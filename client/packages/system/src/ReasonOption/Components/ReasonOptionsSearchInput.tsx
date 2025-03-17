@@ -74,10 +74,12 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
           <BasicTextInput
             {...props}
             autoFocus={autoFocus}
-            InputProps={{
-              disableUnderline: false,
-              style: props.disabled ? { paddingLeft: 0 } : {},
-              ...props.InputProps,
+            slotProps={{
+              input: {
+                disableUnderline: false,
+                style: props.disabled ? { paddingLeft: 0 } : {},
+                ...props.InputProps,
+              },
             }}
             sx={{ minWidth: width }}
             error={isError}

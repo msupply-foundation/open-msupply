@@ -1,0 +1,26 @@
+{
+  "is_custom": false,
+  "version": "2.5.0",
+  "code": "item-usage",
+  "context": "REPORT",
+  "sub_context": "StockAndItems",
+  "name": "Item Usage",
+  "queries": {
+    "gql": "query.graphql",
+    "sql": [
+      "thisMonthConsumption",
+      "lastMonthConsumption",
+      "twoMonthsAgoConsumption",
+      "expiringInSixMonths",
+      "expiringInTwelveMonths",
+      "stockOnOrder",
+      "AMCTwelve",
+      "AMCTwentyFour"
+    ]
+  },
+  "arguments": {
+    "schema": "argument_schemas/arguments.json",
+    "ui": "argument_schemas/arguments_ui.json"
+  },
+  "convert_data": "convert_data_js"
+}

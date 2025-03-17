@@ -16,6 +16,7 @@ import {
   DetailInputWithLabelRow,
   NumericTextInput,
   Typography,
+  LocaleKey,
 } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_GAP, FORM_LABEL_WIDTH } from '../common';
 import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
@@ -61,35 +62,40 @@ const UIComponent = (props: ControlProps) => {
 
   useEffect(() => {
     if (!data) return;
-    const dob = DateUtils.getDateOrNull(data.dateOfBirth);
-    setDoB(dob);
-    if (dob === null) {
+    const naiveDoB = DateUtils.getNaiveDate(data.dateOfBirth);
+    setDoB(naiveDoB);
+    if (naiveDoB === null) {
       setAge(undefined);
       return;
     }
-    setAge(DateUtils.age(dob));
+    setAge(DateUtils.age(naiveDoB));
   }, [data]);
 
   if (!props.visible) {
     return null;
   }
 
-  const { months, days } = DateUtils.ageInMonthsAndDays(dob ?? '');
-
   return (
     <DetailInputWithLabelRow
       sx={DefaultFormRowSx}
-      label={label}
+      label={t(label as LocaleKey)}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}
       Input={
-        <Box display="flex" alignItems="center" gap={FORM_GAP} width="100%">
+        <Box
+          display="flex"
+          alignItems="center"
+          columnGap={FORM_GAP}
+          rowGap="2px"
+          width="100%"
+          flexWrap="wrap"
+        >
           <BaseDatePickerInput
             // undefined is displayed as "now" and null as unset
-            value={DateUtils.getNaiveDate(dob)}
+            value={dob}
             onChange={onChangeDoB}
             format="P"
-            width={135}
+            sx={{ width: 145 }}
             disableFuture
             disabled={!props.enabled}
             onError={validationError => setCustomError(validationError)}
@@ -101,24 +107,27 @@ const UIComponent = (props: ControlProps) => {
             }}
           />
 
-          <Box flex={0} style={{ textAlign: 'end' }}>
-            <FormLabel sx={{ fontWeight: 'bold' }}>{t('label.age')}:</FormLabel>
-          </Box>
-          {(age ?? 1 >= 1) ? (
-            <Box flex={0}>
-              <NumericTextInput
-                value={age}
-                sx={{ width: 65 }}
-                onChange={onChangeAge}
-                disabled={!props.enabled}
-              />
+          <Box display="flex" gap={1}>
+            <Box flex={0} style={{ textAlign: 'end' }}>
+              <FormLabel sx={{ fontWeight: 'bold' }}>
+                {t('label.age')}:
+              </FormLabel>
             </Box>
-          ) : (
-            <Typography fontSize="85%" whiteSpace="nowrap">
-              {months > 0 && t('label.age-months-and', { count: months })}
-              {t('label.age-days', { count: days })}
-            </Typography>
-          )}
+            {(age ?? 1 >= 1) ? (
+              <Box flex={0}>
+                <NumericTextInput
+                  value={age}
+                  sx={{ width: 65 }}
+                  onChange={onChangeAge}
+                  disabled={!props.enabled}
+                />
+              </Box>
+            ) : (
+              <Typography fontSize="85%" whiteSpace="nowrap">
+                {formatDateTime.getDisplayAge(dob)}
+              </Typography>
+            )}
+          </Box>
         </Box>
       }
     />

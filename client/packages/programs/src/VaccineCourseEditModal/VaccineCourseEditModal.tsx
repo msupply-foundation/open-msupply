@@ -26,7 +26,6 @@ import {
   TextInputCell,
   useColumns,
   useDialog,
-  useKeyboardHeightAdjustment,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -82,6 +81,13 @@ interface VaccineCourseEditModalProps {
   mode: ModalMode | null;
 }
 
+function doseIndex(
+  doses: VaccineCourseDoseFragment[],
+  dose: VaccineCourseDoseFragment
+) {
+  return doses.indexOf(dose) + 1;
+}
+
 export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   vaccineCourse,
   isOpen,
@@ -98,12 +104,13 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     updatePatch,
     query: { isLoading },
     isDirty,
-    setIsDirty,
+    resetDraft,
   } = useVaccineCourse(vaccineCourse?.id ?? undefined);
+  const doses = draft.vaccineCourseDoses ?? [];
+
   const { data: demographicData } = useDemographicData.demographics.list();
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(900);
 
   const options = useMemo(
     () => getDemographicOptions(demographicData?.nodes ?? []),
@@ -114,20 +121,26 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     value: draft.demographic?.name ?? '',
     label: draft.demographic?.name ?? '',
   };
-
   const save = async () => {
-    setIsDirty(false);
-
-    const agesAreInOrder = (draft.vaccineCourseDoses ?? []).every(
-      (dose, index, doses) => {
-        const prevDoseAge = doses[index - 1]?.minAgeMonths ?? -0.01;
-        return dose.minAgeMonths > prevDoseAge;
-      }
-    );
+    const agesAreInOrder = doses.every((dose, index, doses) => {
+      const prevDoseAge = doses[index - 1]?.minAgeMonths ?? -0.01;
+      return dose.minAgeMonths > prevDoseAge;
+    });
 
     if (!agesAreInOrder) {
       error(t('error.dose-ages-out-of-order'))();
       return;
+    }
+
+    for (const dose of doses) {
+      if (dose.minAgeMonths > dose.maxAgeMonths) {
+        error(
+          t('error.dose-max-lower-than-min', {
+            doseIndex: doseIndex(doses, dose),
+          })
+        )();
+        return;
+      }
     }
 
     try {
@@ -140,6 +153,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
           mode === ModalMode.Update
             ? `${t('messages.updated-new-vaccine-course')}: ${result.name}`
             : `${t('messages.created-new-vaccine-course')}: ${result.name}`;
+        resetDraft();
         success(message)();
         onClose();
       }
@@ -148,6 +162,10 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
       console.error(e);
     }
   };
+
+  const isValid =
+    draft.name.trim() &&
+    !draft.vaccineCourseDoses?.some(dose => !dose.label.trim());
 
   const modalContent = isLoading ? (
     <BasicSpinner />
@@ -159,6 +177,8 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             value={draft?.name ?? ''}
             fullWidth
             onChange={e => updatePatch({ name: e.target.value })}
+            autoFocus
+            required
           />
         </Row>
         <Row label={t('label.target-demographic')}>
@@ -202,7 +222,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         </Row>
         <VaccineCourseDoseTable
           courseName={draft.name}
-          doses={draft.vaccineCourseDoses ?? []}
+          doses={doses}
           updatePatch={updatePatch}
         />
       </Container>
@@ -219,16 +239,13 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
         <DialogButton
-          disabled={!isDirty || !programId}
+          disabled={!isDirty || !programId || !isValid}
           variant="ok"
           onClick={save}
         />
       }
-      height={height}
-      sx={{
-        width: 1100,
-        maxWidth: 'unset',
-      }}
+      height={900}
+      width={1100}
       slideAnimation={false}
     >
       {modalContent}
@@ -290,11 +307,12 @@ const VaccineCourseDoseTable = ({
         Cell: NumberCell,
         width: 80,
         label: 'label.dose-number',
-        accessor: ({ rowData }) => doses.indexOf(rowData) + 1,
+        accessor: ({ rowData }) => doseIndex(doses, rowData),
       },
       {
         key: 'label',
         Cell: LabelCell,
+        cellProps: { isRequired: true },
         width: 280,
         label: 'label.label',
         setter: updateDose,
@@ -372,7 +390,7 @@ const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => {
   return (
     <MultipleNumberInputCell
       decimalLimit={2}
-      width={25}
+      width={60}
       {...props}
       units={[
         {

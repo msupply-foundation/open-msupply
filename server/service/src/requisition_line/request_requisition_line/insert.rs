@@ -1,4 +1,8 @@
 use crate::{
+    backend_plugin::{
+        plugin_provider::{PluginError, PluginInstance},
+        types::transform_request_requisition_lines::Context,
+    },
     item::item::check_item_exists,
     requisition::{
         common::check_requisition_row_exists, request_requisition::generate_requisition_lines,
@@ -8,12 +12,13 @@ use crate::{
         query::get_requisition_line,
     },
     service_provider::ServiceContext,
+    PluginOrRepositoryError,
 };
 
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    RepositoryError, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository,
-    StorageConnection,
+    PluginDataRowRepository, RepositoryError, RequisitionLine, RequisitionLineRow,
+    RequisitionLineRowRepository, StorageConnection,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -21,8 +26,6 @@ pub struct InsertRequestRequisitionLine {
     pub id: String,
     pub item_id: String,
     pub requisition_id: String,
-    pub requested_quantity: Option<f64>,
-    pub comment: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -37,6 +40,7 @@ pub enum InsertRequestRequisitionLineError {
     NotThisStoreRequisition,
     CannotEditRequisition,
     NotARequestRequisition,
+    PluginError(PluginError),
     DatabaseError(RepositoryError),
     // Should never happen
     CannotFindItemStatusForRequisitionLine,
@@ -53,8 +57,24 @@ pub fn insert_request_requisition_line(
         .connection
         .transaction_sync(|connection| {
             let requisition_row = validate(connection, &ctx.store_id, &input)?;
-            let new_requisition_line_row = generate(ctx, &ctx.store_id, requisition_row, input)?;
+            let lines = vec![generate(ctx, &ctx.store_id, &requisition_row, input)?];
 
+            // Plugin
+            let (mut lines, plugin_data_rows) =
+                PluginInstance::transform_request_requisition_lines(
+                    Context::InsertRequestRequisitionLine,
+                    lines,
+                    &requisition_row,
+                )
+                .map_err(OutError::PluginError)?;
+            let plugin_data_repository = PluginDataRowRepository::new(connection);
+            for plugin_data in plugin_data_rows {
+                plugin_data_repository.upsert_one(&plugin_data)?;
+            }
+
+            let new_requisition_line_row = lines
+                .pop()
+                .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
             RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;
 
             get_requisition_line(ctx, &new_requisition_line_row.id)
@@ -109,30 +129,37 @@ fn validate(
 fn generate(
     ctx: &ServiceContext,
     store_id: &str,
-    requisition_row: RequisitionRow,
+    requisition_row: &RequisitionRow,
     InsertRequestRequisitionLine {
         id,
         requisition_id: _,
         item_id,
-        requested_quantity,
-        comment,
     }: InsertRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, OutError> {
-    let mut new_requisition_line =
-        generate_requisition_lines(ctx, store_id, &requisition_row, vec![item_id])?
+    let mut requisition_line =
+        generate_requisition_lines(ctx, store_id, requisition_row, vec![item_id])?
             .pop()
             .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
 
-    new_requisition_line.requested_quantity = requested_quantity.unwrap_or(0.0);
-    new_requisition_line.id = id;
-    new_requisition_line.comment = comment.or(new_requisition_line.comment);
+    requisition_line.id = id;
 
-    Ok(new_requisition_line)
+    Ok(requisition_line)
 }
 
 impl From<RepositoryError> for InsertRequestRequisitionLineError {
     fn from(error: RepositoryError) -> Self {
         InsertRequestRequisitionLineError::DatabaseError(error)
+    }
+}
+
+impl From<PluginOrRepositoryError> for InsertRequestRequisitionLineError {
+    fn from(error: PluginOrRepositoryError) -> Self {
+        use InsertRequestRequisitionLineError as to;
+        use PluginOrRepositoryError as from;
+        match error {
+            from::RepositoryError(repository_error) => repository_error.into(),
+            from::PluginError(plugin_error) => to::PluginError(plugin_error),
+        }
     }
 }
 
@@ -166,7 +193,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -284,7 +311,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -299,8 +326,6 @@ mod test {
                         .id,
                     id: "new requisition line id".to_string(),
                     item_id: test_item_stats::item2().id,
-                    requested_quantity: Some(20.0),
-                    comment: Some("comment".to_string()),
                 },
             )
             .unwrap();
@@ -313,12 +338,10 @@ mod test {
         assert_eq!(
             line,
             inline_edit(&line, |mut u| {
-                u.requested_quantity = 20.0;
                 u.available_stock_on_hand = test_item_stats::item_2_soh();
                 u.average_monthly_consumption = test_item_stats::item2_amc_3_months();
                 u.suggested_quantity =
                     test_item_stats::item2_amc_3_months() * 10.0 - test_item_stats::item_2_soh();
-                u.comment = Some("comment".to_string());
                 u
             })
         );
@@ -330,12 +353,9 @@ mod test {
                 r.requisition_id = mock_request_draft_requisition().id;
                 r.id = "new requisition line id2".to_string();
                 r.item_id = mock_item_c().id;
-                r.requested_quantity = Some(20.0);
             }),
         );
 
         assert!(result.is_ok());
-
-        // TODO test suggested = 0 (where MOS is above MIN_MOS)
     }
 }

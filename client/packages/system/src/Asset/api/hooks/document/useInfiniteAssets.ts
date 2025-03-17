@@ -1,6 +1,5 @@
 import {
   FilterByWithBoolean,
-  Pagination,
   useInfiniteQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
@@ -9,13 +8,13 @@ import { useAssetApi } from '../utils/useAssetApi';
 interface useAssetsProps {
   categoryId?: string;
   filter?: FilterByWithBoolean;
-  pagination?: Pagination;
+  rowsPerPage: number;
 }
 
 export const useInfiniteAssets = ({
   categoryId,
   filter,
-  pagination,
+  rowsPerPage,
 }: useAssetsProps) => {
   const { queryParams } = useUrlQueryParams({
     filters: [
@@ -31,10 +30,22 @@ export const useInfiniteAssets = ({
     categoryId === undefined
       ? queryParams.filterBy
       : { ...queryParams.filterBy, categoryId: { equalTo: categoryId } };
+
   const filterBy = { ...queryFilter, ...filter };
   const params = { ...queryParams, filterBy };
 
-  return useInfiniteQuery(api.keys.paramList(params), ({ pageParam }) =>
-    api.get.list({ ...params, ...pagination, ...pageParam })
-  );
+  return useInfiniteQuery(api.keys.paramList(params), async ({ pageParam }) => {
+    const pageNumber = Number(pageParam ?? 0);
+
+    const data = await api.get.list({
+      ...params,
+      first: rowsPerPage,
+      offset: rowsPerPage * pageNumber,
+    });
+
+    return {
+      data,
+      pageNumber,
+    };
+  });
 };

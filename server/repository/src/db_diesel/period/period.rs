@@ -1,8 +1,4 @@
-use super::{
-    period_row::{period, period::dsl as period_dsl},
-    period_schedule_row::{period_schedule, period_schedule::dsl as period_schedule_dsl},
-    PeriodScheduleRow,
-};
+use super::{period_row::period, period_schedule_row::period_schedule, PeriodScheduleRow};
 use diesel::{
     dsl::{And, Eq, InnerJoin, IntoBoxed, LeftJoin, On},
     prelude::*,
@@ -11,8 +7,8 @@ use diesel::{
 use crate::{
     diesel_macros::{apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     repository_error::RepositoryError,
-    rnr_form_row::{rnr_form, rnr_form::dsl as rnr_form_dsl},
-    DBType, DateFilter, PeriodRow, RnRFormRow, StorageConnection,
+    rnr_form_row::rnr_form,
+    DBType, DateFilter, Pagination, PeriodRow, RnRFormRow, StorageConnection,
 };
 
 use crate::{EqualFilter, Sort};
@@ -28,6 +24,7 @@ pub struct Period {
 pub struct PeriodFilter {
     pub id: Option<EqualFilter<String>>,
     pub period_schedule_id: Option<EqualFilter<String>>,
+    pub start_date: Option<DateFilter>,
     pub end_date: Option<DateFilter>,
     pub rnr_form_program_id: Option<EqualFilter<String>>,
 }
@@ -54,16 +51,18 @@ impl<'a> PeriodRepository<'a> {
     pub fn query_by_filter(
         &self,
         store_id: String,
-        program_id: String,
+        // Passed into R&R
+        program_id: Option<String>,
         filter: PeriodFilter,
     ) -> Result<Vec<Period>, RepositoryError> {
-        self.query(store_id, program_id, Some(filter), None)
+        self.query(store_id, program_id, Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
         &self,
         store_id: String,
-        program_id: String,
+        program_id: Option<String>,
+        pagination: Pagination,
         filter: Option<PeriodFilter>,
         sort: Option<PeriodSort>,
     ) -> Result<Vec<Period>, RepositoryError> {
@@ -71,15 +70,20 @@ impl<'a> PeriodRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 PeriodSortField::Id => {
-                    apply_sort_no_case!(query, sort, period_dsl::id)
+                    apply_sort_no_case!(query, sort, period::id)
                 }
                 PeriodSortField::EndDate => {
-                    apply_sort!(query, sort, period_dsl::end_date)
+                    apply_sort!(query, sort, period::end_date)
                 }
             }
+        } else {
+            query = query.order(period::end_date.desc());
         };
 
-        let result = query.load::<PeriodJoin>(self.connection.lock().connection())?;
+        let result = query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<PeriodJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -93,12 +97,12 @@ fn to_domain((period_row, period_schedule_row, rnr_form_row): PeriodJoin) -> Per
     }
 }
 
-// rnr_form_dsl::period_id.eq(period_dsl::id)
-type PeriodIdEqualToId = Eq<rnr_form_dsl::period_id, period_dsl::id>;
-// rnr_form_dsl::store_id.eq(store_id)
-type StoreIdEqualToStr = Eq<rnr_form_dsl::store_id, String>;
-// rnr_form_dsl::program_id.eq(program_id)
-type ProgramIdEqualToStr = Eq<rnr_form_dsl::program_id, String>;
+// rnr_form::period_id.eq(period::id)
+type PeriodIdEqualToId = Eq<rnr_form::period_id, period::id>;
+// rnr_form::store_id.eq(store_id)
+type StoreIdEqualToStr = Eq<rnr_form::store_id, String>;
+// rnr_form::program_id.eq(program_id)
+type ProgramIdEqualToStr = Eq<rnr_form::program_id, String>;
 
 type OnRnrFormToPeriodJoin =
     On<rnr_form::table, And<And<PeriodIdEqualToId, StoreIdEqualToStr>, ProgramIdEqualToStr>>;
@@ -111,16 +115,16 @@ type BoxedPeriodQuery = IntoBoxed<
 
 fn create_filtered_query(
     store_id: String,
-    program_id: String,
+    program_id: Option<String>,
     filter: Option<PeriodFilter>,
 ) -> BoxedPeriodQuery {
-    let mut query = period_dsl::period
-        .inner_join(period_schedule_dsl::period_schedule)
+    let mut query = period::table
+        .inner_join(period_schedule::table)
         .left_join(
-            rnr_form_dsl::rnr_form.on(rnr_form_dsl::period_id
-                .eq(period_dsl::id)
-                .and(rnr_form_dsl::store_id.eq(store_id))
-                .and(rnr_form_dsl::program_id.eq(program_id))),
+            rnr_form::table.on(rnr_form::period_id
+                .eq(period::id)
+                .and(rnr_form::store_id.eq(store_id))
+                .and(rnr_form::program_id.eq(program_id.unwrap_or_default()))),
         )
         .into_boxed();
 
@@ -128,15 +132,17 @@ fn create_filtered_query(
         let PeriodFilter {
             id,
             period_schedule_id,
+            start_date,
             end_date,
             rnr_form_program_id,
         } = filter;
 
-        apply_equal_filter!(query, id, period_dsl::id);
-        apply_equal_filter!(query, period_schedule_id, period_dsl::period_schedule_id);
-        apply_date_filter!(query, end_date, period_dsl::end_date);
+        apply_equal_filter!(query, id, period::id);
+        apply_equal_filter!(query, period_schedule_id, period::period_schedule_id);
+        apply_date_filter!(query, start_date, period::start_date);
+        apply_date_filter!(query, end_date, period::end_date);
 
-        apply_equal_filter!(query, rnr_form_program_id, rnr_form_dsl::program_id);
+        apply_equal_filter!(query, rnr_form_program_id, rnr_form::program_id);
     }
 
     query

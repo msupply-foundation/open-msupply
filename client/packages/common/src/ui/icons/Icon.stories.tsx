@@ -2,8 +2,9 @@
 
 import React, { ChangeEvent, useState } from 'react';
 import { StoryFn, Meta } from '@storybook/react';
-import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
-import { SvgIconProps } from '.';
+import { Box, Paper, styled, TextField, Typography } from '@mui/material';
+import { Grid } from '@openmsupply-client/common';
+import { EmergencyIcon, SvgIconProps } from '.';
 
 import { AlertIcon } from './Alert';
 import { ArrowLeftIcon } from './ArrowLeft';
@@ -132,6 +133,7 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
     { icon: <DeleteIcon {...args} />, name: 'Delete' },
     { icon: <DownloadIcon {...args} />, name: 'Download' },
     { icon: <EditIcon {...args} />, name: 'Edit' },
+    { icon: <EmergencyIcon {...args} />, name: 'Emergency' },
     { icon: <ExternalLinkIcon {...args} />, name: 'External Link' },
     { icon: <EyeIcon {...args} />, name: 'Eye' },
     { icon: <EyeOffIcon {...args} />, name: 'EyeOff' },
@@ -200,10 +202,10 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
           variant="outlined"
         />
       </Box>
-      <Grid item>
+      <Grid>
         <Grid container spacing={1}>
           {filteredIcons.map(i => (
-            <Grid item xs key={i.name}>
+            <Grid key={i.name}>
               <StyledPaper>
                 {i.icon}
                 <Typography>{i.name}</Typography>

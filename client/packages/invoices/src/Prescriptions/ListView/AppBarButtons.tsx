@@ -1,5 +1,4 @@
-import React, { FC } from 'react';
-import { AppRoute } from '@openmsupply-client/config';
+import React, { FC, useState } from 'react';
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -8,27 +7,35 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
-  FnUtils,
   FileUtils,
   LoadingButton,
   ToggleState,
   EnvUtils,
   Platform,
-  useNavigate,
-  RouteBuilder,
+  useCallbackWithPermission,
+  UserPermission,
 } from '@openmsupply-client/common';
-import { PatientSearchModal } from '@openmsupply-client/system';
-import { usePrescription } from '../api';
+import { CreatePatientModal } from '@openmsupply-client/system';
+import { ListParams, usePrescriptionList } from '../api';
 import { prescriptionToCsv } from '../../utils';
+import { NewPrescriptionModal } from './NewPrescriptionModal';
 
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
-}> = ({ modalController }) => {
+  listParams: ListParams;
+}> = ({ modalController, listParams }) => {
   const t = useTranslation();
-  const navigate = useNavigate();
   const { success, error } = useNotification();
-  const { mutateAsync: onCreate } = usePrescription.document.insert();
-  const { data, isLoading } = usePrescription.document.list();
+  const [patientModalOpen, setPatientModalOpen] = useState(false);
+
+  const {
+    query: { data, isLoading },
+  } = usePrescriptionList(listParams);
+
+  const onCreatePatient = useCallbackWithPermission(
+    UserPermission.PatientMutate,
+    () => setPatientModalOpen(true)
+  );
 
   const csvExport = async () => {
     if (!data || !data?.nodes.length) {
@@ -49,31 +56,10 @@ export const AppBarButtonsComponent: FC<{
           label={t('button.new-prescription')}
           onClick={modalController.toggleOn}
         />
-        <PatientSearchModal
+        <NewPrescriptionModal
           open={modalController.isOn}
           onClose={modalController.toggleOff}
-          onChange={async name => {
-            modalController.toggleOff();
-            try {
-              onCreate({
-                id: FnUtils.generateUUID(),
-                patientId: name?.id,
-              }).then(invoiceNumber => {
-                navigate(
-                  RouteBuilder.create(AppRoute.Dispensary)
-                    .addPart(AppRoute.Prescription)
-                    .addPart(String(invoiceNumber))
-                    .build(),
-                  { replace: true }
-                );
-              });
-            } catch (e) {
-              const errorSnack = error(
-                t('error.failed-to-create-prescription') + (e as Error).message
-              );
-              errorSnack();
-            }
-          }}
+          openPatientModal={onCreatePatient}
         />
         <LoadingButton
           startIcon={<DownloadIcon />}
@@ -81,9 +67,11 @@ export const AppBarButtonsComponent: FC<{
           variant="outlined"
           onClick={csvExport}
           disabled={EnvUtils.platform === Platform.Android}
-        >
-          {t('button.export')}
-        </LoadingButton>
+          label={t('button.export')}
+        />
+        {patientModalOpen && (
+          <CreatePatientModal onClose={() => setPatientModalOpen(false)} />
+        )}
       </Grid>
     </AppBarButtonsPortal>
   );

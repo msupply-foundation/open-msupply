@@ -1,7 +1,6 @@
 import React from 'react';
-import { ButtonProps, Tooltip } from '@mui/material';
+import { ButtonProps } from '@mui/material';
 import { ShrinkableBaseButton } from './ShrinkableBaseButton';
-import { useIsScreen } from '@common/hooks';
 
 export interface ButtonWithIconProps extends ButtonProps {
   Icon: React.ReactNode;
@@ -31,36 +30,19 @@ export const ButtonWithIcon = React.forwardRef<
       ...buttonProps
     },
     ref
-  ) => {
-    const isShrinkThreshold = useIsScreen(shrinkThreshold);
-
-    // On small screens, if the button shouldShrink, then
-    // only display a centred icon, with no text.
-    const shrink = isShrinkThreshold && shouldShrink;
-    const startIcon = shrink ? null : Icon;
-    const centredIcon = shrink ? Icon : null;
-    const text = shrink ? null : label;
-
-    return (
-      <Tooltip disableHoverListener={!shrink} title={label}>
-        <span>
-          <ShrinkableBaseButton
-            disabled={disabled}
-            shrink={shrink}
-            onClick={onClick}
-            variant={variant}
-            color={color}
-            size="small"
-            startIcon={startIcon}
-            aria-label={label}
-            ref={ref}
-            {...buttonProps}
-          >
-            {centredIcon}
-            {text}
-          </ShrinkableBaseButton>
-        </span>
-      </Tooltip>
-    );
-  }
+  ) => (
+    <ShrinkableBaseButton
+      disabled={disabled}
+      shouldShrink={shouldShrink}
+      shrinkThreshold={shrinkThreshold}
+      onClick={onClick}
+      variant={variant}
+      color={color}
+      size="small"
+      startIcon={Icon}
+      ref={ref}
+      label={label}
+      {...buttonProps}
+    />
+  )
 );

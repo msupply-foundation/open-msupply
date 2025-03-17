@@ -1,5 +1,5 @@
 import React, { FC, PropsWithChildren, useState } from 'react';
-import { Grid, Paper, Typography } from '@mui/material';
+import { Paper, Typography } from '@mui/material';
 import { StoryFn } from '@storybook/react';
 
 import {
@@ -16,6 +16,7 @@ import { BookIcon, TruckIcon } from '@common/icons';
 import { Color } from '../menus';
 import { useTranslation } from '@common/intl';
 import { SplitButtonOption } from '@common/components';
+import { Grid } from '@openmsupply-client/common';
 
 const ops: [
   SplitButtonOption<string>,
@@ -36,7 +37,7 @@ const Wrapper: FC<PropsWithChildren<{ text: string }>> = ({
   text,
 }) => {
   return (
-    <Grid item>
+    <Grid>
       <Paper
         sx={{
           width: 300,

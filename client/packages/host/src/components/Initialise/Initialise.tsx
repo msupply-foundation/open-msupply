@@ -48,9 +48,11 @@ export const Initialise = () => {
           value={username}
           disabled={isInputDisabled}
           onChange={e => setUsername(e.target.value)}
-          inputProps={{
-            autoComplete: 'username',
-            autoCapitalize: 'off',
+          slotProps={{
+            htmlInput: {
+              autoComplete: 'username',
+              autoCapitalize: 'off',
+            },
           }}
           autoFocus
         />
@@ -63,9 +65,11 @@ export const Initialise = () => {
           value={password}
           disabled={isInputDisabled}
           onChange={e => setPassword(e.target.value)}
-          inputProps={{
-            autoComplete: 'current-password',
-            autoCapitalize: 'off',
+          slotProps={{
+            htmlInput: {
+              autoComplete: 'current-password',
+              autoCapitalize: 'off',
+            },
           }}
         />
       }
@@ -96,10 +100,9 @@ export const Initialise = () => {
             !isValid &&
             !isInitialising /* isValid would be false if isInitialising since password is emptied out */
           }
-        >
-          {/* Retry will only be shown when not loading and is initialised (when sync error occurred) */}
-          {isInitialising ? t('button.retry') : t('button.initialise')}
-        </LoadingButton>
+          /* Retry will only be shown when not loading and is initialised (when sync error occurred) */
+          label={isInitialising ? t('button.retry') : t('button.initialise')}
+        />
       }
       ErrorMessage={error && <ErrorWithDetails {...error} />}
       onInitialise={async () => {

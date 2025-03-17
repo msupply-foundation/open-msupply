@@ -223,6 +223,26 @@ impl CannotEditRequisition {
     }
 }
 
+pub struct OrderingTooManyItems(pub i32);
+#[Object]
+impl OrderingTooManyItems {
+    pub async fn description(&self) -> &str {
+        "Ordering too many items"
+    }
+
+    pub async fn max_items_in_emergency_order(&self) -> i32 {
+        self.0
+    }
+}
+
+pub struct CannotDeleteLineLinkedToShipment;
+#[Object]
+impl CannotDeleteLineLinkedToShipment {
+    pub async fn description(&self) -> &str {
+        "Cannot delete line linked to shipment"
+    }
+}
+
 pub struct CannotEditStocktake;
 #[Object]
 impl CannotEditStocktake {
@@ -338,5 +358,13 @@ pub struct MasterListNotFoundForThisStore;
 impl MasterListNotFoundForThisStore {
     pub async fn description(&self) -> &'static str {
         "Master list not found (might not be visible to this store)"
+    }
+}
+
+pub struct FailedTranslation(pub String);
+#[Object]
+impl FailedTranslation {
+    pub async fn description(&self) -> String {
+        self.0.to_owned()
     }
 }

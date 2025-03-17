@@ -63,9 +63,7 @@ table! {
 
 #[cfg(test)]
 fn check_changelogs_have_store_id(connection: &StorageConnection) -> bool {
-    use changelog::dsl as changelog_dsl;
-
-    let changelog_store_ids: Vec<Option<String>> = changelog_dsl::changelog
+    let changelog_store_ids: Vec<Option<String>> = changelog::table
         .select(changelog::store_id)
         .filter(changelog::record_id.eq_any(vec!["TEST_RNR_FORM_ID", "TEST_RNR_FORM_LINE_ID"]))
         .load::<Option<String>>(connection.lock().connection())

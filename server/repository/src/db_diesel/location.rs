@@ -1,10 +1,7 @@
-use super::{
-    location_row::{location, location::dsl as location_dsl},
-    LocationRow, StorageConnection,
-};
+use super::{location_row::location, LocationRow, StorageConnection};
 
 use crate::{
-    asset_internal_location_row::asset_internal_location::dsl as asset_internal_location_dsl,
+    asset_internal_location_row::asset_internal_location,
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     StringFilter,
 };
@@ -72,14 +69,14 @@ impl<'a> LocationRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 LocationSortField::Name => {
-                    apply_sort_no_case!(query, sort, location_dsl::name)
+                    apply_sort_no_case!(query, sort, location::name)
                 }
                 LocationSortField::Code => {
-                    apply_sort_no_case!(query, sort, location_dsl::code)
+                    apply_sort_no_case!(query, sort, location::code)
                 }
             }
         } else {
-            query = query.order(location_dsl::id.asc())
+            query = query.order(location::id.asc())
         }
 
         let result = query
@@ -94,28 +91,28 @@ impl<'a> LocationRepository<'a> {
         let mut query = location::table.into_boxed();
 
         if let Some(filter) = filter {
-            apply_equal_filter!(query, filter.id, location_dsl::id);
-            apply_string_filter!(query, filter.name, location_dsl::name);
-            apply_string_filter!(query, filter.code, location_dsl::code);
+            apply_equal_filter!(query, filter.id, location::id);
+            apply_string_filter!(query, filter.name, location::name);
+            apply_string_filter!(query, filter.code, location::code);
 
             if let Some(value) = filter.on_hold {
-                query = query.filter(location_dsl::on_hold.eq(value));
+                query = query.filter(location::on_hold.eq(value));
             }
             if let Some(value) = filter.assigned_to_asset {
-                let sub_query = asset_internal_location_dsl::asset_internal_location
-                    .select(asset_internal_location_dsl::location_id);
+                let sub_query =
+                    asset_internal_location::table.select(asset_internal_location::location_id);
 
                 match value {
                     true => {
-                        query = query.filter(location_dsl::id.eq_any(sub_query));
+                        query = query.filter(location::id.eq_any(sub_query));
                     }
                     false => {
-                        query = query.filter(location_dsl::id.ne_all(sub_query));
+                        query = query.filter(location::id.ne_all(sub_query));
                     }
                 }
             }
 
-            apply_equal_filter!(query, filter.store_id, location_dsl::store_id);
+            apply_equal_filter!(query, filter.store_id, location::store_id);
         }
 
         query

@@ -1,7 +1,4 @@
-use super::{
-    demographic_indicator_row::demographic_indicator::dsl as demographic_indicator_dsl,
-    StorageConnection,
-};
+use super::StorageConnection;
 
 use crate::RepositoryError;
 
@@ -52,9 +49,9 @@ impl<'a> DemographicIndicatorRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &DemographicIndicatorRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(demographic_indicator_dsl::demographic_indicator)
+        diesel::insert_into(demographic_indicator::table)
             .values(row)
-            .on_conflict(demographic_indicator_dsl::id)
+            .on_conflict(demographic_indicator::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -66,8 +63,8 @@ impl<'a> DemographicIndicatorRowRepository<'a> {
         &self,
         demographic_indicator_id: &str,
     ) -> Result<Option<DemographicIndicatorRow>, RepositoryError> {
-        let result = demographic_indicator_dsl::demographic_indicator
-            .filter(demographic_indicator_dsl::id.eq(demographic_indicator_id))
+        let result = demographic_indicator::table
+            .filter(demographic_indicator::id.eq(demographic_indicator_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)

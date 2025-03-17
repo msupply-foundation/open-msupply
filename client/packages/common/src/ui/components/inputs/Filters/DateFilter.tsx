@@ -7,6 +7,7 @@ import { FilterLabelSx } from './styleConstants';
 
 export interface DateFilterDefinition extends FilterDefinitionCommon {
   type: 'date' | 'dateTime';
+  displayAs?: 'date' | 'dateTime';
   range?: RangeOption;
   maxDate?: Date | string;
   minDate?: Date | string;
@@ -22,6 +23,7 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
     urlParameter,
     name,
     range,
+    displayAs = type,
     maxDate = '9999-12-31',
     minDate = '0000-01-01',
   } = filterDefinition;
@@ -39,8 +41,14 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
         updateQuery({ [urlParameter]: { [range]: '' } });
         return;
       }
+
+      const date =
+        range === 'to' && displayAs === 'date' // if no time picker, set "TO" field to end of day
+          ? DateUtils.endOfDay(selection)
+          : selection;
+
       updateQuery({
-        [urlParameter]: { [range]: customDate(selection, dateTimeFormat) },
+        [urlParameter]: { [range]: customDate(date, dateTimeFormat) },
       });
     } else {
       if (!selection) {
@@ -63,7 +71,7 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
     maxDate: getRangeBoundary(urlValue, range, maxDate),
   };
 
-  return type === 'dateTime' ? (
+  return displayAs === 'dateTime' ? (
     <DateTimePickerInput showTime={true} {...componentProps} />
   ) : (
     <DateTimePickerInput {...componentProps} />
@@ -72,7 +80,7 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
 
 const getDateFromUrl = (query: string, range: RangeOption | undefined) => {
   const value = typeof query !== 'object' || !range ? query : query[range];
-  return DateUtils.getNaiveDate(value);
+  return DateUtils.getDateOrNull(value);
 };
 
 const getRangeBoundary = (

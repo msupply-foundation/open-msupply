@@ -14,7 +14,11 @@ import {
   BasicSpinner,
   DocumentRegistryCategoryNode,
   useNavigate,
+  RouteBuilder,
+  FnUtils,
+  useUrlQuery,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { PatientSummary } from './PatientSummary';
@@ -29,10 +33,11 @@ import {
   SavedDocument,
   SchemaData,
   useDocumentRegistry,
-  useJsonForms,
+  useJsonFormsHandler,
   usePatientModalStore,
   usePatientStore,
   useProgramEnrolments,
+  PatientSchema,
 } from '@openmsupply-client/programs';
 import { Footer } from './Footer';
 import { ContactTraceListView, CreateContactTraceModal } from '../ContactTrace';
@@ -40,6 +45,8 @@ import { ContactTraceListView, CreateContactTraceModal } from '../ContactTrace';
 import defaultPatientSchema from './DefaultPatientSchema.json';
 import defaultPatientUISchema from './DefaultPatientUISchema.json';
 import { VaccinationCardsListView } from '../VaccinationCard/ListView';
+import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
+import { InsuranceListView, InsuranceModal } from '../Insurance';
 
 const DEFAULT_SCHEMA: SchemaData = {
   formSchemaId: undefined,
@@ -98,6 +105,11 @@ const PatientDetailView = ({
     createNewPatient,
     setCreateNewPatient,
   } = usePatientStore();
+
+  const navigate = useNavigate();
+  const { urlQuery } = useUrlQuery();
+  const fromPrescription = urlQuery['previousPath'] === AppRoute.Prescription;
+
   const patientId = usePatient.utils.id();
   const { data: currentPatient, isLoading: isCurrentPatientLoading } =
     usePatient.document.get(patientId);
@@ -107,8 +119,11 @@ const PatientDetailView = ({
         category: { equalTo: DocumentRegistryCategoryNode.Patient },
       },
     });
+  const {
+    create: { create: createPrescription },
+  } = usePrescription();
+
   const isLoading = isCurrentPatientLoading || isPatientRegistryLoading;
-  const navigate = useNavigate();
 
   const patientRegistry = patientRegistries?.nodes[0];
   const isCreatingPatient = !!createNewPatient;
@@ -131,12 +146,13 @@ const PatientDetailView = ({
           address1: createNewPatient.address1,
           isDeceased: createNewPatient.isDeceased,
           dateOfDeath: createNewPatient.dateOfDeath,
+          extension: {},
         },
         isCreating: true,
       };
     } else if (!!currentPatient && !currentPatient.document) {
-      // The loaded patient doesn't has a document. Use the information we got (from the name
-      // table).
+      // The loaded patient doesn't has a document. Use the information we got
+      // (from the name table).
       return {
         schema: patientRegistry ?? DEFAULT_SCHEMA,
         data: {
@@ -151,6 +167,14 @@ const PatientDetailView = ({
           isDeceased: currentPatient.isDeceased ?? undefined,
           phone: currentPatient.phone ?? undefined,
           address1: currentPatient.address1 ?? undefined,
+          nextOfKin:
+            currentPatient.nextOfKinId || currentPatient.nextOfKinName
+              ? {
+                  id: currentPatient.nextOfKinId ?? undefined,
+                  name: currentPatient.nextOfKinName ?? undefined,
+                }
+              : undefined,
+          extension: {},
         },
         isCreating: false,
       };
@@ -189,17 +213,26 @@ const PatientDetailView = ({
         isCreating: isCreatingPatient,
         schema: DEFAULT_SCHEMA,
         save: async (data: unknown) => {
+          const patientData = data as PatientSchema;
           const newData = Object.fromEntries(
             Object.entries(data ?? {}).filter(
-              ([key]) => key !== 'dateOfBirthIsEstimated'
+              ([key]) =>
+                key !== 'dateOfBirthIsEstimated' &&
+                key !== 'nextOfKin' &&
+                key !== 'extension'
             )
           );
-          await handlePatientSave(newData);
+          // map nextOfKin object to individual fields
+          await handlePatientSave({
+            ...newData,
+            nextOfKinId: patientData?.nextOfKin?.id,
+            nextOfKinName: patientData?.nextOfKin?.name,
+          });
         },
       };
 
   const { JsonForm, saveData, isSaving, isDirty, validationError } =
-    useJsonForms(
+    useJsonFormsHandler(
       {
         documentName: createNewPatient ? undefined : documentName,
         patientId: patientId,
@@ -217,6 +250,20 @@ const PatientDetailView = ({
     setCreateNewPatient(undefined);
     if (savedDocument) {
       setDocumentName(savedDocument.name);
+    }
+    // Creates a new prescription and redirects to the prescriptions page
+    // if the patient was created from there.
+    if (fromPrescription) {
+      const invoiceNumber = await createPrescription({
+        id: FnUtils.generateUUID(),
+        patientId,
+      });
+      navigate(
+        RouteBuilder.create(AppRoute.Dispensary)
+          .addPart(AppRoute.Prescription)
+          .addPart(String(invoiceNumber))
+          .build()
+      );
     }
   }, [saveData, setCreateNewPatient, setDocumentName]);
 
@@ -236,14 +283,6 @@ const PatientDetailView = ({
     title: t('heading.are-you-sure'),
   });
 
-  const showCancelConfirmation = useConfirmationModal({
-    onConfirm: () => {
-      navigate(-1);
-    },
-    message: t('messages.confirm-cancel-generic'),
-    title: t('heading.are-you-sure'),
-  });
-
   if (isLoading) return <BasicSpinner />;
 
   return (
@@ -256,7 +295,6 @@ const PatientDetailView = ({
         validationError={validationError}
         inputData={inputData}
         showSaveConfirmation={showSaveConfirmation}
-        showCancelConfirmation={showCancelConfirmation}
       />
     </Box>
   );
@@ -268,6 +306,7 @@ export enum PatientTabValue {
   Encounters = 'encounters',
   ContactTracing = 'contact-tracing',
   Vaccinations = 'vaccinations',
+  Insurance = 'insurance',
 }
 
 /**
@@ -331,6 +370,10 @@ export const PatientView = () => {
         dir: 'desc' as 'desc' | 'asc',
       },
     },
+    {
+      Component: <InsuranceListView />,
+      value: PatientTabValue.Insurance,
+    },
   ];
 
   // Note: unmount modals when not used because they have some internal state
@@ -365,6 +408,7 @@ export const PatientView = () => {
       {current === PatientModal.ContactTraceSearch ? (
         <CreateContactTraceModal />
       ) : null}
+      {current === PatientModal.Insurance ? <InsuranceModal /> : null}
 
       <AppBarButtons disabled={!!createNewPatient} store={store} />
       <PatientSummary />

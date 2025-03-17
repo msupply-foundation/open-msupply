@@ -4,11 +4,13 @@ import {
   ButtonWithIcon,
   DataTableSkeleton,
   IndicatorLineRowNode,
+  LocaleKey,
   NothingHere,
   PlusCircleIcon,
   useTranslation,
 } from '@openmsupply-client/common';
-import { ProgramIndicatorFragment, ResponseFragment } from '../api';
+import { ResponseFragment } from '../../ResponseRequisition/api';
+import { ProgramIndicatorFragment } from '../../RequestRequisition/api';
 
 interface IndicatorTabProps {
   onClick: (
@@ -35,47 +37,37 @@ export const IndicatorsTab = ({
     return <NothingHere body={t('error.no-indicators')} />;
   }
 
-  const regimenIndicators = indicators.filter(
-    indicator =>
-      indicator.code === 'REGIMEN' &&
-      // Should only include indicators if they have at least one column with a value
-      indicator.lineAndColumns.some(line => line.columns.some(c => c.value))
+  const indicatorGroups = indicators.reduce(
+    (
+      acc: Record<string, ProgramIndicatorFragment[]>,
+      indicator: ProgramIndicatorFragment
+    ) => {
+      if (indicator?.code) {
+        if (!acc[indicator.code]) {
+          acc[indicator.code] = [];
+        }
+        acc[indicator.code]?.push(indicator);
+      }
+      return acc;
+    },
+    {}
   );
-
-  const firstRegimenLine = regimenIndicators[0]?.lineAndColumns.sort(
-    (a, b) => a.line.lineNumber - b.line.lineNumber
-  )[0]?.line;
-
-  const hivIndicators = indicators.filter(
-    indicator =>
-      indicator.code === 'HIV' &&
-      // Should only include indicators if they have at least one column with a value
-      indicator.lineAndColumns.some(line => line.columns.some(c => c.value))
-  );
-  const firstHivLine = hivIndicators[0]?.lineAndColumns.sort(
-    (a, b) => a.line.lineNumber - b.line.lineNumber
-  )[0]?.line;
 
   return (
     <Box display="flex" flexDirection="column" padding={2} gap={2}>
-      {regimenIndicators.length > 0 && (
-        <ButtonWithIcon
-          // disabled={disableAddButton}
-          label={t('button.regimen')}
-          Icon={<PlusCircleIcon />}
-          onClick={() =>
-            onClick(regimenIndicators[0], firstRegimenLine, response)
-          }
-        />
-      )}
-      {hivIndicators.length > 0 && (
-        <ButtonWithIcon
-          // disabled={disableAddButton}
-          label={t('button.hiv')}
-          Icon={<PlusCircleIcon />}
-          onClick={() => onClick(hivIndicators[0], firstHivLine, response)}
-        />
-      )}
+      {Object.entries(indicatorGroups).map(([code, groupIndicators]) => {
+        const firstLine = groupIndicators[0]?.lineAndColumns.sort(
+          (a, b) => a.line.lineNumber - b.line.lineNumber
+        )[0]?.line;
+        return (
+          <ButtonWithIcon
+            key={code}
+            label={t(`button.${code.toLowerCase()}` as LocaleKey)}
+            Icon={<PlusCircleIcon />}
+            onClick={() => onClick(groupIndicators[0], firstLine, response)}
+          />
+        );
+      })}
     </Box>
   );
 };

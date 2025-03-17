@@ -9,14 +9,15 @@ import {
   RequisitionSortFieldInput,
   InsertProgramRequestRequisitionInput,
   RequisitionFilterInput,
+  UpdateIndicatorValueInput,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './../DetailView/RequestLineEdit/hooks';
 import {
   RequestRowFragment,
   RequestFragment,
-  RequestLineFragment,
   Sdk,
 } from './operations.generated';
+import { RequestLineFragment } from '.';
 
 export type ListParams = {
   first?: number;
@@ -56,7 +57,7 @@ const requestParser = {
         return RequisitionSortFieldInput.OrderType;
       }
       case 'period': {
-        return RequisitionSortFieldInput.PeriodName;
+        return RequisitionSortFieldInput.PeriodStartDate;
       }
       case 'programName': {
         return RequisitionSortFieldInput.ProgramName;
@@ -94,8 +95,6 @@ const requestParser = {
     id: line.id,
     itemId: line.itemId,
     requisitionId: line.requisitionId,
-    requestedQuantity: line.requestedQuantity,
-    comment: line.comment,
   }),
   toUpdateLine: (
     line: DraftRequestLine
@@ -103,6 +102,7 @@ const requestParser = {
     id: line.id,
     requestedQuantity: line.requestedQuantity,
     comment: line.comment,
+    optionId: line?.reason?.id ?? null,
   }),
 };
 
@@ -164,6 +164,19 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Unable to load chart data');
     },
+  },
+  insertLine: async (input: InsertRequestRequisitionLineInput) => {
+    const result = await sdk.insertRequestLine({
+      storeId,
+      input,
+    });
+
+    const { insertRequestRequisitionLine } = result || {};
+    if (insertRequestRequisitionLine?.__typename === 'RequisitionLineNode') {
+      return insertRequestRequisitionLine;
+    }
+
+    throw new Error('Unable to insert requisition line');
   },
   deleteLine: async (requestLineId: string) => {
     const ids = [{ id: requestLineId }];
@@ -238,11 +251,7 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
     const { updateRequestRequisition } = result || {};
 
-    if (updateRequestRequisition?.__typename === 'RequisitionNode') {
-      return updateRequestRequisition;
-    }
-
-    throw new Error('Unable to update requisition');
+    return updateRequestRequisition;
   },
   insert: async ({
     id,
@@ -273,25 +282,13 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to create requisition');
   },
-  insertProgram: async (
-    input: InsertProgramRequestRequisitionInput
-  ): Promise<{
-    __typename: 'RequisitionNode';
-    id: string;
-    requisitionNumber: number;
-  }> => {
+  insertProgram: async (input: InsertProgramRequestRequisitionInput) => {
     const result = await sdk.insertProgramRequest({
       storeId,
       input,
     });
 
-    const { insertProgramRequestRequisition } = result || {};
-
-    if (insertProgramRequestRequisition?.__typename === 'RequisitionNode') {
-      return insertProgramRequestRequisition;
-    }
-
-    throw new Error('Unable to create requisition');
+    return result.insertProgramRequestRequisition;
   },
   deleteRequests: async (requisitions: RequestRowFragment[]) => {
     const deleteRequestRequisitions = requisitions.map(requestParser.toDelete);
@@ -339,5 +336,30 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
   programSettings: async () => {
     const result = await sdk.supplierProgramSettings({ storeId });
     return result.supplierProgramRequisitionSettings;
+  },
+  getIndicators: async (
+    customerNameId: string,
+    periodId: string,
+    programId: string
+  ) => {
+    const result = await sdk.programIndicators({
+      storeId,
+      customerNameId,
+      periodId,
+      programId,
+    });
+
+    if (result?.programIndicators.__typename === 'ProgramIndicatorConnector') {
+      return result.programIndicators;
+    }
+  },
+  updateIndicatorValue: async (patch: UpdateIndicatorValueInput) => {
+    const result = await sdk.updateIndicatorValue({ storeId, input: patch });
+
+    if (!!result?.updateIndicatorValue) {
+      return result.updateIndicatorValue;
+    }
+
+    throw new Error('Could not update indicator value');
   },
 });

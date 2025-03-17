@@ -13,6 +13,9 @@ import {
 
 declare module '@mui/material/styles/createMixins' {
   interface Mixins {
+    button: {
+      textColor: string;
+    };
     header: {
       backgroundColor: string;
       borderBottom: string;
@@ -121,6 +124,7 @@ declare module '@mui/material/styles/createPalette' {
     login: string;
     icon: string;
     success: string;
+    row: string;
   }
 
   interface TypeForm {
@@ -148,6 +152,7 @@ export const themeOptions = {
   },
   direction: 'ltr' as Direction,
   mixins: {
+    button: { textColor: '#373740' },
     dialog: {
       button: {
         iconHeight: 16,
@@ -202,6 +207,7 @@ export const themeOptions = {
     secondary: { main: '#3e7bfa', light: '#5b8def', dark: '#3568d4' },
     background: {
       drawer: '#f2f2f5',
+      row: '#f2f2f5',
       icon: '#E5EEFF',
       login: '#f2f2f5',
       menu: '#f2f2f5',

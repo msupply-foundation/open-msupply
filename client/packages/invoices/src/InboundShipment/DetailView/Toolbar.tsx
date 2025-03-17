@@ -5,19 +5,14 @@ import {
   InputWithLabelRow,
   BufferedTextInput,
   Grid,
-  DropdownMenu,
-  DropdownMenuItem,
-  DeleteIcon,
   useTranslation,
   Switch,
   InvoiceNodeStatus,
   Alert,
-  ArrowLeftIcon,
-  RewindIcon,
   Tooltip,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
-import { InboundLineFragment, InboundRowFragment, useInbound } from '../api';
+import { InboundRowFragment, useInbound } from '../api';
 
 const InboundInfoPanel = ({
   shipment,
@@ -40,23 +35,17 @@ const InboundInfoPanel = ({
   return <Alert severity="info">{loadMessage(shipment)}</Alert>;
 };
 
-export const Toolbar: FC<{
-  onReturnLines: (selectedLines: InboundLineFragment[]) => void;
-}> = ({ onReturnLines }) => {
+export const Toolbar: FC = () => {
   const isDisabled = useInbound.utils.isDisabled();
   const { data } = useInbound.lines.items();
   const { data: shipment } = useInbound.document.get();
 
-  const onDelete = useInbound.lines.deleteSelected();
-  const onZeroQuantities = useInbound.lines.zeroQuantities();
   const { otherParty, theirReference, update } = useInbound.document.fields([
     'otherParty',
     'theirReference',
   ]);
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
   const t = useTranslation();
-
-  const selectedLines = useInbound.utils.selectedLines();
 
   const isTransfer = !!shipment?.linkedShipment?.id;
   if (!data) return null;
@@ -69,8 +58,9 @@ export const Toolbar: FC<{
         display="flex"
         flex={1}
         alignItems="flex-end"
+        gap={1}
       >
-        <Grid item display="flex" flex={1}>
+        <Grid display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
             {otherParty && (
               <InputWithLabelRow
@@ -106,7 +96,6 @@ export const Toolbar: FC<{
           </Box>
         </Grid>
         <Grid
-          item
           display="flex"
           gap={1}
           justifyContent="flex-end"
@@ -121,28 +110,6 @@ export const Toolbar: FC<{
               color="secondary"
             />
           </Box>
-          <DropdownMenu label={t('label.actions')}>
-            <DropdownMenuItem
-              IconComponent={ArrowLeftIcon}
-              onClick={() => onReturnLines(selectedLines)}
-            >
-              {t('button.replenishment-return-lines')}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={isDisabled}
-              IconComponent={DeleteIcon}
-              onClick={onDelete}
-            >
-              {t('button.delete-lines')}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              IconComponent={RewindIcon}
-              onClick={onZeroQuantities}
-              disabled={isDisabled}
-            >
-              {t('button.zero-line-quantity')}
-            </DropdownMenuItem>
-          </DropdownMenu>
         </Grid>
       </Grid>
     </AppBarContentPortal>

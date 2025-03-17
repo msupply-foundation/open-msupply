@@ -1,9 +1,12 @@
 use crate::repository_error::RepositoryError;
 
+pub mod abbreviation;
+pub mod abbreviation_row;
 pub mod activity_log;
 mod activity_log_row;
 pub mod adjustment;
 pub mod assets;
+pub mod backend_plugin_row;
 pub mod barcode;
 mod barcode_row;
 pub mod category_row;
@@ -15,6 +18,8 @@ mod clinician_store_join_row;
 pub mod cold_storage_type;
 mod cold_storage_type_row;
 pub mod consumption;
+pub mod contact_form;
+pub mod contact_form_row;
 pub mod contact_trace;
 pub mod contact_trace_row;
 mod context_row;
@@ -26,23 +31,28 @@ pub mod demographic_indicator_row;
 pub mod demographic_projection;
 pub mod demographic_projection_row;
 pub mod demographic_row;
+pub mod diagnosis;
+pub mod diagnosis_row;
 pub mod diesel_schema;
 pub mod document;
 pub mod document_registry;
 mod document_registry_config;
 mod document_registry_row;
+pub mod email_queue_row;
 pub mod encounter;
 pub mod encounter_row;
 mod filter_restriction;
 mod filter_sort_pagination;
 pub mod form_schema;
 mod form_schema_row;
+mod frontend_plugin_row;
 pub mod indicator_column;
 mod indicator_column_row;
 pub mod indicator_line;
 mod indicator_line_row;
 pub mod indicator_value;
 mod indicator_value_row;
+pub mod insurance_provider_row;
 pub mod inventory_adjustment_reason;
 mod inventory_adjustment_reason_row;
 pub mod invoice;
@@ -52,6 +62,8 @@ mod invoice_row;
 pub mod item;
 pub mod item_category;
 pub mod item_category_row;
+pub mod item_direction;
+pub mod item_direction_row;
 mod item_link_row;
 mod item_row;
 pub mod item_variant;
@@ -68,6 +80,7 @@ pub mod master_list_name_join;
 mod master_list_row;
 mod migration_fragment_log;
 pub mod name;
+pub mod name_insurance_join_row;
 mod name_link_row;
 pub mod name_property;
 pub mod name_property_row;
@@ -81,6 +94,10 @@ mod patient;
 pub mod period;
 pub mod plugin_data;
 mod plugin_data_row;
+pub mod preference;
+mod preference_row;
+pub mod printer;
+pub mod printer_row;
 pub mod program_enrolment;
 mod program_enrolment_row;
 pub mod program_event;
@@ -142,9 +159,11 @@ pub mod vaccination_card;
 pub mod vaccination_row;
 pub mod vaccine_course;
 
+pub use abbreviation_row::*;
 pub use activity_log_row::*;
 pub use adjustment::*;
 pub use assets::*;
+pub use backend_plugin_row::*;
 pub use barcode_row::*;
 pub use changelog::*;
 pub use clinician::*;
@@ -161,6 +180,7 @@ pub use demographic_indicator::*;
 pub use demographic_indicator_row::*;
 pub use demographic_projection_row::*;
 pub use demographic_row::*;
+pub use diagnosis_row::*;
 pub use document::*;
 pub use document_registry::*;
 pub use document_registry_config::*;
@@ -170,15 +190,18 @@ pub use encounter_row::*;
 pub use filter_sort_pagination::*;
 pub use form_schema::*;
 pub use form_schema_row::*;
+pub use frontend_plugin_row::*;
 pub use indicator_column_row::*;
 pub use indicator_line_row::*;
 pub use indicator_value_row::*;
+pub use insurance_provider_row::*;
 pub use inventory_adjustment_reason_row::*;
 pub use invoice::*;
 pub use invoice_line::*;
 pub use invoice_line_row::*;
 pub use invoice_row::*;
 pub use item::*;
+pub use item_direction_row::*;
 pub use item_link_row::*;
 pub use item_row::*;
 pub use key_value_store::*;
@@ -204,6 +227,9 @@ pub use patient::*;
 pub use period::*;
 pub use plugin_data::*;
 pub use plugin_data_row::*;
+pub use preference::*;
+pub use preference_row::*;
+pub use printer_row::*;
 pub use program_enrolment::*;
 pub use program_enrolment_row::*;
 pub use program_event::*;
@@ -344,9 +370,10 @@ pub struct JsonRawRow {
     #[diesel(sql_type = Text)]
     pub json_row: String,
 }
-
-pub fn raw_query(connection: &StorageConnection, query: String) -> Vec<JsonRawRow> {
-    sql_query(&query)
-        .get_results::<JsonRawRow>(connection.lock().connection())
-        .unwrap()
+// TODO should accept parameters
+pub fn raw_query(
+    connection: &StorageConnection,
+    query: String,
+) -> Result<Vec<JsonRawRow>, RepositoryError> {
+    Ok(sql_query(&query).get_results::<JsonRawRow>(connection.lock().connection())?)
 }

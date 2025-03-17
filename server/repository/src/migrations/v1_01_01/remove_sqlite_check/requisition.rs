@@ -61,14 +61,9 @@ async fn remove_sqlite_check_requisition() {
             status -> Text,
         }
     }
-    use requisition::dsl as requisition_dsl;
-    let requisitions = requisition_dsl::requisition
-        .select((
-            requisition_dsl::id,
-            requisition_dsl::type_,
-            requisition_dsl::status,
-        ))
-        .order_by(requisition_dsl::id.asc())
+    let requisitions = requisition::table
+        .select((requisition::id, requisition::type_, requisition::status))
+        .order_by(requisition::id.asc())
         .load::<(String, String, String)>(connection.lock().connection())
         .unwrap();
 

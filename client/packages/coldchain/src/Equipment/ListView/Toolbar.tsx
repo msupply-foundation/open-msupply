@@ -3,9 +3,6 @@ import {
   AppBarContentPortal,
   AssetLogStatusInput,
   Box,
-  DeleteIcon,
-  DropdownMenu,
-  DropdownMenuItem,
   FilterDefinition,
   FilterMenu,
   useIsCentralServerApi,
@@ -14,7 +11,6 @@ import {
 } from '@openmsupply-client/common';
 import { mapIdNameToOptions, useAssetData } from '@openmsupply-client/system';
 import { CCE_CLASS_ID } from '../utils';
-import { useAssets } from '../api';
 
 type ReferenceData = {
   id: string;
@@ -22,7 +18,7 @@ type ReferenceData = {
   categoryId?: string;
 };
 
-export const Toolbar = () => {
+export const useToolbar = () => {
   const { data: categoryData } = useAssetData.utils.categories({
     classId: { equalTo: CCE_CLASS_ID },
   });
@@ -33,7 +29,6 @@ export const Toolbar = () => {
   });
   const [types, setTypes] = useState<ReferenceData[]>([]);
 
-  const onDelete = useAssets.document.deleteAssets();
   const isCentralServer = useIsCentralServerApi();
 
   const categoryId = urlQuery['categoryId'];
@@ -66,29 +61,27 @@ export const Toolbar = () => {
       urlParameter: 'functionalStatus',
       options: [
         {
-          label: t('status.decommissioned', { ns: 'coldchain' }),
+          label: t('status.decommissioned'),
           value: AssetLogStatusInput.Decommissioned,
         },
         {
-          label: t('status.functioning', { ns: 'coldchain' }),
+          label: t('status.functioning'),
           value: AssetLogStatusInput.Functioning,
         },
         {
-          label: t('status.functioning-but-needs-attention', {
-            ns: 'coldchain',
-          }),
+          label: t('status.functioning-but-needs-attention'),
           value: AssetLogStatusInput.FunctioningButNeedsAttention,
         },
         {
-          label: t('status.not-functioning', { ns: 'coldchain' }),
+          label: t('status.not-functioning'),
           value: AssetLogStatusInput.NotFunctioning,
         },
         {
-          label: t('status.not-in-use', { ns: 'coldchain' }),
+          label: t('status.not-in-use'),
           value: AssetLogStatusInput.NotInUse,
         },
         {
-          label: t('status.unserviceable', { ns: 'coldchain' }),
+          label: t('status.unserviceable'),
           value: AssetLogStatusInput.Unserviceable,
         },
       ],
@@ -137,13 +130,25 @@ export const Toolbar = () => {
     },
   ];
 
-  if (isCentralServer)
+  if (isCentralServer) {
     filters.push({
       type: 'text',
       name: t('label.store'),
-      urlParameter: 'store',
+      urlParameter: 'storeCodeOrName',
       isDefault: true,
     });
+  }
+
+  return {
+    filters,
+  }
+
+}
+
+export const Toolbar = () => {
+  const {
+    filters,
+  } = useToolbar();
 
   return (
     <AppBarContentPortal
@@ -158,11 +163,6 @@ export const Toolbar = () => {
       <Box display="flex" gap={1}>
         <FilterMenu filters={filters} />
       </Box>
-      <DropdownMenu label={t('label.actions')}>
-        <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
-          {t('button.delete-lines')}
-        </DropdownMenuItem>
-      </DropdownMenu>
     </AppBarContentPortal>
   );
 };

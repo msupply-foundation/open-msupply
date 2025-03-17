@@ -26,7 +26,9 @@ export const useSearchPatient = () => {
   }
 
   return {
-    isLoading,
+    // From the user's POV, waiting for debounce and waiting for query result
+    // are essentially the same thing, so show the same "loading" indicator
+    isLoading: isLoading || searchText !== debouncedSearchText,
     patients,
     totalCount,
     search,

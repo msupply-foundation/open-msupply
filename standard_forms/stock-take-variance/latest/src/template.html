@@ -1,0 +1,98 @@
+
+<style>
+  {% include "style.css" %}
+</style>
+
+<body>
+  {% set_global VvalueIncrease=0 %}
+  {% set_global VvalueDecrease=0 %}
+  {% set_global VnetVarience=0 %}
+  {% set_global Vnumofpackscounted=0 %} 
+
+<table class="center">
+  <thead>
+    <tr class="borderline">
+      <th class="col-item-code">{{t(k="report.item-code",f="Item code")}}</th>
+      <th class="col-item-name">{{t(k="report.item-name",f="Item name")}}</th>
+      <th class="col-batch">{{t(k="label.batch",f="Batch")}}</th>
+      <th class="col-expiry-date">{{t(k="label.expiry",f="Expiry")}}</th>
+      <th class="col-packsize">{{t(k="report.pack-size",f="Pack size")}}</th>
+      <th class="col-cost-price">{{t(k="report.cost-price-per-pack",f="Cost price (per pack)")}}</th>
+      <th class="col-snapshot-packs">{{t(k="report.snapshot-packs",f="Snapshot Packs")}}</th>
+      <th class="col-counted-packs">{{t(k="label.counted-num-of-packs",f="Counted Packs")}}</th>
+      <th class="col-variance-packs">{{t(k="report.variance-packs",f="Variance (packs)")}}</th>
+      <th class="col-variance-values">{{t(k="report.variance-value",f="Variance (Value)")}}</th>
+      <th class="col-reason">{{t(k="label.reason",f="Reason")}}</th>
+      <th class="col-comment">{{t(k="label.comment",f="Comment")}}</th>
+    </tr>
+  </thead>
+
+  {% for line in data.stocktakeLines.nodes -%}
+  <tr>
+    <td class="col-item-code">{{line.item.code}}</td>
+    <td class="col-item-name">{{line.item.name}}</td>
+    <td class="col-batch">{{line.batch}}</td>
+    <td class="col-expiry-date">{{line.expiryDate}}</td>
+    <td class="col-packsize">{{line.packSize}}</td>
+    <td class="col-cost-price">{{line.costPricePerPack | default(value=0)}}</td>
+    <td class="col-snapshot-packs">{{line.snapshotNumberOfPacks | round( precision=2)}}</td>
+
+    {% if line.countedNumberOfPacks %}
+    {% set_global Vnumofpackscounted=line.countedNumberOfPacks %}
+    {% else %}
+    {% set_global Vnumofpackscounted=0 %}
+    {% endif %}
+
+    <td class="col-counted-packs">{{Vnumofpackscounted}}</td>
+
+    {% set Vvariance=Vnumofpackscounted - line.snapshotNumberOfPacks %}
+    {% set VvarianceValue=Vvariance * line.costPricePerPack | default(value=0) %}
+    <td class="col-variance-packs">{{Vvariance | round( precision=2)}}</td>
+    <td class="col-variance-values">{{VvarianceValue | round( precision=2)}}</td>
+
+    {% if line.inventoryAdjustmentReasonId %}
+    <td  class="col-reason">{{line.inventoryAdjustmentReason.reason}}</td>
+    {% else %}
+    <td  class="col-reason">N/A</td>
+    {% endif %}
+    <td  class="col-comment">{{line.comment}}</td>
+
+    {% if VvarianceValue > 0 %}
+    {% set_global VvalueIncrease=VvalueIncrease + VvarianceValue  %}
+    {% else %}
+    {% set_global VvalueDecrease=VvalueDecrease + VvarianceValue  %}
+    {% endif %}
+
+  </tr>
+  {%- endfor %}
+  {% set_global VnetVarience=VvalueIncrease + VvalueDecrease %}
+
+  <tr>
+    <td colspan="12"  class="borderline" />
+  </tr>
+
+
+
+
+  <tr>
+    <td colspan="10" />
+    <td  class="borderline"><span class="table_text">{{t(k="report.net-increase",f="Net Increase")}}</span></td>
+    <td class="borderline"><span class="table_text">{{VvalueIncrease | round( precision=2)}}</span></td>
+  </tr>
+
+
+
+  <tr>
+    <td colspan="10" />
+    <td class="borderline"><span class="table_text">{{t(k="report.net-decrease",f="Net Decrease")}}</span></td>
+    <td class="borderline"><span class="table_text">{{VvalueDecrease | round( precision=2)}}</span></td>
+  </tr>
+
+  <tr>
+    <td colspan="10"  />
+    <td  class="borderline"><span class="table_text">{{t(k="report.net-variance",f="Net Variance")}}</span></td>
+    <td  class="borderline"><span class="table_text">{{VnetVarience | round( precision=2)}}</span></td>
+  </tr>
+</table>
+
+</body>

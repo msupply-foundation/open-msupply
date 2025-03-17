@@ -13,6 +13,8 @@ import {
   useNavigate,
   useAuthContext,
   UserPermission,
+  SaveIcon,
+  PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { FormInputData, DocumentHistory } from '@openmsupply-client/programs';
 
@@ -23,7 +25,6 @@ interface FooterProps {
   validationError?: string | boolean;
   inputData?: FormInputData;
   showSaveConfirmation: () => void;
-  showCancelConfirmation: () => void;
 }
 
 export const Footer: FC<FooterProps> = ({
@@ -33,7 +34,6 @@ export const Footer: FC<FooterProps> = ({
   validationError,
   inputData,
   showSaveConfirmation,
-  showCancelConfirmation,
 }) => {
   const t = useTranslation();
   const { Modal, showDialog, hideDialog } = useDialog();
@@ -68,11 +68,7 @@ export const Footer: FC<FooterProps> = ({
               variant="cancel"
               disabled={isSaving}
               onClick={() => {
-                if (isDirty) {
-                  showCancelConfirmation();
-                } else {
-                  navigate(-1);
-                }
+                navigate(-1);
               }}
             />
             <LoadingButton
@@ -84,9 +80,13 @@ export const Footer: FC<FooterProps> = ({
               }
               isLoading={isSaving}
               onClick={showSaveConfirmation}
-            >
-              {inputData?.isCreating ? t('button.create') : t('button.save')}
-            </LoadingButton>
+              label={
+                inputData?.isCreating ? t('button.create') : t('button.save')
+              }
+              startIcon={
+                inputData?.isCreating ? <PlusCircleIcon /> : <SaveIcon />
+              }
+            />
           </Box>
 
           <Modal
@@ -103,7 +103,7 @@ export const Footer: FC<FooterProps> = ({
                 gap={2}
               >
                 <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
-                  Document Edit History
+                  {t('label.document-edit-history')}
                 </Typography>
                 {documentName ? (
                   <DocumentHistory documentName={documentName} />

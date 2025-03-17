@@ -6,13 +6,14 @@ use thiserror::Error;
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
+#[include = "*.json"]
 // Relative to server/Cargo.toml
 #[folder = "../../client/packages/common/src/intl/locales"]
 pub struct EmbeddedLocalisations;
 
 #[derive(Debug, Error)]
-#[error("No translation found and fallback is missing")]
-pub struct TranslationError;
+#[error("No translation found and fallback is missing for key {0}")]
+pub struct TranslationError(String);
 // struct to manage translations
 #[derive(Clone)]
 pub struct Localisations {
@@ -75,15 +76,22 @@ impl Localisations {
         let default_namespace = "common".to_string();
         let default_language = "en".to_string();
 
-        let language = language.to_string();
+        let language_with_dialect = language.to_string();
+        // e.g. if language is "en-GB" then base_language is "en"
+        let base_language = language.split('-').next().unwrap_or(language).to_string();
+
         let namespace = namespace.unwrap_or(default_namespace.clone());
 
         // make cascading array of fallback options:
         for (language, namespace, key) in [
             // first look for key in nominated namespace
-            (&language, &namespace, &key),
+            (&language_with_dialect, &namespace, &key),
             // then look for key in common.json
-            (&language, &default_namespace, &key),
+            (&language_with_dialect, &default_namespace, &key),
+            // then look for key in nominated namespace in base lang
+            (&base_language, &namespace, &key),
+            // then look for key in common.json in base lang
+            (&base_language, &default_namespace, &key),
             // then look for key in nominated namespace in en
             (&default_language, &namespace, &key),
             // then look for key in common.json in en
@@ -94,7 +102,7 @@ impl Localisations {
                 None => continue,
             }
         }
-        fallback.ok_or(TranslationError)
+        fallback.ok_or(TranslationError(key))
     }
 
     pub fn get_translation_function(&self, current_language: Option<String>) -> impl Function {
@@ -147,9 +155,9 @@ impl Localisations {
 }
 
 pub struct GetTranslation {
-    namespace: Option<String>,
-    fallback: Option<String>,
-    key: String,
+    pub(crate) namespace: Option<String>,
+    pub(crate) fallback: Option<String>,
+    pub(crate) key: String,
 }
 
 #[cfg(test)]
@@ -181,13 +189,22 @@ mod test {
         };
         let translated_value = localisations.get_translation(args, lang).unwrap();
         assert_eq!("fallback wrong key", translated_value);
+        // // test missing translation in dialect falls back to base language
+        let args = GetTranslation {
+            namespace: Some("common".to_string()),
+            fallback: Some("fallback".to_string()),
+            key: "button.close".to_string(),
+        };
+        let lang = "fr-MISSING_DIALECT";
+        let translated_value = localisations.get_translation(args, lang).unwrap();
+        assert_eq!("Fermer", translated_value);
         // // test wrong language dir falls back to english translation
         let args = GetTranslation {
             namespace: Some("common".to_string()),
             fallback: Some("fallback wrong key".to_string()),
             key: "button.close".to_string(),
         };
-        let lang = "fr-non-existent-lang";
+        let lang = "non_existent_lang";
         let translated_value = localisations.get_translation(args, lang).unwrap();
         assert_eq!("Close", translated_value);
         // test no translation in namespace falls back to common.json namespace

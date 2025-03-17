@@ -72,7 +72,7 @@ export interface AppNavLinkProps {
   text?: string;
   to: string;
   visible?: boolean;
-  onClick?: () => void;
+  onClick?: React.MouseEventHandler<HTMLAnchorElement>;
 }
 
 export const AppNavLink: FC<AppNavLinkProps> = props => {
@@ -88,18 +88,17 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   } = props;
   const drawer = useDrawer();
 
-  const isGaps = useIsGapsStoreOnly();
-
   const selected = useSelectedNavMenuItem(to, !!end, drawer.isOpen);
   const match = useMatch({ path: `${to}/*` });
+  const isGapsStore = useIsGapsStoreOnly();
   const isSelectedParentItem = inactive && !!match;
   const showMenuSectionIcon = inactive && drawer.isOpen;
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     // reset the clicked nav path when navigating
     // otherwise the child menu remains open
     drawer.setClickedNavPath(undefined);
-    if (isGaps) drawer.close()
-    if (onClick) onClick();
+    if (isGapsStore) drawer.close();
+    if (onClick) onClick(e);
     drawer.onClick();
   };
 
@@ -179,6 +178,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
           >
             <ListItemText
               primary={text}
+              className={selected ? 'selected' : ''}
               sx={{
                 '& .MuiTypography-root': {
                   fontWeight:

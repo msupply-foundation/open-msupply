@@ -1,4 +1,4 @@
-use super::{consumption::consumption::dsl as consumption_dsl, StorageConnection};
+use super::StorageConnection;
 
 use crate::{
     diesel_macros::{apply_date_filter, apply_equal_filter},
@@ -69,7 +69,7 @@ impl<'a> ConsumptionRepository<'a> {
         filter: Option<ConsumptionFilter>,
     ) -> Result<Vec<ConsumptionRow>, RepositoryError> {
         // Query Consumption
-        let mut query = consumption_dsl::consumption.into_boxed();
+        let mut query = consumption::table.into_boxed();
 
         if let Some(f) = filter {
             let ConsumptionFilter {
@@ -78,9 +78,9 @@ impl<'a> ConsumptionRepository<'a> {
                 store_id,
             } = f;
 
-            apply_equal_filter!(query, item_id, consumption_dsl::item_id);
-            apply_equal_filter!(query, store_id, consumption_dsl::store_id);
-            apply_date_filter!(query, date, consumption_dsl::date);
+            apply_equal_filter!(query, item_id, consumption::item_id);
+            apply_equal_filter!(query, store_id, consumption::store_id);
+            apply_date_filter!(query, date, consumption::date);
         }
 
         // Debug diesel query

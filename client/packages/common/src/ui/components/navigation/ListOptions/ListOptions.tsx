@@ -21,6 +21,7 @@ interface ListProps {
   options: ListOptionValues[];
   currentId?: string;
   enteredLineIds?: string[];
+  scrollRef: React.MutableRefObject<HTMLLIElement | null>;
 }
 
 export const ListOptions = ({
@@ -28,8 +29,10 @@ export const ListOptions = ({
   options,
   currentId,
   enteredLineIds,
+  scrollRef,
 }: ListProps) => {
   const { height } = useWindowDimensions();
+
   const startIcon = (
     <CheckIcon
       style={{
@@ -53,9 +56,9 @@ export const ListOptions = ({
     <List
       sx={{
         padding: 0,
-        maxHeight: height * 0.6,
         overflow: 'auto',
         scrollBehavior: 'smooth',
+        maxHeight: height - 200,
       }}
     >
       {options?.map((option, _) => (
@@ -63,12 +66,7 @@ export const ListOptions = ({
           <ListItem
             sx={{ padding: '5px 0px', cursor: 'pointer' }}
             onClick={() => onClick(option.id)}
-            ref={
-              option.id === currentId
-                ? l =>
-                    l?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                : null
-            }
+            ref={option.id === currentId ? scrollRef : null}
           >
             <ListItemIcon sx={{ padding: 0, minWidth: 25 }}>
               <Box

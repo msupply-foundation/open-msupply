@@ -5,7 +5,6 @@ import {
   DialogButton,
   TableProvider,
   createTableStore,
-  useKeyboardHeightAdjustment,
   useTabs,
   ModalMode,
   Box,
@@ -28,6 +27,7 @@ interface CustomerReturnEditModalProps {
   loadNextItem?: () => void;
   hasNextItem?: boolean;
   isNewReturn?: boolean;
+  onCreate?: () => void;
 }
 
 export const CustomerReturnEditModal = ({
@@ -42,6 +42,7 @@ export const CustomerReturnEditModal = ({
   loadNextItem,
   hasNextItem = false,
   isNewReturn = false,
+  onCreate,
 }: CustomerReturnEditModalProps) => {
   const t = useTranslation();
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
@@ -61,7 +62,6 @@ export const CustomerReturnEditModal = ({
   const isDisabled = useReturns.utils.customerIsDisabled() && !isNewReturn;
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(700);
 
   const { lines, update, save, addDraftLine } = useDraftCustomerReturnLines({
     outboundShipmentLineIds,
@@ -79,6 +79,7 @@ export const CustomerReturnEditModal = ({
   const onOk = async () => {
     try {
       !isDisabled && (await save());
+      onCreate?.();
       onClose();
     } catch {
       // TODO: handle error display...
@@ -151,8 +152,8 @@ export const CustomerReturnEditModal = ({
             : OkButton
         }
         nextButton={!isNewReturn ? OkAndNextButton : undefined}
-        height={height}
-        width={1024}
+        height={700}
+        width={1200}
       >
         <Box ref={alertRef}>
           {returnId && (

@@ -5,26 +5,17 @@ import {
   InputWithLabelRow,
   BasicTextInput,
   Grid,
-  DropdownMenu,
   useTranslation,
   useBufferState,
-  DropdownMenuItem,
-  DeleteIcon,
-  ZapIcon,
   Switch,
   useIsGrouped,
-  ArrowLeftIcon,
   Tooltip,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
 
-export const Toolbar: FC<{
-  onReturnLines: (stockLineIds: string[]) => void;
-}> = ({ onReturnLines }) => {
+export const Toolbar: FC = () => {
   const t = useTranslation();
-  const onDelete = useOutbound.line.deleteSelected();
-  const { onAllocate } = useOutbound.line.allocateSelected();
   const { id, otherParty, theirReference, update, requisition } =
     useOutbound.document.fields([
       'id',
@@ -39,8 +30,6 @@ export const Toolbar: FC<{
 
   const isDisabled = useOutbound.utils.isDisabled();
 
-  const selectedIds = useOutbound.utils.selectedIds();
-
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
@@ -50,7 +39,7 @@ export const Toolbar: FC<{
         flex={1}
         alignItems="flex-end"
       >
-        <Grid item display="flex" flex={1}>
+        <Grid display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
             {otherParty && (
               <InputWithLabelRow
@@ -87,7 +76,6 @@ export const Toolbar: FC<{
           </Box>
         </Grid>
         <Grid
-          item
           display="flex"
           gap={1}
           justifyContent="flex-end"
@@ -102,29 +90,6 @@ export const Toolbar: FC<{
               color="secondary"
             />
           </Box>
-          <DropdownMenu label={t('label.actions')}>
-            <DropdownMenuItem
-              IconComponent={DeleteIcon}
-              onClick={onDelete}
-              disabled={isDisabled}
-            >
-              {t('button.delete-lines')}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              IconComponent={ZapIcon}
-              onClick={onAllocate}
-              disabled={isDisabled}
-            >
-              {t('button.allocate-lines')}
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              IconComponent={ArrowLeftIcon}
-              onClick={() => onReturnLines(selectedIds)}
-            >
-              {t('button.return-lines')}
-            </DropdownMenuItem>
-          </DropdownMenu>
         </Grid>
       </Grid>
     </AppBarContentPortal>

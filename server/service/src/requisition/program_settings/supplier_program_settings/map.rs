@@ -50,7 +50,11 @@ pub(super) fn map_supplier_program_settings(
             // Filter by program_id
             let suppliers = program_suppliers
                 .iter()
-                .filter(|s| s.program.id == program_setting.program_row.id)
+                .filter(|s| {
+                    s.program.id == program_setting.program_row.id
+                        || (s.program.elmis_code == program_setting.program_row.elmis_code
+                            && s.program.elmis_code.is_some())
+                })
                 .cloned()
                 .collect();
 
@@ -80,7 +84,10 @@ fn test_reduce_and_sort_periods() {
         .map(make_date)
         .collect();
 
-    let result: Vec<PeriodRow> = [-4, -2, 2, 3].iter().map(make_date).collect();
+    let result: Vec<PeriodRow> = [-10, -10, -5, -4, -2, 2, 3, 4, 10, 11]
+        .iter()
+        .map(make_date)
+        .collect();
 
     assert_eq!(reduce_and_sort_periods(periods), result)
 }

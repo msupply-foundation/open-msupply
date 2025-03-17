@@ -72,4 +72,41 @@ describe('ArrayUtils', () => {
     expect(newArray[1]?.unit).toBe('capsule');
     expect(arr[1]?.unit).toBe('bottle');
   });
+
+  it('is returns average cost per unit', () => {
+    const arr1 = [
+      {
+        costPricePerPack: 2,
+        numberOfPacks: 10,
+        packSize: 1,
+      },
+    ];
+    const arr2 = [
+      {
+        costPricePerPack: 2,
+        numberOfPacks: 10,
+        packSize: 1,
+      },
+      {
+        costPricePerPack: 30,
+        numberOfPacks: 1,
+        packSize: 10,
+      },
+      {
+        costPricePerPack: 5,
+        numberOfPacks: 2,
+        packSize: 5,
+      },
+    ];
+    const arr3 = [
+      {
+        costPricePerPack: 0,
+        numberOfPacks: 0,
+        packSize: 1,
+      },
+    ];
+    expect(ArrayUtils.getAveragePrice(arr1, 'costPricePerPack')).toBe(2);
+    expect(ArrayUtils.getAveragePrice(arr2, 'costPricePerPack')).toBe(2);
+    expect(ArrayUtils.getAveragePrice(arr3, 'costPricePerPack')).toBe(0);
+  });
 });

@@ -1,7 +1,4 @@
-use super::{
-    sensor_row::sensor, store_row::store,
-    temperature_log_row::temperature_log::dsl as temperature_log_dsl, StorageConnection,
-};
+use super::{sensor_row::sensor, store_row::store, StorageConnection};
 
 use crate::{repository_error::RepositoryError, Upsert};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
@@ -49,9 +46,9 @@ impl<'a> TemperatureLogRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &TemperatureLogRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(temperature_log_dsl::temperature_log)
+        diesel::insert_into(temperature_log::table)
             .values(row)
-            .on_conflict(temperature_log_dsl::id)
+            .on_conflict(temperature_log::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -79,16 +76,16 @@ impl<'a> TemperatureLogRowRepository<'a> {
         breach_id: &str,
         temperature_log_ids: &Vec<String>,
     ) -> Result<(), RepositoryError> {
-        diesel::update(temperature_log_dsl::temperature_log)
-            .filter(temperature_log_dsl::id.eq_any(temperature_log_ids))
-            .set(temperature_log_dsl::temperature_breach_id.eq(breach_id))
+        diesel::update(temperature_log::table)
+            .filter(temperature_log::id.eq_any(temperature_log_ids))
+            .set(temperature_log::temperature_breach_id.eq(breach_id))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<TemperatureLogRow>, RepositoryError> {
-        let result = temperature_log_dsl::temperature_log
-            .filter(temperature_log_dsl::id.eq(id))
+        let result = temperature_log::table
+            .filter(temperature_log::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -98,8 +95,8 @@ impl<'a> TemperatureLogRowRepository<'a> {
         &self,
         ids: &[String],
     ) -> Result<Vec<TemperatureLogRow>, RepositoryError> {
-        Ok(temperature_log_dsl::temperature_log
-            .filter(temperature_log_dsl::id.eq_any(ids))
+        Ok(temperature_log::table
+            .filter(temperature_log::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
 }

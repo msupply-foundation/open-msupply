@@ -32,7 +32,7 @@ fragment TemperatureLog on TemperatureLogNode {
   }
 }
 
-query temperature_logs(
+query temperatureLogs(
   $page: PaginationInput
   $sort: [TemperatureLogSortInput!]
   $filter: TemperatureLogFilterInput

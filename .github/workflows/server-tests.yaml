@@ -1,10 +1,7 @@
 on:
   pull_request:
-    branches:
-      - main
-      - develop
     paths:
-      - 'server/**'
+      - "server/**"
   workflow_dispatch:
 
 name: CI
@@ -26,7 +23,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: -p repository -p graphql_types -p graphql_plugin --manifest-path server/Cargo.toml
+          args: -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
       - uses: actions-rs/cargo@v1
         with:
           command: test
@@ -47,7 +44,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clean
-          args: -p repository -p graphql_types -p graphql_plugin --manifest-path server/Cargo.toml
+          args: -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
       - uses: actions-rs/cargo@v1
         with:
           command: test

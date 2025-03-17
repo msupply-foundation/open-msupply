@@ -1,7 +1,4 @@
-use super::{
-    program_requisition_order_type_row::program_requisition_order_type::dsl as program_requisition_order_type_dsl,
-    program_requisition_settings_row::program_requisition_settings,
-};
+use super::program_requisition_settings_row::program_requisition_settings;
 
 use crate::{repository_error::RepositoryError, StorageConnection};
 
@@ -15,6 +12,8 @@ table! {
         threshold_mos -> Double,
         max_mos -> Double,
         max_order_per_period -> Integer,
+        is_emergency -> Bool,
+        max_items_in_emergency_order -> Integer,
     }
 }
 use crate::{Delete, Upsert};
@@ -30,6 +29,8 @@ pub struct ProgramRequisitionOrderTypeRow {
     pub threshold_mos: f64,
     pub max_mos: f64,
     pub max_order_per_period: i32,
+    pub is_emergency: bool,
+    pub max_items_in_emergency_order: i32,
 }
 
 pub struct ProgramRequisitionOrderTypeRowRepository<'a> {
@@ -42,9 +43,9 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &ProgramRequisitionOrderTypeRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(program_requisition_order_type_dsl::program_requisition_order_type)
+        diesel::insert_into(program_requisition_order_type::table)
             .values(row)
-            .on_conflict(program_requisition_order_type_dsl::id)
+            .on_conflict(program_requisition_order_type::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -55,8 +56,8 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
         &self,
         id: &str,
     ) -> Result<Option<ProgramRequisitionOrderTypeRow>, RepositoryError> {
-        let result = program_requisition_order_type_dsl::program_requisition_order_type
-            .filter(program_requisition_order_type_dsl::id.eq(id))
+        let result = program_requisition_order_type::table
+            .filter(program_requisition_order_type::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -66,17 +67,33 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
         &self,
         ids: &[String],
     ) -> Result<Vec<ProgramRequisitionOrderTypeRow>, RepositoryError> {
-        let result = program_requisition_order_type_dsl::program_requisition_order_type
-            .filter(program_requisition_order_type_dsl::program_requisition_settings_id.eq_any(ids))
+        let result = program_requisition_order_type::table
+            .filter(program_requisition_order_type::program_requisition_settings_id.eq_any(ids))
             .load(self.connection.lock().connection())?;
 
         Ok(result)
     }
 
+    pub fn find_one_by_setting_and_name(
+        &self,
+        setting_id: &[String],
+        name: &str,
+    ) -> Result<Option<ProgramRequisitionOrderTypeRow>, RepositoryError> {
+        let result = program_requisition_order_type::table
+            .filter(
+                program_requisition_order_type::program_requisition_settings_id
+                    .eq_any(setting_id)
+                    .and(program_requisition_order_type::name.eq(name)),
+            )
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn delete(&self, order_type_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
-            program_requisition_order_type_dsl::program_requisition_order_type
-                .filter(program_requisition_order_type_dsl::id.eq(order_type_id)),
+            program_requisition_order_type::table
+                .filter(program_requisition_order_type::id.eq(order_type_id)),
         )
         .execute(self.connection.lock().connection())?;
         Ok(())

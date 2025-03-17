@@ -266,17 +266,19 @@ const NoteComponent = (props: ControlProps) => {
             });
         }}
         onFocus={e => (e.target.selectionStart = text?.length ?? 0)}
-        inputProps={{
-          value: text,
-          name: 'text',
-          sx: { margin: 0.5 },
-          disabled: !props.enabled,
-          FormHelperTextProps: error
-            ? { sx: { color: 'error.main' } }
-            : undefined,
-          required: props.required,
-          multiline: true,
-          rows,
+        slotProps={{
+          htmlInput: {
+            value: text,
+            name: 'text',
+            sx: { margin: 0.5 },
+            disabled: !props.enabled,
+            FormHelperTextProps: error
+              ? { sx: { color: 'error.main' } }
+              : undefined,
+            required: props.required,
+            multiline: true,
+            rows,
+          },
         }}
       />
       {signature}

@@ -6,6 +6,7 @@ import {
   Stack,
   Typography,
   FormControlLabel,
+  Button,
 } from '@mui/material';
 import {
   Checkbox,
@@ -18,12 +19,14 @@ import { LocaleKey, useTranslation } from '@common/intl';
 interface ColumnPickerProps<T extends RecordWithId> {
   columns: Column<T>[];
   columnDisplayState: Record<string, boolean>;
+  showAllColumns: () => void;
   toggleColumn: (colKey: string) => void;
 }
 
 export const ColumnPicker = <T extends RecordWithId>({
   columns,
   columnDisplayState,
+  showAllColumns,
   toggleColumn,
 }: ColumnPickerProps<T>) => {
   const t = useTranslation();
@@ -76,7 +79,7 @@ export const ColumnPicker = <T extends RecordWithId>({
             {t('table.show-columns')}
           </Typography>
           {columns
-            .filter(c => !!c.label)
+            .filter(c => !!c.label && c.key !== 'selection')
             .map(column => (
               <FormControlLabel
                 key={String(column.key)}
@@ -87,6 +90,13 @@ export const ColumnPicker = <T extends RecordWithId>({
                 label={t(column.label as LocaleKey)}
               />
             ))}
+          <Button
+            sx={{ textTransform: 'none' }}
+            onClick={showAllColumns}
+            disabled={columns.every(c => !!columnDisplayState[String(c.key)])}
+          >
+            {t('button.show-all')}
+          </Button>
         </Stack>
       </Popover>
     </>

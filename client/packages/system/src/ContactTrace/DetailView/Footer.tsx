@@ -80,9 +80,8 @@ export const Footer: FC<FooterProps> = ({
               isLoading={isSaving}
               onClick={() => onSave()}
               startIcon={<CheckIcon />}
-            >
-              {t('button.save')}
-            </LoadingButton>
+              label={t('button.save')}
+            />
           </Box>
 
           <Modal
@@ -99,7 +98,7 @@ export const Footer: FC<FooterProps> = ({
                 gap={2}
               >
                 <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
-                  Document Edit History
+                  {t('label.document-edit-history')}
                 </Typography>
                 {documentName ? (
                   <DocumentHistory documentName={documentName} />

@@ -59,6 +59,7 @@ pub enum RowActionType {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
+    BackendPlugin,
     Number,
     Location,
     LocationMovement,
@@ -112,21 +113,31 @@ pub enum ChangelogTableName {
     IndicatorValue,
     BundledItem,
     Item,
+    ContactForm,
     SystemLog,
+    InsuranceProvider,
+    FrontendPlugin,
+    NameInsuranceJoin,
+    Report,
+    FormSchema,
+    PluginData,
+    Preference,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
-    Legacy,
-    Central,
+    Legacy,  // Everything that goes to Legacy mSupply server
+    Central, // Data created on Open-mSupply central server
     Remote,
     File,
-    RemoteToCentral, // These records won't sync back to the remote site on re-initalisation
+    RemoteAndCentral, // These records will sync like remote record if store_id exist, otherwise they will sync like central records
+    RemoteToCentral,  // These records won't sync back to the remote site on re-initalisation
 }
 // When adding a new change log record type, specify how it should be synced
 // If new requirements are needed a different ChangeLogSyncStyle can be added
 impl ChangelogTableName {
     pub(crate) fn sync_style(&self) -> ChangeLogSyncStyle {
         match self {
+            ChangelogTableName::BackendPlugin => ChangeLogSyncStyle::Central,
             ChangelogTableName::Number => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Location => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::LocationMovement => ChangeLogSyncStyle::Legacy,
@@ -179,7 +190,15 @@ impl ChangelogTableName {
             ChangelogTableName::PackagingVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::IndicatorValue => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::BundledItem => ChangeLogSyncStyle::Central,
+            ChangelogTableName::ContactForm => ChangeLogSyncStyle::RemoteToCentral,
             ChangelogTableName::SystemLog => ChangeLogSyncStyle::RemoteToCentral, // System Log records won't be synced to remote site on initialisation
+            ChangelogTableName::InsuranceProvider => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::FrontendPlugin => ChangeLogSyncStyle::Central,
+            ChangelogTableName::NameInsuranceJoin => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::Report => ChangeLogSyncStyle::Central,
+            ChangelogTableName::FormSchema => ChangeLogSyncStyle::Central,
+            ChangelogTableName::PluginData => ChangeLogSyncStyle::RemoteAndCentral,
+            ChangelogTableName::Preference => ChangeLogSyncStyle::Central,
         }
     }
 }
@@ -479,7 +498,6 @@ fn create_filtered_outgoing_sync_query(
     // Loop through all the Sync tables and add them to the query if they have the right sync style
 
     // Central Records
-
     let central_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
         .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::Central))
         .collect();
@@ -487,9 +505,16 @@ fn create_filtered_outgoing_sync_query(
     // Remote Records
     let remote_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
         .filter(|table| {
-            matches!(table.sync_style(), ChangeLogSyncStyle::Remote)
-                || matches!(table.sync_style(), ChangeLogSyncStyle::RemoteToCentral)
+            matches!(
+                table.sync_style(),
+                ChangeLogSyncStyle::Remote | ChangeLogSyncStyle::RemoteAndCentral
+            )
         })
+        .collect();
+
+    // Central record where store id is null
+    let central_by_empty_store_id: Vec<ChangelogTableName> = ChangelogTableName::iter()
+        .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::RemoteAndCentral))
         .collect();
 
     let active_stores_for_site = store::table
@@ -504,7 +529,10 @@ fn create_filtered_outgoing_sync_query(
             .or(changelog_deduped::table_name.eq(ChangelogTableName::SyncFileReference)) // All sites get all sync file references (not necessarily files)
             .or(changelog_deduped::table_name
                 .eq_any(remote_sync_table_names)
-                .and(changelog_deduped::store_id.eq_any(active_stores_for_site))),
+                .and(changelog_deduped::store_id.eq_any(active_stores_for_site)))
+            .or(changelog_deduped::table_name
+                .eq_any(central_by_empty_store_id)
+                .and(changelog_deduped::store_id.is_null())),
         // Any other special cases could be handled here...
     );
 

@@ -240,7 +240,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -392,7 +392,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
@@ -457,7 +457,6 @@ mod test {
         let invoice_lines = get_invoice_lines(
             &context,
             &invoice.clone().store_id,
-            &invoice.clone().id,
             None,
             Some(filter),
             None,
@@ -511,7 +510,6 @@ mod test {
         let invoice_lines = get_invoice_lines(
             &context,
             &invoice.clone().store_id,
-            &invoice.clone().id,
             None,
             Some(filter),
             None,
@@ -552,7 +550,6 @@ mod test {
         let invoice_lines = get_invoice_lines(
             &context,
             &invoice.clone().store_id,
-            &invoice.clone().id,
             None,
             Some(filter),
             None,
@@ -583,7 +580,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
@@ -621,7 +618,6 @@ mod test {
         let invoice_lines = get_invoice_lines(
             &context,
             &invoice.clone().store_id,
-            &invoice.clone().id,
             None,
             Some(filter),
             None,
@@ -678,7 +674,6 @@ mod test {
         let invoice_lines = get_invoice_lines(
             &context,
             &invoice.clone().store_id,
-            &invoice.clone().id,
             None,
             Some(filter),
             None,
@@ -718,7 +713,6 @@ mod test {
         let invoice_lines = get_invoice_lines(
             &context,
             &invoice.clone().store_id,
-            &invoice.clone().id,
             None,
             Some(filter),
             None,
@@ -771,7 +765,6 @@ mod test {
         let invoice_lines = get_invoice_lines(
             &context,
             &invoice.clone().store_id,
-            &invoice.clone().id,
             None,
             Some(filter),
             None,

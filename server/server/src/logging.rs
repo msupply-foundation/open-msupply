@@ -16,13 +16,18 @@ pub fn logging_init(settings: Option<LoggingSettings>, level: Option<Level>) {
     let config = match settings.mode {
         LogMode::File => file_logger(&settings)
             .level(log_level.to_string())
+            .expect("Cannot determine log level")
             .output_file()
             .build(),
         LogMode::Console => LogConfigBuilder::builder()
             .level(log_level.to_string())
+            .expect("Cannot determine log level")
             .output_console()
             .build(),
-        LogMode::All => file_logger(&settings).level(log_level.to_string()).build(),
+        LogMode::All => file_logger(&settings)
+            .level(log_level.to_string())
+            .expect("Cannot determine log level")
+            .build(),
     };
 
     simple_log::new(config).expect("Unable to initialise logger");

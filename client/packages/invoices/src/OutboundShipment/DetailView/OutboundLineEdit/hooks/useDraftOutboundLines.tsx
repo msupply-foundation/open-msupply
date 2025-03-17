@@ -3,7 +3,6 @@ import {
   InvoiceLineNodeType,
   InvoiceNodeStatus,
   useConfirmOnLeaving,
-  useDirtyCheck,
   SortUtils,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
@@ -31,7 +30,6 @@ export const useDraftOutboundLines = (
   const { data: lines, isLoading: outboundLinesLoading } =
     useOutbound.line.stockLines(item?.id ?? '');
   const { data, isLoading } = useStockLines(item?.id);
-  const { isDirty, setIsDirty } = useDirtyCheck();
   const [draftStockOutLines, setDraftStockOutLines] = useState<
     DraftStockOutLine[]
   >([]);
@@ -42,7 +40,7 @@ export const useDraftOutboundLines = (
     itemId: item?.id || '',
   });
 
-  useConfirmOnLeaving(isDirty);
+  const { setIsDirty } = useConfirmOnLeaving('outbound-shipment-line-edit');
 
   useEffect(() => {
     // Check placed in since last else in the map is needed to show placeholder row,

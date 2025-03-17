@@ -14,6 +14,19 @@
       "type": "string"
     },
 
+    "NextOfKin": {
+      "properties": {
+        "id": {
+          "description": "ID of the mSupply name record for the patient's next of kin",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the patient's next of kin",
+          "type": "string"
+        }
+      }
+    },
+
     "Patient": {
       "properties": {
         "id": {
@@ -52,6 +65,10 @@
         "phone": {
           "description": "Phone number",
           "type": "string"
+        },
+        "nextOfKin": {
+          "description": "Next of kin info for the patient",
+          "$ref": "#/definitions/NextOfKin"
         }
       },
       "required": ["id", "code", "firstName", "lastName"],

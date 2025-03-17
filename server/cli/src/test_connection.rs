@@ -11,6 +11,7 @@ use server::configuration;
 use service::{
     apis::login_v4::{LoginApiV4, LoginInputV4, LoginUserTypeV4},
     app_data::{AppDataService, AppDataServiceTrait},
+    email::{EmailService, EmailServiceError, EmailServiceTrait},
     service_provider::ServiceProvider,
     settings::is_develop,
     sync::{
@@ -84,6 +85,7 @@ async fn perform_tests(gui_tx: mpsc::Sender<GuiState>, args: Args, gui: bool) {
         Box::new(LoginTest),
         Box::new(SyncTest),
         Box::new(SyncV6Test),
+        Box::new(MailConnectionTest),
     ];
 
     let mut gui_state = GuiState::new(
@@ -224,6 +226,7 @@ impl Test for LoginTest {
             username,
             password,
             login_type: LoginUserTypeV4::User,
+            site_name: None,
         };
 
         let _info = login_api
@@ -247,13 +250,9 @@ impl Test for SyncTest {
 
         let v5_settings = get_sync_settings(config)?;
 
-        let server_folder = config
-            .server
-            .base_dir
-            .clone()
-            .ok_or(anyhow!("No server base dir in config"))?;
+        let app_data_service = AppDataService {};
 
-        let hardware_id = AppDataService::new(server_folder.as_str())
+        let hardware_id = app_data_service
             .get_hardware_id()
             .map_err(|err| anyhow!("Failed to get hardware ID from app data service: {:?}", err))?;
 
@@ -343,6 +342,32 @@ impl Test for SyncV6Test {
     }
 }
 
+struct MailConnectionTest;
+
+#[async_trait]
+impl Test for MailConnectionTest {
+    async fn run(&self, test_data: &mut TestData) -> Result<String> {
+        let config = test_data
+            .server_config
+            .as_ref()
+            .ok_or(anyhow!("No config loaded".to_string()))?;
+
+        info!("Testing mail connection");
+
+        let email_service = EmailService::new(config.mail.clone());
+
+        match email_service.test_connection() {
+            Ok(true) => Ok("Successfully connected to mail server".to_string()),
+            Ok(false) => Err(anyhow!("Failed to connect to mail server")),
+
+            Err(EmailServiceError::NotConfigured) => {
+                Ok("No mail settings found in configuration. Mail setup is only required on OMS Central server.".to_string())
+            }
+            Err(err) => Err(anyhow!("Failed to connect to mail server: {:?}", err)),
+        }
+    }
+}
+
 #[derive(Clone, Default)]
 struct GuiState {
     tests: Vec<(String, TestState)>,
@@ -360,6 +385,7 @@ impl GuiState {
                 ("Login".to_string(), TestState::Pending),
                 ("Sync V5".to_string(), TestState::Pending),
                 ("Sync V6".to_string(), TestState::Pending),
+                ("Mail connection".to_string(), TestState::Pending),
             ],
             username,
             password,
@@ -506,10 +532,7 @@ fn get_url(config: &service::settings::Settings) -> Result<Url> {
 fn get_sync_settings(config: &service::settings::Settings) -> Result<SyncSettings> {
     let machine_uid = machine_uid::get().expect("Failed to query OS for hardware id");
     let connection_manager = get_storage_connection_manager(&config.database);
-    let service_provider = ServiceProvider::new(
-        connection_manager.clone(),
-        &config.server.base_dir.clone().unwrap(),
-    );
+    let service_provider = ServiceProvider::new(connection_manager.clone());
 
     service_provider
         .app_data_service

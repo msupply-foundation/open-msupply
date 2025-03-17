@@ -9,16 +9,20 @@ import {
   useUrlQueryParams,
   DateUtils,
   ColumnDescription,
-  usePluginColumns,
   TooltipTextCell,
   useNavigate,
   RouteBuilder,
+  CurrencyCell,
+  ExpiryDateCell,
+  usePluginProvider,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { AppRoute } from '@openmsupply-client/config';
 import { useStockList } from '../api/hooks/useStockList';
+import { NewStockLineModal } from '../Components/NewStockLineModal';
 
 const StockListComponent: FC = () => {
   const {
@@ -37,11 +41,14 @@ const StockListComponent: FC = () => {
         key: 'expiryDate',
         condition: 'between',
       },
+      {
+        key: 'masterList.name',
+      },
     ],
   });
   const navigate = useNavigate();
   const queryParams = {
-    filterBy,
+    filterBy: filterBy ?? undefined,
     offset,
     sortBy,
     first,
@@ -50,62 +57,67 @@ const StockListComponent: FC = () => {
   const pagination = { page, first, offset };
   const t = useTranslation();
   const { data, isLoading, isError } = useStockList(queryParams);
-  const pluginColumns = usePluginColumns<StockLineRowFragment>({
-    type: 'Stock',
-  });
-  const packSizeAndUnitColumns: ColumnDescription<StockLineRowFragment>[] = [
-    [
-      'itemUnit',
-      {
-        accessor: ({ rowData }) => rowData.item.unitName,
-        sortable: false,
-        Cell: TooltipTextCell,
-        width: 75,
-      },
-    ],
-    ['packSize', { Cell: TooltipTextCell, width: 125 }],
-  ];
+  const { plugins } = usePluginProvider();
+
+  const { isOpen, onClose, onOpen } = useEditModal();
 
   const columnDefinitions: ColumnDescription<StockLineRowFragment>[] = [
-    [
-      'itemCode',
-      {
-        accessor: ({ rowData }) => rowData.item.code,
-        Cell: TooltipTextCell,
-        width: 100,
-      },
-    ],
-    [
-      'itemName',
-      {
-        accessor: ({ rowData }) => rowData.item.name,
-        Cell: TooltipTextCell,
-        width: 350,
-      },
-    ],
-    // TODO:: Add a column for the master list name
-    ['batch', { Cell: TooltipTextCell, width: 100 }],
-    [
-      'expiryDate',
-      {
-        accessor: ({ rowData }) => DateUtils.getNaiveDate(rowData.expiryDate),
-        width: 110,
-      },
-    ],
-    [
-      'location',
-      {
-        Cell: TooltipTextCell,
-        width: 100,
-        accessor: ({ rowData }) => rowData.location?.code,
-      },
-    ],
-    ...packSizeAndUnitColumns,
+    {
+      key: 'itemCode',
+      accessor: ({ rowData }) => rowData.item.code,
+      label: 'label.code',
+      Cell: TooltipTextCell,
+      width: 100,
+    },
+    {
+      key: 'itemName',
+      accessor: ({ rowData }) => rowData.item.name,
+      label: 'label.name',
+      Cell: TooltipTextCell,
+      width: 350,
+    },
+    // TODO: Add back when design has been decided
+    // {
+    //   key: 'masterList',
+    //   label: 'label.master-list',
+    //   Cell: ChipTableCell,
+    //   width: 150,
+    //   accessor: ({ rowData }) => rowData.item.masterLists.map(m => m.name),
+    // },
+    { key: 'batch', label: 'label.batch', Cell: TooltipTextCell, width: 100 },
+    {
+      key: 'expiryDate',
+      label: 'label.expiry',
+      accessor: ({ rowData }) => DateUtils.getNaiveDate(rowData.expiryDate),
+      Cell: ExpiryDateCell,
+      width: 110,
+    },
+    {
+      key: 'location',
+      label: 'label.location',
+      Cell: TooltipTextCell,
+      width: 100,
+      accessor: ({ rowData }) => rowData.location?.code,
+    },
+    {
+      key: 'itemUnit',
+      label: 'label.unit',
+      accessor: ({ rowData }) => rowData.item.unitName,
+      sortable: false,
+      Cell: TooltipTextCell,
+      width: 75,
+    },
+    {
+      key: 'packSize',
+      label: 'label.pack-size',
+      Cell: TooltipTextCell,
+      width: 125,
+    },
     [
       'numberOfPacks',
       {
         accessor: ({ rowData }) => rowData.totalNumberOfPacks,
-        width: 150,
+        width: 125,
       },
     ],
     [
@@ -113,12 +125,26 @@ const StockListComponent: FC = () => {
       {
         accessor: ({ rowData }) =>
           rowData.totalNumberOfPacks * rowData.packSize,
-        label: 'label.soh',
-        description: 'description.soh',
         sortable: false,
         width: 125,
       },
     ],
+    {
+      key: 'costPricePerPack',
+      label: 'label.pack-cost-price',
+      description: 'description.pack-cost',
+      Cell: CurrencyCell,
+      width: 125,
+    },
+    {
+      key: 'totalValue',
+      label: 'label.total',
+      accessor: ({ rowData }) =>
+        rowData.totalNumberOfPacks * rowData.costPricePerPack,
+      Cell: CurrencyCell,
+      description: 'description.total-cost',
+      width: 125,
+    },
     {
       key: 'supplierName',
       label: 'label.supplier',
@@ -127,7 +153,7 @@ const StockListComponent: FC = () => {
       Cell: TooltipTextCell,
       width: 190,
     },
-    ...pluginColumns,
+    ...(plugins.stockColumn?.columns || []),
   ];
 
   const columns = useColumns<StockLineRowFragment>(
@@ -136,20 +162,30 @@ const StockListComponent: FC = () => {
       sortBy,
       onChangeSortBy: updateSortQuery,
     },
-    [sortBy, pluginColumns]
+    [sortBy, plugins.stockColumn?.columns]
   );
 
   return (
     <>
       <Toolbar filter={filter} />
       <AppBarButtons />
+      {plugins.stockColumn?.StateLoader?.map((StateLoader, index) => (
+        <StateLoader key={index} stockLines={data?.nodes ?? []} />
+      ))}
+      {isOpen && <NewStockLineModal isOpen={isOpen} onClose={onClose} />}
       <DataTable
         id="stock-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         columns={columns}
         data={data?.nodes ?? []}
         onChangePage={updatePaginationQuery}
-        noDataElement={<NothingHere body={t('error.no-stock')} />}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-stock')}
+            onCreate={onOpen}
+            buttonText={t('button.add-new-stock')}
+          />
+        }
         isError={isError}
         isLoading={isLoading}
         enableColumnSelection

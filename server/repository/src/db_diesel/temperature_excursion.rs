@@ -1,7 +1,7 @@
 use crate::{
     db_diesel::{
-        temperature_breach_config_row::temperature_breach_config::dsl as temperature_breach_config_dsl,
-        temperature_log_row::temperature_log::dsl as temperature_log_dsl,
+        temperature_breach_config_row::temperature_breach_config,
+        temperature_log_row::temperature_log,
     },
     diesel_macros::{apply_date_time_filter, apply_equal_filter},
     TemperatureBreachType, TemperatureLogFilter,
@@ -62,37 +62,37 @@ impl<'a> TemperatureExcursionRepository<'a> {
         &self,
         filter: TemperatureLogFilter,
     ) -> Result<Vec<TemperatureRow>, RepositoryError> {
-        let mut query = temperature_log_dsl::temperature_log
+        let mut query = temperature_log::table
             .inner_join(
-                temperature_breach_config_dsl::temperature_breach_config
-                    .on(temperature_log_dsl::store_id.eq(temperature_breach_config_dsl::store_id)),
+                temperature_breach_config::table
+                    .on(temperature_log::store_id.eq(temperature_breach_config::store_id)),
             )
             .select((
-                temperature_log_dsl::id,
-                temperature_log_dsl::datetime,
-                temperature_log_dsl::temperature,
-                temperature_log_dsl::store_id,
-                temperature_log_dsl::sensor_id,
-                temperature_log_dsl::location_id,
-                (temperature_breach_config_dsl::duration_milliseconds / 1000).into_sql::<Integer>(),
-                temperature_log_dsl::temperature.not_between(
-                    temperature_breach_config_dsl::minimum_temperature,
-                    temperature_breach_config_dsl::maximum_temperature,
+                temperature_log::id,
+                temperature_log::datetime,
+                temperature_log::temperature,
+                temperature_log::store_id,
+                temperature_log::sensor_id,
+                temperature_log::location_id,
+                (temperature_breach_config::duration_milliseconds / 1000).into_sql::<Integer>(),
+                temperature_log::temperature.not_between(
+                    temperature_breach_config::minimum_temperature,
+                    temperature_breach_config::maximum_temperature,
                 ),
             ))
-            .filter(temperature_log_dsl::temperature_breach_id.is_null())
-            .order(temperature_log_dsl::datetime.asc())
+            .filter(temperature_log::temperature_breach_id.is_null())
+            .order(temperature_log::datetime.asc())
             .into_boxed();
 
-        apply_equal_filter!(query, filter.store_id, temperature_log_dsl::store_id);
-        apply_date_time_filter!(query, filter.datetime, temperature_log_dsl::datetime);
+        apply_equal_filter!(query, filter.store_id, temperature_log::store_id);
+        apply_date_time_filter!(query, filter.datetime, temperature_log::datetime);
 
-        query = query.filter(temperature_breach_config_dsl::is_active.eq(true));
+        query = query.filter(temperature_breach_config::is_active.eq(true));
 
         apply_equal_filter!(
             query,
             Some(TemperatureBreachType::Excursion.equal_to()),
-            temperature_breach_config_dsl::type_
+            temperature_breach_config::type_
         );
 
         // Debug diesel query

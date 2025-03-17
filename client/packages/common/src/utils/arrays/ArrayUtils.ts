@@ -59,4 +59,25 @@ export const ArrayUtils = {
     arr.forEach(t => (obj[t.id] = { ...t }));
     return obj;
   },
+
+  getAveragePrice: <
+    T extends {
+      numberOfPacks: number;
+      packSize: number;
+    },
+    K extends keyof T,
+  >(
+    arr: T[],
+    key: K
+  ) => {
+    let totalPrice = 0;
+    let totalUnits = 0;
+    arr.forEach(entity => {
+      totalPrice += Number(entity[key]) * entity.numberOfPacks;
+      totalUnits += entity.numberOfPacks * entity.packSize;
+    });
+    const averagePrice = totalPrice / totalUnits;
+
+    return Number.isNaN(averagePrice) ? 0 : averagePrice;
+  },
 };

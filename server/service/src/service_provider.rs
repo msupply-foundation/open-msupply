@@ -6,6 +6,7 @@ use crate::{
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
     cold_chain::{ColdChainService, ColdChainServiceTrait},
+    contact_form::{ContactFormService, ContactFormServiceTrait},
     currency::{CurrencyService, CurrencyServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
@@ -20,6 +21,9 @@ use crate::{
         document_service::{DocumentService, DocumentServiceTrait},
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
     },
+    email::{EmailService, EmailServiceTrait},
+    insurance::{InsuranceService, InsuranceServiceTrait},
+    insurance_provider::{InsuranceProviderService, InsuranceProviderServiceTrait},
     invoice::{InvoiceService, InvoiceServiceTrait},
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
     item::ItemServiceTrait,
@@ -30,8 +34,10 @@ use crate::{
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     name::{NameService, NameServiceTrait},
+    plugin::{FrontendPluginCache, PluginService, PluginServiceTrait},
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     pricing::{PricingService, PricingServiceTrait},
+    printer::{PrinterService, PrinterServiceTrait},
     processors::ProcessorsTrigger,
     program::ProgramServiceTrait,
     programs::{
@@ -51,6 +57,7 @@ use crate::{
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
     rnr_form::{RnRFormService, RnRFormServiceTrait},
     sensor::{SensorService, SensorServiceTrait},
+    settings::MailSettings,
     settings_service::{SettingsService, SettingsServiceTrait},
     standard_reports::StandardReports,
     stock_line::{StockLineService, StockLineServiceTrait},
@@ -112,6 +119,8 @@ pub struct ServiceProvider {
     pub document_service: Box<dyn DocumentServiceTrait>,
     pub document_registry_service: Box<dyn DocumentRegistryServiceTrait>,
     pub form_schema_service: Box<dyn FormSchemaServiceTrait>,
+    pub insurance_service: Box<dyn InsuranceServiceTrait>,
+    pub insurance_provider_service: Box<dyn InsuranceProviderServiceTrait>,
     pub patient_service: Box<dyn PatientServiceTrait>,
     pub program_enrolment_service: Box<dyn ProgramEnrolmentServiceTrait>,
     pub encounter_service: Box<dyn EncounterServiceTrait>,
@@ -137,6 +146,7 @@ pub struct ServiceProvider {
     pub log_service: Box<dyn LogServiceTrait>,
     // Plugin
     pub plugin_data_service: Box<dyn PluginDataServiceTrait>,
+    pub plugin_service: Box<dyn PluginServiceTrait>,
     // Currency
     pub currency_service: Box<dyn CurrencyServiceTrait>,
     // Asset catalogue
@@ -151,6 +161,8 @@ pub struct ServiceProvider {
     pub vaccine_course_service: Box<dyn VaccineCourseServiceTrait>,
     // Vaccinations
     pub vaccination_service: Box<dyn VaccinationServiceTrait>,
+    // Printer Configuration
+    pub printer_service: Box<dyn PrinterServiceTrait>,
     // Programs
     pub program_service: Box<dyn ProgramServiceTrait>,
     pub pricing_service: Box<dyn PricingServiceTrait>,
@@ -158,35 +170,44 @@ pub struct ServiceProvider {
     pub translations_service: Box<Localisations>,
     // Standard Reports
     pub standard_reports: Box<StandardReports>,
+    // Emails
+    pub email_service: Box<dyn EmailServiceTrait>,
+    // Contact Form
+    pub contact_form_service: Box<dyn ContactFormServiceTrait>,
+    // Cache
+    pub(crate) frontend_plugins_cache: FrontendPluginCache,
 }
 
 pub struct ServiceContext {
     pub connection: StorageConnection,
     pub(crate) processors_trigger: ProcessorsTrigger,
+    pub(crate) frontend_plugins_cache: FrontendPluginCache,
     pub user_id: String,
     pub store_id: String,
 }
 
 impl ServiceProvider {
     // TODO we should really use `new` with processors_trigger, we constructs ServiceProvider manually in tests though
-    // and it would be a bit of refactor, ideally setup_all and setup_all_with_data will return an instance of ServiceProvider
-    // {make an issue}
-    pub fn new(connection_manager: StorageConnectionManager, app_data_folder: &str) -> Self {
+    // and it would be a bit of refactor
+    // Should update tests to use `setup_all_with_data_and_service_provider` instead
+
+    // Used in tests, and for the CLI & test_connection tool
+    pub fn new(connection_manager: StorageConnectionManager) -> Self {
         ServiceProvider::new_with_triggers(
             connection_manager,
-            app_data_folder,
             ProcessorsTrigger::new_void(),
             SyncTrigger::new_void(),
             SiteIsInitialisedTrigger::new_void(),
+            None, // Mail not required for test/CLI setups
         )
     }
 
     pub fn new_with_triggers(
         connection_manager: StorageConnectionManager,
-        app_data_folder: &str,
         processors_trigger: ProcessorsTrigger,
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
+        mail_settings: Option<MailSettings>,
     ) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
@@ -220,7 +241,7 @@ impl ServiceProvider {
             program_event_service: Box::new(ProgramEventService {}),
             encounter_service: Box::new(EncounterService {}),
             contact_trace_service: Box::new(ContactTraceService {}),
-            app_data_service: Box::new(AppDataService::new(app_data_folder)),
+            app_data_service: Box::new(AppDataService {}),
             site_info_service: Box::new(SiteInfoService),
             sync_status_service: Box::new(SyncStatusService),
             processors_trigger,
@@ -249,6 +270,13 @@ impl ServiceProvider {
             vaccination_service: Box::new(VaccinationService {}),
             translations_service: Box::new(Localisations::new()),
             standard_reports: Box::new(StandardReports {}),
+            email_service: Box::new(EmailService::new(mail_settings.clone())),
+            contact_form_service: Box::new(ContactFormService {}),
+            plugin_service: Box::new(PluginService {}),
+            insurance_service: Box::new(InsuranceService {}),
+            insurance_provider_service: Box::new(InsuranceProviderService {}),
+            printer_service: Box::new(PrinterService {}),
+            frontend_plugins_cache: FrontendPluginCache::new(),
         }
     }
 
@@ -259,6 +287,7 @@ impl ServiceProvider {
             processors_trigger: self.processors_trigger.clone(),
             user_id: "".to_string(),
             store_id: "".to_string(),
+            frontend_plugins_cache: self.frontend_plugins_cache.clone(),
         })
     }
 
@@ -272,6 +301,7 @@ impl ServiceProvider {
             processors_trigger: self.processors_trigger.clone(),
             user_id,
             store_id,
+            frontend_plugins_cache: self.frontend_plugins_cache.clone(),
         })
     }
 
@@ -289,6 +319,7 @@ impl ServiceContext {
             processors_trigger: ProcessorsTrigger::new_void(),
             user_id: "".to_string(),
             store_id: "".to_string(),
+            frontend_plugins_cache: FrontendPluginCache::new(),
         }
     }
 }

@@ -1,11 +1,7 @@
 use super::{
-    master_list_name_join::master_list_name_join,
-    master_list_row::master_list,
-    name_row::{name::dsl::*, name_oms_fields::dsl as name_oms_fields_dsl},
-    name_store_join::name_store_join,
-    program_row::program,
-    store_row::store,
-    NameType, StorageConnection,
+    master_list_name_join::master_list_name_join, master_list_row::master_list,
+    name_store_join::name_store_join, program_row::program, store_row::store, NameType,
+    StorageConnection,
 };
 use crate::{
     item_link, name_link, repository_error::RepositoryError, ChangeLogInsertRow,
@@ -46,6 +42,8 @@ table! {
         is_manufacturer -> Bool,
         is_donor -> Bool,
         on_hold -> Bool,
+        next_of_kin_id -> Nullable<Text>,
+        next_of_kin_name -> Nullable<Text>,
         created_datetime -> Nullable<Timestamp>,
         is_deceased -> Bool,
         national_health_number -> Nullable<Text>,
@@ -169,6 +167,9 @@ pub struct NameRow {
     pub is_donor: bool,
     pub on_hold: bool,
 
+    pub next_of_kin_id: Option<String>,
+    pub next_of_kin_name: Option<String>,
+
     pub created_datetime: Option<NaiveDateTime>,
 
     pub is_deceased: bool,
@@ -213,9 +214,9 @@ impl<'a> NameRowRepository<'a> {
     }
 
     fn _upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(name)
+        diesel::insert_into(name::table)
             .values(name_row)
-            .on_conflict(id)
+            .on_conflict(name::id)
             .do_update()
             .set(name_row)
             .execute(self.connection.lock().connection())?;
@@ -230,14 +231,14 @@ impl<'a> NameRowRepository<'a> {
     }
 
     pub fn mark_deleted(&self, name_id: &str) -> Result<i64, RepositoryError> {
-        diesel::update(name.filter(id.eq(name_id)))
-            .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+        diesel::update(name::table.filter(name::id.eq(name_id)))
+            .set(name::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
         self.insert_changelog(name_id.to_owned(), RowActionType::Delete)
     }
 
     pub async fn insert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(name)
+        diesel::insert_into(name::table)
             .values(name_row)
             .execute(self.connection.lock().connection())?;
         insert_or_ignore_name_link(self.connection, name_row)?;
@@ -245,24 +246,24 @@ impl<'a> NameRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, name_id: &str) -> Result<Option<NameRow>, RepositoryError> {
-        let result = name
-            .filter(id.eq(name_id))
+        let result = name::table
+            .filter(name::id.eq(name_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_one_by_code(&self, name_code: &str) -> Result<Option<NameRow>, RepositoryError> {
-        let result = name
-            .filter(code.eq(name_code))
+        let result = name::table
+            .filter(name::code.eq(name_code))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameRow>, RepositoryError> {
-        let result = name
-            .filter(id.eq_any(ids))
+        let result = name::table
+            .filter(name::id.eq_any(ids))
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
@@ -271,8 +272,8 @@ impl<'a> NameRowRepository<'a> {
         &self,
         name_id: &str,
     ) -> Result<Option<NameOmsFieldsRow>, RepositoryError> {
-        let result = name_oms_fields_dsl::name_oms_fields
-            .filter(name_oms_fields_dsl::id.eq(name_id))
+        let result = name_oms_fields::table
+            .filter(name_oms_fields::id.eq(name_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)

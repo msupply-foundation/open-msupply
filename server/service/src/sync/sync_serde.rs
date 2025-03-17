@@ -1,8 +1,9 @@
 use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime};
 use serde::{
-    de::{value::StrDeserializer, IntoDeserializer},
+    de::{value::StrDeserializer, Error, IntoDeserializer},
     Deserialize, Deserializer, Serialize, Serializer,
 };
+use serde_yaml::Value;
 use util::format_error;
 
 pub fn empty_str_as_option_string<'de, D: Deserializer<'de>>(
@@ -75,7 +76,33 @@ pub fn naive_time<'de, D: Deserializer<'de>>(d: D) -> Result<NaiveTime, D::Error
         .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()))
 }
 
+pub fn empty_str_or_i32<'de, D: Deserializer<'de>>(d: D) -> Result<i32, D::Error> {
+    let value = Value::deserialize(d)?;
+    match value {
+        Value::String(_) => Ok(0),
+        Value::Number(n) => Ok(n.as_i64().unwrap_or(0) as i32),
+        _ => Err(Error::custom("Expected a string or number")),
+    }
+}
+
 pub fn string_to_f64<'de, D: Deserializer<'de>>(d: D) -> Result<f64, D::Error> {
     let s: String = String::deserialize(d)?;
     Ok(s.parse().unwrap_or(0.0))
+}
+
+pub fn zero_f64_as_none<'de, D: Deserializer<'de>>(d: D) -> Result<Option<f64>, D::Error> {
+    let value = Value::deserialize(d)?;
+    match value {
+        Value::Number(n) => {
+            let f = n.as_f64().unwrap_or(0.0);
+            if f == 0.0 {
+                Ok(None)
+            } else {
+                Ok(Some(f))
+            }
+        }
+        _ => Err(Error::custom(
+            "zero_f64_as_none Expected a string or number",
+        )),
+    }
 }

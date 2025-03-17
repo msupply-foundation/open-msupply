@@ -9,7 +9,7 @@ pub mod android {
     use jni::sys::jchar;
     use repository::database_settings::DatabaseSettings;
     use server::{logging_init, start_server};
-    use service::settings::{LogMode, LoggingSettings, ServerSettings, Settings};
+    use service::settings::{DiscoveryMode, LogMode, LoggingSettings, ServerSettings, Settings};
     use tokio::sync::mpsc;
 
     use self::jni::objects::{JClass, JString};
@@ -42,6 +42,7 @@ pub mod android {
             server: ServerSettings {
                 port,
                 danger_allow_http: false,
+                discovery: DiscoveryMode::Disabled,
                 debug_no_access_control: false,
                 cors_origins: vec!["http://localhost".to_string()],
                 base_dir: Some(files_dir.to_str().unwrap().to_string()),
@@ -64,6 +65,8 @@ pub mod android {
                     .with_directory(files_dir.to_string_lossy().to_string()),
             ),
             backup: None,
+            // Not supporting mail sending on Android - so cannot be Central Server (does it need to be?)
+            mail: None,
         };
 
         logging_init(settings.logging.clone(), None);

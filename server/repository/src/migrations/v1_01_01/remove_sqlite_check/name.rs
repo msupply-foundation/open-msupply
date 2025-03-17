@@ -71,10 +71,10 @@ async fn remove_sqlite_check_name() {
             gender -> Text,
         }
     }
-    use name::dsl as name_dsl;
-    let names = name_dsl::name
-        .select((name_dsl::id, name_dsl::type_, name_dsl::gender))
-        .order_by(name_dsl::id.asc())
+
+    let names = name::table
+        .select((name::id, name::type_, name::gender))
+        .order_by(name::id.asc())
         .load::<(String, String, String)>(connection.lock().connection())
         .unwrap();
 

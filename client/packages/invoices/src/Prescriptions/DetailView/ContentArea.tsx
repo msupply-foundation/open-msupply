@@ -3,15 +3,14 @@ import {
   useTranslation,
   NothingHere,
   useUrlQueryParams,
-  Box,
   DataTable,
   MiniTable,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { usePrescriptionColumn } from './columns';
-import { useExpansionColumns } from './PrescriptionLineEdit/columns';
 import { StockOutItem } from '../../types';
 import { StockOutLineFragment } from '../../StockOut';
+import { useExpansionColumns } from './columns';
 
 interface ContentAreaProps {
   onAddItem: () => void;
@@ -39,34 +38,31 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams();
-  const { rows } = usePrescription.line.rows();
+  const { isDisabled, rows } = usePrescription();
   const columns = usePrescriptionColumn({
     onChangeSortBy: updateSortQuery,
     sortBy,
   });
-  const isDisabled = usePrescription.utils.isDisabled();
 
   if (!rows) return null;
 
   return (
-    <Box flexDirection="column" display="flex" flex={1}>
-      <DataTable
-        id="prescription-detail"
-        onRowClick={onRowClick}
-        ExpandContent={Expand}
-        columns={columns}
-        data={rows}
-        enableColumnSelection
-        noDataElement={
-          <NothingHere
-            body={t('error.no-prescriptions')}
-            onCreate={isDisabled ? undefined : () => onAddItem()}
-            buttonText={t('button.add-item')}
-          />
-        }
-        isRowAnimated={true}
-      />
-    </Box>
+    <DataTable
+      id="prescription-detail"
+      onRowClick={onRowClick}
+      columns={columns}
+      data={rows}
+      enableColumnSelection
+      ExpandContent={Expand}
+      noDataElement={
+        <NothingHere
+          body={t('error.no-prescriptions')}
+          onCreate={isDisabled ? undefined : () => onAddItem()}
+          buttonText={t('button.add-item')}
+        />
+      }
+      isRowAnimated={true}
+    />
   );
 };
 

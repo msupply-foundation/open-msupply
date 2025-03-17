@@ -1,17 +1,20 @@
 import React from 'react';
 import {
+  ColumnAlign,
   DataTable,
+  ExpiryDateCell,
+  NumUtils,
   TableProvider,
   createTableStore,
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
-import { DraftStockOutLine } from '@openmsupply-client/invoices/src/types';
-import { PackQuantityCell } from '@openmsupply-client/invoices/src/StockOut';
+import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
+import { UnitQuantityCell } from '@openmsupply-client/invoices/src/Prescriptions/api/hooks/utils';
 
 interface StockLineTableProps {
-  stocklines: DraftStockOutLine[];
-  handleStockLineUpdate: (lines: DraftStockOutLine[]) => void;
+  stocklines: DraftPrescriptionLine[];
+  handleStockLineUpdate: (lines: DraftPrescriptionLine[]) => void;
 }
 
 export const StockLineTable = ({
@@ -19,7 +22,7 @@ export const StockLineTable = ({
   handleStockLineUpdate,
 }: StockLineTableProps) => {
   const t = useTranslation();
-  const handleUpdateDraft = (input: Partial<DraftStockOutLine>) => {
+  const handleUpdateDraft = (input: Partial<DraftPrescriptionLine>) => {
     const updatedDraftLines = [...stocklines];
     const lineIndex = updatedDraftLines.findIndex(line => line.id === input.id);
     if (updatedDraftLines[lineIndex]) {
@@ -31,8 +34,16 @@ export const StockLineTable = ({
     }
   };
 
-  const columns = useColumns<DraftStockOutLine>(
+  const columns = useColumns<DraftPrescriptionLine>(
     [
+      {
+        width: 60,
+        key: 'expiry',
+        label: 'label.expiry',
+        accessor: ({ rowData }) => rowData.expiryDate,
+        Cell: ExpiryDateCell,
+        align: ColumnAlign.Right,
+      },
       {
         width: '100px',
         key: 'batch',
@@ -40,24 +51,40 @@ export const StockLineTable = ({
         accessor: ({ rowData }) => rowData.stockLine?.batch,
       },
       {
-        width: '100px',
-        key: 'expiry',
-        label: 'label.expiry',
-        accessor: ({ rowData }) => rowData.expiryDate,
-      },
-      {
         width: '90px',
         key: 'available',
-        label: 'label.available',
-        accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
+        label: 'label.available-units',
+        accessor: ({ rowData }) =>
+          NumUtils.round(
+            (rowData.stockLine?.availableNumberOfPacks ?? 0) *
+              (rowData.stockLine?.packSize ?? 1),
+            2
+          ),
       },
       {
         width: '55px',
-        key: 'numberOfPacks',
-        label: 'label.amount',
-        accessor: ({ rowData }) => rowData.numberOfPacks,
-        setter: handleUpdateDraft,
-        Cell: PackQuantityCell,
+        key: 'unitQuantity',
+        label: 'label.units-issued',
+        accessor: ({ rowData }) =>
+          NumUtils.round(
+            (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
+            3
+          ),
+        setter: row => {
+          // Using `as` to allow for the `unitQuantity` field, which doesn't
+          // natively exist on DraftStockOutLine. This is preferable to using
+          // the `numberOfPacks` field, which would be misleading and need to be
+          // overwritten with the correct packs value here.
+          const stockLine = { ...row } as Partial<DraftPrescriptionLine> & {
+            id: string;
+            unitQuantity: number;
+          };
+          // Convert input units to packs
+          stockLine.numberOfPacks =
+            stockLine.unitQuantity / (stockLine.packSize ?? 1);
+          handleUpdateDraft(stockLine);
+        },
+        Cell: UnitQuantityCell,
       },
     ],
     {},

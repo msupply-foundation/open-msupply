@@ -33,10 +33,10 @@ export const getStocktakeTranslator =
   (t: ReturnType<typeof useTranslation>) =>
   (currentStatus: StocktakeNodeStatus | null): string => {
     if (currentStatus === StocktakeNodeStatus.New) {
-      return t('label.new', { ns: 'inventory' });
+      return t('label.new');
     }
 
-    return t('label.finalised', { ns: 'inventory' });
+    return t('label.finalised');
   };
 
 export const canDeleteStocktake = (row: StocktakeRowFragment): boolean =>

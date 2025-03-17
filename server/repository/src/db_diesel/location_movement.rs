@@ -1,9 +1,6 @@
 use diesel::*;
 
-use super::{
-    location_movement_row::location_movement::{self, dsl as location_movement_dsl},
-    LocationMovementRow, StorageConnection,
-};
+use super::{location_movement_row::location_movement, LocationMovementRow, StorageConnection};
 use crate::{
     diesel_macros::{
         apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_first,
@@ -71,14 +68,14 @@ impl<'a> LocationMovementRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 LocationMovementSortField::EnterDatetime => {
-                    apply_sort!(query, sort, location_movement_dsl::enter_datetime)
+                    apply_sort!(query, sort, location_movement::enter_datetime)
                 }
                 LocationMovementSortField::ExitDatetime => {
-                    apply_sort_asc_nulls_first!(query, sort, location_movement_dsl::exit_datetime)
+                    apply_sort_asc_nulls_first!(query, sort, location_movement::exit_datetime)
                 }
             }
         } else {
-            query = query.order(location_movement_dsl::enter_datetime.asc())
+            query = query.order(location_movement::enter_datetime.asc())
         }
 
         let result = query
@@ -96,27 +93,23 @@ fn create_filtered_query(filter: Option<LocationMovementFilter>) -> BoxedLocatio
     let mut query = location_movement::table.into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, location_movement_dsl::id);
-        apply_equal_filter!(query, filter.store_id, location_movement_dsl::store_id);
+        apply_equal_filter!(query, filter.id, location_movement::id);
+        apply_equal_filter!(query, filter.store_id, location_movement::store_id);
         apply_equal_filter!(
             query,
             filter.stock_line_id,
-            location_movement_dsl::stock_line_id
+            location_movement::stock_line_id
         );
-        apply_equal_filter!(
-            query,
-            filter.location_id,
-            location_movement_dsl::location_id
-        );
+        apply_equal_filter!(query, filter.location_id, location_movement::location_id);
         apply_date_time_filter!(
             query,
             filter.enter_datetime,
-            location_movement_dsl::enter_datetime
+            location_movement::enter_datetime
         );
         apply_date_time_filter!(
             query,
             filter.exit_datetime,
-            location_movement_dsl::exit_datetime
+            location_movement::exit_datetime
         );
     }
 

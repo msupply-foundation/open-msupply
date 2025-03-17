@@ -2,6 +2,7 @@ use crate::activity_log::activity_log_entry;
 use crate::invoice::query::get_invoice;
 use crate::service_provider::ServiceContext;
 use crate::WithDBError;
+use chrono::NaiveDateTime;
 use repository::{ActivityLogType, Invoice};
 use repository::{InvoiceRowRepository, RepositoryError};
 
@@ -14,6 +15,11 @@ use validate::validate;
 pub struct InsertPrescription {
     pub id: String,
     pub patient_id: String,
+    pub diagnosis_id: Option<String>,
+    pub program_id: Option<String>,
+    pub their_reference: Option<String>,
+    pub clinician_id: Option<String>,
+    pub prescription_date: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -82,7 +88,7 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceRowRepository, NameRow, NameStoreJoinRow, NameRowType,
+        InvoiceRowRepository, NameRow, NameRowType, NameStoreJoinRow,
     };
     use util::{inline_edit, inline_init};
 
@@ -125,7 +131,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -183,7 +189,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();

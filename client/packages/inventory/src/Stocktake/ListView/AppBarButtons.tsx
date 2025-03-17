@@ -48,9 +48,8 @@ export const AppBarButtons: FC<{
           isLoading={isLoading}
           onClick={csvExport}
           disabled={EnvUtils.platform === Platform.Android}
-        >
-          {t('button.export')}
-        </LoadingButton>
+          label={t('button.export')}
+        />
       </Grid>
     </AppBarButtonsPortal>
   );

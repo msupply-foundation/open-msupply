@@ -1,4 +1,4 @@
-import { getLocale, useIntlUtils } from '@common/intl';
+import { getLocale, useIntlUtils, useTranslation } from '@common/intl';
 import {
   addMinutes,
   addDays,
@@ -10,6 +10,7 @@ import {
   differenceInMonths,
   differenceInMinutes,
   differenceInYears,
+  getDaysInMonth,
   isPast,
   isFuture,
   isThisWeek,
@@ -104,6 +105,7 @@ export const DateUtils = {
         : new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
+  getDaysInMonth,
   /**
    * While getDateOrNull is naive to the timezone, the timezone will still
    * change. When converting from the assumed naive zone of GMT to the local
@@ -147,7 +149,8 @@ export const DateUtils = {
     fromUnixTime(Math.max(...dates.map(d => getUnixTime(d as Date)))),
   isPast,
   isFuture,
-  isExpired: (expiryDate: Date): boolean => isPast(expiryDate),
+  isExpired: (expiryDate: Date | string | number): boolean =>
+    isPast(expiryDate),
   isAlmostExpired: (
     expiryDate: Date,
     threshold = MINIMUM_EXPIRY_MONTHS
@@ -202,6 +205,7 @@ export const DateUtils = {
 export const useFormatDateTime = () => {
   const { currentLanguage } = useIntlUtils();
   const locale = getLocale(currentLanguage);
+  const t = useTranslation();
 
   const urlQueryDate = 'yyyy-MM-dd';
   const urlQueryDateTime = 'yyyy-MM-dd HH:mm';
@@ -250,6 +254,24 @@ export const useFormatDateTime = () => {
       : '';
   };
 
+  // Returns a formatted age for the input date (of birth) relative to the
+  // current date. Will format as whole number of years unless the age is less
+  // than one year old, in which case it will format as months/days:
+  // e.g:
+  // - DOB is 2 years in the past => "2"
+  // - DOB is 9 months and 2 days ago => "9 months, 2 days"
+  // - DOB is 5 days ago => "5 days"
+  const getDisplayAge = (dob: Date | null | undefined): string => {
+    if (!dob) return '';
+    const patientAge = DateUtils.age(dob);
+    const { months, days } = DateUtils.ageInMonthsAndDays(dob ?? '');
+
+    if (patientAge >= 1) {
+      return String(patientAge);
+    } else
+      return `${months > 0 ? t('label.age-months-and', { count: months }) : ''}${t('label.age-days', { count: days })}`;
+  };
+
   return {
     urlQueryDate,
     urlQueryDateTime,
@@ -262,5 +284,6 @@ export const useFormatDateTime = () => {
     localisedDistanceToNow,
     localisedTime,
     relativeDateTime,
+    getDisplayAge,
   };
 };

@@ -13,6 +13,7 @@ pub struct PatientSearchInput {
     code: Option<String>,
     /// Secondary patient code
     code_2: Option<String>,
+    name: Option<String>,
     first_name: Option<String>,
     last_name: Option<String>,
     date_of_birth: Option<NaiveDate>,
@@ -95,6 +96,7 @@ impl PatientSearchInput {
         PatientSearch {
             code: self.code,
             code_2: self.code_2,
+            name: self.name,
             first_name: self.first_name,
             last_name: self.last_name,
             date_of_birth: self.date_of_birth,

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import {
   Autocomplete,
+  AutocompleteOptionRenderer,
   AutocompleteProps,
+  Box,
   ButtonWithIcon,
+  DefaultAutocompleteItemOption,
   Grid,
   PlusCircleIcon,
   Typography,
@@ -12,6 +15,7 @@ import { getNameOptionRenderer } from '@openmsupply-client/system';
 
 import { CustomerProgramSettingsFragment } from '../api';
 import { NewRequisitionType } from '../../types';
+import { getOrderTypeRenderer } from '../../RequestRequisition/ListView/ProgramRequisitionOptions';
 
 export interface NewProgramRequisition {
   type: NewRequisitionType.Program;
@@ -79,6 +83,7 @@ const useProgramRequisitionOptions = (
       disabled: program === null || customer === null,
       labelNoOptions: t('messages.not-configured'),
       label: t('label.order-type'),
+      renderOption: getOrderTypeRenderer(),
     },
     customers: {
       options: program?.customerAndOrderTypes.map(c => c.customer) || [],
@@ -130,11 +135,11 @@ const LabelAndOptions = <T,>({
     !!labelNoOptions && <Typography>{labelNoOptions}</Typography>;
 
   return (
-    <Grid item container spacing={2} direction="row">
-      <Grid xs={3} item>
+    <Grid container flexDirection="row">
+      <Grid size={3} marginTop={-1}>
         <Typography>{label}</Typography>
       </Grid>
-      <Grid item>
+      <Grid>
         {noOptionsDisplay || (
           <Autocomplete
             width="450"
@@ -146,6 +151,10 @@ const LabelAndOptions = <T,>({
             value={value}
             disabled={disabled}
             onChange={(_, newValue) => set(newValue)}
+            sx={{
+              background: theme => theme.palette.background.toolbar,
+              borderRadius: 2,
+            }}
           />
         )}
       </Grid>
@@ -163,21 +172,33 @@ export const ProgramRequisitionOptions = ({
   const { programs, orderTypes, customers, periods, createOptions } =
     useProgramRequisitionOptions(programSettings);
   const t = useTranslation();
+  const ProgramOptionRenderer = getProgramOptionRenderer();
 
   return (
-    <Grid
-      container
-      paddingTop={2}
-      spacing="15"
-      direction="column"
-      justifyContent="center"
-      alignItems="center"
-    >
-      <LabelAndOptions {...programs} optionKey="programName" autoFocus={true} />
+    <Grid container paddingTop={2} direction="column">
+      <LabelAndOptions
+        {...programs}
+        renderOption={ProgramOptionRenderer}
+        optionKey="programName"
+        autoFocus={true}
+      />
       <LabelAndOptions {...customers} optionKey="name" />
       <LabelAndOptions {...orderTypes} optionKey="name" />
-      <LabelAndOptions {...periods} optionKey="name" />
-      <Grid item>
+      <Grid>
+        <Typography
+          sx={{
+            fontStyle: 'italic',
+            color: 'gray.main',
+            fontSize: '12px',
+            paddingLeft: 20,
+            marginBottom: 0,
+          }}
+        >
+          {t('message.program-period')}
+        </Typography>
+        <LabelAndOptions {...periods} optionKey="name" />
+      </Grid>
+      <Grid display="flex" justifyContent="center">
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           disabled={!createOptions}
@@ -194,3 +215,21 @@ export const ProgramRequisitionOptions = ({
     </Grid>
   );
 };
+
+const getProgramOptionRenderer =
+  (): AutocompleteOptionRenderer<CustomerProgramSettingsFragment> =>
+  (props, item) => (
+    <DefaultAutocompleteItemOption {...props} key={item.programId}>
+      <Box display="flex" flexDirection="row" gap={1} alignItems="center">
+        <Typography
+          overflow="hidden"
+          textOverflow="ellipsis"
+          sx={{
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {item.programName} ({item.tagName})
+        </Typography>
+      </Box>
+    </DefaultAutocompleteItemOption>
+  );

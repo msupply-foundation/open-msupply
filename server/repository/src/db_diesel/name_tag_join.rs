@@ -1,7 +1,4 @@
-use super::{
-    name_link, name_oms_fields, name_tag_join::name_tag_join::dsl as name_tag_join_dsl,
-    name_tag_row::name_tag, StorageConnection,
-};
+use super::{name_link, name_oms_fields, name_tag_row::name_tag, StorageConnection};
 use crate::repository_error::RepositoryError;
 use crate::{Delete, Upsert};
 use diesel::prelude::*;
@@ -37,9 +34,9 @@ impl<'a> NameTagJoinRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &NameTagJoinRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(name_tag_join_dsl::name_tag_join)
+        diesel::insert_into(name_tag_join::table)
             .values(row)
-            .on_conflict(name_tag_join_dsl::id)
+            .on_conflict(name_tag_join::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -47,15 +44,15 @@ impl<'a> NameTagJoinRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<NameTagJoinRow>, RepositoryError> {
-        let result = name_tag_join_dsl::name_tag_join
-            .filter(name_tag_join_dsl::id.eq(id))
+        let result = name_tag_join::table
+            .filter(name_tag_join::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(name_tag_join_dsl::name_tag_join.filter(name_tag_join_dsl::id.eq(id)))
+        diesel::delete(name_tag_join::table.filter(name_tag_join::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

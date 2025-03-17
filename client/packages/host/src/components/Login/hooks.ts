@@ -42,22 +42,27 @@ export const useLoginForm = (
   const { data: initStatus } = useInitialisationStatus();
   const navigate = useNavigate();
   const location = useLocation();
-  const isGaps = useIsGapsStoreOnly();
+  const isGapsStore = useIsGapsStoreOnly();
   const { mostRecentUsername, login, isLoggingIn } = useAuthContext();
   const { password, setPassword, setUsername, username, error, setError } =
-    state;  
+    state;
 
   const onLogin = async () => {
     setError();
-    const { error, token } = await login(username, password);
+    const { error, token } = await login(username.trim(), password);
     setError(error);
     setPassword('');
     if (!token) return;
 
     // navigate back, if redirected by the <RequireAuthentication /> component
-    // or to the dashboard or cold-chain/sensors for GAPS only enabled store, as a default
+    // or to the dashboard as a default
     const state = location.state as State | undefined;
-    const from = state?.from?.pathname || ( !isGaps ? `/${AppRoute.Dashboard}` : `/${AppRoute.Coldchain}/${AppRoute.Sensors}`);
+    let from = state?.from?.pathname || `/${AppRoute.Dashboard}`;
+    
+    // if GAPS store only, always redirect to Cold Chain
+    if (isGapsStore) {
+      from = `/${AppRoute.Coldchain}/${AppRoute.Equipment}`;
+    }
     navigate(from, { replace: true });
   };
 

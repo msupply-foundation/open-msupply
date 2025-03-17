@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import {
   GenderType,
+  LocaleKey,
   PatientSearchInput,
   RegexUtils,
 } from '@openmsupply-client/common';
@@ -9,15 +10,10 @@ import {
   useTranslation,
   Box,
   Typography,
-  DetailInputWithLabelRow,
   Select,
   Button,
 } from '@openmsupply-client/common';
-import {
-  FORM_INPUT_COLUMN_WIDTH,
-  DefaultFormRowSx,
-  FORM_LABEL_WIDTH,
-} from '../../common/styleConstants';
+import { FORM_INPUT_COLUMN_WIDTH } from '../../common/styleConstants';
 import { usePatientSearchQuery } from './usePatientSearchQuery';
 import { UserOptions } from './Search';
 import { JsonFormsDispatch } from '@jsonforms/react';
@@ -53,7 +49,7 @@ export const SearchWithUserSource = (
   const getOptionLabel = (data: PatientSchema) =>
     options?.optionString
       ? formatTemplateString(options?.optionString, data)
-      : `${data['code'] ? data['code'] + '-' : ''} ${data['firstName']} ${
+      : `${data['code'] ? data['code'] + ' -' : ''} ${data['firstName']} ${
           data['lastName']
         }`;
 
@@ -86,7 +82,7 @@ export const SearchWithUserSource = (
         paddingBottom={1}
         paddingTop={3}
       >
-        <strong>{label}</strong>
+        <strong>{t(label as LocaleKey)}</strong>
       </Typography>
       <JsonFormsDispatch
         schema={schema}
@@ -100,54 +96,44 @@ export const SearchWithUserSource = (
         renderers={renderers}
         enabled={!isPatientSelected}
       />
-      {(isPatientSelected || results.length > 0) && (
-        <DetailInputWithLabelRow
-          sx={DefaultFormRowSx}
-          label=""
-          labelWidthPercentage={FORM_LABEL_WIDTH}
-          inputAlignment={'start'}
-          Input={
-            !isPatientSelected ? (
-              <Box>
-                <Typography variant="body2" mt={1} mb={1}>
-                  <em>{t('control.search.matching-patients')}</em>
-                </Typography>
-                <Select
-                  options={results.map(res => ({
-                    label: getOptionLabel(res) ?? '',
-                    value: res.id,
-                  }))}
-                  onChange={e => handlePatientSelect(e.target.value)}
-                  fullWidth
-                />
-              </Box>
-            ) : (
-              <Box
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-                flexBasis="100%"
-                sx={{ width: FORM_INPUT_COLUMN_WIDTH }}
+      {(isPatientSelected || results.length > 0) &&
+        (!isPatientSelected ? (
+          <Box>
+            <Typography variant="body2" mt={1} mb={1} sx={{ textWrap: 'wrap' }}>
+              <em>{t('control.search.matching-patients')}</em>
+            </Typography>
+            <Select
+              options={results.map(res => ({
+                label: getOptionLabel(res) ?? '',
+                value: res.id,
+              }))}
+              onChange={e => handlePatientSelect(e.target.value)}
+              fullWidth
+            />
+          </Box>
+        ) : (
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ width: FORM_INPUT_COLUMN_WIDTH, float: 'right' }}
+          >
+            {!error ? (
+              <Button
+                onClick={() => {
+                  handleChange(path, {});
+                }}
+                variant="outlined"
+                size="small"
+                sx={{ mt: 1 }}
               >
-                {!error ? (
-                  <Button
-                    onClick={() => {
-                      handleChange(path, {});
-                    }}
-                    variant="outlined"
-                    size="small"
-                    sx={{ mt: 1 }}
-                  >
-                    {t('control.search.reset-button')}
-                  </Button>
-                ) : (
-                  <Typography color="error">{error}</Typography>
-                )}
-              </Box>
-            )
-          }
-        />
-      )}
+                {t('control.search.reset-button')}
+              </Button>
+            ) : (
+              <Typography color="error">{error}</Typography>
+            )}
+          </Box>
+        ))}
     </Box>
   );
 };
@@ -171,6 +157,7 @@ const createSearchFilter = (
       ? (data['gender'] as GenderType)
       : undefined,
     lastName: searchFields.includes('lastName') ? data['lastName'] : undefined,
+    name: searchFields.includes('name') ? data['name'] : undefined,
     identifier: searchFields.includes('identifier')
       ? data['identifier']
       : undefined,

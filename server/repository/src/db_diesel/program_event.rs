@@ -1,13 +1,7 @@
-use super::{
-    program_event_row::program_event::{self, dsl as program_event_dsl},
-    StorageConnection,
-};
+use super::{program_event_row::program_event, StorageConnection};
 
 use crate::{
-    db_diesel::{
-        name_link_row::{name_link, name_link::dsl as name_link_dsl},
-        name_row::{name, name::dsl as name_dsl},
-    },
+    db_diesel::{name_link_row::name_link, name_row::name},
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
     DBType, DatetimeFilter, EqualFilter, NameLinkRow, NameRow, Pagination, ProgramEventRow,
     RepositoryError, Sort, StringFilter,
@@ -97,22 +91,22 @@ pub enum ProgramEventSortField {
 macro_rules! apply_program_event_filters {
     ($query:ident, $filter:expr ) => {{
         if let Some(f) = $filter {
-            apply_date_time_filter!($query, f.datetime, program_event_dsl::datetime);
+            apply_date_time_filter!($query, f.datetime, program_event::datetime);
             apply_date_time_filter!(
                 $query,
                 f.active_start_datetime,
-                program_event_dsl::active_start_datetime
+                program_event::active_start_datetime
             );
             apply_date_time_filter!(
                 $query,
                 f.active_end_datetime,
-                program_event_dsl::active_end_datetime
+                program_event::active_end_datetime
             );
-            apply_equal_filter!($query, f.context_id, program_event_dsl::context_id);
-            apply_equal_filter!($query, f.document_type, program_event_dsl::document_type);
-            apply_equal_filter!($query, f.document_name, program_event_dsl::document_name);
-            apply_equal_filter!($query, f.r#type, program_event_dsl::type_);
-            apply_string_filter!($query, f.data, program_event_dsl::data);
+            apply_equal_filter!($query, f.context_id, program_event::context_id);
+            apply_equal_filter!($query, f.document_type, program_event::document_type);
+            apply_equal_filter!($query, f.document_name, program_event::document_name);
+            apply_equal_filter!($query, f.r#type, program_event::type_);
+            apply_string_filter!($query, f.data, program_event::data);
         }
         $query
     }};
@@ -123,7 +117,7 @@ macro_rules! apply_program_event_filters {
 macro_rules! apply_patient_id_filters {
     ($query:ident, $filter:expr ) => {{
         if let Some(f) = $filter {
-            apply_equal_filter!($query, f.patient_id, name_link_dsl::name_id);
+            apply_equal_filter!($query, f.patient_id, name_link::name_id);
         }
         $query
     }};
@@ -143,8 +137,8 @@ type BoxedProgramEventQuery = IntoBoxed<
 >;
 
 fn create_filtered_query(filter: Option<ProgramEventFilter>) -> BoxedProgramEventQuery {
-    let mut query = program_event_dsl::program_event
-        .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
+    let mut query = program_event::table
+        .left_join(name_link::table.inner_join(name::table))
         .into_boxed();
     query = apply_program_event_filters!(query, filter.clone());
     apply_patient_id_filters!(query, filter)
@@ -185,30 +179,30 @@ impl<'a> ProgramEventRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 ProgramEventSortField::Datetime => {
-                    apply_sort!(query, sort, program_event_dsl::datetime)
+                    apply_sort!(query, sort, program_event::datetime)
                 }
                 ProgramEventSortField::ActiveStartDatetime => {
-                    apply_sort!(query, sort, program_event_dsl::active_start_datetime)
+                    apply_sort!(query, sort, program_event::active_start_datetime)
                 }
                 ProgramEventSortField::ActiveEndDatetime => {
-                    apply_sort!(query, sort, program_event_dsl::active_end_datetime)
+                    apply_sort!(query, sort, program_event::active_end_datetime)
                 }
                 ProgramEventSortField::Patient => {
-                    apply_sort!(query, sort, name_link_dsl::name_id)
+                    apply_sort!(query, sort, name_link::name_id)
                 }
                 ProgramEventSortField::DocumentType => {
-                    apply_sort!(query, sort, program_event_dsl::document_type)
+                    apply_sort!(query, sort, program_event::document_type)
                 }
                 ProgramEventSortField::DocumentName => {
-                    apply_sort!(query, sort, program_event_dsl::document_name)
+                    apply_sort!(query, sort, program_event::document_name)
                 }
-                ProgramEventSortField::Type => apply_sort!(query, sort, program_event_dsl::type_),
+                ProgramEventSortField::Type => apply_sort!(query, sort, program_event::type_),
                 ProgramEventSortField::Name => {
-                    apply_sort!(query, sort, program_event_dsl::data)
+                    apply_sort!(query, sort, program_event::data)
                 }
             }
         } else {
-            query = query.order(program_event_dsl::datetime.desc())
+            query = query.order(program_event::datetime.desc())
         }
 
         let result = query
@@ -226,13 +220,12 @@ impl<'a> ProgramEventRepository<'a> {
     }
 
     pub fn delete(&self, filter: ProgramEventFilter) -> Result<(), RepositoryError> {
-        let mut query = diesel::delete(program_event_dsl::program_event).into_boxed();
+        let mut query = diesel::delete(program_event::table).into_boxed();
         if let Some(patient_id) = &filter.patient_id {
-            let mut sub_query = name_link_dsl::name_link.into_boxed();
-            apply_equal_filter!(sub_query, Some(patient_id.clone()), name_link_dsl::name_id);
+            let mut sub_query = name_link::table.into_boxed();
+            apply_equal_filter!(sub_query, Some(patient_id.clone()), name_link::name_id);
             query = query.filter(
-                program_event_dsl::patient_link_id
-                    .eq_any(sub_query.select(name_link_dsl::id).nullable()),
+                program_event::patient_link_id.eq_any(sub_query.select(name_link::id).nullable()),
             );
         }
         query = apply_program_event_filters!(query, Some(filter));

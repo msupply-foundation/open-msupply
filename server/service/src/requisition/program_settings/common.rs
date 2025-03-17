@@ -1,11 +1,12 @@
 use repository::{
-    PeriodRow, ProgramRequisitionOrderTypeRow, ProgramRequisitionSettings, RequisitionsInPeriod,
+    EqualFilter, PeriodRow, ProgramFilter, ProgramRepository, ProgramRequisitionOrderTypeRow,
+    ProgramRequisitionSettings, RepositoryError, RequisitionsInPeriod, StorageConnection,
 };
 use util::date_now;
 
 // History = historic and current
-const MAX_NUMBER_OF_HISTORIC_PERIODS: usize = 2;
-const MAX_NUMBER_OF_FUTURE_PERIODS: usize = 2;
+const MAX_NUMBER_OF_HISTORIC_PERIODS: usize = 5;
+const MAX_NUMBER_OF_FUTURE_PERIODS: usize = 5;
 
 /// Deduce if period is available for order_type based on
 /// matching period_schedule_id and number of requisition that exists for this
@@ -67,4 +68,30 @@ pub fn reduce_and_sort_periods(periods: Vec<PeriodRow>) -> Vec<PeriodRow> {
         // Add future periods
         .chain(future_iter)
         .collect()
+}
+
+pub(crate) fn get_program_ids(
+    connection: &StorageConnection,
+    settings: &Vec<ProgramRequisitionSettings>,
+) -> Result<Vec<String>, RepositoryError> {
+    let has_elmis_code = settings.iter().any(|s| s.program_row.elmis_code.is_some());
+
+    let program_ids: Vec<String> = match has_elmis_code {
+        true => {
+            let elmis_codes: Vec<String> = settings
+                .iter()
+                .filter_map(|s| s.program_row.elmis_code.clone())
+                .collect();
+            ProgramRepository::new(connection)
+                .query_by_filter(
+                    ProgramFilter::new().elmis_code(EqualFilter::equal_any(elmis_codes)),
+                )?
+                .iter()
+                .map(|p| p.id.clone())
+                .collect()
+        }
+        false => settings.iter().map(|s| s.program_row.id.clone()).collect(),
+    };
+
+    Ok(program_ids)
 }

@@ -62,12 +62,18 @@ const RnRFormDetailViewComponent = ({
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
 
-  const { isDirty, clearAllDraftLines } = useRnRFormContext(state => ({
-    isDirty: !!Object.values(state.draftLines).length,
+  const { rnrFormIsDirty, clearAllDraftLines } = useRnRFormContext(state => ({
+    rnrFormIsDirty: !!Object.values(state.draftLines).length,
     clearAllDraftLines: state.clearAllDraftLines,
   }));
 
-  useConfirmOnLeaving(isDirty);
+  const { setIsDirty } = useConfirmOnLeaving('rnr-form');
+
+  useEffect(() => {
+    // Usually we track isDirty state from `useConfirmOnLeaving` hook
+    // In this case we derive from the draft line context, so we need to update it manually
+    setIsDirty(rnrFormIsDirty);
+  }, [rnrFormIsDirty]);
 
   useEffect(() => {
     return () => clearAllDraftLines();
@@ -107,7 +113,7 @@ const RnRFormDetailViewComponent = ({
       <SidePanel rnrFormId={data.id} />
       <Footer
         rnrFormId={data.id}
-        unsavedChanges={isDirty}
+        unsavedChanges={rnrFormIsDirty}
         linesUnconfirmed={linesUnconfirmed}
       />
     </>

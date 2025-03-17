@@ -31,7 +31,7 @@ export const AppBarButtons = ({
   const navigate = useNavigate();
   const { success, error } = useNotification();
   const { mutateAsync: onCreate } = useResponse.document.insert();
-  const { mutateAsync: onProgramCreate } = useResponse.document.insertProgram();
+  const { insert: onProgramCreate } = useResponse.document.insertProgram();
 
   const { mutateAsync, isLoading } = useResponse.document.listAll({
     key: 'createdDatetime',
@@ -65,21 +65,20 @@ export const AppBarButtons = ({
           onClick={csvExport}
           variant="outlined"
           disabled={EnvUtils.platform === Platform.Android}
-        >
-          {t('button.export')}
-        </LoadingButton>
+          label={t('button.export')}
+        />
       </Grid>
       <CreateRequisitionModal
         isOpen={modalController.isOn}
         onClose={modalController.toggleOff}
         onCreate={async newRequisition => {
-          modalController.toggleOff();
           switch (newRequisition.type) {
             case NewRequisitionType.General:
               return onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId: newRequisition.name.id,
               }).then(({ requisitionNumber }) => {
+                modalController.toggleOff();
                 navigate(
                   RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.CustomerRequisition)
@@ -93,13 +92,16 @@ export const AppBarButtons = ({
               return onProgramCreate({
                 id: FnUtils.generateUUID(),
                 ...rest,
-              }).then(({ requisitionNumber }) => {
-                navigate(
-                  RouteBuilder.create(AppRoute.Distribution)
-                    .addPart(AppRoute.CustomerRequisition)
-                    .addPart(String(requisitionNumber))
-                    .build()
-                );
+              }).then(response => {
+                if (response.__typename == 'RequisitionNode') {
+                  modalController.toggleOff();
+                  navigate(
+                    RouteBuilder.create(AppRoute.Distribution)
+                      .addPart(AppRoute.CustomerRequisition)
+                      .addPart(String(response.requisitionNumber))
+                      .build()
+                  );
+                }
               });
           }
         }}

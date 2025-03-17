@@ -7,6 +7,7 @@ import {
   useUrlQueryParams,
   useNavigate,
   EncounterSortFieldInput,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useEncounterListColumns } from './columns';
 import {
@@ -17,6 +18,7 @@ import { useEncounter } from '@openmsupply-client/programs';
 import { Toolbar } from './Toolbar';
 
 const EncounterListComponent: FC = () => {
+  const t = useTranslation();
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -72,7 +74,7 @@ const EncounterListComponent: FC = () => {
         onRowClick={row => {
           navigate(String(row.id));
         }}
-        noDataElement={<NothingHere />}
+        noDataElement={<NothingHere body={t('error.no-encounters')} />}
       />
     </>
   );

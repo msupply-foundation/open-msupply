@@ -1,11 +1,8 @@
 use repository::{
-    system_log_row::SystemLogType, Invoice, InvoiceFilter, InvoiceRepository, RepositoryError,
-    Requisition, RequisitionFilter, RequisitionRepository, StorageConnection,
+    Invoice, InvoiceFilter, InvoiceRepository, RepositoryError, Requisition, RequisitionFilter,
+    RequisitionRepository, StorageConnection,
 };
 use thiserror::Error;
-use util::format_error;
-
-use crate::activity_log::system_log_entry;
 
 pub(crate) mod invoice;
 pub(crate) mod requisition;
@@ -93,14 +90,4 @@ pub(crate) fn get_linked_original_shipment(
     };
 
     Ok(linked_original_shipment)
-}
-
-fn log_system_error(
-    connection: &StorageConnection,
-    error: &impl std::error::Error,
-) -> Result<(), RepositoryError> {
-    let error_message = format_error(error);
-    log::error!("{}", error_message);
-    system_log_entry(connection, SystemLogType::ProcessorError, &error_message)?;
-    Ok(())
 }

@@ -49,7 +49,7 @@ mod graphql {
         test_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.name_service = Box::new(test_service);
         service_provider
     }
@@ -187,6 +187,7 @@ mod graphql {
                 email,
                 is_donor,
                 code_or_name: _,
+                supplying_store_id: _,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));

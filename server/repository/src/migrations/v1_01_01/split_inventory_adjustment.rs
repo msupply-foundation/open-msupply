@@ -117,11 +117,10 @@ async fn split_inventory_adjustment() {
             #[sql_name = "type"] type_ -> Text,
         }
     }
-    use invoice::dsl as invoice_dsl;
 
-    let invoices = invoice_dsl::invoice
-        .select((invoice_dsl::id, invoice_dsl::type_))
-        .order_by(invoice_dsl::id.asc())
+    let invoices = invoice::table
+        .select((invoice::id, invoice::type_))
+        .order_by(invoice::id.asc())
         .load::<(String, String)>(connection.lock().connection())
         .unwrap();
 
@@ -142,15 +141,14 @@ async fn split_inventory_adjustment() {
             inventory_reduction_id -> Nullable<Text>,
         }
     }
-    use stocktake::dsl as stocktake_dsl;
 
-    let stocktakes = stocktake_dsl::stocktake
+    let stocktakes = stocktake::table
         .select((
-            stocktake_dsl::id,
-            stocktake_dsl::inventory_addition_id,
-            stocktake_dsl::inventory_reduction_id,
+            stocktake::id,
+            stocktake::inventory_addition_id,
+            stocktake::inventory_reduction_id,
         ))
-        .order_by(stocktake_dsl::id.asc())
+        .order_by(stocktake::id.asc())
         .load::<(String, Option<String>, Option<String>)>(connection.lock().connection())
         .unwrap();
 

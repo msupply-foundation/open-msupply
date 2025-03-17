@@ -33,6 +33,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("invoice", "picked_datetime"),
         ("invoice", "delivered_datetime"),
         ("invoice", "verified_datetime"),
+        ("invoice", "cancelled_datetime"),
         ("location_movement", "enter_datetime"),
         ("location_movement", "exit_datetime"),
         ("requisition", "created_datetime"),
@@ -52,6 +53,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("rnr_form", "finalised_datetime"),
         ("vaccination", "created_datetime"),
         ("invoice", "backdated_datetime"),
+        ("contact_form", "created_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -89,6 +91,10 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sync_file_reference", "retry_at"),
         ("migration_fragment_log", "datetime"),
         ("system_log", "datetime"),
+        ("email_queue", "created_at"),
+        ("email_queue", "updated_at"),
+        ("email_queue", "sent_at"),
+        ("email_queue", "retry_at"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -117,6 +123,7 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("asset", "warranty_end"),
         ("rnr_form_line", "expiry_date"),
         ("vaccination", "vaccination_date"),
+        ("name_insurance_join", "expiry_date"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -129,13 +136,13 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
 #[cfg(test)]
 #[cfg(feature = "postgres")]
 fn get_exclude_date_fields() -> Vec<TableAndFieldName> {
-    vec![]
-    // .iter()
-    // .map(|(table_name, field_name)| TableAndFieldName {
-    //     table_name,
-    //     field_name,
-    // })
-    // .collect()
+    vec![("diagnosis", "valid_till")]
+        .iter()
+        .map(|(table_name, field_name)| TableAndFieldName {
+            table_name,
+            field_name,
+        })
+        .collect()
 }
 
 #[derive(QueryableByName, Debug, PartialEq)]

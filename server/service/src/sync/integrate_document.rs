@@ -174,7 +174,7 @@ mod integrate_document_test {
         let (_, _, connection_manager, _) =
             setup_all("test_integrate_latest_document", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.program_enrolment_service;
 

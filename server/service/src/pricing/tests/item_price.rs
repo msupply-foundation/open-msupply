@@ -14,7 +14,7 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("discount_from_master_list", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.pricing_service;
 
@@ -81,7 +81,7 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("default_price_list", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.pricing_service;
 
@@ -152,7 +152,7 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("default_price_plus_discount", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.pricing_service;
 

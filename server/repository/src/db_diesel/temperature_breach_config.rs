@@ -1,8 +1,6 @@
 use super::{
-    temperature_breach_config_row::{
-        temperature_breach_config, temperature_breach_config::dsl as temperature_breach_config_dsl,
-    },
-    DBType, StorageConnection, TemperatureBreachConfigRow, TemperatureBreachType,
+    temperature_breach_config_row::temperature_breach_config, DBType, StorageConnection,
+    TemperatureBreachConfigRow, TemperatureBreachType,
 };
 use diesel::prelude::*;
 
@@ -74,10 +72,10 @@ impl<'a> TemperatureBreachConfigRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 TemperatureBreachConfigSortField::Id => {
-                    apply_sort_no_case!(query, sort, temperature_breach_config_dsl::id)
+                    apply_sort_no_case!(query, sort, temperature_breach_config::id)
                 }
                 TemperatureBreachConfigSortField::Description => {
-                    apply_sort_no_case!(query, sort, temperature_breach_config_dsl::description)
+                    apply_sort_no_case!(query, sort, temperature_breach_config::description)
                 }
             }
         } else {
@@ -85,7 +83,7 @@ impl<'a> TemperatureBreachConfigRepository<'a> {
                 key: TemperatureBreachConfigSortField::Description,
                 desc: Some(false),
             };
-            apply_sort_no_case!(query, sort, temperature_breach_config_dsl::description)
+            apply_sort_no_case!(query, sort, temperature_breach_config::description)
         }
 
         let result = query
@@ -113,34 +111,30 @@ fn create_filtered_query(filter: Option<TemperatureBreachConfigFilter>) -> Boxed
         description,
     }) = filter
     {
-        apply_equal_filter!(query, id, temperature_breach_config_dsl::id);
-        apply_equal_filter!(query, r#type, temperature_breach_config_dsl::type_);
+        apply_equal_filter!(query, id, temperature_breach_config::id);
+        apply_equal_filter!(query, r#type, temperature_breach_config::type_);
         apply_equal_filter!(
             query,
             duration_milliseconds,
-            temperature_breach_config_dsl::duration_milliseconds
+            temperature_breach_config::duration_milliseconds
         );
         apply_equal_filter!(
             query,
             minimum_temperature,
-            temperature_breach_config_dsl::minimum_temperature
+            temperature_breach_config::minimum_temperature
         );
         apply_equal_filter!(
             query,
             maximum_temperature,
-            temperature_breach_config_dsl::maximum_temperature
+            temperature_breach_config::maximum_temperature
         );
-        apply_equal_filter!(
-            query,
-            description,
-            temperature_breach_config_dsl::description
-        );
+        apply_equal_filter!(query, description, temperature_breach_config::description);
 
         if let Some(value) = is_active {
-            query = query.filter(temperature_breach_config_dsl::is_active.eq(value));
+            query = query.filter(temperature_breach_config::is_active.eq(value));
         }
 
-        apply_equal_filter!(query, store_id, temperature_breach_config_dsl::store_id);
+        apply_equal_filter!(query, store_id, temperature_breach_config::store_id);
     }
 
     query

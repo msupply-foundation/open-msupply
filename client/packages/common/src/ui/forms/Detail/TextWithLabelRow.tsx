@@ -7,8 +7,8 @@ import {
   TypographyProps,
   SxProps,
   Theme,
+  Tooltip,
 } from '@mui/material';
-
 interface TextWithLabelRowProps {
   label: string;
   labelProps?: FormLabelProps;
@@ -16,6 +16,7 @@ interface TextWithLabelRowProps {
   text: string;
   textProps?: TypographyProps;
   sx?: SxProps<Theme>;
+  showToolTip?: boolean;
 }
 
 export const TextWithLabelRow: FC<TextWithLabelRowProps> = ({
@@ -25,8 +26,10 @@ export const TextWithLabelRow: FC<TextWithLabelRowProps> = ({
   text,
   textProps,
   sx,
+  showToolTip,
 }) => {
   const { sx: labelSx, ...labelPropsRest } = labelProps || {};
+
   return (
     <Box display="flex" sx={sx}>
       <Box style={{ textAlign: 'end', whiteSpace: 'nowrap' }}>
@@ -43,9 +46,11 @@ export const TextWithLabelRow: FC<TextWithLabelRowProps> = ({
         </FormLabel>
       </Box>
       <Box flex={1} sx={sx}>
-        <Typography paddingRight={1.5} {...textProps}>
-          {text}
-        </Typography>
+        <Tooltip title={showToolTip ? text : ''} placement="right">
+          <Typography paddingRight={1.5} {...textProps}>
+            {text}
+          </Typography>
+        </Tooltip>
       </Box>
     </Box>
   );

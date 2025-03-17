@@ -1,4 +1,4 @@
-use super::{demographic_row::demographic::dsl as demographic_dsl, StorageConnection};
+use super::StorageConnection;
 
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
@@ -34,9 +34,9 @@ impl<'a> DemographicRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &DemographicRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(demographic_dsl::demographic)
+        diesel::insert_into(demographic::table)
             .values(row)
-            .on_conflict(demographic_dsl::id)
+            .on_conflict(demographic::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -63,8 +63,8 @@ impl<'a> DemographicRowRepository<'a> {
         &self,
         demographic_id: &str,
     ) -> Result<Option<DemographicRow>, RepositoryError> {
-        let result = demographic_dsl::demographic
-            .filter(demographic_dsl::id.eq(demographic_id))
+        let result = demographic::table
+            .filter(demographic::id.eq(demographic_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -74,8 +74,8 @@ impl<'a> DemographicRowRepository<'a> {
         &self,
         demographic_name: &str,
     ) -> Result<Option<DemographicRow>, RepositoryError> {
-        let result = demographic_dsl::demographic
-            .filter(demographic_dsl::name.eq(demographic_name))
+        let result = demographic::table
+            .filter(demographic::name.eq(demographic_name))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)

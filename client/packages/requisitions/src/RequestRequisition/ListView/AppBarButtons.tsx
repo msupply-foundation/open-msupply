@@ -28,7 +28,7 @@ export const AppBarButtons: FC<{
   const t = useTranslation();
   const navigate = useNavigate();
   const { mutateAsync: onCreate } = useRequest.document.insert();
-  const { mutateAsync: onProgramCreate } = useRequest.document.insertProgram();
+  const { insert: onProgramCreate } = useRequest.document.insertProgram();
   const { success, error } = useNotification();
   const { isLoading, fetchAsync } = useRequest.document.listAll({
     key: 'createdDatetime',
@@ -62,27 +62,25 @@ export const AppBarButtons: FC<{
           isLoading={isLoading}
           onClick={csvExport}
           disabled={EnvUtils.platform === Platform.Android}
-        >
-          {t('button.export')}
-        </LoadingButton>
+          label={t('button.export')}
+        />
       </Grid>
       <CreateRequisitionModal
         isOpen={modalController.isOn}
         onClose={modalController.toggleOff}
         onCreate={async newRequisition => {
-          modalController.toggleOff();
           switch (newRequisition.type) {
             case NewRequisitionType.General:
               return onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId: newRequisition.name.id,
               }).then(({ requisitionNumber }) => {
+                modalController.toggleOff();
                 navigate(
                   RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InternalOrder)
                     .addPart(String(requisitionNumber))
-                    .build(),
-                  { replace: true }
+                    .build()
                 );
               });
             case NewRequisitionType.Program:
@@ -91,14 +89,16 @@ export const AppBarButtons: FC<{
               return onProgramCreate({
                 id: FnUtils.generateUUID(),
                 ...rest,
-              }).then(({ requisitionNumber }) => {
-                navigate(
-                  RouteBuilder.create(AppRoute.Replenishment)
-                    .addPart(AppRoute.InternalOrder)
-                    .addPart(String(requisitionNumber))
-                    .build(),
-                  { replace: true }
-                );
+              }).then((response) => {
+                if (response.__typename == "RequisitionNode") {
+                  modalController.toggleOff()
+                  navigate(
+                    RouteBuilder.create(AppRoute.Replenishment)
+                      .addPart(AppRoute.InternalOrder)
+                      .addPart(String(response.requisitionNumber))
+                      .build()
+                  );
+                }
               });
           }
         }}

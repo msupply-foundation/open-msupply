@@ -10,23 +10,31 @@ import {
   useTranslation,
   useNavigate,
   RouteBuilder,
+  InvoiceNodeStatus,
+  useConfirmationModal,
+  MinusCircleIcon,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
+import { PrescriptionDetailsSection } from './PrescriptionDetailsSection';
 import { PricingSection } from './PricingSection';
-import { canDeleteInvoice } from '../../../utils';
+import { canCancelInvoice, canDeleteInvoice } from '../../../utils';
+import { PatientDetails } from './PatientDetails';
 
 export const SidePanelComponent = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { success } = useNotification();
-  const { data } = usePrescription.document.get();
-  const { mutateAsync } = usePrescription.document.delete();
+  const {
+    query: { data },
+    update: { update },
+    delete: { deletePrescription },
+  } = usePrescription();
   const canDelete = data ? canDeleteInvoice(data) : false;
+  const canCancel = data ? canCancelInvoice(data) : false;
 
   const deleteAction = async () => {
-    if (!data) return;
-    await mutateAsync([data]);
+    await deletePrescription();
     navigate(
       RouteBuilder.create(AppRoute.Dispensary)
         .addPart(AppRoute.Prescription)
@@ -53,16 +61,30 @@ export const SidePanelComponent = () => {
     },
   });
 
+  const onCancel = useConfirmationModal({
+    onConfirm: () => update({ status: InvoiceNodeStatus.Cancelled }),
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-cancel-prescription'),
+  });
+
   return (
     <DetailPanelPortal
       Actions={
         <>
-          <DetailPanelAction
-            icon={<DeleteIcon />}
-            title={t('label.delete')}
-            onClick={onDelete}
-            disabled={!canDelete}
-          />
+          {canDelete && (
+            <DetailPanelAction
+              icon={<DeleteIcon />}
+              title={t('label.delete')}
+              onClick={onDelete}
+            />
+          )}
+          {canCancel && (
+            <DetailPanelAction
+              icon={<MinusCircleIcon />}
+              title={t('label.cancel-prescription')}
+              onClick={onCancel}
+            />
+          )}
           <DetailPanelAction
             icon={<CopyIcon />}
             title={t('link.copy-to-clipboard')}
@@ -71,8 +93,10 @@ export const SidePanelComponent = () => {
         </>
       }
     >
+      <PrescriptionDetailsSection />
       <AdditionalInfoSection />
       <PricingSection />
+      <PatientDetails />
     </DetailPanelPortal>
   );
 };

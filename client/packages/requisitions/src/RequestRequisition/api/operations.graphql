@@ -1,18 +1,3 @@
-fragment ItemWithStats on ItemNode {
-  id
-  name
-  code
-  unitName
-  defaultPackSize
-  availableStockOnHand(storeId: $storeId)
-  stats(storeId: $storeId) {
-    averageMonthlyConsumption
-    availableStockOnHand
-    availableMonthsOfStockOnHand
-    totalConsumption
-  }
-}
-
 fragment RequestRow on RequisitionNode {
   colour
   comment
@@ -32,34 +17,15 @@ fragment RequestRow on RequisitionNode {
   }
   programName
   period {
+    id
     name
     startDate
     endDate
   }
+  program {
+    id
+  }
   orderType
-}
-
-fragment RequestLine on RequisitionLineNode {
-  id
-  itemId
-  requestedQuantity
-  suggestedQuantity
-  comment
-  itemName
-
-  itemStats {
-    __typename
-    availableStockOnHand
-    availableMonthsOfStockOnHand
-    averageMonthlyConsumption
-  }
-  linkedRequisitionLine {
-    approvedQuantity
-    approvalComment
-  }
-  item {
-    ...ItemWithStats
-  }
 }
 
 fragment Request on RequisitionNode {
@@ -92,6 +58,10 @@ fragment Request on RequisitionNode {
     nodes {
       ...RequestLine
     }
+  }
+
+  program {
+    id
   }
 
   shipments {
@@ -128,11 +98,13 @@ fragment Request on RequisitionNode {
   }
   programName
   period {
+    id
     name
     startDate
     endDate
   }
   orderType
+  isEmergency
 }
 
 fragment ConsumptionHistory on ConsumptionHistoryNode {
@@ -422,7 +394,33 @@ mutation insertProgramRequest(
       id
       requisitionNumber
     }
+    ... on InsertProgramRequestRequisitionError {
+      __typename
+      error {
+        description
+        ... on MaxOrdersReachedForPeriod {
+          __typename
+          description
+        }
+      }
+    }
   }
+}
+
+fragment RequisitionReasonNotProvidedError on RequisitionReasonNotProvided {
+  __typename
+  requisitionLine {
+    id
+  }
+  description
+}
+
+fragment RequisitionReasonsNotProvidedError on RequisitionReasonsNotProvided {
+  __typename
+  errors {
+    ...RequisitionReasonNotProvidedError
+  }
+  description
 }
 
 mutation updateRequest(
@@ -450,6 +448,14 @@ mutation updateRequest(
         ... on OtherPartyNotASupplier {
           __typename
           description
+        }
+        ... on OrderingTooManyItems {
+          __typename
+          description
+          maxItemsInEmergencyOrder
+        }
+        ... on RequisitionReasonsNotProvided {
+          ...RequisitionReasonsNotProvidedError
         }
       }
     }
@@ -490,24 +496,142 @@ mutation deleteRequest(
   }
 }
 
+fragment OrderTypeRow on ProgramRequisitionOrderTypeNode {
+  id
+  name
+  availablePeriods {
+    id
+    name
+  }
+  isEmergency
+}
+
 fragment SupplierProgramSettings on SupplierProgramRequisitionSettingNode {
   programName
   programId
+  tagName
   suppliers {
     ...NameRow
   }
   orderTypes {
-    id
-    name
-    availablePeriods {
-      id
-      name
-    }
+    ...OrderTypeRow
   }
 }
 
 query supplierProgramSettings($storeId: String!) {
   supplierProgramRequisitionSettings(storeId: $storeId) {
     ...SupplierProgramSettings
+  }
+}
+
+fragment ProgramIndicator on ProgramIndicatorNode {
+  code
+  lineAndColumns {
+    ...IndicatorLineWithColumns
+  }
+  id
+}
+fragment IndicatorLineRow on IndicatorLineRowNode {
+  id
+  code
+  lineNumber
+  name
+  valueType
+}
+fragment IndicatorColumn on IndicatorColumnNode {
+  id
+  columnNumber
+  name
+  valueType
+  value(
+    periodId: $periodId
+    customerNameId: $customerNameId
+    storeId: $storeId
+  ) {
+    ...IndicatorValue
+  }
+}
+fragment IndicatorValue on IndicatorValueNode {
+  id
+  value
+}
+fragment CustomerIndicatorInfo on CustomerIndicatorInformationNode {
+  __typename
+  datetime
+  id
+  customer(storeId: $storeId) {
+    __typename
+    id
+    name
+  }
+  indicatorInformation {
+    __typename
+    columnId
+    value
+  }
+}
+
+fragment CustomerColumn on IndicatorColumnNode {
+  __typename
+  columnNumber
+  name
+}
+
+fragment IndicatorLineWithColumns on IndicatorLineNode {
+  columns {
+    ...IndicatorColumn
+  }
+  line {
+    ...IndicatorLineRow
+  }
+  customerIndicatorInfo(periodId: $periodId, storeId: $storeId) {
+    ...CustomerIndicatorInfo
+  }
+}
+
+query programIndicators(
+  $customerNameId: String!
+  $periodId: String!
+  $storeId: String!
+  $programId: String!
+) {
+  programIndicators(
+    storeId: $storeId
+    filter: { programId: { equalTo: $programId } }
+  ) {
+    ... on ProgramIndicatorConnector {
+      __typename
+      nodes {
+        ...ProgramIndicator
+      }
+      totalCount
+    }
+  }
+}
+
+mutation updateIndicatorValue(
+  $storeId: String!
+  $input: UpdateIndicatorValueInput!
+) {
+  updateIndicatorValue(input: $input, storeId: $storeId) {
+    __typename
+    ... on IndicatorValueNode {
+      id
+      value
+    }
+    ... on UpdateIndicatorValueError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on ValueTypeNotCorrect {
+          __typename
+          description
+        }
+      }
+    }
   }
 }

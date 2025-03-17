@@ -1,4 +1,4 @@
-use super::{vaccination_card::vaccination_card::dsl as vaccination_card_dsl, StorageConnection};
+use super::StorageConnection;
 
 use crate::{diesel_macros::apply_equal_filter, EqualFilter, RepositoryError};
 use diesel::prelude::*;
@@ -60,16 +60,16 @@ impl<'a> VaccinationCardRepository<'a> {
         &self,
         program_enrolment_id: String,
     ) -> Result<Vec<VaccinationCardRow>, RepositoryError> {
-        let mut query = vaccination_card_dsl::vaccination_card.into_boxed();
+        let mut query = vaccination_card::table.into_boxed();
 
         apply_equal_filter!(
             query,
             Some(EqualFilter::equal_to(&program_enrolment_id)),
-            vaccination_card_dsl::program_enrolment_id
+            vaccination_card::program_enrolment_id
         );
 
         Ok(query
-            .order(vaccination_card_dsl::min_age.asc())
+            .order(vaccination_card::min_age.asc())
             .load::<VaccinationCardRow>(self.connection.lock().connection())?)
     }
 }

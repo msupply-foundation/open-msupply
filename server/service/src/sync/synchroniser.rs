@@ -1,4 +1,5 @@
 use crate::{
+    processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
     sync::{sync_status::logger::SyncStep, CentralServerConfig},
 };
@@ -284,6 +285,12 @@ impl Synchroniser {
         ctx.processors_trigger
             .trigger_requisition_transfer_processors();
         ctx.processors_trigger.trigger_invoice_transfer_processors();
+
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::ContactFormEmail);
+
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::LoadPlugin);
 
         Ok(())
     }

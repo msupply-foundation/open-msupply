@@ -1,9 +1,4 @@
-use super::{
-    demographic_indicator_row::{
-        demographic_indicator, demographic_indicator::dsl as demographic_indicator_dsl,
-    },
-    DBType, StorageConnection,
-};
+use super::{demographic_indicator_row::demographic_indicator, DBType, StorageConnection};
 use diesel::prelude::*;
 
 use crate::{
@@ -67,14 +62,14 @@ impl<'a> DemographicIndicatorRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 DemographicIndicatorSortField::Id => {
-                    apply_sort_no_case!(query, sort, demographic_indicator_dsl::id)
+                    apply_sort_no_case!(query, sort, demographic_indicator::id)
                 }
                 DemographicIndicatorSortField::Name => {
-                    apply_sort_no_case!(query, sort, demographic_indicator_dsl::name)
+                    apply_sort_no_case!(query, sort, demographic_indicator::name)
                 }
             }
         } else {
-            query = query.order(demographic_indicator_dsl::name.asc())
+            query = query.order(demographic_indicator::name.asc())
         }
 
         let final_query = query
@@ -94,13 +89,9 @@ fn create_filtered_query(filter: Option<DemographicIndicatorFilter>) -> BoxedLog
     let mut query = demographic_indicator::table.into_boxed();
 
     if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, demographic_indicator_dsl::id);
-        apply_string_filter!(query, filter.name, demographic_indicator_dsl::name);
-        apply_equal_filter!(
-            query,
-            filter.base_year,
-            demographic_indicator_dsl::base_year
-        );
+        apply_equal_filter!(query, filter.id, demographic_indicator::id);
+        apply_string_filter!(query, filter.name, demographic_indicator::name);
+        apply_equal_filter!(query, filter.base_year, demographic_indicator::base_year);
     }
     query
 }

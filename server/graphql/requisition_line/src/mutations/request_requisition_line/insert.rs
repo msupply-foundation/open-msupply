@@ -22,8 +22,6 @@ pub struct InsertInput {
     pub id: String,
     pub item_id: String,
     pub requisition_id: String,
-    pub requested_quantity: Option<f64>,
-    pub comment: Option<String>,
 }
 
 #[derive(Interface)]
@@ -85,16 +83,12 @@ impl InsertInput {
             id,
             item_id,
             requisition_id,
-            requested_quantity,
-            comment,
         } = self;
 
         ServiceInput {
             id,
             item_id,
             requisition_id,
-            requested_quantity,
-            comment,
         }
     }
 }
@@ -128,7 +122,9 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::CannotAddItemToProgramRequisition => BadUserInput(formatted_error),
         ServiceError::CannotFindItemStatusForRequisitionLine => InternalError(formatted_error),
         ServiceError::NewlyCreatedRequisitionLineDoesNotExist => InternalError(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::DatabaseError(_) | ServiceError::PluginError(_) => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
@@ -179,7 +175,7 @@ mod test {
         test_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.requisition_line_service = Box::new(test_service);
         service_provider
     }
@@ -386,8 +382,6 @@ mod test {
                     id: "new line id input".to_string(),
                     item_id: mock_item_a().id,
                     requisition_id: "requisition id input".to_string(),
-                    requested_quantity: Some(1.0),
-                    comment: Some("comment".to_string())
                 }
             );
             Ok(RequisitionLine {
@@ -402,8 +396,6 @@ mod test {
             "id": "new line id input",
             "requisitionId": "requisition id input",
             "itemId": "item_a",
-            "requestedQuantity": 1,
-            "comment": "comment"
           },
           "storeId": "store_a"
         });

@@ -5,10 +5,7 @@ import {
   InputWithLabelRow,
   BasicTextInput,
   Grid,
-  DropdownMenu,
   useTranslation,
-  DropdownMenuItem,
-  DeleteIcon,
   useIsGrouped,
   Switch,
 } from '@openmsupply-client/common';
@@ -27,10 +24,6 @@ export const Toolbar: FC = () => {
   const { mutateAsync: updateOtherParty } =
     useReturns.document.updateOtherParty();
 
-  const onDelete = useReturns.lines.deleteSelectedSupplierLines({
-    returnId: id,
-  });
-
   const update = (data: Partial<SupplierReturnFragment>) => {
     if (!id) return;
     setBufferedState({ ...data });
@@ -48,7 +41,7 @@ export const Toolbar: FC = () => {
         flex={1}
         alignItems="flex-end"
       >
-        <Grid item display="flex" flex={1}>
+        <Grid display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
             {otherParty && (
               <InputWithLabelRow
@@ -82,7 +75,6 @@ export const Toolbar: FC = () => {
           </Box>
         </Grid>
         <Grid
-          item
           display="flex"
           gap={1}
           justifyContent="flex-end"
@@ -97,15 +89,6 @@ export const Toolbar: FC = () => {
               color="secondary"
             />
           </Box>
-          <DropdownMenu label={t('label.actions')}>
-            <DropdownMenuItem
-              IconComponent={DeleteIcon}
-              onClick={onDelete}
-              disabled={isDisabled}
-            >
-              {t('button.delete-lines')}
-            </DropdownMenuItem>
-          </DropdownMenu>
         </Grid>
       </Grid>
     </AppBarContentPortal>

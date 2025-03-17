@@ -3,9 +3,11 @@ import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   DetailInputWithLabelRow,
+  LocaleKey,
   NumericTextInput,
   NumericTextInputProps,
   useDebounceCallback,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
 import { z } from 'zod';
@@ -24,6 +26,8 @@ type Options = z.infer<typeof Options>;
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, errors, schema, uischema } = props;
+
+  const t = useTranslation();
   const [localData, setLocalData] = useState<number | undefined>(data);
   const onChange = useDebounceCallback(
     (value: number | undefined) => handleChange(path, value),
@@ -41,8 +45,10 @@ const UIComponent = (props: ControlProps) => {
   const inputProps: NumericTextInputProps & {
     onChange: (newValue: number) => void;
   } = {
-    InputProps: {
-      sx: { '& .MuiInput-input': { textAlign: 'right' } },
+    slotProps: {
+      input: {
+        sx: { '& .MuiInput-input': { textAlign: 'right' } },
+      },
     },
     onChange: value => {
       setLocalData(value);
@@ -60,7 +66,7 @@ const UIComponent = (props: ControlProps) => {
   return (
     <DetailInputWithLabelRow
       sx={DefaultFormRowSx}
-      label={label}
+      label={t(label as LocaleKey)}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={inputAlignment}
       inputSx={{ paddingRight: `${paddingRight}px` }}

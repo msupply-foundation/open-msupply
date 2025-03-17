@@ -1,6 +1,5 @@
 use super::{
-    location_movement_row::location_movement::dsl as location_movement_dsl, location_row::location,
-    stock_line_row::stock_line, store_row::store, StorageConnection,
+    location_row::location, stock_line_row::stock_line, store_row::store, StorageConnection,
 };
 use crate::{repository_error::RepositoryError, Upsert};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
@@ -44,9 +43,9 @@ impl<'a> LocationMovementRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &LocationMovementRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(location_movement_dsl::location_movement)
+        diesel::insert_into(location_movement::table)
             .values(row)
-            .on_conflict(location_movement_dsl::id)
+            .on_conflict(location_movement::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -70,18 +69,16 @@ impl<'a> LocationMovementRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<LocationMovementRow>, RepositoryError> {
-        let result = location_movement_dsl::location_movement
-            .filter(location_movement_dsl::id.eq(id))
+        let result = location_movement::table
+            .filter(location_movement::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(
-            location_movement_dsl::location_movement.filter(location_movement_dsl::id.eq(id)),
-        )
-        .execute(self.connection.lock().connection())?;
+        diesel::delete(location_movement::table.filter(location_movement::id.eq(id)))
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

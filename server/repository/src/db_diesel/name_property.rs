@@ -1,7 +1,5 @@
 use super::{
-    name_property_row::{name_property, name_property::dsl as name_property_dsl},
-    property_row::{property, property::dsl as property_dsl},
-    NamePropertyRow, StorageConnection,
+    name_property_row::name_property, property_row::property, NamePropertyRow, StorageConnection,
 };
 
 use crate::{diesel_macros::apply_equal_filter, PropertyRow};
@@ -61,12 +59,12 @@ impl<'a> NamePropertyRepository<'a> {
     }
 
     pub fn create_filtered_query(filter: Option<NamePropertyFilter>) -> BoxedNamePropertyQuery {
-        let mut query = name_property_dsl::name_property
-            .inner_join(property_dsl::property)
+        let mut query = name_property::table
+            .inner_join(property::table)
             .into_boxed();
 
         if let Some(filter) = filter {
-            apply_equal_filter!(query, filter.id, name_property_dsl::id);
+            apply_equal_filter!(query, filter.id, name_property::id);
         }
 
         query

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   BasicSpinner,
   DetailContainer,
@@ -9,18 +9,19 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useResponse } from '../../api';
-import { PageLayout } from '../PageLayout';
-import { ListIndicatorLines } from './ListIndicators';
+import { PageLayout } from '../../../common/PageLayout';
 import { AppRoute } from '@openmsupply-client/config';
 import { AppBarButtons } from '../ResponseLineEdit/AppBarButtons';
 import { usePreviousNextIndicatorLine } from './hooks';
 import { IndicatorLineEdit } from './IndicatorLineEdit';
+import { ListIndicatorLines } from '../../../common';
 
 export const IndicatorEditPage = () => {
   const t = useTranslation();
   const { programIndicatorLineId, programIndicatorCode } = useParams();
   const { data: response, isLoading } = useResponse.document.get();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const isDisabled = useResponse.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useResponse.document.indicators(
       response?.otherPartyId ?? '',
@@ -38,7 +39,8 @@ export const IndicatorEditPage = () => {
   const currentLineAndColumns = linesAndColumns.find(
     l => l.line.id == programIndicatorLineId
   );
-  // Lines may be added to a program_indicator after the requisition was made. We need to hide them, as they're not valid or necessary for past requisitions.
+  // Should only include indicators if they have at least one column with a value
+  // Filtering for !value done on FE because values are queried via loader
   const populatedLines = linesAndColumns.filter(l =>
     l.columns.find(c => c.value)
   );
@@ -59,7 +61,15 @@ export const IndicatorEditPage = () => {
       },
       [2, 3]
     );
-  }, [programIndicatorLineId]);
+  }, [programIndicatorLineId, programIndicators]);
+
+  // This ref is attached to the currently selected list item, and is used to
+  // "scroll into view" when the Previous/Next buttons are clicked in the NavBar
+  const scrollRef = useRef<null | HTMLLIElement>(null);
+  const scrollSelectedItemIntoView = () =>
+    // Small time delay to allow the ref to change to the previous/next item in
+    // the list before scrolling to it
+    setTimeout(() => scrollRef.current?.scrollIntoView(), 100);
 
   if (isLoading || isProgramIndicatorsLoading) {
     return <BasicSpinner />;
@@ -83,6 +93,7 @@ export const IndicatorEditPage = () => {
                   .addPart(String(response?.requisitionNumber))
                   .addPart(AppRoute.Indicators)
                   .addPart(String(programIndicatorCode))}
+                scrollRef={scrollRef}
               />
             </>
           }
@@ -95,6 +106,8 @@ export const IndicatorEditPage = () => {
                 hasPrevious={hasPrevious}
                 previous={previous}
                 requisitionNumber={response?.requisitionNumber}
+                disabled={isDisabled}
+                scrollIntoView={scrollSelectedItemIntoView}
               />
             </>
           }

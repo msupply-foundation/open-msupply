@@ -76,11 +76,10 @@ async fn remove_sqlite_check_invoice_line() {
             #[sql_name = "type"] type_ -> Text,
         }
     }
-    use invoice_line::dsl as invoice_line_dsl;
 
-    let invoice_lines = invoice_line_dsl::invoice_line
-        .select((invoice_line_dsl::id, invoice_line_dsl::type_))
-        .order_by(invoice_line_dsl::id.asc())
+    let invoice_lines = invoice_line::table
+        .select((invoice_line::id, invoice_line::type_))
+        .order_by(invoice_line::id.asc())
         .load::<(String, String)>(connection.lock().connection())
         .unwrap();
 

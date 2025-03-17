@@ -32,7 +32,7 @@ pub enum RequisitionSortFieldInput {
     TheirReference,
     OrderType,
     ProgramName,
-    PeriodName,
+    PeriodStartDate,
 }
 
 #[derive(InputObject)]
@@ -76,6 +76,9 @@ pub struct RequisitionFilterInput {
     pub comment: Option<StringFilterInput>,
     pub order_type: Option<EqualFilterStringInput>,
     pub a_shipment_has_been_created: Option<bool>,
+    pub period_id: Option<EqualFilterStringInput>,
+    pub program_id: Option<EqualFilterStringInput>,
+    pub elmis_code: Option<EqualFilterStringInput>,
 }
 
 #[derive(Union)]
@@ -206,7 +209,7 @@ impl RequisitionSortInput {
             from::TheirReference => to::TheirReference,
             from::OrderType => to::OrderType,
             from::ProgramName => to::ProgramName,
-            from::PeriodName => to::PeriodName,
+            from::PeriodStartDate => to::PeriodStartDate,
         };
 
         RequisitionSort {
@@ -237,10 +240,13 @@ impl RequisitionFilterInput {
             colour: self.colour.map(EqualFilter::from),
             their_reference: self.their_reference.map(StringFilter::from),
             comment: self.comment.map(StringFilter::from),
-            linked_requisition_id: None,
-            store_id: None,
             order_type: self.order_type.map(EqualFilter::from),
             a_shipment_has_been_created: self.a_shipment_has_been_created,
+            period_id: self.period_id.map(EqualFilter::from),
+            program_id: self.program_id.map(EqualFilter::from),
+            elmis_code: self.elmis_code.map(EqualFilter::from),
+            linked_requisition_id: None,
+            store_id: None,
         }
     }
 }

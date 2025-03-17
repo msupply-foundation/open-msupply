@@ -13,12 +13,14 @@ import {
   useToggle,
   useUrlQueryParams,
   ColumnFormat,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
-import { usePrescription } from '../api';
+import { usePrescriptionList, usePrescription } from '../api';
 import { PrescriptionRowFragment } from '../api/operations.generated';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
+import { Footer } from './Footer';
 
 const useDisablePrescriptionRows = (rows?: PrescriptionRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -31,24 +33,49 @@ const useDisablePrescriptionRows = (rows?: PrescriptionRowFragment[]) => {
 };
 
 const PrescriptionListViewComponent: FC = () => {
-  const { mutate: onUpdate } = usePrescription.document.update();
+  const {
+    update: { update },
+  } = usePrescription();
   const t = useTranslation();
   const {
     updateSortQuery,
     updatePaginationQuery,
     filter,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
+    queryParams: { page, first, offset, sortBy, filterBy },
+  } = useUrlQueryParams({
+    initialSort: { key: 'prescriptionDatetime', dir: 'desc' },
+    filters: [
+      { key: 'otherPartyName' },
+      { key: 'theirReference' },
+      { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
+      {
+        key: 'createdOrBackdatedDatetime',
+        condition: 'between',
+      },
+      {
+        key: 'status',
+        condition: 'equalTo',
+      },
+    ],
+  });
+  const listParams = {
+    sortBy,
+    first,
+    offset,
+    filterBy,
+  };
   const navigate = useNavigate();
   const modalController = useToggle();
-
-  const { data, isError, isLoading } = usePrescription.document.list();
+  const {
+    query: { data, isError, isLoading },
+  } = usePrescriptionList(listParams);
   const pagination = { page, first, offset };
   useDisablePrescriptionRows(data?.nodes);
 
   const columns = useColumns<PrescriptionRowFragment>(
     [
-      [getNameAndColorColumn(), { setter: onUpdate }],
+      GenericColumnKey.Selection,
+      [getNameAndColorColumn(), { setter: update }],
       [
         'status',
         {
@@ -70,8 +97,11 @@ const PrescriptionListViewComponent: FC = () => {
             : rowData.createdDatetime,
         sortable: true,
       },
+      [
+        'theirReference',
+        { description: '', maxWidth: 110 },
+      ],
       ['comment'],
-      'selection',
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
@@ -80,8 +110,10 @@ const PrescriptionListViewComponent: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons modalController={modalController} />
-
+      <AppBarButtons
+        modalController={modalController}
+        listParams={listParams}
+      />
       <DataTable
         id="prescription-list"
         enableColumnSelection
@@ -101,6 +133,7 @@ const PrescriptionListViewComponent: FC = () => {
           navigate(String(row.invoiceNumber));
         }}
       />
+      <Footer listParams={listParams} />
     </>
   );
 };

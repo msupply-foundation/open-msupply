@@ -230,6 +230,10 @@ macro_rules! apply_date_time_filter {
                 $query = $query.filter($dsl_field.eq(value));
             }
 
+            if let Some(value) = date_time_filter.before {
+                $query = $query.filter($dsl_field.lt(value));
+            }
+
             if let Some(value) = date_time_filter.before_or_equal_to {
                 $query = $query.filter($dsl_field.le(value));
             }

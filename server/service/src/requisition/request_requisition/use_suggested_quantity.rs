@@ -89,7 +89,10 @@ fn generate(
                  mut requisition_line_row,
                  ..
              }| {
-                requisition_line_row.requested_quantity = requisition_line_row.suggested_quantity;
+                if requisition_line_row.requested_quantity == 0.00 {
+                    requisition_line_row.requested_quantity =
+                        requisition_line_row.suggested_quantity;
+                }
 
                 requisition_line_row
             },
@@ -132,7 +135,7 @@ mod test {
         let (_, _, connection_manager, _) =
             setup_all("use_suggested_quantity_errors", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -191,7 +194,7 @@ mod test {
         let (_, connection, connection_manager, _) =
             setup_all("use_suggested_quantity_success", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -219,10 +222,12 @@ mod test {
         assert_eq!(result, lines);
 
         for requisition_line in lines {
-            assert_eq!(
-                requisition_line.requisition_line_row.requested_quantity,
-                requisition_line.requisition_line_row.suggested_quantity
-            )
+            if requisition_line.requisition_line_row.requested_quantity == 0.00 {
+                assert_eq!(
+                    requisition_line.requisition_line_row.requested_quantity,
+                    requisition_line.requisition_line_row.suggested_quantity
+                )
+            }
         }
     }
 }

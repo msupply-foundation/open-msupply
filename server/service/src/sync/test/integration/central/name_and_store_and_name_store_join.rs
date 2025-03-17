@@ -6,7 +6,7 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{
-    NameRow, NameStoreJoinRow, NameStoreJoinRowDelete, NameRowType, StoreMode, StoreRow,
+    NameRow, NameRowType, NameStoreJoinRow, NameStoreJoinRowDelete, StoreMode, StoreRow,
 };
 
 use serde_json::json;
@@ -52,6 +52,8 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             date_of_death: None,
             custom_data_string: Some(r#"{"check":"check"}"#.to_string()),
             deleted_datetime: None,
+            next_of_kin_id: None,
+            next_of_kin_name: None,
         };
         let name_json1 = json!({
             "ID": name_row1.id,

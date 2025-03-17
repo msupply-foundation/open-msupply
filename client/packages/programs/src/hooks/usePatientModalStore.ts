@@ -13,6 +13,7 @@ export enum PatientModal {
   ProgramSearch = 'PROGRAM_SEARCH',
   Encounter = 'ENCOUNTER',
   ContactTraceSearch = 'CONTACT_TRACE_SEARCH',
+  Insurance = 'INSURANCE',
 }
 
 /**

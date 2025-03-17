@@ -22,7 +22,7 @@ import { JsonData } from '@openmsupply-client/programs';
 
 interface AppBarButtonProps {
   isDisabled: boolean;
-  onAddItem: (newState: boolean) => void;
+  onAddItem: () => void;
 }
 
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
@@ -50,7 +50,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           disabled={isDisabled || isProgram}
           label={t('button.add-item')}
           Icon={<PlusCircleIcon />}
-          onClick={() => onAddItem(true)}
+          onClick={onAddItem}
         />
 
         <AddFromMasterListButton />
@@ -66,9 +66,8 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
             variant="outlined"
             startIcon={<PrinterIcon />}
             isLoading={isPrinting}
-          >
-            {t('button.print')}
-          </LoadingButton>
+            label={t('button.print')}
+          />
         </ReportSelector>
         {OpenButton}
       </Grid>

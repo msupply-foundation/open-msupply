@@ -2,26 +2,15 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { ItemRowFragmentDoc } from 'packages/system/src/Item/api/operations.generated';
-import { NameRowFragmentDoc } from 'packages/system/src/Name/api/operations.generated';
-import { ReasonOptionRowFragmentDoc } from 'packages/system/src/ReasonOption/api/operations.generated';
+import {
+  RequisitionReasonsNotProvidedErrorFragmentDoc,
+  OrderTypeRowFragmentDoc,
+  ProgramIndicatorFragmentDoc,
+} from '../../RequestRequisition/api/operations.generated';
+import { ItemRowFragmentDoc } from '../../../../system/src/Item/api/operations.generated';
+import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
+import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type RequisitionReasonNotProvidedErrorFragment = {
-  __typename: 'RequisitionReasonNotProvided';
-  description: string;
-  requisitionLine: { __typename: 'RequisitionLineNode'; id: string };
-};
-
-export type RequisitionReasonsNotProvidedErrorFragment = {
-  __typename: 'RequisitionReasonsNotProvided';
-  description: string;
-  errors: Array<{
-    __typename: 'RequisitionReasonNotProvided';
-    description: string;
-    requisitionLine: { __typename: 'RequisitionLineNode'; id: string };
-  }>;
-};
-
 export type UpdateResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpdateResponseRequisitionInput;
@@ -35,6 +24,11 @@ export type UpdateResponseMutation = {
         __typename: 'UpdateResponseRequisitionError';
         error:
           | { __typename: 'CannotEditRequisition'; description: string }
+          | {
+              __typename: 'OrderingTooManyItems';
+              description: string;
+              maxItemsInEmergencyOrder: number;
+            }
           | { __typename: 'RecordNotFound'; description: string }
           | {
               __typename: 'RequisitionReasonsNotProvided';
@@ -51,12 +45,12 @@ export type UpdateResponseMutation = {
       };
 };
 
-export type DeleteRequestMutationVariables = Types.Exact<{
+export type DeleteResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.BatchResponseRequisitionInput;
 }>;
 
-export type DeleteRequestMutation = {
+export type DeleteResponseMutation = {
   __typename: 'Mutations';
   batchResponseRequisition: {
     __typename: 'BatchResponseRequisitionResponse';
@@ -103,7 +97,7 @@ export type ResponseLineFragment = {
   approvalComment?: string | null;
   itemStats: {
     __typename: 'ItemStatsNode';
-    availableStockOnHand: number;
+    stockOnHand: number;
     availableMonthsOfStockOnHand?: number | null;
     averageMonthlyConsumption: number;
   };
@@ -151,6 +145,7 @@ export type ResponseFragment = {
   approvalStatus: Types.RequisitionNodeApprovalStatus;
   programName?: string | null;
   orderType?: string | null;
+  isEmergency: boolean;
   user?: {
     __typename: 'UserNode';
     username: string;
@@ -199,7 +194,7 @@ export type ResponseFragment = {
       approvalComment?: string | null;
       itemStats: {
         __typename: 'ItemStatsNode';
-        availableStockOnHand: number;
+        stockOnHand: number;
         availableMonthsOfStockOnHand?: number | null;
         averageMonthlyConsumption: number;
       };
@@ -277,6 +272,7 @@ export type ResponseByNumberQuery = {
         approvalStatus: Types.RequisitionNodeApprovalStatus;
         programName?: string | null;
         orderType?: string | null;
+        isEmergency: boolean;
         user?: {
           __typename: 'UserNode';
           username: string;
@@ -325,7 +321,7 @@ export type ResponseByNumberQuery = {
             approvalComment?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
-              availableStockOnHand: number;
+              stockOnHand: number;
               availableMonthsOfStockOnHand?: number | null;
               averageMonthlyConsumption: number;
             };
@@ -476,7 +472,10 @@ export type InsertProgramResponseMutationVariables = Types.Exact<{
 export type InsertProgramResponseMutation = {
   __typename: 'Mutations';
   insertProgramResponseRequisition:
-    | { __typename: 'InsertProgramResponseRequisitionError' }
+    | {
+        __typename: 'InsertProgramResponseRequisitionError';
+        error: { __typename: 'MaxOrdersReachedForPeriod'; description: string };
+      }
     | { __typename: 'RequisitionNode'; id: string; requisitionNumber: number };
 };
 
@@ -527,6 +526,10 @@ export type UpdateResponseLineMutation = {
       };
 };
 
+export type CannotDeleteLineLinkedToShipmentErrorFragment = {
+  __typename: 'CannotDeleteLineLinkedToShipment';
+};
+
 export type DeleteResponseLinesMutationVariables = Types.Exact<{
   ids?: Types.InputMaybe<
     | Array<Types.DeleteResponseRequisitionLineInput>
@@ -547,6 +550,10 @@ export type DeleteResponseLinesMutation = {
         | {
             __typename: 'DeleteResponseRequisitionLineError';
             error:
+              | {
+                  __typename: 'CannotDeleteLineLinkedToShipment';
+                  description: string;
+                }
               | { __typename: 'CannotEditRequisition'; description: string }
               | { __typename: 'ForeignKeyError'; description: string }
               | { __typename: 'RecordNotFound'; description: string };
@@ -628,6 +635,7 @@ export type ResponseRequisitionStatsQuery = {
 export type CustomerProgramSettingsFragment = {
   __typename: 'CustomerProgramRequisitionSettingNode';
   programName: string;
+  tagName: string;
   programId: string;
   customerAndOrderTypes: Array<{
     __typename: 'CustomerAndOrderTypeNode';
@@ -645,6 +653,7 @@ export type CustomerProgramSettingsFragment = {
       __typename: 'ProgramRequisitionOrderTypeNode';
       id: string;
       name: string;
+      isEmergency: boolean;
       availablePeriods: Array<{
         __typename: 'PeriodNode';
         id: string;
@@ -663,6 +672,7 @@ export type CustomerProgramSettingsQuery = {
   customerProgramRequisitionSettings: Array<{
     __typename: 'CustomerProgramRequisitionSettingNode';
     programName: string;
+    tagName: string;
     programId: string;
     customerAndOrderTypes: Array<{
       __typename: 'CustomerAndOrderTypeNode';
@@ -680,6 +690,7 @@ export type CustomerProgramSettingsQuery = {
         __typename: 'ProgramRequisitionOrderTypeNode';
         id: string;
         name: string;
+        isEmergency: boolean;
         availablePeriods: Array<{
           __typename: 'PeriodNode';
           id: string;
@@ -690,86 +701,8 @@ export type CustomerProgramSettingsQuery = {
   }>;
 };
 
-export type ProgramIndicatorFragment = {
-  __typename: 'ProgramIndicatorNode';
-  code?: string | null;
-  id: string;
-  lineAndColumns: Array<{
-    __typename: 'IndicatorLineNode';
-    columns: Array<{
-      __typename: 'IndicatorColumnNode';
-      columnNumber: number;
-      name: string;
-      valueType?: Types.IndicatorValueTypeNode | null;
-      value?: {
-        __typename: 'IndicatorValueNode';
-        id: string;
-        value: string;
-      } | null;
-    }>;
-    line: {
-      __typename: 'IndicatorLineRowNode';
-      id: string;
-      code: string;
-      lineNumber: number;
-      name: string;
-      valueType?: Types.IndicatorValueTypeNode | null;
-    };
-  }>;
-};
-
-export type IndicatorLineRowFragment = {
-  __typename: 'IndicatorLineRowNode';
-  id: string;
-  code: string;
-  lineNumber: number;
-  name: string;
-  valueType?: Types.IndicatorValueTypeNode | null;
-};
-
-export type IndicatorColumnFragment = {
-  __typename: 'IndicatorColumnNode';
-  columnNumber: number;
-  name: string;
-  valueType?: Types.IndicatorValueTypeNode | null;
-  value?: {
-    __typename: 'IndicatorValueNode';
-    id: string;
-    value: string;
-  } | null;
-};
-
-export type IndicatorValueFragment = {
-  __typename: 'IndicatorValueNode';
-  id: string;
-  value: string;
-};
-
-export type IndicatorLineWithColumnsFragment = {
-  __typename: 'IndicatorLineNode';
-  columns: Array<{
-    __typename: 'IndicatorColumnNode';
-    columnNumber: number;
-    name: string;
-    valueType?: Types.IndicatorValueTypeNode | null;
-    value?: {
-      __typename: 'IndicatorValueNode';
-      id: string;
-      value: string;
-    } | null;
-  }>;
-  line: {
-    __typename: 'IndicatorLineRowNode';
-    id: string;
-    code: string;
-    lineNumber: number;
-    name: string;
-    valueType?: Types.IndicatorValueTypeNode | null;
-  };
-};
-
 export type ProgramIndicatorsQueryVariables = Types.Exact<{
-  customerNameLinkId: Types.Scalars['String']['input'];
+  customerNameId: Types.Scalars['String']['input'];
   periodId: Types.Scalars['String']['input'];
   storeId: Types.Scalars['String']['input'];
   programId: Types.Scalars['String']['input'];
@@ -788,6 +721,7 @@ export type ProgramIndicatorsQuery = {
         __typename: 'IndicatorLineNode';
         columns: Array<{
           __typename: 'IndicatorColumnNode';
+          id: string;
           columnNumber: number;
           name: string;
           valueType?: Types.IndicatorValueTypeNode | null;
@@ -805,6 +739,17 @@ export type ProgramIndicatorsQuery = {
           name: string;
           valueType?: Types.IndicatorValueTypeNode | null;
         };
+        customerIndicatorInfo: Array<{
+          __typename: 'CustomerIndicatorInformationNode';
+          datetime?: string | null;
+          id: string;
+          customer: { __typename: 'NameNode'; id: string; name: string };
+          indicatorInformation: Array<{
+            __typename: 'RequisitionIndicatorInformationNode';
+            columnId: string;
+            value: string;
+          }>;
+        }>;
       }>;
     }>;
   };
@@ -827,25 +772,6 @@ export type UpdateIndicatorValueMutation = {
       };
 };
 
-export const RequisitionReasonNotProvidedErrorFragmentDoc = gql`
-  fragment RequisitionReasonNotProvidedError on RequisitionReasonNotProvided {
-    __typename
-    requisitionLine {
-      id
-    }
-    description
-  }
-`;
-export const RequisitionReasonsNotProvidedErrorFragmentDoc = gql`
-  fragment RequisitionReasonsNotProvidedError on RequisitionReasonsNotProvided {
-    __typename
-    errors {
-      ...RequisitionReasonNotProvidedError
-    }
-    description
-  }
-  ${RequisitionReasonNotProvidedErrorFragmentDoc}
-`;
 export const ResponseLineFragmentDoc = gql`
   fragment ResponseLine on RequisitionLineNode {
     id
@@ -870,7 +796,7 @@ export const ResponseLineFragmentDoc = gql`
     requisitionNumber
     itemStats {
       __typename
-      availableStockOnHand
+      stockOnHand
       availableMonthsOfStockOnHand
       averageMonthlyConsumption
     }
@@ -971,6 +897,7 @@ export const ResponseFragmentDoc = gql`
       id
     }
     orderType
+    isEmergency
   }
   ${ResponseLineFragmentDoc}
 `;
@@ -1002,77 +929,27 @@ export const ResponseRowFragmentDoc = gql`
     }
   }
 `;
+export const CannotDeleteLineLinkedToShipmentErrorFragmentDoc = gql`
+  fragment CannotDeleteLineLinkedToShipmentError on CannotDeleteLineLinkedToShipment {
+    __typename
+  }
+`;
 export const CustomerProgramSettingsFragmentDoc = gql`
   fragment CustomerProgramSettings on CustomerProgramRequisitionSettingNode {
     programName
+    tagName
     programId
     customerAndOrderTypes {
       customer {
         ...NameRow
       }
       orderTypes {
-        id
-        name
-        availablePeriods {
-          id
-          name
-        }
+        ...OrderTypeRow
       }
     }
   }
   ${NameRowFragmentDoc}
-`;
-export const IndicatorValueFragmentDoc = gql`
-  fragment IndicatorValue on IndicatorValueNode {
-    id
-    value
-  }
-`;
-export const IndicatorColumnFragmentDoc = gql`
-  fragment IndicatorColumn on IndicatorColumnNode {
-    columnNumber
-    name
-    valueType
-    value(
-      periodId: $periodId
-      customerNameLinkId: $customerNameLinkId
-      storeId: $storeId
-    ) {
-      ...IndicatorValue
-    }
-  }
-  ${IndicatorValueFragmentDoc}
-`;
-export const IndicatorLineRowFragmentDoc = gql`
-  fragment IndicatorLineRow on IndicatorLineRowNode {
-    id
-    code
-    lineNumber
-    name
-    valueType
-  }
-`;
-export const IndicatorLineWithColumnsFragmentDoc = gql`
-  fragment IndicatorLineWithColumns on IndicatorLineNode {
-    columns {
-      ...IndicatorColumn
-    }
-    line {
-      ...IndicatorLineRow
-    }
-  }
-  ${IndicatorColumnFragmentDoc}
-  ${IndicatorLineRowFragmentDoc}
-`;
-export const ProgramIndicatorFragmentDoc = gql`
-  fragment ProgramIndicator on ProgramIndicatorNode {
-    code
-    lineAndColumns {
-      ...IndicatorLineWithColumns
-    }
-    id
-  }
-  ${IndicatorLineWithColumnsFragmentDoc}
+  ${OrderTypeRowFragmentDoc}
 `;
 export const UpdateResponseDocument = gql`
   mutation updateResponse(
@@ -1091,14 +968,19 @@ export const UpdateResponseDocument = gql`
           ... on RequisitionReasonsNotProvided {
             ...RequisitionReasonsNotProvidedError
           }
+          ... on OrderingTooManyItems {
+            __typename
+            description
+            maxItemsInEmergencyOrder
+          }
         }
       }
     }
   }
   ${RequisitionReasonsNotProvidedErrorFragmentDoc}
 `;
-export const DeleteRequestDocument = gql`
-  mutation deleteRequest(
+export const DeleteResponseDocument = gql`
+  mutation deleteResponse(
     $storeId: String!
     $input: BatchResponseRequisitionInput!
   ) {
@@ -1208,6 +1090,16 @@ export const InsertProgramResponseDocument = gql`
         id
         requisitionNumber
       }
+      ... on InsertProgramResponseRequisitionError {
+        __typename
+        error {
+          description
+          ... on MaxOrdersReachedForPeriod {
+            __typename
+            description
+          }
+        }
+      }
     }
   }
 `;
@@ -1299,15 +1191,20 @@ export const DeleteResponseLinesDocument = gql`
                 __typename
                 description
               }
+              ... on CannotDeleteLineLinkedToShipment {
+                ...CannotDeleteLineLinkedToShipmentError
+              }
             }
           }
           ... on DeleteResponse {
+            __typename
             id
           }
         }
       }
     }
   }
+  ${CannotDeleteLineLinkedToShipmentErrorFragmentDoc}
 `;
 export const CreateOutboundFromResponseDocument = gql`
   mutation createOutboundFromResponse($responseId: String!, $storeId: String!) {
@@ -1418,7 +1315,7 @@ export const CustomerProgramSettingsDocument = gql`
 `;
 export const ProgramIndicatorsDocument = gql`
   query programIndicators(
-    $customerNameLinkId: String!
+    $customerNameId: String!
     $periodId: String!
     $storeId: String!
     $programId: String!
@@ -1502,18 +1399,18 @@ export function getSdk(
         variables
       );
     },
-    deleteRequest(
-      variables: DeleteRequestMutationVariables,
+    deleteResponse(
+      variables: DeleteResponseMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<DeleteRequestMutation> {
+    ): Promise<DeleteResponseMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteRequestMutation>(
-            DeleteRequestDocument,
+          client.request<DeleteResponseMutation>(
+            DeleteResponseDocument,
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'deleteRequest',
+        'deleteResponse',
         'mutation',
         variables
       );

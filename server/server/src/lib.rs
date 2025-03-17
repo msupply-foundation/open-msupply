@@ -21,12 +21,14 @@ use graphql::{
 use log::info;
 use repository::{get_storage_connection_manager, migrations::migrate};
 
+use scheduled_tasks::spawn_scheduled_task_runner;
 use service::{
     auth_data::AuthData,
+    backend_plugin::plugin_provider::PluginContext,
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
-    settings::{is_develop, ServerSettings, Settings},
+    settings::{is_develop, DiscoveryMode, ServerSettings, Settings},
     standard_reports::StandardReports,
     sync::{
         file_sync_driver::FileSyncDriver,
@@ -46,15 +48,20 @@ pub mod cors;
 pub mod environment;
 mod logging;
 pub mod middleware;
+mod scheduled_tasks;
 mod serve_frontend;
 pub mod static_files;
 pub mod support;
 mod upload_fridge_tag;
 pub use self::logging::*;
+mod serve_frontend_plugins;
+mod upload;
 
 pub mod print;
 mod sync_on_central;
 
+use serve_frontend_plugins::config_server_frontend_plugins;
+use upload::config_upload;
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
 #[cfg(not(target_os = "android"))]
 mod discovery;
@@ -91,7 +98,7 @@ pub async fn start_server(
     info!("Run DB migrations...done");
 
     // Upsert standard reports
-    StandardReports::load_reports(&connection_manager.connection().unwrap()).unwrap();
+    StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");
@@ -103,10 +110,10 @@ pub async fn start_server(
 
     let service_provider = Data::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
-        &settings.server.base_dir.clone().unwrap(),
         processors_trigger,
         sync_trigger,
         site_is_initialise_trigger,
+        settings.mail.clone(),
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
     let certificates = Certificates::try_load(&settings.server).unwrap();
@@ -115,8 +122,9 @@ pub async fn start_server(
     let auth = auth_data(&settings.server, token_bucket, token_secret, &certificates);
     info!("Initialising server context..done");
 
-    // LOGGING
     let service_context = service_provider.basic_context().unwrap();
+
+    // LOGGING
     let log_service = &service_provider.log_service;
     info!("Checking log settings..");
     let log_level = log_service.get_log_level(&service_context).unwrap();
@@ -139,6 +147,16 @@ pub async fn start_server(
             .update_log_level(&service_context, settings.logging.clone().unwrap().level)
             .unwrap();
     }
+
+    // PLUGIN CONTEXT
+    PluginContext {
+        service_provider: service_provider.clone(),
+    }
+    .bind();
+    service_provider
+        .plugin_service
+        .reload_all_plugins(&service_context)
+        .unwrap();
 
     // SET LOG CALLBACK FOR WASM FUNCTIONS
     info!("Setting wasm function log callback..");
@@ -257,8 +275,24 @@ pub async fn start_server(
     // Don't do discovery in android
     #[cfg(not(target_os = "android"))]
     {
-        info!("Starting server DNS-SD discovery",);
-        discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
+        let discovery_enabled = match settings.server.discovery {
+            DiscoveryMode::Disabled => false,
+            DiscoveryMode::Enabled => true,
+            DiscoveryMode::Auto => {
+                if is_develop() {
+                    log::warn!("DNS-SD discovery is automatically disabled in dev mode, add `discovery: Enabled` to local.yaml to turn it on");
+                    false
+                } else {
+                    true
+                }
+            }
+        };
+        if discovery_enabled {
+            info!("Starting server DNS-SD discovery",);
+            discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
+        } else {
+            info!("Server DNS-SD discovery disabled",);
+        }
     }
 
     info!("Starting discovery graphql server",);
@@ -285,6 +319,12 @@ pub async fn start_server(
     );
     let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
 
+    // Scheduled tasks
+    let scheduled_task_handle = spawn_scheduled_task_runner(
+        service_provider.clone().into_inner(),
+        settings.mail.clone().map(|m| m.interval).unwrap_or(60),
+    );
+
     let closure_settings = settings.clone();
     let mut http_server = HttpServer::new(move || {
         App::new()
@@ -302,11 +342,13 @@ pub async fn start_server(
             .configure(config_static_files)
             .configure(config_cold_chain)
             .configure(config_upload_fridge_tag)
+            .configure(config_server_frontend_plugins)
             .configure(config_sync_on_central)
             .configure(config_support)
             .configure(config_print)
             // Needs to be last to capture all unmatches routes
             .configure(config_serve_frontend)
+            .configure(config_upload)
     })
     .disable_signals();
 
@@ -333,7 +375,9 @@ pub async fn start_server(
         Some(_) = off_switch.recv() => {},
         _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
         _ = file_sync_task => unreachable!("File sync unexpectedly stopped"),
-        result = processors_task => unreachable!("Processor terminated ({:?})", result)
+        result = processors_task => unreachable!("Processor terminated ({:?})", result),
+        scheduled_error = scheduled_task_handle => unreachable!("Scheduled task stopped unexpectedly: {:?}", scheduled_error),
+
     };
 
     server_handle.stop(true).await;

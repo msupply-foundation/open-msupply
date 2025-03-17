@@ -140,9 +140,9 @@ mod test {
     use repository::{
         mock::{
             mock_finalised_response_requisition,
-            mock_full_new_response_requisition_for_update_test,
-            mock_new_response_requisition_test, mock_sent_request_requisition, mock_store_a,
-            mock_store_b, mock_user_account_b, MockDataInserts,
+            mock_full_new_response_requisition_for_update_test, mock_new_response_requisition_test,
+            mock_sent_request_requisition, mock_store_a, mock_store_b, mock_user_account_b,
+            MockDataInserts,
         },
         test_db::setup_all,
         ApprovalStatusType, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
@@ -165,7 +165,7 @@ mod test {
         let (_, _, connection_manager, _) =
             setup_all("supply_requested_quantity_errors", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -224,7 +224,7 @@ mod test {
         let (_, connection, connection_manager, _) =
             setup_all("supply_requested_quantity_success", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, mock_user_account_b().id)
             .unwrap();

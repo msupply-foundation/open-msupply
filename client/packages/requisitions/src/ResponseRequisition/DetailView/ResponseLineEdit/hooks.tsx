@@ -50,7 +50,7 @@ export const useDraftRequisitionLine = (item?: ItemRowFragment | null) => {
 
   const save = async () => {
     if (draft) {
-      let result = await saveAction(draft);
+      const result = await saveAction(draft);
       if (
         result.updateResponseRequisitionLine.__typename ===
         'UpdateResponseRequisitionLineError'
@@ -71,7 +71,7 @@ export const usePreviousNextResponseLine = (
   lines?: ResponseLineFragment[],
   currentItem?: ItemRowFragment | null
 ) => {
-  if (!lines) {
+  if (!lines || !currentItem) {
     return { hasNext: false, next: null, hasPrevious: false, previous: null };
   }
 

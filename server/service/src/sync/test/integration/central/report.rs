@@ -18,7 +18,6 @@ impl SyncRecordTester for ReportTester {
         let report_row1 = ReportRow {
             id: report_1_id.clone(),
             name: uuid(),
-            r#type: ReportType::OmSupply,
             template: "".to_string(),
             context: ContextType::InboundShipment,
             comment: Some(uuid()),

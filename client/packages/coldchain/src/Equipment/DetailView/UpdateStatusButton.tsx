@@ -10,6 +10,9 @@ import {
   DetailContainer,
   InsertAssetLogInput,
   FnUtils,
+  UserPermission,
+  useAuthContext,
+  useIsGapsStoreOnly,
 } from '@openmsupply-client/common';
 import { Draft, Statusform } from './StatusForm';
 import { useAssets } from '../api';
@@ -30,9 +33,20 @@ export const UpdateStatusButtonComponent = ({
   };
   const t = useTranslation();
   const { Modal, hideDialog, showDialog } = useDialog({ onClose });
-  const { error, success } = useNotification();
+  const { error, success, info } = useNotification();
   const [draft, setDraft] = useState<Partial<Draft>>(getEmptyAssetLog(''));
   const { insertLog, invalidateQueries } = useAssets.log.insert();
+
+  const permission = UserPermission.AssetMutate;
+  const { userHasPermission } = useAuthContext();
+  const isGaps = useIsGapsStoreOnly();
+
+  const onUpdateStatus = () => {
+    if (userHasPermission(permission)) {
+      showDialog();
+    } else info(t('error.no-asset-edit-permission'))();
+  };
+
 
   const onOk = async () => {
     await insertLog(draft)
@@ -115,9 +129,10 @@ export const UpdateStatusButtonComponent = ({
         </DetailContainer>
       </Modal>
       <ButtonWithIcon
+        shouldShrink={!isGaps}
         Icon={<PlusCircleIcon />}
         label={t('button.update-status')}
-        onClick={showDialog}
+        onClick={onUpdateStatus}
       />
     </>
   );

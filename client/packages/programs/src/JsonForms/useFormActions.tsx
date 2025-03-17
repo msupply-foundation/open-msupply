@@ -20,7 +20,7 @@
  * need to be directly reflected in the UI should be stored here.
  */
 
-import { Dispatch, SetStateAction, useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { ObjUtils } from '@common/utils';
 
 export type SubmitActionRegistry = Record<
@@ -39,7 +39,7 @@ export interface FormActionStructure {
 }
 
 export const useFormActions = (
-  setIsDirty: Dispatch<SetStateAction<boolean | undefined>>
+  setIsDirty: (isDirty: boolean) => void
 ): FormActionStructure => {
   const state = useRef<Record<string, unknown>>({});
   const submitActions = useRef<SubmitActionRegistry>({});

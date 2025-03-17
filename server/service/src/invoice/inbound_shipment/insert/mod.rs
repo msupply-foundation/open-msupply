@@ -19,6 +19,7 @@ pub struct InsertInboundShipment {
     pub comment: Option<String>,
     pub their_reference: Option<String>,
     pub colour: Option<String>,
+    pub requisition_id: Option<String>,
 }
 
 type OutError = InsertInboundShipmentError;
@@ -59,6 +60,10 @@ pub enum InsertInboundShipmentError {
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
     OtherPartyNotASupplier,
+    CannotLinkARequisitionToInboundShipment,
+    RequisitionDoesNotExist,
+    InternalOrderDoesNotBelongToStore,
+    NotAnInternalOrder,
     // Internal error
     NewlyCreatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
@@ -136,7 +141,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -217,7 +222,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();

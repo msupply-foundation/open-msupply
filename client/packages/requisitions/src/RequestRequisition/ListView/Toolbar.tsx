@@ -1,21 +1,16 @@
 import React, { FC } from 'react';
 import {
-  DropdownMenu,
-  DropdownMenuItem,
   useTranslation,
-  DeleteIcon,
   AppBarContentPortal,
   FilterController,
   FilterMenu,
   Box,
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
-import { useRequest } from '../api';
 
 export const Toolbar: FC<{
   filter: FilterController;
 }> = () => {
-  const onDelete = useRequest.document.deleteSelected();
   const t = useTranslation();
 
   return (
@@ -52,12 +47,6 @@ export const Toolbar: FC<{
           ]}
         />
       </Box>
-
-      <DropdownMenu label={t('label.actions')}>
-        <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
-          {t('button.delete-lines')}
-        </DropdownMenuItem>
-      </DropdownMenu>
     </AppBarContentPortal>
   );
 };

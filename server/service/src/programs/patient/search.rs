@@ -18,6 +18,7 @@ pub struct PatientSearch {
     pub code_2: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
+    pub name: Option<String>,
     pub date_of_birth: Option<NaiveDate>,
     pub gender: Option<GenderType>,
     pub identifier: Option<String>,
@@ -39,6 +40,7 @@ pub fn patient_search(
     let PatientSearch {
         code,
         code_2,
+        name,
         first_name,
         last_name,
         date_of_birth,
@@ -51,6 +53,9 @@ pub fn patient_search(
     }
     if let Some(code_2) = code_2 {
         filter = filter.code_2(StringFilter::equal_to(&code_2));
+    }
+    if let Some(name) = name {
+        filter = filter.name(StringFilter::like(&name));
     }
     if let Some(first_name) = first_name {
         filter = filter.first_name(StringFilter::like(&first_name));

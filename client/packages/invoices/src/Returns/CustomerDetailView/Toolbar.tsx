@@ -5,10 +5,7 @@ import {
   InputWithLabelRow,
   BasicTextInput,
   Grid,
-  DropdownMenu,
   useTranslation,
-  DropdownMenuItem,
-  DeleteIcon,
   useIsGrouped,
   Switch,
   Alert,
@@ -21,8 +18,7 @@ export const Toolbar: FC = () => {
   const t = useTranslation();
   const isDisabled = useReturns.utils.customerIsDisabled();
 
-  const { draft, setDraft } =
-    useReturns.document.customerReturn();
+  const { draft, setDraft } = useReturns.document.customerReturn();
   const {
     otherParty,
     theirReference,
@@ -30,9 +26,6 @@ export const Toolbar: FC = () => {
     linkedShipment = '',
   } = draft ?? { id: '' };
 
-  const onDelete = useReturns.lines.deleteSelectedCustomerLines({
-    returnId: id,
-  });
   const { debouncedMutateAsync } = useReturns.document.updateCustomerReturn();
 
   const { isGrouped, toggleIsGrouped } = useIsGrouped('customerReturn');
@@ -52,7 +45,7 @@ export const Toolbar: FC = () => {
         flex={1}
         alignItems="flex-end"
       >
-        <Grid item display="flex" flex={1}>
+        <Grid display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
             {otherParty && (
               <InputWithLabelRow
@@ -86,7 +79,6 @@ export const Toolbar: FC = () => {
           </Box>
         </Grid>
         <Grid
-          item
           display="flex"
           gap={1}
           justifyContent="flex-end"
@@ -101,15 +93,6 @@ export const Toolbar: FC = () => {
               color="secondary"
             />
           </Box>
-          <DropdownMenu label={t('label.actions')}>
-            <DropdownMenuItem
-              IconComponent={DeleteIcon}
-              onClick={onDelete}
-              disabled={isDisabled}
-            >
-              {t('button.delete-lines')}
-            </DropdownMenuItem>
-          </DropdownMenu>
         </Grid>
       </Grid>
     </AppBarContentPortal>

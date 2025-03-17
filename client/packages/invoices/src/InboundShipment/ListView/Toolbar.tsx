@@ -5,16 +5,11 @@ import {
   FilterController,
   Box,
   FilterMenu,
-  DropdownMenu,
-  DropdownMenuItem,
-  DeleteIcon,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
-import { useInbound } from '../api';
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
   const t = useTranslation();
-  const onDelete = useInbound.document.deleteRows();
 
   return (
     <AppBarContentPortal
@@ -40,12 +35,14 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               elements: [
                 {
                   type: 'dateTime',
+                  displayAs: 'date',
                   name: t('label.from-created-datetime'),
                   urlParameter: 'createdDatetime',
                   range: 'from',
                 },
                 {
                   type: 'dateTime',
+                  displayAs: 'date',
                   name: t('label.to-created-datetime'),
                   urlParameter: 'createdDatetime',
                   range: 'to',
@@ -72,11 +69,6 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
           ]}
         />
       </Box>
-      <DropdownMenu label={t('label.actions')}>
-        <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
-          {t('button.delete-lines')}
-        </DropdownMenuItem>
-      </DropdownMenu>
     </AppBarContentPortal>
   );
 };

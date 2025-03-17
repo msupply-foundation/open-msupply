@@ -214,9 +214,14 @@ export const useNativeClient = ({
     const { previousServer } = state;
     if (!nativeAPI) return;
     if (!autoconnect) return;
-    if (previousServer === null) return;
 
-    connectToPrevious(previousServer);
+    getPreference('manualServer').then(manualServer => {
+      if (manualServer) {
+        connectToServer(manualServer).then(handleConnectionResult);
+      } else if (previousServer !== null) {
+        connectToPrevious(previousServer);
+      }
+    });
   }, [state.previousServer, autoconnect, state, nativeAPI, connectToPrevious]);
 
   return {

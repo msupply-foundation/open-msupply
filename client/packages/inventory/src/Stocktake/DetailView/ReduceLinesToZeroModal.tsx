@@ -17,11 +17,13 @@ import { useStocktake } from '../api';
 interface ReduceLinesToZeroConfirmationModalProps {
   isOpen: boolean;
   onCancel: () => void;
+  clearSelected: () => void;
 }
 
 export const ReduceLinesToZeroConfirmationModal = ({
   isOpen,
   onCancel,
+  clearSelected,
 }: ReduceLinesToZeroConfirmationModalProps) => {
   const t = useTranslation();
 
@@ -40,15 +42,16 @@ export const ReduceLinesToZeroConfirmationModal = ({
       message={t('messages.confirm-reduce-lines-to-zero')}
       buttons={
         <>
-          <Grid item>
+          <Grid>
             <DialogButton variant="cancel" onClick={onCancel} />
           </Grid>
-          <Grid item>
+          <Grid>
             <DialogButton
               variant="ok"
               disabled={reasonIsRequired && !reason}
               onClick={async () => {
                 await onZeroQuantities(reason);
+                clearSelected();
                 onCancel();
               }}
             />

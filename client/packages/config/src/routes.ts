@@ -50,9 +50,9 @@ export enum AppRoute {
 
   Messages = 'messages',
 
-  Sync = 'sync',
-
   Settings = 'settings',
+
+  Help = 'help',
 
   Logout = 'logout',
 
@@ -86,6 +86,8 @@ export const useExternalUrl = (url: ExternalURL) => {
         case 'fr':
         case 'fr-DJ':
           return `${baseUrl}/fr/docs`;
+        case 'pt':
+          return `${baseUrl}/pt/docs`;
         default:
           return `${baseUrl}/docs`;
       }

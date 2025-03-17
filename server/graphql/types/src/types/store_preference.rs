@@ -1,5 +1,6 @@
 use async_graphql::*;
 use repository::StorePreferenceRow;
+use util::constants::DEFAULT_AMC_LOOKBACK_MONTHS;
 
 // #[derive(Clone)]
 #[derive(PartialEq, Debug)]
@@ -66,10 +67,40 @@ impl StorePreferenceNode {
     pub async fn extra_fields_in_requisition(&self) -> &bool {
         &self.store_preference.extra_fields_in_requisition
     }
+
+    pub async fn manually_link_internal_order_to_inbound_shipment(&self) -> &bool {
+        &self
+            .store_preference
+            .manually_link_internal_order_to_inbound_shipment
+    }
+
+    pub async fn use_consumption_and_stock_from_customers_for_internal_orders(&self) -> &bool {
+        &self
+            .store_preference
+            .use_consumption_and_stock_from_customers_for_internal_orders
+    }
+
+    pub async fn edit_prescribed_quantity_on_prescription(&self) -> &bool {
+        &self
+            .store_preference
+            .edit_prescribed_quantity_on_prescription
+    }
 }
 
 impl StorePreferenceNode {
     pub fn from_domain(store_preference: StorePreferenceRow) -> StorePreferenceNode {
-        StorePreferenceNode { store_preference }
+        StorePreferenceNode {
+            store_preference: StorePreferenceRow {
+                monthly_consumption_look_back_period: if store_preference
+                    .monthly_consumption_look_back_period
+                    == 0.0
+                {
+                    DEFAULT_AMC_LOOKBACK_MONTHS.into()
+                } else {
+                    store_preference.monthly_consumption_look_back_period
+                },
+                ..store_preference
+            },
+        }
     }
 }

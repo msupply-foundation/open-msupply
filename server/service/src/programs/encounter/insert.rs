@@ -26,7 +26,7 @@ pub enum InsertEncounterError {
     NotAllowedToMutateDocument,
     InvalidEncounterType,
     PatientIsNotEnrolled,
-    InvalidDataSchema(Vec<String>),
+    InvalidDataSchema(String),
     DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
@@ -204,7 +204,7 @@ fn validate(
     };
 
     let encounter = validate_encounter_schema(&input.data).map_err(|err| {
-        InsertEncounterError::InvalidDataSchema(vec![format!("Invalid program data: {}", err)])
+        InsertEncounterError::InvalidDataSchema(format!("Invalid program data: {}", err))
     })?;
 
     let clinician_row = if let Some(clinician_id) = encounter
@@ -270,7 +270,7 @@ mod test {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "");
+        let service_provider = ServiceProvider::new(connection_manager);
         let ctx = service_provider.basic_context().unwrap();
 
         // dummy schema

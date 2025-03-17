@@ -1,11 +1,12 @@
 import React from 'react';
-import { Grid, Paper, Typography } from '@mui/material';
+import { Paper, Typography } from '@mui/material';
 import { StoryFn } from '@storybook/react';
 import { styled } from '@mui/material/styles';
 import { Autocomplete } from './Autocomplete';
 import { AutocompleteList } from './AutocompleteList';
 import { AutocompleteMultiList, AutocompleteOption } from '.';
 import { AutocompleteWithPagination } from './AutocompleteWithPagination';
+import { Grid } from '@openmsupply-client/common';
 
 export default {
   title: 'Inputs/Autocomplete',
@@ -141,19 +142,19 @@ const longOptions = [
 // TODO: Currently the styles are broken for this only within storybook
 const BasicTemplate: StoryFn = ({ options }) => (
   <Grid container>
-    <Grid item>
+    <Grid>
       <StyledPaper>
         <Typography>Basic autocomplete</Typography>
         <Autocomplete options={options} width="300px" />
       </StyledPaper>
     </Grid>
-    <Grid item>
+    <Grid>
       <StyledPaper>
         <Typography>Auto Width Popper</Typography>
         <Autocomplete options={options} width="300px" popperMinWidth={300} />
       </StyledPaper>
     </Grid>
-    <Grid item>
+    <Grid>
       <StyledPaper>
         <Typography>Disabled</Typography>
         <Autocomplete
@@ -169,7 +170,7 @@ const BasicTemplate: StoryFn = ({ options }) => (
 
 const ListTemplate: StoryFn = () => (
   <Grid container>
-    <Grid item>
+    <Grid>
       <StyledPaper>
         <Typography>Autocomplete List</Typography>
         <AutocompleteList options={options} optionKey="label" />
@@ -182,7 +183,7 @@ const MultiListTemplate: StoryFn = () => {
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   return (
     <Grid container>
-      <Grid item>
+      <Grid>
         <Paper>
           <Typography fontWeight={700}>
             Multiple Option Autocomplete List
@@ -208,9 +209,9 @@ const AutocompleteWithPaginationTemplate: StoryFn = () => {
     first: 10,
     offset: 0,
   });
-  const [currOptions, setCurrOptions] = React.useState<typeof longOptions>(
-    longOptions.slice(0, pagination.first)
-  );
+  const [pages, setPages] = React.useState([
+    { data: { nodes: longOptions.slice(0, pagination.first) } },
+  ]);
 
   const onPageChange = (page: number) => {
     setPagination({ ...pagination, offset: pagination.first * page, page });
@@ -218,28 +219,35 @@ const AutocompleteWithPaginationTemplate: StoryFn = () => {
 
   React.useEffect(() => {
     if (pagination.offset > 0) {
-      setCurrOptions(
-        longOptions.slice(
-          pagination.offset,
-          pagination.offset + pagination.first
-        )
-      );
+      setPages(pages => {
+        pages[pagination.page - 1] = {
+          data: {
+            nodes: longOptions.slice(
+              pagination.offset,
+              pagination.offset + pagination.first
+            ),
+          },
+        };
+        return [...pages];
+      });
     }
   }, [pagination]);
 
   return (
     <Grid container>
-      <Grid item>
+      <Grid>
         <Paper>
           <Typography fontWeight={700}>Autocomplete with Pagination</Typography>
           <div style={{ paddingBottom: 30 }}>
             <Typography>Search Text:</Typography>
           </div>
           <AutocompleteWithPagination
-            pagination={{ ...pagination, total: longOptions.length }}
+            pageNumber={1}
+            rowsPerPage={10}
+            totalRows={longOptions.length}
             onPageChange={onPageChange}
             paginationDebounce={300}
-            options={currOptions}
+            pages={pages}
             width="500px"
           />
         </Paper>

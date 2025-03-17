@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Grid, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { BasicModal } from '../BasicModal';
-import { AlertIcon, HelpIcon, InfoIcon } from '@common/icons';
+import { AlertIcon, CheckIcon, HelpIcon, InfoIcon } from '@common/icons';
 import { DialogButton, LoadingButton } from '../../buttons';
+import { Alert } from '@common/components';
+import { useTranslation, Grid } from '@openmsupply-client/common';
 
 interface ConfirmationModalProps {
   open: boolean;
@@ -12,7 +14,10 @@ interface ConfirmationModalProps {
   onCancel: () => void;
   title: string;
   message: string;
+  info?: string | undefined;
   iconType?: 'alert' | 'info' | 'help';
+  buttonLabel?: string | undefined;
+  cancelButtonLabel?: string | undefined;
 }
 
 const iconLookup = {
@@ -28,24 +33,35 @@ export const ConfirmationModal = ({
   onConfirm,
   title,
   message,
+  info,
   onCancel,
   iconType = 'alert',
+  buttonLabel,
+  cancelButtonLabel,
 }: ConfirmationModalProps) => {
   const [loading, setLoading] = useState(false);
   const Icon = iconLookup[iconType];
+  const t = useTranslation();
 
   return (
     <BasicModal width={width} height={height} open={open}>
       <Grid container gap={1} flex={1} padding={4} flexDirection="column">
         <Grid container gap={1} flexDirection="row">
-          <Grid item>
+          <Grid>
             <Icon color={iconType === 'alert' ? 'primary' : 'secondary'} />
           </Grid>
-          <Grid item>
+          <Grid>
             <Typography variant="h6">{title}</Typography>
           </Grid>
         </Grid>
-        <Grid item>
+        {info && (
+          <Grid paddingY={1}>
+            <Alert style={{ whiteSpace: 'pre-line' }} severity="info">
+              {info}
+            </Alert>
+          </Grid>
+        )}
+        <Grid>
           <Typography style={{ whiteSpace: 'pre-line' }}>{message}</Typography>
         </Grid>
         <Grid
@@ -57,17 +73,19 @@ export const ConfirmationModal = ({
           flex={1}
           display="flex"
         >
-          <Grid item>
+          <Grid>
             <DialogButton
               variant="cancel"
+              customLabel={cancelButtonLabel}
               disabled={loading}
               onClick={onCancel}
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <LoadingButton
               autoFocus
               color="secondary"
+              startIcon={<CheckIcon />}
               isLoading={loading}
               onClick={async () => {
                 const result = onConfirm && onConfirm();
@@ -76,11 +94,9 @@ export const ConfirmationModal = ({
                   await result;
                   setLoading(false);
                 }
-                onCancel();
               }}
-            >
-              OK
-            </LoadingButton>
+              label={buttonLabel ? buttonLabel : t('button.ok')}
+            />
           </Grid>
         </Grid>
       </Grid>

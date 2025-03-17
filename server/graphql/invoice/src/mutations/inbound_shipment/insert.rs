@@ -19,6 +19,7 @@ pub struct InsertInput {
     pub comment: Option<String>,
     pub their_reference: Option<String>,
     pub colour: Option<String>,
+    pub requisition_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -70,6 +71,7 @@ impl InsertInput {
             comment,
             their_reference,
             colour,
+            requisition_id,
         } = self;
 
         ServiceInput {
@@ -79,6 +81,7 @@ impl InsertInput {
             comment,
             their_reference,
             colour,
+            requisition_id,
         }
     }
 }
@@ -111,8 +114,12 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::InvoiceAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::InvoiceAlreadyExists
+        | ServiceError::CannotLinkARequisitionToInboundShipment
+        | ServiceError::RequisitionDoesNotExist
+        | ServiceError::NotAnInternalOrder
+        | ServiceError::InternalOrderDoesNotBelongToStore
+        | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::NewlyCreatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
@@ -161,7 +168,7 @@ mod test {
         test_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.invoice_service = Box::new(test_service);
         service_provider
     }
@@ -322,6 +329,7 @@ mod test {
                     comment: Some("comment input".to_string()),
                     their_reference: Some("reference input".to_string()),
                     colour: Some("colour input".to_string()),
+                    requisition_id: None
                 }
             );
             Ok(Invoice {

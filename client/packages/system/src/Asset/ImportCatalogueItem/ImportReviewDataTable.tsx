@@ -3,11 +3,12 @@ import {
   DataTable,
   Grid,
   NothingHere,
-  Pagination,
+  useUserPreferencePagination,
   SearchBar,
   TooltipTextCell,
   useColumns,
   useTranslation,
+  useWindowDimensions,
 } from '@openmsupply-client/common';
 import { ImportRow } from './CatalogueItemImportModal';
 
@@ -18,11 +19,11 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   importRows,
 }) => {
   const t = useTranslation();
-  const [pagination, setPagination] = useState<Pagination>({
-    page: 0,
-    first: 20,
-    offset: 0,
-  });
+  const { height } = useWindowDimensions();
+
+  const { pagination, updateUserPreferencePagination } =
+    useUserPreferencePagination();
+
   const [searchString, setSearchString] = useState<string>(() => '');
   const columns = useColumns<ImportRow>(
     [
@@ -100,18 +101,14 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   );
 
   return (
-    <Grid flexDirection="column" display="flex" gap={0}>
+    <Grid flexDirection="column" display="flex" gap={0} height={height * 0.5}>
       <SearchBar
         placeholder={t('messages.search')}
         value={searchString}
         debounceTime={300}
         onChange={newValue => {
           setSearchString(newValue);
-          setPagination({
-            first: pagination.first,
-            offset: 0,
-            page: 0,
-          });
+          updateUserPreferencePagination(0);
         }}
       />
       <DataTable
@@ -119,13 +116,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
           ...pagination,
           total: filteredAssetItem.length,
         }}
-        onChangePage={page => {
-          setPagination({
-            first: pagination.first,
-            offset: pagination.first * page,
-            page: page,
-          });
-        }}
+        onChangePage={updateUserPreferencePagination}
         columns={columns}
         data={currentAssetItemPage}
         noDataElement={<NothingHere body={t('error.asset-not-found')} />}

@@ -67,21 +67,20 @@ export const DistributionWidget: React.FC = () => {
                 RouteBuilder.create(AppRoute.Distribution)
                   .addPart(AppRoute.OutboundShipment)
                   .addPart(String(invoiceNumber))
-                  .build(),
-                { replace: true }
+                  .build()
               );
             });
           }}
         />
       ) : null}
-      <Widget title={t('distribution', { ns: 'app' })}>
+      <Widget title={t('distribution')}>
         <Grid
           container
           justifyContent="flex-start"
           flex={1}
           flexDirection="column"
         >
-          <Grid item>
+          <Grid>
             <StatsPanel
               error={outboundCountError as ApiException}
               isError={isOutboundCountError}
@@ -102,12 +101,12 @@ export const DistributionWidget: React.FC = () => {
                 .build()}
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <StatsPanel
               error={requisitionCountError as ApiException}
               isError={isRequisitionCountError}
               isLoading={isRequisitionCountLoading}
-              title={t('customer-requisition', { ns: 'app' })}
+              title={t('customer-requisition')}
               stats={[
                 {
                   label: t('label.new'),
@@ -124,7 +123,6 @@ export const DistributionWidget: React.FC = () => {
             />
           </Grid>
           <Grid
-            item
             flex={1}
             container
             justifyContent="flex-end"

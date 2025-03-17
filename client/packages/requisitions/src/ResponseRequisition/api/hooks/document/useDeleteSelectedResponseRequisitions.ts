@@ -23,7 +23,7 @@ export const useDeleteSelectedResponseRequisitions = () => {
       .filter(Boolean) as ResponseFragment[],
   }));
   const deleteAction = async () => {
-    let result = await mutateAsync(selectedRows).catch(err => {
+    const result = await mutateAsync(selectedRows).catch(err => {
       throw err;
     });
     // check for errors
@@ -53,11 +53,11 @@ export const useDeleteSelectedResponseRequisitions = () => {
       confirmMessage: t('messages.confirm-delete-requisitions', {
         count: selectedRows.length,
       }),
-      deleteSuccess: t('messages.deleted-orders', {
+      deleteSuccess: t('messages.deleted-requisitions', {
         count: selectedRows.length,
       }),
       cantDelete: (err: Error) => err.message,
     },
   });
-  return confirmAndDelete;
+  return { confirmAndDelete, selectedRows };
 };

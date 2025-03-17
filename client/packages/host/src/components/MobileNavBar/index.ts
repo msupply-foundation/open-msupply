@@ -1,1 +1,1 @@
-export * from './mobileNavBar';
+export * from './MobileNavBar';

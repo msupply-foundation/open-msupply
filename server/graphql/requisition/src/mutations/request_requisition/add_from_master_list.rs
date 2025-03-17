@@ -109,7 +109,9 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
         ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::DatabaseError(_) | ServiceError::PluginError(_) => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
@@ -160,7 +162,7 @@ mod test {
         test_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.requisition_service = Box::new(test_service);
         service_provider
     }

@@ -1,0 +1,67 @@
+on:
+ push:
+  tags: 
+   - 'v*'
+ workflow_dispatch:
+
+name: Android Build
+
+jobs:
+  create-android-build:
+    runs-on: self-hosted
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Read .nvmrc
+      run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
+      id: nvm
+
+    - name: Use Node.js (.nvmrc)
+      uses: actions/setup-node@v1
+      with:
+        node-version: "${{ steps.nvm.outputs.NVMRC }}"
+
+    - name: Install deps
+      uses: borales/actions-yarn@v4
+      with:
+        cmd: install
+        dir: 'client'
+      env:
+       NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
+
+    - name: Get Properties
+      id: properties
+      run: |
+        cp "$HOME/android/local.properties" ./client/packages/android
+        cp "$HOME/android/release.keystore" ./client/packages/android/app
+
+    - name: Set Up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: aarch64-linux-android
+
+    - name: Set Up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Build Android App
+      uses: borales/actions-yarn@v4
+      with:
+        cmd: android:build:release
+        dir: 'client'
+      env: 
+       NDK_BIN: /Users/tmfmacmini/android/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/
+      #Update this version when upgrading the NDK version on the self-hosted machine
+
+    - name: Create the Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Android_Build
+        path: ./client/packages/android/app/build/outputs/apk/release/
+        retention-days: 3

@@ -7,6 +7,11 @@ import {
   InvoiceNodeStatus,
   XCircleIcon,
   useBreadcrumbs,
+  ArrowLeftIcon,
+  DeleteIcon,
+  RewindIcon,
+  Action,
+  ActionsFooter,
 } from '@openmsupply-client/common';
 
 import React, { FC } from 'react';
@@ -15,7 +20,7 @@ import {
   inboundStatuses,
   manualInboundStatuses,
 } from '../../../utils';
-import { InboundFragment, useInbound } from '../../api';
+import { InboundFragment, InboundLineFragment, useInbound } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 
@@ -29,6 +34,7 @@ const createStatusLog = (invoice: InboundFragment) => {
     [InvoiceNodeStatus.Verified]: null,
     // Placeholder for typescript, not used in inbounds
     [InvoiceNodeStatus.Allocated]: null,
+    [InvoiceNodeStatus.Cancelled]: null,
   };
 
   if (statusIdx >= 0) {
@@ -50,47 +56,85 @@ const createStatusLog = (invoice: InboundFragment) => {
   return statusLog;
 };
 
-export const FooterComponent: FC = () => {
+interface FooterComponentProps {
+  onReturnLines: (selectedLines: InboundLineFragment[]) => void;
+}
+
+export const FooterComponent: FC<FooterComponentProps> = ({
+  onReturnLines,
+}) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
+
   const { data } = useInbound.document.get();
   const isManuallyCreated = !data?.linkedShipment?.id;
+  const onDelete = useInbound.lines.deleteSelected();
+  const onZeroQuantities = useInbound.lines.zeroQuantities();
+  const selectedLines = useInbound.utils.selectedLines();
+
+  const actions: Action[] = [
+    {
+      label: t('button.delete-lines'),
+      icon: <DeleteIcon />,
+      onClick: onDelete,
+    },
+    {
+      label: t('button.return-lines'),
+      icon: <ArrowLeftIcon />,
+      onClick: () => onReturnLines(selectedLines),
+      shouldShrink: false,
+    },
+    {
+      label: t('button.zero-line-quantity'),
+      icon: <RewindIcon />,
+      onClick: onZeroQuantities,
+      shouldShrink: false,
+    },
+  ];
 
   return (
     <AppFooterPortal
       Content={
-        data ? (
-          <Box
-            gap={2}
-            display="flex"
-            flexDirection="row"
-            alignItems="center"
-            height={64}
-          >
-            <OnHoldButton />
-
-            <StatusCrumbs
-              statuses={
-                isManuallyCreated ? manualInboundStatuses : inboundStatuses
-              }
-              statusLog={createStatusLog(data)}
-              statusFormatter={getStatusTranslator(t)}
+        <>
+          {selectedLines.length !== 0 && (
+            <ActionsFooter
+              actions={actions}
+              selectedRowCount={selectedLines.length}
             />
+          )}
+          {data && selectedLines.length === 0 ? (
+            <Box
+              gap={2}
+              display="flex"
+              flexDirection="row"
+              alignItems="center"
+              height={64}
+            >
+              <OnHoldButton />
 
-            <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-              <ButtonWithIcon
-                shrinkThreshold="lg"
-                Icon={<XCircleIcon />}
-                label={t('button.close')}
-                color="secondary"
-                sx={{ fontSize: '12px' }}
-                onClick={() => navigateUpOne()}
+              <StatusCrumbs
+                statuses={
+                  isManuallyCreated ? manualInboundStatuses : inboundStatuses
+                }
+                statusLog={createStatusLog(data)}
+                statusFormatter={getStatusTranslator(t)}
               />
 
-              <StatusChangeButton />
+              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+                <ButtonWithIcon
+                  shrinkThreshold="lg"
+                  Icon={<XCircleIcon />}
+                  label={t('button.close')}
+                  color="secondary"
+                  sx={{ fontSize: '12px' }}
+                  onClick={() => navigateUpOne()}
+                />
+
+                <StatusChangeButton />
+              </Box>
             </Box>
-          </Box>
-        ) : null
+          ) : null}
+        </>
       }
     />
   );

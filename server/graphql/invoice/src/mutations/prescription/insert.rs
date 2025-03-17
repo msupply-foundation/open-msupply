@@ -1,5 +1,6 @@
 use async_graphql::*;
 
+use chrono::{DateTime, Utc};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceNode;
@@ -14,6 +15,11 @@ use service::invoice::prescription::{
 pub struct InsertInput {
     pub id: String,
     pub patient_id: String,
+    pub diagnosis_id: Option<String>,
+    pub program_id: Option<String>,
+    pub their_reference: Option<String>,
+    pub clinician_id: Option<String>,
+    pub prescription_date: Option<DateTime<Utc>>,
 }
 
 #[derive(Union)]
@@ -43,9 +49,25 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
 
 impl InsertInput {
     pub fn to_domain(self) -> ServiceInput {
-        let InsertInput { id, patient_id } = self;
+        let InsertInput {
+            id,
+            patient_id,
+            their_reference,
+            diagnosis_id,
+            program_id,
+            clinician_id,
+            prescription_date,
+        } = self;
 
-        ServiceInput { id, patient_id }
+        ServiceInput {
+            id,
+            patient_id,
+            their_reference,
+            diagnosis_id,
+            program_id,
+            clinician_id,
+            prescription_date: prescription_date.map(|date| date.naive_utc()),
+        }
     }
 }
 
@@ -115,7 +137,7 @@ mod test {
         test_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.invoice_service = Box::new(test_service);
         service_provider
     }
@@ -202,6 +224,7 @@ mod test {
                 ServiceInput {
                     id: "id input".to_string(),
                     patient_id: "patient input".to_string(),
+                    ..Default::default()
                 }
             );
             Ok(Invoice {

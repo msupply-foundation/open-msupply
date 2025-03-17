@@ -10,11 +10,12 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
+import { useDraftIndicatorValue } from './hooks';
 import {
   IndicatorLineRowFragment,
   IndicatorLineWithColumnsFragment,
-} from '../../api';
-import { useDraftIndicatorValue } from './hooks';
+} from '../../../RequestRequisition/api';
+import { indicatorColumnNameToLocal } from '../../../utils';
 
 interface IndicatorLineEditProps {
   requisitionNumber: number;
@@ -23,19 +24,31 @@ interface IndicatorLineEditProps {
   hasPrevious: boolean;
   previous: IndicatorLineRowFragment | null;
   currentLine?: IndicatorLineWithColumnsFragment | null;
+  disabled: boolean;
+  scrollIntoView: () => void;
 }
 
 const INPUT_WIDTH = 185;
 const LABEL_WIDTH = '150px';
 
-const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
-  if (!data?.value) {
-    return;
-  }
+interface InputWithLabelProps {
+  autoFocus: boolean;
+  data: IndicatorColumnNode;
+  disabled: boolean;
+}
 
-  const { draft, update } = useDraftIndicatorValue(data.value);
+const InputWithLabel = ({ autoFocus, data, disabled }: InputWithLabelProps) => {
   const t = useTranslation();
   const { error } = useNotification();
+
+  const { draft, update } = useDraftIndicatorValue(
+    data.value ?? {
+      __typename: 'IndicatorValueNode',
+      id: '',
+      value: '',
+    }
+  );
+
   const errorHandler = useCallback(
     (res: any) => {
       // probably shouldn't be any, but UpdateIndicatorValueResponse doesn't have res.error.__typename
@@ -49,6 +62,16 @@ const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
     },
     [t]
   );
+
+  if (!data?.value) {
+    return null;
+  }
+
+  const sharedProps = {
+    disabled,
+    autoFocus,
+  };
+
   const inputComponent =
     data.valueType === IndicatorValueTypeNode.Number ? (
       <NumericTextInput
@@ -58,7 +81,7 @@ const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
           const newValue = isNaN(Number(v)) ? 0 : v;
           update({ value: String(newValue) }).then(errorHandler);
         }}
-        autoFocus
+        {...sharedProps}
       />
     ) : (
       <BasicTextInput
@@ -67,7 +90,7 @@ const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
         onChange={e => {
           update({ value: e.target.value }).then(errorHandler);
         }}
-        autoFocus
+        {...sharedProps}
       />
     );
 
@@ -75,7 +98,7 @@ const InputWithLabel = ({ data }: { data: IndicatorColumnNode }) => {
     <InputWithLabelRow
       Input={inputComponent}
       labelWidth={LABEL_WIDTH}
-      label={data.name}
+      label={indicatorColumnNameToLocal(data.name, t)}
       sx={{ marginBottom: 1 }}
     />
   );
@@ -88,6 +111,8 @@ export const IndicatorLineEdit = ({
   hasPrevious,
   previous,
   currentLine,
+  disabled,
+  scrollIntoView,
 }: IndicatorLineEditProps) => {
   const columns = currentLine?.columns
     .filter(c => c.value) // Columns may be added to a program after the requisition was made, we want to hide those
@@ -96,8 +121,15 @@ export const IndicatorLineEdit = ({
   return (
     <>
       <Box display="flex" flexDirection="column">
-        {columns?.map(c => {
-          return <InputWithLabel key={c.value?.id} data={c} />;
+        {columns?.map((column, i) => {
+          return (
+            <InputWithLabel
+              key={column.value?.id}
+              data={column}
+              disabled={disabled}
+              autoFocus={i === 0}
+            />
+          );
         })}
       </Box>
       <Box>
@@ -107,6 +139,7 @@ export const IndicatorLineEdit = ({
           hasPrevious={hasPrevious}
           previous={previous}
           requisitionNumber={requisitionNumber}
+          scrollIntoView={scrollIntoView}
         />
       </Box>
     </>

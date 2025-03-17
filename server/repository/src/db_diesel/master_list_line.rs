@@ -5,11 +5,8 @@ use crate::{
 };
 
 use super::{
-    item_link_row::item_link::{self, dsl as item_link_dsl},
-    item_row::item::{self, dsl as item_dsl},
-    master_list_line_row::master_list_line::{self, dsl as master_list_line_dsl},
-    master_list_row::master_list::dsl as master_list_dsl,
-    DBType, MasterListFilter, MasterListLineRow, StorageConnection,
+    item_link_row::item_link, item_row::item, master_list_line_row::master_list_line,
+    master_list_row::master_list, DBType, MasterListFilter, MasterListLineRow, StorageConnection,
 };
 
 use diesel::{
@@ -68,7 +65,7 @@ impl<'a> MasterListLineRepository<'a> {
         // TODO (beyond M1), check that store_id matches current store
         let mut query = Self::create_filtered_query(Some(filter))?;
 
-        query = query.order(master_list_line_dsl::id.asc());
+        query = query.order(master_list_line::id.asc());
 
         let result = query.load::<MasterListLineJoin>(self.connection.lock().connection())?;
 
@@ -87,14 +84,14 @@ impl<'a> MasterListLineRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 MasterListLineSortField::Name => {
-                    apply_sort_no_case!(query, sort, item_dsl::name);
+                    apply_sort_no_case!(query, sort, item::name);
                 }
                 MasterListLineSortField::Code => {
-                    apply_sort_no_case!(query, sort, item_dsl::code);
+                    apply_sort_no_case!(query, sort, item::code);
                 }
             }
         } else {
-            query = query.order(master_list_line_dsl::id.asc())
+            query = query.order(master_list_line::id.asc())
         }
 
         let result = query
@@ -108,25 +105,21 @@ impl<'a> MasterListLineRepository<'a> {
     pub fn create_filtered_query(
         filter: Option<MasterListLineFilter>,
     ) -> Result<BoxedMasterListLineQuery, RepositoryError> {
-        let mut query = master_list_line_dsl::master_list_line
-            .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
+        let mut query = master_list_line::table
+            .inner_join(item_link::table.inner_join(item::table))
             .into_boxed();
 
         if let Some(f) = filter {
-            apply_equal_filter!(query, f.id, master_list_line_dsl::id);
-            apply_equal_filter!(query, f.item_id, item_dsl::id);
-            apply_equal_filter!(
-                query,
-                f.master_list_id,
-                master_list_line_dsl::master_list_id
-            );
-            apply_equal_filter!(query, f.item_type, item_dsl::type_);
+            apply_equal_filter!(query, f.id, master_list_line::id);
+            apply_equal_filter!(query, f.item_id, item::id);
+            apply_equal_filter!(query, f.master_list_id, master_list_line::master_list_id);
+            apply_equal_filter!(query, f.item_type, item::type_);
 
             if f.master_list.is_some() {
                 let master_list_ids = MasterListRepository::create_filtered_query(f.master_list)
-                    .select(master_list_dsl::id);
+                    .select(master_list::id);
 
-                query = query.filter(master_list_line_dsl::master_list_id.eq_any(master_list_ids));
+                query = query.filter(master_list_line::master_list_id.eq_any(master_list_ids));
             }
         }
 

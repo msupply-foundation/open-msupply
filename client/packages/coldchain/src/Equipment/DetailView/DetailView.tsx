@@ -32,7 +32,7 @@ import {
 import { DraftAsset } from '../types';
 import { Details } from './Tabs/Details';
 
-export const EquipmentDetailView = () => {
+export const useEquipmentDetailView = () => {
   const { storeId } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
   const { data, isLoading } = useAssets.document.get();
@@ -50,10 +50,9 @@ export const EquipmentDetailView = () => {
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const [draft, setDraft] = useState<DraftAsset>();
-  const [isDirty, setIsDirty] = useState(false);
   const { error, success } = useNotification();
 
-  useConfirmOnLeaving(isDirty);
+  const { isDirty, setIsDirty } = useConfirmOnLeaving('equipment-detail-view');
 
   const save = async () => {
     if (!draft) return;
@@ -100,7 +99,7 @@ export const EquipmentDetailView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, setDraft]);
 
-  let locations =
+  const locations =
     locationData?.nodes.map(location => ({
       label: formatLocationLabel(location),
       value: location.id,
@@ -115,6 +114,36 @@ export const EquipmentDetailView = () => {
     }));
     locations.push(...assignedLocations);
   }
+
+  return {
+    isLoading,
+    isLoadingLocations,
+    onChange,
+    draft,
+    locations,
+    data,
+    isDirty,
+    isSaving,
+    showSaveConfirmation,
+    navigate,
+    t,
+  };
+};
+
+export const EquipmentDetailView = () => {
+  const {
+    isLoading,
+    isLoadingLocations,
+    onChange,
+    draft,
+    locations,
+    data,
+    isDirty,
+    isSaving,
+    showSaveConfirmation,
+    navigate,
+    t,
+  } = useEquipmentDetailView();
 
   if (isLoading || isLoadingLocations) return <DetailFormSkeleton />;
 

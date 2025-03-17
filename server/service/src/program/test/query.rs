@@ -15,7 +15,7 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("test_program_single_record", MockDataInserts::none()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.program_service;
 
@@ -26,6 +26,8 @@ mod query {
             master_list_id: None,
             context_id: IMMUNISATION_CONTEXT_ID.to_string(),
             is_immunisation: true,
+            elmis_code: None,
+            deleted_datetime: None,
         };
 
         ProgramRowRepository::new(&context.connection)
@@ -49,7 +51,7 @@ mod query {
         let (_, connection, connection_manager, _) =
             setup_all("test_program_filter", MockDataInserts::none()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.program_service;
 
@@ -60,6 +62,8 @@ mod query {
             master_list_id: None,
             context_id: IMMUNISATION_CONTEXT_ID.to_string(),
             is_immunisation: true,
+            elmis_code: None,
+            deleted_datetime: None,
         };
         let program_insert_b = ProgramRow {
             id: "program_id_b".to_owned(),
@@ -67,6 +71,8 @@ mod query {
             master_list_id: None,
             context_id: IMMUNISATION_CONTEXT_ID.to_string(),
             is_immunisation: true,
+            elmis_code: None,
+            deleted_datetime: None,
         };
 
         let repo = ProgramRowRepository::new(&context.connection);

@@ -101,6 +101,7 @@ impl InsertInput {
             total_before_tax: None,
             tax_percentage,
             // Default
+            prescribed_quantity: None,
             note: None,
             location_id: None,
             batch: None,
@@ -218,7 +219,7 @@ mod test {
         test_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.invoice_line_service = Box::new(test_service);
         service_provider
     }
@@ -533,6 +534,7 @@ mod test {
                     invoice_id: "invoice input".to_string(),
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
+                    prescribed_quantity: None,
                     total_before_tax: None,
                     r#type: StockOutType::OutboundShipment,
                     tax_percentage: Some(5.0),

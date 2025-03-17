@@ -1,7 +1,7 @@
 use super::{
-    name_link_row::{name_link, name_link::dsl as name_link_dsl, NameLinkRow},
-    name_row::{name, name::dsl as name_dsl},
-    store_row::{store, store::dsl as store_dsl},
+    name_link_row::{name_link, NameLinkRow},
+    name_row::name,
+    store_row::store,
     NameRow, StorageConnection, StoreRow,
 };
 
@@ -111,17 +111,17 @@ impl<'a> StoreRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 StoreSortField::Code => {
-                    apply_sort_no_case!(query, sort, store_dsl::code);
+                    apply_sort_no_case!(query, sort, store::code);
                 }
                 StoreSortField::Name => {
-                    apply_sort_no_case!(query, sort, name_dsl::name_);
+                    apply_sort_no_case!(query, sort, name::name_);
                 }
                 StoreSortField::NameCode => {
-                    apply_sort_no_case!(query, sort, name_dsl::code);
+                    apply_sort_no_case!(query, sort, name::code);
                 }
             }
         } else {
-            query = query.order(store_dsl::id.asc())
+            query = query.order(store::id.asc())
         }
         let result = query
             .offset(pagination.offset as i64)
@@ -136,8 +136,8 @@ type BoxedStoreQuery =
     IntoBoxed<'static, InnerJoin<store::table, InnerJoin<name_link::table, name::table>>, DBType>;
 
 fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
-    let mut query = store_dsl::store
-        .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
+    let mut query = store::table
+        .inner_join(name_link::table.inner_join(name::table))
         .into_boxed();
 
     if let Some(f) = filter {
@@ -150,12 +150,12 @@ fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
             site_id,
         } = f;
 
-        apply_equal_filter!(query, id, store_dsl::id);
-        apply_string_filter!(query, code, store_dsl::code);
-        apply_equal_filter!(query, name_id, name_dsl::id);
-        apply_string_filter!(query, name, name_dsl::name_);
-        apply_string_filter!(query, name_code, name_dsl::code);
-        apply_equal_filter!(query, site_id, store_dsl::site_id);
+        apply_equal_filter!(query, id, store::id);
+        apply_string_filter!(query, code, store::code);
+        apply_equal_filter!(query, name_id, name::id);
+        apply_string_filter!(query, name, name::name_);
+        apply_string_filter!(query, name_code, name::code);
+        apply_equal_filter!(query, site_id, store::site_id);
     }
 
     query

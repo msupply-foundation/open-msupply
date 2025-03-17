@@ -21,7 +21,7 @@ mod query {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.item_service;
 
@@ -184,7 +184,7 @@ mod query {
         let (_, _, connection_manager, _) =
             setup_all("validate_item_variant", MockDataInserts::none().items()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.item_service;
 

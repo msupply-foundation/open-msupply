@@ -70,6 +70,10 @@ pub struct LegacyStocktakeRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(default)]
     pub finalised_datetime: Option<NaiveDateTime>,
+    #[serde(rename = "programID")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub program_id: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -136,6 +140,7 @@ impl SyncTranslation for StocktakeTranslation {
             inventory_reduction_id: data.inventory_reduction_id,
             stocktake_date: data.stocktake_date,
             is_locked: data.is_locked,
+            program_id: data.program_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -160,6 +165,7 @@ impl SyncTranslation for StocktakeTranslation {
             stocktake_date,
             inventory_addition_id,
             inventory_reduction_id,
+            program_id,
         } = StocktakeRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg("Stocktake row not found"))?;
@@ -180,6 +186,7 @@ impl SyncTranslation for StocktakeTranslation {
             stock_take_time: created_datetime.time(),
             created_datetime: Some(created_datetime),
             finalised_datetime,
+            program_id,
         };
 
         Ok(PushTranslateResult::upsert(

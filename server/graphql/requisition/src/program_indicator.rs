@@ -19,7 +19,7 @@ pub fn program_indicators(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryProgram,
+            resource: Resource::QueryRequisition,
             store_id: Some(store_id.clone()),
         },
     )?;

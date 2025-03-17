@@ -67,9 +67,8 @@ export const FooterComponent = ({
                 }
                 isLoading={isSaving}
                 onClick={showSaveConfirmation}
-              >
-                {t('button.save')}
-              </LoadingButton>
+                label={t('button.save')}
+              />
             </Box>
           </Box>
         ) : null

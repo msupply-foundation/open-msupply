@@ -1,4 +1,4 @@
-use super::{activity_log_row::activity_log::dsl as activity_log_dsl, StorageConnection};
+use super::StorageConnection;
 
 use crate::{
     db_diesel::store_row::store, repository_error::RepositoryError, user_account, Delete, Upsert,
@@ -38,6 +38,7 @@ pub enum ActivityLogType {
     InvoiceStatusShipped,
     InvoiceStatusDelivered,
     InvoiceStatusVerified,
+    InvoiceStatusCancelled,
     InventoryAdjustment,
     StocktakeCreated,
     StocktakeDeleted,
@@ -60,6 +61,7 @@ pub enum ActivityLogType {
     PrescriptionDeleted,
     PrescriptionStatusPicked,
     PrescriptionStatusVerified,
+    PrescriptionStatusCancelled,
     SensorLocationChanged,
     AssetCreated,
     AssetUpdated,
@@ -112,7 +114,7 @@ impl<'a> ActivityLogRowRepository<'a> {
     }
 
     pub fn insert_one(&self, row: &ActivityLogRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(activity_log_dsl::activity_log)
+        diesel::insert_into(activity_log::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
         self.insert_changelog(row, RowActionType::Upsert)
@@ -135,16 +137,16 @@ impl<'a> ActivityLogRowRepository<'a> {
     }
 
     pub fn find_one_by_id(&self, log_id: &str) -> Result<Option<ActivityLogRow>, RepositoryError> {
-        let result = activity_log_dsl::activity_log
-            .filter(activity_log_dsl::id.eq(log_id))
+        let result = activity_log::table
+            .filter(activity_log::id.eq(log_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_many_by_record_id(&self, id: &str) -> Result<Vec<ActivityLogRow>, RepositoryError> {
-        let result = activity_log_dsl::activity_log
-            .filter(activity_log_dsl::record_id.eq(id))
+        let result = activity_log::table
+            .filter(activity_log::record_id.eq(id))
             .get_results(self.connection.lock().connection())?;
         Ok(result)
     }

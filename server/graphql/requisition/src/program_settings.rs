@@ -15,11 +15,13 @@ pub struct ProgramRequisitionOrderTypeNode {
     pub name: String,
     pub id: String,
     pub available_periods: Vec<PeriodNode>,
+    pub is_emergency: bool,
 }
 
 #[derive(SimpleObject)]
 pub struct SupplierProgramRequisitionSettingNode {
     pub program_name: String,
+    pub tag_name: String,
     pub program_id: String,
     pub suppliers: Vec<NameNode>,
     pub master_list: MasterListNode,
@@ -29,6 +31,7 @@ pub struct SupplierProgramRequisitionSettingNode {
 #[derive(SimpleObject)]
 pub struct CustomerProgramRequisitionSettingNode {
     pub program_name: String,
+    pub tag_name: String,
     pub program_id: String,
     pub master_list: MasterListNode,
     pub customer_and_order_types: Vec<CustomerAndOrderTypeNode>,
@@ -68,6 +71,7 @@ pub fn get_supplier_program_requisition_settings(
                  order_types,
              }: SupplierProgramSettings| SupplierProgramRequisitionSettingNode {
                 program_name: program_requisition_settings.program_row.name,
+                tag_name: program_requisition_settings.name_tag_row.name,
                 program_id: program_requisition_settings.program_row.id,
                 suppliers: suppliers
                     .into_iter()
@@ -89,6 +93,7 @@ pub fn get_supplier_program_requisition_settings(
                                 .into_iter()
                                 .map(PeriodNode::from_domain)
                                 .collect(),
+                            is_emergency: order_type.is_emergency,
                         },
                     )
                     .collect(),
@@ -126,6 +131,7 @@ pub fn get_customer_program_requisition_settings(
                  customer_and_order_types,
              }: CustomerProgramSettings| CustomerProgramRequisitionSettingNode {
                 program_name: program_requisition_settings.program_row.name,
+                tag_name: program_requisition_settings.name_tag_row.name,
                 program_id: program_requisition_settings.program_row.id,
                 master_list: MasterListNode::from_domain(program_requisition_settings.master_list),
                 customer_and_order_types: customer_and_order_types
@@ -150,6 +156,7 @@ pub fn get_customer_program_requisition_settings(
                                                 .into_iter()
                                                 .map(PeriodNode::from_domain)
                                                 .collect(),
+                                            is_emergency: order_type.is_emergency,
                                         }
                                     },
                                 )

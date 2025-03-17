@@ -23,6 +23,7 @@ pub struct InsertInput {
     pub invoice_id: String,
     pub stock_line_id: String,
     pub number_of_packs: f64,
+    pub prescribed_quantity: Option<f64>,
     pub note: Option<String>,
 }
 
@@ -151,6 +152,7 @@ impl InsertInput {
             invoice_id,
             stock_line_id,
             number_of_packs,
+            prescribed_quantity,
             note,
         } = self;
 
@@ -160,6 +162,7 @@ impl InsertInput {
             invoice_id,
             stock_line_id,
             number_of_packs,
+            prescribed_quantity,
             note,
             // Default
             total_before_tax: None,
@@ -217,7 +220,7 @@ mod test {
         test_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        let mut service_provider = ServiceProvider::new(connection_manager.clone());
         service_provider.invoice_line_service = Box::new(test_service);
         service_provider
     }
@@ -534,6 +537,7 @@ mod test {
                     invoice_id: "invoice input".to_string(),
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
+                    prescribed_quantity: None,
                     total_before_tax: None,
                     note: None,
                     tax_percentage: None,

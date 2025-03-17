@@ -1,9 +1,13 @@
-use super::{
-    inventory_adjustment_reason_row::inventory_adjustment_reason::dsl as inventory_adjustment_reason_dsl,
-    StorageConnection,
-};
+use super::StorageConnection;
 
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    db_diesel::{
+        invoice_row::invoice, item_link_row::item_link, item_row::item, location_row::location,
+        stock_line_row::stock_line,
+    },
+    repository_error::RepositoryError,
+    Delete, Upsert,
+};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -17,6 +21,12 @@ table! {
         reason -> Text,
     }
 }
+
+allow_tables_to_appear_in_same_query!(inventory_adjustment_reason, item_link);
+allow_tables_to_appear_in_same_query!(inventory_adjustment_reason, item);
+allow_tables_to_appear_in_same_query!(inventory_adjustment_reason, location);
+allow_tables_to_appear_in_same_query!(inventory_adjustment_reason, invoice);
+allow_tables_to_appear_in_same_query!(inventory_adjustment_reason, stock_line);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -57,9 +67,9 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &InventoryAdjustmentReasonRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
+        diesel::insert_into(inventory_adjustment_reason::table)
             .values(row)
-            .on_conflict(inventory_adjustment_reason_dsl::id)
+            .on_conflict(inventory_adjustment_reason::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -70,16 +80,16 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
         &self,
         id: &str,
     ) -> Result<Option<InventoryAdjustmentReasonRow>, RepositoryError> {
-        let result = inventory_adjustment_reason_dsl::inventory_adjustment_reason
-            .filter(inventory_adjustment_reason_dsl::id.eq(id))
+        let result = inventory_adjustment_reason::table
+            .filter(inventory_adjustment_reason::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, inventory_adjustment_reason_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
-            .filter(inventory_adjustment_reason_dsl::id.eq(inventory_adjustment_reason_id))
+        diesel::delete(inventory_adjustment_reason::table)
+            .filter(inventory_adjustment_reason::id.eq(inventory_adjustment_reason_id))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

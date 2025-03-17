@@ -195,7 +195,7 @@ impl<'a> UserAccountService<'a> {
             return Err(VerifyPasswordError::EmptyHashedPassword);
         }
 
-        // verify password  
+        // verify password
         let valid = verify(password, &user.hashed_password).map_err(|err| {
             error!("verify_password: {}", err);
             VerifyPasswordError::InvalidCredentialsBackend(err)
@@ -211,7 +211,10 @@ impl<'a> UserAccountService<'a> {
 #[cfg(test)]
 mod user_account_test {
     use repository::{
-        mock::{mock_user_account_a, mock_user_account_b, mock_user_empty_hashed_password, MockDataInserts},
+        mock::{
+            mock_user_account_a, mock_user_account_b, mock_user_empty_hashed_password,
+            MockDataInserts,
+        },
         test_db::{self, setup_all},
         PermissionType,
     };
@@ -270,7 +273,7 @@ mod user_account_test {
                 .user_permissions(),
         )
         .await;
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
 
         let user_repo = UserRepository::new(&context.connection);
@@ -350,17 +353,19 @@ mod user_account_test {
     async fn test_missing_hashed_password() {
         let (_, _, connection_manager, _) = setup_all(
             "test_missing_hashed_password",
-            MockDataInserts::none()
-                .user_accounts()
+            MockDataInserts::none().user_accounts(),
         )
         .await;
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
 
         let user_service = UserAccountService::new(&context.connection);
 
-        let result = user_service.verify_password(&mock_user_empty_hashed_password().username, "password");
-        assert!(matches!(result, Err(VerifyPasswordError::EmptyHashedPassword)));
+        let result =
+            user_service.verify_password(&mock_user_empty_hashed_password().username, "password");
+        assert!(matches!(
+            result,
+            Err(VerifyPasswordError::EmptyHashedPassword)
+        ));
     }
-
 }

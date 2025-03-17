@@ -133,15 +133,14 @@ const DataTableComponent = <T extends RecordWithId>({
   const t = useTranslation();
   const { setRows, setDisabledRows, setFocus } = useTableStore();
   const [clickFocusedRow, setClickFocusedRow] = useState(false);
-  const { columnDisplayState, toggleColumn } = useColumnDisplayState(
-    id,
-    columns
-  );
+  const { columnDisplayState, showAllColumns, toggleColumn } =
+    useColumnDisplayState(id, columns);
 
-  const columnsToDisplay = React.useMemo(
-    () => columns.filter(c => columnDisplayState[String(c.key)] ?? true),
-    [columns, columnDisplayState]
-  );
+  const columnsToDisplay = React.useMemo(() => {
+    const cols = columns.filter(c => columnDisplayState[String(c.key)] ?? true);
+
+    return cols.every(c => c.key === 'selection') ? [] : cols;
+  }, [columns, columnDisplayState]);
 
   useRegisterActions([
     {
@@ -254,6 +253,7 @@ const DataTableComponent = <T extends RecordWithId>({
                   columns={columns}
                   columnDisplayState={columnDisplayState}
                   toggleColumn={toggleColumn}
+                  showAllColumns={showAllColumns}
                 />
               </TableCell>
             )}

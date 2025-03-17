@@ -58,7 +58,7 @@ const responseParser = {
         return RequisitionSortFieldInput.OrderType;
       }
       case 'period': {
-        return RequisitionSortFieldInput.PeriodName;
+        return RequisitionSortFieldInput.PeriodStartDate;
       }
       case 'programName': {
         return RequisitionSortFieldInput.ProgramName;
@@ -194,25 +194,13 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to create requisition');
   },
-  insertProgram: async (
-    input: InsertProgramResponseRequisitionInput
-  ): Promise<{
-    __typename: 'RequisitionNode';
-    id: string;
-    requisitionNumber: number;
-  }> => {
+  insertProgram: async (input: InsertProgramResponseRequisitionInput) => {
     const result = await sdk.insertProgramResponse({
       storeId,
       input,
     });
 
-    const { insertProgramResponseRequisition } = result || {};
-
-    if (insertProgramResponseRequisition?.__typename === 'RequisitionNode') {
-      return insertProgramResponseRequisition;
-    }
-
-    throw new Error('Unable to create requisition');
+    return result.insertProgramResponseRequisition;
   },
   update: async (patch: Partial<ResponseFragment> & { id: string }) => {
     const input = responseParser.toUpdate(patch);
@@ -224,7 +212,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     const deleteResponseRequisitions = requisitions.map(
       responseParser.toDelete
     );
-    const result = await sdk.deleteRequest({
+    const result = await sdk.deleteResponse({
       storeId,
       input: { deleteResponseRequisitions },
     });
@@ -241,18 +229,11 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     const ids = responseLines.map(responseParser.toDeleteLine);
     const result = await sdk.deleteResponseLines({ ids, storeId });
 
-    if (result.batchResponseRequisition.deleteResponseRequisitionLines) {
-      const failedLines =
-        result.batchResponseRequisition.deleteResponseRequisitionLines.filter(
-          line =>
-            line.response.__typename === 'DeleteResponseRequisitionLineError'
-        );
-      if (failedLines.length === 0) {
-        return result.batchResponseRequisition.deleteResponseRequisitionLines;
-      }
+    if (result?.batchResponseRequisition.deleteResponseRequisitionLines) {
+      return result.batchResponseRequisition.deleteResponseRequisitionLines;
     }
 
-    throw new Error('Could not delete requisition lines!');
+    throw new Error('Could not delete lines');
   },
   insertLine: async (input: InsertResponseRequisitionLineInput) => {
     const result =
@@ -307,12 +288,16 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     const result = await sdk.customerProgramSettings({ storeId });
     return result.customerProgramRequisitionSettings;
   },
-  getIndicators: async (customerNameLinkId: string, periodId: string, programId: string) => {    
-    let result = await sdk.programIndicators({
+  getIndicators: async (
+    customerNameId: string,
+    periodId: string,
+    programId: string
+  ) => {
+    const result = await sdk.programIndicators({
       storeId,
-      customerNameLinkId,
+      customerNameId,
       periodId,
-      programId
+      programId,
     });
 
     if (result?.programIndicators.__typename === 'ProgramIndicatorConnector') {
@@ -320,8 +305,8 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     }
   },
   updateIndicatorValue: async (patch: UpdateIndicatorValueInput) => {
-    let result = await sdk.updateIndicatorValue({ storeId, input: patch });
-    
+    const result = await sdk.updateIndicatorValue({ storeId, input: patch });
+
     if (!!result?.updateIndicatorValue) {
       return result.updateIndicatorValue;
     }

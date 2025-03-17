@@ -3,6 +3,7 @@ import {
   BasicSpinner,
   BasicTextInput,
   Box,
+  ChevronDownIcon,
   Container,
   DatePicker,
   DialogButton,
@@ -16,7 +17,6 @@ import {
   Switch,
   useDialog,
   useFormatDateTime,
-  useKeyboardHeightAdjustment,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -29,11 +29,11 @@ import {
   VaccinationDetailFragment,
 } from '../api/operations.generated';
 import { AppRoute } from '@openmsupply-client/config';
-import { ArrowRightIcon } from '@mui/x-date-pickers';
 import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
 import { getSwitchReason } from './getSwitchReason';
 import { useConfirmNoStockLineSelected } from './useConfirmNoStockLineSelected';
+import { useClinicians } from '@openmsupply-client/programs';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
@@ -42,6 +42,7 @@ interface VaccinationModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultClinician?: Clinician;
+  onOk: () => void;
 }
 
 export const VaccinationModal = ({
@@ -51,6 +52,7 @@ export const VaccinationModal = ({
   encounterId,
   vaccinationId,
   defaultClinician,
+  onOk,
 }: VaccinationModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
@@ -69,7 +71,6 @@ export const VaccinationModal = ({
   });
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(700);
 
   const save = useConfirmNoStockLineSelected(
     draft,
@@ -79,7 +80,10 @@ export const VaccinationModal = ({
         const result = await saveVaccination(draft);
 
         if (result?.__typename === 'VaccinationNode') {
-          success(t('messages.vaccination-saved'))();
+          result?.invoice?.id && draft.createTransactions
+            ? success(t('messages.vaccination-saved-and-stock-recorded'))()
+            : success(t('messages.vaccination-saved'))();
+          onOk();
           onClose();
         }
 
@@ -122,7 +126,7 @@ export const VaccinationModal = ({
           onClick={save}
         />
       }
-      height={height}
+      height={700}
       width={550}
       slideAnimation={false}
       contentProps={{ sx: { paddingTop: !!InfoBox ? 0 : undefined } }}
@@ -144,6 +148,9 @@ const VaccinationForm = ({
   updateDraft: (update: Partial<VaccinationDraft>) => void;
 }) => {
   const t = useTranslation();
+
+  const { data: clinicians } = useClinicians.document.list({});
+  const hasClinicians = clinicians?.nodes.length !== 0;
 
   if (!dose) {
     return null;
@@ -188,7 +195,7 @@ const VaccinationForm = ({
         label={t('label.facility')}
         labelProps={{ sx: { alignSelf: 'start', marginTop: '3px' } }}
         Input={
-          <Grid item flex={1}>
+          <Grid flex={1}>
             <FacilitySearchInput
               onChange={facilityId =>
                 updateDraft({
@@ -213,11 +220,11 @@ const VaccinationForm = ({
           </Grid>
         }
       />
-      {!isOtherFacility && (
+      {hasClinicians && !isOtherFacility && (
         <InputWithLabelRow
           label={t('label.clinician')}
           Input={
-            <Grid item flex={1}>
+            <Grid flex={1}>
               <ClinicianSearchInput
                 onChange={clinician => {
                   updateDraft({
@@ -343,7 +350,11 @@ const GivenInfoBox = ({
                 .build()}
             >
               {t('button.view-prescription')}
-              <ArrowRightIcon />
+              <ChevronDownIcon
+                sx={{
+                  transform: 'rotate(-90deg)',
+                }}
+              />
             </Link>
           )}
         </Box>

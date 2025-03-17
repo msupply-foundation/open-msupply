@@ -7,9 +7,9 @@ export enum Gender {
   FEMALE = 'FEMALE',
   /** 703117000 Masculine gender*/
   MALE = 'MALE',
-  /** 407379008 transgendered transsexual, female-to-male*/
+  /** 407379008 Transgender, female-to-male*/
   TRANSGENDER_MALE = 'TRANSGENDER_MALE',
-  /** 407378000 Surgically transgendered transsexual, male-to-female*/
+  /** 407378000 Transgender, male-to-female*/
   TRANSGENDER_FEMALE = 'TRANSGENDER_FEMALE',
   /** 394743007 Gender unknown*/
   UNKNOWN = 'UNKNOWN',

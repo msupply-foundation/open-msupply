@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Grid } from '@mui/material';
 import { StoryFn } from '@storybook/react';
 import { useConfirmOnLeaving } from './useConfirmOnLeaving';
@@ -10,14 +10,13 @@ export default {
 };
 
 const Template: StoryFn = () => {
-  const [isUnsaved, setIsUnsaved] = useState(false);
-  useConfirmOnLeaving(isUnsaved);
+  const { isDirty, setIsDirty } = useConfirmOnLeaving('storybook');
 
   return (
     <Grid>
       <ToggleButton
-        selected={isUnsaved}
-        onClick={() => setIsUnsaved(!isUnsaved)}
+        selected={isDirty}
+        onClick={() => setIsDirty(!isDirty)}
         label="Prompt if leaving this page"
         value="dirty"
       />

@@ -124,6 +124,7 @@ fn generate(
         program_id: None,
         period_id: None,
         order_type: None,
+        is_emergency: false,
     };
 
     Ok(result)
@@ -181,7 +182,7 @@ mod test_insert {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -234,6 +235,8 @@ mod test_insert {
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
+
+        // TODO add test for if max number of orders per period is reached
     }
 
     #[actix_rt::test]
@@ -244,7 +247,7 @@ mod test_insert {
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();

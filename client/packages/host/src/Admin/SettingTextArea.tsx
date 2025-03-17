@@ -22,6 +22,7 @@ interface SettingTextAreaProps {
   /** Info text displayed next to the settings label */
   infoText?: string;
   title: string;
+  visible: boolean;
 }
 
 export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
@@ -31,6 +32,7 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
   onToggle,
   infoText,
   title,
+  visible,
 }) => {
   const t = useTranslation();
   const [value, setValue] = React.useState(defaultValue);
@@ -46,7 +48,7 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
     onToggle?.(checked);
   };
 
-  return (
+  return visible ? (
     <>
       <Setting
         infoText={infoText}
@@ -60,7 +62,6 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
       {value.enabled && (
         <Grid container flexDirection="column" alignItems="flex-end">
           <Grid
-            item
             sx={{
               marginBottom: '5px',
               width: '100%',
@@ -73,18 +74,18 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
               maxRows={10}
               minRows={10}
               style={{ padding: '0 0 0 50px' }}
-              inputProps={{
-                sx: {
-                  borderColor: 'gray.main',
-                  borderStyle: 'solid',
-                  borderWidth: '1px',
-                  borderRadius: '5px',
-                  padding: '3px',
+              slotProps={{
+                input: {
+                  sx: {
+                    border: theme => `1px solid ${theme.palette.gray.main}`,
+                    borderRadius: '5px',
+                    padding: '3px',
+                  },
                 },
               }}
             />
           </Grid>
-          <Grid item>
+          <Grid>
             <ButtonWithIcon
               Icon={<SaveIcon />}
               label={t('button.save')}
@@ -96,5 +97,5 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
         </Grid>
       )}
     </>
-  );
+  ) : null;
 };

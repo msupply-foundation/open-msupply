@@ -14,7 +14,7 @@ use super::IdPair;
 pub struct IndicatorValuePayload {
     pub period_id: String,
     pub store_id: String,
-    pub customer_name_link_id: String,
+    pub customer_name_id: String,
 }
 
 pub type IndicatorValueLoaderInput = IdPair<IndicatorValuePayload>;
@@ -43,13 +43,13 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
     ) -> Result<HashMap<IndicatorValueLoaderInput, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
 
-        let (period_id, store_id, customer_name_link_id) =
+        let (period_id, store_id, customer_name_id) =
             // TODO replace with logic to not assume only one combination queried at any time.
             if let Some(loader_input) = loader_inputs.first() {
                 (
                     loader_input.payload.period_id.clone(),
                     loader_input.payload.store_id.clone(),
-                    loader_input.payload.customer_name_link_id.clone(),
+                    loader_input.payload.customer_name_id.clone(),
                 )
             } else {
                 return Ok(HashMap::new());
@@ -57,7 +57,7 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
 
         let filter = IndicatorValueFilter::new()
             .store_id(EqualFilter::equal_to(&store_id))
-            .customer_name_link_id(EqualFilter::equal_to(&customer_name_link_id))
+            .customer_name_id(EqualFilter::equal_to(&customer_name_id))
             .period_id(EqualFilter::equal_to(&period_id));
 
         let values =
@@ -66,7 +66,7 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
         let payload = IndicatorValuePayload {
             period_id,
             store_id,
-            customer_name_link_id,
+            customer_name_id,
         };
 
         Ok(values
@@ -74,11 +74,11 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
             .map(|value| {
                 (
                     IndicatorValueLoaderInput::new(
-                        &value.indicator_line_id,
-                        &value.indicator_column_id,
+                        &value.indicator_value_row.indicator_line_id,
+                        &value.indicator_value_row.indicator_column_id,
                         payload.clone(),
                     ),
-                    value,
+                    value.indicator_value_row,
                 )
             })
             .collect())

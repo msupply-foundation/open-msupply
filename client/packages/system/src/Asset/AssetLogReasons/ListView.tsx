@@ -10,12 +10,14 @@ import {
   useUrlQueryParams,
   useEditModal,
   InsertAssetLogReasonInput,
+  GenericColumnKey,
 } from '@openmsupply-client/common';
 import { AssetLogReasonFragment, useAssetData } from '../api';
 import { Toolbar } from './Toolbar';
 import { parseStatus } from '../utils';
 import { AppBarButtons } from './AppBarButtons';
 import { LogReasonCreateModal } from './LogReasonCreateModal';
+import { Footer } from './Footer';
 
 const AssetListComponent: FC = () => {
   const {
@@ -34,6 +36,7 @@ const AssetListComponent: FC = () => {
 
   const columns = useColumns<AssetLogReasonFragment>(
     [
+      GenericColumnKey.Selection,
       {
         key: 'status',
         label: 'label.status',
@@ -45,7 +48,6 @@ const AssetListComponent: FC = () => {
         label: 'label.reason',
         sortable: false,
       },
-      'selection',
     ],
     {
       sortBy,
@@ -67,7 +69,7 @@ const AssetListComponent: FC = () => {
         />
       )}
       <AppBarButtons onCreate={() => onOpen()} />
-      <Toolbar data={data?.nodes ?? []} filter={filter} />
+      <Toolbar filter={filter} />
       <DataTable
         id="item-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
@@ -76,8 +78,14 @@ const AssetListComponent: FC = () => {
         data={data?.nodes}
         isError={isError}
         isLoading={isLoading}
-        noDataElement={<NothingHere body={t('error.no-items')} />}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-asset-log-reasons')}
+            onCreate={() => onOpen()}
+          />
+        }
       />
+      <Footer data={data?.nodes ?? []} />
     </>
   );
 };
