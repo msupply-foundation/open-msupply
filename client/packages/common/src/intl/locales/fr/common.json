@@ -315,7 +315,7 @@
   "error.no-properties-to-import": "Il n'y a pas de propriétés d'import configurées pour vos sites",
   "error.no-report-permission": "Aucune autorisation pour afficher les rapports",
   "error.no-reports-available": "Aucun rapport disponible",
-  "error.no-requisition-items": "Aucun article n'a été ajouté à cette commande interne.",
+  "error.no-internal-order-items": "Aucun article n'a été ajouté à cette commande interne.",
   "error.no-requisitions": "Il n'y aucune réquisition client à afficher.",
   "error.no-results": "Aucune donnée trouvée",
   "error.no-rnr-forms": "Aucun Formulaire R&R trouvé",

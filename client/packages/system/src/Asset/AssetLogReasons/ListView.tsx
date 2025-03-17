@@ -78,7 +78,12 @@ const AssetListComponent: FC = () => {
         data={data?.nodes}
         isError={isError}
         isLoading={isLoading}
-        noDataElement={<NothingHere body={t('error.no-items')} />}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-asset-log-reasons')}
+            onCreate={() => onOpen()}
+          />
+        }
       />
       <Footer data={data?.nodes ?? []} />
     </>

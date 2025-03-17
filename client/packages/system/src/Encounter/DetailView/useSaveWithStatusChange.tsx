@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   ButtonWithIcon,
+  DateUtils,
   DialogButton,
   EncounterNodeStatus,
   SaveIcon,
@@ -34,6 +35,9 @@ export function useSaveWithStatusChange(
     status: EncounterNodeStatus;
     callback: () => void;
   }>();
+  const endDatetime = encounterData?.endDatetime
+    ? encounterData.endDatetime
+    : DateUtils.formatRFC3339(new Date());
 
   const { Modal, hideDialog, showDialog } = useDialog({
     disableBackdrop: true,
@@ -56,7 +60,11 @@ export function useSaveWithStatusChange(
       onSave();
       return;
     }
-    updateEncounter({ status });
+    if (status === EncounterNodeStatus.Visited) {
+      updateEncounter({ status, endDatetime });
+    } else {
+      updateEncounter({ status });
+    }
     setSaveStatus({ status, callback });
   };
 
