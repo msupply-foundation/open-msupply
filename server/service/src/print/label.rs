@@ -4,9 +4,7 @@ use crate::settings::LabelPrinterSettingNode;
 
 use super::jetdirect::{Jetdirect, Mode};
 
-const LINE_HEIGHT_IN_DOTS: i32 = 30;
-
-pub fn print_data_matrix_barcode_label(
+pub fn print_asset_label(
     settings: LabelPrinterSettingNode,
     code: String,
     assetNumber: Option<String>,
