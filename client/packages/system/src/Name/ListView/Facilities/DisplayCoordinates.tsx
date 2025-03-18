@@ -30,38 +30,26 @@ export const DisplayCoordinates = ({
   const [errorMessage, setErrorMessage] = useState<string>();
   const [distance, setDistance] = useState<number>();
 
-  const calculateDistance = (
-    targetLatitude: number,
-    targetLongitude: number
-  ) => {
-    if (!latitude || !longitude) return;
+  // Follows haversine formula to calculate the distance
+  const calculateDistance = (targetLat: number, targetLng: number) => {
+    if (latitude === undefined || longitude === undefined) return;
+
+    const R = 6371; // Earth radius in kilometers
     const toRadians = (degrees: number) => degrees * (Math.PI / 180);
 
-    // Radius of the Earth in kilometers
-    const earthRadiusKm = 6371;
+    const lat1 = toRadians(latitude);
+    const lat2 = toRadians(targetLat);
+    const deltaLat = toRadians(targetLat - latitude);
+    const deltaLng = toRadians(targetLng - longitude);
 
-    const deltaLatitude = toRadians(
-      parseFloat(targetLatitude.toFixed(6)) - latitude
-    );
-    const deltaLongitude = toRadians(
-      parseFloat(targetLongitude.toFixed(6)) - longitude
-    );
+    const a =
+      Math.sin(deltaLat / 2) ** 2 +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
 
-    // Determines distance between two points in a sphere
-    const haversineFormula =
-      Math.sin(deltaLatitude / 2) * Math.sin(deltaLatitude / 2) +
-      Math.cos(toRadians(latitude)) *
-        Math.cos(toRadians(targetLatitude)) *
-        Math.sin(deltaLongitude / 2) *
-        Math.sin(deltaLongitude / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    const centralAngle =
-      2 *
-      Math.atan2(Math.sqrt(haversineFormula), Math.sqrt(1 - haversineFormula));
-
-    // Distance in kilometers
-    const distanceKm = parseFloat((earthRadiusKm * centralAngle).toFixed(6));
-    setDistance(distanceKm);
+    const distance = R * c; // in Kilometers
+    setDistance(parseFloat(distance.toFixed(6)));
   };
 
   const updateCoordinates = (latitude: number, longitude: number): void => {
