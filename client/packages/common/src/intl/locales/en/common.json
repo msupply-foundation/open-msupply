@@ -1544,7 +1544,7 @@
   "messages.mark-as-visited": "This encounter is still marked as pending. If you are finished, mark it as visited.",
   "messages.max-or-min-temperature": "Max / min temperature",
   "messages.message-not-sent": "Error! Your message was not sent",
-  "messages.message-sent": "Your message has been sent successfully!",
+  "messages.message-sent": "Your message has been saved successfully. It will be sent with the next synchronisation process.",
   "messages.missing-insurance-inputs": "Please fill in all fields",
   "messages.must-allocate-all-lines": "Cannot change the status until all lines have been allocated.",
   "messages.native-mode": "Select the mode which you would like to run. Note that you can change this option later if you have administrator access.",
