@@ -1,6 +1,6 @@
 import React from 'react';
 import { rankWith, ControlProps, isDateTimeControl } from '@jsonforms/core';
-import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
+import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   DetailInputWithLabelRow,
   DateUtils,
