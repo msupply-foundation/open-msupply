@@ -43,18 +43,6 @@ export const FileList = ({
 
   const isAndroid = Capacitor.getPlatform() === 'android';
 
-  const downloadFile = async (fileUrl: string) => {
-    const response = await fetch(fileUrl, {
-      headers: {
-        Accept: 'application/json',
-      },
-      credentials: 'include',
-    });
-    const blob = await response.blob();
-    const reader = new FileReader();
-    reader.readAsDataURL(blob);
-  };
-
   const onError = (err: string) => {
     error(`Error: ${err}`)();
   };
@@ -96,23 +84,12 @@ export const FileList = ({
                   {file.name}
                 </span>
               ) : (
-                <>
-                  <div
-                    onClick={() =>
-                      downloadFile(
-                        `${Environment.SYNC_FILES_URL}/${tableName}/${assetId}/${file.id}`
-                      )
-                    }
-                  >
-                    {file.name}
-                  </div>
-                  <Link
-                    to={`${Environment.SYNC_FILES_URL}/${tableName}/${assetId}/${file.id}`}
-                    target="_blank"
-                  >
-                    {file.name}
-                  </Link>
-                </>
+                <Link
+                  to={`${Environment.SYNC_FILES_URL}/${tableName}/${assetId}/${file.id}`}
+                  target="_blank"
+                >
+                  {file.name}
+                </Link>
               )
             ) : (
               file.name
