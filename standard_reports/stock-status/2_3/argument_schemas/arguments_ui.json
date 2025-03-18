@@ -53,21 +53,15 @@
       "label": "T#report.sort-by",
       "options": {
         "show": [
-          ["name", "T#report.item-name"],
-          ["code", "T#label.code"]
+          ["name", "item"],
+          ["code", "code"]
         ]
       }
     },
     {
       "type": "Control",
       "scope": "#/properties/dir",
-      "label": "T#report.sort-direction",
-      "options": {
-        "show": [
-          ["asc", "T#report.ascending"],
-          ["desc", "T#report.descending"]
-        ]
-      }
+      "label": "T#report.sort-direction"
     }
   ]
 }
