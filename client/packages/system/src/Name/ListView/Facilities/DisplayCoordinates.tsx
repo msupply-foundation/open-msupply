@@ -56,10 +56,11 @@ export const DisplayCoordinates = ({
     setLoading(true);
     try {
       const isNativePlatform = Capacitor.isNativePlatform();
-      const isGeolocationAvailable = Capacitor.isPluginAvailable('Geolocation');
+      const isGeolocationPluginAvailable =
+        Capacitor.isPluginAvailable('Geolocation');
 
       // Sets coordinates for Android devices
-      if (isGeolocationAvailable && isNativePlatform) {
+      if (isGeolocationPluginAvailable && isNativePlatform) {
         const geolocationPermission = await Geolocation.checkPermissions();
 
         if (
@@ -155,7 +156,6 @@ export const DisplayCoordinates = ({
           />
         </Stack>
       )}
-      <Typography>{t('label.gps-coordinates')}:</Typography>
     </>
   );
 };
