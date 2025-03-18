@@ -46,7 +46,7 @@ const calculateExpectedUsage = (daysUntilExpired, line) => {
   if (!!daysUntilExpired && !!averageMonthlyConsumption && !!totalStock) {
     if (daysUntilExpired >= 0) {
       const usage = Math.round(
-        daysUntilExpired * (averageMonthlyConsumption / (365.25 / 12.0))
+        daysUntilExpired * (averageMonthlyConsumption / 30)
       );
       expectedUsage = Math.min(usage, totalStock ?? usage);
     }
@@ -66,9 +66,7 @@ const calculateStockAtRisk = (
     if (!!averageMonthlyConsumption) {
       if (daysUntilExpired >= 0) {
         stockAtRisk = Math.round(
-          totalStock - averageMonthlyConsumption * (daysUntilExpired / 
-            (365.25 / 12.0)
-          )
+          totalStock - averageMonthlyConsumption * (daysUntilExpired / 30)
         );
       } else {
         stockAtRisk = Math.round(totalStock);
