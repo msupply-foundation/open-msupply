@@ -1,4 +1,8 @@
-import { Autocomplete, useIntlUtils } from '@openmsupply-client/common';
+import {
+  Autocomplete,
+  useIntlUtils,
+  useTheme,
+} from '@openmsupply-client/common';
 import { ClinicianFragment, useClinicians } from '@openmsupply-client/programs';
 import React from 'react';
 import { FC } from 'react';
@@ -22,6 +26,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
   const { data } = useClinicians.document.list({});
   const { getLocalisedFullName } = useIntlUtils();
   const clinicians: ClinicianFragment[] = data?.nodes ?? [];
+  const theme = useTheme();
 
   return (
     <Autocomplete
@@ -54,6 +59,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
         })
       )}
       sx={{ minWidth: width }}
+      textSx={{ backgroundColor: theme.palette.background.white }}
       disabled={disabled}
       fullWidth={fullWidth}
     />

@@ -23,6 +23,7 @@ pub struct ClinicianFilter {
     pub phone: Option<StringFilter>,
     pub mobile: Option<StringFilter>,
     pub email: Option<StringFilter>,
+    pub is_active: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -149,6 +150,7 @@ fn create_filtered_query(store_id: String, filter: Option<ClinicianFilter>) -> B
             phone,
             mobile,
             email,
+            is_active,
         } = f;
 
         apply_equal_filter!(query, id, clinician::id);
@@ -161,6 +163,10 @@ fn create_filtered_query(store_id: String, filter: Option<ClinicianFilter>) -> B
         apply_string_filter!(query, phone, clinician::phone);
         apply_string_filter!(query, mobile, clinician::mobile);
         apply_string_filter!(query, email, clinician::email);
+
+        if let Some(is_active) = is_active {
+            query = query.filter(clinician::is_active.eq(is_active))
+        }
     };
 
     // Restrict results to clinicians belonging to the store as specified in the
@@ -226,6 +232,11 @@ impl ClinicianFilter {
 
     pub fn email(mut self, filter: StringFilter) -> Self {
         self.email = Some(filter);
+        self
+    }
+
+    pub fn is_active(mut self, filter: bool) -> Self {
+        self.is_active = Some(filter);
         self
     }
 }

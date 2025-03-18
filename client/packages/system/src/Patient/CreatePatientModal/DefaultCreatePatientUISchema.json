@@ -29,12 +29,12 @@
           "label": "label.gender",
           "options": {
             "show": [
-              ["MALE", "Male"],
-              ["FEMALE", "Female"],
-              ["TRANSGENDER_MALE", "Transgender Male"],
-              ["TRANSGENDER_FEMALE", "Transgender Female"],
-              ["NON_BINARY", "Non-binary"],
-              ["UNKNOWN", "Unknown"]
+                  ["MALE", "gender.male"],
+                  ["FEMALE", "gender.female"],
+                  ["TRANSGENDER_MALE", "gender.transgender-male"],
+                  ["TRANSGENDER_FEMALE", "gender.transgender-female"],
+                  ["NON_BINARY", "gender.non-binary"],
+                  ["UNKNOWN", "gender.unknown"]
             ]
           }
         },

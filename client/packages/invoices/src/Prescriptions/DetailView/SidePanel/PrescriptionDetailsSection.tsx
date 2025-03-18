@@ -73,13 +73,13 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
     theirReferenceInput,
   ]);
 
-  if (!createdDatetime) return null;
-
   useEffect(() => {
     if (!data) return;
     const { theirReference } = data;
     setTheirReferenceInput(theirReference);
   }, [data]);
+
+  if (!createdDatetime) return null;
 
   return (
     <DetailPanelSection title={t('heading.prescription-details')}>
@@ -98,7 +98,14 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
           <BasicTextInput
             disabled={isDisabled}
             size="small"
-            sx={{ width: 250 }}
+            fullWidth
+            slotProps={{
+              input: {
+                sx: {
+                  backgroundColor: theme => theme.palette.background.white,
+                },
+              },
+            }}
             value={theirReferenceInput ?? ''}
             onChange={event => {
               setTheirReferenceInput(event.target.value);
