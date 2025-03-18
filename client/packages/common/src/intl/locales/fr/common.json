@@ -1505,7 +1505,7 @@
   "messages.mark-as-visited": "Cette rencontre est encore marquée comme étant en attente. Si vous avez terminé, marquez-la comme visitée.",
   "messages.max-or-min-temperature": "Température Max/Min",
   "messages.message-not-sent": "Erreur ! Message non envoyé",
-  "messages.message-sent": "Votre message a été envoyé avec succès !",
+  "messages.message-sent": "Votre message a été sauvegardé avec succès ! Il sera envoyé lors de la prochaine synchronisation.",
   "messages.must-allocate-all-lines": "Impossible de changer le statut tant que toutes les lignes n'ont pas été allouées (ou supprimées).",
   "messages.native-mode": "Sélectionnez le mode que vous souhaitez utiliser. Notez que vous pouvez modifier cette option ultérieurement si vous disposez d'un accès administrateur.",
   "messages.native-mode-client": "Ce mode permet de sélectionner le serveur auquel se connecter.",
@@ -1574,7 +1574,7 @@
   "messages.reduced-to-zero_other": "La quantité de {{ count }} lignes réduite à 0",
   "messages.regenerate-id-confirm": "Cela créera un nouvel identifiant et ne pourra pas être annulé.",
   "messages.repack-log-info": "Reconditionné depuis la ligne de stock",
-  "messages.requested-to-suggested": "Cela définira les quantités demandées avec les quantités suggérées.",
+  "messages.requested-to-suggested": "La quantité demandée correspondra à la quantité suggérée pour les lignes dont la quantité demandée est égale à 0.",
   "messages.requisition-item-information-amc": "Consommation mensuelle moyenne des clients. Pour votre dépôt, il s'agit de la somme des consommations mensuelles moyennes des clients.",
   "messages.requisition-no-stock": "Aucun stock disponible actuellement",
   "messages.results-found": "{{totalCount}} résultats trouvés",
@@ -1918,5 +1918,10 @@
   "error.dose-max-lower-than-min": "La dose {{doseIndex}} doit avoir un âge maximum plus élevé que l'âge minimum",
   "label.code2": "Code 2",
   "messages.cannot-delete-linked-requisition": "Impossible de supprimer une réquisition liée",
-  "label.batches": "Lots"
+  "label.batches": "Lots",
+  "messages.prescription-given": "Prescrit {{amount}} {{item}} le {{date}}",
+  "error.provide-reason-stock-adjustment": "L'ajustement du stock doit être justifié",
+  "error.provide-reason-new-stock": "L'augmentation du stock doit être justifiée",
+  "messages.customer-return-created-verified": "Le retour client a été créé avec succès comme Vérifié",
+  "messages.supplier-return-created-shipped": "Retour fournisseur créé avec succès comme Expédié"
 }
