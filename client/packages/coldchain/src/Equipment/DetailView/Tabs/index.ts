@@ -1,1 +1,2 @@
-export * from './Summary';
+export * from "./Summary";
+export * from "./Details";

@@ -113,7 +113,7 @@
   "error.no-outbound-shipments": "La iha remessa sasan sai atu hatudu.",
   "error.no-report-permission": "Laiha permisaun atu hare relatoriu sira",
   "error.no-reports-available": "Relatoriu sira la disponivel",
-  "error.no-requisition-items": "La iha items ne'ebe aumenta ba iha pedidu internal ne'e.",
+  "error.no-internal-order-items": "La iha items ne'ebe aumenta ba iha pedidu internal ne'e.",
   "error.no-requisitions": "Laiha requizisaun atu hatudu.",
   "error.no-results": "Laiha buat ida atu hatudu",
   "error.no-stock": "Laiha Stock atu hatudu.",

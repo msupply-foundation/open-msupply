@@ -35,6 +35,8 @@ export const SelectBatch = ({
     }
   }, [data]);
 
+  const hasSingleBatch = data?.nodes?.length === 1;
+
   const columns = useColumns<StockLineFragment>(
     [
       {
@@ -42,7 +44,7 @@ export const SelectBatch = ({
         key: 'select',
         Cell: ({ rowData, isDisabled }) => (
           <Checkbox
-            disabled={isDisabled}
+            disabled={isDisabled || hasSingleBatch}
             checked={rowData.id === stockLine?.id}
           />
         ),
@@ -101,7 +103,8 @@ const BatchTable = ({
         // Make the table a little more compact
         height: 'unset',
         '& td': {
-          padding: 0,
+          paddingY: 0,
+          paddingLeft: '16',
         },
       }
     );
