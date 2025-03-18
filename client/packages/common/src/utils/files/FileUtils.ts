@@ -79,7 +79,9 @@ const openAndroidFile = async (file: {
       const fileUrl = `${Environment.SYNC_FILES_URL}/${file.tableName}/${file.assetId}/${file.id}`;
 
       // Download file
-      // console.log('Downloading file...');
+
+      // Ideally we would use the Filesystem.downloadFile() method here, but it
+      // doesn't pass through credentials, so we'll have to do it the long way:
       const response = await fetch(fileUrl, {
         headers: {
           Accept: 'application/json',
