@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Autocomplete,
   BasicTextInput,
@@ -16,12 +16,14 @@ import {
   useDebounceCallback,
   styled,
   PlusCircleIcon,
+  useIsScreen,
+  Paper,
 } from '@openmsupply-client/common';
 import { FileList } from '../Components';
-import { parseLogStatus } from '../utils';
+import { base64ToBlob, parseLogStatus } from '../utils';
 import { useAssetData } from '@openmsupply-client/system';
 import { useIsGapsStoreOnly } from '@openmsupply-client/common';
-import { Camera, CameraResultType } from '@capacitor/camera';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
 
 const StyledContainer = styled(Box)(({ theme }) => ({
@@ -87,8 +89,8 @@ const Row = ({
 
 export const StatusForm = ({ draft, onChange }: StatusForm) => {
   const t = useTranslation();
+  const isTabletOrMobile = useIsScreen('md') || useIsScreen('sm');
   defineCustomElements(window);
-  const [imageElement, setImageElement] = useState<any>({ src: undefined })
   const isGaps = useIsGapsStoreOnly();
   const debouncedOnChange = useDebounceCallback(
     (patch: Partial<InsertAssetLogInput>) => onChange(patch),
@@ -102,20 +104,26 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
 
   const takePicture = async () => {
     const image = await Camera.getPhoto({
+      source: CameraSource.Camera,
       quality: 90,
       allowEditing: true,
-      resultType: CameraResultType.Uri
+      resultType: CameraResultType.Base64
     });
 
-    // image.webPath will contain a path that can be set as an image src.
-    // You can access the original file using image.path, which can be
-    // passed to the Filesystem API to read the raw data of the image,
-    // if desired (or pass resultType: CameraResultType.Base64 to getPhoto)
-    var imageUrl = image.webPath;
+    const base64Data = image.base64String;
+    const contentType = `image/${image.format}`;
+    if (!base64Data) {
+      // throw error?
+      return
+    }
+    const blob = base64ToBlob(contentType, base64Data);
+
+    // Create a File from the blob
+    const fileName = `photo_${new Date().getTime()}.${image.format}`;
+    const file = new File([blob], fileName, { type: contentType });
 
     // Can be set to the src of an image now
-    setImageElement({ ...imageElement, src: imageUrl })
-
+    onUpload([file]);
   };
 
   const getOptionsFromEnum = (
@@ -189,24 +197,42 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
             onChange={e => debouncedOnChange({ comment: e.target.value })}
           />
         </Row>
-        <Box padding={2}>
-          <Upload onUpload={onUpload} />
-          <ButtonWithIcon
-            Icon={<PlusCircleIcon />}
-            label={t('button.take-photo')}
-            onClick={takePicture}
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'row',
+          marginTop: 2,
+          alignItems: 'center',
+        }}>
+          <Upload onUpload={onUpload} customWidth={'50%'} />
+          {isTabletOrMobile &&
+            <Paper
+              sx={{
+                border: '0px',
+                borderWidth: '0px',
+                backgroundColor: 'inherit',
+                width: '50%',
+                marginTop: '0px 0px',
+                padding: '0px',
+                boxShadow: 'none',
+              }}>
+              < ButtonWithIcon
+                shouldShrink={false}
+                color="secondary"
+                variant='outlined'
+                label={t('button.take-photo')}
+                onClick={takePicture}
+                Icon={<PlusCircleIcon />}
+              /></Paper>}
+        </Box>
+        <Box display="flex" sx={{ width: '300px' }}>
+          <FileList
+            assetId={draft.id ?? ''}
+            files={draft.files}
+            padding={0.5}
+            removeFile={removeFile}
           />
-          <Box display="flex" sx={{ width: '300px' }}>
-            <FileList
-              assetId={draft.id ?? ''}
-              files={draft.files}
-              padding={0.5}
-              removeFile={removeFile}
-            />
-          </Box>
         </Box>
       </Box>
-
     </StyledContainer >
   );
 };

@@ -15,26 +15,27 @@ import {
 export interface UploadProps {
   accept?: Accept;
   color?: 'primary' | 'secondary' | 'gray';
-  maxSize?: number;
+  customWidth?: String;
   onUpload: <T extends File>(files: T[]) => void;
 }
 
 export const Upload: FC<UploadProps> = ({
   accept,
   color = 'secondary',
+  customWidth,
   onUpload,
 }) => {
   const t = useTranslation();
-  const isMobile = useIsScreen('sm');
+  const isTabletOrMobile = useIsScreen('md') || useIsScreen('sm');
 
   return (
     <Paper
       sx={theme => ({
-        [theme.breakpoints.down('sm')]: {
+        [theme.breakpoints.down('md')]: {
           border: '0px',
           borderWidth: '0px',
           backgroundColor: 'inherit',
-          width: '200px',
+          width: customWidth || '200px',
           marginTop: '0px 0px',
           padding: '0px',
           boxShadow: 'none',
@@ -62,7 +63,7 @@ export const Upload: FC<UploadProps> = ({
         {({ getRootProps, getInputProps }) => (
           <div {...getRootProps()}>
             <input {...getInputProps()} />
-            {!isMobile && <>
+            {!isTabletOrMobile && <>
               <FileUploadIcon
                 sx={{
                   fontSize: 36,
@@ -78,7 +79,7 @@ export const Upload: FC<UploadProps> = ({
               </BaseButton>
             </>
             }
-            {isMobile && <ButtonWithIcon
+            {isTabletOrMobile && <ButtonWithIcon
               shouldShrink={false}
               color="secondary"
               variant='outlined'
