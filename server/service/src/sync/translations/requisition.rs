@@ -7,9 +7,7 @@ use repository::{
 };
 
 use serde::{Deserialize, Serialize};
-use util::constants::{
-    MISSING_PROGRAM, MSUPPLY_NUMBER_OF_DAYS_IN_A_MONTH, NUMBER_OF_DAYS_IN_A_MONTH,
-};
+use util::constants::{MISSING_PROGRAM, MSUPPLY_NUMBER_OF_DAYS_IN_A_MONTH};
 
 use crate::sync::{
     sync_serde::{
