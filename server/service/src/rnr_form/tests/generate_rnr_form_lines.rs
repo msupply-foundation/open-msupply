@@ -425,7 +425,7 @@ mod generate_rnr_form_lines {
         assert_eq!(
             result.get(&item_query_test1().id),
             // adjusted consumption for the month
-            Some(&vec![0.9818548387096774])
+            Some(&vec![0.9677419354838709])
         );
 
         // When many rnr forms, it gets the most recent two
@@ -442,7 +442,7 @@ mod generate_rnr_form_lines {
         assert_eq!(
             result.get(&item_query_test1().id),
             // adjusted consumption for the month
-            Some(&vec![2.0991379310344827, 2.9455645161290325])
+            Some(&vec![2.0689655172413794, 2.9032258064516125])
         );
     }
 
@@ -455,7 +455,7 @@ mod generate_rnr_form_lines {
                 20.0,    // 20 consumed in period
                 &vec![]  // no previous AMCs
             ),
-            10.145833333333334
+            10.0
         );
 
         // if there is a previous AMC average, average that with the current period
@@ -465,8 +465,7 @@ mod generate_rnr_form_lines {
                 20.0,              // 20 consumed in period
                 &vec![15.0, 11.0]  // AMC across previous periods
             ),
-            12.048611111111112
-        );
+            12.0
     }
 
     // ---- TEST DATA ----
