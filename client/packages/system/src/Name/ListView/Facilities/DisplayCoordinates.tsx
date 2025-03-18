@@ -1,4 +1,4 @@
-import React, { ReactElement, useEffect, useState } from 'react';
+import React, { ReactElement, useState } from 'react';
 import {
   Alert,
   ButtonWithIcon,
@@ -13,17 +13,26 @@ import {
 import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
 
-export const DisplayCoordinates = (): ReactElement => {
+interface DisplayCoordinatesProps {
+  latitude?: number;
+  longitude?: number;
+  onDraftPropertiesChange: (latitude: number, longitude: number) => void;
+}
+
+export const DisplayCoordinates = ({
+  latitude,
+  longitude,
+  onDraftPropertiesChange,
+}: DisplayCoordinatesProps): ReactElement => {
   const t = useTranslation();
 
   const [loading, setLoading] = useState(false);
-  const [latitude, setLatitude] = useState<number>();
-  const [longitude, setLongitude] = useState<number>();
   const [errorMessage, setErrorMessage] = useState<string>();
 
   const updateCoordinates = (latitude: number, longitude: number): void => {
-    setLatitude(parseFloat(latitude.toFixed(6)));
-    setLongitude(parseFloat(longitude.toFixed(6)));
+    const fixedLatitude = parseFloat(latitude.toFixed(6));
+    const fixedLongitude = parseFloat(longitude.toFixed(6));
+    onDraftPropertiesChange(fixedLatitude, fixedLongitude);
   };
 
   const handleGeolocationWebError = (error: GeolocationPositionError) => {
@@ -89,17 +98,10 @@ export const DisplayCoordinates = (): ReactElement => {
     }
   };
 
-  useEffect(() => {
-    fetchCoordinates();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const formatCoordinate = (
-    coordinate?: number,
+    coordinate: number,
     isLatitude?: boolean
   ): string => {
-    if (!coordinate) return '';
-
     const direction = isLatitude
       ? coordinate >= 0
         ? 'N'
@@ -116,8 +118,8 @@ export const DisplayCoordinates = (): ReactElement => {
   };
 
   const isLatitude = true;
-  const formattedLatitude = formatCoordinate(latitude, isLatitude);
-  const formattedLongitude = formatCoordinate(longitude, !isLatitude);
+  const formattedLatitude = formatCoordinate(latitude ?? 0, isLatitude);
+  const formattedLongitude = formatCoordinate(longitude ?? 0, !isLatitude);
 
   return (
     <>
@@ -147,13 +149,13 @@ export const DisplayCoordinates = (): ReactElement => {
             />
           </Box>
           <ButtonWithIcon
-            disabled
-            onClick={() => {}}
+            onClick={fetchCoordinates}
             Icon={<LocationIcon />}
             label={t('label.update-live-location')}
           />
         </Stack>
       )}
+      <Typography>{t('label.gps-coordinates')}:</Typography>
     </>
   );
 };
