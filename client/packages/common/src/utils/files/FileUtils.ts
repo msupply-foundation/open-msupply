@@ -71,18 +71,19 @@ const openAndroidFile = async (file: {
     // Check file exists first
     try {
       console.log('Checking file exists...');
-      const result = await statWithTimeout(filePath);
+      // const result = await statWithTimeout(filePath);
 
-      // Filesystem.stat({
-      //   path: filePath,
-      //   directory: Directory.Data,
-      // });
+      const result = await Filesystem.stat({
+        path: filePath,
+        directory: Directory.Data,
+      });
       console.log('Stat', JSON.stringify(result, null, 2));
-      uri = (result as any).uri;
+      uri = result.uri;
     } catch (e) {
       console.error("File doesn't exist", e);
       const fileUrl = `${Environment.SYNC_FILES_URL}/${file.tableName}/${file.assetId}/${file.id}`;
       // Download file
+      console.log('Downloading file...');
       const response = await fetch(fileUrl, {
         headers: {
           Accept: 'application/json',
@@ -105,10 +106,11 @@ const openAndroidFile = async (file: {
       const base64String = base64Data.split(',')[1];
       if (!base64String) throw new Error('Problem parsing base64 string');
       // Save to filesystem
+      console.log('Writing file...');
       await Filesystem.writeFile({
         path: filePath,
         data: base64String,
-        directory: Directory.Documents,
+        directory: Directory.Data,
       });
 
       const uriResult = await Filesystem.getUri({
@@ -119,22 +121,6 @@ const openAndroidFile = async (file: {
 
       uri = uriResult.uri;
     }
-
-    // Get the full URI for the file
-
-    // console.log('File URI', JSON.stringify(uriResult, null, 2));
-
-    // try {
-    //   console.log('About to call stat');
-    //   const result = await Filesystem.stat({
-    //     path: filePath,
-    //     directory: Directory.Data,
-    //   });
-
-    //   console.log('Stat result', JSON.stringify(result, null, 2));
-    // } catch (error) {
-    //   console.error('Error in stat:', error);
-    // }
 
     console.log('Continuing...');
 
@@ -162,14 +148,14 @@ export const FileUtils = {
   openAndroidFile,
 };
 
-const statWithTimeout = async (filePath: string, timeout = 5000) => {
-  return Promise.race([
-    Filesystem.stat({
-      path: filePath,
-      directory: Directory.Data,
-    }),
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Stat operation timed out')), timeout)
-    ),
-  ]);
-};
+// const statWithTimeout = async (filePath: string, timeout = 5000) => {
+//   return Promise.race([
+//     Filesystem.stat({
+//       path: filePath,
+//       directory: Directory.Data,
+//     }),
+//     new Promise((_, reject) =>
+//       setTimeout(() => reject(new Error('Stat operation timed out')), timeout)
+//     ),
+//   ]);
+// };
