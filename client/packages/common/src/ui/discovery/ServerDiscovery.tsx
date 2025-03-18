@@ -124,7 +124,11 @@ export const ServerDiscovery = () => {
             display="flex"
             flex={0}
             justifyContent="center"
-            sx={{
+            sx={theme => ({
+              [theme.breakpoints.down('sm')]: {
+                paddingX: '1em',
+                textJustify: 'inter-word'
+              },
               fontSize: {
                 xs: '12px',
                 sm: '14px',
@@ -136,7 +140,7 @@ export const ServerDiscovery = () => {
               fontWeight: 600,
               whiteSpace: 'pre-line',
               paddingBottom: '5%',
-            }}
+            })}
           >
             {t('discovery.body')}
           </Typography>

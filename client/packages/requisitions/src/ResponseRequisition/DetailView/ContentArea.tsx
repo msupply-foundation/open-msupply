@@ -28,6 +28,7 @@ export const ContentArea = ({
       data={lines}
       noDataElement={
         <NothingHere
+          body={t('error.no-requisition-items')}
           buttonText={t('button.add-item')}
           onCreate={disableAddLine ? undefined : onAddItem}
         />
