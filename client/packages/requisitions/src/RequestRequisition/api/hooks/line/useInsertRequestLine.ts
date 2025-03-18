@@ -3,12 +3,11 @@ import { useRequestId } from '../document/useRequest';
 import { useRequestApi } from '../utils/useRequestApi';
 
 export const useInsertRequestLines = () => {
-  const RequestId = useRequestId();
+  const requestId = useRequestId();
   const queryClient = useQueryClient();
   const api = useRequestApi();
 
   return useMutation(api.insertLine, {
-    onSuccess: () =>
-      queryClient.invalidateQueries(api.keys.detail(RequestId)),
+    onSuccess: () => queryClient.invalidateQueries(api.keys.detail(requestId)),
   });
 };

@@ -33,7 +33,7 @@ export const usePrescriptionLines = (id?: string) => {
     mutateAsync: updateMutation,
     isLoading: isSavingLines,
     error: saveLineError,
-  } = useSaveLines(data?.id ?? '', data?.id ?? "");
+  } = useSaveLines(data?.id ?? '', data?.id ?? '');
 
   const saveLines = async ({
     draftPrescriptionLines,
@@ -53,7 +53,7 @@ export const usePrescriptionLines = (id?: string) => {
     mutateAsync: deleteMutation,
     isLoading: isDeletingLines,
     error: deleteLinesError,
-  } = useDeleteLines(data?.id ?? "");
+  } = useDeleteLines(data?.id ?? '');
 
   const deleteLines = async (rowsToDelete: DraftPrescriptionLine[]) => {
     const lines = rowsToDelete.map(({ id }) => ({ id }));
@@ -115,19 +115,19 @@ const useSaveLines = (id: string, invoiceId: string) => {
         ),
       updatePrescriptions: !!patch
         ? [
-          {
-            ...patch,
-            status: mapStatus(patch),
-            clinicianId: setNullableInput('clinicianId', patch),
-            diagnosisId: setNullableInput('diagnosisId', patch),
-            programId: setNullableInput('programId', patch),
-            theirReference: setNullableInput('theirReference', patch),
-            nameInsuranceJoinId: setNullableInput(
-              'nameInsuranceJoinId',
-              patch
-            ),
-          },
-        ]
+            {
+              ...patch,
+              status: mapStatus(patch),
+              clinicianId: setNullableInput('clinicianId', patch),
+              diagnosisId: setNullableInput('diagnosisId', patch),
+              programId: setNullableInput('programId', patch),
+              theirReference: setNullableInput('theirReference', patch),
+              nameInsuranceJoinId: setNullableInput(
+                'nameInsuranceJoinId',
+                patch
+              ),
+            },
+          ]
         : undefined,
       setPrescribedQuantity: draftPrescriptionLines
         .filter(
