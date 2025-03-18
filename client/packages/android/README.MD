@@ -42,26 +42,28 @@ Note, which linker Rust should use is defined in `server/android/.cargo/config.t
 
 ### Java Installation
 
-In your terminal, run `java --version` to check if you have it installed. As at 19/12/2024 version `17.0.7-tem` is tested and works with our setup
+In your terminal, run `java --version` to check if you have the right version installed.
+As at 19/12/2024 version `17.0.7-tem` is tested and works with our setup, so if you don't have that one, we'll install it now with the instructions below. And if you do have that version, great! Skip to the section called [Set up Android Studio](#set-up-android-studio).
 
-- install [SDK man](https://sdkman.io/) through your terminal by running `curl -s "https://get.sdkman.io" | bash`
-- Open a new terminal
-
-Install Java: Run `sdk install java 17.0.7-tem`
-
-Then set the defaults using the following commands:
+First, install [SDK man](https://sdkman.io/) by running `curl -s "https://get.sdkman.io" | bash` in your terminal.
+Then, install Java by opening a new terminal and running `sdk install java 17.0.7-tem`.
+Finally, set the defaults using the following commands:
 
 - `sdk use java 17.0.7-tem`
 - `sdk default java 17.0.7-tem`
 
-Go to Android Studio settings -> Build -> Build Settings
+### Set up Android Studio
 
-- Change Gradle JDK to 17.0.7-tem
-  ![omSupply Gradle JDK](./doc/omSupply_android_gradle_jdk.png)
+Now we'll set up Android Studio so that it will use the version of Java that we want.
+First of all, open Android Studio and click Open. Open '<your Open mSupply repository>/client/packages/android'.
+Then, when you're in that project, go to Android Studio settings -> Build, Execution, Deployment -> Build Tools -> Gradle.
+You should see a dropdown to select 'Default Gradle JDK'.
+That dropdown should have an option to use a JDK called '17.0.7-temurin' - select that one.
+Here's a screenshot of what that should look like (the sidebar shows you what you should click on to get to this option):
+
+![choosing OMS Android Gradle JDK](./doc/choosing_OMS_Android_Gradle_JDK.png)
 
 You may also see prompts in Android Studio to sync - keep an eye out for these and run the sync as needed
-
-If you don't see the option to change Gradle JDK to `17.07.7-tem`, then open the android folder from the OMS repo in Android Studio.
 
 ## Running Android Studio
 
