@@ -44,7 +44,7 @@ export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
 
   return (
     <>
-      {plugins.requestRequisitionColumn?.StateLoader?.map(
+      {plugins.requestRequisitionLine?.tableStateLoader?.map(
         (StateLoader, index) => <StateLoader key={index} requestLines={lines} />
       )}
       <DataTable
@@ -58,7 +58,7 @@ export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
             body={t(
               isFiltered
                 ? 'error.no-items-filter-on'
-                : 'error.no-requisition-items'
+                : 'error.no-internal-order-items'
             )}
             onCreate={isDisabled ? undefined : onAddItem}
             buttonText={t('button.add-item')}
