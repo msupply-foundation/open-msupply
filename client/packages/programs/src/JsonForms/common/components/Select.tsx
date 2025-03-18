@@ -5,6 +5,7 @@ import {
   Autocomplete,
   DetailInputWithLabelRow,
   LocaleKey,
+  TypedTFunction,
   useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
@@ -82,6 +83,7 @@ type DisplayOption = {
 };
 
 const getDisplayOptions = (
+  t: TypedTFunction<LocaleKey>,
   schemaEnum: string[],
   options?: Options
 ): DisplayOption[] => {
@@ -100,7 +102,12 @@ const getDisplayOptions = (
         );
         return prev;
       }
-      prev.push({ value: key, label: value ?? key, description, right });
+      prev.push({
+        value: key,
+        label: t(`${value as LocaleKey}`) ?? key,
+        description,
+        right,
+      });
       return prev;
     },
     []
@@ -258,7 +265,7 @@ const UIComponent = (props: ControlProps) => {
     value: DisplayOption | null
   ) => handleChange(path, value?.value);
 
-  const options = getDisplayOptions(items, schemaOptions);
+  const options = getDisplayOptions(t, items, schemaOptions);
 
   const value = data ? options.find(o => o.value === data) : null;
 
