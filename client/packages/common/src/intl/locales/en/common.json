@@ -1674,6 +1674,7 @@
   "paymentMethod.Cash": "Cash",
   "paymentMethod.Cheque": "Cheque",
   "paymentMethod.Mobile": "Mobile Payment",
+  "label.no-options": "No options",
   "placeholder.enter-an-item-code-or-name": "Enter item code or name",
   "placeholder.enter-facility-code-or-name": "Enter facility code or name",
   "placeholder.enter-facility-name": "Enter facility name",
