@@ -53,8 +53,8 @@ const UIComponent = (props: ControlProps) => {
   );
 
   const actions = options?.hideClear
-    ? (['accept'] as PickersActionBarAction[])
-    : (['clear', 'accept'] as PickersActionBarAction[]);
+    ? ([] as PickersActionBarAction[])
+    : (['clear'] as PickersActionBarAction[]);
 
   const dobPath = composePaths(path, 'dateOfBirth');
   const estimatedPath = composePaths(path, 'dateOfBirthIsEstimated');
