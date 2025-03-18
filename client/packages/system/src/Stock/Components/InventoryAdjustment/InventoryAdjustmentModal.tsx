@@ -109,11 +109,12 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
             textProps={{ textAlign: 'end' }}
             labelProps={{ sx: { textWrap: 'wrap' } }}
           />
-          <StyledInputRow
+          <StyledInputRow // here
             label={t('label.adjust-by')}
             Input={
               <NumericTextInput
                 width={INPUT_WIDTH}
+                decimalLimit={2}
                 max={
                   draft.adjustmentType === AdjustmentTypeInput.Reduction
                     ? stockLine.totalNumberOfPacks
