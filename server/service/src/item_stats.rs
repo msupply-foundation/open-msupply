@@ -14,7 +14,7 @@ use repository::{
     ConsumptionFilter, ConsumptionRepository, DateFilter, EqualFilter, PluginType, RepositoryError,
     RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
 };
-use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now_with_offset};
+use util::{constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH, date_now_with_offset};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ItemStats {
@@ -113,7 +113,7 @@ fn get_consumption_map(
     amc_lookback_months: f64,
 ) -> Result<HashMap<String /* item_id */, f64 /* total consumption */>, RepositoryError> {
     let start_date = date_now_with_offset(Duration::days(
-        (amc_lookback_months * NUMBER_OF_DAYS_IN_A_MONTH).neg() as i64,
+        (amc_lookback_months * APPROX_NUMBER_OF_DAYS_IN_A_MONTH).neg() as i64,
     ));
 
     let filter = ConsumptionFilter {
