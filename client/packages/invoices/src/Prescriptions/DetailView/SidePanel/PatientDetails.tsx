@@ -8,6 +8,7 @@ import {
   PanelField,
   UNDEFINED_STRING_VALUE,
   Grid,
+  useTheme,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../../api';
 import { useDiagnosisOptions } from '../../api/hooks/useDiagnosisOptions';
@@ -29,6 +30,8 @@ export const PatientDetailsComponent = () => {
   const {
     query: { data: diagnosisOptions },
   } = useDiagnosisOptions();
+
+  const theme = useTheme();
 
   const displayValue =
     selected === undefined
@@ -81,6 +84,7 @@ export const PatientDetailsComponent = () => {
               }
             }}
             disabled={isDisabled}
+            textSx={{ backgroundColor: theme.palette.background.white }}
           />
         </PanelRow>
       </Grid>

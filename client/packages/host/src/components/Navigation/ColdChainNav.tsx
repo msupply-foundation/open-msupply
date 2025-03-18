@@ -26,7 +26,10 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
   const isGapsStore = useIsGapsStoreOnly();
 
   return (
-    <AppNavSection isActive={isGapsStore ? isGapsStore : isActive} to={AppRoute.Coldchain}>
+    <AppNavSection
+      isActive={isGapsStore ? isGapsStore : isActive}
+      to={AppRoute.Coldchain}
+    >
       <AppNavLink
         visible={visible}
         end={false}
@@ -36,7 +39,7 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
         inactive
       />
       <Collapse in={isGapsStore ? isGapsStore : isActive}>
-        <List>          
+        <List>
           <AppNavLink
             visible={visible}
             end
@@ -45,6 +48,26 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
               .build()}
             text={t('equipment')}
           />
+          {!isGapsStore && (
+            <>
+              <AppNavLink
+                visible={visible}
+                end
+                to={RouteBuilder.create(AppRoute.Coldchain)
+                  .addPart(AppRoute.Monitoring)
+                  .build()}
+                text={t('monitoring')}
+              />
+              <AppNavLink
+                visible={visible}
+                end
+                to={RouteBuilder.create(AppRoute.Coldchain)
+                  .addPart(AppRoute.Sensors)
+                  .build()}
+                text={t('sensors')}
+              />
+            </>
+          )}
         </List>
       </Collapse>
     </AppNavSection>

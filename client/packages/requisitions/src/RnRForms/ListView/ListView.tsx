@@ -100,7 +100,9 @@ const RnRFormListComponent = () => {
         isLoading={isLoading}
         isError={isError}
         onRowClick={row => navigate(row.id)}
-        noDataElement={<NothingHere body={t('error.no-rnr-forms')} />}
+        noDataElement={
+          <NothingHere body={t('error.no-rnr-forms')} onCreate={onOpen} />
+        }
       />
     </>
   );
