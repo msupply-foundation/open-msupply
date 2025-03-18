@@ -868,6 +868,130 @@ fn trans_line_invalid_stockline_push_record() -> TestSyncOutgoingRecord {
     }
 }
 
+const TRANS_LINE_EMPTY_STOCKLINE: (&str, &str) = (
+    "TRANS_LINE_EMPTY_STOCKLINE",
+    r#"{        
+        "ID": "TRANS_LINE_EMPTY_STOCKLINE",
+        "transaction_ID": "outbound_shipment_a",
+        "item_ID": "item_a",
+        "batch": "",
+        "price_extension": -4000,
+        "note": "",
+        "sell_price": -200,
+        "expiry_date": "0000-00-00",
+        "cost_price": -200,
+        "pack_size": 1,
+        "quantity": -20,
+        "box_number": "",
+        "item_line_ID": "",
+        "line_number": 1,
+        "item_name": "Item A",
+        "supp_trans_line_ID_ns": "",
+        "goods_received_lines_ID": "",
+        "manufacturer_ID": "",
+        "foreign_currency_price": -200,
+        "location_ID": "",
+        "volume_per_pack": 0,
+        "repeat_ID": "",
+        "user_1": "",
+        "user_2": "",
+        "user_3": "",
+        "user_4": "",
+        "pack_size_inner": 0,
+        "pack_inners_in_outer": 0,
+        "is_from_inventory_adjustment": false,
+        "Weight": 0,
+        "source_backorder_id": "",
+        "order_lines_ID": "",
+        "donor_id": "",
+        "local_charge_line_total": 0,
+        "type": "stock_out",
+        "linked_transact_id": "",
+        "user_5_ID": "",
+        "user_6_ID": "",
+        "user_7_ID": "",
+        "user_8_ID": "",
+        "linked_trans_line_ID": "",
+        "barcodeID": "",
+        "sentQuantity": 0,
+        "optionID": "",
+        "isVVMPassed": "",
+        "prescribedQuantity": 0,
+        "vaccine_vial_monitor_status_ID": "",
+        "sent_pack_size": 0,
+        "custom_data": null,
+        "medicine_administrator_ID": "",
+        "om_item_code": "item_a_code",
+        "om_tax": null,
+        "om_total_before_tax": 4000.0,
+        "om_total_after_tax": 4000.0,
+        "om_item_variant_id": ""
+    }"#,
+);
+
+fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
+        TRANS_LINE_EMPTY_STOCKLINE,
+        InvoiceLineRow {
+            id: TRANS_LINE_EMPTY_STOCKLINE.0.to_string(),
+            invoice_id: "outbound_shipment_a".to_string(),
+            item_link_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            item_code: mock_item_a().code,
+            stock_line_id: None,
+            location_id: None,
+            batch: None,
+            expiry_date: None,
+            pack_size: 1.0,
+            cost_price_per_pack: 200.0,
+            sell_price_per_pack: 200.0,
+            total_before_tax: 4000.0,
+            total_after_tax: 4000.0,
+            tax_percentage: None,
+            r#type: InvoiceLineType::StockIn,
+            number_of_packs: 20.0,
+            prescribed_quantity: Some(0.0),
+            note: None,
+            inventory_adjustment_reason_id: None,
+            return_reason_id: None,
+            foreign_currency_price_before_tax: Some(200.0),
+            item_variant_id: None,
+        },
+    )
+}
+
+fn trans_line_empty_stockline_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
+        record_id: TRANS_LINE_EMPTY_STOCKLINE.0.to_string(),
+        push_data: json!(LegacyTransLineRow {
+            id: TRANS_LINE_EMPTY_STOCKLINE.0.to_string(),
+            invoice_id: "outbound_shipment_a".to_string(),
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            item_code: Some(mock_item_a().code),
+            stock_line_id: None,
+            location_id: None,
+            batch: None,
+            expiry_date: None,
+            pack_size: 1.0,
+            cost_price_per_pack: 200.0,
+            sell_price_per_pack: 200.0,
+            total_before_tax: Some(4000.0),
+            total_after_tax: Some(4000.0),
+            tax_percentage: None,
+            r#type: LegacyTransLineType::StockIn,
+            number_of_packs: 20.0,
+            prescribed_quantity: Some(0.0),
+            note: None,
+            option_id: None,
+            foreign_currency_price_before_tax: Some(200.0),
+            item_variant_id: None,
+        }),
+    }
+}
+
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
         trans_line_1_pull_record(),
@@ -877,6 +1001,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         trans_line_negative_pull_record(),
         trans_line_prescribed_quantity_pull_record(),
         trans_line_invalid_stockline_pull_record(),
+        trans_line_empty_stockline_pull_record()
     ]
 }
 
@@ -897,5 +1022,6 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
         trans_line_negative_push_record(),
         trans_line_prescribed_quantity_push_record(),
         trans_line_invalid_stockline_push_record(),
+        trans_line_empty_stockline_push_record()
     ]
 }
