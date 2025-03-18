@@ -22,7 +22,7 @@ import { Footer } from './Footer';
 import { NavBar } from './NavBar';
 
 export const PrescriptionLineEditView = () => {
-  const { invoiceId = "", itemId } = useParams();
+  const { invoiceId = '', itemId } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const isDirty = useRef(false);
   const navigate = useNavigate();
@@ -121,12 +121,12 @@ export const PrescriptionLineEditView = () => {
 
     const patch =
       status !== InvoiceNodeStatus.Picked &&
-        flattenedLines.length >= 1 &&
-        !isOnHold
+      flattenedLines.length >= 1 &&
+      !isOnHold
         ? {
-          id: invoiceId,
-          status: InvoiceNodeStatus.Picked,
-        }
+            id: invoiceId,
+            status: InvoiceNodeStatus.Picked,
+          }
         : undefined;
 
     await saveLines({
