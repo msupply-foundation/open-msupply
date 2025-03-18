@@ -127,7 +127,7 @@ const valueRef.current = value
 useEffect(() => {
   const unmountEvent = events.mountEvent(() => {
   console.log(`this will be the current value ${valueRef.current} this will be stale value ${value}`)
-   
+
   return unmountEvent;
 }, [/* can also just listen to value here but on every value change we are mounting event and unmounting even */])
 ```
@@ -145,9 +145,9 @@ Plugins can store data in the `plugin_data` table. The following methods are ava
 The querying and mutating of data follows the standard pattern used throughout open mSupply:
 
 ```typescript
-  const { data } = usePluginData.data(stockLine?.id ?? '');
-  const { mutate: insert } = usePluginData.insert();
-  const { mutate: update } = usePluginData.update();
+const { data } = usePluginData.data(stockLine?.id ?? '');
+const { mutate: insert } = usePluginData.insert();
+const { mutate: update } = usePluginData.update();
 ```
 
 These functions can be implemented within your plugin and used to fetch and update data.
@@ -156,12 +156,11 @@ These functions can be implemented within your plugin and used to fetch and upda
 
 You can watch [this video for example](https://drive.google.com/file/d/1JnmPU9hRaQD4R1hTDKbbNj78FnM2l00A/view?usp=drive_link) TODO make public
 
-The simplest way to begin is by cloning (forking for now or just copy and create new repo, until we have a template), this repository https://github.com/msupply-foundation/open-msupply-plugins, then add it as a submodule to `client/packages/plugins/`. From the root of this repository, run: 
+The simplest way to begin is by cloning (forking for now or just copy and create new repo, until we have a template), this repository https://github.com/msupply-foundation/open-msupply-plugins, then add it as a submodule to `client/packages/plugins/`. From the root of this repository, run:
 
 ```
 git submodule add [your-plugin-bundle-repo-url] client/packages/plugins/myPluginBundle
 ```
-
 
 Note the `myPluginBundle` can be anything. The inner repository and core will be treated as two different repositories, changes in them will only be reflected in relative repositories (i.e. you can add the inner repository as local repository in github desktop). Make sure that you don't commit the `.gitmodule` or the single `client/packages/plugins/{your plugin bundle name}` to the core.
 

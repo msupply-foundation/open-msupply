@@ -50,18 +50,18 @@ export const ListItems = ({
   }
 
   return (
-      <Box sx={{ flexGrowY: 1, overflow: 'auto', scrollBehavior: 'smooth' }}>
-        <ListOptions
-          currentId={value?.id ?? 'new'}
-          onClick={id => {
-            if (currentItemId === 'new' && isDirty) {
-              showSaveConfirmation();
-            } else navigate(route.addPart(id).build());
-          }}
-          options={options}
-          enteredLineIds={enteredLineIds}
-          scrollRef={scrollRef}
-        />
-      </Box>
+    <Box sx={{ flexGrowY: 1, overflow: 'auto', scrollBehavior: 'smooth' }}>
+      <ListOptions
+        currentId={value?.id ?? 'new'}
+        onClick={id => {
+          if (currentItemId === 'new' && isDirty) {
+            showSaveConfirmation();
+          } else navigate(route.addPart(id).build());
+        }}
+        options={options}
+        enteredLineIds={enteredLineIds}
+        scrollRef={scrollRef}
+      />
+    </Box>
   );
 };
