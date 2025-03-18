@@ -54,7 +54,16 @@ Then set the defaults using the following commands:
 - `sdk use java 17.0.7-tem`
 - `sdk default java 17.0.7-tem`
 
-Go to Android Studio settings -> Build -> Build Settings
+Now we'll tell Android Studio to use the version of Java we just installed.
+First of all, open Android Studio and click Open. Open '<your Open mSupply repository>/client/packages/android'.
+Then, when you're in that project, go to Android Studio settings -> Build, Execution, Deployment -> Build Tools -> Gradle.
+You should see a dropdown to select 'Default Gradle JDK'.
+That dropdown should have an option to use a JDK called '17.0.7-temurin'. Select that one.
+Here's a screenshot of what that should look like (the sidebar shows you what you should click on to get there):
+
+
+![choosing OMS Android Gradle JDK](./doc/choosing_OMS_Android_Gradle_JDK.png)
+
 
 - Change Gradle JDK to 17.0.7-tem
   ![omSupply Gradle JDK](./doc/omSupply_android_gradle_jdk.png)
