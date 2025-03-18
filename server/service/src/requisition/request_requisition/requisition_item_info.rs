@@ -13,7 +13,7 @@ use repository::{
     RequisitionLineRepository, RequisitionRepository, RequisitionType, StorageConnection,
     StoreFilter, StoreRepository,
 };
-use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH;
+use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
 
 // TODO: MOVE TO PLUGIN
 #[derive(Debug, PartialEq, Clone)]
@@ -99,7 +99,7 @@ pub fn get_requisition_item_information(
                 id: customer_id.clone(),
                 amc_in_units: line.average_monthly_consumption,
                 stock_in_units: line.available_stock_on_hand
-                    + (line.average_monthly_consumption / APPROX_NUMBER_OF_DAYS_IN_A_MONTH),
+                    + (line.average_monthly_consumption / APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30),
                 adjustments_in_units: line.addition_in_units + line.incoming_units
                     - line.outgoing_units
                     - line.loss_in_units,
@@ -124,7 +124,7 @@ pub fn get_requisition_item_information(
         PeriodFilter::new().period_schedule_id(EqualFilter::equal_to(&period.period_schedule_id)),
     )?;
     let look_back_date = period.end_date.checked_sub_signed(chrono::Duration::days(
-        (6.0 * APPROX_NUMBER_OF_DAYS_IN_A_MONTH) as i64,
+        (6.0 * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30) as i64,
     ));
     periods_for_schedule.retain(|p| {
         p.period_row.end_date <= period.end_date

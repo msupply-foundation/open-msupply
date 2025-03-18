@@ -9,7 +9,7 @@ use repository::{
     StockLineFilter, StockLineRepository, StockLineSort, StockLineSortField, StockMovementFilter,
     StockMovementRepository, StockOnHandFilter, StockOnHandRepository, StorageConnection,
 };
-use util::{constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH, date_now, date_with_offset, uuid::uuid};
+use util::{constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, date_now, date_with_offset, uuid::uuid};
 
 use crate::{
     requisition_line::chart::{get_stock_evolution_for_item, StockEvolutionOptions},
@@ -194,7 +194,7 @@ pub fn get_amc(
     adjusted_quantity_consumed: f64,
     previous_monthly_consumption_values: &Vec<f64>,
 ) -> f64 {
-    let period_months = period_length_in_days as f64 / APPROX_NUMBER_OF_DAYS_IN_A_MONTH;
+    let period_months = period_length_in_days as f64 / APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
     let monthly_consumption_this_period = adjusted_quantity_consumed / period_months;
 
     // In `get_previous_monthly_consumption` we only ever take the last 2 forms
@@ -235,7 +235,7 @@ pub fn get_previous_monthly_consumption(
     // For each of the previous forms, collate the monthly consumption values for each item
     for form in prev_forms {
         let period_length_in_days = get_period_length(&form.period_row);
-        let period_months = period_length_in_days as f64 / APPROX_NUMBER_OF_DAYS_IN_A_MONTH;
+        let period_months = period_length_in_days as f64 / APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
 
         let lines = line_repo.find_many_by_rnr_form_id(&form.rnr_form_row.id)?;
 
