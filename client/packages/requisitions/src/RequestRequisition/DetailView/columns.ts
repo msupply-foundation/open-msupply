@@ -257,13 +257,13 @@ export const useRequestColumns = () => {
   const columns = useColumns<RequestLineFragment>(
     [
       ...columnDefinitions,
-      ...(plugins.requestRequisitionColumn?.tableColumns || []),
+      ...(plugins.requestRequisitionLine?.tableColumn || []),
     ],
     {
       onChangeSortBy: updateSortQuery,
       sortBy,
     },
-    [updateSortQuery, sortBy, plugins.requestRequisitionColumn]
+    [updateSortQuery, sortBy, plugins.requestRequisitionLine]
   );
 
   return { columns, sortBy, onChangeSortBy: updateSortQuery };

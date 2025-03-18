@@ -12,6 +12,7 @@ import { DraftPrescriptionLine } from '../../../types';
 import {
   createDraftPrescriptionLine,
   createDraftPrescriptionLineFromStockLine,
+  createPrescriptionPlaceholderRow,
   issuePrescriptionStock,
   updateNotes,
 } from '../../api/hooks/utils';
@@ -58,8 +59,13 @@ export const useDraftPrescriptionLines = (
 
     const noStockLines = stockLines.length == 0;
 
+    const placeholderItem = createPrescriptionPlaceholderRow(
+      invoiceId ?? '',
+      item?.id ?? ''
+    );
+
     if (noStockLines || !item) {
-      return updateDraftLines([]);
+      return updateDraftLines([placeholderItem]);
     }
 
     const rows = stockLines

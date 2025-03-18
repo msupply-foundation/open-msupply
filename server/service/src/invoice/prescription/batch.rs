@@ -2,9 +2,10 @@ use repository::{Invoice, InvoiceLine, RepositoryError};
 
 use crate::{
     invoice_line::stock_out_line::{
-        delete_stock_out_line, insert_stock_out_line, update_stock_out_line, DeleteStockOutLine,
-        DeleteStockOutLineError, InsertStockOutLine, InsertStockOutLineError, UpdateStockOutLine,
-        UpdateStockOutLineError,
+        delete_stock_out_line, insert_stock_out_line, set_prescribed_quantity,
+        update_stock_out_line, DeleteStockOutLine, DeleteStockOutLineError, InsertStockOutLine,
+        InsertStockOutLineError, SetPrescribedQuantity, SetPrescribedQuantityError,
+        UpdateStockOutLine, UpdateStockOutLineError,
     },
     service_provider::ServiceContext,
     BatchMutationsProcessor, InputWithResult, WithDBError,
@@ -24,6 +25,7 @@ pub struct BatchPrescription {
     pub update_prescription: Option<Vec<UpdatePrescription>>,
     pub delete_prescription: Option<Vec<String>>,
     pub continue_on_error: Option<bool>,
+    pub set_prescribed_quantity: Option<Vec<SetPrescribedQuantity>>,
 }
 
 pub type InsertPrescriptionsResult =
@@ -38,6 +40,8 @@ pub type UpdatePrescriptionsResult =
     Vec<InputWithResult<UpdatePrescription, Result<Invoice, UpdatePrescriptionError>>>;
 pub type DeletePrescriptionsResult =
     Vec<InputWithResult<String, Result<String, DeletePrescriptionError>>>;
+pub type SetPrescribedQuantityResult =
+    Vec<InputWithResult<SetPrescribedQuantity, Result<InvoiceLine, SetPrescribedQuantityError>>>;
 
 #[derive(Debug, Default)]
 pub struct BatchPrescriptionResult {
@@ -47,6 +51,7 @@ pub struct BatchPrescriptionResult {
     pub delete_line: DeleteLinesResult,
     pub update_prescription: UpdatePrescriptionsResult,
     pub delete_prescription: DeletePrescriptionsResult,
+    pub set_prescribed_quantity: SetPrescribedQuantityResult,
 }
 
 pub fn batch_prescription(
@@ -87,6 +92,13 @@ pub fn batch_prescription(
             let (has_errors, result) =
                 mutations_processor.do_mutations(input.delete_line, delete_stock_out_line);
             results.delete_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
+
+            let (has_errors, result) = mutations_processor
+                .do_mutations(input.set_prescribed_quantity, set_prescribed_quantity);
+            results.set_prescribed_quantity = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
             }
@@ -165,6 +177,7 @@ mod test {
             update_prescription: None,
             delete_prescription: Some(vec![delete_shipment_input.clone()]),
             continue_on_error: None,
+            set_prescribed_quantity: None,
         };
 
         // Test rollback
