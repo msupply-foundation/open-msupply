@@ -32,7 +32,7 @@ export const AppBarButtonsComponent = () => {
   };
 
   const printAssetLabel = () => {
-    const date = new Date().toLocaleString().split(', ')[0];
+    const date = new Date().toLocaleDateString();
     setIsPrinting(true);
     fetch(Environment.PRINT_LABEL_QR, {
       method: 'POST',
