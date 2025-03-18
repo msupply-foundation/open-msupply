@@ -1,4 +1,4 @@
-import { Autocomplete } from '@openmsupply-client/common';
+import { Autocomplete, useTheme } from '@openmsupply-client/common';
 import { ProgramFragment } from '@openmsupply-client/programs';
 import React from 'react';
 import { FC } from 'react';
@@ -18,8 +18,9 @@ export const ProgramSearchInput: FC<ProgramSearchInputProps> = ({
   onChange,
   width = 250,
   disabled,
-  fullWidth,
 }) => {
+  const theme = useTheme();
+
   return (
     <Autocomplete
       value={
@@ -33,7 +34,6 @@ export const ProgramSearchInput: FC<ProgramSearchInputProps> = ({
       isOptionEqualToValue={(option, value) =>
         option.value.id === value.value?.id
       }
-      width={`${width}px`}
       onChange={(_, option) => {
         onChange(option?.value);
       }}
@@ -41,9 +41,10 @@ export const ProgramSearchInput: FC<ProgramSearchInputProps> = ({
         label: program.name,
         value: program,
       }))}
+      fullWidth
       sx={{ minWidth: width }}
+      textSx={{ backgroundColor: theme.palette.background.white }}
       disabled={disabled}
-      fullWidth={fullWidth}
     />
   );
 };

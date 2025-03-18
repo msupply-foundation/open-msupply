@@ -4,6 +4,7 @@ import {
   InvoiceLineNodeType,
   RecordPatch,
   setNullableInput,
+  SetPrescribedQuantityInput,
   UpdatePrescriptionLineInput,
   useMutation,
 } from '@openmsupply-client/common';
@@ -90,12 +91,11 @@ const useSaveLines = (id: string, invoiceNum: number) => {
         ),
       updatePrescriptionLines: draftPrescriptionLines
         .filter(
-          ({ type, isCreated, isUpdated, numberOfPacks, prescribedQuantity }) =>
+          ({ type, isCreated, isUpdated, numberOfPacks }) =>
             !isCreated &&
             isUpdated &&
             type === InvoiceLineNodeType.StockOut &&
-            numberOfPacks > 0 &&
-            (prescribedQuantity ?? 0) >= 0
+            numberOfPacks > 0
         )
         .map(
           line =>
@@ -129,6 +129,18 @@ const useSaveLines = (id: string, invoiceNum: number) => {
             },
           ]
         : undefined,
+      setPrescribedQuantity: draftPrescriptionLines
+        .filter(
+          ({ invoiceId, item, prescribedQuantity }) =>
+            invoiceId && item && (prescribedQuantity ?? 0) > 0
+        )
+        .map(
+          line =>
+            createInputObject(
+              line,
+              'setPrescribedQuantity'
+            ) as SetPrescribedQuantityInput
+        ),
     };
 
     const result = await prescriptionApi.upsertPrescription({ storeId, input });

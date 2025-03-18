@@ -61,7 +61,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
         enableColumnSelection
         noDataElement={
           <NothingHere
-            body={t('error.no-outbound-items')}
+            body={t('error.no-supplier-return-items')}
             onCreate={isDisabled ? undefined : () => onAddItem()}
             buttonText={t('button.add-item')}
           />

@@ -1,3 +1,4 @@
+use insert::insert_contact_form;
 use repository::contact_form_row::ContactFormRow;
 
 pub use self::insert::{InsertContactForm, InsertContactFormError};
@@ -12,7 +13,7 @@ pub trait ContactFormServiceTrait: Sync + Send {
         store_id: &str,
         input: InsertContactForm,
     ) -> Result<ContactFormRow, InsertContactFormError> {
-        insert::insert_contact_form(ctx, store_id, input)
+        insert_contact_form(ctx, store_id, input)
     }
 }
 

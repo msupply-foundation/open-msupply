@@ -9,6 +9,7 @@ import {
   ModalMode,
   Box,
   AlertColor,
+  useNotification,
 } from '@openmsupply-client/common';
 import { ItemSelector } from './ItemSelector';
 import { ReturnSteps, Tabs } from './ReturnSteps';
@@ -46,6 +47,7 @@ export const CustomerReturnEditModal = ({
 }: CustomerReturnEditModalProps) => {
   const t = useTranslation();
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
+  const { success } = useNotification();
 
   const [itemId, setItemId] = useState<string | undefined>(
     initialItemId ?? undefined
@@ -78,8 +80,12 @@ export const CustomerReturnEditModal = ({
 
   const onOk = async () => {
     try {
-      !isDisabled && (await save());
+      const customerReturn = !isDisabled && (await save());
       onCreate?.();
+      !!customerReturn &&
+        customerReturn?.originalShipment?.id &&
+        isNewReturn &&
+        success(t('messages.customer-return-created-verified'))();
       onClose();
     } catch {
       // TODO: handle error display...
