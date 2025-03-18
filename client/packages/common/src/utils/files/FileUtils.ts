@@ -72,7 +72,7 @@ const openAndroidFile = async (file: {
       });
       uri = result.uri;
     } catch (e) {
-      // The Filesystem.stat method throws and error when file is not found, so
+      // The Filesystem.stat method throws an error when file is not found, so
       // we handle the download in the "Catch" block
       console.error("File doesn't exist", e);
 
