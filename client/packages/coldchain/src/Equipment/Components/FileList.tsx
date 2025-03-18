@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from '@common/intl';
-import { Filesystem, Directory } from '@capacitor/filesystem';
 import {
-  BasicTextInput,
   Box,
   FileUtils,
   IconButton,
@@ -34,8 +32,6 @@ export const FileList = ({
 }) => {
   const t = useTranslation();
   const { error } = useNotification();
-
-  const [fileString, setFileString] = useState('');
 
   if (files === undefined || files.length === 0) {
     return noFilesMessage === undefined ? null : (
@@ -70,26 +66,6 @@ export const FileList = ({
       alignContent="center"
       paddingTop={4 * padding}
     >
-      <BasicTextInput
-        value={fileString}
-        onChange={e => setFileString(e.target.value)}
-      />
-      <Typography
-        onClick={async () => {
-          try {
-            console.log('fileString', fileString);
-            const result = await Filesystem.stat({
-              path: fileString,
-              directory: Directory.Data,
-            });
-            console.log('Stat', JSON.stringify(result));
-          } catch (err) {
-            onError((err as Error).message);
-          }
-        }}
-      >
-        Click to stat
-      </Typography>
       {files?.map((file, idx) => (
         <Box
           key={`${idx}_${file.name}`}

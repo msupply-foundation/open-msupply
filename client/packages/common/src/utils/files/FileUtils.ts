@@ -58,32 +58,28 @@ const openAndroidFile = async (file: {
 }) => {
   const filePath = `${Environment.ANDROID_DATA_FILES_PATH}/${file.tableName}/${file.assetId}/${file.id}_${file.name}`;
 
-  console.log('Attempting to open', filePath);
-
   let uri: string;
 
   try {
-    // console.log('URI is', JSON.stringify(uriResult, null, 2));
-
     if (Capacitor.getPlatform() !== 'android')
       throw new Error('This method is specifically for Android');
 
     // Check file exists first
     try {
-      console.log('Checking file exists...');
-      // const result = await statWithTimeout(filePath);
-
       const result = await Filesystem.stat({
         path: filePath,
         directory: Directory.Data,
       });
-      console.log('Stat', JSON.stringify(result, null, 2));
       uri = result.uri;
     } catch (e) {
+      // The Filesystem.stat method throws and error when file is not found, so
+      // we handle the download in the "Catch" block
       console.error("File doesn't exist", e);
+
       const fileUrl = `${Environment.SYNC_FILES_URL}/${file.tableName}/${file.assetId}/${file.id}`;
+
       // Download file
-      console.log('Downloading file...');
+      // console.log('Downloading file...');
       const response = await fetch(fileUrl, {
         headers: {
           Accept: 'application/json',
@@ -106,7 +102,6 @@ const openAndroidFile = async (file: {
       const base64String = base64Data.split(',')[1];
       if (!base64String) throw new Error('Problem parsing base64 string');
       // Save to filesystem
-      console.log('Writing file...');
       await Filesystem.writeFile({
         path: filePath,
         data: base64String,
@@ -117,27 +112,19 @@ const openAndroidFile = async (file: {
         path: filePath,
         directory: Directory.Data,
       });
-      console.log('File written');
-
+      // console.log('File written');
       uri = uriResult.uri;
     }
 
-    console.log('Continuing...');
-
     const fileOpenerOptions: FileOpenerOptions = {
       filePath: uri,
-      // contentType: 'application/pdf',
       openWithDefault: true,
     };
 
     await FileOpener.open(fileOpenerOptions);
-
-    console.log('File opened successfully');
   } catch (error) {
     console.error('Error opening file:', error);
     throw error;
-  } finally {
-    console.log('DONE');
   }
 };
 
@@ -147,15 +134,3 @@ export const FileUtils = {
   downloadFile,
   openAndroidFile,
 };
-
-// const statWithTimeout = async (filePath: string, timeout = 5000) => {
-//   return Promise.race([
-//     Filesystem.stat({
-//       path: filePath,
-//       directory: Directory.Data,
-//     }),
-//     new Promise((_, reject) =>
-//       setTimeout(() => reject(new Error('Stat operation timed out')), timeout)
-//     ),
-//   ]);
-// };
