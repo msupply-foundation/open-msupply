@@ -1,4 +1,4 @@
-import React, { ReactElement, useState } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 import {
   Alert,
   ButtonWithIcon,
@@ -28,6 +28,41 @@ export const DisplayCoordinates = ({
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
+  const [distance, setDistance] = useState<number>();
+
+  const calculateDistance = (
+    targetLatitude: number,
+    targetLongitude: number
+  ) => {
+    if (!latitude || !longitude) return;
+    const toRadians = (degrees: number) => degrees * (Math.PI / 180);
+
+    // Radius of the Earth in kilometers
+    const earthRadiusKm = 6371;
+
+    const deltaLatitude = toRadians(
+      parseFloat(targetLatitude.toFixed(6)) - latitude
+    );
+    const deltaLongitude = toRadians(
+      parseFloat(targetLongitude.toFixed(6)) - longitude
+    );
+
+    // Determines distance between two points in a sphere
+    const haversineFormula =
+      Math.sin(deltaLatitude / 2) * Math.sin(deltaLatitude / 2) +
+      Math.cos(toRadians(latitude)) *
+        Math.cos(toRadians(targetLatitude)) *
+        Math.sin(deltaLongitude / 2) *
+        Math.sin(deltaLongitude / 2);
+
+    const centralAngle =
+      2 *
+      Math.atan2(Math.sqrt(haversineFormula), Math.sqrt(1 - haversineFormula));
+
+    // Distance in kilometers
+    const distanceKm = parseFloat((earthRadiusKm * centralAngle).toFixed(6));
+    setDistance(distanceKm);
+  };
 
   const updateCoordinates = (latitude: number, longitude: number): void => {
     const fixedLatitude = parseFloat(latitude.toFixed(6));
@@ -52,7 +87,9 @@ export const DisplayCoordinates = ({
     }
   };
 
-  const fetchCoordinates = async () => {
+  const fetchCoordinates = async (
+    onSuccess: (latitude: number, longitude: number) => void
+  ) => {
     setLoading(true);
     try {
       const isNativePlatform = Capacitor.isNativePlatform();
@@ -73,7 +110,7 @@ export const DisplayCoordinates = ({
         const position = await Geolocation.getCurrentPosition({
           enableHighAccuracy: true,
         });
-        updateCoordinates(position.coords.latitude, position.coords.longitude);
+        onSuccess(position.coords.latitude, position.coords.longitude);
         return;
       }
 
@@ -81,11 +118,9 @@ export const DisplayCoordinates = ({
       if ('geolocation' in navigator && !isNativePlatform) {
         navigator.geolocation.getCurrentPosition(
           (position: GeolocationPosition) =>
-            updateCoordinates(
-              position.coords.latitude,
-              position.coords.longitude
-            ),
-          (error: GeolocationPositionError) => handleGeolocationWebError(error)
+            onSuccess(position.coords.latitude, position.coords.longitude),
+          (error: GeolocationPositionError) => handleGeolocationWebError(error),
+          { enableHighAccuracy: true }
         );
         return;
       }
@@ -98,6 +133,13 @@ export const DisplayCoordinates = ({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // If latitude and longitude are provided, calculate the user's distance from them
+    if (latitude !== undefined && longitude !== undefined)
+      fetchCoordinates((lat, long) => calculateDistance(lat, long));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latitude, longitude]);
 
   const formatCoordinate = (
     coordinate: number,
@@ -150,12 +192,23 @@ export const DisplayCoordinates = ({
             />
           </Box>
           <ButtonWithIcon
-            onClick={fetchCoordinates}
+            onClick={() => {
+              fetchCoordinates((lat, long) => updateCoordinates(lat, long));
+            }}
             Icon={<LocationIcon />}
             label={t('label.update-live-location')}
           />
         </Stack>
       )}
+      <InputWithLabelRow
+        label={t('label.distance')}
+        labelProps={{
+          sx: {
+            width: 180,
+          },
+        }}
+        Input={<ReadOnlyInput value={`${distance ?? 0}`} />}
+      />
     </>
   );
 };
