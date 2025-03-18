@@ -1,6 +1,6 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
+    RowActionType, StorageConnection, Upsert,
 };
 
 use super::{preference_row::preference::dsl::*, store_row::store};
@@ -115,6 +115,22 @@ impl Upsert for PreferenceRow {
         assert_eq!(
             PreferenceRowRepository::new(con).find_one_by_key(&self.key),
             Ok(Some(self.clone()))
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PreferenceRowDelete(pub String);
+impl Delete for PreferenceRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        PreferenceRowRepository::new(con).delete(&self.0)
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            PreferenceRowRepository::new(con).find_one_by_key(&self.0),
+            Ok(None)
         )
     }
 }
