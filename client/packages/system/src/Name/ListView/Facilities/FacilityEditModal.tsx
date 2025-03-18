@@ -38,7 +38,6 @@ const useDraftFacilityProperties = (
   const [draftProperties, setDraftProperties] = useState<DraftProperty>(
     ObjUtils.parse(initialProperties)
   );
-  1;
 
   useEffect(() => {
     const parsedProperties = ObjUtils.parse(initialProperties);
