@@ -51,7 +51,7 @@ export const LoginLayout = ({
         <Box>
           <Typography
             sx={{
-              color: (theme: Theme) => theme.typography.login.color,
+              color: (theme: Theme) => theme.typography.loginHeader.color,
               fontSize: {
                 xs: '28px',
                 sm: '30px',
@@ -77,7 +77,7 @@ export const LoginLayout = ({
                 lg: '20px',
                 xl: '20px',
               },
-              color: (theme: Theme) => theme.typography.login.color,
+              color: (theme: Theme) => theme.typography.loginBody.color,
               fontWeight: 600,
             }}
           >

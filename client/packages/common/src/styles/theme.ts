@@ -134,7 +134,8 @@ declare module '@mui/material/styles/createPalette' {
 
 declare module '@mui/material/styles/createTypography' {
   interface Typography {
-    login: CSSProperties;
+    loginHeader: CSSProperties;
+    loginBody: CSSProperties;
     th: CSSProperties;
   }
 }
@@ -274,7 +275,8 @@ export const themeOptions = {
     },
     subtitle1: { fontSize: '1.2em' },
     // Custom text variants
-    login: { color: '#fafafa' },
+    loginHeader: { color: '#fafafa' },
+    loginBody: { color: '#fafafa' },
   },
 };
 

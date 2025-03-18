@@ -54,7 +54,7 @@ export const InitialiseLayout = ({
         <Box>
           <Typography
             sx={{
-              color: (theme: Theme) => theme.typography.login.color,
+              color: (theme: Theme) => theme.typography.loginHeader.color,
               fontSize: {
                 xs: '38px',
                 sm: '38px',
@@ -80,7 +80,7 @@ export const InitialiseLayout = ({
                 lg: '20px',
                 xl: '20px',
               },
-              color: (theme: Theme) => theme.typography.login.color,
+              color: (theme: Theme) => theme.typography.loginBody.color,
               fontWeight: 600,
               whiteSpace: 'pre-line',
             }}
