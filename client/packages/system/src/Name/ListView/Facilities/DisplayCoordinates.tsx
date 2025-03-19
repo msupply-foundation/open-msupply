@@ -122,8 +122,7 @@ export const DisplayCoordinates = ({
 
   useEffect(() => {
     // If latitude and longitude are provided, calculate the user's distance from them
-    if (latitude !== 0 && longitude !== 0)
-      fetchCoordinates((lat, long) => calculateDistance(lat, long));
+    if (latitude !== 0 && longitude !== 0) fetchCoordinates(calculateDistance);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latitude, longitude]);
 
@@ -179,7 +178,7 @@ export const DisplayCoordinates = ({
           </Box>
           <ButtonWithIcon
             onClick={() => {
-              fetchCoordinates((lat, long) => updateCoordinates(lat, long));
+              fetchCoordinates(updateCoordinates);
             }}
             Icon={<LocationIcon />}
             label={t('label.update-live-location')}
