@@ -52,7 +52,7 @@ export const SidePanelComponent = () => {
   const copyToClipboard = () => {
     navigator.clipboard
       .writeText(JSON.stringify(data, null, 4) ?? '')
-      .then(() => success('Copied to clipboard successfully')());
+      .then(() => success(t('message.copy-success'))());
   };
 
   return (
