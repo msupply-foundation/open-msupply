@@ -52,13 +52,6 @@ export const Footer: React.FC = () => {
       paddingY={0.75}
       paddingX={0}
     >
-      {isOpen && (
-        <FacilityEditModal
-          nameId={store?.nameId ?? ''}
-          isOpen={isOpen}
-          onClose={onClose}
-        />
-      )}
       <StoreSelector>
         <PaddedCell>
           <HomeIcon sx={iconStyles} />
@@ -116,6 +109,13 @@ export const Footer: React.FC = () => {
           </Typography>
         </Box>
       ) : null}
+      {isOpen && (
+        <FacilityEditModal
+          nameId={store?.nameId ?? ''}
+          isOpen={isOpen}
+          onClose={onClose}
+        />
+      )}
     </Box>
   );
 };
