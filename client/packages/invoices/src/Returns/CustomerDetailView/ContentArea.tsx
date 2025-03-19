@@ -2,7 +2,6 @@ import React, { FC } from 'react';
 import {
   DataTable,
   useTranslation,
-  Box,
   NothingHere,
   useUrlQueryParams,
   MiniTable,
@@ -49,24 +48,22 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   if (!rows) return null;
 
   return (
-    <Box flexDirection="column" flex={1} display="flex">
-      <DataTable
-        id="customer-return-detail"
-        onRowClick={onRowClick}
-        ExpandContent={Expand}
-        columns={columns}
-        data={rows}
-        enableColumnSelection
-        noDataElement={
-          <NothingHere
-            body={t('error.no-customer-return-items')}
-            onCreate={isDisabled ? undefined : () => onAddItem()}
-            buttonText={t('button.add-item')}
-          />
-        }
-        isRowAnimated={true}
-      />
-    </Box>
+    <DataTable
+      id="customer-return-detail"
+      onRowClick={onRowClick}
+      ExpandContent={Expand}
+      columns={columns}
+      data={rows}
+      enableColumnSelection
+      noDataElement={
+        <NothingHere
+          body={t('error.no-customer-return-items')}
+          onCreate={isDisabled ? undefined : () => onAddItem()}
+          buttonText={t('button.add-item')}
+        />
+      }
+      isRowAnimated={true}
+    />
   );
 };
 
