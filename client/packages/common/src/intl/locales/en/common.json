@@ -294,6 +294,7 @@
   "error.name-program-duplicate": "Vaccine course name already exists for this program",
   "error.no-asset-create-permission": "You do not have permission to create a new asset.",
   "error.no-asset-edit-permission": "You do not have permission to edit assets.",
+  "error.no-asset-import-permission": "You do not have permission to import assets",
   "error.no-asset-log-reasons": "There are no asset log reasons to display.",
   "error.no-asset-view-permission": "You do not have permission to view assets.",
   "error.no-assets": "There are no assets to display.",
