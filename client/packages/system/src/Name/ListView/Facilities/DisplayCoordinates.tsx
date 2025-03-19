@@ -14,8 +14,8 @@ import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor } from '@capacitor/core';
 
 interface DisplayCoordinatesProps {
-  latitude?: number;
-  longitude?: number;
+  latitude: number;
+  longitude: number;
   onDraftPropertiesChange: (latitude: number, longitude: number) => void;
 }
 
@@ -27,13 +27,11 @@ export const DisplayCoordinates = ({
   const t = useTranslation();
 
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>();
   const [distance, setDistance] = useState<number>();
+  const [errorMessage, setErrorMessage] = useState<string>();
 
   // Follows haversine formula to calculate the distance
   const calculateDistance = (targetLat: number, targetLng: number) => {
-    if (latitude === undefined || longitude === undefined) return;
-
     const R = 6371; // Earth radius in kilometers
     const toRadians = (degrees: number) => degrees * (Math.PI / 180);
 
@@ -124,7 +122,7 @@ export const DisplayCoordinates = ({
 
   useEffect(() => {
     // If latitude and longitude are provided, calculate the user's distance from them
-    if (latitude !== undefined && longitude !== undefined)
+    if (latitude !== 0 && longitude !== 0)
       fetchCoordinates((lat, long) => calculateDistance(lat, long));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latitude, longitude]);
@@ -159,7 +157,7 @@ export const DisplayCoordinates = ({
         <Box sx={{ pb: 2, display: 'flex', justifyContent: 'center' }}>
           <Typography>{t('label.fetching-coordinates')}</Typography>
         </Box>
-      ) : errorMessage ? (
+      ) : errorMessage && latitude === 0 && longitude === 0 ? (
         <Box sx={{ pb: 2, display: 'flex', justifyContent: 'center' }}>
           <Alert severity="error">{errorMessage}</Alert>
         </Box>
