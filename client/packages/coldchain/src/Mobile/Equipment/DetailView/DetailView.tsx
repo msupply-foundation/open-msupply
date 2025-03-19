@@ -14,7 +14,6 @@ import { StatusLogs } from 'packages/coldchain/src/Equipment/DetailView/Tabs/Sta
 import { UpdateStatusButton } from 'packages/coldchain/src/Equipment/DetailView/UpdateStatusButton';
 import { Documents } from 'packages/coldchain/src/Equipment/DetailView/Tabs/Documents';
 import { LogCardListView } from '../LogCardListView';
-import { ImportFridgeTag } from 'packages/coldchain/src/common/ImportFridgeTag';
 
 export const EquipmentDetailView: FC = () => {
   const {
@@ -53,9 +52,7 @@ export const EquipmentDetailView: FC = () => {
         }}
       >
         <UpdateStatusButton assetId={data?.id} />
-        <ImportFridgeTag shouldShrink={false} />
       </Box>
-
       <Box
         sx={{
           padding: '.25rem .75rem',
