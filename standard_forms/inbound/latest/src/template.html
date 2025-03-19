@@ -55,23 +55,23 @@
 
 <body>
     <table class="body_section" cellpadding="2" cellspacing="0">
-        <tr class="body_column_label">
-            <th class="line_number" style="width: 20px;">{{t(k="report.line", f="Line")}}</th>
-            <th class="location_code" style="width: 80px;">{{t(k="label.location",f="Location")}}</th>
-            <th class="location_code" style="width: 50px;">{{t(k="report.item-code",f="Item code")}}</th>
-            <th class="item_name" style="width: 350px;">{{t(k="report.item-name", f="Item name")}}</th>
-            <th class="quantity" style="width: 50px;">{{t(k="label.quantity",f="Quantity")}}</th>
-            <th class="pack" style="width: 50px;">{{t(k="report.pack-size",f="Pack size")}}</th>
-            <th class="pack" style="width: 50px;">{{t(k="label.unit-quantity",f="Unit Qty")}}</th>
-            <th class="batch" style="width: 50px;">{{t(k="label.batch", f="Batch")}}</th>
-            <th class="expiry" style="width: 80px;">{{t(k="label.expiry",f="Expiry")}}</th>
-            <th class="cost_price" style="width: 80px;">{{t(k="description.pack-cost",f="Cost price per pack")}}</th>
-            <th class="cost_price" style="width: 80px;">{{t(k="label.cost-per-unit",f="Cost per unit")}}</th>
-            <th class="total_extension" style="width: 50px;">{{t(k="label.line-total",f="Line total")}}</th>
-        </tr>
+        <thead>
+            <tr class="body_column_label">
+                <th class="location_code" style="width: 80px;">{{t(k="label.location",f="Location")}}</th>
+                <th class="location_code" style="width: 50px;">{{t(k="report.item-code",f="Item code")}}</th>
+                <th class="item_name" style="width: 350px;">{{t(k="report.item-name", f="Item name")}}</th>
+                <th class="quantity" style="width: 50px;">{{t(k="label.quantity",f="Quantity")}}</th>
+                <th class="pack" style="width: 50px;">{{t(k="report.pack-size",f="Pack size")}}</th>
+                <th class="pack" style="width: 50px;">{{t(k="label.unit-quantity",f="Unit Qty")}}</th>
+                <th class="batch" style="width: 50px;">{{t(k="label.batch", f="Batch")}}</th>
+                <th class="expiry" style="width: 80px;">{{t(k="label.expiry",f="Expiry")}}</th>
+                <th class="cost_price" style="width: 80px;">{{t(k="description.pack-cost",f="Cost price per pack")}}</th>
+                <th class="cost_price" style="width: 80px;">{{t(k="label.cost-per-unit",f="Cost per unit")}}</th>
+                <th class="total_extension" style="width: 50px;">{{t(k="label.line-total",f="Line total")}}</th>
+            </tr>
+        </thead>
         {% for line in data.invoiceLines.nodes -%}
         <tr class="body_value">
-            <td class="line_number" style="width: 20px;">{{ loop.index }}</td>
             {% if line.location.code %}
                 <td class="location_code" style="width: 80px;">{{ line.location.code }}</td>
             {% else %}
