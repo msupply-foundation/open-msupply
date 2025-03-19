@@ -16,23 +16,24 @@ const Example: StoryFn = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<VirtualElement | null>(null);
 
-  const control: React.MouseEventHandler<HTMLButtonElement | HTMLDivElement> =
-    e => {
-      const rect = {
-        top: e.clientY,
-        left: e.clientX,
-        bottom: e.clientY,
-        right: e.clientX,
-        width: 0,
-        height: 0,
-      } as DOMRect;
+  const control: React.MouseEventHandler<
+    HTMLButtonElement | HTMLDivElement
+  > = e => {
+    const rect = {
+      top: e.clientY,
+      left: e.clientX,
+      bottom: e.clientY,
+      right: e.clientX,
+      width: 0,
+      height: 0,
+    } as DOMRect;
 
-      if (!isOpen) {
-        setAnchorEl({ getBoundingClientRect: () => rect });
-      }
+    if (!isOpen) {
+      setAnchorEl({ getBoundingClientRect: () => rect });
+    }
 
-      setIsOpen(state => !state);
-    };
+    setIsOpen(state => !state);
+  };
 
   return (
     <>
