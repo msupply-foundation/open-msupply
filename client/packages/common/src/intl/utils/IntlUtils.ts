@@ -2,7 +2,7 @@ import { useCallback, useContext, useState } from 'react';
 import { EnvUtils, Formatter } from '@common/utils';
 import { LanguageType } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
-import { IntlContext } from '../context';
+import { LocaleKey, useTranslation, IntlContext } from '@common/intl';
 
 // importing individually to reduce bundle size
 // the date-fns methods are tree shaking correctly
@@ -14,8 +14,6 @@ import { ar } from 'date-fns/locale/ar';
 import { es } from 'date-fns/locale/es';
 import { ru } from 'date-fns/locale/ru';
 import { pt } from 'date-fns/locale/pt';
-import { LocaleKey } from '../locales';
-import { useTranslation } from '..';
 
 // Map locale string (from i18n) to locale object (from date-fns)
 const getLocaleObj = { fr, ar, es, ru };

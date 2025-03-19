@@ -1,10 +1,4 @@
-import React, {
-  FC,
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useMemo,
-} from 'react';
+import React, { FC, PropsWithChildren, useCallback, useEffect } from 'react';
 import {
   LocaleKey,
   Typography,
