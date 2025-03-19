@@ -18,21 +18,43 @@ import {
   Typography,
   LocaleKey,
 } from '@openmsupply-client/common';
-import { DefaultFormRowSx, FORM_GAP, FORM_LABEL_WIDTH } from '../common';
+import { z } from 'zod';
+
+import {
+  DefaultFormRowSx,
+  FORM_GAP,
+  FORM_LABEL_WIDTH,
+  useZodOptionsValidation,
+} from '../common';
 import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
+import { PickersActionBarAction } from '@mui/x-date-pickers';
+
+const Options = z
+  .object({
+    hideClear: z.boolean().optional(),
+  })
+  .strict()
+  .optional();
+
+type Options = z.input<typeof Options>;
 
 export const dateOfBirthTester = rankWith(10, uiTypeIs('DateOfBirth'));
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path } = props;
+  const { data, handleChange, label, path, uischema } = props;
   const [age, setAge] = React.useState<number | undefined>();
   const [dob, setDoB] = React.useState<Date | null>(null);
   const t = useTranslation();
   const formatDateTime = useFormatDateTime();
+  const { options } = useZodOptionsValidation(Options, uischema.options);
   const { customError, setCustomError } = useJSONFormsCustomError(
     path,
     'Date of Birth'
   );
+
+  const actions = options?.hideClear
+    ? ([] as PickersActionBarAction[])
+    : (['clear'] as PickersActionBarAction[]);
 
   const dobPath = composePaths(path, 'dateOfBirth');
   const estimatedPath = composePaths(path, 'dateOfBirthIsEstimated');
@@ -102,7 +124,7 @@ const UIComponent = (props: ControlProps) => {
             error={customError}
             slotProps={{
               actionBar: {
-                actions: ['clear'],
+                actions: actions,
               },
             }}
           />
