@@ -1,3 +1,4 @@
+import { Environment } from '@openmsupply-client/config';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import {
@@ -5,7 +6,6 @@ import {
   FileOpenerOptions,
 } from '@capacitor-community/file-opener';
 import { Formatter } from '..';
-import { Environment } from 'packages/config/src';
 
 const exportFile = (data: string, type: string, title?: string) => {
   let extension = 'txt';
