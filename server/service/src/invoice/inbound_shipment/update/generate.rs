@@ -330,6 +330,7 @@ pub fn generate_lines_and_stock_lines(
             return_reason_id: _,
             foreign_currency_price_before_tax: _,
             item_variant_id,
+            linked_invoice_id: _,
         }: InvoiceLineRow = invoice_lines;
 
         if number_of_packs > 0.0 {
