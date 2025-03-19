@@ -26,5 +26,13 @@
   {
     "pkg": "@capacitor/preferences",
     "classpath": "com.capacitorjs.plugins.preferences.PreferencesPlugin"
+  },
+  {
+    "pkg": "@capacitor-community/file-opener",
+    "classpath": "com.ryltsov.alex.plugins.file.opener.FileOpenerPlugin"
+  },
+  {
+    "pkg": "@capacitor/filesystem",
+    "classpath": "com.capacitorjs.plugins.filesystem.FilesystemPlugin"
   }
 ]

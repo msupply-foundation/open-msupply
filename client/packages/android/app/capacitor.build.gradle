@@ -16,6 +16,8 @@ dependencies {
     implementation project(':capacitor-app')
     implementation project(':capacitor-keyboard')
     implementation project(':capacitor-preferences')
+    implementation project(':capacitor-community-file-opener')
+    implementation project(':capacitor-filesystem')
 
 }
 
