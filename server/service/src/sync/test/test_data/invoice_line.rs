@@ -97,6 +97,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             return_reason_id: None,
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
+            linked_invoice_id: None,
         },
     )
 }
@@ -127,6 +128,7 @@ fn trans_line_1_push_record() -> TestSyncOutgoingRecord {
             option_id: None,
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
+            linked_invoice_id: None,
         }),
     }
 }
@@ -217,6 +219,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             return_reason_id: None,
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
+            linked_invoice_id: None,
         },
     )
 }
@@ -247,6 +250,7 @@ fn trans_line_2_push_record() -> TestSyncOutgoingRecord {
             option_id: None,
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
+            linked_invoice_id: None,
         }),
     }
 }
@@ -340,6 +344,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             return_reason_id: None,
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: Some("5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string()),
+            linked_invoice_id: None,
         },
     )
 }
@@ -370,6 +375,7 @@ fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
             option_id: None,
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: Some("5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string()),
+            linked_invoice_id: None,
         }),
     }
 }
@@ -463,6 +469,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             return_reason_id: None,
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
+            linked_invoice_id: None,
         },
     )
 }
@@ -493,6 +500,7 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncOutgoingRecord {
             option_id: None,
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
+            linked_invoice_id: None,
         }),
     }
 }
@@ -586,6 +594,7 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
             return_reason_id: None,
             foreign_currency_price_before_tax: Some(200.0),
             item_variant_id: None,
+            linked_invoice_id: None,
         },
     )
 }
@@ -616,6 +625,7 @@ fn trans_line_negative_push_record() -> TestSyncOutgoingRecord {
             option_id: None,
             foreign_currency_price_before_tax: Some(200.0),
             item_variant_id: None,
+            linked_invoice_id: None,
         }),
     }
 }
@@ -710,6 +720,7 @@ fn trans_line_prescribed_quantity_pull_record() -> TestSyncIncomingRecord {
             return_reason_id: None,
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
+            linked_invoice_id: None,
         },
     )
 }
@@ -741,6 +752,7 @@ fn trans_line_prescribed_quantity_push_record() -> TestSyncOutgoingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             option_id: None,
             item_variant_id: None,
+            linked_invoice_id: None,
         }),
     }
 }
@@ -834,6 +846,7 @@ fn trans_line_invalid_stockline_pull_record() -> TestSyncIncomingRecord {
             return_reason_id: None,
             foreign_currency_price_before_tax: Some(200.0),
             item_variant_id: None,
+            linked_invoice_id: None,
         },
     )
 }
@@ -864,6 +877,7 @@ fn trans_line_invalid_stockline_push_record() -> TestSyncOutgoingRecord {
             option_id: None,
             foreign_currency_price_before_tax: Some(200.0),
             item_variant_id: None,
+            linked_invoice_id: None,
         }),
     }
 }
@@ -957,6 +971,7 @@ fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
             return_reason_id: None,
             foreign_currency_price_before_tax: Some(200.0),
             item_variant_id: None,
+            linked_invoice_id: None,
         },
     )
 }
@@ -988,6 +1003,7 @@ fn trans_line_empty_stockline_push_record() -> TestSyncOutgoingRecord {
             option_id: None,
             foreign_currency_price_before_tax: Some(200.0),
             item_variant_id: None,
+            linked_invoice_id: None,
         }),
     }
 }
@@ -1001,7 +1017,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         trans_line_negative_pull_record(),
         trans_line_prescribed_quantity_pull_record(),
         trans_line_invalid_stockline_pull_record(),
-        trans_line_empty_stockline_pull_record()
+        trans_line_empty_stockline_pull_record(),
     ]
 }
 
@@ -1022,6 +1038,6 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
         trans_line_negative_push_record(),
         trans_line_prescribed_quantity_push_record(),
         trans_line_invalid_stockline_push_record(),
-        trans_line_empty_stockline_push_record()
+        trans_line_empty_stockline_push_record(),
     ]
 }
