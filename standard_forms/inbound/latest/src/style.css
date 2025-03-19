@@ -3,11 +3,6 @@
         size: A4 landscape 
     }
 }
-/* @page:left{
-    @bottom-left {
-      content: "Page " counter(page) " of " counter(pages);
-    }
-  } */
 
 @page {
     font-family: Tahoma;
@@ -27,7 +22,7 @@
 }
 
 .header_supplied_section {
-    /* width: 100%; */
+    width: 100%;
     font-family: Tahoma;
     font-size: 8pt;
     border-bottom: 0.5px solid black;
@@ -93,10 +88,3 @@ hr {
     margin-left: 8px; 
     border: 0.1px solid black;
 }
-
-/* .pageNumber::after {
-    font-family: Tahoma;
-    font-size: 8pt;
-    counter-increment: page;
-    content: "Page " counter(page);
-} */
