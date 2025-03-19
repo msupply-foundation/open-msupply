@@ -570,6 +570,7 @@
   "inventory-management": "Gestion de stock",
   "inventory-reduction": "Réduction de stock",
   "items": "Articles",
+  "json-forms-error.required": "Ce champ est obligatoire",
   "label.abbreviation": "Abréviation",
   "label.acknowledged": "Accepté",
   "label.actions": "Actions",

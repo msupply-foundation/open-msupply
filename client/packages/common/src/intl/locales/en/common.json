@@ -563,6 +563,7 @@
   "inventory-management": "Inventory Management",
   "inventory-reduction": "Inventory Reduction",
   "items": "Items",
+  "json-forms-error.required": "This field is required",
   "label.abbreviation": "Abbreviation",
   "label.acknowledged": "Acknowledged",
   "label.actions": "Actions",
