@@ -43,10 +43,6 @@ export const FileList = ({
 
   const isAndroid = Capacitor.getPlatform() === 'android';
 
-  const onError = (err: string) => {
-    error(`Error: ${err}`)();
-  };
-
   return (
     <Stack
       justifyContent="center"
@@ -77,7 +73,7 @@ export const FileList = ({
                         assetId,
                       });
                     } catch (err) {
-                      onError((err as Error).message);
+                      error(`Error: ${(err as Error).message}`)();
                     }
                   }}
                 >
