@@ -1,8 +1,10 @@
-import React, { FC, PropsWithChildren, useEffect } from 'react';
+import React, { FC, PropsWithChildren, useCallback, useEffect } from 'react';
 import {
+  LocaleKey,
   Typography,
   UnhappyMan,
   useAuthContext,
+  useIntlUtils,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
 import { Box, useTranslation, BasicSpinner } from '@openmsupply-client/common';
@@ -131,6 +133,8 @@ const FormComponent = ({
   config,
   onChange,
 }: JsonFormsComponentProps & JsonFormsReactProps) => {
+  const t = useTranslation();
+  const { currentLanguage } = useIntlUtils();
   const { user, store } = useAuthContext();
   const fullConfig: JsonFormsConfig = {
     store,
@@ -158,8 +162,20 @@ const FormComponent = ({
       return error.message ?? '';
     });
 
-  // This allows "default" values to be set in the JSON schema
+  // This allows "default" values to be set in the JSON schema, though it
+  // currently can't add defaults on nested properties unless a
+  // default object is defined at the root level -- see issue #6971
   const handleDefaultsAjv = createAjv({ useDefaults: true });
+
+  const translateError = useCallback(
+    ({ keyword, message }: { keyword: string; message: string }) => {
+      const localeKey = `json-forms-error.${keyword}` as LocaleKey;
+      // If a specific type of error is not defined in our localisations, just
+      // return the default error message
+      return t(localeKey, message);
+    },
+    [t]
+  );
 
   return !data ? null : (
     <JsonForms
@@ -180,6 +196,7 @@ const FormComponent = ({
         onChange?.({ errors, data });
       }}
       ajv={handleDefaultsAjv}
+      i18n={{ locale: currentLanguage, translateError }}
     />
   );
 };
