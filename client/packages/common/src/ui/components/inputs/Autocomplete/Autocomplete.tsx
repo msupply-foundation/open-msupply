@@ -121,7 +121,6 @@ export function Autocomplete<T>({
     />
   );
   const popper = popperMinWidth ? CustomPopper : StyledPopper;
-  const noOptions = noOptionsText ?? t('label.no-options')
 
   return (
     <MuiAutocomplete
@@ -137,8 +136,8 @@ export function Autocomplete<T>({
       getOptionDisabled={getOptionDisabled}
       filterOptions={filter}
       loading={loading}
-      loadingText={loadingText}
-      noOptionsText={noOptions}
+      loadingText={loadingText ?? t('loading')}
+      noOptionsText={noOptionsText ?? t('label.no-options')}
       options={options}
       size="small"
       renderInput={renderInput || defaultRenderInput}
