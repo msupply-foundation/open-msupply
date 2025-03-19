@@ -89,9 +89,9 @@ export const AppBarButtons: FC<{
               return onProgramCreate({
                 id: FnUtils.generateUUID(),
                 ...rest,
-              }).then((response) => {
-                if (response.__typename == "RequisitionNode") {
-                  modalController.toggleOff()
+              }).then(response => {
+                if (response.__typename == 'RequisitionNode') {
+                  modalController.toggleOff();
                   navigate(
                     RouteBuilder.create(AppRoute.Replenishment)
                       .addPart(AppRoute.InternalOrder)

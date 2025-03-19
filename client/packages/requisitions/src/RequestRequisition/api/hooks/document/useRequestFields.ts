@@ -7,7 +7,7 @@ import { RequestFragment } from '../../operations.generated';
 import { useRequestApi } from '../utils/useRequestApi';
 
 export const useRequestFields = <
-  KeyOfRequisition extends keyof RequestFragment
+  KeyOfRequisition extends keyof RequestFragment,
 >(
   keys: KeyOfRequisition | KeyOfRequisition[]
 ): FieldSelectorControl<RequestFragment, KeyOfRequisition> => {
