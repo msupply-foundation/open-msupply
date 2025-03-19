@@ -96,7 +96,6 @@ export const useEncounterListColumns = ({
     key: 'effectiveStatus',
     label: 'label.status',
     sortable: false,
-    align: ColumnAlign.Right,
     width: 175,
   });
   columnList.push({
