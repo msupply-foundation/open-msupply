@@ -127,7 +127,7 @@ export const ServerDiscovery = () => {
             sx={theme => ({
               [theme.breakpoints.down('sm')]: {
                 paddingX: '1em',
-                textJustify: 'inter-word'
+                textJustify: 'inter-word',
               },
               fontSize: {
                 xs: '12px',

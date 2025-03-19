@@ -38,10 +38,10 @@ export const LoginLayout = ({
     <Box display="flex" style={{ width: '100%' }}>
       <Box
         flex="1 0 50%"
-        sx={theme => ({      
+        sx={theme => ({
           [theme.breakpoints.down('sm')]: {
             display: 'none',
-          },   
+          },
           backgroundImage: (theme: Theme) => theme.mixins.gradient.primary,
           backgroundSize: (theme: Theme) => theme.mixins.gradient.size,
           padding: '0 5% 7%',
