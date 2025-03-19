@@ -14,16 +14,25 @@ import {
 import { useTemperatureLog, useTemperatureBreach } from '../Monitoring/api';
 import { useSensor } from '../Sensor/api';
 
-export const ImportFridgeTag = () => {
+interface ImportFridgeTagProps {
+  shouldShrink: boolean;
+}
+
+export const ImportFridgeTag = ({
+  shouldShrink = false,
+}: ImportFridgeTagProps) => {
   const t = useTranslation();
+  const navigate = useNavigate();
+  const { success, error } = useNotification();
+
   const hiddenFileInput = useRef<HTMLInputElement>(null);
   const { storeId } = useAuthContext();
-  const { success, error } = useNotification();
   const queryClient = useQueryClient();
+
   const sensorApi = useSensor.utils.api();
   const logApi = useTemperatureLog.utils.api();
   const breachApi = useTemperatureBreach.utils.api();
-  const navigate = useNavigate();
+
   const getConfirmation = useConfirmationModal({
     message: t('messages.new-sensor'),
     title: t('title.new-sensor'),
@@ -97,16 +106,17 @@ export const ImportFridgeTag = () => {
         accept=".txt"
       />
       <LoadingButton
+        variant="outlined"
+        shouldShrink={shouldShrink}
         title={t('tooltip.import-fridge-tag')}
         startIcon={<UploadIcon />}
+        label={t('button.import-fridge-tag')}
         onClick={() => hiddenFileInput?.current?.click()}
         isLoading={isUploadingFridgeTag}
         loadingStyle={{
           backgroundColor: 'primary.main',
           iconColor: 'background.white',
         }}
-        label={t('button.import-fridge-tag')}
-        variant="outlined"
       />
     </>
   );

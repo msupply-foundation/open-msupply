@@ -6,7 +6,7 @@ import { ImportFridgeTag } from '../../common/ImportFridgeTag';
 export const AppBarButtons = () => {
   return (
     <AppBarButtonsPortal>
-      <ImportFridgeTag />
+      <ImportFridgeTag shouldShrink={true} />
     </AppBarButtonsPortal>
   );
 };
