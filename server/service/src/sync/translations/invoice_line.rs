@@ -87,6 +87,9 @@ pub struct LegacyTransLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "om_item_variant_id")]
     pub item_variant_id: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "linked_trans_line_ID")]
+    pub linked_invoice_id: Option<String>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -144,6 +147,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             option_id,
             foreign_currency_price_before_tax,
             item_variant_id,
+            linked_invoice_id,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
         let line_type = match to_invoice_line_type(&r#type) {
             Some(line_type) => line_type,
@@ -284,6 +288,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             },
             foreign_currency_price_before_tax,
             item_variant_id,
+            linked_invoice_id,
         };
 
         let result = adjust_negative_values(result);
@@ -339,6 +344,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     return_reason_id,
                     foreign_currency_price_before_tax,
                     item_variant_id,
+                    linked_invoice_id,
                 },
             item_row,
             invoice_row,
@@ -376,6 +382,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             option_id,
+            linked_invoice_id,
         };
         Ok(PushTranslateResult::upsert(
             changelog,
