@@ -13,7 +13,7 @@ import {
   ObjUtils,
   useIsCentralServerApi,
   useIsGapsStoreOnly,
-  PropertyNodeValueType
+  PropertyNodeValueType,
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
 import { NameRenderer } from '../..';
@@ -124,16 +124,16 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
               </Typography>
             ) : (
               <Box
-                  sx={theme => ({
-                    [theme.breakpoints.down('sm')]: {
-                      width: '95%',
-                      minWidth: '340px',
-                      paddingX: '2em',
-                    },
+                sx={theme => ({
+                  [theme.breakpoints.down('sm')]: {
+                    width: '95%',
+                    minWidth: '340px',
+                    paddingX: '2em',
+                  },
                   width: '500px',
                   display: 'grid',
                   gap: 1,
-                  })}
+                })}
               >
                 {properties.map(p => (
                   <Row
@@ -145,7 +145,7 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
                       valueType: p.property.valueType,
                       allowedValues: p.property.allowedValues?.split(','),
                       value: draftProperties[p.property.key],
-                      onChange: (v) =>
+                      onChange: v =>
                         setDraftProperties({
                           ...draftProperties,
                           [p.property.key]: v ?? null,
@@ -177,32 +177,32 @@ const Row = ({
   isGapsStore,
   inputProperties,
 }: {
-  key: string,
-  label: string,
-  isGapsStore: boolean,
-  inputProperties: PropertyInput,
+  key: string;
+  label: string;
+  isGapsStore: boolean;
+  inputProperties: PropertyInput;
 }) => {
-  if (!isGapsStore) return (
-    <InputWithLabelRow
-      key={key}
-      label={label}
-      sx={{ width: '100%' }}
-      labelProps={{
-        sx: {
-          width: '250px',
-          fontSize: '16px',
-          paddingRight: 2,
-          textAlign: 'right',
-        },
-      }}
-      Input={
-        <Box flex={1}>
-          <PropertyInput
-            {...inputProperties}
-          />
-        </Box>
-      }
-    />)
+  if (!isGapsStore)
+    return (
+      <InputWithLabelRow
+        key={key}
+        label={label}
+        sx={{ width: '100%' }}
+        labelProps={{
+          sx: {
+            width: '250px',
+            fontSize: '16px',
+            paddingRight: 2,
+            textAlign: 'right',
+          },
+        }}
+        Input={
+          <Box flex={1}>
+            <PropertyInput {...inputProperties} />
+          </Box>
+        }
+      />
+    );
 
   return (
     <Box paddingTop={1.5}>
@@ -214,9 +214,7 @@ const Row = ({
       >
         {label}
       </Typography>
-      <PropertyInput
-        {...inputProperties}          
-      />
+      <PropertyInput {...inputProperties} />
     </Box>
-  )
-}
+  );
+};
