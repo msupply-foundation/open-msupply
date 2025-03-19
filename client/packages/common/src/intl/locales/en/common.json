@@ -1832,6 +1832,7 @@
   "select-report": "Select Template",
   "select-store": "Select store",
   "sensors": "Sensors",
+  "server-error.DemographicIndicatorHasNoName": "Demographic indicator has no name",
   "settings": "Settings",
   "settings.label-printing": "Label Printing",
   "settings.printer-address": "IP address",
