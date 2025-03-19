@@ -53,7 +53,7 @@ export const EquipmentDetailView: FC = () => {
         }}
       >
         <UpdateStatusButton assetId={data?.id} />
-        <ImportFridgeTag />
+        <ImportFridgeTag shouldShrink={false} />
       </Box>
 
       <Box
