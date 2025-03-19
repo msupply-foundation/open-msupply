@@ -109,7 +109,7 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
             textProps={{ textAlign: 'end' }}
             labelProps={{ sx: { textWrap: 'wrap' } }}
           />
-          <StyledInputRow // here
+          <StyledInputRow
             label={t('label.adjust-by')}
             Input={
               <NumericTextInput
