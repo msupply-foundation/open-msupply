@@ -17,6 +17,7 @@ import {
 import { BasicTextInput, BasicTextInputProps } from '../TextInput';
 import { StyledPopper } from './components';
 import { useOpenStateWithKeyboard } from './utils';
+import { useTranslation } from '@common/intl';
 
 export interface AutocompleteProps<T>
   extends Omit<
@@ -80,6 +81,7 @@ export function Autocomplete<T>({
   textSx,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
+  const t = useTranslation();
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
@@ -119,6 +121,7 @@ export function Autocomplete<T>({
     />
   );
   const popper = popperMinWidth ? CustomPopper : StyledPopper;
+  const noOptions = noOptionsText ?? t('label.no-options')
 
   return (
     <MuiAutocomplete
@@ -135,7 +138,7 @@ export function Autocomplete<T>({
       filterOptions={filter}
       loading={loading}
       loadingText={loadingText}
-      noOptionsText={noOptionsText}
+      noOptionsText={noOptions}
       options={options}
       size="small"
       renderInput={renderInput || defaultRenderInput}
