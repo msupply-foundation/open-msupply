@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from '@common/intl';
 import {
   Box,
   FileUtils,
   IconButton,
+  InlineSpinner,
   Link,
   Stack,
   Typography,
@@ -32,6 +33,7 @@ export const FileList = ({
 }) => {
   const t = useTranslation();
   const { error } = useNotification();
+  const [loadingIndex, setLoadingIndex] = useState<number>();
 
   if (files === undefined || files.length === 0) {
     return noFilesMessage === undefined ? null : (
@@ -65,6 +67,7 @@ export const FileList = ({
               isAndroid ? (
                 <span
                   onClick={async () => {
+                    setLoadingIndex(idx);
                     try {
                       await FileUtils.openAndroidFile({
                         id: file.id as string,
@@ -75,6 +78,7 @@ export const FileList = ({
                     } catch (err) {
                       error(`Error: ${(err as Error).message}`)();
                     }
+                    setLoadingIndex(undefined);
                   }}
                 >
                   {file.name}
@@ -91,7 +95,7 @@ export const FileList = ({
               file.name
             )}
           </Typography>
-          {!!removeFile && (
+          {!!removeFile && idx !== loadingIndex && (
             <IconButton
               onClick={() => removeFile(file.name, file.id)}
               icon={
@@ -100,6 +104,7 @@ export const FileList = ({
               label={t('button.remove-file')}
             />
           )}
+          {idx === loadingIndex && <InlineSpinner />}
         </Box>
       ))}
     </Stack>
