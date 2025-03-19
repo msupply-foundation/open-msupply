@@ -20,7 +20,7 @@
     </tr>
 
     <tr> 
-        <td class="header_section_field_left">{{ data.invoice.otherParty.address1 }}</td> 
+        <td class="header_section_field_left">{{ data.invoice.otherParty.code }}</td>        
         <td class="header_section_field_right">{{t(k="report.their-ref",f="Their ref")}}: 
             {% if data.invoice.theirReference %}
                 {{ data.invoice.theirReference }}
@@ -30,27 +30,25 @@
         </td>
     </tr>
     <tr>
-        <td class="header_section_field_left">{{ data.invoice.otherParty.code }}</td>
+        <td class="header_section_field_left">{{ data.invoice.otherParty.address1 }}</td> 
         <td class="header_section_field_right">{{t(k="report.confirmed-date", f="Confirmed date")}}:{{ self::dateOrNA(datetime=data.invoice.deliveredDatetime) }}</td>
+    </tr>
+    <tr>
+        <td class="header_section_field_left">{{ data.invoice.otherParty.address2 }}</td> 
+        <td class="header_section_field_right"></td>
     </tr>
 
 </table>
 
 <table class="header_date_section">
     <tr>
-        <td class="header_section_field_left"></td>
-        <td class="header_section_field_right">{{t(k="report.printed-date",f="Printed date")}}: {{ now() | date(format="%d/%m/%Y") }}</td>
-    </tr> 
-
-    <tr> 
         <td class="header_section_field_left">{{t(k="label.entered-by",f="Entered by")}}: {{ data.invoice.user.username | default(value='') }}</td>
-        <td class="header_section_field_right">{{t(k="report.invoice-type",f="Invoice type")}}: {{ data.invoice.type }}</td>
+        <td class="header_section_field_right">{{t(k="report.printed-date",f="Printed date")}}: {{ now() | date(format="%d/%m/%Y") }}</td>
     </tr>
-
     <tr> 
         <td class="header_section_field_left">{{t(k="report.created-date",f="Created date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}</td>
         <td class="header_section_field_right">{{t(k="report.shipped-date",f="Shipped date")}}: {{ self::dateOrNA(datetime=data.invoice.shippedDatetime) }}</td>
-    </tr> 
+    </tr>
 </table>
 
 <body>
@@ -98,7 +96,7 @@
 
 <table class="body_total_section" cellpadding="2" cellspacing="0">
     <tr class="body_total_column_label">
-        <th class="header_section_field_right">{{t(k="heading.sub-total",f="Sub total")}}: {{ data.invoice.pricing.totalBeforeTax }}</th>
+        <th class="header_section_field_right">{{t(k="heading.sub-total",f="Sub total")}}: {{ data.invoice.pricing.totalBeforeTax | round(precision=2) }}</th>
     </tr>
       <tr class="body_total_column_label">
         <th class="header_section_field_right">{{t(k="heading.tax",f="Tax")}}: {{ data.invoice.pricing.taxPercentage }}</th>
