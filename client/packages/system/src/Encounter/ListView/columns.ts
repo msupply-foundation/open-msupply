@@ -1,6 +1,5 @@
 import {
   useColumns,
-  ColumnAlign,
   ColumnDescription,
   SortBy,
   ColumnDataAccessor,
