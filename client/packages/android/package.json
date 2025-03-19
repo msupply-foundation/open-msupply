@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@capacitor/android": "^6.1.0",
-    "@capacitor/core": "^6.1.0"
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/geolocation": "^6.0.1"
   }
 }

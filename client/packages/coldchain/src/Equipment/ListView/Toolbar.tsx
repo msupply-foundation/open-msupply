@@ -141,14 +141,11 @@ export const useToolbar = () => {
 
   return {
     filters,
-  }
-
-}
+  };
+};
 
 export const Toolbar = () => {
-  const {
-    filters,
-  } = useToolbar();
+  const { filters } = useToolbar();
 
   return (
     <AppBarContentPortal

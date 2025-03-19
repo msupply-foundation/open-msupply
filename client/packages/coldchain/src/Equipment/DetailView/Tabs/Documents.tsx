@@ -111,7 +111,7 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
       sx={theme => ({
         [theme.breakpoints.down('sm')]: {
           flexDirection: 'column',
-        }
+        },
       })}
     >
       <Container>
@@ -119,7 +119,7 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
         <FileList
           assetId={draft.id}
           files={[]}
-          removeFile={() => { }}
+          removeFile={() => {}}
           noFilesMessage={t('messages.no-documents-uploaded')}
         />
       </Container>
@@ -133,7 +133,7 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
           borderStyle: 'solid',
           [theme.breakpoints.down('sm')]: {
             display: 'none',
-          }
+          },
         })}
       ></Box>
       <Container>
@@ -144,7 +144,7 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
           sx={theme => ({
             [theme.breakpoints.down('sm')]: {
               marginY: '1em',
-            }
+            },
           })}
         />
         <Heading text={t('heading.download-cce-documents')} />

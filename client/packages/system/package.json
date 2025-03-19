@@ -12,6 +12,7 @@
     "eslint": "eslint ./src"
   },
   "dependencies": {
+    "@capacitor/geolocation": "^6.0.1",
     "@openmsupply-client/common": "^0.0.1",
     "@openmsupply-client/config": "^0.0.0",
     "@openmsupply-client/requisitions": "^0.0.0",
