@@ -1,19 +1,20 @@
 import React, { FC } from 'react';
-import {
-  Box,
-  DetailFormSkeleton,
-} from '@openmsupply-client/common';
+import { Box, DetailFormSkeleton } from '@openmsupply-client/common';
 import { SimpleLabelDisplay } from '../../Components/SimpleLabelDisplay';
 import { Status } from 'packages/coldchain/src/Equipment/Components';
 
 import { AccordionPanelSection } from 'packages/invoices/src/Prescriptions/LineEditView/PanelSection';
 import { useEquipmentDetailView } from 'packages/coldchain/src/Equipment/DetailView';
-import { Summary, Details } from 'packages/coldchain/src/Equipment/DetailView/Tabs';
+import {
+  Summary,
+  Details,
+} from 'packages/coldchain/src/Equipment/DetailView/Tabs';
 import { Footer } from './Footer';
 import { StatusLogs } from 'packages/coldchain/src/Equipment/DetailView/Tabs/StatusLogs';
 import { UpdateStatusButton } from 'packages/coldchain/src/Equipment/DetailView/UpdateStatusButton';
 import { Documents } from 'packages/coldchain/src/Equipment/DetailView/Tabs/Documents';
 import { LogCardListView } from '../LogCardListView';
+import { ImportFridgeTag } from 'packages/coldchain/src/common/ImportFridgeTag';
 
 export const EquipmentDetailView: FC = () => {
   const {
@@ -48,10 +49,11 @@ export const EquipmentDetailView: FC = () => {
           minHeight: '50px',
           display: 'flex',
           padding: '.75rem',
-          gap: '.5em'
+          gap: '.5em',
         }}
       >
         <UpdateStatusButton assetId={data?.id} />
+        <ImportFridgeTag />
       </Box>
 
       <Box
@@ -77,7 +79,7 @@ export const EquipmentDetailView: FC = () => {
         sx={{
           display: 'flex',
           flexDirection: 'column',
-          gap: 1
+          gap: 1,
         }}
       >
         <AccordionPanelSection title="Status History" defaultExpanded={false}>
@@ -99,11 +101,13 @@ export const EquipmentDetailView: FC = () => {
         <AccordionPanelSection title="Logs" defaultExpanded={false}>
           <LogCardListView recordId={data?.id} />
         </AccordionPanelSection>
-        {isDirty && <Footer
-          isDirty={isDirty}
-          isSaving={isSaving}
-          showSaveConfirmation={showSaveConfirmation}
-        />}
+        {isDirty && (
+          <Footer
+            isDirty={isDirty}
+            isSaving={isSaving}
+            showSaveConfirmation={showSaveConfirmation}
+          />
+        )}
       </Box>
     </Box>
   );
