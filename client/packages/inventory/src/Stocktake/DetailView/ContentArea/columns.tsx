@@ -16,6 +16,7 @@ import {
   NumberCell,
   ColumnDescription,
   UNDEFINED_STRING_VALUE,
+  getCommentPopoverColumn,
 } from '@openmsupply-client/common';
 import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
@@ -241,16 +242,8 @@ export const useStocktakeColumns = ({
       accessor: ({ rowData }) => getStocktakeReasons(rowData, t),
       sortable: false,
     },
-    {
-      key: 'comment',
-      label: 'label.stocktake-comment',
-      sortable: false,
-      accessor: ({ rowData }) =>
-        getColumnProperty(rowData, [
-          { path: ['lines', 'comment'] },
-          { path: ['comment'] },
-        ]),
-    },
+
+    getCommentPopoverColumn(),
     expandColumn,
   ];
 
