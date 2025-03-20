@@ -11,8 +11,6 @@ export default {
   },
 } as Meta<typeof UnhappyMan>;
 
-const Template: StoryFn<typeof UnhappyMan> = args => (
-  <UnhappyMan {...args} />
-);
+const Template: StoryFn<typeof UnhappyMan> = args => <UnhappyMan {...args} />;
 
 export const Primary = Template.bind({});

@@ -9,8 +9,8 @@ Components that can be used as-is or extended to suit specific use cases. Ideall
 ### Tips & Things to keep in mind
 
 - We use MUI heavily as the base for components. Where possible, try to utilise a MUI component. Often, if you import a MUI component and style it, that should be all you need.
-- Try to break down components and use composition where possible. I.e. a `BaseTextInput` component can be used to make a `NumericTextInput` or a `CurrencyTextInput` 
-- You don't need to cover *every* use case, but when making components try to keep these in mind:
+- Try to break down components and use composition where possible. I.e. a `BaseTextInput` component can be used to make a `NumericTextInput` or a `CurrencyTextInput`
+- You don't need to cover _every_ use case, but when making components try to keep these in mind:
   - Disabling
   - Forwarding refs
   - RTL Support
@@ -18,7 +18,3 @@ Components that can be used as-is or extended to suit specific use cases. Ideall
 ### Gotchas
 
 ### Future Considerations
-
-
-
-

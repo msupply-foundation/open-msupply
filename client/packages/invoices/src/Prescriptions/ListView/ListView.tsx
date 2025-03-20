@@ -14,6 +14,7 @@ import {
   useUrlQueryParams,
   ColumnFormat,
   GenericColumnKey,
+  getCommentPopoverColumn,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
 import { usePrescriptionList, usePrescription } from '../api';
@@ -97,11 +98,8 @@ const PrescriptionListViewComponent: FC = () => {
             : rowData.createdDatetime,
         sortable: true,
       },
-      [
-        'theirReference',
-        { description: '', maxWidth: 110 },
-      ],
-      ['comment'],
+      ['theirReference', { description: '', maxWidth: 110 }],
+      getCommentPopoverColumn(),
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]

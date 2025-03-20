@@ -7,7 +7,7 @@ import { useIntlUtils } from '@common/intl';
 const getOptions = (): [
   SplitButtonOption<string>,
   SplitButtonOption<string>,
-  SplitButtonOption<string>
+  SplitButtonOption<string>,
 ] => [
   { label: 'Create a merge commit', value: 'createAndMerge' },
   { label: 'Squash and merge', value: 'squashAndMerge' },
