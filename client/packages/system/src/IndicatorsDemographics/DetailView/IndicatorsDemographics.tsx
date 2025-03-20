@@ -4,7 +4,6 @@ import {
   Box,
   ColumnAlign,
   DataTable,
-  LocaleKey,
   RecordPatch,
   TableProvider,
   createTableStore,
