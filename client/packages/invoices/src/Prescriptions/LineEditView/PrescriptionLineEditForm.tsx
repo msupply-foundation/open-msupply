@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Pluralize from 'pluralize';
 import {
   Grid,
   BasicTextInput,
@@ -23,6 +24,7 @@ import {
   DropdownMenuItem,
   TextArea,
   InputWithLabelRow,
+  useIntl,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -90,6 +92,8 @@ export const PrescriptionLineEditForm: React.FC<
   programId,
 }) => {
   const t = useTranslation();
+  const p = Pluralize;
+  const { i18n } = useIntl();
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
   const { store: { preferences } = {} } = useAuthContext();
@@ -107,6 +111,16 @@ export const PrescriptionLineEditForm: React.FC<
     []
   );
   const isDirectionsDisabled = !issueUnitQuantity;
+
+  const pluralize = (unit: string, count: number) => {
+    if (i18n.language !== 'en') return unit;
+    {
+      if (p.isPlural(unit)) {
+        return unit;
+      }
+      return p(unit, count);
+    }
+  };
 
   const allocate = (
     numPacks: number,
@@ -302,7 +316,7 @@ export const PrescriptionLineEditForm: React.FC<
           )}
           <AccordionPanelSection
             title={t('label.quantity')}
-            closedSummary={summarise(draftPrescriptionLines, t)}
+            closedSummary={summarise(draftPrescriptionLines, t, p)}
             defaultExpanded={isNew && !disabled}
             key={key + '_quantity'}
           >
@@ -365,10 +379,11 @@ export const PrescriptionLineEditForm: React.FC<
                   }}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
-                  {t('label.unit-plural', {
-                    count: issueUnitQuantity,
-                    unit: item?.unitName,
-                  })}
+                  {item.unitName &&
+                    pluralize(
+                      t('label.unit-type', { unit: item.unitName }),
+                      issueUnitQuantity
+                    )}
                 </InputLabel>
               </Grid>
             </Grid>
@@ -550,7 +565,8 @@ const TableWrapper: React.FC<TableProps> = ({
 
 const summarise = (
   lines: DraftPrescriptionLine[],
-  t: TypedTFunction<LocaleKey>
+  t: TypedTFunction<LocaleKey>,
+  pluralize: typeof Pluralize
 ) => {
   // Count how many of each pack size
   const counts: Record<number, { unitName: string; count: number }> = {};
@@ -569,14 +585,30 @@ const summarise = (
   // Summarise counts in words
   const summary: string[] = [];
   Object.entries(counts).forEach(([size, { unitName, count }]) => {
-    const unitWord = t('label.unit-plural', {
-      count,
-      unit: unitName,
-    });
-    if (Number(size) > 1) {
-      const packs = NumUtils.round(count / Number(size), 3);
-      summary.push(t('label.packs-of-size', { packs, count, size, unitWord }));
+    const packSize = Number(size);
+    if (packSize > 1) {
+      const packs = NumUtils.round(count / packSize, 3);
+      const packWord = pluralize(t('pack'), packs);
+      const unit = pluralize(t('unit'), count);
+      const unitWord = pluralize(
+        t('label.unit-type', { unit: unitName }),
+        packSize
+      );
+      summary.push(
+        t('label.packs-of-size', {
+          packs,
+          count,
+          size,
+          unitWord,
+          unit,
+          packWord,
+        })
+      );
     } else {
+      const unitWord = pluralize(
+        t('label.unit-type', { unit: unitName }),
+        count
+      );
       summary.push(t('label.packs-of-1', { count, unitWord }));
     }
   });
