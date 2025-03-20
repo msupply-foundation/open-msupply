@@ -1,4 +1,5 @@
 use super::{
+    location::set_asset_location,
     query::get_asset,
     validate::{check_asset_exists, check_asset_number_exists},
 };
@@ -12,8 +13,10 @@ use repository::{
         asset::{AssetFilter, AssetRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
-    ActivityLogType, RepositoryError, StorageConnection, StringFilter,
+    migrations::constants::COLD_CHAIN_EQUIPMENT_UUID,
+    ActivityLogType, LocationRow, RepositoryError, StorageConnection, StringFilter, Upsert,
 };
+use util::uuid::uuid;
 
 #[derive(PartialEq, Debug)]
 pub enum InsertAssetError {
@@ -70,8 +73,31 @@ pub fn insert_asset(
                 }
                 None => input,
             };
+
             let new_asset = generate(input);
             AssetRowRepository::new(connection).upsert_one(&new_asset)?;
+
+            // Automatically create a location for this asset (if it's a cold chain asset)
+            if new_asset.asset_class_id == Some(COLD_CHAIN_EQUIPMENT_UUID.to_string()) {
+                if let Some(store_id) = new_asset.store_id {
+                    let new_location = LocationRow {
+                        id: uuid(),
+                        name: new_asset
+                            .asset_number
+                            .clone()
+                            .unwrap_or_else(|| "Asset".to_string()),
+                        code: new_asset
+                            .asset_number
+                            .clone()
+                            .unwrap_or_else(|| "Asset".to_string()),
+                        on_hold: false,
+                        store_id,
+                        cold_storage_type_id: None, // TODO(future): Based on asset type try to determine cold storage type
+                    };
+                    new_location.upsert(connection)?;
+                    set_asset_location(connection, &new_asset.id, vec![new_location.id])?;
+                }
+            }
 
             activity_log_entry(
                 ctx,
