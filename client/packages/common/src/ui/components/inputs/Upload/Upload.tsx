@@ -15,27 +15,26 @@ import {
 export interface UploadProps {
   accept?: Accept;
   color?: 'primary' | 'secondary' | 'gray';
-  customWidth?: String;
+  maxSize?: number;
   onUpload: <T extends File>(files: T[]) => void;
 }
 
 export const Upload: FC<UploadProps> = ({
   accept,
   color = 'secondary',
-  customWidth,
   onUpload,
 }) => {
   const t = useTranslation();
-  const isTabletOrMobile = useIsScreen('md') || useIsScreen('sm');
+  const isMobile = useIsScreen('sm');
 
   return (
     <Paper
       sx={theme => ({
-        [theme.breakpoints.down('md')]: {
+        [theme.breakpoints.down('sm')]: {
           border: '0px',
           borderWidth: '0px',
           backgroundColor: 'inherit',
-          width: customWidth || '200px',
+          width: '200px',
           marginTop: '0px 0px',
           padding: '0px',
           boxShadow: 'none',
