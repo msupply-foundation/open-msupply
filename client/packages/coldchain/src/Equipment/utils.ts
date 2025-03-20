@@ -216,7 +216,7 @@ export const parseStatusFromString = (
   }
 };
 
-export const base64ToBlob = (contentType: any, base64: string) => {
+export const base64ToBlob = (base64: string, contentType: any) => {
   const byteCharacters = atob(base64);
   const byteArrays = [];
 
