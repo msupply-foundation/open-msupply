@@ -53,7 +53,6 @@ export const EquipmentDetailView: FC = () => {
       >
         <UpdateStatusButton assetId={data?.id} />
       </Box>
-
       <Box
         sx={{
           padding: '.25rem .75rem',
