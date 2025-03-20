@@ -9,11 +9,11 @@
 <table class="header_date_section">
     <tr>
         <td class="header_section_field_left">{{t(k="label.entered-by",f="Entered by")}}: {{ data.invoice.user.username | default(value='') }}</td>
-        <td class="header_section_field_right">{{t(k="report.printed-date",f="Printed date")}}: {{ now() | date(format="%d/%m/%Y") }}</td>
+        <td class="header_section_field_right">{{t(k="report.shipped-date",f="Shipped date")}}: {{ self::dateOrNA(datetime=data.invoice.shippedDatetime) }}</td>
     </tr>
     <tr> 
         <td class="header_section_field_left">{{t(k="report.created-date",f="Created date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}</td>
-        <td class="header_section_field_right">{{t(k="report.shipped-date",f="Shipped date")}}: {{ self::dateOrNA(datetime=data.invoice.shippedDatetime) }}</td>
+        <td></td>
     </tr>
 </table>
 
