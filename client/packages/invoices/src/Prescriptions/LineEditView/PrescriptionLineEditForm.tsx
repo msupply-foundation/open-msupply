@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import Pluralize from 'pluralize';
 import {
   Grid,
   BasicTextInput,
@@ -92,8 +91,7 @@ export const PrescriptionLineEditForm: React.FC<
   programId,
 }) => {
   const t = useTranslation();
-  const p = Pluralize;
-  const { currentLanguage } = useIntlUtils();
+  const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
   const { store: { preferences } = {} } = useAuthContext();
@@ -111,12 +109,6 @@ export const PrescriptionLineEditForm: React.FC<
     []
   );
   const isDirectionsDisabled = !issueUnitQuantity;
-
-  // pluralize only works for English words. Any other language strings are returned unchanged
-  const pluralize = (unit: string, count: number) => {
-    if (currentLanguage !== 'en') return unit;
-    return p(unit, count);
-  };
 
   const allocate = (
     numPacks: number,
@@ -312,7 +304,7 @@ export const PrescriptionLineEditForm: React.FC<
           )}
           <AccordionPanelSection
             title={t('label.quantity')}
-            closedSummary={summarise(draftPrescriptionLines, t, p)}
+            closedSummary={summarise(draftPrescriptionLines, t, getPlural)}
             defaultExpanded={isNew && !disabled}
             key={key + '_quantity'}
           >
@@ -375,7 +367,7 @@ export const PrescriptionLineEditForm: React.FC<
                   }}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
-                  {item.unitName && pluralize(item.unitName, issueUnitQuantity)}
+                  {item.unitName && getPlural(item.unitName, issueUnitQuantity)}
                 </InputLabel>
               </Grid>
             </Grid>
@@ -558,7 +550,7 @@ const TableWrapper: React.FC<TableProps> = ({
 const summarise = (
   lines: DraftPrescriptionLine[],
   t: TypedTFunction<LocaleKey>,
-  pluralize: typeof Pluralize
+  getPlural: (word: string, count: number) => void
 ) => {
   // Count how many of each pack size
   const counts: Record<number, { unitName: string; count: number }> = {};
@@ -582,7 +574,7 @@ const summarise = (
       const numPacks = NumUtils.round(numUnits / packSize, 3);
       const packWord = t('label.packs-of', { count: numPacks }); // pack or packs
       const unitWord = t('label.units-plural', { count: numUnits }); // unit or units
-      const unitType = pluralize(unitName, packSize);
+      const unitType = getPlural(unitName, packSize);
       summary.push(
         t('label.packs-of-size', {
           numPacks,
@@ -594,7 +586,7 @@ const summarise = (
         })
       );
     } else {
-      const unitType = pluralize(unitName, numUnits);
+      const unitType = getPlural(unitName, numUnits);
       summary.push(t('label.packs-of-1', { numUnits, unitType }));
     }
   });

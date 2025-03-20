@@ -14,6 +14,7 @@ import { ar } from 'date-fns/locale/ar';
 import { es } from 'date-fns/locale/es';
 import { ru } from 'date-fns/locale/ru';
 import { pt } from 'date-fns/locale/pt';
+import pluralize from 'pluralize';
 
 // Map locale string (from i18n) to locale object (from date-fns)
 const getLocaleObj = { fr, ar, es, ru };
@@ -109,6 +110,12 @@ export const useIntlUtils = () => {
     [language]
   );
 
+  // pluralize only works for English words. Any other language strings are returned unchanged
+  const getPlural = (word: string, count: number) => {
+    if (language !== 'en') return word;
+    return pluralize(word, count);
+  };
+
   return {
     currentLanguage,
     currentLanguageName,
@@ -120,6 +127,7 @@ export const useIntlUtils = () => {
     getUserLocale,
     setUserLocale,
     getLocalisedFullName,
+    getPlural,
   };
 };
 
