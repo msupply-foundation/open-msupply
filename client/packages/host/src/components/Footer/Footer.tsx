@@ -15,7 +15,7 @@ import {
   useEditModal,
   EditIcon,
   useTheme,
-  useIsSmallScreen,
+  useIsExtraSmallScreen,
   SxProps,
 } from '@openmsupply-client/common';
 import { StoreSelector } from './StoreSelector';
@@ -27,7 +27,6 @@ interface PaddedCellProps {
   sx?: SxProps;
   text?: string;
   icon: ReactNode;
-  textSx?: SxProps;
   tooltip?: string;
   onClick?: () => void;
 }
@@ -36,27 +35,34 @@ const PaddedCell: FC<PaddedCellProps> = ({
   sx,
   text,
   icon,
-  textSx,
   tooltip,
   onClick,
 }) => {
-  const isSmallScreen = useIsSmallScreen();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   return (
     <Box
-      display="flex"
-      alignItems="center"
       onClick={onClick}
-      sx={{ cursor: onClick ? 'pointer' : 'inherit', ...sx }}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        flexDirection: isExtraSmallScreen ? 'column' : 'row',
+        cursor: onClick ? 'pointer' : 'inherit',
+        ...sx,
+      }}
     >
       {icon}
-      {!isSmallScreen && text && (
+      {text && (
         <Tooltip title={tooltip || ''}>
           <Typography
             sx={{
               color: 'inherit',
-              fontSize: '12px',
-              marginInlineStart: '8px',
-              ...textSx,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              textAlign: 'center',
+              width: isExtraSmallScreen ? '60px' : 'inherit',
+              fontSize: isExtraSmallScreen ? '8px' : '12px',
+              marginInlineStart: isExtraSmallScreen ? 0 : '8px',
             }}
           >
             {text}
@@ -70,7 +76,7 @@ const PaddedCell: FC<PaddedCellProps> = ({
 export const Footer: FC = () => {
   const theme = useTheme();
   const t = useTranslation();
-  const isSmallScreen = useIsSmallScreen();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   const { user, store } = useAuthContext();
   const { currentLanguageName, getLocalisedFullName } = useIntlUtils();
 
@@ -86,8 +92,8 @@ export const Footer: FC = () => {
 
   const iconStyles = {
     color: 'inherit',
-    height: isSmallScreen ? 24 : 16,
-    width: isSmallScreen ? 24 : 16,
+    height: isExtraSmallScreen ? 24 : 16,
+    width: isExtraSmallScreen ? 24 : 16,
   };
 
   return (
@@ -97,8 +103,8 @@ export const Footer: FC = () => {
       display="flex"
       alignItems="center"
       px={0}
-      py={isSmallScreen ? 1.5 : 0.75}
-      justifyContent={isSmallScreen ? 'space-evenly' : 'inherit'}
+      py={isExtraSmallScreen ? 1.5 : 0.75}
+      justifyContent={isExtraSmallScreen ? 'space-evenly' : 'inherit'}
     >
       {isOpen && (
         <FacilityEditModal
@@ -142,14 +148,13 @@ export const Footer: FC = () => {
           tooltip={t('select-language', { ...store })}
         />
       </LanguageSelector>
-      {isSmallScreen && <Divider />}
+      {isExtraSmallScreen && <Divider />}
       {isCentralServer ? (
         <PaddedCell
           icon={<CentralIcon />}
           text={t('label.central-server')}
           tooltip={t('select-language', { ...store })}
-          sx={{ ml: isSmallScreen ? 0 : 'auto' }}
-          textSx={{ marginInlineStart: 0 }}
+          sx={{ ml: isExtraSmallScreen ? 0 : 'auto' }}
         />
       ) : null}
     </Box>
