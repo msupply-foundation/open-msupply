@@ -26,8 +26,6 @@
     font-family: Tahoma;
     font-size: 8pt;
     border-bottom: 0.5px solid black;
-    padding-top: 1pt;
-    font-size: 10px
 } 
 
 .header_image_section {
@@ -87,4 +85,26 @@ hr {
     width: 100%; 
     margin-left: 8px; 
     border: 0.1px solid black;
+}
+
+.header_left_section {
+    text-align: left;
+    font-family: Tahoma;
+    font-size: 8pt;
+    flex: 0 1 auto;
+    margin-right: 10px;
+}
+
+.header_details_section {
+    flex: 1 1 0;
+    text-align: left;
+    font-family: Tahoma;
+    font-size: 8pt;
+}
+
+.header_right_section {
+  text-align: right;
+  font-family: Tahoma;
+  font-size: 8pt;
+  flex: 0 1 auto;
 }

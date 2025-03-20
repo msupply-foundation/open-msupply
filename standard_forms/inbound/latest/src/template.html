@@ -6,40 +6,6 @@
 {% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
 {% endmacro input %}
 
-<table class="header_supplied_section">
-    <tr> 
-        <td class="header_section_field_left">{{t(k="report.received-from",f="Received from")}}:</td> 
-        <td class="header_section_field_right invoice_number" style="font-weight: bold;">        
-            {{t(k="report.invoice",f="Invoice")}} #: {{ data.invoice.invoiceNumber }}
-        </td>
-    </tr> 
-
-    <tr> 
-        <td class="header_section_field_left">{{ data.invoice.otherPartyName }}</td> 
-        <td class="header_section_field_right">{{t(k="report.status", f="Status")}}: {{data.invoice.status}}</td>
-    </tr>
-
-    <tr> 
-        <td class="header_section_field_left">{{ data.invoice.otherParty.code }}</td>        
-        <td class="header_section_field_right">{{t(k="report.their-ref",f="Their ref")}}: 
-            {% if data.invoice.theirReference %}
-                {{ data.invoice.theirReference }}
-            {% else %}
-                {{ t(k="messages.not-applicable", f="N/A") }}
-            {% endif %}
-        </td>
-    </tr>
-    <tr>
-        <td class="header_section_field_left">{{ data.invoice.otherParty.address1 }}</td> 
-        <td class="header_section_field_right">{{t(k="report.confirmed-date", f="Confirmed date")}}:{{ self::dateOrNA(datetime=data.invoice.deliveredDatetime) }}</td>
-    </tr>
-    <tr>
-        <td class="header_section_field_left">{{ data.invoice.otherParty.address2 }}</td> 
-        <td class="header_section_field_right"></td>
-    </tr>
-
-</table>
-
 <table class="header_date_section">
     <tr>
         <td class="header_section_field_left">{{t(k="label.entered-by",f="Entered by")}}: {{ data.invoice.user.username | default(value='') }}</td>

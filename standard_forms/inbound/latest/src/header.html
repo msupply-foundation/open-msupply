@@ -1,3 +1,7 @@
+{% macro dateOrNA(datetime) %}
+{% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %}
+{% endmacro input %}
+
 <table class="header_image_section" style="width: 100%;height: 98%;"> 
     <tr> 
         <th style="text-align:left; width:10%;height:70%;">
@@ -17,3 +21,25 @@
         <th style="text-align:right;width:70%;font-size:28pt;">{{ t(k="report.inbound-form", f="Inbound Shipment Form") }}</th>           
     </tr>             
 </table>
+
+<div class="header_supplied_section" style="display: flex; justify-content: space-between; padding: 0.1em;">
+    <div class="header_left_section">
+        <span>{{t(k="report.received-from",f="Received from")}}:</span>
+    </div>
+    <div class="header_details_section">
+        <span>{{ data.invoice.otherPartyName }}</span><br>
+        <span>{{ data.invoice.otherParty.code }}</span><br>
+        <span>{{ data.invoice.otherParty.address1 }}</span><br>
+        <span>{{ data.invoice.otherParty.address2 }}</span>
+    </div>   
+    <div class="header_right_section">
+        <span style="font-weight: bold;">{{t(k="report.invoice",f="Invoice")}} #: {{ data.invoice.invoiceNumber }}</span><br>
+        <span>{{t(k="report.status", f="Status")}}: {{data.invoice.status}}</span><br>
+        <span>{{t(k="report.their-ref",f="Their ref")}}: 
+            {% if data.invoice.theirReference %}
+                {{ data.invoice.theirReference }}
+            {% else %}
+                {{ t(k="messages.not-applicable", f="N/A") }}
+            {% endif %}</span><br>
+        <span>{{t(k="report.confirmed-date", f="Confirmed date")}}:{{ self::dateOrNA(datetime=data.invoice.deliveredDatetime) }}</span><br>
+    </div>
