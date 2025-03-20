@@ -142,7 +142,6 @@ export const Footer: FC = () => {
           tooltip={t('select-language', { ...store })}
         />
       </LanguageSelector>
-
       {isSmallScreen && <Divider />}
       {isCentralServer ? (
         <PaddedCell
