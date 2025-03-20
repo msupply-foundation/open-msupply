@@ -24,7 +24,7 @@ import {
   DropdownMenuItem,
   TextArea,
   InputWithLabelRow,
-  useIntl,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -93,7 +93,7 @@ export const PrescriptionLineEditForm: React.FC<
 }) => {
   const t = useTranslation();
   const p = Pluralize;
-  const { i18n } = useIntl();
+  const { currentLanguage } = useIntlUtils();
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
   const { store: { preferences } = {} } = useAuthContext();
@@ -112,14 +112,10 @@ export const PrescriptionLineEditForm: React.FC<
   );
   const isDirectionsDisabled = !issueUnitQuantity;
 
+  // pluralize only works for English words. Any other language strings are returned unchanged
   const pluralize = (unit: string, count: number) => {
-    if (i18n.language !== 'en') return unit;
-    {
-      if (p.isPlural(unit)) {
-        return unit;
-      }
-      return p(unit, count);
-    }
+    if (currentLanguage !== 'en') return unit;
+    return p(unit, count);
   };
 
   const allocate = (
@@ -379,11 +375,7 @@ export const PrescriptionLineEditForm: React.FC<
                   }}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
-                  {item.unitName &&
-                    pluralize(
-                      t('label.unit-type', { unit: item.unitName }),
-                      issueUnitQuantity
-                    )}
+                  {item.unitName && pluralize(item.unitName, issueUnitQuantity)}
                 </InputLabel>
               </Grid>
             </Grid>
@@ -584,32 +576,26 @@ const summarise = (
 
   // Summarise counts in words
   const summary: string[] = [];
-  Object.entries(counts).forEach(([size, { unitName, count }]) => {
+  Object.entries(counts).forEach(([size, { unitName, count: numUnits }]) => {
     const packSize = Number(size);
     if (packSize > 1) {
-      const packs = NumUtils.round(count / packSize, 3);
-      const packWord = pluralize(t('pack'), packs);
-      const unit = pluralize(t('unit'), count);
-      const unitWord = pluralize(
-        t('label.unit-type', { unit: unitName }),
-        packSize
-      );
+      const numPacks = NumUtils.round(numUnits / packSize, 3);
+      const packWord = t('label.packs-of', { count: numPacks }); // pack or packs
+      const unitWord = t('label.units-plural', { count: numUnits }); // unit or units
+      const unitType = pluralize(unitName, packSize);
       summary.push(
         t('label.packs-of-size', {
-          packs,
-          count,
-          size,
-          unitWord,
-          unit,
+          numPacks,
+          numUnits,
+          packSize,
+          unitType,
           packWord,
+          unitWord,
         })
       );
     } else {
-      const unitWord = pluralize(
-        t('label.unit-type', { unit: unitName }),
-        count
-      );
-      summary.push(t('label.packs-of-1', { count, unitWord }));
+      const unitType = pluralize(unitName, numUnits);
+      summary.push(t('label.packs-of-1', { numUnits, unitType }));
     }
   });
 
