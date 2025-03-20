@@ -1,1 +1,1 @@
-export * from  './useIsGapsStoreOnly'
+export * from './useIsGapsStoreOnly';

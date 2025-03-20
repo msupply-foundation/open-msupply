@@ -17,7 +17,7 @@ import { FORM_INPUT_COLUMN_WIDTH } from '../../common/styleConstants';
 import { usePatientSearchQuery } from './usePatientSearchQuery';
 import { UserOptions } from './Search';
 import { JsonFormsDispatch } from '@jsonforms/react';
-import { PatientSchema } from '@openmsupply-client/programs';
+import { PatientSchema, usePatientStore } from '@openmsupply-client/programs';
 
 const { formatTemplateString } = RegexUtils;
 
@@ -35,8 +35,12 @@ export const SearchWithUserSource = (
     renderers,
   } = props;
   const t = useTranslation();
+  const { currentPatient } = usePatientStore();
   const isPatientSelected = !!data?.id;
   const { results, error: queryError, mutateAsync } = usePatientSearchQuery();
+  const filteredResult = results.filter(
+    result => result.id !== currentPatient?.id
+  );
 
   useEffect(() => {
     const searchFilter = !isPatientSelected
@@ -96,14 +100,14 @@ export const SearchWithUserSource = (
         renderers={renderers}
         enabled={!isPatientSelected}
       />
-      {(isPatientSelected || results.length > 0) &&
+      {(isPatientSelected || filteredResult.length > 0) &&
         (!isPatientSelected ? (
           <Box>
             <Typography variant="body2" mt={1} mb={1} sx={{ textWrap: 'wrap' }}>
               <em>{t('control.search.matching-patients')}</em>
             </Typography>
             <Select
-              options={results.map(res => ({
+              options={filteredResult.map(res => ({
                 label: getOptionLabel(res) ?? '',
                 value: res.id,
               }))}

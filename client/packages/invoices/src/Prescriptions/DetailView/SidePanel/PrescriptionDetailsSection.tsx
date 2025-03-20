@@ -98,7 +98,14 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
           <BasicTextInput
             disabled={isDisabled}
             size="small"
-            sx={{ width: 250 }}
+            fullWidth
+            slotProps={{
+              input: {
+                sx: {
+                  backgroundColor: theme => theme.palette.background.white,
+                },
+              },
+            }}
             value={theirReferenceInput ?? ''}
             onChange={event => {
               setTheirReferenceInput(event.target.value);

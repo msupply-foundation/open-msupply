@@ -9,6 +9,24 @@ export const gapsNameProperties: {
 } & Partial<Record<SupportedLocales, ConfigureNamePropertyInput[]>> = {
   en: [
     {
+      id: '0ed01a18-c9ac-4b51-bb56-d5fea4f15feb',
+      propertyId: 'latitude',
+      key: 'latitude',
+      name: 'Latitude',
+      valueType: PropertyNodeValueType.Float,
+      allowedValues: null,
+      remoteEditable: false,
+    },
+    {
+      id: '9d595b3e-2eca-4b1a-983e-77aa34b14e62',
+      propertyId: 'longitude',
+      key: 'longitude',
+      name: 'Longitude',
+      valueType: PropertyNodeValueType.Float,
+      allowedValues: null,
+      remoteEditable: false,
+    },
+    {
       id: '3285c231-ffc2-485b-9a86-5ccafed9a5c5',
       propertyId: 'supply_level',
       key: 'supply_level',

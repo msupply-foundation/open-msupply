@@ -482,7 +482,12 @@ export type InsertSupplierReturnMutation = {
           | { __typename: 'OtherPartyNotASupplier'; description: string }
           | { __typename: 'OtherPartyNotVisible'; description: string };
       }
-    | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number };
+    | {
+        __typename: 'InvoiceNode';
+        id: string;
+        invoiceNumber: number;
+        originalShipment?: { __typename: 'InvoiceNode'; id: string } | null;
+      };
 };
 
 export type UpdateSupplierReturnMutationVariables = Types.Exact<{
@@ -506,7 +511,11 @@ export type UpdateSupplierReturnLinesMutationVariables = Types.Exact<{
 
 export type UpdateSupplierReturnLinesMutation = {
   __typename: 'Mutations';
-  updateSupplierReturnLines: { __typename: 'InvoiceNode'; id: string };
+  updateSupplierReturnLines: {
+    __typename: 'InvoiceNode';
+    id: string;
+    originalShipment?: { __typename: 'InvoiceNode'; id: string } | null;
+  };
 };
 
 export type InsertCustomerReturnMutationVariables = Types.Exact<{
@@ -523,7 +532,12 @@ export type InsertCustomerReturnMutation = {
           | { __typename: 'OtherPartyNotACustomer'; description: string }
           | { __typename: 'OtherPartyNotVisible'; description: string };
       }
-    | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number };
+    | {
+        __typename: 'InvoiceNode';
+        id: string;
+        invoiceNumber: number;
+        originalShipment?: { __typename: 'InvoiceNode'; id: string } | null;
+      };
 };
 
 export type DeleteSupplierReturnMutationVariables = Types.Exact<{
@@ -557,7 +571,11 @@ export type UpdateCustomerReturnLinesMutationVariables = Types.Exact<{
 
 export type UpdateCustomerReturnLinesMutation = {
   __typename: 'Mutations';
-  updateCustomerReturnLines: { __typename: 'InvoiceNode'; id: string };
+  updateCustomerReturnLines: {
+    __typename: 'InvoiceNode';
+    id: string;
+    originalShipment?: { __typename: 'InvoiceNode'; id: string } | null;
+  };
 };
 
 export type DeleteCustomerReturnMutationVariables = Types.Exact<{
@@ -940,6 +958,9 @@ export const InsertSupplierReturnDocument = gql`
         __typename
         id
         invoiceNumber
+        originalShipment {
+          id
+        }
       }
       ... on InsertSupplierReturnError {
         __typename
@@ -974,6 +995,9 @@ export const UpdateSupplierReturnLinesDocument = gql`
       ... on InvoiceNode {
         __typename
         id
+        originalShipment {
+          id
+        }
       }
     }
   }
@@ -988,6 +1012,9 @@ export const InsertCustomerReturnDocument = gql`
         __typename
         id
         invoiceNumber
+        originalShipment {
+          id
+        }
       }
       ... on InsertCustomerReturnError {
         __typename
@@ -1031,6 +1058,9 @@ export const UpdateCustomerReturnLinesDocument = gql`
       ... on InvoiceNode {
         __typename
         id
+        originalShipment {
+          id
+        }
       }
     }
   }
