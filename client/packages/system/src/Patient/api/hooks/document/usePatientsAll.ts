@@ -6,6 +6,6 @@ export const usePatientsAll = (sortBy: SortBy<PatientRowFragment>) => {
   const api = usePatientApi();
 
   return useMutation(api.keys.sortedList(sortBy), () =>
-      api.get.listAll({ sortBy })
-    );
+    api.get.listAll({ sortBy })
+  );
 };

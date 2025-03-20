@@ -44,6 +44,7 @@ import { InfoOutlineIcon } from './InfoOutline';
 import { InvoiceIcon } from './Invoice';
 import { LinkIcon } from './Link';
 import { ListIcon } from './List';
+import { LocationIcon } from './Location';
 import { MSupplyGuy, AnimatedMSupplyGuy } from './MSupplyGuy';
 import { MedicineIcon } from './MedicineIcon';
 import { MenuDotsIcon } from './MenuDots';
@@ -147,6 +148,7 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
     { icon: <InvoiceIcon {...args} />, name: 'Invoice' },
     { icon: <LinkIcon {...args} />, name: 'Link' },
     { icon: <ListIcon {...args} />, name: 'List' },
+    { icon: <LocationIcon {...args} />, name: 'Location' },
     { icon: <MSupplyGuy {...args} size="medium" />, name: 'MSupplyGuy' },
     {
       icon: <AnimatedMSupplyGuy {...args} size="medium" />,
