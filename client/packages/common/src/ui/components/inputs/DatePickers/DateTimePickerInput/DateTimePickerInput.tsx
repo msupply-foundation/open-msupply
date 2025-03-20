@@ -30,6 +30,7 @@ export const DateTimePickerInput: FC<
     showTime?: boolean;
     actions?: PickersActionBarAction[];
     dateAsEndOfDay?: boolean;
+    disableFuture?: boolean;
   }
 > = ({
   error,
@@ -43,6 +44,7 @@ export const DateTimePickerInput: FC<
   showTime,
   actions,
   dateAsEndOfDay,
+  disableFuture,
   ...props
 }) => {
   const theme = useAppTheme();
@@ -155,6 +157,7 @@ export const DateTimePickerInput: FC<
       }
       minDate={minDate}
       maxDate={maxDate}
+      disableFuture={disableFuture}
       {...props}
       value={value}
     />
