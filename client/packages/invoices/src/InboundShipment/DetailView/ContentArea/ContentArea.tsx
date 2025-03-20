@@ -2,7 +2,6 @@ import React, { FC, useEffect } from 'react';
 import {
   DataTable,
   useTranslation,
-  Box,
   MiniTable,
   NothingHere,
   AppSxProp,
@@ -79,24 +78,22 @@ export const ContentArea: FC<ContentAreaProps> = React.memo(
     const { columns, rows } = useInbound.lines.rows();
     useHighlightPlaceholderRows(rows);
     return (
-      <Box flexDirection="column" display="flex" flex={1}>
-        <DataTable
-          id="inbound-detail"
-          onRowClick={onRowClick}
-          ExpandContent={Expando}
-          columns={columns}
-          data={rows}
-          enableColumnSelection
-          noDataElement={
-            <NothingHere
-              body={t('error.no-inbound-items')}
-              onCreate={isDisabled ? undefined : onAddItem}
-              buttonText={t('button.add-item')}
-            />
-          }
-          isRowAnimated={true}
-        />
-      </Box>
+      <DataTable
+        id="inbound-detail"
+        onRowClick={onRowClick}
+        ExpandContent={Expando}
+        columns={columns}
+        data={rows}
+        enableColumnSelection
+        noDataElement={
+          <NothingHere
+            body={t('error.no-inbound-items')}
+            onCreate={isDisabled ? undefined : onAddItem}
+            buttonText={t('button.add-item')}
+          />
+        }
+        isRowAnimated={true}
+      />
     );
   }
 );

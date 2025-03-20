@@ -58,7 +58,7 @@ export const useLoginForm = (
     // or to the dashboard as a default
     const state = location.state as State | undefined;
     let from = state?.from?.pathname || `/${AppRoute.Dashboard}`;
-    
+
     // if GAPS store only, always redirect to Cold Chain
     if (isGapsStore) {
       from = `/${AppRoute.Coldchain}/${AppRoute.Equipment}`;
