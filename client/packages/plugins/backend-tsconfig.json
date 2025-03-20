@@ -1,16 +1,14 @@
 {
-    "compilerOptions": {
-        "noImplicitAny": true,
-        "module": "ESNext",
-        "target": "ESNext",
-        "moduleResolution": "node",
-        "strict": true,
-        "esModuleInterop": true,
-        "resolveJsonModule": true,
-        "paths": {
-            "@backendPlugins": [
-                "./backendTypes/types.ts"
-            ]
-        }
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "@backendPlugins": ["./backendTypes/types.ts"]
     }
+  }
 }

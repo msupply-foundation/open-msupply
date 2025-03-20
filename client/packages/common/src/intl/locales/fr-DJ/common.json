@@ -266,5 +266,6 @@
   "label.facility": "Dépôt",
   "label.encounter": "Visite",
   "label.gender": "Sexe",
-  "report.pending-encounters": "Rapport des visites"
+  "report.pending-encounters": "Rapport des visites",
+  "label.next-of-kin": "Parent"
 }

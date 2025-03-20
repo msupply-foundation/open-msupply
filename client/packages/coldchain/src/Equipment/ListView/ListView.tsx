@@ -139,14 +139,6 @@ const AssetListComponent: FC = () => {
 
   return (
     <>
-      <CreateAssetModal
-        isOpen={modalController.isOn}
-        onClose={modalController.toggleOff}
-      />
-      <EquipmentImportModal
-        isOpen={importModalController.isOn}
-        onClose={importModalController.toggleOff}
-      />
       <AppBarButtons
         importModalController={importModalController}
         modalController={modalController}
@@ -165,6 +157,14 @@ const AssetListComponent: FC = () => {
         enableColumnSelection
       />
       <Footer />
+      <CreateAssetModal
+        isOpen={modalController.isOn}
+        onClose={modalController.toggleOff}
+      />
+      <EquipmentImportModal
+        isOpen={importModalController.isOn}
+        onClose={importModalController.toggleOff}
+      />
     </>
   );
 };

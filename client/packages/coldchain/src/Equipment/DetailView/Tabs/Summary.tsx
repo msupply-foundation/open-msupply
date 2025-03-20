@@ -105,26 +105,27 @@ const Row = ({
   label: string;
   isGaps: boolean;
 }) => {
-
-  if (!isGaps) return (
-    <Box paddingTop={1.5}>
-      <InputWithLabelRow
-        labelWidth="160px"
-        label={label}
-        labelProps={{
-          sx: {
-            fontSize: '16px',
-            paddingRight: 2,
-            textAlign: 'right',
-          },
-        }}
-        Input={
-          <Box sx={{}} flex={1}>
-            {children}
-          </Box>
-        }
-      />
-    </Box>);
+  if (!isGaps)
+    return (
+      <Box paddingTop={1.5}>
+        <InputWithLabelRow
+          labelWidth="160px"
+          label={label}
+          labelProps={{
+            sx: {
+              fontSize: '16px',
+              paddingRight: 2,
+              textAlign: 'right',
+            },
+          }}
+          Input={
+            <Box sx={{}} flex={1}>
+              {children}
+            </Box>
+          }
+        />
+      </Box>
+    );
 
   return (
     <Box paddingTop={1.5}>
@@ -138,7 +139,7 @@ const Row = ({
       </Typography>
       {children}
     </Box>
-  )
+  );
 };
 
 export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
@@ -146,7 +147,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   const { localisedDate } = useFormatDateTime();
   const { storeId } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
-  const isGaps = useIsGapsStoreOnly();  
+  const isGaps = useIsGapsStoreOnly();
 
   if (!draft) return null;
 

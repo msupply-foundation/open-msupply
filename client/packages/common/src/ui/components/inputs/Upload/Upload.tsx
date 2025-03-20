@@ -63,30 +63,33 @@ export const Upload: FC<UploadProps> = ({
         {({ getRootProps, getInputProps }) => (
           <div {...getRootProps()}>
             <input {...getInputProps()} />
-            {!isTabletOrMobile && <>
-              <FileUploadIcon
-                sx={{
-                  fontSize: 36,
-                  stroke: theme => theme.palette[color].main,
-                }}
+            {!isMobile && (
+              <>
+                <FileUploadIcon
+                  sx={{
+                    fontSize: 36,
+                    stroke: theme => theme.palette[color].main,
+                  }}
+                />
+                <Typography sx={{ fontWeight: 'bold', color: `${color}.main` }}>
+                  {t('messages.upload-invite')}
+                </Typography>
+                <Typography color={color}>{t('messages.upload-or')}</Typography>
+                <BaseButton color="secondary" variant="outlined">
+                  {t('button.browse-files')}
+                </BaseButton>
+              </>
+            )}
+            {isMobile && (
+              <ButtonWithIcon
+                shouldShrink={false}
+                color="secondary"
+                variant="outlined"
+                label={t('button.browse-files')}
+                onClick={() => { }}
+                Icon={<LinkIcon />}
               />
-              <Typography sx={{ fontWeight: 'bold', color: `${color}.main` }}>
-                {t('messages.upload-invite')}
-              </Typography>
-              <Typography color={color}>{t('messages.upload-or')}</Typography>
-              <BaseButton color="secondary" variant="outlined">
-                {t('button.browse-files')}
-              </BaseButton>
-            </>
-            }
-            {isTabletOrMobile && <ButtonWithIcon
-              shouldShrink={false}
-              color="secondary"
-              variant='outlined'
-              label={t('button.browse-files')}
-              onClick={() => { }}
-              Icon={<LinkIcon />}
-            />}
+            )}
           </div>
         )}
       </Dropzone>

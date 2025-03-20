@@ -5,11 +5,19 @@ import {
 } from '@openmsupply-client/common';
 import { Sdk, ActivityLogRowFragment } from './operations.generated';
 
-export type ListParams = { recordId: string; sortBy?: SortBy<ActivityLogRowFragment> };
+export type ListParams = {
+  recordId: string;
+  sortBy?: SortBy<ActivityLogRowFragment>;
+};
 
 const logParsers = {
-  toSortInput: (sortBy: SortBy<ActivityLogRowFragment>): ActivityLogSortInput => {
-    return { desc: sortBy.isDesc, key: sortBy.key as ActivityLogSortFieldInput };
+  toSortInput: (
+    sortBy: SortBy<ActivityLogRowFragment>
+  ): ActivityLogSortInput => {
+    return {
+      desc: sortBy.isDesc,
+      key: sortBy.key as ActivityLogSortFieldInput,
+    };
   },
 };
 
