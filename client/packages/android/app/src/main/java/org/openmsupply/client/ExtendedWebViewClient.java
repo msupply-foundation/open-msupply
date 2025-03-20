@@ -58,7 +58,7 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
         // see what plugins to add
 
         // This function needs to run after plugins are registered, so can't be part of the constructor as order doesn't appear to be consistent.
-        List<String> pluginNames =  Arrays.asList("NativeApi","Keyboard", "WebView","BarcodeScanner","Preferences", "KeepAwake", "App", "Printer");
+        List<String> pluginNames =  Arrays.asList("NativeApi","Keyboard", "WebView","BarcodeScanner","Preferences", "KeepAwake", "App", "Printer", "Camera");
         List<PluginHandle> pluginList = new ArrayList<>();
         for (String pluginName : pluginNames) {
             PluginHandle plugin = bridge.getPlugin(pluginName);

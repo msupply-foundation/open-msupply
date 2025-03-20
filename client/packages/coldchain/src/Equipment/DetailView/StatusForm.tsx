@@ -102,28 +102,60 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
     value: value ?? label,
   });
 
-  const takePicture = async () => {
-    const image = await Camera.getPhoto({
-      source: CameraSource.Camera,
-      quality: 90,
-      allowEditing: true,
-      resultType: CameraResultType.Base64
-    });
-
-    const base64Data = image.base64String;
-    const contentType = `image/${image.format}`;
-    if (!base64Data) {
-      // throw error?
-      return
+  // Add this before taking a picture
+  const checkPermissions = async () => {
+    console.log('checking permissions')
+    const permissionState = await Camera.checkPermissions();
+    console.log('permission state', permissionState)
+    if (permissionState.camera !== 'granted') {
+      const requested = await Camera.requestPermissions();
+      if (requested.camera !== 'granted') {
+        console.error('Camera permission denied');
+        return false;
+      }
     }
-    const blob = base64ToBlob(contentType, base64Data);
+    return true;
+  };
 
-    // Create a File from the blob
-    const fileName = `photo_${new Date().getTime()}.${image.format}`;
-    const file = new File([blob], fileName, { type: contentType });
+  const takePicture = async () => {
 
-    // Can be set to the src of an image now
-    onUpload([file]);
+    console.log('taking photo');
+    const hasPermission = await checkPermissions();
+    console.log('permissions got', hasPermission);
+    if (!hasPermission) return;
+
+    try {
+      const image = await Camera.getPhoto({
+        source: CameraSource.Camera,
+        quality: 90,
+        allowEditing: true,
+        resultType: CameraResultType.Base64
+      });
+
+
+      const base64Data = image.base64String;
+      const contentType = `image/${image.format}`;
+
+      console.log('file', image);
+
+      if (!base64Data) {
+        // throw error?
+        return
+      }
+      const blob = base64ToBlob(base64Data, contentType);
+
+      // Create a File from the blob
+      const fileName = `photo_${new Date().getTime()}.${image.format}`;
+      const file = new File([blob], fileName, { type: contentType });
+
+      console.log('file', file);
+      // Can be set to the src of an image now
+      onUpload([file]);
+
+      console.log('got image', image);
+    } catch (error) {
+      console.error('error', error)
+    }
   };
 
   const getOptionsFromEnum = (
