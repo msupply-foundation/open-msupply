@@ -138,6 +138,7 @@ pub enum Permissions {
     ChangeTransportationDatesOnFinalisedInvoice,
     AuthorisePurchaseOrders,
     AddEditAssets,
+    AddAssetsViaDataMatrix,
     SetupAssets,
     AuthoriseCustomerInvoices,
     AuthoriseSupplierInvoices,
