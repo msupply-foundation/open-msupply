@@ -7,8 +7,8 @@ import {
   TemperatureLogSortFieldInput,
 } from '@openmsupply-client/common';
 import { TemperatureBreachList } from './TemperatureBreach';
-import { TemperatureChart } from './TemperatureChart';
 import { AppBarButtons } from './AppBarButtons';
+import { TemperatureChart } from './TemperatureChart/';
 
 export const ListView: FC = () => {
   const t = useTranslation();
