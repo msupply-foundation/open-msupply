@@ -106,13 +106,6 @@ export const Footer: FC = () => {
       py={isExtraSmallScreen ? 1.5 : 0.75}
       justifyContent={isExtraSmallScreen ? 'space-evenly' : 'inherit'}
     >
-      {isOpen && (
-        <FacilityEditModal
-          nameId={store?.nameId ?? ''}
-          isOpen={isOpen}
-          onClose={onClose}
-        />
-      )}
       <StoreSelector>
         <PaddedCell
           icon={<HomeIcon sx={iconStyles} />}
@@ -157,6 +150,13 @@ export const Footer: FC = () => {
           sx={{ ml: isExtraSmallScreen ? 0 : 'auto' }}
         />
       ) : null}
+      {isOpen && (
+        <FacilityEditModal
+          nameId={store?.nameId ?? ''}
+          isOpen={isOpen}
+          onClose={onClose}
+        />
+      )}
     </Box>
   );
 };
