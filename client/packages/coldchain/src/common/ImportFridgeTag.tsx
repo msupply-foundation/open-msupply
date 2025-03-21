@@ -3,7 +3,11 @@ import { LoadingButton, useConfirmationModal } from '@common/components';
 import { UploadIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 import { AppRoute, Environment } from '@openmsupply-client/config';
-import { useConfirmOnLeaving, useNotification } from '@common/hooks';
+import {
+  useConfirmOnLeaving,
+  useIsExtraSmallScreen,
+  useNotification,
+} from '@common/hooks';
 
 import {
   RouteBuilder,
@@ -24,6 +28,7 @@ export const ImportFridgeTag = ({
   const t = useTranslation();
   const navigate = useNavigate();
   const { success, error } = useNotification();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const hiddenFileInput = useRef<HTMLInputElement>(null);
   const { storeId } = useAuthContext();
@@ -77,10 +82,27 @@ export const ImportFridgeTag = ({
 
       // asks if the user would like to assign a location and redirects if yes
       if (!!resultJson.newSensorId) {
-        const path = RouteBuilder.create(AppRoute.Coldchain)
-          .addPart(AppRoute.Sensors)
-          .addQuery({ edit: resultJson.newSensorId })
-          .build();
+        let path;
+
+        if (isExtraSmallScreen) {
+          const encodedDatetime = encodeURIComponent(
+            `${resultJson.startDatetime}_${resultJson.endDatetime}`
+          );
+
+          path = RouteBuilder.create(AppRoute.Coldchain)
+            .addPart(AppRoute.Monitoring)
+            .addQuery({
+              edit: resultJson.newSensorId,
+              datetime: encodedDatetime,
+              sort: 'datetime',
+            })
+            .build();
+        } else {
+          path = RouteBuilder.create(AppRoute.Coldchain)
+            .addPart(AppRoute.Sensors)
+            .addQuery({ edit: resultJson.newSensorId })
+            .build();
+        }
 
         getConfirmation({
           onConfirm: () => setTimeout(() => navigate(path), 500),
