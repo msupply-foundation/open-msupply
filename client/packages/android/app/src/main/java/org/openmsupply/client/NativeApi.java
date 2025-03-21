@@ -40,7 +40,7 @@ import java.util.Enumeration;
 
 import javax.net.ssl.SSLHandshakeException;
 
-@CapacitorPlugin(name = "NativeApi")
+@CapacitorPlugin(name = "NativeApi", requestCodes = {101})
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     private static final String LOG_FILE_NAME = "remote_server.log";
 
