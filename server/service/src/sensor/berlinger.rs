@@ -232,16 +232,17 @@ fn sensor_add_breach_config_if_new(
     Ok(())
 }
 
-fn sensor_add_if_new(
+fn ensure_sensor_exists(
     connection: &StorageConnection,
     store_id: &str,
     temperature_sensor: &temperature_sensor::Sensor,
-) -> Result<Option<String>, RepositoryError> {
+) -> Result<String, RepositoryError> {
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
-    if !result.is_empty() {
-        return Ok(None);
-    };
+    if let Some(existing_sensor) = result.first() {
+        // Return the existing sensor's ID
+        return Ok(existing_sensor.sensor_row.id.clone());
+    }
 
     let mut interval_seconds = None;
     if let Some(interval_duration) = temperature_sensor.log_interval {
@@ -261,15 +262,18 @@ fn sensor_add_if_new(
     };
     SensorRowRepository::new(connection).upsert_one(&new_sensor)?;
     log::info!("Added sensor {:?} ", new_sensor);
-    Ok(Some(new_sensor.id))
+
+    Ok(new_sensor.id)
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadSensor {
-    new_sensor_id: Option<String>,
+    sensor_id: String,
     number_of_logs: u32,
     number_of_breaches: u32,
+    start_datetime: Option<NaiveDateTime>,
+    end_datetime: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, Error)]
@@ -393,7 +397,7 @@ fn integrate_sensor_data(
     store_id: &str,
     temperature_sensor: temperature_sensor::Sensor,
 ) -> anyhow::Result<ReadSensor, ReadSensorError> {
-    let new_sensor_id = sensor_add_if_new(connection, store_id, &temperature_sensor)?;
+    let sensor_id = ensure_sensor_exists(connection, store_id, &temperature_sensor)?;
 
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
@@ -416,10 +420,32 @@ fn integrate_sensor_data(
     let temperature_sensor_breaches = temperature_sensor.breaches.unwrap_or_default();
     let temperature_sensor_logs = temperature_sensor.logs.unwrap_or_default();
 
+    let earliest_event_timestamp = temperature_sensor_logs
+        .iter()
+        .map(|log| log.timestamp)
+        .chain(
+            temperature_sensor_breaches
+                .iter()
+                .map(|breach| breach.start_timestamp),
+        )
+        .min();
+
+    let latest_event_timestamp = temperature_sensor_logs
+        .iter()
+        .map(|log| log.timestamp)
+        .chain(
+            temperature_sensor_breaches
+                .iter()
+                .map(|breach| breach.end_timestamp),
+        )
+        .max();
+
     let result = ReadSensor {
-        new_sensor_id,
+        sensor_id,
         number_of_logs: temperature_sensor_logs.len() as u32,
         number_of_breaches: temperature_sensor_breaches.len() as u32,
+        start_datetime: earliest_event_timestamp,
+        end_datetime: latest_event_timestamp,
     };
 
     for temperature_sensor_log in temperature_sensor_logs {
