@@ -16,6 +16,7 @@ import {
   UNDEFINED_STRING_VALUE,
   XAxis,
   YAxis,
+  useIsExtraSmallScreen,
   useTheme,
   useUrlQuery,
 } from '@openmsupply-client/common';
@@ -72,6 +73,8 @@ export const Chart = ({
 }) => {
   const t = useTranslation();
   const theme = useTheme();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+
   const { dayMonthTime, customDate } = useFormatDateTime();
   const dateFormatter = (date: Date) => dayMonthTime(date);
   const [currentBreach, setCurrentBreach] = useState<BreachDot | null>(null);
@@ -92,8 +95,7 @@ export const Chart = ({
     }
   }, [customDate, updateQuery, urlQuery]);
 
-  // shows a breach icon if there is a breach
-  // and nothing otherwise
+  // Renders a breach icon if a breach is detected, otherwise nothing.
   const TemperatureLineDot = useCallback(
     ({ cx, cy, stroke, payload, fill, r, strokeWidth }: DotProps) => {
       return !payload?.breachId ? (
@@ -118,21 +120,8 @@ export const Chart = ({
     [setCurrentBreach]
   );
 
-  if (isLoading) {
-    return <BasicSpinner />;
-  }
-
-  if (!data) {
-    return <NothingHere body={t('error.no-temperature-logs')} />;
-  }
-
-  const series = transformData(data, theme.palette.chart.lines);
-  const breachConfig = generateBreachConfig(startTime, endTime);
-  const { ticks, yAxisDomain } = yAxisTicks(data, BREACH_MIN, BREACH_MAX);
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const CustomisedTick = ({ x, y, payload }: any) => {
-    const theme = useTheme();
     const textColour =
       payload.value === BREACH_MIN
         ? theme.palette.chart.cold.main
@@ -161,10 +150,29 @@ export const Chart = ({
     );
   };
 
+  if (isLoading) {
+    return <BasicSpinner />;
+  }
+
+  if (!data) {
+    return <NothingHere body={t('error.no-temperature-logs')} />;
+  }
+
+  const series = transformData(data, theme.palette.chart.lines);
+  const breachConfig = generateBreachConfig(startTime, endTime);
+  const { ticks, yAxisDomain } = yAxisTicks(data, BREACH_MIN, BREACH_MAX);
+
   return !series.length ? (
     <NothingHere body={t('error.no-temperature-logs')} />
   ) : (
-    <Box flex={1} padding={2} sx={{ textAlign: 'center' }}>
+    <Box
+      sx={{
+        flex: 1,
+        py: 2,
+        px: isExtraSmallScreen ? 0 : 2,
+        textAlign: 'center',
+      }}
+    >
       <Typography variant="body1" fontWeight={700} style={{ marginBottom: 10 }}>
         {t('heading.chart')}
       </Typography>
@@ -173,7 +181,11 @@ export const Chart = ({
           {t('error.too-many-datapoints')}
         </Typography>
       )}
-      <ResponsiveContainer width="90%" height="90%">
+      <ResponsiveContainer
+        width={isExtraSmallScreen ? '100%' : '90%'}
+        height="90%"
+        style={{ marginLeft: isExtraSmallScreen ? '-15px' : 0 }}
+      >
         <ComposedChart>
           <CartesianGrid vertical={false} />
           <XAxis
@@ -225,7 +237,7 @@ export const Chart = ({
           <Legend
             align="right"
             verticalAlign="top"
-            layout="vertical"
+            layout={isExtraSmallScreen ? 'horizontal' : 'vertical'}
             content={({ payload }) => (
               <ul>
                 {payload?.map((entry, index) => (

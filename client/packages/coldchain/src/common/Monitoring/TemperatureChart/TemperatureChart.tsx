@@ -1,10 +1,13 @@
 import React from 'react';
-import { useUrlQueryParams } from '@openmsupply-client/common';
+import {
+  useIsExtraSmallScreen,
+  useUrlQueryParams,
+} from '@openmsupply-client/common';
 import { Toolbar } from '../../../Monitoring/ListView/TemperatureLog/Toolbar';
 import { useTemperatureLogs } from '../../../Monitoring/api/TemperatureLog/hooks/document/useTemperatureLogs';
-import { Chart } from '../../../common/Monitoring';
-import { MAX_DATA_POINTS } from '../../../common/Monitoring/Chart/utils';
+import { MAX_DATA_POINTS } from './utils';
 import { getDateRangeAndFilter } from './utils';
+import { Chart } from './Chart';
 
 const temperatureLogFilterAndSort = {
   initialSort: { key: 'datetime', dir: 'asc' as 'asc' | 'desc' },
@@ -24,6 +27,8 @@ const temperatureLogFilterAndSort = {
 };
 
 export const TemperatureChart = () => {
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+
   const {
     filter,
     queryParams: { filterBy },
@@ -46,7 +51,7 @@ export const TemperatureChart = () => {
   const dataTruncated = (data?.totalCount ?? 0) > (data?.nodes.length ?? 0);
   return (
     <>
-      <Toolbar filter={filter} />
+      {!isExtraSmallScreen && <Toolbar filter={filter} />}
       <Chart
         isLoading={isLoading}
         data={data?.nodes ?? []}
