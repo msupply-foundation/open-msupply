@@ -25,7 +25,7 @@ import { parseBreachType } from '@openmsupply-client/coldchain';
 import {
   TemperatureBreachFragment,
   useTemperatureBreach,
-} from '../../api/TemperatureBreach';
+} from '../../../Monitoring/api/TemperatureBreach';
 
 interface BreachPopperProps {
   breachDot: BreachDot;
