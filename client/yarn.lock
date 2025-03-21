@@ -1293,10 +1293,10 @@
   resolved "https://registry.yarnpkg.com/@capacitor/app/-/app-6.0.0.tgz#b383c97543e2fb9462e8bd69c0f512c33bba0089"
   integrity sha512-X5UGd90Jh5p9rmoPyMqFyFWqOypdJgVJhYcM5X1YyDVJJGzmJ5MuYv1+ajj5DW9Qyh+5a3th9WYptdGby8jidA==
 
-"@capacitor/camera@4":
-  version "4.1.5"
-  resolved "https://registry.yarnpkg.com/@capacitor/camera/-/camera-4.1.5.tgz#ec092426ea802da3deeb8fa2bf86ed9bf779748a"
-  integrity sha512-E00IRsJiIr1kP3EkJa0OWp//TDFXOx3ifDfmLOmIkPxKt1FfuNheE0ipWBo5b44pKsx9pO64Rm9MkfUhgH5Rfg==
+"@capacitor/camera@5":
+  version "5.0.10"
+  resolved "https://registry.yarnpkg.com/@capacitor/camera/-/camera-5.0.10.tgz#b62131108af551f1e71145e9c35306002c32e3d6"
+  integrity sha512-DOLYjiaOdUQk8mtAAgliqVVJaGegC7VzV4Tk3j1rjXyuc8JeX5SJOfow4v0N+NYxyGMsEEtwNnVZ1B7yzxsrVg==
 
 "@capacitor/cli@^6.1.0":
   version "6.1.0"
