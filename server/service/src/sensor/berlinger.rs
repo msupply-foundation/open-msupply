@@ -232,17 +232,16 @@ fn sensor_add_breach_config_if_new(
     Ok(())
 }
 
-fn ensure_sensor_exists(
+fn sensor_add_if_new(
     connection: &StorageConnection,
     store_id: &str,
     temperature_sensor: &temperature_sensor::Sensor,
-) -> Result<String, RepositoryError> {
+) -> Result<Option<String>, RepositoryError> {
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
-    if let Some(existing_sensor) = result.first() {
-        // Return the existing sensor's ID
-        return Ok(existing_sensor.sensor_row.id.clone());
-    }
+    if !result.is_empty() {
+        return Ok(None);
+    };
 
     let mut interval_seconds = None;
     if let Some(interval_duration) = temperature_sensor.log_interval {
@@ -262,14 +261,13 @@ fn ensure_sensor_exists(
     };
     SensorRowRepository::new(connection).upsert_one(&new_sensor)?;
     log::info!("Added sensor {:?} ", new_sensor);
-
-    Ok(new_sensor.id)
+    Ok(Some(new_sensor.id))
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadSensor {
-    sensor_id: String,
+    new_sensor_id: Option<String>,
     number_of_logs: u32,
     number_of_breaches: u32,
     start_datetime: Option<NaiveDateTime>,
@@ -397,7 +395,7 @@ fn integrate_sensor_data(
     store_id: &str,
     temperature_sensor: temperature_sensor::Sensor,
 ) -> anyhow::Result<ReadSensor, ReadSensorError> {
-    let sensor_id = ensure_sensor_exists(connection, store_id, &temperature_sensor)?;
+    let new_sensor_id = sensor_add_if_new(connection, store_id, &temperature_sensor)?;
 
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
@@ -441,7 +439,7 @@ fn integrate_sensor_data(
         .max();
 
     let result = ReadSensor {
-        sensor_id,
+        new_sensor_id,
         number_of_logs: temperature_sensor_logs.len() as u32,
         number_of_breaches: temperature_sensor_breaches.len() as u32,
         start_datetime: earliest_event_timestamp,
