@@ -1,5 +1,9 @@
 [
   {
+    "pkg": "@capacitor/geolocation",
+    "classpath": "com.capacitorjs.plugins.geolocation.GeolocationPlugin"
+  },
+  {
     "pkg": "@bcyesil/capacitor-plugin-printer",
     "classpath": "com.bcyesil.capacitor.printer.PrinterPlugin"
   },
@@ -22,5 +26,13 @@
   {
     "pkg": "@capacitor/preferences",
     "classpath": "com.capacitorjs.plugins.preferences.PreferencesPlugin"
+  },
+  {
+    "pkg": "@capacitor-community/file-opener",
+    "classpath": "com.ryltsov.alex.plugins.file.opener.FileOpenerPlugin"
+  },
+  {
+    "pkg": "@capacitor/filesystem",
+    "classpath": "com.capacitorjs.plugins.filesystem.FilesystemPlugin"
   }
 ]
