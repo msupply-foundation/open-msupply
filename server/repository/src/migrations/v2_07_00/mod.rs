@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_preference_table;
+mod asset_data_matrix_permission;
 
 pub(crate) struct V2_07_00;
 
@@ -15,7 +16,10 @@ impl Migration for V2_07_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_preference_table::Migrate)]
+        vec![
+            Box::new(add_preference_table::Migrate),
+            Box::new(asset_data_matrix_permission::Migrate),
+        ]
     }
 }
 
