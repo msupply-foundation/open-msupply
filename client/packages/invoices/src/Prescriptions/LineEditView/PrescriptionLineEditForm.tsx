@@ -550,7 +550,7 @@ const TableWrapper: React.FC<TableProps> = ({
 const summarise = (
   lines: DraftPrescriptionLine[],
   t: TypedTFunction<LocaleKey>,
-  getPlural: (word: string, count: number) => void
+  getPlural: (word: string, count: number) => string
 ) => {
   // Count how many of each pack size
   const counts: Record<number, { unitName: string; count: number }> = {};
