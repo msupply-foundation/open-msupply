@@ -2,10 +2,9 @@ import React from 'react';
 import {
   Autocomplete,
   BasicTextInput,
-  ButtonWithIcon,
   InputWithLabelRow,
   Typography,
-  Upload
+  Upload,
 } from '@common/components';
 import { LocaleKey, useTranslation } from '@common/intl';
 import {
@@ -13,18 +12,16 @@ import {
   Box,
   InsertAssetLogInput,
   StatusType,
-  useDebounceCallback,
   styled,
-  PlusCircleIcon,
+  useDebounceCallback,
   useIsScreen,
-  Paper,
 } from '@openmsupply-client/common';
 import { FileList } from '../Components';
-import { base64ToBlob, parseLogStatus } from '../utils';
+import { parseLogStatus } from '../utils';
 import { useAssetData } from '@openmsupply-client/system';
 import { useIsGapsStoreOnly } from '@openmsupply-client/common';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { defineCustomElements } from '@ionic/pwa-elements/loader';
+import { TakePhotoButton } from './TakePhotoButton';
+import { Capacitor } from '@capacitor/core';
 
 const StyledContainer = styled(Box)(({ theme }) => ({
   borderColor: theme.palette.divider,
@@ -42,6 +39,7 @@ interface StatusForm {
 
 export type Draft = InsertAssetLogInput & { files?: File[] };
 
+
 const Row = ({
   children,
   label,
@@ -51,26 +49,27 @@ const Row = ({
   label: string;
   isGaps: boolean;
 }) => {
-
-  if (!isGaps) return (
-    <Box paddingTop={1.5}>
-      <InputWithLabelRow
-        labelWidth="160px"
-        label={label}
-        labelProps={{
-          sx: {
-            fontSize: '16px',
-            paddingRight: 2,
-            textAlign: 'right',
-          },
-        }}
-        Input={
-          <Box sx={{}} flex={1}>
-            {children}
-          </Box>
-        }
-      />
-    </Box>);
+  if (!isGaps)
+    return (
+      <Box paddingTop={1.5}>
+        <InputWithLabelRow
+          labelWidth="160px"
+          label={label}
+          labelProps={{
+            sx: {
+              fontSize: '16px',
+              paddingRight: 2,
+              textAlign: 'right',
+            },
+          }}
+          Input={
+            <Box sx={{}} flex={1}>
+              {children}
+            </Box>
+          }
+        />
+      </Box>
+    );
 
   return (
     <Box paddingTop={1.5}>
@@ -84,14 +83,13 @@ const Row = ({
       </Typography>
       {children}
     </Box>
-  )
+  );
 };
 
 export const StatusForm = ({ draft, onChange }: StatusForm) => {
   const t = useTranslation();
-  const isTabletOrMobile = useIsScreen('md') || useIsScreen('sm');
-  defineCustomElements(window);
   const isGaps = useIsGapsStoreOnly();
+  const isMobile = useIsScreen('sm') && Capacitor.getPlatform() === 'android';
   const debouncedOnChange = useDebounceCallback(
     (patch: Partial<InsertAssetLogInput>) => onChange(patch),
     [onChange],
@@ -102,61 +100,6 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
     value: value ?? label,
   });
 
-  // Add this before taking a picture
-  const checkPermissions = async () => {
-    console.log('checking permissions')
-    const permissionState = await Camera.checkPermissions();
-    console.log('permission state', permissionState)
-    if (permissionState.camera !== 'granted') {
-      const requested = await Camera.requestPermissions();
-      if (requested.camera !== 'granted') {
-        console.error('Camera permission denied');
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const takePicture = async () => {
-
-    console.log('taking photo');
-    const hasPermission = await checkPermissions();
-    console.log('permissions got', hasPermission);
-    if (!hasPermission) return;
-
-    try {
-      const image = await Camera.getPhoto({
-        source: CameraSource.Camera,
-        quality: 90,
-        allowEditing: true,
-        resultType: CameraResultType.Base64
-      });
-
-
-      const base64Data = image.base64String;
-      const contentType = `image/${image.format}`;
-
-      console.log('file', image);
-
-      if (!base64Data) {
-        // throw error?
-        return
-      }
-      const blob = base64ToBlob(base64Data, contentType);
-
-      // Create a File from the blob
-      const fileName = `photo_${new Date().getTime()}.${image.format}`;
-      const file = new File([blob], fileName, { type: contentType });
-
-      console.log('file', file);
-      // Can be set to the src of an image now
-      onUpload([file]);
-
-      console.log('got image', image);
-    } catch (error) {
-      console.error('error', error)
-    }
-  };
 
   const getOptionsFromEnum = (
     enumObject: Record<string, string>,
@@ -177,14 +120,6 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
       : undefined
   );
 
-  const removeFile = (name: string) => {
-    onChange({ files: draft.files?.filter(file => file.name !== name) });
-  };
-
-  const onUpload = (files: File[]) => {
-    onChange({ files });
-  };
-
   const reasons =
     data?.nodes?.map(value => {
       return {
@@ -193,9 +128,18 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
       };
     }) ?? [];
 
+  const removeFile = (name: string) => {
+    onChange({ files: draft.files?.filter(file => file.name !== name) });
+  };
+
+  const onUpload = (files: File[]) => {
+    onChange({ files });
+  };
+
+
   return (
     <StyledContainer>
-      <Box display="flex" flexDirection="column" sx={{ width: '100%' }}>
+      <Box display="flex" flexDirection="column" sx={{ width: '100%' }} >
         <Row label={t('label.new-functional-status')} isGaps={isGaps}>
           <Autocomplete
             isOptionEqualToValue={option => option?.value === draft.status}
@@ -233,28 +177,14 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
           display: 'flex',
           flexDirection: 'row',
           marginTop: 2,
+          padding: 0,
           alignItems: 'center',
+          height: '100%',
+          width: '100%',
         }}>
-          <Upload onUpload={onUpload} customWidth={'50%'} />
-          {isTabletOrMobile &&
-            <Paper
-              sx={{
-                border: '0px',
-                borderWidth: '0px',
-                backgroundColor: 'inherit',
-                width: '50%',
-                marginTop: '0px 0px',
-                padding: '0px',
-                boxShadow: 'none',
-              }}>
-              < ButtonWithIcon
-                shouldShrink={false}
-                color="secondary"
-                variant='outlined'
-                label={t('button.take-photo')}
-                onClick={takePicture}
-                Icon={<PlusCircleIcon />}
-              /></Paper>}
+          <Upload onUpload={onUpload} customWidth={isMobile ? '50%' : undefined} />
+          {isMobile && (
+            <TakePhotoButton onUpload={onUpload} files={draft.files} />)}
         </Box>
         <Box display="flex" sx={{ width: '300px' }}>
           <FileList

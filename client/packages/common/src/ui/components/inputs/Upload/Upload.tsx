@@ -17,12 +17,14 @@ export interface UploadProps {
   color?: 'primary' | 'secondary' | 'gray';
   maxSize?: number;
   onUpload: <T extends File>(files: T[]) => void;
+  customWidth?: string;
 }
 
 export const Upload: FC<UploadProps> = ({
   accept,
   color = 'secondary',
   onUpload,
+  customWidth,
 }) => {
   const t = useTranslation();
   const isMobile = useIsScreen('sm');
@@ -34,7 +36,7 @@ export const Upload: FC<UploadProps> = ({
           border: '0px',
           borderWidth: '0px',
           backgroundColor: 'inherit',
-          width: '200px',
+          width: customWidth || '200px',
           marginTop: '0px 0px',
           padding: '0px',
           boxShadow: 'none',
@@ -43,7 +45,7 @@ export const Upload: FC<UploadProps> = ({
         marginTop: '20px 0',
         backgroundColor: theme => alpha(theme.palette[color].main, 0.1),
         padding: '24px',
-        width: '100%',
+        width: customWidth || '100%',
         alignContent: 'center',
         textAlign: 'center',
         borderStyle: 'dashed',
