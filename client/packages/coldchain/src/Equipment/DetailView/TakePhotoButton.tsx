@@ -15,9 +15,7 @@ export const TakePhotoButton = ({
 }) => {
     const t = useTranslation();
     const checkPermissions = async () => {
-        console.info('checking permissions')
         const permissionState = await Camera.checkPermissions();
-        console.info('permission state', permissionState)
         if (permissionState.camera !== 'granted') {
             const requested = await Camera.requestPermissions();
             if (requested.camera !== 'granted') {
@@ -29,9 +27,7 @@ export const TakePhotoButton = ({
     };
 
     const takePicture = async () => {
-        console.info('taking photo');
         const hasPermission = await checkPermissions();
-        console.info('permissions got', hasPermission);
         if (!hasPermission) return;
 
         try {
@@ -44,10 +40,9 @@ export const TakePhotoButton = ({
             const base64Data = image.base64String;
             const contentType = `image/${image.format}`;
 
-            console.info('file', image);
 
             if (!base64Data) {
-                // throw error?
+                // todo throw error?
                 return
             }
             const blob = base64ToBlob(base64Data, contentType);
@@ -56,13 +51,10 @@ export const TakePhotoButton = ({
             const fileName = `photo_${new Date().getTime()}.${image.format}`;
             const file = new File([blob], fileName, { type: contentType });
 
-            console.info('file', file);
-            // Can be set to the src of an image now
             const newFileSet = files ?? [];
             newFileSet.push(file);
             onUpload(newFileSet);
 
-            console.info('got image', image);
         } catch (error) {
             console.error('error', error)
         }
