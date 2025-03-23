@@ -4,32 +4,37 @@
 
 <table class="body_section">
   <thead>
-      <tr class="body_column_label">
-          <th>{{ t(k="label.code", f="Code") }}</th>
-          <th>{{ t(k="report.item-name", f="Item name") }}</th>
-          <th>{{ t(k="report.stock-on-hand",f="Stock on hand") }}</th>
-          <th>{{ t(k="label.amc",f="AMC") }}</th>
-          <th>{{ t(k="label.months-of-stock", f="MOS") }}</th>
-          <th>{{ t(k="label.requested-quantity", f="Requested quantity") }}</th>
-          <th>{{ t(k="label.supply-quantity", f="Quantity to supply") }}</th>
-          <th>{{ t(k="report.issued", f="Issued") }}</th>
-          <th>{{ t(k="label.remaining-to-supply", f="Remaining") }}</th>
-      </tr>
+    <tr class="body_column_label">
+      <th>{{ t(k="label.code", f="Code") }}</th>
+      <th>{{ t(k="report.item-name", f="Item name") }}</th>
+      <th>{{ t(k="report.stock-on-hand",f="Stock on hand") }}</th>
+      <th>{{ t(k="label.amc",f="AMC") }}</th>
+      <th>{{ t(k="label.months-of-stock", f="MOS") }}</th>
+      <th style="width: 10%">{{ t(k="label.requested-quantity", f="Requested quantity") }}</th>
+      <th style="width: 10%">{{ t(k="label.supply-quantity", f="Quantity to supply") }}</th>
+      <th>{{ t(k="report.issued", f="Issued") }}</th>
+      <th>{{ t(k="label.remaining-to-supply", f="Remaining") }}</th>
+    </tr>
   </thead>
   {% for line in data.requisition.lines.nodes -%}
   <tr class="body_value">
-      <td>{{ line.item.code }}</td>
-      <td>{{ line.item.name }}</td>
-      <td>{{ line.itemStats.stockOnHand | default(value=0.00) |
-        round(precision=2) }}</td>
-      <td>{{ line.itemStats.averageMonthlyConsumption | default(value=0.00) |
-        round(precision=2) }}</td>
-      <td>{{ line.itemStats.monthsOfStockOnHand | default(value=0.00) |
-        round(precision=2) }}</td>
-      <td>{{ line.requestedQuantity }}</td>
-      <td>{{ line.supplyQuantity}}</td>
-      <td>{{ line.alreadyIssued }}</td>
-      <td>{{ line.remainingQuantityToSupply }}</td>
+    <td>{{ line.item.code }}</td>
+    <td>{{ line.item.name }}</td>
+    <td>
+      {{ line.itemStats.stockOnHand | default(value=0.00) | round(precision=2) }}
+    </td>
+    <td>
+      {{ line.itemStats.averageMonthlyConsumption | default(value=0.00) |
+      round(precision=2) }}
+    </td>
+    <td>
+      {{ line.itemStats.monthsOfStockOnHand | default(value=0.00) |
+      round(precision=2) }}
+    </td>
+    <td>{{ line.requestedQuantity }}</td>
+    <td>{{ line.supplyQuantity }}</td>
+    <td>{{ line.alreadyIssued }}</td>
+    <td>{{ line.remainingQuantityToSupply }}</td>
   </tr>
   {%- endfor %}
 </table>
