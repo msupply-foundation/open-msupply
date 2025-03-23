@@ -2,21 +2,17 @@ query requisitionQuery($storeId: String!, $dataId: String!) {
   requisition(storeId: $storeId, id: $dataId) {
     ... on RequisitionNode {
       id
-      type
       status
       requisitionNumber
       theirReference
       createdDatetime
       finalisedDatetime
       comment
-      otherPartyName
       maxMonthsOfStock
       otherParty(storeId: $storeId) {
         name
         id
         code
-        comment
-        country
         address1
         address2
         phone
@@ -25,9 +21,9 @@ query requisitionQuery($storeId: String!, $dataId: String!) {
       lines {
         nodes {
           supplyQuantity
-          suggestedQuantity
           requestedQuantity
           remainingQuantityToSupply
+          alreadyIssued
           comment
           item {
             code
@@ -51,14 +47,9 @@ query requisitionQuery($storeId: String!, $dataId: String!) {
         ... on NameNode {
           address1
           address2
-          chargeCode
           code
-          comment
-          country
           email
-          name
           phone
-          website
         }
       }
     }
