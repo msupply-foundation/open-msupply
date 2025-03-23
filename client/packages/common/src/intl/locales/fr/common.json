@@ -71,6 +71,8 @@
   "button.more": "Plus",
   "button.new-asset": "Nouvel équipement",
   "button.new-catalogue-item": "Nouvel article catalogue",
+  "report.outbound-landscape": "Sorties de stock (paysage)",
+  "report.outbound-portrait": "Sorties de stock (portrait)",
   "button.new-inbound-shipment": "Nouveau Bon de livraison",
   "button.new-outbound-shipment": "Nouvelle Livraison Sortante",
   "button.new-patient": "Nouveau patient",
