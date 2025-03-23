@@ -9,6 +9,8 @@
   "approval-status.pending": "En attente",
   "assets": "Équipements",
   "auth.alert-title": "Erreur d'authentification",
+  "report.finalised-date": "Date de finalisation",
+  "report.sent-date": "Date d'envoi",
   "auth.logged-out-message": "Vous avez été déconnecté pour cause d'inactivité. Cliquez sur OK pour être redirigé vers l'écran de connexion.",
   "auth.no-store-assigned": "Votre utilisateur n'est assigné à aucun dépôt. Veuillez vous connecter avec un autre compte utilisateur ou contacter votre administrateur.",
   "auth.not-a-central-server": "Cette opération n'est permise que sur le serveur central",
