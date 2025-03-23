@@ -166,7 +166,7 @@ git submodule add [your-plugin-bundle-repo-url] client/packages/plugins/myPlugin
 With GitHub, I usually insert a blockquote.
 
 
-Note the `myPluginBundle` can be anything. The inner repository and core will be treated as two different repositories, changes in them will only be reflected in relative repositories (i.e. you can add the inner repository as local repository https://cli.github.com/in github desktop). Make sure that you don't commit the `.gitmodule` or the single `client/packages/plugins/{your plugin bundle name}` to the core.
+Note the `myPluginBundle` can be anything. The inner repository and core will be treated as two different repositories, changes in them will only be reflected in relative repositories (i.e. you can add the inner repository as local repository https://cli.github.com/in github desktop). Make sure that you don't commit the `.gitmodules` file or the files under `client/packages/plugins/{your plugin bundle name}` to the main app.
 
 You would need to change [name](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/package.json#L3) in package.json, which is also the plugin code and unique identifier (every plugin should have unique code). You should also add types that are implemented, in the future those will be displayed before plugin is installed, for validation form the user, for frontend plugins they are not essential though. TODO these types can be looked up when building, both for front end and backed plugin, by running ts-node and inspecting import { plugins } from './plugins.tsx' or '.ts'.
 
