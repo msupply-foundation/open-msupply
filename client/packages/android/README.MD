@@ -69,7 +69,7 @@ You may also see prompts in Android Studio to sync - keep an eye out for these a
 
 You can now use `yarn build:server` from the `client/packages/android/` directory, this builds the `libremote_server_lib.so` binaries and relocate them to `app/src/main/jniLibs`.
 Please see `client/packages/android/app/src/main/java/org/openmsupply/client/RemoteServer.java` for more details of how these libs are loaded.
-It's important to note that web app is bundled in the remote server binary, and web app needs to be built from `client` directory with `yarn build` command, so it's best to use `yarn android:build:server` from client directory as it does both (builds web app and then build android remote server).
+It's important to note that web app is bundled in the remote server binary, and web app needs to be built from the `client` directory with `yarn build` command, so it's best to use `yarn android:build:server` from client directory as it does both (builds web app and then build android remote server).
 
 ## Scripts
 
@@ -108,9 +108,9 @@ When building apk `properties.local` files is required (it can be empty). Also c
 
 ## Debugging
 
-It's recommended to use Android Studio for debugging and running Android App, there is a lot of functionality that cannot be replicated in Visual Studio Code (although there are some extensions for Visual Studio Code, they are quite limited).
+It's recommended to use Android Studio for debugging and running the Android app, because there is a lot of functionality that cannot be replicated in Visual Studio Code (although there are some extensions for Visual Studio Code, they are quite limited).
 
-Open this directory in Android Studio, this will engage gradle sync process (initialising pre-requisites etc.), if you get an error during 'sync' process Android Studio should outline the issue with suggested fix.
+Open this directory (client/packages/android) in Android Studio - this will engage the gradle sync process (initialising pre-requisites etc.), if you get an error during 'sync' process Android Studio should outline the issue with suggested fix.
 Usually you will need to either set `ANDROID_SDK_ROOT` or add `sdk.dir` in `local.properties` file, and skd is usually located in `/Users/{user}/Library/Android/sdk/`. Pressing play (run) should restart sync process.
 
 Debugging native Java code is straight forward, breakpoint in Android Studio and press debug.
