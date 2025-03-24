@@ -18,6 +18,16 @@ import {
 import { useTemperatureLog, useTemperatureBreach } from '../Monitoring/api';
 import { useSensor } from '../Sensor/api';
 
+// Types are based on berlinger file returned values
+interface FridgeTag {
+  [key: string]: unknown; // satisfies t function types
+  newSensorId?: string | null;
+  numberOfLogs: number;
+  numberOfBreaches: number;
+  startDatetime?: Date | null;
+  endDatetime?: Date | null;
+}
+
 interface ImportFridgeTagProps {
   shouldShrink: boolean;
 }
@@ -68,8 +78,7 @@ export const ImportFridgeTag = ({
       if (!result.ok) {
         throw new Error(await result.text());
       }
-      // Result format: {"newSensorId":null,"numberOfLogs":66,"numberOfBreaches":0}
-      const resultJson = await result.json();
+      const resultJson: FridgeTag = await result.json();
       if (resultJson.numberOfLogs === 0 && resultJson.numberOfBreaches === 0)
         throw new Error(t('error.fridge-tag-import-empty'));
 
@@ -80,33 +89,36 @@ export const ImportFridgeTag = ({
       queryClient.invalidateQueries(logApi.keys.base());
       queryClient.invalidateQueries(sensorApi.keys.base());
 
-      // asks if the user would like to assign a location and redirects if yes
-      if (!!resultJson.newSensorId) {
-        let path;
+      // if the user is on mobile - redirect to monitoring page
+      if (isExtraSmallScreen) {
+        const encodedDatetime = encodeURIComponent(
+          `${resultJson.startDatetime}_${resultJson.endDatetime}`
+        );
 
-        if (isExtraSmallScreen) {
-          const encodedDatetime = encodeURIComponent(
-            `${resultJson.startDatetime}_${resultJson.endDatetime}`
-          );
-
-          path = RouteBuilder.create(AppRoute.Coldchain)
+        navigate(
+          RouteBuilder.create(AppRoute.Coldchain)
             .addPart(AppRoute.Monitoring)
             .addQuery({
-              edit: resultJson.newSensorId,
+              'sensor.id': resultJson.newSensorId ?? '',
               datetime: encodedDatetime,
               sort: 'datetime',
             })
-            .build();
-        } else {
-          path = RouteBuilder.create(AppRoute.Coldchain)
-            .addPart(AppRoute.Sensors)
-            .addQuery({ edit: resultJson.newSensorId })
-            .build();
-        }
+            .build()
+        );
+        return;
+      }
+
+      // asks if the user would like to assign a location and redirects if yes
+      if (!!resultJson.newSensorId) {
+        const path = RouteBuilder.create(AppRoute.Coldchain)
+          .addPart(AppRoute.Sensors)
+          .addQuery({ edit: resultJson.newSensorId })
+          .build();
 
         getConfirmation({
           onConfirm: () => setTimeout(() => navigate(path), 500),
         });
+        return;
       }
     } catch (e) {
       console.error(e);
