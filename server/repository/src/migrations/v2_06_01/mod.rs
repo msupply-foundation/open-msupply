@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod change_vaccination_date_to_nullable;
+mod remove_plugins;
 
 pub(crate) struct V2_06_01;
 
@@ -15,7 +16,10 @@ impl Migration for V2_06_01 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(change_vaccination_date_to_nullable::Migrate)]
+        vec![
+            Box::new(change_vaccination_date_to_nullable::Migrate),
+            Box::new(remove_plugins::Migrate),
+        ]
     }
 }
 
