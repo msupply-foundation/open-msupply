@@ -5,6 +5,7 @@
   "private": true,
   "main": "./src/index.ts",
   "devDependencies": {
+    "@types/pluralize": "^0.0.33",
     "find-up": "^7.0.0"
   },
   "scripts": {

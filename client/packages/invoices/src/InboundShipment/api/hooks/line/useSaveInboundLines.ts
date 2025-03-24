@@ -36,15 +36,15 @@ export const useSaveInboundLines = () => {
 
         switch (response.error.__typename) {
           case 'BatchIsReserved':
-            return { errorMessage: t('error.batch-is-reserved') };
+            throw Error(t('error.batch-is-reserved'));
 
           case 'CannotEditInvoice':
-            return { errorMessage: t('error.inbound-shipment-not-editable') };
+            throw Error(t('error.inbound-shipment-not-editable'));
 
           case 'NotAnInboundShipment':
           case 'RecordNotFound':
           case 'ForeignKeyError':
-            return { errorMessage: t('error.something-wrong') };
+            throw Error(t('error.something-wrong'));
 
           default:
             noOtherVariants(response.error);
@@ -52,6 +52,7 @@ export const useSaveInboundLines = () => {
       }
       return { errorMessage: undefined };
     },
+
     {
       onSettled: () =>
         queryClient.invalidateQueries(api.keys.detail(invoiceNumber)),

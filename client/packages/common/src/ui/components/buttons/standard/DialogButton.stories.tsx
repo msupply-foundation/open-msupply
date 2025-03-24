@@ -3,10 +3,7 @@ import { Box } from '@mui/material';
 import { StoryFn, Meta } from '@storybook/react';
 import { DialogButton } from './DialogButton';
 
-const Template: StoryFn<typeof DialogButton> = ({
-  disabled,
-  variant,
-}) => (
+const Template: StoryFn<typeof DialogButton> = ({ disabled, variant }) => (
   <Box>
     <DialogButton
       variant={variant}

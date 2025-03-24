@@ -87,36 +87,37 @@ const Row = ({
   label: string;
   isGaps: boolean;
 }) => {
-  if (!isGaps) return (
-    <Box paddingTop={1.5}>
-      <InputWithLabelRow
-        labelWidth="300px"
-        label={label}
-        labelProps={{
-          sx: {
-            fontSize: '16px',
-            paddingRight: 2,
-            textAlign: 'right',
-          },
-        }}
-        Input={
-          <>
-            <Box sx={{}} flex={1}>
-              {children}{' '}
-            </Box>
-            <Box>
-              {tooltip && (
-                <InfoTooltipIcon
-                  iconSx={{ color: 'gray.main' }}
-                  title={tooltip}
-                />
-              )}
-            </Box>
-          </>
-        }
-      />
-    </Box>
-  );
+  if (!isGaps)
+    return (
+      <Box paddingTop={1.5}>
+        <InputWithLabelRow
+          labelWidth="300px"
+          label={label}
+          labelProps={{
+            sx: {
+              fontSize: '16px',
+              paddingRight: 2,
+              textAlign: 'right',
+            },
+          }}
+          Input={
+            <>
+              <Box sx={{}} flex={1}>
+                {children}{' '}
+              </Box>
+              <Box>
+                {tooltip && (
+                  <InfoTooltipIcon
+                    iconSx={{ color: 'gray.main' }}
+                    title={tooltip}
+                  />
+                )}
+              </Box>
+            </>
+          }
+        />
+      </Box>
+    );
 
   return (
     <Box paddingTop={1.5}>
@@ -130,7 +131,7 @@ const Row = ({
       </Typography>
       {children}
     </Box>
-  )
+  );
 };
 
 export const Details = ({ draft, onChange }: DetailsProps) => {
@@ -156,10 +157,12 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
             </Typography>
           ) : (
             <>
-                {isGaps && <Typography>
+              {isGaps && (
+                <Typography>
                   {/* Need to add to translate */}
                   {'Non-editable properties are defined in the catalogue'}
-                </Typography>}
+                </Typography>
+              )}
               {assetProperties &&
                 ArrayUtils.uniqBy(assetProperties, 'key').map(property => {
                   const isCatalogue =

@@ -58,9 +58,9 @@ export const DiscoveredServers = ({
         display="flex"
         sx={theme => ({
           [theme.breakpoints.down('sm')]: {
-            paddingX: '1em'
+            paddingX: '1em',
           },
-          color: 'error.main'
+          color: 'error.main',
         })}
         justifyContent="center"
         alignItems="center"
