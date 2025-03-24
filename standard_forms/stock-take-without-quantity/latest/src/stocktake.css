@@ -39,11 +39,15 @@
 
 .stocktake-wrapper .main-table .table-header {
     border-bottom: 0.5px solid black;
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 1;
 }
 
 .stocktake-wrapper .main-table .table-header .row {
-	font-size: 13px;
-	border-bottom: 0px;	
+    font-size: 13px;
+    border-bottom: 0px;
 }
 
 .stocktake-wrapper .main-table .row {
