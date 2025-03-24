@@ -47,12 +47,12 @@ query masterLists(
   }
 }
 
-query masterListsByItemId(
-  $storeId: String!
-  $itemId: String!
-) {
+query masterListsByItemId($storeId: String!, $itemId: String!) {
   masterLists(
-    filter: { itemId: { equalTo: $itemId }, existsForStoreId: { equalTo: $storeId } } 
+    filter: {
+      itemId: { equalTo: $itemId }
+      existsForStoreId: { equalTo: $storeId }
+    }
     storeId: $storeId
   ) {
     ... on MasterListConnector {

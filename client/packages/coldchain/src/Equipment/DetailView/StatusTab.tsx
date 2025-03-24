@@ -27,26 +27,27 @@ const Row = ({
   label: string;
   isGaps: boolean;
 }) => {
-
-  if (!isGaps) return (
-    <Box paddingTop={1.5}>
-      <InputWithLabelRow
-        labelWidth="160px"
-        label={label}
-        labelProps={{
-          sx: {
-            fontSize: '16px',
-            paddingRight: 2,
-            textAlign: 'right',
-          },
-        }}
-        Input={
-          <Box sx={{}} flex={1}>
-            {children}
-          </Box>
-        }
-      />
-    </Box>);
+  if (!isGaps)
+    return (
+      <Box paddingTop={1.5}>
+        <InputWithLabelRow
+          labelWidth="160px"
+          label={label}
+          labelProps={{
+            sx: {
+              fontSize: '16px',
+              paddingRight: 2,
+              textAlign: 'right',
+            },
+          }}
+          Input={
+            <Box sx={{}} flex={1}>
+              {children}
+            </Box>
+          }
+        />
+      </Box>
+    );
 
   return (
     <Box paddingTop={1.5}>
@@ -60,7 +61,7 @@ const Row = ({
       </Typography>
       {children}
     </Box>
-  )
+  );
 };
 
 export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
@@ -90,8 +91,8 @@ export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
   const { data } = useAssetData.log.listReasons(
     draft.status
       ? {
-        assetLogStatus: { equalTo: draft.status },
-      }
+          assetLogStatus: { equalTo: draft.status },
+        }
       : undefined
   );
 
