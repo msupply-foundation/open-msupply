@@ -1099,6 +1099,7 @@
   "label.stock-on-hand": "Stock on hand",
   "label.stock-on-hand-remaining": "SoH (Est. remaining)",
   "label.stock-on-order": "Stock on order",
+  "label.stocktake": "Stocktake",
   "label.stocktake-comment": "Comment",
   "label.stocktake-date": "Stocktake Date",
   "label.stocktake-frequency": "Stocktake frequency",
