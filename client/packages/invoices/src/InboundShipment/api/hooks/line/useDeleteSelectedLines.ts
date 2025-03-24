@@ -7,7 +7,6 @@ import {
 import { useIsInboundDisabled } from '../utils/useIsInboundDisabled';
 import { useDeleteInboundLines } from './useDeleteInboundLines';
 import { useInboundRows } from './useInboundRows';
-import { useInbound } from '..';
 import { useInboundShipmentLineErrorContext } from '../../../context/inboundShipmentLineError';
 
 export const useDeleteSelectedLines = (): (() => void) => {
@@ -15,8 +14,6 @@ export const useDeleteSelectedLines = (): (() => void) => {
   const { items, lines } = useInboundRows();
   const { mutateAsync } = useDeleteInboundLines();
   const isDisabled = useIsInboundDisabled();
-  const { data } = useInbound.document.get();
-  const isManuallyCreated = !data?.linkedShipment?.id;
   const errorsContext = useInboundShipmentLineErrorContext();
 
   const selectedRows =
@@ -76,12 +73,9 @@ export const useDeleteSelectedLines = (): (() => void) => {
     });
   };
 
-  interface handleCantDelete {
-    isDisabled: boolean;
-    isManuallyCreated: boolean;
-  }
 
-  const handleCantDelete = ({ isDisabled }: handleCantDelete) => {
+  const handleCantDelete = ({ isDisabled }: { isDisabled: boolean }
+  ) => {
     if (isDisabled) return t('label.cant-delete-disabled');
     return (err: Error) => err.message;
   };
@@ -97,7 +91,7 @@ export const useDeleteSelectedLines = (): (() => void) => {
       deleteSuccess: t('messages.deleted-lines', {
         count: selectedRows.length,
       }),
-      cantDelete: handleCantDelete({ isDisabled, isManuallyCreated }),
+      cantDelete: handleCantDelete({ isDisabled }),
     },
   });
 
