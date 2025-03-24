@@ -1835,6 +1835,7 @@
   "report.stocktake-number": "Numéro d'inventaire",
   "report.stocktake-per-period": "Prise de stock par période",
   "report.stocktake-sheet": "Fiche d'inventaire",
+  "report.stocktake-without-quantity": "Inventaire sans Quantité",
   "report.suggested-qty": "Qté suggérée",
   "report.summary-for-period": "Résumé pour la période",
   "report.supplied-to": "Fourni à",
