@@ -6,7 +6,6 @@ query StocktakeDetailQuery(
   stocktake(storeId: $storeId, id: $dataId) {
     ... on StocktakeNode {
       id
-      storeId
       stocktakeDate
       stocktakeNumber
       status
@@ -54,19 +53,13 @@ query StocktakeDetailQuery(
       code
       storeName
       logo
+      id
       name(storeId: $storeId) {
-        ... on NameNode {
-          address1
-          address2
-          chargeCode
-          code
-          comment
-          country
-          email
-          name
-          phone
-          website
-        }
+        address1
+        address2
+        code
+        email
+        phone
       }
     }
   }
