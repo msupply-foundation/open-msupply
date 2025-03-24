@@ -19,6 +19,8 @@ pub struct Preference {
 #[derive(Clone, Default)]
 pub struct PreferenceFilter {
     pub id: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
+    pub key: Option<EqualFilter<String>>,
 }
 
 impl PreferenceFilter {
@@ -27,6 +29,16 @@ impl PreferenceFilter {
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+
+    pub fn key(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
         self
     }
@@ -89,9 +101,11 @@ fn create_filtered_query(filter: Option<PreferenceFilter>) -> BoxedPreferenceQue
     let mut query = preference::table.inner_join(store::table).into_boxed();
 
     if let Some(f) = filter {
-        let PreferenceFilter { id } = f;
+        let PreferenceFilter { id, store_id, key } = f;
 
         apply_equal_filter!(query, id, preference::id);
+        apply_equal_filter!(query, store_id, preference::store_id);
+        apply_equal_filter!(query, key, preference::key);
     }
     query
 }
