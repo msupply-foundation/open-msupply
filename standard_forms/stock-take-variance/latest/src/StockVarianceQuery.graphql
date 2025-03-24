@@ -56,14 +56,10 @@ query StocktakeQuery(
         ... on NameNode {
           address1
           address2
-          chargeCode
           code
-          comment
-          country
           email
           name
           phone
-          website
         }
       }
     }
