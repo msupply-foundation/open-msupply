@@ -13,6 +13,7 @@ const temperatureLogFilterAndSort = {
   initialSort: { key: 'datetime', dir: 'asc' as 'asc' | 'desc' },
   filters: [
     { key: 'datetime', condition: 'between' },
+    { key: 'sensor.id', condition: 'equalTo' },
     {
       key: 'sensor.name',
     },
