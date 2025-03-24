@@ -169,6 +169,29 @@ You would need to change [name](https://github.com/andreievg/open-msupply-plugin
 
 Hot reloading will be working on dev mode but frontend needs to be restarted when adding a new plugin because local plugins are only discovered when webpack starts
 
+### Developing on branches of plugins
+
+Different branches of plugins can be selected by adding a -b flag to the adding submodule command:
+
+```
+git submodule add [your-plugin-bundle-repo-url] -b [your-branch] client/packages/plugins/myPluginBundle
+```
+
+This will add a branch field to the .gitmodules file in the root project dir to include a specific branch field:
+
+``` .gitmodules
+  [submodule "client/packages/plugins/myPluginBundle"]
+	path = client/packages/plugins/myPluginBundle
+	url = https://github.com/msupply-foundation/civ-plugins.git
+	branch = fix-plugin-data-saving
+```
+
+The submodule can be updated to the remote with the following command:
+
+```
+git submodule update --remote
+```
+
 ## Testing production build
 
 You can work on plugins as if they were part of the app (types should be shared, autocompletion and hot reload should work). If you want to test plugin in production, you can bundle it and deploy to server via:
