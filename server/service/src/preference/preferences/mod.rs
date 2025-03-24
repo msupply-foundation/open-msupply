@@ -3,7 +3,7 @@ use repository::{
 };
 use serde::de::DeserializeOwned;
 
-mod complex_pref;
+pub mod complex_pref;
 use complex_pref::*;
 mod use_payments_in_prescriptions;
 use use_payments_in_prescriptions::*;

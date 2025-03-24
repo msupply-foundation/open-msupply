@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 use super::Preference;
 
-#[derive(Default, Deserialize)]
+#[derive(Clone, Default, Deserialize)]
 pub struct ComplexPref {
     pub something_here: i32,
     pub something_else: String,
