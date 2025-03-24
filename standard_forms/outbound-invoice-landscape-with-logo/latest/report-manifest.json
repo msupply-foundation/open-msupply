@@ -1,9 +1,8 @@
 {
   "is_custom": false,
-  "version": "2.6.1",
+  "version": "2.6.2",
   "code": "outbound-invoice-landscape-with-logo",
   "context": "OUTBOUND_SHIPMENT",
-  "sub_context": "picklist",
   "name": "Outbound Shipment (landscape)",
   "queries": {
     "gql": "outbound.graphql"

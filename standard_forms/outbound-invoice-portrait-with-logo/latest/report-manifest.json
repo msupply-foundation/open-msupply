@@ -3,8 +3,7 @@
   "version": "2.6.1",
   "code": "outbound-invoice-portrait-with-logo",
   "context": "OUTBOUND_SHIPMENT",
-  "sub_context": "picklist",
-  "name": "outbound-invoice-portrait-with-logo",
+  "name": "Outbound Shipment (portrait)",
   "queries": {
     "gql": "picklist.graphql"
   },
