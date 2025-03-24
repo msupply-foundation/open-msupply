@@ -1,20 +1,11 @@
-use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::diesel_macros::apply_equal_filter;
 
 use super::{
     preference_row::{preference, PreferenceRow},
-    store_row::store,
-    DBType, EqualFilter, Pagination, RepositoryError, StorageConnection, StoreRow,
+    DBType, EqualFilter, Pagination, RepositoryError, StorageConnection,
 };
-
-#[derive(PartialEq, Debug, Clone, Default)]
-pub struct Preference {
-    pub preference_row: PreferenceRow,
-}
 
 #[derive(Clone, Default)]
 pub struct PreferenceFilter {
@@ -34,17 +25,15 @@ impl PreferenceFilter {
     }
 
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.id = Some(filter);
+        self.store_id = Some(filter);
         self
     }
 
     pub fn key(mut self, filter: EqualFilter<String>) -> Self {
-        self.id = Some(filter);
+        self.key = Some(filter);
         self
     }
 }
-
-pub type PreferenceJoin = (PreferenceRow, StoreRow);
 
 pub struct PreferenceRepository<'a> {
     connection: &'a StorageConnection,
@@ -58,14 +47,14 @@ impl<'a> PreferenceRepository<'a> {
     pub fn query_one(
         &self,
         filter: PreferenceFilter,
-    ) -> Result<Option<Preference>, RepositoryError> {
+    ) -> Result<Option<PreferenceRow>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
         &self,
         filter: PreferenceFilter,
-    ) -> Result<Vec<Preference>, RepositoryError> {
+    ) -> Result<Vec<PreferenceRow>, RepositoryError> {
         self.query(Pagination::new(), Some(filter))
     }
 
@@ -73,7 +62,7 @@ impl<'a> PreferenceRepository<'a> {
         &self,
         pagination: Pagination,
         filter: Option<PreferenceFilter>,
-    ) -> Result<Vec<Preference>, RepositoryError> {
+    ) -> Result<Vec<PreferenceRow>, RepositoryError> {
         let query = create_filtered_query(filter);
 
         let final_query = query
@@ -85,20 +74,16 @@ impl<'a> PreferenceRepository<'a> {
         //    "{}",
         //    diesel::debug_query::<DBType, _>(&final_query).to_string()
         //);
-        let result = final_query
-            .load::<PreferenceJoin>(self.connection.lock().connection())?
-            .into_iter()
-            .map(|(preference_row, _store_row)| Preference { preference_row })
-            .collect();
+        let result = final_query.load::<PreferenceRow>(self.connection.lock().connection())?;
 
         Ok(result)
     }
 }
 
-type BoxedPreferenceQuery = IntoBoxed<'static, InnerJoin<preference::table, store::table>, DBType>;
+type BoxedPreferenceQuery = IntoBoxed<'static, preference::table, DBType>;
 
 fn create_filtered_query(filter: Option<PreferenceFilter>) -> BoxedPreferenceQuery {
-    let mut query = preference::table.inner_join(store::table).into_boxed();
+    let mut query = preference::table.into_boxed();
 
     if let Some(f) = filter {
         let PreferenceFilter { id, store_id, key } = f;

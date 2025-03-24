@@ -41,7 +41,7 @@ impl<'a> PreferenceRowRepository<'a> {
         PreferenceRowRepository { connection }
     }
 
-    fn upsert_one(&self, preference_row: &PreferenceRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, preference_row: &PreferenceRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(preference::table)
             .values(preference_row)
             .on_conflict(id)
