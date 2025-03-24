@@ -88,7 +88,7 @@ pub struct LegacyTransLineRow {
     #[serde(rename = "om_item_variant_id")]
     pub item_variant_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    #[serde(rename = "linked_trans_line_ID")]
+    #[serde(rename = "linked_transact_ID")]
     pub linked_invoice_id: Option<String>,
 }
 // Needs to be added to all_translators()
