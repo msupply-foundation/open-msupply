@@ -2,6 +2,9 @@ use repository::{
     RepositoryError, StorageConnection, StorePreferenceRow, StorePreferenceRowRepository,
 };
 
+// TODO: migrate to preferences table
+// These are existing store preferences from OG. New store prefs should be configured
+// through the preferences API
 pub fn get_store_preferences(
     connection: &StorageConnection,
     store_id: &str,
