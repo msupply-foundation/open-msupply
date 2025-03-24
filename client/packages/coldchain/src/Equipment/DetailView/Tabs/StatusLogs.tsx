@@ -45,17 +45,18 @@ const User = ({ user }: { user: ColdchainAssetLogFragment['user'] }) => {
       sx={theme => ({
         [theme.breakpoints.down('sm')]: {
           flexDirection: 'column',
-          marginTop: '.25em'
+          marginTop: '.25em',
         },
       })}
     >
-      <Typography sx={theme => ({
-        [theme.breakpoints.down('sm')]: {
-          fontSize: '14px!important',
-        },
-        fontWeight: 'bold',
-        fontSize: '12px',
-      })}
+      <Typography
+        sx={theme => ({
+          [theme.breakpoints.down('sm')]: {
+            fontSize: '14px!important',
+          },
+          fontWeight: 'bold',
+          fontSize: '12px',
+        })}
       >
         {t('label.user')}: {user?.username ?? UNDEFINED_STRING_VALUE}
       </Typography>
@@ -162,34 +163,40 @@ const StatusLog = ({
               },
             })}
           >
-            <Typography sx={theme => ({
-              [theme.breakpoints.down('sm')]: {
-                fontSize: '14px!important',
-              },
-              fontWeight: 'bold', lineHeight: 2
-            })}>
+            <Typography
+              sx={theme => ({
+                [theme.breakpoints.down('sm')]: {
+                  fontSize: '14px!important',
+                },
+                fontWeight: 'bold',
+                lineHeight: 2,
+              })}
+            >
               {localisedDate(log.logDatetime)}
             </Typography>
             <Status status={log.status} />
           </Box>
           <User user={log.user} />
           <Box display="flex" alignItems="flex-start">
-            <Typography sx={theme => ({
-              [theme.breakpoints.down('sm')]: {
-                fontSize: '14px!important',
-              },
-              fontSize: '12px',
-            })}>
+            <Typography
+              sx={theme => ({
+                [theme.breakpoints.down('sm')]: {
+                  fontSize: '14px!important',
+                },
+                fontSize: '12px',
+              })}
+            >
               <b>{t('label.reason')}:</b>{' '}
               {log.reason?.reason ?? UNDEFINED_STRING_VALUE}
             </Typography>
           </Box>
-          <Typography sx={theme => ({
-            [theme.breakpoints.down('sm')]: {
-              fontSize: '14px!important',
-            },
-            fontSize: '12px'
-          })}
+          <Typography
+            sx={theme => ({
+              [theme.breakpoints.down('sm')]: {
+                fontSize: '14px!important',
+              },
+              fontSize: '12px',
+            })}
           >
             <b>{t('label.observations')}:</b>{' '}
             {log.comment ?? UNDEFINED_STRING_VALUE}
@@ -233,7 +240,7 @@ export const StatusLogs = ({ assetId }: { assetId: string }) => {
           paddingX: 0,
           paddingY: 0,
           justifyItems: 'center',
-        }
+        },
       })}
     >
       {logs?.nodes?.map((log, index, nodes) => (

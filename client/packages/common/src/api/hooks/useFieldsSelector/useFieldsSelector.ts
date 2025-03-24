@@ -20,7 +20,7 @@ export type FieldUpdateMutation<T> = (
 
 export type FieldSelectorControl<
   Entity,
-  KeyOfEntity extends keyof Entity
+  KeyOfEntity extends keyof Entity,
 > = Pick<Entity, KeyOfEntity> & {
   update: FieldUpdateMutation<Entity>;
 };
@@ -35,10 +35,13 @@ export const useFieldsSelector = <Entity, KeyOfEntity extends keyof Entity>(
   const queryClient = useQueryClient();
   const select = useCallback((entity: Entity) => {
     if (Array.isArray(keyOrKeys)) {
-      const mapped = keyOrKeys.reduce((acc, val) => {
-        acc[val] = entity[val];
-        return acc;
-      }, {} as Pick<Entity, KeyOfEntity>);
+      const mapped = keyOrKeys.reduce(
+        (acc, val) => {
+          acc[val] = entity[val];
+          return acc;
+        },
+        {} as Pick<Entity, KeyOfEntity>
+      );
 
       return mapped;
     } else {
