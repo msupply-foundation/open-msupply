@@ -186,11 +186,15 @@ This will add a branch field to the .gitmodules file in the root project dir to 
 	branch = fix-plugin-data-saving
 ```
 
-The submodule can be updated to the remote with the following command:
+The command can be re-run with a different branch to change the branch of the submodule.
+
+Alternatively, the .gitmodules file can be edited to a different branch name manually, and then updated to the remote of that branch with the following command:
 
 ```
 git submodule update --remote
 ```
+
+> Note that the branch flag support branch names only and not SHA or Tags.
 
 ## Testing production build
 
