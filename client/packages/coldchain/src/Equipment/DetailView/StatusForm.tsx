@@ -22,6 +22,7 @@ import { useAssetData } from '@openmsupply-client/system';
 import { useIsGapsStoreOnly } from '@openmsupply-client/common';
 import { TakePhotoButton } from './TakePhotoButton';
 import { Capacitor } from '@capacitor/core';
+import { UploadButton } from './UploadButton';
 
 const StyledContainer = styled(Box)(({ theme }) => ({
   borderColor: theme.palette.divider,
@@ -89,7 +90,8 @@ const Row = ({
 export const StatusForm = ({ draft, onChange }: StatusForm) => {
   const t = useTranslation();
   const isGaps = useIsGapsStoreOnly();
-  const isMobile = useIsScreen('sm') && Capacitor.getPlatform() === 'android';
+  const isNative = Capacitor.isNativePlatform();
+  const isSmallScreen = useIsScreen('md',);
   const debouncedOnChange = useDebounceCallback(
     (patch: Partial<InsertAssetLogInput>) => onChange(patch),
     [onChange],
@@ -99,7 +101,6 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
     label,
     value: value ?? label,
   });
-
 
   const getOptionsFromEnum = (
     enumObject: Record<string, string>,
@@ -181,10 +182,21 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
           alignItems: 'center',
           height: '100%',
           width: '100%',
+          justifyContent: 'center',
         }}>
-          <Upload onUpload={onUpload} customWidth={isMobile ? '50%' : undefined} />
-          {isMobile && (
-            <TakePhotoButton onUpload={onUpload} files={draft.files} />)}
+          {!isSmallScreen && <Upload onUpload={onUpload} />}
+          {isSmallScreen && isNative && (
+            <>
+              <UploadButton onUpload={onUpload} files={draft.files} customLabel={t('button.browse-files')}></UploadButton>
+              <TakePhotoButton onUpload={onUpload} files={draft.files} />
+            </>
+          )}
+          {isSmallScreen && !isNative && (
+            <>
+              <UploadButton onUpload={onUpload} files={draft.files} customLabel={t('button.browse-files')}></UploadButton>
+              <UploadButton onUpload={onUpload} files={draft.files} customLabel={t('button.camera')}></UploadButton>
+            </>
+          )}
         </Box>
         <Box display="flex" sx={{ width: '300px' }}>
           <FileList
