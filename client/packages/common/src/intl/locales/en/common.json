@@ -1338,7 +1338,7 @@
   "messages.cannot-view-vaccine-card": "You cannot view this patient's Vaccination Card from this store, because they were enrolled in the {{ programName }} by another store",
   "messages.cant-delete-generic": "You cannot delete one or more of the selected items",
   "messages.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
-  "messages.cant-delete-transferred": "You cannot delete items that have been transferred from another store",
+  "messages.cant-delete-transferred": "You cannot delete items that have been transferred from another store. Please reduce those lines to zero instead.",
   "messages.cant-download-android": "File cannot be downloaded on this device",
   "messages.cant-return-shipment": "Cannot process return of lines until the status is 'Shipped'",
   "messages.cant-return-shipment-replenishment": "Cannot return lines until the status is 'Delivered'",
