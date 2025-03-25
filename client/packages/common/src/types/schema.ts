@@ -4391,6 +4391,12 @@ export type LineDeleteError = DeleteResponseRequisitionErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type LineLinkedToTransferredInvoice =
+  DeleteInboundShipmentLineErrorInterface & {
+    __typename: 'LineLinkedToTransferredInvoice';
+    description: Scalars['String']['output'];
+  };
+
 export type LinkPatientPatientToStoreError = {
   __typename: 'LinkPatientPatientToStoreError';
   error: LinkPatientPatientToStoreErrorInterface;
@@ -8403,11 +8409,6 @@ export type TokenExpired = RefreshTokenErrorInterface & {
 
 export type TransferredRequisition = DeleteResponseRequisitionErrorInterface & {
   __typename: 'TransferredRequisition';
-  description: Scalars['String']['output'];
-};
-
-export type TransferredShipment = DeleteInboundShipmentLineErrorInterface & {
-  __typename: 'TransferredShipment';
   description: Scalars['String']['output'];
 };
 
