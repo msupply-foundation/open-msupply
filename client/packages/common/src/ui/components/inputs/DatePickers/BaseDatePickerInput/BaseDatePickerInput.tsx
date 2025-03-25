@@ -66,10 +66,10 @@ export const BaseDatePickerInput: FC<
   required,
   ...props
 }) => {
+  const t = useTranslation();
   const theme = useAppTheme();
   const [internalError, setInternalError] = useState<string | null>(null);
   const [isInitialEntry, setIsInitialEntry] = useState(true);
-  const t = useTranslation();
 
   return (
     <DesktopDatePicker
@@ -137,6 +137,12 @@ export const BaseDatePickerInput: FC<
             ...textFieldProps?.sx,
           },
         },
+      }}
+      localeText={{
+        okButtonLabel: t('button.ok'),
+        cancelButtonLabel: t('button.cancel'),
+        clearButtonLabel: t('button.clear'),
+        todayButtonLabel: t('button.today'),
       }}
       {...props}
       value={DateUtils.getDateOrNull(props.value)}

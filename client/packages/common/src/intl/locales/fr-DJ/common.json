@@ -267,5 +267,9 @@
   "label.encounter": "Visite",
   "label.gender": "Sexe",
   "report.pending-encounters": "Rapport des visites",
-  "label.next-of-kin": "Parent"
+  "label.next-of-kin": "Parent",
+  "label.patients": "Patient(e)s",
+  "filename.patients": "Patient(e)s",
+  "patients": "Patient(e)s",
+  "label.patient": "Patient(e)"
 }

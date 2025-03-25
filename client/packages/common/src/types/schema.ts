@@ -6966,6 +6966,7 @@ export enum ReportContext {
   Dispensary = 'DISPENSARY',
   InboundReturn = 'INBOUND_RETURN',
   InboundShipment = 'INBOUND_SHIPMENT',
+  InternalOrder = 'INTERNAL_ORDER',
   OutboundReturn = 'OUTBOUND_RETURN',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Patient = 'PATIENT',
