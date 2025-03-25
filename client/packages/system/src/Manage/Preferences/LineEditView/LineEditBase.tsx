@@ -1,29 +1,29 @@
 import React, { PropsWithChildren, useRef } from 'react';
-import { Grid, RouteBuilder, useNavigate } from '@openmsupply-client/common';
+import {
+  Grid,
+  PreferenceDescriptionNode,
+  RouteBuilder,
+  useNavigate,
+} from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
-import { Footer } from './Footer';
 import { ListPrefs } from './ListPrefs';
 
 export const LineEditBase = ({
   children,
-  // items,
+  prefs,
   currentId,
 }: PropsWithChildren & {
-  // items: InvoiceItemFragment[];
+  prefs: PreferenceDescriptionNode[];
   currentId: string;
 }) => {
   const navigate = useNavigate();
 
+  //t odo remove?
   // This ref is attached to the currently selected list item, and is used to
   // "scroll into view" when the Previous/Next buttons are clicked in the NavBar
   const scrollRef = useRef<null | HTMLLIElement>(null);
-  const scrollSelectedItemIntoView = () =>
-    // Small time delay to allow the ref to change to the previous/next item in
-    // the list before scrolling to it
-    setTimeout(() => scrollRef.current?.scrollIntoView(), 100);
 
-  const items = [];
   const setSelectedPref = (id: string) =>
     navigate(
       RouteBuilder.create(AppRoute.Manage)
@@ -43,8 +43,8 @@ export const LineEditBase = ({
     >
       <Grid size={{ xs: 3 }}>
         <ListPrefs
-          currentId={currentId}
-          prefs={items}
+          currentKey={currentId}
+          prefs={prefs}
           scrollRef={scrollRef}
           setSelectedPref={setSelectedPref}
         />

@@ -1252,6 +1252,12 @@ export type ColdStorageTypeSortInput = {
 
 export type ColdStorageTypesResponse = ColdStorageTypeConnector;
 
+export type ComplexPrefNode = {
+  __typename: 'ComplexPrefNode';
+  somethingElse: Scalars['String']['output'];
+  somethingHere: Scalars['Int']['output'];
+};
+
 export type ConfigureNamePropertiesResponse = Success;
 
 export type ConfigureNamePropertyInput = {
@@ -5854,6 +5860,19 @@ export type PluginInfoNode = {
   pluginInfo: Scalars['JSON']['output'];
 };
 
+export type PreferenceDescriptionNode = {
+  __typename: 'PreferenceDescriptionNode';
+  globalOnly: Scalars['Boolean']['output'];
+  jsonFormsInputType: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+};
+
+export type PreferencesNode = {
+  __typename: 'PreferencesNode';
+  complexPref: ComplexPrefNode;
+  showContactTracing: Scalars['Boolean']['output'];
+};
+
 export type PricingNode = {
   __typename: 'PricingNode';
   foreignCurrencyTotalAfterTax?: Maybe<Scalars['Float']['output']>;
@@ -6183,6 +6202,7 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
+  availablePreferences: Array<PreferenceDescriptionNode>;
   barcodeByGtin: BarcodeResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
@@ -6276,6 +6296,7 @@ export type Queries = {
   patients: PatientResponse;
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
+  preferences: PreferencesNode;
   printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
@@ -6722,6 +6743,10 @@ export type QueriesPluginDataArgs = {
   filter?: InputMaybe<PluginDataFilterInput>;
   pluginCode: Scalars['String']['input'];
   sort?: InputMaybe<Array<PluginDataSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPreferencesArgs = {
   storeId: Scalars['String']['input'];
 };
 

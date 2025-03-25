@@ -1,3 +1,7 @@
 query AllPrefs {
-  
+  availablePreferences {
+    key
+    globalOnly
+    jsonFormsInputType
+  }
 }
