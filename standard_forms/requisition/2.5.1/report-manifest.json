@@ -3,7 +3,7 @@
   "version": "2.5.1",
   "code": "requisition",
   "context": "REQUISITION",
-  "name": "requisition",
+  "name": "Requisition",
   "queries": {
     "gql": "requisitionQuery.graphql"
   },
