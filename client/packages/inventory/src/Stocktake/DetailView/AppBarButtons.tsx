@@ -58,7 +58,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           context={ReportContext.Stocktake}
           onPrint={printReport}
           isPrinting={isPrinting}
-          buttonLabel="Print Options"
+          buttonLabel={t('button.print')}
         />
         {OpenButton}
       </Grid>
