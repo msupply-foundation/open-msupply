@@ -24,6 +24,7 @@ const UIComponent = (props: ControlProps) => {
       sx={DefaultFormRowSx}
       label={t(label as LocaleKey)}
       labelWidthPercentage={FORM_LABEL_WIDTH}
+      labelProps={{ sx: { lineHeight: '2.5' } }}
       inputAlignment={'start'}
       Input={
         <Switch
