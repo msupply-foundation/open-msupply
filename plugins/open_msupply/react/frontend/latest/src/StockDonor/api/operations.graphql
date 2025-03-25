@@ -17,7 +17,7 @@ query pluginData(
       nodes {
         id
         data
-        stockLineId: relatedRecordId
+        relatedRecordId
       }
     }
   }

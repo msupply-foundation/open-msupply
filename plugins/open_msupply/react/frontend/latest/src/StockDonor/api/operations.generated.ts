@@ -11,7 +11,7 @@ export type PluginDataQueryVariables = Types.Exact<{
 }>;
 
 
-export type PluginDataQuery = { __typename: 'Queries', pluginData: { __typename: 'PluginDataConnector', nodes: Array<{ __typename: 'PluginDataNode', id: string, data: string, stockLineId?: string | null }> } };
+export type PluginDataQuery = { __typename: 'Queries', pluginData: { __typename: 'PluginDataConnector', nodes: Array<{ __typename: 'PluginDataNode', id: string, data: string, relatedRecordId?: string | null }> } };
 
 export type InsertPluginDataMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -42,7 +42,7 @@ export const PluginDataDocument = gql`
       nodes {
         id
         data
-        stockLineId: relatedRecordId
+        relatedRecordId
       }
     }
   }
