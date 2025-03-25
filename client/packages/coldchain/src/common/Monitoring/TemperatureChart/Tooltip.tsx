@@ -6,7 +6,7 @@ import {
   UNDEFINED_STRING_VALUE,
   useFormatDateTime,
 } from '@openmsupply-client/common';
-import { useFormatTemperature } from '../../../common';
+import { useFormatTemperature } from '../..';
 
 import React from 'react';
 
@@ -36,7 +36,7 @@ export type Entry = {
   }
   ]
   */
-export const TemperatureTooltip = ({
+export const Tooltip = ({
   active,
   payload,
   label,
