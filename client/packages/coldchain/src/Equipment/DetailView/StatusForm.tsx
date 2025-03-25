@@ -10,6 +10,7 @@ import { LocaleKey, useTranslation } from '@common/intl';
 import {
   AssetLogStatusInput,
   Box,
+  CameraIcon,
   InsertAssetLogInput,
   StatusType,
   styled,
@@ -158,6 +159,7 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
         <UploadButton
           onUpload={onUpload}
           files={draft.files}
+          icon={<CameraIcon />}
           customLabel={t('button.camera')}
         ></UploadButton>
       );

@@ -1,17 +1,19 @@
+import React from 'react';
 import { ButtonWithIcon } from '@common/components';
 import { PlusCircleIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 import { Box, FnUtils } from 'packages/common/src';
-import React from 'react';
 
 export const UploadButton = ({
   onUpload,
   files,
   customLabel,
+  icon,
 }: {
   onUpload: (files: File[]) => void;
   files: File[] | undefined;
   customLabel?: string;
+  icon?: React.ReactNode;
 }) => {
   const t = useTranslation();
   const elementId = FnUtils.generateUUID();
@@ -35,7 +37,7 @@ export const UploadButton = ({
       }}
     >
       <ButtonWithIcon
-        Icon={<PlusCircleIcon />}
+        Icon={icon ? icon : <PlusCircleIcon />}
         label={customLabel || t('button.browse-files')}
         onClick={() => document.getElementById(elementId)?.click()}
         shouldShrink={false}
