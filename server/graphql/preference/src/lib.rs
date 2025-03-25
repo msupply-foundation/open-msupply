@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::PreferencesNode;
+use graphql_types::types::{PreferenceDescriptionNode, PreferencesNode};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Default, Clone)]
@@ -28,35 +28,34 @@ impl PreferenceQueries {
 
         Ok(PreferencesNode::from_domain(prefs))
     }
+
+    pub async fn available_preferences(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Vec<PreferenceDescriptionNode>> {
+        validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::QueryStorePreferences,
+                store_id: None,
+            },
+        )?;
+
+        let service_provider = ctx.service_provider();
+        let service = &service_provider.preference_service;
+
+        let prefs = service.get_preference_descriptions();
+
+        Ok(prefs
+            .iter()
+            .map(|pref| PreferenceDescriptionNode {
+                key: pref.key(),
+                global_only: pref.global_only(),
+                json_forms_input_type: pref.json_forms_input_type(),
+            })
+            .collect())
+    }
 }
-
-// TODO: separate query for central edit UI - all prefs, global and for each store, rather than the consolidated list
-
-// #[derive(Default, Clone)]
-// pub struct CentralPreferenceQueries;
-// #[Object]
-// impl CentralPreferenceQueries {
-//     pub async fn preferences(
-//         &self,
-//         ctx: &Context<'_>,
-//         store_id: String,
-//     ) -> Result<PreferencesResponse> {
-//         validate_auth(
-//             ctx,
-//             &ResourceAccessRequest {
-//                 resource: Resource::QueryVaccineCourse,
-//                 store_id: None,
-//             },
-//         )?;
-//         let connection = ctx.get_connection_manager().connection()?;
-//         let items = get_preferences(&connection, store_id)
-//             .map_err(StandardGraphqlError::from_list_error)?;
-
-//         Ok(VaccineCoursesResponse::Response(
-//             VaccineCourseConnector::from_domain(items),
-//         ))
-//     }
-// }
 
 // --
 // TODO: mutations from central only UI
