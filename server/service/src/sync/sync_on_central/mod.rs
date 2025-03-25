@@ -347,7 +347,7 @@ pub async fn upload_file(
         .ok_or(Error::SyncFileNotFound(file_id.clone()))?;
 
     file_service.move_temp_file(
-        file_part,
+        &file_part,
         &StaticFileCategory::SyncFile(
             sync_file_reference.table_name.clone(),
             sync_file_reference.record_id.clone(),

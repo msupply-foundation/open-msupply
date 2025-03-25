@@ -1,4 +1,4 @@
-use super::{BatchIsReserved, TransferredShipment};
+use super::{BatchIsReserved, LineLinkedToTransferredInvoice};
 use async_graphql::*;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
@@ -58,7 +58,7 @@ pub enum DeleteErrorInterface {
     ForeignKeyError(ForeignKeyError),
     CannotEditInvoice(CannotEditInvoice),
     BatchIsReserved(BatchIsReserved),
-    TransferredShipment(TransferredShipment),
+    LineLinkedToTransferredInvoice(LineLinkedToTransferredInvoice),
 }
 
 impl DeleteInput {
@@ -104,9 +104,9 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         ServiceError::BatchIsReserved => {
             return Ok(DeleteErrorInterface::BatchIsReserved(BatchIsReserved {}))
         }
-        ServiceError::TransferredShipment => {
-            return Ok(DeleteErrorInterface::TransferredShipment(
-                TransferredShipment {},
+        ServiceError::LineLinkedToTransferredInvoice => {
+            return Ok(DeleteErrorInterface::LineLinkedToTransferredInvoice(
+                LineLinkedToTransferredInvoice {},
             ))
         }
         // Standard Graphql Errors
@@ -313,13 +313,15 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // TransferredShipment
-        let test_service = TestService(Box::new(|_| Err(ServiceError::TransferredShipment)));
+        // LineLinkedToTransferredInvoice
+        let test_service = TestService(Box::new(|_| {
+            Err(ServiceError::LineLinkedToTransferredInvoice)
+        }));
 
         let expected = json!({
             "deleteInboundShipmentLine": {
               "error": {
-                "__typename": "TransferredShipment"
+                "__typename": "LineLinkedToTransferredInvoice"
               }
             }
           }
