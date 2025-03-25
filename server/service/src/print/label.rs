@@ -15,9 +15,6 @@ pub struct AssetLabelData {
 pub fn print_asset_label(
     settings: LabelPrinterSettingNode,
     data: AssetLabelData,
-    // code: String,
-    // asset_number: Option<String>,
-    // date_printed: Option<String>,
 ) -> Result<String> {
 
     let asset_number = data.asset_number.unwrap_or_default();
