@@ -42,7 +42,8 @@
     </div>
     <div class="header-space-between">
         <span>
-            {{data.invoice.otherParty.address1 }}, {{data.invoice.otherParty.address2}}
+            {{data.invoice.otherParty.address1 }}{% if data.invoice.otherParty.address2 %},
+            {{data.invoice.otherParty.address2 }} {% endif %} 
         </span>
         <span>{{t(k="report.shipped-date",f="Shipped date")}}: {{self::dateOrNA(datetime=data.invoice.shippedDatetime)}}</span>
     </div>
