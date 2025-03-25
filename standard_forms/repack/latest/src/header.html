@@ -1,6 +1,5 @@
 {% macro dateOrNA(datetime) %}
-{% if datetime %}{{ datetime | date(format="%d/%m/%Y") }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif
-%}
+{% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %}
 {% endmacro input %}
 
 <table class="header_image_section" style="width: 100%;height: 98%;">
