@@ -7,6 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { LineEditBase } from './LineEditBase';
 import { useAvailablePreferences } from '../api';
+import { EditPreference } from './EditPreference';
 
 export const PreferencesLineEdit = () => {
   const t = useTranslation();
@@ -24,9 +25,11 @@ export const PreferencesLineEdit = () => {
       });
   }, [key]);
 
+  const selectedPref = data?.find(d => key === d.key);
+
   return (
     <LineEditBase currentKey={key ?? ''} prefs={data ?? []}>
-      ELLLOO
+      {selectedPref && <EditPreference selected={selectedPref} />}
     </LineEditBase>
   );
 };
