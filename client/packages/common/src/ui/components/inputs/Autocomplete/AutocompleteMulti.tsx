@@ -119,7 +119,8 @@ export function AutocompleteMulti<
           borderRadius: 2,
         },
       }}
-      noOptionsText={t('label.no-options')}
+      noOptionsText={noOptionsText ?? t('label.no-options')}
+      loadingText={loadingText ?? t('loading')}
     />
   );
 }
