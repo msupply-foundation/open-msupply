@@ -95,16 +95,15 @@ export const ImportFridgeTag = ({
           `${resultJson.startDatetime}_${resultJson.endDatetime}`
         );
 
-        navigate(
-          RouteBuilder.create(AppRoute.Coldchain)
-            .addPart(AppRoute.Monitoring)
-            .addQuery({
-              'sensor.id': resultJson.newSensorId ?? '',
-              datetime: encodedDatetime,
-              sort: 'datetime',
-            })
-            .build()
-        );
+        const path = RouteBuilder.create(AppRoute.Coldchain)
+          .addPart(AppRoute.Monitoring)
+          .addQuery({
+            'sensor.id': resultJson.newSensorId ?? '',
+            datetime: encodedDatetime,
+            sort: 'datetime',
+          })
+          .build();
+        setTimeout(() => navigate(path));
         return;
       }
 
