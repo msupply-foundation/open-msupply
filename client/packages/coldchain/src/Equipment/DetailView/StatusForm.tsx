@@ -40,7 +40,6 @@ interface StatusForm {
 
 export type Draft = InsertAssetLogInput & { files?: File[] };
 
-
 const Row = ({
   children,
   label,
@@ -91,7 +90,7 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
   const t = useTranslation();
   const isGaps = useIsGapsStoreOnly();
   const isNative = Capacitor.isNativePlatform();
-  const isSmallScreen = useIsScreen('md',);
+  const isSmallScreen = useIsScreen('md');
   const debouncedOnChange = useDebounceCallback(
     (patch: Partial<InsertAssetLogInput>) => onChange(patch),
     [onChange],
@@ -116,8 +115,8 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
   const { data } = useAssetData.log.listReasons(
     draft.status
       ? {
-        assetLogStatus: { equalTo: draft.status },
-      }
+          assetLogStatus: { equalTo: draft.status },
+        }
       : undefined
   );
 
@@ -137,10 +136,37 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
     onChange({ files });
   };
 
+  const uploadButton = isSmallScreen ? (
+    <UploadButton
+      onUpload={onUpload}
+      files={draft.files}
+      customLabel={t('button.browse-files')}
+    ></UploadButton>
+  ) : (
+    <Upload onUpload={onUpload} /> // Use dropzone for larger screens
+  );
+
+  // If the screen is small or the platform is native, add a TakePhotoButton
+  let takePhotoButton = null;
+  if (isSmallScreen || isNative) {
+    if (isNative) {
+      takePhotoButton = (
+        <TakePhotoButton onUpload={onUpload} files={draft.files} />
+      );
+    } else {
+      takePhotoButton = (
+        <UploadButton
+          onUpload={onUpload}
+          files={draft.files}
+          customLabel={t('button.camera')}
+        ></UploadButton>
+      );
+    }
+  }
 
   return (
     <StyledContainer>
-      <Box display="flex" flexDirection="column" sx={{ width: '100%' }} >
+      <Box display="flex" flexDirection="column" sx={{ width: '100%' }}>
         <Row label={t('label.new-functional-status')} isGaps={isGaps}>
           <Autocomplete
             isOptionEqualToValue={option => option?.value === draft.status}
@@ -174,29 +200,20 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
             onChange={e => debouncedOnChange({ comment: e.target.value })}
           />
         </Row>
-        <Box sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          marginTop: 2,
-          padding: 0,
-          alignItems: 'center',
-          height: '100%',
-          width: '100%',
-          justifyContent: 'center',
-        }}>
-          {!isSmallScreen && <Upload onUpload={onUpload} />}
-          {isSmallScreen && isNative && (
-            <>
-              <UploadButton onUpload={onUpload} files={draft.files} customLabel={t('button.browse-files')}></UploadButton>
-              <TakePhotoButton onUpload={onUpload} files={draft.files} />
-            </>
-          )}
-          {isSmallScreen && !isNative && (
-            <>
-              <UploadButton onUpload={onUpload} files={draft.files} customLabel={t('button.browse-files')}></UploadButton>
-              <UploadButton onUpload={onUpload} files={draft.files} customLabel={t('button.camera')}></UploadButton>
-            </>
-          )}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            marginTop: 2,
+            padding: 0,
+            alignItems: 'center',
+            height: '100%',
+            width: '100%',
+            justifyContent: 'center',
+          }}
+        >
+          {uploadButton}
+          {takePhotoButton}
         </Box>
         <Box display="flex" sx={{ width: '300px' }}>
           <FileList
@@ -207,6 +224,6 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
           />
         </Box>
       </Box>
-    </StyledContainer >
+    </StyledContainer>
   );
 };
