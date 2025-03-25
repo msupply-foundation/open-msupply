@@ -4,7 +4,7 @@ import { PlusCircleIcon } from "@common/icons";
 import React from "react";
 import { base64ToBlob } from "../utils";
 import { useTranslation } from "@common/intl";
-import { Box } from "packages/common/src";
+import { Box, useNotification } from "packages/common/src";
 
 export const TakePhotoButton = ({
     onUpload,
@@ -14,6 +14,7 @@ export const TakePhotoButton = ({
     | undefined
 }) => {
     const t = useTranslation();
+    const { error } = useNotification();
     const checkPermissions = async () => {
         const permissionState = await Camera.checkPermissions();
         if (permissionState.camera !== 'granted') {
@@ -55,14 +56,13 @@ export const TakePhotoButton = ({
             newFileSet.push(file);
             onUpload(newFileSet);
 
-        } catch (error) {
-            console.error('error', error)
+        } catch (e) {
+            error(t('error.photo-error'));
         }
     };
 
     return (
-        <Box sx={{ width: '50%', padding: 0 }} >
-
+        <Box sx={{ padding: 0 }} >
             <ButtonWithIcon
                 Icon={<PlusCircleIcon />}
                 label={t('button.camera')}
