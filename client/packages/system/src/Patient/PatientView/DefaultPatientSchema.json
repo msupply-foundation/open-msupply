@@ -66,6 +66,15 @@
           "description": "Phone number",
           "type": "string"
         },
+        "dateOfDeath": {
+          "description": "Date of death",
+          "format": "date",
+          "type": "string"
+        },
+        "isDeceased": {
+          "description": "Person is deceased",
+          "type": "boolean"
+        },
         "nextOfKin": {
           "description": "Next of kin info for the patient",
           "$ref": "#/definitions/NextOfKin"

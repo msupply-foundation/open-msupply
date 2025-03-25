@@ -4,6 +4,7 @@ import { DateTimePickerInput } from '@common/components';
 import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
 import { DateUtils, useFormatDateTime } from '@common/intl';
 import { FilterLabelSx } from './styleConstants';
+import { PickersActionBarAction } from '@mui/x-date-pickers';
 
 export interface DateFilterDefinition extends FilterDefinitionCommon {
   type: 'date' | 'dateTime';
@@ -69,6 +70,8 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
     },
     minDate: getRangeBoundary(urlValue, range, minDate),
     maxDate: getRangeBoundary(urlValue, range, maxDate),
+    actions: ['clear', 'accept'] as PickersActionBarAction[],
+    displayAs,
   };
 
   return displayAs === 'dateTime' ? (
