@@ -11,7 +11,7 @@ interface CustomOption<T> {
   label: string;
   value?: T;
   isDisabled?: boolean;
-  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 interface ReportSelectorProps {
   context?: ReportContext;
@@ -21,7 +21,7 @@ interface ReportSelectorProps {
   /** Disable the whole control */
   disabled?: boolean;
   queryParams?: ReportListParams;
-  extraOptions?: CustomOption<string>[];
+  CustomOptions?: CustomOption<string>[];
   onPrintCustom?: (
     e: React.MouseEvent<HTMLButtonElement>,
     option: string
@@ -34,9 +34,9 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   subContext,
   onPrint,
   isPrinting,
-  disabled,
+  disabled = false,
   queryParams,
-  extraOptions,
+  CustomOptions,
   onPrintCustom,
   buttonLabel,
 }) => {
@@ -57,7 +57,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
     }
 
     // // if there is a matching custom option
-    const actions = extraOptions?.map(opt => ({
+    const actions = CustomOptions?.map(opt => ({
       value: opt.value,
     }));
     const act = actions?.find(a => a.value === option.value);
@@ -77,28 +77,40 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
       // passing timezone through as forms do not have arguments
       const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
       onPrint(report, { timezone });
+      // force disabled to reset to false
+      setSelectedOption({
+        label: ' ',
+        isDisabled: false,
+      });
     }
   };
 
-  // button options renderer - if exist
+  // useEffect(() => {
+  //   disabled;
+  // }, [disabled]);
+
+  // button options renderer - if exists
   const options: SplitButtonOption<string>[] = useMemo(() => {
     const reports = data
       ? data?.nodes?.map(report => ({
           value: report.id,
           label: report.name,
-          isDisabled: disabled ? true : false,
+          isDisabled: disabled,
         }))
       : [];
 
-    const allOptions = [extraOptions || [], reports];
+    const allOptions = [CustomOptions || [], reports];
     return allOptions.flat();
-  }, [data, disabled, extraOptions]);
+  }, [data, disabled, CustomOptions]);
 
   // for if no options
   const hasPermission = !initialLoading && data !== undefined;
   const noReports = hasPermission
     ? { label: t('error.no-reports-available') }
     : { label: t('error.no-report-permission') };
+
+  if (options.length === 0) options.push(noReports);
+
   // the selected option
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<string>
