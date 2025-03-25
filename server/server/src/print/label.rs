@@ -5,21 +5,14 @@ use actix_web::{
 use repository::RepositoryError;
 use service::{
     auth_data::AuthData,
-    print::label::{host_status, print_asset_label, print_prescription_label, PrescriptionLabelData},
+    print::label::{host_status, print_asset_label, print_prescription_label, AssetLabelData, PrescriptionLabelData},
     service_provider::ServiceProvider,
     settings::LabelPrinterSettingNode,
 };
 
 use crate::authentication::validate_cookie_auth;
 
-#[derive(serde::Deserialize)]
-pub struct AssetLabelData {
-    code: String,
-    assetNumber: Option<String>,
-    datePrinted: Option<String>
-}
-
-pub async fn print_label_qr(
+pub async fn print_label_asset(
     request: HttpRequest,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
@@ -41,8 +34,7 @@ pub async fn print_label_qr(
                 .body(format!("Error getting printer settings: {}", error));
         }
     };
-
-    match print_asset_label(settings, data.code.clone(), data.assetNumber.clone(), data.datePrinted.clone()) {
+    match print_asset_label(settings, data.into_inner()) {
         Ok(_) => HttpResponse::Ok().body("Asset label printed"),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
