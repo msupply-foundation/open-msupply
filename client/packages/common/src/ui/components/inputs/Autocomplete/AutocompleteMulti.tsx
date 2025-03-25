@@ -49,6 +49,8 @@ export function AutocompleteMulti<
   width = 'auto',
   slotProps,
   inputProps,
+  loadingText,
+  noOptionsText,
   ...restOfAutocompleteProps
 }: PropsWithChildren<
   AutocompleteMultiProps<T, true, DisableClearable, FreeSolo, ChipComponent>
@@ -119,7 +121,8 @@ export function AutocompleteMulti<
           borderRadius: 2,
         },
       }}
-      noOptionsText={t('label.no-options')}
+      noOptionsText={noOptionsText ?? t('label.no-options')}
+      loadingText={loadingText ?? t('loading')}
     />
   );
 }
