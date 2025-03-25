@@ -3,7 +3,6 @@
   "version": "2.6.1",
   "code": "repack",
   "context": "REPACK",
-  "sub_context": "picklist",
   "name": "Repack",
   "queries": {
     "gql": "repack.graphql"
