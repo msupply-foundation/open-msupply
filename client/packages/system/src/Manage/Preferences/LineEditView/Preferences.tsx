@@ -1,3 +1,4 @@
 import React from 'react';
+import { LineEditBase } from './LineEditBase';
 
-export const PreferencesLineEdit = () => <>ELLLOO</>;
+export const PreferencesLineEdit = () => <LineEditBase>ELLLOO</LineEditBase>;
