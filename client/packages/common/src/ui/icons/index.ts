@@ -21,6 +21,7 @@ export { ClockIcon } from './Clock';
 export { CloseIcon } from './Close';
 export { ColumnsIcon } from './Columns';
 export { CopyIcon } from './Copy';
+export { CameraIcon } from './Camera';
 export { CustomersIcon } from './Customers';
 export { DashboardIcon } from './Dashboard';
 export { DeleteIcon } from './Delete';
