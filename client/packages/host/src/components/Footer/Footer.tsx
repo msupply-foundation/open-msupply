@@ -98,8 +98,7 @@ export const Footer: FC = () => {
 
   return (
     <Box
-      gap={2}
-      flex={1}
+      gap={isExtraSmallScreen ? 0 : 2}
       display="flex"
       alignItems="center"
       px={0}
