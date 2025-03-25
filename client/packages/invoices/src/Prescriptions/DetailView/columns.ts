@@ -13,6 +13,7 @@ import {
   CurrencyCell,
   ColumnDescription,
   NumUtils,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -64,6 +65,9 @@ export const usePrescriptionColumn = ({
 >[] => {
   const t = useTranslation();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
+
+  const { store: { preferences } = {} } = useAuthContext();
+  const hasPrescribedQty = preferences?.editPrescribedQuantityOnPrescription;
 
   const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
     GenericColumnKey.Selection,
@@ -219,7 +223,40 @@ export const usePrescriptionColumn = ({
         },
       },
     ],
+  ];
 
+  if (hasPrescribedQty) {
+    columns.push({
+      label: 'label.prescribed-quantity',
+      key: 'prescribedQuantity',
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => {
+        if ('lines' in rowData) {
+          // Multiple lines, so we need to get the prescribed quantity from the first line with a value
+
+          const lineWithPrescribedQty = rowData.lines.find(
+            line => line.prescribedQuantity
+          );
+          return lineWithPrescribedQty?.prescribedQuantity ?? 0;
+        } else {
+          return rowData.prescribedQuantity ?? 0;
+        }
+      },
+      getSortValue: rowData => {
+        if ('lines' in rowData) {
+          return Object.values(rowData.lines).reduce(
+            (sum, batch) =>
+              sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
+            0
+          );
+        } else {
+          return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
+        }
+      },
+    });
+  }
+
+  columns.push(
     [
       'numberOfPacks',
       {
@@ -260,7 +297,6 @@ export const usePrescriptionColumn = ({
         },
       },
     ],
-
     {
       label: 'label.unit-price',
       key: 'sellPricePerUnit',
@@ -356,8 +392,8 @@ export const usePrescriptionColumn = ({
         }
       },
     },
-    expansionColumn,
-  ];
+    expansionColumn
+  );
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
 };
