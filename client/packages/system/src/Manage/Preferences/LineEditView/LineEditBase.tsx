@@ -12,10 +12,10 @@ import { ListPrefs } from './ListPrefs';
 export const LineEditBase = ({
   children,
   prefs,
-  currentId,
+  currentKey,
 }: PropsWithChildren & {
   prefs: PreferenceDescriptionNode[];
-  currentId: string;
+  currentKey: string;
 }) => {
   const navigate = useNavigate();
 
@@ -43,7 +43,7 @@ export const LineEditBase = ({
     >
       <Grid size={{ xs: 3 }}>
         <ListPrefs
-          currentKey={currentId}
+          currentKey={currentKey}
           prefs={prefs}
           scrollRef={scrollRef}
           setSelectedPref={setSelectedPref}

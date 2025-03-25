@@ -10,7 +10,7 @@ export const ManageService: FC = () => {
   ).build();
 
   const preferencesRoute = RouteBuilder.create(AppRoute.Preferences)
-    .addWildCard()
+    .addPart(':key?')
     .build();
 
   return (
