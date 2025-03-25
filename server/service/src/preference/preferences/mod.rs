@@ -5,13 +5,13 @@ use serde::de::DeserializeOwned;
 
 pub mod complex_pref;
 use complex_pref::*;
-mod use_payments_in_prescriptions;
-use use_payments_in_prescriptions::*;
+mod show_contact_tracing;
+use show_contact_tracing::*;
 
 use crate::service_provider::ServiceContext;
 
 pub struct Preferences {
-    pub use_payments_in_prescriptions: bool,
+    pub show_contact_tracing: bool,
     pub complex: ComplexPref,
 }
 
@@ -22,21 +22,39 @@ pub fn get_preferences(
     let connection = &ctx.connection;
 
     let prefs = Preferences {
-        use_payments_in_prescriptions: UsePaymentsInPrescriptions::load(connection, store_id)?,
-        complex: ComplexPref::load(connection, store_id)?,
+        show_contact_tracing: ShowContactTracing::load(connection, store_id)?,
+        complex: ComplexOne::load(connection, store_id)?,
     };
 
     Ok(prefs)
 }
 
-pub trait Preference<T: Default + DeserializeOwned> {
+pub fn get_preference_descriptions() -> Vec<Box<dyn PreferenceDescription>> {
+    let registry: Vec<Box<dyn PreferenceDescription>> =
+        vec![Box::new(ShowContactTracing {}), Box::new(ComplexOne {})];
+
+    registry
+}
+
+pub trait Preference {
+    type Value: Default + DeserializeOwned;
+
     fn key() -> &'static str;
 
-    fn deserialize(data: &str) -> Result<T, serde_json::Error> {
-        serde_json::from_str::<T>(data)
+    fn global_only() -> bool {
+        false
     }
 
-    fn load(connection: &StorageConnection, store_id: &str) -> Result<T, RepositoryError> {
+    fn json_forms_input_type() -> String;
+
+    fn deserialize(data: &str) -> Result<Self::Value, serde_json::Error> {
+        serde_json::from_str::<Self::Value>(data)
+    }
+
+    fn load(
+        connection: &StorageConnection,
+        store_id: &str,
+    ) -> Result<Self::Value, RepositoryError> {
         let prefs_by_key = PreferenceRepository::new(connection).query_by_filter(
             PreferenceFilter::new()
                 .store_id(EqualFilter::equal_any_or_null(vec![store_id.to_string()]))
@@ -50,7 +68,7 @@ pub trait Preference<T: Default + DeserializeOwned> {
         let configured_pref = store_pref.or(global_pref);
 
         match configured_pref {
-            None => Ok(T::default()),
+            None => Ok(Self::Value::default()),
             Some(pref) => {
                 let text_pref = pref.value.as_str();
 
@@ -64,6 +82,23 @@ pub trait Preference<T: Default + DeserializeOwned> {
     }
 }
 
+pub trait PreferenceDescription {
+    fn key(&self) -> String;
+    fn global_only(&self) -> bool;
+    fn json_forms_input_type(&self) -> String;
+}
+
+impl<T: 'static + Preference> PreferenceDescription for T {
+    fn key(&self) -> String {
+        T::key().to_string()
+    }
+    fn global_only(&self) -> bool {
+        T::global_only()
+    }
+    fn json_forms_input_type(&self) -> String {
+        T::json_forms_input_type()
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -80,7 +115,12 @@ mod tests {
             b: String,
         }
 
-        impl Preference<TestPref1> for TestPref1 {
+        impl Preference for TestPref1 {
+            type Value = TestPref1;
+            fn json_forms_input_type() -> String {
+                "n/a".to_string()
+            }
+
             fn key() -> &'static str {
                 "test_pref_1"
             }
@@ -89,7 +129,12 @@ mod tests {
         #[derive(Debug, PartialEq)]
         struct TestPref2;
 
-        impl Preference<i32> for TestPref2 {
+        impl Preference for TestPref2 {
+            type Value = i32;
+            fn json_forms_input_type() -> String {
+                "n/a".to_string()
+            }
+
             fn key() -> &'static str {
                 "test_pref_2"
             }
