@@ -1,13 +1,31 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import {
+  LocaleKey,
+  useBreadcrumbs,
+  useParams,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { LineEditBase } from './LineEditBase';
 import { useAvailablePreferences } from '../api';
 
 export const PreferencesLineEdit = () => {
+  const t = useTranslation();
+  const { key } = useParams();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+
   const {
     query: { data },
   } = useAvailablePreferences();
+
+  useEffect(() => {
+    if (key)
+      setCustomBreadcrumbs({
+        1: t(`preference.${key}` as LocaleKey),
+      });
+  }, [key]);
+
   return (
-    <LineEditBase currentKey={null} prefs={data ?? []}>
+    <LineEditBase currentKey={key ?? ''} prefs={data ?? []}>
       ELLLOO
     </LineEditBase>
   );
