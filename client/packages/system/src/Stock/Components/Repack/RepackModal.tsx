@@ -14,8 +14,6 @@ import {
   noOtherVariants,
   ButtonWithIcon,
   ReportContext,
-  LoadingButton,
-  PrinterIcon,
   StockLineNode,
   useConfirmationModal,
   useNavigate,
@@ -196,16 +194,9 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           context={ReportContext.Repack}
           onPrint={printReport}
           disabled={!invoiceId}
-        >
-          <LoadingButton
-            sx={{ marginLeft: 1 }}
-            variant="outlined"
-            startIcon={<PrinterIcon />}
-            isLoading={isPrinting}
-            disabled={!invoiceId}
-            label={t('button.print')}
-          />
-        </ReportSelector>
+          isPrinting={isPrinting}
+          buttonLabel={t('button.print')}
+        />
       }
     >
       <Box>
