@@ -42,7 +42,7 @@ export const TakePhotoButton = ({
       const contentType = `image/${image.format}`;
 
       if (!base64Data) {
-        // todo throw error?
+        error(t('error.photo-error'));
         return;
       }
       const blob = base64ToBlob(base64Data, contentType);
