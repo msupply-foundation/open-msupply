@@ -150,7 +150,7 @@ async fn upload_sync_file(
 
     let path_inner = path.into_inner();
 
-    let mut static_file_ids: Vec<String> = [].to_vec();
+    let mut static_file_ids: Vec<String> = vec![];
 
     for f in file {
         let static_file =
