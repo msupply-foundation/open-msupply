@@ -19,6 +19,7 @@ export * from './Log';
 export * from './ReturnReason';
 export * from './Currency';
 export * from './RequestRequisitionLine';
+export * from './Manage';
 export {
   getInvoiceLocalisationKey,
   processProperties,
