@@ -43,11 +43,7 @@ export const usePrescription = (id?: string) => {
   // invoice id from the URL
   const invoiceId = !id ? paramInvoiceId : id;
 
-  const {
-    data,
-    isLoading: loading,
-    error,
-  } = useGetById(invoiceId);
+  const { data, isLoading: loading, error } = useGetById(invoiceId);
 
   const isDisabled = data ? isPrescriptionDisabled(data) : false;
 
@@ -141,10 +137,6 @@ const useGetById = (invoiceId: string | undefined) => {
     } else {
       throw new Error('Could not find invoice');
     }
-    // TODO check if this is throwing unweildy errors where program component has id for yet to exist presciptions.
-    // Don't throw error for this one if not found -- it's mainly used by
-    // Program component (Prescription), which may have stored an id for a
-    // prescription that doesn't yet exist
   };
 
   const query = useQuery({
