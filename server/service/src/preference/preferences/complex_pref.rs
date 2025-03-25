@@ -8,8 +8,16 @@ pub struct ComplexPref {
     pub something_else: String,
 }
 
-impl Preference<ComplexPref> for ComplexPref {
+pub struct ComplexOne;
+
+impl Preference for ComplexOne {
+    type Value = ComplexPref;
+
     fn key() -> &'static str {
-        "complex_pref"
+        "complex_one"
+    }
+
+    fn json_forms_input_type() -> String {
+        "believe me i made a custom renderer called this".to_string()
     }
 }
