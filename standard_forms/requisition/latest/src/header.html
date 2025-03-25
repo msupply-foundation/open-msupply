@@ -41,7 +41,8 @@
   </div>
   <div style="display: flex; justify-content: flex-start;">
       <span>
-          {{data.requisition.otherParty.address1 }}, {{data.requisition.otherParty.address2}}
+          {{data.requisition.otherParty.address1 }}{% if data.requisition.otherParty.address2 %},
+          {{data.requisition.otherParty.address2 }} {% endif %} 
       </span>
   </div>
 </div>

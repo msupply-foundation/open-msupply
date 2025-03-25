@@ -41,8 +41,8 @@
   </div>
   <div class="header-space-between">
       <span>
-          {{data.requisition.otherParty.address1 }},
-          {{data.requisition.otherParty.address2}}
+          {{data.requisition.otherParty.address1 }}{% if data.requisition.otherParty.address2 %},
+          {{data.requisition.otherParty.address2 }} {% endif %} 
         </span>
         <span id="date">{{t(k="report.finalised-date", f="Finalised date") }}: {{ self::dateOrNA(datetime=data.requisition.finalisedDatetime)}}</span>
   </div>
