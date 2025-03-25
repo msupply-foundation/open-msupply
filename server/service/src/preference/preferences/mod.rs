@@ -10,6 +10,8 @@ use show_contact_tracing::*;
 
 use crate::service_provider::ServiceContext;
 
+type PreferenceRegistry = (ShowContactTracing, ComplexOne);
+
 pub struct Preferences {
     pub show_contact_tracing: bool,
     pub complex: ComplexPref,
@@ -21,19 +23,24 @@ pub fn get_preferences(
 ) -> Result<Preferences, RepositoryError> {
     let connection = &ctx.connection;
 
+    let (show_contact_tracing, complex_one) = get_preference_registry();
+
     let prefs = Preferences {
-        show_contact_tracing: ShowContactTracing::load(connection, store_id)?,
-        complex: ComplexOne::load(connection, store_id)?,
+        show_contact_tracing: show_contact_tracing.load(connection, store_id)?,
+        complex: complex_one.load(connection, store_id)?,
     };
 
     Ok(prefs)
 }
 
 pub fn get_preference_descriptions() -> Vec<Box<dyn PreferenceDescription>> {
-    let registry: Vec<Box<dyn PreferenceDescription>> =
-        vec![Box::new(ShowContactTracing {}), Box::new(ComplexOne {})];
+    let (show_contact_tracing, complex_one) = get_preference_registry();
 
-    registry
+    vec![Box::new(show_contact_tracing), Box::new(complex_one)]
+}
+
+fn get_preference_registry() -> PreferenceRegistry {
+    (ShowContactTracing, ComplexOne)
 }
 
 pub trait Preference {
@@ -52,6 +59,7 @@ pub trait Preference {
     }
 
     fn load(
+        &self,
         connection: &StorageConnection,
         store_id: &str,
     ) -> Result<Self::Value, RepositoryError> {
@@ -99,6 +107,7 @@ impl<T: 'static + Preference> PreferenceDescription for T {
         T::json_forms_input_type()
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -157,11 +166,11 @@ mod tests {
         let store_id = mock_store_a().id;
 
         // Should return default, as no saved pref record exists for this pref type
-        let pref = TestPref1::load(&connection, &store_id).unwrap();
+        let pref = TestPref1::default().load(&connection, &store_id).unwrap();
         assert_eq!(pref, TestPref1::default());
 
         // Should return 6, the saved global pref
-        let pref2 = TestPref2::load(&connection, &store_id).unwrap();
+        let pref2 = TestPref2.load(&connection, &store_id).unwrap();
         assert_eq!(pref2, 6);
 
         // Insert a store pref
@@ -175,7 +184,7 @@ mod tests {
             .unwrap();
 
         // Should return 12, overriding the global pref
-        let pref2 = TestPref2::load(&connection, &store_id).unwrap();
+        let pref2 = TestPref2.load(&connection, &store_id).unwrap();
         assert_eq!(pref2, 12);
     }
 }
