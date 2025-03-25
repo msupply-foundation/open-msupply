@@ -1,7 +1,7 @@
 import React, { FC, PropsWithChildren, useState } from 'react';
 import { Box, ReportContext, Typography } from '@openmsupply-client/common';
 import { AlertIcon } from '@common/icons';
-import { useTranslation } from '@common/intl';
+import { LocaleKey, useTranslation } from '@common/intl';
 import {
   CircularProgress,
   FlatButton,
@@ -72,7 +72,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
 
   const reportButtons = data?.nodes?.map(report => (
     <FlatButton
-      label={report.name}
+      label={t(report.name as LocaleKey)}
       onClick={() => {
         hide();
         onReportSelected(report);

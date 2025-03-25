@@ -4,7 +4,7 @@
   "code": "stock-take-variance",
   "context": "STOCKTAKE",
   "sub_context": "picklist",
-  "name": "Stocktake Variance",
+  "name": "stock-take-variance",
   "queries": {
     "gql": "StockVarianceQuery.graphql"
   },
