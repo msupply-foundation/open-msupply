@@ -74,7 +74,14 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
   return displayAs === 'dateTime' ? (
     <DateTimePickerInput showTime={true} {...componentProps} />
   ) : (
-    <DateTimePickerInput {...componentProps} />
+    <DateTimePickerInput
+      slotProps={{
+        tabs: {
+          hidden: true,
+        },
+      }}
+      {...componentProps}
+    />
   );
 };
 
