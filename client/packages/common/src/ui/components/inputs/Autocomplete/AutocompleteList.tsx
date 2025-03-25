@@ -16,6 +16,7 @@ import {
   getDefaultOptionRenderer,
   useOpenStateWithKeyboard,
 } from './utils';
+import { useTranslation } from '@common/intl';
 
 export type AutocompleteListProps<T> = {
   options: T[];
@@ -71,6 +72,7 @@ export const AutocompleteList = <T,>({
   getOptionDisabled,
   onInputChange,
 }: AutocompleteListProps<T>): JSX.Element => {
+  const t = useTranslation();
   // Open by default
   const openOverrides = useOpenStateWithKeyboard({ open: true });
   const createdFilterOptions = createFilterOptions(filterOptionConfig);
@@ -104,6 +106,7 @@ export const AutocompleteList = <T,>({
   } else {
     mappedOptions = options;
   }
+  const noOptions = noOptionsText ?? t('label.no-options');
 
   return (
     <>
@@ -123,7 +126,7 @@ export const AutocompleteList = <T,>({
         autoSelect={false}
         loading={loading}
         loadingText={loadingText}
-        noOptionsText={noOptionsText}
+        noOptionsText={noOptions}
         onChange={onChange}
         onInputChange={onInputChange}
         sx={{
