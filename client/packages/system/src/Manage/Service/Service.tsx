@@ -9,7 +9,9 @@ export const ManageService: FC = () => {
     AppRoute.IndicatorsDemographics
   ).build();
 
-  const preferencesRoute = RouteBuilder.create(AppRoute.Preferences).build();
+  const preferencesRoute = RouteBuilder.create(AppRoute.Preferences)
+    .addWildCard()
+    .build();
 
   return (
     <Routes>

@@ -4,39 +4,38 @@ import {
   Box,
   ListOptions,
   ListOptionValues,
+  PreferenceDescriptionNode,
+  useTranslation,
+  LocaleKey,
 } from '@openmsupply-client/common';
 
-interface TempPref {
-  id: string;
-  key: string;
-}
-
 interface ListPrefsProps {
-  currentId: string;
-  prefs: TempPref[];
+  currentKey: string;
+  prefs: PreferenceDescriptionNode[];
   scrollRef: React.MutableRefObject<HTMLLIElement | null>;
   setSelectedPref: (id: string) => void;
 }
 
 export const ListPrefs = ({
-  currentId,
+  currentKey,
   prefs,
   scrollRef,
   setSelectedPref,
 }: ListPrefsProps) => {
-  const value = prefs?.find(({ id }) => id === currentId) ?? null;
+  const t = useTranslation();
+  const value = prefs?.find(({ key }) => key === currentKey) ?? null;
 
   let options: ListOptionValues[] =
-    prefs?.map(({ id, key }) => ({
-      id,
-      value: key,
+    prefs?.map(({ key }) => ({
+      id: key,
+      value: t(`preference.${key}` as LocaleKey),
     })) ?? [];
 
   return (
     <Tooltip title={value?.key}>
       <Box sx={{ flexGrowY: 1, overflow: 'auto', scrollBehavior: 'smooth' }}>
         <ListOptions
-          currentId={currentId}
+          currentId={currentKey}
           onClick={setSelectedPref}
           options={options}
           scrollRef={scrollRef}
