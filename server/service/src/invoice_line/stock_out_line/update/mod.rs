@@ -75,7 +75,7 @@ pub fn update_stock_out_line(
                 stock_line_repo.upsert_one(&previous_batch.stock_line_row)?;
             }
 
-            update_picked_date(&connection, &invoice)?;
+            update_picked_date(connection, &invoice)?;
 
             get_invoice_line(ctx, &update_line.id)
                 .map_err(OutError::DatabaseError)?
