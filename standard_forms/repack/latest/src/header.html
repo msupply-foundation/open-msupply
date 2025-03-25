@@ -26,7 +26,7 @@
 
 <div class="header_image_section" style="display: flex; flex-direction: column;">
   <div style="display: flex; justify-content: flex-end;">
-    {{ t(k="label.number", f="Number") }} #: {{ data.repack.invoice.invoiceNumber }}
+    {{ t(k="label.number", f="Number") }}: {{ data.repack.invoice.invoiceNumber }}
   </div>
   <div style="display: flex; justify-content: flex-end;">
     {{t(k="report.confirmed-date", f="Confirmed date")}}: {{data.repack.datetime | date(format="%d/%m/%Y")}}
