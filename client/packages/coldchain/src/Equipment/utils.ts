@@ -49,7 +49,7 @@ export const assetsToCsv = (
 
     const status =
       node.statusLog?.status && parseLogStatus(node.statusLog.status);
-
+      
     return [
       node.id,
       ...(isCentralServer ? [node.store?.code] : []),
@@ -61,7 +61,7 @@ export const assetsToCsv = (
       Formatter.csvDateString(node.warrantyEnd),
       node.serialNumber,
       status ? t(status.key) : '',
-      node.needsReplacement ? node.needsReplacement?.toString() : 'false',
+      node.needsReplacement ? node.needsReplacement : false,
       node.notes,
       Formatter.csvDateTimeString(node.createdDatetime),
       Formatter.csvDateTimeString(node.modifiedDatetime),
