@@ -1,6 +1,9 @@
 use async_graphql::*;
-use repository::Preference;
-use service::preference::preferences::{complex_pref::ComplexPref, Preferences};
+use repository::PreferenceRow;
+use service::preference::{
+    preferences::{complex_pref::ComplexPref, Preferences},
+    PreferencesByKeyResult,
+};
 
 /// Defines the preferences object for a store
 pub struct PreferencesNode {
@@ -11,6 +14,12 @@ pub struct PreferencesNode {
 impl PreferencesNode {
     pub async fn show_contact_tracing(&self) -> &bool {
         &self.preferences.show_contact_tracing
+    }
+    pub async fn preferred_store_name(&self) -> &String {
+        &self.preferences.preferred_store_name
+    }
+    pub async fn months_of_stock(&self) -> &i32 {
+        &self.preferences.months_of_stock
     }
 
     pub async fn complex_pref(&self) -> ComplexPrefNode {
@@ -72,33 +81,52 @@ impl PreferenceDescriptionNode {
 
 /// Usually a store would access preferences via the PreferencesNode - this is for central access,
 /// to view preferences across all stores
+pub struct PreferencesByKeyNode {
+    pub result: PreferencesByKeyResult,
+}
+
+#[Object]
+impl PreferencesByKeyNode {
+    pub async fn global(&self) -> Option<PreferenceNode> {
+        self.result
+            .global
+            .clone()
+            .map(|preference| PreferenceNode { preference })
+    }
+
+    pub async fn per_store(&self) -> Vec<PreferenceNode> {
+        self.result
+            .per_store
+            .clone()
+            .into_iter()
+            .map(|preference| PreferenceNode { preference })
+            .collect()
+    }
+
+    pub async fn serialised_default(&self) -> Option<String> {
+        self.result.serialised_default.clone()
+    }
+}
 pub struct PreferenceNode {
-    pub preference: Preference,
+    pub preference: PreferenceRow,
 }
 
 #[Object]
 impl PreferenceNode {
     pub async fn id(&self) -> &String {
-        &self.preference.preference_row.id
+        &self.preference.id
     }
 
     pub async fn key(&self) -> &String {
-        &self.preference.preference_row.key
+        &self.preference.key
     }
 
     // /// JSON serialized value
     pub async fn value(&self) -> &String {
-        &self.preference.preference_row.value
+        &self.preference.value
     }
 
     pub async fn store_id(&self) -> Option<String> {
-        self.preference.preference_row.store_id.clone()
-    }
-
-    pub async fn store_name(&self) -> Option<String> {
-        self.preference
-            .name_row
-            .as_ref()
-            .map(|name| name.name.clone())
+        self.preference.store_id.clone()
     }
 }
