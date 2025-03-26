@@ -425,6 +425,10 @@ export const RequestLineEdit = ({
           </>
         )}
       </Box>
+      {line &&
+        plugins.requestRequisitionLine?.editViewInfo?.map((Info, index) => (
+          <Info key={index} line={line} />
+        ))}
       {showItemInformation && (
         <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
           <ItemInformationView
