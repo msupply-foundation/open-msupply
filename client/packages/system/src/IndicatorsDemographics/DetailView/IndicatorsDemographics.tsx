@@ -4,12 +4,12 @@ import {
   Box,
   ColumnAlign,
   DataTable,
-  Formatter,
   RecordPatch,
   TableProvider,
   createTableStore,
   useColumns,
   useFormatNumber,
+  useIntlUtils,
   useNotification,
   useTranslation,
   useUrlQueryParams,
@@ -44,6 +44,7 @@ const IndicatorsDemographicsComponent = () => {
 
   const { error, success } = useNotification();
   const t = useTranslation();
+  const { translateServerError } = useIntlUtils();
 
   const { draft, setDraft } = useDemographicData.indicator.list(headerDraft);
   const baseYear = headerDraft?.baseYear ?? 2024; // TODO: Allow the user to select the base year for their projections
@@ -178,7 +179,7 @@ const IndicatorsDemographicsComponent = () => {
       .catch(e =>
         error(
           t('error.an-error-occurred', {
-            message: Formatter.fromCamelCase(e.message),
+            message: translateServerError(e.message),
           })
         )()
       );

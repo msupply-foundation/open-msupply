@@ -6,33 +6,9 @@
 {% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
 {% endmacro input %}
 
-<table class="header_supplied_section">
-    <tr> 
-        <td class="header_section_field_left"></td>
-        <td id= "date" class="header_section_field_right"> {{t(k="report.printed-date",f="Printed date")}}: {{ now() | date(format="%d/%m/%Y") }}</td>
-    </tr> 
-
-    <tr> 
-        <td class="header_section_field_left">{{t(k="report.supplied-to",f="Supplied to")}}:</td> 
-        <td class="header_section_field_right">{{t(k="report.status", f="Status")}}: {{ data.invoice.status }}</td>
-    </tr> 
-
-    <tr> 
-        <td class="header_section_field_left">{{ data.invoice.otherPartyName }}</td> 
-        <td class="header_section_field_right">{{t(k="report.entered-date",f="Entered date")}}: {{ data.invoice.createdDatetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}</td>
-    </tr> 
-
-    <tr> 
-        <td class="header_section_field_left">{{ data.invoice.otherParty.address1 }}</td> 
-        <td class="header_section_field_right">{{t(k="report.confirmed-date",f="Confirmed Date")}}: {{ self::dateOrNA(datetime=data.invoice.pickedDatetime) }}</td>
-    </tr>
-
-</table>
-
 <table class="body_section" cellpadding="2" cellspacing="0">
     <thead>
         <tr class="body_column_label">
-            <th class="line_number" style="width: 5%;">{{t(k="report.line", f="Line")}}</th>
             <th class="location_code" style="width: 13%;">{{t(k="label.location",f="Location")}}</th>
             <th class="item_name" style="width: 38%;">{{t(k="report.item-name", f="Item name")}}</th>
             <th class="quantity" style="width: 8%;">{{t(k="label.quantity",f="Quantity")}}</th>
@@ -44,7 +20,6 @@
     </thead>
     {% for line in data.invoiceLines.nodes -%}
     <tr class="body_value">
-        <td class="line_number" style="width: 20px;">{{ loop.index }}</td>
         {% if line.location.code %}
         <td class="location_code" style="width: 80px;">{{ line.location.code }}</td>
         {% else %}

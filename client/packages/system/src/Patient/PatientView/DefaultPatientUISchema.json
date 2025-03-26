@@ -50,7 +50,10 @@
             {
               "type": "DateOfBirth",
               "label": "label.date-of-birth",
-              "scope": "#"
+              "scope": "#",
+              "options": {
+                "hideClear": true
+              }
             },
             {
               "type": "Control",
@@ -82,21 +85,49 @@
       ]
     },
     {
-      "type": "Search",
-      "scope": "#/properties/nextOfKin",
-      "label": "label.next-of-kin",
-      "options": {
-        "source": "user",
-        "searchFields": ["name"],
-        "saveFields": ["id", "name"],
-        "elements": [
-          {
-            "type": "Control",
-            "scope": "/properties/name",
-            "label": "label.name"
+      "type": "VerticalLayout",
+      "elements": [
+        {
+          "type": "Search",
+          "scope": "#/properties/nextOfKin",
+          "label": "label.next-of-kin",
+          "options": {
+            "source": "user",
+            "searchFields": ["name"],
+            "saveFields": ["id", "name"],
+            "elements": [
+              {
+                "type": "Control",
+                "scope": "/properties/name",
+                "label": "label.name"
+              }
+            ]
           }
-        ]
-      }
+        },
+        {
+          "type": "Group",
+          "label": "Death",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/isDeceased"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/dateOfDeath",
+              "rule": {
+                "effect": "HIDE",
+                "condition": {
+                  "scope": "#/properties/isDeceased",
+                  "schema": {
+                    "const": false
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

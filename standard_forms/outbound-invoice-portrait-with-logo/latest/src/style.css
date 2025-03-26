@@ -21,6 +21,11 @@
     padding-top: 1pt;
 } 
 
+.header-space-between {
+    display: flex;
+    justify-content: space-between;
+}
+
 .header_image_section {
     width: 100%;
     font-family: Tahoma;

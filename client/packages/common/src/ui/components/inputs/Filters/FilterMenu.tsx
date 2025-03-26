@@ -152,8 +152,8 @@ const getFilterOptions = (
     .filter(fil =>
       fil.type === 'group'
         ? !fil.elements.every(innerFil =>
-          activeFilterCodes.includes(innerFil.urlParameter)
-        )
+            activeFilterCodes.includes(innerFil.urlParameter)
+          )
         : !activeFilterCodes.includes(fil.urlParameter)
     )
     .map(fil => ({
@@ -217,16 +217,18 @@ const getFilterComponent = (
     case 'dateTime':
       return (
         <DateFilter
-          key={`${filter.urlParameter}${filter.range ? '_' + filter.range : ''
-            }`}
+          key={`${filter.urlParameter}${
+            filter.range ? '_' + filter.range : ''
+          }`}
           filterDefinition={filter}
         />
       );
     case 'number':
       return (
         <NumberFilter
-          key={`${filter.urlParameter}${filter.range ? '_' + filter.range : ''
-            }`}
+          key={`${filter.urlParameter}${
+            filter.range ? '_' + filter.range : ''
+          }`}
           filterDefinition={filter}
         />
       );
@@ -252,7 +254,7 @@ export const EndAdornment: FC<{
       <IconButton
         sx={{ color: 'gray.main' }}
         label={hasValue ? t('label.clear-filter') : ''}
-        onClick={hasValue ? onClear : () => { }}
+        onClick={hasValue ? onClear : () => {}}
         icon={hasValue ? <CloseIcon /> : <SearchIcon fontSize="small" />}
       />
     </InputAdornment>
