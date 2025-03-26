@@ -20,16 +20,19 @@
   </tr>
 </table>
 
-<div class="header_supplied_section" style="display: flex; flex-direction: column">
-  <div style="display: flex; justify-content: flex-end">
+<div class="header_supplied_section" style="display: flex; padding: 4px 0">
+  <div style="display: flex; flex: 1">
+    {{ data.stocktake.description }}{% if data.stocktake.comment and data.stocktake.description %} -
+    {% else %}{% endif %}{{ data.stocktake.comment }}
+  </div>
+  <div style="display: flex">
     <span>{{ t(k="label.number", f="Number") }}: {{ data.stocktake.stocktakeNumber }}</span>
   </div>
 </div>
 <!--  
   <tr>
     <td colspan="3" class="Report_title borderline">
-      {{ data.stocktake.description }}{% if data.stocktake.comment %} - {% else %}{% endif %}{{
-      data.stocktake.comment }}
+      
     </td>
   </tr>
 -->
