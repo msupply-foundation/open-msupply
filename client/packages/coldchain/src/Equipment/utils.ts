@@ -61,7 +61,7 @@ export const assetsToCsv = (
       Formatter.csvDateString(node.warrantyEnd),
       node.serialNumber,
       status ? t(status.key) : '',
-      node.needsReplacement,
+      node.needsReplacement ? node.needsReplacement?.toString() : 'false',
       node.notes,
       Formatter.csvDateTimeString(node.createdDatetime),
       Formatter.csvDateTimeString(node.modifiedDatetime),
