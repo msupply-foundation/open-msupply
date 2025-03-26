@@ -10,8 +10,6 @@ export const usePlugins = () => {
     return query?.frontendPluginMetadata || [];
   };
 
-  console.log('yow');
-
   const query = useMutation({ mutationFn });
   return { ...query, query: query.mutateAsync };
 };
