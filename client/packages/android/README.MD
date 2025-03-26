@@ -4,40 +4,59 @@ The Android app can run as standalone site with a local server, as a client conn
 On Android, the server always starts on the device.
 This makes it possible to have one mobile app for all operational modes.
 The mobile app will broadcast via dns sd and will be reachable by both Mobile and Electron clients on the local network.
-We are using Capacitor to make use of existing optimisations and a large library of native plugins.
-The UI is not bundled within Capacitor, it is served by the server the client connects to, and discovery UI is always served by the bundled local server.
+
+We are using Capacitor to make use of existing optimisations and large library of native plugins.
+The UI is not bundled within Capacitor, it is served by the server the client connects to, but the discovery UI is always served by the bundled local server.
 
 ## Building the Rust Server Library for Android
 
 Before building the Android app, the Rust server library that allows us to run the mSupply server on the mobile device needs to be built.
-First, install Android Studio (you'll find the instructions [here](https://developer.android.com/studio)). N.B. the version used when this readme was originally written was Ladybug.
-Next, install NDK in Android Studio (you'll find the instruction [here](https://developer.android.com/studio/projects/install-ndk) or failing that just for 'android studio NDK') N.B. The version used when this readme was originally written was 26.1.10909125.
-Now, add the required build targets to rust by opening a terminal, and running `rustup target add aarch64-linux-android`.
-N.B. In case you need it, here is some information about the build target:
 
-| rust target | android ABI |
-| aarch64-linux-android | arm64-v8a |
-| ----------------------- | ----------- |
+This requires a couple of steps.
 
-Next, we have to tell Rust where to find the Android NDK binaries required to link the server library.
-First of all, we need to find the path to those binaries. In your file browser, navigate to `~/Library/Android/sdk/ndk/<the version of NDK you are using, e.g. 26.1.10909125>/toolchains/llvm/prebuilt/darwin-x86_64/bin`.
-Then copy the path, open a terminal and run `echo "export NDK_BIN=<paste the path here>" >> ~/.zshrc`. For example, if you are using version number 26.1.10909125:
+- Install Android Studio (Ladybug at time of writing 15/11/24) (Instructions [here](https://developer.android.com/studio))
+- Install NDK in Android Studio (26.1.10909125 at the time of writing on the 8/4/24) (Instructions [here](https://developer.android.com/studio/projects/install-ndk)
+
+![omSupply Android NDK](./doc/omSupply_android_ndk.png)
+
+To add the required build targets to Rust run:
+
+```bash
+rustup target add aarch64-linux-android
+```
+
+Currently, we support only 1 Android architecture (64bit);
+
+| rust target           | android ABI |
+| --------------------- | ----------- |
+| aarch64-linux-android | arm64-v8a   |
+
+Next we have to tell Rust where to find the Android NDK binaries required to link the server library. This is done by setting the `NDK_BIN` env variable to the currently installed Android NDK.
+
+For example, to permanently add the `NDK_BIN` env variable on a mac run:
 
 ```bash
 echo "export NDK_BIN=~/Library/Android/sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/darwin-x86_64/bin/" >> ~/.zshrc
 ```
 
-Now, check that that worked by opening a new terminal and seeing if running `ls $NDK_BIN` produces a list of files starting with aarch64 and armv7a.
-In case it is helpful to know, the linker Rust will use is the one given in `server/android/.cargo/config.toml`, under [target._architecture_].
+> If you are on linux or using a different version of the NDK for some reason, you'll need to adjust this command accordingly.
+
+Run `source ~/.zshrc` to apply the changes to the current terminal.
+
+Validate that `$NDK_BIN` is set correctly using `ls $NDK_BIN` (this should give a list of files starting with aarch64 and armv7a)
+
+Note, which linker Rust uses is defined in `server/android/.cargo/config.toml`, under [target._architecture_].
 
 ### Java Installation
 
-As of 19/12/2024, the version of Java that is tested is Temurin version 17.0.7. That's the one we need. To see if you have it installed, open a terminal and run `java --version`.
-If that version is listed in your terminal's response, great! Skip to the section called [Set up Android Studio](#set-up-android-studio).
-If that version is not in the response, we'll install it now:
-First, install [SDK man](https://sdkman.io/) by running `curl -s "https://get.sdkman.io" | bash` in your terminal.
-Then, install Java by opening a new terminal and running `sdk install java 17.0.7-tem`.
-Finally, set the defaults by running `sdk use java 17.0.7-tem` and `sdk default java 17.0.7-tem`.
+In your terminal, run `java --version` to check if you have it installed. As at 19/12/2024 version `17.0.7-tem` is tested and works with our setup
+
+We normally use [SDK man](https://sdkman.io/) to manage java versions, this can be installed using the following terminal command:
+`curl -s "https://get.sdkman.io" | bash`
+
+Then install Java 17.0.7-tem (Temurin) using the following terminal command:
+Install the last tested version of Java: Run `sdk install java 17.0.7-tem`
+To make this the default version of Java `sdk default java 17.0.7-tem`.
 
 ### Set up Android Studio
 
@@ -89,7 +108,7 @@ yarn android:build:debug
 yarn android:build:release
 ```
 
-To make the an apk that you can install on a device for testing, run `yarn android:build:debug` in the client directory. You will find the resulting apk in `client/android/app/build/outputs/apk/debug`, and you can then transfer it to the tablet and install it, [install it directly using android studio](), or [sideload it using adb]().
+To make the an apk that you can install on a device for testing, run `yarn android:build:debug` in the client directory. You will find the resulting apk in `client/packages/android/app/build/outputs/apk/debug`, and you can then transfer it to the tablet and install it. This can be done by uploading the apk file via the android studio device manager, then clicking the apk file from the device itself. Or using [adb](https://developer.android.com/tools/adb)
 
 ### Known script issues
 
@@ -105,8 +124,8 @@ Usually you will need to either set `ANDROID_SDK_ROOT` or add `sdk.dir` in `loca
 Debugging native Java code is straight forward, breakpoint in Android Studio and press debug.
 
 Debugging web app code is done by opening `chrome://inspect`, you should see the Web View when the app is running in emulator.
-When bundled is served from remote server (default setup), js bundle is minimised and this makes debugging very hard (and doesn't allow for hot reload),
-however we can run the bundle from webpack server by commenting out the plugins section in `capacitor.config.ts` and entering your local ip in the debugUrl field and running `yarn apply-config`.
+When bundle is served from rust server (default setup), the js bundle is minimised and this makes debugging very hard (and doesn't allow for hot reload),
+however we can serve the bundle from the webpack server on your pc by commenting out the plugins section in `capacitor.config.ts` and entering your local ip in the debugUrl field and running `yarn apply-config`.
 Please make sure that you start front end server with `yarn start` from 'client' directory for this to work.
 For examples: `yarn && yarn start -- -- --env API_HOST='http://192.168.1.205:8000` <- your local server will also need to be running.
 
