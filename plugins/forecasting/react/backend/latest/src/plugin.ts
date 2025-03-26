@@ -126,7 +126,6 @@ const plugins: BackendPlugins = {
 };
 
 const getAggregatedAmc = (storeId: string, itemIds: string[]) => {
-  // Sqlite only
   return sqlQuery(
     ['item_id', 'average_monthly_consumption', 'name'],
     `
