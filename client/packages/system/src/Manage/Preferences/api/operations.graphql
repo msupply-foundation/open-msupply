@@ -5,3 +5,26 @@ query AllPrefs {
     jsonFormsInputType
   }
 }
+
+query prefsByKey($key: String!) {
+  centralServer {
+    preferences {
+      preferencesByKey(key: $key) {
+        serialisedDefault
+
+        global {
+          id
+          key
+          value
+        }
+
+        perStore {
+          id
+          key
+          value
+          storeId
+        }
+      }
+    }
+  }
+}

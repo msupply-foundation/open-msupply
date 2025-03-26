@@ -15,12 +15,65 @@ export type AllPrefsQuery = {
   }>;
 };
 
+export type PrefsByKeyQueryVariables = Types.Exact<{
+  key: Types.Scalars['String']['input'];
+}>;
+
+export type PrefsByKeyQuery = {
+  __typename: 'Queries';
+  centralServer: {
+    __typename: 'CentralServerQueryNode';
+    preferences: {
+      __typename: 'CentralPreferenceQueries';
+      preferencesByKey: {
+        __typename: 'PreferencesByKeyNode';
+        serialisedDefault?: string | null;
+        global?: {
+          __typename: 'PreferenceNode';
+          id: string;
+          key: string;
+          value: string;
+        } | null;
+        perStore: Array<{
+          __typename: 'PreferenceNode';
+          id: string;
+          key: string;
+          value: string;
+          storeId?: string | null;
+        }>;
+      };
+    };
+  };
+};
+
 export const AllPrefsDocument = gql`
   query AllPrefs {
     availablePreferences {
       key
       globalOnly
       jsonFormsInputType
+    }
+  }
+`;
+export const PrefsByKeyDocument = gql`
+  query prefsByKey($key: String!) {
+    centralServer {
+      preferences {
+        preferencesByKey(key: $key) {
+          serialisedDefault
+          global {
+            id
+            key
+            value
+          }
+          perStore {
+            id
+            key
+            value
+            storeId
+          }
+        }
+      }
     }
   }
 `;
@@ -55,6 +108,21 @@ export function getSdk(
             ...wrappedRequestHeaders,
           }),
         'AllPrefs',
+        'query',
+        variables
+      );
+    },
+    prefsByKey(
+      variables: PrefsByKeyQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<PrefsByKeyQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PrefsByKeyQuery>(PrefsByKeyDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'prefsByKey',
         'query',
         variables
       );
