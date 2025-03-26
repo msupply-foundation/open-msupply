@@ -62,6 +62,7 @@ pub struct PreferenceDescriptionNode {
     pub key: String,
     pub global_only: bool,
     pub json_forms_input_type: String,
+    pub serialised_default: String,
 }
 
 #[Object]
@@ -76,6 +77,10 @@ impl PreferenceDescriptionNode {
 
     pub async fn json_forms_input_type(&self) -> &String {
         &self.json_forms_input_type
+    }
+
+    pub async fn serialised_default(&self) -> &String {
+        &self.serialised_default
     }
 }
 
@@ -101,10 +106,6 @@ impl PreferencesByKeyNode {
             .into_iter()
             .map(|preference| PreferenceNode { preference })
             .collect()
-    }
-
-    pub async fn serialised_default(&self) -> Option<String> {
-        self.result.serialised_default.clone()
     }
 }
 pub struct PreferenceNode {

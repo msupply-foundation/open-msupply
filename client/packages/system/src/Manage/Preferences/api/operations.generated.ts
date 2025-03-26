@@ -12,6 +12,7 @@ export type AllPrefsQuery = {
     key: string;
     globalOnly: boolean;
     jsonFormsInputType: string;
+    serialisedDefault: string;
   }>;
 };
 
@@ -27,7 +28,6 @@ export type PrefsByKeyQuery = {
       __typename: 'CentralPreferenceQueries';
       preferencesByKey: {
         __typename: 'PreferencesByKeyNode';
-        serialisedDefault?: string | null;
         global?: {
           __typename: 'PreferenceNode';
           id: string;
@@ -52,6 +52,7 @@ export const AllPrefsDocument = gql`
       key
       globalOnly
       jsonFormsInputType
+      serialisedDefault
     }
   }
 `;
@@ -60,7 +61,6 @@ export const PrefsByKeyDocument = gql`
     centralServer {
       preferences {
         preferencesByKey(key: $key) {
-          serialisedDefault
           global {
             id
             key

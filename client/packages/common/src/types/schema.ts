@@ -5875,6 +5875,7 @@ export type PreferenceDescriptionNode = {
   globalOnly: Scalars['Boolean']['output'];
   jsonFormsInputType: Scalars['String']['output'];
   key: Scalars['String']['output'];
+  serialisedDefault: Scalars['String']['output'];
 };
 
 export type PreferenceNode = {
@@ -5889,12 +5890,13 @@ export type PreferencesByKeyNode = {
   __typename: 'PreferencesByKeyNode';
   global?: Maybe<PreferenceNode>;
   perStore: Array<PreferenceNode>;
-  serialisedDefault?: Maybe<Scalars['String']['output']>;
 };
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
   complexPref: ComplexPrefNode;
+  monthsOfStock: Scalars['Int']['output'];
+  preferredStoreName: Scalars['String']['output'];
   showContactTracing: Scalars['Boolean']['output'];
 };
 
