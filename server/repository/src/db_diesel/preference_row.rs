@@ -3,7 +3,9 @@ use crate::{
     StorageConnection, Upsert,
 };
 
-use super::{preference_row::preference::dsl::*, store_row::store};
+use super::{
+    name_link_row::name_link, name_row::name, preference_row::preference::dsl::*, store_row::store,
+};
 use serde::{Deserialize, Serialize};
 
 use diesel::prelude::*;
@@ -20,6 +22,8 @@ table! {
 joinable!(preference -> store (store_id));
 
 allow_tables_to_appear_in_same_query!(preference, store);
+allow_tables_to_appear_in_same_query!(preference, name);
+allow_tables_to_appear_in_same_query!(preference, name_link);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,

@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::{PreferenceDescriptionNode, PreferencesNode};
+use graphql_types::types::{PreferenceDescriptionNode, PreferenceNode, PreferencesNode};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Default, Clone)]
@@ -53,6 +53,36 @@ impl PreferenceQueries {
                 global_only: pref.global_only(),
                 json_forms_input_type: pref.json_forms_input_type(),
             })
+            .collect())
+    }
+}
+
+pub struct CentralPreferenceQueries;
+#[Object]
+impl CentralPreferenceQueries {
+    pub async fn preferences_by_key(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        key: String,
+    ) -> Result<Vec<PreferenceNode>> {
+        let user = validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::MutatePreferences,
+                store_id: None,
+            },
+        )?;
+
+        let service_provider = ctx.service_provider();
+        let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
+        let service = &service_provider.preference_service;
+
+        let prefs = service.get_preferences_by_key(&service_ctx, &key)?;
+
+        Ok(prefs
+            .into_iter()
+            .map(|preference| PreferenceNode { preference })
             .collect())
     }
 }

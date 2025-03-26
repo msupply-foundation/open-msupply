@@ -137,6 +137,8 @@ pub enum Resource {
     // Plugin data
     MutatePluginData,
     ReadPluginData,
+    // Preferences
+    MutatePreferences,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -612,6 +614,10 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(
         Resource::ReadPluginData,
         PermissionDSL::NoPermissionRequired, // Plugin data doesn't get any special protections...
+    );
+    map.insert(
+        Resource::MutatePreferences,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
 
     map

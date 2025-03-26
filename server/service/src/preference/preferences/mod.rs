@@ -70,15 +70,19 @@ pub trait Preference {
         )?;
 
         // If there is a store-specific preference, that should override any global preference
-        let store_pref = prefs_by_key.iter().find(|pref| pref.store_id.is_some());
-        let global_pref = prefs_by_key.iter().find(|pref| pref.store_id.is_none());
+        let store_pref = prefs_by_key
+            .iter()
+            .find(|pref| pref.preference_row.store_id.is_some());
+        let global_pref = prefs_by_key
+            .iter()
+            .find(|pref| pref.preference_row.store_id.is_none());
 
         let configured_pref = store_pref.or(global_pref);
 
         match configured_pref {
             None => Ok(Self::Value::default()),
             Some(pref) => {
-                let text_pref = pref.value.as_str();
+                let text_pref = pref.preference_row.value.as_str();
 
                 let parsed = Self::deserialize(text_pref).map_err(|e| {
                     RepositoryError::as_db_error("Failed to deserialize preference", e)
