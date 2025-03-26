@@ -5,24 +5,18 @@ use actix_web::{
 use repository::RepositoryError;
 use service::{
     auth_data::AuthData,
-    print::label::{host_status, print_prescription_label, print_qr_code, PrescriptionLabelData},
+    print::label::{host_status, print_asset_label, print_prescription_label, AssetLabelData, PrescriptionLabelData},
     service_provider::ServiceProvider,
     settings::LabelPrinterSettingNode,
 };
 
 use crate::authentication::validate_cookie_auth;
 
-#[derive(serde::Deserialize)]
-pub struct QrLabelData {
-    code: String,
-    message: Option<String>,
-}
-
-pub async fn print_label_qr(
+pub async fn print_label_asset(
     request: HttpRequest,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
-    data: web::Json<QrLabelData>,
+    data: web::Json<AssetLabelData>,
 ) -> HttpResponse {
     let auth_result = validate_cookie_auth(request.clone(), &auth_data);
     match auth_result {
@@ -40,9 +34,8 @@ pub async fn print_label_qr(
                 .body(format!("Error getting printer settings: {}", error));
         }
     };
-
-    match print_qr_code(settings, data.code.clone(), data.message.clone()) {
-        Ok(_) => HttpResponse::Ok().body("QR label printed"),
+    match print_asset_label(settings, data.into_inner()) {
+        Ok(_) => HttpResponse::Ok().body("Asset label printed"),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }

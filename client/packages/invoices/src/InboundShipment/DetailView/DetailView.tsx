@@ -29,6 +29,7 @@ import { InboundItem } from '../../types';
 import { useInbound, InboundLineFragment } from '../api';
 import { SupplierReturnEditModal } from '../../Returns';
 import { canReturnInboundLines } from '../../utils';
+import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLineError';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -109,38 +110,40 @@ const DetailViewInner = () => {
     >
       {data ? (
         <>
-          <AppBarButtons onAddItem={() => onOpen()} />
+          <InboundShipmentLineErrorProvider>
+            <AppBarButtons onAddItem={() => onOpen()} />
 
-          <Toolbar />
+            <Toolbar />
 
-          <DetailTabs tabs={tabs} />
+            <DetailTabs tabs={tabs} />
 
-          <Footer onReturnLines={onReturn} />
-          <SidePanel />
+            <Footer onReturnLines={onReturn} />
+            <SidePanel />
 
-          {isOpen && (
-            <InboundLineEdit
-              isDisabled={isDisabled}
-              isOpen={isOpen}
-              onClose={onClose}
-              mode={mode}
-              item={entity}
-              currency={data.currency}
-              isExternalSupplier={!data.otherParty.store}
-            />
-          )}
-          {returnsIsOpen && (
-            <SupplierReturnEditModal
-              isOpen={returnsIsOpen}
-              onCreate={clearSelected}
-              onClose={onCloseReturns}
-              stockLineIds={stockLineIds || []}
-              supplierId={data.otherParty.id}
-              modalMode={returnModalMode}
-              inboundShipmentId={data.id}
-              isNewReturn
-            />
-          )}
+            {isOpen && (
+              <InboundLineEdit
+                isDisabled={isDisabled}
+                isOpen={isOpen}
+                onClose={onClose}
+                mode={mode}
+                item={entity}
+                currency={data.currency}
+                isExternalSupplier={!data.otherParty.store}
+              />
+            )}
+            {returnsIsOpen && (
+              <SupplierReturnEditModal
+                isOpen={returnsIsOpen}
+                onCreate={clearSelected}
+                onClose={onCloseReturns}
+                stockLineIds={stockLineIds || []}
+                supplierId={data.otherParty.id}
+                modalMode={returnModalMode}
+                inboundShipmentId={data.id}
+                isNewReturn
+              />
+            )}
+          </InboundShipmentLineErrorProvider>
         </>
       ) : (
         <AlertModal
