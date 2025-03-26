@@ -219,7 +219,7 @@ export type AddToShipmentFromMasterListInput = {
   shipmentId: Scalars['String']['input'];
 };
 
-export type AdjustmentReasonNotProvided = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+export type AdjustmentReasonNotProvided = InsertInventoryAdjustmentErrorInterface & InsertStockLineErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
   __typename: 'AdjustmentReasonNotProvided';
   description: Scalars['String']['output'];
 };
@@ -748,6 +748,7 @@ export type BatchPrescriptionInput = {
   deletePrescriptions?: InputMaybe<Array<Scalars['String']['input']>>;
   insertPrescriptionLines?: InputMaybe<Array<InsertPrescriptionLineInput>>;
   insertPrescriptions?: InputMaybe<Array<InsertPrescriptionInput>>;
+  setPrescribedQuantity?: InputMaybe<Array<SetPrescribedQuantityInput>>;
   updatePrescriptionLines?: InputMaybe<Array<UpdatePrescriptionLineInput>>;
   updatePrescriptions?: InputMaybe<Array<UpdatePrescriptionInput>>;
 };
@@ -758,6 +759,7 @@ export type BatchPrescriptionResponse = {
   deletePrescriptions?: Maybe<Array<DeletePrescriptionResponseWithId>>;
   insertPrescriptionLines?: Maybe<Array<InsertPrescriptionLineResponseWithId>>;
   insertPrescriptions?: Maybe<Array<InsertPrescriptionResponseWithId>>;
+  setPrescribedQuantity?: Maybe<Array<SetPrescribedQuantityWithId>>;
   updatePrescriptionLines?: Maybe<Array<UpdatePrescriptionLineResponseWithId>>;
   updatePrescriptions?: Maybe<Array<UpdatePrescriptionResponseWithId>>;
 };
@@ -1005,6 +1007,7 @@ export type ClinicianFilterInput = {
   firstName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   initials?: InputMaybe<StringFilterInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<StringFilterInput>;
   mobile?: InputMaybe<StringFilterInput>;
   phone?: InputMaybe<StringFilterInput>;
@@ -2322,7 +2325,7 @@ export enum ForeignKey {
   StockLineId = 'stockLineId'
 }
 
-export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionLineErrorInterface & DeleteResponseRequisitionLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertPrescriptionLineErrorInterface & InsertRequestRequisitionLineErrorInterface & InsertResponseRequisitionLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
+export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionLineErrorInterface & DeleteResponseRequisitionLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertPrescriptionLineErrorInterface & InsertRequestRequisitionLineErrorInterface & InsertResponseRequisitionLineErrorInterface & SetPrescribedQuantityErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
   __typename: 'ForeignKeyError';
   description: Scalars['String']['output'];
   key: ForeignKey;
@@ -3008,7 +3011,6 @@ export type InsertPrescriptionLineInput = {
   invoiceId: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacks: Scalars['Float']['input'];
-  prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
   stockLineId: Scalars['String']['input'];
 };
 
@@ -3220,6 +3222,15 @@ export type InsertRnRFormInput = {
 
 export type InsertRnRFormResponse = RnRFormNode;
 
+export type InsertStockLineError = {
+  __typename: 'InsertStockLineError';
+  error: InsertStockLineErrorInterface;
+};
+
+export type InsertStockLineErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type InsertStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
   barcode?: InputMaybe<Scalars['String']['input']>;
@@ -3237,7 +3248,7 @@ export type InsertStockLineInput = {
   sellPricePerPack: Scalars['Float']['input'];
 };
 
-export type InsertStockLineLineResponse = StockLineNode;
+export type InsertStockLineLineResponse = InsertStockLineError | StockLineNode;
 
 export type InsertStocktakeInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -3498,6 +3509,7 @@ export type InvoiceFilterInput = {
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  createdOrBackdatedDatetime?: InputMaybe<DatetimeFilterInput>;
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -6953,6 +6965,7 @@ export enum ReportContext {
   Dispensary = 'DISPENSARY',
   InboundReturn = 'INBOUND_RETURN',
   InboundShipment = 'INBOUND_SHIPMENT',
+  InternalOrder = 'INTERNAL_ORDER',
   OutboundReturn = 'OUTBOUND_RETURN',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Patient = 'PATIENT',
@@ -7505,6 +7518,29 @@ export type SensorSortInput = {
 };
 
 export type SensorsResponse = SensorConnector;
+
+export type SetPrescribedQuantityError = {
+  __typename: 'SetPrescribedQuantityError';
+  error: SetPrescribedQuantityErrorInterface;
+};
+
+export type SetPrescribedQuantityErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type SetPrescribedQuantityInput = {
+  invoiceId: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  prescribedQuantity: Scalars['Float']['input'];
+};
+
+export type SetPrescribedQuantityResponse = InvoiceLineNode | SetPrescribedQuantityError;
+
+export type SetPrescribedQuantityWithId = {
+  __typename: 'SetPrescribedQuantityWithId';
+  id: Scalars['String']['output'];
+  response: SetPrescribedQuantityResponse;
+};
 
 export type SnapshotCountCurrentCountMismatch = UpdateStocktakeErrorInterface & {
   __typename: 'SnapshotCountCurrentCountMismatch';
@@ -8706,7 +8742,6 @@ export type UpdatePrescriptionLineInput = {
   id: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
-  prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -9100,7 +9135,7 @@ export type UpdateVaccinationInput = {
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
   stockLineId?: InputMaybe<NullableStringUpdate>;
   updateTransactions?: InputMaybe<Scalars['Boolean']['input']>;
-  vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  vaccinationDate?: InputMaybe<NullableDateUpdate>;
 };
 
 export type UpdateVaccinationResponse = UpdateVaccinationError | VaccinationNode;
@@ -9374,7 +9409,7 @@ export type VaccinationNode = {
   invoiceId?: Maybe<Scalars['String']['output']>;
   notGivenReason?: Maybe<Scalars['String']['output']>;
   stockLine?: Maybe<StockLineNode>;
-  vaccinationDate: Scalars['NaiveDate']['output'];
+  vaccinationDate?: Maybe<Scalars['NaiveDate']['output']>;
 };
 
 export type VaccineCourseConnector = {

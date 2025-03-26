@@ -16,6 +16,7 @@ import {
   getDefaultOptionRenderer,
   useOpenStateWithKeyboard,
 } from './utils';
+import { useTranslation } from '@common/intl';
 
 export type AutocompleteListProps<T> = {
   options: T[];
@@ -71,6 +72,7 @@ export const AutocompleteList = <T,>({
   getOptionDisabled,
   onInputChange,
 }: AutocompleteListProps<T>): JSX.Element => {
+  const t = useTranslation();
   // Open by default
   const openOverrides = useOpenStateWithKeyboard({ open: true });
   const createdFilterOptions = createFilterOptions(filterOptionConfig);
@@ -118,11 +120,12 @@ export const AutocompleteList = <T,>({
       )}
       <MuiAutocomplete
         {...openOverrides}
+        open
         disableClearable={disableClearable}
         autoSelect={false}
         loading={loading}
-        loadingText={loadingText}
-        noOptionsText={noOptionsText}
+        loadingText={loadingText ?? t('loading')}
+        noOptionsText={noOptionsText ?? t('label.no-options')}
         onChange={onChange}
         onInputChange={onInputChange}
         sx={{

@@ -1,10 +1,9 @@
 {
   "is_custom": false,
-  "version": "2.6.1",
+  "version": "2.6.2",
   "code": "inbound",
   "context": "INBOUND_SHIPMENT",
-  "sub_context": "picklist",
-  "name": "Inbound",
+  "name": "Inbound Shipment",
   "queries": {
     "gql": "inbound.graphql"
   },

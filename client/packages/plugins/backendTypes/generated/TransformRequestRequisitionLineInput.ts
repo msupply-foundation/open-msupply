@@ -3,4 +3,8 @@ import type { RequisitionLineRow } from "./RequisitionLineRow";
 import type { RequisitionRow } from "./RequisitionRow";
 import type { TransformRequestRequisitionLineContext } from "./TransformRequestRequisitionLineContext";
 
-export type TransformRequestRequisitionLineInput = { requisition: RequisitionRow, lines: Array<RequisitionLineRow>, context: TransformRequestRequisitionLineContext, };
+export type TransformRequestRequisitionLineInput = { requisition: RequisitionRow, lines: Array<RequisitionLineRow>, 
+/**
+ *The variants in this list may not represent all of the areas where request requisition line is upserted
+ */
+context: TransformRequestRequisitionLineContext, };

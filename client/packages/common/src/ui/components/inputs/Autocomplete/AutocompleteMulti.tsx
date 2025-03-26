@@ -9,6 +9,7 @@ import {
   ChipProps,
 } from '@mui/material';
 import { BasicTextInput } from '../TextInput';
+import { useTranslation } from '@common/intl';
 
 export interface AutocompleteMultiProps<
   T,
@@ -48,10 +49,13 @@ export function AutocompleteMulti<
   width = 'auto',
   slotProps,
   inputProps,
+  loadingText,
+  noOptionsText,
   ...restOfAutocompleteProps
 }: PropsWithChildren<
   AutocompleteMultiProps<T, true, DisableClearable, FreeSolo, ChipComponent>
 >): JSX.Element {
+  const t = useTranslation();
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
@@ -117,6 +121,8 @@ export function AutocompleteMulti<
           borderRadius: 2,
         },
       }}
+      noOptionsText={noOptionsText ?? t('label.no-options')}
+      loadingText={loadingText ?? t('loading')}
     />
   );
 }
