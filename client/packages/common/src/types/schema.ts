@@ -6050,6 +6050,7 @@ export type Queries = {
   patients: PatientResponse;
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
+  pluginGraphqlQuery: Scalars['JSON']['output'];
   printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
@@ -6563,6 +6564,13 @@ export type QueriesPluginDataArgs = {
   filter?: InputMaybe<PluginDataFilterInput>;
   pluginCode: Scalars['String']['input'];
   sort?: InputMaybe<Array<PluginDataSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesPluginGraphqlQueryArgs = {
+  input: Scalars['JSON']['input'];
+  pluginCode: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
