@@ -53,14 +53,10 @@ query StocktakeQuery($storeId: String!, $dataId: String!, $sort: PrintReportSort
         ... on NameNode {
           address1
           address2
-          chargeCode
           code
-          comment
-          country
           email
           name
           phone
-          website
         }
       }
     }

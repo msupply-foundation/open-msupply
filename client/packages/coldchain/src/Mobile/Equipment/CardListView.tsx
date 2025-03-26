@@ -19,6 +19,7 @@ import { SimpleLabelDisplay } from '../Components/SimpleLabelDisplay';
 import { AddFromScannerButton } from '../../Equipment/ListView/AddFromScannerButton';
 import { CreateAssetModal } from '../../Equipment/ListView/CreateAssetModal';
 import { useIsGapsStoreOnly } from '@openmsupply-client/common';
+import { ImportFridgeTag } from '../../common/ImportFridgeTag';
 
 export const CardListView: FC = () => {
   const t = useTranslation();
@@ -58,10 +59,6 @@ export const CardListView: FC = () => {
         flex: 1,
       }}
     >
-      <CreateAssetModal
-        isOpen={modalController.isOn}
-        onClose={modalController.toggleOff}
-      />
       <Box
         sx={{
           width: '100%',
@@ -78,6 +75,7 @@ export const CardListView: FC = () => {
           Icon={<PlusCircleIcon />}
         />
         <AddFromScannerButton />
+        <ImportFridgeTag shouldShrink={false} />
       </Box>
       <Box
         sx={{
@@ -125,6 +123,10 @@ export const CardListView: FC = () => {
           </Card>
         ))}
       </Box>
+      <CreateAssetModal
+        isOpen={modalController.isOn}
+        onClose={modalController.toggleOff}
+      />
     </Box>
   );
 };
