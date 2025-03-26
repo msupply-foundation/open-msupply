@@ -30,6 +30,7 @@ export const DateTimePickerInput: FC<
     showTime?: boolean;
     actions?: PickersActionBarAction[];
     dateAsEndOfDay?: boolean;
+    displayAs?: 'date' | 'dateTime';
   }
 > = ({
   error,
@@ -43,6 +44,7 @@ export const DateTimePickerInput: FC<
   showTime,
   actions,
   dateAsEndOfDay,
+  displayAs,
   ...props
 }) => {
   const theme = useAppTheme();
@@ -145,6 +147,9 @@ export const DateTimePickerInput: FC<
             ...textFieldProps?.sx,
             width,
           },
+        },
+        tabs: {
+          hidden: displayAs === 'dateTime' ? false : true,
         },
         ...(actions ? { actionBar: { actions } } : {}),
       }}

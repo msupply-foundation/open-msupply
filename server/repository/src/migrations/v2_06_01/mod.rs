@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_internal_order_report_type;
 mod change_vaccination_date_to_nullable;
 mod remove_plugins;
 
@@ -19,6 +20,7 @@ impl Migration for V2_06_01 {
         vec![
             Box::new(change_vaccination_date_to_nullable::Migrate),
             Box::new(remove_plugins::Migrate),
+            Box::new(add_internal_order_report_type::Migrate),
         ]
     }
 }
