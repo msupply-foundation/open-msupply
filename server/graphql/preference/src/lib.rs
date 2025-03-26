@@ -97,7 +97,7 @@ pub struct PreferenceMutations;
 
 #[Object]
 impl PreferenceMutations {
-    pub async fn upsert_preferences(
+    pub async fn upsert_preference(
         &self,
         ctx: &Context<'_>,
         store_id: String,
