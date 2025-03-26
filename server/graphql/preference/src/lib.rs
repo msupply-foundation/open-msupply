@@ -16,7 +16,7 @@ impl PreferenceQueries {
             ctx,
             &ResourceAccessRequest {
                 resource: Resource::QueryStorePreferences,
-                store_id: None,
+                store_id: Some(store_id.clone()),
             },
         )?;
 
