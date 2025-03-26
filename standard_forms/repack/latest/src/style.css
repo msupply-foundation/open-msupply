@@ -1,7 +1,12 @@
 @media print {
     @page {
-        size: A4 landscape
+        size: portrait;
     }
+}
+
+body > table {
+    width: 100%;
+    padding: 2em;
 }
 
 .logo {
@@ -37,12 +42,6 @@
     border-bottom: 0.5px solid black;
     padding-top: 8pt;
     font-family: Tahoma;
-}
-
-.header_section_field_right {
-    text-align: right;
-    font-family: Tahoma;
-    font-size: 8pt;
 }
 
 .location
