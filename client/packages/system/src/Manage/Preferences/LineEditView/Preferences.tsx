@@ -14,9 +14,7 @@ export const PreferencesLineEdit = () => {
   const { key } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
 
-  const {
-    query: { data },
-  } = useAvailablePreferences();
+  const { data } = useAvailablePreferences();
 
   useEffect(() => {
     if (key)
