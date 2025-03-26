@@ -1135,6 +1135,15 @@ export type CentralPluginQueriesUploadedPluginInfoArgs = {
   fileId: Scalars['String']['input'];
 };
 
+export type CentralPreferenceQueries = {
+  __typename: 'CentralPreferenceQueries';
+  preferencesByKey: PreferencesByKeyNode;
+};
+
+export type CentralPreferenceQueriesPreferencesByKeyArgs = {
+  key: Scalars['String']['input'];
+};
+
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   assetCatalogue: AssetCatalogueMutations;
@@ -1150,6 +1159,7 @@ export type CentralServerMutationNode = {
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
   plugin: CentralPluginQueries;
+  preferences: CentralPreferenceQueries;
 };
 
 export type CentralSyncRequired = AuthTokenErrorInterface & {
@@ -5865,6 +5875,21 @@ export type PreferenceDescriptionNode = {
   globalOnly: Scalars['Boolean']['output'];
   jsonFormsInputType: Scalars['String']['output'];
   key: Scalars['String']['output'];
+};
+
+export type PreferenceNode = {
+  __typename: 'PreferenceNode';
+  id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  storeId?: Maybe<Scalars['String']['output']>;
+  value: Scalars['String']['output'];
+};
+
+export type PreferencesByKeyNode = {
+  __typename: 'PreferencesByKeyNode';
+  global?: Maybe<PreferenceNode>;
+  perStore: Array<PreferenceNode>;
+  serialisedDefault?: Maybe<Scalars['String']['output']>;
 };
 
 export type PreferencesNode = {
