@@ -56,11 +56,8 @@ const formatDate = (value: string): string | null => {
 };
 
 const formatNeedsReplacement = (value: string): boolean | null => {
-  if (value.match(/true/i)) {
-    return true;
-  } else {
-    return false;
-  }
+  if (value.match(/true/i)) return true;
+  else return false;
 };
 
 function getImportHelpers<T, P>(
