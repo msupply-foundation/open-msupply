@@ -1153,6 +1153,7 @@ export type CentralServerMutationNode = {
   itemVariant: ItemVariantMutations;
   logReason: AssetLogReasonMutations;
   plugins: CentralPluginMutations;
+  preferences: PreferenceMutations;
   vaccineCourse: VaccineCourseMutations;
 };
 
@@ -5878,6 +5879,16 @@ export type PreferenceDescriptionNode = {
   serialisedDefault: Scalars['String']['output'];
 };
 
+export type PreferenceMutations = {
+  __typename: 'PreferenceMutations';
+  upsertPreference: PreferenceNode;
+};
+
+export type PreferenceMutationsUpsertPreferenceArgs = {
+  input: UpsertPreferenceInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type PreferenceNode = {
   __typename: 'PreferenceNode';
   id: Scalars['String']['output'];
@@ -9548,6 +9559,13 @@ export type UpsertLogLevelResponse = {
 export type UpsertPackVariantResponse =
   | ItemVariantNode
   | UpsertItemVariantError;
+
+export type UpsertPreferenceInput = {
+  id: Scalars['String']['input'];
+  key: Scalars['String']['input'];
+  storeId?: InputMaybe<Scalars['String']['input']>;
+  value: Scalars['String']['input'];
+};
 
 export type UpsertVaccineCourseDoseInput = {
   customAgeLabel?: InputMaybe<Scalars['String']['input']>;

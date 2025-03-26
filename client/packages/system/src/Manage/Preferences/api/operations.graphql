@@ -27,3 +27,13 @@ query prefsByKey($key: String!) {
     }
   }
 }
+
+mutation upsertPreference($storeId: String!, $input: UpsertPreferenceInput!) {
+  centralServer {
+    preferences {
+      upsertPreference(storeId: $storeId, input: $input) {
+        id
+      }
+    }
+  }
+}

@@ -46,6 +46,22 @@ export type PrefsByKeyQuery = {
   };
 };
 
+export type UpsertPreferenceMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpsertPreferenceInput;
+}>;
+
+export type UpsertPreferenceMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    preferences: {
+      __typename: 'PreferenceMutations';
+      upsertPreference: { __typename: 'PreferenceNode'; id: string };
+    };
+  };
+};
+
 export const AllPrefsDocument = gql`
   query AllPrefs {
     availablePreferences {
@@ -72,6 +88,17 @@ export const PrefsByKeyDocument = gql`
             value
             storeId
           }
+        }
+      }
+    }
+  }
+`;
+export const UpsertPreferenceDocument = gql`
+  mutation upsertPreference($storeId: String!, $input: UpsertPreferenceInput!) {
+    centralServer {
+      preferences {
+        upsertPreference(storeId: $storeId, input: $input) {
+          id
         }
       }
     }
@@ -124,6 +151,22 @@ export function getSdk(
           }),
         'prefsByKey',
         'query',
+        variables
+      );
+    },
+    upsertPreference(
+      variables: UpsertPreferenceMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<UpsertPreferenceMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpsertPreferenceMutation>(
+            UpsertPreferenceDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'upsertPreference',
+        'mutation',
         variables
       );
     },
