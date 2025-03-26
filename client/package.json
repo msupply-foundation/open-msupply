@@ -13,7 +13,6 @@
     "build-plugins": "lerna run --scope @openmsupply-client/* build-plugin",
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
     "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
-    "compile": "lerna run --scope @openmsupply-client/* --parallel tsc --since HEAD -- --noEmit",
     "re-compile": "tsc --project packages/host/tsconfig.json --noEmit",
     "compile-full": "lerna run --scope @openmsupply-client/* --parallel tsc",
     "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom",
