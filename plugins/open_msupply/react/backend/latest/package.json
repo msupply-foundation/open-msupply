@@ -6,7 +6,8 @@
         "//": "Fields here must match PluginTypes in backend_plugin_row repository",
         "types": [
             "average_monthly_consumption",
-            "transform_request_requisition_lines"
+            "transform_request_requisition_lines",
+            "graphql_query"
         ],
         "variant_type": "BOA_JS"
     },

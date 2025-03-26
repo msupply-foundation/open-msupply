@@ -5,6 +5,7 @@ import SyncStatus from './Dashboard/SyncStatus';
 import StockDonorEdit from './StockDonor/StockDonorEdit';
 import * as stockDonor from './StockDonor/StockDonorColumn';
 import * as aggregateAmc from './AggregateAmc/AggregateAmcColumn';
+import { Info } from './AggregateAmc/AggregateAmcInfo';
 
 const ReplenishmentAndSyncStatus: Plugins = {
   inboundShipmentAppBar: [ShippingStatus],
@@ -18,6 +19,7 @@ const ReplenishmentAndSyncStatus: Plugins = {
     tableStateLoader: [aggregateAmc.StateLoader],
     tableColumn: [aggregateAmc.AggregateAmcColumn],
     editViewField: [aggregateAmc.AggregateAmcEditView],
+    editViewInfo: [Info],
   },
 };
 
