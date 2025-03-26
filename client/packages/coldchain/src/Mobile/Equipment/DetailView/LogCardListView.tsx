@@ -7,7 +7,7 @@ import {
   Formatter,
 } from '@openmsupply-client/common';
 import { Box, Typography, Card, CardContent } from '@mui/material';
-import { SimpleLabelDisplay } from '../Components/SimpleLabelDisplay';
+import { SimpleLabelDisplay } from '../../Components/SimpleLabelDisplay';
 import { useActivityLog } from '@openmsupply-client/system/src/ActivityLog/api';
 
 export const LogCardListView: FC<{ recordId: string }> = ({ recordId }) => {
