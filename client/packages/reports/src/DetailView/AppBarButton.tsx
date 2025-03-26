@@ -8,6 +8,8 @@ import {
   Grid,
   Platform,
   PrinterIcon,
+  SwipeIcon,
+  Typography,
   useTranslation,
 } from '@openmsupply-client/common';
 
@@ -31,6 +33,21 @@ export const AppBarButtonsComponent = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        <Grid
+          sx={{ paddingRight: 10, display: 'flex', justifyContent: 'center' }}
+        >
+          {EnvUtils.platform === Platform.Android && (
+            <>
+              <SwipeIcon color="disabled" />
+              <Typography
+                variant="body1"
+                sx={{ paddingLeft: 1, color: 'gray.main' }}
+              >
+                {t('messages.swipe-to-see-more')}
+              </Typography>
+            </>
+          )}
+        </Grid>
         <ButtonWithIcon
           disabled={isFilterDisabled}
           label={t('label.filters')}

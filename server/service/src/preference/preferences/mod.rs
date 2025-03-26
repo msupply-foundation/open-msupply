@@ -114,11 +114,9 @@ pub trait Preference {
             Some(pref) => {
                 let text_pref = pref.value.as_str();
 
-                let parsed = Self::deserialize(text_pref).map_err(|e| {
+                Self::deserialize(text_pref).map_err(|e| {
                     RepositoryError::as_db_error("Failed to deserialize preference", e)
-                });
-
-                parsed
+                })
             }
         }
     }

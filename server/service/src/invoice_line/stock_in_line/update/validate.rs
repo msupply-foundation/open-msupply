@@ -52,15 +52,13 @@ pub fn validate(
     if !check_location_exists(connection, store_id, &input.location)? {
         return Err(LocationDoesNotExist);
     }
-    match &input.item_variant_id {
-        Some(NullableUpdate {
-            value: Some(item_variant_id),
-        }) => {
-            if check_item_variant_exists(connection, item_variant_id)?.is_none() {
-                return Err(ItemVariantDoesNotExist);
-            }
+    if let Some(NullableUpdate {
+        value: Some(item_variant_id),
+    }) = &input.item_variant_id
+    {
+        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
+            return Err(ItemVariantDoesNotExist);
         }
-        _ => {} //  We don't need to check item_variant if it's not being updated, or if it's being updated to None
     }
 
     if !check_line_belongs_to_invoice(line_row, &invoice) {

@@ -71,6 +71,7 @@ import { SortDescIcon } from './SortDesc';
 import { StockIcon } from './Stock';
 import { SunIcon } from './Sun';
 import { SuppliersIcon } from './Suppliers';
+import { SwipeIcon } from './Swipe';
 import { ThermometerIcon } from './Thermometer';
 import { ToolsIcon } from './Tools';
 import { TranslateIcon } from './Translate';
@@ -179,6 +180,7 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
     { icon: <StockIcon {...args} />, name: 'Stock' },
     { icon: <SunIcon {...args} />, name: 'Sun' },
     { icon: <SuppliersIcon {...args} />, name: 'Suppliers' },
+    { icon: <SwipeIcon {...args} />, name: 'Swipe' },
     { icon: <ThermometerIcon {...args} />, name: 'Thermometer' },
     { icon: <ToolsIcon {...args} />, name: 'Tools' },
     { icon: <TranslateIcon {...args} />, name: 'Translate' },

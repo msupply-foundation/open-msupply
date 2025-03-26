@@ -71,6 +71,7 @@ export { SortDescIcon } from './SortDesc';
 export { StockIcon } from './Stock';
 export { SunIcon } from './Sun';
 export { SuppliersIcon } from './Suppliers';
+export { SwipeIcon } from './Swipe';
 export { ThermometerIcon } from './Thermometer';
 export { ToolsIcon } from './Tools';
 export { TranslateIcon } from './Translate';

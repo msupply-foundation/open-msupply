@@ -35,7 +35,7 @@
   border-bottom: none;
 }
 
-.container>table>thead {
+.container > table > thead {
   position: -webkit-sticky;
   position: sticky;
   top: 0;
@@ -44,7 +44,7 @@
 
 .container,
 body,
-.container>table {
+.container > table {
   margin-top: 0px;
   padding-top: 0px;
 }
