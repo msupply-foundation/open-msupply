@@ -108,6 +108,20 @@ impl PluginInstance {
         plugin_instance
     }
 
+    pub fn get_one_with_code(code: &str, r#type: PluginType) -> Option<Arc<PluginInstance>> {
+        let plugin_instance = {
+            let plugins = PLUGINS.read().unwrap();
+
+            let plugin = plugins
+                .iter()
+                .find(|p| p.has_type(&r#type) && p.code == code);
+
+            plugin.map(|p| p.instance.clone())
+        };
+
+        plugin_instance
+    }
+
     pub fn bind(
         BackendPluginRow {
             bundle_base64,

@@ -1,5 +1,6 @@
 use boa_engine::*;
 use repository::{raw_query, JsonRawRow};
+use util::format_error;
 
 use crate::backend_plugin::{boajs::utils::*, plugin_provider::PluginContext};
 
@@ -19,7 +20,9 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
                 let connection = service_provider
                     .connection()
                     .map_err(std_error_to_js_error)?;
-                raw_query(&connection, sql).map_err(std_error_to_js_error)
+                raw_query(&connection, sql.clone())
+                    .inspect_err(|e| log::error!("{} {sql}", format_error(e)))
+                    .map_err(std_error_to_js_error)
             }?;
 
             let as_json: Vec<serde_json::Value> = results
