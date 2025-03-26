@@ -56,7 +56,7 @@ export const useBlockNavigation = () => {
       // If there is a custom check on one of the registered blockers, use that
       if (b.options?.customCheck) {
         setActiveBlocker(b);
-        return b.options.customCheck(currentLocation, nextLocation);
+        return b.options.customCheck.navigate(currentLocation, nextLocation);
       }
 
       if (b.shouldBlock && currentLocation.pathname !== nextLocation.pathname) {
@@ -69,9 +69,12 @@ export const useBlockNavigation = () => {
     return false;
   });
 
-  const shouldBlockRefresh = blockers.some(
-    b => b.shouldBlock && !b.options?.allowRefresh
-  );
+  const shouldBlockRefresh = blockers.some(b => {
+    if (b.options?.customCheck) {
+      return b.options.customCheck.refresh();
+    }
+    return b.shouldBlock && !b.options?.allowRefresh;
+  });
 
   // handle page refresh events
   useBeforeUnload(
@@ -103,7 +106,10 @@ interface BlockerOptions {
    * Only one registered customCheck will be used at a time, the first one,
    * even if multiple blockers are registered
    */
-  customCheck?: (currentLocation: Location, nextLocation: Location) => boolean;
+  customCheck?: {
+    navigate: (currentLocation: Location, nextLocation: Location) => boolean;
+    refresh: () => boolean;
+  };
   customConfirmation?: (proceed: () => void) => void;
   /**
    * Will block when navigating away from the page, but not when refreshing
