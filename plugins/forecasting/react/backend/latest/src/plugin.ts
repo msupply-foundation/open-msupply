@@ -1,7 +1,9 @@
 // To upload to server (after adding submodule to openmsupply repo locally)
 // cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/{plugin name}/backend' -u 'http://localhost:8000' --username 'test' --password 'pass'
 
-import { BackendPlugins } from '@backendPlugins';
+import { BackendPlugins } from '@common/types';
+import { sqlDateTime, sqlList, sqlQuery } from '@common/utils';
+import { Graphql } from '../../../shared/types';
 // Tree shaking working
 import zipObject from 'lodash/zipObject';
 import { uuidv7 } from 'uuidv7';
@@ -16,22 +18,16 @@ const plugins: BackendPlugins = {
     const now = new Date();
     now.setDate(now.getDate() - DAY_LOOKBACK);
 
-    const sql_date = now.toJSON().split('T')[0];
-    const sql_item_ids = '"' + item_ids.join('","') + '"';
-
-    // Sqlite only
-    const sql_statement = `
-        SELECT json_object('item_id', item_id, 'consumption', consumption) as json_row 
-        FROM (
+    const sql_result = sqlQuery(
+      ['item_id', 'consumption'],
+      `
         SELECT item_id, sum(quantity) as consumption FROM consumption WHERE 
         store_id = "${store_id}" 
-        AND item_id in (${sql_item_ids}) 
-        AND date > "${sql_date}"
+        AND item_id in ${sqlList(item_ids)}
+        AND date > "${sqlDateTime(now)}"
         GROUP BY item_id
-        )
-    `;
-
-    const sql_result = sql(sql_statement);
+      `
+    );
 
     // Fill all item_ids with default
     const response = zipObject(
@@ -75,62 +71,10 @@ const plugins: BackendPlugins = {
       related_record_id: { equal_any: lines.map(({ id }) => id) },
     });
 
-    // Sqlite only
-    const sql_statement = `
-      WITH 
-      rl_all AS (
-      SELECT 
-        rl.average_monthly_consumption,
-        il.item_id,
-        r.store_id,
-        nl.name_id,
-        r.created_datetime
-      FROM requisition_line as rl
-      JOIN item_link as il ON rl.item_link_id = il.id
-      JOIN requisition as r ON rl.requisition_id = r.id
-      JOIN name_link as nl ON r.name_link_id = nl.id
-      WHERE r.type = 'RESPONSE'
-      ),
-      latest_created_datetime AS (
-      SELECT
-        item_id,
-        store_id,
-        name_id,
-        max(created_datetime) as max_datetime
-      FROM rl_all GROUP BY 1,2,3
-      ),
-      rl_latest AS (
-      SELECT 
-        average_monthly_consumption,
-        rl_all.item_id,
-        rl_all.store_id
-      FROM rl_all
-      INNER JOIN latest_created_datetime as latest ON 
-        rl_all.store_id = latest.store_id AND
-        rl_all.item_id = latest.item_id AND
-        rl_all.name_id = latest.name_id AND
-        rl_all.created_datetime = latest.max_datetime 
-      ),	
-      summed AS (
-      SELECT 
-        item_id, 
-        store_id,
-        sum(average_monthly_consumption) as summed_consumption
-      FROM rl_latest
-      GROUP BY  1, 2
-      ),
-      with_item_link_id AS (
-      SELECT 
-        il.id, 
-        store_id,
-        summed_consumption
-      FROM summed
-      JOIN item_link as il ON il.item_id = summed.item_id
-      )
-      SELECT json_object('item_link_id', id, 'summed_consumption', summed_consumption) AS json_row 
-      FROM with_item_link_id WHERE store_id = '${requisition.store_id}'
-    `;
-    const sql_result = sql(sql_statement);
+    const sql_result = getAggregatedAmc(
+      requisition.store_id,
+      lines.map(({ item_link_id }) => item_link_id)
+    );
 
     return {
       transformed_lines: lines.map(line => {
@@ -153,13 +97,79 @@ const plugins: BackendPlugins = {
         // need to share this
         data_identifier: dataIdentifier,
         data: String(
-          sql_result.find(
-            ({ item_link_id }) => item_link_id === line.item_link_id
-          )?.summed_consumption || 0
+          sql_result
+            .filter(({ item_id }) => item_id === line.item_link_id)
+            .reduce((acc, row) => acc + row.average_monthly_consumption, 0)
         ),
       })),
     };
   },
+  graphql_query: ({ store_id, input: inputUntyped }): Graphql['output'] => {
+    const input = inputUntyped as Graphql['input'];
+
+    switch (input.type) {
+      case 'echo':
+        return { type: 'echo', echo: input.echo };
+      case 'aggregateAmc':
+        return {
+          type: 'aggregateAmc',
+          stats: getAggregatedAmc(store_id, input.itemIds).map(row => ({
+            itemId: row.item_id,
+            amc: row.average_monthly_consumption,
+            name: row.name,
+          })),
+        };
+      default:
+        assertUnreachable(input);
+    }
+  },
+};
+
+const getAggregatedAmc = (storeId: string, itemIds: string[]) => {
+  // Sqlite only
+  return sqlQuery(
+    ['item_id', 'average_monthly_consumption', 'name'],
+    `
+      WITH 
+      rl_all AS (
+      SELECT 
+        rl.average_monthly_consumption,
+        il.item_id,
+        r.store_id,
+        nl.name_id,
+        n.name,
+        r.created_datetime
+      FROM requisition_line as rl
+      JOIN item_link as il ON rl.item_link_id = il.id
+      JOIN requisition as r ON rl.requisition_id = r.id
+      JOIN name_link as nl ON r.name_link_id = nl.id
+      JOIN name as n ON n.id = nl.name_id
+      WHERE r.type = 'RESPONSE' 
+      AND store_id = '${storeId}'
+      AND il.item_id in ${sqlList(itemIds)}
+      ),
+      latest_created_datetime AS (
+      SELECT
+        item_id,
+        name_id,
+        max(created_datetime) as max_datetime
+      FROM rl_all GROUP BY 1,2
+      ),
+      rl_latest AS (
+      SELECT 
+        average_monthly_consumption,
+        rl_all.item_id,
+        rl_all.name
+      FROM rl_all
+      INNER JOIN latest_created_datetime as latest ON 
+        rl_all.item_id = latest.item_id AND
+        rl_all.name_id = latest.name_id AND
+        rl_all.created_datetime = latest.max_datetime 
+      )
+      SELECT item_id, average_monthly_consumption, name
+      FROM rl_latest
+    `
+  );
 };
 
 function assertUnreachable(_: never): never {
