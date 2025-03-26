@@ -22,6 +22,7 @@ import { StyledPopper } from './components';
 import { ArrayUtils } from '@common/utils';
 import { RecordWithId } from '@common/types';
 import { useOpenStateWithKeyboard } from '@common/components';
+import { useTranslation } from '@common/intl';
 
 const LOADER_HIDE_TIMEOUT = 500;
 
@@ -68,6 +69,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   mapOptions,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteWithPaginationProps<T>>) {
+  const t = useTranslation();
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const [isLoading, setIsLoading] = useState(true);
   const lastOptions = useRef<T[]>([]);
@@ -192,8 +194,8 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       getOptionDisabled={getOptionDisabled}
       filterOptions={filter}
       loading={loading}
-      loadingText={loadingText}
-      noOptionsText={noOptionsText}
+      loadingText={loadingText ?? t('loading')}
+      noOptionsText={noOptionsText ?? t('label.no-options')}
       options={options}
       size="small"
       renderInput={renderInput || defaultRenderInput}

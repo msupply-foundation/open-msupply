@@ -6,6 +6,7 @@ import {
   DefaultAutocompleteItemOption,
   DocumentRegistryCategoryNode,
   Typography,
+  useTranslation,
 } from '@openmsupply-client/common';
 import {
   useDocumentRegistry,
@@ -36,6 +37,7 @@ export const ContactTraceSearchInput: FC<ContactTraceSearchInputProps> = ({
   width = 250,
   disabled = false,
 }) => {
+  const t = useTranslation();
   const { data, isLoading } = useDocumentRegistry.get.documentRegistries({
     filter: {
       category: {
@@ -77,6 +79,7 @@ export const ContactTraceSearchInput: FC<ContactTraceSearchInputProps> = ({
       width={`${width}px`}
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option.id === value.id}
+      noOptionsText={t('label.no-options')}
     />
   );
 };
