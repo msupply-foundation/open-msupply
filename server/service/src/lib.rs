@@ -60,6 +60,7 @@ pub mod number;
 pub mod permission;
 pub mod plugin;
 pub mod plugin_data;
+pub mod preference;
 pub mod pricing;
 pub mod print;
 pub mod printer;
