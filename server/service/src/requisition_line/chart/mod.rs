@@ -179,7 +179,7 @@ mod test {
         StockLineRow, StoreRow,
     };
     use util::{
-        constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now, inline_edit, inline_init, uuid::uuid,
+        constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, date_now, inline_edit, inline_init, uuid::uuid,
     };
 
     type ServiceError = RequisitionLineChartError;
@@ -447,7 +447,7 @@ mod test {
                         / (NaiveDate::from_ymd_opt(2020, 11, 30).unwrap()
                             - NaiveDate::from_ymd_opt(2020, 7, 1).unwrap())
                         .num_days() as f64
-                        * NUMBER_OF_DAYS_IN_A_MONTH,
+                        * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30,
                     date: NaiveDate::from_ymd_opt(2020, 11, 30).unwrap()
                 },
                 ConsumptionHistory {
@@ -458,7 +458,7 @@ mod test {
                         / (NaiveDate::from_ymd_opt(2020, 12, 31).unwrap()
                             - NaiveDate::from_ymd_opt(2020, 8, 1).unwrap())
                         .num_days() as f64
-                        * NUMBER_OF_DAYS_IN_A_MONTH,
+                        * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30,
                     date: NaiveDate::from_ymd_opt(2020, 12, 31).unwrap()
                 },
                 ConsumptionHistory {
@@ -470,7 +470,7 @@ mod test {
                         / (NaiveDate::from_ymd_opt(2021, 1, 31).unwrap()
                             - NaiveDate::from_ymd_opt(2020, 9, 1).unwrap())
                         .num_days() as f64
-                        * NUMBER_OF_DAYS_IN_A_MONTH,
+                        * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30,
                     date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap()
                 },
                 ConsumptionHistory {
@@ -520,7 +520,7 @@ mod test {
                         .and_hms_opt(12, 10, 11)
                         .unwrap(),
                 );
-                r.average_monthly_consumption = 25.0 * NUMBER_OF_DAYS_IN_A_MONTH;
+                r.average_monthly_consumption = 25.0 * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
                 r.available_stock_on_hand = 30.0;
                 r.requested_quantity = 100.0;
             })

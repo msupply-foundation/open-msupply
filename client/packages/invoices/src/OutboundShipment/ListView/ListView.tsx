@@ -44,6 +44,9 @@ const OutboundShipmentListViewComponent: FC = () => {
     filters: [
       { key: 'otherPartyName' },
       { key: 'status', condition: 'equalTo' },
+      { key: 'theirReference' },
+      { key: 'createdDatetime', condition: 'between' },
+      { key: 'shippedDatetime', condition: 'between' },
     ],
   });
   const navigate = useNavigate();
