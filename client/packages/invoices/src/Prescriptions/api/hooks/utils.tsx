@@ -46,13 +46,21 @@ export const mapStatus = (patch: RecordPatch<PrescriptionRowFragment>) => {
 
 export const createInputObject = (
   line: DraftPrescriptionLine,
-  type: 'insert' | 'update' | 'delete'
+  type: 'insert' | 'update' | 'delete' | 'setPrescribedQuantity'
 ) => {
-  const { id, numberOfPacks, prescribedQuantity, stockLine, invoiceId, note } =
-    line;
+  const {
+    id,
+    numberOfPacks,
+    prescribedQuantity,
+    stockLine,
+    invoiceId,
+    note,
+    item,
+  } = line;
 
+  const itemId = item?.id ?? '';
   const stockLineId = stockLine?.id ?? '';
-  const output = { id, numberOfPacks, stockLineId, note, prescribedQuantity };
+  const output = { id, numberOfPacks, stockLineId, note };
 
   switch (type) {
     case 'delete':
@@ -61,6 +69,8 @@ export const createInputObject = (
       return output;
     case 'insert':
       return { ...output, invoiceId };
+    case 'setPrescribedQuantity':
+      return { invoiceId, itemId, prescribedQuantity };
   }
 };
 
@@ -92,6 +102,33 @@ export const createPrescriptionPlaceholderRow = (
     itemDirections: [],
   },
   itemName: '',
+  stockLine: {
+    __typename: 'StockLineNode',
+    id: '',
+    itemId: '',
+    batch: '',
+    availableNumberOfPacks: 0,
+    totalNumberOfPacks: 0,
+    onHold: false,
+    sellPricePerPack: 0,
+    costPricePerPack: 0,
+    packSize: 0,
+    expiryDate: null,
+    item: {
+      __typename: 'ItemNode',
+      code: '',
+      name: '',
+      itemDirections: [
+        {
+          id: '',
+          itemId,
+          __typename: 'ItemDirectionNode',
+          directions: '',
+          priority: 0,
+        },
+      ],
+    },
+  },
 });
 
 export interface DraftPrescriptionLineSeeds {

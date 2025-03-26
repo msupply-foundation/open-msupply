@@ -4,7 +4,7 @@ use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 use chrono::NaiveDate;
 use repository::{RequisitionLineRow, RequisitionLineRowDelete};
 use serde_json::json;
-use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
+use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
 
 const TABLE_NAME: &str = "requisition_line";
 
@@ -56,7 +56,7 @@ fn requisition_line_request_pull_record() -> TestSyncIncomingRecord {
             suggested_quantity: 101.0,
             supply_quantity: 2.0,
             available_stock_on_hand: 10.0,
-            average_monthly_consumption: 3.0 * NUMBER_OF_DAYS_IN_A_MONTH,
+            average_monthly_consumption: 3.0 * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30,
             comment: None,
             snapshot_datetime: None,
             approved_quantity: 0.0,
@@ -154,7 +154,7 @@ fn requisition_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             available_stock_on_hand: 10.0,
             approved_quantity: 0.0,
             approval_comment: Some("approval comment".to_string()),
-            average_monthly_consumption: 3.0 * NUMBER_OF_DAYS_IN_A_MONTH,
+            average_monthly_consumption: 3.0 * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30,
             comment: Some("Some comment".to_string()),
             snapshot_datetime: Some(
                 NaiveDate::from_ymd_opt(2022, 4, 4)
