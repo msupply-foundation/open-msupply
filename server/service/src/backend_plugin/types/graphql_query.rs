@@ -21,10 +21,6 @@ pub trait Trait: Send + Sync {
     fn call(&self, input: Input) -> PluginResult<Output>;
 }
 
-// average_monthly_consumption -> amc
-// call_plugin -> more generic (do ?)
-
-// TODO as macro ? Can do types here too
 impl self::Trait for PluginInstance {
     fn call(&self, input: Input) -> PluginResult<Output> {
         Ok(call_plugin(input, plugin_type(), self)?)
