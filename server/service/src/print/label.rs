@@ -32,8 +32,8 @@ pub fn print_asset_label(
         ^FO18,18
         ^BXN,11,200
         ^FD{}^FS
-        ^FO277,18^A0,32,25^FDAsset Number: {}^FS
-        ^FO277,73^A0,32,25^FDDate Printed: {}^FS
+        ^FO277,18^A0,32,25^FD{}^FS
+        ^FO277,73^A0,32,25^FD{}^FS
         {}
         ^XZ"#,
         data.code, asset_number, date_printed, m_supply_logo
