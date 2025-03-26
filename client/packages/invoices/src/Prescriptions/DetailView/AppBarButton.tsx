@@ -49,7 +49,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     printReceipt({ reportId: report.id, dataId: prescription?.id, args });
   };
 
-  const handlePrintLabels = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handlePrintLabels = (e?: React.MouseEvent<HTMLButtonElement>) => {
     if (prescription) {
       printPrescriptionLabels(prescription, prescription.lines.nodes, e);
     }
@@ -59,7 +59,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     ? [
         {
           value: 'Print Labels',
-          label: 'Print Labels',
+          label: t('button.print-prescription-label'),
           isDisabled: isDisabled,
           onClick: handlePrintLabels,
         },
@@ -80,7 +80,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           isPrinting={isPrintingReceipt || isPrintingLabels}
           customOptions={extraOptions}
           onPrintCustom={e => handlePrintLabels(e)}
-          buttonLabel="Print Options"
+          buttonLabel={t('button.print-report-options')}
         />
         <ButtonWithIcon
           label={t('button.history')}

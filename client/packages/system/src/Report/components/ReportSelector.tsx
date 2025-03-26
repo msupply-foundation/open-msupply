@@ -17,7 +17,7 @@ interface CustomOption<T> {
   label: string;
   value?: T;
   isDisabled?: boolean;
-  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onClick: (e?: React.MouseEvent<HTMLButtonElement>) => void;
 }
 interface ReportSelectorProps {
   context?: ReportContext;
@@ -28,10 +28,7 @@ interface ReportSelectorProps {
   disabled?: boolean;
   queryParams?: ReportListParams;
   customOptions?: CustomOption<string>[];
-  onPrintCustom?: (
-    e: React.MouseEvent<HTMLButtonElement>,
-    option: string
-  ) => void;
+  onPrintCustom?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
   buttonLabel: string;
 }
 
@@ -56,7 +53,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   // Report Content
   const onReportSelected = (
     option: SplitButtonOption<string> | undefined,
-    e: React.MouseEvent<HTMLButtonElement>
+    e?: React.MouseEvent<HTMLButtonElement>
   ) => {
     if (option?.value === undefined) {
       return;
@@ -67,7 +64,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
     }));
     const selected = custom?.find(c => c.value === option.value);
     if (onPrintCustom) {
-      selected?.value ? onPrintCustom(e, selected.value) : '';
+      selected?.value ? onPrintCustom(e) : '';
     }
 
     const report: ReportRowFragment | undefined = data?.nodes.find(
@@ -95,13 +92,20 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
     return allOptions.flat();
   }, [data, disabled, customOptions]);
 
+  const handleClick = () => {
+    const oneReport = options.length === 1 ? options[0] : undefined;
+    if (oneReport) {
+      onReportSelected(oneReport);
+    }
+  };
+
   const hasPermission = !initialLoading && data !== undefined;
   const noReports: SplitButtonOption<string> = useMemo(() => {
     const noReport = hasPermission
       ? { label: t('error.no-reports-available') }
       : { label: t('error.no-report-permission') };
     return noReport;
-  }, [hasPermission, t]);
+  }, [hasPermission]);
 
   if (options.length === 0) options.push(noReports);
 
@@ -121,7 +125,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
 
   const onSelectOption = (
     option: SplitButtonOption<string>,
-    e: React.MouseEvent<HTMLButtonElement>
+    e?: React.MouseEvent<HTMLButtonElement>
   ) => {
     setSelectedOption(option);
     onReportSelected(option, e);
@@ -137,7 +141,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
         selectedOption={selectedOption}
         onSelectOption={onSelectOption}
         Icon={<PrinterIcon />}
-        onClick={() => {}}
+        onClick={handleClick}
         isLoading={isPrinting}
         isLoadingType={true}
         staticLabel={buttonLabel}

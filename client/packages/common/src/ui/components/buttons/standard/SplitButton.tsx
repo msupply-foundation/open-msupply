@@ -25,14 +25,14 @@ export interface SplitButtonProps<T> {
   options: SplitButtonOption<T>[];
   onClick: (
     option: SplitButtonOption<T>,
-    e: React.MouseEvent<HTMLButtonElement>
+    e?: React.MouseEvent<HTMLButtonElement>
   ) => void;
   Icon?: ButtonWithIconProps['Icon'];
   isDisabled?: boolean;
   selectedOption: SplitButtonOption<T>;
   onSelectOption: (
     option: SplitButtonOption<T>,
-    e: React.MouseEvent<HTMLButtonElement>
+    e?: React.MouseEvent<HTMLButtonElement>
   ) => void;
   label?: string;
   staticLabel?: string;

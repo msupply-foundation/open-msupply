@@ -64,8 +64,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           context={ReportContext.OutboundShipment}
           onPrint={printReport}
           isPrinting={isPrinting}
-          // Filters out reports that have a subContext (i.e. `R&R`)
-          queryParams={{ filterBy: { subContext: { equalAnyOrNull: [] } } }}
           buttonLabel={t('button.print')}
         />
         {OpenButton}
