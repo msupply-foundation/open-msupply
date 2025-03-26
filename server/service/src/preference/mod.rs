@@ -2,12 +2,14 @@ use crate::service_provider::ServiceContext;
 use preferences::{
     get_preference_descriptions, get_preferences, PreferenceDescription, Preferences,
 };
-use repository::RepositoryError;
+use repository::{PreferenceRow, RepositoryError};
 
 pub mod preferences;
 pub mod query;
+pub mod upsert;
 
 pub use query::*;
+pub use upsert::*;
 
 pub trait PreferenceServiceTrait: Sync + Send {
     // Maybe should be called get_store_preferences, but wanting to maintain
@@ -30,6 +32,14 @@ pub trait PreferenceServiceTrait: Sync + Send {
         key: &str,
     ) -> Result<PreferencesByKeyResult, RepositoryError> {
         get_preferences_by_key(ctx, key)
+    }
+
+    fn upsert(
+        &self,
+        ctx: &ServiceContext,
+        input: UpsertPreference,
+    ) -> Result<PreferenceRow, RepositoryError> {
+        upsert_preference(ctx, input)
     }
 }
 

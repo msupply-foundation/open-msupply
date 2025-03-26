@@ -1,7 +1,12 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::{PreferenceDescriptionNode, PreferencesByKeyNode, PreferencesNode};
+use graphql_types::types::{
+    PreferenceDescriptionNode, PreferenceNode, PreferencesByKeyNode, PreferencesNode,
+};
 use service::auth::{Resource, ResourceAccessRequest};
+
+mod upsert;
+use upsert::*;
 
 #[derive(Default, Clone)]
 pub struct PreferenceQueries;
@@ -85,28 +90,19 @@ impl CentralPreferenceQueries {
 }
 
 // --
-// TODO: mutations from central only UI
+// mutations from central only UI
 
-// #[derive(Default, Clone)]
-// pub struct PreferenceMutations;
+#[derive(Default, Clone)]
+pub struct PreferenceMutations;
 
-// #[Object]
-// impl PreferenceMutations {
-//     async fn upsert_preferences(
-//         &self,
-//         ctx: &Context<'_>,
-//         store_id: String,
-//         input: UpdatePreferenceInput,
-//     ) -> Result<UpdatePreferenceResponse> {
-//         update_preference(ctx, &store_id, input)
-//     }
-
-//     // needed? or always just "clear"?
-//     async fn delete_preference(
-//         &self,
-//         ctx: &Context<'_>,
-//         preference_id: String,
-//     ) -> Result<DeletePreferenceResponse> {
-//         delete_preference(ctx, &preference_id)
-//     }
-// }
+#[Object]
+impl PreferenceMutations {
+    pub async fn upsert_preferences(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpsertPreferenceInput,
+    ) -> Result<PreferenceNode> {
+        upsert_preference(ctx, store_id, input)
+    }
+}
