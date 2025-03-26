@@ -78,7 +78,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           context={ReportContext.Prescription}
           onPrint={printReport}
           isPrinting={isPrintingReceipt || isPrintingLabels}
-          extraOptions={extraOptions}
+          customOptions={extraOptions}
           onPrintCustom={e => handlePrintLabels(e)}
           buttonLabel="Print Options"
         />

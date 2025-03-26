@@ -1,4 +1,10 @@
-import React, { FC, PropsWithChildren, useMemo, useState } from 'react';
+import React, {
+  FC,
+  PropsWithChildren,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { ReportContext, useTranslation } from '@openmsupply-client/common';
 import { PrinterIcon } from '@common/icons';
 import { SplitButton, SplitButtonOption } from '@common/components';
@@ -21,12 +27,12 @@ interface ReportSelectorProps {
   /** Disable the whole control */
   disabled?: boolean;
   queryParams?: ReportListParams;
-  CustomOptions?: CustomOption<string>[];
+  customOptions?: CustomOption<string>[];
   onPrintCustom?: (
     e: React.MouseEvent<HTMLButtonElement>,
     option: string
   ) => void;
-  buttonLabel?: string;
+  buttonLabel: string;
 }
 
 export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
@@ -36,7 +42,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   isPrinting,
   disabled = false,
   queryParams,
-  CustomOptions,
+  customOptions,
   onPrintCustom,
   buttonLabel,
 }) => {
@@ -56,40 +62,26 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
       return;
     }
 
-    // // if there is a matching custom option
-    const actions = CustomOptions?.map(opt => ({
-      value: opt.value,
+    const custom = customOptions?.map(option => ({
+      value: option.value,
     }));
-    const act = actions?.find(a => a.value === option.value);
+    const selected = custom?.find(c => c.value === option.value);
     if (onPrintCustom) {
-      act?.value ? onPrintCustom(e, act.value) : '';
+      selected?.value ? onPrintCustom(e, selected.value) : '';
     }
 
-    // if not custom, find report data from option id
     const report: ReportRowFragment | undefined = data?.nodes.find(
       r => r.id === option.value
     );
     if (report) {
-      // report with args
       report?.argumentSchema ?? setReportWithArgs(report);
 
-      // report without args
       // passing timezone through as forms do not have arguments
       const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
       onPrint(report, { timezone });
-      // force disabled to reset to false
-      setSelectedOption({
-        label: ' ',
-        isDisabled: false,
-      });
     }
   };
 
-  // useEffect(() => {
-  //   disabled;
-  // }, [disabled]);
-
-  // button options renderer - if exists
   const options: SplitButtonOption<string>[] = useMemo(() => {
     const reports = data
       ? data?.nodes?.map(report => ({
@@ -99,24 +91,30 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
         }))
       : [];
 
-    const allOptions = [CustomOptions || [], reports];
+    const allOptions = [customOptions || [], reports];
     return allOptions.flat();
-  }, [data, disabled, CustomOptions]);
+  }, [data, disabled, customOptions]);
 
-  // for if no options
   const hasPermission = !initialLoading && data !== undefined;
-  const noReports = hasPermission
-    ? { label: t('error.no-reports-available') }
-    : { label: t('error.no-report-permission') };
+  const noReports: SplitButtonOption<string> = useMemo(() => {
+    const noReport = hasPermission
+      ? { label: t('error.no-reports-available') }
+      : { label: t('error.no-report-permission') };
+    return noReport;
+  }, [hasPermission, t]);
 
   if (options.length === 0) options.push(noReports);
 
-  // the selected option
+  // updates disabled state
+  useEffect(() => {
+    setSelectedOption(options[0] || noReports);
+  }, [options, noReports]);
+
+  // selected option is at [0] for the SplitButton, however the customLabel is rendered instead
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<string>
   >(options[0] || noReports);
 
-  // selected with args
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined
   >();
@@ -134,17 +132,16 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
       <SplitButton
         color="primary"
         openFrom={'bottom'}
-        isDisabled={initialLoading}
+        isDisabled={initialLoading || disabled}
         options={options}
         selectedOption={selectedOption}
-        onSelectOption={onSelectOption} // click with change
+        onSelectOption={onSelectOption}
         Icon={<PrinterIcon />}
-        onClick={() => {}} // click without changing option
+        onClick={() => {}}
         isLoading={isPrinting}
         isLoadingType={true}
         staticLabel={buttonLabel}
       />
-
       <ReportArgumentsModal
         key={reportWithArgs?.id}
         report={reportWithArgs}
