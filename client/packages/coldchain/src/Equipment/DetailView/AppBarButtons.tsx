@@ -38,8 +38,8 @@ export const AppBarButtonsComponent = () => {
       method: 'POST',
       body: JSON.stringify({
         code: data?.id,
-        assetNumber: `${t('label.asset-number')}: ${data?.assetNumber ?? ''}`,
-        datePrinted: `${t('label.date-printed')}: ${date}`,
+        assetNumber: `${data?.assetNumber ?? ''}`,
+        datePrinted: `${date}`,
       }),
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
