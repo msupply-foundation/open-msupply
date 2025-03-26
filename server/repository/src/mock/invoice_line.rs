@@ -466,6 +466,7 @@ pub fn mock_transferred_inbound_shipment_a_line_b() -> InvoiceLineRow {
         tax_percentage: None,
         r#type: InvoiceLineType::StockIn,
         number_of_packs: 2.0,
+        linked_invoice_id: Some("trasnferred_outbound_shipment_a".to_string()),
         ..Default::default()
     }
 }

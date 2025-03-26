@@ -13,7 +13,7 @@ import { Footer } from './Footer';
 import { StatusLogs } from 'packages/coldchain/src/Equipment/DetailView/Tabs/StatusLogs';
 import { UpdateStatusButton } from 'packages/coldchain/src/Equipment/DetailView/UpdateStatusButton';
 import { Documents } from 'packages/coldchain/src/Equipment/DetailView/Tabs/Documents';
-import { LogCardListView } from '../LogCardListView';
+import { LogCardListView } from './LogCardListView';
 
 export const EquipmentDetailView: FC = () => {
   const {

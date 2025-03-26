@@ -1,41 +1,34 @@
 <style>
-    {% include "stocktake.css" %}
+    {% include "style.css" %}
 </style>
-<div class="container">
-        <table class="main-table">
-            <thead class="table-header">
-                <tr class="row">
-                    <th class="bold col-location">{{t(k="label.location",f="Location")}}</th>
-                    <th class="bold col-item-code">{{t(k="label.code", f="Code")}}</th>
-                    <th class="bold col-item-name">{{t(k="report.item-name",f="Item name")}}</th>
-                    <th class="bold col-batch">{{t(k="label.batch", f="Batch")}}</th>
-                    <th class="bold col-expiry-date">{{t(k="report.expiry-date",f="Expiry date")}}</td>
-                    <th class="bold col-packsize">{{t(k="report.pack-size",f="Pack size")}}</th>
-                    <th class="bold col-packsize">{{t(k="report.quan",f="Quan")}}</th>
-                    <th class="bold col-actual-stock">{{t(k="report.actual",f="Actual")}}</th>
-                </tr>
-            </thead>
-            <tbody class="table-body">
-                {% for line in data.stocktakeLines.nodes -%}
-                <tr class="row">
-                    <td class="col-location">
-                        {% if line.location.code %}
-                            {{ line.location.code }}
-                        {% endif %}
-                    </td>
-                    <td class="col-item-code">{{ line.item.code }}</td>
-                    <td class="col-item-name">{{ line.item.name }}</td>
-                    <td class="ccol-batch">{{ line.batch }}</td>
-                    <td class="col-expiry-date">
-                        {% if line.expiryDate %}
-                            {{ line.expiryDate | date(format="%d/%m/%Y") }}
-                        {% endif %}
-                    </td>
-                    <td class="col-packsize">{{ line.packSize }}</td>
-                    <td class="col-quantity">{{ line.countedNumberOfPacks }}</td>
-                    <td class="col-actual-stock">.....................</td>
-                </tr>
-                {%- endfor %}
-            </tbody>
-        </table>
-</div>
+
+<table class="body_section">
+    <thead>
+        <tr class="body_column_label">
+            <th>{{t(k="label.location", f="Location")}}</th>
+            <th>{{t(k="label.code", f="Code")}}</th>
+            <th>{{t(k="report.item-name", f="Item name")}}</th>
+            <th>{{t(k="label.batch", f="batch")}}</th>
+            <th>{{t(k="label.expiry", f="Expiry")}}</th>
+            <th>{{t(k="report.pack-size",f="Pack size")}}</th>
+            <th>{{t(k="report.quan",f="Quan")}}</th>
+            <th>{{t(k="report.actual-stock",f="Actual Stock")}}</th>
+        </tr>
+    </thead>
+    {% for line in data.stocktakeLines.nodes -%}
+    <tr class="body_value">
+        <td>{{ line.location.code | default(value='') }}</td>
+        <td>{{ line.item.code }}</td>
+        <td>{{ line.item.name }}</td>
+        <td>{{ line.batch }}</td>
+        <td>
+            {% if line.expiryDate %}
+            {{ line.expiryDate | date(format="%d/%m/%Y") }}
+            {% endif %}
+        </td>
+        <td>{{ line.packSize }}</td>
+        <td>{{ line.countedNumberOfPacks }}</td>
+        <td>.....................</td>
+    </tr>
+    {%- endfor %}
+</table>
