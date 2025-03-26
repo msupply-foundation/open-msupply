@@ -5,7 +5,7 @@ use repository::{
     EqualFilter, ProgramEnrolment, ProgramEnrolmentFilter, ProgramEnrolmentRepository,
     RepositoryError, VaccinationCardRepository, VaccinationCardRow,
 };
-use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
+use util::constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH;
 
 use crate::service_provider::ServiceContext;
 
@@ -86,7 +86,7 @@ pub fn get_suggested_date(
     let suggested_date_by_age = patient_dob
         .map(|dob| {
             dob.checked_add_signed(Duration::days(
-                (row.min_age * NUMBER_OF_DAYS_IN_A_MONTH) as i64,
+                (row.min_age * AVG_NUMBER_OF_DAYS_IN_A_MONTH) as i64,
             ))
         })
         .flatten();
@@ -152,7 +152,7 @@ pub fn get_vaccination_status(
 
     if let Some(dob) = patient_dob {
         let patient_age_in_months =
-            ((Local::now().date_naive() - dob).num_days() as f64) / NUMBER_OF_DAYS_IN_A_MONTH;
+            ((Local::now().date_naive() - dob).num_days() as f64) / AVG_NUMBER_OF_DAYS_IN_A_MONTH;
 
         if patient_age_in_months > row.max_age {
             return Some(VaccinationCardItemStatus::Late);

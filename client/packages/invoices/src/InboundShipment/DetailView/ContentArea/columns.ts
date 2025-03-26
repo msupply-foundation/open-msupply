@@ -10,10 +10,12 @@ import {
   TooltipTextCell,
   useColumnUtils,
   CurrencyCell,
+  getLinesFromRow,
 } from '@openmsupply-client/common';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 import { isInboundPlaceholderRow } from '../../../utils';
+import { useInboundShipmentLineErrorContext } from '../../context/inboundShipmentLineError';
 
 const getUnitQuantity = (row: InboundLineFragment) =>
   row.packSize * row.numberOfPacks;
@@ -40,10 +42,19 @@ export const useInboundShipmentColumns = () => {
   const getCostPrice = (row: InboundLineFragment) =>
     isInboundPlaceholderRow(row) ? 0 : row.costPricePerPack / row.packSize;
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
+  const { getError } = useInboundShipmentLineErrorContext();
 
   const columns = useColumns<InboundLineFragment | InboundItem>(
     [
-      GenericColumnKey.Selection,
+      [
+        GenericColumnKey.Selection,
+        {
+          getIsError: row =>
+            getLinesFromRow(row).some(
+              r => getError(r)?.__typename === 'LineLinkedToTransferredInvoice'
+            ),
+        },
+      ],
       [
         getNotePopoverColumn(),
         {

@@ -4391,6 +4391,12 @@ export type LineDeleteError = DeleteResponseRequisitionErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type LineLinkedToTransferredInvoice =
+  DeleteInboundShipmentLineErrorInterface & {
+    __typename: 'LineLinkedToTransferredInvoice';
+    description: Scalars['String']['output'];
+  };
+
 export type LinkPatientPatientToStoreError = {
   __typename: 'LinkPatientPatientToStoreError';
   error: LinkPatientPatientToStoreErrorInterface;
@@ -7152,6 +7158,7 @@ export enum ReportContext {
   Dispensary = 'DISPENSARY',
   InboundReturn = 'INBOUND_RETURN',
   InboundShipment = 'INBOUND_SHIPMENT',
+  InternalOrder = 'INTERNAL_ORDER',
   OutboundReturn = 'OUTBOUND_RETURN',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Patient = 'PATIENT',
@@ -8403,11 +8410,6 @@ export type TokenExpired = RefreshTokenErrorInterface & {
 
 export type TransferredRequisition = DeleteResponseRequisitionErrorInterface & {
   __typename: 'TransferredRequisition';
-  description: Scalars['String']['output'];
-};
-
-export type TransferredShipment = DeleteInboundShipmentLineErrorInterface & {
-  __typename: 'TransferredShipment';
   description: Scalars['String']['output'];
 };
 

@@ -13,6 +13,7 @@ import {
   useUrlQueryParams,
   ColumnFormat,
   GenericColumnKey,
+  getCommentPopoverColumn,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -59,7 +60,7 @@ export const StocktakeListView: FC = () => {
       ['description', { sortable: false }],
       ['createdDatetime', { format: ColumnFormat.Date }],
       ['stocktakeDate', { sortable: false }],
-      ['comment', { sortable: false }],
+      getCommentPopoverColumn(),
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
