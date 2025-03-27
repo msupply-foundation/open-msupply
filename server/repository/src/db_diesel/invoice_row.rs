@@ -52,6 +52,7 @@ table! {
         insurance_discount_amount -> Nullable<Double>,
         insurance_discount_percentage -> Nullable<Double>,
         is_cancellation -> Bool,
+        expected_delivery_datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -134,6 +135,7 @@ pub struct InvoiceRow {
     pub insurance_discount_amount: Option<f64>,
     pub insurance_discount_percentage: Option<f64>,
     pub is_cancellation: bool,
+    pub expected_delivery_datetime: Option<NaiveDateTime>,
 }
 
 impl Default for InvoiceRow {
@@ -174,6 +176,7 @@ impl Default for InvoiceRow {
             insurance_discount_amount: Default::default(),
             insurance_discount_percentage: Default::default(),
             is_cancellation: Default::default(),
+            expected_delivery_datetime: Default::default(),
         }
     }
 }
