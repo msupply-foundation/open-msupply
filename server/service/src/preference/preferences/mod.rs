@@ -10,6 +10,7 @@ use preferred_store_name::*;
 mod months_of_stock;
 use months_of_stock::*;
 mod show_contact_tracing;
+use serde_json::json;
 use show_contact_tracing::*;
 
 use crate::service_provider::ServiceContext;
@@ -77,7 +78,7 @@ fn get_preference_registry() -> PreferenceRegistry {
     }
 }
 
-pub trait Preference {
+pub trait Preference: Sync + Send {
     type Value: Default + DeserializeOwned + Serialize;
 
     fn key() -> &'static str;
@@ -86,7 +87,29 @@ pub trait Preference {
         false
     }
 
-    fn json_forms_input_type() -> String;
+    /// Use this for scalar types - otherwise you should implement json_schema()
+    fn json_forms_input_type() -> String {
+        "boolean".to_string()
+    }
+
+    /// IMPORTANT! The frontend does expect the properties > value structure
+    /// Below that you can customise
+    fn json_schema() -> serde_json::Value {
+        json!({
+          "properties": {
+            "value": {
+                "type": Self::json_forms_input_type()
+            }
+          },
+        })
+    }
+
+    fn ui_schema() -> serde_json::Value {
+        json!({
+          "type": "Control",
+          "scope": "#/properties/value"
+        })
+    }
 
     fn deserialize(data: &str) -> Result<Self::Value, serde_json::Error> {
         serde_json::from_str::<Self::Value>(data)
@@ -122,11 +145,12 @@ pub trait Preference {
     }
 }
 
-pub trait PreferenceDescription {
+pub trait PreferenceDescription: Send + Sync {
     fn key(&self) -> String;
     fn global_only(&self) -> bool;
-    fn json_forms_input_type(&self) -> String;
     fn serialised_default(&self) -> String;
+    fn json_schema(&self) -> serde_json::Value;
+    fn ui_schema(&self) -> serde_json::Value;
 }
 
 impl<T: 'static + Preference> PreferenceDescription for T {
@@ -136,8 +160,11 @@ impl<T: 'static + Preference> PreferenceDescription for T {
     fn global_only(&self) -> bool {
         T::global_only()
     }
-    fn json_forms_input_type(&self) -> String {
-        T::json_forms_input_type()
+    fn json_schema(&self) -> serde_json::Value {
+        T::json_schema()
+    }
+    fn ui_schema(&self) -> serde_json::Value {
+        T::ui_schema()
     }
     fn serialised_default(&self) -> String {
         serde_json::to_string(&T::Value::default()).unwrap()
@@ -162,10 +189,6 @@ mod tests {
 
         impl Preference for TestPref1 {
             type Value = TestPref1;
-            fn json_forms_input_type() -> String {
-                "n/a".to_string()
-            }
-
             fn key() -> &'static str {
                 "test_pref_1"
             }
@@ -176,10 +199,6 @@ mod tests {
 
         impl Preference for TestPref2 {
             type Value = i32;
-            fn json_forms_input_type() -> String {
-                "n/a".to_string()
-            }
-
             fn key() -> &'static str {
                 "test_pref_2"
             }
