@@ -78,7 +78,7 @@ export const AppBarButtons = ({
     if (name && (data?.totalCount === 0 || !manuallyLinkInternalOrder)) {
       createInvoice(name.id);
     }
-  }, [name, data]);
+  }, [name, data, manuallyLinkInternalOrder]);
 
   const onRowClick = async (row: LinkedRequestRowFragment) => {
     const invoiceNumber = await onCreate({
