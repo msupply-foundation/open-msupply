@@ -74,7 +74,7 @@ export const EditPreference = ({
                   </Typography>
                   <Box sx={{ width: 300 }}>
                     <EditField
-                      value={match?.value}
+                      value={match?.value ?? prefs.global?.value}
                       preference={selected}
                       onChange={value =>
                         update({ value, storeId: s.id, id: match?.id })
