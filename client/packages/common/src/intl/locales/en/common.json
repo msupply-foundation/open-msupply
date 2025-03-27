@@ -1732,6 +1732,8 @@
   "placeholder.search-by-notes": "Search by notes",
   "policyType.BUSINESS": "Business",
   "policyType.PERSONAL": "Personal",
+  "preference.complex_one": "Complex One",
+  "preference.months_of_stock": "Months of Stock",
   "preference.show_contact_tracing": "Show Contact Tracing",
   "preferences": "Preferences",
   "prescription": "Prescriptions",
