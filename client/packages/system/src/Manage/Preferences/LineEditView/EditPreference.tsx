@@ -1,7 +1,9 @@
 import React from 'react';
 import {
+  BasicSpinner,
   Box,
   DetailPanelSection,
+  NothingHere,
   PreferenceDescriptionNode,
   Typography,
   useTranslation,
@@ -24,11 +26,12 @@ export const EditPreference = ({
   const { data: prefs, isLoading } = usePreferencesByKey(selected.key);
   const { mutateAsync: update } = useEditPreference(selected.key);
 
-  const defaultValue = parse(selected.serialisedDefault);
-  const globalValue = prefs?.global ? parse(prefs.global.value) : defaultValue;
-
   if (isLoading) {
-    return null;
+    return <BasicSpinner />;
+  }
+
+  if (!prefs) {
+    return <NothingHere />;
   }
 
   return (
@@ -36,8 +39,8 @@ export const EditPreference = ({
       <DetailPanelSection title={t('label.global-preference')}>
         <Box sx={{ width: 300 }}>
           <EditField
-            value={globalValue}
-            type={selected.jsonFormsInputType}
+            value={prefs.global?.value}
+            preference={selected}
             onChange={value => update({ value, id: prefs?.global?.id })}
           />
         </Box>
@@ -51,7 +54,6 @@ export const EditPreference = ({
           <Box display="flex" flexDirection="column" gap={1}>
             {stores.map(s => {
               const match = prefs?.perStore.find(p => p.storeId === s.id);
-              const value = match ? parse(match.value) : defaultValue;
 
               return (
                 <Box
@@ -64,8 +66,8 @@ export const EditPreference = ({
                   </Typography>
                   <Box sx={{ width: 300 }}>
                     <EditField
-                      value={value}
-                      type={selected.jsonFormsInputType}
+                      value={match?.value}
+                      preference={selected}
                       onChange={value =>
                         update({ value, storeId: s.id, id: match?.id })
                       }
@@ -79,12 +81,4 @@ export const EditPreference = ({
       </DetailPanelSection>
     </Box>
   );
-};
-
-const parse = (value: string) => {
-  try {
-    return JSON.parse(value);
-  } catch (e) {
-    return value;
-  }
 };

@@ -38,16 +38,16 @@ impl Preference for ComplexOne {
 
     fn ui_schema() -> serde_json::Value {
         json!({
-           "type": "VerticalLayout",
-          "scope": "#/properties/value",
+            "type": "VerticalLayout",
+            "scope": "#/properties/value",
             "elements": [
                 {
-          "type": "Control",
-          "scope": "/properties/somethingHere"
+                    "type": "Control",
+                    "scope": "#/properties/value/properties/somethingHere"
                 },
                 {
-          "type": "Control",
-          "scope": "/properties/somethingElse"
+                    "type": "Control",
+                    "scope": "#/properties/value/properties/somethingElse"
                 }
             ]
         })

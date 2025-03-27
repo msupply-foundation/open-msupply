@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import { JsonData, JsonForm } from '@openmsupply-client/programs';
+import { PreferenceDescriptionNode } from '@openmsupply-client/common';
 
 export const EditField = ({
   value,
-  type,
+  preference,
   onChange,
 }: {
-  value: JsonData;
-  type: string;
+  value: string | undefined;
+  preference: PreferenceDescriptionNode;
   onChange: (newVal: JsonData) => void;
 }) => {
-  const [state, setState] = useState(value);
+  const defaultValue = parse(preference.serialisedDefault);
+  const initialValue = value ? parse(value) : defaultValue;
+
+  const [state, setState] = useState(initialValue);
 
   const updateData = (newData: JsonData) => {
     const newValue = (newData as { value: JsonData })?.value;
@@ -19,7 +23,7 @@ export const EditField = ({
       return;
     }
 
-    if (newValue !== value) {
+    if (newValue !== initialValue && newValue !== state) {
       setState(newValue);
       onChange(newValue);
     }
@@ -28,13 +32,19 @@ export const EditField = ({
   return (
     <JsonForm
       data={{ value: state }}
-      jsonSchema={{
-        properties: { value: { type } },
-      }}
-      uiSchema={{ type: 'Control', scope: '#/properties/value' }}
+      jsonSchema={preference.jsonSchema}
+      uiSchema={preference.uiSchema}
       isError={false}
       isLoading={false}
       updateData={updateData}
     />
   );
+};
+
+const parse = (value: string) => {
+  try {
+    return JSON.parse(value);
+  } catch (e) {
+    return value;
+  }
 };
