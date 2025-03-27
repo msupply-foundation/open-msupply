@@ -1,14 +1,13 @@
-use repository::{
-    EqualFilter, PreferenceFilter, PreferenceRepository, RepositoryError, StorageConnection,
-};
-use serde::{de::DeserializeOwned, Serialize};
+use repository::RepositoryError;
+
+pub mod types;
+pub use types::*;
 
 pub mod complex_pref;
 use complex_pref::*;
 mod months_of_stock;
 use months_of_stock::*;
 mod show_contact_tracing;
-use serde_json::json;
 use show_contact_tracing::*;
 
 use crate::service_provider::ServiceContext;
@@ -17,6 +16,14 @@ struct PreferenceRegistry {
     pub show_contact_tracing: ShowContactTracing,
     pub complex_one: ComplexOne,
     pub months_of_stock: MonthsOfStock,
+}
+
+fn get_preference_registry() -> PreferenceRegistry {
+    PreferenceRegistry {
+        show_contact_tracing: ShowContactTracing,
+        complex_one: ComplexOne,
+        months_of_stock: MonthsOfStock,
+    }
 }
 
 pub struct Preferences {
@@ -60,114 +67,13 @@ pub fn get_preference_descriptions() -> Vec<Box<dyn PreferenceDescription>> {
     ]
 }
 
-fn get_preference_registry() -> PreferenceRegistry {
-    PreferenceRegistry {
-        show_contact_tracing: ShowContactTracing,
-        complex_one: ComplexOne,
-        months_of_stock: MonthsOfStock,
-    }
-}
-
-pub trait Preference: Sync + Send {
-    type Value: Default + DeserializeOwned + Serialize;
-
-    fn key() -> &'static str;
-
-    fn global_only() -> bool {
-        false
-    }
-
-    /// Use this for scalar types - otherwise you should implement json_schema()
-    fn json_forms_input_type() -> String {
-        "boolean".to_string()
-    }
-
-    /// IMPORTANT! The frontend does expect the properties > value structure
-    /// Below that you can customise
-    fn json_schema() -> serde_json::Value {
-        json!({
-          "properties": {
-            "value": {
-                "type": Self::json_forms_input_type()
-            }
-          },
-        })
-    }
-
-    fn ui_schema() -> serde_json::Value {
-        json!({
-          "type": "Control",
-          "scope": "#/properties/value"
-        })
-    }
-
-    fn deserialize(data: &str) -> Result<Self::Value, serde_json::Error> {
-        serde_json::from_str::<Self::Value>(data)
-    }
-
-    fn load(
-        &self,
-        connection: &StorageConnection,
-        store_id: &str,
-    ) -> Result<Self::Value, RepositoryError> {
-        let prefs_by_key = PreferenceRepository::new(connection).query_by_filter(
-            PreferenceFilter::new()
-                .store_id(EqualFilter::equal_any_or_null(vec![store_id.to_string()]))
-                .key(EqualFilter::equal_to(Self::key())),
-        )?;
-
-        // If there is a store-specific preference, that should override any global preference
-        let store_pref = prefs_by_key.iter().find(|pref| pref.store_id.is_some());
-        let global_pref = prefs_by_key.iter().find(|pref| pref.store_id.is_none());
-
-        let configured_pref = store_pref.or(global_pref);
-
-        match configured_pref {
-            None => Ok(Self::Value::default()),
-            Some(pref) => {
-                let text_pref = pref.value.as_str();
-
-                Self::deserialize(text_pref).map_err(|e| {
-                    RepositoryError::as_db_error("Failed to deserialize preference", e)
-                })
-            }
-        }
-    }
-}
-
-pub trait PreferenceDescription: Send + Sync {
-    fn key(&self) -> String;
-    fn global_only(&self) -> bool;
-    fn serialised_default(&self) -> String;
-    fn json_schema(&self) -> serde_json::Value;
-    fn ui_schema(&self) -> serde_json::Value;
-}
-
-impl<T: 'static + Preference> PreferenceDescription for T {
-    fn key(&self) -> String {
-        T::key().to_string()
-    }
-    fn global_only(&self) -> bool {
-        T::global_only()
-    }
-    fn json_schema(&self) -> serde_json::Value {
-        T::json_schema()
-    }
-    fn ui_schema(&self) -> serde_json::Value {
-        T::ui_schema()
-    }
-    fn serialised_default(&self) -> String {
-        serde_json::to_string(&T::Value::default()).unwrap()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use repository::mock::{mock_store_a, MockDataInserts};
     use repository::test_db::setup_all;
     use repository::{PreferenceRow, PreferenceRowRepository};
-    use serde::Deserialize;
+    use serde::{Deserialize, Serialize};
 
     #[actix_rt::test]
     async fn test_preference() {

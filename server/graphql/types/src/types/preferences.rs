@@ -120,7 +120,7 @@ impl PreferenceNode {
         &self.preference.key
     }
 
-    // /// JSON serialized value
+    /// JSON serialized value
     pub async fn value(&self) -> &String {
         &self.preference.value
     }
