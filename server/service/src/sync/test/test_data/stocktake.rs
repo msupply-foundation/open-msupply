@@ -112,8 +112,8 @@ const STOCKTAKE_OM_FIELD: (&str, &str) = (
       "type": "",
       "om_created_datetime": "2021-07-30T15:15:15",
       "om_finalised_datetime": "2021-07-31T15:15:15",
-      "counted_by": "testuser1",
-      "verified_by": "testuser2"
+      "om_counted_by": "testuser1",
+      "om_verified_by": "testuser2"
     }"#,
 );
 fn stocktake_om_field_pull_record() -> TestSyncIncomingRecord {
