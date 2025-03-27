@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useBeforeUnload, useBlocker } from 'react-router-dom';
 import { create } from 'zustand';
 import { useTranslation } from '@common/intl';
@@ -69,22 +69,18 @@ export const useBlockNavigation = () => {
     return false;
   });
 
-  const shouldBlockRefresh = blockers.some(b => {
-    if (b.options?.customCheck) {
-      return b.options.customCheck.refresh();
-    }
-    return b.shouldBlock && !b.options?.allowRefresh;
-  });
-
   // handle page refresh events
   useBeforeUnload(
-    useCallback(
-      event => {
-        // Cancel the refresh
-        if (shouldBlockRefresh) event.preventDefault();
-      },
-      [shouldBlockRefresh]
-    ),
+    event => {
+      const shouldBlockRefresh = blockers.some(b => {
+        if (b.options?.customCheck) {
+          return b.options.customCheck.refresh();
+        }
+        return b.shouldBlock && !b.options?.allowRefresh;
+      });
+      // Cancel the refresh
+      if (shouldBlockRefresh) event.preventDefault();
+    },
     { capture: true }
   );
 
