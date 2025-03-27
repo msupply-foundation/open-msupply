@@ -174,7 +174,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
       await insertLog({
         id: FnUtils.generateUUID(),
         assetId: row.id,
-        comment: t('label.created'),
+        comment: t('message.asset-created'),
         status: toStatusTypeInput(row.status),
       });
     } catch (e) {
