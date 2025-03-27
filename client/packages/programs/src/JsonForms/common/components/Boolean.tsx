@@ -25,6 +25,7 @@ const UIComponent = (props: ControlProps) => {
       label={t(label as LocaleKey)}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}
+      labelProps={{ sx: { lineHeight: '2.5' } }}
       Input={
         <Switch
           labelPlacement="end"
