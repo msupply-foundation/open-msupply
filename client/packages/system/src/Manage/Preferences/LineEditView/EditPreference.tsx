@@ -7,9 +7,9 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useStores } from '@openmsupply-client/system';
-import { JsonData } from '@openmsupply-client/programs';
 import { usePreferencesByKey } from '../api/usePreferencesByKey';
 import { EditField } from './EditField';
+import { useEditPreference } from '../api/useEditPreference';
 
 export const EditPreference = ({
   selected,
@@ -22,21 +22,10 @@ export const EditPreference = ({
   const stores = data?.nodes ?? [];
 
   const { data: prefs, isLoading } = usePreferencesByKey(selected.key);
+  const { mutateAsync: update } = useEditPreference(selected.key);
 
   const defaultValue = parse(selected.serialisedDefault);
   const globalValue = prefs?.global ? parse(prefs.global.value) : defaultValue;
-
-  const update = ({
-    id,
-    value,
-    storeId,
-  }: {
-    id?: string;
-    value: JsonData;
-    storeId?: string;
-  }) => {
-    console.log(id, value, storeId);
-  };
 
   if (isLoading) {
     return null;

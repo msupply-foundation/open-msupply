@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { JsonData, JsonForm } from '@openmsupply-client/programs';
 
 export const EditField = ({
@@ -10,21 +10,24 @@ export const EditField = ({
   type: string;
   onChange: (newVal: JsonData) => void;
 }) => {
+  const [state, setState] = useState(value);
+
   const updateData = (newData: JsonData) => {
     const newValue = (newData as { value: JsonData })?.value;
     if (newValue === undefined) {
-      console.log('Invalid data', newData);
+      console.error('Invalid data', newData);
       return;
     }
 
     if (newValue !== value) {
+      setState(newValue);
       onChange(newValue);
     }
   };
 
   return (
     <JsonForm
-      data={{ value }}
+      data={{ value: state }}
       jsonSchema={{
         properties: { value: { type } },
       }}
