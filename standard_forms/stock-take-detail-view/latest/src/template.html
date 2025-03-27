@@ -1,59 +1,56 @@
 <style>
-    {% include "stocktake-detail.css" %}
+    {% include "style.css" %}
 </style>
-<div class="container">
-        <table class="main-table">
-            <thead class="table-header">
-                <tr class="row">
-                    <th class="bold col-item-code">{{t(k="label.code", f="Code")}}</th>
-                    <th class="bold col-item-name">{{t(k="report.item-name", f="Item name")}}</th>
-                    <th class="bold col-batch">{{t(k="label.batch", f="batch")}}</th>
-                    <th class="bold col-expiry">{{t(k="label.expiry", f="Expiry")}}</th>                    
-                    <th class="bold col-location">{{t(k="label.location", f="Location")}}</th>
-                    <th class="bold col-unit">{{t(k="label.unit", f="Unit")}}</th>  
-                    <th class="bold col-packsize">{{t(k="label.pack-size",f="Pack size")}}</th>
-                    <th class="bold col-snapshot-packs">{{t(k="label.snapshot-num-of-packs",f="Snapshot Packs")}}</th>
-                    <th class="bold col-counted-packs">{{t(k="label.counted-num-of-packs",f="Counted Packs")}}</th>
-                    <th class="bold col-difference">{{t(k="label.difference",f="Difference")}}</th>
-                    <th class="bold col-reason">{{t(k="label.reason-adjustment",f="Adjustment Reason")}}</th>
-                </tr>
-            </thead>
-            <tbody class="table-body">
-                {% for line in data.stocktakeLines.nodes -%}
-                <tr class="row">
-                    <td class="col-item-code">{{ line.item.code }}</td>
-                    <td class="col-item-name">{{ line.item.name }}</td>
-                    <td class="col-batch">{{ line.batch }}</td>
-                    <td class="col-expiry">
-                        {% if line.expiryDate %}
-                        {{ line.expiryDate | date(format="%d/%m/%Y") }}
-                        {% endif %}
-                    </td>
-                    <td class="col-location">
-                        {% if line.location.code %}
-                        {{ line.location.code }}
-                        {% endif %}
-                    </td>
-                    <td class="col-unit">{{ line.item.unitName }}</td>
-                    <td class="col-packsize">{{ line.packSize }}</td>                    
-                    <td class="col-snapshot-packs">{{ line.snapshotNumberOfPacks }}</td>
-                    <td class="col-counted-packs">
-                        {% if line.countedNumberOfPacks %}
-                        {{ line.countedNumberOfPacks }} 
-                        {% else %}
-                        -
-                        {% endif %}
-                    </td>
-                    <td class="col-difference">
-                        {% if line.countedNumberOfPacks %} 
-                        {{ line.countedNumberOfPacks - line.snapshotNumberOfPacks }} 
-                        {% else %}
-                        -
-                        {% endif %}
-                    </td>
-                    <td class="col-reason">{{ line.inventoryAdjustmentReason.reason | default(value='') }}</td>
-                </tr>
-                {%- endfor %}
-            </tbody>
-        </table>
-</div>
+
+<table class="body_section">
+    <thead>
+        <tr class="body_column_label">
+            <th>{{t(k="label.code", f="Code")}}</th>
+            <th>{{t(k="report.item-name", f="Item name")}}</th>
+            <th>{{t(k="label.batch", f="batch")}}</th>
+            <th>{{t(k="label.expiry", f="Expiry")}}</th>
+            <th>{{t(k="label.location", f="Location")}}</th>
+            <th>{{t(k="label.unit", f="Unit")}}</th>
+            <th>{{t(k="label.pack-size",f="Pack size")}}</th>
+            <th>{{t(k="label.snapshot-num-of-packs",f="Snapshot Packs")}}</th>
+            <th>{{t(k="label.counted-num-of-packs",f="Counted Packs")}}</th>
+            <th>{{t(k="label.difference",f="Difference")}}</th>
+            <th>{{t(k="label.reason-adjustment",f="Adjustment Reason")}}</th>
+        </tr>
+    </thead>
+    {% for line in data.stocktakeLines.nodes -%}
+    <tr class="body_value">
+        <td>{{ line.item.code }}</td>
+        <td>{{ line.item.name }}</td>
+        <td>{{ line.batch }}</td>
+        <td>
+            {% if line.expiryDate %}
+            {{ line.expiryDate | date(format="%d/%m/%Y") }}
+            {% endif %}
+        </td>
+        <td>
+            {% if line.location.code %}
+            {{ line.location.code }}
+            {% endif %}
+        </td>
+        <td>{{ line.item.unitName }}</td>
+        <td>{{ line.packSize}}</td>
+        <td>{{ line.snapshotNumberOfPacks }}</td>
+        <td>
+            {% if line.countedNumberOfPacks %}
+            {{ line.countedNumberOfPacks }}
+            {% else %}
+            -
+            {% endif %}
+        </td>
+        <td>
+            {% if line.countedNumberOfPacks %}
+            {{ line.countedNumberOfPacks - line.snapshotNumberOfPacks }}
+            {% else %}
+            -
+            {% endif %}
+        </td>
+        <td>{{ line.inventoryAdjustmentReason.reason | default(value='') }}</td>
+    </tr>
+    {%- endfor %}
+</table>

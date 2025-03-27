@@ -1,5 +1,4 @@
 import { LowStockStatus } from '@common/types';
-import { DAYS_IN_A_MONTH } from '@common/utils';
 
 export const getAmc = (
   previousMonthlyConsumptionValues: string,
@@ -11,7 +10,7 @@ export const getAmc = (
     .filter(v => v !== '');
 
   const monthlyConsumptionThisPeriod =
-    adjustedQuantityConsumed / (periodLength / DAYS_IN_A_MONTH);
+    adjustedQuantityConsumed / (periodLength / 30); // 30 days in a month
 
   const totalMonthlyConsumption =
     previousConsumptionValues.reduce((acc, cur) => acc + Number(cur), 0) +

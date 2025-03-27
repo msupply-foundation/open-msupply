@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_internal_order_report_type;
 mod change_vaccination_date_to_nullable;
 
 pub(crate) struct V2_06_01;
@@ -15,7 +16,10 @@ impl Migration for V2_06_01 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(change_vaccination_date_to_nullable::Migrate)]
+        vec![
+            Box::new(change_vaccination_date_to_nullable::Migrate),
+            Box::new(add_internal_order_report_type::Migrate),
+        ]
     }
 }
 
