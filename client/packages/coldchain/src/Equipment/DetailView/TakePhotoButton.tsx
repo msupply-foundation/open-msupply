@@ -63,7 +63,7 @@ export const TakePhotoButton = ({
     <Box sx={{ padding: 0 }}>
       <ButtonWithIcon
         Icon={<CameraIcon />}
-        label={t('button.camera')}
+        label={t('button.photo')}
         onClick={takePicture}
         shouldShrink={false}
         color="secondary"
