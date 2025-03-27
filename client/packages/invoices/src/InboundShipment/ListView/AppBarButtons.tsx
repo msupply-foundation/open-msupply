@@ -63,25 +63,11 @@ export const AppBarButtons = ({
     success(t('success'))();
   };
 
-  const createInvoice = async (nameId: string) => {
+  const createInvoice = async (nameId: string, requisitionId?: string) => {
     const invoiceNumber = await onCreate({
       id: FnUtils.generateUUID(),
       otherPartyId: nameId,
-    });
-
-    navigate(
-      RouteBuilder.create(AppRoute.Replenishment)
-        .addPart(AppRoute.InboundShipment)
-        .addPart(String(invoiceNumber))
-        .build()
-    );
-  };
-
-  const onRowClick = async (row: LinkedRequestRowFragment) => {
-    const invoiceNumber = await onCreate({
-      id: FnUtils.generateUUID(),
-      otherPartyId: name?.id ?? '',
-      requisitionId: row.id,
+      requisitionId,
     });
 
     navigate(
@@ -115,7 +101,10 @@ export const AppBarButtons = ({
           requestRequisitions={data?.nodes}
           isOpen={linkRequestModalController.isOn}
           onClose={linkRequestModalController.toggleOff}
-          onRowClick={onRowClick}
+          onRowClick={row => {
+            createInvoice(name?.id ?? '', row.id);
+            linkRequestModalController.toggleOff();
+          }}
           isLoading={internalOrderIsLoading}
           onNextClick={() => {
             if (name) {
