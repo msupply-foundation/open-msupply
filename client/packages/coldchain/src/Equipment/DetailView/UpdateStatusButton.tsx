@@ -101,10 +101,7 @@ export const UpdateStatusButtonComponent = ({
             }}
           />
         }
-        okButton={
-          <DialogButton variant="ok" onClick={onOk} />
-        }
-
+        okButton={<DialogButton variant="ok" onClick={onOk} />}
       >
         <DetailContainer paddingTop={1}>
           <Box
@@ -119,10 +116,7 @@ export const UpdateStatusButtonComponent = ({
               },
             }}
           >
-            <StatusForm
-              draft={draft}
-              onChange={onChange}
-            />
+            <StatusForm draft={draft} onChange={onChange} />
           </Box>
         </DetailContainer>
       </Modal>
