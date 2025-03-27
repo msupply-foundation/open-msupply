@@ -85,7 +85,7 @@ export const Upload: FC<UploadProps> = ({
                 color="secondary"
                 variant="outlined"
                 label={t('button.browse-files')}
-                onClick={() => { }}
+                onClick={() => {}}
                 Icon={<LinkIcon />}
               />
             )}
