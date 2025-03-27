@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import { ButtonWithIcon } from '@common/components';
 import { PlusCircleIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
@@ -18,7 +18,7 @@ export const UploadButton = ({
   const t = useTranslation();
   const elementId = FnUtils.generateUUID();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const newFileSet = files ?? [];
       for (const file of e.target.files) {

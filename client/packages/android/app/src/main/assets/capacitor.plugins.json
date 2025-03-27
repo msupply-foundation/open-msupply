@@ -1,42 +1,42 @@
 [
-	{
-		"pkg": "@capacitor/camera",
-		"classpath": "com.capacitorjs.plugins.camera.CameraPlugin"
-	},
-	{
-		"pkg": "@capacitor/geolocation",
-		"classpath": "com.capacitorjs.plugins.geolocation.GeolocationPlugin"
-	},
-	{
-		"pkg": "@bcyesil/capacitor-plugin-printer",
-		"classpath": "com.bcyesil.capacitor.printer.PrinterPlugin"
-	},
-	{
-		"pkg": "@capacitor-community/barcode-scanner",
-		"classpath": "com.getcapacitor.community.barcodescanner.BarcodeScanner"
-	},
-	{
-		"pkg": "@capacitor-community/keep-awake",
-		"classpath": "com.getcapacitor.community.keepawake.KeepAwakePlugin"
-	},
-	{
-		"pkg": "@capacitor/app",
-		"classpath": "com.capacitorjs.plugins.app.AppPlugin"
-	},
-	{
-		"pkg": "@capacitor/keyboard",
-		"classpath": "com.capacitorjs.plugins.keyboard.KeyboardPlugin"
-	},
-	{
-		"pkg": "@capacitor/preferences",
-		"classpath": "com.capacitorjs.plugins.preferences.PreferencesPlugin"
-	},
-	{
-		"pkg": "@capacitor-community/file-opener",
-		"classpath": "com.ryltsov.alex.plugins.file.opener.FileOpenerPlugin"
-	},
-	{
-		"pkg": "@capacitor/filesystem",
-		"classpath": "com.capacitorjs.plugins.filesystem.FilesystemPlugin"
-	}
+  {
+    "pkg": "@capacitor/camera",
+    "classpath": "com.capacitorjs.plugins.camera.CameraPlugin"
+  },
+  {
+    "pkg": "@capacitor/geolocation",
+    "classpath": "com.capacitorjs.plugins.geolocation.GeolocationPlugin"
+  },
+  {
+    "pkg": "@bcyesil/capacitor-plugin-printer",
+    "classpath": "com.bcyesil.capacitor.printer.PrinterPlugin"
+  },
+  {
+    "pkg": "@capacitor-community/barcode-scanner",
+    "classpath": "com.getcapacitor.community.barcodescanner.BarcodeScanner"
+  },
+  {
+    "pkg": "@capacitor-community/keep-awake",
+    "classpath": "com.getcapacitor.community.keepawake.KeepAwakePlugin"
+  },
+  {
+    "pkg": "@capacitor/app",
+    "classpath": "com.capacitorjs.plugins.app.AppPlugin"
+  },
+  {
+    "pkg": "@capacitor/keyboard",
+    "classpath": "com.capacitorjs.plugins.keyboard.KeyboardPlugin"
+  },
+  {
+    "pkg": "@capacitor/preferences",
+    "classpath": "com.capacitorjs.plugins.preferences.PreferencesPlugin"
+  },
+  {
+    "pkg": "@capacitor-community/file-opener",
+    "classpath": "com.ryltsov.alex.plugins.file.opener.FileOpenerPlugin"
+  },
+  {
+    "pkg": "@capacitor/filesystem",
+    "classpath": "com.capacitorjs.plugins.filesystem.FilesystemPlugin"
+  }
 ]

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import {
   Autocomplete,
   BasicTextInput,
@@ -13,9 +13,8 @@ import {
   CameraIcon,
   InsertAssetLogInput,
   StatusType,
-  styled,
   useDebounceCallback,
-  useIsScreen,
+  useIsSmallScreen,
 } from '@openmsupply-client/common';
 import { FileList } from '../Components';
 import { parseLogStatus } from '../utils';
@@ -24,15 +23,6 @@ import { useIsGapsStoreOnly } from '@openmsupply-client/common';
 import { TakePhotoButton } from './TakePhotoButton';
 import { Capacitor } from '@capacitor/core';
 import { UploadButton } from './UploadButton';
-
-const StyledContainer = styled(Box)(({ theme }) => ({
-  borderColor: theme.palette.divider,
-  flexDirection: 'column',
-  display: 'flex',
-  alignItems: 'center',
-  height: '100%',
-  width: '100%',
-}));
 
 interface StatusForm {
   draft: Partial<Draft>;
@@ -46,7 +36,7 @@ const Row = ({
   label,
   isGaps,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   label: string;
   isGaps: boolean;
 }) => {
@@ -91,7 +81,7 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
   const t = useTranslation();
   const isGaps = useIsGapsStoreOnly();
   const isNative = Capacitor.isNativePlatform();
-  const isSmallScreen = useIsScreen('md');
+  const isSmallScreen = useIsSmallScreen();
   const debouncedOnChange = useDebounceCallback(
     (patch: Partial<InsertAssetLogInput>) => onChange(patch),
     [onChange],
@@ -137,38 +127,45 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
     onChange({ files });
   };
 
-  const uploadButton = isSmallScreen ? (
-    <UploadButton
-      onUpload={onUpload}
-      files={draft.files}
-      customLabel={t('button.browse-files')}
-    ></UploadButton>
-  ) : (
-    <Upload onUpload={onUpload} /> // Use dropzone for larger screens
-  );
+  const renderUploadButton = (): ReactNode => {
+    if (!isSmallScreen) return <Upload onUpload={onUpload} />;
 
-  // If the screen is small or the platform is native, add a TakePhotoButton
-  let takePhotoButton = null;
-  if (isSmallScreen || isNative) {
-    if (isNative) {
-      takePhotoButton = (
-        <TakePhotoButton onUpload={onUpload} files={draft.files} />
-      );
-    } else {
-      takePhotoButton = (
-        <UploadButton
-          onUpload={onUpload}
-          files={draft.files}
-          icon={<CameraIcon />}
-          customLabel={t('button.camera')}
-        ></UploadButton>
-      );
-    }
-  }
+    return (
+      <UploadButton
+        onUpload={onUpload}
+        files={draft.files}
+        customLabel={t('button.browse-files')}
+      />
+    );
+  };
+
+  const renderTakePhotoButton = (): ReactNode => {
+    if (!isSmallScreen) return null;
+
+    return isNative ? (
+      <TakePhotoButton onUpload={onUpload} files={draft.files} />
+    ) : (
+      <UploadButton
+        onUpload={onUpload}
+        files={draft.files}
+        icon={<CameraIcon />}
+        customLabel={t('button.photo')}
+      />
+    );
+  };
 
   return (
-    <StyledContainer>
-      <Box display="flex" flexDirection="column" sx={{ width: '100%' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        width: '100%',
+        height: '100%',
+        alignItems: 'center',
+        flexDirection: 'column',
+        borderColor: theme => theme.palette.divider,
+      }}
+    >
+      <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
         <Row label={t('label.new-functional-status')} isGaps={isGaps}>
           <Autocomplete
             isOptionEqualToValue={option => option?.value === draft.status}
@@ -214,10 +211,10 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
             justifyContent: 'center',
           }}
         >
-          {uploadButton}
-          {takePhotoButton}
+          {renderUploadButton()}
+          {renderTakePhotoButton()}
         </Box>
-        <Box display="flex" sx={{ width: '300px' }}>
+        <Box sx={{ display: 'flex', width: '300px' }}>
           <FileList
             assetId={draft.id ?? ''}
             files={draft.files}
@@ -226,6 +223,6 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
           />
         </Box>
       </Box>
-    </StyledContainer>
+    </Box>
   );
 };
