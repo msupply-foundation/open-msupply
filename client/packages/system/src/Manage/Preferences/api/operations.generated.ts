@@ -11,8 +11,9 @@ export type AllPrefsQuery = {
     __typename: 'PreferenceDescriptionNode';
     key: string;
     globalOnly: boolean;
-    jsonFormsInputType: string;
     serialisedDefault: string;
+    jsonSchema: any;
+    uiSchema: any;
   }>;
 };
 
@@ -67,8 +68,9 @@ export const AllPrefsDocument = gql`
     availablePreferences {
       key
       globalOnly
-      jsonFormsInputType
       serialisedDefault
+      jsonSchema
+      uiSchema
     }
   }
 `;

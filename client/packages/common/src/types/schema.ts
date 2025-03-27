@@ -4584,6 +4584,7 @@ export type MasterListNode = {
   __typename: 'MasterListNode';
   code: Scalars['String']['output'];
   description: Scalars['String']['output'];
+  discountPercentage: Scalars['Float']['output'];
   id: Scalars['String']['output'];
   linesCount?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
@@ -5880,9 +5881,10 @@ export type PluginInfoNode = {
 export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
   globalOnly: Scalars['Boolean']['output'];
-  jsonFormsInputType: Scalars['String']['output'];
+  jsonSchema: Scalars['JSON']['output'];
   key: Scalars['String']['output'];
   serialisedDefault: Scalars['String']['output'];
+  uiSchema: Scalars['JSON']['output'];
 };
 
 export type PreferenceMutations = {

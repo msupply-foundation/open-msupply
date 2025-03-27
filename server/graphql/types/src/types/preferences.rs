@@ -1,7 +1,7 @@
 use async_graphql::*;
 use repository::PreferenceRow;
 use service::preference::{
-    preferences::{complex_pref::ComplexPref, Preferences},
+    preferences::{complex_pref::ComplexPref, PreferenceDescription, Preferences},
     PreferencesByKeyResult,
 };
 
@@ -59,28 +59,29 @@ impl ComplexPrefNode {
 
 /// Describes a preference, how it is configured
 pub struct PreferenceDescriptionNode {
-    pub key: String,
-    pub global_only: bool,
-    pub json_forms_input_type: String,
-    pub serialised_default: String,
+    pub pref: Box<dyn PreferenceDescription>,
 }
 
 #[Object]
 impl PreferenceDescriptionNode {
-    pub async fn key(&self) -> &String {
-        &self.key
+    pub async fn key(&self) -> String {
+        self.pref.key()
     }
 
-    pub async fn global_only(&self) -> &bool {
-        &self.global_only
+    pub async fn global_only(&self) -> bool {
+        self.pref.global_only()
     }
 
-    pub async fn json_forms_input_type(&self) -> &String {
-        &self.json_forms_input_type
+    pub async fn json_schema(&self) -> serde_json::Value {
+        self.pref.json_schema()
     }
 
-    pub async fn serialised_default(&self) -> &String {
-        &self.serialised_default
+    pub async fn ui_schema(&self) -> serde_json::Value {
+        self.pref.ui_schema()
+    }
+
+    pub async fn serialised_default(&self) -> String {
+        self.pref.serialised_default()
     }
 }
 
