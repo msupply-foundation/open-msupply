@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   FnUtils,
@@ -61,24 +61,28 @@ export const AppBarButtons = ({
     success(t('success'))();
   };
 
-  const createInvoice = async (nameId: string) => {
-    const invoiceNumber = await onCreate({
-      id: FnUtils.generateUUID(),
-      otherPartyId: nameId,
-    });
+  const createInvoice = useCallback(
+    async (nameId: string) => {
+      const invoiceNumber = await onCreate({
+        id: FnUtils.generateUUID(),
+        otherPartyId: nameId,
+      });
 
-    navigate(
-      RouteBuilder.create(AppRoute.Replenishment)
-        .addPart(AppRoute.InboundShipment)
-        .addPart(String(invoiceNumber))
-        .build()
-    );
-  };
+      navigate(
+        RouteBuilder.create(AppRoute.Replenishment)
+          .addPart(AppRoute.InboundShipment)
+          .addPart(String(invoiceNumber))
+          .build()
+      );
+    },
+    [onCreate]
+  );
+
   useEffect(() => {
     if (name && (data?.totalCount === 0 || !manuallyLinkInternalOrder)) {
       createInvoice(name.id);
     }
-  }, [name, data, manuallyLinkInternalOrder]);
+  }, [name, data, manuallyLinkInternalOrder, createInvoice]);
 
   const onRowClick = async (row: LinkedRequestRowFragment) => {
     const invoiceNumber = await onCreate({
