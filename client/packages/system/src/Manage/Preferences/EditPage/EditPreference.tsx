@@ -37,16 +37,18 @@ export const EditPreference = ({
   return (
     <Box>
       <DetailPanelSection title={t('label.global-preference')}>
-        <Box sx={{ width: 300 }}>
-          <EditField
-            value={prefs.global?.value}
-            preference={selected}
-            onChange={value => update({ value, id: prefs?.global?.id })}
-          />
+        <Box sx={{ backgroundColor: 'white', padding: 1, borderRadius: 1 }}>
+          <Box sx={{ width: 300 }}>
+            <EditField
+              value={prefs.global?.value}
+              preference={selected}
+              onChange={value => update({ value, id: prefs?.global?.id })}
+            />
+          </Box>
         </Box>
       </DetailPanelSection>
       <Box sx={{ height: 10 }} />
-      <DetailPanelSection title={t('label.per-store')}>
+      <DetailPanelSection title={t('label.per-store')} defaultExpanded={false}>
         {selected.globalOnly ? (
           <Typography>{t('messages.global-only-preference')}</Typography>
         ) : (
@@ -60,7 +62,11 @@ export const EditPreference = ({
               return (
                 <Box
                   display="flex"
-                  sx={{ backgroundColor: 'white' }}
+                  sx={{
+                    backgroundColor: 'white',
+                    padding: 0.5,
+                    borderRadius: 1,
+                  }}
                   key={s.id}
                 >
                   <Typography width="200px" fontWeight="bold">
