@@ -9,7 +9,7 @@ import { LineEditBase } from './LineEditBase';
 import { useAvailablePreferences } from '../api';
 import { EditPreference } from './EditPreference';
 
-export const PreferencesLineEdit = () => {
+export const EditPreferencesPage = () => {
   const t = useTranslation();
   const { key } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();

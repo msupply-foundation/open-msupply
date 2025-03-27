@@ -51,6 +51,8 @@ export const EditPreference = ({
           <Typography>{t('messages.global-only-preference')}</Typography>
         ) : (
           // TODO: This should be a searchable/filterable table
+          // Leaving here for now to see, but probably should leave
+          // only global prefs needed for now?
           <Box display="flex" flexDirection="column" gap={1}>
             {stores.map(s => {
               const match = prefs?.perStore.find(p => p.storeId === s.id);

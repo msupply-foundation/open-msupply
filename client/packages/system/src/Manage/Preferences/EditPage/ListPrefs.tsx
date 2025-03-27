@@ -25,7 +25,7 @@ export const ListPrefs = ({
   const t = useTranslation();
   const value = prefs?.find(({ key }) => key === currentKey) ?? null;
 
-  let options: ListOptionValues[] =
+  const options: ListOptionValues[] =
     prefs?.map(({ key }) => ({
       id: key,
       value: t(`preference.${key}` as LocaleKey),
