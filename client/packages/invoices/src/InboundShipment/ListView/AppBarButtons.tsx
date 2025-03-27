@@ -22,7 +22,7 @@ import {
   NameRowFragment,
   SupplierSearchModal,
 } from '@openmsupply-client/system';
-import { LinkedRequestRowFragment, useInbound } from '../api';
+import { useInbound } from '../api';
 import { inboundsToCsv } from '../../utils';
 import { LinkInternalOrderModal } from './LinkInternalOrderModal';
 
