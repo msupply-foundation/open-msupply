@@ -7,7 +7,7 @@ export const useAvailablePreferences = () => {
   return useQuery({
     queryKey: 'availablePreferences',
     queryFn: async () => {
-      const result = await api.AllPrefs();
+      const result = await api.allPrefs();
 
       return result.availablePreferences;
     },

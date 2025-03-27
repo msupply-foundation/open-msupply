@@ -64,7 +64,7 @@ export type UpsertPreferenceMutation = {
 };
 
 export const AllPrefsDocument = gql`
-  query AllPrefs {
+  query allPrefs {
     availablePreferences {
       key
       globalOnly
@@ -126,7 +126,7 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
-    AllPrefs(
+    allPrefs(
       variables?: AllPrefsQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<AllPrefsQuery> {
@@ -136,7 +136,7 @@ export function getSdk(
             ...requestHeaders,
             ...wrappedRequestHeaders,
           }),
-        'AllPrefs',
+        'allPrefs',
         'query',
         variables
       );
