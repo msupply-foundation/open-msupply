@@ -15,9 +15,6 @@ impl PreferencesNode {
     pub async fn show_contact_tracing(&self) -> &bool {
         &self.preferences.show_contact_tracing
     }
-    pub async fn preferred_store_name(&self) -> &String {
-        &self.preferences.preferred_store_name
-    }
     pub async fn months_of_stock(&self) -> &i32 {
         &self.preferences.months_of_stock
     }
