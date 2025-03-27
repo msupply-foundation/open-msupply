@@ -55,10 +55,7 @@ const formatDate = (value: string): string | null => {
   return Formatter.naiveDate(DateUtils.getDateOrNull(value, 'dd/MM/yyyy'));
 };
 
-const formatNeedsReplacement = (value: string): boolean | null => {
-  if (value.match(/true/i)) return true;
-  else return false;
-};
+const formatNeedsReplacement = (value: string) => !!value.match(/true/i);
 
 function getImportHelpers<T, P>(
   row: P,
