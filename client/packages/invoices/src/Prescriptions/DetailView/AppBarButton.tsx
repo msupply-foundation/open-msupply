@@ -7,8 +7,6 @@ import {
   useDetailPanel,
   useTranslation,
   InfoOutlineIcon,
-  LoadingButton,
-  PrinterIcon,
   ReportContext,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
@@ -51,11 +49,22 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     printReceipt({ reportId: report.id, dataId: prescription?.id, args });
   };
 
-  const handlePrintLabels = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handlePrintLabels = (e?: React.MouseEvent<HTMLButtonElement>) => {
     if (prescription) {
       printPrescriptionLabels(prescription, prescription.lines.nodes, e);
     }
   };
+
+  const extraOptions = prescription
+    ? [
+        {
+          value: 'Print Labels',
+          label: t('button.print-prescription-label'),
+          isDisabled: isDisabled,
+          onClick: handlePrintLabels,
+        },
+      ]
+    : [];
 
   return (
     <AppBarButtonsPortal>
@@ -65,25 +74,14 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           label={t('button.add-item')}
           onClick={onAddItem}
         />
-        <LoadingButton
-          disabled={isDisabled}
-          variant="outlined"
-          startIcon={<PrinterIcon />}
-          isLoading={isPrintingLabels}
-          label={t('button.print-prescription-label')}
-          onClick={handlePrintLabels}
-        />
         <ReportSelector
           context={ReportContext.Prescription}
           onPrint={printReport}
-        >
-          <LoadingButton
-            variant="outlined"
-            startIcon={<PrinterIcon />}
-            isLoading={isPrintingReceipt}
-            label={t('button.print-receipt')}
-          />
-        </ReportSelector>
+          isPrinting={isPrintingReceipt || isPrintingLabels}
+          customOptions={extraOptions}
+          onPrintCustom={e => handlePrintLabels(e)}
+          buttonLabel={t('button.print-report-options')}
+        />
         <ButtonWithIcon
           label={t('button.history')}
           Icon={<InfoOutlineIcon />}
