@@ -1,9 +1,4 @@
-
-query StocktakeQuery(
-  $storeId: String!
-  $dataId: String!
-  $sort: PrintReportSortInput
-) {
+query StocktakeQuery($storeId: String!, $dataId: String!, $sort: PrintReportSortInput) {
   stocktake(storeId: $storeId, id: $dataId) {
     ... on StocktakeNode {
       id
@@ -12,6 +7,8 @@ query StocktakeQuery(
       stocktakeNumber
       status
       createdDatetime
+      description
+      comment
     }
     ... on NodeError {
       __typename
