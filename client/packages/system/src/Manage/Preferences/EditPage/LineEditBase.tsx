@@ -9,6 +9,7 @@ import { AppRoute } from '@openmsupply-client/config';
 
 import { ListPrefs } from './ListPrefs';
 
+// TODO: this to become a generic component
 export const LineEditBase = ({
   children,
   prefs,
@@ -19,7 +20,6 @@ export const LineEditBase = ({
 }) => {
   const navigate = useNavigate();
 
-  //t odo remove?
   // This ref is attached to the currently selected list item, and is used to
   // "scroll into view" when the Previous/Next buttons are clicked in the NavBar
   const scrollRef = useRef<null | HTMLLIElement>(null);
