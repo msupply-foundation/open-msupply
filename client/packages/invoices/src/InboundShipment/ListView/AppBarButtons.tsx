@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   FnUtils,
@@ -61,28 +61,19 @@ export const AppBarButtons = ({
     success(t('success'))();
   };
 
-  const createInvoice = useCallback(
-    async (nameId: string) => {
-      const invoiceNumber = await onCreate({
-        id: FnUtils.generateUUID(),
-        otherPartyId: nameId,
-      });
+  const createInvoice = async (nameId: string) => {
+    const invoiceNumber = await onCreate({
+      id: FnUtils.generateUUID(),
+      otherPartyId: nameId,
+    });
 
-      navigate(
-        RouteBuilder.create(AppRoute.Replenishment)
-          .addPart(AppRoute.InboundShipment)
-          .addPart(String(invoiceNumber))
-          .build()
-      );
-    },
-    [onCreate]
-  );
-
-  useEffect(() => {
-    if (name && (data?.totalCount === 0 || !manuallyLinkInternalOrder)) {
-      createInvoice(name.id);
-    }
-  }, [name, data, manuallyLinkInternalOrder, createInvoice]);
+    navigate(
+      RouteBuilder.create(AppRoute.Replenishment)
+        .addPart(AppRoute.InboundShipment)
+        .addPart(String(invoiceNumber))
+        .build()
+    );
+  };
 
   const onRowClick = async (row: LinkedRequestRowFragment) => {
     const invoiceNumber = await onCreate({
@@ -134,11 +125,13 @@ export const AppBarButtons = ({
       <SupplierSearchModal
         open={invoiceModalController.isOn}
         onClose={invoiceModalController.toggleOff}
-        onChange={nameRow => {
+        onChange={async nameRow => {
           setName(nameRow);
           invoiceModalController.toggleOff();
           if (manuallyLinkInternalOrder) {
             linkRequestModalController.toggleOn();
+          } else {
+            createInvoice(nameRow.id);
           }
         }}
       />
