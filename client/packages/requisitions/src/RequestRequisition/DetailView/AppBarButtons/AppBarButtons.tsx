@@ -6,8 +6,6 @@ import {
   Grid,
   useDetailPanel,
   useTranslation,
-  PrinterIcon,
-  LoadingButton,
   ReportContext,
 } from '@openmsupply-client/common';
 import {
@@ -57,18 +55,13 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <UseSuggestedQuantityButton />
 
         <ReportSelector
-          context={ReportContext.Requisition}
+          context={ReportContext.InternalOrder}
           onPrint={printReport}
           // Filters out reports that have a subContext (i.e. `R&R`)
           queryParams={{ filterBy: { subContext: { equalAnyOrNull: [] } } }}
-        >
-          <LoadingButton
-            variant="outlined"
-            startIcon={<PrinterIcon />}
-            isLoading={isPrinting}
-            label={t('button.print')}
-          />
-        </ReportSelector>
+          isPrinting={isPrinting}
+          buttonLabel={t('button.print')}
+        />
         {OpenButton}
       </Grid>
     </AppBarButtonsPortal>

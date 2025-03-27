@@ -3,11 +3,9 @@
   "version": "2.6.2",
   "code": "stock-take-detail-view",
   "context": "STOCKTAKE",
-  "sub_context": "picklist",
-  "name": "stock-take-detail-view",
+  "name": "Stocktake",
   "queries": { "gql": "StocktakeDetailQuery.graphql" },
   "arguments": {},
   "header": "header.html",
-  "footer": "footer.html",
-  "query_default": "stocktake"
+  "footer": "footer.html"
 }

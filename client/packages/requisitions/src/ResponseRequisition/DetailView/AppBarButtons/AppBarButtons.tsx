@@ -3,9 +3,7 @@ import {
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
-  LoadingButton,
   PlusCircleIcon,
-  PrinterIcon,
   ReportContext,
   useDetailPanel,
   useTranslation,
@@ -62,14 +60,9 @@ export const AppBarButtonsComponent = ({
           onPrint={printReport}
           // Filters out reports that have a subContext (i.e. `R&R`)
           queryParams={{ filterBy: { subContext: { equalAnyOrNull: [] } } }}
-        >
-          <LoadingButton
-            variant="outlined"
-            startIcon={<PrinterIcon />}
-            isLoading={isPrinting}
-            label={t('button.print')}
-          />
-        </ReportSelector>
+          isPrinting={isPrinting}
+          buttonLabel={t('button.print')}
+        />
         {OpenButton}
       </Grid>
     </AppBarButtonsPortal>
