@@ -48,6 +48,8 @@ export const AppBarButtons = ({
     useInbound.document.listInternalOrders(name?.id ?? '');
   const manuallyLinkInternalOrder =
     store?.preferences.manuallyLinkInternalOrderToInboundShipment;
+  const showManuallyLinkModal =
+    data?.totalCount !== 0 && manuallyLinkInternalOrder;
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -108,7 +110,7 @@ export const AppBarButtons = ({
         />
       </Grid>
 
-      {data?.totalCount !== 0 && manuallyLinkInternalOrder && (
+      {showManuallyLinkModal && (
         <LinkInternalOrderModal
           requestRequisitions={data?.nodes}
           isOpen={linkRequestModalController.isOn}
