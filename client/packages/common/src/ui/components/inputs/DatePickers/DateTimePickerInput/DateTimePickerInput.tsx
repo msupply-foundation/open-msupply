@@ -147,9 +147,6 @@ export const DateTimePickerInput: FC<
           },
         },
         ...(actions ? { actionBar: { actions } } : {}),
-        tabs: {
-          hidden: true,
-        },
       }}
       views={
         showTime
