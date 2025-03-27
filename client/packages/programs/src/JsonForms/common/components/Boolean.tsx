@@ -21,11 +21,13 @@ const UIComponent = (props: ControlProps) => {
 
   return (
     <DetailInputWithLabelRow
-      sx={DefaultFormRowSx}
+      // On most json form elements, we want the label at the start as
+      // the input may span multiple lines. However, for a boolean field,
+      // the input is a single line, so we want the label centred.
+      sx={{ ...DefaultFormRowSx, alignItems: 'center !important' }}
       label={t(label as LocaleKey)}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}
-      labelProps={{ sx: { lineHeight: '2.5' } }}
       Input={
         <Switch
           labelPlacement="end"
