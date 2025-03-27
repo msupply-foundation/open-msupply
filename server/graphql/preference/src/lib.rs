@@ -52,13 +52,8 @@ impl PreferenceQueries {
         let prefs = service.get_preference_descriptions();
 
         Ok(prefs
-            .iter()
-            .map(|pref| PreferenceDescriptionNode {
-                key: pref.key(),
-                global_only: pref.global_only(),
-                json_forms_input_type: pref.json_forms_input_type(),
-                serialised_default: pref.serialised_default(),
-            })
+            .into_iter()
+            .map(|pref| PreferenceDescriptionNode { pref })
             .collect())
     }
 }

@@ -2,8 +2,9 @@ query AllPrefs {
   availablePreferences {
     key
     globalOnly
-    jsonFormsInputType
     serialisedDefault
+    jsonSchema
+    uiSchema
   }
 }
 
