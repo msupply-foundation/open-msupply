@@ -34,6 +34,7 @@ pub trait Preference: Sync + Send {
     fn ui_schema() -> serde_json::Value {
         json!({
           "type": "Control",
+          "label": "label.value",
           "scope": "#/properties/value"
         })
     }
