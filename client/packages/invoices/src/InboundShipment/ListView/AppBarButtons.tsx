@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   FnUtils,
@@ -38,16 +38,21 @@ export const AppBarButtons = ({
   const { success, error } = useNotification();
   const { store } = useAuthContext();
   const [name, setName] = useState<NameRowFragment | null>(null);
+
   const { mutateAsync: onCreate } = useInbound.document.insert();
   const { isLoading, fetchAsync } = useInbound.document.listAll({
     key: 'createdDateTime',
     direction: 'desc',
     isDesc: true,
   });
-  const { data, isLoading: internalOrderIsLoading } =
+
+  const { data: internalOrders, isLoading: internalOrderIsLoading } =
     useInbound.document.listInternalOrders(name?.id ?? '');
-  const manuallyLinkInternalOrder =
+
+  const isManualLinkEnabled =
     store?.preferences.manuallyLinkInternalOrderToInboundShipment;
+  const hasInternalOrders = internalOrders?.totalCount !== 0;
+  const shouldShowLinkModal = isManualLinkEnabled && hasInternalOrders;
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -61,34 +66,11 @@ export const AppBarButtons = ({
     success(t('success'))();
   };
 
-  const createInvoice = useCallback(
-    async (nameId: string) => {
-      const invoiceNumber = await onCreate({
-        id: FnUtils.generateUUID(),
-        otherPartyId: nameId,
-      });
-
-      navigate(
-        RouteBuilder.create(AppRoute.Replenishment)
-          .addPart(AppRoute.InboundShipment)
-          .addPart(String(invoiceNumber))
-          .build()
-      );
-    },
-    [onCreate]
-  );
-
-  useEffect(() => {
-    if (name && (data?.totalCount === 0 || !manuallyLinkInternalOrder)) {
-      createInvoice(name.id);
-    }
-  }, [name, data, manuallyLinkInternalOrder, createInvoice]);
-
-  const onRowClick = async (row: LinkedRequestRowFragment) => {
+  const createInvoice = async (nameId: string, requisitionId?: string) => {
     const invoiceNumber = await onCreate({
       id: FnUtils.generateUUID(),
-      otherPartyId: name?.id ?? '',
-      requisitionId: row.id,
+      otherPartyId: nameId,
+      ...(requisitionId ? { requisitionId } : {}),
     });
 
     navigate(
@@ -97,6 +79,25 @@ export const AppBarButtons = ({
         .addPart(String(invoiceNumber))
         .build()
     );
+  };
+
+  const handleSupplierSelect = (nameRow: NameRowFragment) => {
+    setName(nameRow);
+    invoiceModalController.toggleOff();
+
+    // If manual link is enabled and there are internal orders, show link modal
+    if (shouldShowLinkModal) {
+      linkRequestModalController.toggleOn();
+    } else {
+      // If no manual link or no internal orders, directly create invoice
+      createInvoice(nameRow.id);
+    }
+  };
+
+  const onRowClick = async (row: LinkedRequestRowFragment) => {
+    if (name) {
+      await createInvoice(name.id, row.id);
+    }
   };
 
   return (
@@ -117,30 +118,23 @@ export const AppBarButtons = ({
         />
       </Grid>
 
-      {data?.totalCount !== 0 && manuallyLinkInternalOrder && (
-        <LinkInternalOrderModal
-          requestRequisitions={data?.nodes}
-          isOpen={linkRequestModalController.isOn}
-          onClose={linkRequestModalController.toggleOff}
-          onRowClick={onRowClick}
-          isLoading={internalOrderIsLoading}
-          onNextClick={() => {
-            if (name) {
-              createInvoice(name.id);
-            }
-          }}
-        />
-      )}
+      <LinkInternalOrderModal
+        requestRequisitions={internalOrders?.nodes}
+        isOpen={linkRequestModalController.isOn}
+        onClose={linkRequestModalController.toggleOff}
+        onRowClick={onRowClick}
+        isLoading={internalOrderIsLoading}
+        onNextClick={() => {
+          if (name) {
+            createInvoice(name.id);
+          }
+        }}
+      />
+
       <SupplierSearchModal
         open={invoiceModalController.isOn}
         onClose={invoiceModalController.toggleOff}
-        onChange={nameRow => {
-          setName(nameRow);
-          invoiceModalController.toggleOff();
-          if (manuallyLinkInternalOrder) {
-            linkRequestModalController.toggleOn();
-          }
-        }}
+        onChange={handleSupplierSelect}
       />
     </AppBarButtonsPortal>
   );
