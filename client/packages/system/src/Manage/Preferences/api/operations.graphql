@@ -1,4 +1,4 @@
-query AllPrefs {
+query allPrefs {
   availablePreferences {
     key
     globalOnly
