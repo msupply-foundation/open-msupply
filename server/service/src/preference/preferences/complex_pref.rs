@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 use super::Preference;
 
@@ -17,7 +18,38 @@ impl Preference for ComplexOne {
         "complex_one"
     }
 
-    fn json_forms_input_type() -> String {
-        "believe me i made a custom renderer called this".to_string()
+    fn json_schema() -> serde_json::Value {
+        json!({
+          "properties": {
+            "value": {
+                "type": "object",
+                "properties": {
+                    "somethingHere": {
+                        "type": "string"
+                    },
+                    "somethingElse": {
+                        "type": "string"
+                    }
+                }
+            }
+          },
+        })
+    }
+
+    fn ui_schema() -> serde_json::Value {
+        json!({
+           "type": "VerticalLayout",
+          "scope": "#/properties/value",
+            "elements": [
+                {
+          "type": "Control",
+          "scope": "/properties/somethingHere"
+                },
+                {
+          "type": "Control",
+          "scope": "/properties/somethingElse"
+                }
+            ]
+        })
     }
 }

@@ -8,8 +8,4 @@ impl Preference for ShowContactTracing {
     fn key() -> &'static str {
         "show_contact_tracing"
     }
-
-    fn json_forms_input_type() -> String {
-        "boolean".to_string()
-    }
 }

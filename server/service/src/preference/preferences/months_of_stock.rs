@@ -9,7 +9,6 @@ impl Preference for MonthsOfStock {
         "months_of_stock"
     }
 
-    // todo
     fn json_forms_input_type() -> String {
         "number".to_string()
     }
