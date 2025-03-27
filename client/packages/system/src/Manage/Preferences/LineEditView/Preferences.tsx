@@ -27,7 +27,9 @@ export const PreferencesLineEdit = () => {
 
   return (
     <LineEditBase currentKey={key ?? ''} prefs={data ?? []}>
-      {selectedPref && <EditPreference selected={selectedPref} />}
+      {selectedPref && (
+        <EditPreference key={selectedPref.key} selected={selectedPref} />
+      )}
     </LineEditBase>
   );
 };
