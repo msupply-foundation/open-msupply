@@ -74,9 +74,11 @@ pub struct LegacyStocktakeRow {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub program_id: Option<String>,
+    #[serde(rename = "om_counted_by")]
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub counted_by: Option<String>,
+    #[serde(rename = "om_verified_by")]
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub verified_by: Option<String>,

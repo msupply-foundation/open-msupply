@@ -30,8 +30,8 @@ const STOCKTAKE_1: (&str, &str) = (
       "store_ID": "store_a",
       "type": "",
       "om_created_datetime": "",
-      "counted_by": "",
-      "verified_by": ""
+      "om_counted_by": "",
+      "om_verified_by": ""
     }"#,
 );
 fn stocktake_pull_record() -> TestSyncIncomingRecord {
