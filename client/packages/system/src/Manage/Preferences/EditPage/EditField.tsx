@@ -1,17 +1,23 @@
 import React, { useState } from 'react';
 import { JsonData, JsonForm } from '@openmsupply-client/programs';
-import { PreferenceDescriptionNode } from '@openmsupply-client/common';
+import {
+  Box,
+  PreferenceDescriptionNode,
+  Typography,
+} from '@openmsupply-client/common';
 
 export const EditField = ({
   value,
-  preference,
+  config,
+  message,
   onChange,
 }: {
   value: string | undefined;
-  preference: PreferenceDescriptionNode;
+  config: PreferenceDescriptionNode;
+  message?: string;
   onChange: (newVal: JsonData) => void;
 }) => {
-  const defaultValue = parse(preference.serialisedDefault);
+  const defaultValue = parse(config.serialisedDefault);
   const initialValue = value ? parse(value) : defaultValue;
 
   const [state, setState] = useState(initialValue);
@@ -30,14 +36,21 @@ export const EditField = ({
   };
 
   return (
-    <JsonForm
-      data={{ value: state }}
-      jsonSchema={preference.jsonSchema}
-      uiSchema={preference.uiSchema}
-      isError={false}
-      isLoading={false}
-      updateData={updateData}
-    />
+    <Box display="flex" justifyContent="space-between">
+      <Box width={300}>
+        <JsonForm
+          data={{ value: state }}
+          jsonSchema={config.jsonSchema}
+          uiSchema={config.uiSchema}
+          isError={false}
+          isLoading={false}
+          updateData={updateData}
+        />
+      </Box>
+      <Typography padding={1} fontStyle="italic" color="text.secondary">
+        {message}
+      </Typography>
+    </Box>
   );
 };
 

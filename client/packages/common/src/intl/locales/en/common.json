@@ -1695,6 +1695,8 @@
   "messages.upload-error": "Error with uploaded file {{ error }}",
   "messages.upload-invite": "Drag & drop to upload",
   "messages.upload-or": "or",
+  "messages.using-default": "Using default value",
+  "messages.using-global": "Using global value",
   "messages.vaccination-saved": "Vaccination saved 🥳",
   "messages.vaccination-saved-and-stock-recorded": "Vaccination saved and stock transaction recorded 🥳",
   "messages.vaccination-was-given": "Vaccination was given on {{date}}.",
