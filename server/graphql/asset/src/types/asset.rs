@@ -28,7 +28,7 @@ use repository::{
     EqualFilter,
 };
 use repository::{DateFilter, StringFilter};
-use service::asset::parse::AssetFromGs1Error as ServiceScannedDataParseError;
+use service::asset::parse::{AssetFromGs1Error as ServiceScannedDataParseError, LockedAssetFields};
 use service::{usize_to_u32, ListResult};
 
 use super::{AssetLogNode, AssetLogStatusInput, EqualFilterStatusInput};
@@ -90,6 +90,14 @@ impl From<AssetFilterInput> for AssetFilter {
                 .map(|t| map_filter!(t, AssetLogStatusInput::to_domain)),
         }
     }
+}
+
+#[derive(PartialEq, Debug)]
+pub struct LockedAssetFieldsNode {
+    pub serial_number: bool,
+    pub catalogue_item_id: bool,
+    pub warranty_start: bool,
+    pub warranty_end: bool,
 }
 
 #[derive(PartialEq, Debug)]
@@ -298,6 +306,22 @@ impl AssetNode {
 
     pub async fn needs_replacement(&self) -> &Option<bool> {
         &self.row().needs_replacement
+    }
+
+    pub async fn locked_fields(&self) -> LockedAssetFieldsNode {
+        let locked_fields = match &self.row().locked_fields_json {
+            Some(locked_fields_json) => {
+                serde_json::from_str::<LockedAssetFields>(locked_fields_json).unwrap_or_default()
+            }
+            None => LockedAssetFields::default(),
+        };
+
+        LockedAssetFieldsNode {
+            serial_number: locked_fields.serial_number,
+            catalogue_item_id: locked_fields.catalogue_item_id,
+            warranty_start: locked_fields.warranty_start,
+            warranty_end: locked_fields.warranty_end,
+        }
     }
 }
 
