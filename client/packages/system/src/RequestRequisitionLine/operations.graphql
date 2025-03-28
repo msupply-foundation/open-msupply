@@ -15,19 +15,6 @@ fragment ItemWithStats on ItemNode {
   }
 }
 
-fragment itemInformation on RequisitionItemInformationNode {
-  id
-  adjustmentsInUnits
-  amcInUnits
-  name(storeId: $storeId) {
-    id
-    name
-  }
-  outgoingUnits
-  dateRange
-  stockInUnits
-}
-
 fragment RequestLine on RequisitionLineNode {
   id
   itemId
@@ -54,16 +41,91 @@ fragment RequestLine on RequisitionLineNode {
     approvedQuantity
     approvalComment
   }
-  itemInformation {
-    __typename
-    ...itemInformation
-  }
   item {
     ...ItemWithStats
   }
   reason {
     ...ReasonOptionRow
   }
+}
+
+fragment Request on RequisitionNode {
+  __typename
+  id
+  type
+  status
+  createdDatetime
+  sentDatetime
+  finalisedDatetime
+  requisitionNumber
+  colour
+  theirReference
+  comment
+  otherPartyName
+  otherPartyId
+  maxMonthsOfStock
+  minMonthsOfStock
+  approvalStatus
+
+  user {
+    __typename
+    username
+    email
+  }
+
+  lines {
+    __typename
+    totalCount
+    nodes {
+      ...RequestLine
+    }
+  }
+
+  program {
+    id
+  }
+
+  shipments {
+    __typename
+    totalCount
+    nodes {
+      __typename
+      id
+      invoiceNumber
+      createdDatetime
+
+      user {
+        __typename
+        username
+      }
+    }
+  }
+
+  otherParty(storeId: $storeId) {
+    id
+    code
+    isCustomer
+    isSupplier
+    isOnHold
+    name
+    store {
+      id
+      code
+    }
+  }
+
+  linkedRequisition {
+    approvalStatus
+  }
+  programName
+  period {
+    id
+    name
+    startDate
+    endDate
+  }
+  orderType
+  isEmergency
 }
 
 query OnlyHereToAvoidUnusedWarnings {
