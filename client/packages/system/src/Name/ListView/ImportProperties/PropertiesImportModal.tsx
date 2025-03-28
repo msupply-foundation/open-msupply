@@ -128,7 +128,7 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
         break;
       case Tabs.Review:
         changeTab(tabName as Tabs);
-        setActiveStep(1);
+        // Do nothing, user can't review data before importing data
         break;
       case Tabs.Import:
         // Do nothing, user can't get to the import page without clicking the import button
@@ -155,7 +155,7 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
 
   const importSteps = [
     { label: t('label.upload'), description: '', clickable: true },
-    { label: t('label.review'), description: '', clickable: true },
+    { label: t('label.review'), description: '', clickable: false },
     {
       label: t('label.import'),
       description: '',
@@ -168,7 +168,7 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
       okButton={
         <DialogButton
           variant="next-and-ok"
-          disabled={false}
+          disabled={bufferedFacilityProperties.length < 1}
           onClick={importAction}
         />
       }
@@ -181,9 +181,6 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
             handleClose();
           }}
         />
-      }
-      nextButton={
-        <DialogButton variant="export" disabled={false} onClick={() => {}} />
       }
       title={t('label.import-facility-properties')}
       height={1000}
