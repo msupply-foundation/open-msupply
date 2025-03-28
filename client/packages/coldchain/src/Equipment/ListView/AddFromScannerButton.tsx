@@ -55,7 +55,7 @@ export const AddFromScannerButtonComponent = () => {
               await insertLog({
                 id: FnUtils.generateUUID(),
                 assetId: newAssetData.current.id,
-                comment: t('label.created'),
+                comment: t('message.asset-created'),
                 status: AssetLogStatusInput.Functioning,
               });
               invalidateQueries();
