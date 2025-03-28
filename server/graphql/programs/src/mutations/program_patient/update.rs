@@ -80,7 +80,7 @@ pub fn update_program_patient(
                 UpdateProgramPatientError::InvalidParentId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpdateProgramPatientError::PatientDocumentRegistryDoesNotExist => {
+                UpdateProgramPatientError::PatientDocumentRegistryDoesNotExit => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
             };
