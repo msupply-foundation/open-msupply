@@ -70,9 +70,9 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
     onClose();
   };
 
+  const numberImportRecords = bufferedFacilityProperties?.length ?? 0;
   const importAction = async () => {
     onChangeTab(Tabs.Import);
-    const numberImportRecords = bufferedFacilityProperties?.length ?? 0;
     if (bufferedFacilityProperties && numberImportRecords > 0) {
       const importErrorRows: ImportRow[] = [];
       // Import count can be quite large, we break this into blocks of 10 to avoid too much concurrency
@@ -127,7 +127,6 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
         setActiveStep(0);
         break;
       case Tabs.Review:
-        changeTab(tabName as Tabs);
         // Do nothing, user can't review data before importing data
         break;
       case Tabs.Import:
@@ -168,7 +167,7 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
       okButton={
         <DialogButton
           variant="next-and-ok"
-          disabled={bufferedFacilityProperties.length < 1}
+          disabled={numberImportRecords < 1}
           onClick={importAction}
         />
       }
