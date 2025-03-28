@@ -5,15 +5,14 @@ import {
   DetailPanelSection,
   NothingHere,
   PreferenceDescriptionNode,
-  PreferenceNode,
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
-// import { useStores } from '@openmsupply-client/system';
 import { usePreferencesByKey } from '../api/usePreferencesByKey';
 import { EditField } from './EditField';
 import { useEditPreference } from '../api/useEditPreference';
-import { JsonData } from '@openmsupply-client/programs';
+// import { useStores } from '@openmsupply-client/system';
+// import { JsonData } from '@openmsupply-client/programs';
 
 export const EditPreference = ({
   selected,
@@ -79,42 +78,41 @@ export const EditPreference = ({
   );
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const StorePrefRow = ({
-  store,
-  pref,
-  config,
-  globalValue,
-  update,
-}: {
-  store: { id: string; storeName: string };
-  update: (input: { value: JsonData; storeId: string; id?: string }) => void;
-  pref?: PreferenceNode;
-  globalValue?: string;
-  config: PreferenceDescriptionNode;
-}) => {
-  const t = useTranslation();
+// const StorePrefRow = ({
+//   store,
+//   pref,
+//   config,
+//   globalValue,
+//   update,
+// }: {
+//   store: { id: string; storeName: string };
+//   update: (input: { value: JsonData; storeId: string; id?: string }) => void;
+//   pref?: PreferenceNode;
+//   globalValue?: string;
+//   config: PreferenceDescriptionNode;
+// }) => {
+//   const t = useTranslation();
 
-  const message = pref
-    ? ''
-    : globalValue !== undefined
-      ? t('messages.using-global')
-      : t('messages.using-default');
+//   const message = pref
+//     ? ''
+//     : globalValue !== undefined
+//       ? t('messages.using-global')
+//       : t('messages.using-default');
 
-  return (
-    <Box
-      display="flex"
-      sx={{ backgroundColor: 'white', padding: 0.5, borderRadius: 1 }}
-    >
-      <Typography width="200px" fontWeight="bold">
-        {store.storeName}
-      </Typography>
-      <EditField
-        value={pref?.value ?? globalValue}
-        config={config}
-        message={message}
-        onChange={value => update({ value, storeId: store.id, id: pref?.id })}
-      />
-    </Box>
-  );
-};
+//   return (
+//     <Box
+//       display="flex"
+//       sx={{ backgroundColor: 'white', padding: 0.5, borderRadius: 1 }}
+//     >
+//       <Typography width="200px" fontWeight="bold">
+//         {store.storeName}
+//       </Typography>
+//       <EditField
+//         value={pref?.value ?? globalValue}
+//         config={config}
+//         message={message}
+//         onChange={value => update({ value, storeId: store.id, id: pref?.id })}
+//       />
+//     </Box>
+//   );
+// };
