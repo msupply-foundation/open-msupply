@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_linked_invoice_id_to_invoice_line;
 mod add_preference_table;
+mod new_stocktake_fields;
 
 pub(crate) struct V2_07_00;
 
@@ -19,6 +20,7 @@ impl Migration for V2_07_00 {
         vec![
             Box::new(add_preference_table::Migrate),
             Box::new(add_linked_invoice_id_to_invoice_line::Migrate),
+            Box::new(new_stocktake_fields::Migrate),
         ]
     }
 }
