@@ -72,7 +72,7 @@ export const RequestLineEdit = ({
   requisitionId,
   insert,
   scrollIntoView,
-  disabled,
+  disabled: isSent,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
@@ -265,13 +265,13 @@ export const RequestLineEdit = ({
                       checked={isPacks}
                       onChange={(_event, checked) => setIsPacks(checked)}
                       size="small"
-                      disabled={disabled}
+                      disabled={isSent}
                     />
                     <Box
                       paddingLeft={2}
                       paddingRight={2}
                       sx={{
-                        color: disabled ? theme.palette.text.disabled : '',
+                        color: isSent ? theme.palette.text.disabled : '',
                       }}
                     >
                       {t('label.packs')}
@@ -286,7 +286,7 @@ export const RequestLineEdit = ({
                     <NumericTextInput
                       width={INPUT_WIDTH}
                       value={Math.ceil(draft?.requestedQuantity)}
-                      disabled={isPacks || disabled}
+                      disabled={isPacks || isSent}
                       onChange={value => {
                         const newValue = isNaN(Number(value)) ? 0 : value;
                         if (draft?.suggestedQuantity === newValue) {
@@ -338,7 +338,7 @@ export const RequestLineEdit = ({
                   <InputWithLabelRow
                     Input={
                       <NumericTextInput
-                        disabled={!isPacks || disabled}
+                        disabled={!isPacks || isSent}
                         value={NumUtils.round(
                           (draft?.requestedQuantity ?? 0) /
                             (draft?.defaultPackSize ?? 1),
@@ -405,7 +405,7 @@ export const RequestLineEdit = ({
                       type={ReasonOptionNodeType.RequisitionLineVariance}
                       isDisabled={
                         draft?.requestedQuantity === draft?.suggestedQuantity ||
-                        disabled
+                        isSent
                       }
                       onBlur={save}
                     />
@@ -429,7 +429,7 @@ export const RequestLineEdit = ({
                       },
                     }}
                     onBlur={save}
-                    disabled={disabled}
+                    disabled={isSent}
                   />
                 }
                 sx={{ width: 275 }}
