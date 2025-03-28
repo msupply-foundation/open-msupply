@@ -14,7 +14,6 @@ use diesel::{dsl::max, prelude::*};
 use chrono::NaiveDateTime;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
-use util::Defaults;
 
 table! {
     invoice (id) {
@@ -64,11 +63,12 @@ joinable!(invoice -> clinician_link (clinician_link_id));
 allow_tables_to_appear_in_same_query!(invoice, item_link);
 allow_tables_to_appear_in_same_query!(invoice, name_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceType {
     OutboundShipment,
+    #[default]
     InboundShipment,
     Prescription,
     // Initially we had single inventory adjustment InvoiceType, this was changed to two separate types
@@ -83,10 +83,11 @@ pub enum InvoiceType {
     CustomerReturn,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceStatus {
+    #[default]
     New,
     Allocated,
     Picked,
@@ -96,7 +97,7 @@ pub enum InvoiceStatus {
     Cancelled,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = invoice)]
 pub struct InvoiceRow {
@@ -136,49 +137,6 @@ pub struct InvoiceRow {
     pub insurance_discount_percentage: Option<f64>,
     pub is_cancellation: bool,
     pub expected_delivery_datetime: Option<NaiveDateTime>,
-}
-
-impl Default for InvoiceRow {
-    fn default() -> Self {
-        Self {
-            created_datetime: Defaults::naive_date_time(),
-            r#type: InvoiceType::InboundShipment,
-            status: InvoiceStatus::New,
-            // Defaults
-            id: Default::default(),
-            user_id: Default::default(),
-            name_link_id: Default::default(),
-            name_store_id: Default::default(),
-            store_id: Default::default(),
-            invoice_number: Default::default(),
-            on_hold: Default::default(),
-            comment: Default::default(),
-            their_reference: Default::default(),
-            transport_reference: Default::default(),
-            allocated_datetime: Default::default(),
-            picked_datetime: Default::default(),
-            shipped_datetime: Default::default(),
-            delivered_datetime: Default::default(),
-            verified_datetime: Default::default(),
-            cancelled_datetime: Default::default(),
-            colour: Default::default(),
-            requisition_id: Default::default(),
-            linked_invoice_id: Default::default(),
-            tax_percentage: Default::default(),
-            currency_id: Default::default(),
-            currency_rate: Default::default(),
-            clinician_link_id: Default::default(),
-            original_shipment_id: Default::default(),
-            backdated_datetime: Default::default(),
-            diagnosis_id: Default::default(),
-            program_id: Default::default(),
-            name_insurance_join_id: Default::default(),
-            insurance_discount_amount: Default::default(),
-            insurance_discount_percentage: Default::default(),
-            is_cancellation: Default::default(),
-            expected_delivery_datetime: Default::default(),
-        }
-    }
 }
 
 pub struct InvoiceRowRepository<'a> {
