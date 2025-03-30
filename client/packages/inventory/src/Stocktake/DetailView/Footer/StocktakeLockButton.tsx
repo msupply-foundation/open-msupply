@@ -34,7 +34,7 @@ export const StocktakeLockButton: FC = () => {
       value={isLocked}
       selected={isLocked}
       onClick={() => getConfirmation()}
-      label={t('label.locked')}
+      label={t('label.on-hold')}
     />
   );
 };
