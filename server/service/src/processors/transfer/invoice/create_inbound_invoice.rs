@@ -245,6 +245,7 @@ fn generate_inbound_invoice(
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
         is_cancellation: false,
+        expected_delivery_datetime: None,
     };
 
     Ok(result)
