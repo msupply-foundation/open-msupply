@@ -39,7 +39,42 @@ impl MigrationFragment for Migrate {
                     not_given_reason TEXT,
                     comment TEXT
                 );
-                INSERT INTO vaccination SELECT * FROM vaccination_old;
+                INSERT INTO vaccination (
+                    id,
+                    store_id,
+                    program_enrolment_id,
+                    encounter_id,
+                    user_id,
+                    vaccine_course_dose_id,
+                    created_datetime,
+                    facility_name_link_id,
+                    facility_free_text,
+                    invoice_id,
+                    stock_line_id,
+                    clinician_link_id,
+                    vaccination_date,
+                    given,
+                    not_given_reason,
+                    comment
+                )
+                SELECT
+                    id,
+                    store_id,
+                    program_enrolment_id,
+                    encounter_id,
+                    user_id,
+                    vaccine_course_dose_id,
+                    created_datetime,
+                    facility_name_link_id,
+                    facility_free_text,
+                    invoice_id,
+                    stock_line_id,
+                    clinician_link_id,
+                    vaccination_date,
+                    given,
+                    not_given_reason,
+                    comment
+                FROM vaccination_old;
                 DROP TABLE vaccination_old;
                 PRAGMA foreign_keys = ON;
                 "#,
