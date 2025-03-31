@@ -16,6 +16,7 @@ import {
   UNDEFINED_STRING_VALUE,
   useAuthContext,
   useIsCentralServerApi,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { Status } from '../../Components';
 import {
@@ -158,9 +159,11 @@ const Row = ({
 export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
-  const { storeId } = useAuthContext();
+  const { storeId, userHasPermission } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
   const isGaps = useIsGapsStoreOnly();
+
+  const isServerAdmin = userHasPermission(UserPermission.ServerAdmin);
 
   if (!draft) return null;
 
@@ -243,7 +246,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             }
           >
             <BasicTextInput
-              disabled={draft.lockedFields.serialNumber}
+              disabled={draft.lockedFields.serialNumber && !isServerAdmin}
               value={draft.serialNumber ?? ''}
               fullWidth
               onChange={e => onChange({ serialNumber: e.target.value })}
@@ -286,7 +289,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             }
           >
             <DateTimePickerInput
-              disabled={draft.lockedFields.warrantyStart}
+              disabled={draft.lockedFields.warrantyStart && !isServerAdmin}
               value={DateUtils.getDateOrNull(draft.warrantyStart)}
               format="P"
               onChange={date =>
@@ -305,7 +308,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             }
           >
             <DateTimePickerInput
-              disabled={draft.lockedFields.warrantyEnd}
+              disabled={draft.lockedFields.warrantyEnd && !isServerAdmin}
               value={DateUtils.getDateOrNull(draft.warrantyEnd)}
               format="P"
               onChange={date =>
