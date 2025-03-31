@@ -228,6 +228,7 @@ fn generate_inbound_invoice(
         tax_percentage: outbound_invoice_row.tax_percentage,
         currency_id: outbound_invoice_row.currency_id.clone(),
         currency_rate: outbound_invoice_row.currency_rate,
+        expected_delivery_datetime: outbound_invoice_row.expected_delivery_datetime,
         original_shipment_id,
         // Default
         colour: None,
@@ -245,7 +246,6 @@ fn generate_inbound_invoice(
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
         is_cancellation: false,
-        expected_delivery_datetime: None,
     };
 
     Ok(result)
