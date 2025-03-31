@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use repository::{
     Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
     LocationMovementRowRepository, RepositoryError, StockLineRowRepository, TransactionError,
@@ -14,6 +15,7 @@ use crate::invoice::outbound_shipment::update::generate::GenerateResult;
 use crate::invoice::query::get_invoice;
 use crate::invoice_line::ShipmentTaxUpdate;
 use crate::service_provider::ServiceContext;
+use crate::NullableUpdate;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateOutboundShipmentStatus {
@@ -33,6 +35,7 @@ pub struct UpdateOutboundShipment {
     pub tax: Option<ShipmentTaxUpdate>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
+    pub expected_delivery_datetime: Option<NullableUpdate<NaiveDateTime>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -185,6 +188,7 @@ mod test {
         },
         invoice_line::ShipmentTaxUpdate,
         service_provider::ServiceProvider,
+        NullableUpdate,
     };
 
     use super::UpdateOutboundShipmentError;
@@ -437,6 +441,11 @@ mod test {
                 }),
                 currency_id: None,
                 currency_rate: None,
+                expected_delivery_datetime: Some(NullableUpdate {
+                    value: NaiveDate::from_ymd_opt(2025, 1, 7)
+                        .unwrap()
+                        .and_hms_milli_opt(15, 30, 0, 0),
+                }),
             }
         }
 
@@ -463,6 +472,7 @@ mod test {
                     tax,
                     currency_id: _,
                     currency_rate: _,
+                    expected_delivery_datetime,
                 } = get_update();
                 u.on_hold = on_hold.unwrap();
                 u.comment = comment;
@@ -470,6 +480,7 @@ mod test {
                 u.colour = colour;
                 u.transport_reference = transport_reference;
                 u.tax_percentage = tax.map(|tax| tax.percentage.unwrap());
+                u.expected_delivery_datetime = expected_delivery_datetime.unwrap().value;
                 u
             })
         );
