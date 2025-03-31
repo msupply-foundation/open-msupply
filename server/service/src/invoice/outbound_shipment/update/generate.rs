@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 
 use repository::{
     location_movement::{LocationMovementFilter, LocationMovementRepository},
@@ -8,10 +8,15 @@ use repository::{
 use repository::{
     InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, StockLineRow, StorageConnection,
 };
+use util::constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH;
 
-use crate::invoice::common::{
-    calculate_foreign_currency_total, calculate_total_after_tax,
-    generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
+use crate::{
+    invoice::common::{
+        calculate_foreign_currency_total, calculate_total_after_tax,
+        generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
+    },
+    store_preference::get_store_preferences,
+    NullableUpdate,
 };
 
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundShipmentStatus};
@@ -38,9 +43,11 @@ pub(crate) fn generate(
         tax: input_tax,
         currency_id: input_currency_id,
         currency_rate: input_currency_rate,
+        expected_delivery_datetime: input_expected_delivery_datetime,
     }: UpdateOutboundShipment,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdateOutboundShipmentError> {
+    let store_preferences = get_store_preferences(connection, store_id)?;
     let should_update_batches_total_number_of_packs =
         should_update_batches_total_number_of_packs(&existing_invoice, &input_status);
     let mut update_invoice = existing_invoice.clone();
@@ -62,6 +69,14 @@ pub(crate) fn generate(
     if let Some(status) = input_status.clone() {
         update_invoice.status = status.full_status()
     }
+
+    let expected_delivery_datetime = calculate_expected_delivery_date(
+        &update_invoice,
+        input_expected_delivery_datetime,
+        store_preferences.months_lead_time,
+    );
+
+    update_invoice.expected_delivery_datetime = expected_delivery_datetime;
 
     let batches_to_update = if should_update_batches_total_number_of_packs {
         Some(
@@ -107,6 +122,29 @@ pub(crate) fn generate(
         location_movements,
         update_lines,
     })
+}
+
+fn calculate_expected_delivery_date(
+    invoice: &InvoiceRow,
+    delivery_date_input: Option<NullableUpdate<NaiveDateTime>>,
+    months_lead_time: f64,
+) -> Option<NaiveDateTime> {
+    match delivery_date_input {
+        Some(input) => input.value,
+        None => {
+            if invoice.status == InvoiceStatus::Shipped
+                && invoice.expected_delivery_datetime.is_none()
+            {
+                println!("Invoice is shipped and expected delivery date is None");
+                let lead_time_days = (months_lead_time * AVG_NUMBER_OF_DAYS_IN_A_MONTH) as i64;
+                invoice
+                    .shipped_datetime
+                    .map(|shipped| shipped + chrono::Duration::days(lead_time_days))
+            } else {
+                invoice.expected_delivery_datetime
+            }
+        }
+    }
 }
 
 fn should_update_batches_total_number_of_packs(
