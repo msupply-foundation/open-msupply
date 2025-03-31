@@ -24,6 +24,7 @@ export type OutboundFragment = {
   transportReference?: string | null;
   type: Types.InvoiceNodeType;
   taxPercentage?: number | null;
+  expectedDeliveryDatetime?: string | null;
   currencyRate: number;
   user?: {
     __typename: 'UserNode';
@@ -136,6 +137,7 @@ export type OutboundRowFragment = {
   status: Types.InvoiceNodeStatus;
   colour?: string | null;
   taxPercentage?: number | null;
+  expectedDeliveryDatetime?: string | null;
   currencyRate: number;
   pricing: {
     __typename: 'PricingNode';
@@ -193,6 +195,7 @@ export type InvoicesQuery = {
       status: Types.InvoiceNodeStatus;
       colour?: string | null;
       taxPercentage?: number | null;
+      expectedDeliveryDatetime?: string | null;
       currencyRate: number;
       pricing: {
         __typename: 'PricingNode';
@@ -239,6 +242,7 @@ export type InvoiceQuery = {
         transportReference?: string | null;
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
+        expectedDeliveryDatetime?: string | null;
         currencyRate: number;
         user?: {
           __typename: 'UserNode';
@@ -371,6 +375,7 @@ export type OutboundByNumberQuery = {
         transportReference?: string | null;
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
+        expectedDeliveryDatetime?: string | null;
         currencyRate: number;
         user?: {
           __typename: 'UserNode';
@@ -1014,6 +1019,7 @@ export const OutboundFragmentDoc = gql`
     transportReference
     type
     taxPercentage
+    expectedDeliveryDatetime
     user {
       __typename
       username
@@ -1090,6 +1096,7 @@ export const OutboundRowFragmentDoc = gql`
     status
     colour
     taxPercentage
+    expectedDeliveryDatetime
     pricing {
       __typename
       totalAfterTax

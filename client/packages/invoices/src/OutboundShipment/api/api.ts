@@ -17,6 +17,7 @@ import {
   InsertOutboundShipmentServiceLineInput,
   UpdateOutboundShipmentServiceLineInput,
   DeleteOutboundShipmentServiceLineInput,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../types';
 import { isA } from '../../utils';
@@ -96,6 +97,10 @@ const outboundParsers = {
         : undefined,
     currencyId: 'currency' in patch ? patch.currency?.id : undefined,
     currencyRate: 'currency' in patch ? patch.currency?.rate : undefined,
+    expectedDeliveryDatetime: setNullableInput(
+      'expectedDeliveryDatetime',
+      patch
+    ),
   }),
   toUpdateName: (
     patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
