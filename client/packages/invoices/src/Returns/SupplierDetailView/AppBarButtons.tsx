@@ -6,9 +6,7 @@ import {
   Grid,
   useDetailPanel,
   useTranslation,
-  LoadingButton,
   ReportContext,
-  PrinterIcon,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useReturns } from '../api';
@@ -62,14 +60,10 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           context={ReportContext.OutboundShipment}
           subContext="SupplierReturn"
           onPrint={printReport}
-        >
-          <LoadingButton
-            variant="outlined"
-            startIcon={<PrinterIcon />}
-            isLoading={isPrinting}
-            label={t('button.print')}
-          />
-        </ReportSelector>
+          isPrinting={isPrinting}
+          buttonLabel={t('button.print')}
+        />
+
         {OpenButton}
       </Grid>
     </AppBarButtonsPortal>

@@ -40,6 +40,8 @@ pub struct UpdateStocktake {
     pub status: Option<UpdateStocktakeStatus>,
     pub stocktake_date: Option<NaiveDate>,
     pub is_locked: Option<bool>,
+    pub counted_by: Option<String>,
+    pub verified_by: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -539,6 +541,8 @@ mod test {
                     status: None,
                     stocktake_date: Some(NaiveDate::from_ymd_opt(2019, 3, 20).unwrap()),
                     is_locked: Some(false),
+                    counted_by: Some("user_a".to_string()),
+                    verified_by: Some("user_b".to_string()),
                 },
             )
             .unwrap();
@@ -550,6 +554,8 @@ mod test {
                 i.description = Some("description_1".to_string());
                 i.stocktake_date = Some(NaiveDate::from_ymd_opt(2019, 3, 20).unwrap());
                 i.is_locked = false;
+                i.counted_by = Some("user_a".to_string());
+                i.verified_by = Some("user_b".to_string());
                 i
             }),
         );
