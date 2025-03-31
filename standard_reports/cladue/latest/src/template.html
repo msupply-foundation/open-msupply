@@ -1,0 +1,118 @@
+<style>
+  {% include "style.css" %}
+</style>
+
+<div class="container">
+  <div class="report-summary">
+    <h3>{{t(k="report.summary", f="Stock Status Summary")}}</h3>
+    <div class="summary-stats">
+      <div class="stat-item">
+        <strong>{{t(k="report.total-items", f="Total Items")}}</strong>: {{
+        data.summaryStats.totalItems }}
+      </div>
+      <div class="stat-item">
+        <strong>{{t(k="report.items-with-stock", f="Items with Stock")}}</strong>: {{
+        data.summaryStats.itemsWithStock }}
+      </div>
+      <div class="stat-item">
+        <strong>{{t(k="report.items-no-stock", f="Items without Stock")}}</strong>: {{
+        data.summaryStats.itemsNoStock }}
+      </div>
+      <div class="stat-item">
+        <strong>{{t(k="report.items-low-stock", f="Items with Low Stock")}}</strong>: {{
+        data.summaryStats.itemsLowStock }}
+      </div>
+      <div class="stat-item">
+        <strong>{{t(k="report.items-high-stock", f="Items with High Stock")}}</strong>: {{
+        data.summaryStats.itemsHighStock }}
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr class="heading">
+        <td>{{t(k="label.code", f="Code")}}</td>
+        <td>{{t(k="label.name", f="Name")}}</td>
+        <td>{{t(k="label.unit", f="Unit")}}</td>
+        <td class="numeric">{{t(k="report.stock-on-hand", f="Stock on Hand")}}</td>
+        <td class="numeric">{{t(k="report.available-stock", f="Available Stock")}}</td>
+        <td class="numeric">
+          {{t(k="report.average-monthly-consumption", f="Average Monthly Consumption")}}
+        </td>
+        <td class="numeric">{{t(k="report.months-of-stock", f="Months of Stock")}}</td>
+        <td>{{t(k="report.stock-status", f="Stock Status")}}</td>
+        <td>{{t(k="report.batches", f="Batches")}}</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in data.items %}
+      <tr>
+        <td>{{ item.code }}</td>
+        <td>{{ item.name }}</td>
+        <td>{{ item.unitName | default(value='') }}</td>
+        <td class="numeric">{{ item.stats.stockOnHand | round(precision=1) }}</td>
+        <td class="numeric">{{ item.stats.availableStockOnHand | round(precision=1) }}</td>
+        <td class="numeric">{{ item.stats.averageMonthlyConsumption | round(precision=1) }}</td>
+        <td class="numeric">
+          {% if item.stats.monthsOfStockOnHand %} {{ item.stats.monthsOfStockOnHand |
+          round(precision=1) }} {% else %} N/A {% endif %}
+        </td>
+        <td class="stock-status {{ item.stockStatusClass }}">{{ item.stockStatusText }}</td>
+        <td>{{ item.batchData.count }}</td>
+      </tr>
+      {% if item.batchData.count > 0 %} {% for batch in item.batchData.items %}
+      <tr class="sub-heading">
+        <td></td>
+        <td colspan="2">
+          {% if batch.batch %} {{t(k="label.batch", f="Batch")}}: {{ batch.batch }} {% else %}
+          {{t(k="label.no-batch", f="No Batch")}} {% endif %}
+        </td>
+        <td class="numeric">{{ batch.totalQuantity | round(precision=1) }}</td>
+        <td class="numeric">
+          {% if batch.onHold %} 0 {% else %} {{ batch.totalQuantity | round(precision=1) }} {% endif
+          %}
+        </td>
+        <td></td>
+        <td></td>
+        <td>
+          {% if batch.expiryDate %} {{t(k="label.expires", f="Expires")}}: {{ batch.expiryDate |
+          date(format="%d/%m/%Y") }} {% endif %}
+        </td>
+        <td>
+          {% if batch.locationCode %} {{t(k="label.location", f="Location")}}: {{ batch.locationCode
+          }} {% endif %}
+        </td>
+      </tr>
+      {% endfor %} {% endif %} {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="stock-status-legend">
+    <div class="legend-item">
+      <div class="legend-color none"></div>
+      <span>{{t(k="report.no-stock", f="No Stock")}}</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color low"></div>
+      <span
+        >{{t(k="report.low-stock", f="Low Stock")}} (< {{ arguments.lowStockThreshold }}
+        {{t(k="report.months", f="months")}})</span
+      >
+    </div>
+    <div class="legend-item">
+      <div class="legend-color ok"></div>
+      <span
+        >{{t(k="report.adequate-stock", f="Adequate Stock")}} ({{ arguments.lowStockThreshold }} -
+        {{ arguments.highStockThreshold }} {{t(k="report.months", f="months")}})</span
+      >
+    </div>
+    <div class="legend-item">
+      <div class="legend-color high"></div>
+      <span
+        >{{t(k="report.high-stock", f="High Stock")}} (> {{ arguments.highStockThreshold }}
+        {{t(k="report.months", f="months")}})</span
+      >
+    </div>
+  </div>
+</div>

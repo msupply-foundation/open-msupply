@@ -638,6 +638,7 @@ fn generate_report(
     current_language: Option<String>,
 ) -> Result<GeneratedReport, ReportError> {
     let report_data = ReportData { data, arguments };
+    println!("{}", serde_json::to_string(&report_data).unwrap());
     let report_data = transform_data(
         connection,
         report_data,
@@ -645,6 +646,8 @@ fn generate_report(
         &report.convert_data_type,
     )
     .map_err(ReportError::ConvertDataError)?;
+
+    println!("{}", serde_json::to_string(&report_data).unwrap());
 
     let mut context = tera::Context::from_serialize(report_data).map_err(|err| {
         ReportError::DocGenerationError(format!("Tera context from data: {:?}", err))

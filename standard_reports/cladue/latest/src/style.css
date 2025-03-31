@@ -1,0 +1,135 @@
+@page {
+  margin: 0;
+  size: A4 landscape;
+}
+
+.paging {
+  width: 100%;
+}
+
+.container {
+  margin: auto;
+  padding: 10px;
+  font-size: 14px;
+  font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
+  color: #555;
+}
+
+.container table {
+  width: 100%;
+  font-size: inherit;
+  font-family: inherit;
+  text-align: left;
+  margin-top: 10px;
+  margin-bottom: 15px;
+  border-collapse: collapse;
+}
+
+.container table td {
+  padding: 8px;
+  vertical-align: top;
+  border-top: 1px solid rgb(164, 163, 163);
+}
+
+.container>table>thead {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  background-color: #f1f1f1;
+}
+
+.container table tr.heading td {
+  font-weight: bold;
+  background-color: #f1f1f1;
+  border-bottom: 2px solid #ddd;
+}
+
+.container table tr.sub-heading td {
+  background-color: #f9f9f9;
+  font-style: italic;
+}
+
+.container table td.numeric {
+  text-align: right;
+}
+
+.container table td.stock-status {
+  padding: 3px 10px;
+  border-radius: 4px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.container table td.stock-status.low {
+  background-color: rgba(245, 5, 1, 0.3);
+}
+
+.container table td.stock-status.ok {
+  background-color: rgba(51, 169, 1, 0.3);
+}
+
+.container table td.stock-status.high {
+  background-color: rgba(255, 191, 0, 0.3);
+}
+
+.container table td.stock-status.none {
+  background-color: rgba(143, 144, 166, 0.3);
+}
+
+.stock-status-legend {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+}
+
+.legend-color {
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
+  border-radius: 4px;
+}
+
+.legend-color.low {
+  background-color: rgba(245, 5, 1, 0.3);
+}
+
+.legend-color.ok {
+  background-color: rgba(51, 169, 1, 0.3);
+}
+
+.legend-color.high {
+  background-color: rgba(255, 191, 0, 0.3);
+}
+
+.legend-color.none {
+  background-color: rgba(143, 144, 166, 0.3);
+}
+
+.report-summary {
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.report-summary h3 {
+  margin-top: 0;
+}
+
+.summary-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.stat-item {
+  padding: 10px;
+  border-radius: 4px;
+  min-width: 150px;
+}

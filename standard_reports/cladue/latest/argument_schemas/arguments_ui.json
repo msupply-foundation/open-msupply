@@ -1,0 +1,88 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/itemCodeOrName",
+      "label": "T#label.item-code-or-name",
+      "options": {
+        "useDebounce": false,
+        "flexBasis": "90%"
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/categoryId",
+      "label": "T#report.item-category",
+      "options": {
+        "useDropdownSelector": true,
+        "entityType": "itemCategory"
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/isActive",
+      "label": "T#label.active-items-only"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/lowStockThreshold",
+      "label": "T#label.low-stock-threshold-months",
+      "options": {
+        "inputAlignment": "end",
+        "paddingRight": 25
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/highStockThreshold",
+      "label": "T#label.high-stock-threshold-months",
+      "options": {
+        "inputAlignment": "end",
+        "paddingRight": 25
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/sort",
+      "label": "T#report.sort-by",
+      "options": {
+        "show": [
+          [
+            "name",
+            "T#label.name"
+          ],
+          [
+            "code",
+            "T#label.code"
+          ],
+          [
+            "availableStockOnHand",
+            "T#report.available-stock"
+          ],
+          [
+            "monthsOfStock",
+            "T#report.months-of-stock"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/dir",
+      "label": "T#report.sort-direction",
+      "options": {
+        "show": [
+          [
+            "asc",
+            "T#report.ascending"
+          ],
+          [
+            "desc",
+            "T#report.descending"
+          ]
+        ]
+      }
+    }
+  ]
+}

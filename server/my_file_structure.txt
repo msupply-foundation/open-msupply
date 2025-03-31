@@ -1,0 +1,14 @@
+/Users/andreievg/Documents/repo/work/open-msupply/standard_reports/expiring-items/latest/argument_schemas/arguments.json
+/Users/andreievg/Documents/repo/work/open-msupply/standard_reports/expiring-items/latest/argument_schemas/arguments_ui.json
+/Users/andreievg/Documents/repo/work/open-msupply/standard_reports/expiring-items/latest/convert_data_js/input.json
+/Users/andreievg/Documents/repo/work/open-msupply/standard_reports/expiring-items/latest/convert_data_js/output.json
+/Users/andreievg/Documents/repo/work/open-msupply/standard_reports/expiring-items/latest/convert_data_js/package.json
+/Users/andreievg/Documents/repo/work/open-msupply/standard_reports/expiring-items/latest/convert_data_js/src/convert_data.js
+/Users/andreievg/Documents/repo/work/open-msupply/standard_reports/expiring-items/latest/convert_data_js/src/utils.js
+/Users/andreievg/Documents/repo/work/open-msupply/standard_reports/expiring-items/latest/convert_data_js/src/utils.test.ts
+/Users/andreievg/Documents/repo/work/open-msupply/standard_reports/expiring-items/latest/convert_data_js/webpack.config.js
+/Users/andreievg/Documents/repo/work/open-msupply/standard_reports/expiring-items/latest/convert_data_js/yarn.lock
+/Users/andreievg/Documents/repo/work/open-msupply/standard_reports/expiring-items/latest/report-manifest.json
+/Users/andreievg/Documents/repo/work/open-msupply/standard_reports/expiring-items/latest/src/query.graphql
+/Users/andreievg/Documents/repo/work/open-msupply/standard_reports/expiring-items/latest/src/style.css
+/Users/andreievg/Documents/repo/work/open-msupply/standard_reports/expiring-items/latest/src/template.html

@@ -1,0 +1,57 @@
+query StockStatus(
+  $storeId: String!
+  $itemCodeOrName: String
+  $categoryId: String
+  $isActive: Boolean
+) {
+  items(
+    storeId: $storeId
+    filter: {
+      codeOrName: { like: $itemCodeOrName }
+      categoryId: $categoryId
+      isActive: $isActive
+      isVisibleOrOnHand: true
+    }
+    page: { first: 1000 }
+    sort: [{ key: name }]
+  ) {
+    ... on ItemConnector {
+      totalCount
+      nodes {
+        id
+        code
+        name
+        unitName
+        type
+        isVaccine
+        stats(storeId: $storeId) {
+          totalConsumption
+          averageMonthlyConsumption
+          availableStockOnHand
+          stockOnHand
+          availableMonthsOfStockOnHand
+          monthsOfStockOnHand
+        }
+        availableBatches(storeId: $storeId) {
+          ... on StockLineConnector {
+            totalCount
+            nodes {
+              id
+              expiryDate
+              batch
+              totalNumberOfPacks
+              availableNumberOfPacks
+              packSize
+              costPricePerPack
+              sellPricePerPack
+              onHold
+              location {
+                code
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

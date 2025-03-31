@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "itemCodeOrName": {
+      "type": "string",
+      "description": "T#label.item-code-or-name"
+    },
+    "categoryId": {
+      "type": "string",
+      "description": "T#report.item-category"
+    },
+    "isActive": {
+      "type": "boolean",
+      "description": "T#label.active-items-only",
+      "default": true
+    },
+    "lowStockThreshold": {
+      "type": "number",
+      "description": "T#label.low-stock-threshold-months",
+      "default": 3.0
+    },
+    "highStockThreshold": {
+      "type": "number",
+      "description": "T#label.high-stock-threshold-months",
+      "default": 6.0
+    },
+    "sort": {
+      "type": "string",
+      "description": "T#report.sort-by",
+      "enum": [
+        "name",
+        "code",
+        "availableStockOnHand",
+        "monthsOfStock"
+      ]
+    },
+    "dir": {
+      "type": "string",
+      "description": "T#report.sort-direction",
+      "enum": [
+        "asc",
+        "desc"
+      ]
+    }
+  }
+}
