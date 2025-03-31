@@ -39,17 +39,18 @@ export const convert_data: ConvertData<Data, Arguments, Result> = ({
   let output = data.items.nodes.map((item) => {
     let outputNode: OutputNode = {
       ...item,
-      monthConsumption: calculateQuantity(data.thisMonthConsumption, item.id),
-      lastMonthConsumption: calculateQuantity(data.lastMonthConsumption, item.id),
-      twoMonthsAgoConsumption: calculateQuantity(data.twoMonthsAgoConsumption, item.id),
-      expiringInSixMonths: calculateQuantity(data.expiringInSixMonths, item.id),
-      expiringInTwelveMonths: calculateQuantity(data.expiringInTwelveMonths, item.id),
-      stockOnOrder: calculateQuantity(data.stockOnOrder, item.id),
-      AMC12: calculateQuantity(data.AMCTwelve, item.id),
-      AMC24: calculateQuantity(data.AMCTwentyFour, item.id),
-      SOH: calculateStatValue(item.stats?.stockOnHand),
-      MOS: calculateStatValue(item.stats?.availableMonthsOfStockOnHand),
-      AMC: calculateStatValue(item.stats?.averageMonthlyConsumption),
+      monthConsumption: getQuantity(data.thisMonthConsumption, item.id),
+      lastMonthConsumption: getQuantity(data.lastMonthConsumption, item.id),
+      twoMonthsAgoConsumption: getQuantity(data.twoMonthsAgoConsumption, item.id),
+      expiringInSixMonths: getQuantity(data.expiringInSixMonths, item.id),
+      expiringInTwelveMonths: getQuantity(data.expiringInTwelveMonths, item.id),
+      // invoice lines could add up to more then requested stock
+      stockOnOrder: Math.max(getQuantity(data.stockOnOrder, item.id), 0),
+      AMC12: getQuantity(data.AMCTwelve, item.id),
+      AMC24: getQuantity(data.AMCTwentyFour, item.id),
+      SOH: item.stats?.stockOnHand || 0,
+      MOS: item.stats?.availableMonthsOfStockOnHand || 0,
+      AMC: item.stats?.averageMonthlyConsumption || 0,
     };
     return outputNode;
   });
@@ -69,24 +70,5 @@ export const convert_data: ConvertData<Data, Arguments, Result> = ({
 };
 
 // function adds month consumption to data  (either this or last month)
-const calculateQuantity = (queryResult: SqlResult, id: string) => {
-  let quantity = 0;
-  if (!!queryResult && !!id) {
-    const node = queryResult.find((element) => element.item_id == id);
-    quantity = node?.quantity ? node.quantity : 0;
-  }
-  // return 0 if quantity is less than 0. This covers use cases such as stock on order which can be negative if invoice line stock is greater than requested stock.
-  if (quantity < 0) {
-    return 0;
-  }
-  return quantity;
-};
-
-const calculateStatValue = (value?: number | null) => {
-  let returnValue = 0;
-  if (!!value) {
-    // round to 1 decimal
-    returnValue = Math.round(value * 10) / 10;
-  }
-  return returnValue;
-};
+const getQuantity = (queryResult: SqlResult, id: string) =>
+  queryResult.find((element) => element.item_id == id)?.quantity || 0;
