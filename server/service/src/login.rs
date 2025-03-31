@@ -117,7 +117,7 @@ impl LoginService {
     ) -> Result<TokenPair, LoginError> {
         let mut username = input.username.clone();
         let mut connection_failure = false;
-        match LoginService::fetch_user_from_central(&input).await {
+        match LoginService::fetch_user_from_central(service_provider, &input).await {
             Ok(user_info) => {
                 let service_ctx =
                     service_provider.context("".to_string(), user_info.user.id.clone())?;
@@ -206,6 +206,7 @@ impl LoginService {
     }
 
     pub async fn fetch_user_from_central(
+        service_provider: &ServiceProvider,
         input: &LoginInput,
     ) -> Result<LoginUserInfoV4, FetchUserError> {
         // Prepare central login query
@@ -220,12 +221,23 @@ impl LoginService {
         let username = &input.username;
         let password = &input.password;
 
+        let service_ctx = service_provider.basic_context().map_err(|err| {
+            FetchUserError::InternalError(format!("Failed to get service context: {}", err))
+        })?;
+        let settings = service_provider
+            .settings
+            .sync_settings(&service_ctx)
+            .map_err(|err| {
+                FetchUserError::InternalError(format!("Failed to get sync settings: {}", err))
+            })?;
+
         // Try login with central
         let login_result = login_api
             .login(LoginInputV4 {
                 username: username.clone(),
                 password: password.clone(),
                 login_type: LoginUserTypeV4::User,
+                site_name: settings.map(|x| x.username),
             })
             .await;
 

@@ -17,6 +17,7 @@ import {
   AssetLogStatusInput,
   UserPermission,
   useAuthContext,
+  useIsGapsStoreOnly,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useAssets } from '../api';
@@ -24,6 +25,7 @@ import { DraftAsset } from '../types';
 
 export const AddFromScannerButtonComponent = () => {
   const t = useTranslation();
+  const isGaps = useIsGapsStoreOnly();
   const { isConnected, isEnabled, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
   const { error, info } = useNotification();
@@ -53,7 +55,7 @@ export const AddFromScannerButtonComponent = () => {
               await insertLog({
                 id: FnUtils.generateUUID(),
                 assetId: newAssetData.current.id,
-                comment: t('label.created'),
+                comment: t('message.asset-created'),
                 status: AssetLogStatusInput.Functioning,
               });
               invalidateQueries();
@@ -160,6 +162,7 @@ export const AddFromScannerButtonComponent = () => {
   return (
     <Box>
       <ButtonWithIcon
+        shouldShrink={!isGaps}
         ref={buttonRef}
         onClick={e => {
           handleClick(e);

@@ -9,7 +9,7 @@ import {
   useNotification,
   useAuthContext,
 } from '@openmsupply-client/common';
-import { useTranslation } from '@common/intl';
+import { DateUtils, useTranslation } from '@common/intl';
 import {
   useEncounter,
   EncounterSchema,
@@ -36,7 +36,9 @@ export const ScheduleNextEncounterModal = ({
   const t = useTranslation();
   const [draft, setDraft] = useState<EncounterSchema>({
     createdDatetime: new Date().toISOString(),
-    startDatetime: suggestedDate?.toISOString(),
+    startDatetime: DateUtils.formatRFC3339(
+      DateUtils.addCurrentTime(suggestedDate)
+    ),
     createdBy: { id: user?.id ?? '', username: user?.name ?? '' },
     status: EncounterNodeStatus.Pending,
     location: {

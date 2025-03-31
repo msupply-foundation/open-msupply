@@ -21,6 +21,7 @@ const Options = z
      */
     dateOnly: z.boolean().optional(),
     dateAsEndOfDay: z.boolean().optional(),
+    disableFuture: z.boolean().optional(),
   })
   .strict()
   .optional();
@@ -37,6 +38,7 @@ const UIComponent = (props: ControlProps) => {
     Options,
     uischema.options
   );
+
   const { customError, setCustomError } = useJSONFormsCustomError(
     path,
     'Date-Time'
@@ -51,7 +53,7 @@ const UIComponent = (props: ControlProps) => {
   const inputFormat = !dateOnly ? 'P p' : 'P';
 
   const onChange = (e: Date | null) => {
-    if (!e) return;
+    if (!e) handleChange(path, null);
     setCustomError(undefined);
 
     try {
@@ -71,6 +73,7 @@ const UIComponent = (props: ControlProps) => {
     error: zErrors ?? error ?? customError ?? props.errors,
     actions: ['clear', 'today', 'accept'] as PickersActionBarAction[],
     dateAsEndOfDay: !!props.uischema.options?.['dateAsEndOfDay'],
+    disableFuture: !!props.uischema.options?.['disableFuture'],
   };
 
   return (
