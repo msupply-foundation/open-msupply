@@ -87,6 +87,8 @@ pub fn generate(
             finalised_datetime: None,
             inventory_addition_id: None,
             inventory_reduction_id: None,
+            counted_by: None,
+            verified_by: None,
         },
         lines,
     ))
