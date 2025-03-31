@@ -237,7 +237,7 @@ export const CreateAssetModal = ({
                   pageNumber={pageNumber}
                   rowsPerPage={RECORDS_PER_PAGE}
                   totalRows={
-                    catalogueItemData?.pages?.[0]?.data.totalCount ?? 0
+                    catalogueItemData?.pages?.[0]?.data?.totalCount ?? 0
                   }
                   value={selectedCatalogueItem}
                   mapOptions={mapCatalogueItems}
