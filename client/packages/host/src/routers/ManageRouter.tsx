@@ -13,6 +13,10 @@ const IndicatorsDemographicsService = React.lazy(
     )
 );
 
+const EquipmentService = React.lazy(
+  () => import('@openmsupply-client//coldchain/src/ColdchainService')
+);
+
 const fullFacilitiesPath = RouteBuilder.create(AppRoute.Manage)
   .addPart(AppRoute.Facilities)
   .addWildCard()
@@ -23,9 +27,15 @@ const fullIndicatorsDemographicsPath = RouteBuilder.create(AppRoute.Manage)
   .addWildCard()
   .build();
 
+const fullEquipmentPath = RouteBuilder.create(AppRoute.Manage)
+  .addPart(AppRoute.Equipment)
+  .addWildCard()
+  .build();
+
 export const ManageRouter: FC = () => {
   const gotoFacilities = useMatch(fullFacilitiesPath);
   const gotoIndicatorsDemographics = useMatch(fullIndicatorsDemographicsPath);
+  const gotoEquipment = useMatch(fullEquipmentPath);
 
   if (gotoFacilities) {
     return <NameService />;
@@ -34,6 +44,9 @@ export const ManageRouter: FC = () => {
   if (gotoIndicatorsDemographics) {
     return <IndicatorsDemographicsService />;
   }
+
+  if (gotoEquipment) return <EquipmentService />;
+
   const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();
   return <Navigate to={notFoundRoute} />;
 };
