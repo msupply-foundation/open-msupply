@@ -1,7 +1,4 @@
-import {
-  useQueryClient,
-  useMutation,
-} from '@openmsupply-client/common';
+import { useQueryClient, useMutation } from '@openmsupply-client/common';
 import { useRequestApi } from '../utils/useRequestApi';
 
 export const useDeleteRequests = () => {
@@ -9,7 +6,7 @@ export const useDeleteRequests = () => {
   const api = useRequestApi();
   return useMutation(api.deleteRequests, {
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.base())
+      queryClient.invalidateQueries(api.keys.base());
     },
   });
 };

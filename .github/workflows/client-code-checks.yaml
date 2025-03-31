@@ -1,0 +1,29 @@
+on:
+  pull_request:
+    paths:
+      - "client/**"
+  workflow_dispatch:
+
+name: Client Code Checks
+
+jobs:
+  code-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Set Up Node JS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: |
+          cd client
+          rm -rf node_modules
+          yarn install --frozen-lockfile
+
+      - name: Lint, Format, and Compile
+        run: cd client && yarn lint-and-format
