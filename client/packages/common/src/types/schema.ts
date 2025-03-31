@@ -8013,6 +8013,7 @@ export type StocktakeLineSortInput = {
 export type StocktakeNode = {
   __typename: 'StocktakeNode';
   comment?: Maybe<Scalars['String']['output']>;
+  countedBy?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
@@ -8029,6 +8030,7 @@ export type StocktakeNode = {
   stocktakeNumber: Scalars['Int']['output'];
   storeId: Scalars['String']['output'];
   user?: Maybe<UserNode>;
+  verifiedBy?: Maybe<Scalars['String']['output']>;
 };
 
 export enum StocktakeNodeStatus {
@@ -9297,11 +9299,13 @@ export type UpdateStocktakeErrorInterface = {
 
 export type UpdateStocktakeInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
+  countedBy?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   isLocked?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<UpdateStocktakeStatusInput>;
   stocktakeDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  verifiedBy?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateStocktakeLineError = {

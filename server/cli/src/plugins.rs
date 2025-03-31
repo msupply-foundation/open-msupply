@@ -234,7 +234,7 @@ fn bundle_backend_plugin(
 
     bundle.backend_plugins.push(BackendPluginRow {
         // TODO for now id = code in the future id = code + version (similar to reports)
-        id: code.clone(),
+        id: format!("backend_{code}"),
         bundle_base64: bundle_base64,
         variant_type,
         types,
@@ -305,7 +305,7 @@ fn bundle_frontend_plugin(
     };
 
     bundle.frontend_plugins.push(FrontendPluginRow {
-        id: code.clone(),
+        id: format!("frontend_{code}"),
         code,
         entry_point,
         files: FrontendPluginFiles(files),
