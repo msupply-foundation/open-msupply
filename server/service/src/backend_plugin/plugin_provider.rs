@@ -97,7 +97,7 @@ impl PluginInstance {
 
             let plugin = plugins
                 .iter()
-                .find(|p| p.has_type(&r#type) && p.code == code);
+                .find(|p| p.has_type(&r#type) && p.instance.code == code);
 
             plugin.map(|p| p.instance.clone())
         };
