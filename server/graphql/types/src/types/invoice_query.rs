@@ -451,6 +451,12 @@ impl InvoiceNode {
     pub async fn insurance_discount_percentage(&self) -> &Option<f64> {
         &self.row().insurance_discount_percentage
     }
+
+    pub async fn expected_delivery_datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .expected_delivery_datetime
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    }
 }
 
 impl InvoiceNode {
