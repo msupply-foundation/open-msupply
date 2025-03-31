@@ -11,7 +11,6 @@ use graphql_core::{
 use service::{
     asset::insert::{InsertAsset, InsertAssetError as ServiceError},
     auth::{Resource, ResourceAccessRequest},
-    sync::CentralServerConfig,
 };
 
 use crate::types::AssetNode;
@@ -29,16 +28,10 @@ pub fn insert_asset(
         },
     )?;
 
-    // add store_id if not inserting from central server
     let asset_input = match &input.store_id {
-        Some(input_store_id)
-            if !CentralServerConfig::is_central_server() && input_store_id != store_id =>
-        {
-            return Ok(InsertAssetResponse::Error(InsertAssetError {
-                error: InsertAssetErrorInterface::PermissionError(NoPermissionForThisStore),
-            }));
-        }
+        // Manage Page: input.store_id is provided, use it as-is
         Some(_) => input,
+        // Cold Chain Page: input.store_id is None, assign the user's store_id
         None => InsertAssetInput {
             store_id: Some(store_id.to_owned()),
             ..input
