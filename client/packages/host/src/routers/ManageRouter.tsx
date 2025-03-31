@@ -37,13 +37,9 @@ export const ManageRouter: FC = () => {
   const gotoIndicatorsDemographics = useMatch(fullIndicatorsDemographicsPath);
   const gotoEquipment = useMatch(fullEquipmentPath);
 
-  if (gotoFacilities) {
-    return <NameService />;
-  }
+  if (gotoFacilities) return <NameService />;
 
-  if (gotoIndicatorsDemographics) {
-    return <IndicatorsDemographicsService />;
-  }
+  if (gotoIndicatorsDemographics) return <IndicatorsDemographicsService />;
 
   if (gotoEquipment) return <EquipmentService />;
 

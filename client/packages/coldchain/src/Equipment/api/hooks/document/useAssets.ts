@@ -1,19 +1,16 @@
 import {
   useAuthContext,
   useCentralServerCallback,
-  useLocation,
+  usePathnameIncludes,
   useQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useAssetApi } from '../utils/useAssetApi';
 
 export const useAssets = () => {
-  const isCentralServer = useCentralServerCallback();
+  const isColdChain = usePathnameIncludes('cold-chain');
   const { store } = useAuthContext();
-
-  const location = useLocation();
-  const urlSegments = location.pathname.split('/');
-  const isColdChain = urlSegments.includes('cold-chain');
+  const isCentralServer = useCentralServerCallback();
 
   const { queryParams } = useUrlQueryParams({
     filters: [
