@@ -130,20 +130,17 @@ fn calculate_expected_delivery_date(
     months_lead_time: f64,
 ) -> Option<NaiveDateTime> {
     match delivery_date_input {
-        Some(input) => input.value,
-        None => {
-            if invoice.status == InvoiceStatus::Shipped
-                && invoice.expected_delivery_datetime.is_none()
-            {
-                println!("Invoice is shipped and expected delivery date is None");
-                let lead_time_days = (months_lead_time * AVG_NUMBER_OF_DAYS_IN_A_MONTH) as i64;
-                invoice
-                    .shipped_datetime
-                    .map(|shipped| shipped + chrono::Duration::days(lead_time_days))
-            } else {
-                invoice.expected_delivery_datetime
-            }
+        Some(input_expected_delivery_datetime) => input_expected_delivery_datetime.value,
+        None if invoice.status == InvoiceStatus::Shipped
+            && invoice.expected_delivery_datetime.is_none() =>
+        {
+            let months_lead_time_in_days =
+                (months_lead_time * AVG_NUMBER_OF_DAYS_IN_A_MONTH) as i64;
+            invoice.shipped_datetime.map(|shipped_datetime| {
+                shipped_datetime + chrono::Duration::days(months_lead_time_in_days)
+            })
         }
+        _ => invoice.expected_delivery_datetime,
     }
 }
 
