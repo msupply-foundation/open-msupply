@@ -437,6 +437,8 @@ pub fn generate(
         description: input_description,
         is_locked: input_is_locked,
         stocktake_date: input_stocktake_date,
+        counted_by,
+        verified_by,
     }: UpdateStocktake,
     existing: StocktakeRow,
     stocktake_lines: Vec<StocktakeLine>,
@@ -460,6 +462,8 @@ pub fn generate(
         u.comment = input_comment.or(u.comment);
         u.is_locked = input_is_locked.unwrap_or(false);
         u.stocktake_date = input_stocktake_date.or(u.stocktake_date);
+        u.counted_by = counted_by.or(u.counted_by);
+        u.verified_by = verified_by.or(u.verified_by);
         u
     });
 
