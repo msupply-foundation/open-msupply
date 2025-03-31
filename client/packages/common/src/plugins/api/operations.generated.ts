@@ -8,6 +8,15 @@ export type FrontendPluginMetadataQueryVariables = Types.Exact<{ [key: string]: 
 
 export type FrontendPluginMetadataQuery = { __typename: 'Queries', frontendPluginMetadata: Array<{ __typename: 'FrontendPluginMetadataNode', code: string, path: string }> };
 
+export type PluginGraphqlQueryQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.Scalars['JSON']['input'];
+  pluginCode: Types.Scalars['String']['input'];
+}>;
+
+
+export type PluginGraphqlQueryQuery = { __typename: 'Queries', pluginGraphqlQuery: any };
+
 
 export const FrontendPluginMetadataDocument = gql`
     query frontendPluginMetadata {
@@ -15,6 +24,11 @@ export const FrontendPluginMetadataDocument = gql`
     code
     path
   }
+}
+    `;
+export const PluginGraphqlQueryDocument = gql`
+    query pluginGraphqlQuery($storeId: String!, $input: JSON!, $pluginCode: String!) {
+  pluginGraphqlQuery(input: $input, pluginCode: $pluginCode, storeId: $storeId)
 }
     `;
 
@@ -27,6 +41,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   return {
     frontendPluginMetadata(variables?: FrontendPluginMetadataQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<FrontendPluginMetadataQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<FrontendPluginMetadataQuery>(FrontendPluginMetadataDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'frontendPluginMetadata', 'query', variables);
+    },
+    pluginGraphqlQuery(variables: PluginGraphqlQueryQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PluginGraphqlQueryQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PluginGraphqlQueryQuery>(PluginGraphqlQueryDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'pluginGraphqlQuery', 'query', variables);
     }
   };
 }
