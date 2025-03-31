@@ -18,6 +18,10 @@ use types::{
     AssetSortInput, AssetsResponse, GS1DataElement, ScannedDataParseError,
 };
 
+// TODO:
+// Add storeId filter
+// Return all if theres no storeId
+
 #[derive(Default, Clone)]
 pub struct AssetQueries;
 
@@ -53,6 +57,7 @@ impl AssetQueries {
                 // Currently only one sort option is supported, use the first from the list.
                 sort.and_then(|mut sort_list| sort_list.pop())
                     .map(|sort| sort.to_domain()),
+                //
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
