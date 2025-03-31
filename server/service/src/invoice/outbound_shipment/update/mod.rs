@@ -480,7 +480,7 @@ mod test {
                 u.colour = colour;
                 u.transport_reference = transport_reference;
                 u.tax_percentage = tax.map(|tax| tax.percentage.unwrap());
-                u.expected_delivery_datetime = expected_delivery_datetime.unwrap().value;
+                u.expected_delivery_datetime = expected_delivery_datetime.and_then(|v| v.value);
                 u
             })
         );

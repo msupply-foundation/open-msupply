@@ -1,5 +1,5 @@
 use async_graphql::*;
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::NaiveDateTime;
 use graphql_core::generic_inputs::{NullableUpdateInput, TaxInput};
 use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, NodeError, RecordNotFound};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
@@ -132,9 +132,8 @@ impl UpdateInput {
             }),
             currency_id,
             currency_rate,
-            expected_delivery_datetime: expected_delivery_datetime.map(|datetime| NullableUpdate {
-                value: datetime.value.map(|datetime| datetime),
-            }),
+            expected_delivery_datetime: expected_delivery_datetime
+                .map(|dt| NullableUpdate { value: dt.value }),
         }
     }
 }
