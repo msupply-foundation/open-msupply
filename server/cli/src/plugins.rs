@@ -1,12 +1,4 @@
-use std::{
-    ffi::OsStr,
-    fs,
-    path::{Path, PathBuf},
-    process::{Command, ExitStatus, Stdio},
-};
-
 use base64::{prelude::BASE64_STANDARD, Engine};
-use cli::{queries_mutations::INSTALL_PLUGINS, Api, ApiError};
 use log::{info, warn};
 use repository::{
     BackendPluginRow, FrontendPluginFile, FrontendPluginFiles, FrontendPluginRow,
@@ -16,11 +8,22 @@ use reqwest::Url;
 use serde::Deserialize;
 use serde_json::json;
 use service::backend_plugin::plugin_provider::PluginBundle;
+use std::{
+    ffi::OsStr,
+    fs,
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 use thiserror::Error as ThisError;
 use util::format_error;
+
+use crate::{
+    queries_mutations::INSTALL_PLUGINS, run_command_with_error, Api, ApiError, CommandError,
+};
+
 #[derive(ThisError, Debug)]
-pub(super) enum Error {
+pub enum Error {
     #[error("Failed to read dir {0}")]
     FailedToReadDir(PathBuf, #[source] std::io::Error),
     #[error("Failed to get file or dir {0}")]
@@ -48,7 +51,7 @@ pub(super) enum Error {
 }
 
 #[derive(clap::Parser, Debug)]
-pub(super) struct GeneratePluginBundle {
+pub struct GeneratePluginBundle {
     /// Directory in which to search for plugins
     #[clap(short, long)]
     in_dir: PathBuf,
@@ -58,7 +61,7 @@ pub(super) struct GeneratePluginBundle {
 }
 
 #[derive(clap::Parser, Debug)]
-pub(super) struct InstallPluginBundle {
+pub struct InstallPluginBundle {
     /// Path to bundle
     #[clap(short, long)]
     path: PathBuf,
@@ -74,7 +77,7 @@ pub(super) struct InstallPluginBundle {
 }
 
 #[derive(clap::Parser, Debug)]
-pub(super) struct GenerateAndInstallPluginBundle {
+pub struct GenerateAndInstallPluginBundle {
     /// Directory in which to search for plugins
     #[clap(short, long)]
     in_dir: PathBuf,
@@ -110,7 +113,7 @@ struct ManifestJson {
     om_supply_plugin: PluginDescription,
 }
 
-pub(crate) fn generate_plugin_bundle(
+pub fn generate_plugin_bundle(
     GeneratePluginBundle { in_dir, out_file }: GeneratePluginBundle,
 ) -> Result<(), Error> {
     let ignore_paths = vec![
@@ -315,28 +318,8 @@ fn bundle_frontend_plugin(
     Ok(())
 }
 
-#[derive(ThisError, Debug)]
-pub(super) enum CommandError {
-    #[error(transparent)]
-    FailedToRunCommand(#[from] std::io::Error),
-    #[error("Exited with non ok status {0}")]
-    StatusNotOk(ExitStatus),
-}
-
-pub fn run_command_with_error(command: &mut Command) -> Result<(), CommandError> {
-    let status = command
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .status()?;
-
-    if status.success() {
-        return Ok(());
-    }
-    return Err(CommandError::StatusNotOk(status));
-}
-
 /// username, password, url should come from config, like in reports (in the new show command)
-pub(super) async fn install_plugin_bundle(
+pub async fn install_plugin_bundle(
     InstallPluginBundle {
         path,
         url,
@@ -365,7 +348,7 @@ pub(super) async fn install_plugin_bundle(
 }
 
 /// username and password should come from config, like in reports (and url too)
-pub(super) async fn generate_and_install_plugin_bundle(
+pub async fn generate_and_install_plugin_bundle(
     GenerateAndInstallPluginBundle {
         in_dir,
         url,

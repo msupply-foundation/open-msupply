@@ -1,28 +1,23 @@
 use std::sync::{Arc, RwLock};
 
-use actix_web::web::Data;
-
 use base64::{prelude::BASE64_STANDARD, Engine};
 
 use repository::{BackendPluginRow, FrontendPluginRow, PluginType, PluginTypes, PluginVariantType};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{backend_plugin::boajs, service_provider::ServiceProvider};
-
-use super::boajs::BoaJsPluginError;
+use crate::boajs::{self, BoaJsError};
 
 #[derive(Debug, Error, PartialEq)]
-#[error("Error in plugin {r#type:?}")]
+#[error("Error in plugin {code}")]
 pub struct PluginError {
-    r#type: PluginType,
+    code: String,
     #[source]
     variant: PluginErrorVariant,
 }
 
 pub struct Plugin {
     types: PluginTypes,
-    code: String,
     instance: Arc<PluginInstance>,
 }
 
@@ -31,8 +26,12 @@ impl Plugin {
         self.types.0.contains(r#type)
     }
 }
-pub enum PluginInstance {
+pub enum PluginInstanceVariant {
     BoaJs(Vec<u8>),
+}
+pub struct PluginInstance {
+    code: String,
+    variant: PluginInstanceVariant,
 }
 
 pub type PluginResult<T> = Result<T, PluginError>;
@@ -40,35 +39,13 @@ pub type PluginResult<T> = Result<T, PluginError>;
 #[derive(Debug, Error, PartialEq)]
 pub enum PluginErrorVariant {
     #[error(transparent)]
-    BoaJs(#[from] BoaJsPluginError),
+    BoaJs(#[from] BoaJsError),
 }
 
 pub static PLUGINS: RwLock<Vec<Plugin>> = RwLock::new(Vec::new());
 
-pub struct PluginContext {
-    pub service_provider: Data<ServiceProvider>,
-}
-
-// Needs to be bound on startup
-// Plugin context is used because some types cannot easily implement 'Trace' to be used in boajs callbacks
-// There is a repository for testing some basic use cases for this here: https://github.com/andreievg/Checking-global-static-context-in-boajs-callback
-static PLUGINS_CONTEXT: RwLock<Option<PluginContext>> = RwLock::new(None);
-impl PluginContext {
-    pub fn bind(self) {
-        *(PLUGINS_CONTEXT
-            .write()
-            .expect("Failed to get write lock for plugin context")) = Some(self);
-    }
-
-    pub fn service_provider() -> Data<ServiceProvider> {
-        PLUGINS_CONTEXT
-            .read()
-            .expect("Failed to get read lock for plugin context")
-            .as_ref()
-            .expect("Global plugin context is not present")
-            .service_provider
-            .clone()
-    }
+fn plugin_type_to_string(r#type: PluginType) -> String {
+    serde_json::to_string(&r#type).unwrap().replace("\"", "")
 }
 
 pub(crate) fn call_plugin<I, O>(
@@ -80,13 +57,19 @@ where
     I: Serialize,
     O: DeserializeOwned,
 {
-    let result = match plugin {
-        PluginInstance::BoaJs(bundle) => {
-            boajs::call_plugin(input, &r#type, &bundle).map_err(Into::into)
-        }
+    let result = match &plugin.variant {
+        PluginInstanceVariant::BoaJs(bundle) => boajs::call_method(
+            input,
+            vec!["plugins", &plugin_type_to_string(r#type)],
+            &bundle,
+        )
+        .map_err(Into::into),
     };
 
-    result.map_err(|variant| PluginError { r#type, variant })
+    result.map_err(|variant| PluginError {
+        code: plugin.code.clone(),
+        variant,
+    })
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -134,7 +117,10 @@ impl PluginInstance {
         let plugin_bundle = BASE64_STANDARD.decode(bundle_base64).unwrap();
 
         let plugin = match variant_type {
-            PluginVariantType::BoaJs => PluginInstance::BoaJs(plugin_bundle),
+            PluginVariantType::BoaJs => PluginInstance {
+                code: code.clone(),
+                variant: PluginInstanceVariant::BoaJs(plugin_bundle),
+            },
         };
 
         let instance = Arc::new(plugin);
@@ -142,13 +128,9 @@ impl PluginInstance {
         let mut plugins = PLUGINS.write().unwrap();
 
         // Remove all plugins with this code
-        (*plugins).retain(|Plugin { code: p_code, .. }| p_code != &code);
+        (*plugins).retain(|Plugin { instance, .. }| instance.code != code);
 
         // Add plugin with this code
-        (*plugins).push(Plugin {
-            code,
-            types,
-            instance,
-        });
+        (*plugins).push(Plugin { types, instance });
     }
 }
