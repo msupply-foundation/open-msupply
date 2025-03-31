@@ -47,9 +47,6 @@ export const localDate = (date: Date) => {
 };
 export const sqlList = (list: string[]) => '("' + list.join('","') + '")';
 export const fromSqlDateTime = (datetime: string) => {
-  log(
-    JSON.stringify({ datetime, converted: `${datetime.split(' ').join('T')}Z` })
-  );
   // Will map '2023-01-01 10:10:10' to UTC '2023-01-01T10:10:10Z'
   return new Date(`${datetime.split(' ').join('T')}Z`);
 };
