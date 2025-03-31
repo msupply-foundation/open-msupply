@@ -21,6 +21,7 @@ export const sqlQuery = <K extends string>(
   sqlStatement: string
 ): Record<K, any>[] => {
   const adjustedStatement = wrapSql(fields, sqlStatement);
+  // log(adjustedStatement);
   return sql(adjustedStatement) as Record<K, any>[];
 };
 

@@ -1,5 +1,7 @@
 import { PluginTypes } from './generated/PluginTypes';
 
+export type ArrayElement<T> = T extends (infer U)[] ? U : T;
+
 export type BackendPlugins = {
   average_monthly_consumption?: (
     _: PluginTypes['average_monthly_consumption']['input']

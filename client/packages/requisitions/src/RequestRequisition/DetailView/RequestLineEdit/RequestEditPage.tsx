@@ -104,8 +104,7 @@ export const RequestLineEditPageInner = ({
               isPacks={isPacks}
               setIsPacks={setIsPacks}
               insert={mutateAsync}
-              requisitionId={requisition?.id ?? ''}
-              requisitionNumber={requisition?.requisitionNumber}
+              requisition={requisition}
               lines={lines}
               scrollIntoView={scrollSelectedItemIntoView}
             />
