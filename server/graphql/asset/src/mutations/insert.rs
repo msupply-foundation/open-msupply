@@ -30,29 +30,20 @@ pub fn insert_asset(
     )?;
 
     // add store_id if not inserting from central server
-    let asset_input;
-    if !CentralServerConfig::is_central_server() {
-        match &input.store_id {
-            Some(input_store_id) => {
-                if input_store_id != store_id {
-                    return Ok(InsertAssetResponse::Error(InsertAssetError {
-                        error: InsertAssetErrorInterface::PermissionError(NoPermissionForThisStore),
-                    }));
-                }
-                asset_input = input;
-            }
-            None => {
-                asset_input = {
-                    InsertAssetInput {
-                        store_id: Some(store_id.to_owned()),
-                        ..input
-                    }
-                }
-            }
+    let asset_input = match &input.store_id {
+        Some(input_store_id)
+            if !CentralServerConfig::is_central_server() && input_store_id != store_id =>
+        {
+            return Ok(InsertAssetResponse::Error(InsertAssetError {
+                error: InsertAssetErrorInterface::PermissionError(NoPermissionForThisStore),
+            }));
         }
-    } else {
-        asset_input = input
-    }
+        Some(_) => input,
+        None => InsertAssetInput {
+            store_id: Some(store_id.to_owned()),
+            ..input
+        },
+    };
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
