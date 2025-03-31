@@ -3,6 +3,8 @@ use std::vec;
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
+use serde_json;
+
 use graphql_asset_catalogue::types::asset_catalogue_item::AssetCatalogueItemNode;
 use graphql_asset_catalogue::types::asset_category::AssetCategoryNode;
 use graphql_asset_catalogue::types::asset_class::AssetClassNode;
@@ -92,7 +94,7 @@ impl From<AssetFilterInput> for AssetFilter {
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(SimpleObject, PartialEq, Debug)]
 pub struct LockedAssetFieldsNode {
     pub serial_number: bool,
     pub catalogue_item_id: bool,

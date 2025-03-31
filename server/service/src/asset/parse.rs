@@ -4,6 +4,7 @@ use repository::{
     asset_catalogue_item::{AssetCatalogueItemFilter, AssetCatalogueItemRepository},
     EqualFilter, RepositoryError, StringFilter,
 };
+use serde::{Deserialize, Serialize};
 use util::{GS1DataElement, GS1};
 
 use crate::service_provider::ServiceContext;
@@ -11,9 +12,13 @@ use crate::service_provider::ServiceContext;
 #[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LockedAssetFields {
+    #[serde(default)]
     pub serial_number: bool,
+    #[serde(default)]
     pub catalogue_item_id: bool,
+    #[serde(default)]
     pub warranty_start: bool,
+    #[serde(default)]
     pub warranty_end: bool,
 }
 
@@ -81,7 +86,7 @@ fn lookup_asset_catalogue_id_by_pqs_code(
 fn create_draft_asset_from_gs1(ctx: &ServiceContext, gs1: GS1) -> Result<Asset, AssetFromGs1Error> {
     let mut asset = Asset::default();
 
-    let mut locked_fields = LockedFields::default();
+    let mut locked_fields = LockedAssetFields::default();
 
     asset.serial_number = gs1.serial_number();
     if asset.serial_number.is_some() {
@@ -113,7 +118,12 @@ fn create_draft_asset_from_gs1(ctx: &ServiceContext, gs1: GS1) -> Result<Asset, 
 
     asset.installation_date = Some(Utc::now().naive_local().date()); // Default to today's date
 
-    asset.locked_fields_json = Some(serde_json::to_string(&locked_fields)?);
+    let locked_fields_json = serde_json::to_string(&locked_fields).map_err(|e| {
+        log::error!("Failed to serialize locked fields: {}", e);
+        AssetFromGs1Error::ParseError
+    })?;
+
+    asset.locked_fields_json = Some(locked_fields_json);
 
     Ok(asset)
 }
