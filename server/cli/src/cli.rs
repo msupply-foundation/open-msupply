@@ -45,10 +45,11 @@ use util::inline_init;
 mod backup;
 use backup::*;
 
-mod plugins;
-use plugins::*;
-
-use cli::{generate_report_data, generate_reports_recursive, RefreshDatesRepository, ReportError};
+use cli::{
+    generate_and_install_plugin_bundle, generate_plugin_bundle, generate_report_data,
+    generate_reports_recursive, install_plugin_bundle, GenerateAndInstallPluginBundle,
+    GeneratePluginBundle, InstallPluginBundle, RefreshDatesRepository, ReportError,
+};
 
 const DATA_EXPORT_FOLDER: &str = "data";
 
@@ -441,8 +442,10 @@ async fn main() -> anyhow::Result<()> {
         Action::BuildReports { path } => {
             let dir_list = match path.clone() {
                 Some(path) => path,
-                None => vec![PathBuf::new().join("../standard_reports"),
-                             PathBuf::new().join("../standard_forms")],
+                None => vec![
+                    PathBuf::new().join("../standard_reports"),
+                    PathBuf::new().join("../standard_forms"),
+                ],
             };
 
             for base_dir in dir_list {
@@ -484,7 +487,10 @@ async fn main() -> anyhow::Result<()> {
                 if path.is_some() {
                     info!("All reports built in custom path {:?}", base_dir.display());
                 } else {
-                    info!("All standard reports built in path {:?}", base_dir.display())
+                    info!(
+                        "All standard reports built in path {:?}",
+                        base_dir.display()
+                    )
                 };
             }
         }
@@ -503,16 +509,13 @@ async fn main() -> anyhow::Result<()> {
 
             for file_path in file_list {
                 let json_file = fs::File::open(file_path.clone())
-                .unwrap_or_else(|_| panic!(
-                    "{} not found for report",
-                    file_path.display()
-                ));
-                let reports_data: ReportsData =
-                    serde_json::from_reader(json_file).expect("json incorrectly formatted for report");
-    
+                    .unwrap_or_else(|_| panic!("{} not found for report", file_path.display()));
+                let reports_data: ReportsData = serde_json::from_reader(json_file)
+                    .expect("json incorrectly formatted for report");
+
                 let connection_manager = get_storage_connection_manager(&settings.database);
                 let con = connection_manager.connection()?;
-    
+
                 StandardReports::upsert_reports(reports_data, &con, overwrite)?;
             }
         }
@@ -643,8 +646,13 @@ async fn main() -> anyhow::Result<()> {
                 .arg(generated_file_path.clone())
                 .status()
                 .expect(&format!("failed to open file {:?}", generated_file_path));
-        },
-        Action::ToggleReport { code, is_custom, enable, disable } => {
+        }
+        Action::ToggleReport {
+            code,
+            is_custom,
+            enable,
+            disable,
+        } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
 
@@ -652,7 +660,7 @@ async fn main() -> anyhow::Result<()> {
             match is_custom {
                 Some(value) => {
                     filter = filter.is_custom(value);
-                },
+                }
                 None => {}
             }
 
@@ -666,18 +674,17 @@ async fn main() -> anyhow::Result<()> {
                 let updated_value = {
                     if enable {
                         true
-                    } else if disable{
+                    } else if disable {
                         false
                     } else {
                         !report.report_row.is_active
                     }
                 };
                 report.report_row.is_active = updated_value;
-                row_repository.upsert_one(
-                    &report.report_row
-                )?;
+                row_repository.upsert_one(&report.report_row)?;
 
-                info!("{}: {} => {}",
+                info!(
+                    "{}: {} => {}",
                     report.report_row.id,
                     if initial_value { "ACTIVE" } else { "INACTIVE" },
                     if updated_value { "ACTIVE" } else { "INACTIVE" }

@@ -1,16 +1,13 @@
-import { processItemLines } from "./utils";
+import { processItemLines } from './utils';
 
-function convert_data() {
-  const res = JSON.parse(Host.inputString());
+function convert_data(res) {
   res.data.items.nodes = processItemLines(
     res.data.items.nodes,
     // assign default sort values
-    res?.arguments?.sort ?? "name",
-    res?.arguments?.dir ?? "asc"
+    res?.arguments?.sort ?? 'name',
+    res?.arguments?.dir ?? 'asc'
   );
-  Host.outputString(JSON.stringify(res));
+  return res;
 }
 
-module.exports = {
-  convert_data,
-};
+export { convert_data };
