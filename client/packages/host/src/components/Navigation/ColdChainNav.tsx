@@ -9,6 +9,8 @@ import {
   ThermometerIcon,
   UserStoreNodeFragment,
   useIsGapsStoreOnly,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
@@ -22,7 +24,9 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
     RouteBuilder.create(AppRoute.Coldchain).addWildCard().build()
   );
   const t = useTranslation();
-  const visible = store?.preferences.vaccineModule ?? false;
+  const permission = UserPermission.AssetQuery;
+  const { userHasPermission } = useAuthContext();
+  const visible = (store?.preferences.vaccineModule && userHasPermission(permission)) ?? false;
   const isGapsStore = useIsGapsStoreOnly();
 
   return (
