@@ -28,10 +28,10 @@ pub fn insert_asset(
         },
     )?;
 
+    // If the store_id is not provided in the input, set it to the store_id from the context
+    // This is to ensure that the asset is always associated with a store
     let asset_input = match &input.store_id {
-        // Manage Page: input.store_id is provided, use it as-is
         Some(_) => input,
-        // Cold Chain Page: input.store_id is None, assign the user's store_id
         None => InsertAssetInput {
             store_id: Some(store_id.to_owned()),
             ..input
