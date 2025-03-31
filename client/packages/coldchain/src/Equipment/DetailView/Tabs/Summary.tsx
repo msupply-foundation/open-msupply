@@ -4,6 +4,7 @@ import {
   BasicTextInput,
   Checkbox,
   DateTimePickerInput,
+  InfoTooltipIcon,
   InputWithLabelRow,
   Typography,
 } from '@common/components';
@@ -100,10 +101,12 @@ const Row = ({
   children,
   label,
   isGaps,
+  tooltip,
 }: {
   children: React.ReactNode;
   label: string;
   isGaps: boolean;
+  tooltip?: string;
 }) => {
   if (!isGaps)
     return (
@@ -119,9 +122,19 @@ const Row = ({
             },
           }}
           Input={
-            <Box sx={{}} flex={1}>
-              {children}
-            </Box>
+            <>
+              <Box sx={{}} flex={1}>
+                {children}
+              </Box>
+              <Box>
+                {tooltip && (
+                  <InfoTooltipIcon
+                    iconSx={{ color: 'gray.main' }}
+                    title={tooltip}
+                  />
+                )}
+              </Box>
+            </>
           }
         />
       </Box>
@@ -220,8 +233,17 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               fullWidth
             />
           </Row>
-          <Row isGaps={isGaps} label={t('label.serial')}>
+          <Row
+            isGaps={isGaps}
+            label={t('label.serial')}
+            tooltip={
+              draft.lockedFields.serialNumber
+                ? t('tooltip.defined-by-gs1-matrix')
+                : undefined
+            }
+          >
             <BasicTextInput
+              disabled={draft.lockedFields.serialNumber}
               value={draft.serialNumber ?? ''}
               fullWidth
               onChange={e => onChange({ serialNumber: e.target.value })}
@@ -254,8 +276,17 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               textFieldProps={{ fullWidth: true }}
             />
           </Row>
-          <Row isGaps={isGaps} label={t('label.warranty-start-date')}>
+          <Row
+            isGaps={isGaps}
+            label={t('label.warranty-start-date')}
+            tooltip={
+              draft.lockedFields.warrantyStart
+                ? t('tooltip.defined-by-gs1-matrix')
+                : undefined
+            }
+          >
             <DateTimePickerInput
+              disabled={draft.lockedFields.warrantyStart}
               value={DateUtils.getDateOrNull(draft.warrantyStart)}
               format="P"
               onChange={date =>
@@ -264,8 +295,17 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               textFieldProps={{ fullWidth: true }}
             />
           </Row>
-          <Row isGaps={isGaps} label={t('label.warranty-end-date')}>
+          <Row
+            isGaps={isGaps}
+            label={t('label.warranty-end-date')}
+            tooltip={
+              draft.lockedFields.warrantyEnd
+                ? t('tooltip.defined-by-gs1-matrix')
+                : undefined
+            }
+          >
             <DateTimePickerInput
+              disabled={draft.lockedFields.warrantyEnd}
               value={DateUtils.getDateOrNull(draft.warrantyEnd)}
               format="P"
               onChange={date =>
