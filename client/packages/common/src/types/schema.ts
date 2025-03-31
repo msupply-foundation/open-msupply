@@ -442,6 +442,7 @@ export type AssetFilterInput = {
   replacementDate?: InputMaybe<DateFilterInput>;
   serialNumber?: InputMaybe<StringFilterInput>;
   storeCodeOrName?: InputMaybe<StringFilterInput>;
+  storeId?: InputMaybe<StringFilterInput>;
   typeId?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -1251,6 +1252,12 @@ export type ColdStorageTypeSortInput = {
 };
 
 export type ColdStorageTypesResponse = ColdStorageTypeConnector;
+
+export type ComplexPrefNode = {
+  __typename: 'ComplexPrefNode';
+  somethingElse: Scalars['String']['output'];
+  somethingHere: Scalars['Int']['output'];
+};
 
 export type ConfigureNamePropertiesResponse = Success;
 
@@ -4567,6 +4574,7 @@ export type MasterListNode = {
   __typename: 'MasterListNode';
   code: Scalars['String']['output'];
   description: Scalars['String']['output'];
+  discountPercentage: Scalars['Float']['output'];
   id: Scalars['String']['output'];
   linesCount?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
@@ -5860,6 +5868,12 @@ export type PluginInfoNode = {
   pluginInfo: Scalars['JSON']['output'];
 };
 
+export type PreferencesNode = {
+  __typename: 'PreferencesNode';
+  complexPref: ComplexPrefNode;
+  usePaymentsInPrescriptions: Scalars['Boolean']['output'];
+};
+
 export type PricingNode = {
   __typename: 'PricingNode';
   foreignCurrencyTotalAfterTax?: Maybe<Scalars['Float']['output']>;
@@ -6282,6 +6296,7 @@ export type Queries = {
   patients: PatientResponse;
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
+  preferences: PreferencesNode;
   printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
@@ -6728,6 +6743,10 @@ export type QueriesPluginDataArgs = {
   filter?: InputMaybe<PluginDataFilterInput>;
   pluginCode: Scalars['String']['input'];
   sort?: InputMaybe<Array<PluginDataSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPreferencesArgs = {
   storeId: Scalars['String']['input'];
 };
 

@@ -1,6 +1,7 @@
 import {
   useAuthContext,
   useCentralServerCallback,
+  useLocation,
   useQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
@@ -9,6 +10,10 @@ import { useAssetApi } from '../utils/useAssetApi';
 export const useAssets = () => {
   const isCentralServer = useCentralServerCallback();
   const { store } = useAuthContext();
+
+  const location = useLocation();
+  const urlSegments = location.pathname.split('/');
+  const isColdChain = urlSegments.includes('cold-chain');
 
   const { queryParams } = useUrlQueryParams({
     filters: [
@@ -30,6 +35,6 @@ export const useAssets = () => {
 
   const api = useAssetApi();
   return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.list(queryParams, storeCodeFilter)
+    api.get.list(queryParams, storeCodeFilter, isColdChain)
   );
 };

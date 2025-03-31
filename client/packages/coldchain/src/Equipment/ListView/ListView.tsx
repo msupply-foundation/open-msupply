@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, ReactNode } from 'react';
 import {
   useNavigate,
   TableProvider,
@@ -17,6 +17,7 @@ import {
   RouteBuilder,
   ColumnFormat,
   GenericColumnKey,
+  SortBy,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { Toolbar } from './Toolbar';
@@ -28,33 +29,22 @@ import { AssetRowFragment } from '../api/operations.generated';
 import { AppRoute } from '@openmsupply-client/config';
 import { Footer } from './Footer';
 
-const StatusCell = ({ rowData }: { rowData: AssetRowFragment }) => {
+const StatusCell = ({ rowData }: { rowData: AssetRowFragment }): ReactNode => {
   return <Status status={rowData.statusLog?.status} />;
 };
 
-const AssetListComponent: FC = () => {
-  const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({
-    initialSort: { key: 'installationDate', dir: 'desc' },
-  });
+interface AssetColumns {
+  sortBy: SortBy<unknown>;
+  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
+}
 
-  const { data, isError, isLoading } = useAssets.document.list();
-  const pagination = { page, first, offset };
-  const navigate = useNavigate();
-  const t = useTranslation();
-  const modalController = useToggle();
-  const importModalController = useToggle();
+export const useAssetColumns = ({ sortBy, onChangeSortBy }: AssetColumns) => {
   const isCentralServer = useIsCentralServerApi();
-  const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
-    AppRoute.Equipment
-  );
 
   const columnsToCreate: ColumnDescription<AssetRowFragment>[] = [
     GenericColumnKey.Selection,
   ];
+
   if (isCentralServer)
     columnsToCreate.push({
       key: 'store',
@@ -128,14 +118,46 @@ const AssetListComponent: FC = () => {
     }
   );
 
-  const columns = useColumns(
+  return useColumns(
     columnsToCreate,
     {
       sortBy,
-      onChangeSortBy: updateSortQuery,
+      onChangeSortBy,
     },
     [sortBy]
   );
+};
+
+const AssetList: FC = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
+
+  const modalController = useToggle();
+  const importModalController = useToggle();
+
+  const { data, isError, isLoading } = useAssets.document.list();
+
+  const {
+    updateSortQuery,
+    updatePaginationQuery,
+    queryParams: { sortBy, page, first, offset },
+  } = useUrlQueryParams({
+    initialSort: { key: 'installationDate', dir: 'desc' },
+  });
+  const pagination = { page, first, offset };
+
+  const columns = useAssetColumns({
+    sortBy,
+    onChangeSortBy: updateSortQuery,
+  });
+
+  const handleRowClick = (row: AssetRowFragment): void => {
+    const path = RouteBuilder.create(AppRoute.Coldchain)
+      .addPart(AppRoute.Equipment)
+      .addPart(row.id)
+      .build();
+    navigate(path);
+  };
 
   return (
     <>
@@ -152,7 +174,7 @@ const AssetListComponent: FC = () => {
         data={data?.nodes}
         isError={isError}
         isLoading={isLoading}
-        onRowClick={row => navigate(equipmentRoute.addPart(row.id).build())}
+        onRowClick={handleRowClick}
         noDataElement={<NothingHere body={t('error.no-items-to-display')} />}
         enableColumnSelection
       />
@@ -171,6 +193,6 @@ const AssetListComponent: FC = () => {
 
 export const EquipmentListView: FC = () => (
   <TableProvider createStore={createTableStore}>
-    <AssetListComponent />
+    <AssetList />
   </TableProvider>
 );
