@@ -136,6 +136,7 @@ pub struct LegacyTransactRow {
     #[serde(serialize_with = "date_option_to_isostring")]
     pub arrival_date_actual: Option<NaiveDate>,
     /// expected_delivery_datetime
+    #[serde(default)]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub arrival_date_estimated: Option<NaiveDate>,
