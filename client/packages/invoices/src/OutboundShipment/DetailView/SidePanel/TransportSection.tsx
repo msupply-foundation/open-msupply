@@ -29,9 +29,7 @@ export const TransportSectionComponent: FC = () => {
     <DetailPanelSection title={t('heading.transport-details')}>
       <Grid container gap={0.5} key="transport-details">
         <PanelRow>
-          <PanelLabel display="flex" alignItems="center" sx={{ flex: 1 }}>
-            {t('label.expected-delivery-date')}
-          </PanelLabel>
+          <PanelLabel>{t('label.expected-delivery-date')}</PanelLabel>
           <DateTimePickerInput
             disabled={isDisabled}
             value={DateUtils.getDateOrNull(expectedDeliveryDatetime)}
@@ -59,9 +57,7 @@ export const TransportSectionComponent: FC = () => {
           />
         </PanelRow>
         <PanelRow>
-          <PanelLabel display="flex" alignItems="center">
-            {t('heading.reference')}
-          </PanelLabel>
+          <PanelLabel>{t('heading.reference')}</PanelLabel>
           <BufferedTextInput
             disabled={isDisabled}
             onChange={e => {
