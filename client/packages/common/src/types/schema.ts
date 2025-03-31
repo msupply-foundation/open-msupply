@@ -1252,6 +1252,12 @@ export type ColdStorageTypeSortInput = {
 
 export type ColdStorageTypesResponse = ColdStorageTypeConnector;
 
+export type ComplexPrefNode = {
+  __typename: 'ComplexPrefNode';
+  somethingElse: Scalars['String']['output'];
+  somethingHere: Scalars['Int']['output'];
+};
+
 export type ConfigureNamePropertiesResponse = Success;
 
 export type ConfigureNamePropertyInput = {
@@ -3950,6 +3956,7 @@ export type InvoiceNode = {
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   diagnosis?: Maybe<DiagnosisNode>;
   diagnosisId?: Maybe<Scalars['String']['output']>;
+  expectedDeliveryDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   insuranceDiscountAmount?: Maybe<Scalars['Float']['output']>;
   insuranceDiscountPercentage?: Maybe<Scalars['Float']['output']>;
@@ -4567,6 +4574,7 @@ export type MasterListNode = {
   __typename: 'MasterListNode';
   code: Scalars['String']['output'];
   description: Scalars['String']['output'];
+  discountPercentage: Scalars['Float']['output'];
   id: Scalars['String']['output'];
   linesCount?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
@@ -5557,6 +5565,21 @@ export type NullableDateUpdate = {
  * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
  * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
  */
+export type NullableDatetimeUpdate = {
+  value?: InputMaybe<Scalars['NaiveDateTime']['input']>;
+};
+
+/**
+ * Update a nullable value
+ *
+ * This struct is usually used as an optional value.
+ * For example, in an API update input object like `mutableValue:  NullableUpdate | null | undefined`.
+ * This is done to encode the following cases (using `mutableValue` from previous example):
+ * 1) if `mutableValue` is `null | undefined`, nothing is updated
+ * 2) if `mutableValue` object is set:
+ * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
+ * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
+ */
 export type NullableStringUpdate = {
   value?: InputMaybe<Scalars['String']['input']>;
 };
@@ -5858,6 +5881,12 @@ export type PluginDataSortInput = {
 export type PluginInfoNode = {
   __typename: 'PluginInfoNode';
   pluginInfo: Scalars['JSON']['output'];
+};
+
+export type PreferencesNode = {
+  __typename: 'PreferencesNode';
+  complexPref: ComplexPrefNode;
+  usePaymentsInPrescriptions: Scalars['Boolean']['output'];
 };
 
 export type PricingNode = {
@@ -6282,6 +6311,7 @@ export type Queries = {
   patients: PatientResponse;
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
+  preferences: PreferencesNode;
   printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
@@ -6728,6 +6758,10 @@ export type QueriesPluginDataArgs = {
   filter?: InputMaybe<PluginDataFilterInput>;
   pluginCode: Scalars['String']['input'];
   sort?: InputMaybe<Array<PluginDataSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPreferencesArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -8800,6 +8834,7 @@ export type UpdateOutboundShipmentInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
   currencyRate?: InputMaybe<Scalars['Float']['input']>;
+  expectedDeliveryDatetime?: InputMaybe<NullableDatetimeUpdate>;
   /** The new invoice id provided by the client */
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;

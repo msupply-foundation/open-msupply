@@ -1901,6 +1901,7 @@
   "supplier-return": "Supplier Return",
   "supplier-returns": "Supplier Returns",
   "suppliers": "Suppliers",
+  "label.expected-delivery-date": "Expected delivery date",
   "sync": "Sync",
   "sync-info.last-successful-sync": "Last successful sync completed",
   "sync-info.last-sync-duration": "Last sync duration",
