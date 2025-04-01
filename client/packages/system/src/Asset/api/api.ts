@@ -91,6 +91,35 @@ export const getAssetQueries = (sdk: Sdk, currentStoreId: string) => ({
 
       throw new Error('Asset catalogue item not found');
     },
+    list: async ({
+      first,
+      offset,
+      sortBy,
+      filterBy,
+    }: ListParams<AssetCatalogueItemFragment>) => {
+      const result = await sdk.assetCatalogueItems({
+        first,
+        offset,
+        key: itemParsers.toSortField(sortBy),
+        desc: sortBy.isDesc,
+        filter: filterBy,
+      });
+
+      const items = result?.assetCatalogueItems;
+
+      return items;
+    },
+    listAll: async ({ sortBy }: ListParams<AssetCatalogueItemFragment>) => {
+      const result = await sdk.assetCatalogueItems({
+        key: itemParsers.toSortField(sortBy),
+        desc: sortBy.isDesc,
+        first: 1000, // otherwise the default of 100 is applied and we have 159 currently
+      });
+
+      const items = result?.assetCatalogueItems;
+
+      return items;
+    },
     categories: async (filter: AssetCategoryFilterInput | undefined) => {
       const result = await sdk.assetCategories({
         filter,
