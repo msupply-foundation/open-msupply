@@ -8,16 +8,6 @@ use show_contact_tracing::*;
 
 use crate::service_provider::ServiceContext;
 
-struct PreferenceRegistry {
-    pub show_contact_tracing: ShowContactTracing,
-}
-
-fn get_preference_registry() -> PreferenceRegistry {
-    PreferenceRegistry {
-        show_contact_tracing: ShowContactTracing,
-    }
-}
-
 pub struct Preferences {
     pub show_contact_tracing: bool,
 }
@@ -28,21 +18,16 @@ pub fn get_preferences(
 ) -> Result<Preferences, RepositoryError> {
     let connection = &ctx.connection;
 
-    let PreferenceRegistry {
-        show_contact_tracing,
-    } = get_preference_registry();
-
     let prefs = Preferences {
-        show_contact_tracing: show_contact_tracing.load(connection, store_id)?,
+        show_contact_tracing: ShowContactTracing.load(connection, store_id)?,
     };
 
     Ok(prefs)
 }
 
-pub fn get_preference_descriptions() -> Vec<Box<dyn PreferenceDescription>> {
-    let PreferenceRegistry {
-        show_contact_tracing,
-    } = get_preference_registry();
-
-    vec![Box::new(show_contact_tracing)]
+// TODO: Value = bool obviously won't work when we have non-bool preferences
+// Genericising involves boxing Value as Any, i.e. type loss, but I think we will move away
+// from this method in cooldown anyway, so just leaving like this for now
+pub fn get_preference_descriptions() -> Vec<Box<dyn Preference<Value = bool>>> {
+    vec![Box::new(ShowContactTracing)]
 }

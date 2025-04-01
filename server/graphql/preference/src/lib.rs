@@ -29,6 +29,7 @@ impl PreferenceQueries {
         let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
         let service = &service_provider.preference_service;
 
+        // TODO - pass `load`ing of prefs through to GQL layer, so only query for what is needed
         let prefs = service.get_preferences(&service_ctx, &store_id)?;
 
         Ok(PreferencesNode::from_domain(prefs))
