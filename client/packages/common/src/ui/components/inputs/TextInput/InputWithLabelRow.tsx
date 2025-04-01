@@ -8,7 +8,6 @@ export interface InputWithLabelRowProps {
   labelProps?: FormLabelProps;
   labelWidth?: string | null;
   sx?: SxProps<Theme>;
-  required?: boolean;
 }
 
 export const InputWithLabelRow: FC<InputWithLabelRowProps> = ({
