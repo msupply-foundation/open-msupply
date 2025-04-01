@@ -1,31 +1,15 @@
 query allPrefs {
   availablePreferences {
     key
-    globalOnly
     serialisedDefault
     jsonSchema
     uiSchema
   }
 }
 
-query prefsByKey($key: String!) {
-  centralServer {
-    preferences {
-      preferencesByKey(key: $key) {
-        global {
-          id
-          key
-          value
-        }
-
-        perStore {
-          id
-          key
-          value
-          storeId
-        }
-      }
-    }
+query preferences($storeId: String!) {
+  preferences(storeId: $storeId) {
+    showContactTracing
   }
 }
 

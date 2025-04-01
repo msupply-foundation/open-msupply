@@ -1,8 +1,6 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::{
-    PreferenceDescriptionNode, PreferenceNode, PreferencesByKeyNode, PreferencesNode,
-};
+use graphql_types::types::{PreferenceDescriptionNode, PreferenceNode, PreferencesNode};
 use service::auth::{Resource, ResourceAccessRequest};
 
 mod upsert;
@@ -35,6 +33,7 @@ impl PreferenceQueries {
         Ok(PreferencesNode::from_domain(prefs))
     }
 
+    // TODO: consider UI, maybe list of prefs not required?
     pub async fn available_preferences(
         &self,
         ctx: &Context<'_>,
@@ -56,32 +55,6 @@ impl PreferenceQueries {
             .into_iter()
             .map(|pref| PreferenceDescriptionNode { pref })
             .collect())
-    }
-}
-
-pub struct CentralPreferenceQueries;
-#[Object]
-impl CentralPreferenceQueries {
-    pub async fn preferences_by_key(
-        &self,
-        ctx: &Context<'_>,
-        key: String,
-    ) -> Result<PreferencesByKeyNode> {
-        validate_auth(
-            ctx,
-            &ResourceAccessRequest {
-                resource: Resource::MutatePreferences,
-                store_id: None,
-            },
-        )?;
-
-        let service_provider = ctx.service_provider();
-        let service_ctx = service_provider.basic_context()?;
-        let service = &service_provider.preference_service;
-
-        let result = service.get_preferences_by_key(&service_ctx, &key)?;
-
-        Ok(PreferencesByKeyNode { result })
     }
 }
 

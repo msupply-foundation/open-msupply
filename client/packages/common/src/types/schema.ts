@@ -1135,15 +1135,6 @@ export type CentralPluginQueriesUploadedPluginInfoArgs = {
   fileId: Scalars['String']['input'];
 };
 
-export type CentralPreferenceQueries = {
-  __typename: 'CentralPreferenceQueries';
-  preferencesByKey: PreferencesByKeyNode;
-};
-
-export type CentralPreferenceQueriesPreferencesByKeyArgs = {
-  key: Scalars['String']['input'];
-};
-
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   assetCatalogue: AssetCatalogueMutations;
@@ -1160,7 +1151,6 @@ export type CentralServerMutationNode = {
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
   plugin: CentralPluginQueries;
-  preferences: CentralPreferenceQueries;
 };
 
 export type CentralSyncRequired = AuthTokenErrorInterface & {
@@ -1262,12 +1252,6 @@ export type ColdStorageTypeSortInput = {
 };
 
 export type ColdStorageTypesResponse = ColdStorageTypeConnector;
-
-export type ComplexPrefNode = {
-  __typename: 'ComplexPrefNode';
-  somethingElse: Scalars['String']['output'];
-  somethingHere: Scalars['Int']['output'];
-};
 
 export type ConfigureNamePropertiesResponse = Success;
 
@@ -5880,7 +5864,6 @@ export type PluginInfoNode = {
 
 export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
-  globalOnly: Scalars['Boolean']['output'];
   jsonSchema: Scalars['JSON']['output'];
   key: Scalars['String']['output'];
   serialisedDefault: Scalars['String']['output'];
@@ -5906,16 +5889,8 @@ export type PreferenceNode = {
   value: Scalars['String']['output'];
 };
 
-export type PreferencesByKeyNode = {
-  __typename: 'PreferencesByKeyNode';
-  global?: Maybe<PreferenceNode>;
-  perStore: Array<PreferenceNode>;
-};
-
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
-  complexPref: ComplexPrefNode;
-  monthsOfStock: Scalars['Int']['output'];
   showContactTracing: Scalars['Boolean']['output'];
 };
 

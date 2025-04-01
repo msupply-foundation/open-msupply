@@ -7,15 +7,12 @@ export const EditField = ({
   config,
   onChange,
 }: {
-  value: string | undefined;
+  value: JsonData | undefined;
   config: PreferenceDescriptionNode;
   message?: string;
   onChange: (newVal: JsonData) => void;
 }) => {
-  const defaultValue = parse(config.serialisedDefault);
-  const initialValue = value ? parse(value) : defaultValue;
-
-  const [state, setState] = useState(initialValue);
+  const [state, setState] = useState(value);
 
   const updateData = (newData: JsonData) => {
     const newValue = (newData as { value: JsonData })?.value;
@@ -24,7 +21,9 @@ export const EditField = ({
       return;
     }
 
-    if (newValue !== initialValue && newValue !== state) {
+    if (newValue !== value) {
+      // TODO: value and onchange to come from same place so only one call
+      // (UI value updates immediately, but the API call is delayed)
       setState(newValue);
       onChange(newValue);
     }
@@ -44,12 +43,4 @@ export const EditField = ({
       </Box>
     </Box>
   );
-};
-
-const parse = (value: string) => {
-  try {
-    return JSON.parse(value);
-  } catch (e) {
-    return value;
-  }
 };

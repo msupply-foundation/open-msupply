@@ -3,10 +3,8 @@ use preferences::{get_preference_descriptions, get_preferences, Preference, Pref
 use repository::{PreferenceRow, RepositoryError};
 
 pub mod preferences;
-pub mod query;
 pub mod upsert;
 
-pub use query::*;
 pub use upsert::*;
 
 pub trait PreferenceServiceTrait: Sync + Send {
@@ -22,14 +20,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
 
     fn get_preference_descriptions(&self) -> Vec<Box<dyn Preference<Value = bool>>> {
         get_preference_descriptions()
-    }
-
-    fn get_preferences_by_key(
-        &self,
-        ctx: &ServiceContext,
-        key: &str,
-    ) -> Result<PreferencesByKeyResult, RepositoryError> {
-        get_preferences_by_key(ctx, key)
     }
 
     fn upsert(

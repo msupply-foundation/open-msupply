@@ -1,9 +1,6 @@
 use async_graphql::*;
 use repository::PreferenceRow;
-use service::preference::{
-    preferences::{Preference, Preferences},
-    PreferencesByKeyResult,
-};
+use service::preference::preferences::{Preference, Preferences};
 
 /// Defines the preferences object for a store
 pub struct PreferencesNode {
@@ -49,30 +46,7 @@ impl PreferenceDescriptionNode {
     }
 }
 
-/// Usually a store would access preferences via the PreferencesNode - this is for central access,
-/// to view preferences across all stores
-pub struct PreferencesByKeyNode {
-    pub result: PreferencesByKeyResult,
-}
-
-#[Object]
-impl PreferencesByKeyNode {
-    pub async fn global(&self) -> Option<PreferenceNode> {
-        self.result
-            .global
-            .clone()
-            .map(|preference| PreferenceNode { preference })
-    }
-
-    pub async fn per_store(&self) -> Vec<PreferenceNode> {
-        self.result
-            .per_store
-            .clone()
-            .into_iter()
-            .map(|preference| PreferenceNode { preference })
-            .collect()
-    }
-}
+// TODO, also not used?
 pub struct PreferenceNode {
     pub preference: PreferenceRow,
 }
