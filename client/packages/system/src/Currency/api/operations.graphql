@@ -5,14 +5,8 @@ fragment CurrencyRow on CurrencyNode {
   isHomeCurrency
 }
 
-query currencies(
-  $sort: [CurrencySortInput!]
-  $filter: CurrencyFilterInput
-) {
-  currencies(
-    filter: $filter
-    sort: $sort
-  ) {
+query currencies($sort: [CurrencySortInput!], $filter: CurrencyFilterInput) {
+  currencies(filter: $filter, sort: $sort) {
     ... on CurrencyConnector {
       nodes {
         ...CurrencyRow

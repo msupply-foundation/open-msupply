@@ -1,7 +1,6 @@
 import React, { FC, useEffect } from 'react';
 import {
   useNavigate,
-  StocktakeNodeStatus,
   DataTable,
   useColumns,
   TableProvider,
@@ -13,6 +12,7 @@ import {
   useUrlQueryParams,
   ColumnFormat,
   GenericColumnKey,
+  getCommentPopoverColumn,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -53,13 +53,16 @@ export const StocktakeListView: FC = () => {
       [
         'status',
         {
-          formatter: status => statusTranslator(status as StocktakeNodeStatus),
+          accessor: ({ rowData }) =>
+            rowData.isLocked
+              ? t('label.stocktake-on-hold')
+              : statusTranslator(rowData.status),
         },
       ],
       ['description', { sortable: false }],
       ['createdDatetime', { format: ColumnFormat.Date }],
       ['stocktakeDate', { sortable: false }],
-      ['comment', { sortable: false }],
+      getCommentPopoverColumn(),
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]

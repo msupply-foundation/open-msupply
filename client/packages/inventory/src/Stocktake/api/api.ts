@@ -51,6 +51,8 @@ const stocktakeParser = {
       patch.status === StocktakeNodeStatus.Finalised
         ? UpdateStocktakeStatusInput.Finalised
         : undefined,
+    countedBy: patch.countedBy,
+    verifiedBy: patch.verifiedBy,
   }),
   line: {
     toDelete: (line: DraftStocktakeLine): DeleteStocktakeLineInput => ({

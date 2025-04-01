@@ -74,12 +74,7 @@ export const DetailView: FC = () => {
   };
   const tabs = [
     {
-      Component: (
-        <ContentArea
-          onRowClick={!isDisabled ? onRowClick : null}
-          onAddItem={onAddItem}
-        />
-      ),
+      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
       value: 'Details',
     },
     {

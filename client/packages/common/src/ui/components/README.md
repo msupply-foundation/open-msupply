@@ -18,4 +18,3 @@ All components here should be some widget which is generic enough to extend or c
   - Forwarding refs
 
 ### Future considerations
-

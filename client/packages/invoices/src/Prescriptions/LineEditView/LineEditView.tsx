@@ -56,11 +56,11 @@ export const PrescriptionLineEditView = () => {
     Record<string, DraftPrescriptionLine[]>
   >({});
 
-  let currentItem = lines.find(line => line.item.id === itemId)?.item;
+  const currentItem = lines.find(line => line.item.id === itemId)?.item;
 
-  let items = useMemo(() => {
-    let itemSet = new Set();
-    let items: ItemRowFragment[] = [];
+  const items = useMemo(() => {
+    const itemSet = new Set();
+    const items: ItemRowFragment[] = [];
     lines.forEach(line => {
       if (!itemSet.has(line.item.id)) {
         items.push(line.item);
@@ -86,15 +86,18 @@ export const PrescriptionLineEditView = () => {
     // Need a custom checking method here, as we don't want to warn user when
     // switching to a different item within this page
     {
-      customCheck: (current, next) => {
-        if (!isDirty.current) return false;
+      customCheck: {
+        navigate: (current, next) => {
+          if (!isDirty.current) return false;
 
-        const currentPathParts = current.pathname.split('/');
-        const nextPathParts = next.pathname.split('/');
-        // Compare URLS, but don't include the last part, which is the ItemID
-        currentPathParts.pop();
-        nextPathParts.pop();
-        return !isEqual(currentPathParts, nextPathParts);
+          const currentPathParts = current.pathname.split('/');
+          const nextPathParts = next.pathname.split('/');
+          // Compare URLS, but don't include the last part, which is the ItemID
+          currentPathParts.pop();
+          nextPathParts.pop();
+          return !isEqual(currentPathParts, nextPathParts);
+        },
+        refresh: () => isDirty.current,
       },
     }
   );
@@ -143,7 +146,8 @@ export const PrescriptionLineEditView = () => {
           .addPart(AppRoute.Prescription)
           .addPart(invoiceId)
           .addPart(itemId)
-          .build()
+          .build(),
+        { replace: true }
       );
     }
     isDirty.current = false;
