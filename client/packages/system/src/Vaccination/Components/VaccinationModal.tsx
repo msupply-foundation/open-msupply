@@ -284,7 +284,6 @@ const VaccinationForm = ({
         <>
           <InputWithLabelRow
             label={t('label.reason')}
-            required={true}
             Input={
               <>
                 <Select
