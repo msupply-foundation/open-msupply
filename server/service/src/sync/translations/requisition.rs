@@ -267,8 +267,8 @@ impl SyncTranslation for RequisitionTranslation {
             ),
             None => (
                 date_and_time_to_datetime(data.date_entered, 0),
-                from_legacy_finalised_datetime(data.last_modified_at, &r#type),
                 from_legacy_sent_datetime(data.last_modified_at, &r#type, &data.status),
+                from_legacy_finalised_datetime(data.last_modified_at, &r#type, &data.status),
                 data.daysToSupply as f64 / APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30,
                 from_legacy_status(&data.r#type, &data.status).ok_or(anyhow::Error::msg(
                     format!("Unsupported requisition status: {:?}", data.status),
@@ -456,11 +456,12 @@ fn from_legacy_sent_datetime(
 fn from_legacy_finalised_datetime(
     last_modified_at: i64,
     r#type: &RequisitionType,
+    status: &LegacyRequisitionStatus,
 ) -> Option<NaiveDateTime> {
     match r#type {
         RequisitionType::Request => None,
         RequisitionType::Response => {
-            if last_modified_at > 0 {
+            if last_modified_at > 0 && matches!(status, LegacyRequisitionStatus::Fn) {
                 Some(
                     DateTime::from_timestamp(last_modified_at, 0)
                         .unwrap()
