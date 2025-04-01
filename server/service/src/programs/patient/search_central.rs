@@ -140,19 +140,20 @@ async fn link_patient_to_store_v6(
         store_id,
     }: &NameStoreJoin,
 ) -> Result<(), CentralPatientRequestError> {
-    let client = ClientBuilder::new()
-        .build()
-        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
-
     let om_central_url = match CentralServerConfig::get() {
         CentralServerConfig::NotConfigured => {
             return Err(CentralPatientRequestError::InternalError(
                 "Open mSupply Central Server not configured".to_string(),
             ))
         }
-        CentralServerConfig::IsCentralServer => None,
+        // Don't need to push to central if we are central :)
+        CentralServerConfig::IsCentralServer => return Ok(()),
         CentralServerConfig::CentralServerUrl(url) => Some(url),
     };
+
+    let client = ClientBuilder::new()
+        .build()
+        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
 
     if let Some(url) = om_central_url {
         let server_url = Url::parse(&url).map_err(|_| {
