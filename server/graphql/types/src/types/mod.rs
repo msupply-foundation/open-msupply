@@ -126,7 +126,6 @@ pub use self::cold_storage_type::*;
 
 pub mod abbreviation;
 pub use self::abbreviation::*;
-mod requisition_item_information;
 
 pub mod printer;
 pub use self::printer::*;

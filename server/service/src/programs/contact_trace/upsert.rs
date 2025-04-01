@@ -24,7 +24,7 @@ pub enum UpsertContactTraceError {
     /// Invalid document parent id
     InvalidParentId,
     InvalidDataSchema(String),
-    DocumentTypeDoesNotExit,
+    DocumentTypeDoesNotExist,
     DataSchemaDoesNotExist,
 
     InternalError(String),
@@ -210,7 +210,7 @@ fn validate(
 
     let document_registry = match validate_document_type(ctx, &input.r#type)? {
         Some(document_registry) => document_registry,
-        None => return Err(UpsertContactTraceError::DocumentTypeDoesNotExit),
+        None => return Err(UpsertContactTraceError::DocumentTypeDoesNotExist),
     };
 
     let program_row = match validate_program(ctx, &document_registry.context_id)? {

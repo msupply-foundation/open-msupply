@@ -1,7 +1,6 @@
 import React, { FC, useEffect } from 'react';
 import {
   useNavigate,
-  StocktakeNodeStatus,
   DataTable,
   useColumns,
   TableProvider,
@@ -54,7 +53,10 @@ export const StocktakeListView: FC = () => {
       [
         'status',
         {
-          formatter: status => statusTranslator(status as StocktakeNodeStatus),
+          accessor: ({ rowData }) =>
+            rowData.isLocked
+              ? t('label.stocktake-on-hold')
+              : statusTranslator(rowData.status),
         },
       ],
       ['description', { sortable: false }],
