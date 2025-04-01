@@ -1,3 +1,4 @@
+use log::info;
 use repository::{NameStoreJoinRepository, NameStoreJoinRow, RepositoryError};
 use reqwest::{ClientBuilder, StatusCode};
 use serde::{Deserialize, Serialize};
@@ -63,15 +64,20 @@ pub async fn patient_name_store_join(
     // TODO: maybe should prevent this from creating a changelog? Let the OG one be source of truth?
     name_store_join_repo.upsert_one(&NameStoreJoinRow {
         id,
-        store_id,
+        store_id: store_id.clone(),
         // I think ideally would do a lookup and see if we have a name_link_id,
         // but should do the same as in sync translation
-        name_link_id: name_id,
+        name_link_id: name_id.clone(),
 
         // This is only used for adding patient visibility, so ok to set these here
         name_is_customer: true,
         name_is_supplier: false,
     })?;
+
+    info!(
+        "Created name_store_join for patient {} and store {}",
+        name_id, store_id
+    );
 
     Ok(())
 }
