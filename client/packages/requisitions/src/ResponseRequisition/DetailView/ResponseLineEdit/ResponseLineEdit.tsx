@@ -47,6 +47,7 @@ interface ResponseLineEditProps {
   requisitionId: string;
   insert: (patch: InsertResponseRequisitionLineInput) => void;
   scrollIntoView: () => void;
+  disabled?: boolean;
 }
 
 export const ResponseLineEdit = ({
@@ -65,6 +66,7 @@ export const ResponseLineEdit = ({
   requisitionId,
   insert,
   scrollIntoView,
+  disabled: isFinalised,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
@@ -140,7 +142,7 @@ export const ResponseLineEdit = ({
                         update({ availableStockOnHand: value })
                       }
                       onBlur={save}
-                      disabled={!!hasLinkedRequisition}
+                      disabled={!!hasLinkedRequisition || isFinalised}
                       autoFocus
                     />
                   }
@@ -158,7 +160,7 @@ export const ResponseLineEdit = ({
                         update({ initialStockOnHandUnits: value })
                       }
                       onBlur={save}
-                      disabled={!!hasLinkedRequisition}
+                      disabled={!!hasLinkedRequisition || isFinalised}
                       autoFocus
                     />
                   }
@@ -176,6 +178,7 @@ export const ResponseLineEdit = ({
                         value={draft?.incomingUnits}
                         onChange={value => update({ incomingUnits: value })}
                         onBlur={save}
+                        disabled={isFinalised}
                       />
                     }
                     labelWidth={LABEL_WIDTH}
@@ -189,6 +192,7 @@ export const ResponseLineEdit = ({
                         value={draft?.outgoingUnits}
                         onChange={value => update({ outgoingUnits: value })}
                         onBlur={save}
+                        disabled={isFinalised}
                       />
                     }
                     labelWidth={LABEL_WIDTH}
@@ -202,6 +206,7 @@ export const ResponseLineEdit = ({
                         value={draft?.lossInUnits}
                         onChange={value => update({ lossInUnits: value })}
                         onBlur={save}
+                        disabled={isFinalised}
                       />
                     }
                     labelWidth={LABEL_WIDTH}
@@ -215,6 +220,7 @@ export const ResponseLineEdit = ({
                         value={draft?.additionInUnits}
                         onChange={value => update({ additionInUnits: value })}
                         onBlur={save}
+                        disabled={isFinalised}
                       />
                     }
                     labelWidth={LABEL_WIDTH}
@@ -228,6 +234,7 @@ export const ResponseLineEdit = ({
                         value={draft?.expiringUnits}
                         onChange={value => update({ expiringUnits: value })}
                         onBlur={save}
+                        disabled={isFinalised}
                       />
                     }
                     labelWidth={LABEL_WIDTH}
@@ -241,6 +248,7 @@ export const ResponseLineEdit = ({
                         value={draft?.daysOutOfStock}
                         onChange={value => update({ daysOutOfStock: value })}
                         onBlur={save}
+                        disabled={isFinalised}
                       />
                     }
                     labelWidth={LABEL_WIDTH}
@@ -262,7 +270,7 @@ export const ResponseLineEdit = ({
                     }
                     decimalLimit={2}
                     onBlur={save}
-                    disabled={!!hasLinkedRequisition}
+                    disabled={!!hasLinkedRequisition || isFinalised}
                   />
                 }
                 labelWidth={LABEL_WIDTH}
@@ -299,7 +307,7 @@ export const ResponseLineEdit = ({
                           update({ requestedQuantity: value });
                         }
                       }}
-                      disabled={!!hasLinkedRequisition}
+                      disabled={!!hasLinkedRequisition || isFinalised}
                       onBlur={save}
                     />
                   }
@@ -364,6 +372,7 @@ export const ResponseLineEdit = ({
                       <NumericTextInput
                         width={INPUT_WIDTH}
                         value={draft?.approvedQuantity}
+                        disabled={isFinalised}
                       />
                     }
                     labelWidth={LABEL_WIDTH}
@@ -434,6 +443,7 @@ export const ResponseLineEdit = ({
                       value={draft?.supplyQuantity}
                       onChange={value => update({ supplyQuantity: value })}
                       onBlur={save}
+                      disabled={isFinalised}
                     />
                   }
                   labelWidth={LABEL_WIDTH}
@@ -495,7 +505,8 @@ export const ResponseLineEdit = ({
                       type={ReasonOptionNodeType.RequisitionLineVariance}
                       isDisabled={
                         draft?.requestedQuantity === draft?.suggestedQuantity ||
-                        !!hasLinkedRequisition
+                        !!hasLinkedRequisition ||
+                        isFinalised
                       }
                       onBlur={save}
                     />
@@ -519,6 +530,7 @@ export const ResponseLineEdit = ({
                       },
                     }}
                     onBlur={save}
+                    disabled={isFinalised}
                   />
                 }
                 sx={{ width: 275 }}

@@ -17,8 +17,8 @@ export const StocktakeLockButton: FC = () => {
   ]);
 
   const message = isLocked
-    ? 'messages.unlocked-description'
-    : 'messages.locked-description';
+    ? 'messages.not-on-hold-description'
+    : 'messages.on-hold-description';
 
   const getConfirmation = useConfirmationModal({
     onConfirm: () => update({ isLocked: !isLocked }),

@@ -9,18 +9,14 @@ use service::{item_stats::ItemStats, usize_to_u32};
 use graphql_core::{
     loader::{
         InvoiceLineForRequisitionLine, ItemLoader, ItemStatsLoaderInput, ItemsStatsForItemLoader,
-        LinkedRequisitionLineLoader, ProgramByIdLoader, ReasonOptionLoader, RequisitionAndItemId,
-        RequisitionItemInfoLoader, RequisitionItemInfoLoaderInput,
+        LinkedRequisitionLineLoader, ReasonOptionLoader, RequisitionAndItemId,
         RequisitionLineSupplyStatusLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 
-use super::{
-    requisition_item_information::RequisitionItemInformationNode, InvoiceLineConnector, ItemNode,
-    ItemStatsNode, ReasonOptionNode,
-};
+use super::{InvoiceLineConnector, ItemNode, ItemStatsNode, ReasonOptionNode};
 
 #[derive(PartialEq, Debug)]
 pub struct RequisitionLineNode {
@@ -290,44 +286,6 @@ impl RequisitionLineNode {
 
     pub async fn requisition_number(&self) -> &i64 {
         &self.requisition_row().requisition_number
-    }
-
-    pub async fn item_information(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Option<Vec<RequisitionItemInformationNode>>> {
-        let (program_id, period_id) = match (
-            &self.requisition_row().program_id,
-            &self.requisition_row().period_id,
-        ) {
-            (Some(program_id), Some(period_id)) => (program_id, period_id),
-            _ => return Ok(None),
-        };
-
-        let program_loader = ctx.get_loader::<DataLoader<ProgramByIdLoader>>();
-        let program = match program_loader.load_one(program_id.clone()).await? {
-            Some(program) => program,
-            None => {
-                return Err(
-                    StandardGraphqlError::InternalError("Program not found".to_string()).extend(),
-                )
-            }
-        };
-
-        let loader = ctx.get_loader::<DataLoader<RequisitionItemInfoLoader>>();
-        let result = loader
-            .load_one(RequisitionItemInfoLoaderInput::new(
-                &self.requisition_row().store_id,
-                &self.item_row().id,
-                (
-                    program_id.clone(),
-                    program.elmis_code.clone(),
-                    period_id.clone(),
-                ),
-            ))
-            .await?;
-
-        Ok(result.map(RequisitionItemInformationNode::from_vec))
     }
 }
 
