@@ -129,6 +129,15 @@ const StockListComponent: FC = () => {
         width: 125,
       },
     ],
+    [
+      'availableStockOnHand',
+      {
+        accessor: ({ rowData }) =>
+          rowData.availableNumberOfPacks * rowData.packSize,
+        sortable: false,
+        width: 125,
+      },
+    ],
     {
       key: 'costPricePerPack',
       label: 'label.pack-cost-price',
