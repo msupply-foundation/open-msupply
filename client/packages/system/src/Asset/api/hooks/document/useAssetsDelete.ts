@@ -6,14 +6,14 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useAssetApi } from '../utils/useAssetApi';
-import { useAssets } from './useAssets';
 import { AssetCatalogueItemFragment } from '../../operations.generated';
+import { useAssetList } from '../useAssetList';
 
 export const useAssetsDelete = () => {
   const t = useTranslation();
   const queryClient = useQueryClient();
   const api = useAssetApi();
-  const { data: rows } = useAssets();
+  const { data: rows } = useAssetList();
   const { mutateAsync } = useMutation(async (id: string) => api.delete(id));
 
   const { selectedRows } = useTableStore(state => ({

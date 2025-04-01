@@ -1,1 +1,1 @@
-export const ACTIVITY_LOG = 'activityLog';
+export const ACTIVITY_LOG = 'activity_log';
