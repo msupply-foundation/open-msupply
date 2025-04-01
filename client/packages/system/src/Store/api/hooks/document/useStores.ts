@@ -8,7 +8,7 @@ import { useStoreApi } from '../utils/useStoreApi';
 
 export const useStores = () => {
   const api = useStoreApi();
-  const { filter } = useQueryParamsStore();
+  const { filter = { filterBy: null } } = useQueryParamsStore();
   const { filterBy } = filter;
 
   return useQuery(api.keys.paramList(filterBy), async () =>

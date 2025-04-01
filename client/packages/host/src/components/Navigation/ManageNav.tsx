@@ -49,6 +49,13 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
               .build()}
             text={t('indicators-demographics')}
           />
+          <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.Preferences)
+              .build()}
+            text={t('preferences')}
+          />
         </List>
       </Collapse>
     </AppNavSection>
