@@ -436,7 +436,7 @@ export const prescriptionToCsv = (
   const data = invoices.map(node => [
     node.id,
     node.otherPartyName,
-    node.status,
+    t(getStatusTranslation(node.status)),
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
     node.comment,

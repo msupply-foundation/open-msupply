@@ -14,6 +14,8 @@ impl MigrationFragment for Migrate {
             r#"
             DELETE FROM backend_plugin;
             DELETE FROM frontend_plugin;
+            DELETE FROM changelog WHERE table_name = 'backend_plugin';
+            DELETE FROM changelog WHERE table_name = 'frontend_plugin';
             "#,
         )?;
 

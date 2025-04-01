@@ -3,5 +3,5 @@ export * from './operations.generated';
 export {
   RequestLineFragment,
   ItemWithStatsFragment,
-  ItemInformationFragment,
+  RequestFragment,
 } from '@openmsupply-client/system';

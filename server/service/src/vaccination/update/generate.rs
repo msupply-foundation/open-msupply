@@ -130,6 +130,7 @@ pub fn generate(
         encounter_id,
         vaccine_course_dose_id,
         user_id,
+        patient_link_id,
         created_datetime,
 
         vaccination_date,
@@ -149,6 +150,7 @@ pub fn generate(
         id,
         store_id,
         program_enrolment_id,
+        patient_link_id,
         user_id,
         created_datetime,
         encounter_id,
