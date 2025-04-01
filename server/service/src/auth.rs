@@ -567,7 +567,10 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     map.insert(
         Resource::MutateAsset,
-        PermissionDSL::HasPermission(PermissionType::AssetMutate),
+        PermissionDSL::Any(vec![
+            PermissionDSL::HasPermission(PermissionType::AssetMutate),
+            PermissionDSL::HasPermission(PermissionType::AssetMutateViaDataMatrix),
+        ]),
     );
     map.insert(
         Resource::MutateAssetCatalogueItem,
