@@ -4,5 +4,6 @@ export {
   AssetPropertyFragment,
   useAssetData,
   useAssetList,
+  useInfiniteAssets,
 } from './api';
 export { mapIdNameToOptions } from './utils';
