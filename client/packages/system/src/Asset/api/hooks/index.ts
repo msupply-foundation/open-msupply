@@ -13,8 +13,6 @@ export const useAssetData = {
   },
 
   document: {
-    get: Document.useAsset,
-
     delete: Document.useAssetsDelete,
   },
 
