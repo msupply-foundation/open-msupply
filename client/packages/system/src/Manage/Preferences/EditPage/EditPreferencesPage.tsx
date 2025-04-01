@@ -26,6 +26,7 @@ export const EditPreferencesPage = () => {
   const selectedPref = data?.find(d => key === d.key);
 
   return (
+    // TODO: Consider alternative UI - more explicit than JSON forms?
     <LineEditBase currentKey={key ?? ''} prefs={data ?? []}>
       {selectedPref && (
         <EditPreference key={selectedPref.key} selected={selectedPref} />
