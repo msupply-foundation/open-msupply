@@ -4160,6 +4160,7 @@ export type ItemLedgerNode = {
   datetime: Scalars['DateTime']['output'];
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  invoiceId: Scalars['String']['output'];
   invoiceNumber: Scalars['Int']['output'];
   invoiceStatus: InvoiceNodeStatus;
   invoiceType: InvoiceNodeType;
@@ -7346,6 +7347,7 @@ export type RequisitionLineNode = {
   remainingQuantityToSupply: Scalars['Float']['output'];
   /** Quantity requested */
   requestedQuantity: Scalars['Float']['output'];
+  requisitionId: Scalars['String']['output'];
   requisitionNumber: Scalars['Int']['output'];
   /**
    * Calculated quantity
