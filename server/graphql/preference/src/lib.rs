@@ -70,6 +70,7 @@ impl PreferenceMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
+        // TODO: upsert should have defined input types for each pref
         input: UpsertPreferenceInput,
     ) -> Result<PreferenceNode> {
         upsert_preference(ctx, store_id, input)
