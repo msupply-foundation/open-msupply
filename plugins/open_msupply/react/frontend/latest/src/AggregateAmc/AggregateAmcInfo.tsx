@@ -16,7 +16,7 @@ import { name as pluginCode } from '../../package.json';
 import React from 'react';
 
 type RequestLineEditInfo = ArrayElement<
-  NonNullable<Plugins['requestRequisitionLine']>['editViewField']
+  NonNullable<Plugins['requestRequisitionLine']>['editViewInfo']
 >;
 
 type Stat = ArrayElement<
@@ -64,7 +64,7 @@ const ItemInformation: RequestLineEditInfo = ({ line }) => {
   );
 };
 
-const ItemInformationView: RequestLineEditInfo = ({ line }) => (
+const ItemInformationView: RequestLineEditInfo = props => (
   <Box
     width="100%"
     borderRadius={3}
@@ -75,13 +75,13 @@ const ItemInformationView: RequestLineEditInfo = ({ line }) => (
     }}
   >
     <TableProvider createStore={createTableStore}>
-      <ItemInformation line={line} />
+      <ItemInformation {...props} />
     </TableProvider>
   </Box>
 );
 
-export const Info: RequestLineEditInfo = ({ line }) => (
+export const Info: RequestLineEditInfo = ({ ...props }) => (
   <QueryClientProviderProxy>
-    <ItemInformationView line={line} />
+    <ItemInformationView {...props} />
   </QueryClientProviderProxy>
 );
