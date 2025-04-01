@@ -4160,7 +4160,6 @@ export type ItemLedgerNode = {
   datetime: Scalars['DateTime']['output'];
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
-  invoiceId: Scalars['String']['output'];
   invoiceNumber: Scalars['Int']['output'];
   invoiceStatus: InvoiceNodeStatus;
   invoiceType: InvoiceNodeType;
@@ -6296,6 +6295,7 @@ export type Queries = {
   patients: PatientResponse;
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
+  pluginGraphqlQuery: Scalars['JSON']['output'];
   preferences: PreferencesNode;
   printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
@@ -6743,6 +6743,12 @@ export type QueriesPluginDataArgs = {
   filter?: InputMaybe<PluginDataFilterInput>;
   pluginCode: Scalars['String']['input'];
   sort?: InputMaybe<Array<PluginDataSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPluginGraphqlQueryArgs = {
+  input: Scalars['JSON']['input'];
+  pluginCode: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -7281,21 +7287,6 @@ export type RequisitionIndicatorInformationNode = {
   value: Scalars['String']['output'];
 };
 
-export type RequisitionItemInformationNode = {
-  __typename: 'RequisitionItemInformationNode';
-  adjustmentsInUnits: Scalars['Float']['output'];
-  amcInUnits: Scalars['Float']['output'];
-  dateRange?: Maybe<Scalars['DateTime']['output']>;
-  id: Scalars['String']['output'];
-  name: NameNode;
-  outgoingUnits: Scalars['Float']['output'];
-  stockInUnits: Scalars['Float']['output'];
-};
-
-export type RequisitionItemInformationNodeNameArgs = {
-  storeId: Scalars['String']['input'];
-};
-
 export type RequisitionLineChartError = {
   __typename: 'RequisitionLineChartError';
   error: RequisitionLineChartErrorInterface;
@@ -7334,7 +7325,6 @@ export type RequisitionLineNode = {
   initialStockOnHandUnits: Scalars['Float']['output'];
   item: ItemNode;
   itemId: Scalars['String']['output'];
-  itemInformation?: Maybe<Array<RequisitionItemInformationNode>>;
   itemName: Scalars['String']['output'];
   /**
    * For request requisition: snapshot stats (when requisition was created)
@@ -7356,7 +7346,6 @@ export type RequisitionLineNode = {
   remainingQuantityToSupply: Scalars['Float']['output'];
   /** Quantity requested */
   requestedQuantity: Scalars['Float']['output'];
-  requisitionId: Scalars['String']['output'];
   requisitionNumber: Scalars['Int']['output'];
   /**
    * Calculated quantity
