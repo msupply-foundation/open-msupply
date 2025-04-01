@@ -97,10 +97,7 @@ const outboundParsers = {
         : undefined,
     currencyId: 'currency' in patch ? patch.currency?.id : undefined,
     currencyRate: 'currency' in patch ? patch.currency?.rate : undefined,
-    expectedDeliveryDatetime: setNullableInput(
-      'expectedDeliveryDatetime',
-      patch
-    ),
+    expectedDeliveryDate: setNullableInput('expectedDeliveryDate', patch),
   }),
   toUpdateName: (
     patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>

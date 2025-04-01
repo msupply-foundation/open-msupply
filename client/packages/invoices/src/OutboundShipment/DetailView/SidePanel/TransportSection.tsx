@@ -16,11 +16,8 @@ import { useOutbound } from '../../api';
 export const TransportSectionComponent: FC = () => {
   const t = useTranslation();
   const isDisabled = useOutbound.utils.isDisabled();
-  const { transportReference, expectedDeliveryDatetime, update } =
-    useOutbound.document.fields([
-      'transportReference',
-      'expectedDeliveryDatetime',
-    ]);
+  const { transportReference, expectedDeliveryDate, update } =
+    useOutbound.document.fields(['transportReference', 'expectedDeliveryDate']);
   const [referenceBuffer, setReferenceBuffer] = useBufferState(
     transportReference ?? ''
   );
@@ -32,15 +29,15 @@ export const TransportSectionComponent: FC = () => {
           <PanelLabel>{t('label.expected-delivery-date')}</PanelLabel>
           <DateTimePickerInput
             disabled={isDisabled}
-            value={DateUtils.getDateOrNull(expectedDeliveryDatetime)}
+            value={DateUtils.getDateOrNull(expectedDeliveryDate)}
             format="P"
-            onChange={expectedDeliveryDatetime => {
-              const formattedDate = expectedDeliveryDatetime
-                ? Formatter.toIsoString(
-                    DateUtils.endOfDayOrNull(expectedDeliveryDatetime)
-                  )?.replace(/Z$/, '')
+            onChange={expectedDeliveryDate => {
+              const formattedDate = expectedDeliveryDate
+                ? Formatter.naiveDate(expectedDeliveryDate)
                 : null;
-              update({ expectedDeliveryDatetime: formattedDate });
+              update({
+                expectedDeliveryDate: formattedDate,
+              });
             }}
             sx={{
               flex: 2,
@@ -53,7 +50,7 @@ export const TransportSectionComponent: FC = () => {
                 },
               },
             }}
-            actions={['cancel', 'accept']}
+            actions={['cancel', 'accept', 'clear']}
           />
         </PanelRow>
         <PanelRow>

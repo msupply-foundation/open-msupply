@@ -3956,7 +3956,7 @@ export type InvoiceNode = {
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   diagnosis?: Maybe<DiagnosisNode>;
   diagnosisId?: Maybe<Scalars['String']['output']>;
-  expectedDeliveryDatetime?: Maybe<Scalars['DateTime']['output']>;
+  expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   insuranceDiscountAmount?: Maybe<Scalars['Float']['output']>;
   insuranceDiscountPercentage?: Maybe<Scalars['Float']['output']>;
@@ -5552,21 +5552,6 @@ export type NothingRemainingToSupply =
  */
 export type NullableDateUpdate = {
   value?: InputMaybe<Scalars['NaiveDate']['input']>;
-};
-
-/**
- * Update a nullable value
- *
- * This struct is usually used as an optional value.
- * For example, in an API update input object like `mutableValue:  NullableUpdate | null | undefined`.
- * This is done to encode the following cases (using `mutableValue` from previous example):
- * 1) if `mutableValue` is `null | undefined`, nothing is updated
- * 2) if `mutableValue` object is set:
- * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
- * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
- */
-export type NullableDatetimeUpdate = {
-  value?: InputMaybe<Scalars['NaiveDateTime']['input']>;
 };
 
 /**
@@ -8836,7 +8821,7 @@ export type UpdateOutboundShipmentInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
   currencyRate?: InputMaybe<Scalars['Float']['input']>;
-  expectedDeliveryDatetime?: InputMaybe<NullableDatetimeUpdate>;
+  expectedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   /** The new invoice id provided by the client */
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
