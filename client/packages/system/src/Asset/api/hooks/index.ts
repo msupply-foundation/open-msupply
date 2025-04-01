@@ -1,5 +1,4 @@
 import { Utils } from './utils';
-import { Document } from './document';
 import { Log } from './log';
 export * from './useAssetList';
 export * from './useAsset';
@@ -10,10 +9,6 @@ export const useAssetData = {
     categories: Utils.useAssetCategories,
     types: Utils.useAssetTypes,
     properties: Utils.useAssetProperties,
-  },
-
-  document: {
-    delete: Document.useAssetsDelete,
   },
 
   log: {
