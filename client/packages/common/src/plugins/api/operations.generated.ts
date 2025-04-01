@@ -16,12 +16,36 @@ export type FrontendPluginMetadataQuery = {
   }>;
 };
 
+export type PluginGraphqlQueryQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.Scalars['JSON']['input'];
+  pluginCode: Types.Scalars['String']['input'];
+}>;
+
+export type PluginGraphqlQueryQuery = {
+  __typename: 'Queries';
+  pluginGraphqlQuery: any;
+};
+
 export const FrontendPluginMetadataDocument = gql`
   query frontendPluginMetadata {
     frontendPluginMetadata {
       code
       path
     }
+  }
+`;
+export const PluginGraphqlQueryDocument = gql`
+  query pluginGraphqlQuery(
+    $storeId: String!
+    $input: JSON!
+    $pluginCode: String!
+  ) {
+    pluginGraphqlQuery(
+      input: $input
+      pluginCode: $pluginCode
+      storeId: $storeId
+    )
   }
 `;
 
@@ -56,6 +80,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'frontendPluginMetadata',
+        'query',
+        variables
+      );
+    },
+    pluginGraphqlQuery(
+      variables: PluginGraphqlQueryQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<PluginGraphqlQueryQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PluginGraphqlQueryQuery>(
+            PluginGraphqlQueryDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'pluginGraphqlQuery',
         'query',
         variables
       );

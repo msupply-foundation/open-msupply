@@ -6,11 +6,8 @@ const NameService = React.lazy(
   () => import('@openmsupply-client/system/src/Name/Service')
 );
 
-const IndicatorsDemographicsService = React.lazy(
-  () =>
-    import(
-      '@openmsupply-client/system/src/IndicatorsDemographics/Service/Service'
-    )
+const ManageService = React.lazy(
+  () => import('@openmsupply-client/system/src/Manage/Service')
 );
 
 const fullFacilitiesPath = RouteBuilder.create(AppRoute.Manage)
@@ -18,21 +15,20 @@ const fullFacilitiesPath = RouteBuilder.create(AppRoute.Manage)
   .addWildCard()
   .build();
 
-const fullIndicatorsDemographicsPath = RouteBuilder.create(AppRoute.Manage)
-  .addPart(AppRoute.IndicatorsDemographics)
+const fullManagePath = RouteBuilder.create(AppRoute.Manage)
   .addWildCard()
   .build();
 
 export const ManageRouter: FC = () => {
   const gotoFacilities = useMatch(fullFacilitiesPath);
-  const gotoIndicatorsDemographics = useMatch(fullIndicatorsDemographicsPath);
+  const goToManage = useMatch(fullManagePath);
 
   if (gotoFacilities) {
     return <NameService />;
   }
 
-  if (gotoIndicatorsDemographics) {
-    return <IndicatorsDemographicsService />;
+  if (goToManage) {
+    return <ManageService />;
   }
   const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();
   return <Navigate to={notFoundRoute} />;

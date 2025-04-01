@@ -4,6 +4,8 @@ use crate::StorageConnection;
 mod add_linked_invoice_id_to_invoice_line;
 mod add_patient_link_id_to_vaccination;
 mod add_preference_table;
+mod asset_data_matrix_locked_fields;
+mod asset_data_matrix_permission;
 mod new_stocktake_fields;
 
 pub(crate) struct V2_07_00;
@@ -22,6 +24,8 @@ impl Migration for V2_07_00 {
             Box::new(add_preference_table::Migrate),
             Box::new(add_linked_invoice_id_to_invoice_line::Migrate),
             Box::new(new_stocktake_fields::Migrate),
+            Box::new(asset_data_matrix_permission::Migrate),
+            Box::new(asset_data_matrix_locked_fields::Migrate),
             Box::new(add_patient_link_id_to_vaccination::Migrate),
         ]
     }

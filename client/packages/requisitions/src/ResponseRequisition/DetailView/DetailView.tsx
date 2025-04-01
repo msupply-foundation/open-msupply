@@ -78,7 +78,7 @@ export const DetailView: FC = () => {
       Component: (
         <ContentArea
           onAddItem={onAddItem}
-          onRowClick={!isDisabled ? onRowClick : null}
+          onRowClick={onRowClick}
           disableAddLine={
             isDisabled || !!data?.linkedRequisition || !!data?.programName
           }

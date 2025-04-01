@@ -54,6 +54,7 @@ pub enum UserPermission {
     DocumentMutate,
     ColdChainApi,
     AssetMutate,
+    AssetMutateViaDataMatrix,
     AssetQuery,
     AssetCatalogueItemMutate,
     NamePropertiesMutate,
@@ -144,6 +145,7 @@ impl UserPermission {
 
             PermissionType::ColdChainApi => UserPermission::ColdChainApi,
             PermissionType::AssetMutate => UserPermission::AssetMutate,
+            PermissionType::AssetMutateViaDataMatrix => UserPermission::AssetMutateViaDataMatrix,
             PermissionType::AssetQuery => UserPermission::AssetQuery,
             PermissionType::AssetCatalogueItemMutate => UserPermission::AssetCatalogueItemMutate,
             PermissionType::NamePropertiesMutate => UserPermission::NamePropertiesMutate,
@@ -196,6 +198,7 @@ impl UserPermission {
             }
             UserPermission::ColdChainApi => PermissionType::ColdChainApi,
             UserPermission::AssetMutate => PermissionType::AssetMutate,
+            UserPermission::AssetMutateViaDataMatrix => PermissionType::AssetMutateViaDataMatrix,
             UserPermission::AssetQuery => PermissionType::AssetQuery,
             UserPermission::AssetCatalogueItemMutate => PermissionType::AssetCatalogueItemMutate,
             UserPermission::NamePropertiesMutate => PermissionType::NamePropertiesMutate,
