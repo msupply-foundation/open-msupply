@@ -64,7 +64,7 @@ pub fn generate(
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
         is_cancellation: false,
-        expected_delivery_datetime: None,
+        expected_delivery_date: None,
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;

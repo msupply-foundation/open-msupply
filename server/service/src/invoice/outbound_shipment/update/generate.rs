@@ -1,4 +1,4 @@
-use chrono::{NaiveDateTime, Utc};
+use chrono::{NaiveDate, Utc};
 
 use repository::{
     location_movement::{LocationMovementFilter, LocationMovementRepository},
@@ -43,7 +43,7 @@ pub(crate) fn generate(
         tax: input_tax,
         currency_id: input_currency_id,
         currency_rate: input_currency_rate,
-        expected_delivery_datetime: input_expected_delivery_datetime,
+        expected_delivery_date: input_expected_delivery_date,
     }: UpdateOutboundShipment,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdateOutboundShipmentError> {
@@ -70,13 +70,13 @@ pub(crate) fn generate(
         update_invoice.status = status.full_status()
     }
 
-    let expected_delivery_datetime = calculate_expected_delivery_date(
+    let expected_delivery_date = calculate_expected_delivery_date(
         &update_invoice,
-        input_expected_delivery_datetime,
+        input_expected_delivery_date,
         store_preferences.months_lead_time,
     );
 
-    update_invoice.expected_delivery_datetime = expected_delivery_datetime;
+    update_invoice.expected_delivery_date = expected_delivery_date;
 
     let batches_to_update = if should_update_batches_total_number_of_packs {
         Some(
@@ -126,21 +126,21 @@ pub(crate) fn generate(
 
 fn calculate_expected_delivery_date(
     invoice: &InvoiceRow,
-    delivery_date_input: Option<NullableUpdate<NaiveDateTime>>,
+    delivery_date_input: Option<NullableUpdate<NaiveDate>>,
     months_lead_time: f64,
-) -> Option<NaiveDateTime> {
+) -> Option<NaiveDate> {
     match delivery_date_input {
-        Some(input_expected_delivery_datetime) => input_expected_delivery_datetime.value,
+        Some(input_expected_delivery_date) => input_expected_delivery_date.value,
         None if invoice.status == InvoiceStatus::Shipped
-            && invoice.expected_delivery_datetime.is_none() =>
+            && invoice.expected_delivery_date.is_none() =>
         {
             let months_lead_time_in_days =
                 (months_lead_time * AVG_NUMBER_OF_DAYS_IN_A_MONTH) as i64;
             invoice.shipped_datetime.map(|shipped_datetime| {
-                shipped_datetime + chrono::Duration::days(months_lead_time_in_days)
+                (shipped_datetime + chrono::Duration::days(months_lead_time_in_days)).date()
             })
         }
-        _ => invoice.expected_delivery_datetime,
+        _ => invoice.expected_delivery_date,
     }
 }
 

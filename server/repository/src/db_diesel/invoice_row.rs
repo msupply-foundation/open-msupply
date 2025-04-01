@@ -11,7 +11,7 @@ use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActi
 
 use diesel::{dsl::max, prelude::*};
 
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime};
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
@@ -51,7 +51,7 @@ table! {
         insurance_discount_amount -> Nullable<Double>,
         insurance_discount_percentage -> Nullable<Double>,
         is_cancellation -> Bool,
-        expected_delivery_datetime -> Nullable<Timestamp>,
+        expected_delivery_date -> Nullable<Date>,
     }
 }
 
@@ -136,7 +136,7 @@ pub struct InvoiceRow {
     pub insurance_discount_amount: Option<f64>,
     pub insurance_discount_percentage: Option<f64>,
     pub is_cancellation: bool,
-    pub expected_delivery_datetime: Option<NaiveDateTime>,
+    pub expected_delivery_date: Option<NaiveDate>,
 }
 
 pub struct InvoiceRowRepository<'a> {

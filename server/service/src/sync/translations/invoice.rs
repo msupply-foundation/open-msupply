@@ -135,11 +135,6 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub arrival_date_actual: Option<NaiveDate>,
-    /// expected_delivery_datetime
-    #[serde(default)]
-    #[serde(deserialize_with = "zero_date_as_option")]
-    #[serde(serialize_with = "date_option_to_isostring")]
-    pub arrival_date_estimated: Option<NaiveDate>,
     /// verified_datetime
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
@@ -222,9 +217,10 @@ pub struct LegacyTransactRow {
     pub is_cancellation: bool,
 
     #[serde(default)]
-    #[serde(rename = "om_expected_delivery_datetime")]
-    #[serde(deserialize_with = "empty_str_as_option")]
-    pub expected_delivery_datetime: Option<NaiveDateTime>,
+    #[serde(rename = "arrival_date_estimated")]
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub expected_delivery_date: Option<NaiveDate>,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -368,7 +364,6 @@ impl SyncTranslation for InvoiceTranslation {
             shipped_datetime: mapping.shipped_datetime,
             delivered_datetime: mapping.delivered_datetime,
             verified_datetime: mapping.verified_datetime,
-            expected_delivery_datetime: mapping.expected_delivery_datetime,
             // Cancelled datetime handled in processor (To-DO)
             cancelled_datetime: data.cancelled_datetime,
             is_cancellation: data.is_cancellation,
@@ -384,6 +379,7 @@ impl SyncTranslation for InvoiceTranslation {
             name_insurance_join_id: data.name_insurance_join_id,
             insurance_discount_amount: data.insurance_discount_amount,
             insurance_discount_percentage: data.insurance_discount_percentage,
+            expected_delivery_date: data.expected_delivery_date,
         };
 
         // HACK...
@@ -467,7 +463,7 @@ impl SyncTranslation for InvoiceTranslation {
                     insurance_discount_amount,
                     insurance_discount_percentage,
                     is_cancellation,
-                    expected_delivery_datetime,
+                    expected_delivery_date,
                 },
             name_row,
             clinician_row,
@@ -513,8 +509,6 @@ impl SyncTranslation for InvoiceTranslation {
                 .map(|shipped_datetime| date_from_date_time(&shipped_datetime)),
             arrival_date_actual: delivered_datetime
                 .map(|delivered_datetime| date_from_date_time(&delivered_datetime)),
-            arrival_date_estimated: expected_delivery_datetime
-                .map(|expected_delivery_datetime| date_from_date_time(&expected_delivery_datetime)),
             confirm_date: confirm_datetime.0,
             confirm_time: confirm_datetime.1,
             tax_percentage,
@@ -545,7 +539,7 @@ impl SyncTranslation for InvoiceTranslation {
             insurance_discount_amount,
             insurance_discount_percentage,
             is_cancellation,
-            expected_delivery_datetime,
+            expected_delivery_date,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
@@ -614,7 +608,6 @@ struct LegacyMapping {
     shipped_datetime: Option<NaiveDateTime>,
     verified_datetime: Option<NaiveDateTime>,
     backdated_datetime: Option<NaiveDateTime>,
-    expected_delivery_datetime: Option<NaiveDateTime>,
     colour: Option<String>,
 }
 /// Either make use of om_* fields, if present, or do a best afford mapping
@@ -633,7 +626,6 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
                 &created_datetime,
                 &data.picked_datetime,
             )),
-            expected_delivery_datetime: data.expected_delivery_datetime,
             colour: data.om_colour.clone(),
         };
     }
@@ -646,7 +638,6 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
         shipped_datetime: None,
         verified_datetime: None,
         backdated_datetime: None,
-        expected_delivery_datetime: None,
         colour: None,
     };
 
@@ -659,9 +650,6 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
     if backdated_datetime.is_some() {
         mapping.backdated_datetime = backdated_datetime
     }
-
-    mapping.expected_delivery_datetime =
-        map_expected_delivery_datetime(&data.arrival_date_estimated);
 
     match invoice_type {
         InvoiceType::OutboundShipment | InvoiceType::SupplierReturn => match data.status {
@@ -716,17 +704,6 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
         }
     };
     mapping
-}
-
-fn map_expected_delivery_datetime(
-    expected_delivery_datetime: &Option<NaiveDate>,
-) -> Option<NaiveDateTime> {
-    expected_delivery_datetime.map(|arrival_date_estimated| {
-        NaiveDateTime::new(
-            arrival_date_estimated,
-            NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
-        )
-    })
 }
 
 fn to_legacy_confirm_time(

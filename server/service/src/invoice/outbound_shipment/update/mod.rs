@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::NaiveDate;
 use repository::{
     Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
     LocationMovementRowRepository, RepositoryError, StockLineRowRepository, TransactionError,
@@ -35,7 +35,7 @@ pub struct UpdateOutboundShipment {
     pub tax: Option<ShipmentTaxUpdate>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
-    pub expected_delivery_datetime: Option<NullableUpdate<NaiveDateTime>>,
+    pub expected_delivery_date: Option<NullableUpdate<NaiveDate>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -441,10 +441,8 @@ mod test {
                 }),
                 currency_id: None,
                 currency_rate: None,
-                expected_delivery_datetime: Some(NullableUpdate {
-                    value: NaiveDate::from_ymd_opt(2025, 1, 7)
-                        .unwrap()
-                        .and_hms_milli_opt(15, 30, 0, 0),
+                expected_delivery_date: Some(NullableUpdate {
+                    value: NaiveDate::from_ymd_opt(2025, 1, 7),
                 }),
             }
         }
@@ -472,7 +470,7 @@ mod test {
                     tax,
                     currency_id: _,
                     currency_rate: _,
-                    expected_delivery_datetime,
+                    expected_delivery_date,
                 } = get_update();
                 u.on_hold = on_hold.unwrap();
                 u.comment = comment;
@@ -480,7 +478,7 @@ mod test {
                 u.colour = colour;
                 u.transport_reference = transport_reference;
                 u.tax_percentage = tax.map(|tax| tax.percentage.unwrap());
-                u.expected_delivery_datetime = expected_delivery_datetime.and_then(|v| v.value);
+                u.expected_delivery_date = expected_delivery_date.and_then(|v| v.value);
                 u
             })
         );
