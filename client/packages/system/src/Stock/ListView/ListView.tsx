@@ -132,6 +132,8 @@ const StockListComponent: FC = () => {
     [
       'availableStockOnHand',
       {
+        label: 'label.available-soh',
+        description: 'description.available-soh',
         accessor: ({ rowData }) =>
           rowData.availableNumberOfPacks * rowData.packSize,
         sortable: false,
