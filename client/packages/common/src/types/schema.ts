@@ -1144,6 +1144,7 @@ export type CentralServerMutationNode = {
   itemVariant: ItemVariantMutations;
   logReason: AssetLogReasonMutations;
   plugins: CentralPluginMutations;
+  preferences: PreferenceMutations;
   vaccineCourse: VaccineCourseMutations;
 };
 
@@ -1251,12 +1252,6 @@ export type ColdStorageTypeSortInput = {
 };
 
 export type ColdStorageTypesResponse = ColdStorageTypeConnector;
-
-export type ComplexPrefNode = {
-  __typename: 'ComplexPrefNode';
-  somethingElse: Scalars['String']['output'];
-  somethingHere: Scalars['Int']['output'];
-};
 
 export type ConfigureNamePropertiesResponse = Success;
 
@@ -5867,10 +5862,35 @@ export type PluginInfoNode = {
   pluginInfo: Scalars['JSON']['output'];
 };
 
+export type PreferenceDescriptionNode = {
+  __typename: 'PreferenceDescriptionNode';
+  jsonSchema: Scalars['JSON']['output'];
+  key: Scalars['String']['output'];
+  uiSchema: Scalars['JSON']['output'];
+};
+
+export type PreferenceMutations = {
+  __typename: 'PreferenceMutations';
+  upsertPreference: PreferenceNode;
+};
+
+export type PreferenceMutationsUpsertPreferenceArgs = {
+  input: UpsertPreferenceInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type PreferenceNode = {
+  __typename: 'PreferenceNode';
+  id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  storeId?: Maybe<Scalars['String']['output']>;
+  /** JSON serialized value */
+  value: Scalars['String']['output'];
+};
+
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
-  complexPref: ComplexPrefNode;
-  usePaymentsInPrescriptions: Scalars['Boolean']['output'];
+  showContactTracing: Scalars['Boolean']['output'];
 };
 
 export type PricingNode = {
@@ -6202,6 +6222,7 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
+  availablePreferences: Array<PreferenceDescriptionNode>;
   barcodeByGtin: BarcodeResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
@@ -9511,6 +9532,13 @@ export type UpsertLogLevelResponse = {
 export type UpsertPackVariantResponse =
   | ItemVariantNode
   | UpsertItemVariantError;
+
+export type UpsertPreferenceInput = {
+  id: Scalars['String']['input'];
+  key: Scalars['String']['input'];
+  storeId?: InputMaybe<Scalars['String']['input']>;
+  value: Scalars['String']['input'];
+};
 
 export type UpsertVaccineCourseDoseInput = {
   customAgeLabel?: InputMaybe<Scalars['String']['input']>;
