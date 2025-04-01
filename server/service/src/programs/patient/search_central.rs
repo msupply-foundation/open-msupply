@@ -5,7 +5,7 @@ use url::Url;
 use crate::{
     apis::{
         api_on_central::NameStoreJoinParams,
-        oms_central::OmsCentral,
+        oms_central::OmsCentralApi,
         patient_v4::{
             NameStoreJoinParamsV4, NameStoreJoinV2, PatientApiV4, PatientParamsV4, PatientV4,
         },
@@ -159,7 +159,7 @@ async fn link_patient_to_store_v6(
             CentralPatientRequestError::InternalError(format!("Cannot parse central server URL: "))
         })?;
 
-        let om_central_api = OmsCentral::new(
+        let om_central_api = OmsCentralApi::new(
             client,
             server_url,
             &sync_settings.username,
