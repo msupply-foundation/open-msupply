@@ -15,14 +15,14 @@ pub enum RepositoryError {
     #[error("actix thread pool canceled")]
     ThreadPoolCanceled,
     /// Transaction error
-    #[error("Transaction failed: {msg:?} {level:?}")]
+    #[error("Transaction failed: {msg} {level}")]
     TransactionError {
         msg: String,
         /// The level of nested transactions (1 == normal transaction)
         level: i32,
     },
     /// Other DB related errors
-    #[error("{msg:?} ({extra:?})")]
+    #[error("{msg} ({extra})")]
     DBError { msg: String, extra: String },
 }
 

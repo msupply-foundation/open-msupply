@@ -1,7 +1,9 @@
 use super::{
+    location::set_asset_location,
     query::get_asset,
     validate::{check_asset_exists, check_asset_number_exists},
 };
+use crate::sync::ActiveStoresOnSite;
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
 };
@@ -12,8 +14,10 @@ use repository::{
         asset::{AssetFilter, AssetRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
-    ActivityLogType, RepositoryError, StorageConnection, StringFilter,
+    migrations::constants::COLD_CHAIN_EQUIPMENT_UUID,
+    ActivityLogType, LocationRow, RepositoryError, StorageConnection, StringFilter, Upsert,
 };
+use util::uuid::uuid;
 
 #[derive(PartialEq, Debug)]
 pub enum InsertAssetError {
@@ -71,8 +75,43 @@ pub fn insert_asset(
                 }
                 None => input,
             };
+
             let new_asset = generate(input);
             AssetRowRepository::new(connection).upsert_one(&new_asset)?;
+
+            // Automatically create a location for this asset (if it's a cold chain asset, and store is active on this site)
+            if new_asset.asset_class_id == Some(COLD_CHAIN_EQUIPMENT_UUID.to_string()) {
+                let active_stores = ActiveStoresOnSite::get(&ctx.connection);
+                let active_store_ids = match active_stores {
+                    Ok(active_stores) => active_stores.store_ids(),
+                    Err(_) => {
+                        // If we can't get the active stores, just assume the asset is in this store (mainly for test cases)
+                        vec![new_asset.store_id.clone().unwrap_or_default()]
+                    }
+                };
+
+                // Check if the asset is in a store that is active before creating a location
+                if let Some(store_id) = new_asset.store_id {
+                    if active_store_ids.contains(&store_id) {
+                        let new_location = LocationRow {
+                            id: uuid(),
+                            name: new_asset
+                                .asset_number
+                                .clone()
+                                .unwrap_or_else(|| "Asset".to_string()),
+                            code: new_asset
+                                .asset_number
+                                .clone()
+                                .unwrap_or_else(|| "Asset".to_string()),
+                            on_hold: false,
+                            store_id,
+                            cold_storage_type_id: None, // TODO(future): Based on asset type try to determine cold storage type
+                        };
+                        new_location.upsert(connection)?;
+                        set_asset_location(connection, &new_asset.id, vec![new_location.id])?;
+                    }
+                }
+            }
 
             activity_log_entry(
                 ctx,

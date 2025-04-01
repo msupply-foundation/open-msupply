@@ -1,5 +1,6 @@
 mod mutations;
 pub mod plugin_data;
+mod plugin_graphql;
 mod queries;
 pub mod types;
 
@@ -21,6 +22,16 @@ impl PluginQueries {
         sort: Option<Vec<PluginDataSortInput>>,
     ) -> Result<PluginDataResponse> {
         plugin_data::query::get_plugin_data(ctx, &store_id, &plugin_code, filter, sort)
+    }
+
+    async fn plugin_graphql_query(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        plugin_code: String,
+        input: serde_json::Value,
+    ) -> Result<serde_json::Value> {
+        plugin_graphql::query::plugin_graphql_query(ctx, &store_id, &plugin_code, input)
     }
 }
 
