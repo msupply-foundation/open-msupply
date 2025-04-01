@@ -112,6 +112,9 @@ export const CreateEncounterForm: FC<{
               day: {
                 highlightedDays,
               } as BadgePickersDayProps,
+              tabs: {
+                hidden: true,
+              },
             }}
           />
         }

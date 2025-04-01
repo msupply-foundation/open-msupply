@@ -137,6 +137,10 @@ pub enum Resource {
     // Plugin data
     MutatePluginData,
     ReadPluginData,
+    // Configure plugin
+    ConfigurePlugin,
+    // Plugin Graphql
+    PluginGraphql,
     // Preferences
     MutatePreferences,
 }
@@ -620,6 +624,19 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
 
+    // configure
+    map.insert(
+        Resource::ConfigurePlugin,
+        PermissionDSL::Any(vec![
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin), // Server admins can install plugins
+        ]),
+    );
+
+    // plugin graphql
+    map.insert(
+        Resource::PluginGraphql,
+        PermissionDSL::Any(vec![PermissionDSL::HasStoreAccess]),
+    );
     map
 }
 
