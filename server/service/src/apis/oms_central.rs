@@ -16,8 +16,8 @@ pub struct OmsCentral {
 #[derive(Debug)]
 pub enum OmsCentralError {
     AuthenticationFailed,
-    InvalidResponse(serde_json::Error),
     ConnectionError(reqwest::Error),
+    InternalError(String),
 }
 
 impl OmsCentral {
@@ -41,12 +41,17 @@ impl OmsCentral {
             .await
             .map_err(OmsCentralError::ConnectionError)?;
 
-        if response.status() == StatusCode::UNAUTHORIZED {
-            return Err(OmsCentralError::AuthenticationFailed);
+        match response.status() {
+            StatusCode::OK => Ok(()),
+            StatusCode::UNAUTHORIZED => Err(OmsCentralError::AuthenticationFailed),
+            _ => {
+                let text = response
+                    .text()
+                    .await
+                    .map_err(OmsCentralError::ConnectionError)?;
+
+                Err(OmsCentralError::InternalError(text))
+            }
         }
-        response
-            .json()
-            .await
-            .map_err(OmsCentralError::ConnectionError)
     }
 }
