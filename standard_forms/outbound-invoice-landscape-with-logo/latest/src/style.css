@@ -106,3 +106,7 @@ hr {
   counter-increment: page;
   content: "Page " counter(page);
 }
+
+.batch-wrap {
+  word-break: break-word;
+}
