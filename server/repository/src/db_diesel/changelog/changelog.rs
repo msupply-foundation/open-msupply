@@ -1,6 +1,7 @@
 use crate::{
-    db_diesel::store_row::store, diesel_macros::apply_equal_filter, name_link, DBType, EqualFilter,
-    LockedConnection, NameLinkRow, RepositoryError, StorageConnection,
+    db_diesel::store_row::store, diesel_macros::apply_equal_filter, name_link,
+    name_store_join::name_store_join, DBType, EqualFilter, LockedConnection, NameLinkRow,
+    RepositoryError, StorageConnection,
 };
 use diesel::{
     helper_types::{IntoBoxed, LeftJoin},
@@ -522,6 +523,17 @@ fn create_filtered_outgoing_sync_query(
         .select(store::id.nullable())
         .into_boxed();
 
+    let names_visible_on_active_stores_for_site = name_store_join::table
+        .filter(
+            name_store_join::store_id.eq_any(
+                store::table
+                    .filter(store::site_id.eq(sync_site_id))
+                    .select(store::id),
+            ),
+        )
+        .select(name_store_join::name_link_id.nullable())
+        .into_boxed();
+
     // Filter the query for the matching records for each type
     query = query.filter(
         changelog_deduped::table_name
@@ -529,7 +541,12 @@ fn create_filtered_outgoing_sync_query(
             .or(changelog_deduped::table_name.eq(ChangelogTableName::SyncFileReference)) // All sites get all sync file references (not necessarily files)
             .or(changelog_deduped::table_name
                 .eq_any(remote_sync_table_names)
-                .and(changelog_deduped::store_id.eq_any(active_stores_for_site)))
+                .and(
+                    changelog_deduped::store_id
+                        .eq_any(active_stores_for_site)
+                        .or(changelog_deduped::name_link_id
+                            .eq_any(names_visible_on_active_stores_for_site)),
+                ))
             .or(changelog_deduped::table_name
                 .eq_any(central_by_empty_store_id)
                 .and(changelog_deduped::store_id.is_null())),
