@@ -7,6 +7,7 @@ import {
   useQuery,
 } from '@openmsupply-client/common';
 import { useAssetGraphQL } from '../useAssetGraphQL';
+import { ASSET } from './keys';
 
 export type ListParams = {
   first?: number;
@@ -18,7 +19,7 @@ export type ListParams = {
 export const useAssetList = (queryParams?: ListParams) => {
   const { assetApi, storeId } = useAssetGraphQL();
   const { first, offset, sortBy, filterBy } = queryParams ?? {};
-  const queryKey = ['asset', storeId, LIST, first, offset, sortBy, filterBy];
+  const queryKey = [ASSET, storeId, LIST, first, offset, sortBy, filterBy];
 
   const queryFn = async () => {
     const query = await assetApi.assetCatalogueItems({

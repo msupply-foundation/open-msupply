@@ -2,6 +2,7 @@ import { Utils } from './utils';
 import { Document } from './document';
 import { Log } from './log';
 export * from './useAssetList';
+export * from './useAsset';
 
 export const useAssetData = {
   utils: {
@@ -16,7 +17,6 @@ export const useAssetData = {
     infiniteList: Document.useInfiniteAssets,
 
     fields: Document.useAssetFields,
-    insert: Document.useAssetItemInsert,
     delete: Document.useAssetsDelete,
   },
 
