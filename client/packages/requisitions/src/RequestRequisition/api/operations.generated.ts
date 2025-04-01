@@ -246,16 +246,6 @@ export type RequestByIdQuery = {
               approvedQuantity: number;
               approvalComment?: string | null;
             } | null;
-            itemInformation?: Array<{
-              __typename: 'RequisitionItemInformationNode';
-              id: string;
-              adjustmentsInUnits: number;
-              amcInUnits: number;
-              outgoingUnits: number;
-              dateRange?: string | null;
-              stockInUnits: number;
-              name: { __typename: 'NameNode'; id: string; name: string };
-            }> | null;
             item: {
               __typename: 'ItemNode';
               id: string;
