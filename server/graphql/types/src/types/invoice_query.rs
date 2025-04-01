@@ -5,7 +5,7 @@ use super::{
     NameNode, RequisitionNode, StoreNode, UserNode,
 };
 use async_graphql::*;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 
 use graphql_core::loader::{
@@ -452,10 +452,8 @@ impl InvoiceNode {
         &self.row().insurance_discount_percentage
     }
 
-    pub async fn expected_delivery_datetime(&self) -> Option<DateTime<Utc>> {
-        self.row()
-            .expected_delivery_datetime
-            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    pub async fn expected_delivery_date(&self) -> &Option<NaiveDate> {
+        &self.row().expected_delivery_date
     }
 }
 

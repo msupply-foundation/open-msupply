@@ -95,7 +95,7 @@ const TRANSACT_1: (&str, &str) = (
       "om_verified_datetime": "",
       "om_created_datetime": "",
       "om_transport_reference": "",
-      "om_expected_delivery_datetime": ""
+      "om_expected_delivery_date": ""
   }"#,
 );
 fn transact_1_pull_record() -> TestSyncIncomingRecord {
@@ -147,7 +147,7 @@ fn transact_1_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_amount: Some(10.0),
             insurance_discount_percentage: Some(2.5),
             is_cancellation: false,
-            expected_delivery_datetime: None,
+            expected_delivery_date: None,
         },
     )
 }
@@ -175,7 +175,6 @@ fn transact_1_push_record() -> TestSyncOutgoingRecord {
             arrival_date_actual: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
             confirm_date: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
             confirm_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
-            arrival_date_estimated: None,
             mode: TransactMode::Store,
             created_datetime: Some(
                 NaiveDate::from_ymd_opt(2021, 7, 30)
@@ -210,7 +209,7 @@ fn transact_1_push_record() -> TestSyncOutgoingRecord {
             insurance_discount_amount: Some(10.0),
             insurance_discount_percentage: Some(2.5),
             is_cancellation: false,
-            expected_delivery_datetime: None,
+            expected_delivery_date: None,
         }),
     }
 }
@@ -292,7 +291,7 @@ const TRANSACT_2: (&str, &str) = (
         "waybill_number": "",
         "om_transport_reference": "transport reference",
         "programID": "missing_program",
-        "om_expected_delivery_datetime": ""
+        "om_expected_delivery_date": ""
     }"#,
 );
 fn transact_2_pull_record() -> TestSyncIncomingRecord {
@@ -338,7 +337,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_datetime: None,
+            expected_delivery_date: None,
         },
     )
 }
@@ -362,7 +361,6 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             linked_transaction_id: None,
             entry_date: NaiveDate::from_ymd_opt(2021, 8, 3).unwrap(),
             entry_time: NaiveTime::from_hms_opt(12, 26, 46).unwrap(),
-            arrival_date_estimated: None,
             ship_date: None,
             arrival_date_actual: None,
             confirm_date: None,
@@ -396,7 +394,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_datetime: None,
+            expected_delivery_date: None,
         }),
     }
 }
@@ -486,7 +484,7 @@ const TRANSACT_OM_FIELDS: (&str, &str) = (
         "om_status": "SHIPPED",
         "om_colour": "SomeColour",
         "om_type": "INVENTORY_ADDITION",
-        "om_expected_delivery_datetime": ""
+        "om_expected_delivery_date": ""
     }"#,
 );
 
@@ -557,7 +555,7 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_datetime: None,
+            expected_delivery_date: None,
         },
     )
 }
@@ -585,7 +583,6 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             arrival_date_actual: Some(NaiveDate::from_ymd_opt(2022, 8, 28).unwrap()),
             confirm_date: Some(NaiveDate::from_ymd_opt(2022, 8, 29).unwrap()),
             confirm_time: NaiveTime::from_hms_opt(14, 33, 0).unwrap(),
-            arrival_date_estimated: None,
             mode: TransactMode::Store,
 
             created_datetime: Some(
@@ -640,7 +637,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_datetime: None,
+            expected_delivery_date: None,
         }),
     }
 }
@@ -731,7 +728,7 @@ const INVENTORY_ADDITION: (&str, &str) = (
         "om_type": null,
         "om_transport_reference": null,
         "finalised_date": "2023-01-16",
-        "om_expected_delivery_datetime": null
+        "om_expected_delivery_date": null
     }"#,
 );
 
@@ -783,7 +780,7 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_datetime: None,
+            expected_delivery_date: None,
         },
     )
 }
@@ -823,7 +820,6 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             mode: TransactMode::Store,
             comment: Some("Stocktake 1; Added stock".to_string()),
 
-            arrival_date_estimated: None,
             arrival_date_actual: None,
             allocated_datetime: None,
             picked_datetime: None,
@@ -847,7 +843,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_datetime: None,
+            expected_delivery_date: None,
         }),
     }
 }
@@ -938,7 +934,7 @@ const INVENTORY_REDUCTION: (&str, &str) = (
         "om_type": null,
         "om_transport_reference": null,
         "finalised_date": "2023-01-16",
-        "om_expected_delivery_datetime": null
+        "om_expected_delivery_date": null
     }"#,
 );
 
@@ -990,7 +986,7 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_datetime: None,
+            expected_delivery_date: None,
         },
     )
 }
@@ -1029,7 +1025,6 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             cancelled_datetime: None,
             mode: TransactMode::Store,
             comment: Some("Stocktake 2; Reduced stock".to_string()),
-            arrival_date_estimated: None,
             arrival_date_actual: None,
             allocated_datetime: None,
             picked_datetime: None,
@@ -1053,7 +1048,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_datetime: None,
+            expected_delivery_date: None,
         }),
     }
 }
@@ -1140,7 +1135,7 @@ const PRESCRIPTION_1: (&str, &str) = (
       "om_verified_datetime": "",
       "om_created_datetime": "",
       "om_transport_reference": "",
-      "om_expected_delivery_datetime": ""
+      "om_expected_delivery_date": ""
   }"#,
 );
 fn prescription_1_pull_record() -> TestSyncIncomingRecord {
@@ -1192,7 +1187,7 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_datetime: None,
+            expected_delivery_date: None,
         },
     )
 }
@@ -1220,7 +1215,6 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             arrival_date_actual: None,
             confirm_date: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
             confirm_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
-            arrival_date_estimated: None,
             mode: TransactMode::Dispensary,
             created_datetime: Some(
                 NaiveDate::from_ymd_opt(2021, 7, 30)
@@ -1255,7 +1249,7 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_datetime: None,
+            expected_delivery_date: None,
         }),
     }
 }
@@ -1343,7 +1337,7 @@ const CANCELLED_PRESCRIPTION: (&str, &str) = (
       "om_created_datetime": "",
       "om_cancelled_datetime": "2022-08-24T09:33:00",
       "om_transport_reference": "",
-      "om_expected_delivery_datetime": ""
+      "om_expected_delivery_date": ""
   }"#,
 );
 fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
@@ -1400,12 +1394,7 @@ fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_datetime: Some(
-                NaiveDate::from_ymd_opt(2021, 7, 30)
-                    .unwrap()
-                    .and_hms_opt(0, 0, 0)
-                    .unwrap(),
-            ),
+            expected_delivery_date: NaiveDate::from_ymd_opt(2021, 7, 30),
         },
     )
 }
@@ -1431,7 +1420,6 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             entry_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
             ship_date: None,
             arrival_date_actual: None,
-            arrival_date_estimated: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
             confirm_date: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
             confirm_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
             mode: TransactMode::Dispensary,
@@ -1473,12 +1461,7 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
-            expected_delivery_datetime: Some(
-                NaiveDate::from_ymd_opt(2021, 7, 30)
-                    .unwrap()
-                    .and_hms_opt(0, 0, 0)
-                    .unwrap(),
-            ),
+            expected_delivery_date: NaiveDate::from_ymd_opt(2021, 7, 30),
         }),
     }
 }
