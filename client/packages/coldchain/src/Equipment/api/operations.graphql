@@ -39,6 +39,11 @@ fragment AssetRow on AssetNode {
   }
   properties
   catalogProperties
+  lockedFields {
+    serialNumber
+    warrantyEnd
+    warrantyStart
+  }
 }
 
 fragment Asset on AssetNode {
@@ -113,6 +118,11 @@ fragment Asset on AssetNode {
   warrantyStart
   warrantyEnd
   needsReplacement
+  lockedFields {
+    serialNumber
+    warrantyEnd
+    warrantyStart
+  }
 }
 
 fragment ColdchainAssetLog on AssetLogNode {

@@ -46,6 +46,7 @@ pub struct InsertAsset {
     pub warranty_start: Option<NaiveDate>,
     pub warranty_end: Option<NaiveDate>,
     pub needs_replacement: Option<bool>,
+    pub locked_fields_json: Option<String>,
 }
 
 pub fn insert_asset(
@@ -172,6 +173,7 @@ pub fn generate(
         warranty_start,
         warranty_end,
         needs_replacement,
+        locked_fields_json,
     }: InsertAsset,
 ) -> AssetRow {
     AssetRow {
@@ -194,6 +196,7 @@ pub fn generate(
         warranty_start,
         warranty_end,
         needs_replacement,
+        locked_fields_json,
     }
 }
 

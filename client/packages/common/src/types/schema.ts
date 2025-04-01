@@ -565,6 +565,7 @@ export type AssetNode = {
   id: Scalars['String']['output'];
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
+  lockedFields: LockedAssetFieldsNode;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
   needsReplacement?: Maybe<Scalars['Boolean']['output']>;
   notes?: Maybe<Scalars['String']['output']>;
@@ -2800,6 +2801,7 @@ export type InsertAssetInput = {
   donorNameId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  lockedFieldsJson?: InputMaybe<Scalars['String']['input']>;
   needsReplacement?: InputMaybe<Scalars['Boolean']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
   properties?: InputMaybe<Scalars['String']['input']>;
@@ -4475,6 +4477,14 @@ export type LocationSortInput = {
 };
 
 export type LocationsResponse = LocationConnector;
+
+export type LockedAssetFieldsNode = {
+  __typename: 'LockedAssetFieldsNode';
+  catalogueItemId: Scalars['Boolean']['output'];
+  serialNumber: Scalars['Boolean']['output'];
+  warrantyEnd: Scalars['Boolean']['output'];
+  warrantyStart: Scalars['Boolean']['output'];
+};
 
 export enum LogLevelEnum {
   Debug = 'DEBUG',
