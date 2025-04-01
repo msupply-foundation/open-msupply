@@ -65,10 +65,8 @@ impl<'a> InsuranceProviderRowRepository<'a> {
 
     pub fn find_all_active(&self) -> Result<Vec<InsuranceProviderRow>, RepositoryError> {
         let result = insurance_provider::table
-            .load(self.connection.lock().connection())?
-            .into_iter()
-            .filter(|row: &InsuranceProviderRow| row.is_active == true)
-            .collect();
+            .filter(insurance_provider::is_active.eq(true))
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
