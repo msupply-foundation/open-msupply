@@ -69,6 +69,7 @@ export type SupplierReturnFragment = {
   } | null;
   originalShipment?: {
     __typename: 'InvoiceNode';
+    id: string;
     invoiceNumber: number;
     createdDatetime: string;
     user?: { __typename: 'UserNode'; username: string } | null;
@@ -100,6 +101,7 @@ export type CustomerReturnFragment = {
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
   originalShipment?: {
     __typename: 'InvoiceNode';
+    id: string;
     invoiceNumber: number;
     createdDatetime: string;
     user?: { __typename: 'UserNode'; username: string } | null;
@@ -386,6 +388,81 @@ export type SupplierReturnByNumberQuery = {
         } | null;
         originalShipment?: {
           __typename: 'InvoiceNode';
+          id: string;
+          invoiceNumber: number;
+          createdDatetime: string;
+          user?: { __typename: 'UserNode'; username: string } | null;
+        } | null;
+      }
+    | { __typename: 'NodeError' };
+};
+
+export type SupplierReturnByIdQueryVariables = Types.Exact<{
+  invoiceId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type SupplierReturnByIdQuery = {
+  __typename: 'Queries';
+  invoice:
+    | {
+        __typename: 'InvoiceNode';
+        id: string;
+        status: Types.InvoiceNodeStatus;
+        invoiceNumber: number;
+        colour?: string | null;
+        onHold: boolean;
+        comment?: string | null;
+        createdDatetime: string;
+        pickedDatetime?: string | null;
+        shippedDatetime?: string | null;
+        deliveredDatetime?: string | null;
+        verifiedDatetime?: string | null;
+        otherPartyName: string;
+        otherPartyId: string;
+        theirReference?: string | null;
+        transportReference?: string | null;
+        lines: {
+          __typename: 'InvoiceLineConnector';
+          nodes: Array<{
+            __typename: 'InvoiceLineNode';
+            id: string;
+            itemCode: string;
+            itemName: string;
+            itemId: string;
+            batch?: string | null;
+            expiryDate?: string | null;
+            numberOfPacks: number;
+            packSize: number;
+            sellPricePerPack: number;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+              defaultPackSize: number;
+            };
+          }>;
+        };
+        otherParty: {
+          __typename: 'NameNode';
+          id: string;
+          name: string;
+          code: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        };
+        user?: {
+          __typename: 'UserNode';
+          username: string;
+          email?: string | null;
+        } | null;
+        originalShipment?: {
+          __typename: 'InvoiceNode';
+          id: string;
           invoiceNumber: number;
           createdDatetime: string;
           user?: { __typename: 'UserNode'; username: string } | null;
@@ -450,6 +527,82 @@ export type CustomerReturnByNumberQuery = {
         linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
         originalShipment?: {
           __typename: 'InvoiceNode';
+          id: string;
+          invoiceNumber: number;
+          createdDatetime: string;
+          user?: { __typename: 'UserNode'; username: string } | null;
+        } | null;
+        otherParty: {
+          __typename: 'NameNode';
+          id: string;
+          name: string;
+          code: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        };
+      }
+    | { __typename: 'NodeError' };
+};
+
+export type CustomerReturnByIdQueryVariables = Types.Exact<{
+  invoiceId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type CustomerReturnByIdQuery = {
+  __typename: 'Queries';
+  invoice:
+    | {
+        __typename: 'InvoiceNode';
+        id: string;
+        status: Types.InvoiceNodeStatus;
+        invoiceNumber: number;
+        colour?: string | null;
+        onHold: boolean;
+        comment?: string | null;
+        createdDatetime: string;
+        pickedDatetime?: string | null;
+        shippedDatetime?: string | null;
+        deliveredDatetime?: string | null;
+        verifiedDatetime?: string | null;
+        otherPartyId: string;
+        otherPartyName: string;
+        theirReference?: string | null;
+        transportReference?: string | null;
+        lines: {
+          __typename: 'InvoiceLineConnector';
+          totalCount: number;
+          nodes: Array<{
+            __typename: 'InvoiceLineNode';
+            id: string;
+            itemId: string;
+            itemCode: string;
+            itemName: string;
+            batch?: string | null;
+            expiryDate?: string | null;
+            numberOfPacks: number;
+            packSize: number;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+              defaultPackSize: number;
+            };
+          }>;
+        };
+        user?: {
+          __typename: 'UserNode';
+          username: string;
+          email?: string | null;
+        } | null;
+        linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
+        originalShipment?: {
+          __typename: 'InvoiceNode';
+          id: string;
           invoiceNumber: number;
           createdDatetime: string;
           user?: { __typename: 'UserNode'; username: string } | null;
@@ -497,11 +650,7 @@ export type UpdateSupplierReturnMutationVariables = Types.Exact<{
 
 export type UpdateSupplierReturnMutation = {
   __typename: 'Mutations';
-  updateSupplierReturn: {
-    __typename: 'InvoiceNode';
-    id: string;
-    invoiceNumber: number;
-  };
+  updateSupplierReturn: { __typename: 'InvoiceNode'; id: string };
 };
 
 export type UpdateSupplierReturnLinesMutationVariables = Types.Exact<{
@@ -683,6 +832,7 @@ export const SupplierReturnFragmentDoc = gql`
     theirReference
     transportReference
     originalShipment {
+      id
       invoiceNumber
       createdDatetime
       user {
@@ -720,6 +870,7 @@ export const CustomerReturnFragmentDoc = gql`
     transportReference
     originalShipment {
       __typename
+      id
       invoiceNumber
       createdDatetime
       user {
@@ -926,6 +1077,23 @@ export const SupplierReturnByNumberDocument = gql`
   ${SupplierReturnFragmentDoc}
   ${SupplierReturnLineFragmentDoc}
 `;
+export const SupplierReturnByIdDocument = gql`
+  query supplierReturnById($invoiceId: String!, $storeId: String!) {
+    invoice(id: $invoiceId, storeId: $storeId) {
+      ... on InvoiceNode {
+        __typename
+        ...SupplierReturn
+        lines {
+          nodes {
+            ...SupplierReturnLine
+          }
+        }
+      }
+    }
+  }
+  ${SupplierReturnFragmentDoc}
+  ${SupplierReturnLineFragmentDoc}
+`;
 export const CustomerReturnByNumberDocument = gql`
   query customerReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
     invoiceByNumber(
@@ -933,6 +1101,24 @@ export const CustomerReturnByNumberDocument = gql`
       storeId: $storeId
       type: CUSTOMER_RETURN
     ) {
+      ... on InvoiceNode {
+        __typename
+        ...CustomerReturn
+        lines {
+          nodes {
+            ...CustomerReturnLine
+          }
+          totalCount
+        }
+      }
+    }
+  }
+  ${CustomerReturnFragmentDoc}
+  ${CustomerReturnLineFragmentDoc}
+`;
+export const CustomerReturnByIdDocument = gql`
+  query customerReturnById($invoiceId: String!, $storeId: String!) {
+    invoice(id: $invoiceId, storeId: $storeId) {
       ... on InvoiceNode {
         __typename
         ...CustomerReturn
@@ -981,7 +1167,6 @@ export const UpdateSupplierReturnDocument = gql`
       ... on InvoiceNode {
         __typename
         id
-        invoiceNumber
       }
     }
   }
@@ -1210,6 +1395,22 @@ export function getSdk(
         variables
       );
     },
+    supplierReturnById(
+      variables: SupplierReturnByIdQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<SupplierReturnByIdQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SupplierReturnByIdQuery>(
+            SupplierReturnByIdDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'supplierReturnById',
+        'query',
+        variables
+      );
+    },
     customerReturnByNumber(
       variables: CustomerReturnByNumberQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
@@ -1222,6 +1423,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'customerReturnByNumber',
+        'query',
+        variables
+      );
+    },
+    customerReturnById(
+      variables: CustomerReturnByIdQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<CustomerReturnByIdQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<CustomerReturnByIdQuery>(
+            CustomerReturnByIdDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'customerReturnById',
         'query',
         variables
       );
