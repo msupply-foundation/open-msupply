@@ -10,7 +10,6 @@ export type AllPrefsQuery = {
   availablePreferences: Array<{
     __typename: 'PreferenceDescriptionNode';
     key: string;
-    serialisedDefault: string;
     jsonSchema: any;
     uiSchema: any;
   }>;
@@ -45,7 +44,6 @@ export const AllPrefsDocument = gql`
   query allPrefs {
     availablePreferences {
       key
-      serialisedDefault
       jsonSchema
       uiSchema
     }

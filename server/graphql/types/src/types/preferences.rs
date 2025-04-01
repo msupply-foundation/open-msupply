@@ -40,13 +40,8 @@ impl PreferenceDescriptionNode {
     pub async fn ui_schema(&self) -> serde_json::Value {
         self.pref.ui_schema()
     }
-
-    pub async fn serialised_default(&self) -> String {
-        self.pref.serialised_default()
-    }
 }
 
-// TODO, also not used?
 pub struct PreferenceNode {
     pub preference: PreferenceRow,
 }

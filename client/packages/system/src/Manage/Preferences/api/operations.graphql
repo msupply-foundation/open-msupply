@@ -1,7 +1,6 @@
 query allPrefs {
   availablePreferences {
     key
-    serialisedDefault
     jsonSchema
     uiSchema
   }
