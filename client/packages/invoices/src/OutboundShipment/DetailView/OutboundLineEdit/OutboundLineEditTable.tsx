@@ -56,8 +56,13 @@ const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
       <PlaceholderCell colSpan={3} sx={{ color: 'secondary.main' }}>
         {t('label.placeholder')}
       </PlaceholderCell>
-      <PlaceholderCell style={{ textAlign: 'right' }}>1</PlaceholderCell>
-      <PlaceholderCell colSpan={4}></PlaceholderCell>
+      <PlaceholderCell
+        style={{ textAlign: 'right', paddingRight: '14px' }}
+        colSpan={2}
+      >
+        1
+      </PlaceholderCell>
+      <PlaceholderCell colSpan={3}></PlaceholderCell>
       <Tooltip title={line?.numberOfPacks.toString()}>
         <PlaceholderCell style={{ textAlign: 'right' }}>
           {!!NumUtils.hasMoreThanTwoDp(placeholderBuffer)
