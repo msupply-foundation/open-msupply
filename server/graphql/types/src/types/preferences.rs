@@ -1,7 +1,7 @@
 use async_graphql::*;
 use repository::PreferenceRow;
 use service::preference::{
-    preferences::{PreferenceDescription, Preferences},
+    preferences::{Preference, Preferences},
     PreferencesByKeyResult,
 };
 
@@ -27,17 +27,13 @@ impl PreferencesNode {
 
 /// Describes a preference, how it is configured
 pub struct PreferenceDescriptionNode {
-    pub pref: Box<dyn PreferenceDescription>,
+    pub pref: Box<dyn Preference<Value = bool>>,
 }
 
 #[Object]
 impl PreferenceDescriptionNode {
-    pub async fn key(&self) -> String {
+    pub async fn key(&self) -> &str {
         self.pref.key()
-    }
-
-    pub async fn global_only(&self) -> bool {
-        self.pref.global_only()
     }
 
     pub async fn json_schema(&self) -> serde_json::Value {

@@ -1,7 +1,5 @@
 use crate::service_provider::ServiceContext;
-use preferences::{
-    get_preference_descriptions, get_preferences, PreferenceDescription, Preferences,
-};
+use preferences::{get_preference_descriptions, get_preferences, Preference, Preferences};
 use repository::{PreferenceRow, RepositoryError};
 
 pub mod preferences;
@@ -22,7 +20,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         get_preferences(ctx, store_id)
     }
 
-    fn get_preference_descriptions(&self) -> Vec<Box<dyn PreferenceDescription>> {
+    fn get_preference_descriptions(&self) -> Vec<Box<dyn Preference<Value = bool>>> {
         get_preference_descriptions()
     }
 

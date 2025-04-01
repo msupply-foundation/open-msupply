@@ -8,30 +8,29 @@ use serde_json::json;
 pub trait Preference: Sync + Send {
     type Value: Default + DeserializeOwned + Serialize;
 
-    fn key() -> &'static str;
+    fn key(&self) -> &'static str;
 
-    fn global_only() -> bool {
-        false
-    }
+    // TODO: remove JSON forms, allow greater type safety
+    // Completely hard-coded UI, or maybe still return scalar UI types? Depends on UI...
 
     /// Use this for scalar types - otherwise you should implement json_schema()
-    fn json_forms_input_type() -> String {
+    fn json_forms_input_type(&self) -> String {
         "boolean".to_string()
     }
 
     /// IMPORTANT! The frontend does expect the properties > value structure
     /// Below that you can customise
-    fn json_schema() -> serde_json::Value {
+    fn json_schema(&self) -> serde_json::Value {
         json!({
           "properties": {
             "value": {
-                "type": Self::json_forms_input_type()
+                "type": &self.json_forms_input_type()
             }
           },
         })
     }
 
-    fn ui_schema() -> serde_json::Value {
+    fn ui_schema(&self) -> serde_json::Value {
         json!({
           "type": "Control",
           "label": "label.value",
@@ -39,10 +38,16 @@ pub trait Preference: Sync + Send {
         })
     }
 
-    fn deserialize(data: &str) -> Result<Self::Value, serde_json::Error> {
+    fn deserialize(&self, data: &str) -> Result<Self::Value, serde_json::Error> {
         serde_json::from_str::<Self::Value>(data)
     }
 
+    fn serialised_default(&self) -> String {
+        serde_json::to_string(&Self::Value::default()).unwrap()
+    }
+
+    // TODO: Refactor to helper methods, get_global(), get_store() etc.
+    // Allow for different kinds of merging based on pref type
     fn load(
         &self,
         connection: &StorageConnection,
@@ -51,7 +56,7 @@ pub trait Preference: Sync + Send {
         let prefs_by_key = PreferenceRepository::new(connection).query_by_filter(
             PreferenceFilter::new()
                 .store_id(EqualFilter::equal_any_or_null(vec![store_id.to_string()]))
-                .key(EqualFilter::equal_to(Self::key())),
+                .key(EqualFilter::equal_to(&self.key())),
         )?;
 
         // If there is a store-specific preference, that should override any global preference
@@ -65,37 +70,11 @@ pub trait Preference: Sync + Send {
             Some(pref) => {
                 let text_pref = pref.value.as_str();
 
-                Self::deserialize(text_pref).map_err(|e| {
+                self.deserialize(text_pref).map_err(|e| {
                     RepositoryError::as_db_error("Failed to deserialize preference", e)
                 })
             }
         }
-    }
-}
-
-pub trait PreferenceDescription: Send + Sync {
-    fn key(&self) -> String;
-    fn global_only(&self) -> bool;
-    fn serialised_default(&self) -> String;
-    fn json_schema(&self) -> serde_json::Value;
-    fn ui_schema(&self) -> serde_json::Value;
-}
-
-impl<T: 'static + Preference> PreferenceDescription for T {
-    fn key(&self) -> String {
-        T::key().to_string()
-    }
-    fn global_only(&self) -> bool {
-        T::global_only()
-    }
-    fn json_schema(&self) -> serde_json::Value {
-        T::json_schema()
-    }
-    fn ui_schema(&self) -> serde_json::Value {
-        T::ui_schema()
-    }
-    fn serialised_default(&self) -> String {
-        serde_json::to_string(&T::Value::default()).unwrap()
     }
 }
 
@@ -117,7 +96,7 @@ mod tests {
 
         impl Preference for TestPref1 {
             type Value = TestPref1;
-            fn key() -> &'static str {
+            fn key(&self) -> &'static str {
                 "test_pref_1"
             }
         }
@@ -127,7 +106,7 @@ mod tests {
 
         impl Preference for TestPref2 {
             type Value = i32;
-            fn key() -> &'static str {
+            fn key(&self) -> &'static str {
                 "test_pref_2"
             }
         }
