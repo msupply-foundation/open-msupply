@@ -22,9 +22,9 @@ const plugins: BackendPlugins = {
       ['item_id', 'consumption'],
       `
         SELECT item_id, sum(quantity) as consumption FROM consumption WHERE 
-        store_id = "${store_id}" 
+        store_id = '${store_id}' 
         AND item_id in ${sqlList(item_ids)}
-        AND date > "${sqlDateTime(now)}"
+        AND date > '${sqlDateTime(now)}'
         GROUP BY item_id
       `
     );
