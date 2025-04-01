@@ -1,7 +1,6 @@
 import {
   SortBy,
   FilterByWithBoolean,
-  AssetCatalogueItemSortFieldInput,
   AssetCategorySortFieldInput,
   AssetClassSortFieldInput,
   AssetTypeSortFieldInput,
@@ -10,42 +9,15 @@ import {
   InsertAssetLogReasonInput,
   AssetLogStatusInput,
   AssetLogReasonFilterInput,
-  InsertAssetCatalogueItemInput,
   AssetPropertyFilterInput,
 } from '@openmsupply-client/common';
-import { Sdk, AssetCatalogueItemFragment } from './operations.generated';
+import { Sdk } from './operations.generated';
 
 export type ListParams<T> = {
   first: number;
   offset: number;
   sortBy: SortBy<T>;
   filterBy?: FilterByWithBoolean | null;
-};
-
-const itemParsers = {
-  toSortField: (sortBy: SortBy<AssetCatalogueItemFragment>) => {
-    const fields: Record<string, AssetCatalogueItemSortFieldInput> = {
-      catalogue: AssetCatalogueItemSortFieldInput.Catalogue,
-      code: AssetCatalogueItemSortFieldInput.Code,
-      make: AssetCatalogueItemSortFieldInput.Manufacturer,
-      model: AssetCatalogueItemSortFieldInput.Model,
-    };
-
-    return fields[sortBy.key] ?? AssetCatalogueItemSortFieldInput.Manufacturer;
-  },
-  toInsert: (
-    input: AssetCatalogueItemFragment
-  ): InsertAssetCatalogueItemInput => ({
-    id: input.id ?? '',
-    subCatalogue: input.subCatalogue,
-    code: input.code ?? '',
-    manufacturer: input.manufacturer,
-    model: input.model ?? '',
-    classId: input.assetClassId,
-    categoryId: input.assetCategoryId,
-    typeId: input.assetTypeId,
-    properties: input.properties,
-  }),
 };
 
 const logReasonParsers = {
@@ -78,48 +50,6 @@ const logReasonParsers = {
 
 export const getAssetQueries = (sdk: Sdk, currentStoreId: string) => ({
   get: {
-    byId: async (assetCatalogueItemId: string) => {
-      const result = await sdk.assetCatalogueItemById({
-        assetCatalogueItemId,
-      });
-      const { assetCatalogueItems } = result;
-      if (assetCatalogueItems.__typename === 'AssetCatalogueItemConnector') {
-        if (assetCatalogueItems.nodes.length) {
-          return assetCatalogueItems.nodes[0];
-        }
-      }
-
-      throw new Error('Asset catalogue item not found');
-    },
-    list: async ({
-      first,
-      offset,
-      sortBy,
-      filterBy,
-    }: ListParams<AssetCatalogueItemFragment>) => {
-      const result = await sdk.assetCatalogueItems({
-        first,
-        offset,
-        key: itemParsers.toSortField(sortBy),
-        desc: sortBy.isDesc,
-        filter: filterBy,
-      });
-
-      const items = result?.assetCatalogueItems;
-
-      return items;
-    },
-    listAll: async ({ sortBy }: ListParams<AssetCatalogueItemFragment>) => {
-      const result = await sdk.assetCatalogueItems({
-        key: itemParsers.toSortField(sortBy),
-        desc: sortBy.isDesc,
-        first: 1000, // otherwise the default of 100 is applied and we have 159 currently
-      });
-
-      const items = result?.assetCatalogueItems;
-
-      return items;
-    },
     categories: async (filter: AssetCategoryFilterInput | undefined) => {
       const result = await sdk.assetCategories({
         filter,
@@ -190,29 +120,6 @@ export const getAssetQueries = (sdk: Sdk, currentStoreId: string) => ({
       return result.centralServer.logReason;
     }
     throw new Error('Could not delete reason');
-  },
-  insert: async (input: AssetCatalogueItemFragment, storeId: string) => {
-    const result = await sdk.insertAssetCatalogueItem({
-      input: itemParsers.toInsert(input),
-      storeId,
-    });
-    const insertAssetCatalogueItem =
-      result.centralServer.assetCatalogue.insertAssetCatalogueItem;
-
-    return insertAssetCatalogueItem;
-  },
-  delete: async (id: string) => {
-    const result = await sdk.deleteAssetCatalogueItem({
-      assetCatalogueItemId: id,
-    });
-    const deleteAssetCatalogueItem =
-      result.centralServer.assetCatalogue.deleteAssetCatalogueItem;
-
-    if (deleteAssetCatalogueItem?.__typename === 'DeleteResponse') {
-      return deleteAssetCatalogueItem.id;
-    }
-
-    throw new Error('Could not delete asset catalogue item');
   },
 });
 
