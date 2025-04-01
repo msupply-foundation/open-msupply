@@ -79,6 +79,7 @@ pub enum PermissionType {
     ColdChainApi,
     AssetQuery,
     AssetMutate,
+    AssetMutateViaDataMatrix,
     AssetCatalogueItemMutate,
     // Names
     NamePropertiesMutate,
