@@ -1,14 +1,14 @@
 use actix_web::{
+    http::header::HeaderValue,
     post,
     web::{self, Data, Json},
-    HttpResponse,
+    HttpRequest, HttpResponse,
 };
+use base64::{prelude::BASE64_STANDARD, Engine};
 
 use crate::central_server_only;
 use service::{
-    apis::api_on_central::{self, NameStoreJoinParams},
-    auth::validate_auth,
-    auth_data::AuthData,
+    apis::api_on_central::{self, CentralApiError, NameStoreJoinParams, SiteAuth},
     service_provider::ServiceProvider,
 };
 
@@ -20,25 +20,38 @@ pub fn config_central(cfg: &mut web::ServiceConfig) {
     );
 }
 
-// todo auth ? cookie?
 #[post("/name-store-join")]
 async fn patient_name_store_join(
-    request: Json<NameStoreJoinParams>,
+    request: HttpRequest,
     service_provider: Data<ServiceProvider>,
-    auth_data: Data<AuthData>,
+    data: Json<NameStoreJoinParams>,
 ) -> HttpResponse {
-    // or maybe just validate_auth??
-    // let auth_result = validate_cookie_auth(request.clone(), &auth_data);
-    // match auth_result {
-    //     Ok(_) => (),
-    //     Err(error) => {
-    //         let formatted_error = format!("{:#?}", error);
-    //         return HttpResponse::Unauthorized().body(formatted_error);
-    //     }
-    // }
+    let basic_auth_header = request.headers().get("authorization");
+    let auth = match parse_basic_auth_header(basic_auth_header) {
+        Some((user, pass)) => SiteAuth {
+            username: user,
+            password_sha256: pass,
+        },
+        None => {
+            return HttpResponse::Unauthorized().body("Couldn't parse auth header");
+        }
+    };
 
-    match api_on_central::patient_name_store_join(&service_provider, request.into_inner()) {
+    match api_on_central::patient_name_store_join(&service_provider, data.into_inner(), auth).await
+    {
         Ok(_) => HttpResponse::Ok().finish(),
+        Err(CentralApiError::NotAuthorized) => HttpResponse::Unauthorized()
+            .body("Site credentials not authorized by legacy central server"),
         Err(error) => HttpResponse::InternalServerError().body(error.to_string()),
     }
+}
+
+fn parse_basic_auth_header(header: Option<&HeaderValue>) -> Option<(String, String)> {
+    let header_value = header.and_then(|v| v.to_str().ok())?;
+    let encoded = header_value.strip_prefix("Basic ")?;
+    let decoded = BASE64_STANDARD.decode(encoded).ok()?;
+    let credentials = String::from_utf8(decoded).ok()?;
+    let mut parts = credentials.splitn(2, ':');
+
+    Some((parts.next()?.to_string(), parts.next()?.to_string()))
 }
