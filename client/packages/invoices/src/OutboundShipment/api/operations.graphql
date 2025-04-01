@@ -18,7 +18,7 @@ fragment Outbound on InvoiceNode {
   transportReference
   type
   taxPercentage
-  expectedDeliveryDatetime
+  expectedDeliveryDate
 
   user {
     __typename
@@ -101,7 +101,7 @@ fragment OutboundRow on InvoiceNode {
   status
   colour
   taxPercentage
-  expectedDeliveryDatetime
+  expectedDeliveryDate
   pricing {
     __typename
     totalAfterTax

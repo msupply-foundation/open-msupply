@@ -12,11 +12,8 @@ import { useInbound } from '../../api';
 
 export const TransportSectionComponent: FC = () => {
   const t = useTranslation();
-  const { transportReference, expectedDeliveryDatetime } =
-    useInbound.document.fields([
-      'transportReference',
-      'expectedDeliveryDatetime',
-    ]);
+  const { transportReference, expectedDeliveryDate } =
+    useInbound.document.fields(['transportReference', 'expectedDeliveryDate']);
   const { localisedDate } = useFormatDateTime();
 
   // Both transportReference and expectedDeliveryDatetime are read-only and are
@@ -31,9 +28,7 @@ export const TransportSectionComponent: FC = () => {
           <BufferedTextInput
             disabled={true}
             value={
-              expectedDeliveryDatetime
-                ? localisedDate(expectedDeliveryDatetime)
-                : ''
+              expectedDeliveryDate ? localisedDate(expectedDeliveryDate) : ''
             }
             slotProps={{
               input: {
