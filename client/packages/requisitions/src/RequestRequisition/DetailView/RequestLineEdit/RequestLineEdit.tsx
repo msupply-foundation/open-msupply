@@ -29,7 +29,6 @@ import { Footer } from './Footer';
 import { RequestStats } from './ItemCharts/RequestStats';
 import { RequestLineFragment } from '../../api';
 import { buildItemEditRoute } from '../utils';
-import { ItemInformationView } from './ItemInformation';
 
 const INPUT_WIDTH = 100;
 const LABEL_WIDTH = '150px';
@@ -48,7 +47,6 @@ interface RequestLineEditProps {
   isPacks: boolean;
   setIsPacks: (isPacks: boolean) => void;
   lines: RequestLineFragment[];
-  requisitionNumber?: number;
   requisitionId: string;
   insert: (patch: InsertRequestRequisitionLineInput) => void;
   scrollIntoView: () => void;
@@ -82,15 +80,6 @@ export const RequestLineEdit = ({
   const useConsumptionData =
     store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
   const isNew = !draft?.id;
-  const showItemInformation =
-    useConsumptionData &&
-    !!draft?.itemInformation &&
-    isProgram &&
-    store?.preferences?.extraFieldsInRequisition;
-  const itemInformationSorted = draft?.itemInformation
-    ?.sort((a, b) => a.name.name.localeCompare(b.name.name))
-    .sort((a, b) => b.amcInUnits - a.amcInUnits)
-    .sort((a, b) => b.stockInUnits - a.stockInUnits);
 
   const line = lines.find(line => line.id === draft?.id);
   const { width } = useWindowDimensions();
@@ -439,14 +428,14 @@ export const RequestLineEdit = ({
           </>
         )}
       </Box>
-      {showItemInformation && (
-        <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
-          <ItemInformationView
-            itemInformation={itemInformationSorted}
-            storeNameId={store?.nameId}
-          />
-        </Box>
-      )}
+
+      <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
+        {line &&
+          plugins.requestRequisitionLine?.editViewInfo?.map((Info, index) => (
+            <Info key={index} line={line} requisition={requisition} />
+          ))}
+      </Box>
+
       <Box>
         <Footer
           hasNext={hasNext}
