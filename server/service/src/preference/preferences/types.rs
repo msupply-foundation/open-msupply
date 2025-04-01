@@ -42,10 +42,6 @@ pub trait Preference: Sync + Send {
         serde_json::from_str::<Self::Value>(data)
     }
 
-    fn serialised_default(&self) -> String {
-        serde_json::to_string(&Self::Value::default()).unwrap()
-    }
-
     // TODO: Refactor to helper methods, get_global(), get_store() etc.
     // Allow for different kinds of merging based on pref type
     fn load(

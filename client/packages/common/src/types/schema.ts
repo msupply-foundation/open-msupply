@@ -5866,7 +5866,6 @@ export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
   jsonSchema: Scalars['JSON']['output'];
   key: Scalars['String']['output'];
-  serialisedDefault: Scalars['String']['output'];
   uiSchema: Scalars['JSON']['output'];
 };
 
