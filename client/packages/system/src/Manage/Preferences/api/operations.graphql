@@ -1,0 +1,23 @@
+query allPrefs {
+  availablePreferences {
+    key
+    jsonSchema
+    uiSchema
+  }
+}
+
+query preferences($storeId: String!) {
+  preferences(storeId: $storeId) {
+    showContactTracing
+  }
+}
+
+mutation upsertPreference($storeId: String!, $input: UpsertPreferenceInput!) {
+  centralServer {
+    preferences {
+      upsertPreference(storeId: $storeId, input: $input) {
+        id
+      }
+    }
+  }
+}

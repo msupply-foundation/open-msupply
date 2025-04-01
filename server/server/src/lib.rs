@@ -24,7 +24,7 @@ use repository::{get_storage_connection_manager, migrations::migrate};
 use scheduled_tasks::spawn_scheduled_task_runner;
 use service::{
     auth_data::AuthData,
-    backend_plugin::plugin_provider::PluginContext,
+    boajs::context::BoaJsContext,
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
@@ -150,7 +150,7 @@ pub async fn start_server(
     }
 
     // PLUGIN CONTEXT
-    PluginContext {
+    BoaJsContext {
         service_provider: service_provider.clone(),
     }
     .bind();

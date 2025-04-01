@@ -1,7 +1,10 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::PreferencesNode;
+use graphql_types::types::{PreferenceDescriptionNode, PreferenceNode, PreferencesNode};
 use service::auth::{Resource, ResourceAccessRequest};
+
+mod upsert;
+use upsert::*;
 
 #[derive(Default, Clone)]
 pub struct PreferenceQueries;
@@ -24,63 +27,52 @@ impl PreferenceQueries {
         let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
         let service = &service_provider.preference_service;
 
+        // TODO - pass `load`ing of prefs through to GQL layer, so only query for what is needed
         let prefs = service.get_preferences(&service_ctx, &store_id)?;
 
         Ok(PreferencesNode::from_domain(prefs))
     }
+
+    // TODO: consider UI, maybe list of prefs not required?
+    pub async fn available_preferences(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Vec<PreferenceDescriptionNode>> {
+        validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::QueryStorePreferences,
+                store_id: None,
+            },
+        )?;
+
+        let service_provider = ctx.service_provider();
+        let service = &service_provider.preference_service;
+
+        let prefs = service.get_preference_descriptions();
+
+        Ok(prefs
+            .into_iter()
+            .map(|pref| PreferenceDescriptionNode { pref })
+            .collect())
+    }
 }
 
-// TODO: separate query for central edit UI - all prefs, global and for each store, rather than the consolidated list
-
-// #[derive(Default, Clone)]
-// pub struct CentralPreferenceQueries;
-// #[Object]
-// impl CentralPreferenceQueries {
-//     pub async fn preferences(
-//         &self,
-//         ctx: &Context<'_>,
-//         store_id: String,
-//     ) -> Result<PreferencesResponse> {
-//         validate_auth(
-//             ctx,
-//             &ResourceAccessRequest {
-//                 resource: Resource::QueryVaccineCourse,
-//                 store_id: None,
-//             },
-//         )?;
-//         let connection = ctx.get_connection_manager().connection()?;
-//         let items = get_preferences(&connection, store_id)
-//             .map_err(StandardGraphqlError::from_list_error)?;
-
-//         Ok(VaccineCoursesResponse::Response(
-//             VaccineCourseConnector::from_domain(items),
-//         ))
-//     }
-// }
-
 // --
-// TODO: mutations from central only UI
+// mutations from central only UI
 
-// #[derive(Default, Clone)]
-// pub struct PreferenceMutations;
+#[derive(Default, Clone)]
+pub struct PreferenceMutations;
 
-// #[Object]
-// impl PreferenceMutations {
-//     async fn upsert_preferences(
-//         &self,
-//         ctx: &Context<'_>,
-//         store_id: String,
-//         input: UpdatePreferenceInput,
-//     ) -> Result<UpdatePreferenceResponse> {
-//         update_preference(ctx, &store_id, input)
-//     }
-
-//     // needed? or always just "clear"?
-//     async fn delete_preference(
-//         &self,
-//         ctx: &Context<'_>,
-//         preference_id: String,
-//     ) -> Result<DeletePreferenceResponse> {
-//         delete_preference(ctx, &preference_id)
-//     }
-// }
+#[Object]
+impl PreferenceMutations {
+    pub async fn upsert_preference(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        // TODO: upsert should have defined input types for each pref
+        input: UpsertPreferenceInput,
+    ) -> Result<PreferenceNode> {
+        upsert_preference(ctx, store_id, input)
+    }
+}
