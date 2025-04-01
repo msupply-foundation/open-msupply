@@ -1,15 +1,10 @@
 import React, { useState } from 'react';
 import { JsonData, JsonForm } from '@openmsupply-client/programs';
-import {
-  Box,
-  PreferenceDescriptionNode,
-  Typography,
-} from '@openmsupply-client/common';
+import { Box, PreferenceDescriptionNode } from '@openmsupply-client/common';
 
 export const EditField = ({
   value,
   config,
-  message,
   onChange,
 }: {
   value: string | undefined;
@@ -47,9 +42,6 @@ export const EditField = ({
           updateData={updateData}
         />
       </Box>
-      <Typography padding={1} fontStyle="italic" color="text.secondary">
-        {message}
-      </Typography>
     </Box>
   );
 };
