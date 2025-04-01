@@ -14,6 +14,7 @@ import {
   useUrlQueryParams,
   TooltipTextCell,
   GenericColumnKey,
+  getCommentPopoverColumn,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -75,12 +76,12 @@ export const InboundListView: FC = () => {
       ['invoiceNumber', { maxWidth: 100 }],
       'createdDatetime',
       'deliveredDatetime',
-      ['comment', { width: 125, Cell: TooltipTextCell }],
+      getCommentPopoverColumn(),
       [
         'theirReference',
         {
           Cell: TooltipTextCell,
-          width: 125,
+          width: 225,
         },
       ],
       [

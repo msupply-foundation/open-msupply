@@ -12,9 +12,9 @@ import {
   NothingHere,
   useUrlQueryParams,
   ColumnDescription,
-  TooltipTextCell,
   useToggle,
   GenericColumnKey,
+  getCommentPopoverColumn,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -99,6 +99,7 @@ export const ResponseRequisitionListView: FC = () => {
       accessor: ({ rowData }) => rowData?.shipments?.totalCount ?? 0,
       sortable: false,
     },
+    getCommentPopoverColumn(),
   ];
 
   if (program) {
@@ -135,7 +136,6 @@ export const ResponseRequisitionListView: FC = () => {
         t(getApprovalStatusKey(rowData.approvalStatus)),
     });
   }
-  columnDefinitions.push(['comment', { minWidth: 350, Cell: TooltipTextCell }]);
 
   const columns = useColumns<ResponseRowFragment>(
     columnDefinitions,
@@ -159,7 +159,12 @@ export const ResponseRequisitionListView: FC = () => {
         }}
         isError={isError}
         isLoading={isLoading}
-        noDataElement={<NothingHere body={t('error.no-requisitions')} />}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-requisitions')}
+            onCreate={modalController.toggleOn}
+          />
+        }
       />
 
       <Footer />

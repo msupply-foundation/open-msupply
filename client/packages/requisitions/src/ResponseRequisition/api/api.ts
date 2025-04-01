@@ -301,7 +301,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     periodId: string,
     programId: string
   ) => {
-    let result = await sdk.programIndicators({
+    const result = await sdk.programIndicators({
       storeId,
       customerNameId,
       periodId,
@@ -313,7 +313,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     }
   },
   updateIndicatorValue: async (patch: UpdateIndicatorValueInput) => {
-    let result = await sdk.updateIndicatorValue({ storeId, input: patch });
+    const result = await sdk.updateIndicatorValue({ storeId, input: patch });
 
     if (!!result?.updateIndicatorValue) {
       return result.updateIndicatorValue;

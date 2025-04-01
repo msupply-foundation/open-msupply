@@ -15,6 +15,7 @@ import {
   useTableStore,
   TooltipTextCell,
   GenericColumnKey,
+  getCommentPopoverColumn,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -77,7 +78,7 @@ const SupplierReturnListViewComponent: FC = () => {
         { description: 'description.invoice-number', width: 150 },
       ],
       'createdDatetime',
-      ['comment', { width: 125, Cell: TooltipTextCell }],
+      getCommentPopoverColumn(),
       [
         'theirReference',
         {

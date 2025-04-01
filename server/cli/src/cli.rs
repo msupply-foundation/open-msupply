@@ -58,6 +58,9 @@ const DATA_EXPORT_FOLDER: &str = "data";
 struct Args {
     #[clap(subcommand)]
     action: Action,
+    
+    #[clap(flatten)]
+    config_args: configuration::ConfigArgs,
 }
 
 #[derive(clap::Subcommand)]
@@ -280,7 +283,7 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     let settings: Settings =
-        configuration::get_configuration().expect("Problem loading configurations");
+        configuration::get_configuration(args.config_args).expect("Problem loading configurations");
 
     match args.action {
         Action::ExportGraphqlSchema => {
@@ -322,7 +325,7 @@ async fn main() -> anyhow::Result<()> {
                 };
                 synced_user_info_rows.push((
                     input.clone(),
-                    LoginService::fetch_user_from_central(&input)
+                    LoginService::fetch_user_from_central(&service_provider.clone(), &input)
                         .await
                         .unwrap_or_else(|_| panic!("Cannot find user {:?}", input)),
                 ));
@@ -441,8 +444,10 @@ async fn main() -> anyhow::Result<()> {
         Action::BuildReports { path } => {
             let dir_list = match path.clone() {
                 Some(path) => path,
-                None => vec![PathBuf::new().join("../standard_reports"),
-                             PathBuf::new().join("../standard_forms")],
+                None => vec![
+                    PathBuf::new().join("../standard_reports"),
+                    PathBuf::new().join("../standard_forms"),
+                ],
             };
 
             for base_dir in dir_list {
@@ -484,7 +489,10 @@ async fn main() -> anyhow::Result<()> {
                 if path.is_some() {
                     info!("All reports built in custom path {:?}", base_dir.display());
                 } else {
-                    info!("All standard reports built in path {:?}", base_dir.display())
+                    info!(
+                        "All standard reports built in path {:?}",
+                        base_dir.display()
+                    )
                 };
             }
         }
@@ -503,16 +511,13 @@ async fn main() -> anyhow::Result<()> {
 
             for file_path in file_list {
                 let json_file = fs::File::open(file_path.clone())
-                .unwrap_or_else(|_| panic!(
-                    "{} not found for report",
-                    file_path.display()
-                ));
-                let reports_data: ReportsData =
-                    serde_json::from_reader(json_file).expect("json incorrectly formatted for report");
-    
+                    .unwrap_or_else(|_| panic!("{} not found for report", file_path.display()));
+                let reports_data: ReportsData = serde_json::from_reader(json_file)
+                    .expect("json incorrectly formatted for report");
+
                 let connection_manager = get_storage_connection_manager(&settings.database);
                 let con = connection_manager.connection()?;
-    
+
                 StandardReports::upsert_reports(reports_data, &con, overwrite)?;
             }
         }

@@ -20,6 +20,7 @@ import {
   useAuthContext,
   useNavigate,
   usePluginProvider,
+  useTheme,
   useToggle,
   useWindowDimensions,
 } from '@openmsupply-client/common';
@@ -51,6 +52,7 @@ interface RequestLineEditProps {
   requisitionId: string;
   insert: (patch: InsertRequestRequisitionLineInput) => void;
   scrollIntoView: () => void;
+  disabled?: boolean;
 }
 
 export const RequestLineEdit = ({
@@ -69,6 +71,7 @@ export const RequestLineEdit = ({
   requisitionId,
   insert,
   scrollIntoView,
+  disabled: isSent,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
@@ -91,6 +94,7 @@ export const RequestLineEdit = ({
 
   const line = lines.find(line => line.id === draft?.id);
   const { width } = useWindowDimensions();
+  const theme = useTheme();
 
   return (
     <Box display="flex" flexDirection="column" padding={2}>
@@ -105,7 +109,9 @@ export const RequestLineEdit = ({
                     requisitionId: requisitionId,
                     itemId: newItem.id,
                   });
-                  navigate(buildItemEditRoute(requisitionId, newItem.id));
+                  navigate(buildItemEditRoute(requisitionId, newItem.id), {
+                    replace: true,
+                  });
                 }
               }}
               openOnFocus={true}
@@ -258,8 +264,15 @@ export const RequestLineEdit = ({
                       checked={isPacks}
                       onChange={(_event, checked) => setIsPacks(checked)}
                       size="small"
+                      disabled={isSent}
                     />
-                    <Box paddingLeft={2} paddingRight={2}>
+                    <Box
+                      paddingLeft={2}
+                      paddingRight={2}
+                      sx={{
+                        color: isSent ? theme.palette.text.disabled : '',
+                      }}
+                    >
                       {t('label.packs')}
                     </Box>
                   </Box>
@@ -272,7 +285,7 @@ export const RequestLineEdit = ({
                     <NumericTextInput
                       width={INPUT_WIDTH}
                       value={Math.ceil(draft?.requestedQuantity)}
-                      disabled={isPacks}
+                      disabled={isPacks || isSent}
                       onChange={value => {
                         const newValue = isNaN(Number(value)) ? 0 : value;
                         if (draft?.suggestedQuantity === newValue) {
@@ -324,7 +337,7 @@ export const RequestLineEdit = ({
                   <InputWithLabelRow
                     Input={
                       <NumericTextInput
-                        disabled={!isPacks}
+                        disabled={!isPacks || isSent}
                         value={NumUtils.round(
                           (draft?.requestedQuantity ?? 0) /
                           (draft?.defaultPackSize ?? 1),
@@ -390,7 +403,8 @@ export const RequestLineEdit = ({
                       width={200}
                       type={ReasonOptionNodeType.RequisitionLineVariance}
                       isDisabled={
-                        draft?.requestedQuantity === draft?.suggestedQuantity
+                        draft?.requestedQuantity === draft?.suggestedQuantity ||
+                        isSent
                       }
                       onBlur={save}
                     />
@@ -414,6 +428,7 @@ export const RequestLineEdit = ({
                       },
                     }}
                     onBlur={save}
+                    disabled={isSent}
                   />
                 }
                 sx={{ width: 275 }}

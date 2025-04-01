@@ -1,6 +1,5 @@
 {% macro dateOrNA(datetime) %}
-{% if datetime %}{{ datetime | date(format="%d/%m/%Y") }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif
-%}
+{% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %}
 {% endmacro input %}
 
 <table class="header_image_section" style="width: 100%;height: 98%;">
@@ -20,7 +19,7 @@
             </span>
         </th>
         <th style="text-align:right;width:70%;font-size:28pt;">
-            {{ t(k="report.outbound-landscape", f="Outbound Shipment (landscape)") }}<br>
+            {{ t(k="label.outbound-shipment", f="Outbound Shipment") }}<br>
         </th>
     </tr>
 </table>
@@ -28,7 +27,7 @@
 <div class="header_supplied_section" style="display: flex; flex-direction: column;">
     <div class="header-space-between">
         <span>{{ t(k="label.customer", f="Customer") }}:</span>
-        <span>{{ t(k="label.number", f="Number") }} #: {{ data.invoice.invoiceNumber }}</span>
+        <span>{{ t(k="label.number", f="Number") }}: {{ data.invoice.invoiceNumber }}</span>
     </div>
     <div class="header-space-between">
         <span>{{ data.invoice.otherParty.name }}</span>
@@ -42,7 +41,8 @@
     </div>
     <div class="header-space-between">
         <span>
-            {{data.invoice.otherParty.address1 }}, {{data.invoice.otherParty.address2}}
+            {{data.invoice.otherParty.address1 }}{% if data.invoice.otherParty.address2 %},
+            {{data.invoice.otherParty.address2 }} {% endif %} 
         </span>
         <span>{{t(k="report.shipped-date",f="Shipped date")}}: {{self::dateOrNA(datetime=data.invoice.shippedDatetime)}}</span>
     </div>

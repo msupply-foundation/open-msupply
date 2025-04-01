@@ -1,0 +1,85 @@
+@media print{
+    @page {
+        size: portrait
+    }
+}
+
+.logo {
+    display: block;
+    height: 96px;
+}
+
+.header {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+    padding: 0 25px 0 20px;
+}
+
+.bold {
+	font-weight: 900;
+}
+
+.main-table {
+	align-items: center;
+	justify-content: center;
+	font-size: 12px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 100%;
+    width: 900px;
+    border-collapse: collapse;
+}
+
+.main-table .table-header {
+    border-bottom: 0.5px solid black;
+}
+
+td {
+    vertical-align: top;
+    padding: 3px;
+}
+
+.col-location {
+    width: 10%;
+    text-align: left;
+}
+
+.col-item-code {
+    width: 15%;
+    text-align: left;
+}
+
+.col-item-name {
+    width: 30%;
+    text-align: left;
+}
+
+.col-batch {
+    width: 5%;
+    text-align: left;
+}
+
+.col-expiry-date {
+    width: 15%;
+	text-align: right;
+}
+
+.col-packsize {
+    width: 5%;
+    text-align: right;
+}
+
+.col-quantity {
+    width: 10%;
+    text-align: right;
+}
+
+.col-actual-stock {
+    width: 10%;
+	text-align: right;
+}

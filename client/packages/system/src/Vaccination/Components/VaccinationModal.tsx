@@ -33,6 +33,7 @@ import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
 import { getSwitchReason } from './getSwitchReason';
 import { useConfirmNoStockLineSelected } from './useConfirmNoStockLineSelected';
+import { useClinicians } from '@openmsupply-client/programs';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
@@ -79,7 +80,9 @@ export const VaccinationModal = ({
         const result = await saveVaccination(draft);
 
         if (result?.__typename === 'VaccinationNode') {
-          success(t('messages.vaccination-saved'))();
+          result?.invoice?.id && draft.createTransactions
+            ? success(t('messages.vaccination-saved-and-stock-recorded'))()
+            : success(t('messages.vaccination-saved'))();
           onOk();
           onClose();
         }
@@ -145,6 +148,9 @@ const VaccinationForm = ({
   updateDraft: (update: Partial<VaccinationDraft>) => void;
 }) => {
   const t = useTranslation();
+
+  const { data: clinicians } = useClinicians.document.list({});
+  const hasClinicians = clinicians?.nodes.length !== 0;
 
   if (!dose) {
     return null;
@@ -214,7 +220,7 @@ const VaccinationForm = ({
           </Grid>
         }
       />
-      {!isOtherFacility && (
+      {hasClinicians && !isOtherFacility && (
         <InputWithLabelRow
           label={t('label.clinician')}
           Input={

@@ -101,7 +101,7 @@ const createTestLine = ({
   });
 
 const createTestPrescription = (): PrescriptionRowFragment => {
-  //this generates a line to satisfy the PrescriptionRowFragment type - not used for the labels
+  // this generates a line to satisfy the PrescriptionRowFragment type - not used for the labels
   const prescriptionLine = createTestLine({
     id: 'test',
     itemId: 'test',
