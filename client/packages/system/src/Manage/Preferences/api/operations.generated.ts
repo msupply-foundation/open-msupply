@@ -10,41 +10,19 @@ export type AllPrefsQuery = {
   availablePreferences: Array<{
     __typename: 'PreferenceDescriptionNode';
     key: string;
-    globalOnly: boolean;
     serialisedDefault: string;
     jsonSchema: any;
     uiSchema: any;
   }>;
 };
 
-export type PrefsByKeyQueryVariables = Types.Exact<{
-  key: Types.Scalars['String']['input'];
+export type PreferencesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
 }>;
 
-export type PrefsByKeyQuery = {
+export type PreferencesQuery = {
   __typename: 'Queries';
-  centralServer: {
-    __typename: 'CentralServerQueryNode';
-    preferences: {
-      __typename: 'CentralPreferenceQueries';
-      preferencesByKey: {
-        __typename: 'PreferencesByKeyNode';
-        global?: {
-          __typename: 'PreferenceNode';
-          id: string;
-          key: string;
-          value: string;
-        } | null;
-        perStore: Array<{
-          __typename: 'PreferenceNode';
-          id: string;
-          key: string;
-          value: string;
-          storeId?: string | null;
-        }>;
-      };
-    };
-  };
+  preferences: { __typename: 'PreferencesNode'; showContactTracing: boolean };
 };
 
 export type UpsertPreferenceMutationVariables = Types.Exact<{
@@ -67,31 +45,16 @@ export const AllPrefsDocument = gql`
   query allPrefs {
     availablePreferences {
       key
-      globalOnly
       serialisedDefault
       jsonSchema
       uiSchema
     }
   }
 `;
-export const PrefsByKeyDocument = gql`
-  query prefsByKey($key: String!) {
-    centralServer {
-      preferences {
-        preferencesByKey(key: $key) {
-          global {
-            id
-            key
-            value
-          }
-          perStore {
-            id
-            key
-            value
-            storeId
-          }
-        }
-      }
+export const PreferencesDocument = gql`
+  query preferences($storeId: String!) {
+    preferences(storeId: $storeId) {
+      showContactTracing
     }
   }
 `;
@@ -141,17 +104,17 @@ export function getSdk(
         variables
       );
     },
-    prefsByKey(
-      variables: PrefsByKeyQueryVariables,
+    preferences(
+      variables: PreferencesQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<PrefsByKeyQuery> {
+    ): Promise<PreferencesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PrefsByKeyQuery>(PrefsByKeyDocument, variables, {
+          client.request<PreferencesQuery>(PreferencesDocument, variables, {
             ...requestHeaders,
             ...wrappedRequestHeaders,
           }),
-        'prefsByKey',
+        'preferences',
         'query',
         variables
       );

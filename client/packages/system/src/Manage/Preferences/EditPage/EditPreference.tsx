@@ -5,9 +5,10 @@ import {
   DetailPanelSection,
   NothingHere,
   PreferenceDescriptionNode,
+  PreferencesNode,
   useTranslation,
 } from '@openmsupply-client/common';
-import { usePreferencesByKey } from '../api/usePreferencesByKey';
+import { usePreferences } from '../api/usePreferences';
 import { EditField } from './EditField';
 import { useEditPreference } from '../api/useEditPreference';
 
@@ -18,25 +19,29 @@ export const EditPreference = ({
 }) => {
   const t = useTranslation();
 
-  const { data: prefs, isLoading } = usePreferencesByKey(selected.key);
+  const { data: prefs, isLoading } = usePreferences();
   const { mutateAsync: update } = useEditPreference(selected.key);
 
   if (isLoading) {
     return <BasicSpinner />;
   }
 
-  if (!prefs) {
+  const prefKey = getPrefKey(selected.key);
+  if (!prefs || !prefKey) {
     return <NothingHere />;
   }
+
+  const value = prefs[prefKey];
 
   return (
     <Box>
       <DetailPanelSection title={t('label.global-preference')}>
         <Box sx={{ backgroundColor: 'white', padding: 1, borderRadius: 1 }}>
           <EditField
-            value={prefs.global?.value}
+            value={value}
             config={selected}
-            onChange={value => update({ value, id: prefs?.global?.id })}
+            // TODO: backend would generate IDs, just send the value
+            onChange={value => update({ value, id: `${selected.key}_global` })}
           />
         </Box>
       </DetailPanelSection>
@@ -44,3 +49,10 @@ export const EditPreference = ({
     </Box>
   );
 };
+
+function getPrefKey(key: string): keyof PreferencesNode | undefined {
+  switch (key) {
+    case 'show_contact_tracing':
+      return 'showContactTracing';
+  }
+}
