@@ -1252,6 +1252,12 @@ export type ColdStorageTypeSortInput = {
 
 export type ColdStorageTypesResponse = ColdStorageTypeConnector;
 
+export type ComplexPrefNode = {
+  __typename: 'ComplexPrefNode';
+  somethingElse: Scalars['String']['output'];
+  somethingHere: Scalars['Int']['output'];
+};
+
 export type ConfigureNamePropertiesResponse = Success;
 
 export type ConfigureNamePropertyInput = {
@@ -4567,6 +4573,7 @@ export type MasterListNode = {
   __typename: 'MasterListNode';
   code: Scalars['String']['output'];
   description: Scalars['String']['output'];
+  discountPercentage: Scalars['Float']['output'];
   id: Scalars['String']['output'];
   linesCount?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
@@ -5860,6 +5867,12 @@ export type PluginInfoNode = {
   pluginInfo: Scalars['JSON']['output'];
 };
 
+export type PreferencesNode = {
+  __typename: 'PreferencesNode';
+  complexPref: ComplexPrefNode;
+  usePaymentsInPrescriptions: Scalars['Boolean']['output'];
+};
+
 export type PricingNode = {
   __typename: 'PricingNode';
   foreignCurrencyTotalAfterTax?: Maybe<Scalars['Float']['output']>;
@@ -6282,6 +6295,8 @@ export type Queries = {
   patients: PatientResponse;
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
+  pluginGraphqlQuery: Scalars['JSON']['output'];
+  preferences: PreferencesNode;
   printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
@@ -6728,6 +6743,16 @@ export type QueriesPluginDataArgs = {
   filter?: InputMaybe<PluginDataFilterInput>;
   pluginCode: Scalars['String']['input'];
   sort?: InputMaybe<Array<PluginDataSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPluginGraphqlQueryArgs = {
+  input: Scalars['JSON']['input'];
+  pluginCode: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPreferencesArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -7262,21 +7287,6 @@ export type RequisitionIndicatorInformationNode = {
   value: Scalars['String']['output'];
 };
 
-export type RequisitionItemInformationNode = {
-  __typename: 'RequisitionItemInformationNode';
-  adjustmentsInUnits: Scalars['Float']['output'];
-  amcInUnits: Scalars['Float']['output'];
-  dateRange?: Maybe<Scalars['DateTime']['output']>;
-  id: Scalars['String']['output'];
-  name: NameNode;
-  outgoingUnits: Scalars['Float']['output'];
-  stockInUnits: Scalars['Float']['output'];
-};
-
-export type RequisitionItemInformationNodeNameArgs = {
-  storeId: Scalars['String']['input'];
-};
-
 export type RequisitionLineChartError = {
   __typename: 'RequisitionLineChartError';
   error: RequisitionLineChartErrorInterface;
@@ -7315,7 +7325,6 @@ export type RequisitionLineNode = {
   initialStockOnHandUnits: Scalars['Float']['output'];
   item: ItemNode;
   itemId: Scalars['String']['output'];
-  itemInformation?: Maybe<Array<RequisitionItemInformationNode>>;
   itemName: Scalars['String']['output'];
   /**
    * For request requisition: snapshot stats (when requisition was created)
