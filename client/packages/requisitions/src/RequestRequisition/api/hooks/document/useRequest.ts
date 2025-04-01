@@ -3,7 +3,7 @@ import {
   UseQueryResult,
   useQuery,
 } from '@openmsupply-client/common';
-import { RequestFragment } from '../../operations.generated';
+import { RequestFragment } from '../../.';
 import { useRequestApi } from '../utils/useRequestApi';
 
 export const useRequestNumber = () => {

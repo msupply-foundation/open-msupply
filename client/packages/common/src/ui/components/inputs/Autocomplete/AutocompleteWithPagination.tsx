@@ -179,7 +179,6 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   useEffect(() => {
     setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
   }, [options]);
-  const noOptions = noOptionsText ?? t('label.no-options');
 
   return (
     <MuiAutocomplete
@@ -195,8 +194,8 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       getOptionDisabled={getOptionDisabled}
       filterOptions={filter}
       loading={loading}
-      loadingText={loadingText}
-      noOptionsText={noOptions}
+      loadingText={loadingText ?? t('loading')}
+      noOptionsText={noOptionsText ?? t('label.no-options')}
       options={options}
       size="small"
       renderInput={renderInput || defaultRenderInput}

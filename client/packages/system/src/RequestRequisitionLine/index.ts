@@ -1,5 +1,5 @@
 export {
   RequestLineFragment,
   ItemWithStatsFragment,
-  ItemInformationFragment,
+  RequestFragment,
 } from './operations.generated';
