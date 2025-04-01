@@ -1,6 +1,5 @@
-use super::StorageConnection;
-use crate::Upsert;
-use crate::{item_link, item_warning_link, RepositoryError};
+use super::{item_link, item_row::item, warning_row::warning::dsl::*, StorageConnection};
+use crate::{RepositoryError, Upsert};
 
 use diesel::prelude::*;
 
@@ -21,8 +20,8 @@ pub struct WarningRow {
     pub code: String,
 }
 
-allow_tables_to_appear_in_same_query!(warning, item_warning_link);
 allow_tables_to_appear_in_same_query!(warning, item_link);
+allow_tables_to_appear_in_same_query!(warning, item);
 
 pub struct WarningRowRepository<'a> {
     connection: &'a StorageConnection,
@@ -43,15 +42,31 @@ impl<'a> WarningRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id_option(
-        &self,
-        row_id: &str,
-    ) -> Result<Option<WarningRow>, RepositoryError> {
+    pub async fn insert_one(&self, warning_row: &WarningRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(warning)
+            .values(warning_row)
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub async fn find_all(&mut self) -> Result<Vec<WarningRow>, RepositoryError> {
+        let result = warning.load(self.connection.lock().connection());
+        Ok(result?)
+    }
+
+    pub fn find_one_by_id(&self, row_id: &str) -> Result<Option<WarningRow>, RepositoryError> {
         let result = warning::table
             .filter(warning::id.eq(row_id))
             .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)
+    }
+
+    pub fn find_many_by_id(&self, ids: &Vec<String>) -> Result<Vec<WarningRow>, RepositoryError> {
+        let result = warning
+            .filter(id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
     }
 
     pub fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {
@@ -60,7 +75,7 @@ impl<'a> WarningRowRepository<'a> {
         Ok(())
     }
 }
-
+#[derive(Debug, Clone)]
 pub struct WarningRowDelete(pub String);
 
 impl Upsert for WarningRow {
@@ -72,7 +87,7 @@ impl Upsert for WarningRow {
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            WarningRowRepository::new(con).find_one_by_id_option(&self.id),
+            WarningRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

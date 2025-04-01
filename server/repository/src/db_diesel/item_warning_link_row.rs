@@ -1,8 +1,6 @@
-use super::item_link;
-use crate::Delete;
-use crate::RepositoryError;
-use crate::StorageConnection;
-use crate::Upsert;
+use super::{item_link, item_row::item, warning_row::warning};
+use crate::{RepositoryError, StorageConnection, Upsert};
+
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -14,8 +12,12 @@ table! {
         priority -> Bool,
     }
 }
+
+joinable!(item_warning_link -> warning (warning_id));
 joinable!(item_warning_link -> item_link (item_link_id));
 allow_tables_to_appear_in_same_query!(item_warning_link, item_link);
+allow_tables_to_appear_in_same_query!(item_warning_link, item);
+allow_tables_to_appear_in_same_query!(item_warning_link, warning);
 
 #[derive(
     Clone, Default, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
@@ -57,6 +59,11 @@ impl<'a> ItemWarningLinkRowRepository<'a> {
         Ok(())
     }
 
+    pub async fn find_all(&mut self) -> Result<Vec<ItemWarningLinkRow>, RepositoryError> {
+        let result = item_warning_link::table.load(self.connection.lock().connection());
+        Ok(result?)
+    }
+
     pub fn find_one_by_id(
         &self,
         item_warning_link_id: &str,
@@ -67,6 +74,7 @@ impl<'a> ItemWarningLinkRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
     pub fn find_many_by_item_id(
         &self,
         item_link_id: &str,
@@ -90,7 +98,7 @@ impl<'a> ItemWarningLinkRowRepository<'a> {
 impl Upsert for ItemWarningLinkRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         ItemWarningLinkRowRepository::new(con).upsert_one(self)?;
-        Ok(None)
+        Ok(None) // Table not in Changelog
     }
 
     // Test only
@@ -98,23 +106,6 @@ impl Upsert for ItemWarningLinkRow {
         assert_eq!(
             ItemWarningLinkRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug)]
-pub struct ItemWarningLinkRowDelete(pub String);
-impl Delete for ItemWarningLinkRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ItemWarningLinkRowRepository::new(con).delete(&self.0)?;
-        Ok(None)
-    }
-
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ItemWarningLinkRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
         )
     }
 }

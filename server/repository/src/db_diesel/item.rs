@@ -1,8 +1,9 @@
 use super::{
     item_category_row::item_category_join, item_link_row::item_link, item_row::item,
-    master_list_line_row::master_list_line, master_list_name_join::master_list_name_join,
-    master_list_row::master_list, stock_on_hand::stock_on_hand, store_row::store, unit_row::unit,
-    DBType, ItemRow, ItemType, StorageConnection, UnitRow,
+    item_warning_link_row::item_warning_link, master_list_line_row::master_list_line,
+    master_list_name_join::master_list_name_join, master_list_row::master_list,
+    stock_on_hand::stock_on_hand, store_row::store, unit_row::unit, DBType, ItemRow, ItemType,
+    StorageConnection, UnitRow,
 };
 
 use diesel::{
@@ -51,6 +52,7 @@ pub struct ItemFilter {
     pub is_active: Option<bool>,
     pub is_vaccine: Option<bool>,
     pub master_list_id: Option<EqualFilter<String>>,
+    pub item_warning_link_id: Option<EqualFilter<String>>,
 }
 
 impl ItemFilter {
@@ -218,6 +220,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             is_vaccine,
             is_visible_or_on_hand,
             master_list_id,
+            item_warning_link_id,
         } = f;
 
         // or filter need to be applied before and filters
@@ -318,6 +321,21 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
                 sub_query,
                 Some(master_list_id_filter),
                 master_list_line::master_list_id
+            );
+            query = query.filter(item::id.eq_any(sub_query));
+        };
+
+        if let Some(item_warning_link_id_filter) = item_warning_link_id {
+            let mut sub_query = item_link::table
+                .select(item_link::item_id)
+                .inner_join(
+                    item_warning_link::table.on(item_warning_link::item_link_id.eq(item_link::id)),
+                )
+                .into_boxed();
+            apply_equal_filter!(
+                sub_query,
+                Some(item_warning_link_id_filter),
+                item_warning_link::id
             );
             query = query.filter(item::id.eq_any(sub_query));
         }
