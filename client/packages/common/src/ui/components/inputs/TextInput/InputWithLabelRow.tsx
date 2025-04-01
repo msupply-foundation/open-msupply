@@ -1,12 +1,5 @@
 import React, { FC, ReactNode } from 'react';
-import {
-  FormLabel,
-  Box,
-  FormLabelProps,
-  SxProps,
-  Theme,
-  Typography,
-} from '@mui/material';
+import { FormLabel, Box, FormLabelProps, SxProps, Theme } from '@mui/material';
 import { BasicTextInput } from './BasicTextInput';
 
 export interface InputWithLabelRowProps {
@@ -24,7 +17,6 @@ export const InputWithLabelRow: FC<InputWithLabelRowProps> = ({
   labelProps,
   labelWidth = '120px',
   sx,
-  required,
 }) => {
   const { sx: labelSx, ...labelPropsRest } = labelProps || {};
 
@@ -37,19 +29,6 @@ export const InputWithLabelRow: FC<InputWithLabelRowProps> = ({
         {label}:
       </FormLabel>
       {Input}
-      <Box width={2}>
-        {required && (
-          <Typography
-            sx={{
-              color: 'primary.light',
-              fontSize: '17px',
-              marginRight: 0.5,
-            }}
-          >
-            *
-          </Typography>
-        )}
-      </Box>
     </Box>
   );
 };
