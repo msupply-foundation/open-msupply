@@ -21,7 +21,7 @@ export const EditField = ({
       return;
     }
 
-    if (newValue !== value) {
+    if (newValue !== state) {
       // TODO: value and onchange to come from same place so only one call
       // (UI value updates immediately, but the API call is delayed)
       setState(newValue);
