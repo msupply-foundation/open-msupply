@@ -513,6 +513,9 @@ fn create_filtered_outgoing_sync_query(
         })
         .collect();
 
+    // Patient Records
+    let patient_sync_table_names: Vec<ChangelogTableName> = vec![ChangelogTableName::Vaccination];
+
     // Central record where store id is null
     let central_by_empty_store_id: Vec<ChangelogTableName> = ChangelogTableName::iter()
         .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::RemoteAndCentral))
@@ -523,9 +526,10 @@ fn create_filtered_outgoing_sync_query(
         .select(store::id.nullable())
         .into_boxed();
 
-    let names_visible_on_active_stores_for_site = name_store_join::table
+    let patients_visible_on_active_stores_for_site = name_store_join::table
         .filter(
             name_store_join::store_id.eq_any(
+                // Active stores for the site
                 store::table
                     .filter(store::site_id.eq(sync_site_id))
                     .select(store::id),
@@ -541,15 +545,18 @@ fn create_filtered_outgoing_sync_query(
             .or(changelog_deduped::table_name.eq(ChangelogTableName::SyncFileReference)) // All sites get all sync file references (not necessarily files)
             .or(changelog_deduped::table_name
                 .eq_any(remote_sync_table_names)
-                .and(
-                    changelog_deduped::store_id
-                        .eq_any(active_stores_for_site)
-                        .or(changelog_deduped::name_link_id
-                            .eq_any(names_visible_on_active_stores_for_site)),
-                ))
+                .and(changelog_deduped::store_id.eq_any(active_stores_for_site)))
             .or(changelog_deduped::table_name
                 .eq_any(central_by_empty_store_id)
-                .and(changelog_deduped::store_id.is_null())),
+                .and(changelog_deduped::store_id.is_null()))
+            // Special case: should sync patient-related records to all stores
+            // where they are visible, regardless of the store_id in the changelog
+            .or(changelog_deduped::table_name
+                .eq_any(patient_sync_table_names)
+                .and(
+                    changelog_deduped::name_link_id
+                        .eq_any(patients_visible_on_active_stores_for_site),
+                )),
         // Any other special cases could be handled here...
     );
 
