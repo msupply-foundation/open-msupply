@@ -3,7 +3,7 @@ use reqwest::{Client, StatusCode, Url};
 use super::api_on_central::NameStoreJoinParams;
 
 // Non-sync related APIs on the OMS Central server
-pub struct OmsCentral {
+pub struct OmsCentralApi {
     server_url: Url,
     client: Client,
     /// Username to authenticate with the central server. For the backend this is usually the site
@@ -14,15 +14,15 @@ pub struct OmsCentral {
 }
 
 #[derive(Debug)]
-pub enum OmsCentralError {
+pub enum OmsCentralApiError {
     AuthenticationFailed,
     ConnectionError(reqwest::Error),
     InternalError(String),
 }
 
-impl OmsCentral {
+impl OmsCentralApi {
     pub fn new(client: Client, server_url: Url, username: &str, password_sha256: &str) -> Self {
-        OmsCentral {
+        OmsCentralApi {
             server_url,
             client,
             username: username.to_string(),
@@ -31,7 +31,10 @@ impl OmsCentral {
     }
 
     /// Creates/updates a name_store_join
-    pub async fn name_store_join(&self, body: NameStoreJoinParams) -> Result<(), OmsCentralError> {
+    pub async fn name_store_join(
+        &self,
+        body: NameStoreJoinParams,
+    ) -> Result<(), OmsCentralApiError> {
         let response = self
             .client
             .post(self.server_url.join("/central/name-store-join").unwrap())
@@ -39,18 +42,18 @@ impl OmsCentral {
             .basic_auth(&self.username, Some(&self.password_sha256))
             .send()
             .await
-            .map_err(OmsCentralError::ConnectionError)?;
+            .map_err(OmsCentralApiError::ConnectionError)?;
 
         match response.status() {
             StatusCode::OK => Ok(()),
-            StatusCode::UNAUTHORIZED => Err(OmsCentralError::AuthenticationFailed),
+            StatusCode::UNAUTHORIZED => Err(OmsCentralApiError::AuthenticationFailed),
             _ => {
                 let text = response
                     .text()
                     .await
-                    .map_err(OmsCentralError::ConnectionError)?;
+                    .map_err(OmsCentralApiError::ConnectionError)?;
 
-                Err(OmsCentralError::InternalError(text))
+                Err(OmsCentralApiError::InternalError(text))
             }
         }
     }
