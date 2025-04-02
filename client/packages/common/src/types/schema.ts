@@ -6475,6 +6475,10 @@ export type QueriesAuthTokenArgs = {
   username: Scalars['String']['input'];
 };
 
+export type QueriesAvailablePreferencesArgs = {
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesBarcodeByGtinArgs = {
   gtin: Scalars['String']['input'];
   storeId: Scalars['String']['input'];

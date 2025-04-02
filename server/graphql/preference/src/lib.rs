@@ -37,12 +37,13 @@ impl PreferenceQueries {
     pub async fn available_preferences(
         &self,
         ctx: &Context<'_>,
+        store_id: String,
     ) -> Result<Vec<PreferenceDescriptionNode>> {
         validate_auth(
             ctx,
             &ResourceAccessRequest {
                 resource: Resource::QueryStorePreferences,
-                store_id: None,
+                store_id: Some(store_id),
             },
         )?;
 
