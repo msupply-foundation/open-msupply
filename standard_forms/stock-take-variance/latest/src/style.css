@@ -135,5 +135,9 @@ td.borderlineTopBottom {
   text-align: right;
 }
 
+.batch-wrap {
+  word-break: break-word;
+}
+
 
 @media print{@page {size: landscape}}

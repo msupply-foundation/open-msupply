@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { EquipmentReviewTab } from './ReviewTab';
 import { EquipmentUploadTab } from './UploadTab';
 import { EquipmentImportTab } from './ImportTab';
@@ -28,6 +28,7 @@ import {
   AssetCatalogueItemFragment,
   StoreRowFragment,
   useAssetData,
+  useAssetList,
 } from '@openmsupply-client/system';
 import { DraftAsset } from '../types';
 
@@ -137,11 +138,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
 
   const [importProgress, setImportProgress] = useState(0);
   const [importErrorCount, setImportErrorCount] = useState(0);
-  const {
-    data: catalogueItemData,
-    fetchAsync,
-    isLoading,
-  } = useAssetData.document.listAll();
+  const { data: catalogueItemData, isLoading } = useAssetList();
   const { data: properties } = useAssetData.utils.properties();
   const { mutateAsync: insertAssets } = useAssets.document.insert();
   const { insertLog, invalidateQueries } = useAssets.log.insert();
@@ -150,10 +147,6 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   const [bufferedEquipment, setBufferedEquipment] = useState<ImportRow[]>(
     () => []
   );
-
-  useEffect(() => {
-    fetchAsync();
-  }, [fetchAsync]);
 
   const csvExport = async () => {
     const csv = importEquipmentToCsvWithErrors(
