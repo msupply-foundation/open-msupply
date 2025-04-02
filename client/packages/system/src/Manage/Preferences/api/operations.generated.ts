@@ -3,9 +3,11 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type AllPrefsQueryVariables = Types.Exact<{ [key: string]: never }>;
+export type AvailablePreferencesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
 
-export type AllPrefsQuery = {
+export type AvailablePreferencesQuery = {
   __typename: 'Queries';
   availablePreferences: Array<{
     __typename: 'PreferenceDescriptionNode';
@@ -40,9 +42,9 @@ export type UpsertPreferenceMutation = {
   };
 };
 
-export const AllPrefsDocument = gql`
-  query allPrefs {
-    availablePreferences {
+export const AvailablePreferencesDocument = gql`
+  query availablePreferences($storeId: String!) {
+    availablePreferences(storeId: $storeId) {
       key
       jsonSchema
       uiSchema
@@ -87,17 +89,18 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
-    allPrefs(
-      variables?: AllPrefsQueryVariables,
+    availablePreferences(
+      variables: AvailablePreferencesQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<AllPrefsQuery> {
+    ): Promise<AvailablePreferencesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AllPrefsQuery>(AllPrefsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
-          }),
-        'allPrefs',
+          client.request<AvailablePreferencesQuery>(
+            AvailablePreferencesDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'availablePreferences',
         'query',
         variables
       );
