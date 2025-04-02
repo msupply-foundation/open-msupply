@@ -32,8 +32,8 @@ impl MigrationFragment for Migrate {
                     WHERE program_enrolment.id = vaccination.program_enrolment_id
                 );
 
-                INSERT INTO changelog (table_name, record_id, row_action, store_id, name_link_id)
-                    SELECT 'vaccination', id, 'UPSERT', store_id, patient_link_id
+                INSERT INTO changelog (table_name, record_id, row_action, store_id)
+                    SELECT 'vaccination', id, 'UPSERT', store_id
                     FROM vaccination;
             "#
         )?;
