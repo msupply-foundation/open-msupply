@@ -138,7 +138,9 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
 
   const [importProgress, setImportProgress] = useState(0);
   const [importErrorCount, setImportErrorCount] = useState(0);
-  const { data: catalogueItemData, isLoading } = useAssetList();
+  const {
+    query: { data: catalogueItemData, isLoading },
+  } = useAssetList();
   const { data: properties } = useAssetData.utils.properties();
   const { mutateAsync: insertAssets } = useAssets.document.insert();
   const { insertLog, invalidateQueries } = useAssets.log.insert();

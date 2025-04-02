@@ -73,7 +73,6 @@ export const AppBarButtonsComponent = ({
             onClick={() => {
               navigate(path);
             }}
-            disabled={EnvUtils.platform === Platform.Android}
           >
             {t('button.manage-asset-log-reasons')}
           </BaseButton>

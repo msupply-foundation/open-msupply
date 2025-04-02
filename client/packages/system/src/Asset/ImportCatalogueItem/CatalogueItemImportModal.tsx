@@ -19,7 +19,7 @@ import {
 import { useTranslation } from '@common/intl';
 import { importRowToCsv } from '../utils';
 import { useAssetData } from '@openmsupply-client/system';
-import { useAsset } from '../api';
+import { useAssetInsert } from '../api';
 
 interface AssetItemImportModalProps {
   isOpen: boolean;
@@ -97,9 +97,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
   const { data: assetTypes, isLoading: isLoadingTypes } =
     useAssetData.utils.types();
 
-  const {
-    create: { create, createInvalidateQueries },
-  } = useAsset();
+  const { mutateAsync: create, invalidateQueries } = useAssetInsert();
 
   const [bufferedAssetItem, setBufferedAssetItem] = useState<ImportRow[]>(
     () => []
@@ -200,7 +198,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
           setImportErrorCount(importErrorRows.length);
         });
       }
-      createInvalidateQueries();
+      invalidateQueries();
       if (importErrorRows.length === 0) {
         const importMessage = t('messages.import-generic', {
           count: numberImportRecords,
