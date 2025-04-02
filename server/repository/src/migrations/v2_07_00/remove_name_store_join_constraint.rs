@@ -35,7 +35,7 @@ impl MigrationFragment for Migrate {
                     store_id TEXT NOT NULL REFERENCES store(id),
                     name_is_customer BOOLEAN NOT NULL,
                     name_is_supplier BOOLEAN NOT NULL,
-                    is_sync_update BOOLEAN NOT NULL,
+                    is_sync_update BOOLEAN NOT NULL DEFAULT FALSE,
                     name_link_id TEXT NOT NULL
                 );
                 
