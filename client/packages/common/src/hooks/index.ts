@@ -27,6 +27,7 @@ export * from './useNativeClient';
 export * from './useWebClient';
 export * from './useInterval';
 export * from './usePagination';
+export * from './usePathnameIncludes';
 export * from './useUserPreferencePagination';
 export * from './useStringFilter';
 export * from './useIsGapsStoreOnly';

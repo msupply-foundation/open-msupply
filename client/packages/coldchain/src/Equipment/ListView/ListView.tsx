@@ -3,36 +3,34 @@ import {
   useNavigate,
   TableProvider,
   DataTable,
-  useColumns,
   createTableStore,
   NothingHere,
   useTranslation,
   useUrlQueryParams,
   useToggle,
-  TooltipTextCell,
-  useIsCentralServerApi,
-  ColumnDescription,
-  ColumnAlign,
-  DotCell,
   RouteBuilder,
-  ColumnFormat,
-  GenericColumnKey,
+  usePathnameIncludes,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { CreateAssetModal } from './CreateAssetModal';
 import { EquipmentImportModal } from '../ImportAsset';
-import { Status } from '../Components';
 import { AssetRowFragment } from '../api/operations.generated';
 import { AppRoute } from '@openmsupply-client/config';
 import { Footer } from './Footer';
+import { useAssetColumns } from './columns';
 
-const StatusCell = ({ rowData }: { rowData: AssetRowFragment }) => {
-  return <Status status={rowData.statusLog?.status} />;
-};
+const AssetList: FC = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
+  const isColdChain = usePathnameIncludes('cold-chain');
 
-const AssetListComponent: FC = () => {
+  const modalController = useToggle();
+  const importModalController = useToggle();
+
+  const { data, isError, isLoading } = useAssets.document.list();
+
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -40,102 +38,21 @@ const AssetListComponent: FC = () => {
   } = useUrlQueryParams({
     initialSort: { key: 'installationDate', dir: 'desc' },
   });
-
-  const { data, isError, isLoading } = useAssets.document.list();
   const pagination = { page, first, offset };
-  const navigate = useNavigate();
-  const t = useTranslation();
-  const modalController = useToggle();
-  const importModalController = useToggle();
-  const isCentralServer = useIsCentralServerApi();
-  const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
-    AppRoute.Equipment
-  );
 
-  const columnsToCreate: ColumnDescription<AssetRowFragment>[] = [
-    GenericColumnKey.Selection,
-  ];
-  if (isCentralServer)
-    columnsToCreate.push({
-      key: 'store',
-      label: 'label.store',
-      accessor: ({ rowData }) => rowData.store?.storeName,
-    });
+  const columns = useAssetColumns({
+    sortBy,
+    onChangeSortBy: updateSortQuery,
+  });
 
-  columnsToCreate.push(
-    {
-      key: 'assetNumber',
-      width: 150,
-      label: 'label.asset-number',
-    },
-    {
-      key: 'categoryName',
-      label: 'label.category',
-      sortable: false,
-      width: 200,
-      accessor: ({ rowData }) => rowData.assetCategory?.name,
-      Cell: TooltipTextCell,
-    },
-    {
-      key: 'type',
-      label: 'label.type',
-      sortable: false,
-      width: 200,
-      accessor: ({ rowData }) => rowData.assetType?.name,
-      Cell: TooltipTextCell,
-    },
-    {
-      key: 'manufacturer',
-      Cell: TooltipTextCell,
-      maxWidth: 200,
-      label: 'label.manufacturer',
-      sortable: false,
-      accessor: ({ rowData }) => rowData.catalogueItem?.manufacturer,
-    },
-    {
-      key: 'model',
-      label: 'label.model',
-      sortable: false,
-      accessor: ({ rowData }) => rowData.catalogueItem?.model,
-    },
-    {
-      key: 'status',
-      label: 'label.functional-status',
-      Cell: StatusCell,
-      sortable: false,
-    },
-    {
-      key: 'serialNumber',
-      label: 'label.serial',
-    },
-    {
-      key: 'catalogueItem',
-      label: 'label.non-catalogue',
-      accessor: ({ rowData }) => !rowData.catalogueItem,
-      align: ColumnAlign.Center,
-      Cell: DotCell,
-      sortable: false,
-    },
-    {
-      key: 'installationDate',
-      label: 'label.installation-date',
-      format: ColumnFormat.Date,
-    },
-    {
-      key: 'notes',
-      label: 'label.notes',
-      sortable: false,
-    }
-  );
-
-  const columns = useColumns(
-    columnsToCreate,
-    {
-      sortBy,
-      onChangeSortBy: updateSortQuery,
-    },
-    [sortBy]
-  );
+  const handleRowClick = (row: AssetRowFragment): void => {
+    const appRoute = isColdChain ? AppRoute.Coldchain : AppRoute.Manage;
+    const path = RouteBuilder.create(appRoute)
+      .addPart(AppRoute.Equipment)
+      .addPart(row.id)
+      .build();
+    navigate(path);
+  };
 
   return (
     <>
@@ -152,7 +69,7 @@ const AssetListComponent: FC = () => {
         data={data?.nodes}
         isError={isError}
         isLoading={isLoading}
-        onRowClick={row => navigate(equipmentRoute.addPart(row.id).build())}
+        onRowClick={handleRowClick}
         noDataElement={<NothingHere body={t('error.no-items-to-display')} />}
         enableColumnSelection
       />
@@ -171,6 +88,6 @@ const AssetListComponent: FC = () => {
 
 export const EquipmentListView: FC = () => (
   <TableProvider createStore={createTableStore}>
-    <AssetListComponent />
+    <AssetList />
   </TableProvider>
 );
