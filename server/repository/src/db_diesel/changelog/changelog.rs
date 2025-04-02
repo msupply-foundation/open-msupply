@@ -1,7 +1,7 @@
 use crate::{
     db_diesel::store_row::store, diesel_macros::apply_equal_filter, name_link,
-    name_store_join::name_store_join, DBType, EqualFilter, LockedConnection, NameLinkRow,
-    RepositoryError, StorageConnection,
+    name_store_join::name_store_join, vaccination_row::vaccination, DBType, EqualFilter,
+    LockedConnection, NameLinkRow, RepositoryError, StorageConnection,
 };
 use diesel::{
     helper_types::{IntoBoxed, LeftJoin},
@@ -513,9 +513,6 @@ fn create_filtered_outgoing_sync_query(
         })
         .collect();
 
-    // Patient Records
-    let patient_sync_table_names: Vec<ChangelogTableName> = vec![ChangelogTableName::Vaccination];
-
     // Central record where store id is null
     let central_by_empty_store_id: Vec<ChangelogTableName> = ChangelogTableName::iter()
         .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::RemoteAndCentral))
@@ -526,16 +523,23 @@ fn create_filtered_outgoing_sync_query(
         .select(store::id.nullable())
         .into_boxed();
 
-    let patients_visible_on_active_stores_for_site = name_store_join::table
+    let vaccinations_for_visible_patients = vaccination::table
         .filter(
-            name_store_join::store_id.eq_any(
-                // Active stores for the site
-                store::table
-                    .filter(store::site_id.eq(sync_site_id))
-                    .select(store::id),
+            vaccination::patient_link_id.eq_any(
+                // name_link_ids of patients visible on active stores for the site
+                name_store_join::table
+                    .filter(
+                        name_store_join::store_id.eq_any(
+                            // Active stores for site (same as above, without nullable select)
+                            store::table
+                                .filter(store::site_id.eq(sync_site_id))
+                                .select(store::id),
+                        ),
+                    )
+                    .select(name_store_join::name_link_id),
             ),
         )
-        .select(name_store_join::name_link_id.nullable())
+        .select(vaccination::id)
         .into_boxed();
 
     // Filter the query for the matching records for each type
@@ -549,14 +553,11 @@ fn create_filtered_outgoing_sync_query(
             .or(changelog_deduped::table_name
                 .eq_any(central_by_empty_store_id)
                 .and(changelog_deduped::store_id.is_null()))
-            // Special case: should sync patient-related records to all stores
-            // where they are visible, regardless of the store_id in the changelog
+            // Special case: patient Vaccination records
+            // where patient is visible, regardless of the store_id in the changelog
             .or(changelog_deduped::table_name
-                .eq_any(patient_sync_table_names)
-                .and(
-                    changelog_deduped::name_link_id
-                        .eq_any(patients_visible_on_active_stores_for_site),
-                )),
+                .eq(ChangelogTableName::Vaccination)
+                .and(changelog_deduped::record_id.eq_any(vaccinations_for_visible_patients))),
         // Any other special cases could be handled here...
     );
 
