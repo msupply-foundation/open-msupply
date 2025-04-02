@@ -13,11 +13,23 @@ export const useAssetLogReason = () => {
     error: createError,
   } = useCreateAssetLogReason();
 
+  // DELETE
+  const {
+    mutateAsync: deleteMutation,
+    isLoading: isDeleting,
+    error: deleteError,
+  } = useDeleteAssetLogReason();
+
   return {
     create: {
       create: createMutation,
       isCreating,
       createError,
+    },
+    delete: {
+      delete: deleteMutation,
+      isDeleting,
+      deleteError,
     },
   };
 };
@@ -31,6 +43,28 @@ const useCreateAssetLogReason = () => {
     });
 
     return result.centralServer.logReason.insertAssetLogReason;
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries([ASSET]);
+    },
+    onError: e => {
+      console.error(e);
+    },
+  });
+};
+
+const useDeleteAssetLogReason = () => {
+  const { assetApi, queryClient } = useAssetGraphQL();
+
+  const mutationFn = async (reasonId: string) => {
+    const result = await assetApi.deleteLogReason({
+      reasonId,
+    });
+
+    return result.centralServer.logReason.deleteLogReason;
   };
 
   return useMutation({
