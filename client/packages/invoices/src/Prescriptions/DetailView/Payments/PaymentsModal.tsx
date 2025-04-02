@@ -99,7 +99,8 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
     // Reset plugin error when modal is closed
     if (pluginEvents.state.errorMessage)
       pluginEvents.setState({ ...pluginEvents.state, errorMessage: null });
-  }, [isOpen, pluginEvents]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   return (
     <Modal
