@@ -269,6 +269,11 @@ mutation insertOutboundShipment(
   }
 }
 
+fragment CannotHaveEstimatedDeliveryDateBeforeShippedDateError on CannotHaveEstimatedDeliveryDateBeforeShippedDate {
+  __typename
+  description
+}
+
 mutation updateOutboundShipment(
   $input: UpdateOutboundShipmentInput!
   $storeId: String!
@@ -277,7 +282,7 @@ mutation updateOutboundShipment(
     ... on UpdateOutboundShipmentError {
       __typename
       error {
-        description
+        __typename
         ... on RecordNotFound {
           __typename
           description
@@ -306,6 +311,7 @@ mutation updateOutboundShipment(
           __typename
           description
         }
+        ...CannotHaveEstimatedDeliveryDateBeforeShippedDateError
         ... on RecordNotFound {
           __typename
           description
@@ -681,7 +687,9 @@ mutation upsertOutboundShipment(
         ... on UpdateOutboundShipmentError {
           __typename
           error {
+            __typename
             description
+            ...CannotHaveEstimatedDeliveryDateBeforeShippedDateError
           }
         }
         ... on NodeError {

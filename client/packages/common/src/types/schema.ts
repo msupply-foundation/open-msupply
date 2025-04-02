@@ -1054,6 +1054,12 @@ export type CannotEditStocktake = DeleteStocktakeErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type CannotHaveEstimatedDeliveryDateBeforeShippedDate =
+  UpdateErrorInterface & {
+    __typename: 'CannotHaveEstimatedDeliveryDateBeforeShippedDate';
+    description: Scalars['String']['output'];
+  };
+
 export type CannotHaveFractionalPack = InsertRepackErrorInterface & {
   __typename: 'CannotHaveFractionalPack';
   description: Scalars['String']['output'];

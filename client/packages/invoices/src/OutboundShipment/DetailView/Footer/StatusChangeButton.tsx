@@ -96,13 +96,14 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { lines, status, onHold, update } = useOutbound.document.fields([
+  const t = useTranslation();
+  const { lines, status, onHold } = useOutbound.document.fields([
     'status',
     'onHold',
     'lines',
   ]);
-  const { success, error } = useNotification();
-  const t = useTranslation();
+  const { mutateAsync: update } = useOutbound.document.update();
+  const { success, error, info } = useNotification();
   const { data } = useOutbound.document.get();
   const hasLinesToPrune =
     data?.status === InvoiceNodeStatus.New &&
@@ -121,8 +122,23 @@ const useStatusChangeButton = () => {
   const onConfirmStatusChange = async () => {
     if (!selectedOption) return null;
     try {
-      await update({ status: selectedOption.value });
-      success(t('messages.shipment-saved'))();
+      await update({
+        id: data?.id ?? '',
+        status: selectedOption.value,
+      }).then(res => {
+        res?.forEach(res => {
+          if (res?.__typename === 'InvoiceNode') {
+            success(t('messages.shipment-saved'))();
+          }
+          if (
+            res.__typename === 'UpdateOutboundShipmentError' &&
+            res.error.__typename ===
+              'CannotHaveEstimatedDeliveryDateBeforeShippedDate'
+          ) {
+            info(t('error.estimated-delivery-before-shipped-date'))();
+          }
+        });
+      });
     } catch (e) {
       error(t('messages.error-saving-shipment'))();
     }
