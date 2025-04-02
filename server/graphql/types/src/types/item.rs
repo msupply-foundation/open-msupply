@@ -1,5 +1,6 @@
 use super::{
     ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode, StockLineConnector,
+    WarningNode,
 };
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
@@ -8,7 +9,7 @@ use graphql_core::{
         ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemVariantsByItemIdLoader,
         ItemsStatsForItemLoader, ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput,
         MasterListByItemIdLoader, MasterListByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
-        StockLineByItemAndStoreIdLoaderInput,
+        StockLineByItemAndStoreIdLoaderInput, WarningLoader,
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
@@ -154,6 +155,17 @@ impl ItemNode {
             .unwrap_or_default();
 
         Ok(ItemDirectionNode::from_vec(result))
+    }
+
+    pub async fn item_warnings(&self, ctx: &Context<'_>) -> Result<Vec<WarningNode>> {
+        // needs to be warnings
+        let loader = ctx.get_loader::<DataLoader<WarningLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(WarningNode::from_vec(result))
     }
 
     pub async fn msupply_universal_code(&self) -> String {

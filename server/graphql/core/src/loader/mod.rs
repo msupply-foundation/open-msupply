@@ -55,6 +55,8 @@ mod vaccine_course;
 mod vaccine_course_by_program;
 mod vaccine_course_dose_by_vaccine_course;
 mod vaccine_course_item_by_vaccine_course;
+mod warning;
+mod warning_by_item;
 
 use std::{collections::HashSet, hash::Hasher};
 
@@ -115,6 +117,7 @@ pub use vaccine_course::*;
 pub use vaccine_course_by_program::*;
 pub use vaccine_course_dose_by_vaccine_course::*;
 pub use vaccine_course_item_by_vaccine_course::*;
+pub use warning::*;
 
 #[derive(Debug, Clone)]
 /// Sometimes loaders need to take an extra parameter, like store_id or requisition_id

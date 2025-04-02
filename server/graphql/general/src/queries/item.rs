@@ -55,6 +55,7 @@ pub struct ItemFilterInput {
     pub is_active: Option<bool>,
     pub is_vaccine: Option<bool>,
     pub master_list_id: Option<EqualFilterStringInput>,
+    pub item_warning_link_id: Option<EqualFilterStringInput>,
 }
 
 #[derive(Union)]
@@ -107,6 +108,7 @@ impl ItemFilterInput {
             is_vaccine,
             is_visible_or_on_hand,
             master_list_id,
+            item_warning_link_id,
         } = self;
 
         ItemFilter {
@@ -122,6 +124,7 @@ impl ItemFilterInput {
             is_vaccine,
             is_visible_or_on_hand,
             master_list_id: master_list_id.map(EqualFilter::from),
+            item_warning_link_id: item_warning_link_id.map(EqualFilter::from),
         }
     }
 }
