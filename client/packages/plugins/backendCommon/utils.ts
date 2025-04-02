@@ -1,19 +1,11 @@
 const wrapSql = (fields: string[], sqlStatement: string) => {
-  if (sql_type() === 'sqlite') {
-    return `
-            SELECT json_object(${fields.map(field => `'${field}', ${field}`)}) AS json_row 
-            FROM (${sqlStatement})
-            `;
-  }
+  const jsonObjectFunction =
+    sql_type() === 'sqlite' ? 'json_object' : 'json_build_object';
 
-  if (sql_type() === 'postgres') {
-    return `
-            SELECT json_agg(inner) AS json_row 
-            FROM (${sqlStatement}) AS inner
-            `;
-  }
-
-  throw new Error('Unknown sql_type');
+  return `
+      SELECT ${jsonObjectFunction}(${fields.map(field => `'${field}', inner_statement.${field}`)}) AS json_row 
+      FROM (${sqlStatement}) AS inner_statement
+  `;
 };
 
 export const sqlQuery = <K extends string>(
@@ -46,7 +38,7 @@ export const sqlDateTime = (date: Date) =>
 export const localDate = (date: Date) => {
   return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 };
-export const sqlList = (list: string[]) => '("' + list.join('","') + '")';
+export const sqlList = (list: string[]) => `('${list.join(`','`)}')`;
 export const fromSqlDateTime = (datetime: string) => {
   // Will map '2023-01-01 10:10:10' to UTC '2023-01-01T10:10:10Z'
   return new Date(`${datetime.split(' ').join('T')}Z`);
