@@ -56,6 +56,9 @@ const assetParsers = {
     warrantyStart: input.warrantyStart,
     warrantyEnd: input.warrantyEnd,
     needsReplacement: input.needsReplacement,
+    lockedFieldsJson: input.lockedFields
+      ? JSON.stringify(input.lockedFields)
+      : null,
   }),
   toUpdate: (input: Partial<DraftAsset>): UpdateAssetInput => ({
     id: input.id ?? '',

@@ -171,7 +171,7 @@ export const CreateAssetModal = ({
       await insertLog({
         id: FnUtils.generateUUID(),
         assetId: draft.id,
-        comment: t('label.created'),
+        comment: t('message.asset-created'),
         status: AssetLogStatusInput.Functioning,
       });
       invalidateQueries();
