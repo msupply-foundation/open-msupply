@@ -2,6 +2,7 @@ import { Utils } from './utils';
 import { Log } from './log';
 export * from './useAssetList';
 export * from './useAsset';
+export * from './useAssetLogReasonList';
 
 export const useAssetData = {
   utils: {
