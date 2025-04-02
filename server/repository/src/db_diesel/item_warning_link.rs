@@ -7,21 +7,18 @@ use crate::{
     db_diesel::item_row::item, diesel_macros::apply_equal_filter, item_link,
     repository_error::RepositoryError, DBType, EqualFilter, ItemLinkRow,
 };
-use diesel::dsl::{InnerJoin, LeftJoin};
+use diesel::dsl::InnerJoin;
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Clone, Default, PartialEq, Debug)]
 pub struct ItemWarningLink {
-    pub warning_row: Option<WarningRow>,
+    pub warning_row: WarningRow,
     pub item_row: ItemRow,
-    pub priority: bool,
+    pub item_warning_link_row: ItemWarningLinkRow,
+    // pub priority: bool,
 }
 
-type ItemWarningLinkJoin = (
-    ItemWarningLinkRow,
-    (ItemLinkRow, ItemRow),
-    Option<WarningRow>,
-);
+type ItemWarningLinkJoin = (ItemWarningLinkRow, (ItemLinkRow, ItemRow), WarningRow);
 
 #[derive(Clone, Default)]
 pub struct ItemWarningLinkFilter {
@@ -58,6 +55,14 @@ impl<'a> ItemWarningLinkRepository<'a> {
         ItemWarningLinkRepository { connection }
     }
 
+    pub fn count(&self, filter: Option<ItemWarningLinkFilter>) -> Result<i64, RepositoryError> {
+        let query = create_filtered_query(filter);
+
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
+    }
+
     pub fn query_by_filter(
         &self,
         filter: ItemWarningLinkFilter,
@@ -82,7 +87,8 @@ impl<'a> ItemWarningLinkRepository<'a> {
         // Load results into the correct tuple type
         let result = query.load::<ItemWarningLinkJoin>(self.connection.lock().connection())?;
 
-        Ok(result.into_iter().map(to_domain).collect())
+        let final_result = result.into_iter().map(to_domain).collect();
+        Ok(final_result)
     }
 }
 fn to_domain(
@@ -91,13 +97,14 @@ fn to_domain(
     ItemWarningLink {
         warning_row,
         item_row,
-        priority: item_warning_link_row.priority,
+        item_warning_link_row,
+        // priority: item_warning_link_row.priority,
     }
 }
 
 type BoxedItemWarningLinkQuery = IntoBoxed<
     'static,
-    LeftJoin<
+    InnerJoin<
         InnerJoin<item_warning_link::table, InnerJoin<item_link::table, item::table>>,
         warning::table,
     >,
@@ -108,7 +115,7 @@ type BoxedItemWarningLinkQuery = IntoBoxed<
 fn create_filtered_query(filter: Option<ItemWarningLinkFilter>) -> BoxedItemWarningLinkQuery {
     let mut query = item_warning_link::table
         .inner_join(item_link::table.inner_join(item::table))
-        .left_join(warning::table)
+        .inner_join(warning::table)
         .into_boxed();
 
     if let Some(f) = filter {

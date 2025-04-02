@@ -46,6 +46,7 @@ pub mod invoice;
 pub mod invoice_line;
 pub mod item;
 pub mod item_stats;
+pub mod item_warning_link;
 pub mod json_translate;
 pub mod label_printer_settings_service;
 pub mod ledger;
@@ -93,6 +94,7 @@ pub mod user_account;
 pub mod vaccination;
 pub mod vaccine_course;
 pub mod validate;
+pub mod warning;
 
 #[cfg(test)]
 mod login_mock_data;
