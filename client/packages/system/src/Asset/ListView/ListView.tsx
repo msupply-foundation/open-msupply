@@ -36,7 +36,9 @@ const AssetListComponent: FC = () => {
       { key: 'subCatalogue' },
     ],
   });
-  const { data, isError, isLoading } = useAssetList({
+  const {
+    query: { data, isError, isLoading },
+  } = useAssetList({
     first,
     offset,
     sortBy,
