@@ -523,6 +523,11 @@ fn create_filtered_outgoing_sync_query(
         .select(store::id.nullable())
         .into_boxed();
 
+    // Ideally this would be by changelog name_link_id, but that has an FK constraint
+    // requiring all names to exist on OMS central, which currently isn't the case.
+    // Instead, for visible patient sync - filter changelogs by record id of vaccinations
+    // for visible patients
+    // Bit of a hack, subquery unlikely to scale well - bring on v7 sync :cry:
     let vaccinations_for_visible_patients = vaccination::table
         .filter(
             vaccination::patient_link_id.eq_any(
