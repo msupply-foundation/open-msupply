@@ -26,7 +26,7 @@ export type useAssetsProps = {
 };
 
 export const useAssetList = (queryParams?: ListParams) => {
-  const { data, isLoading, isError } = getList(queryParams);
+  const { data, isLoading, isError } = useGetList(queryParams);
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
@@ -97,7 +97,7 @@ export const useInfiniteAssets = ({
   return infiniteQuery;
 };
 
-export const getList = (queryParams?: ListParams) => {
+export const useGetList = (queryParams?: ListParams) => {
   const { assetApi, storeId } = useAssetGraphQL();
   const { first, offset, sortBy, filterBy } = queryParams ?? {};
   const queryKey = [ASSET, storeId, LIST, first, offset, sortBy, filterBy];
