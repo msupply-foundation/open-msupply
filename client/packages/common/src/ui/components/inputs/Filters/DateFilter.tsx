@@ -19,14 +19,15 @@ export type RangeOption = 'from' | 'to';
 export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
   filterDefinition,
 }) => {
+  const currentYear = new Date().getFullYear()
   const {
     type,
     urlParameter,
     name,
     range,
     displayAs = type,
-    maxDate = '9999-12-31',
-    minDate = '0000-01-01',
+    maxDate = `${currentYear + 10}-12-31`,
+    minDate = `${currentYear - 120}-01-01`,
   } = filterDefinition;
   const { urlQuery, updateQuery } = useUrlQuery();
   const { customDate, urlQueryDate, urlQueryDateTime } = useFormatDateTime();
