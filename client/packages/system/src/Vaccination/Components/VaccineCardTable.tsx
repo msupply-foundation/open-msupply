@@ -219,6 +219,7 @@ const VaccinationCardComponent = ({
       {
         key: 'facilityName',
         label: 'label.facility',
+        accessor: ({ rowData }) => (rowData.given ? rowData.facilityName : ''),
       },
     ],
     {},
