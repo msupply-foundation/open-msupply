@@ -86,7 +86,7 @@ const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
         <TotalCell
           style={{
             textAlign: 'right',
-            paddingRight: 12,
+            paddingRight: 20,
           }}
         >
           {!!NumUtils.hasMoreThanTwoDp(allocatedQuantity)
