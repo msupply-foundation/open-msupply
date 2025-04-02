@@ -16,8 +16,8 @@ use service::invoice_line::ShipmentTaxUpdate;
 use service::NullableUpdate;
 
 use super::error::{
-    CannotChangeStatusOfInvoiceOnHold, CannotIssueInForeignCurrency, InvoiceIsNotEditable,
-    NotAnOutboundShipmentError,
+    CannotChangeStatusOfInvoiceOnHold, CannotHaveEstimatedDeliveryDateBeforeShippedDate,
+    CannotIssueInForeignCurrency, InvoiceIsNotEditable, NotAnOutboundShipmentError,
 };
 
 #[derive(InputObject)]
@@ -101,6 +101,9 @@ pub enum UpdateErrorInterface {
     NotAnOutboundShipment(NotAnOutboundShipmentError),
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(CanOnlyChangeToAllocatedWhenNoUnallocatedLines),
     CannotIssueInForeignCurrency(CannotIssueInForeignCurrency),
+    CannotHaveEstimatedDeliveryDateBeforeShippedDate(
+        CannotHaveEstimatedDeliveryDateBeforeShippedDate,
+    ),
 }
 
 impl UpdateInput {
@@ -176,6 +179,13 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             return Ok(UpdateErrorInterface::CannotIssueInForeignCurrency(
                 CannotIssueInForeignCurrency,
             ))
+        }
+        ServiceError::CannotHaveEstimatedDeliveryDateBeforeShippedDate => {
+            return Ok(
+                UpdateErrorInterface::CannotHaveEstimatedDeliveryDateBeforeShippedDate(
+                    CannotHaveEstimatedDeliveryDateBeforeShippedDate,
+                ),
+            )
         }
         // Standard Graphql Errors
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
