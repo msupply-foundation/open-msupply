@@ -41,5 +41,7 @@ export const localDate = (date: Date) => {
 export const sqlList = (list: string[]) => `('${list.join(`','`)}')`;
 export const fromSqlDateTime = (datetime: string) => {
   // Will map '2023-01-01 10:10:10' to UTC '2023-01-01T10:10:10Z'
-  return new Date(`${datetime.split(' ').join('T')}Z`);
+  // Will also map '2024-09-08 04:12:27.398858' to UTC '2024-09-08T04:12:27Z'
+  const withoutMillisecods = datetime.split('.')[0] || datetime;
+  return new Date(`${withoutMillisecods.split(' ').join('T')}Z`);
 };
