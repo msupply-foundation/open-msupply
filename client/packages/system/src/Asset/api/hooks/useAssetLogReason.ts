@@ -82,13 +82,9 @@ const useDeleteAssetLogReason = () => {
 export const checkLogReasonStatus = (status: string): boolean => {
   switch (status) {
     case AssetLogStatusInput.Decommissioned:
-      return true;
     case AssetLogStatusInput.Functioning:
-      return true;
     case AssetLogStatusInput.FunctioningButNeedsAttention:
-      return true;
     case AssetLogStatusInput.NotFunctioning:
-      return true;
     case AssetLogStatusInput.NotInUse:
       return true;
     default:
