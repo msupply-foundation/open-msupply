@@ -3,6 +3,7 @@ import { Log } from './log';
 export * from './useAssetList';
 export * from './useAsset';
 export * from './useAssetLogReasonList';
+export * from './useAssetLogReason';
 
 export const useAssetData = {
   utils: {
@@ -13,8 +14,6 @@ export const useAssetData = {
   },
 
   log: {
-    listReasons: Log.useAssetLogReasons,
-    insertReasons: Log.useAssetLogReasonInsert,
     deleteReason: Log.useAssetLogReasonsDelete,
   },
 
