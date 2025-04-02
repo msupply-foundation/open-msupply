@@ -6,24 +6,16 @@ const NameService = React.lazy(
   () => import('@openmsupply-client/system/src/Name/Service')
 );
 
-const IndicatorsDemographicsService = React.lazy(
-  () =>
-    import(
-      '@openmsupply-client/system/src/IndicatorsDemographics/Service/Service'
-    )
+const ManageService = React.lazy(
+  () => import('@openmsupply-client/system/src/Manage/Service')
 );
 
 const EquipmentService = React.lazy(
-  () => import('@openmsupply-client//coldchain/src/ColdchainService')
+  () => import('@openmsupply-client/coldchain/src/ColdchainService')
 );
 
 const fullFacilitiesPath = RouteBuilder.create(AppRoute.Manage)
   .addPart(AppRoute.Facilities)
-  .addWildCard()
-  .build();
-
-const fullIndicatorsDemographicsPath = RouteBuilder.create(AppRoute.Manage)
-  .addPart(AppRoute.IndicatorsDemographics)
   .addWildCard()
   .build();
 
@@ -32,16 +24,27 @@ const fullEquipmentPath = RouteBuilder.create(AppRoute.Manage)
   .addWildCard()
   .build();
 
+const fullManagePath = RouteBuilder.create(AppRoute.Manage)
+  .addWildCard()
+  .build();
+
 export const ManageRouter: FC = () => {
   const gotoFacilities = useMatch(fullFacilitiesPath);
-  const gotoIndicatorsDemographics = useMatch(fullIndicatorsDemographicsPath);
   const gotoEquipment = useMatch(fullEquipmentPath);
+  const goToManage = useMatch(fullManagePath);
 
-  if (gotoFacilities) return <NameService />;
+  if (gotoFacilities) {
+    return <NameService />;
+  }
 
-  if (gotoIndicatorsDemographics) return <IndicatorsDemographicsService />;
+  if (gotoEquipment) {
+    return <EquipmentService />;
+  }
 
-  if (gotoEquipment) return <EquipmentService />;
+  // Put this last to catch all other routes
+  if (goToManage) {
+    return <ManageService />;
+  }
 
   const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();
   return <Navigate to={notFoundRoute} />;

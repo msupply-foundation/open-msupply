@@ -50,6 +50,13 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
             text={t('indicators-demographics')}
           />
           <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.Preferences)
+              .build()}
+            text={t('preferences')}
+          />
+          <AppNavLink
             visible={isCentralServer && vaccineModuleEnabled}
             end
             to={RouteBuilder.create(AppRoute.Manage)

@@ -1,4 +1,5 @@
 pub mod amc;
+pub mod graphql_query;
 pub mod transform_request_requisition_lines;
 
 #[cfg(test)]
@@ -23,6 +24,7 @@ mod generate_typescript_types {
             transform_request_requisition_lines::Input,
             transform_request_requisition_lines::Output,
         >,
+        graphql_query: Function<graphql_query::Input, graphql_query::Output>,
         // Extra types to expose, not directly related to plugin interface
         // like for input or output of global methods
         get_store_preferences: StorePreferenceRow,

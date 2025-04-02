@@ -3,7 +3,7 @@ import {
   useFieldsSelector,
 } from '@openmsupply-client/common';
 import { useRequest, useRequestNumber } from './useRequest';
-import { RequestFragment } from '../../operations.generated';
+import { RequestFragment } from '../../.';
 import { useRequestApi } from '../utils/useRequestApi';
 
 export const useRequestFields = <

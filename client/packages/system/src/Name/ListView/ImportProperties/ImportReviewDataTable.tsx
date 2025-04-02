@@ -85,7 +85,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
       key: property.key,
       width: 150,
       sortable: false,
-      label: undefined,
+      label: property.name,
       labelProps: {
         defaultValue: property.name,
       },
