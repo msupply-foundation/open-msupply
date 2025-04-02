@@ -50,6 +50,7 @@ pub enum UpdateOutboundShipmentError {
     OtherPartyDoesNotExist,
     // Error applies to unallocated lines with above zero quantity
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
+    CannotHaveEstimatedDeliveryDateBeforeShippedDate,
     // Internal
     UpdatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
