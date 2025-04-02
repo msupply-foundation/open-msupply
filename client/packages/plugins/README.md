@@ -174,7 +174,7 @@ Hot reloading will be working on dev mode but frontend needs to be restarted whe
 Different branches of plugins can be selected by adding a -b flag to the adding submodule command:
 
 ```
-git submodule add [your-plugin-bundle-repo-url] -b [your-branch] client/packages/plugins/myPluginBundle
+git submodule add -b [your-branch] [your-plugin-bundle-repo-url] client/packages/plugins/myPluginBundle
 ```
 
 This will add a branch field to the .gitmodules file in the root project dir to include a specific branch field:
