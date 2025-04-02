@@ -48,3 +48,27 @@ impl SyncTranslation for WarningTranslation {
         Ok(PullTranslateResult::upsert(result))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_warning_translation() {
+        use crate::sync::test::test_data::warning as test_data;
+        let translator = WarningTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_warning_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+    }
+}
