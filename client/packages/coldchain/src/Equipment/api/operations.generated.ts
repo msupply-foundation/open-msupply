@@ -39,6 +39,12 @@ export type AssetRowFragment = {
   } | null;
   assetCategory?: { __typename: 'AssetCategoryNode'; name: string } | null;
   assetType?: { __typename: 'AssetTypeNode'; name: string } | null;
+  lockedFields: {
+    __typename: 'LockedAssetFieldsNode';
+    serialNumber: boolean;
+    warrantyEnd: boolean;
+    warrantyStart: boolean;
+  };
 };
 
 export type AssetFragment = {
@@ -115,6 +121,12 @@ export type AssetFragment = {
     name: string;
   } | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  lockedFields: {
+    __typename: 'LockedAssetFieldsNode';
+    serialNumber: boolean;
+    warrantyEnd: boolean;
+    warrantyStart: boolean;
+  };
 };
 
 export type ColdchainAssetLogFragment = {
@@ -193,6 +205,12 @@ export type AssetsQuery = {
       } | null;
       assetCategory?: { __typename: 'AssetCategoryNode'; name: string } | null;
       assetType?: { __typename: 'AssetTypeNode'; name: string } | null;
+      lockedFields: {
+        __typename: 'LockedAssetFieldsNode';
+        serialNumber: boolean;
+        warrantyEnd: boolean;
+        warrantyStart: boolean;
+      };
     }>;
   };
 };
@@ -285,6 +303,12 @@ export type AssetByIdQuery = {
         name: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      lockedFields: {
+        __typename: 'LockedAssetFieldsNode';
+        serialNumber: boolean;
+        warrantyEnd: boolean;
+        warrantyStart: boolean;
+      };
     }>;
   };
 };
@@ -375,6 +399,12 @@ export type AssetFromGs1DataQuery = {
           name: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+        lockedFields: {
+          __typename: 'LockedAssetFieldsNode';
+          serialNumber: boolean;
+          warrantyEnd: boolean;
+          warrantyStart: boolean;
+        };
       }
     | { __typename: 'ScannedDataParseError' };
 };
@@ -552,6 +582,11 @@ export const AssetRowFragmentDoc = gql`
     }
     properties
     catalogProperties
+    lockedFields {
+      serialNumber
+      warrantyEnd
+      warrantyStart
+    }
   }
 `;
 export const AssetFragmentDoc = gql`
@@ -627,6 +662,11 @@ export const AssetFragmentDoc = gql`
     warrantyStart
     warrantyEnd
     needsReplacement
+    lockedFields {
+      serialNumber
+      warrantyEnd
+      warrantyStart
+    }
   }
 `;
 export const ColdchainAssetLogFragmentDoc = gql`

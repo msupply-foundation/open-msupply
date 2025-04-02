@@ -141,7 +141,7 @@
   "cmdk.goto-patients": "Go to: Patients",
   "cmdk.goto-prescriptions": "Go to: Prescriptions",
   "cmdk.goto-reports": "Go to: Reports",
-  "cmdk.goto-stock": "Go to: Stock",
+  "cmdk.goto-stock": "Go to: View Stock",
   "cmdk.goto-stocktakes": "Go to: Stocktakes",
   "cmdk.goto-suppliers": "Go to: Suppliers",
   "cmdk.more-info-close": "More info panel: hide",
@@ -299,6 +299,7 @@
   "error.more-info": "More information",
   "error.name-program-duplicate": "Vaccine course name already exists for this program",
   "error.no-asset-create-permission": "You do not have permission to create a new asset.",
+  "error.no-asset-create-scan-permission": "You do not have permission to create a new asset via data matrix scan.",
   "error.no-asset-edit-permission": "You do not have permission to edit assets.",
   "error.no-asset-import-permission": "You do not have permission to import assets",
   "error.no-asset-log-reasons": "There are no asset log reasons to display.",
@@ -829,6 +830,7 @@
   "label.general": "General",
   "label.general-population": "General Population",
   "label.generate": "Generate",
+  "label.global-preference": "Global preference",
   "label.gps-coordinates": "GPS coordinates",
   "label.group-by-item": "Group by Item",
   "label.growth-on-previous-year": "Growth on previous year",
@@ -1350,6 +1352,7 @@
   "messages.cannot-delete-linked-requisition": "Cannot delete linked requisition",
   "messages.cannot-delete-multiple-lines": "One or more lines cannot be deleted",
   "messages.cannot-delete-requisition-with-shipment": "Cannot delete requisition linked to a shipment",
+  "messages.cannot-delete-stocktake-on-hold": "Cannot delete stocktake that is 'On Hold'",
   "messages.cannot-delete-transfer-requisition": "Cannot delete transfer requisition",
   "messages.cannot-edit-requisition": "Cannot edit Requisition.",
   "messages.cannot-perform-action": "This action cannot be performed on one or more lines",
@@ -1736,6 +1739,7 @@
   "placeholder.search-by-notes": "Search by notes",
   "policyType.BUSINESS": "Business",
   "policyType.PERSONAL": "Personal",
+  "preference.show_contact_tracing": "Show Contact Tracing",
   "preferences": "Preferences",
   "prescription": "Prescriptions",
   "prescriptions": "Prescriptions",
@@ -1958,5 +1962,6 @@
   "warning.cannot-create-placeholder-units": "There is a total of {{allocatedQuantity}} units available. Unable to allocate all {{requestedQuantity}} units.",
   "warning.caps-lock": "Warning: Caps lock is on",
   "warning.field-not-parsed": "{{field}} not parsed",
-  "warning.nothing-to-supply": "Nothing left to supply!"
+  "warning.nothing-to-supply": "Nothing left to supply!",
+  "tooltip.defined-by-gs1-matrix": "Defined by GS1 datamatrix"
 }
