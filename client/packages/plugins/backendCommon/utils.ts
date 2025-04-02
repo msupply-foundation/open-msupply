@@ -3,8 +3,8 @@ const wrapSql = (fields: string[], sqlStatement: string) => {
     sql_type() === 'sqlite' ? 'json_object' : 'json_build_object';
 
   return `
-      SELECT ${jsonObjectFunction}(${fields.map(field => `'${field}', ${field}`)}) AS json_row 
-      FROM (${sqlStatement})
+      SELECT ${jsonObjectFunction}(${fields.map(field => `'${field}', inner_statement.${field}`)}) AS json_row 
+      FROM (${sqlStatement}) AS inner_statement
   `;
 };
 
