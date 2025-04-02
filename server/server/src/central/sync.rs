@@ -2,13 +2,13 @@ use std::fmt::Display;
 
 use actix_multipart::form::{tempfile::TempFile, MultipartForm};
 use actix_web::{
+    dev::HttpServiceFactory,
     http::header::{ContentDisposition, DispositionParam, DispositionType},
     post, put,
     web::{self, Data, Json},
     HttpRequest, Responder, ResponseError,
 };
 
-use crate::central_server_only;
 use service::{
     service_provider::ServiceProvider,
     settings::Settings,
@@ -22,16 +22,13 @@ use service::{
     },
 };
 
-pub fn config_sync_on_central(cfg: &mut web::ServiceConfig) {
-    cfg.service(
-        web::scope("central/sync")
-            .wrap(central_server_only())
-            .service(pull)
-            .service(push)
-            .service(site_status)
-            .service(download_file)
-            .service(upload_file),
-    );
+pub fn sync_on_central() -> impl HttpServiceFactory {
+    web::scope("sync")
+        .service(pull)
+        .service(push)
+        .service(site_status)
+        .service(download_file)
+        .service(upload_file)
 }
 
 #[post("/pull")]

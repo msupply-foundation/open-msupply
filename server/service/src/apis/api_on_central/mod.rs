@@ -1,21 +1,24 @@
 use log::info;
 use repository::{NameStoreJoinRepository, NameStoreJoinRow, RepositoryError};
-use reqwest::{ClientBuilder, StatusCode};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use url::Url;
 use util::format_error;
 
 use crate::{
-    service_provider::{ServiceContext, ServiceProvider},
-    sync::CentralServerConfig,
+    service_provider::ServiceProvider,
+    sync::{
+        api::{SyncApiSettings, SyncApiV5},
+        CentralServerConfig,
+    },
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NameStoreJoinParams {
     pub id: String,
     pub name_id: String,
     pub store_id: String,
+    pub sync_v5_settings: SyncApiSettings,
 }
 
 #[derive(Debug)]
@@ -34,6 +37,8 @@ pub enum CentralApiError {
     ConnectionError(String),
     #[error("Internal error: {0}")]
     InternalError(String),
+    #[error("Internal error: {0}")]
+    LegacyServerError(String),
 }
 
 impl From<RepositoryError> for CentralApiError {
@@ -49,15 +54,15 @@ pub async fn patient_name_store_join(
         id,
         name_id,
         store_id,
+        sync_v5_settings,
     }: NameStoreJoinParams,
-    auth: SiteAuth,
 ) -> Result<(), CentralApiError> {
     if !CentralServerConfig::is_central_server() {
         return Err(CentralApiError::NotACentralServer);
     }
 
     let ctx = service_provider.basic_context()?;
-    validate_auth(service_provider, &ctx, &auth).await?;
+    validate_auth(sync_v5_settings).await?;
 
     let name_store_join_repo = NameStoreJoinRepository::new(&ctx.connection);
 
@@ -83,40 +88,14 @@ pub async fn patient_name_store_join(
 }
 
 // OMS Central does not yet do auth validation for site credentials
-// So we call an OG endpoint to validate the credentials
-// (/login endpoint is for user credentials, using name_store_join for site credentials)
-async fn validate_auth(
-    service_provider: &ServiceProvider,
-    ctx: &ServiceContext,
-    auth: &SiteAuth,
-) -> Result<(), CentralApiError> {
-    let sync_settings =
-        service_provider
-            .settings
-            .sync_settings(ctx)?
-            .ok_or(CentralApiError::InternalError(
-                "Missing sync settings".to_string(),
-            ))?;
-
-    let central_server_url = Url::parse(&sync_settings.url).map_err(|err| {
-        CentralApiError::InternalError(format!("Failed to parse central server url: {}", err))
-    })?;
-    let client = ClientBuilder::new()
-        .build()
-        .map_err(|err| CentralApiError::ConnectionError(format!("{:?}", err)))?;
-
-    let response = client
-        .post(central_server_url.join("/api/v4/name_store_join").unwrap())
-        .basic_auth(&auth.username, Some(&auth.password_sha256))
-        // Send an empty body - we don't want to actually create a name_store_join, just validate auth
-        .json("")
-        .send()
+// So we call Legacy central server for this
+// (Use sync API for simplest auth)
+async fn validate_auth(sync_v5_settings: SyncApiSettings) -> Result<(), CentralApiError> {
+    SyncApiV5::new(sync_v5_settings)
+        .map_err(|e| CentralApiError::ConnectionError(format_error(&e)))?
+        .get_site_info()
         .await
-        .map_err(|err| CentralApiError::ConnectionError(format!("{:?}", err)))?;
-
-    if response.status() == StatusCode::UNAUTHORIZED {
-        return Err(CentralApiError::NotAuthorized);
-    }
+        .map_err(|e| CentralApiError::LegacyServerError(format_error(&e)))?;
 
     Ok(())
 }
