@@ -46,6 +46,7 @@ pub struct AssetFilter {
     pub replacement_date: Option<DateFilter>,
     pub is_non_catalogue: Option<bool>,
     pub store: Option<StringFilter>,
+    pub store_id: Option<StringFilter>,
     pub functional_status: Option<EqualFilter<AssetLogStatus>>,
 }
 
@@ -111,6 +112,11 @@ impl AssetFilter {
 
     pub fn store(mut self, filter: StringFilter) -> Self {
         self.store = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: StringFilter) -> Self {
+        self.store_id = Some(filter);
         self
     }
 }
@@ -224,6 +230,7 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
             replacement_date,
             is_non_catalogue,
             store,
+            store_id,
             functional_status,
         } = f;
 
@@ -231,6 +238,7 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
         apply_string_filter!(query, notes, asset::notes);
         apply_string_filter!(query, asset_number, asset::asset_number);
         apply_string_filter!(query, serial_number, asset::serial_number);
+        apply_string_filter!(query, store_id, asset::store_id);
 
         apply_equal_filter!(query, catalogue_item_id, asset::asset_catalogue_item_id);
         apply_date_filter!(query, installation_date, asset::installation_date);
