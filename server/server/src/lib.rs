@@ -5,8 +5,7 @@ use crate::{
     central::config_central, certs::Certificates, cold_chain::config_cold_chain,
     configuration::get_or_create_token_secret, cors::cors_policy, middleware::central_server_only,
     print::config_print, serve_frontend::config_serve_frontend, static_files::config_static_files,
-    support::config_support, sync_on_central::config_sync_on_central,
-    upload_fridge_tag::config_upload_fridge_tag,
+    support::config_support, upload_fridge_tag::config_upload_fridge_tag,
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
@@ -59,7 +58,6 @@ mod upload;
 
 mod central;
 pub mod print;
-mod sync_on_central;
 
 use serve_frontend_plugins::config_server_frontend_plugins;
 use upload::config_upload;
@@ -344,7 +342,6 @@ pub async fn start_server(
             .configure(config_cold_chain)
             .configure(config_upload_fridge_tag)
             .configure(config_server_frontend_plugins)
-            .configure(config_sync_on_central)
             .configure(config_central)
             .configure(config_support)
             .configure(config_print)
