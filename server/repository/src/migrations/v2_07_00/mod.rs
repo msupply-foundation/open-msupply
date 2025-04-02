@@ -5,7 +5,6 @@ mod add_item_warning_link_table;
 mod add_linked_invoice_id_to_invoice_line;
 mod add_preference_table;
 mod add_warning_table;
-mod indexes;
 mod new_stocktake_fields;
 
 pub(crate) struct V2_07_00;
@@ -24,9 +23,8 @@ impl Migration for V2_07_00 {
             Box::new(add_preference_table::Migrate),
             Box::new(add_linked_invoice_id_to_invoice_line::Migrate),
             Box::new(new_stocktake_fields::Migrate),
-            Box::new(add_item_warning_link_table::Migrate),
             Box::new(add_warning_table::Migrate),
-            Box::new(indexes::Migrate),
+            Box::new(add_item_warning_link_table::Migrate),
         ]
     }
 }

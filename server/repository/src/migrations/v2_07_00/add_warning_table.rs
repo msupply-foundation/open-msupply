@@ -14,7 +14,7 @@ impl MigrationFragment for Migrate {
                 CREATE TABLE warning (
                     id TEXT NOT NULL PRIMARY KEY,
                     warning_text TEXT NOT NULL,
-                    code TEXT NOT NULL,
+                    code TEXT NOT NULL
                 );
             "#
         )?;
