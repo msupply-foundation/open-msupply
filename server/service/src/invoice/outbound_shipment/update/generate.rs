@@ -129,11 +129,13 @@ fn calculate_expected_delivery_date(
     delivery_date_input: Option<NullableUpdate<NaiveDate>>,
     months_lead_time: f64,
 ) -> Option<NaiveDate> {
-    match delivery_date_input {
-        Some(input_expected_delivery_date) => input_expected_delivery_date.value,
-        None if invoice.status == InvoiceStatus::Shipped
-            && invoice.expected_delivery_date.is_none() =>
-        {
+    match (
+        delivery_date_input,
+        invoice.expected_delivery_date,
+        &invoice.status,
+    ) {
+        (Some(new_delivery_date), ..) => new_delivery_date.value,
+        (None, None, InvoiceStatus::Shipped) => {
             let months_lead_time_in_days =
                 (months_lead_time * AVG_NUMBER_OF_DAYS_IN_A_MONTH) as i64;
             invoice.shipped_datetime.map(|shipped_datetime| {
