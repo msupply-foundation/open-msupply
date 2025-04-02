@@ -13,6 +13,7 @@ use crate::{
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NameStoreJoinParams {
     pub id: String,
     pub name_id: String,
