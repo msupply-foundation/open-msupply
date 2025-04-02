@@ -56,7 +56,6 @@ mod vaccine_course_by_program;
 mod vaccine_course_dose_by_vaccine_course;
 mod vaccine_course_item_by_vaccine_course;
 mod warning;
-mod warning_by_item;
 
 use std::{collections::HashSet, hash::Hasher};
 
