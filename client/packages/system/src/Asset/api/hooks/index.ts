@@ -1,6 +1,6 @@
 import { Utils } from './utils';
 export * from './useAssetList';
-export * from './useAsset';
+export * from './useAssetInsert';
 export * from './useAssetLogReasonList';
 export * from './useAssetLogReason';
 
