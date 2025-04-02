@@ -1,4 +1,5 @@
 import {
+  AssetLogStatusInput,
   InsertAssetLogReasonInput,
   useMutation,
 } from '@openmsupply-client/common';
@@ -76,4 +77,21 @@ const useDeleteAssetLogReason = () => {
       console.error(e);
     },
   });
+};
+
+export const checkLogReasonStatus = (status: string): boolean => {
+  switch (status) {
+    case AssetLogStatusInput.Decommissioned:
+      return true;
+    case AssetLogStatusInput.Functioning:
+      return true;
+    case AssetLogStatusInput.FunctioningButNeedsAttention:
+      return true;
+    case AssetLogStatusInput.NotFunctioning:
+      return true;
+    case AssetLogStatusInput.NotInUse:
+      return true;
+    default:
+      return false;
+  }
 };
