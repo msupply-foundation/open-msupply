@@ -442,6 +442,7 @@ export type AssetFilterInput = {
   replacementDate?: InputMaybe<DateFilterInput>;
   serialNumber?: InputMaybe<StringFilterInput>;
   storeCodeOrName?: InputMaybe<StringFilterInput>;
+  storeId?: InputMaybe<StringFilterInput>;
   typeId?: InputMaybe<EqualFilterStringInput>;
 };
 

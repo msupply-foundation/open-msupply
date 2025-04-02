@@ -6,6 +6,7 @@ import {
   FilterDefinition,
   FilterMenu,
   useIsCentralServerApi,
+  usePathnameIncludes,
   useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
@@ -19,18 +20,19 @@ type ReferenceData = {
 };
 
 export const useToolbar = () => {
+  const t = useTranslation();
+  const isCentralServer = useIsCentralServerApi();
+  const isColdChain = usePathnameIncludes('cold-chain');
+  const [types, setTypes] = useState<ReferenceData[]>([]);
+
+  const { data: typeData } = useAssetData.utils.types();
   const { data: categoryData } = useAssetData.utils.categories({
     classId: { equalTo: CCE_CLASS_ID },
   });
-  const { data: typeData } = useAssetData.utils.types();
-  const t = useTranslation();
+
   const { urlQuery, updateQuery } = useUrlQuery({
     skipParse: ['classId', 'categoryId', 'typeId'],
   });
-  const [types, setTypes] = useState<ReferenceData[]>([]);
-
-  const isCentralServer = useIsCentralServerApi();
-
   const categoryId = urlQuery['categoryId'];
   const typeId = urlQuery['typeId'];
 
@@ -130,7 +132,7 @@ export const useToolbar = () => {
     },
   ];
 
-  if (isCentralServer) {
+  if (isCentralServer && !isColdChain) {
     filters.push({
       type: 'text',
       name: t('label.store'),
