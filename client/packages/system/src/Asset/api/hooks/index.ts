@@ -1,6 +1,8 @@
 import { Utils } from './utils';
 import { Document } from './document';
 import { Log } from './log';
+export * from './useAssetList';
+export * from './useAsset';
 
 export const useAssetData = {
   utils: {
@@ -13,11 +15,8 @@ export const useAssetData = {
   document: {
     get: Document.useAsset,
     infiniteList: Document.useInfiniteAssets,
-    list: Document.useAssets,
-    listAll: Document.useAssetsAll,
 
     fields: Document.useAssetFields,
-    insert: Document.useAssetItemInsert,
     delete: Document.useAssetsDelete,
   },
 
