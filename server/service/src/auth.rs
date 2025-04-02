@@ -141,6 +141,8 @@ pub enum Resource {
     ConfigurePlugin,
     // Plugin Graphql
     PluginGraphql,
+    // Preferences
+    MutatePreferences,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -567,7 +569,10 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     map.insert(
         Resource::MutateAsset,
-        PermissionDSL::HasPermission(PermissionType::AssetMutate),
+        PermissionDSL::Any(vec![
+            PermissionDSL::HasPermission(PermissionType::AssetMutate),
+            PermissionDSL::HasPermission(PermissionType::AssetMutateViaDataMatrix),
+        ]),
     );
     map.insert(
         Resource::MutateAssetCatalogueItem,
@@ -616,6 +621,10 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(
         Resource::ReadPluginData,
         PermissionDSL::NoPermissionRequired, // Plugin data doesn't get any special protections...
+    );
+    map.insert(
+        Resource::MutatePreferences,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
 
     // configure

@@ -99,7 +99,7 @@ export const AddFromScannerButtonComponent = () => {
       }
 
       // If not existing, offer to create from the parsed GS1 data
-      const permission = UserPermission.AssetMutate;
+      const permission = UserPermission.AssetMutateViaDataMatrix;
       if (userHasPermission(permission)) {
         newAssetData.current = {
           ...asset,
@@ -109,7 +109,7 @@ export const AddFromScannerButtonComponent = () => {
           parsedCatalogProperties: {},
         };
         showCreateConfirmation();
-      } else info(t('error.no-asset-create-permission'))();
+      } else info(t('error.no-asset-create-scan-permission'))();
     }
   };
 

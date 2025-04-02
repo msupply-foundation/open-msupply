@@ -442,6 +442,7 @@ export type AssetFilterInput = {
   replacementDate?: InputMaybe<DateFilterInput>;
   serialNumber?: InputMaybe<StringFilterInput>;
   storeCodeOrName?: InputMaybe<StringFilterInput>;
+  storeId?: InputMaybe<StringFilterInput>;
   typeId?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -565,6 +566,7 @@ export type AssetNode = {
   id: Scalars['String']['output'];
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
+  lockedFields: LockedAssetFieldsNode;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
   needsReplacement?: Maybe<Scalars['Boolean']['output']>;
   notes?: Maybe<Scalars['String']['output']>;
@@ -1144,6 +1146,7 @@ export type CentralServerMutationNode = {
   itemVariant: ItemVariantMutations;
   logReason: AssetLogReasonMutations;
   plugins: CentralPluginMutations;
+  preferences: PreferenceMutations;
   vaccineCourse: VaccineCourseMutations;
 };
 
@@ -1251,12 +1254,6 @@ export type ColdStorageTypeSortInput = {
 };
 
 export type ColdStorageTypesResponse = ColdStorageTypeConnector;
-
-export type ComplexPrefNode = {
-  __typename: 'ComplexPrefNode';
-  somethingElse: Scalars['String']['output'];
-  somethingHere: Scalars['Int']['output'];
-};
 
 export type ConfigureNamePropertiesResponse = Success;
 
@@ -2805,6 +2802,7 @@ export type InsertAssetInput = {
   donorNameId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  lockedFieldsJson?: InputMaybe<Scalars['String']['input']>;
   needsReplacement?: InputMaybe<Scalars['Boolean']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
   properties?: InputMaybe<Scalars['String']['input']>;
@@ -4482,6 +4480,14 @@ export type LocationSortInput = {
 
 export type LocationsResponse = LocationConnector;
 
+export type LockedAssetFieldsNode = {
+  __typename: 'LockedAssetFieldsNode';
+  catalogueItemId: Scalars['Boolean']['output'];
+  serialNumber: Scalars['Boolean']['output'];
+  warrantyEnd: Scalars['Boolean']['output'];
+  warrantyStart: Scalars['Boolean']['output'];
+};
+
 export enum LogLevelEnum {
   Debug = 'DEBUG',
   Error = 'ERROR',
@@ -5868,10 +5874,35 @@ export type PluginInfoNode = {
   pluginInfo: Scalars['JSON']['output'];
 };
 
+export type PreferenceDescriptionNode = {
+  __typename: 'PreferenceDescriptionNode';
+  jsonSchema: Scalars['JSON']['output'];
+  key: Scalars['String']['output'];
+  uiSchema: Scalars['JSON']['output'];
+};
+
+export type PreferenceMutations = {
+  __typename: 'PreferenceMutations';
+  upsertPreference: PreferenceNode;
+};
+
+export type PreferenceMutationsUpsertPreferenceArgs = {
+  input: UpsertPreferenceInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type PreferenceNode = {
+  __typename: 'PreferenceNode';
+  id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  storeId?: Maybe<Scalars['String']['output']>;
+  /** JSON serialized value */
+  value: Scalars['String']['output'];
+};
+
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
-  complexPref: ComplexPrefNode;
-  usePaymentsInPrescriptions: Scalars['Boolean']['output'];
+  showContactTracing: Scalars['Boolean']['output'];
 };
 
 export type PricingNode = {
@@ -6203,6 +6234,7 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
+  availablePreferences: Array<PreferenceDescriptionNode>;
   barcodeByGtin: BarcodeResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
@@ -6442,6 +6474,10 @@ export type QueriesAssetsArgs = {
 export type QueriesAuthTokenArgs = {
   password: Scalars['String']['input'];
   username: Scalars['String']['input'];
+};
+
+export type QueriesAvailablePreferencesArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type QueriesBarcodeByGtinArgs = {
@@ -9514,6 +9550,13 @@ export type UpsertPackVariantResponse =
   | ItemVariantNode
   | UpsertItemVariantError;
 
+export type UpsertPreferenceInput = {
+  id: Scalars['String']['input'];
+  key: Scalars['String']['input'];
+  storeId?: InputMaybe<Scalars['String']['input']>;
+  value: Scalars['String']['input'];
+};
+
 export type UpsertVaccineCourseDoseInput = {
   customAgeLabel?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
@@ -9569,6 +9612,7 @@ export type UserNodePermissionsArgs = {
 export enum UserPermission {
   AssetCatalogueItemMutate = 'ASSET_CATALOGUE_ITEM_MUTATE',
   AssetMutate = 'ASSET_MUTATE',
+  AssetMutateViaDataMatrix = 'ASSET_MUTATE_VIA_DATA_MATRIX',
   AssetQuery = 'ASSET_QUERY',
   ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
