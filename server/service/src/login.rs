@@ -499,6 +499,9 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
             Permissions::AddEditAssets => {
                 output.insert(PermissionType::AssetMutate);
             }
+            Permissions::AddAssetsViaDataMatrix => {
+                output.insert(PermissionType::AssetMutateViaDataMatrix);
+            }
             Permissions::SetupAssets => {
                 output.insert(PermissionType::AssetCatalogueItemMutate);
             }

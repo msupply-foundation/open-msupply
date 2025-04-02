@@ -1,4 +1,4 @@
-export * from '../../../../Item/api/hooks/useVaccineItem/useVaccineItems';
+export * from '../../../../../Item/api/hooks/useVaccineItem/useVaccineItems';
 
 import { useDemographics } from './useDemographics';
 import { useDemographicIndicator } from './useDemographicIndicator';
@@ -8,7 +8,7 @@ import { useDemographicIndicatorUpdate } from './useDemographicIndicatorUpdate';
 import { useDemographicProjections } from './useDemographicProjections';
 import { useDemographicProjectionUpsert } from './useDemographicProjectionUpsert';
 import { useDemographicProjection } from './useDemographicProjection';
-import { useVaccineItems } from '../../../../Item/api/hooks/useVaccineItem/useVaccineItems';
+import { useVaccineItems } from '../../../../../Item/api/hooks/useVaccineItem/useVaccineItems';
 
 export const Document = {
   useDemographics,

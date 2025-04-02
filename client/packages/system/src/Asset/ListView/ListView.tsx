@@ -13,7 +13,7 @@ import {
   ColumnDescription,
   GenericColumnKey,
 } from '@openmsupply-client/common';
-import { AssetCatalogueItemFragment, useAssetData } from '../api';
+import { AssetCatalogueItemFragment, useAssetList } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { AssetCatalogueItemImportModal } from '../ImportCatalogueItem';
@@ -24,19 +24,24 @@ const AssetListComponent: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
+    queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'code', dir: 'asc' },
     filters: [
+      { key: 'categoryId', condition: 'equalTo' },
+      { key: 'code' },
       { key: 'manufacturer' },
       { key: 'model' },
-      { key: 'category' },
-      { key: 'class' },
-      { key: 'type' },
-      { key: 'catalogue' },
+      { key: 'typeId', condition: 'equalTo' },
+      { key: 'subCatalogue' },
     ],
   });
-  const { data, isError, isLoading } = useAssetData.document.list();
+  const { data, isError, isLoading } = useAssetList({
+    first,
+    offset,
+    sortBy,
+    filterBy,
+  });
   const pagination = { page, first, offset };
   const t = useTranslation();
   const importModalController = useToggle();
@@ -98,7 +103,10 @@ const AssetListComponent: FC = () => {
         isOpen={importModalController.isOn}
         onClose={importModalController.toggleOff}
       />
-      <AppBarButtons importModalController={importModalController} />
+      <AppBarButtons
+        importModalController={importModalController}
+        assets={data?.nodes ?? []}
+      />
       <Toolbar />
       <DataTable
         id="item-list"
