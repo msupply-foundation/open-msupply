@@ -20,7 +20,7 @@ export const useSensorList = (queryParams?: ListParams) => {
   const queryFn = async () => {
     const { first, offset, sortBy, filterBy } = queryParams ?? {};
 
-    const query = await sensorApi.sensors({
+    const result = await sensorApi.sensors({
       storeId,
       page: { offset, first },
       sort: {
@@ -30,7 +30,7 @@ export const useSensorList = (queryParams?: ListParams) => {
       filter: filterBy,
     });
 
-    const { nodes, totalCount } = query?.sensors;
+    const { nodes, totalCount } = result?.sensors;
     return { nodes, totalCount };
   };
 
