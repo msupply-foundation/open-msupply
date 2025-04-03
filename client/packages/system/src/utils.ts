@@ -158,3 +158,44 @@ export const getNameValue = (t: TypedTFunction<LocaleKey>, name: string) => {
   if (name == 'Inventory adjustments') return t('inventory-adjustment');
   return name;
 };
+
+export enum ReportType {
+  INBOUND = "Inbound Shipment",
+  INTERNAL_ORDER = "Internal Order",
+  OUTBOUND_INVOICE_LANDSCAPE_WITH_LOGO = "Outbound Shipment (Landscape)",
+  OUTBOUND_INVOICE_PORTRAIT_WITH_LOGO = "Outbound Shipment (Portrait)",
+  PRESCRIPTION_RECEIPT = "Prescription Receipt",
+  REPACK = "Repack",
+  REQUISITION = "Requisition",
+  STOCK_TAKE_DETAIL_VIEW = "Stocktake",
+  STOCKTAKE_VARIANCE = "Stocktake Variance",
+  STOCK_TAKE_WITH_QUANTITY = "Stocktake With Quantity",
+  STOCK_TAKE_WOTHOUT_QUANTITY = "Stocktake Without Quantity",
+}
+
+export const REPORT_TRANSLATION_KEYS: Record<ReportType, LocaleKey> = {
+  [ReportType.STOCKTAKE_VARIANCE]: 'report.stocktake-variance',
+  [ReportType.INBOUND]: 'form.inbound',
+  [ReportType.INTERNAL_ORDER]: 'form.internal-order',
+  [ReportType.OUTBOUND_INVOICE_LANDSCAPE_WITH_LOGO]: 'form.outbound-invoice-landscape-woth-logo',
+  [ReportType.OUTBOUND_INVOICE_PORTRAIT_WITH_LOGO]: 'form.outbound-invoice-portrait-woth-logo',
+  [ReportType.PRESCRIPTION_RECEIPT]: 'form.prescription-receipt',
+  [ReportType.REPACK]: 'form.repack',
+  [ReportType.REQUISITION]: 'form.requisition',
+  [ReportType.STOCK_TAKE_DETAIL_VIEW]: 'form.stocktake-detail-view',
+  [ReportType.STOCK_TAKE_WITH_QUANTITY]: 'form.stocktake-with-quantity',
+  [ReportType.STOCK_TAKE_WOTHOUT_QUANTITY]: 'form.stocktake-without-quantity',
+};
+
+export const getReportKey = (reportName: string): LocaleKey => {
+  const reportType = Object.values(ReportType).find(
+    type => type === reportName
+  );
+  if (reportType) {
+    return REPORT_TRANSLATION_KEYS[reportType];
+  }
+  console.warn('Report name not found in translation keys:', reportName);
+  // Fallback to using the report name directly as a key
+  return reportName as LocaleKey;
+}
+

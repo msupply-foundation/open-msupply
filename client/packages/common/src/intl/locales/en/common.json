@@ -1968,5 +1968,16 @@
   "warning.caps-lock": "Warning: Caps lock is on",
   "warning.field-not-parsed": "{{field}} not parsed",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "tooltip.defined-by-gs1-matrix": "Defined by GS1 datamatrix"
+  "tooltip.defined-by-gs1-matrix": "Defined by GS1 datamatrix",
+  "report.stocktake-variance": "Stocktake Variance",
+  "form.inbound": "Inbound",
+  "form.internal-order": "Internal Order",
+  "form.outbound-invoice-landscape-woth-logo": "Outbound Shipment (landscape)",
+  "form.outbound-invoice-portrait-woth-logo": "Outbound Shipment (portrait)",
+  "form.prescription-receipt": "Prescription Receipt",
+  "form.repack": "Repack",
+  "form.requisition": "",
+  "form.stocktake-detail-view": "",
+  "form.stocktake-with-quantity": "",
+  "form.stocktake-without-quantity": ""
 }

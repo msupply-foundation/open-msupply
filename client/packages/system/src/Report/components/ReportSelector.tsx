@@ -5,13 +5,14 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { ReportContext, useTranslation } from '@openmsupply-client/common';
+import { LocaleKey, ReportContext, useTranslation } from '@openmsupply-client/common';
 import { PrinterIcon } from '@common/icons';
 import { SplitButton, SplitButtonOption } from '@common/components';
 import { ReportArgumentsModal } from './ReportArgumentsModal';
 import { JsonData } from '@openmsupply-client/programs';
 import { ReportListParams, useReportList } from '../api/hooks';
 import { ReportRowFragment } from '../api';
+import { getReportKey } from '../../utils';
 
 interface CustomOption<T> {
   label: string;
@@ -82,10 +83,10 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   const options: SplitButtonOption<string>[] = useMemo(() => {
     const reports = data
       ? data?.nodes?.map(report => ({
-          value: report.id,
-          label: report.name,
-          isDisabled: disabled,
-        }))
+        value: report.id,
+        label: t(getReportKey(report.name)),
+        isDisabled: disabled,
+      }))
       : [];
 
     const allOptions = [customOptions || [], reports];
