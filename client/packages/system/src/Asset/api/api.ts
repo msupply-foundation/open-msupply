@@ -17,14 +17,6 @@ export type ListParams<T> = {
 
 export const getAssetQueries = (sdk: Sdk) => ({
   get: {
-    classes: async () => {
-      const result = await sdk.assetClasses({
-        sort: { key: AssetClassSortFieldInput.Name, desc: false },
-      });
-      const classes = result?.assetClasses;
-
-      return classes;
-    },
     types: async (filter: AssetTypeFilterInput | undefined) => {
       const result = await sdk.assetTypes({
         filter,
