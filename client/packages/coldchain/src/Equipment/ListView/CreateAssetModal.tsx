@@ -25,7 +25,7 @@ import {
   StoreSearchInput,
   mapIdNameToOptions,
   useAssetCategories,
-  useAssetData,
+  useAssetTypes,
   useInfiniteAssets,
 } from '@openmsupply-client/system';
 import { useAssets } from '../api';
@@ -96,10 +96,9 @@ export const CreateAssetModal = ({
   const { data: categoryData, isLoading: isLoadingCategories } =
     useAssetCategories({ classId: { equalTo: CCE_CLASS_ID } });
 
-  const { data: typeData, isLoading: isLoadingTypes } =
-    useAssetData.utils.types({
-      categoryId: { equalTo: draft.categoryId ?? '' },
-    });
+  const { data: typeData, isLoading: isLoadingTypes } = useAssetTypes({
+    categoryId: { equalTo: draft.categoryId ?? '' },
+  });
 
   const {
     data: catalogueItemData,
