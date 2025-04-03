@@ -582,12 +582,26 @@ fn create_filtered_outgoing_sync_query(
     // If this is a manual sync to fetch a specific patient, add an OR condition for their vaccination records
     // (since cursor 0)
     if let Some(patient_id) = &fetch_patient_id {
+        let visible_patients_for_site = name_store_join::table
+            .filter(
+                name_store_join::store_id.eq_any(
+                    // Active stores for site
+                    store::table
+                        .filter(store::site_id.eq(sync_site_id))
+                        .select(store::id),
+                ),
+            )
+            .select(name_store_join::name_link_id)
+            .into_boxed();
+
         let all_fetched_patient_changelogs = changelog_deduped::table_name
             .eq(ChangelogTableName::Vaccination)
             .and(
                 changelog_deduped::record_id.eq_any(
                     vaccination::table
                         .filter(vaccination::patient_link_id.eq(patient_id.clone()))
+                        // Ensure the patient is visible on the site that is requesting the patient data
+                        .filter(vaccination::patient_link_id.eq_any(visible_patients_for_site))
                         .select(vaccination::id),
                 ),
             );

@@ -762,4 +762,16 @@ async fn test_changelog_outgoing_patient_sync_records() {
         .unwrap();
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, vaccination.id);
+
+    // Ensure site without name_store_join for the patient does not get the vaccination changelog
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(
+            (cursor + 500) as u64,
+            1000,
+            5,
+            true,
+            Some("patient2".to_string()),
+        )
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 0);
 }
