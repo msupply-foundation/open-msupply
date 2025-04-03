@@ -1,6 +1,6 @@
 import { FilterByWithBoolean, SortBy } from '@common/hooks';
 import { Sdk, SensorFragment } from './operations.generated';
-import { RecordPatch, SensorSortFieldInput } from '@common/types';
+import { RecordPatch } from '@common/types';
 import { setNullableInput } from '@common/utils';
 
 export type ListParams = {
@@ -11,23 +11,6 @@ export type ListParams = {
 };
 
 export const getSensorQueries = (sdk: Sdk, storeId: string) => ({
-  get: {
-    list:
-      ({ first, offset, sortBy, filterBy }: ListParams) =>
-      async () => {
-        const result = await sdk.sensors({
-          storeId,
-          page: { offset, first },
-          sort: {
-            key: sortBy.key as SensorSortFieldInput,
-            desc: !!sortBy.isDesc,
-          },
-          filter: filterBy,
-        });
-
-        return result?.sensors;
-      },
-  },
   update: async (patch: RecordPatch<SensorFragment>) => {
     const result = await sdk.updateSensor({
       storeId,

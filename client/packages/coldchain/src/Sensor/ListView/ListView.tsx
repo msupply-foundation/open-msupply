@@ -13,23 +13,31 @@ import {
   SensorNodeType,
   UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
-import { useSensor, SensorFragment } from '../api';
+import { SensorFragment, useSensorList } from '../api';
 import { SensorEditModal } from '../Components';
 import { BreachTypeCell, useFormatTemperature } from '../../common';
 
 export const SensorListView: FC = () => {
-  const {
-    updateSortQuery,
-    updatePaginationQuery,
-    // filter,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filters: [{ key: 'serial' }] });
-
-  const { data, isError, isLoading } = useSensor.document.list();
-  const pagination = { page, first, offset };
   const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
   const formatTemperature = useFormatTemperature();
+
+  const {
+    updateSortQuery,
+    updatePaginationQuery,
+    queryParams: { sortBy, page, first, offset, filterBy },
+  } = useUrlQueryParams({
+    initialSort: { key: 'serial', dir: 'desc' },
+    filters: [{ key: 'serial' }],
+  });
+  const pagination = { page, first, offset };
+
+  const { data, isError, isLoading } = useSensorList({
+    first,
+    offset,
+    sortBy,
+    filterBy,
+  });
 
   const columns = useColumns<SensorFragment>(
     [
