@@ -14,7 +14,7 @@ import { LocaleKey, useFormatDateTime, useTranslation } from '@common/intl';
 import { CircleAlertIcon } from '@common/icons';
 import { alpha, useTheme } from '@common/styles';
 import { AppRoute } from '@openmsupply-client/config';
-import { useTemperatureNotification } from './Monitoring/api';
+import { useTemperatureNotificationList } from './Monitoring/api';
 import { TemperatureNotificationBreachFragment } from './Monitoring/api';
 import { TemperatureExcursionFragment } from './Monitoring/api/TemperatureNotification/operations.generated';
 
@@ -228,7 +228,7 @@ const Notification = ({
 
 export const ColdchainNotification = () => {
   const t = useTranslation();
-  const { data: notifications } = useTemperatureNotification.document.list({
+  const { data: notifications } = useTemperatureNotificationList({
     first: 1,
     offset: 0,
   });
