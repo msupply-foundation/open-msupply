@@ -15,7 +15,7 @@ import {
 
 interface IndicatorTabProps {
   onClick: (
-    requisitionNumber?: number,
+    requisitionId?: string,
     programIndicatorCode?: string,
     indicatorId?: string
   ) => void;
@@ -67,7 +67,7 @@ export const IndicatorsTab = ({
             Icon={<PlusCircleIcon />}
             onClick={() =>
               onClick(
-                request?.requisitionNumber,
+                request?.id,
                 groupIndicators[0]?.code ?? undefined,
                 firstLine?.id
               )

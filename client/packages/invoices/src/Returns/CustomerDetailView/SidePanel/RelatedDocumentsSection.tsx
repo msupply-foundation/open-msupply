@@ -46,7 +46,7 @@ export const RelatedDocumentsSectionComponent = () => {
                 <Link
                   to={RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.OutboundShipment)
-                    .addPart(String(originalShipment.invoiceNumber))
+                    .addPart(String(originalShipment.id))
                     .build()}
                 >{`#${originalShipment.invoiceNumber}`}</Link>
               </PanelField>

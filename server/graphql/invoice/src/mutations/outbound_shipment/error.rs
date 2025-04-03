@@ -84,3 +84,11 @@ impl CannotIssueInForeignCurrency {
         "Cannot issue invoice in foreign currency"
     }
 }
+
+pub struct CannotHaveEstimatedDeliveryDateBeforeShippedDate;
+#[Object]
+impl CannotHaveEstimatedDeliveryDateBeforeShippedDate {
+    pub async fn description(&self) -> &str {
+        "Cannot have estimated delivery date before shipped date"
+    }
+}

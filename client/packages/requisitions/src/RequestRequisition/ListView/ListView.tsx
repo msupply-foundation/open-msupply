@@ -127,7 +127,7 @@ export const RequestRequisitionListView: FC = () => {
 
   const onRowClick = useCallback(
     (row: RequestRowFragment) => {
-      navigate(String(row.requisitionNumber));
+      navigate(String(row.id));
     },
     [navigate]
   );

@@ -287,6 +287,10 @@ impl RequisitionLineNode {
     pub async fn requisition_number(&self) -> &i64 {
         &self.requisition_row().requisition_number
     }
+
+    pub async fn requisition_id(&self) -> &String {
+        &self.requisition_row().id
+    }
 }
 
 impl RequisitionLineNode {

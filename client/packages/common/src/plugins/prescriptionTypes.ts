@@ -5,5 +5,5 @@ export type PrescriptionPaymentComponentProps = {
   prescriptionData: PrescriptionRowFragment;
   totalToBePaidByInsurance: number;
   totalToBePaidByPatient: number;
-  events: UsePluginEvents<{ isDirty: boolean }>;
+  events: UsePluginEvents<{ isDirty: boolean; errorMessage: string | null }>;
 };
