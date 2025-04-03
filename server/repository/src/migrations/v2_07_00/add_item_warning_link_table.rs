@@ -17,9 +17,7 @@ impl MigrationFragment for Migrate {
                     warning_id TEXT NOT NULL REFERENCES warning(id),
                     priority BOOLEAN not null
                 );
-                CREATE INDEX "index_item_warning_link_item_id_fkey" ON "item_warning_link" ("item_link_id");
-                CREATE INDEX "index_item_warning_link_warning_id_fkey" ON "item_warning_link" ("warning_id");
-            "#,
+            "#
         )?;
 
         Ok(())

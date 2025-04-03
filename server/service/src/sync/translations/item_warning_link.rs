@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use crate::sync::translations::{item::ItemTranslation, warning::WarningTranslation};
 use repository::{ItemWarningLinkRow, StorageConnection, SyncBufferRow};
 
 use super::{PullTranslateResult, SyncTranslation};
@@ -29,7 +30,10 @@ impl SyncTranslation for ItemWarningLinkTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![]
+        vec![
+            ItemTranslation.table_name(),
+            WarningTranslation.table_name(),
+        ]
     }
 
     fn try_translate_from_upsert_sync_record(
@@ -69,7 +73,6 @@ mod tests {
             MockDataInserts::none(),
         )
         .await;
-        // println!("connection {:?}", connection);
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
