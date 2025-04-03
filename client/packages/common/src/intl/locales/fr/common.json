@@ -1940,5 +1940,16 @@
   "warning.cannot-create-placeholder-units": "Il y a un total de {{allocatedQuantity}} unités disponibles. Impossible d'allouer toutes les {{requestedQuantity}} unités demandées.",
   "warning.caps-lock": "Avertissement : Verrouillage majuscule activé",
   "warning.field-not-parsed": "{{field}} non analysé",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
+  "form.stocktake-variance": "Stocktake Variance - french",
+  "form.inbound": "Inbound -french",
+  "form.internal-order": "Internal Order -french",
+  "form.outbound-invoice-landscape-woth-logo": "Outbound Shipment (landscape) -french",
+  "form.outbound-invoice-portrait-woth-logo": "Outbound Shipment (portrait) -french",
+  "form.prescription-receipt": "Prescription Receipt -french",
+  "form.repack": "Repack -french",
+  "form.requisition": "Requisition -french",
+  "form.stocktake-detail-view": "Stocktake -french",
+  "form.stocktake-with-quantity": "Stocktake with Quantity -french",
+  "form.stocktake-without-quantity": "Stocktake without Quantity -french"
 }
