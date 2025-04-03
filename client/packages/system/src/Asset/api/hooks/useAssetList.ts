@@ -2,7 +2,7 @@ import { AssetCatalogueItemFragment } from '../operations.generated';
 import {
   AssetCatalogueItemSortFieldInput,
   FilterByWithBoolean,
-  LIST,
+  LIST_KEY,
   SortBy,
   useInfiniteQuery,
   useMutation,
@@ -67,7 +67,14 @@ export const useInfiniteAssets = ({
   rowsPerPage,
 }: useAssetsProps) => {
   const { assetApi, storeId } = useAssetGraphQL();
-  const queryKey = [ASSET, storeId, LIST, categoryId, queryParams, rowsPerPage];
+  const queryKey = [
+    ASSET,
+    storeId,
+    LIST_KEY,
+    categoryId,
+    queryParams,
+    rowsPerPage,
+  ];
 
   const filter =
     categoryId === undefined
@@ -100,7 +107,7 @@ export const useInfiniteAssets = ({
 export const useGetList = (queryParams?: ListParams) => {
   const { assetApi, storeId } = useAssetGraphQL();
   const { first, offset, sortBy, filterBy } = queryParams ?? {};
-  const queryKey = [ASSET, storeId, LIST, first, offset, sortBy, filterBy];
+  const queryKey = [ASSET, storeId, LIST_KEY, first, offset, sortBy, filterBy];
 
   const queryFn = async () => {
     const query = await assetApi.assetCatalogueItems({
