@@ -66,8 +66,7 @@ pub async fn patient_name_store_join(
 
     let name_store_join_repo = NameStoreJoinRepository::new(&ctx.connection);
 
-    // TODO: maybe should prevent this from creating a changelog? Let the OG one be source of truth?
-    name_store_join_repo.upsert_one(&NameStoreJoinRow {
+    name_store_join_repo.upsert_one_without_changelog(&NameStoreJoinRow {
         id,
         store_id: store_id.clone(),
         // I think ideally would do a lookup and see if we have a name_link_id,
