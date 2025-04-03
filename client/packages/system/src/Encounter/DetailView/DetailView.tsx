@@ -114,9 +114,11 @@ export const DetailView: FC = () => {
 
   const updateEncounter = useDebounceCallback(
     (patch: Partial<EncounterFragment>) =>
-      setData({
-        ...(typeof data === 'object' ? data : {}),
-        ...patch,
+      setData((prev) => {
+        return {
+          ...(typeof prev === 'object' ? prev : {}),
+          ...patch,
+        };
       }),
     [data, setData]
   );
