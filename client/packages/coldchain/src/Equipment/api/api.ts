@@ -56,6 +56,9 @@ const assetParsers = {
     warrantyStart: input.warrantyStart,
     warrantyEnd: input.warrantyEnd,
     needsReplacement: input.needsReplacement,
+    lockedFieldsJson: input.lockedFields
+      ? JSON.stringify(input.lockedFields)
+      : null,
   }),
   toUpdate: (input: Partial<DraftAsset>): UpdateAssetInput => ({
     id: input.id ?? '',
@@ -111,7 +114,8 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
     },
     list: async (
       { first, offset, sortBy, filterBy }: ListParams<AssetFragment>,
-      storeCode?: string
+      storeCode?: string,
+      isColdChain?: boolean
     ) => {
       const result = await sdk.assets({
         first,
@@ -122,6 +126,7 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
         filter: {
           ...filterBy,
           ...(storeCode ? { store: { equalTo: storeCode } } : {}),
+          ...(isColdChain ? { storeId: { equalTo: storeId } } : {}),
           classId: { equalTo: CCE_CLASS_ID },
         },
       });

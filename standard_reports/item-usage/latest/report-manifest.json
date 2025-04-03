@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.5.1",
+  "version": "2.6.1",
   "code": "item-usage",
   "context": "REPORT",
   "sub_context": "StockAndItems",
@@ -22,5 +22,6 @@
     "schema": "argument_schemas/arguments.json",
     "ui": "argument_schemas/arguments_ui.json"
   },
-  "convert_data": "convert_data_js"
+  "convert_data": "convert_data_js",
+  "convert_data_type": "BoaJs"
 }

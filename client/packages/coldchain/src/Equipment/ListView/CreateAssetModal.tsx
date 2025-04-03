@@ -17,6 +17,7 @@ import {
   ArrayUtils,
   useDebounceCallback,
   AssetLogStatusInput,
+  usePathnameIncludes,
 } from '@openmsupply-client/common';
 import {
   AssetCatalogueItemFragment,
@@ -82,16 +83,22 @@ export const CreateAssetModal = ({
 }: CreateAssetModalProps) => {
   const t = useTranslation();
   const { error, success } = useNotification();
-  const { Modal } = useDialog({ isOpen, onClose });
+  const isCentralServer = useIsCentralServerApi();
+  const isColdChain = usePathnameIncludes('cold-chain');
+  const { filter, onFilter } = useStringFilter('search');
+
   const [isCatalogueAsset, setIsCatalogueAsset] = useState(true);
   const [draft, setDraft] = useState<Partial<InsertAsset>>(getEmptyAsset());
+
+  const { Modal } = useDialog({ isOpen, onClose });
+
   const { data: categoryData, isLoading: isLoadingCategories } =
     useAssetData.utils.categories({ classId: { equalTo: CCE_CLASS_ID } });
+
   const { data: typeData, isLoading: isLoadingTypes } =
     useAssetData.utils.types({
       categoryId: { equalTo: draft.categoryId ?? '' },
     });
-  const { filter, onFilter } = useStringFilter('search');
 
   const {
     data: catalogueItemData,
@@ -113,7 +120,6 @@ export const CreateAssetModal = ({
 
   const { mutateAsync: save } = useAssets.document.insert();
   const { insertLog, invalidateQueries } = useAssets.log.insert();
-  const isCentralServer = useIsCentralServerApi();
 
   const handleClose = () => {
     setDraft(getEmptyAsset());
@@ -202,7 +208,7 @@ export const CreateAssetModal = ({
               label={t('label.use-catalogue')}
             />
           </Box>
-          {isCentralServer && (
+          {isCentralServer && !isColdChain && (
             <InputRow
               label={t('label.store')}
               Input={
@@ -242,7 +248,7 @@ export const CreateAssetModal = ({
                   pageNumber={pageNumber}
                   rowsPerPage={RECORDS_PER_PAGE}
                   totalRows={
-                    catalogueItemData?.pages?.[0]?.data.totalCount ?? 0
+                    catalogueItemData?.pages?.[0]?.data?.totalCount ?? 0
                   }
                   value={selectedCatalogueItem}
                   mapOptions={mapCatalogueItems}
