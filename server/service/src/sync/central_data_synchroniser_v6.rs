@@ -91,6 +91,7 @@ impl SynchroniserV6 {
         batch_size: u32,
         is_initialised: bool,
         logger: &mut SyncLogger<'a>,
+        fetch_patient_id: Option<String>,
     ) -> Result<(), CentralPullErrorV6> {
         let cursor_controller = CursorController::new(KeyType::SyncPullCursorV6);
         // TODO protection from infinite loop
@@ -104,7 +105,7 @@ impl SynchroniserV6 {
                 records,
             } = self
                 .sync_api_v6
-                .pull(start_cursor, batch_size, is_initialised)
+                .pull(start_cursor, batch_size, is_initialised, &fetch_patient_id)
                 .await?;
 
             logger.progress(SyncStepProgress::PullCentralV6, total_records)?;

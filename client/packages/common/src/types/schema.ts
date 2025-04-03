@@ -5139,6 +5139,10 @@ export type MutationsLinkPatientToStoreArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsManualSyncArgs = {
+  fetchPatientId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type MutationsSupplyRequestedQuantityArgs = {
   input: SupplyRequestedQuantityInput;
   storeId: Scalars['String']['input'];
