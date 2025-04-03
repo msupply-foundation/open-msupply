@@ -43,6 +43,7 @@ table! {
 
 joinable!(changelog_deduped -> name_link (name_link_id));
 allow_tables_to_appear_in_same_query!(changelog_deduped, name_link);
+allow_tables_to_appear_in_same_query!(changelog_deduped, vaccination);
 
 #[cfg(not(feature = "postgres"))]
 define_sql_function!(
@@ -309,11 +310,17 @@ impl<'a> ChangelogRepository<'a> {
         batch_size: u32,
         sync_site_id: i32,
         is_initialized: bool,
+        fetching_patient_id: Option<String>,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
         let result = with_locked_changelog_table(self.connection, |locked_con| {
-            let query = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
-                .order(changelog_deduped::cursor.asc())
-                .limit(batch_size.into());
+            let query = create_filtered_outgoing_sync_query(
+                earliest,
+                sync_site_id,
+                is_initialized,
+                fetching_patient_id,
+            )
+            .order(changelog_deduped::cursor.asc())
+            .limit(batch_size.into());
 
             // Debug diesel query
             // println!(
@@ -347,10 +354,16 @@ impl<'a> ChangelogRepository<'a> {
         earliest: u64,
         sync_site_id: i32,
         is_initialized: bool,
+        fetching_patient_id: Option<String>,
     ) -> Result<u64, RepositoryError> {
-        let result = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
-            .count()
-            .get_result::<i64>(self.connection.lock().connection())?;
+        let result = create_filtered_outgoing_sync_query(
+            earliest,
+            sync_site_id,
+            is_initialized,
+            fetching_patient_id,
+        )
+        .count()
+        .get_result::<i64>(self.connection.lock().connection())?;
         Ok(result as u64)
     }
 
@@ -479,6 +492,7 @@ fn create_filtered_outgoing_sync_query(
     earliest: u64,
     sync_site_id: i32,
     is_initialized: bool,
+    fetching_patient_id: Option<String>,
 ) -> BoxedChangelogQuery {
     let mut query = changelog_deduped::table
         .left_join(name_link::table)
@@ -487,7 +501,6 @@ fn create_filtered_outgoing_sync_query(
 
     // If we are initialising, we want to send all the records for the site, even ones that originally came from the site
     // The rest of the time we want to exclude any records that were created by the site
-
     if is_initialized {
         query = query.filter(
             changelog_deduped::source_site_id
@@ -565,6 +578,22 @@ fn create_filtered_outgoing_sync_query(
                 .and(changelog_deduped::record_id.eq_any(vaccinations_for_visible_patients))),
         // Any other special cases could be handled here...
     );
+
+    // If this is a manual sync to fetch a specific patient, add an OR condition for their vaccination records
+    // (since cursor 0)
+    if let Some(patient_id) = &fetching_patient_id {
+        let all_fetched_patient_changelogs = changelog_deduped::table_name
+            .eq(ChangelogTableName::Vaccination)
+            .and(
+                changelog_deduped::record_id.eq_any(
+                    vaccination::table
+                        .filter(vaccination::patient_link_id.eq(patient_id.clone()))
+                        .select(vaccination::id),
+                ),
+            );
+
+        query = query.or_filter(all_fetched_patient_changelogs);
+    }
 
     query
 }

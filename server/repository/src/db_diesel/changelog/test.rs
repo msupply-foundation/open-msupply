@@ -14,6 +14,7 @@ use crate::{
     EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
     LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
     RequisitionRow, RequisitionRowRepository, RowActionType, StorageConnection, StoreRow, Upsert,
+    VaccinationRow,
 };
 
 #[actix_rt::test]
@@ -636,7 +637,7 @@ async fn test_changelog_outgoing_sync_records() {
     let repo = ChangelogRepository::new(&connection);
 
     let outgoing_results = repo
-        .outgoing_sync_records_from_central(0, 10, 1, true)
+        .outgoing_sync_records_from_central(0, 10, 1, true, None)
         .unwrap();
     assert_eq!(outgoing_results.len(), 0); // Nothing to send to the remote site yet...
 
@@ -656,7 +657,7 @@ async fn test_changelog_outgoing_sync_records() {
     let _result = row.upsert(&connection).unwrap();
 
     let outgoing_results = repo
-        .outgoing_sync_records_from_central(0, 1000, 1, true)
+        .outgoing_sync_records_from_central(0, 1000, 1, true, None)
         .unwrap();
     // outgoing_results should contain the changelog record for the asset class
     assert_eq!(outgoing_results.len(), 1);
@@ -681,7 +682,7 @@ async fn test_changelog_outgoing_sync_records() {
     // The asset class and the asset
 
     let outgoing_results = repo
-        .outgoing_sync_records_from_central(0, 1000, site1_id, false)
+        .outgoing_sync_records_from_central(0, 1000, site1_id, false, None)
         .unwrap();
     assert_eq!(outgoing_results.len(), 2);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
@@ -689,15 +690,76 @@ async fn test_changelog_outgoing_sync_records() {
 
     // If not during initialisation, we should only get the asset_class as the asset was synced from the site already
     let outgoing_results = repo
-        .outgoing_sync_records_from_central(0, 1000, site1_id, true)
+        .outgoing_sync_records_from_central(0, 1000, site1_id, true, None)
         .unwrap();
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 
     // Site 2 should only get the asset_class
     let outgoing_results = repo
-        .outgoing_sync_records_from_central(0, 1000, site2_id, true)
+        .outgoing_sync_records_from_central(0, 1000, site2_id, true, None)
         .unwrap();
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
+}
+
+#[actix_rt::test]
+async fn test_changelog_outgoing_patient_sync_records() {
+    let (_, connection, _, _) = test_db::setup_all(
+        "test_changelog_outgoing_patient_sync_records",
+        MockDataInserts::all(),
+    )
+    .await;
+
+    let repo = ChangelogRepository::new(&connection);
+
+    let site1_id = mock_store_a().site_id; // Site 1 is used in mock_store_a
+
+    // create a vaccination record from store B (site 2) for patient2
+    let vaccination = VaccinationRow {
+        id: "mock_vax_id".to_string(),
+        patient_link_id: "patient2".to_string(),
+        store_id: "store_b".to_string(),
+        vaccine_course_dose_id: "vaccine_course_a_dose_a".to_string(),
+        user_id: "user_account_a".to_string(),
+        ..Default::default()
+    };
+
+    let cursor = vaccination.upsert(&connection).unwrap().unwrap();
+
+    // store A (on site1) has name_store_join for patient2
+
+    // Site 1 sync should get the vaccination changelog via name_store_join
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(cursor as u64, 1000, site1_id, true, None)
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results[0].record_id, vaccination.id);
+
+    // Site 1 sync from higher cursor, does not get the vaccination changelog
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(
+            // Definitely a higher cursor than the vaccination changelog (+500)
+            (cursor + 500) as u64,
+            1000,
+            site1_id,
+            true,
+            None,
+        )
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 0);
+
+    // Site 1 sync from higher cursor, gets this vax changelog when using fetching_patient_id
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(
+            // Definitely a higher cursor than the vaccination changelog (+500)
+            (cursor + 500) as u64,
+            1000,
+            site1_id,
+            true,
+            Some("patient2".to_string()),
+        )
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results[0].record_id, vaccination.id);
 }
