@@ -106,7 +106,6 @@ export const AutocompleteList = <T,>({
   } else {
     mappedOptions = options;
   }
-  const noOptions = noOptionsText ?? t('label.no-options');
 
   return (
     <>
@@ -125,8 +124,8 @@ export const AutocompleteList = <T,>({
         disableClearable={disableClearable}
         autoSelect={false}
         loading={loading}
-        loadingText={loadingText}
-        noOptionsText={noOptions}
+        loadingText={loadingText ?? t('loading')}
+        noOptionsText={noOptionsText ?? t('label.no-options')}
         onChange={onChange}
         onInputChange={onInputChange}
         sx={{

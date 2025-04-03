@@ -54,8 +54,6 @@ td.borderlineTopBottom {
 
 .Report_title {
   text-align: center;
-  width: 100%;
-  height: 14px;
   padding-top: 8px;
   font-weight: bold; 
   font-size: 12pt; 
@@ -135,6 +133,10 @@ td.borderlineTopBottom {
 .col-comment {
   width: 12%;
   text-align: right;
+}
+
+.batch-wrap {
+  word-break: break-word;
 }
 
 
