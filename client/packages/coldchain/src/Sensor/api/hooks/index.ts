@@ -1,9 +1,9 @@
 import { Document } from './document';
 import { Utils } from './utils';
+export * from './useSensorList';
 
 export const useSensor = {
   document: {
-    list: Document.useSensors,
     update: Document.useSensorUpdate,
   },
   utils: {
