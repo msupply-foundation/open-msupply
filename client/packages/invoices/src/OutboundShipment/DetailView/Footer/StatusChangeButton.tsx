@@ -127,15 +127,14 @@ const useStatusChangeButton = () => {
         status: selectedOption.value,
       }).then(res => {
         res?.forEach(res => {
-          if (res?.__typename === 'InvoiceNode') {
-            success(t('messages.shipment-saved'))();
-          }
           if (
             res.__typename === 'UpdateOutboundShipmentError' &&
             res.error.__typename ===
               'CannotHaveEstimatedDeliveryDateBeforeShippedDate'
           ) {
             info(t('error.estimated-delivery-before-shipped-date'))();
+          } else {
+            success(t('messages.shipment-saved'))();
           }
         });
       });
