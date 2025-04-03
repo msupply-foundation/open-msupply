@@ -9,7 +9,7 @@ export const useOutbound = {
     barcode: Utils.useBarcode,
     barcodeInsert: Utils.useBarcodeInsert,
     isDisabled: Utils.useOutboundIsDisabled,
-    number: Utils.useOutboundNumber,
+    id: Utils.useOutboundId,
     selectedLines: Utils.useSelectedLines,
   },
 

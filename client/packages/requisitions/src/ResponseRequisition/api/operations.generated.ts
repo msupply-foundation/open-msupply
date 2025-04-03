@@ -93,6 +93,7 @@ export type ResponseLineFragment = {
   optionId?: string | null;
   suggestedQuantity: number;
   requisitionNumber: number;
+  requisitionId: string;
   approvedQuantity: number;
   approvalComment?: string | null;
   itemStats: {
@@ -190,6 +191,7 @@ export type ResponseFragment = {
       optionId?: string | null;
       suggestedQuantity: number;
       requisitionNumber: number;
+      requisitionId: string;
       approvedQuantity: number;
       approvalComment?: string | null;
       itemStats: {
@@ -317,6 +319,143 @@ export type ResponseByNumberQuery = {
             optionId?: string | null;
             suggestedQuantity: number;
             requisitionNumber: number;
+            requisitionId: string;
+            approvedQuantity: number;
+            approvalComment?: string | null;
+            itemStats: {
+              __typename: 'ItemStatsNode';
+              stockOnHand: number;
+              availableMonthsOfStockOnHand?: number | null;
+              averageMonthlyConsumption: number;
+            };
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              code: string;
+              name: string;
+              unitName?: string | null;
+            };
+            linkedRequisitionLine?: {
+              __typename: 'RequisitionLineNode';
+              itemStats: {
+                __typename: 'ItemStatsNode';
+                availableStockOnHand: number;
+                averageMonthlyConsumption: number;
+                availableMonthsOfStockOnHand?: number | null;
+              };
+            } | null;
+            reason?: {
+              __typename: 'ReasonOptionNode';
+              id: string;
+              type: Types.ReasonOptionNodeType;
+              reason: string;
+              isActive: boolean;
+            } | null;
+          }>;
+        };
+        otherParty: {
+          __typename: 'NameNode';
+          id: string;
+          code: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        };
+        program?: {
+          __typename: 'ProgramNode';
+          id: string;
+          name: string;
+        } | null;
+        period?: {
+          __typename: 'PeriodNode';
+          id: string;
+          name: string;
+          startDate: string;
+          endDate: string;
+        } | null;
+        linkedRequisition?: {
+          __typename: 'RequisitionNode';
+          id: string;
+        } | null;
+      };
+};
+
+export type ResponseByIdQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  requisitionId: Types.Scalars['String']['input'];
+}>;
+
+export type ResponseByIdQuery = {
+  __typename: 'Queries';
+  requisition:
+    | { __typename: 'RecordNotFound' }
+    | {
+        __typename: 'RequisitionNode';
+        id: string;
+        type: Types.RequisitionNodeType;
+        status: Types.RequisitionNodeStatus;
+        createdDatetime: string;
+        sentDatetime?: string | null;
+        finalisedDatetime?: string | null;
+        requisitionNumber: number;
+        colour?: string | null;
+        theirReference?: string | null;
+        comment?: string | null;
+        otherPartyName: string;
+        otherPartyId: string;
+        maxMonthsOfStock: number;
+        minMonthsOfStock: number;
+        approvalStatus: Types.RequisitionNodeApprovalStatus;
+        programName?: string | null;
+        orderType?: string | null;
+        isEmergency: boolean;
+        user?: {
+          __typename: 'UserNode';
+          username: string;
+          email?: string | null;
+        } | null;
+        shipments: {
+          __typename: 'InvoiceConnector';
+          totalCount: number;
+          nodes: Array<{
+            __typename: 'InvoiceNode';
+            id: string;
+            invoiceNumber: number;
+            createdDatetime: string;
+            user?: { __typename: 'UserNode'; username: string } | null;
+          }>;
+        };
+        linesRemainingToSupply: {
+          __typename: 'RequisitionLineConnector';
+          totalCount: number;
+        };
+        lines: {
+          __typename: 'RequisitionLineConnector';
+          totalCount: number;
+          nodes: Array<{
+            __typename: 'RequisitionLineNode';
+            id: string;
+            itemId: string;
+            requestedQuantity: number;
+            supplyQuantity: number;
+            remainingQuantityToSupply: number;
+            alreadyIssued: number;
+            comment?: string | null;
+            averageMonthlyConsumption: number;
+            availableStockOnHand: number;
+            initialStockOnHandUnits: number;
+            incomingUnits: number;
+            outgoingUnits: number;
+            lossInUnits: number;
+            additionInUnits: number;
+            expiringUnits: number;
+            daysOutOfStock: number;
+            optionId?: string | null;
+            suggestedQuantity: number;
+            requisitionNumber: number;
+            requisitionId: string;
             approvedQuantity: number;
             approvalComment?: string | null;
             itemStats: {
@@ -461,7 +600,7 @@ export type InsertResponseMutation = {
           | { __typename: 'OtherPartyNotACustomer'; description: string }
           | { __typename: 'OtherPartyNotVisible'; description: string };
       }
-    | { __typename: 'RequisitionNode'; id: string; requisitionNumber: number };
+    | { __typename: 'RequisitionNode'; id: string };
 };
 
 export type InsertProgramResponseMutationVariables = Types.Exact<{
@@ -476,7 +615,7 @@ export type InsertProgramResponseMutation = {
         __typename: 'InsertProgramResponseRequisitionError';
         error: { __typename: 'MaxOrdersReachedForPeriod'; description: string };
       }
-    | { __typename: 'RequisitionNode'; id: string; requisitionNumber: number };
+    | { __typename: 'RequisitionNode'; id: string };
 };
 
 export type InsertResponseLineMutationVariables = Types.Exact<{
@@ -794,6 +933,7 @@ export const ResponseLineFragmentDoc = gql`
     suggestedQuantity
     availableStockOnHand
     requisitionNumber
+    requisitionId
     itemStats {
       __typename
       stockOnHand
@@ -1033,6 +1173,17 @@ export const ResponseByNumberDocument = gql`
   }
   ${ResponseFragmentDoc}
 `;
+export const ResponseByIdDocument = gql`
+  query responseById($storeId: String!, $requisitionId: String!) {
+    requisition(id: $requisitionId, storeId: $storeId) {
+      __typename
+      ... on RequisitionNode {
+        ...Response
+      }
+    }
+  }
+  ${ResponseFragmentDoc}
+`;
 export const ResponsesDocument = gql`
   query responses(
     $storeId: String!
@@ -1060,7 +1211,6 @@ export const InsertResponseDocument = gql`
       ... on RequisitionNode {
         __typename
         id
-        requisitionNumber
       }
       ... on InsertResponseRequisitionError {
         __typename
@@ -1088,7 +1238,6 @@ export const InsertProgramResponseDocument = gql`
       ... on RequisitionNode {
         __typename
         id
-        requisitionNumber
       }
       ... on InsertProgramResponseRequisitionError {
         __typename
@@ -1427,6 +1576,21 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'responseByNumber',
+        'query',
+        variables
+      );
+    },
+    responseById(
+      variables: ResponseByIdQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<ResponseByIdQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ResponseByIdQuery>(ResponseByIdDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'responseById',
         'query',
         variables
       );

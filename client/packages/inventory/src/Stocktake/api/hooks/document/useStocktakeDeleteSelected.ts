@@ -37,7 +37,9 @@ export const useStocktakeDeleteSelected = () => {
       deleteSuccess: t('messages.deleted-stocktakes', {
         count: selectedRows.length,
       }),
-      cantDelete: t('label.cant-delete-disabled'),
+      cantDelete: selectedRows.every(item => item.isLocked)
+        ? t('messages.cannot-delete-stocktake-on-hold')
+        : t('label.cant-delete-disabled'),
     },
   });
 

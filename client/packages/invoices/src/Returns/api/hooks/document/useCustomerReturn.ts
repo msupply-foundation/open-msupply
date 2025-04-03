@@ -17,12 +17,12 @@ export const useCustomerReturn = () => {
       .build()
   );
 
-  const { invoiceNumber = '' } = useParams();
+  const { invoiceId = '' } = useParams();
   const api = useReturnsApi();
 
   const query = useQuery(
-    api.keys.customerDetail(invoiceNumber),
-    () => api.get.customerReturnByNumber(Number(invoiceNumber)),
+    api.keys.customerDetail(invoiceId),
+    () => api.get.customerReturnById(invoiceId),
     {
       enabled: !!isCustomerReturnPage,
     }

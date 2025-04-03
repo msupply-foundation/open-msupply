@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -10,6 +10,7 @@ import {
   createQueryParamsStore,
   useEditModal,
   DetailTabs,
+  useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
@@ -34,12 +35,17 @@ export const SupplierReturnsDetailViewComponent = () => {
   const { data, isLoading } = useReturns.document.supplierReturn();
   const { rows } = useReturns.lines.supplierReturnRows();
   const t = useTranslation();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
 
   const onRowClick = (row: SupplierReturnLineFragment | SupplierReturnItem) =>
     onOpen(row.itemId);
 
   const onAddItem = () => onOpen();
+
+  useEffect(() => {
+    setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
+  }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 

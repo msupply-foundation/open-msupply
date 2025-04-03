@@ -12,12 +12,8 @@ import {
   UpdateIndicatorValueInput,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './../DetailView/RequestLineEdit/hooks';
-import {
-  RequestRowFragment,
-  RequestFragment,
-  Sdk,
-} from './operations.generated';
-import { RequestLineFragment } from '.';
+import { RequestRowFragment, Sdk } from './operations.generated';
+import { RequestFragment, RequestLineFragment } from '.';
 
 export type ListParams = {
   first?: number;
@@ -118,9 +114,9 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
         page: { offset, first },
         sort: sortBy
           ? {
-              key: requestParser.toSortField(sortBy),
-              desc: !!sortBy.isDesc,
-            }
+            key: requestParser.toSortField(sortBy),
+            desc: !!sortBy.isDesc,
+          }
           : undefined,
         filter,
       });
@@ -148,6 +144,19 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
       if (result?.requisitionByNumber.__typename === 'RequisitionNode') {
         return result?.requisitionByNumber;
+      }
+
+      throw new Error('Record not found');
+    },
+    byId: async (requisitionId: string): Promise<RequestFragment> => {
+      const result = await sdk.requestById({
+        storeId,
+        requisitionId,
+      });
+
+
+      if (result?.requisition.__typename === 'RequisitionNode') {
+        return result?.requisition;
       }
 
       throw new Error('Record not found');
@@ -262,7 +271,6 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
   }): Promise<{
     __typename: 'RequisitionNode';
     id: string;
-    requisitionNumber: number;
   }> => {
     const result = await sdk.insertRequest({
       storeId,

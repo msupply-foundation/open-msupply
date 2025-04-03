@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod query {
     use repository::{
+        asset_internal_location_row::AssetInternalLocationRowRepository,
         mock::{mock_store_a, MockDataInserts},
         test_db::setup_all,
     };
@@ -47,6 +48,11 @@ mod query {
             asset.modified_datetime
                 >= chrono::Utc::now().naive_utc() - chrono::Duration::seconds(5)
         );
+
+        // Check that the asset has an internal location assigned
+        let internal_location_repo = AssetInternalLocationRowRepository::new(&ctx.connection);
+        let internal_locations = internal_location_repo.find_all_by_asset(&id).unwrap();
+        assert_eq!(internal_locations.len(), 1);
 
         // 2. Check we can't create an asset with the same id
         assert_eq!(
