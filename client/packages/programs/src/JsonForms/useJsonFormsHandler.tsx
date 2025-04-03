@@ -148,8 +148,7 @@ export const useJsonFormsHandler = <R,>(
     try {
       await formActions.run({ preSubmit: true });
 
-      const cacheAppendedData = appendCachedData(initialData, data);
-      const sanitizedData = stripEmptyAdditions(initialData, cacheAppendedData);
+      const sanitizedData = stripEmptyAdditions(initialData, data);
       const result = await save?.(sanitizedData);
 
       await formActions.run({ preSubmit: false });
