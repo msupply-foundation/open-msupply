@@ -3,7 +3,6 @@ import { useTranslation } from '@common/intl';
 import {
   ItemRowFragment,
   ReasonOptionsSearchInput,
-  RequestFragment,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
 import {
@@ -48,7 +47,7 @@ interface RequestLineEditProps {
   isPacks: boolean;
   setIsPacks: (isPacks: boolean) => void;
   lines: RequestLineFragment[];
-  requisition: RequestFragment;
+  requisitionId: string;
   insert: (patch: InsertRequestRequisitionLineInput) => void;
   scrollIntoView: () => void;
   disabled?: boolean;
@@ -67,7 +66,7 @@ export const RequestLineEdit = ({
   isPacks,
   setIsPacks,
   lines,
-  requisition,
+  requisitionId,
   insert,
   scrollIntoView,
   disabled: isSent,
@@ -84,7 +83,6 @@ export const RequestLineEdit = ({
 
   const line = lines.find(line => line.id === draft?.id);
   const { width } = useWindowDimensions();
-  const { id: requisitionId, requisitionNumber } = requisition;
   const theme = useTheme();
 
   return (
@@ -100,7 +98,7 @@ export const RequestLineEdit = ({
                     requisitionId: requisitionId,
                     itemId: newItem.id,
                   });
-                  navigate(buildItemEditRoute(requisitionNumber, newItem.id), {
+                  navigate(buildItemEditRoute(requisitionId, newItem.id), {
                     replace: true,
                   });
                 }
@@ -331,7 +329,7 @@ export const RequestLineEdit = ({
                         disabled={!isPacks || isSent}
                         value={NumUtils.round(
                           (draft?.requestedQuantity ?? 0) /
-                            (draft?.defaultPackSize ?? 1),
+                          (draft?.defaultPackSize ?? 1),
                           2
                         )}
                         decimalLimit={2}
@@ -444,7 +442,7 @@ export const RequestLineEdit = ({
           next={next}
           hasPrevious={hasPrevious}
           previous={previous}
-          requisitionNumber={draft?.requisitionNumber}
+          requisitionId={draft?.requisitionId}
           scrollIntoView={scrollIntoView}
         />
       </Box>

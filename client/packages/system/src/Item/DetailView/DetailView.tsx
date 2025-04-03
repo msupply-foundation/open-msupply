@@ -33,12 +33,18 @@ export const ItemDetailView: FC = () => {
   if (isLoading || !data) return <DetailFormSkeleton />;
 
   const onLedgerRowClick = (ledger: ItemLedgerFragment) => {
+    navigate(
+      RouteBuilder.create(AppRoute.Replenishment)
+        .addPart(AppRoute.InboundShipment)
+        .addPart(String(ledger.invoiceId))
+        .build()
+    );
     switch (ledger.invoiceType) {
       case InvoiceNodeType.InboundShipment:
         navigate(
           RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.InboundShipment)
-            .addPart(String(ledger.invoiceNumber))
+            .addPart(String(ledger.invoiceId))
             .build()
         );
         break;
@@ -46,7 +52,7 @@ export const ItemDetailView: FC = () => {
         navigate(
           RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.SupplierReturn)
-            .addPart(String(ledger.invoiceNumber))
+            .addPart(String(ledger.invoiceId))
             .build()
         );
         break;
@@ -54,7 +60,7 @@ export const ItemDetailView: FC = () => {
         navigate(
           RouteBuilder.create(AppRoute.Distribution)
             .addPart(AppRoute.OutboundShipment)
-            .addPart(String(ledger.invoiceNumber))
+            .addPart(String(ledger.invoiceId))
             .build()
         );
         break;
@@ -62,7 +68,7 @@ export const ItemDetailView: FC = () => {
         navigate(
           RouteBuilder.create(AppRoute.Distribution)
             .addPart(AppRoute.CustomerReturn)
-            .addPart(String(ledger.invoiceNumber))
+            .addPart(String(ledger.invoiceId))
             .build()
         );
         break;
@@ -70,7 +76,7 @@ export const ItemDetailView: FC = () => {
         navigate(
           RouteBuilder.create(AppRoute.Dispensary)
             .addPart(AppRoute.Prescription)
-            .addPart(String(ledger.invoiceNumber))
+            .addPart(String(ledger.invoiceId))
             .build()
         );
         break;
