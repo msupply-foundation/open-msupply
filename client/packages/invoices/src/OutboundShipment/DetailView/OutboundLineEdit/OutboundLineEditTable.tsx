@@ -69,6 +69,8 @@ const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
   );
 };
 
+// commment for android build
+
 const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
   const t = useTranslation();
   const formattedValue = useFormatNumber().round(allocatedQuantity, 2);
