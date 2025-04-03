@@ -45,7 +45,7 @@ pub async fn pull(
         sync_v5_settings,
         is_initialised,
         sync_v6_version,
-        fetching_patient_id,
+        fetch_patient_id,
     }: SyncPullRequestV6,
 ) -> Result<SyncBatchV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
@@ -83,13 +83,13 @@ pub async fn pull(
         batch_size,
         response.site_id,
         is_initialised,
-        fetching_patient_id.clone(),
+        fetch_patient_id.clone(),
     )?;
     let total_records = changelog_repo.count_outgoing_sync_records_from_central(
         cursor,
         response.site_id,
         is_initialised,
-        fetching_patient_id,
+        fetch_patient_id,
     )?;
     let max_cursor = changelog_repo.latest_cursor()?;
 
