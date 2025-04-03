@@ -1,11 +1,16 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_expected_delivery_date_to_invoice;
 mod add_item_warning_link_table;
 mod add_linked_invoice_id_to_invoice_line;
+mod add_patient_link_id_to_vaccination;
 mod add_preference_table;
 mod add_warning_table;
+mod asset_data_matrix_locked_fields;
+mod asset_data_matrix_permission;
 mod new_stocktake_fields;
+mod remove_name_store_join_constraint;
 
 pub(crate) struct V2_07_00;
 
@@ -22,7 +27,12 @@ impl Migration for V2_07_00 {
         vec![
             Box::new(add_preference_table::Migrate),
             Box::new(add_linked_invoice_id_to_invoice_line::Migrate),
+            Box::new(add_expected_delivery_date_to_invoice::Migrate),
             Box::new(new_stocktake_fields::Migrate),
+            Box::new(asset_data_matrix_permission::Migrate),
+            Box::new(asset_data_matrix_locked_fields::Migrate),
+            Box::new(add_patient_link_id_to_vaccination::Migrate),
+            Box::new(remove_name_store_join_constraint::Migrate),
             Box::new(add_warning_table::Migrate),
             Box::new(add_item_warning_link_table::Migrate),
         ]

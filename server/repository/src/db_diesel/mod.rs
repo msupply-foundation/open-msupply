@@ -324,7 +324,16 @@ impl From<DieselError> for RepositoryError {
                 Error::as_db_error("DIESEL_INVALID_C_STRING", extra)
             }
             DieselError::DatabaseError(err, extra) => {
-                let extra = format!("{:?}", extra);
+                let extra = format!(
+                    "{} {} {} {} {} {} {}",
+                    extra.message(),
+                    extra.details().unwrap_or_default(),
+                    extra.hint().unwrap_or_default(),
+                    extra.table_name().unwrap_or_default(),
+                    extra.column_name().unwrap_or_default(),
+                    extra.constraint_name().unwrap_or_default(),
+                    extra.statement_position().unwrap_or_default(),
+                );
                 match err {
                     DieselDatabaseErrorKind::UniqueViolation => Error::UniqueViolation(extra),
                     DieselDatabaseErrorKind::ForeignKeyViolation => {

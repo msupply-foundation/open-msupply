@@ -58,9 +58,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const [reportDisabled, setReportDisabled] = useState<boolean>(false);
   const [isNew, setIsNew] = useState<boolean>(false);
 
-  const { data: logData } = useActivityLog.document.listByRecord(
-    stockLine?.id ?? ''
-  );
+  const { data: logData } = useActivityLog(stockLine?.id ?? '');
 
   const {
     list: { repacks, isError, isLoading },
