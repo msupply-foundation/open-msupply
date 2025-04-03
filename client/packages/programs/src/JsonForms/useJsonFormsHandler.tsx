@@ -46,7 +46,6 @@ import {
   stripEmptyAdditions,
 } from './stripEmptyAdditions';
 import { useFormActions } from './useFormActions';
-import { appendCachedData } from './useAppendCachedData';
 
 export interface SchemaData {
   formSchemaId?: string;
