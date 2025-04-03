@@ -6,7 +6,7 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 use util::{
-    constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, date_with_months_offset, first_day_of_the_month,
+    constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH, date_with_months_offset, first_day_of_the_month,
     last_day_of_the_month,
 };
 
@@ -150,7 +150,7 @@ fn calculate_consumption(
     ConsumptionHistory {
         consumption,
         average_monthly_consumption: total_consumption_amc / days_in_amc_lookup as f64
-            * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30,
+            * AVG_NUMBER_OF_DAYS_IN_A_MONTH,
         date: reference_date,
     }
 }
@@ -268,7 +268,7 @@ mod tests {
                     / (NaiveDate::from_ymd_opt(2021, 1, 31).unwrap()
                         - NaiveDate::from_ymd_opt(2020, 10, 1).unwrap())
                     .num_days() as f64
-                    * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30,
+                    * AVG_NUMBER_OF_DAYS_IN_A_MONTH,
                 date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap()
             }
         );
