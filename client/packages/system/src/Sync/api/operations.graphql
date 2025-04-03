@@ -104,6 +104,6 @@ query syncStatus {
   }
 }
 
-mutation manualSync {
-  manualSync
+mutation manualSync($fetchPatientId: String) {
+  manualSync(fetchPatientId: $fetchPatientId)
 }

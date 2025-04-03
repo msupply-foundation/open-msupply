@@ -43,6 +43,7 @@ impl SyncApiV6 {
         cursor: u64,
         batch_size: u32,
         is_initialised: bool,
+        fetch_patient_id: &Option<String>,
     ) -> Result<SyncBatchV6, SyncApiErrorV6> {
         let Self {
             sync_v5_settings,
@@ -59,6 +60,7 @@ impl SyncApiV6 {
             sync_v5_settings: sync_v5_settings.clone(),
             is_initialised,
             sync_v6_version: *sync_v6_version,
+            fetch_patient_id: fetch_patient_id.clone(),
         };
 
         let result = with_retries(RetrySeconds::default(), |client| {

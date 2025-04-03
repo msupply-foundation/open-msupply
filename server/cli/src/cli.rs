@@ -59,7 +59,7 @@ const DATA_EXPORT_FOLDER: &str = "data";
 struct Args {
     #[clap(subcommand)]
     action: Action,
-    
+
     #[clap(flatten)]
     config_args: configuration::ConfigArgs,
 }
@@ -253,7 +253,7 @@ async fn initialise_from_central(
     // file_sync_trigger is not used here, but easier to just create it rather than making file sync trigger optional
     let (file_sync_trigger, _file_sync_driver) = FileSyncDriver::init(&settings);
     let (_, sync_driver) = SynchroniserDriver::init(file_sync_trigger);
-    sync_driver.sync(service_provider.clone()).await;
+    sync_driver.sync(service_provider.clone(), None).await;
 
     info!("Syncing users");
     for user in users.split(',') {
