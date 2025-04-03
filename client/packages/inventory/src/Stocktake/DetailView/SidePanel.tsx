@@ -137,6 +137,7 @@ export const SidePanel = () => {
     selectedRows: [stocktake],
     deleteAction,
     messages: {
+      // TODO differentiate betweeen duplicate stocktakeNumber on delete where stores have been merged (https://github.com/msupply-foundation/open-msupply/pull/6789)
       confirmMessage: t('messages.confirm-delete-stocktake', {
         number: stocktake?.stocktakeNumber,
       }),
