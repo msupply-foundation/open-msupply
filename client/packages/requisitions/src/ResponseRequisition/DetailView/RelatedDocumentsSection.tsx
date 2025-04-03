@@ -62,7 +62,7 @@ export const RelatedDocumentsSection: FC = () => {
                 value={shipment?.invoiceNumber}
                 to={RouteBuilder.create(AppRoute.Distribution)
                   .addPart(AppRoute.OutboundShipment)
-                  .addPart(String(shipment?.invoiceNumber))
+                  .addPart(shipment?.id)
                   .build()}
               />
             </Grid>
