@@ -304,7 +304,9 @@ export type SyncStatusQuery = {
   } | null;
 };
 
-export type ManualSyncMutationVariables = Types.Exact<{ [key: string]: never }>;
+export type ManualSyncMutationVariables = Types.Exact<{
+  fetchPatientId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+}>;
 
 export type ManualSyncMutation = {
   __typename: 'Mutations';
@@ -438,8 +440,8 @@ export const SyncStatusDocument = gql`
   ${FullSyncStatusFragmentDoc}
 `;
 export const ManualSyncDocument = gql`
-  mutation manualSync {
-    manualSync
+  mutation manualSync($fetchPatientId: String) {
+    manualSync(fetchPatientId: $fetchPatientId)
   }
 `;
 

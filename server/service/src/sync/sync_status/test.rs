@@ -603,7 +603,7 @@ async fn run_server_and_sync(
     let result = tokio::select! {
         _ = server_future => unreachable!("Sync should finish first"),
         _ = v6_server_future  => unreachable!("Sync should finish first"),
-        result = synchroniser.sync() => result
+        result = synchroniser.sync(None) => result
     };
 
     server_handle.stop(true).await;
