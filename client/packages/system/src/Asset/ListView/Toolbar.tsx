@@ -8,6 +8,7 @@ import {
 } from '@openmsupply-client/common';
 import { useAssetData } from '../api/hooks';
 import { mapIdNameToOptions } from '../utils';
+import { useAssetCategories } from '@openmsupply-client/system';
 
 type ReferenceData = {
   id: string;
@@ -16,9 +17,7 @@ type ReferenceData = {
 };
 
 export const Toolbar = () => {
-  // const { data: classes } = useAssetData.utils.classes();
-
-  const { data: categoryData } = useAssetData.utils.categories();
+  const { data: categoryData } = useAssetCategories();
   const { data: typeData } = useAssetData.utils.types();
   const { urlQuery, updateQuery } = useUrlQuery({
     skipParse: ['classId', 'categoryId', 'typeId'],
