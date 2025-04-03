@@ -8,5 +8,6 @@ export {
   useAssetLogReasonList,
   useAssetCategories,
   useAssetProperties,
+  useAssetTypes,
 } from './api';
 export { mapIdNameToOptions } from './utils';

@@ -10,7 +10,7 @@ import {
   useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
-import { mapIdNameToOptions, useAssetData } from '@openmsupply-client/system';
+import { mapIdNameToOptions, useAssetTypes } from '@openmsupply-client/system';
 import { CCE_CLASS_ID } from '../utils';
 import { useAssetCategories } from '@openmsupply-client/system';
 
@@ -26,7 +26,7 @@ export const useToolbar = () => {
   const isColdChain = usePathnameIncludes('cold-chain');
   const [types, setTypes] = useState<ReferenceData[]>([]);
 
-  const { data: typeData } = useAssetData.utils.types();
+  const { data: typeData } = useAssetTypes();
   const { data: categoryData } = useAssetCategories({
     classId: { equalTo: CCE_CLASS_ID },
   });
