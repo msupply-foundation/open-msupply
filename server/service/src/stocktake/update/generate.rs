@@ -578,6 +578,7 @@ pub fn generate(
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
         is_cancellation: false,
+        expected_delivery_date: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {
