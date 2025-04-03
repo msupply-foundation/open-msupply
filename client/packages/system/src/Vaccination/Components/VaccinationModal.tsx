@@ -285,7 +285,7 @@ const VaccinationForm = ({
           <InputWithLabelRow
             label={t('label.reason')}
             Input={
-              <>
+              <Box sx={{ display: 'flex', width: 275 }}>
                 <Select
                   options={[
                     // TODO: make the values an enum from backend
@@ -304,14 +304,14 @@ const VaccinationForm = ({
                     sx={{
                       color: 'primary.light',
                       fontSize: '17px',
-                      marginRight: 0.5,
+                      marginLeft: 0.5,
                       marginBottom: 2,
                     }}
                   >
                     *
                   </Typography>
                 </Box>
-              </>
+              </Box>
             }
           />
         </>
