@@ -99,7 +99,13 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
     <Box
       display="flex"
       gap={2}
-      sx={{ alignItems: 'flex-start', flexWrap: 'wrap' }}
+      sx={theme => ({
+        [theme.breakpoints.down('sm')]: {
+          flexDirection: 'column',
+        },
+        alignItems: 'flex-start',
+        flexWrap: 'wrap',
+      })}
     >
       {/* 13px margin to make menu match the individual filter inputs */}
       <DropdownMenu label={t('label.filters')} sx={{ marginTop: '13px' }}>

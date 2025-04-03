@@ -13,8 +13,9 @@ import {
   AutocompleteOnChange,
   InsertAssetLogReasonInput,
   AssetLogStatusInput,
+  useNotification,
 } from '@openmsupply-client/common';
-import { useAssetData } from '../../api';
+import { checkLogReasonStatus, useAssetLogReason } from '../../api';
 import { getStatusInputOptions } from '../../utils';
 
 type AssetLogStatus = {
@@ -50,7 +51,9 @@ const useDraftLogReason = (
   const [logReason, setLogReason] = useState<InsertAssetLogReasonInput>(() =>
     createNewLogReason(seed)
   );
-  const { mutate: insert, isLoading } = useAssetData.log.insertReasons();
+  const {
+    create: { create: insert, isCreating },
+  } = useAssetLogReason();
 
   const onUpdate = (patch: Partial<InsertAssetLogReasonInput>) => {
     setLogReason({ ...logReason, ...patch });
@@ -64,7 +67,7 @@ const useDraftLogReason = (
     draft: logReason,
     onUpdate,
     onSave,
-    isLoading,
+    isLoading: isCreating,
   };
 };
 
@@ -77,6 +80,7 @@ export const LogReasonCreateModal: FC<LogReasonCreateModalProps> = ({
   const t = useTranslation();
   const { draft, onUpdate, onSave, isLoading } = useDraftLogReason(logReason);
   const isInvalid = !draft.reason.trim();
+  const { info } = useNotification();
 
   const updateStatus: AutocompleteOnChange<AssetLogStatus> = (_, option) => {
     if (!option) {
@@ -92,8 +96,13 @@ export const LogReasonCreateModal: FC<LogReasonCreateModalProps> = ({
           variant="ok"
           disabled={isInvalid}
           onClick={async () => {
-            await onSave();
-            onClose();
+            // The default enum value 'NotInUse' will not be used, as it will fail the checkStatus validation first.
+            if (checkLogReasonStatus(draft.assetLogStatus))
+              info(t('error.no-status-provided-for-asset-log-reason'))();
+            else {
+              await onSave();
+              onClose();
+            }
           }}
         />
       }

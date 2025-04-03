@@ -14,6 +14,7 @@ import {
   useUrlQueryParams,
   TooltipTextCell,
   GenericColumnKey,
+  getCommentPopoverColumn,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -79,12 +80,7 @@ const OutboundShipmentListViewComponent: FC = () => {
         Cell: TooltipTextCell,
         width: 175,
       },
-      [
-        'comment',
-        {
-          Cell: TooltipTextCell,
-        },
-      ],
+      getCommentPopoverColumn(),
       [
         'totalAfterTax',
         {

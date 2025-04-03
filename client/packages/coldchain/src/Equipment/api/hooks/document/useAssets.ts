@@ -1,14 +1,16 @@
 import {
   useAuthContext,
   useCentralServerCallback,
+  usePathnameIncludes,
   useQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useAssetApi } from '../utils/useAssetApi';
 
 export const useAssets = () => {
-  const isCentralServer = useCentralServerCallback();
+  const isColdChain = usePathnameIncludes('cold-chain');
   const { store } = useAuthContext();
+  const isCentralServer = useCentralServerCallback();
 
   const { queryParams } = useUrlQueryParams({
     filters: [
@@ -21,7 +23,7 @@ export const useAssets = () => {
       { key: 'categoryId', condition: 'equalTo' },
       { key: 'typeId', condition: 'equalTo' },
       { key: 'isNonCatalogue', condition: '=' },
-      { key: 'store' },
+      { key: 'storeCodeOrName' },
       { key: 'functionalStatus', condition: 'equalTo' },
     ],
   });
@@ -30,6 +32,6 @@ export const useAssets = () => {
 
   const api = useAssetApi();
   return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.list(queryParams, storeCodeFilter)
+    api.get.list(queryParams, storeCodeFilter, isColdChain)
   );
 };

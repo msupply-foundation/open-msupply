@@ -10,12 +10,12 @@
         "after": {
           "description": "From date",
           "format": "date-time",
-          "type": "string"
+          "type": ["string", "null"]
         },
         "before": {
           "description": "To date",
           "format": "date-time",
-          "type": "string"
+            "type": ["string", "null"]
         }
       },
       "required": ["programId"]

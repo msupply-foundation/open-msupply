@@ -8,6 +8,7 @@ import {
   useNotification,
   AdjustmentTypeInput,
   useDialog,
+  useFormatNumber,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
 import { InventoryAdjustmentReasonSearchInput } from '../../..';
@@ -27,6 +28,7 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
   const t = useTranslation();
   const { success, error } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
+  const { format } = useFormatNumber();
 
   const { draft, setDraft, create } = useInventoryAdjustment(stockLine);
 
@@ -105,7 +107,13 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
         >
           <TextWithLabelRow
             label={t('label.pack-quantity')}
-            text={String(stockLine.totalNumberOfPacks)}
+            text={format(stockLine.totalNumberOfPacks)}
+            textProps={{ textAlign: 'end' }}
+            labelProps={{ sx: { textWrap: 'wrap' } }}
+          />
+          <TextWithLabelRow
+            label={t('label.available-packs')}
+            text={format(stockLine.availableNumberOfPacks)}
             textProps={{ textAlign: 'end' }}
             labelProps={{ sx: { textWrap: 'wrap' } }}
           />
@@ -114,6 +122,7 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
             Input={
               <NumericTextInput
                 width={INPUT_WIDTH}
+                decimalLimit={2}
                 max={
                   draft.adjustmentType === AdjustmentTypeInput.Reduction
                     ? stockLine.totalNumberOfPacks

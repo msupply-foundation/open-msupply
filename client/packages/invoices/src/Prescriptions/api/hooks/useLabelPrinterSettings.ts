@@ -3,7 +3,7 @@ import { useGql, useQuery } from '@openmsupply-client/common';
 import { getSdk } from '../operations.generated';
 import { PRINTER_SETTINGS } from './keys';
 
-//duplicate of settings label printer - to be updated when new printer settings are finished and make reuseable then
+// duplicate of settings label printer - to be updated when new printer settings are finished and make reuseable then
 export const useLabelPrinterSettingsGraphQl = () => {
   const { client } = useGql();
   const printerSettingsApi = getSdk(client);
