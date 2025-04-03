@@ -82,7 +82,7 @@ export const DetailView: FC = () => {
   ];
 
   const showIndicatorTab =
-    data?.programName &&
+    !!data?.programName &&
     !!data?.otherParty.store &&
     programIndicators?.totalCount !== 0 &&
     !data?.isEmergency;
@@ -109,7 +109,11 @@ export const DetailView: FC = () => {
           initialSortBy: { key: 'itemName' },
         })}
       >
-        <AppBarButtons isDisabled={!data || isDisabled} onAddItem={onAddItem} />
+        <AppBarButtons
+          isDisabled={!data || isDisabled}
+          onAddItem={onAddItem}
+          showIndicators={showIndicatorTab}
+        />
         <Toolbar />
 
         <DetailTabs tabs={tabs} />
