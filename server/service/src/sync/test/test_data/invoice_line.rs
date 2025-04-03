@@ -64,7 +64,8 @@ const TRANS_LINE_1: (&str, &str) = (
         "user_7_ID": "",
         "user_8_ID": "",
         "vaccine_vial_monitor_status_ID": "",
-        "volume_per_pack": 0
+        "volume_per_pack": 0,
+        "om_item_variant_id": ""
         }
     "#,
 );
@@ -184,7 +185,9 @@ const TRANS_LINE_2: (&str, &str) = (
         "user_7_ID": "",
         "user_8_ID": "",
         "vaccine_vial_monitor_status_ID": "",
-        "volume_per_pack": 0
+        "volume_per_pack": 0,
+        "om_item_variant_id": ""
+        
     }"#,
 );
 fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
@@ -429,7 +432,8 @@ const TRANS_LINE_OM_UNSET_TAX_FIELDS: (&str, &str) = (
         "om_item_code": "item_a_code",
         "om_tax": null,
         "om_total_before_tax": 105.4,
-        "om_total_after_tax": 130.5
+        "om_total_after_tax": 130.5,
+        "om_item_variant_id": ""
     }"#,
 );
 fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
