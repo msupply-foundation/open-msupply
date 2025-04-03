@@ -84,7 +84,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
     const reports = data
       ? data?.nodes?.map(report => ({
         value: report.id,
-        label: t(getReportKey(report.name)),
+        label: report.isCustom ? report.name : t(getReportKey(report.name)),
         isDisabled: disabled,
       }))
       : [];
