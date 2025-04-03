@@ -20,8 +20,9 @@ where
     loop {
         let client = Client::builder()
             .connect_timeout(Duration::from_secs(connection_timeouts.0[index]))
+            .timeout(Duration::from_secs(30))
             .build()
-            .unwrap();// This method fails if a TLS backend cannot be initialized, or the resolver cannot load the system configuration.
+            .unwrap(); // This method fails if a TLS backend cannot be initialized, or the resolver cannot load the system configuration.
 
         let result = f(client).send().await;
 
