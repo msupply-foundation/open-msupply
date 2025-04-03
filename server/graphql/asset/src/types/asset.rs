@@ -3,6 +3,8 @@ use std::vec;
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
+use serde_json;
+
 use graphql_asset_catalogue::types::asset_catalogue_item::AssetCatalogueItemNode;
 use graphql_asset_catalogue::types::asset_category::AssetCategoryNode;
 use graphql_asset_catalogue::types::asset_class::AssetClassNode;
@@ -28,7 +30,7 @@ use repository::{
     EqualFilter,
 };
 use repository::{DateFilter, StringFilter};
-use service::asset::parse::AssetFromGs1Error as ServiceScannedDataParseError;
+use service::asset::parse::{AssetFromGs1Error as ServiceScannedDataParseError, LockedAssetFields};
 use service::{usize_to_u32, ListResult};
 
 use super::{AssetLogNode, AssetLogStatusInput, EqualFilterStatusInput};
@@ -67,6 +69,7 @@ pub struct AssetFilterInput {
     pub installation_date: Option<DateFilterInput>,
     pub replacement_date: Option<DateFilterInput>,
     pub store_code_or_name: Option<StringFilterInput>,
+    pub store_id: Option<StringFilterInput>,
     pub functional_status: Option<EqualFilterStatusInput>,
 }
 
@@ -85,11 +88,20 @@ impl From<AssetFilterInput> for AssetFilter {
             replacement_date: f.replacement_date.map(DateFilter::from),
             is_non_catalogue: f.is_non_catalogue,
             store: f.store_code_or_name.map(StringFilter::from),
+            store_id: f.store_id.map(StringFilter::from),
             functional_status: f
                 .functional_status
                 .map(|t| map_filter!(t, AssetLogStatusInput::to_domain)),
         }
     }
+}
+
+#[derive(SimpleObject, PartialEq, Debug)]
+pub struct LockedAssetFieldsNode {
+    pub serial_number: bool,
+    pub catalogue_item_id: bool,
+    pub warranty_start: bool,
+    pub warranty_end: bool,
 }
 
 #[derive(PartialEq, Debug)]
@@ -298,6 +310,22 @@ impl AssetNode {
 
     pub async fn needs_replacement(&self) -> &Option<bool> {
         &self.row().needs_replacement
+    }
+
+    pub async fn locked_fields(&self) -> LockedAssetFieldsNode {
+        let locked_fields = match &self.row().locked_fields_json {
+            Some(locked_fields_json) => {
+                serde_json::from_str::<LockedAssetFields>(locked_fields_json).unwrap_or_default()
+            }
+            None => LockedAssetFields::default(),
+        };
+
+        LockedAssetFieldsNode {
+            serial_number: locked_fields.serial_number,
+            catalogue_item_id: locked_fields.catalogue_item_id,
+            warranty_start: locked_fields.warranty_start,
+            warranty_end: locked_fields.warranty_end,
+        }
     }
 }
 

@@ -29,4 +29,8 @@
     font-family: Tahoma;
     font-size: 8pt;
   }
+
+  .batch {
+    word-break: break-word;
+  }
   

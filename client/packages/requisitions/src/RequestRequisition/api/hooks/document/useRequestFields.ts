@@ -2,8 +2,8 @@ import {
   FieldSelectorControl,
   useFieldsSelector,
 } from '@openmsupply-client/common';
-import { useRequest, useRequestNumber } from './useRequest';
-import { RequestFragment } from '../../operations.generated';
+import { useRequest, useRequestId } from './useRequest';
+import { RequestFragment } from '../../.';
 import { useRequestApi } from '../utils/useRequestApi';
 
 export const useRequestFields = <
@@ -12,11 +12,11 @@ export const useRequestFields = <
   keys: KeyOfRequisition | KeyOfRequisition[]
 ): FieldSelectorControl<RequestFragment, KeyOfRequisition> => {
   const { data } = useRequest();
-  const requestNumber = useRequestNumber();
+  const requestId = useRequestId();
   const api = useRequestApi();
   return useFieldsSelector(
-    api.keys.detail(requestNumber),
-    () => api.get.byNumber(requestNumber),
+    api.keys.detail(requestId),
+    () => api.get.byId(requestId),
 
     (patch: Partial<RequestFragment>) =>
       api.update({ ...patch, id: data?.id ?? '' }),
