@@ -1969,7 +1969,7 @@
   "warning.field-not-parsed": "{{field}} not parsed",
   "warning.nothing-to-supply": "Nothing left to supply!",
   "tooltip.defined-by-gs1-matrix": "Defined by GS1 datamatrix",
-  "report.stocktake-variance": "Stocktake Variance",
+  "form.stocktake-variance": "Stocktake Variance",
   "form.inbound": "Inbound",
   "form.internal-order": "Internal Order",
   "form.outbound-invoice-landscape-woth-logo": "Outbound Shipment (landscape)",
