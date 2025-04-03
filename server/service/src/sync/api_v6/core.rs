@@ -60,7 +60,7 @@ impl SyncApiV6 {
             sync_v5_settings: sync_v5_settings.clone(),
             is_initialised,
             sync_v6_version: *sync_v6_version,
-            fetching_patient_id: fetch_patient_id.clone(),
+            fetch_patient_id: fetch_patient_id.clone(),
         };
 
         let result = with_retries(RetrySeconds::default(), |client| {

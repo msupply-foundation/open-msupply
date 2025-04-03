@@ -310,14 +310,14 @@ impl<'a> ChangelogRepository<'a> {
         batch_size: u32,
         sync_site_id: i32,
         is_initialized: bool,
-        fetching_patient_id: Option<String>,
+        fetch_patient_id: Option<String>,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
         let result = with_locked_changelog_table(self.connection, |locked_con| {
             let query = create_filtered_outgoing_sync_query(
                 earliest,
                 sync_site_id,
                 is_initialized,
-                fetching_patient_id,
+                fetch_patient_id,
             )
             .order(changelog_deduped::cursor.asc())
             .limit(batch_size.into());
@@ -354,13 +354,13 @@ impl<'a> ChangelogRepository<'a> {
         earliest: u64,
         sync_site_id: i32,
         is_initialized: bool,
-        fetching_patient_id: Option<String>,
+        fetch_patient_id: Option<String>,
     ) -> Result<u64, RepositoryError> {
         let result = create_filtered_outgoing_sync_query(
             earliest,
             sync_site_id,
             is_initialized,
-            fetching_patient_id,
+            fetch_patient_id,
         )
         .count()
         .get_result::<i64>(self.connection.lock().connection())?;
@@ -492,7 +492,7 @@ fn create_filtered_outgoing_sync_query(
     earliest: u64,
     sync_site_id: i32,
     is_initialized: bool,
-    fetching_patient_id: Option<String>,
+    fetch_patient_id: Option<String>,
 ) -> BoxedChangelogQuery {
     let mut query = changelog_deduped::table
         .left_join(name_link::table)
@@ -581,7 +581,7 @@ fn create_filtered_outgoing_sync_query(
 
     // If this is a manual sync to fetch a specific patient, add an OR condition for their vaccination records
     // (since cursor 0)
-    if let Some(patient_id) = &fetching_patient_id {
+    if let Some(patient_id) = &fetch_patient_id {
         let all_fetched_patient_changelogs = changelog_deduped::table_name
             .eq(ChangelogTableName::Vaccination)
             .and(

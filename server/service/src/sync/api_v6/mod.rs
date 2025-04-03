@@ -164,7 +164,7 @@ pub struct SyncPullRequestV6 {
     pub(crate) sync_v6_version: u32,
     /// For manual sync, query for existing patient data
     /// after fetching that patient from a new store
-    pub(crate) fetching_patient_id: Option<String>,
+    pub(crate) fetch_patient_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]

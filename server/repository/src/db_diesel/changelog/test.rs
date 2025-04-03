@@ -749,7 +749,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
         .unwrap();
     assert_eq!(outgoing_results.len(), 0);
 
-    // Site 1 sync from higher cursor, gets this vax changelog when using fetching_patient_id
+    // Site 1 sync from higher cursor, gets this vax changelog when using fetch_patient_id
     let outgoing_results = repo
         .outgoing_sync_records_from_central(
             // Definitely a higher cursor than the vaccination changelog (+500)
