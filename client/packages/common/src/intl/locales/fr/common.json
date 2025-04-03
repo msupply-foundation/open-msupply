@@ -131,7 +131,7 @@
   "cmdk.goto-customers": "Aller à : Clients",
   "cmdk.goto-dashboard": "Aller à : Tableau de Bord",
   "cmdk.goto-inbound": "Aller à : Bons de livraison",
-  "cmdk.goto-internal-order": "Aller à : Bons de commande",
+  "cmdk.goto-internal-order": "Aller à : bons de commande",
   "cmdk.goto-items": "Aller à : Articles",
   "cmdk.goto-locations": "Aller à : Emplacements",
   "cmdk.goto-master-lists": "Aller à : Listes Maîtresses",
@@ -1939,5 +1939,10 @@
   "warning.cannot-create-placeholder-units": "Il y a un total de {{allocatedQuantity}} unités disponibles. Impossible d'allouer toutes les {{requestedQuantity}} unités demandées.",
   "warning.caps-lock": "Avertissement: Verrouillage majuscule activé",
   "warning.field-not-parsed": "{{field}} non analysé",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
+  "label.insurance-status": "Statut de l'Assurance",
+  "label.insured": "Assuré(e)",
+  "label.not-insured": "Non assuré(e)",
+  "label.from-shipped-datetime": "À partir de la date d'expédition",
+  "label.to-shipped-datetime": "jusqu'à la date d'expedition"
 }
