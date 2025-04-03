@@ -14,13 +14,12 @@ import {
   FnUtils,
   noOtherVariants,
   UniqueCombinationKey,
+  InsertAssetCatalogueItemInput,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { importRowToCsv } from '../utils';
-import {
-  AssetCatalogueItemFragment,
-  useAssetData,
-} from '@openmsupply-client/system';
+import { useAssetData } from '@openmsupply-client/system';
+import { useAssetInsert } from '../api';
 
 interface AssetItemImportModalProps {
   isOpen: boolean;
@@ -52,17 +51,18 @@ export type ImportRow = {
 export type LineNumber = {
   lineNumber: number;
 };
-const toInsertAssetItemInput = (row: ImportRow): AssetCatalogueItemFragment => {
+const toInsertAssetItemInput = (
+  row: ImportRow
+): InsertAssetCatalogueItemInput => {
   return {
-    __typename: 'AssetCatalogueItemNode',
     id: FnUtils.generateUUID(),
     subCatalogue: row.subCatalogue,
     code: row.code,
     manufacturer: row.manufacturer,
     model: row.model,
-    assetClassId: row.classId ?? '',
-    assetCategoryId: row.categoryId ?? '',
-    assetTypeId: row.typeId ?? '',
+    classId: row.classId ?? '',
+    categoryId: row.categoryId ?? '',
+    typeId: row.typeId ?? '',
     properties: JSON.stringify(row.properties),
   };
 };
@@ -97,8 +97,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
   const { data: assetTypes, isLoading: isLoadingTypes } =
     useAssetData.utils.types();
 
-  const { insertAssetCatalogueItem, invalidateQueries } =
-    useAssetData.document.insert();
+  const { mutateAsync: create, invalidateQueries } = useAssetInsert();
 
   const [bufferedAssetItem, setBufferedAssetItem] = useState<ImportRow[]>(
     () => []
@@ -116,7 +115,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
   };
 
   const mapStructuredErrors = (
-    result: Awaited<ReturnType<typeof insertAssetCatalogueItem>>
+    result: Awaited<ReturnType<typeof create>>
   ): string | undefined => {
     if (result.__typename === 'AssetCatalogueItemNode') {
       return undefined;
@@ -169,7 +168,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
       while (remainingRecords.length) {
         await Promise.all(
           remainingRecords.splice(0, 10).map(async asset => {
-            await insertAssetCatalogueItem(toInsertAssetItemInput(asset))
+            await create(toInsertAssetItemInput(asset))
               .then(async result => {
                 // Map structured Errors
                 if (result?.__typename === 'InsertAssetCatalogueItemError') {

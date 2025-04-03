@@ -1,0 +1,18 @@
+[package]
+name = "graphql_preference"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+path = "src/lib.rs"
+doctest = false
+
+[dependencies]
+
+repository = { path = "../../repository" }
+service = { path = "../../service" }
+util = { path = "../../util" }
+graphql_core = { path = "../core" }
+graphql_types = { path = "../types" }
+
+async-graphql = { workspace = true }

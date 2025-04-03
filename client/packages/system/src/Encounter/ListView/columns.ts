@@ -1,6 +1,5 @@
 import {
   useColumns,
-  ColumnAlign,
   ColumnDescription,
   SortBy,
   ColumnDataAccessor,
@@ -50,7 +49,7 @@ export const useEncounterListColumns = ({
   sortBy,
   includePatient = false,
 }: useEncounterListColumnsProps) => {
-  const { localisedDate, localisedTime } = useFormatDateTime();
+  const { localisedDate } = useFormatDateTime();
   const { data: enrolmentRegistries } =
     useDocumentRegistry.get.documentRegistries({
       filter: {
@@ -84,20 +83,6 @@ export const useEncounterListColumns = ({
       formatter: dateString =>
         dateString ? localisedDate((dateString as string) || '') : '',
     },
-    {
-      key: 'startTime',
-      label: 'label.encounter-start',
-      sortable: false,
-      accessor: ({ rowData }) => rowData?.startDatetime,
-      formatter: dateString =>
-        dateString ? localisedTime((dateString as string) || '') : '',
-    },
-    {
-      key: 'endDatetime',
-      label: 'label.encounter-end',
-      formatter: dateString =>
-        dateString ? localisedTime((dateString as string) || '') : '',
-    },
   ];
 
   if (includePatient)
@@ -107,19 +92,18 @@ export const useEncounterListColumns = ({
       accessor: ({ rowData }) => rowData?.patient?.name,
     });
   columnList.push({
+    key: 'effectiveStatus',
+    label: 'label.status',
+    sortable: false,
+    width: 175,
+  });
+  columnList.push({
     label: 'label.additional-info',
     key: 'events',
     sortable: false,
     accessor: additionalInfoAccessor,
     Cell: ChipTableCell,
-    minWidth: 400,
-  });
-  columnList.push({
-    key: 'effectiveStatus',
-    label: 'label.status',
-    sortable: false,
-    align: ColumnAlign.Right,
-    width: 175,
+    minWidth: 300,
   });
 
   const columns = useColumns<EncounterRowFragment>(

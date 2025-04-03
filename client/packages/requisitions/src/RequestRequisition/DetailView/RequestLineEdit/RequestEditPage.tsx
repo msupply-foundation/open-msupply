@@ -55,6 +55,7 @@ export const RequestLineEditPageInner = ({
         .map(line => line.item.id)
     : [];
   const isProgram = !!requisition.programName;
+  const isDisabled = requisition.status !== 'DRAFT';
 
   // This ref is attached to the currently selected list item, and is used to
   // "scroll into view" when the Previous/Next buttons are clicked in the NavBar
@@ -107,6 +108,7 @@ export const RequestLineEditPageInner = ({
               requisition={requisition}
               lines={lines}
               scrollIntoView={scrollSelectedItemIntoView}
+              disabled={isDisabled}
             />
           }
         />

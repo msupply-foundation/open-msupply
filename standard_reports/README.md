@@ -64,7 +64,7 @@ Optional fields in the manifest json are marked as '// optional'
   // name of html header template of the report found within the src dir
   "header": "header.html",
   // optional
-  // name of html footer template of the report found within the src dir
+  // name of tera html footer template of the report found within the src dir
   "footer": "footer.html"
 }
 ```
@@ -72,7 +72,7 @@ Optional fields in the manifest json are marked as '// optional'
 ### src dir
 
 The src dir contains:
-1. The main template file `template.html` which contains the report content. The name of this must be `template.html`
+1. The main template file `template.html` which contains the report content. The name of this must be `template.html`. 
 2. Header and footer html files. The names of these are specified in the [`report-manifest.json`](#report-manifest)
 2. GraphQL and sql query functions used by the report
 GraphQL query files must be named in full as seen in the example [`report-manifest.json`](#report-manifest)
@@ -143,7 +143,7 @@ Command line interface tools used in development and maintenance of reports are:
 
 Build reports command generates all reports into a json array. 
 
-It builds these reports from source files within the dir passed as an argument to this command. It will attempt to build a report from any dir containing a `report-manifest.json` file. Any file structure can be used as this command will search recursively through the directories.
+It builds these reports from source files within the dir passed as an argument to this command. It will attempt to build a report from any dir containing a `report-manifest.json` file. This command will search through any sub directories recursively; any file structure can be used.
 
 If no path is passed, the build-reports command defaults to the `reports` dir containing OMS standard reports.
 
@@ -196,12 +196,17 @@ If `--is_custom` is include, will filter the selected reports by the `is_custom`
 
 Other functionality, and processes used in report development are:
 
+[Tera templating language](#tera-templating-language)
 [Translating of reports](#translating-reports)
 [Standard vs custom reports]
 [Report versioning](#report-versioning)
 [Wasm functions](#wasm-functions)
 [Development processes](#development-processes)
-[File Structure]
+[File Structure](#file-structure-1)
+
+### Tera templating language
+
+Open mSupply reports are rendered using [Tera](https://keats.github.io/tera/docs/), an extension of HTML where values are replaced during render and simple logic can be executed.
 
 ### Translating reports
 

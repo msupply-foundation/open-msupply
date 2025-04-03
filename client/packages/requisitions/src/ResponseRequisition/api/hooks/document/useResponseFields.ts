@@ -7,7 +7,7 @@ import { useResponse, useResponseNumber } from './useResponse';
 import { useResponseApi } from '../utils/useResponseApi';
 
 export const useResponseFields = <
-  KeyOfRequisition extends keyof ResponseFragment
+  KeyOfRequisition extends keyof ResponseFragment,
 >(
   keys: KeyOfRequisition | KeyOfRequisition[]
 ): FieldSelectorControl<ResponseFragment, KeyOfRequisition> => {

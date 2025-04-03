@@ -28,7 +28,7 @@ export const getRowExpandColumn = <
     return isGrouped ? (
       <IconButton
         label={
-          labels?.header ?? !!numberExpanded
+          (labels?.header ?? !!numberExpanded)
             ? t('label.collapse-all')
             : t('label.expand-all')
         }
@@ -58,7 +58,7 @@ export const getRowExpandColumn = <
     return (
       <IconButton
         label={
-          labels?.cell ?? isExpanded ? t('label.collapse') : t('label.expand')
+          (labels?.cell ?? isExpanded) ? t('label.collapse') : t('label.expand')
         }
         onClick={event => {
           event.stopPropagation();

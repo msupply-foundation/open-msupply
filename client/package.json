@@ -12,17 +12,14 @@
     "build-stats": "lerna run --scope @openmsupply-client/* build-stats",
     "build-plugins": "lerna run --scope @openmsupply-client/* build-plugin",
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
-    "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
-    "compile": "lerna run --scope @openmsupply-client/* --parallel tsc --since HEAD -- --noEmit",
+    "re-compile": "tsc --project packages/host/tsconfig.json --noEmit",
     "compile-full": "lerna run --scope @openmsupply-client/* --parallel tsc",
-    "prepare": "cd .. && husky client/.husky",
-    "pre-commit-lint": "yarn compile && yarn lint-staged",
     "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "gql-codegen": "graphql-codegen --config codegen.yml",
     "//": "This command runs graphql-codegen twice, as running once is causing import path errors for shared fragments in the generated files (but running twice resolves them??) See issue here: https://github.com/msupply-foundation/open-msupply/issues/2812",
-    "generate": "cd ../server && cargo run --bin remote_server_cli -- export-graphql-schema && cd ../client && yarn gql-codegen && yarn gql-codegen",
+    "generate": "cd ../server && cargo run --bin remote_server_cli -- export-graphql-schema && cd ../client && yarn gql-codegen",
     "android:run": "npx cap run android",
     "android:build:server": "yarn build && lerna run --scope @openmsupply-client/android build:server --stream",
     "android:build:debug": "yarn build && lerna run --scope @openmsupply-client/android build:debug --stream",
@@ -33,7 +30,9 @@
     "i18n-unused-display": "i18n-unused display-unused",
     "i18n-unused-remove": "i18n-unused remove-unused",
     "i18n-missing": "i18n-unused display-missed",
-    "eslint": "lerna run --scope @openmsupply-client/* --parallel eslint"
+    "eslint": "lerna run --scope @openmsupply-client/* --parallel eslint",
+    "prettier": "prettier --check 'packages/*/src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
+    "lint-and-format": "yarn re-compile && yarn prettier || true && yarn eslint"
   },
   "workspaces": {
     "packages": [
@@ -77,21 +76,19 @@
     "babel-jest": "^29.6.2",
     "babel-loader": "^9.1.2",
     "babel-preset-react-app": "^10.0.1",
-    "eslint": "^9.6.0",
+    "eslint": "^8.50.0",
     "eslint-config-google": "^0.14.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-jest-dom": "^5.0.1",
     "eslint-plugin-react": "^7.27.1",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-storybook": "^0.8.0",
-    "husky": "^9.0.11",
     "i18n-unused": "^0.16.0",
     "jest": "^29.6.2",
     "jest-environment-jsdom": "^29.6.2",
     "jest-transform-stub": "^2.0.0",
     "jetifier": "^2.0.0",
     "lerna": "^8.1.8",
-    "lint-staged": "^15.2.7",
     "prettier": "^3.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
@@ -103,19 +100,13 @@
     "webpack": "^5.76.2",
     "yarn-outdated-formatter": "^4.0.0"
   },
-  "lint-staged": {
-    "src/**/*.+(js|json|ts|tsx)": [
-      "eslint"
-    ],
-    "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
-      "prettier --write"
-    ]
-  },
   "dependencies": {
     "@bugsnag/js": "^7.25.0",
+    "@capacitor/camera": "5",
     "@mui/x-date-pickers": "^7.23.6",
     "@types/react-dom": "^18.0.1",
     "graphql": "^16.3.0",
-    "papaparse": "^5.3.2"
+    "papaparse": "^5.3.2",
+    "pluralize": "^8.0.0"
   }
 }

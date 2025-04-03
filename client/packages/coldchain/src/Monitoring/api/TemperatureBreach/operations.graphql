@@ -20,7 +20,7 @@ fragment TemperatureBreach on TemperatureBreachNode {
   }
 }
 
-query temperature_breaches(
+query temperatureBreaches(
   $page: PaginationInput
   $sort: [TemperatureBreachSortInput!]
   $filter: TemperatureBreachFilterInput
