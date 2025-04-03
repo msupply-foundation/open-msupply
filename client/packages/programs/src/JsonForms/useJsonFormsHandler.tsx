@@ -46,6 +46,7 @@ import {
   stripEmptyAdditions,
 } from './stripEmptyAdditions';
 import { useFormActions } from './useFormActions';
+import { appendCachedData } from './useAppendCachedData';
 
 export interface SchemaData {
   formSchemaId?: string;
@@ -147,7 +148,8 @@ export const useJsonFormsHandler = <R,>(
     try {
       await formActions.run({ preSubmit: true });
 
-      const sanitizedData = stripEmptyAdditions(initialData, data);
+      const cacheAppendedData = appendCachedData(initialData, data);
+      const sanitizedData = stripEmptyAdditions(initialData, cacheAppendedData);
       const result = await save?.(sanitizedData);
 
       await formActions.run({ preSubmit: false });
