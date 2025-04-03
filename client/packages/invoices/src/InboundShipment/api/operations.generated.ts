@@ -73,6 +73,7 @@ export type InboundFragment = {
   transportReference?: string | null;
   type: Types.InvoiceNodeType;
   taxPercentage?: number | null;
+  expectedDeliveryDate?: string | null;
   currencyRate: number;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
   user?: {
@@ -274,6 +275,7 @@ export type InvoiceQuery = {
         transportReference?: string | null;
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
+        expectedDeliveryDate?: string | null;
         currencyRate: number;
         linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
         user?: {
@@ -410,6 +412,7 @@ export type InboundByNumberQuery = {
         transportReference?: string | null;
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
+        expectedDeliveryDate?: string | null;
         currencyRate: number;
         linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
         user?: {
@@ -1015,6 +1018,7 @@ export const InboundFragmentDoc = gql`
     transportReference
     type
     taxPercentage
+    expectedDeliveryDate
     linkedShipment {
       __typename
       id

@@ -215,6 +215,12 @@ pub struct LegacyTransactRow {
 
     #[serde(default)]
     pub is_cancellation: bool,
+
+    #[serde(default)]
+    #[serde(rename = "arrival_date_estimated")]
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub expected_delivery_date: Option<NaiveDate>,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -373,6 +379,7 @@ impl SyncTranslation for InvoiceTranslation {
             name_insurance_join_id: data.name_insurance_join_id,
             insurance_discount_amount: data.insurance_discount_amount,
             insurance_discount_percentage: data.insurance_discount_percentage,
+            expected_delivery_date: data.expected_delivery_date,
         };
 
         // HACK...
@@ -456,6 +463,7 @@ impl SyncTranslation for InvoiceTranslation {
                     insurance_discount_amount,
                     insurance_discount_percentage,
                     is_cancellation,
+                    expected_delivery_date,
                 },
             name_row,
             clinician_row,
@@ -531,6 +539,7 @@ impl SyncTranslation for InvoiceTranslation {
             insurance_discount_amount,
             insurance_discount_percentage,
             is_cancellation,
+            expected_delivery_date,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;

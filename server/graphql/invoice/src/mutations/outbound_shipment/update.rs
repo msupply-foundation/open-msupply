@@ -1,5 +1,6 @@
 use async_graphql::*;
-use graphql_core::generic_inputs::TaxInput;
+use chrono::NaiveDate;
+use graphql_core::generic_inputs::{NullableUpdateInput, TaxInput};
 use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, NodeError, RecordNotFound};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
@@ -12,10 +13,11 @@ use service::invoice::outbound_shipment::update::{
     UpdateOutboundShipmentStatus,
 };
 use service::invoice_line::ShipmentTaxUpdate;
+use service::NullableUpdate;
 
 use super::error::{
-    CannotChangeStatusOfInvoiceOnHold, CannotIssueInForeignCurrency, InvoiceIsNotEditable,
-    NotAnOutboundShipmentError,
+    CannotChangeStatusOfInvoiceOnHold, CannotHaveEstimatedDeliveryDateBeforeShippedDate,
+    CannotIssueInForeignCurrency, InvoiceIsNotEditable, NotAnOutboundShipmentError,
 };
 
 #[derive(InputObject)]
@@ -35,6 +37,7 @@ pub struct UpdateInput {
     tax: Option<TaxInput>,
     currency_id: Option<String>,
     currency_rate: Option<f64>,
+    expected_delivery_date: Option<NullableUpdateInput<NaiveDate>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -98,6 +101,9 @@ pub enum UpdateErrorInterface {
     NotAnOutboundShipment(NotAnOutboundShipmentError),
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(CanOnlyChangeToAllocatedWhenNoUnallocatedLines),
     CannotIssueInForeignCurrency(CannotIssueInForeignCurrency),
+    CannotHaveEstimatedDeliveryDateBeforeShippedDate(
+        CannotHaveEstimatedDeliveryDateBeforeShippedDate,
+    ),
 }
 
 impl UpdateInput {
@@ -113,6 +119,7 @@ impl UpdateInput {
             tax,
             currency_id,
             currency_rate,
+            expected_delivery_date,
         } = self;
 
         ServiceInput {
@@ -128,6 +135,8 @@ impl UpdateInput {
             }),
             currency_id,
             currency_rate,
+            expected_delivery_date: expected_delivery_date
+                .map(|d| NullableUpdate { value: d.value }),
         }
     }
 }
@@ -170,6 +179,13 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             return Ok(UpdateErrorInterface::CannotIssueInForeignCurrency(
                 CannotIssueInForeignCurrency,
             ))
+        }
+        ServiceError::CannotHaveEstimatedDeliveryDateBeforeShippedDate => {
+            return Ok(
+                UpdateErrorInterface::CannotHaveEstimatedDeliveryDateBeforeShippedDate(
+                    CannotHaveEstimatedDeliveryDateBeforeShippedDate,
+                ),
+            )
         }
         // Standard Graphql Errors
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),

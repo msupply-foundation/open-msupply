@@ -72,6 +72,7 @@ fragment Inbound on InvoiceNode {
   transportReference
   type
   taxPercentage
+  expectedDeliveryDate
 
   linkedShipment {
     __typename
