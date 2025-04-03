@@ -12,9 +12,17 @@ import {
 } from '@openmsupply-client/common';
 import { usePrescription } from '../../api';
 import { useDiagnosisOptions } from '../../api/hooks/useDiagnosisOptions';
+import {
+  useInsurancePolicies,
+  useInsuranceProviders,
+} from '@openmsupply-client/system/src/Patient/apiModern';
+
+type Option = { id: string; value: string; label: string };
 
 export const PatientDetailsComponent = () => {
+  const theme = useTheme();
   const t = useTranslation();
+  const [selected, setSelected] = useState<Option | null>();
 
   const {
     query: { data },
@@ -23,15 +31,17 @@ export const PatientDetailsComponent = () => {
   } = usePrescription();
   const { diagnosis, patient } = data ?? {};
 
-  const [selected, setSelected] = useState<Option | null>();
-
-  type Option = { id: string; value: string; label: string };
-
   const {
     query: { data: diagnosisOptions },
   } = useDiagnosisOptions();
 
-  const theme = useTheme();
+  const {
+    query: { data: insuranceProvidersData },
+  } = useInsuranceProviders();
+
+  const {
+    query: { data: insurancePoliciesData },
+  } = useInsurancePolicies(patient?.id ?? '');
 
   const displayValue =
     selected === undefined
@@ -66,7 +76,18 @@ export const PatientDetailsComponent = () => {
           <PanelLabel fontWeight="bold">{t('label.gender')}</PanelLabel>
           <PanelField>{patient?.gender ?? UNDEFINED_STRING_VALUE}</PanelField>
         </PanelRow>
-
+        {insuranceProvidersData?.length > 0 && (
+          <PanelRow>
+            <PanelLabel fontWeight="bold">
+              {t('label.insurance-status')}
+            </PanelLabel>
+            <PanelField>
+              {(insurancePoliciesData?.length ?? 0) > 0
+                ? t('label.insured')
+                : t('label.not-insured')}
+            </PanelField>
+          </PanelRow>
+        )}
         <PanelRow>
           <PanelLabel>{t('heading.diagnosis')}</PanelLabel>
           <Autocomplete

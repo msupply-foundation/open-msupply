@@ -4,12 +4,12 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useResponseNumber } from '../document/useResponse';
+import { useResponseId } from '../document/useResponse';
 import { useResponseFields } from '../document/useResponseFields';
 import { useResponseApi } from './useResponseApi';
 
 export const useCreateOutboundFromResponse = () => {
-  const responseNumber = useResponseNumber();
+  const responseId = useResponseId();
   const queryClient = useQueryClient();
   const { error, warning } = useNotification();
   const t = useTranslation();
@@ -25,7 +25,7 @@ export const useCreateOutboundFromResponse = () => {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries(api.keys.detail(responseNumber));
+      queryClient.invalidateQueries(api.keys.detail(responseId));
     },
   });
 };

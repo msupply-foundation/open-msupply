@@ -1,13 +1,8 @@
 import { applyDaysLate } from "./utils";
 
-function convert_data() {
-  const res = JSON.parse(Host.inputString());
-
+function convert_data(res) {
   res.data.encounters.nodes = applyDaysLate(res.data.encounters.nodes);
-
-  Host.outputString(JSON.stringify(res));
+  return res;
 }
 
-module.exports = {
-  convert_data,
-};
+export { convert_data };

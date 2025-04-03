@@ -237,14 +237,14 @@ export const PatientDetailView = ({
     // Creates a new prescription and redirects to the prescriptions page
     // if the patient was created from there.
     if (fromPrescription) {
-      const invoiceNumber = await createPrescription({
+      const invoice = await createPrescription({
         id: FnUtils.generateUUID(),
         patientId,
       });
       navigate(
         RouteBuilder.create(AppRoute.Dispensary)
           .addPart(AppRoute.Prescription)
-          .addPart(String(invoiceNumber))
+          .addPart(invoice?.id ?? '')
           .build()
       );
     }
