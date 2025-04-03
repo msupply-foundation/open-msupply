@@ -85,20 +85,15 @@ export const useRequestColumns = () => {
     ],
   ];
 
-  if (
-    programName &&
-    store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders
-  ) {
-    columnDefinitions.push({
-      key: 'monthsOfStock',
-      label: 'label.months-of-stock',
-      description: 'description.available-months-of-stock',
-      align: ColumnAlign.Right,
-      width: 150,
-      Cell: PackQuantityCell,
-      accessor: ({ rowData }) => rowData.itemStats.availableMonthsOfStockOnHand,
-    });
-  }
+  columnDefinitions.push({
+    key: 'monthsOfStock',
+    label: 'label.months-of-stock',
+    description: 'description.available-months-of-stock',
+    align: ColumnAlign.Right,
+    width: 150,
+    Cell: PackQuantityCell,
+    accessor: ({ rowData }) => rowData.itemStats.availableMonthsOfStockOnHand,
+  });
 
   columnDefinitions.push(
     {
