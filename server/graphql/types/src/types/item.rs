@@ -158,7 +158,6 @@ impl ItemNode {
     }
 
     pub async fn item_warnings(&self, ctx: &Context<'_>) -> Result<Vec<WarningNode>> {
-        // needs to be warnings
         let loader = ctx.get_loader::<DataLoader<WarningLoader>>();
         let result = loader
             .load_one(self.row().id.clone())

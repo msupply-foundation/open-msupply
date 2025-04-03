@@ -4146,6 +4146,7 @@ export type ItemFilterInput = {
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   /** Items that are part of a masterlist which is visible in this store OR there is available stock of that item in this store */
   isVisibleOrOnHand?: InputMaybe<Scalars['Boolean']['input']>;
+  itemWarningLinkId?: InputMaybe<EqualFilterStringInput>;
   masterListId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
@@ -4195,6 +4196,7 @@ export type ItemNode = {
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
   itemDirections: Array<ItemDirectionNode>;
+  itemWarnings: Array<WarningNode>;
   margin: Scalars['Float']['output'];
   masterLists?: Maybe<Array<MasterListNode>>;
   msupplyUniversalCode: Scalars['String']['output'];
@@ -9850,3 +9852,12 @@ export enum VenCategoryType {
   NotAssigned = 'NOT_ASSIGNED',
   V = 'V',
 }
+
+export type WarningNode = {
+  __typename: 'WarningNode';
+  id: Scalars['String']['output'];
+  itemLinkId: Scalars['String']['output'];
+  priority: Scalars['Boolean']['output'];
+  warningId: Scalars['String']['output'];
+  warningText: Scalars['String']['output'];
+};
