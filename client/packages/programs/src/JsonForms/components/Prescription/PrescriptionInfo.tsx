@@ -72,7 +72,7 @@ export const PrescriptionInfo = ({ prescription }: PrescriptionInfoProps) => {
             }}
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Prescription)
-              .addPart(String(prescription?.invoiceNumber))
+              .addPart(prescription?.id)
               .build()}
             target="_blank"
           >

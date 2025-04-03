@@ -92,11 +92,11 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                 otherPartyId,
               },
               { onError }
-            ).then(invoiceNumber => {
+            ).then(invoiceId => {
               navigate(
                 RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InboundShipment)
-                  .addPart(String(invoiceNumber))
+                  .addPart(invoiceId)
                   .build()
               );
             });
