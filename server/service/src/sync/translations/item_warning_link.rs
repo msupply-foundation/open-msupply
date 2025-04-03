@@ -7,14 +7,16 @@ use super::{PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 
-struct LegacyItemWarningLinkRow {
-    #[serde(rename = "ID")]
-    pub id: String,
+pub struct LegacyItemWarningLinkRow {
+    #[serde(rename = "Spare")] // Spare column not used in oms
+    spare: f64,
     #[serde(rename = "item_ID")]
-    pub item_link_id: String,
+    item_link_id: String,
     #[serde(rename = "warning_ID")]
-    pub warning_id: String,
-    pub priority: bool,
+    warning_id: String,
+    priority: bool,
+    #[serde(rename = "ID")]
+    id: String,
 }
 
 // Needs to be added to all_translators()
@@ -41,18 +43,13 @@ impl SyncTranslation for ItemWarningLinkTranslation {
         _connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let LegacyItemWarningLinkRow {
-            id,
-            item_link_id,
-            warning_id,
-            priority,
-        } = serde_json::from_str::<LegacyItemWarningLinkRow>(&sync_record.data)?;
+        let data = serde_json::from_str::<LegacyItemWarningLinkRow>(&sync_record.data)?;
 
         let result = ItemWarningLinkRow {
-            id,
-            item_link_id,
-            warning_id,
-            priority,
+            id: data.id,
+            item_link_id: data.item_link_id,
+            warning_id: data.warning_id,
+            priority: data.priority,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -69,7 +66,7 @@ mod tests {
         let translator = ItemWarningLinkTranslation {};
 
         let (_, connection, _, _) = setup_all(
-            "test_item_warning_link__translation",
+            "test_item_warning_link_translation",
             MockDataInserts::none(),
         )
         .await;
@@ -79,8 +76,6 @@ mod tests {
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
-            println!("result {:?}", translation_result);
-            println!("records {:?}", record.translated_record);
             assert_eq!(translation_result, record.translated_record);
         }
     }

@@ -50,15 +50,6 @@ impl<'a> ItemWarningLinkRowRepository<'a> {
         Ok(())
     }
 
-    pub fn insert_one_or_ignore(&self, row: &ItemWarningLinkRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(item_warning_link::table)
-            .values(row)
-            .on_conflict(item_warning_link::id)
-            .do_nothing()
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
     pub async fn find_all(&mut self) -> Result<Vec<ItemWarningLinkRow>, RepositoryError> {
         let result = item_warning_link::table.load(self.connection.lock().connection());
         Ok(result?)
@@ -82,7 +73,6 @@ impl<'a> ItemWarningLinkRowRepository<'a> {
         let result = item_warning_link::table
             .filter(item_warning_link::item_link_id.eq(item_link_id))
             .load::<ItemWarningLinkRow>(self.connection.lock().connection())?;
-
         Ok(result)
     }
 
