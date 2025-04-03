@@ -174,7 +174,7 @@ export enum ReportType {
 }
 
 export const REPORT_TRANSLATION_KEYS: Record<ReportType, LocaleKey> = {
-  [ReportType.STOCKTAKE_VARIANCE]: 'report.stocktake-variance',
+  [ReportType.STOCKTAKE_VARIANCE]: 'form.stocktake-variance',
   [ReportType.INBOUND]: 'form.inbound',
   [ReportType.INTERNAL_ORDER]: 'form.internal-order',
   [ReportType.OUTBOUND_INVOICE_LANDSCAPE_WITH_LOGO]: 'form.outbound-invoice-landscape-woth-logo',
