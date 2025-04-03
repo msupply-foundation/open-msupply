@@ -12,6 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { mapIdNameToOptions, useAssetData } from '@openmsupply-client/system';
 import { CCE_CLASS_ID } from '../utils';
+import { useAssetCategories } from '@openmsupply-client/system';
 
 type ReferenceData = {
   id: string;
@@ -26,7 +27,7 @@ export const useToolbar = () => {
   const [types, setTypes] = useState<ReferenceData[]>([]);
 
   const { data: typeData } = useAssetData.utils.types();
-  const { data: categoryData } = useAssetData.utils.categories({
+  const { data: categoryData } = useAssetCategories({
     classId: { equalTo: CCE_CLASS_ID },
   });
 

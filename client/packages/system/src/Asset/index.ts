@@ -6,5 +6,6 @@ export {
   useAssetList,
   useInfiniteAssets,
   useAssetLogReasonList,
+  useAssetCategories,
 } from './api';
 export { mapIdNameToOptions } from './utils';

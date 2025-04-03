@@ -19,7 +19,7 @@ import {
 import { useTranslation } from '@common/intl';
 import { importRowToCsv } from '../utils';
 import { useAssetData } from '@openmsupply-client/system';
-import { useAssetInsert } from '../api';
+import { useAssetCategories, useAssetInsert } from '../api';
 
 interface AssetItemImportModalProps {
   isOpen: boolean;
@@ -92,7 +92,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
     useAssetData.utils.classes();
 
   const { data: assetCategories, isLoading: isLoadingCategories } =
-    useAssetData.utils.categories();
+    useAssetCategories();
 
   const { data: assetTypes, isLoading: isLoadingTypes } =
     useAssetData.utils.types();

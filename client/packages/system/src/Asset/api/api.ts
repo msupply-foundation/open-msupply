@@ -1,10 +1,8 @@
 import {
   SortBy,
   FilterByWithBoolean,
-  AssetCategorySortFieldInput,
   AssetClassSortFieldInput,
   AssetTypeSortFieldInput,
-  AssetCategoryFilterInput,
   AssetTypeFilterInput,
   AssetPropertyFilterInput,
 } from '@openmsupply-client/common';
@@ -19,15 +17,6 @@ export type ListParams<T> = {
 
 export const getAssetQueries = (sdk: Sdk) => ({
   get: {
-    categories: async (filter: AssetCategoryFilterInput | undefined) => {
-      const result = await sdk.assetCategories({
-        filter,
-        sort: { key: AssetCategorySortFieldInput.Name, desc: false },
-      });
-      const categories = result?.assetCategories;
-
-      return categories;
-    },
     classes: async () => {
       const result = await sdk.assetClasses({
         sort: { key: AssetClassSortFieldInput.Name, desc: false },
