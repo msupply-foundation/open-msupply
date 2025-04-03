@@ -31,7 +31,7 @@
   {%set costPricePerPack=line.costPricePerPack | default(value=0) %}
     <td class="table_text">{{line.item.code}}</td>
     <td class="table_text">{{line.item.name}}</td>
-    <td class="table_text">{{line.batch}}</td>
+    <td class="table_text batch-wrap">{{line.batch}}</td>
     <td class="table_number">{{line.expiryDate}}</td>
     <td class="table_number">{{line.packSize}}</td>
     <td class="table_number">{{costPricePerPack}}</td>

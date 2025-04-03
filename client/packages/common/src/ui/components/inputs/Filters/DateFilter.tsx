@@ -25,8 +25,8 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
     name,
     range,
     displayAs = type,
-    maxDate = '9999-12-31',
-    minDate = '0000-01-01',
+    maxDate,
+    minDate,
   } = filterDefinition;
   const { urlQuery, updateQuery } = useUrlQuery();
   const { customDate, urlQueryDate, urlQueryDateTime } = useFormatDateTime();
