@@ -3,7 +3,7 @@ import {
   useFieldsSelector,
 } from '@openmsupply-client/common';
 import { ResponseFragment } from '../../operations.generated';
-import { useResponse, useResponseNumber } from './useResponse';
+import { useResponse, useResponseId } from './useResponse';
 import { useResponseApi } from '../utils/useResponseApi';
 
 export const useResponseFields = <
@@ -12,12 +12,12 @@ export const useResponseFields = <
   keys: KeyOfRequisition | KeyOfRequisition[]
 ): FieldSelectorControl<ResponseFragment, KeyOfRequisition> => {
   const { data } = useResponse();
-  const responseNumber = useResponseNumber();
+  const responseId = useResponseId();
   const api = useResponseApi();
 
   return useFieldsSelector(
-    api.keys.detail(responseNumber),
-    () => api.get.byNumber(responseNumber),
+    api.keys.detail(responseId),
+    () => api.get.byId(responseId),
     (patch: Partial<ResponseFragment>) =>
       api.update({ ...patch, id: data?.id ?? '' }),
     keys

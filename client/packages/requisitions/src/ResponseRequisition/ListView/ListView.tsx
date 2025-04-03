@@ -155,7 +155,7 @@ export const ResponseRequisitionListView: FC = () => {
         columns={columns}
         data={data?.nodes}
         onRowClick={row => {
-          navigate(String(row.requisitionNumber));
+          navigate(String(row.id));
         }}
         isError={isError}
         isLoading={isLoading}
