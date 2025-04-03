@@ -169,8 +169,8 @@ export enum ReportType {
   REQUISITION = "Requisition",
   STOCK_TAKE_DETAIL_VIEW = "Stocktake",
   STOCKTAKE_VARIANCE = "Stocktake Variance",
-  STOCK_TAKE_WITH_QUANTITY = "Stocktake With Quantity",
-  STOCK_TAKE_WOTHOUT_QUANTITY = "Stocktake Without Quantity",
+  STOCK_TAKE_WITH_QUANTITY = "Stocktake with Quantity",
+  STOCK_TAKE_WOTHOUT_QUANTITY = "Stocktake without Quantity",
 }
 
 export const REPORT_TRANSLATION_KEYS: Record<ReportType, LocaleKey> = {

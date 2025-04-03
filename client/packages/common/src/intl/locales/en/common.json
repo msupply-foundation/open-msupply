@@ -1976,8 +1976,8 @@
   "form.outbound-invoice-portrait-woth-logo": "Outbound Shipment (portrait)",
   "form.prescription-receipt": "Prescription Receipt",
   "form.repack": "Repack",
-  "form.requisition": "",
-  "form.stocktake-detail-view": "",
-  "form.stocktake-with-quantity": "",
-  "form.stocktake-without-quantity": ""
+  "form.requisition": "Requisition",
+  "form.stocktake-detail-view": "Stocktake",
+  "form.stocktake-with-quantity": "Stocktake with Quantity",
+  "form.stocktake-without-quantity": "Stocktake without Quantity"
 }
