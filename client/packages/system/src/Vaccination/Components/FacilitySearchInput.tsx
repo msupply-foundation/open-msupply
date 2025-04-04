@@ -6,11 +6,16 @@ export const OTHER_FACILITY = 'other';
 type FacilitySearchInputProps = {
   facilityId?: string | null;
   onChange: (newValue: string) => void;
+  enteredAtOtherFacility?: {
+    id: string;
+    name: string;
+  };
 };
 
 export const FacilitySearchInput = ({
   facilityId,
   onChange,
+  enteredAtOtherFacility,
 }: FacilitySearchInputProps) => {
   const { store } = useAuthContext();
 
@@ -20,6 +25,14 @@ export const FacilitySearchInput = ({
           {
             label: store.name,
             value: store.nameId,
+          },
+        ]
+      : []),
+    ...(enteredAtOtherFacility
+      ? [
+          {
+            label: enteredAtOtherFacility.name,
+            value: enteredAtOtherFacility.id,
           },
         ]
       : []),
