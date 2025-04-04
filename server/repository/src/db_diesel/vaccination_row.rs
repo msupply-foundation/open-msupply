@@ -121,7 +121,7 @@ impl<'a> VaccinationRowRepository<'a> {
             table_name: ChangelogTableName::Vaccination,
             record_id: row.id,
             row_action: action,
-            store_id: Some(row.store_id),
+            store_id: None, // Vaccination can be updated from any store
             name_link_id: None,
         };
 
