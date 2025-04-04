@@ -27,7 +27,7 @@ import {
 import { DraftRequestLine } from './hooks';
 import { Footer } from './Footer';
 import { RequestStats } from './ItemCharts/RequestStats';
-import { RequestLineFragment } from '../../api';
+import { RequestFragment, RequestLineFragment } from '../../api';
 import { buildItemEditRoute } from '../utils';
 
 const INPUT_WIDTH = 100;
@@ -47,7 +47,7 @@ interface RequestLineEditProps {
   isPacks: boolean;
   setIsPacks: (isPacks: boolean) => void;
   lines: RequestLineFragment[];
-  requisitionId: string;
+  requisition: RequestFragment;
   insert: (patch: InsertRequestRequisitionLineInput) => void;
   scrollIntoView: () => void;
   disabled?: boolean;
@@ -66,7 +66,7 @@ export const RequestLineEdit = ({
   isPacks,
   setIsPacks,
   lines,
-  requisitionId,
+  requisition,
   insert,
   scrollIntoView,
   disabled: isSent,
@@ -83,6 +83,7 @@ export const RequestLineEdit = ({
 
   const line = lines.find(line => line.id === draft?.id);
   const { width } = useWindowDimensions();
+  const { id: requisitionId } = requisition;
   const theme = useTheme();
 
   return (
