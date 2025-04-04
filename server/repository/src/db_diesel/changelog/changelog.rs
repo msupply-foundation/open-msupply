@@ -1,5 +1,6 @@
 use crate::{
-    db_diesel::store_row::store, diesel_macros::apply_equal_filter, name_link, DBType, EqualFilter,
+    db_diesel::store_row::store, diesel_macros::apply_equal_filter, name_link,
+    name_store_join::name_store_join, vaccination_row::vaccination, DBType, EqualFilter,
     LockedConnection, NameLinkRow, RepositoryError, StorageConnection,
 };
 use diesel::{
@@ -522,6 +523,30 @@ fn create_filtered_outgoing_sync_query(
         .select(store::id.nullable())
         .into_boxed();
 
+    // Ideally this would be by changelog name_link_id, but that has an FK constraint
+    // requiring all names to exist on OMS central, which currently isn't the case.
+    // Instead, for visible patient sync - filter changelogs by record id of vaccinations
+    // for visible patients
+    // Bit of a hack, subquery unlikely to scale well - bring on v7 sync :cry:
+    let vaccinations_for_visible_patients = vaccination::table
+        .filter(
+            vaccination::patient_link_id.eq_any(
+                // name_link_ids of patients visible on active stores for the site
+                name_store_join::table
+                    .filter(
+                        name_store_join::store_id.eq_any(
+                            // Active stores for site (same as above, without nullable select)
+                            store::table
+                                .filter(store::site_id.eq(sync_site_id))
+                                .select(store::id),
+                        ),
+                    )
+                    .select(name_store_join::name_link_id),
+            ),
+        )
+        .select(vaccination::id)
+        .into_boxed();
+
     // Filter the query for the matching records for each type
     query = query.filter(
         changelog_deduped::table_name
@@ -532,7 +557,12 @@ fn create_filtered_outgoing_sync_query(
                 .and(changelog_deduped::store_id.eq_any(active_stores_for_site)))
             .or(changelog_deduped::table_name
                 .eq_any(central_by_empty_store_id)
-                .and(changelog_deduped::store_id.is_null())),
+                .and(changelog_deduped::store_id.is_null()))
+            // Special case: patient Vaccination records
+            // where patient is visible, regardless of the store_id in the changelog
+            .or(changelog_deduped::table_name
+                .eq(ChangelogTableName::Vaccination)
+                .and(changelog_deduped::record_id.eq_any(vaccinations_for_visible_patients))),
         // Any other special cases could be handled here...
     );
 
