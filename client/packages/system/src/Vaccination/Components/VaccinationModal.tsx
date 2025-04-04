@@ -15,6 +15,7 @@ import {
   RouteBuilder,
   Select,
   Switch,
+  useAuthContext,
   useDialog,
   useFormatDateTime,
   useNotification,
@@ -25,6 +26,7 @@ import React from 'react';
 import { useVaccination, VaccinationDraft } from '../api';
 import { Clinician, ClinicianSearchInput } from '../../Clinician';
 import {
+  VaccinationCardItemFragment,
   VaccinationCourseDoseFragment,
   VaccinationDetailFragment,
 } from '../api/operations.generated';
@@ -36,9 +38,8 @@ import { useConfirmNoStockLineSelected } from './useConfirmNoStockLineSelected';
 import { useClinicians } from '@openmsupply-client/programs';
 
 interface VaccinationModalProps {
-  vaccinationId: string | undefined;
   encounterId?: string;
-  vaccineCourseDoseId: string;
+  cardRow: VaccinationCardItemFragment;
   isOpen: boolean;
   onClose: () => void;
   defaultClinician?: Clinician;
@@ -48,9 +49,8 @@ interface VaccinationModalProps {
 export const VaccinationModal = ({
   isOpen,
   onClose,
-  vaccineCourseDoseId,
   encounterId,
-  vaccinationId,
+  cardRow,
   defaultClinician,
   onOk,
 }: VaccinationModalProps) => {
@@ -65,8 +65,7 @@ export const VaccinationModal = ({
     saveVaccination,
   } = useVaccination({
     encounterId,
-    vaccineCourseDoseId,
-    vaccinationId,
+    cardRow,
     defaultClinician,
   });
 
@@ -148,6 +147,7 @@ const VaccinationForm = ({
   updateDraft: (update: Partial<VaccinationDraft>) => void;
 }) => {
   const t = useTranslation();
+  const { store } = useAuthContext();
 
   const { data: clinicians } = useClinicians.document.list({});
   const hasClinicians = clinicians?.nodes.length !== 0;
@@ -175,16 +175,19 @@ const VaccinationForm = ({
     />
   ) : null;
 
+  const isFreeTextFacility = draft.facilityId === OTHER_FACILITY;
+  const isOtherFacility =
+    !!draft.facilityId && draft.facilityId !== store?.nameId;
+
   const SelectBatch = (
     <SelectItemAndBatch
       dose={dose}
       draft={draft}
       updateDraft={updateDraft}
       hasExistingSelectedBatch={!!vaccination?.stockLine}
+      isOtherFacility={isOtherFacility}
     />
   );
-
-  const isOtherFacility = draft.facilityId === OTHER_FACILITY;
 
   return (
     <Container
@@ -203,9 +206,10 @@ const VaccinationForm = ({
                 })
               }
               facilityId={draft.facilityId}
+              enteredAtOtherFacility={draft.enteredAtOtherFacility}
             />
 
-            {isOtherFacility && (
+            {isFreeTextFacility && (
               <BasicTextInput
                 fullWidth
                 autoFocus

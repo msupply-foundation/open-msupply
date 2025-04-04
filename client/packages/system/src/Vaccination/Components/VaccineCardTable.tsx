@@ -22,10 +22,7 @@ import {
 
 interface VaccinationCardProps {
   programEnrolmentId: string;
-  openModal: (
-    vaccinationId: string | null | undefined,
-    vaccineCourseDoseId: string
-  ) => void;
+  openModal: (row: VaccinationCardItemFragment) => void;
   encounterId?: string;
 }
 
@@ -230,8 +227,7 @@ const VaccinationCardComponent = ({
         columns={columns}
         data={data?.items ?? []}
         onRowClick={row => {
-          if (includeRow(isEncounter, row, data?.items))
-            openModal(row.vaccinationId, row.vaccineCourseDoseId);
+          if (includeRow(isEncounter, row, data?.items)) openModal(row);
         }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
       />
