@@ -520,30 +520,30 @@ fn create_filtered_outgoing_sync_query(
 
     let active_stores_for_site = store::table
         .filter(store::site_id.eq(sync_site_id))
-        .select(store::id.nullable())
-        .into_boxed();
+        .select(store::id.nullable());
 
     // Ideally this would be by changelog name_link_id, but that has an FK constraint
     // requiring all names to exist on OMS central, which currently isn't the case.
     // Instead, for visible patient sync - filter changelogs by record id of vaccinations
     // for visible patients
     // Bit of a hack, subquery unlikely to scale well - bring on v7 sync :cry:
-    let vaccinations_for_visible_patients = vaccination::table
+
+    let visible_patient_ids = name_store_join::table
+        .inner_join(name_link::table)
         .filter(
-            vaccination::patient_link_id.eq_any(
-                // name_link_ids of patients visible on active stores for the site
-                name_store_join::table
-                    .filter(
-                        name_store_join::store_id.eq_any(
-                            // Active stores for site (same as above, without nullable select)
-                            store::table
-                                .filter(store::site_id.eq(sync_site_id))
-                                .select(store::id),
-                        ),
-                    )
-                    .select(name_store_join::name_link_id),
-            ),
+            name_store_join::store_id
+                .nullable()
+                .eq_any(active_stores_for_site.clone().into_boxed()),
         )
+        .select(name_link::name_id)
+        .into_boxed();
+
+    let vaccinations_for_visible_patients = vaccination::table
+        .left_join(name_link::table)
+        .filter(name_link::name_id.eq_any(
+            // name_link_ids of patients visible on active stores for the site
+            visible_patient_ids,
+        ))
         .select(vaccination::id)
         .into_boxed();
 
@@ -554,7 +554,7 @@ fn create_filtered_outgoing_sync_query(
             .or(changelog_deduped::table_name.eq(ChangelogTableName::SyncFileReference)) // All sites get all sync file references (not necessarily files)
             .or(changelog_deduped::table_name
                 .eq_any(remote_sync_table_names)
-                .and(changelog_deduped::store_id.eq_any(active_stores_for_site)))
+                .and(changelog_deduped::store_id.eq_any(active_stores_for_site.into_boxed())))
             .or(changelog_deduped::table_name
                 .eq_any(central_by_empty_store_id)
                 .and(changelog_deduped::store_id.is_null()))
