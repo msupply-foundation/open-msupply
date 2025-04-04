@@ -120,7 +120,7 @@ export const DetailView: FC = () => {
           ...patch,
         };
       }),
-    [data, setData]
+    [setData]
   );
 
   const onDelete = () => {
