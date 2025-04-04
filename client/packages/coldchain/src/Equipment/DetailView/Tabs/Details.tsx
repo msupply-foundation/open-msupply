@@ -1,14 +1,17 @@
 import React from 'react';
 import {
+  ArrayUtils,
+  Box,
+  PropertyInput,
+  useIsGapsStoreOnly,
   BasicSpinner,
   InfoTooltipIcon,
   InputWithLabelRow,
   Typography,
-} from '@common/components';
-import { useTranslation } from '@common/intl';
-import { ArrayUtils, Box, PropertyInput } from '@openmsupply-client/common';
+  useTranslation,
+} from '@openmsupply-client/common';
 import { DraftAsset } from '../../types';
-import { useAssets } from '../../api';
+import { useAssetProperties } from '@openmsupply-client/system';
 
 interface DetailsProps {
   draft?: DraftAsset;
@@ -16,7 +19,18 @@ interface DetailsProps {
 }
 
 const Container = ({ children }: { children: React.ReactNode }) => (
-  <Box display="flex" flexDirection="column" alignContent="center" padding={4}>
+  <Box
+    display="flex"
+    flexDirection="column"
+    alignContent="center"
+    sx={theme => ({
+      [theme.breakpoints.down('sm')]: {
+        margin: 0,
+        padding: 0,
+      },
+      padding: 4,
+    })}
+  >
     {children}
   </Box>
 );
@@ -33,7 +47,14 @@ const Section = ({
     flexDirection="column"
     padding={2}
     paddingRight={4}
-    sx={{ maxWidth: '600px', width: '100%' }}
+    sx={theme => ({
+      [theme.breakpoints.down('sm')]: {
+        margin: '0 0 15px 0',
+        padding: 0,
+      },
+      maxWidth: '600px',
+      width: '100%',
+    })}
   >
     <Heading>{heading}</Heading>
     {children}
@@ -42,11 +63,16 @@ const Section = ({
 
 const Heading = ({ children }: { children: React.ReactNode }) => (
   <Typography
-    sx={{
+    sx={theme => ({
+      [theme.breakpoints.down('sm')]: {
+        marginLeft: '0',
+        textAlign: 'center',
+        fontSize: '16px!important',
+      },
       marginLeft: '158px',
-      fontSize: '20px',
+      fontSize: '20px!important',
       fontWeight: 'bold',
-    }}
+    })}
   >
     {children}
   </Typography>
@@ -56,45 +82,65 @@ const Row = ({
   children,
   tooltip,
   label,
+  isGaps,
 }: {
   children: React.ReactNode;
   tooltip?: string;
   label: string;
-}) => (
-  <Box paddingTop={1.5}>
-    <InputWithLabelRow
-      labelWidth="300px"
-      label={label}
-      labelProps={{
-        sx: {
-          fontSize: '16px',
-          paddingRight: 2,
-          textAlign: 'right',
-        },
-      }}
-      Input={
-        <>
-          <Box sx={{}} flex={1}>
-            {children}{' '}
-          </Box>
-          <Box>
-            {tooltip && (
-              <InfoTooltipIcon
-                iconSx={{ color: 'gray.main' }}
-                title={tooltip}
-              />
-            )}
-          </Box>
-        </>
-      }
-    />
-  </Box>
-);
+  isGaps: boolean;
+}) => {
+  if (!isGaps)
+    return (
+      <Box paddingTop={1.5}>
+        <InputWithLabelRow
+          labelWidth="300px"
+          label={label}
+          labelProps={{
+            sx: {
+              fontSize: '16px',
+              paddingRight: 2,
+              textAlign: 'right',
+            },
+          }}
+          Input={
+            <>
+              <Box sx={{}} flex={1}>
+                {children}{' '}
+              </Box>
+              <Box>
+                {tooltip && (
+                  <InfoTooltipIcon
+                    iconSx={{ color: 'gray.main' }}
+                    title={tooltip}
+                  />
+                )}
+              </Box>
+            </>
+          }
+        />
+      </Box>
+    );
+
+  return (
+    <Box paddingTop={1.5}>
+      <Typography
+        sx={{
+          fontSize: '1rem!important',
+          fontWeight: 'bold',
+        }}
+      >
+        {label}
+      </Typography>
+      {children}
+    </Box>
+  );
+};
 
 export const Details = ({ draft, onChange }: DetailsProps) => {
   const t = useTranslation();
+  const isGaps = useIsGapsStoreOnly();
 
-  const { data: assetProperties, isLoading } = useAssets.properties.list({
+  const { data: assetProperties, isLoading } = useAssetProperties({
     assetCategoryId: { equalAnyOrNull: [draft?.assetCategory?.id ?? ''] },
     assetClassId: { equalAnyOrNull: [draft?.assetClass?.id ?? ''] },
     assetTypeId: { equalAnyOrNull: [draft?.assetType?.id ?? ''] },
@@ -113,6 +159,12 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
             </Typography>
           ) : (
             <>
+              {isGaps && (
+                <Typography>
+                  {/* Need to add to translate */}
+                  {'Non-editable properties are defined in the catalogue'}
+                </Typography>
+              )}
               {assetProperties &&
                 ArrayUtils.uniqBy(assetProperties, 'key').map(property => {
                   const isCatalogue =
@@ -133,6 +185,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
                           ? t('messages.catalogue-property')
                           : undefined
                       }
+                      isGaps={isGaps}
                     >
                       <PropertyInput
                         valueType={property.valueType}

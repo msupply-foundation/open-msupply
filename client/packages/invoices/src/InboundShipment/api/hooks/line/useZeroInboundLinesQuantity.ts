@@ -46,6 +46,15 @@ export const useZeroInboundLinesQuantity = (): (() => void) => {
       });
   };
 
+  interface handleCantZeroQuantity {
+    isDisabled: boolean;
+  }
+
+  const handleCantZeroQuantity = ({ isDisabled }: handleCantZeroQuantity) => {
+    if (isDisabled) return t('label.cant-zero-quantity-disabled');
+    return (err: Error) => err.message;
+  };
+
   const confirmAndZeroLines = useDeleteConfirmation({
     selectedRows,
     deleteAction: onZeroQuantities,
@@ -57,7 +66,7 @@ export const useZeroInboundLinesQuantity = (): (() => void) => {
       deleteSuccess: t('messages.zero-line-quantities', {
         count: selectedRows.length,
       }),
-      cantDelete: t('label.cant-zero-quantity-disabled'),
+      cantDelete: handleCantZeroQuantity({ isDisabled }),
     },
   });
 

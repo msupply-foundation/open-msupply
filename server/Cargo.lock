@@ -4041,6 +4041,7 @@ dependencies = [
  "graphql_item_variant",
  "graphql_location",
  "graphql_plugin",
+ "graphql_preference",
  "graphql_printer",
  "graphql_programs",
  "graphql_repack",
@@ -4407,6 +4408,18 @@ dependencies = [
  "repository",
  "serde",
  "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_preference"
+version = "0.1.0"
+dependencies = [
+ "async-graphql",
+ "graphql_core",
+ "graphql_types",
+ "repository",
  "service",
  "util",
 ]

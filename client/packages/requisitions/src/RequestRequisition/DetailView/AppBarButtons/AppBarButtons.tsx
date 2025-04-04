@@ -6,9 +6,9 @@ import {
   Grid,
   useDetailPanel,
   useTranslation,
-  PrinterIcon,
-  LoadingButton,
   ReportContext,
+  LoadingButton,
+  PrinterIcon,
 } from '@openmsupply-client/common';
 import {
   ReportRowFragment,

@@ -14,6 +14,7 @@ import {
   useAuthContext,
   UserPermission,
   SaveIcon,
+  PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { FormInputData, DocumentHistory } from '@openmsupply-client/programs';
 
@@ -52,7 +53,7 @@ export const Footer: FC<FooterProps> = ({
           <ButtonWithIcon
             Icon={<ClockIcon />}
             color="secondary"
-            label={'History'}
+            label={t('label.history')}
             disabled={documentName === undefined}
             onClick={showDialog}
           />
@@ -79,9 +80,11 @@ export const Footer: FC<FooterProps> = ({
               }
               isLoading={isSaving}
               onClick={showSaveConfirmation}
-              startIcon={<SaveIcon />}
               label={
                 inputData?.isCreating ? t('button.create') : t('button.save')
+              }
+              startIcon={
+                inputData?.isCreating ? <PlusCircleIcon /> : <SaveIcon />
               }
             />
           </Box>
