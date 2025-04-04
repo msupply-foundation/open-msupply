@@ -262,7 +262,7 @@ impl RequisitionTransferTester {
             r.suggested_quantity = 3.0;
             r.comment = Some("line comment".to_string());
             r.available_stock_on_hand = 1.0;
-            r.average_monthly_consumption = 0.9999999999999934;
+            r.average_monthly_consumption = 10.0;
             r.snapshot_datetime = Some(
                 NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
@@ -278,7 +278,7 @@ impl RequisitionTransferTester {
             r.requested_quantity = 10.0;
             r.suggested_quantity = 20.0;
             r.available_stock_on_hand = 30.0;
-            r.average_monthly_consumption = 9.999999999999934;
+            r.average_monthly_consumption = 10.0;
             r.snapshot_datetime = Some(
                 NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
