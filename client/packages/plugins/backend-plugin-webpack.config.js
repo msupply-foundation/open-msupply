@@ -14,7 +14,7 @@ module.exports = ({ distDir }) => ({
   resolve: {
     extensions: ['.js', '.ts'],
     alias: {
-      '@backendPlugins': path.resolve(__dirname, 'backendTypes/types.ts'),
+      '@common': path.resolve(__dirname, 'backendCommon'),
     },
   },
   optimization: {

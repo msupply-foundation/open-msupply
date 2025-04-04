@@ -6,29 +6,15 @@ import { ReasonOptionRowFragmentDoc } from '../ReasonOption/api/operations.gener
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type ItemWithStatsFragment = { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number, stockOnHand: number, monthsOfStockOnHand?: number | null } };
 
-export type ItemInformationFragment = { __typename: 'RequisitionItemInformationNode', id: string, adjustmentsInUnits: number, amcInUnits: number, outgoingUnits: number, dateRange?: string | null, stockInUnits: number, name: { __typename: 'NameNode', id: string, name: string } };
+export type RequestLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemName: string, requisitionNumber: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number, stockOnHand: number, monthsOfStockOnHand?: number | null } }, reason?: { __typename: 'ReasonOptionNode', id: string, type: Types.ReasonOptionNodeType, reason: string, isActive: boolean } | null };
 
-export type RequestLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemName: string, requisitionNumber: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, itemInformation?: Array<{ __typename: 'RequisitionItemInformationNode', id: string, adjustmentsInUnits: number, amcInUnits: number, outgoingUnits: number, dateRange?: string | null, stockInUnits: number, name: { __typename: 'NameNode', id: string, name: string } }> | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number, stockOnHand: number, monthsOfStockOnHand?: number | null } }, reason?: { __typename: 'ReasonOptionNode', id: string, type: Types.ReasonOptionNodeType, reason: string, isActive: boolean } | null };
+export type RequestFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, isEmergency: boolean, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemName: string, requisitionNumber: number, initialStockOnHandUnits: number, incomingUnits: number, outgoingUnits: number, lossInUnits: number, additionInUnits: number, expiringUnits: number, daysOutOfStock: number, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number, stockOnHand: number, monthsOfStockOnHand?: number | null } }, reason?: { __typename: 'ReasonOptionNode', id: string, type: Types.ReasonOptionNodeType, reason: string, isActive: boolean } | null }> }, program?: { __typename: 'ProgramNode', id: string } | null, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } | null };
 
 export type OnlyHereToAvoidUnusedWarningsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
 export type OnlyHereToAvoidUnusedWarningsQuery = { __typename: 'Queries', me: { __typename: 'UserNode' } };
 
-export const ItemInformationFragmentDoc = gql`
-    fragment itemInformation on RequisitionItemInformationNode {
-  id
-  adjustmentsInUnits
-  amcInUnits
-  name(storeId: $storeId) {
-    id
-    name
-  }
-  outgoingUnits
-  dateRange
-  stockInUnits
-}
-    `;
 export const ItemWithStatsFragmentDoc = gql`
     fragment ItemWithStats on ItemNode {
   id
@@ -73,10 +59,6 @@ export const RequestLineFragmentDoc = gql`
     approvedQuantity
     approvalComment
   }
-  itemInformation {
-    __typename
-    ...itemInformation
-  }
   item {
     ...ItemWithStats
   }
@@ -84,9 +66,81 @@ export const RequestLineFragmentDoc = gql`
     ...ReasonOptionRow
   }
 }
-    ${ItemInformationFragmentDoc}
-${ItemWithStatsFragmentDoc}
+    ${ItemWithStatsFragmentDoc}
 ${ReasonOptionRowFragmentDoc}`;
+export const RequestFragmentDoc = gql`
+    fragment Request on RequisitionNode {
+  __typename
+  id
+  type
+  status
+  createdDatetime
+  sentDatetime
+  finalisedDatetime
+  requisitionNumber
+  colour
+  theirReference
+  comment
+  otherPartyName
+  otherPartyId
+  maxMonthsOfStock
+  minMonthsOfStock
+  approvalStatus
+  user {
+    __typename
+    username
+    email
+  }
+  lines {
+    __typename
+    totalCount
+    nodes {
+      ...RequestLine
+    }
+  }
+  program {
+    id
+  }
+  shipments {
+    __typename
+    totalCount
+    nodes {
+      __typename
+      id
+      invoiceNumber
+      createdDatetime
+      user {
+        __typename
+        username
+      }
+    }
+  }
+  otherParty(storeId: $storeId) {
+    id
+    code
+    isCustomer
+    isSupplier
+    isOnHold
+    name
+    store {
+      id
+      code
+    }
+  }
+  linkedRequisition {
+    approvalStatus
+  }
+  programName
+  period {
+    id
+    name
+    startDate
+    endDate
+  }
+  orderType
+  isEmergency
+}
+    ${RequestLineFragmentDoc}`;
 export const OnlyHereToAvoidUnusedWarningsDocument = gql`
     query OnlyHereToAvoidUnusedWarnings {
   me {

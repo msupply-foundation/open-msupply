@@ -1,0 +1,11 @@
+{
+  "is_custom": false,
+  "version": "2.6.1",
+  "code": "internal-order",
+  "context": "INTERNAL_ORDER",
+  "name": "Internal Order",
+  "queries": {
+    "gql": "query.graphql"
+  },
+  "header": "header.html"
+}

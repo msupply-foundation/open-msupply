@@ -41,13 +41,6 @@ pub struct BuildArgs {
     /// Default query type, one of: "invoice" | "stocktake" | "requisition",
     #[clap(long)]
     pub query_default: Option<String>,
-
-    #[clap(long)]
-    pub convert_data: Option<PathBuf>,
-
-    #[clap(long)]
-    pub custom_wasm_function: Option<String>,
-
     /// SQL query name.
     /// This argument requires that there is either
     /// - a single {query_sql}.sql file (for both Sqlite and Postgres)

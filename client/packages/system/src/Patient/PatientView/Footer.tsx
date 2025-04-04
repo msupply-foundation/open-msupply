@@ -13,6 +13,7 @@ import {
   useNavigate,
   useAuthContext,
   UserPermission,
+  SaveIcon,
 } from '@openmsupply-client/common';
 import { FormInputData, DocumentHistory } from '@openmsupply-client/programs';
 
@@ -78,6 +79,7 @@ export const Footer: FC<FooterProps> = ({
               }
               isLoading={isSaving}
               onClick={showSaveConfirmation}
+              startIcon={<SaveIcon />}
               label={
                 inputData?.isCreating ? t('button.create') : t('button.save')
               }

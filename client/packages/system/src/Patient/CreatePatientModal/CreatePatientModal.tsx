@@ -126,7 +126,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
           <DialogButton
             variant="next"
             onClick={onOk}
-            customLabel={t('button.create-new')}
+            customLabel={t('button.create-new-patient')}
           />
         ) : undefined
       }

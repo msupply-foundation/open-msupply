@@ -12,12 +12,8 @@ import {
   UpdateIndicatorValueInput,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './../DetailView/RequestLineEdit/hooks';
-import {
-  RequestRowFragment,
-  RequestFragment,
-  Sdk,
-} from './operations.generated';
-import { RequestLineFragment } from '.';
+import { RequestRowFragment, Sdk } from './operations.generated';
+import { RequestFragment, RequestLineFragment } from '.';
 
 export type ListParams = {
   first?: number;

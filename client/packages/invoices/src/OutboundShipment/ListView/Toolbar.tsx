@@ -51,6 +51,47 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
                 },
               ],
             },
+            {
+              type: 'text',
+              name: t('label.reference'),
+              urlParameter: 'theirReference',
+            },
+            {
+              type: 'group',
+              name: t('label.created-datetime'),
+              elements: [
+                {
+                  type: 'date',
+                  name: t('label.from-created-datetime'),
+                  urlParameter: 'createdDatetime',
+                  range: 'from',
+                },
+                {
+                  type: 'date',
+                  name: t('label.to-created-datetime'),
+                  urlParameter: 'createdDatetime',
+                  range: 'to',
+                },
+              ],
+            },
+            {
+              type: 'group',
+              name: t('label.shipped-datetime'),
+              elements: [
+                {
+                  type: 'date',
+                  name: t('label.from-shipped-datetime'),
+                  urlParameter: 'shippedDatetime',
+                  range: 'from',
+                },
+                {
+                  type: 'date',
+                  name: t('label.to-shipped-datetime'),
+                  urlParameter: 'shippedDatetime',
+                  range: 'to',
+                },
+              ],
+            },
           ]}
         />
       </Box>

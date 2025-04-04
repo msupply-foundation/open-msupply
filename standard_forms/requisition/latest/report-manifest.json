@@ -1,13 +1,11 @@
 {
   "is_custom": false,
-  "version": "2.5.1",
+  "version": "2.6.1",
   "code": "requisition",
   "context": "REQUISITION",
-  "name": "requisition",
+  "name": "Requisition",
   "queries": {
-    "gql": "requisitionQuery.graphql"
+    "gql": "query.graphql"
   },
-  "arguments": {},
-  "header": "header.html",
-  "footer": "footer.html"
+  "header": "header.html"
 }

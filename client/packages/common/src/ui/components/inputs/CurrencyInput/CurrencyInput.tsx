@@ -4,6 +4,7 @@ import RCInput, {
   CurrencyInputProps as RCInputProps,
 } from 'react-currency-input-field';
 import { useCurrency } from '@common/intl';
+import { NumUtils } from '@common/utils';
 
 interface CurrencyInputProps extends RCInputProps {
   onChangeNumber: (value: number) => void;
@@ -44,6 +45,9 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   const isSymbolLast = options.pattern.endsWith('!');
   const prefix = !isSymbolLast ? options.symbol : '';
   const suffix = isSymbolLast ? options.symbol : '';
+  const defaultValueAsNumber = Number.isNaN(Number(defaultValue))
+    ? undefined
+    : Number(defaultValue);
   const valueAsNumber = Number.isNaN(value) ? 0 : Number(value);
 
   return (
@@ -55,7 +59,12 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
             ? theme.palette.background.toolbar
             : theme.palette.background.menu,
       }}
-      defaultValue={defaultValue ?? valueAsNumber}
+      // We implement our own rounding here, as the react-currency-input-field
+      // component only truncates internally
+      defaultValue={NumUtils.round(
+        defaultValueAsNumber ?? valueAsNumber,
+        options.precision
+      )}
       onValueChange={newValue => onChangeNumber(c(newValue || '').value)}
       onFocus={e => e.target.select()}
       allowNegativeValue={allowNegativeValue}

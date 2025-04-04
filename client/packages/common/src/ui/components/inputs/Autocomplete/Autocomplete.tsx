@@ -17,6 +17,7 @@ import {
 import { BasicTextInput, BasicTextInputProps } from '../TextInput';
 import { StyledPopper } from './components';
 import { useOpenStateWithKeyboard } from './utils';
+import { useTranslation } from '@common/intl';
 
 export interface AutocompleteProps<T>
   extends Omit<
@@ -80,6 +81,7 @@ export function Autocomplete<T>({
   textSx,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
+  const t = useTranslation();
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
@@ -134,8 +136,8 @@ export function Autocomplete<T>({
       getOptionDisabled={getOptionDisabled}
       filterOptions={filter}
       loading={loading}
-      loadingText={loadingText}
-      noOptionsText={noOptionsText}
+      loadingText={loadingText ?? t('loading')}
+      noOptionsText={noOptionsText ?? t('label.no-options')}
       options={options}
       size="small"
       renderInput={renderInput || defaultRenderInput}

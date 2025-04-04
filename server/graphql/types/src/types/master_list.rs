@@ -61,6 +61,10 @@ impl MasterListNode {
         &self.master_list.description
     }
 
+    pub async fn discount_percentage(&self) -> f64 {
+        self.master_list.discount_percentage.unwrap_or(0.0)
+    }
+
     pub async fn lines_count(&self, ctx: &Context<'_>) -> Result<Option<i64>, Error> {
         let count = get_master_list_lines_count(
             &ctx.get_connection_manager().connection()?,

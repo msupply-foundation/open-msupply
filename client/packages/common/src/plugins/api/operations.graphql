@@ -4,3 +4,11 @@ query frontendPluginMetadata {
     path
   }
 }
+
+query pluginGraphqlQuery(
+  $storeId: String!
+  $input: JSON!
+  $pluginCode: String!
+) {
+  pluginGraphqlQuery(input: $input, pluginCode: $pluginCode, storeId: $storeId)
+}

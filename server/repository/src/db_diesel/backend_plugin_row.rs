@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 pub enum PluginType {
     AverageMonthlyConsumption,
     TransformRequestRequisitionLines,
+    GraphqlQuery,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]

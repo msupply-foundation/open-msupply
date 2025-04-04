@@ -131,6 +131,7 @@ const UIComponent = (props: ControlProps) => {
             return option.label === value.label;
           }}
           disabled={!props.enabled}
+          noOptionsText={t('label.no-options')}
         />
       }
     />

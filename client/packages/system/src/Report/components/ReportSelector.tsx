@@ -19,6 +19,7 @@ interface ReportSelectorProps {
   onPrint: (report: ReportRowFragment, args: JsonData | undefined) => void;
   disabled?: boolean;
   queryParams?: ReportListParams;
+  extraArguments?: Record<string, string | number | undefined>;
 }
 
 const NoReports = ({ hasPermission }: { hasPermission: boolean }) => {
@@ -46,6 +47,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   onPrint,
   disabled,
   queryParams,
+  extraArguments,
 }) => {
   const { hide, PaperClickPopover } = usePaperClickPopover();
   const { data, isLoading } = useReportList({
@@ -66,7 +68,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
     } else {
       const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
       // passing timezone through as forms do not have arguments
-      onPrint(report, { timezone });
+      onPrint(report, { timezone, ...extraArguments });
     }
   };
 

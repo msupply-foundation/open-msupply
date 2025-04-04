@@ -1,13 +1,11 @@
-use log::info;
+use base64::{prelude::BASE64_STANDARD, Engine};
 use report_builder::{build::build_report_definition, BuildArgs};
 use repository::{schema_from_row, ContextType, FormSchemaRow, RepositoryError};
-use service::standard_reports::{ReportData, ReportsData};
-use std::{
-    ffi::OsStr,
-    fs,
-    path::PathBuf,
-    process::{Command, Stdio},
+use service::{
+    report::definition::ConvertDataType,
+    standard_reports::{ReportData, ReportsData},
 };
+use std::{ffi::OsStr, fs, path::PathBuf, process::Command};
 use thiserror::Error as ThisError;
 
 #[derive(ThisError, Debug)]
@@ -24,10 +22,10 @@ pub enum ReportError {
     PathDoesNotHaveParent(PathBuf),
     #[error("Failed to find package json {0}")]
     FailedToFindPackageJson(PathBuf),
-    #[error("Failed to find esbuild module {0}")]
-    FailedToFindEsbuildModule(PathBuf),
-    #[error("Failed to install yarn {0}")]
-    FailedToInstallYarn(PathBuf, #[source] std::io::Error),
+    #[error("Failed to yarn install {0}")]
+    FailedToYarnInstall(PathBuf, #[source] CommandError),
+    #[error("Failed to buid convert data {0}")]
+    FailedToBuildConvertData(PathBuf, #[source] CommandError),
     #[error("Failed to build report {0}")]
     FailedToBuildReport(PathBuf, #[source] anyhow::Error),
     #[error("Repository error on existing report validation")]
@@ -49,6 +47,8 @@ pub enum ReportError {
 }
 
 use ReportError as Error;
+
+use crate::helpers::{run_command_with_error, CommandError};
 
 pub fn generate_reports_recursive(
     reports_data: &mut ReportsData,
@@ -91,16 +91,14 @@ fn process_report(reports_data: &mut ReportsData, path: &PathBuf) -> Result<(), 
 
 pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
     // install esbuild depedencies
-
-    if let Err(e) = run_yarn_install(&path) {
-        eprintln!("Failed to run yarn install in {}: {}", path.display(), e);
-    }
     // read manifest file
     let manifest_file = fs::File::open(path.join("report-manifest.json"))
         .map_err(|e| Error::CannotOpenManifestFile(path.clone(), e))?;
 
     let manifest: Manifest = serde_json::from_reader(manifest_file)
         .map_err(|e| Error::CannotReadManifestFile(path.clone(), e))?;
+
+    let convert_data = generate_convert_data(path, &manifest)?;
     let code = manifest.code;
 
     let version = manifest.version;
@@ -122,8 +120,6 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
         .and_then(|ui| Some(path.join(ui)));
     let graphql_query = manifest.queries.clone().and_then(|q| q.gql);
     let sql_queries = manifest.queries.clone().and_then(|q| q.sql);
-    let convert_data = manifest.convert_data.and_then(|cd| Some(path.join(cd)));
-    let custom_wasm_function = manifest.custom_wasm_function;
     let query_default = manifest.query_default;
 
     let args = BuildArgs {
@@ -135,12 +131,13 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
         query_gql: graphql_query,
         query_default: query_default,
         query_sql: sql_queries,
-        convert_data,
-        custom_wasm_function,
     };
 
-    let report_definition =
+    let mut report_definition =
         build_report_definition(&args).map_err(|e| Error::FailedToBuildReport(path.clone(), e))?;
+
+    report_definition.index.convert_data = convert_data;
+    report_definition.index.convert_data_type = manifest.convert_data_type;
 
     let form_schema_json = match (arguments_path, arguments_ui_path) {
         (Some(_), None) | (None, Some(_)) => {
@@ -175,43 +172,31 @@ pub fn generate_report_data(path: &PathBuf) -> Result<ReportData, Error> {
     })
 }
 
-fn run_yarn_install(directory: &PathBuf) -> Result<(), Error> {
-    let convert_dir = directory.join("convert_data_js");
+fn generate_convert_data(path: &PathBuf, manifest: &Manifest) -> Result<Option<String>, Error> {
+    let Some(convert_data) = &manifest.convert_data else {
+        return Ok(None);
+    };
 
-    if !convert_dir.exists() {
-        info!(
-            "No conversion function for {}. Skipping esbuild install.",
-            convert_dir.display().to_string()
-        );
-        return Ok(());
-    }
-
-    let node_modules_path = convert_dir.join("node_modules");
-
-    let package_json = convert_dir.join("package.json");
-    if !package_json.exists() {
-        return Err(Error::FailedToFindPackageJson(convert_dir));
-    }
-
-    let esbuild = convert_dir.join("esbuild.js");
-    if !esbuild.exists() {
-        return Err(Error::FailedToFindEsbuildModule(convert_dir));
-    }
-
-    if !node_modules_path.exists() {
+    let convert_dir = path.join(convert_data);
+    // Yarn install, use lock file bit it should be git ignored
+    run_command_with_error(
         Command::new("yarn")
             .args(["install", "--cwd"])
-            .arg(convert_dir.clone())
-            .args(["--no-lockfile", "--check-files"])
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .status()
-            .map_err(|e| Error::FailedToInstallYarn(convert_dir.clone(), e))?;
-    } else {
-        info!("Dependencies up to date");
-    }
+            .arg(&convert_dir),
+    )
+    .map_err(|e| Error::FailedToYarnInstall(convert_dir.clone(), e))?;
 
-    Ok(())
+    run_command_with_error(Command::new("yarn").arg("build").current_dir(&convert_dir))
+        .map_err(|e| Error::FailedToBuildConvertData(convert_dir.clone(), e))?;
+
+    let bundle_path: PathBuf = convert_dir
+        .join("dist")
+        .join(match manifest.convert_data_type {
+            ConvertDataType::BoaJs => "convert_data.js",
+            ConvertDataType::Extism => "plugin.wasm",
+        });
+
+    Ok(Some(BASE64_STANDARD.encode(fs::read(bundle_path).unwrap())))
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -229,7 +214,8 @@ pub struct Manifest {
     pub arguments: Option<Arguments>,
     pub test_arguments: Option<TestReportArguments>,
     pub convert_data: Option<String>,
-    pub custom_wasm_function: Option<String>,
+    #[serde(default)]
+    pub convert_data_type: ConvertDataType,
     pub query_default: Option<String>,
 }
 

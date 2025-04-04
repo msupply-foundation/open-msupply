@@ -3,11 +3,11 @@ import {
   useFieldsSelector,
 } from '@openmsupply-client/common';
 import { useRequest, useRequestNumber } from './useRequest';
-import { RequestFragment } from '../../operations.generated';
+import { RequestFragment } from '../../.';
 import { useRequestApi } from '../utils/useRequestApi';
 
 export const useRequestFields = <
-  KeyOfRequisition extends keyof RequestFragment
+  KeyOfRequisition extends keyof RequestFragment,
 >(
   keys: KeyOfRequisition | KeyOfRequisition[]
 ): FieldSelectorControl<RequestFragment, KeyOfRequisition> => {
