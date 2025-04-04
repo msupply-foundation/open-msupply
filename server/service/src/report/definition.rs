@@ -78,8 +78,15 @@ pub enum ReportDefinitionEntry {
     Ref(ReportRef),
 }
 
+#[derive(serde::Deserialize, Serialize, Clone, PartialEq, Default, Debug)]
+pub enum ConvertDataType {
+    BoaJs,
+    #[default]
+    Extism,
+}
+
 /// Specifies which report definition entries are the "main" entries.
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct ReportDefinitionIndex {
     pub template: Option<String>,
     pub header: Option<String>,
@@ -87,7 +94,8 @@ pub struct ReportDefinitionIndex {
     #[serde(deserialize_with = "string_or_vec")]
     pub query: Vec<String>,
     pub convert_data: Option<String>,
-    pub custom_wasm_function: Option<String>,
+    #[serde(default)]
+    pub convert_data_type: ConvertDataType,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -159,8 +167,7 @@ mod report_dsl_test {
                     header: None,
                     footer: Some("local_footer.html".to_string()),
                     query: vec!["query".to_string()],
-                    convert_data: None,
-                    custom_wasm_function: None,
+                    ..Default::default()
                 },
                 entries: HashMap::from([
                     (

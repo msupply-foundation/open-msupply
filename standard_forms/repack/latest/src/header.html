@@ -1,44 +1,41 @@
-<div style="font-size: 10px; padding-top: 8px; text-align: center; width: 98%">
-  <table class="header_image_section" style="width: 98%; height: 98%">
-    <tr>
-      <td>
-        <img class="logo" src="{{data.store.logo}}" />
-      </td>
-      <td style="width: 350px">
-        <span
-          style="
-            text-align: center;
-            font-size: 9pt;
-            font-weight: bold;
-            font-family: Tahoma;
-          "
-          >{{ data.store.storeName }}</span
-        ><br />
-        <span style="text-align: center; font-size: 7pt; font-family: Tahoma"
-          >{{ data.store.name.address1 }}</span
-        ><br />
-        <span style="text-align: center; font-size: 6pt; font-family: Tahoma"
-          >{{ data.store.name.address2 }}</span
-        >
-      </td>
-      <td style="padding-left: 8px">
-        <span
-          class="repack_details"
-          style="
-            text-align: right;
-            font-weight: bold;
-            font-size: 7pt;
-            float: right;
-            margin-left: 20px;
-          "
-        >
-          <div>{{t(k="label.repack",f="Repack")}} #: {{ data.repack.invoice.invoiceNumber }}</div>
-          <div>{{t(k="report.status", f="Status")}}: {{ data.repack.invoice.status }}</div>
-          <div>
-            {{t(k="report.confirmed-date", f="Confirmed date")}}: {{ data.repack.datetime | date(format="%d/%m/%Y") }}
-          </div>
-        </span>
-      </td>
-    </tr>
-  </table>
+{% macro dateOrNA(datetime) %}
+{% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %}
+{% endmacro input %}
+
+<table class="header_image_section" style="width: 100%;height: 98%;">
+  <tr>
+    <th style="text-align:left;width:10%;height:70%;">
+      <img class="logo" src="{{ data.store.logo }}" />
+    </th>
+    <th style="text-align:left;width:20%;">
+      <span style="font-weight:bold;">{{ data.store.storeName }}</span><br>
+      <span style="font-size:6pt;">{{ data.store.name.address1 }}</span><br>
+      <span style="font-size:6pt;">{{ data.store.name.address2 }}</span><br>
+      <span style="font-size:6pt;">
+        {{t(k="label.phone",f="Telephone")}}: {{ data.store.name.phone }}
+      </span><br>
+      <span style="font-size:6pt;">
+        {{t(k="label.email",f="Email")}}: {{ data.store.name.email }}
+      </span>
+    </th>
+    <th style="text-align:right;width:70%;font-size:28pt;">
+      {{ t(k="label.repack", f="Repack") }}<br>
+    </th>
+  </tr>
+</table>
+
+<div class="header_image_section" style="display: flex; flex-direction: column;">
+  <div style="display: flex; justify-content: flex-end;">
+    {{ t(k="label.number", f="Number") }}: {{ data.repack.invoice.invoiceNumber }}
+  </div>
+  <div style="display: flex; justify-content: flex-end;">
+    {{t(k="report.confirmed-date", f="Confirmed date")}}: {{data.repack.datetime | date(format="%d/%m/%Y")}}
+  </div>
+  <div style="display: flex; justify-content: flex-end;">
+    {{t(k="report.item-code", f="Item code")}}: {{ data.repack.from.stockLine.item.code }}
+  </div>
+  <div style="display: flex; justify-content: flex-end; padding-bottom: 10px;">
+    {{t(k="report.item-name", f="Item name")}}: {{
+    data.repack.from.stockLine.item.name }}
+  </div>
 </div>

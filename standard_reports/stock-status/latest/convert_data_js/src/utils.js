@@ -1,4 +1,4 @@
-import { cleanUpNodes, sortNodes } from "../../../../utils";
+import { cleanUpNodes, sortNodes } from '../../../../utils';
 
 const processItemLines = (nodes, sort, dir) => {
   let cleanNodes = cleanUpNodes(nodes);
@@ -6,6 +6,4 @@ const processItemLines = (nodes, sort, dir) => {
   return sortedNodes;
 };
 
-module.exports = {
-  processItemLines,
-};
+export { processItemLines };

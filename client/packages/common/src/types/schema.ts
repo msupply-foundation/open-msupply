@@ -6050,6 +6050,7 @@ export type Queries = {
   patients: PatientResponse;
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
+  pluginGraphqlQuery: Scalars['JSON']['output'];
   printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
@@ -6567,6 +6568,13 @@ export type QueriesPluginDataArgs = {
 };
 
 
+export type QueriesPluginGraphqlQueryArgs = {
+  input: Scalars['JSON']['input'];
+  pluginCode: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesPrintersArgs = {
   filter?: InputMaybe<PrinterFilterInput>;
 };
@@ -6965,6 +6973,7 @@ export enum ReportContext {
   Dispensary = 'DISPENSARY',
   InboundReturn = 'INBOUND_RETURN',
   InboundShipment = 'INBOUND_SHIPMENT',
+  InternalOrder = 'INTERNAL_ORDER',
   OutboundReturn = 'OUTBOUND_RETURN',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Patient = 'PATIENT',
@@ -7068,22 +7077,6 @@ export type RequisitionIndicatorInformationNode = {
   value: Scalars['String']['output'];
 };
 
-export type RequisitionItemInformationNode = {
-  __typename: 'RequisitionItemInformationNode';
-  adjustmentsInUnits: Scalars['Float']['output'];
-  amcInUnits: Scalars['Float']['output'];
-  dateRange?: Maybe<Scalars['DateTime']['output']>;
-  id: Scalars['String']['output'];
-  name: NameNode;
-  outgoingUnits: Scalars['Float']['output'];
-  stockInUnits: Scalars['Float']['output'];
-};
-
-
-export type RequisitionItemInformationNodeNameArgs = {
-  storeId: Scalars['String']['input'];
-};
-
 export type RequisitionLineChartError = {
   __typename: 'RequisitionLineChartError';
   error: RequisitionLineChartErrorInterface;
@@ -7120,7 +7113,6 @@ export type RequisitionLineNode = {
   initialStockOnHandUnits: Scalars['Float']['output'];
   item: ItemNode;
   itemId: Scalars['String']['output'];
-  itemInformation?: Maybe<Array<RequisitionItemInformationNode>>;
   itemName: Scalars['String']['output'];
   /**
    * For request requisition: snapshot stats (when requisition was created)
