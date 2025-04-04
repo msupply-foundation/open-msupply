@@ -532,6 +532,7 @@ impl InvoiceTransferTester {
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap();
+            r.tax_percentage = Some(0.0);
         });
 
         let location = inline_init(|r: &mut LocationRow| {
@@ -565,6 +566,7 @@ impl InvoiceTransferTester {
             r.expiry_date = stock_line1.expiry_date;
             r.stock_line_id = Some(stock_line1.id.clone());
             r.location_id = Some(location.id.clone());
+            r.tax_percentage = Some(0.0);
         });
 
         let stock_line2 = inline_init(|r: &mut StockLineRow| {
@@ -592,6 +594,7 @@ impl InvoiceTransferTester {
             r.batch.clone_from(&stock_line2.batch);
             r.expiry_date = stock_line2.expiry_date;
             r.stock_line_id = Some(stock_line2.id.clone());
+            r.tax_percentage = Some(0.0);
             // Location todo
         });
 
@@ -617,6 +620,7 @@ impl InvoiceTransferTester {
             r.item_link_id.clone_from(&item2.id);
             r.item_name.clone_from(&item2.name);
             r.item_code.clone_from(&item2.code);
+            r.tax_percentage = Some(0.0);
         });
 
         let supplier_return = inline_init(|r: &mut InvoiceRow| {
@@ -650,6 +654,7 @@ impl InvoiceTransferTester {
             r.expiry_date = stock_line1.expiry_date;
             r.stock_line_id = Some(stock_line1.id.clone());
             r.location_id = Some(location.id.clone());
+            r.tax_percentage = Some(0.0);
         });
 
         InvoiceTransferTester {
