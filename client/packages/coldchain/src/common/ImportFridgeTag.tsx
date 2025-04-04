@@ -15,7 +15,7 @@ import {
   useNavigate,
   useQueryClient,
 } from '@openmsupply-client/common';
-import { useTemperatureLog, useTemperatureBreach } from '../Monitoring/api';
+import { useTemperatureBreach, TEMPERATURE_LOG } from '../Monitoring/api';
 import { SENSOR } from '../Sensor/api';
 
 // Types are based on berlinger file returned values
@@ -44,7 +44,6 @@ export const ImportFridgeTag = ({
   const { storeId } = useAuthContext();
   const queryClient = useQueryClient();
 
-  const logApi = useTemperatureLog.utils.api();
   const breachApi = useTemperatureBreach.utils.api();
 
   const getConfirmation = useConfirmationModal({
@@ -85,7 +84,7 @@ export const ImportFridgeTag = ({
 
       // forces a refetch of logs, breach, chart data and sensors
       queryClient.invalidateQueries(breachApi.keys.base());
-      queryClient.invalidateQueries(logApi.keys.base());
+      queryClient.invalidateQueries([TEMPERATURE_LOG]);
       queryClient.invalidateQueries([SENSOR]);
 
       // if the user is on mobile - redirect to monitoring page

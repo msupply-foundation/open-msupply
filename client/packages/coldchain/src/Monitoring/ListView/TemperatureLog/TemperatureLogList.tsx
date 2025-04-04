@@ -3,7 +3,7 @@ import { useUrlQueryParams } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import {
   TemperatureLogFragment,
-  useTemperatureLog,
+  useTemperatureLogList,
 } from '../../api/TemperatureLog';
 import {
   DataTable,
@@ -47,8 +47,7 @@ const ListView: FC = () => {
     first,
   };
 
-  const { data, isLoading, isError } =
-    useTemperatureLog.document.list(queryParams);
+  const { data, isLoading, isError } = useTemperatureLogList(queryParams);
   const pagination = { page, first, offset };
   const t = useTranslation();
   const formatTemperature = useFormatTemperature();
