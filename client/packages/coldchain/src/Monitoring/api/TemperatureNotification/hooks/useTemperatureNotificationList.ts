@@ -1,4 +1,5 @@
 import {
+  LIST,
   useNotification,
   useQuery,
   useTranslation,
@@ -21,7 +22,7 @@ export const useTemperatureNotificationList = (queryParams?: ListParams) => {
   const { temperatureNotificationApi, storeId } =
     useTemperatureNotificationGraphQL();
 
-  const queryKey = [TEMPERATURE_NOTIFICATION, storeId, queryParams];
+  const queryKey = [TEMPERATURE_NOTIFICATION, storeId, LIST, queryParams];
 
   const queryFn = async () => {
     try {
