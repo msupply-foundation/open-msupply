@@ -67,6 +67,7 @@ export const RequestLineEditPageInner = ({
 
   useEffect(() => {
     setCustomBreadcrumbs({
+      1: requisition.requisitionNumber.toString() || '',
       2: currentItem?.name || '',
     });
   }, [currentItem]);
