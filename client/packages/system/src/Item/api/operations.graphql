@@ -26,6 +26,9 @@ fragment StockLine on StockLineNode {
     itemDirections {
       ...ItemDirection
     }
+    warnings {
+      ...Warning
+    }
   }
   note
   onHold
@@ -58,6 +61,22 @@ fragment ItemDirection on ItemDirectionNode {
   id
   itemId
   priority
+}
+
+fragment ItemRowWithWarnings on ItemNode {
+  ...ItemRow
+  warnings {
+    ...Warning
+  }
+}
+
+fragment Warning on WarningNode {
+  __typename
+  warningText
+  id
+  itemId
+  priority
+  code
 }
 
 fragment ItemWithPackSize on ItemNode {
@@ -185,6 +204,9 @@ fragment Item on ItemNode {
   }
   itemDirections {
     ...ItemDirection
+  }
+  warnings {
+    ...Warning
   }
 }
 

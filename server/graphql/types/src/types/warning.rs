@@ -11,7 +11,7 @@ impl WarningNode {
     pub async fn id(&self) -> &str {
         &self.row().id
     }
-    pub async fn item_link_id(&self) -> &str {
+    pub async fn item_id(&self) -> &str {
         &self.item_row().id
     }
     pub async fn warning_id(&self) -> &str {
@@ -22,6 +22,9 @@ impl WarningNode {
     }
     pub async fn warning_text(&self) -> &str {
         &self.row().warning_text
+    }
+    pub async fn code(&self) -> &str {
+        &self.row().code
     }
 }
 

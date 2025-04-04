@@ -157,7 +157,7 @@ impl ItemNode {
         Ok(ItemDirectionNode::from_vec(result))
     }
 
-    pub async fn item_warnings(&self, ctx: &Context<'_>) -> Result<Vec<WarningNode>> {
+    pub async fn warnings(&self, ctx: &Context<'_>) -> Result<Vec<WarningNode>> {
         let loader = ctx.get_loader::<DataLoader<WarningLoader>>();
         let result = loader
             .load_one(self.row().id.clone())

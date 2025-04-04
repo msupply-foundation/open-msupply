@@ -4196,7 +4196,6 @@ export type ItemNode = {
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
   itemDirections: Array<ItemDirectionNode>;
-  itemWarnings: Array<WarningNode>;
   margin: Scalars['Float']['output'];
   masterLists?: Maybe<Array<MasterListNode>>;
   msupplyUniversalCode: Scalars['String']['output'];
@@ -4211,6 +4210,7 @@ export type ItemNode = {
   venCategory: VenCategoryType;
   volumePerOuterPack: Scalars['Float']['output'];
   volumePerPack: Scalars['Float']['output'];
+  warnings: Array<WarningNode>;
   weight: Scalars['Float']['output'];
 };
 
@@ -9855,8 +9855,9 @@ export enum VenCategoryType {
 
 export type WarningNode = {
   __typename: 'WarningNode';
+  code: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  itemLinkId: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
   priority: Scalars['Boolean']['output'];
   warningId: Scalars['String']['output'];
   warningText: Scalars['String']['output'];
