@@ -165,7 +165,7 @@ const VaccinationCardComponent = ({
           // Only show age label for first of each "block", when repeated
           return sameAsPrev ? null : getAgeLabel(rowData);
         },
-        width: 140,
+        width: '5%',
       },
       {
         key: 'label',
