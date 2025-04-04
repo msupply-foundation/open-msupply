@@ -144,7 +144,7 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
               <NumericTextInput
                 width={INPUT_WIDTH}
                 disabled={true}
-                value={parseInt(
+                value={parseFloat(
                   (
                     stockLine.totalNumberOfPacks +
                     (draft.adjustmentType === AdjustmentTypeInput.Addition
