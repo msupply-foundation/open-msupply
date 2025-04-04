@@ -30,7 +30,13 @@
     {
       "type": "Control",
       "scope": "#/properties/dir",
-      "label": "T#report.sort-direction"
+      "label": "T#report.sort-direction",
+      "options": {
+       "show": [
+          ["asc", "T#report.ascending"],
+          ["desc", "T#report.descending"]
+        ]
+      }
     }
   ]
 }

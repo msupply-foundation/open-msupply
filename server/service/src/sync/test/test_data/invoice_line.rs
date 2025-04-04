@@ -91,7 +91,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             tax_percentage: None,
             r#type: InvoiceLineType::StockIn,
             number_of_packs: 700.36363636,
-            prescribed_quantity: Some(0.0),
+            prescribed_quantity: None,
             note: None,
             inventory_adjustment_reason_id: None,
             return_reason_id: None,
@@ -118,7 +118,7 @@ fn trans_line_1_push_record() -> TestSyncOutgoingRecord {
             sell_price_per_pack: 0.0,
             r#type: LegacyTransLineType::StockIn,
             number_of_packs: 700.36363636,
-            prescribed_quantity: Some(0.0),
+            prescribed_quantity: None,
             note: None,
             item_code: Some("item_a_code".to_string()),
             tax_percentage: None,
@@ -187,7 +187,6 @@ const TRANS_LINE_2: (&str, &str) = (
         "vaccine_vial_monitor_status_ID": "",
         "volume_per_pack": 0,
         "om_item_variant_id": ""
-        
     }"#,
 );
 fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
@@ -212,7 +211,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             tax_percentage: None,
             r#type: InvoiceLineType::StockOut,
             number_of_packs: 1000.9124798,
-            prescribed_quantity: Some(0.0),
+            prescribed_quantity: None,
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             inventory_adjustment_reason_id: None,
             return_reason_id: None,
@@ -239,7 +238,7 @@ fn trans_line_2_push_record() -> TestSyncOutgoingRecord {
             sell_price_per_pack: 2.0,
             r#type: LegacyTransLineType::StockOut,
             number_of_packs: 1000.9124798,
-            prescribed_quantity: Some(0.0),
+            prescribed_quantity: None,
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             item_code: Some("item_a_code".to_string()),
             tax_percentage: None,
@@ -335,7 +334,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             tax_percentage: Some(33.3),
             r#type: InvoiceLineType::StockOut,
             number_of_packs: 1000.9124798,
-            prescribed_quantity: Some(0.0),
+            prescribed_quantity: None,
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             inventory_adjustment_reason_id: None,
             return_reason_id: None,
@@ -362,7 +361,7 @@ fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
             sell_price_per_pack: 2.0,
             r#type: LegacyTransLineType::StockOut,
             number_of_packs: 1000.9124798,
-            prescribed_quantity: Some(0.0),
+            prescribed_quantity: None,
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             item_code: Some("item_a_code".to_string()),
             tax_percentage: Some(33.3),
@@ -458,7 +457,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             tax_percentage: None,
             r#type: InvoiceLineType::StockOut,
             number_of_packs: 1000.9124798,
-            prescribed_quantity: Some(0.0),
+            prescribed_quantity: None,
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             inventory_adjustment_reason_id: None,
             return_reason_id: None,
@@ -485,7 +484,7 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncOutgoingRecord {
             sell_price_per_pack: 2.0,
             r#type: LegacyTransLineType::StockOut,
             number_of_packs: 1000.9124798,
-            prescribed_quantity: Some(0.0),
+            prescribed_quantity: None,
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             item_code: Some("item_a_code".to_string()),
             tax_percentage: None,
@@ -556,7 +555,7 @@ const TRANS_LINE_NEGATIVE: (&str, &str) = (
         "om_tax": null,
         "om_total_before_tax": 4000.0,
         "om_total_after_tax": 4000.0,
-        "om_item_variant_id": null
+        "om_item_variant_id": ""
     }"#,
 );
 fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
@@ -581,7 +580,7 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
             tax_percentage: None,
             r#type: InvoiceLineType::StockIn,
             number_of_packs: 20.0,
-            prescribed_quantity: Some(0.0),
+            prescribed_quantity: None,
             note: None,
             inventory_adjustment_reason_id: None,
             return_reason_id: None,
@@ -612,7 +611,7 @@ fn trans_line_negative_push_record() -> TestSyncOutgoingRecord {
             tax_percentage: None,
             r#type: LegacyTransLineType::StockIn,
             number_of_packs: 20.0,
-            prescribed_quantity: Some(0.0),
+            prescribed_quantity: None,
             note: None,
             option_id: None,
             foreign_currency_price_before_tax: Some(200.0),
@@ -649,7 +648,6 @@ const TRANS_LINE_PRESCRIBED_QUANTITY: (&str, &str) = (
         "medicine_administrator_ID": "",
         "note": "every FOUR to SIX hours when necessary ",
         "om_item_code": null,
-        "om_item_variant_id": null,
         "om_tax": null,
         "om_total_after_tax": null,
         "om_total_before_tax": null,
@@ -679,7 +677,8 @@ const TRANS_LINE_PRESCRIBED_QUANTITY: (&str, &str) = (
         "user_7_ID": "",
         "user_8_ID": "",
         "vaccine_vial_monitor_status_ID": "",
-        "volume_per_pack": 0
+        "volume_per_pack": 0,
+        "om_item_variant_id": ""
     }"#,
 );
 

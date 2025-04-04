@@ -1,11 +1,18 @@
 use std::collections::HashSet;
 
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 
 use async_graphql::{Context, Enum, Object, SimpleObject, Union};
 use serde_json::json;
-use service::{backend_plugin::plugin_provider::PluginBundle, UploadedFile, UploadedFileJsonError};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    backend_plugin::plugin_provider::PluginBundle,
+    UploadedFile, UploadedFileJsonError,
+};
 use util::format_error;
 
 #[derive(Union)]
@@ -14,11 +21,18 @@ pub enum UploadedPluginInfoResponse {
     Error(UploadedPluginError),
 }
 
-// TODO central server only
 pub fn uploaded_plugin_info(
     ctx: &Context<'_>,
     file_id: String,
 ) -> Result<UploadedPluginInfoResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::ConfigurePlugin,
+            store_id: None,
+        },
+    )?;
+
     let service_provider = ctx.service_provider();
     let settings = ctx.get_settings();
 
@@ -95,8 +109,8 @@ impl PluginInfoNode {
                     .frontend_plugins
                     .iter()
                     .map(|r| json!({ "front_end": r.code.clone(), "types": r.types.clone() }))
-                    .collect::<HashSet<serde_json::Value>>()
-
+                    .collect::<HashSet<serde_json::Value>>(),
+            "NOTE": "Back end plugins are not currently 'stackable', i.e. only one instance of transform request requisition line plugin will be executed"
         })
     }
 }

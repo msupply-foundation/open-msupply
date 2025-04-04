@@ -47,6 +47,7 @@ pub enum ReportContext {
     InboundReturn,
     Report,
     Prescription,
+    InternalOrder
 }
 
 #[derive(InputObject, Clone)]
@@ -254,6 +255,7 @@ impl ReportContext {
             ReportContext::InboundReturn => ReportContextDomain::InboundReturn,
             ReportContext::Report => ReportContextDomain::Report,
             ReportContext::Prescription => ReportContextDomain::Prescription,
+            ReportContext::InternalOrder => ReportContextDomain::InternalOrder,
         }
     }
 
@@ -272,6 +274,7 @@ impl ReportContext {
             ReportContextDomain::InboundReturn => ReportContext::InboundReturn,
             ReportContextDomain::Report => ReportContext::Report,
             ReportContextDomain::Prescription => ReportContext::Prescription,
+            ReportContextDomain::InternalOrder => ReportContext::InternalOrder,
         }
     }
 }
@@ -279,14 +282,14 @@ impl ReportContext {
 fn map_report_error(error: GetReportError) -> Result<ReportResponse> {
     match error {
         GetReportError::TranslationError(error) => {
-            return Ok(ReportResponse::Error(QueryReportError {
+            Ok(ReportResponse::Error(QueryReportError {
                 error: QueryReportErrorInterface::ReportTranslationError(FailedTranslation(
                     error.to_string(),
                 )),
             }))
         }
         GetReportError::RepositoryError(error) => {
-            return Err(StandardGraphqlError::from_repository_error(error))
+            Err(StandardGraphqlError::from_repository_error(error))
         }
     }
 }
@@ -294,12 +297,12 @@ fn map_report_error(error: GetReportError) -> Result<ReportResponse> {
 fn map_reports_error(error: GetReportsError) -> Result<ReportsResponse> {
     match error {
         GetReportsError::TranslationError(error) => {
-            return Ok(ReportsResponse::Error(QueryReportsError {
+            Ok(ReportsResponse::Error(QueryReportsError {
                 error: QueryReportsErrorInterface::ReportsTranslationError(FailedTranslation(
                     error.to_string(),
                 )),
             }))
         }
-        GetReportsError::ListError(error) => return Err(list_error_to_gql_err(error)),
+        GetReportsError::ListError(error) => Err(list_error_to_gql_err(error)),
     }
 }

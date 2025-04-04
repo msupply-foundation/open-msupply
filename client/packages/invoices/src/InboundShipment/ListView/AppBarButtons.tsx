@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   FnUtils,
@@ -22,7 +22,7 @@ import {
   NameRowFragment,
   SupplierSearchModal,
 } from '@openmsupply-client/system';
-import { LinkedRequestRowFragment, useInbound } from '../api';
+import { useInbound } from '../api';
 import { inboundsToCsv } from '../../utils';
 import { LinkInternalOrderModal } from './LinkInternalOrderModal';
 
@@ -48,6 +48,8 @@ export const AppBarButtons = ({
     useInbound.document.listInternalOrders(name?.id ?? '');
   const manuallyLinkInternalOrder =
     store?.preferences.manuallyLinkInternalOrderToInboundShipment;
+  const showManuallyLinkModal =
+    data?.totalCount !== 0 && manuallyLinkInternalOrder;
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -61,30 +63,11 @@ export const AppBarButtons = ({
     success(t('success'))();
   };
 
-  const createInvoice = async (nameId: string) => {
+  const createInvoice = async (nameId: string, requisitionId?: string) => {
     const invoiceNumber = await onCreate({
       id: FnUtils.generateUUID(),
       otherPartyId: nameId,
-    });
-
-    navigate(
-      RouteBuilder.create(AppRoute.Replenishment)
-        .addPart(AppRoute.InboundShipment)
-        .addPart(String(invoiceNumber))
-        .build()
-    );
-  };
-  useEffect(() => {
-    if (name && (data?.totalCount === 0 || !manuallyLinkInternalOrder)) {
-      createInvoice(name.id);
-    }
-  }, [name, data]);
-
-  const onRowClick = async (row: LinkedRequestRowFragment) => {
-    const invoiceNumber = await onCreate({
-      id: FnUtils.generateUUID(),
-      otherPartyId: name?.id ?? '',
-      requisitionId: row.id,
+      requisitionId,
     });
 
     navigate(
@@ -113,12 +96,15 @@ export const AppBarButtons = ({
         />
       </Grid>
 
-      {data?.totalCount !== 0 && manuallyLinkInternalOrder && (
+      {showManuallyLinkModal && (
         <LinkInternalOrderModal
           requestRequisitions={data?.nodes}
           isOpen={linkRequestModalController.isOn}
           onClose={linkRequestModalController.toggleOff}
-          onRowClick={onRowClick}
+          onRowClick={row => {
+            createInvoice(name?.id ?? '', row.id);
+            linkRequestModalController.toggleOff();
+          }}
           isLoading={internalOrderIsLoading}
           onNextClick={() => {
             if (name) {
@@ -130,11 +116,13 @@ export const AppBarButtons = ({
       <SupplierSearchModal
         open={invoiceModalController.isOn}
         onClose={invoiceModalController.toggleOff}
-        onChange={nameRow => {
+        onChange={async nameRow => {
           setName(nameRow);
           invoiceModalController.toggleOff();
           if (manuallyLinkInternalOrder) {
             linkRequestModalController.toggleOn();
+          } else {
+            createInvoice(nameRow.id);
           }
         }}
       />
