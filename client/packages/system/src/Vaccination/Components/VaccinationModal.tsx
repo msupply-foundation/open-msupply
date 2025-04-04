@@ -98,7 +98,7 @@ export const VaccinationModal = ({
     }
   );
 
-  const InfoBox = <GivenInfoBox vaccination={vaccination} />;
+  const InfoBox = <VaccineInfoBox vaccination={vaccination} />;
 
   const modalContent = isLoading ? (
     <BasicSpinner />
@@ -325,7 +325,7 @@ const VaccinationForm = ({
   );
 };
 
-const GivenInfoBox = ({
+const VaccineInfoBox = ({
   vaccination,
 }: {
   vaccination: VaccinationDetailFragment | null | undefined;
@@ -333,36 +333,36 @@ const GivenInfoBox = ({
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
 
-  if (vaccination?.given) {
-    return (
-      <Alert severity="success">
-        <Box display="flex" alignItems="center">
-          {t('messages.vaccination-was-given', {
-            date: localisedDate(vaccination.vaccinationDate ?? ''),
-          })}
-          {vaccination.invoice && (
-            <Link
-              style={{
-                marginLeft: 6,
-                fontWeight: 'bold',
-                alignItems: 'center',
-                display: 'flex',
+  return vaccination?.given ? (
+    <Alert severity="success">
+      <Box display="flex" alignItems="center">
+        {t('messages.vaccination-was-given', {
+          date: localisedDate(vaccination.vaccinationDate ?? ''),
+        })}
+        {vaccination.invoice && (
+          <Link
+            style={{
+              marginLeft: 6,
+              fontWeight: 'bold',
+              alignItems: 'center',
+              display: 'flex',
+            }}
+            to={RouteBuilder.create(AppRoute.Dispensary)
+              .addPart(AppRoute.Prescription)
+              .addPart(vaccination.invoice.invoiceNumber.toString())
+              .build()}
+          >
+            {t('button.view-prescription')}
+            <ChevronDownIcon
+              sx={{
+                transform: 'rotate(-90deg)',
               }}
-              to={RouteBuilder.create(AppRoute.Dispensary)
-                .addPart(AppRoute.Prescription)
-                .addPart(vaccination.invoice.invoiceNumber.toString())
-                .build()}
-            >
-              {t('button.view-prescription')}
-              <ChevronDownIcon
-                sx={{
-                  transform: 'rotate(-90deg)',
-                }}
-              />
-            </Link>
-          )}
-        </Box>
-      </Alert>
-    );
-  }
+            />
+          </Link>
+        )}
+      </Box>
+    </Alert>
+  ) : (
+    <Alert severity="warning">{t('warning.check-before-vaccinating')}</Alert>
+  );
 };
