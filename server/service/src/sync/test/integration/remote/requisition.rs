@@ -56,7 +56,7 @@ impl SyncRecordTester for RequisitionRecordTester {
             suggested_quantity: 10.0,
             supply_quantity: 5.0,
             available_stock_on_hand: 10.0,
-            average_monthly_consumption: 15.000000000000053,
+            average_monthly_consumption: 15.0,
             comment: None,
             snapshot_datetime: None,
             approved_quantity: 0.0,
@@ -140,7 +140,7 @@ impl SyncRecordTester for RequisitionRecordTester {
             d.suggested_quantity = 15.0;
             d.supply_quantity = 15.0;
             d.available_stock_on_hand = 15.0;
-            d.average_monthly_consumption = 9.999999999999934;
+            d.average_monthly_consumption = 10.0;
             d.comment = Some("some comment".to_string());
             d.snapshot_datetime = NaiveDate::from_ymd_opt(2022, 03, 20)
                 .unwrap()
