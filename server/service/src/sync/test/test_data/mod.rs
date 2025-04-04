@@ -29,7 +29,7 @@ pub(crate) mod item;
 pub(crate) mod item_category;
 pub(crate) mod item_direction;
 pub(crate) mod item_variant;
-pub(crate) mod item_warning_link;
+pub(crate) mod item_warning_join;
 pub(crate) mod location;
 pub(crate) mod location_movement;
 pub(crate) mod master_list;
@@ -99,7 +99,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut cold_storage_type::test_pull_upsert_records());
     test_records.append(&mut insurance_provider::test_pull_upsert_records());
     test_records.append(&mut warning::test_pull_upsert_records());
-    test_records.append(&mut item_warning_link::test_pull_upsert_records());
+    test_records.append(&mut item_warning_join::test_pull_upsert_records());
     // Central but site specific
     test_records.append(&mut name_store_join::test_pull_upsert_records());
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());

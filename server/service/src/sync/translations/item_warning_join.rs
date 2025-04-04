@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 
 use crate::sync::translations::{item::ItemTranslation, warning::WarningTranslation};
-use repository::{ItemWarningLinkRow, StorageConnection, SyncBufferRow};
+use repository::{ItemWarningJoinRow, StorageConnection, SyncBufferRow};
 
 use super::{PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 
-pub struct LegacyItemWarningLinkRow {
+pub struct LegacyItemWarningJoinRow {
     #[serde(rename = "Spare")] // Spare column not used in oms
     spare: f64,
     #[serde(rename = "item_ID")]
@@ -22,11 +22,11 @@ pub struct LegacyItemWarningLinkRow {
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
-    Box::new(ItemWarningLinkTranslation)
+    Box::new(ItemWarningJoinTranslation)
 }
 
-pub(super) struct ItemWarningLinkTranslation;
-impl SyncTranslation for ItemWarningLinkTranslation {
+pub(super) struct ItemWarningJoinTranslation;
+impl SyncTranslation for ItemWarningJoinTranslation {
     fn table_name(&self) -> &str {
         "item_warning_link"
     }
@@ -43,9 +43,9 @@ impl SyncTranslation for ItemWarningLinkTranslation {
         _connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyItemWarningLinkRow>(&sync_record.data)?;
+        let data = serde_json::from_str::<LegacyItemWarningJoinRow>(&sync_record.data)?;
 
-        let result = ItemWarningLinkRow {
+        let result = ItemWarningJoinRow {
             id: data.id,
             item_link_id: data.item_link_id,
             warning_id: data.warning_id,
@@ -61,12 +61,12 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
-    async fn test_item_warning_link_translation() {
-        use crate::sync::test::test_data::item_warning_link as test_data;
-        let translator = ItemWarningLinkTranslation {};
+    async fn test_item_warning_join_translation() {
+        use crate::sync::test::test_data::item_warning_join as test_data;
+        let translator = ItemWarningJoinTranslation {};
 
         let (_, connection, _, _) = setup_all(
-            "test_item_warning_link_translation",
+            "test_item_warning_join_translation",
             MockDataInserts::none(),
         )
         .await;

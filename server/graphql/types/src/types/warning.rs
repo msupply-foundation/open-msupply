@@ -1,9 +1,9 @@
 use async_graphql::*;
 
-use repository::{ItemRow, ItemWarningLink, WarningRow};
+use repository::{ItemRow, ItemWarningJoin, WarningRow};
 
 pub struct WarningNode {
-    pub warning: ItemWarningLink,
+    pub warning: ItemWarningJoin,
 }
 
 #[Object]
@@ -18,7 +18,7 @@ impl WarningNode {
         &self.row().id
     }
     pub async fn priority(&self) -> &bool {
-        &self.warning.item_warning_link_row.priority
+        &self.warning.item_warning_join_row.priority
     }
     pub async fn warning_text(&self) -> &str {
         &self.row().warning_text
@@ -26,11 +26,11 @@ impl WarningNode {
 }
 
 impl WarningNode {
-    pub fn from_domain(warning: ItemWarningLink) -> WarningNode {
+    pub fn from_domain(warning: ItemWarningJoin) -> WarningNode {
         WarningNode { warning }
     }
 
-    pub fn from_vec(warnings: Vec<ItemWarningLink>) -> Vec<WarningNode> {
+    pub fn from_vec(warnings: Vec<ItemWarningJoin>) -> Vec<WarningNode> {
         warnings.into_iter().map(WarningNode::from_domain).collect()
     } // warnings
 
@@ -41,6 +41,6 @@ impl WarningNode {
         &self.warning.item_row
     }
     pub fn warn_row(&self) -> &bool {
-        &self.warning.item_warning_link_row.priority
+        &self.warning.item_warning_join_row.priority
     }
 }

@@ -30,7 +30,7 @@ pub(crate) mod invoice_line;
 pub(crate) mod item;
 pub(crate) mod item_direction;
 pub(crate) mod item_variant;
-pub(crate) mod item_warning_link;
+pub(crate) mod item_warning_join;
 pub(crate) mod location;
 pub(crate) mod location_movement;
 pub(crate) mod master_list;
@@ -137,7 +137,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         document::boxed(),
         currency::boxed(),
         contact_form::boxed(),
-        item_warning_link::boxed(),
+        item_warning_join::boxed(),
         warning::boxed(),
         // Cold chain
         sensor::boxed(),
