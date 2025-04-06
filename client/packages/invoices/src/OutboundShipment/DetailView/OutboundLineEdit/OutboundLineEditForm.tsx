@@ -210,8 +210,8 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
       {item && canAutoAllocate ? (
         <>
           <Divider margin={10} />
-          <Box display="flex" alignItems="center">
-            <Grid container alignItems="center">
+          <Box display="flex" alignItems="flex-start" gap={2}>
+            <Grid container alignItems="center" pt={1}>
               <ModalLabel label={t('label.issue')} />
               <NumericTextInput
                 autoFocus
