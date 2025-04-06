@@ -551,7 +551,7 @@ fn create_filtered_outgoing_sync_query(
     // for visible patients
     // Bit of a hack, subquery unlikely to scale well - bring on v7 sync :cry:
     let vaccinations_for_visible_patients = vaccination::table
-        .left_join(name_link::table)
+        .left_join(name_link::table.on(vaccination::patient_link_id.eq(name_link::id)))
         .filter(name_link::name_id.eq_any(visible_patient_ids.into_boxed()))
         .select(vaccination::id)
         .into_boxed();
@@ -579,7 +579,7 @@ fn create_filtered_outgoing_sync_query(
     // (all vaccinations since cursor 0)
     if let Some(patient_id) = &fetch_patient_id {
         let patient_vaccinations = vaccination::table
-            .left_join(name_link::table)
+            .left_join(name_link::table.on(vaccination::patient_link_id.eq(name_link::id)))
             // Get all vaccinations for patient
             .filter(name_link::name_id.eq(patient_id.clone()))
             // Ensure patient is visible on at least one active store for site
