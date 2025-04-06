@@ -9,6 +9,7 @@ mod asset_data_matrix_locked_fields;
 mod asset_data_matrix_permission;
 mod new_stocktake_fields;
 mod remove_name_store_join_constraint;
+mod change_vaccination_date_to_not_nullable;
 
 pub(crate) struct V2_07_00;
 
