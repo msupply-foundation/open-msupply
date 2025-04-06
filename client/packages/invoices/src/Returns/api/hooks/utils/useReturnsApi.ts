@@ -25,10 +25,10 @@ export const useReturnsApi = () => {
       [...keys.supplierList(), sortBy] as const,
     supplierParamList: (params: SupplierListParams) =>
       [...keys.supplierList(), params] as const,
-    supplierDetail: (invoiceNumber: string) =>
-      [...keys.base(), storeId, invoiceNumber] as const,
-    customerDetail: (invoiceNumber: string) =>
-      [...keys.base(), storeId, 'customer', invoiceNumber] as const,
+    supplierDetail: (invoiceId: string) =>
+      [...keys.base(), storeId, invoiceId] as const,
+    customerDetail: (invoiceId: string) =>
+      [...keys.base(), storeId, 'customer', invoiceId] as const,
     generatedSupplierLines: (itemId?: string) =>
       [...keys.base(), storeId, 'generatedSupplierLines', itemId] as const,
     generatedCustomerLines: (itemId?: string) =>
