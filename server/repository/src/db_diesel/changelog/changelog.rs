@@ -541,10 +541,9 @@ fn create_filtered_outgoing_sync_query(
         .filter(
             name_store_join::store_id
                 .nullable()
-                .eq_any(active_stores_for_site.clone().into_boxed()),
+                .eq_any(active_stores_for_site),
         )
-        .select(name_link::name_id)
-        .into_boxed();
+        .select(name_link::name_id);
 
     // Ideally this would be by changelog name_link_id, but that has an FK constraint
     // requiring all names to exist on OMS central, which currently isn't the case.
@@ -553,7 +552,7 @@ fn create_filtered_outgoing_sync_query(
     // Bit of a hack, subquery unlikely to scale well - bring on v7 sync :cry:
     let vaccinations_for_visible_patients = vaccination::table
         .left_join(name_link::table)
-        .filter(name_link::name_id.eq_any(visible_patient_ids))
+        .filter(name_link::name_id.eq_any(visible_patient_ids.into_boxed()))
         .select(vaccination::id)
         .into_boxed();
 
@@ -577,33 +576,22 @@ fn create_filtered_outgoing_sync_query(
     );
 
     // If this is a manual sync to fetch a specific patient, add an OR condition for their vaccination records
-    // (since cursor 0)
+    // (all vaccinations since cursor 0)
     if let Some(patient_id) = &fetch_patient_id {
-        let visible_patients_for_site = name_store_join::table
-            .filter(
-                name_store_join::store_id.eq_any(
-                    // Active stores for site
-                    store::table
-                        .filter(store::site_id.eq(sync_site_id))
-                        .select(store::id),
-                ),
-            )
-            .select(name_store_join::name_link_id)
+        let patient_vaccinations = vaccination::table
+            .left_join(name_link::table)
+            // Get all vaccinations for patient
+            .filter(name_link::name_id.eq(patient_id.clone()))
+            // Ensure patient is visible on at least one active store for site
+            .filter(name_link::name_id.eq_any(visible_patient_ids.into_boxed()))
+            .select(vaccination::id)
             .into_boxed();
 
-        let all_fetched_patient_changelogs = changelog_deduped::table_name
+        let all_patient_changelogs = changelog_deduped::table_name
             .eq(ChangelogTableName::Vaccination)
-            .and(
-                changelog_deduped::record_id.eq_any(
-                    vaccination::table
-                        .filter(vaccination::patient_link_id.eq(patient_id.clone()))
-                        // Ensure the patient is visible on the site that is requesting the patient data
-                        .filter(vaccination::patient_link_id.eq_any(visible_patients_for_site))
-                        .select(vaccination::id),
-                ),
-            );
+            .and(changelog_deduped::record_id.eq_any(patient_vaccinations));
 
-        query = query.or_filter(all_fetched_patient_changelogs);
+        query = query.or_filter(all_patient_changelogs);
     }
 
     query
