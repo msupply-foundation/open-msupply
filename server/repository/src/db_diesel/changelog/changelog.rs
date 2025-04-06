@@ -522,12 +522,7 @@ fn create_filtered_outgoing_sync_query(
         .filter(store::site_id.eq(sync_site_id))
         .select(store::id.nullable());
 
-    // Ideally this would be by changelog name_link_id, but that has an FK constraint
-    // requiring all names to exist on OMS central, which currently isn't the case.
-    // Instead, for visible patient sync - filter changelogs by record id of vaccinations
-    // for visible patients
-    // Bit of a hack, subquery unlikely to scale well - bring on v7 sync :cry:
-
+    // ids of patients visible on active stores for the site
     let visible_patient_ids = name_store_join::table
         .inner_join(name_link::table)
         .filter(
@@ -538,12 +533,14 @@ fn create_filtered_outgoing_sync_query(
         .select(name_link::name_id)
         .into_boxed();
 
+    // Ideally this would be by changelog name_link_id, but that has an FK constraint
+    // requiring all names to exist on OMS central, which currently isn't the case.
+    // Instead, for visible patient sync - filter changelogs by record id of vaccinations
+    // for visible patients
+    // Bit of a hack, subquery unlikely to scale well - bring on v7 sync :cry:
     let vaccinations_for_visible_patients = vaccination::table
         .left_join(name_link::table)
-        .filter(name_link::name_id.eq_any(
-            // name_link_ids of patients visible on active stores for the site
-            visible_patient_ids,
-        ))
+        .filter(name_link::name_id.eq_any(visible_patient_ids))
         .select(vaccination::id)
         .into_boxed();
 
