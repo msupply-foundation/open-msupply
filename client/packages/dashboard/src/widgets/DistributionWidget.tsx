@@ -62,11 +62,11 @@ export const DistributionWidget: React.FC = () => {
                 otherPartyId,
               },
               { onError }
-            ).then(invoiceNumber => {
+            ).then(invoiceId => {
               navigate(
                 RouteBuilder.create(AppRoute.Distribution)
                   .addPart(AppRoute.OutboundShipment)
-                  .addPart(String(invoiceNumber))
+                  .addPart(invoiceId)
                   .build()
               );
             });

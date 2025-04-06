@@ -116,6 +116,20 @@ export const StockLineForm: FC<StockLineFormProps> = ({
             }
           />
           <StyledInputRow
+            label={t('label.available-packs')}
+            Input={
+              <NumericTextInput
+                autoFocus
+                disabled={!packEditable}
+                width={160}
+                value={draft.availableNumberOfPacks}
+                onChange={availableNumberOfPacks =>
+                  onUpdate({ availableNumberOfPacks })
+                }
+              />
+            }
+          />
+          <StyledInputRow
             label={t('label.cost-price')}
             Input={
               <CurrencyInput

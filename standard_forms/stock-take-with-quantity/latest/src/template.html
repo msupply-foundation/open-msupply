@@ -20,7 +20,7 @@
         <td>{{ line.location.code | default(value='') }}</td>
         <td>{{ line.item.code }}</td>
         <td>{{ line.item.name }}</td>
-        <td>{{ line.batch }}</td>
+        <td class="batch">{{ line.batch }}</td>
         <td>
             {% if line.expiryDate %}
             {{ line.expiryDate | date(format="%d/%m/%Y") }}

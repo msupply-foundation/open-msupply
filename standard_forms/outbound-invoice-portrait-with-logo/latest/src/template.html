@@ -29,7 +29,7 @@
         <td class="quantity" style="width: 20px;">{{ line.numberOfPacks }}</td>
         <td class="issued" style="width: 40px;">___________</td>
         <td class="pack" style="width: 50px;">{{ line.packSize }}</td>
-        <td class="batch" style="width: 50px;">{{ line.batch }}</td>
+        <td class="batch batch-wrap" style="width: 50px;">{{ line.batch }}</td>
         <td class="expiry" style="width: 50px;">{{ line.expiryDate }}</td>
     </tr>
     {%- endfor %}

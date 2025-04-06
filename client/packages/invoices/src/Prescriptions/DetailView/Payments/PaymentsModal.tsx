@@ -34,7 +34,6 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const [insuranceId, setInsuranceId] = useState<string | null>();
-  const [pluginError, setPluginError] = useState<string>();
 
   const {
     query: { data: prescriptionData },
@@ -55,8 +54,12 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
   const selectedInsurance = insuranceData?.find(({ id }) => id === insuranceId);
 
   const { plugins } = usePluginProvider();
-  const pluginEvents = usePluginEvents({
+  const pluginEvents = usePluginEvents<{
+    isDirty: boolean;
+    errorMessage: string | null;
+  }>({
     isDirty: false,
+    errorMessage: null,
   });
 
   const totalAfterTax = prescriptionData?.pricing.totalAfterTax ?? 0;
@@ -85,13 +88,18 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
       );
       onClose();
     } catch (error) {
-      setPluginError((error as Error).message);
+      pluginEvents.setState({
+        ...pluginEvents.state,
+        errorMessage: (error as Error).message,
+      });
     }
   };
 
   useEffect(() => {
     // Reset plugin error when modal is closed
-    setPluginError(undefined);
+    if (pluginEvents.state.errorMessage)
+      pluginEvents.setState({ ...pluginEvents.state, errorMessage: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   return (
@@ -189,9 +197,9 @@ export const PaymentsModal: FC<PaymentsModalProps> = ({
             ) : null
           )}
         </Grid>
-        {pluginError && (
+        {pluginEvents.state.errorMessage && (
           <Box sx={{ pt: 4, display: 'flex', justifyContent: 'center' }}>
-            <Alert severity="error">{pluginError}</Alert>
+            <Alert severity="error">{pluginEvents.state.errorMessage}</Alert>
           </Box>
         )}
       </>
