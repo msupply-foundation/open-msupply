@@ -91,7 +91,6 @@ impl SynchroniserV6 {
         batch_size: u32,
         is_initialised: bool,
         logger: &mut SyncLogger<'a>,
-        fetch_patient_id: Option<String>,
     ) -> Result<(), CentralPullErrorV6> {
         let cursor_controller = CursorController::new(KeyType::SyncPullCursorV6);
         // TODO protection from infinite loop
@@ -105,7 +104,7 @@ impl SynchroniserV6 {
                 records,
             } = self
                 .sync_api_v6
-                .pull(start_cursor, batch_size, is_initialised, &fetch_patient_id)
+                .pull(start_cursor, batch_size, is_initialised)
                 .await?;
 
             logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
@@ -193,6 +192,51 @@ impl SynchroniserV6 {
             // TODO Wait for integration to start??? Or somehow control when/if we should continue to do pull and other actions...
         }
 
+        Ok(())
+    }
+
+    // Replaces the `pull` step if running manual sync for a fetched patient
+    pub(crate) async fn patient_pull<'a>(
+        &self,
+        connection: &StorageConnection,
+        batch_size: u32,
+        fetch_patient_id: String,
+        logger: &mut SyncLogger<'a>,
+    ) -> Result<(), CentralPullErrorV6> {
+        // Temp cursor for patient pull
+        let mut patient_cursor: u64 = 0;
+
+        // TODO protection from infinite loop
+        loop {
+            let SyncBatchV6 {
+                end_cursor,
+                total_records,
+                is_last_batch,
+                records,
+            } = self
+                .sync_api_v6
+                .patient_pull(patient_cursor, batch_size, fetch_patient_id.clone())
+                .await?;
+
+            logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
+
+            let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
+                records.into_iter().map(|r| r.record).collect(),
+                None, // Everything from open-mSupply Central Server is considered to not have a source_site_id
+            )?;
+            // Upsert sync buffer rows
+            connection
+                .transaction_sync(|t_con| {
+                    SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)
+                })
+                .map_err(|e| e.to_inner_error())?;
+
+            patient_cursor = end_cursor + 1;
+
+            if is_last_batch {
+                break;
+            }
+        }
         Ok(())
     }
 
