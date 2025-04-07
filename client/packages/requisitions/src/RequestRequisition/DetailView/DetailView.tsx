@@ -11,6 +11,7 @@ import {
   DetailTabs,
   useAuthContext,
   useBreadcrumbs,
+  useParams,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { RequestLineFragment, useRequest } from '../api';
@@ -29,6 +30,7 @@ export const DetailView: FC = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const { data, isLoading } = useRequest.document.get();
+  const { requisitionId = '' } = useParams();
   const { store } = useAuthContext();
   const isDisabled = useRequest.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
@@ -40,7 +42,7 @@ export const DetailView: FC = () => {
     );
 
   const onRowClick = useCallback((line: RequestLineFragment) => {
-    navigate(buildItemEditRoute(line.id, line.item.id));
+    navigate(buildItemEditRoute(requisitionId, line.item.id));
   }, []);
 
   const onProgramIndicatorClick = useCallback(

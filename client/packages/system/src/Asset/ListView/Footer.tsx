@@ -8,16 +8,13 @@ import {
   useIsCentralServerApi,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { useAssetList } from '../api/hooks';
+import { useAssetDelete } from '../api/hooks';
 
 export const FooterComponent: FC = () => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
 
-  const {
-    delete: { deleteAssets },
-    selectedRows,
-  } = useAssetList();
+  const { deleteAssets, selectedRows } = useAssetDelete();
 
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
