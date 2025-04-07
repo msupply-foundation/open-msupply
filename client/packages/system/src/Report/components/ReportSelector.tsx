@@ -1,148 +1,153 @@
-import React, { FC, PropsWithChildren, useState } from 'react';
-import { Box, ReportContext, Typography } from '@openmsupply-client/common';
-import { AlertIcon } from '@common/icons';
-import { useTranslation } from '@common/intl';
-import {
-  CircularProgress,
-  FlatButton,
-  PaperPopoverSection,
-  usePaperClickPopover,
-} from '@common/components';
+import React, {
+  FC,
+  PropsWithChildren,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { ReportContext, useTranslation } from '@openmsupply-client/common';
+import { PrinterIcon } from '@common/icons';
+import { SplitButton, SplitButtonOption } from '@common/components';
 import { ReportArgumentsModal } from './ReportArgumentsModal';
 import { JsonData } from '@openmsupply-client/programs';
 import { ReportListParams, useReportList } from '../api/hooks';
 import { ReportRowFragment } from '../api';
 
+interface CustomOption<T> {
+  label: string;
+  value?: T;
+  isDisabled?: boolean;
+  onClick: (e?: React.MouseEvent<HTMLButtonElement>) => void;
+}
 interface ReportSelectorProps {
   context?: ReportContext;
   subContext?: string;
   onPrint: (report: ReportRowFragment, args: JsonData | undefined) => void;
+  isPrinting?: boolean;
+  /** Disable the whole control */
   disabled?: boolean;
   queryParams?: ReportListParams;
   extraArguments?: Record<string, string | number | undefined>;
+  customOptions?: CustomOption<string>[];
+  onPrintCustom?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
+  buttonLabel: string;
 }
-
-const NoReports = ({ hasPermission }: { hasPermission: boolean }) => {
-  const t = useTranslation();
-  return (
-    <Box display="flex" alignItems="center" gap={1} padding={2}>
-      <Box flex={0}>
-        <AlertIcon fontSize="small" color="primary" />
-      </Box>
-      <Typography flex={1}>
-        {t(
-          hasPermission
-            ? 'error.no-reports-available'
-            : 'error.no-report-permission'
-        )}
-      </Typography>
-    </Box>
-  );
-};
 
 export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   context,
   subContext,
-  children,
   onPrint,
-  disabled,
+  isPrinting,
+  disabled = false,
   queryParams,
   extraArguments,
+  customOptions,
+  onPrintCustom,
+  buttonLabel,
 }) => {
-  const { hide, PaperClickPopover } = usePaperClickPopover();
-  const { data, isLoading } = useReportList({
+  const { data, isLoading: initialLoading } = useReportList({
     context,
     subContext,
     queryParams,
   });
   const t = useTranslation();
-  const [reportWithArgs, setReportWithArgs] = useState<
-    ReportRowFragment | undefined
-  >();
-  const onReportSelected = (report: ReportRowFragment | undefined) => {
-    if (report === undefined) {
+
+  // Report Content
+  const onReportSelected = (
+    option: SplitButtonOption<string> | undefined,
+    e?: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    if (option?.value === undefined) {
       return;
     }
-    if (report.argumentSchema) {
-      setReportWithArgs(report);
-    } else {
-      const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const custom = customOptions?.map(option => ({
+      value: option.value,
+    }));
+    const selected = custom?.find(c => c.value === option.value);
+    if (onPrintCustom) {
+      selected?.value ? onPrintCustom(e) : '';
+    }
+
+    const report: ReportRowFragment | undefined = data?.nodes.find(
+      r => r.id === option.value
+    );
+    if (report) {
+      report?.argumentSchema ?? setReportWithArgs(report);
+
       // passing timezone through as forms do not have arguments
-      onPrint(report, { timezone, ...extraArguments });
+      const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+      onPrint(report, { timezone });
     }
   };
 
-  const reportButtons = data?.nodes?.map(report => (
-    <FlatButton
-      label={report.name}
-      onClick={() => {
-        hide();
-        onReportSelected(report);
-      }}
-      key={report.id}
-      sx={{ textAlign: 'left', justifyContent: 'left' }}
-    />
-  ));
+  const options: SplitButtonOption<string>[] = useMemo(() => {
+    const reports = data
+      ? data?.nodes?.map(report => ({
+          value: report.id,
+          label: report.name,
+          isDisabled: disabled,
+        }))
+      : [];
 
-  const hasPermission = !isLoading && data !== undefined;
-  const noReports = !isLoading && !data?.nodes?.length;
-  const oneReport =
-    !isLoading && data?.nodes?.length === 1 ? data.nodes[0] : undefined;
+    const allOptions = [customOptions || [], reports];
+    return allOptions.flat();
+  }, [data, disabled, customOptions]);
 
-  if (disabled) return <>{children}</>;
+  const handleClick = () => {
+    const oneReport = options.length === 1 ? options[0] : undefined;
+    if (oneReport) {
+      onReportSelected(oneReport);
+    }
+  };
+
+  const hasPermission = !initialLoading && data !== undefined;
+  const noReports: SplitButtonOption<string> = useMemo(() => {
+    const noReport = hasPermission
+      ? { label: t('error.no-reports-available') }
+      : { label: t('error.no-report-permission') };
+    return noReport;
+  }, [hasPermission]);
+
+  if (options.length === 0) options.push(noReports);
+
+  // updates disabled state
+  useEffect(() => {
+    setSelectedOption(options[0] || noReports);
+  }, [options, noReports]);
+
+  // selected option is at [0] for the SplitButton, however the customLabel is rendered instead
+  const [selectedOption, setSelectedOption] = useState<
+    SplitButtonOption<string>
+  >(options[0] || noReports);
+
+  const [reportWithArgs, setReportWithArgs] = useState<
+    ReportRowFragment | undefined
+  >();
+
+  const onSelectOption = (
+    option: SplitButtonOption<string>,
+    e?: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setSelectedOption(option);
+    onReportSelected(option, e);
+  };
 
   return (
     <>
-      {!!oneReport ? (
-        <div onClick={() => onReportSelected(oneReport)}>{children}</div>
-      ) : (
-        <PaperClickPopover
-          placement="bottom"
-          width={350}
-          Content={
-            <PaperPopoverSection
-              label={t('select-report')}
-              labelStyle={{ width: '100%' }}
-              alignItems="center"
-            >
-              {isLoading ? (
-                <CircularProgress size={12} />
-              ) : (
-                <Box
-                  style={{
-                    maxHeight: '200px',
-                    overflowY: 'auto',
-                  }}
-                  display="flex"
-                  flexDirection="column"
-                >
-                  {noReports ? (
-                    <NoReports hasPermission={hasPermission} />
-                  ) : (
-                    <Box
-                      style={{
-                        maxHeight: '200px',
-                        overflowY: 'auto',
-                      }}
-                      display="flex"
-                      flexDirection="column"
-                    >
-                      {noReports ? (
-                        <NoReports hasPermission={hasPermission} />
-                      ) : (
-                        reportButtons
-                      )}
-                    </Box>
-                  )}
-                </Box>
-              )}
-            </PaperPopoverSection>
-          }
-        >
-          {children}
-        </PaperClickPopover>
-      )}
-
+      <SplitButton
+        color="primary"
+        openFrom={'bottom'}
+        isDisabled={initialLoading || disabled}
+        options={options}
+        selectedOption={selectedOption}
+        onSelectOption={onSelectOption}
+        Icon={<PrinterIcon />}
+        onClick={handleClick}
+        isLoading={isPrinting}
+        isLoadingType={true}
+        staticLabel={buttonLabel}
+      />
       <ReportArgumentsModal
         key={reportWithArgs?.id}
         report={reportWithArgs}

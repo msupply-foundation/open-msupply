@@ -108,3 +108,7 @@ hr {
   font-size: 8pt;
   flex: 0 1 auto;
 }
+
+.batch-wrap {
+    word-break: break-word;
+}

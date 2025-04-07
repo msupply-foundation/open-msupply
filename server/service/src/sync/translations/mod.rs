@@ -47,6 +47,7 @@ pub(crate) mod packaging_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod plugin_data;
+pub(crate) mod preference;
 pub(crate) mod program_indicator;
 pub(crate) mod program_requisition_settings;
 pub(crate) mod property;
@@ -179,6 +180,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         insurance_provider::boxed(),
         name_insurance_join::boxed(),
         report::boxed(),
+        preference::boxed(),
     ]
 }
 

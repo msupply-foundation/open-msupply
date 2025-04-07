@@ -48,7 +48,6 @@ export function AutocompleteMulti<
   renderInput,
   width = 'auto',
   slotProps,
-  inputProps,
   loadingText,
   noOptionsText,
   ...restOfAutocompleteProps

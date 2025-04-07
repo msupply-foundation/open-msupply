@@ -70,11 +70,14 @@ impl StaticFileService {
     // at the time of method creation TempFile only comes from web multipart
     pub fn move_temp_file(
         &self,
-        temp_file: TempFile,
+        temp_file: &TempFile,
         category: &StaticFileCategory,
         file_id: Option<String>,
     ) -> anyhow::Result<StaticFile> {
-        let file_name = temp_file.file_name.context("Filename not provided")?;
+        let file_name = temp_file
+            .file_name
+            .clone()
+            .context("Filename not provided")?;
         let sanitized_filename = sanitize_filename(file_name);
 
         let static_file = self.reserve_file(&sanitized_filename, category, file_id)?;

@@ -56,7 +56,7 @@ pub enum DeleteStockInLineError {
     BatchIsReserved,
     NotThisInvoiceLine(String),
     LineUsedInStocktake,
-    TransferredShipment,
+    LineLinkedToTransferredInvoice,
 }
 
 impl From<RepositoryError> for DeleteStockInLineError {
@@ -195,7 +195,7 @@ mod test {
                     r#type: StockInType::InboundShipment,
                 },
             ),
-            Err(ServiceError::TransferredShipment)
+            Err(ServiceError::LineLinkedToTransferredInvoice)
         );
 
         // NotThisStoreInvoice

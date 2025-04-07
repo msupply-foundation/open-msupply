@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from '@common/intl';
 import {
   Box,
+  FileUtils,
   IconButton,
+  InlineSpinner,
   Link,
   Stack,
   Typography,
+  useNotification,
 } from '@openmsupply-client/common';
+import { Capacitor } from '@capacitor/core';
 import { FileIcon, XCircleIcon } from '@common/icons';
 import { Environment } from '@openmsupply-client/config/src';
 
@@ -28,6 +32,9 @@ export const FileList = ({
   removeFile?: (filename: string, id?: string) => void;
 }) => {
   const t = useTranslation();
+  const { error } = useNotification();
+  const [loadingIndex, setLoadingIndex] = useState<number>();
+
   if (files === undefined || files.length === 0) {
     return noFilesMessage === undefined ? null : (
       <Typography sx={{ color: 'gray.main', paddingLeft: 2 }}>
@@ -35,6 +42,8 @@ export const FileList = ({
       </Typography>
     );
   }
+
+  const isAndroid = Capacitor.getPlatform() === 'android';
 
   return (
     <Stack
@@ -55,17 +64,38 @@ export const FileList = ({
             sx={{ width: '100%', color: 'gray.main', paddingLeft: 1 }}
           >
             {file.id ? (
-              <Link
-                to={`${Environment.SYNC_FILES_URL}/${tableName}/${assetId}/${file.id}`}
-                target="_blank"
-              >
-                {file.name}
-              </Link>
+              isAndroid ? (
+                <span
+                  onClick={async () => {
+                    setLoadingIndex(idx);
+                    try {
+                      await FileUtils.openAndroidFile({
+                        id: file.id as string,
+                        name: file.name,
+                        tableName,
+                        assetId,
+                      });
+                    } catch (err) {
+                      error(`Error: ${(err as Error).message}`)();
+                    }
+                    setLoadingIndex(undefined);
+                  }}
+                >
+                  {file.name}
+                </span>
+              ) : (
+                <Link
+                  to={`${Environment.SYNC_FILES_URL}/${tableName}/${assetId}/${file.id}`}
+                  target="_blank"
+                >
+                  {file.name}
+                </Link>
+              )
             ) : (
               file.name
             )}
           </Typography>
-          {!!removeFile && (
+          {!!removeFile && idx !== loadingIndex && (
             <IconButton
               onClick={() => removeFile(file.name, file.id)}
               icon={
@@ -74,6 +104,7 @@ export const FileList = ({
               label={t('button.remove-file')}
             />
           )}
+          {idx === loadingIndex && <InlineSpinner />}
         </Box>
       ))}
     </Stack>

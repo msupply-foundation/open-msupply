@@ -270,6 +270,8 @@ pub struct ReadSensor {
     new_sensor_id: Option<String>,
     number_of_logs: u32,
     number_of_breaches: u32,
+    start_datetime: Option<NaiveDateTime>,
+    end_datetime: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, Error)]
@@ -416,10 +418,32 @@ fn integrate_sensor_data(
     let temperature_sensor_breaches = temperature_sensor.breaches.unwrap_or_default();
     let temperature_sensor_logs = temperature_sensor.logs.unwrap_or_default();
 
+    let earliest_event_timestamp = temperature_sensor_logs
+        .iter()
+        .map(|log| log.timestamp)
+        .chain(
+            temperature_sensor_breaches
+                .iter()
+                .map(|breach| breach.start_timestamp),
+        )
+        .min();
+
+    let latest_event_timestamp = temperature_sensor_logs
+        .iter()
+        .map(|log| log.timestamp)
+        .chain(
+            temperature_sensor_breaches
+                .iter()
+                .map(|breach| breach.end_timestamp),
+        )
+        .max();
+
     let result = ReadSensor {
         new_sensor_id,
         number_of_logs: temperature_sensor_logs.len() as u32,
         number_of_breaches: temperature_sensor_breaches.len() as u32,
+        start_datetime: earliest_event_timestamp,
+        end_datetime: latest_event_timestamp,
     };
 
     for temperature_sensor_log in temperature_sensor_logs {

@@ -55,6 +55,8 @@ const formatDate = (value: string): string | null => {
   return Formatter.naiveDate(DateUtils.getDateOrNull(value, 'dd/MM/yyyy'));
 };
 
+const isTruthyString = (value: string) => !!value.match(/true/i);
+
 function getImportHelpers<T, P>(
   row: P,
   rows: T[],
@@ -325,7 +327,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         'label.status',
         status => parseStatusFromString(status, t) ?? StatusType.Functioning
       );
-      addCell('needsReplacement', 'label.needs-replacement');
+      addCell('needsReplacement', 'label.needs-replacement', isTruthyString);
       processProperties(properties ?? [], row, importRow, rowErrors, t);
       importRow.errorMessage = rowErrors.join(',');
       importRow.warningMessage = rowWarnings.join(',');

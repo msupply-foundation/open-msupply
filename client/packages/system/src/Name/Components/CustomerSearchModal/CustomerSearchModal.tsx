@@ -30,7 +30,7 @@ const CustomerSearchComponent: FC<NameSearchProps> = props => {
 
   if ('isList' in props) return <AutocompleteList {...listProps} />;
 
-  let { open, onClose } = props;
+  const { open, onClose } = props;
 
   return (
     <ListSearch
