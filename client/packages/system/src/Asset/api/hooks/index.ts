@@ -6,3 +6,4 @@ export * from './useAssetCategories';
 export * from './useAssetClasses';
 export * from './useAssetProperties';
 export * from './useAssetTypes';
+export * from './useAssetDelete';
