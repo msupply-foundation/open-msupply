@@ -116,7 +116,7 @@ const StockListComponent: FC = () => {
     [
       'numberOfPacks',
       {
-        accessor: ({ rowData }) => rowData.totalNumberOfPacks,
+        accessor: ({ rowData }) => rowData.totalNumberOfPacks.toFixed(2),
         width: 125,
       },
     ],
@@ -124,7 +124,7 @@ const StockListComponent: FC = () => {
       'stockOnHand',
       {
         accessor: ({ rowData }) =>
-          rowData.totalNumberOfPacks * rowData.packSize,
+          (rowData.totalNumberOfPacks * rowData.packSize).toFixed(2),
         sortable: false,
         width: 125,
       },
@@ -135,7 +135,7 @@ const StockListComponent: FC = () => {
         label: 'label.available-soh',
         description: 'description.available-soh',
         accessor: ({ rowData }) =>
-          rowData.availableNumberOfPacks * rowData.packSize,
+          (rowData.availableNumberOfPacks * rowData.packSize).toFixed(2),
         sortable: false,
         width: 125,
       },
