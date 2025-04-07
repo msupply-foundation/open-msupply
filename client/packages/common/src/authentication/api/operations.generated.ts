@@ -197,19 +197,13 @@ export type PermissionsQuery = {
   };
 };
 
-export type StorePreferencesQueryVariables = Types.Exact<{
+export type PreferencesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
-export type StorePreferencesQuery = {
+export type PreferencesQuery = {
   __typename: 'Queries';
-  storePreferences: {
-    __typename: 'StorePreferenceNode';
-    responseRequisitionRequiresAuthorisation: boolean;
-    requestRequisitionRequiresAuthorisation: boolean;
-    packToOne: boolean;
-    id: string;
-  };
+  preferences: { __typename: 'PreferencesNode'; showContactTracing: boolean };
 };
 
 export type UpdateUserFragment = {
@@ -405,13 +399,10 @@ export const PermissionsDocument = gql`
     }
   }
 `;
-export const StorePreferencesDocument = gql`
-  query storePreferences($storeId: String!) {
-    storePreferences(storeId: $storeId) {
-      responseRequisitionRequiresAuthorisation
-      requestRequisitionRequiresAuthorisation
-      packToOne
-      id
+export const PreferencesDocument = gql`
+  query preferences($storeId: String!) {
+    preferences(storeId: $storeId) {
+      showContactTracing
     }
   }
 `;
@@ -548,18 +539,17 @@ export function getSdk(
         variables
       );
     },
-    storePreferences(
-      variables: StorePreferencesQueryVariables,
+    preferences(
+      variables: PreferencesQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<StorePreferencesQuery> {
+    ): Promise<PreferencesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StorePreferencesQuery>(
-            StorePreferencesDocument,
-            variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
-        'storePreferences',
+          client.request<PreferencesQuery>(PreferencesDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'preferences',
         'query',
         variables
       );
