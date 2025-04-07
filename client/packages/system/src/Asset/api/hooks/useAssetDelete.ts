@@ -1,4 +1,4 @@
-import { useMutation } from 'packages/common/src';
+import { useMutation } from '@openmsupply-client/common';
 import { useAssetGraphQL } from '../useAssetGraphQL';
 import { ASSET } from './keys';
 import { useAssetList } from './useAssetList';
