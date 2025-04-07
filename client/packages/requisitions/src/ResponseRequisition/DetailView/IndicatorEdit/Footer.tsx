@@ -15,7 +15,7 @@ interface FooterProps {
   next: IndicatorLineRowFragment | null;
   hasPrevious: boolean;
   previous: IndicatorLineRowFragment | null;
-  requisitionNumber?: number;
+  requisitionId?: string;
   scrollIntoView: () => void;
 }
 
@@ -24,7 +24,7 @@ export const Footer = ({
   next,
   hasPrevious,
   previous,
-  requisitionNumber,
+  requisitionId,
   scrollIntoView,
 }: FooterProps) => {
   const navigate = useNavigate();
@@ -54,7 +54,7 @@ export const Footer = ({
                 navigate(
                   RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.CustomerRequisition)
-                    .addPart(String(requisitionNumber))
+                    .addPart(String(requisitionId))
                     .addPart(AppRoute.Indicators)
                     .addPart(String(programIndicatorCode))
                     .addPart(String(previous?.id))
@@ -70,7 +70,7 @@ export const Footer = ({
                 navigate(
                   RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.CustomerRequisition)
-                    .addPart(String(requisitionNumber))
+                    .addPart(String(requisitionId))
                     .addPart(AppRoute.Indicators)
                     .addPart(String(programIndicatorCode))
                     .addPart(String(next?.id))

@@ -25,6 +25,7 @@ import {
   StoreSearchInput,
   mapIdNameToOptions,
   useAssetData,
+  useInfiniteAssets,
 } from '@openmsupply-client/system';
 import { useAssets } from '../api';
 import { CCE_CLASS_ID } from '../utils';
@@ -103,8 +104,12 @@ export const CreateAssetModal = ({
     data: catalogueItemData,
     isFetching,
     fetchNextPage,
-  } = useAssetData.document.infiniteList({
-    filter,
+  } = useInfiniteAssets({
+    queryParams: {
+      filterBy: {
+        ...filter,
+      },
+    },
     categoryId: draft.categoryId,
     rowsPerPage: RECORDS_PER_PAGE,
   });

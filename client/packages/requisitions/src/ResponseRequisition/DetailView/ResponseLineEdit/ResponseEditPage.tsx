@@ -57,6 +57,7 @@ const ResponseLineEditPageInner = ({
 
   useEffect(() => {
     setCustomBreadcrumbs({
+      1: requisition.requisitionNumber.toString() || '',
       2: currentItem?.name || '',
     });
   }, [currentItem]);
@@ -75,7 +76,7 @@ const ResponseLineEditPageInner = ({
 
   return (
     <>
-      <AppBarButtons requisitionNumber={requisition.requisitionNumber} />
+      <AppBarButtons requisitionId={requisition.id} />
       <DetailContainer>
         <PageLayout
           Left={
@@ -84,7 +85,7 @@ const ResponseLineEditPageInner = ({
               items={lines.map(line => line.item)}
               route={RouteBuilder.create(AppRoute.Distribution)
                 .addPart(AppRoute.CustomerRequisition)
-                .addPart(String(requisition.requisitionNumber))}
+                .addPart(String(requisition.id))}
               enteredLineIds={enteredLineIds}
               showNew={showNew}
               scrollRef={scrollRef}
@@ -106,7 +107,6 @@ const ResponseLineEditPageInner = ({
               previous={previous}
               isProgram={!!isProgram}
               lines={lines}
-              requisitionNumber={requisition.requisitionNumber}
               requisitionId={requisition.id}
               insert={mutateAsync}
               scrollIntoView={scrollSelectedItemIntoView}

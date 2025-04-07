@@ -3,7 +3,7 @@ import {
   useFieldsSelector,
 } from '@openmsupply-client/common';
 import { StocktakeFragment } from '../../operations.generated';
-import { useStocktake, useStocktakeNumber } from './useStocktake';
+import { useStocktake, useStocktakeId } from './useStocktake';
 import { useUpdateStocktake } from './useUpdateStocktake';
 import { useStocktakeApi } from '../utils/useStocktakeApi';
 
@@ -12,14 +12,14 @@ export const useStocktakeFields = <
 >(
   keys: KeyOfStocktake | KeyOfStocktake[]
 ): FieldSelectorControl<StocktakeFragment, KeyOfStocktake> => {
-  const stocktakeNumber = useStocktakeNumber();
+  const stocktakeId = useStocktakeId();
   const { mutateAsync } = useUpdateStocktake();
   const { data } = useStocktake();
   const api = useStocktakeApi();
 
   return useFieldsSelector(
-    api.keys.detail(stocktakeNumber),
-    () => api.get.byNumber(stocktakeNumber),
+    api.keys.detail(stocktakeId),
+    () => api.get.byId(stocktakeId),
     (patch: Partial<StocktakeFragment>) =>
       mutateAsync({ ...patch, id: data?.id ?? '' }),
     keys

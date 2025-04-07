@@ -2,39 +2,36 @@ use std::fmt::Display;
 
 use actix_multipart::form::{tempfile::TempFile, MultipartForm};
 use actix_web::{
+    dev::HttpServiceFactory,
     http::header::{ContentDisposition, DispositionParam, DispositionType},
     post, put,
     web::{self, Data, Json},
     HttpRequest, Responder, ResponseError,
 };
 
-use crate::central_server_only;
 use service::{
     service_provider::ServiceProvider,
     settings::Settings,
     sync::{
         api_v6::{
-            SiteStatusRequestV6, SiteStatusResponseV6, SyncDownloadFileRequestV6, SyncParsedErrorV6, SyncPullRequestV6, SyncPullResponseV6,
-            SyncPushRequestV6, SyncPushResponseV6, SyncUploadFileRequestV6,
-            SyncUploadFileResponseV6,
+            SiteStatusRequestV6, SiteStatusResponseV6, SyncDownloadFileRequestV6,
+            SyncParsedErrorV6, SyncPullRequestV6, SyncPullResponseV6, SyncPushRequestV6,
+            SyncPushResponseV6, SyncUploadFileRequestV6, SyncUploadFileResponseV6,
         },
         sync_on_central,
     },
 };
 
-pub fn config_sync_on_central(cfg: &mut web::ServiceConfig) {
-    cfg.service(
-        web::scope("central")
-            .wrap(central_server_only())
-            .service(pull)
-            .service(push)
-            .service(site_status)
-            .service(download_file)
-            .service(upload_file),
-    );
+pub fn sync_on_central() -> impl HttpServiceFactory {
+    web::scope("sync")
+        .service(pull)
+        .service(push)
+        .service(site_status)
+        .service(download_file)
+        .service(upload_file)
 }
 
-#[post("/sync/pull")]
+#[post("/pull")]
 async fn pull(
     request: Json<SyncPullRequestV6>,
     service_provider: Data<ServiceProvider>,
@@ -47,7 +44,7 @@ async fn pull(
     Ok(web::Json(response))
 }
 
-#[post("/sync/push")]
+#[post("/push")]
 async fn push(
     request: Json<SyncPushRequestV6>,
     service_provider: Data<ServiceProvider>,
@@ -61,7 +58,7 @@ async fn push(
     Ok(web::Json(response))
 }
 
-#[post("/sync/site_status")]
+#[post("/site_status")]
 async fn site_status(request: Json<SiteStatusRequestV6>) -> actix_web::Result<impl Responder> {
     let response = match sync_on_central::get_site_status(request.into_inner()).await {
         Ok(result) => SiteStatusResponseV6::Data(result),
@@ -87,7 +84,7 @@ impl Display for ToResponseError {
 }
 impl ResponseError for ToResponseError {}
 
-#[post("/sync/download_file")]
+#[post("/download_file")]
 async fn download_file(
     req: HttpRequest,
     request: Json<SyncDownloadFileRequestV6>,
@@ -117,7 +114,7 @@ pub struct SyncUploadFileMultipartRequestV6 {
     pub json_part: actix_multipart::form::json::Json<SyncUploadFileRequestV6>,
 }
 
-#[put("/sync/upload_file")]
+#[put("/upload_file")]
 async fn upload_file(
     MultipartForm(SyncUploadFileMultipartRequestV6 {
         file_part,
