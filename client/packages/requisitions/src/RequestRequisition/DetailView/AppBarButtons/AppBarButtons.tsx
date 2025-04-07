@@ -70,7 +70,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
               ? {
                   periodId: data?.period?.id,
                   programId: data?.program?.id,
-                  customerNameId: store?.nameId
+                  customerNameId: store?.nameId,
                 }
               : undefined
           }
