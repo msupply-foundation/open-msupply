@@ -18,7 +18,7 @@ impl MigrationFragment for Migrate {
         } else {
             sql!(
                 connection,
-                r#" 
+                r#"
                 PRAGMA foreign_keys = OFF;
                 ALTER TABLE vaccination RENAME TO vaccination_old;
                 CREATE TABLE vaccination (
