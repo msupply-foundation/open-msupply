@@ -5,14 +5,13 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { LocaleKey, ReportContext, useTranslation } from '@openmsupply-client/common';
+import { ReportContext, useIntlUtils, useTranslation } from '@openmsupply-client/common';
 import { PrinterIcon } from '@common/icons';
 import { SplitButton, SplitButtonOption } from '@common/components';
 import { ReportArgumentsModal } from './ReportArgumentsModal';
 import { JsonData } from '@openmsupply-client/programs';
 import { ReportListParams, useReportList } from '../api/hooks';
 import { ReportRowFragment } from '../api';
-import { getReportKey } from '../../utils';
 
 interface CustomOption<T> {
   label: string;
@@ -50,6 +49,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
     queryParams,
   });
   const t = useTranslation();
+  const { getReportKey } = useIntlUtils();
 
   // Report Content
   const onReportSelected = (

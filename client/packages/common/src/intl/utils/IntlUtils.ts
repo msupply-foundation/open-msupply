@@ -75,7 +75,7 @@ export enum ReportType {
   STOCK_TAKE_DETAIL_VIEW = "Stocktake",
   STOCKTAKE_VARIANCE = "Stocktake Variance",
   STOCK_TAKE_WITH_QUANTITY = "Stocktake with Quantity",
-  STOCK_TAKE_WOTHOUT_QUANTITY = "Stocktake without Quantity",
+  STOCK_TAKE_WITHOUT_QUANTITY = "Stocktake without Quantity",
 }
 
 export const REPORT_TRANSLATION_KEYS: Record<ReportType, LocaleKey> = {
@@ -89,7 +89,7 @@ export const REPORT_TRANSLATION_KEYS: Record<ReportType, LocaleKey> = {
   [ReportType.REQUISITION]: 'form.requisition',
   [ReportType.STOCK_TAKE_DETAIL_VIEW]: 'form.stocktake-detail-view',
   [ReportType.STOCK_TAKE_WITH_QUANTITY]: 'form.stocktake-with-quantity',
-  [ReportType.STOCK_TAKE_WOTHOUT_QUANTITY]: 'form.stocktake-without-quantity',
+  [ReportType.STOCK_TAKE_WITHOUT_QUANTITY]: 'form.stocktake-without-quantity',
 };
 
 export const useIntlUtils = () => {
@@ -154,15 +154,14 @@ export const useIntlUtils = () => {
   };
 
   const getReportKey = (reportName: string): LocaleKey => {
-    const reportType = Object.values(ReportType).find(
-      type => type === reportName
-    );
-    if (reportType) {
-      return REPORT_TRANSLATION_KEYS[reportType];
+    const reportKey = reportName as ReportType;
+    if (Object.values(ReportType).includes(reportKey)) {
+      return REPORT_TRANSLATION_KEYS[reportKey];
+    } else {
+      console.warn('Report name not found in translation keys:', reportName);
+      // Fallback to using the report name directly as a key
+      return reportName as LocaleKey;
     }
-    console.warn('Report name not found in translation keys:', reportName);
-    // Fallback to using the report name directly as a key
-    return reportName as LocaleKey;
   };
 
 
