@@ -5,11 +5,13 @@ interface ItemDetails {
   unitName: string;
   name: string;
   itemDirections: string;
+  warning: string;
   sum: number;
 }
 interface Label {
   itemDetails: string;
   itemDirections: string;
+  warning: string;
   patientDetails: string;
   details: string;
 }
@@ -31,7 +33,13 @@ export const groupItems = (
   // gets the objects from the items array
   const items = Object.values(linesByItem).map((items): ItemDetails => {
     const firstItem = items[0];
-    const itemWithNote = items.find(item => item.note) || firstItem;
+    const itemWithNote = items.find(item => item) || firstItem;
+
+    const priorityWarning =
+      items.map(item => item.item.warnings.find(warning => warning.priority)) ||
+      items.map(item => item.item.warnings.find(warning => !warning.priority));
+
+    const warning = priorityWarning[0];
 
     // calculates the number of units prescribed for each item
     const totalUnits = items.reduce(
@@ -46,6 +54,7 @@ export const groupItems = (
       name: firstItem?.itemName ?? '',
       sum: totalUnits,
       itemDirections: itemWithNote?.note ?? '',
+      warning: warning?.warningText ?? '',
     };
   });
   return items;
@@ -67,6 +76,7 @@ export const generateLabel = (
     const finishedLabel = {
       itemDetails: itemDetails,
       itemDirections: result.itemDirections,
+      warning: result.warning,
       patientDetails: patientDetails,
       details: `${store} - ${new Date(prescription.createdDatetime).toLocaleDateString()}${clinicianDetails}`,
     };
