@@ -42,7 +42,7 @@ export const SidePanelComponent = () => {
           </PanelRow>
           <PanelRow>
             <NumericTextInput
-              label={t('label.expiring-item-period')}
+              label={t('label.expiring-item-period-report-panel')}
               decimalLimit={2}
               endAdornment={t('label.months')}
               value={preferences?.monthsItemsExpire}
