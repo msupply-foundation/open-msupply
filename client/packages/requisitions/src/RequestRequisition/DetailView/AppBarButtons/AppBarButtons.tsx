@@ -63,6 +63,15 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           queryParams={{ filterBy: { subContext: { equalAnyOrNull: [] } } }}
           isPrinting={isPrinting}
           buttonLabel={t('button.print')}
+          extraArguments={
+            showIndicators
+              ? {
+                  periodId: data?.period?.id,
+                  programId: data?.program?.id,
+                  customerNameId: data?.otherPartyId,
+                }
+              : undefined
+          }
         />
         {OpenButton}
       </Grid>
