@@ -5,9 +5,7 @@ import {
   LIST,
   SortBy,
   useInfiniteQuery,
-  useMutation,
   useQuery,
-  useTableStore,
 } from '@openmsupply-client/common';
 import { useAssetGraphQL } from '../useAssetGraphQL';
 import { ASSET } from './keys';
@@ -28,36 +26,8 @@ export type useAssetsProps = {
 export const useAssetList = (queryParams?: ListParams) => {
   const { data, isLoading, isError } = useGetList(queryParams);
 
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => data?.nodes?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as AssetCatalogueItemFragment[],
-  }));
-
-  const {
-    mutateAsync: deleteMutation,
-    isLoading: isDeleting,
-    error: deleteError,
-  } = useDelete();
-
-  const deleteAssets = async () => {
-    await Promise.all(selectedRows.map(row => deleteMutation(row.id))).catch(
-      err => {
-        console.error(err);
-        throw err;
-      }
-    );
-  };
-
   return {
     query: { data, isLoading, isError },
-    delete: {
-      deleteAssets,
-      isDeleting,
-      deleteError,
-    },
-    selectedRows,
   };
 };
 
@@ -119,24 +89,6 @@ export const useGetList = (queryParams?: ListParams) => {
     queryFn,
   });
   return query;
-};
-
-export const useDelete = () => {
-  const { assetApi, queryClient } = useAssetGraphQL();
-  const mutationFn = async (id: string) => {
-    const result = await assetApi.deleteAssetCatalogueItem({
-      assetCatalogueItemId: id,
-    });
-
-    return result.centralServer.assetCatalogue.deleteAssetCatalogueItem;
-  };
-
-  return useMutation({
-    mutationFn,
-    onSuccess: () => {
-      queryClient.invalidateQueries([ASSET]);
-    },
-  });
 };
 
 const toSortField = (sortBy?: SortBy<AssetCatalogueItemFragment>) => {
