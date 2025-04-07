@@ -89,6 +89,7 @@ export const Toolbar: FC = () => {
                       update({ theirReference: event.target.value });
                     }}
                     maxRows={2}
+                    minRows={1}
                     slotProps={{
                       input: {
                         sx: {
