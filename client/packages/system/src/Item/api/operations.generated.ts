@@ -1129,6 +1129,7 @@ export type ItemLedgerFragment = {
   datetime: string;
   expiryDate?: string | null;
   invoiceNumber: number;
+  invoiceId: string;
   invoiceStatus: Types.InvoiceNodeStatus;
   invoiceType: Types.InvoiceNodeType;
   name: string;
@@ -1163,6 +1164,7 @@ export type ItemLedgerQuery = {
       datetime: string;
       expiryDate?: string | null;
       invoiceNumber: number;
+      invoiceId: string;
       invoiceStatus: Types.InvoiceNodeStatus;
       invoiceType: Types.InvoiceNodeType;
       name: string;
@@ -1436,6 +1438,7 @@ export const ItemLedgerFragmentDoc = gql`
     datetime
     expiryDate
     invoiceNumber
+    invoiceId
     invoiceStatus
     invoiceType
     name

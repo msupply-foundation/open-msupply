@@ -6,14 +6,14 @@ import {
   useTableStore,
 } from '@openmsupply-client/common';
 import { useOutboundApi } from './../utils/useOutboundApi';
-import { useOutboundNumber } from './../utils/useOutboundNumber';
+import { useOutboundId } from '../utils/useOutboundId';
 import { useOutboundRows } from './useOutboundRows';
 
 export const useOutboundAllocateLines = () => {
-  const outboundNumber = useOutboundNumber();
+  const outboundId = useOutboundId();
   const queryClient = useQueryClient();
   const api = useOutboundApi();
-  const queryKey = api.keys.detail(outboundNumber);
+  const queryKey = api.keys.detail(outboundId);
 
   return useMutation(api.allocateLines, {
     onMutate: async () => {
@@ -43,9 +43,9 @@ export const useOutboundAllocateSelectedLines = (): {
 
       return isGrouped
         ? items
-            ?.filter(({ id }) => state.rowState[id]?.isSelected)
-            .map(({ lines }) => lines.flat())
-            .flat()
+          ?.filter(({ id }) => state.rowState[id]?.isSelected)
+          .map(({ lines }) => lines.flat())
+          .flat()
         : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
     }) ?? [];
 

@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -11,6 +11,7 @@ import {
   DetailTabs,
   ModalMode,
   useEditModal,
+  useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
@@ -38,13 +39,14 @@ export const PrescriptionDetailView: FC = () => {
     query: { data, loading },
   } = usePrescription();
   const t = useTranslation();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const onRowClick = useCallback(
     (item: StockOutLineFragment | StockOutItem) => {
       navigate(
         RouteBuilder.create(AppRoute.Dispensary)
           .addPart(AppRoute.Prescription)
-          .addPart(String(data?.invoiceNumber))
+          .addPart(String(data?.id))
           .addPart(String(item.id))
           .build()
       );
@@ -55,7 +57,7 @@ export const PrescriptionDetailView: FC = () => {
     navigate(
       RouteBuilder.create(AppRoute.Dispensary)
         .addPart(AppRoute.Prescription)
-        .addPart(String(data?.invoiceNumber))
+        .addPart(String(data?.id))
         .addPart(String('new'))
         .build()
     );
@@ -64,6 +66,10 @@ export const PrescriptionDetailView: FC = () => {
     onOpenHistory(draft);
     setHistoryMode(ModalMode.Create);
   };
+
+  useEffect(() => {
+    setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
+  }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
   if (loading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 

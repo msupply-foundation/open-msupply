@@ -211,11 +211,11 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     setCreateNewPatient(undefined);
 
     if (urlSegments.includes(AppRoute.Prescription)) {
-      const invoiceNumber = await createPrescription({
+      const invoice = await createPrescription({
         id: FnUtils.generateUUID(),
         patientId: String(row.id),
       });
-      navigate(String(invoiceNumber));
+      navigate(invoice.id ?? "");
       return;
     }
 

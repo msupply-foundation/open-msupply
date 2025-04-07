@@ -51,8 +51,8 @@ export const RequestLineEditPageInner = ({
   const [isPacks, setIsPacks] = useState(isPacksEnabled);
   const enteredLineIds = lines
     ? lines
-        .filter(line => line.requestedQuantity !== 0)
-        .map(line => line.item.id)
+      .filter(line => line.requestedQuantity !== 0)
+      .map(line => line.item.id)
     : [];
   const isProgram = !!requisition.programName;
   const isDisabled = requisition.status !== 'DRAFT';
@@ -67,13 +67,14 @@ export const RequestLineEditPageInner = ({
 
   useEffect(() => {
     setCustomBreadcrumbs({
+      1: requisition.requisitionNumber.toString() || '',
       2: currentItem?.name || '',
     });
   }, [currentItem]);
 
   return (
     <>
-      <AppBarButtons requisitionNumber={requisition.requisitionNumber} />
+      <AppBarButtons requisitionId={requisition.id} />
       <DetailContainer>
         <PageLayout
           Left={
@@ -82,7 +83,7 @@ export const RequestLineEditPageInner = ({
               items={lines?.map(l => l.item)}
               route={RouteBuilder.create(AppRoute.Replenishment)
                 .addPart(AppRoute.InternalOrder)
-                .addPart(String(requisition.requisitionNumber))}
+                .addPart(String(requisition.id))}
               enteredLineIds={enteredLineIds}
               showNew={
                 requisition.status !== RequisitionNodeStatus.Sent && !isProgram
