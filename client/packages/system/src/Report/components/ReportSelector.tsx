@@ -27,6 +27,7 @@ interface ReportSelectorProps {
   /** Disable the whole control */
   disabled?: boolean;
   queryParams?: ReportListParams;
+  extraArguments?: Record<string, string | number | undefined>;
   customOptions?: CustomOption<string>[];
   onPrintCustom?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
   buttonLabel: string;
@@ -39,6 +40,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   isPrinting,
   disabled = false,
   queryParams,
+  extraArguments,
   customOptions,
   onPrintCustom,
   buttonLabel,
@@ -75,7 +77,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
 
       // passing timezone through as forms do not have arguments
       const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
-      onPrint(report, { timezone });
+      onPrint(report, { timezone, ...extraArguments });
     }
   };
 
