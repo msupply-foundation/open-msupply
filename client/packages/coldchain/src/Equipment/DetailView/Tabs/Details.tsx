@@ -1,15 +1,17 @@
 import React from 'react';
 import {
+  ArrayUtils,
+  Box,
+  PropertyInput,
+  useIsGapsStoreOnly,
   BasicSpinner,
   InfoTooltipIcon,
   InputWithLabelRow,
   Typography,
-} from '@common/components';
-import { useTranslation } from '@common/intl';
-import { ArrayUtils, Box, PropertyInput } from '@openmsupply-client/common';
+  useTranslation,
+} from '@openmsupply-client/common';
 import { DraftAsset } from '../../types';
-import { useAssets } from '../../api';
-import { useIsGapsStoreOnly } from '@openmsupply-client/common';
+import { useAssetProperties } from '@openmsupply-client/system';
 
 interface DetailsProps {
   draft?: DraftAsset;
@@ -138,7 +140,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
   const t = useTranslation();
   const isGaps = useIsGapsStoreOnly();
 
-  const { data: assetProperties, isLoading } = useAssets.properties.list({
+  const { data: assetProperties, isLoading } = useAssetProperties({
     assetCategoryId: { equalAnyOrNull: [draft?.assetCategory?.id ?? ''] },
     assetClassId: { equalAnyOrNull: [draft?.assetClass?.id ?? ''] },
     assetTypeId: { equalAnyOrNull: [draft?.assetType?.id ?? ''] },
