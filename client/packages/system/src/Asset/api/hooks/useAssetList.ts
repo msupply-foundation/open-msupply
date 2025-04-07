@@ -24,7 +24,26 @@ export type useAssetsProps = {
 };
 
 export const useAssetList = (queryParams?: ListParams) => {
-  const { data, isLoading, isError } = useGetList(queryParams);
+  const { assetApi, storeId } = useAssetGraphQL();
+  const { first, offset, sortBy, filterBy } = queryParams ?? {};
+  const queryKey = [ASSET, storeId, LIST, first, offset, sortBy, filterBy];
+
+  const queryFn = async () => {
+    const query = await assetApi.assetCatalogueItems({
+      first: first ?? 1000,
+      offset: offset ?? 0,
+      key: toSortField(sortBy),
+      desc: sortBy?.isDesc,
+      filter: filterBy,
+    });
+    const { nodes, totalCount } = query?.assetCatalogueItems;
+    return { nodes, totalCount };
+  };
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey,
+    queryFn,
+  });
 
   return {
     query: { data, isLoading, isError },
@@ -65,30 +84,6 @@ export const useInfiniteAssets = ({
     queryFn,
   });
   return infiniteQuery;
-};
-
-export const useGetList = (queryParams?: ListParams) => {
-  const { assetApi, storeId } = useAssetGraphQL();
-  const { first, offset, sortBy, filterBy } = queryParams ?? {};
-  const queryKey = [ASSET, storeId, LIST, first, offset, sortBy, filterBy];
-
-  const queryFn = async () => {
-    const query = await assetApi.assetCatalogueItems({
-      first: first ?? 1000,
-      offset: offset ?? 0,
-      key: toSortField(sortBy),
-      desc: sortBy?.isDesc,
-      filter: filterBy,
-    });
-    const { nodes, totalCount } = query?.assetCatalogueItems;
-    return { nodes, totalCount };
-  };
-
-  const query = useQuery({
-    queryKey,
-    queryFn,
-  });
-  return query;
 };
 
 const toSortField = (sortBy?: SortBy<AssetCatalogueItemFragment>) => {
