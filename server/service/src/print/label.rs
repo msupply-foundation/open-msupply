@@ -98,8 +98,8 @@ pub fn print_prescription_label(
                 ^GB575,2,2^FS
 
                 ^A0,25
-                ^FO,75
-                ^FB575,5,0
+                ^FO10,75
+                ^FB580,5,0
                 ^FD{item_directions}\&{warning}\^FS
 
                 ^FX Line
