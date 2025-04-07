@@ -15,8 +15,9 @@ use service::{
     sync::{
         api_v6::{
             SiteStatusRequestV6, SiteStatusResponseV6, SyncDownloadFileRequestV6,
-            SyncParsedErrorV6, SyncPullRequestV6, SyncPullResponseV6, SyncPushRequestV6,
-            SyncPushResponseV6, SyncUploadFileRequestV6, SyncUploadFileResponseV6,
+            SyncParsedErrorV6, SyncPatientPullRequestV6, SyncPullRequestV6, SyncPullResponseV6,
+            SyncPushRequestV6, SyncPushResponseV6, SyncUploadFileRequestV6,
+            SyncUploadFileResponseV6,
         },
         sync_on_central,
     },
@@ -25,6 +26,7 @@ use service::{
 pub fn sync_on_central() -> impl HttpServiceFactory {
     web::scope("sync")
         .service(pull)
+        .service(patient_pull)
         .service(push)
         .service(site_status)
         .service(download_file)
@@ -40,6 +42,20 @@ async fn pull(
         Ok(batch) => SyncPullResponseV6::Data(batch),
         Err(error) => SyncPullResponseV6::Error(error),
     };
+
+    Ok(web::Json(response))
+}
+
+#[post("/patient-pull")]
+async fn patient_pull(
+    request: Json<SyncPatientPullRequestV6>,
+    service_provider: Data<ServiceProvider>,
+) -> actix_web::Result<impl Responder> {
+    let response =
+        match sync_on_central::patient_pull(&service_provider, request.into_inner()).await {
+            Ok(batch) => SyncPullResponseV6::Data(batch),
+            Err(error) => SyncPullResponseV6::Error(error),
+        };
 
     Ok(web::Json(response))
 }
