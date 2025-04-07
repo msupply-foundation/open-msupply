@@ -69,13 +69,6 @@ impl<'a> ItemWarningJoinRepository<'a> {
         self.query(Some(filter))
     }
 
-    pub fn query_one(
-        &self,
-        filter: ItemWarningJoinFilter,
-    ) -> Result<Option<ItemWarningJoin>, RepositoryError> {
-        Ok(self.query_by_filter(filter)?.pop())
-    }
-
     pub fn query(
         &self,
         filter: Option<ItemWarningJoinFilter>,
@@ -109,7 +102,6 @@ type BoxedItemWarningJoinQuery = IntoBoxed<
     DBType,
 >;
 
-// query the warnings on an item via item link
 fn create_filtered_query(filter: Option<ItemWarningJoinFilter>) -> BoxedItemWarningJoinQuery {
     let mut query = item_warning_join::table
         .inner_join(item_link::table.inner_join(item::table))

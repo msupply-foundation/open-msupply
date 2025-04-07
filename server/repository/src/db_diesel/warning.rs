@@ -33,10 +33,6 @@ impl<'a> WarningRepository<'a> {
         self.query(Some(filter))
     }
 
-    pub fn query_one(&self, filter: WarningFilter) -> Result<Option<Warning>, RepositoryError> {
-        Ok(self.query_by_filter(filter)?.pop())
-    }
-
     pub fn query(&self, filter: Option<WarningFilter>) -> Result<Vec<Warning>, RepositoryError> {
         let mut query = create_filtered_query(filter);
         query = query.order(warning::id.asc());

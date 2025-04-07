@@ -35,7 +35,7 @@ impl WarningNode {
 
     pub fn from_vec(warnings: Vec<ItemWarningJoin>) -> Vec<WarningNode> {
         warnings.into_iter().map(WarningNode::from_domain).collect()
-    } // warnings
+    }
 
     pub fn row(&self) -> &WarningRow {
         &self.warning.warning_row

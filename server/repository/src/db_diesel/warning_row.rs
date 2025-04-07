@@ -42,13 +42,6 @@ impl<'a> WarningRowRepository<'a> {
         Ok(())
     }
 
-    pub async fn insert_one(&self, warning_row: &WarningRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(warning)
-            .values(warning_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
     pub async fn find_all(&mut self) -> Result<Vec<WarningRow>, RepositoryError> {
         let result = warning.load(self.connection.lock().connection());
         Ok(result?)
