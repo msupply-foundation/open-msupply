@@ -7,6 +7,7 @@ import {
   useDetailPanel,
   useTranslation,
   ReportContext,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import {
   ReportRowFragment,
@@ -30,6 +31,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   showIndicators = false,
 }) => {
   const t = useTranslation();
+  const { store } = useAuthContext();
   const isProgram = useRequest.utils.isProgram();
   const { OpenButton } = useDetailPanel();
   const { data } = useRequest.document.get();
@@ -68,7 +70,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
               ? {
                   periodId: data?.period?.id,
                   programId: data?.program?.id,
-                  customerNameId: data?.otherPartyId,
+                  customerNameId: store?.nameId
                 }
               : undefined
           }
