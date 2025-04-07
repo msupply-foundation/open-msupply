@@ -7,6 +7,7 @@ import {
   useAuthContext,
   ContactTraceSortFieldInput,
   TabDefinition,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -46,6 +47,7 @@ export const PatientView = () => {
   const { data: currentPatient } = usePatient.document.get(patientId);
   const [isDirtyPatient, setIsDirtyPatient] = useState(false);
   const { store, storeId } = useAuthContext();
+  const { data: prefs } = usePreferences();
 
   const {
     query: { data: insuranceProvidersData },
@@ -78,14 +80,6 @@ export const PatientView = () => {
       },
     },
     {
-      Component: <ContactTraceListView />,
-      value: PatientTabValue.ContactTracing,
-      sort: {
-        key: ContactTraceSortFieldInput.Datetime,
-        dir: 'desc' as 'desc' | 'asc',
-      },
-    },
-    {
       Component: <VaccinationCardsListView />,
       value: PatientTabValue.Vaccinations,
       sort: {
@@ -104,7 +98,21 @@ export const PatientView = () => {
   ];
 
   // Display program tabs only if the Program module is enabled and the patient is saved
-  if (store?.preferences.omProgramModule) tabs.push(...programTabs);
+  if (store?.preferences.omProgramModule) {
+    tabs.push(...programTabs);
+
+    // Only if program module enabled, add contact tracing tab if global pref is enabled
+    if (prefs?.showContactTracing) {
+      tabs.push({
+        Component: <ContactTraceListView />,
+        value: PatientTabValue.ContactTracing,
+        sort: {
+          key: ContactTraceSortFieldInput.Datetime,
+          dir: 'desc' as 'desc' | 'asc',
+        },
+      });
+    }
+  }
 
   // Display insurance tab only if insurance providers are available and the patient is saved
   if (insuranceProvidersData.length > 0)
