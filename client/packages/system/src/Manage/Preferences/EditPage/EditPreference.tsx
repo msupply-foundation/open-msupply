@@ -6,9 +6,9 @@ import {
   NothingHere,
   PreferenceDescriptionNode,
   PreferencesNode,
+  usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
-import { usePreferences } from '../api/usePreferences';
 import { EditField } from './EditField';
 import { useEditPreference } from '../api/useEditPreference';
 
