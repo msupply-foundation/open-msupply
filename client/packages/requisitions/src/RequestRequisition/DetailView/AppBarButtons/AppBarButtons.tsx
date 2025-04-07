@@ -7,6 +7,7 @@ import {
   useDetailPanel,
   useTranslation,
   ReportContext,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import {
   ReportRowFragment,
@@ -21,15 +22,18 @@ import { JsonData } from '@openmsupply-client/programs';
 interface AppBarButtonProps {
   isDisabled: boolean;
   onAddItem: () => void;
+  showIndicators?: boolean;
 }
 
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
+  isDisabled,
+  showIndicators = false,
 }) => {
-  const isDisabled = useRequest.utils.isDisabled();
+  const t = useTranslation();
+  const { store } = useAuthContext();
   const isProgram = useRequest.utils.isProgram();
   const { OpenButton } = useDetailPanel();
-  const t = useTranslation();
   const { data } = useRequest.document.get();
   const { print, isPrinting } = usePrintReport();
 
@@ -61,6 +65,15 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           queryParams={{ filterBy: { subContext: { equalAnyOrNull: [] } } }}
           isPrinting={isPrinting}
           buttonLabel={t('button.print')}
+          extraArguments={
+            showIndicators
+              ? {
+                  periodId: data?.period?.id,
+                  programId: data?.program?.id,
+                  customerNameId: store?.nameId,
+                }
+              : undefined
+          }
         />
         {OpenButton}
       </Grid>
