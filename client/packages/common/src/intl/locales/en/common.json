@@ -146,7 +146,7 @@
   "cmdk.goto-suppliers": "Go to: Suppliers",
   "cmdk.more-info-close": "More info panel: hide",
   "cmdk.more-info-open": "More info panel: show",
-  "cmdk.placeholder": "Type a command or search",
+  "cmdk.placeholder": "Start typing to search",
   "cold-chain": "Cold chain",
   "contact-trace": "Contact Tracing",
   "control.adherence-status-warning": "Pill Count: after last visit = {{previousCountOnHand}} < before visit = {{remainingCount}}",
