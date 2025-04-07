@@ -39,7 +39,7 @@ export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
   );
 };
 
-export const translationExistsInLocale = (key: string): boolean => {
+export const useTranslationExistsInLocale = (key: string): boolean => {
   const { i18n } = useIntl();
   return i18n.exists(key);
 };

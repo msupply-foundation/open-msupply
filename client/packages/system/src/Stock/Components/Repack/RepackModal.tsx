@@ -14,8 +14,6 @@ import {
   noOtherVariants,
   ButtonWithIcon,
   ReportContext,
-  LoadingButton,
-  PrinterIcon,
   StockLineNode,
   useConfirmationModal,
   useNavigate,
@@ -57,11 +55,10 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const { Modal } = useDialog({ isOpen, onClose });
 
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
+  const [reportDisabled, setReportDisabled] = useState<boolean>(false);
   const [isNew, setIsNew] = useState<boolean>(false);
 
-  const { data: logData } = useActivityLog.document.listByRecord(
-    stockLine?.id ?? ''
-  );
+  const { data: logData } = useActivityLog(stockLine?.id ?? '');
 
   const {
     list: { repacks, isError, isLoading },
@@ -86,6 +83,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
 
   const onRowClick = (rowData: RepackFragment) => {
     setInvoiceId(rowData.id);
+    setReportDisabled(false);
     setIsNew(false);
   };
 
@@ -195,17 +193,10 @@ export const RepackModal: FC<RepackModalControlProps> = ({
         <ReportSelector
           context={ReportContext.Repack}
           onPrint={printReport}
-          disabled={!invoiceId}
-        >
-          <LoadingButton
-            sx={{ marginLeft: 1 }}
-            variant="outlined"
-            startIcon={<PrinterIcon />}
-            isLoading={isPrinting}
-            disabled={!invoiceId}
-            label={t('button.print')}
-          />
-        </ReportSelector>
+          disabled={reportDisabled || !invoiceId}
+          isPrinting={isPrinting}
+          buttonLabel={t('button.print')}
+        />
       }
     >
       <Box>

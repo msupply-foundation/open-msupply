@@ -40,6 +40,7 @@ use graphql_location::{LocationMutations, LocationQueries};
 use graphql_plugin::{
     CentralPluginMutations, CentralPluginQueries, PluginMutations, PluginQueries,
 };
+use graphql_preference::{PreferenceMutations, PreferenceQueries};
 use graphql_printer::{PrinterMutations, PrinterQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
@@ -95,6 +96,10 @@ impl CentralServerMutationNode {
 
     async fn plugins(&self) -> CentralPluginMutations {
         CentralPluginMutations
+    }
+
+    async fn preferences(&self) -> PreferenceMutations {
+        PreferenceMutations
     }
 }
 
@@ -158,6 +163,7 @@ pub struct Queries(
     pub DemographicIndicatorQueries,
     pub VaccineCourseQueries,
     pub ItemVariantQueries,
+    pub PreferenceQueries,
     pub CentralServerQueries,
 );
 
@@ -188,6 +194,7 @@ impl Queries {
             DemographicIndicatorQueries,
             VaccineCourseQueries,
             ItemVariantQueries,
+            PreferenceQueries,
             CentralServerQueries,
         )
     }

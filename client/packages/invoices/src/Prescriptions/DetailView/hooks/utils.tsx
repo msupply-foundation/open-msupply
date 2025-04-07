@@ -39,7 +39,7 @@ export const groupItems = (
       0
     );
 
-    //returns item values required to construct the label
+    // returns item values required to construct the label
     return {
       id: firstItem?.id ?? '',
       unitName: firstItem?.item.unitName ?? '',

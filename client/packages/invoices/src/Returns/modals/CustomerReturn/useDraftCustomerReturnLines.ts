@@ -114,18 +114,17 @@ export const useDraftCustomerReturnLines = ({
 
     // TODO: error handling here
     // also need to consider what we do if the error was on the first page of the wizard
-    return !returnId ?
-      await insert({
-        id: FnUtils.generateUUID(),
-        customerId,
-        outboundShipmentId,
-        customerReturnLines,
-      })
-      :
-      await updateLines({
-        customerReturnId: returnId,
-        customerReturnLines,
-      });
+    return !returnId
+      ? await insert({
+          id: FnUtils.generateUUID(),
+          customerId,
+          outboundShipmentId,
+          customerReturnLines,
+        })
+      : await updateLines({
+          customerReturnId: returnId,
+          customerReturnLines,
+        });
   };
 
   return { lines: draftLines, update, save, addDraftLine };

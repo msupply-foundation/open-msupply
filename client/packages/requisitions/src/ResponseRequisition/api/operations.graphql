@@ -83,7 +83,7 @@ fragment ResponseLine on RequisitionLineNode {
   suggestedQuantity
   availableStockOnHand
   requisitionNumber
-
+  requisitionId
   itemStats {
     __typename
     stockOnHand
@@ -206,6 +206,18 @@ query responseByNumber($storeId: String!, $requisitionNumber: Int!) {
   }
 }
 
+query responseById($storeId: String!, $requisitionId: String!) {
+  requisition(
+    id: $requisitionId
+    storeId: $storeId
+  ) {
+    __typename
+    ... on RequisitionNode {
+      ...Response
+    }
+  }
+}
+
 fragment ResponseRow on RequisitionNode {
   colour
   comment
@@ -257,7 +269,6 @@ mutation insertResponse(
     ... on RequisitionNode {
       __typename
       id
-      requisitionNumber
     }
     ... on InsertResponseRequisitionError {
       __typename
@@ -284,7 +295,6 @@ mutation insertProgramResponse(
     ... on RequisitionNode {
       __typename
       id
-      requisitionNumber
     }
     ... on InsertProgramResponseRequisitionError {
       __typename

@@ -174,6 +174,11 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
                   onChange={newDate => {
                     if (newDate) setDate(newDate);
                   }}
+                  slotProps={{
+                    tabs: {
+                      hidden: true,
+                    },
+                  }}
                 />
               }
             />

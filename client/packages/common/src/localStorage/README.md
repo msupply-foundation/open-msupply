@@ -9,7 +9,8 @@ Helpers for working with local storage in the browser.
 Colocation of local storage helpers. Intention to try and make working with local storage as type safe and resistant to errors as possible.
 
 ### Tips & Things to keep in mind
-- It's always possible that the value you think might be in local storage.. isn't! When first initialising, especially. 
+
+- It's always possible that the value you think might be in local storage.. isn't! When first initialising, especially.
 
 ### Future considerations
 

@@ -6,14 +6,31 @@ import {
   useTranslation,
   AppFooterPortal,
   useIsCentralServerApi,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { useAssetData } from '../api/hooks';
+import { useAssetList } from '../api/hooks';
 
 export const FooterComponent: FC = () => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
 
-  const { selectedRows, confirmAndDelete } = useAssetData.document.delete();
+  const {
+    delete: { deleteAssets },
+    selectedRows,
+  } = useAssetList();
+
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction: deleteAssets,
+    messages: {
+      confirmMessage: t('messages.confirm-delete-assets', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-assets', {
+        count: selectedRows.length,
+      }),
+    },
+  });
 
   const actions: Action[] = [
     {

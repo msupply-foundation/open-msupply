@@ -1,8 +1,5 @@
 import { useOutboundApi } from './../utils/useOutboundApi';
-import {
-  useMutation,
-  useQueryClient,
-} from '@openmsupply-client/common';
+import { useMutation, useQueryClient } from '@openmsupply-client/common';
 
 export const useOutboundDelete = () => {
   const queryClient = useQueryClient();

@@ -9,6 +9,7 @@ Each package is co-located by shared code functionality, not by shared GUI space
 The intention is that packages have an explicit boundary to ensure bundle sizes are kept minimal by reducing the chance of accidental imports increasing bundle sizes.
 
 The only packages which should be imported by any other package are:
+
 - `@openmsupply-client/common`
 - `@openmsupply-client/system`
 

@@ -21,7 +21,7 @@ import { CustomerIndicatorInfoView } from './CustomerIndicatorInfo';
 import { indicatorColumnNameToLocal } from '../../../utils';
 
 interface IndicatorLineEditProps {
-  requisitionNumber: number;
+  requisitionId: string;
   hasNext: boolean;
   next: IndicatorLineRowFragment | null;
   hasPrevious: boolean;
@@ -34,22 +34,23 @@ interface IndicatorLineEditProps {
 const INPUT_WIDTH = 185;
 const LABEL_WIDTH = '150px';
 
-const InputWithLabel = ({
-  autoFocus,
-  data,
-  disabled,
-}: {
+interface InputWithLabelProps {
   autoFocus: boolean;
   data: IndicatorColumnNode;
   disabled: boolean;
-}) => {
-  if (!data?.value) {
-    return;
-  }
+}
 
-  const { draft, update } = useDraftIndicatorValue(data.value);
+const InputWithLabel = ({ autoFocus, data, disabled }: InputWithLabelProps) => {
   const t = useTranslation();
   const { error } = useNotification();
+
+  const { draft, update } = useDraftIndicatorValue(
+    data.value ?? {
+      __typename: 'IndicatorValueNode',
+      id: '',
+      value: '',
+    }
+  );
 
   const errorHandler = useCallback(
     (res: any) => {
@@ -64,6 +65,10 @@ const InputWithLabel = ({
     },
     [t]
   );
+
+  if (!data?.value) {
+    return null;
+  }
 
   const sharedProps = {
     disabled,
@@ -103,7 +108,7 @@ const InputWithLabel = ({
 };
 
 export const IndicatorLineEdit = ({
-  requisitionNumber,
+  requisitionId,
   hasNext,
   next,
   hasPrevious,
@@ -126,14 +131,17 @@ export const IndicatorLineEdit = ({
   return (
     <>
       <Box display="flex" flexDirection="column">
-        {columns.map((c, i) => (
-          <InputWithLabel
-            key={c.value?.id}
-            data={c}
-            disabled={disabled}
-            autoFocus={i === 0}
-          />
-        ))}
+        {columns.map(
+          (column, i) =>
+            column.value != null && (
+              <InputWithLabel
+                key={column.value?.id}
+                data={column}
+                disabled={disabled}
+                autoFocus={i === 0}
+              />
+            )
+        )}
       </Box>
       {showInfo && (
         <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
@@ -149,7 +157,7 @@ export const IndicatorLineEdit = ({
           next={next}
           hasPrevious={hasPrevious}
           previous={previous}
-          requisitionNumber={requisitionNumber}
+          requisitionId={requisitionId}
           scrollIntoView={scrollIntoView}
         />
       </Box>

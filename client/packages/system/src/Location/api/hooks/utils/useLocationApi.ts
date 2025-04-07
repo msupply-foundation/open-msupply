@@ -1,8 +1,4 @@
-import {
-  useGql,
-  useAuthContext,
-  SortBy,
-} from '@openmsupply-client/common';
+import { useGql, useAuthContext, SortBy } from '@openmsupply-client/common';
 import { getLocationQueries, ListParams } from '../../api';
 import { getSdk, LocationRowFragment } from '../../operations.generated';
 

@@ -14,8 +14,8 @@ export const useInsertStocktake = () => {
   return useMutation(
     (input: InsertStocktakeInput) => api.insertStocktake(input),
     {
-      onSuccess: ({ stocktakeNumber }) => {
-        navigate(String(stocktakeNumber));
+      onSuccess: ({ id }) => {
+        navigate(String(id));
         return queryClient.invalidateQueries(api.keys.base());
       },
     }

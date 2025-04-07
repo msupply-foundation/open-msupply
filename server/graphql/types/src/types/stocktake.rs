@@ -51,6 +51,14 @@ impl StocktakeNode {
         &self.stocktake.comment
     }
 
+    pub async fn counted_by(&self) -> &Option<String> {
+        &self.stocktake.counted_by
+    }
+
+    pub async fn verified_by(&self) -> &Option<String> {
+        &self.stocktake.verified_by
+    }
+
     pub async fn description(&self) -> &Option<String> {
         &self.stocktake.description
     }

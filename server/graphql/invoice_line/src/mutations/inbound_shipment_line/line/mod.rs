@@ -13,10 +13,10 @@ impl BatchIsReserved {
     }
 }
 
-pub struct TransferredShipment;
+pub struct LineLinkedToTransferredInvoice;
 #[Object]
-impl TransferredShipment {
+impl LineLinkedToTransferredInvoice {
     pub async fn description(&self) -> &str {
-        "Cannot delete an inbound shipment transferred from another store"
+        "Cannot delete line generated from a generated invoice"
     }
 }

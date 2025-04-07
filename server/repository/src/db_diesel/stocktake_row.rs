@@ -7,7 +7,6 @@ use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActi
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::{dsl::max, prelude::*};
 use diesel_derive_enum::DbEnum;
-use util::Defaults;
 
 table! {
     stocktake (id) {
@@ -25,19 +24,22 @@ table! {
         inventory_reduction_id -> Nullable<Text>,
         is_locked -> Bool,
         program_id -> Nullable<Text>,
+        counted_by -> Nullable<Text>,
+        verified_by -> Nullable<Text>,
     }
 }
 
 joinable!(stocktake -> user_account (user_id));
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum StocktakeStatus {
+    #[default]
     New,
     Finalised,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default)]
 #[diesel(table_name = stocktake)]
 pub struct StocktakeRow {
     pub id: String,
@@ -55,34 +57,8 @@ pub struct StocktakeRow {
     pub inventory_reduction_id: Option<String>,
     pub is_locked: bool,
     pub program_id: Option<String>,
-}
-
-impl Default for StocktakeStatus {
-    fn default() -> Self {
-        Self::New
-    }
-}
-
-impl Default for StocktakeRow {
-    fn default() -> Self {
-        Self {
-            created_datetime: Defaults::naive_date_time(),
-            status: Default::default(),
-            // Defaults
-            id: Default::default(),
-            store_id: Default::default(),
-            user_id: Default::default(),
-            stocktake_number: Default::default(),
-            stocktake_date: Default::default(),
-            comment: Default::default(),
-            description: Default::default(),
-            finalised_datetime: Default::default(),
-            inventory_addition_id: Default::default(),
-            inventory_reduction_id: Default::default(),
-            is_locked: Default::default(),
-            program_id: Default::default(),
-        }
-    }
+    pub counted_by: Option<String>,
+    pub verified_by: Option<String>,
 }
 
 pub struct StocktakeRowRepository<'a> {

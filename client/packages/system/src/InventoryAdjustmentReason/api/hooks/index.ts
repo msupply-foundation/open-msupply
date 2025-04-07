@@ -3,7 +3,7 @@ import { Utils } from './utils';
 
 export const useInventoryAdjustmentReason = {
   document: {
-    listAllActive: Document.useInventoryAdjustmentReason
+    listAllActive: Document.useInventoryAdjustmentReason,
   },
   utils: {
     api: Utils.useInventoryAdjustmentReasonApi,

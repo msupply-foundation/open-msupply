@@ -360,7 +360,7 @@ export const getClinicianQueries = (sdk: Sdk, storeId: string) => ({
       filter: {
         ...filterBy,
         isActive: true,
-      }
+      },
     });
 
     if (result.clinicians.__typename === 'ClinicianConnector') {

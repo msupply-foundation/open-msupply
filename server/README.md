@@ -210,7 +210,13 @@ If you want to ensure all your changes have been written to the main sqlite data
 
 `note`: yaml configurations are likely to be deprecated to .env, thus documentations is limited for .yaml.
 
-In `configurations` folder you'll find `.yaml` config files, there is `base`, `local` (will overwrite/expand `base` in dev mode), `production` (will overwrite/expand other configs when `APP\_\_ENVIRONMENT=production ).
+In `configurations` folder you'll find `.yaml` config files, there is `base`, `local` (will overwrite/expand `base` in dev mode), `production` (will overwrite/expand other configs when `APP\_\_ENVIRONMENT=production` ).
+
+Config files can be selected with the `--config-path` argument. When this argument is not provided configuration will default to `local.yaml`/`production.yaml` as per above. When providing a file path, the code expects a `base.yaml` file to exist at the same directory level as the chosen file.
+
+```bash
+cargo run -- --config-path configurations/alternate_file.yaml
+```
 
 You can use env variable to overwrite any configurations, can use dot notation with `__` (two underscore) to specify nested value. Env vars configuration overrides start with `APP__`.
 

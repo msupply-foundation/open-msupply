@@ -21,8 +21,10 @@ declare module '@mui/material/Switch' {
   }
 }
 ```
+
 - It is generally rare that you really need to use the theme object directly within your component. Utilising the `sx` prop and `styled` gives access to the theme.
 - Styles should be swapped automatically when the app is switched to a language which is read right-to-left. However, if you really need to know, you might be looking for `useRTL` from `@common/intl`
 
 ### Future considerations
+
 - More module augmentation and theme customising might result in needing to split the theme out into multiple files to actually see what's going on!

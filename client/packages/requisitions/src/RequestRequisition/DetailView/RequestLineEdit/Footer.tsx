@@ -13,7 +13,7 @@ interface FooterProps {
   next: ItemRowFragment | null;
   hasPrevious: boolean;
   previous: ItemRowFragment | null;
-  requisitionNumber?: number;
+  requisitionId?: string;
   scrollIntoView: () => void;
 }
 
@@ -22,7 +22,7 @@ export const Footer = ({
   next,
   hasPrevious,
   previous,
-  requisitionNumber,
+  requisitionId,
   scrollIntoView,
 }: FooterProps) => {
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ export const Footer = ({
               variant="previous"
               disabled={!hasPrevious}
               onClick={() => {
-                navigate(buildItemEditRoute(requisitionNumber, previous?.id));
+                navigate(buildItemEditRoute(requisitionId, previous?.id));
                 scrollIntoView();
               }}
             />
@@ -56,7 +56,7 @@ export const Footer = ({
               variant="next"
               disabled={!hasNext}
               onClick={() => {
-                navigate(buildItemEditRoute(requisitionNumber, next?.id));
+                navigate(buildItemEditRoute(requisitionId, next?.id));
                 scrollIntoView();
               }}
             />
