@@ -144,7 +144,7 @@
   "cmdk.goto-suppliers": "Aller à : Fournisseurs",
   "cmdk.more-info-close": "Volet d'information supplémentaire : masquer",
   "cmdk.more-info-open": "Volet d'information supplémentaire : Afficher",
-  "cmdk.placeholder": "Saisir une commande ou rechercher",
+  "cmdk.placeholder": "Commencez à taper pour rechercher",
   "cold-chain": "Chaîne du froid",
   "contact-trace": "Recherche des contacts",
   "control.adherence-status-warning": "Nombre de pilules : après la dernière visite = {{previousCountOnHand}} < avant la visite = {{remainingCount}}",
