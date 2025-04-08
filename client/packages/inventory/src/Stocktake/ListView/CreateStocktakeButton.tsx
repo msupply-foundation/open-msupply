@@ -15,8 +15,8 @@ import { ToggleState, useDialog } from '@common/hooks';
 import { useStocktake } from '../api';
 import {
   useMasterList,
-  useLocation,
   useStockList,
+  useLocationList,
 } from '@openmsupply-client/system';
 import {
   Box,
@@ -60,10 +60,8 @@ export const CreateStocktakeButton: React.FC<{
     { existsForStoreId: { equalTo: storeId } }
   );
   const {
-    data: locationData,
-    isLoading: isLoadingLocations,
-    mutate: fetchLocations,
-  } = useLocation.document.listAll({ key: 'name', direction: 'asc' });
+    query: { data: locationData, isLoading: isLoadingLocations },
+  } = useLocationList({ sortBy: { key: 'name', direction: 'asc' } });
   const { data: stockData, isLoading: isLoadingStock } = useStockList({
     sortBy: {
       key: 'expiryDate',
@@ -153,7 +151,6 @@ export const CreateStocktakeButton: React.FC<{
 
   useEffect(() => {
     fetchMasterLists();
-    fetchLocations();
   }, []);
 
   return (
