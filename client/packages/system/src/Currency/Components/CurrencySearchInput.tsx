@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { CurrencyRowFragment, useCurrency } from '../api';
+import { CurrencyRowFragment, useCurrencyList } from '../api';
 import {
   Autocomplete,
   AutocompleteOptionRenderer,
@@ -42,7 +42,7 @@ export const CurrencySearchInput: FC<CurrencySearchInputProps> = ({
   onChange,
   currencyRate,
 }) => {
-  const { data, isLoading } = useCurrency.document.list();
+  const { data, isLoading } = useCurrencyList();
   const homeCurrency = data?.nodes.find(
     currency => currency.isHomeCurrency
   ) as CurrencyRowFragment;

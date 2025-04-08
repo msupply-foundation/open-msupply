@@ -1,4 +1,4 @@
-import { LIST, useQuery } from '@openmsupply-client/common';
+import { LIST_KEY, useQuery } from '@openmsupply-client/common';
 import { FilterByWithBoolean, SortBy } from '@common/hooks';
 
 import { SENSOR } from './keys';
@@ -15,7 +15,7 @@ export interface ListParams {
 
 export const useSensorList = (queryParams?: ListParams) => {
   const { sensorApi, storeId } = useSensorGraphQL();
-  const queryKey = [SENSOR, storeId, LIST, queryParams];
+  const queryKey = [SENSOR, storeId, LIST_KEY, queryParams];
 
   const queryFn = async () => {
     const { first, offset, sortBy, filterBy } = queryParams ?? {};
