@@ -210,7 +210,13 @@ const VaccinationCardComponent = ({
       {
         key: 'dateGiven',
         label: 'label.date-given',
-        accessor: ({ rowData }) => localisedDate(rowData.vaccinationDate ?? ''),
+        accessor: ({ rowData }) => {
+          if (rowData.status === VaccinationCardItemNodeStatus.Given) {
+            return localisedDate(rowData.vaccinationDate ?? '');
+          } else {
+            return t('messages.not-applicable');
+          }
+        },
       },
       {
         key: 'batch',
