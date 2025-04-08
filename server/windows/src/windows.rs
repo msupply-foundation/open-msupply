@@ -1,3 +1,4 @@
+#![recursion_limit = "256"]
 /// Creates the entry points and event handling to manage running the server
 // under a windows service context
 
@@ -13,6 +14,7 @@ fn main() {
 
 #[cfg(windows)]
 mod omsupply_service {
+    use clap::Parser;
     use eventlog;
     use log::error;
     use server::{configuration, logging_init, start_server};
@@ -32,7 +34,6 @@ mod omsupply_service {
         service_control_handler::{self, ServiceControlHandlerResult, ServiceStatusHandle},
         service_dispatcher, Result,
     };
-    use clap::Parser;
 
     #[derive(clap::Parser)]
     #[clap(version, about)]
