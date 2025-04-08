@@ -54,6 +54,8 @@ impl SyncRecordTester for StocktakeRecordTester {
             inventory_reduction_id: None,
             is_locked: true,
             program_id: None,
+            counted_by: None,
+            verified_by: None,
         };
         let stocktake_line_row = StocktakeLineRow {
             id: uuid(),
