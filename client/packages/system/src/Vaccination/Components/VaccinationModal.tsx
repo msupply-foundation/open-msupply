@@ -20,7 +20,7 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
-import { FormControlLabel } from '@mui/material';
+import { FormControlLabel, Typography } from '@mui/material';
 import React from 'react';
 import { useVaccination, VaccinationDraft } from '../api';
 import { Clinician, ClinicianSearchInput } from '../../Clinician';
@@ -285,17 +285,33 @@ const VaccinationForm = ({
           <InputWithLabelRow
             label={t('label.reason')}
             Input={
-              <Select
-                options={[
-                  // TODO: make the values an enum from backend
-                  { label: t('label.refused'), value: 'REFUSED' },
-                  { label: t('label.out-of-stock'), value: 'OUT_OF_STOCK' },
-                  { label: t('label.no-reason'), value: 'NO_REASON' },
-                ]}
-                value={draft.notGivenReason ?? ''}
-                onChange={e => updateDraft({ notGivenReason: e.target.value })}
-                sx={{ flex: 1 }}
-              />
+              <Box sx={{ display: 'flex', width: 275 }}>
+                <Select
+                  options={[
+                    // TODO: make the values an enum from backend
+                    { label: t('label.refused'), value: 'REFUSED' },
+                    { label: t('label.out-of-stock'), value: 'OUT_OF_STOCK' },
+                    { label: t('label.no-reason'), value: 'NO_REASON' },
+                  ]}
+                  value={draft.notGivenReason ?? ''}
+                  onChange={e =>
+                    updateDraft({ notGivenReason: e.target.value })
+                  }
+                  sx={{ flex: 1 }}
+                />
+                <Box width={2}>
+                  <Typography
+                    sx={{
+                      color: 'primary.light',
+                      fontSize: '17px',
+                      marginLeft: 0.5,
+                      marginBottom: 2,
+                    }}
+                  >
+                    *
+                  </Typography>
+                </Box>
+              </Box>
             }
           />
         </>
