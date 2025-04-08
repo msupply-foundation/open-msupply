@@ -82,7 +82,7 @@ const LocationListComponent: FC = () => {
       )}
       <Toolbar filter={filter} />
       <AppBarButtons
-        onCreate={() => onOpen()}
+        onCreate={onOpen}
         locations={data?.nodes}
         reportIsLoading={isLoading}
       />
@@ -96,10 +96,7 @@ const LocationListComponent: FC = () => {
         isLoading={isLoading}
         onRowClick={onOpen}
         noDataElement={
-          <NothingHere
-            body={t('error.no-locations')}
-            onCreate={() => onOpen()}
-          />
+          <NothingHere body={t('error.no-locations')} onCreate={onOpen} />
         }
       />
       <Footer data={locations} />
