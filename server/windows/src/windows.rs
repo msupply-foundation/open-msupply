@@ -1,5 +1,6 @@
 /// Creates the entry points and event handling to manage running the server
 // under a windows service context
+#![recursion_limit = "256"]
 
 #[cfg(windows)]
 fn main() -> windows_service::Result<()> {
