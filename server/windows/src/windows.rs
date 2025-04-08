@@ -32,6 +32,7 @@ mod omsupply_service {
         service_control_handler::{self, ServiceControlHandlerResult, ServiceStatusHandle},
         service_dispatcher, Result,
     };
+    use clap::Parser;
 
     #[derive(clap::Parser)]
     #[clap(version, about)]
