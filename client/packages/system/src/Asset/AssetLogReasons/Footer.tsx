@@ -11,7 +11,7 @@ import {
   AssetLogReasonNode,
   AlertModal,
 } from '@openmsupply-client/common';
-import { useAssetData } from '../api';
+import { useAssetLogReason } from '../api';
 
 type DeleteError = {
   reason: string;
@@ -23,7 +23,9 @@ export const FooterComponent: FC<{ data: AssetLogReasonNode[] }> = ({
 }) => {
   const t = useTranslation();
 
-  const { mutateAsync: deleteReason } = useAssetData.log.deleteReason();
+  const {
+    delete: { delete: deleteReason },
+  } = useAssetLogReason();
   const { error, success, info } = useNotification();
   const [deleteErrors, setDeleteErrors] = useState<DeleteError[]>([]);
 
@@ -41,12 +43,10 @@ export const FooterComponent: FC<{ data: AssetLogReasonNode[] }> = ({
       Promise.all(
         selectedRows.map(async reason => {
           await deleteReason(reason.id).then(data => {
-            if (
-              data?.deleteLogReason.__typename === 'DeleteAssetLogReasonError'
-            ) {
+            if (data?.__typename === 'DeleteAssetLogReasonError') {
               errors.push({
                 reason: reason.reason,
-                message: data?.deleteLogReason?.error?.description ?? '',
+                message: data?.error?.description ?? '',
               });
             }
           });

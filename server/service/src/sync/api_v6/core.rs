@@ -43,7 +43,6 @@ impl SyncApiV6 {
         cursor: u64,
         batch_size: u32,
         is_initialised: bool,
-        fetch_patient_id: &Option<String>,
     ) -> Result<SyncBatchV6, SyncApiErrorV6> {
         let Self {
             sync_v5_settings,
@@ -60,7 +59,6 @@ impl SyncApiV6 {
             sync_v5_settings: sync_v5_settings.clone(),
             is_initialised,
             sync_v6_version: *sync_v6_version,
-            fetch_patient_id: fetch_patient_id.clone(),
         };
 
         let result = with_retries(RetrySeconds::default(), |client| {
@@ -105,6 +103,47 @@ impl SyncApiV6 {
         let error = match response_or_err(result).await {
             Ok(SyncPushResponseV6::Data(data)) => return Ok(data),
             Ok(SyncPushResponseV6::Error(error)) => error.into(),
+            Err(error) => error,
+        };
+
+        Err(SyncApiErrorV6 {
+            url,
+            route: route.to_string(),
+            source: error,
+        })
+    }
+
+    pub async fn patient_pull(
+        &self,
+        cursor: u64,
+        batch_size: u32,
+        fetch_patient_id: String,
+    ) -> Result<SyncBatchV6, SyncApiErrorV6> {
+        let Self {
+            sync_v5_settings,
+            url,
+            sync_v6_version,
+        } = self;
+
+        let route = "patient-pull";
+        let url = url.join(route).unwrap();
+
+        let request = SyncPatientPullRequestV6 {
+            cursor,
+            batch_size,
+            sync_v5_settings: sync_v5_settings.clone(),
+            sync_v6_version: *sync_v6_version,
+            fetch_patient_id,
+        };
+
+        let result = with_retries(RetrySeconds::default(), |client| {
+            client.post(url.clone()).json(&request)
+        })
+        .await;
+
+        let error = match response_or_err(result).await {
+            Ok(SyncPullResponseV6::Data(data)) => return Ok(data),
+            Ok(SyncPullResponseV6::Error(error)) => error.into(),
             Err(error) => error,
         };
 

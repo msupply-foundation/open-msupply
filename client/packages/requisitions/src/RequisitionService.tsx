@@ -22,25 +22,25 @@ const customerRequisitionsRoute = RouteBuilder.create(
 const customerRequisitionRoute = RouteBuilder.create(
   AppRoute.CustomerRequisition
 )
-  .addPart(':requisitionNumber')
+  .addPart(':requisitionId')
   .build();
 
 const customerRequisitionLineRoute = RouteBuilder.create(
   AppRoute.CustomerRequisition
 )
-  .addPart(':requisitionNumber')
+  .addPart(':requisitionId')
   .addPart(':itemId')
   .build();
 
 const indicatorLineRoute = RouteBuilder.create(AppRoute.CustomerRequisition)
-  .addPart(':requisitionNumber')
+  .addPart(':requisitionId')
   .addPart(AppRoute.Indicators)
   .addPart(':programIndicatorCode')
   .addPart(':programIndicatorLineId')
   .build();
 
 const requestIndicatorLineRoute = RouteBuilder.create(AppRoute.InternalOrder)
-  .addPart(':requisitionNumber')
+  .addPart(':requisitionId')
   .addPart(AppRoute.Indicators)
   .addPart(':programIndicatorCode')
   .addPart(':programIndicatorLineId')
@@ -48,11 +48,11 @@ const requestIndicatorLineRoute = RouteBuilder.create(AppRoute.InternalOrder)
 
 const internalOrdersRoute = RouteBuilder.create(AppRoute.InternalOrder).build();
 const internalOrderRoute = RouteBuilder.create(AppRoute.InternalOrder)
-  .addPart(':requisitionNumber')
+  .addPart(':requisitionId')
   .build();
 
 const internalOrderLineRoute = RouteBuilder.create(AppRoute.InternalOrder)
-  .addPart(':requisitionNumber')
+  .addPart(':requisitionId')
   .addPart(':itemId')
   .build();
 

@@ -248,15 +248,23 @@ impl Synchroniser {
         if let Some(v6_sync) = &v6_sync {
             logger.start_step(SyncStep::PullCentralV6)?;
 
-            v6_sync
-                .pull(
-                    &ctx.connection,
-                    20,
-                    is_initialised,
-                    logger,
-                    fetch_patient_id,
-                )
-                .await?;
+            match fetch_patient_id {
+                Some(patient_id) => {
+                    v6_sync
+                        .patient_pull(&ctx.connection, batch_size.central_pull, patient_id, logger)
+                        .await?;
+                }
+                None => {
+                    v6_sync
+                        .pull(
+                            &ctx.connection,
+                            batch_size.central_pull,
+                            is_initialised,
+                            logger,
+                        )
+                        .await?;
+                }
+            }
 
             logger.done_step(SyncStep::PullCentralV6)?;
         }

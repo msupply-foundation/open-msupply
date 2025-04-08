@@ -12,8 +12,7 @@ import { useActivityLog } from '@openmsupply-client/system/src/ActivityLog/api';
 
 export const LogCardListView: FC<{ recordId: string }> = ({ recordId }) => {
   const t = useTranslation();
-  const { data, isError, isLoading } =
-    useActivityLog.document.listByRecord(recordId);
+  const { data, isError, isLoading } = useActivityLog(recordId);
   const { localisedDate, localisedTime } = useFormatDateTime();
 
   if (isLoading) return <BasicSpinner />;

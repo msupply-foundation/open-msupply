@@ -128,6 +128,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
             tax_percentage: outbound_invoice_row.tax_percentage,
             currency_id: outbound_invoice_row.currency_id.clone(),
             currency_rate: outbound_invoice_row.currency_rate,
+            expected_delivery_date: outbound_invoice_row.expected_delivery_date,
 
             ..inbound_invoice.invoice_row.clone()
         };

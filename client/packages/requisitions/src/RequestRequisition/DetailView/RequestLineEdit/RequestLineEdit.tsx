@@ -3,7 +3,6 @@ import { useTranslation } from '@common/intl';
 import {
   ItemRowFragment,
   ReasonOptionsSearchInput,
-  RequestFragment,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
 import {
@@ -28,7 +27,7 @@ import {
 import { DraftRequestLine } from './hooks';
 import { Footer } from './Footer';
 import { RequestStats } from './ItemCharts/RequestStats';
-import { RequestLineFragment } from '../../api';
+import { RequestFragment, RequestLineFragment } from '../../api';
 import { buildItemEditRoute } from '../utils';
 
 const INPUT_WIDTH = 100;
@@ -84,7 +83,7 @@ export const RequestLineEdit = ({
 
   const line = lines.find(line => line.id === draft?.id);
   const { width } = useWindowDimensions();
-  const { id: requisitionId, requisitionNumber } = requisition;
+  const { id: requisitionId } = requisition;
   const theme = useTheme();
 
   return (
@@ -100,7 +99,7 @@ export const RequestLineEdit = ({
                     requisitionId: requisitionId,
                     itemId: newItem.id,
                   });
-                  navigate(buildItemEditRoute(requisitionNumber, newItem.id), {
+                  navigate(buildItemEditRoute(requisitionId, newItem.id), {
                     replace: true,
                   });
                 }
@@ -331,7 +330,7 @@ export const RequestLineEdit = ({
                         disabled={!isPacks || isSent}
                         value={NumUtils.round(
                           (draft?.requestedQuantity ?? 0) /
-                            (draft?.defaultPackSize ?? 1),
+                          (draft?.defaultPackSize ?? 1),
                           2
                         )}
                         decimalLimit={2}
@@ -444,7 +443,7 @@ export const RequestLineEdit = ({
           next={next}
           hasPrevious={hasPrevious}
           previous={previous}
-          requisitionNumber={draft?.requisitionNumber}
+          requisitionId={draft?.requisitionId}
           scrollIntoView={scrollIntoView}
         />
       </Box>
