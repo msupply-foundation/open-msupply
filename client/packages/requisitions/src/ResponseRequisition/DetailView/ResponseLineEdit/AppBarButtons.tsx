@@ -9,11 +9,11 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 
 interface AppBarButtonsProps {
-  requisitionNumber: number;
+  requisitionId: string;
 }
 
 export const AppBarButtonsComponent = ({
-  requisitionNumber,
+  requisitionId,
 }: AppBarButtonsProps) => {
   const navigate = useNavigate();
 
@@ -26,7 +26,7 @@ export const AppBarButtonsComponent = ({
             navigate(
               RouteBuilder.create(AppRoute.Distribution)
                 .addPart(AppRoute.CustomerRequisition)
-                .addPart(String(requisitionNumber))
+                .addPart(String(requisitionId))
                 .build()
             )
           }

@@ -18,7 +18,7 @@ import {
 } from '@openmsupply-client/common';
 import { FileList } from '../Components';
 import { parseLogStatus } from '../utils';
-import { useAssetData } from '@openmsupply-client/system';
+import { useAssetLogReasonList } from '@openmsupply-client/system';
 import { useIsGapsStoreOnly } from '@openmsupply-client/common';
 import { TakePhotoButton } from './TakePhotoButton';
 import { Capacitor } from '@capacitor/core';
@@ -103,7 +103,7 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
     });
 
   const statuses = getOptionsFromEnum(StatusType, parseLogStatus);
-  const { data } = useAssetData.log.listReasons(
+  const { data } = useAssetLogReasonList(
     draft.status
       ? {
           assetLogStatus: { equalTo: draft.status },

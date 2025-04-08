@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_expected_delivery_date_to_invoice;
 mod add_linked_invoice_id_to_invoice_line;
 mod add_patient_link_id_to_vaccination;
 mod add_preference_table;
@@ -24,6 +25,7 @@ impl Migration for V2_07_00 {
         vec![
             Box::new(add_preference_table::Migrate),
             Box::new(add_linked_invoice_id_to_invoice_line::Migrate),
+            Box::new(add_expected_delivery_date_to_invoice::Migrate),
             Box::new(new_stocktake_fields::Migrate),
             Box::new(asset_data_matrix_permission::Migrate),
             Box::new(asset_data_matrix_locked_fields::Migrate),

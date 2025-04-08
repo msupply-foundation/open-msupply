@@ -11,8 +11,12 @@ impl MigrationFragment for Migrate {
         if cfg!(feature = "postgres") {
             sql!(
                 connection,
+                // Also drop FK reference that we removed for sqlite in 2.5 but not for postgres
+                // name_link may not exist everywhere that vaccination is synced, so no reference constraint
                 r#"
                     ALTER TABLE vaccination ALTER COLUMN vaccination_date DROP NOT NULL;
+                    
+                    ALTER TABLE vaccination DROP CONSTRAINT vaccination_facility_name_link_id_fkey;
                 "#,
             )?;
         } else {
@@ -26,10 +30,10 @@ impl MigrationFragment for Migrate {
                     store_id TEXT NOT NULL,
                     program_enrolment_id TEXT NOT NULL,
                     encounter_id TEXT NOT NULL,
-                    user_id TEXT NOT NULL REFERENCES user_account(id),
+                    user_id TEXT NOT NULL,
                     vaccine_course_dose_id TEXT NOT NULL REFERENCES vaccine_course_dose(id),
                     created_datetime {DATETIME} NOT NULL,
-                    facility_name_link_id TEXT REFERENCES name(id),
+                    facility_name_link_id TEXT,
                     facility_free_text TEXT,
                     invoice_id TEXT,
                     stock_line_id TEXT,

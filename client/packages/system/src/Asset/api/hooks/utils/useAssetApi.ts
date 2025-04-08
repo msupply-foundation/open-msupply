@@ -3,7 +3,6 @@ import {
   AssetPropertyFilterInput,
   AssetTypeFilterInput,
   SortBy,
-  useAuthContext,
   useGql,
 } from '@openmsupply-client/common';
 import {
@@ -14,7 +13,6 @@ import {
 
 export const useAssetApi = () => {
   const { client } = useGql();
-  const { storeId } = useAuthContext();
 
   const keys = {
     base: () => ['asset'] as const,
@@ -35,6 +33,6 @@ export const useAssetApi = () => {
       [filter, 'properties'] as const,
   };
 
-  const queries = getAssetQueries(getSdk(client), storeId);
+  const queries = getAssetQueries(getSdk(client));
   return { ...queries, keys };
 };

@@ -162,9 +162,6 @@ pub struct SyncPullRequestV6 {
     pub(crate) is_initialised: bool,
     #[serde(default)]
     pub(crate) sync_v6_version: u32,
-    /// For manual sync, query for existing patient data
-    /// after fetching that patient from a new store
-    pub(crate) fetch_patient_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -174,6 +171,19 @@ pub struct SyncPushRequestV6 {
     pub(crate) sync_v5_settings: SyncApiSettings,
     #[serde(default)]
     pub(crate) sync_v6_version: u32,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncPatientPullRequestV6 {
+    pub(crate) cursor: u64,
+    pub(crate) batch_size: u32,
+    pub(crate) sync_v5_settings: SyncApiSettings,
+    #[serde(default)]
+    pub(crate) sync_v6_version: u32,
+    /// For manual sync, query for existing patient data
+    /// after fetching that patient from a new store
+    pub(crate) fetch_patient_id: String,
 }
 
 #[derive(Serialize, Deserialize)]

@@ -59,7 +59,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
         })
       )}
       sx={{ minWidth: width }}
-      textSx={{ backgroundColor: theme.palette.background.white }}
+      textSx={{ backgroundColor: theme.palette.background.drawer }}
       disabled={disabled}
       fullWidth={fullWidth}
     />

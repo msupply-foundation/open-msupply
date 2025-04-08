@@ -1,5 +1,5 @@
-query allPrefs {
-  availablePreferences {
+query availablePreferences($storeId: String!) {
+  availablePreferences(storeId: $storeId) {
     key
     jsonSchema
     uiSchema
