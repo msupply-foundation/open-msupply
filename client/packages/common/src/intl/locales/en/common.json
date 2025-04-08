@@ -1637,6 +1637,7 @@
   "messages.no-stock-available": "There is no stock available",
   "messages.no-transaction-other-facility": "Stock transactions are not recorded for vaccinations given in other facilities",
   "messages.no-vaccine-items-configured": "No vaccine items configured for this vaccine course. Stock transactions will not be recorded.",
+  "messages.error-printing-report": "Unable to print report",
   "messages.not-applicable": "N/A",
   "messages.not-configured": "Not configured",
   "messages.not-initialised": "[ Not configured ]",

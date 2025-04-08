@@ -1531,6 +1531,7 @@
   "messages.error-deleting-reasons_other": "{{count}} raisons n'ont pas pu être supprimées",
   "messages.error-generic_one": "{{count}} erreur",
   "messages.error-generic_other": "{{count}} erreurs",
+  "messages.error-printing-report": "Impossible d'imprimer le document",
   "messages.error-no-file-selected": "Aucun fichier sélectionné",
   "messages.error-not-valid-email": "Veuillez saisir une adresse électronique valide",
   "messages.error-saving-insurances": "Erreur lors de l'enregistrement des assurances 🥺",
