@@ -47,7 +47,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
         record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<Option<String>, RepositoryError> {
         // Check can execute
-        let (outbound_invoice, _linked_invoice, request_requisition, original_shipment) =
+        let (outbound_invoice, linked_invoice, request_requisition, original_shipment) =
             match &record_for_processing.operation {
                 Operation::Upsert {
                     invoice: outbound_invoice,
@@ -78,7 +78,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
             return Ok(None);
         }
         // 4.
-        if outbound_invoice.invoice_row.linked_invoice_id.is_some() {
+        if linked_invoice.is_some() {
             return Ok(None);
         }
         // 5.
