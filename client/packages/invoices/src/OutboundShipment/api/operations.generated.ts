@@ -24,6 +24,7 @@ export type OutboundFragment = {
   transportReference?: string | null;
   type: Types.InvoiceNodeType;
   taxPercentage?: number | null;
+  expectedDeliveryDate?: string | null;
   currencyRate: number;
   user?: {
     __typename: 'UserNode';
@@ -136,6 +137,7 @@ export type OutboundRowFragment = {
   status: Types.InvoiceNodeStatus;
   colour?: string | null;
   taxPercentage?: number | null;
+  expectedDeliveryDate?: string | null;
   currencyRate: number;
   pricing: {
     __typename: 'PricingNode';
@@ -193,6 +195,7 @@ export type InvoicesQuery = {
       status: Types.InvoiceNodeStatus;
       colour?: string | null;
       taxPercentage?: number | null;
+      expectedDeliveryDate?: string | null;
       currencyRate: number;
       pricing: {
         __typename: 'PricingNode';
@@ -239,6 +242,7 @@ export type InvoiceQuery = {
         transportReference?: string | null;
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
+        expectedDeliveryDate?: string | null;
         currencyRate: number;
         user?: {
           __typename: 'UserNode';
@@ -371,6 +375,7 @@ export type OutboundByNumberQuery = {
         transportReference?: string | null;
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
+        expectedDeliveryDate?: string | null;
         currencyRate: number;
         user?: {
           __typename: 'UserNode';
@@ -542,6 +547,11 @@ export type InsertOutboundShipmentMutation = {
       };
 };
 
+export type CannotHaveEstimatedDeliveryDateBeforeShippedDateErrorFragment = {
+  __typename: 'CannotHaveEstimatedDeliveryDateBeforeShippedDate';
+  description: string;
+};
+
 export type UpdateOutboundShipmentMutationVariables = Types.Exact<{
   input: Types.UpdateOutboundShipmentInput;
   storeId: Types.Scalars['String']['input'];
@@ -570,6 +580,10 @@ export type UpdateOutboundShipmentMutation = {
             }
           | {
               __typename: 'CannotChangeStatusOfInvoiceOnHold';
+              description: string;
+            }
+          | {
+              __typename: 'CannotHaveEstimatedDeliveryDateBeforeShippedDate';
               description: string;
             }
           | { __typename: 'CannotIssueInForeignCurrency'; description: string }
@@ -872,6 +886,10 @@ export type UpsertOutboundShipmentMutation = {
                   description: string;
                 }
               | {
+                  __typename: 'CannotHaveEstimatedDeliveryDateBeforeShippedDate';
+                  description: string;
+                }
+              | {
                   __typename: 'CannotIssueInForeignCurrency';
                   description: string;
                 }
@@ -1014,6 +1032,7 @@ export const OutboundFragmentDoc = gql`
     transportReference
     type
     taxPercentage
+    expectedDeliveryDate
     user {
       __typename
       username
@@ -1090,6 +1109,7 @@ export const OutboundRowFragmentDoc = gql`
     status
     colour
     taxPercentage
+    expectedDeliveryDate
     pricing {
       __typename
       totalAfterTax
@@ -1112,6 +1132,12 @@ export const BarcodeFragmentDoc = gql`
     itemId
     packSize
     gtin
+  }
+`;
+export const CannotHaveEstimatedDeliveryDateBeforeShippedDateErrorFragmentDoc = gql`
+  fragment CannotHaveEstimatedDeliveryDateBeforeShippedDateError on CannotHaveEstimatedDeliveryDateBeforeShippedDate {
+    __typename
+    description
   }
 `;
 export const ItemPriceFragmentDoc = gql`
@@ -1284,7 +1310,7 @@ export const UpdateOutboundShipmentDocument = gql`
       ... on UpdateOutboundShipmentError {
         __typename
         error {
-          description
+          __typename
           ... on RecordNotFound {
             __typename
             description
@@ -1313,6 +1339,7 @@ export const UpdateOutboundShipmentDocument = gql`
             __typename
             description
           }
+          ...CannotHaveEstimatedDeliveryDateBeforeShippedDateError
           ... on RecordNotFound {
             __typename
             description
@@ -1340,6 +1367,7 @@ export const UpdateOutboundShipmentDocument = gql`
       }
     }
   }
+  ${CannotHaveEstimatedDeliveryDateBeforeShippedDateErrorFragmentDoc}
 `;
 export const UpdateOutboundShipmentNameDocument = gql`
   mutation updateOutboundShipmentName(
@@ -1691,7 +1719,9 @@ export const UpsertOutboundShipmentDocument = gql`
           ... on UpdateOutboundShipmentError {
             __typename
             error {
+              __typename
               description
+              ...CannotHaveEstimatedDeliveryDateBeforeShippedDateError
             }
           }
           ... on NodeError {
@@ -1731,6 +1761,7 @@ export const UpsertOutboundShipmentDocument = gql`
       }
     }
   }
+  ${CannotHaveEstimatedDeliveryDateBeforeShippedDateErrorFragmentDoc}
 `;
 export const DeleteOutboundShipmentLinesDocument = gql`
   mutation deleteOutboundShipmentLines(

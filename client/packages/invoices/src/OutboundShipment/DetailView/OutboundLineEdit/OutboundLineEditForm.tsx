@@ -210,51 +210,52 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
       {item && canAutoAllocate ? (
         <>
           <Divider margin={10} />
-          <StockOutAlerts
-            allocationAlerts={allocationAlerts}
-            showZeroQuantityConfirmation={showZeroQuantityConfirmation}
-            isAutoAllocated={isAutoAllocated}
-          />
-          <Grid container>
-            <ModalLabel label={t('label.issue')} />
-            <NumericTextInput
-              autoFocus
-              value={issueQuantity}
-              onChange={handleIssueQuantityChange}
+          <Box display="flex" alignItems="flex-start" gap={2}>
+            <Grid container alignItems="center" pt={1}>
+              <ModalLabel label={t('label.issue')} />
+              <NumericTextInput
+                autoFocus
+                value={issueQuantity}
+                onChange={handleIssueQuantityChange}
+              />
+              <Box marginLeft={1} />
+
+              {packSizeController.options.length ? (
+                <>
+                  <Box marginLeft={1} />
+                  <Select
+                    sx={{ width: 110 }}
+                    options={packSizeController.options}
+                    value={packSizeController.selected?.value ?? ''}
+                    onChange={e => {
+                      const { value } = e.target;
+                      onChangePackSize(Number(value));
+                    }}
+                  />
+                  {packSizeController.selected?.value !== -1 && (
+                    <Grid
+                      alignItems="center"
+                      display="flex"
+                      justifyContent="flex-start"
+                    >
+                      <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
+                        {t('label.unit-plural', {
+                          count: packSizeController.selected?.value,
+                          unit: item?.unitName,
+                        })}
+                      </InputLabel>
+                    </Grid>
+                  )}
+                  <Box marginLeft="auto" />
+                </>
+              ) : null}
+            </Grid>
+            <StockOutAlerts
+              allocationAlerts={allocationAlerts}
+              showZeroQuantityConfirmation={showZeroQuantityConfirmation}
+              isAutoAllocated={isAutoAllocated}
             />
-            <Box marginLeft={1} />
-
-            {packSizeController.options.length ? (
-              <>
-                <Box marginLeft={1} />
-
-                <Select
-                  sx={{ width: 110 }}
-                  options={packSizeController.options}
-                  value={packSizeController.selected?.value ?? ''}
-                  onChange={e => {
-                    const { value } = e.target;
-                    onChangePackSize(Number(value));
-                  }}
-                />
-                {packSizeController.selected?.value !== -1 && (
-                  <Grid
-                    alignItems="center"
-                    display="flex"
-                    justifyContent="flex-start"
-                  >
-                    <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
-                      {t('label.unit-plural', {
-                        count: packSizeController.selected?.value,
-                        unit: item?.unitName,
-                      })}
-                    </InputLabel>
-                  </Grid>
-                )}
-                <Box marginLeft="auto" />
-              </>
-            ) : null}
-          </Grid>
+          </Box>
         </>
       ) : (
         <Box height={100} />
