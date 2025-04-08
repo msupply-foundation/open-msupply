@@ -23,7 +23,6 @@ impl Migration for V2_07_00 {
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
-            Box::new(change_vaccination_date_to_not_nullable::Migrate),
             Box::new(add_preference_table::Migrate),
             Box::new(add_linked_invoice_id_to_invoice_line::Migrate),
             Box::new(add_expected_delivery_date_to_invoice::Migrate),
@@ -32,6 +31,7 @@ impl Migration for V2_07_00 {
             Box::new(asset_data_matrix_locked_fields::Migrate),
             Box::new(add_patient_link_id_to_vaccination::Migrate),
             Box::new(remove_name_store_join_constraint::Migrate),
+            Box::new(change_vaccination_date_to_not_nullable::Migrate),
         ]
     }
 }
