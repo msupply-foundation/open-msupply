@@ -305,7 +305,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
           steps={importSteps}
           activeStep={activeStep}
           onClickStep={onClickStep}
-        ></ClickableStepper>
+        />
         {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
         <TabContext value={currentTab}>
           <Grid container flex={1} flexDirection="column" gap={1}>
