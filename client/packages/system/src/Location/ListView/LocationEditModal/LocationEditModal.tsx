@@ -10,7 +10,7 @@ import {
   ToggleButton,
   InlineSpinner,
 } from '@openmsupply-client/common';
-import { LocationRowFragment, useLocation } from '../../api';
+import { LocationRowFragment, useLocation, useLocationList } from '../../api';
 import { ColdStorageTypeInput } from '@openmsupply-client/system/src/Item/Components/ColdStorageTypeInput';
 interface LocationEditModalProps {
   mode: ModalMode | null;
@@ -46,7 +46,12 @@ const useDraftLocation = (
   const [location, setLocation] = useState<LocationRowFragment>(() =>
     createNewLocation(seed)
   );
-  const nextLocation = useLocation.document.next(location);
+  const { nextLocation } = useLocationList(
+    {
+      sortBy: { key: 'name', direction: 'asc' },
+    },
+    location
+  );
   const { mutate: insert, isLoading: insertIsLoading } =
     useLocation.document.insert();
   const { mutate: update, isLoading: updateIsLoading } =
