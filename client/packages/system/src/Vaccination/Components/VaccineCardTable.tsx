@@ -214,7 +214,7 @@ const VaccinationCardComponent = ({
           if (rowData.status === VaccinationCardItemNodeStatus.Given) {
             return localisedDate(rowData.vaccinationDate ?? '');
           } else {
-            return t('messages.not-applicable');
+            return null;
           }
         },
       },
