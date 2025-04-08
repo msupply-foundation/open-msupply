@@ -80,9 +80,8 @@ pub enum ReportDefinitionEntry {
 
 #[derive(serde::Deserialize, Serialize, Clone, PartialEq, Default, Debug)]
 pub enum ConvertDataType {
-    BoaJs,
     #[default]
-    Extism,
+    BoaJs,
 }
 
 /// Specifies which report definition entries are the "main" entries.

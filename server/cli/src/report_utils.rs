@@ -193,7 +193,6 @@ fn generate_convert_data(path: &PathBuf, manifest: &Manifest) -> Result<Option<S
         .join("dist")
         .join(match manifest.convert_data_type {
             ConvertDataType::BoaJs => "convert_data.js",
-            ConvertDataType::Extism => "plugin.wasm",
         });
 
     Ok(Some(BASE64_STANDARD.encode(fs::read(bundle_path).unwrap())))
