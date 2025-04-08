@@ -4,6 +4,7 @@ use crate::{
     LockedConnection, NameLinkRow, RepositoryError, StorageConnection,
 };
 use diesel::{
+    dsl::InnerJoin,
     helper_types::{IntoBoxed, LeftJoin},
     prelude::*,
 };
@@ -461,11 +462,15 @@ impl<'a> ChangelogRepository<'a> {
 type BoxedChangelogQuery =
     IntoBoxed<'static, LeftJoin<changelog_deduped::table, name_link::table>, DBType>;
 
-fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> BoxedChangelogQuery {
-    let mut query = changelog_deduped::table
+fn create_base_query(earliest: u64) -> BoxedChangelogQuery {
+    changelog_deduped::table
         .left_join(name_link::table)
         .filter(changelog_deduped::cursor.ge(earliest.try_into().unwrap_or(0)))
-        .into_boxed();
+        .into_boxed()
+}
+
+fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> BoxedChangelogQuery {
+    let mut query = create_base_query(earliest);
 
     if let Some(f) = filter {
         let ChangelogFilter {
@@ -513,10 +518,7 @@ fn create_filtered_outgoing_sync_query(
     sync_site_id: i32,
     is_initialized: bool,
 ) -> BoxedChangelogQuery {
-    let mut query = changelog_deduped::table
-        .left_join(name_link::table)
-        .filter(changelog_deduped::cursor.ge(earliest.try_into().unwrap_or(0)))
-        .into_boxed();
+    let mut query = create_base_query(earliest);
 
     // If we are initialising, we want to send all the records for the site, even ones that originally came from the site
     // The rest of the time we want to exclude any records that were created by the site
@@ -554,27 +556,8 @@ fn create_filtered_outgoing_sync_query(
         .filter(store::site_id.eq(sync_site_id))
         .select(store::id.nullable());
 
-    // ids of patients visible on active stores for the site
-    let visible_patient_ids = name_store_join::table
-        .inner_join(name_link::table)
-        .filter(
-            name_store_join::store_id
-                .nullable()
-                .eq_any(active_stores_for_site.into_boxed()),
-        )
-        .select(name_link::name_id)
-        .into_boxed();
-
-    // Ideally this would be by changelog name_link_id, but that has an FK constraint
-    // requiring all names to exist on OMS central, which currently isn't the case.
-    // Instead, for visible patient sync - filter changelogs by record id of vaccinations
-    // for visible patients
-    // Bit of a hack, subquery unlikely to scale well - bring on v7 sync :cry:
-    let vaccinations_for_visible_patients = vaccination::table
-        .left_join(name_link::table.on(vaccination::patient_link_id.eq(name_link::id)))
-        .filter(name_link::name_id.eq_any(visible_patient_ids))
-        .select(vaccination::id)
-        .into_boxed();
+    let patient_names_visible_on_site =
+        patient_names_visible_on_site(sync_site_id).select(name_link::name_id);
 
     // Filter the query for the matching records for each type
     query = query.filter(
@@ -591,8 +574,29 @@ fn create_filtered_outgoing_sync_query(
             // where patient is visible, regardless of the store_id in the changelog
             .or(changelog_deduped::table_name
                 .eq(ChangelogTableName::Vaccination)
-                .and(changelog_deduped::record_id.eq_any(vaccinations_for_visible_patients))),
+                .and(name_link::name_id.eq_any(patient_names_visible_on_site))),
         // Any other special cases could be handled here...
+    );
+
+    query
+}
+
+type BoxedNameStoreJoinQuery =
+    IntoBoxed<'static, InnerJoin<name_store_join::table, name_link::table>, DBType>;
+
+fn patient_names_visible_on_site(sync_site_id: i32) -> BoxedNameStoreJoinQuery {
+    let active_stores_for_site = store::table
+        .filter(store::site_id.eq(sync_site_id))
+        .select(store::id.nullable());
+
+    let mut query = name_store_join::table
+        .inner_join(name_link::table)
+        .into_boxed();
+
+    query = query.filter(
+        name_store_join::store_id
+            .nullable()
+            .eq_any(active_stores_for_site),
     );
 
     query
@@ -605,39 +609,14 @@ fn create_filtered_outgoing_patient_sync_query(
     sync_site_id: i32,
     fetch_patient_id: String,
 ) -> BoxedChangelogQuery {
-    let mut query = changelog_deduped::table
-        .left_join(name_link::table)
-        .filter(changelog_deduped::cursor.ge(earliest.try_into().unwrap_or(0)))
-        .into_boxed();
+    let mut query = create_base_query(earliest);
 
-    let active_stores_for_site = store::table
-        .filter(store::site_id.eq(sync_site_id))
-        .select(store::id.nullable());
+    let patient_names_visible_on_site =
+        patient_names_visible_on_site(sync_site_id).select(name_link::name_id);
 
-    // ids of patients visible on active stores for the site
-    let visible_patient_ids = name_store_join::table
-        .inner_join(name_link::table)
-        .filter(
-            name_store_join::store_id
-                .nullable()
-                .eq_any(active_stores_for_site),
-        )
-        .select(name_link::name_id);
-
-    let patient_vaccinations = vaccination::table
-        .left_join(name_link::table.on(vaccination::patient_link_id.eq(name_link::id)))
-        // Get all vaccinations for patient
+    query = query
         .filter(name_link::name_id.eq(fetch_patient_id.clone()))
-        // Ensure patient is visible on at least one active store for site
-        .filter(name_link::name_id.eq_any(visible_patient_ids.into_boxed()))
-        .select(vaccination::id)
-        .into_boxed();
-
-    let all_patient_changelogs = changelog_deduped::table_name
-        .eq(ChangelogTableName::Vaccination)
-        .and(changelog_deduped::record_id.eq_any(patient_vaccinations));
-
-    query = query.filter(all_patient_changelogs);
+        .filter(name_link::name_id.eq_any(patient_names_visible_on_site));
 
     query
 }
