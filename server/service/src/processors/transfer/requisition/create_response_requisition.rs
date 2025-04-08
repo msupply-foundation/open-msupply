@@ -8,7 +8,8 @@ use chrono::Utc;
 use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
     ActivityLogType, ApprovalStatusType, EqualFilter, IndicatorValueRow,
-    IndicatorValueRowRepository, ItemRow, NumberRowType, RepositoryError, Requisition,
+    IndicatorValueRowRepository, ItemRow, MasterListFilter, MasterListLineFilter,
+    MasterListLineRepository, MasterListRepository, NumberRowType, RepositoryError, Requisition,
     RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
     RequisitionRowRepository, RequisitionStatus, RequisitionType, StorageConnection, StoreFilter,
     StoreRepository,
@@ -62,9 +63,15 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         // TODO link to documentation of how remote authorisation works
         let store_preference =
             get_store_preferences(connection, &record_for_processing.other_party_store_id)?;
+
+        // Check if requisition has items that are part of programs
+        let has_program_items =
+            requisition_has_program_items(connection, &request_requisition.requisition_row.id)?;
+
         // TODO Rework once plugin functionality has been implemented
         let approval_status = if store_preference.response_requisition_requires_authorisation
             && request_requisition.requisition_row.program_id.is_some()
+            || has_program_items
         {
             Some(ApprovalStatusType::Pending)
         } else {
@@ -133,6 +140,47 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
 
         Ok(Some(result))
     }
+}
+
+fn requisition_has_program_items(
+    connection: &StorageConnection,
+    requisition_id: &str,
+) -> Result<bool, RepositoryError> {
+    // Checks if any items in the requisition are part of program master lists
+    //
+    // 1. Gets all requisition lines for the given requisition ID
+    // 2. Gets all master lists that are marked as programs
+    // 3. Checks if any item in the requisition is included in any program master list
+    // 4. Returns true if any program item is found, false otherwise
+    let requisition_lines = get_lines_for_requisition(connection, requisition_id)?;
+    if requisition_lines.len() == 0 {
+        return Ok(false);
+    }
+
+    let program_master_lists = MasterListRepository::new(connection)
+        .query_by_filter(MasterListFilter::new().is_program(true))?;
+    if program_master_lists.len() == 0 {
+        return Ok(false);
+    }
+
+    let program_master_list_ids = program_master_lists
+        .into_iter()
+        .map(|ml| ml.id)
+        .collect::<Vec<String>>();
+
+    for line in &requisition_lines {
+        let master_list_lines = MasterListLineRepository::new(connection).query_by_filter(
+            MasterListLineFilter::new()
+                .item_id(EqualFilter::equal_to(&line.item_row.id))
+                .master_list_id(EqualFilter::equal_any(program_master_list_ids.clone())),
+        )?;
+
+        if master_list_lines.len() > 0 {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
 }
 
 fn generate_response_requisition(
