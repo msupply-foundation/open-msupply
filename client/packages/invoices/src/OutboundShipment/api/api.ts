@@ -17,6 +17,7 @@ import {
   InsertOutboundShipmentServiceLineInput,
   UpdateOutboundShipmentServiceLineInput,
   DeleteOutboundShipmentServiceLineInput,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../types';
 import { isA } from '../../utils';
@@ -96,6 +97,7 @@ const outboundParsers = {
         : undefined,
     currencyId: 'currency' in patch ? patch.currency?.id : undefined,
     currencyRate: 'currency' in patch ? patch.currency?.rate : undefined,
+    expectedDeliveryDate: setNullableInput('expectedDeliveryDate', patch),
   }),
   toUpdateName: (
     patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
@@ -308,7 +310,9 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     const { batchOutboundShipment } = result;
 
     if (batchOutboundShipment?.__typename === 'BatchOutboundShipmentResponse') {
-      return patch;
+      return batchOutboundShipment.updateOutboundShipments?.map(
+        response => response.response
+      );
     }
 
     throw new Error('Unable to update invoice');
