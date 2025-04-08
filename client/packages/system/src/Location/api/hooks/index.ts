@@ -7,8 +7,6 @@ export const useLocation = {
     update: Document.useLocationUpdate,
     delete: Document.useLocationDelete,
     insert: Document.useLocationInsert,
-
-    next: Document.useNextLocation,
   },
   utils: {
     api: Utils.useLocationApi,

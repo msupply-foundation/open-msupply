@@ -16,15 +16,22 @@ export type ListParams = {
   filterBy?: LocationFilterInput | null;
 };
 
-export const useLocationList = (queryParams?: ListParams) => {
+export const useLocationList = (
+  queryParams?: ListParams,
+  currentLocation?: LocationRowFragment | null
+) => {
   const { data, isLoading, isError } = useGetList(queryParams);
+
+  // NEXT LOCATION
+  const next = getNextLocation(data?.nodes ?? [], currentLocation);
 
   return {
     query: { data, isLoading, isError },
+    nextLocation: next,
   };
 };
 
-export const useGetList = (queryParams?: ListParams) => {
+const useGetList = (queryParams?: ListParams) => {
   const { locationApi, storeId } = useLocationGraphQL();
   const { first, offset, sortBy, filterBy } = queryParams ?? {};
   const queryKey = [
@@ -54,6 +61,17 @@ export const useGetList = (queryParams?: ListParams) => {
     queryFn,
   });
   return query;
+};
+
+const getNextLocation = (
+  data: LocationRowFragment[],
+  currentLocation?: LocationRowFragment | null
+) => {
+  const idx = data?.findIndex(l => l.id === currentLocation?.id);
+  if (idx == undefined) return null;
+  const next = data[(idx + 1) % data.length];
+
+  return next ?? null;
 };
 
 const toSortInput = (sortBy?: SortBy<LocationRowFragment>) => ({
