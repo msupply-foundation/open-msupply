@@ -155,6 +155,12 @@ export const DateTimePickerInput: FC<
         },
         ...(actions ? { actionBar: { actions } } : {}),
       }}
+      localeText={{
+        okButtonLabel: t('button.ok'),
+        cancelButtonLabel: t('button.cancel'),
+        clearButtonLabel: t('button.clear'),
+        todayButtonLabel: t('button.today'),
+      }}
       views={
         showTime
           ? ['year', 'month', 'day', 'hours', 'minutes']
