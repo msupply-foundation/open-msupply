@@ -1,28 +1,26 @@
 #[cfg(test)]
 mod tests {
-    use crate::sync::test::integration::{
-        central_server_configurations::{ConfigureCentralServer, SiteConfiguration},
-        init_test_context, SyncIntegrationContext,
+    use crate::{
+        sync::test::integration::{
+            central_server_configurations::SiteConfiguration, create_site, FullSiteConfig,
+        },
+        test_helpers::ServiceTestContext,
     };
     use repository::{KeyType, KeyValueStoreRepository};
 
     #[actix_rt::test]
     async fn integration_sync_request_and_persist_site_info() {
-        let SiteConfiguration {
-            sync_settings,
-            new_site_properties,
-        } = ConfigureCentralServer::from_env()
-            .create_sync_site(vec![])
-            .await
-            .expect("Problem creating sync site");
-
-        let SyncIntegrationContext {
-            connection,
+        let FullSiteConfig {
+            context: ServiceTestContext { connection, .. },
+            config:
+                SiteConfiguration {
+                    new_site_properties,
+                    ..
+                },
             synchroniser,
-            ..
-        } = init_test_context(&sync_settings, "site_info").await;
+        } = create_site("site_info", vec![]).await;
 
-        synchroniser.sync().await.unwrap();
+        synchroniser.sync(None).await.unwrap();
 
         let repo = KeyValueStoreRepository::new(&connection);
 

@@ -8,12 +8,12 @@ mod tests {
 
     #[actix_rt::test]
     async fn integration_sync_omsupply_central_sync_plugin_data() {
-        test_omsupply_central_records("plugin_data", &PluginDataCentral).await;
+        test_omsupply_central_records("plugin_data_central", &PluginDataCentral).await;
     }
 
     #[actix_rt::test]
     async fn integration_sync_omsupply_remote_sync_plugin_data() {
-        test_omsupply_central_remote_records("plugin_data", &PluginDataRemote).await;
+        test_omsupply_central_remote_records("plugin_data_remote", &PluginDataRemote).await;
     }
 
     #[actix_rt::test]
