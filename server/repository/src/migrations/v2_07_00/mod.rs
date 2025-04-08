@@ -8,8 +8,6 @@ mod add_preference_table;
 mod asset_data_matrix_locked_fields;
 mod asset_data_matrix_permission;
 mod new_stocktake_fields;
-mod remove_name_store_join_constraint;
-
 pub(crate) struct V2_07_00;
 
 impl Migration for V2_07_00 {
@@ -30,7 +28,6 @@ impl Migration for V2_07_00 {
             Box::new(asset_data_matrix_permission::Migrate),
             Box::new(asset_data_matrix_locked_fields::Migrate),
             Box::new(add_patient_link_id_to_vaccination::Migrate),
-            Box::new(remove_name_store_join_constraint::Migrate),
         ]
     }
 }
