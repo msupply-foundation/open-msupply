@@ -108,7 +108,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
                 autoFocus
                 disabled={!packEditable}
                 width={160}
-                value={draft.totalNumberOfPacks}
+                value={parseFloat(draft.totalNumberOfPacks.toFixed(2))}
                 onChange={totalNumberOfPacks =>
                   onUpdate({ totalNumberOfPacks })
                 }
@@ -122,7 +122,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
                 autoFocus
                 disabled={!packEditable}
                 width={160}
-                value={draft.availableNumberOfPacks}
+                value={parseFloat(draft.availableNumberOfPacks.toFixed(2))}
                 onChange={availableNumberOfPacks =>
                   onUpdate({ availableNumberOfPacks })
                 }
