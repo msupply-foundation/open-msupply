@@ -2,7 +2,7 @@ use base64::prelude::*;
 use chrono::{DateTime, Utc};
 use repository::{
     migrations::Version, EqualFilter, Report, ReportFilter, ReportMetaData, ReportRepository,
-    ReportRowRepository, ReportSort, RepositoryError, StorageConnection,
+    ReportRowRepository, ReportSort, RepositoryError,
 };
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
@@ -131,7 +131,6 @@ pub trait ReportServiceTrait: Sync + Send {
     /// Converts a HTML report to a file for the target PrintFormat and returns file id
     fn generate_html_report(
         &self,
-        connection: StorageConnection,
         base_dir: &Option<String>,
         report: &ResolvedReportDefinition,
         report_data: serde_json::Value,
@@ -141,7 +140,6 @@ pub trait ReportServiceTrait: Sync + Send {
         current_language: Option<String>,
     ) -> Result<String, ReportError> {
         let document = generate_report(
-            connection,
             report,
             report_data,
             arguments,
@@ -532,7 +530,6 @@ struct ReportData {
 }
 
 fn transform_data(
-    connection: StorageConnection,
     data: ReportData,
     convert_data: Option<String>,
     convert_data_type: &ConvertDataType,
@@ -560,7 +557,6 @@ fn transform_data_boajs(data: ReportData, convert_data: String) -> Result<Report
 }
 
 fn generate_report(
-    connection: StorageConnection,
     report: &ResolvedReportDefinition,
     data: serde_json::Value,
     arguments: Option<serde_json::Value>,
@@ -569,7 +565,6 @@ fn generate_report(
 ) -> Result<GeneratedReport, ReportError> {
     let report_data = ReportData { data, arguments };
     let report_data = transform_data(
-        connection,
         report_data,
         report.convert_data.clone(),
         &report.convert_data_type,
@@ -912,7 +907,6 @@ mod report_service_test {
         let resolved_def = service.resolve_report(&context, "report_1").unwrap();
 
         let doc = generate_report(
-            connection,
             &resolved_def,
             serde_json::json!({
                 "test": "Hello"
@@ -1059,7 +1053,7 @@ mod report_generation_test {
             output: ReportOutputType::Html,
         };
 
-        let (_, connection, connection_manager, _) =
+        let (_, _, connection_manager, _) =
             setup_all("test_report_translations", MockDataInserts::none()).await;
 
         let translation_service = ServiceProvider::new(connection_manager).translations_service;
@@ -1081,7 +1075,6 @@ mod report_generation_test {
         let report_data = json!(null);
 
         let generated_report = generate_report(
-            connection,
             &report,
             report_data.clone(),
             None,
@@ -1093,13 +1086,9 @@ mod report_generation_test {
         assert!(generated_report.document.contains("some text"));
         assert!(generated_report.document.contains("Name"));
 
-        let (_, connection, _, _) =
-            setup_all("test_report_translations", MockDataInserts::none()).await;
-
         // // test generation in other languages
 
         let generated_report = generate_report(
-            connection,
             &report,
             report_data,
             None,
