@@ -6,6 +6,7 @@ import {
   PlusCircleIcon,
   useUrlQuery,
   UserStoreNodeFragment,
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
   PatientModal,
@@ -29,6 +30,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
 }) => {
   const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
+  const { data: preferences } = usePreferences();
   const currentUrlTab = urlQuery['tab'];
   const { createNewPatient } = usePatientStore();
   const { setModal: selectModal, reset } = usePatientModalStore();
@@ -50,12 +52,14 @@ export const AddButton: React.FC<AddButtonProps> = ({
           value: PatientModal.Encounter,
           label: t('button.add-encounter'),
           isDisabled: disableEncounterButton,
-        },
-        {
-          value: PatientModal.ContactTraceSearch,
-          label: t('button.add-contact-trace'),
         }
       );
+      if (preferences?.showContactTracing) {
+        baseOptions.push({
+          value: PatientModal.ContactTraceSearch,
+          label: t('button.add-contact-trace'),
+        });
+      }
     }
 
     if (insuranceProvidersData?.length > 0) {
@@ -66,7 +70,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
     }
 
     return baseOptions;
-  }, [disableEncounterButton, t, store, insuranceProvidersData]);
+  }, [disableEncounterButton, t, store, insuranceProvidersData, preferences]);
 
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<PatientModal> | undefined
