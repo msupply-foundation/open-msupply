@@ -173,10 +173,10 @@ impl From<UpdatePrescriptionError> for UpdateVaccinationError {
 mod update {
     use chrono::NaiveDate;
     use repository::mock::{
-        mock_immunisation_encounter_a, mock_immunisation_program_enrolment_a, mock_stock_line_a,
-        mock_stock_line_b_vaccine_item_a, mock_stock_line_vaccine_item_a, mock_store_a,
-        mock_user_account_a, mock_vaccination_a, mock_vaccine_course_a_dose_b, MockData,
-        MockDataInserts,
+        mock_immunisation_encounter_a, mock_immunisation_program_enrolment_a, mock_patient,
+        mock_stock_line_a, mock_stock_line_b_vaccine_item_a, mock_stock_line_vaccine_item_a,
+        mock_store_a, mock_user_account_a, mock_vaccination_a, mock_vaccine_course_a_dose_b,
+        MockData, MockDataInserts,
     };
     use repository::test_db::{setup_all, setup_all_with_data};
     use repository::{
@@ -193,6 +193,7 @@ mod update {
         fn mock_vaccination_b_given() -> VaccinationRow {
             VaccinationRow {
                 id: "mock_vaccination_b_given".to_string(),
+                patient_link_id: mock_patient().id,
                 store_id: mock_store_a().id,
                 user_id: mock_user_account_a().id,
                 program_enrolment_id: mock_immunisation_program_enrolment_a().id,
@@ -211,6 +212,7 @@ mod update {
             MockDataInserts::all(),
             MockData {
                 vaccinations: vec![mock_vaccination_b_given()],
+                names: vec![mock_patient()],
                 ..Default::default()
             },
         )
