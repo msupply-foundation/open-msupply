@@ -110,11 +110,13 @@
           "elements": [
             {
               "type": "Control",
-              "scope": "#/properties/isDeceased"
+              "scope": "#/properties/isDeceased",
+              "label": "label.deceased"
             },
             {
               "type": "Control",
               "scope": "#/properties/dateOfDeath",
+              "label": "label.date-of-death",
               "rule": {
                 "effect": "HIDE",
                 "condition": {
