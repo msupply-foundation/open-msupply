@@ -51,15 +51,15 @@ export const DesktopTableView = <T extends RecordWithId>({
     if (ExpandContent != undefined)
       return (
         <>
-          {data.map((row, idx) => (
+          {data.map((row, index) => (
             <DataRow
               key={row.id}
               ExpandContent={ExpandContent}
-              rowIndex={idx}
+              rowIndex={index}
               columns={columnsToDisplay}
               onClick={onRowClick ? onRowClick : undefined}
               rowData={row}
-              rowKey={String(idx)}
+              rowKey={String(index)}
               dense={dense}
               keyboardActivated={clickFocusedRow}
               generateRowTooltip={generateRowTooltip}
@@ -82,15 +82,15 @@ export const DesktopTableView = <T extends RecordWithId>({
           renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
           initialDelay={1}
         >
-          {(row, idx) => (
+          {(row, index) => (
             <DataRow
               key={row.id}
               ExpandContent={ExpandContent}
-              rowIndex={idx}
+              rowIndex={index}
               columns={columnsToDisplay}
               onClick={onRowClick ? onRowClick : undefined}
               rowData={row}
-              rowKey={String(idx)}
+              rowKey={String(index)}
               dense={dense}
               keyboardActivated={clickFocusedRow}
               generateRowTooltip={generateRowTooltip}

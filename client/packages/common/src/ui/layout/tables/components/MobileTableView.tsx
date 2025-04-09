@@ -8,7 +8,7 @@ import {
   useFormatDateTime,
   useTranslation,
 } from '@openmsupply-client/common';
-import { MobileCardList } from './MobileCardList';
+import { DataCard } from './DataCard';
 
 interface MobileTableViewProps<T extends RecordWithId> {
   data: T[];
@@ -48,19 +48,18 @@ export function MobileTableView<T extends RecordWithId>({
         overflowX: 'hidden',
         overflowY: 'auto',
         width,
-        padding: 1,
       }}
     >
-      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ p: 1, display: 'flex', flexDirection: 'column' }}>
         <>
-          {data.map((row, idx) => (
-            <MobileCardList
+          {data.map((row, index) => (
+            <DataCard
               key={row.id}
-              rowIndex={idx}
+              rowIndex={index}
               columns={columnsToDisplay ?? columns}
               onClick={onRowClick ? onRowClick : undefined}
               rowData={row}
-              rowKey={String(idx)}
+              rowKey={String(index)}
               generateRowTooltip={generateRowTooltip}
               localisedText={t}
               localisedDate={localisedDate}

@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import {
   BasicSpinner,
-  useIsSmallScreen,
+  useIsExtraSmallScreen,
   useRegisterActions,
 } from '@openmsupply-client/common';
 
@@ -38,7 +38,7 @@ const DataTableComponent = <T extends RecordWithId>({
   width = '100%',
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation();
-  const isSmallScreen = useIsSmallScreen();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   const [clickFocusedRow, setClickFocusedRow] = useState(false);
   const { setRows, setDisabledRows, setFocus } = useTableStore();
   const { columnDisplayState } = useColumnDisplayState(id, columns);
@@ -118,7 +118,7 @@ const DataTableComponent = <T extends RecordWithId>({
     );
   }
 
-  if (isSmallScreen) {
+  if (isExtraSmallScreen) {
     return (
       <MobileTableView
         data={data}
