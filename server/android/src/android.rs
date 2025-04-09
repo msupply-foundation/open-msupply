@@ -1,4 +1,5 @@
-/// This module exports some "C" methods that can directly be called from the Java runtime.
+#![recursion_limit = "256"]
+// This module exports some "C" methods that can directly be called from the Java runtime.
 #[allow(non_snake_case)]
 pub mod android {
     extern crate jni;
