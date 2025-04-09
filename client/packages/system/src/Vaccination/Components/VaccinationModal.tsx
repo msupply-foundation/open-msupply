@@ -242,7 +242,7 @@ const VaccinationForm = ({
         Input={
           <DatePicker
             disableFuture
-            value={draft.date}
+            value={draft.date}  
             onChange={date => updateDraft({ date })}
             sx={{ flex: 1 }}
           />
