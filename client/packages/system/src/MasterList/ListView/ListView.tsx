@@ -22,13 +22,13 @@ const MasterListComponent: FC = () => {
     filter,
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({ filters: [{ key: 'name' }] });
-  const {
-    masterLists: { data, isError, isLoading },
-  } = useMasterLists({
-    first,
-    offset,
-    sortBy,
-    filterBy,
+  const { data, isError, isLoading } = useMasterLists({
+    queryParams: {
+      first,
+      offset,
+      sortBy,
+      filterBy,
+    },
   });
   const pagination = { page, first, offset };
   const navigate = useNavigate();

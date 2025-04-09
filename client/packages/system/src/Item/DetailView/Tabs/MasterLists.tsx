@@ -16,9 +16,14 @@ import {
 } from '@openmsupply-client/common';
 
 const MasterListsTable = ({ itemId }: { itemId?: string }) => {
-  const {
-    byItemId: { data, isLoading },
-  } = useMasterLists(undefined, itemId ?? '');
+  const { data, isLoading } = useMasterLists({
+    queryParams: {
+      filterBy: {
+        existsForStoreId: { equalTo: 'storeId' },
+        itemId: { equalTo: itemId ?? '' },
+      },
+    },
+  });
   const t = useTranslation();
   const columns = useColumns<MasterListRowFragment>([
     ['code', { Cell: TooltipTextCell }],
