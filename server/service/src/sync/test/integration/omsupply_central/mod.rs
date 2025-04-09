@@ -1,6 +1,7 @@
 mod asset;
 mod plugin_data;
 mod test;
+mod vaccine_card;
 
 use std::time::Duration;
 
