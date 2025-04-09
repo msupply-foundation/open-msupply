@@ -1,113 +1,20 @@
 /* eslint-disable react/jsx-key */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
-import { ViewportList } from 'react-viewport-list';
-import {
-  Box,
-  TableBody,
-  TableHead,
-  TableContainer,
-  Table as MuiTable,
-  Typography,
-  TableCell,
-} from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import {
   BasicSpinner,
-  Column,
+  useIsSmallScreen,
   useRegisterActions,
 } from '@openmsupply-client/common';
 
 import { TableProps } from './types';
-import { DataRow } from './components/DataRow/DataRow';
-import { PaginationRow } from './columns/PaginationRow';
-import { ColumnPicker, HeaderCell, HeaderRow } from './components/Header';
 import { RecordWithId } from '@common/types';
-import { useFormatDateTime, useTranslation } from '@common/intl';
+import { useTranslation } from '@common/intl';
 import { useTableStore } from './context';
 import { useColumnDisplayState } from './hooks';
-
-interface RenderRowsProps<T extends RecordWithId> {
-  mRef: React.RefObject<HTMLDivElement>;
-  data: T[];
-  ExpandContent?: React.FC<{ rowData: T }>;
-  columnsToDisplay: Column<T>[];
-  onRowClick?: ((row: T) => void) | null;
-  dense: boolean;
-  clickFocusedRow: boolean;
-  generateRowTooltip: ((row: T) => string) | undefined;
-  isRowAnimated: boolean;
-  additionalRows?: JSX.Element[];
-}
-const RenderRows = <T extends RecordWithId>({
-  mRef,
-  data,
-  ExpandContent,
-  columnsToDisplay,
-  onRowClick,
-  dense,
-  clickFocusedRow,
-  generateRowTooltip,
-  isRowAnimated,
-  additionalRows,
-}: RenderRowsProps<T>) => {
-  const t = useTranslation();
-  const { localisedDate } = useFormatDateTime();
-
-  if (ExpandContent != undefined)
-    return (
-      <>
-        {data.map((row, idx) => (
-          <DataRow
-            key={row.id}
-            ExpandContent={ExpandContent}
-            rowIndex={idx}
-            columns={columnsToDisplay}
-            onClick={onRowClick ? onRowClick : undefined}
-            rowData={row}
-            rowKey={String(idx)}
-            dense={dense}
-            keyboardActivated={clickFocusedRow}
-            generateRowTooltip={generateRowTooltip}
-            localisedText={t}
-            localisedDate={localisedDate}
-            isAnimated={isRowAnimated}
-          />
-        ))}
-        {additionalRows}
-      </>
-    );
-  return (
-    <>
-      <ViewportList
-        viewportRef={mRef}
-        items={data}
-        axis="y"
-        itemSize={40}
-        renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
-        initialDelay={1}
-      >
-        {(row, idx) => (
-          <DataRow
-            key={row.id}
-            ExpandContent={ExpandContent}
-            rowIndex={idx}
-            columns={columnsToDisplay}
-            onClick={onRowClick ? onRowClick : undefined}
-            rowData={row}
-            rowKey={String(idx)}
-            dense={dense}
-            keyboardActivated={clickFocusedRow}
-            generateRowTooltip={generateRowTooltip}
-            localisedText={t}
-            localisedDate={localisedDate}
-            isAnimated={isRowAnimated}
-          />
-        )}
-      </ViewportList>
-      {additionalRows}
-    </>
-  );
-};
+import { MobileTableView } from './components/MobileTableView';
+import { DesktopTableView } from './components/DesktopTableView';
 
 const DataTableComponent = <T extends RecordWithId>({
   id,
@@ -131,12 +38,12 @@ const DataTableComponent = <T extends RecordWithId>({
   width = '100%',
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation();
-  const { setRows, setDisabledRows, setFocus } = useTableStore();
+  const isSmallScreen = useIsSmallScreen();
   const [clickFocusedRow, setClickFocusedRow] = useState(false);
-  const { columnDisplayState, showAllColumns, toggleColumn } =
-    useColumnDisplayState(id, columns);
+  const { setRows, setDisabledRows, setFocus } = useTableStore();
+  const { columnDisplayState } = useColumnDisplayState(id, columns);
 
-  const columnsToDisplay = React.useMemo(() => {
+  const columnsToDisplay = useMemo(() => {
     const cols = columns.filter(c => columnDisplayState[String(c.key)] ?? true);
 
     return cols.every(c => c.key === 'selection') ? [] : cols;
@@ -171,10 +78,12 @@ const DataTableComponent = <T extends RecordWithId>({
 
   useEffect(() => {
     if (data.length) setRows(data.map(({ id }) => id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   useEffect(() => {
     if (isDisabled) setDisabledRows(data.map(({ id }) => id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDisabled, data]);
 
   // guard against a page number being set which is greater than the data allows
@@ -182,9 +91,8 @@ const DataTableComponent = <T extends RecordWithId>({
     if (!pagination || !onChangePage || !pagination.total) return;
     const { page, first, total } = pagination;
     if (page * first > total) onChangePage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination]);
-
-  const ref = useRef<HTMLDivElement>(null);
 
   if (isLoading) return <BasicSpinner />;
 
@@ -210,94 +118,42 @@ const DataTableComponent = <T extends RecordWithId>({
     );
   }
 
+  if (isSmallScreen) {
+    return (
+      <MobileTableView
+        data={data}
+        columns={columns}
+        columnsToDisplay={columnsToDisplay}
+        onRowClick={onRowClick}
+        clickFocusedRow={clickFocusedRow}
+        generateRowTooltip={generateRowTooltip}
+        isRowAnimated={isRowAnimated}
+        additionalRows={additionalRows}
+        pagination={pagination}
+        onChangePage={onChangePage}
+        width={width}
+      />
+    );
+  }
+
   return (
-    <TableContainer
-      ref={ref}
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        overflowX,
-        overflowY: 'auto',
-        width,
-      }}
-    >
-      <MuiTable style={{ borderCollapse: 'separate' }}>
-        <TableHead
-          sx={{
-            backgroundColor: 'background.white',
-            position: 'sticky',
-            top: 0,
-            zIndex: 'tableHeader',
-            boxShadow: dense ? null : theme => theme.shadows[2],
-          }}
-        >
-          <HeaderRow dense={dense}>
-            {columnsToDisplay.map(column => (
-              <HeaderCell
-                dense={dense}
-                column={column}
-                key={String(column.key)}
-              />
-            ))}
-            {!!enableColumnSelection && (
-              <TableCell
-                role="columnheader"
-                padding={'none'}
-                sx={{
-                  backgroundColor: 'transparent',
-                  borderBottom: '0px',
-                  width: 30,
-                }}
-              >
-                <ColumnPicker
-                  columns={columns}
-                  columnDisplayState={columnDisplayState}
-                  toggleColumn={toggleColumn}
-                  showAllColumns={showAllColumns}
-                />
-              </TableCell>
-            )}
-          </HeaderRow>
-        </TableHead>
-        <TableBody>
-          <RenderRows
-            mRef={ref}
-            data={data}
-            ExpandContent={ExpandContent}
-            columnsToDisplay={columnsToDisplay}
-            onRowClick={onRowClick}
-            dense={dense}
-            clickFocusedRow={clickFocusedRow}
-            generateRowTooltip={generateRowTooltip}
-            isRowAnimated={isRowAnimated}
-            additionalRows={additionalRows}
-          />
-        </TableBody>
-      </MuiTable>
-      <Box
-        sx={{
-          flex: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'sticky',
-          left: 0,
-          insetBlockEnd: 0,
-          backgroundColor: 'white',
-          justifyContent: 'flex-end',
-          zIndex: 100,
-        }}
-      >
-        {pagination && onChangePage && (
-          <PaginationRow
-            page={pagination.page}
-            offset={pagination.offset}
-            first={pagination.first}
-            total={pagination.total ?? 0}
-            onChange={onChangePage}
-          />
-        )}
-      </Box>
-    </TableContainer>
+    <DesktopTableView
+      id={id}
+      data={data}
+      columns={columns}
+      ExpandContent={ExpandContent}
+      onRowClick={onRowClick}
+      clickFocusedRow={clickFocusedRow}
+      isRowAnimated={isRowAnimated}
+      generateRowTooltip={generateRowTooltip}
+      additionalRows={additionalRows}
+      pagination={pagination}
+      onChangePage={onChangePage}
+      width={width}
+      overflowX={overflowX}
+      dense={dense}
+      enableColumnSelection={enableColumnSelection}
+    />
   );
 };
 

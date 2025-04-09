@@ -66,6 +66,7 @@ const DataRowComponent = <T extends RecordWithId>({
 
   useEffect(() => {
     if (isFocused) onRowClick();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keyboardActivated]);
 
   return (
