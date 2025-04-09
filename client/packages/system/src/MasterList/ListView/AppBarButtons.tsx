@@ -11,14 +11,14 @@ import {
   Platform,
   useAuthContext,
 } from '@openmsupply-client/common';
-import { useMasterList } from '../api/hooks';
+import { useMasterListOld } from '../api/hooks';
 import { masterListsToCsv } from '../../utils';
 
 export const AppBarButtons = () => {
   const { success, error } = useNotification();
   const t = useTranslation();
   const { storeId } = useAuthContext();
-  const { isLoading, fetchAsync } = useMasterList.document.listAll(
+  const { isLoading, fetchAsync } = useMasterListOld.document.listAll(
     {
       key: 'name',
       direction: 'asc',

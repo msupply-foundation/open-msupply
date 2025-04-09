@@ -1,14 +1,18 @@
-import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
+import {
+  useParams,
+  useQuery,
+  useUrlQueryParams,
+} from '@openmsupply-client/common';
 import { useMasterListApi } from '../utils/useMasterListApi';
-import { useMasterListId } from '../document/useMasterList';
 
 export const useMasterListLines = () => {
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'itemName', dir: 'asc' },
   });
+  const { id } = useParams();
 
   const api = useMasterListApi();
-  const masterListId = useMasterListId();
+  const masterListId = id || '';
 
   return useQuery(api.keys.lines(masterListId, queryParams), () =>
     api.get.lines(masterListId, queryParams)

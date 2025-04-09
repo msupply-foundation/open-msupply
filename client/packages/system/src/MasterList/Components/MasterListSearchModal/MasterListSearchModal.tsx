@@ -4,7 +4,7 @@ import {
   ListSearch,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useMasterList, MasterListRowFragment } from '../../api';
+import { useMasterListOld, MasterListRowFragment } from '../../api';
 
 interface MasterListSearchProps {
   filterBy?: FilterByWithBoolean;
@@ -20,7 +20,7 @@ export const MasterListSearchModal: FC<MasterListSearchProps> = ({
   onChange,
 }) => {
   const sortBy = { key: 'name', direction: 'asc' as 'asc' | 'desc' };
-  const { mutate, data, isLoading } = useMasterList.document.listAll(
+  const { mutate, data, isLoading } = useMasterListOld.document.listAll(
     sortBy,
     filterBy
   );
