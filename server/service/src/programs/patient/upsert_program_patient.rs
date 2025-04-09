@@ -61,7 +61,7 @@ pub fn upsert_program_patient(
                     &doc_timestamp,
                     patient,
                 )?;
-                create_patient_name_store_join(&ctx.connection, store_id, &patient_id)?;
+                create_patient_name_store_join(&ctx.connection, store_id, &patient_id, None)?;
             }
 
             service_provider

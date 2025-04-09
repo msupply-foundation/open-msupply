@@ -1,6 +1,6 @@
 use super::sync_omsupply_central;
 use crate::{
-    programs::patient::link_patient_to_store,
+    programs::patient::{link_patient_to_store, patient_updated::create_patient_name_store_join},
     sync::{
         test::{
             check_integrated,
@@ -13,7 +13,7 @@ use crate::{
         CentralServerConfig,
     },
 };
-use repository::{GenderType, NameLinkRow, NameRow, NameRowType, NameStoreJoinRow, VaccinationRow};
+use repository::{GenderType, NameRow, NameRowType, VaccinationRow};
 use serde_json::json;
 use util::uuid::uuid;
 
@@ -149,18 +149,6 @@ pub(super) async fn test_vaccine_card() {
         ..Default::default()
     };
 
-    let name_link = NameLinkRow {
-        id: patient_one.id.clone(),
-        name_id: patient_one.id.clone(),
-    };
-
-    let name_store_join = NameStoreJoinRow {
-        id: uuid(),
-        name_link_id: patient_one.id.clone(),
-        store_id: site1.config.new_site_properties.store_id.clone(),
-        ..Default::default()
-    };
-
     let vaccination_one = VaccinationRow {
         id: uuid(),
         store_id: site1.config.new_site_properties.store_id.clone(),
@@ -176,14 +164,15 @@ pub(super) async fn test_vaccine_card() {
     ];
 
     integrate_with_is_sync_reset(&site1.context.connection, &integrations_one);
-    // Also insert name link and name_store_join
-    integrate_with_is_sync_reset(
+    // Name store join created here, name link is create when patient is upserted
+    create_patient_name_store_join(
         &site1.context.connection,
-        &vec![
-            IntegrationOperation::upsert(name_link.clone()),
-            IntegrationOperation::upsert(name_store_join.clone()),
-        ],
-    );
+        &site1.config.new_site_properties.store_id,
+        &patient_one.id,
+        None,
+    )
+    .unwrap();
+
     site1.synchroniser.sync(None).await.unwrap();
 
     // 2 - Link patient to sites 2, sync and test data from 1 is present
