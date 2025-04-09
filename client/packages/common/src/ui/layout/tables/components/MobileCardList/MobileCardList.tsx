@@ -86,6 +86,8 @@ export const MobileCardList = <T extends RecordWithId>({
         overflow: 'hidden',
         border: '2px solid',
         borderColor: 'divider',
+        borderLeft: '2px solid',
+        borderLeftColor: 'primary.light',
         opacity: isDisabled ? 0.7 : 1,
         backgroundColor: isFocused
           ? theme => alpha(theme.palette.secondary.light, 0.15)
