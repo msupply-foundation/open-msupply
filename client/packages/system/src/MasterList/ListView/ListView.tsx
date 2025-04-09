@@ -13,16 +13,23 @@ import {
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { useMasterListOld, MasterListRowFragment } from '../api';
+import { MasterListRowFragment, useMasterLists } from '../api';
 
 const MasterListComponent: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
     filter,
-    queryParams: { sortBy, page, first, offset },
+    queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({ filters: [{ key: 'name' }] });
-  const { data, isError, isLoading } = useMasterListOld.document.list();
+  const {
+    masterLists: { data, isError, isLoading },
+  } = useMasterLists({
+    first,
+    offset,
+    sortBy,
+    filterBy,
+  });
   const pagination = { page, first, offset };
   const navigate = useNavigate();
   const t = useTranslation();
@@ -41,7 +48,7 @@ const MasterListComponent: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons />
+      <AppBarButtons data={data?.nodes ?? []} />
       <DataTable
         id="master-list-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}

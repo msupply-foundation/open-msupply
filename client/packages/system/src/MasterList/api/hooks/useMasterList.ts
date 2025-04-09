@@ -19,7 +19,7 @@ export const useMasterList = () => {
     ) {
       return query?.masterLists.nodes[0];
     }
-    return undefined;
+    throw new Error(`Master list with id ${id} not found.`);
   };
 
   const query = useQuery({
