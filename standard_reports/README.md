@@ -367,6 +367,8 @@ It's a good idea to test convert_data with realistic input and output data.
 
 For full typescript examples with tests please see item-usage report.
 
+> Note typescript reports often require additional dependencies which are not installed by default. You may need to navigate to the report convert_data dir and run `yarn` to allow reports to build. This may be required even if no type regeneration is needed. For example, the item-usage report will require dependency installation on a new omSupply instance before it can be built.
+
 #### Debugging and Logging
 
 A `log` method is injected into javascript context, and can be used to pass a log messages to the server, which in term log them at info level, i.e. `log('debug log')` will result in the following log in server console and or file log:
