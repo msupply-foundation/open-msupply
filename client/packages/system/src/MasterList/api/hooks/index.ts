@@ -6,7 +6,6 @@ export { useMasterLists } from './useMasterLists';
 export const useMasterListOld = {
   document: {
     listAll: Document.useMasterListsAll,
-    listByItemId: Document.useMasterListsByItemId,
   },
   line: {
     rows: Lines.useMasterListLines,
