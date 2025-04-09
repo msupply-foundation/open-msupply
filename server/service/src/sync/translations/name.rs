@@ -164,7 +164,6 @@ impl SyncTranslation for NameTranslation {
         r#type: &ToSyncRecordTranslationType,
     ) -> bool {
         match r#type {
-            // By default will assume records needs to be pushed to central if change_log_type is implemented
             ToSyncRecordTranslationType::PushToLegacyCentral => {
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }
