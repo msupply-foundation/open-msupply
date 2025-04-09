@@ -1157,7 +1157,7 @@
   "label.to-date": "À ce jour",
   "label.to-datetime": "jusqu'à la date/heure",
   "label.to-expiry": "Jusqu'à péremption",
-  "label.to-shipped-datetime": "Jusqu'à la date d'expedition",
+  "label.to-shipped-datetime": "Jusqu'à la date d'expédition",
   "label.to-start-datetime": "jusqu'à la date/heure de début",
   "label.today": "Aujourd'hui",
   "label.toggle-password-visibility": "changer la visibilité du mot de passe",
