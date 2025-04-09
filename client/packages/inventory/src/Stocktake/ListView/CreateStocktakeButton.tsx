@@ -47,10 +47,15 @@ export const CreateStocktakeButton: React.FC<{
 }> = ({ modalController }) => {
   const t = useTranslation();
   const { mutateAsync, isLoading: isSaving } = useStocktake.document.insert();
-  const { user } = useAuthContext();
-  const {
-    masterLists: { data: masterListData, isLoading: isLoadingMasterLists },
-  } = useMasterLists();
+  const { user, store } = useAuthContext();
+  const { data: masterListData, isLoading: isLoadingMasterLists } =
+    useMasterLists({
+      queryParams: {
+        filterBy: {
+          existsForStoreId: { equalTo: store?.id },
+        },
+      },
+    });
   const {
     query: { data: locationData, isLoading: isLoadingLocations },
   } = useLocationList({ sortBy: { key: 'name', direction: 'asc' } });
