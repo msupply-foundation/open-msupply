@@ -6545,7 +6545,6 @@ name = "omsupply-service"
 version = "0.1.0"
 dependencies = [
  "actix-web",
- "clap",
  "eventlog",
  "futures",
  "log",

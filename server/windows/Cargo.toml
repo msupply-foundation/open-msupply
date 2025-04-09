@@ -26,6 +26,3 @@ server = { path = "../server", default-features = false }
 service = { path = "../service" }
 tokio = { workspace = true }
 log-panics = { workspace = true }
-clap = { workspace = true }
-
-
