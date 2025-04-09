@@ -1,24 +1,22 @@
 import {
+  AssetTypeSortFieldInput,
   FilterByWithBoolean,
-  LIST_KEY,
   useQuery,
 } from '@openmsupply-client/common';
 import { useAssetGraphQL } from '../useAssetGraphQL';
-import { ASSET, LOG_REASONS } from './keys';
+import { ASSET, TYPES } from './keys';
 
-export const useAssetLogReasonList = (
-  filterBy?: FilterByWithBoolean | null
-) => {
+export const useAssetTypes = (filterBy?: FilterByWithBoolean | null) => {
   const { assetApi, storeId } = useAssetGraphQL();
-  const queryKey = [ASSET, storeId, LIST_KEY, LOG_REASONS, filterBy];
+  const queryKey = [ASSET, storeId, TYPES, filterBy];
 
   const queryFn = async () => {
-    const query = await assetApi.assetLogReasons({
-      storeId,
+    const query = await assetApi.assetTypes({
       filter: filterBy,
+      sort: { key: AssetTypeSortFieldInput.Name, desc: false },
     });
 
-    const { nodes, totalCount } = query?.assetLogReasons;
+    const { nodes, totalCount } = query?.assetTypes;
     return { nodes, totalCount };
   };
 
