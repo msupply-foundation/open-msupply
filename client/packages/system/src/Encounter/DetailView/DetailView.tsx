@@ -114,13 +114,13 @@ export const DetailView: FC = () => {
 
   const updateEncounter = useDebounceCallback(
     (patch: Partial<EncounterFragment>) =>
-      setData((prev) => {
+      setData(prev => {
         return {
           ...(typeof prev === 'object' ? prev : {}),
           ...patch,
         };
       }),
-    [setData]
+    []
   );
 
   const onDelete = () => {
