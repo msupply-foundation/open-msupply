@@ -45,23 +45,6 @@ const masterListLineParser = {
 
 export const getMasterListQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    list: async ({ first, offset, sortBy, filterBy }: ListParams) => {
-      const key = masterListParser.toSort(sortBy);
-      const desc = !!sortBy.isDesc;
-      const result = await sdk.masterLists({
-        first,
-        offset,
-        key,
-        desc,
-        filter: { ...filterBy, existsForStoreId: { equalTo: storeId } },
-        storeId,
-      });
-      return result?.masterLists;
-    },
-    byItemId: async (itemId: string) => {
-      const result = await sdk.masterListsByItemId({ itemId, storeId });
-      return result?.masterLists;
-    },
     listAll: async ({
       sortBy,
       filter,

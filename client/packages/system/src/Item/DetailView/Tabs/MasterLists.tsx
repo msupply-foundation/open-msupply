@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import {
   MasterListRowFragment,
-  useMasterListOld,
+  useMasterLists,
 } from '@openmsupply-client/system';
 import { BasicSpinner, NothingHere } from '@common/components';
 import {
@@ -15,10 +15,10 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 
-const MasterListsTable: FC<{ itemId?: string }> = ({ itemId }) => {
-  const { data, isLoading } = useMasterListOld.document.listByItemId(
-    itemId ?? ''
-  );
+const MasterListsTable = ({ itemId }: { itemId?: string }) => {
+  const {
+    byItemId: { data, isLoading },
+  } = useMasterLists(undefined, itemId ?? '');
   const t = useTranslation();
   const columns = useColumns<MasterListRowFragment>([
     ['code', { Cell: TooltipTextCell }],
