@@ -11,7 +11,7 @@ import {
   useNotification,
   useWebClient,
 } from '@openmsupply-client/common';
-import { useLog, useLogOld } from '@openmsupply-client/system';
+import { useLog } from '@openmsupply-client/system';
 import { LogTextDisplay } from './LogTextDisplay';
 
 export const LogDisplay = ({
@@ -21,8 +21,9 @@ export const LogDisplay = ({
   fileName: string;
   setLogContent: (content: string[]) => void;
 }) => {
-  const { mutateAsync, data, isLoading } =
-    useLogOld.document.logContentsByFileName();
+  const {
+    logContents: { mutateAsync, data, isLoading },
+  } = useLog();
 
   useEffect(() => {
     if (!!fileName) {
@@ -34,7 +35,7 @@ export const LogDisplay = ({
     if (!!data?.fileContent) {
       setLogContent(data.fileContent);
     }
-  }, [data]);
+  }, [data?.fileContent]);
 
   if (isLoading) {
     return <BasicSpinner />;
