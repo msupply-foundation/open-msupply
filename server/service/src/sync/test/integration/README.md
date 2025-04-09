@@ -59,7 +59,7 @@ In this case d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 = 
 
 ## 5 `run tests`
 
-Via cli: `SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test integration_sync  --features integration_test`
+Via cli: `SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test  integration_sync  --features integration_test --package service`
 
 If you've set configurations in rust analyzer, can use inlay hint play and debug buttons in:
 
