@@ -223,7 +223,7 @@ pub(super) async fn test_vaccine_card() {
 
     check_integrated(&site1.context.connection, &integrations_two);
 
-    // 3 - Re intialise both sites and make sure all data is present on both sites
+    // 4 - Re intialise both sites and make sure all data is present on both sites
 
     let site1 = init_test_context(site1.config, "vaccine_card_site_1_reinit").await;
     let site2 = init_test_context(site2.config, "vaccine_card_site_2_reinit").await;
