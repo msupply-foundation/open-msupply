@@ -9,7 +9,7 @@ interface CardContentProps<T extends RecordWithId> {
   columns: Column<T>[];
   rowData: T;
   rowKey: string;
-  index: number;
+  rowIndex: number;
   isDisabled: boolean;
   localisedText: TypedTFunction<LocaleKey>;
   localisedDate: (date: string | number | Date) => string;
@@ -20,14 +20,14 @@ export const CardContent = <T extends RecordWithId>({
   columns,
   rowData,
   rowKey,
-  index,
+  rowIndex,
   isDisabled,
   localisedText: t,
   localisedDate,
 }: CardContentProps<T>): ReactElement => {
   return (
     <Box
-      key={`${rowKey}-${index}`}
+      key={`${rowKey}-${rowIndex}`}
       sx={{
         p: 0.5,
         width: '50%',
@@ -36,10 +36,10 @@ export const CardContent = <T extends RecordWithId>({
     >
       <Box
         sx={{
+          width: '100%',
           display: 'flex',
           flexDirection: 'row',
           position: 'relative',
-          width: '100%',
         }}
       >
         {column.label && (
@@ -48,10 +48,10 @@ export const CardContent = <T extends RecordWithId>({
             color="text.secondary"
             sx={{
               pr: 2,
-              alignSelf: 'center',
               flexShrink: 0,
-              whiteSpace: 'nowrap',
               fontWeight: 'bold',
+              alignSelf: 'center',
+              whiteSpace: 'nowrap',
             }}
           >
             {t(column.label as LocaleKey)}:
@@ -61,18 +61,18 @@ export const CardContent = <T extends RecordWithId>({
           variant="body2"
           sx={{
             overflow: 'hidden',
-            textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
           }}
         >
           {column.Cell && (
             <column.Cell
               column={column}
               columns={columns}
-              columnIndex={index + 1}
+              columnIndex={rowIndex + 1}
               rowKey={rowKey}
               rowData={rowData}
-              rowIndex={Math.floor(index / 3)}
+              rowIndex={Math.floor(rowIndex / 3)}
               localisedText={t}
               localisedDate={localisedDate}
               isError={column.getIsError?.(rowData)}

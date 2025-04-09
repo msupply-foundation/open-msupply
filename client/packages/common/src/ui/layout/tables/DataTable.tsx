@@ -126,11 +126,10 @@ const DataTableComponent = <T extends RecordWithId>({
         columnsToDisplay={columnsToDisplay}
         onRowClick={onRowClick}
         generateRowTooltip={generateRowTooltip}
-        isRowAnimated={isRowAnimated}
         additionalRows={additionalRows}
+        width={width}
         pagination={pagination}
         onChangePage={onChangePage}
-        width={width}
       />
     );
   }

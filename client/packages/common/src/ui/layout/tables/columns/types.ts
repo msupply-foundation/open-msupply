@@ -60,6 +60,8 @@ export enum GenericColumnKey {
   Selection = 'selection',
 }
 
+export type CardColumnType = 'Primary' | 'Status' | 'General';
+
 export interface Column<T extends RecordWithId> {
   key: keyof T | GenericColumnKey | string;
   accessor: ColumnDataAccessor<T>;
@@ -104,6 +106,10 @@ export interface Column<T extends RecordWithId> {
   // When using browser autocomplete in tables, row data needs to be used to set autocompleteName
   // to a value that's related to row data (like item id)
   autocompleteProvider?: (rowDataValue: T) => string;
+
+  // Used to provide context for the DataCard component
+  // It helps the layout of the card
+  cardColumnType?: CardColumnType;
 }
 
 export interface ColumnDefinition<T extends RecordWithId>

@@ -66,7 +66,12 @@ export const PaginationRow: FC<PaginationRowProps> = ({
     >
       {!!total && (
         <>
-          <Box display="flex" flexDirection="row" flexWrap="wrap" flex={1}>
+          <Box
+            flex={1}
+            flexWrap="wrap"
+            flexDirection="row"
+            display={theme => (theme.breakpoints.down('xs') ? 'none' : 'flex')}
+          >
             <Typography sx={{ marginRight: '4px' }}>
               {t('label.showing')}
             </Typography>

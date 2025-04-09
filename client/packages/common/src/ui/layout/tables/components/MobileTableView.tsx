@@ -13,7 +13,6 @@ import { DataCard } from './DataCard';
 interface MobileTableViewProps<T extends RecordWithId> {
   data: T[];
   width?: string | number;
-  isRowAnimated?: boolean;
   columns: Column<T>[];
   columnsToDisplay?: Column<T>[];
   additionalRows?: JSX.Element[];
@@ -29,7 +28,6 @@ export function MobileTableView<T extends RecordWithId>({
   columnsToDisplay,
   width = '100%',
   onRowClick,
-  isRowAnimated = false,
   pagination,
   additionalRows,
   onChangePage,
@@ -43,11 +41,11 @@ export function MobileTableView<T extends RecordWithId>({
     <Box
       ref={ref}
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        overflowX: 'hidden',
-        overflowY: 'auto',
         width,
+        display: 'flex',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        flexDirection: 'column',
       }}
     >
       <Box sx={{ p: 1, display: 'flex', flexDirection: 'column' }}>
@@ -63,7 +61,6 @@ export function MobileTableView<T extends RecordWithId>({
               generateRowTooltip={generateRowTooltip}
               localisedText={t}
               localisedDate={localisedDate}
-              isAnimated={isRowAnimated}
             />
           ))}
           {additionalRows}

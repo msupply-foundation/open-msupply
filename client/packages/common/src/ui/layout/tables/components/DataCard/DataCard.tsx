@@ -19,7 +19,6 @@ interface DataCardProps<T extends RecordWithId> {
   generateRowTooltip?: (row: T) => string;
   localisedText: TypedTFunction<LocaleKey>;
   localisedDate: (date: string | number | Date) => string;
-  isAnimated: boolean;
 }
 
 export const DataCard = <T extends RecordWithId>({
@@ -33,13 +32,17 @@ export const DataCard = <T extends RecordWithId>({
   generateRowTooltip,
 }: DataCardProps<T>): JSX.Element => {
   const hasOnClick = !!onClick;
-  const { isDisabled } = useIsDisabled(rowData.id);
   const { rowStyle } = useRowStyle(rowData.id);
   const tooltip = generateRowTooltip?.(rowData);
+  const { isDisabled } = useIsDisabled(rowData.id);
   const [showAllColumns, setShowAllColumns] = useState(false);
 
   // Need to manage this information at the useColumn hook
   // e.g. have a column type that tells if it is a primary column or a status column
+
+  // if theres a card column type this can be a bit easier to follow
+  // we can allocate the primary when we define the columns
+
   const primaryColumn =
     columns
       .filter(col => col.key !== 'selection')
@@ -85,9 +88,7 @@ export const DataCard = <T extends RecordWithId>({
       title={tooltip}
       sx={{
         my: 1,
-        position: 'relative',
         borderRadius: 1.5,
-        overflow: 'hidden',
         border: '1px solid',
         borderColor: 'divider',
         borderLeft: '3px solid',
@@ -127,13 +128,13 @@ export const DataCard = <T extends RecordWithId>({
             <CardContent
               key={`${rowKey}-${index}`}
               column={column}
+              columns={columns}
               rowData={rowData}
               rowKey={rowKey}
-              index={index}
+              rowIndex={index}
               isDisabled={isDisabled}
               localisedText={localisedText}
               localisedDate={localisedDate}
-              columns={columns}
             />
           ))}
           {hasMoreColumns && (
@@ -143,13 +144,13 @@ export const DataCard = <T extends RecordWithId>({
                   <CardContent
                     key={`${rowKey}-${index}`}
                     column={column}
-                    rowData={rowData}
+                    columns={columns}
                     rowKey={rowKey}
-                    index={index}
+                    rowIndex={index}
+                    rowData={rowData}
                     isDisabled={isDisabled}
                     localisedText={localisedText}
                     localisedDate={localisedDate}
-                    columns={columns}
                   />
                 ))}
               </Box>
