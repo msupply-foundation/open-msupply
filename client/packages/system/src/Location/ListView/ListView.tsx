@@ -10,7 +10,7 @@ import {
   useUrlQueryParams,
   GenericColumnKey,
 } from '@openmsupply-client/common';
-import { useLocation, LocationRowFragment } from '../api';
+import { LocationRowFragment, useLocationList } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { LocationEditModal } from './LocationEditModal';
 import { Toolbar } from './Toolbar';
@@ -35,7 +35,9 @@ const LocationListComponent: FC = () => {
     ],
   });
   const queryParams = { sortBy, first, offset, filterBy };
-  const { data, isError, isLoading } = useLocation.document.list(queryParams);
+  const {
+    query: { data, isError, isLoading },
+  } = useLocationList(queryParams);
   const pagination = { page, first, offset };
   const t = useTranslation();
   const columns = useColumns<LocationRowFragment>(
@@ -79,7 +81,11 @@ const LocationListComponent: FC = () => {
         />
       )}
       <Toolbar filter={filter} />
-      <AppBarButtons onCreate={() => onOpen()} />
+      <AppBarButtons
+        onCreate={() => onOpen()}
+        locations={data?.nodes}
+        reportIsLoading={isLoading}
+      />
       <DataTable
         id="location-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
