@@ -1,10 +1,10 @@
 import { Document } from './document';
 import { Lines } from './line';
 import { Utils } from './utils';
+export { useMasterLists } from './useMasterLists';
 
 export const useMasterListOld = {
   document: {
-    list: Document.useMasterLists,
     listAll: Document.useMasterListsAll,
     listByItemId: Document.useMasterListsByItemId,
   },
