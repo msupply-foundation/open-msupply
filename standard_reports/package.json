@@ -1,0 +1,10 @@
+{
+  "name": "@openmsupply-reports/system",
+  "version": "0.0.0",
+  "sideEffects": false,
+  "private": true,
+  "dependencies": {},
+  "devDependencies": {
+    "lodash": "^4.17.21"
+  }
+}
