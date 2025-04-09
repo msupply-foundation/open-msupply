@@ -158,10 +158,7 @@ pub fn generate(
 
         // Update, or default to existing
         clinician_link_id: clinician_id,
-        vaccination_date: match update_input.vaccination_date {
-            Some(NullableUpdate { value }) => value,
-            None => vaccination_date,
-        },
+        vaccination_date: update_input.vaccination_date.unwrap_or(vaccination_date),
         given: update_input.given.unwrap_or(given),
         comment: update_input.comment.or(comment),
 

@@ -18,7 +18,7 @@ use super::NotMostRecentGivenDose;
 #[derive(InputObject)]
 pub struct UpdateVaccinationInput {
     pub id: String,
-    pub vaccination_date: Option<NullableUpdateInput<NaiveDate>>,
+    pub vaccination_date: Option<NaiveDate>,
     pub facility_name_id: Option<NullableUpdateInput<String>>,
     pub facility_free_text: Option<NullableUpdateInput<String>>,
     pub clinician_id: Option<NullableUpdateInput<String>>,
@@ -46,9 +46,7 @@ impl From<UpdateVaccinationInput> for UpdateVaccination {
     ) -> Self {
         Self {
             id,
-            vaccination_date: vaccination_date.map(|vaccination_date| NullableUpdate {
-                value: vaccination_date.value,
-            }),
+            vaccination_date,
             clinician_id: clinician_id.map(|clinician_id| NullableUpdate {
                 value: clinician_id.value,
             }),
