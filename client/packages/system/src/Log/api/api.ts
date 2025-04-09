@@ -8,10 +8,6 @@ export const getServerLogQueries = (sdk: Sdk) => ({
       const response = await sdk.logLevel();
       return response?.logLevel;
     },
-    logFileNames: async () => {
-      const response = await sdk.logFileNames();
-      return response?.logFileNames;
-    },
     logContentsByFileName: async ({
       fileName,
     }: logContentsByFileNameParams) => {

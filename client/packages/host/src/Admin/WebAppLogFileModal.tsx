@@ -11,7 +11,7 @@ import {
   useNotification,
   useWebClient,
 } from '@openmsupply-client/common';
-import { useLog } from '@openmsupply-client/system';
+import { useLog, useLogOld } from '@openmsupply-client/system';
 import { LogTextDisplay } from './LogTextDisplay';
 
 export const LogDisplay = ({
@@ -22,7 +22,7 @@ export const LogDisplay = ({
   setLogContent: (content: string[]) => void;
 }) => {
   const { mutateAsync, data, isLoading } =
-    useLog.document.logContentsByFileName();
+    useLogOld.document.logContentsByFileName();
 
   useEffect(() => {
     if (!!fileName) {
@@ -63,7 +63,9 @@ export const WebAppLogFileModal = ({
   const [isSaving, setIsSaving] = useState(false);
   const noLog = logContent.length === 0;
 
-  const { data, isError, isLoading } = useLog.document.listFileNames();
+  const {
+    fileNames: { data, isLoading, isError },
+  } = useLog();
 
   const saveLog = async () => {
     if (noLog) {

@@ -1,9 +1,9 @@
 import { Utils } from './utils';
 import { Document } from './document';
+export * from './useLog';
 
-export const useLog = {
+export const useLogOld = {
   document: {
-    listFileNames: Document.useLogFileNames,
     logContentsByFileName: Document.useLogContentsByFileName,
   },
   utils: {
