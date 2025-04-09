@@ -15,6 +15,7 @@ import { es } from 'date-fns/locale/es';
 import { ru } from 'date-fns/locale/ru';
 import { pt } from 'date-fns/locale/pt';
 import pluralize from 'pluralize';
+import { localeKeySet } from '../locales';
 
 // Map locale string (from i18n) to locale object (from date-fns)
 const getLocaleObj = { fr, ar, es, ru };
@@ -125,6 +126,15 @@ export const useIntlUtils = () => {
     return t(localeKey, Formatter.fromCamelCase(serverKey));
   };
 
+  const translateReportName = (code: string, name: string) => {
+    const localeKey = `report.${code}`
+    return isLocaleKey(localeKey) ? t(localeKey) : name;
+  }
+
+  const isLocaleKey = (key: string): key is LocaleKey => {
+    return localeKeySet.has(key);
+  };
+
   return {
     currentLanguage,
     currentLanguageName,
@@ -138,6 +148,8 @@ export const useIntlUtils = () => {
     getLocalisedFullName,
     getPlural,
     translateServerError,
+    isLocaleKey,
+    translateReportName,
   };
 };
 
