@@ -53,10 +53,11 @@ impl SyncTranslation for NameStoreJoinTranslation {
         r#type: &ToSyncRecordTranslationType,
     ) -> bool {
         match r#type {
-            // By default will assume records needs to be pushed to central if change_log_type is implemented
             ToSyncRecordTranslationType::PushToLegacyCentral => {
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }
+            // We are also pushing to omsupply central so that it's available for
+            // cross site patient details sharing, same for name
             ToSyncRecordTranslationType::PushToOmSupplyCentral => {
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }
