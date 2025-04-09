@@ -59,7 +59,7 @@ const DATA_EXPORT_FOLDER: &str = "data";
 struct Args {
     #[clap(subcommand)]
     action: Action,
-
+    
     #[clap(flatten)]
     config_args: configuration::ConfigArgs,
 }
