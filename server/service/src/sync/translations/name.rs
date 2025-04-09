@@ -168,6 +168,8 @@ impl SyncTranslation for NameTranslation {
             ToSyncRecordTranslationType::PushToLegacyCentral => {
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }
+            // We are also pushing to omsupply central so that it's available for
+            // cross site patient details sharing, same for names_store_join
             ToSyncRecordTranslationType::PushToOmSupplyCentral => {
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }
