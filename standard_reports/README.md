@@ -118,6 +118,45 @@ These files must be compliant with JSON forms.
    │   ├── dist (generated)
    |   ├── node_modules (generated)
    |   ├── src
+   |   |   ├── generated-types (generated)
+   |   |   ├── test (optional)
+   |   |   |   ├── input.json
+   |   |   |   ├── output.json
+   |   |   |   └── test.ts
+   |   |   ├── convert_data.ts (copy)
+   |   |   ├── utils.ts
+   |   |   └── utils.test.ts (optional)
+   |   ├── codegen.yaml
+   |   ├── codegenTypes.ts
+   |   ├── convertDataType.ts
+   |   ├── jest.config.js
+   |   ├── package.json
+   |   ├── tsconfig.json
+   |   ├── input.json (optional)
+   |   ├── output.json (optional)
+   |   ├── webpack.config.js
+   |   └── yarn.lock (generated)
+   ├──  src
+   |   ├── footer.html (optional)
+   |   ├── header.html (optional)
+   |   ├── style.css
+   |   ├── SQL queries (optional, and possibly multiple)
+   |   ├── GraphQL query (optional)
+   |   └── template.html
+   └── report-manifest.json
+```
+
+### source file structure diagram with typescript functionality
+
+```
+├── example-report
+   ├── argument_schemas (optional)
+   │   ├── argument_ui.json
+   |   └── arguments.json
+   ├── convert_data_js (optional)
+   │   ├── dist (generated)
+   |   ├── node_modules (generated)
+   |   ├── src
    |   |   ├── convert_data.js (copy)
    |   |   ├── utils.js
    |   |   └── utils.test.js (optional)
@@ -134,10 +173,6 @@ These files must be compliant with JSON forms.
    |   └── template.html
    └── report-manifest.json
 ```
-
-### source file structure diagram with typescript functionality
-
-TODO add typescript file structure for generated types
 
 ## CLI Tools
 
@@ -364,7 +399,7 @@ Any .test files within standard report or standard forms will be checked when co
 
 webpack is used to package convert_data entrypoint file into a module.
 
-Typescript convert_data package will require base types (`convertDataTypes.ts`), configuration for graphql codegen and type dependencies (`codegenTypes.ts` and `codegen.yaml`) and a typescript config (`tsconfig.json`). Also extra dependencies and generate-types script is added to package.json. Types can be generated from graphql queries and argument form json schema using `yarn generate-types` script, not the server must be running on port 8000 over http and initialised.
+Typescript convert_data package will require base types (`convertDataTypes.ts`), configuration for graphql codegen and type dependencies (`codegenTypes.ts` and `codegen.yaml`) and a typescript config (`tsconfig.json`). Also extra dependencies and generate-types script is added to package.json. Types can be generated from graphql queries and argument form json schema using `yarn generate-types` script, note the server must be running on port 8000 over http and initialised.
 
 If common types or utilities need to be shared, they must live withing rootDir specified by tsconfig.json or copied into report.
 
