@@ -5,12 +5,12 @@ import {
   useTranslation,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
-import { useMasterListOld } from '../api';
 import { MasterListLineFragment } from '../api/operations.generated';
+import { useMasterListLines } from '../api/hooks/useMasterListLines';
 
 export const ContentArea = () => {
   const t = useTranslation();
-  const { data, isLoading, isError } = useMasterListOld.line.rows();
+  const { data, isLoading, isError } = useMasterListLines();
   const {
     updateSortQuery,
     updatePaginationQuery,
