@@ -2,7 +2,7 @@
 mod tests {
     use std::sync::Arc;
 
-    use repository::{mock::MockDataInserts, StorageConnectionManager, SyncApiErrorCode};
+    use repository::{StorageConnectionManager, SyncApiErrorCode};
     use reqwest::StatusCode;
 
     use util::assert_matches;
@@ -18,11 +18,10 @@ mod tests {
             sync_status::SyncLogError,
             synchroniser::{SyncError, Synchroniser},
             test::integration::{
-                central_server_configurations::{ConfigureCentralServer, SiteConfiguration},
-                create_site, FullSiteConfig,
+                central_server_configurations::SiteConfiguration, create_site, FullSiteConfig,
             },
         },
-        test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+        test_helpers::ServiceTestContext,
     };
 
     fn get_synchroniser_with_hardware_id(
