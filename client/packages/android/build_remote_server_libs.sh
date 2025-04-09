@@ -17,3 +17,5 @@ PATH=PATH=$PATH:$NDK_BIN \
 
 # Copy built .so files to jniLib
 cp "server-lib/aarch64-linux-android/release/libremote_server_android.so" "app/src/main/jniLibs/arm64-v8a/"
+cp "server-lib/armv7a-linux-androideabi/release/libremote_server_android.so" "app/src/main/jniLibs/armeabi-v7a/"
+

@@ -16,7 +16,7 @@
   "scripts": {
     "build:server": "./build_remote_server_libs.sh",
     "build:debug": "yarn build:server && ./gradlew assembleDebug",
-    "build:release": "yarn build:server && ./gradlew assembleRelease",
+    "build:release": "yarn build:server && ./gradlew assembleRelease -PabiFilters=arm64-v8a && ./gradlew assembleRelease -PabiFilters=armeabi-v7a,arm64-v8a",
     "apply-config": "npx cap copy"
   },
   "dependencies": {

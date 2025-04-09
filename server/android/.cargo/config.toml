@@ -8,8 +8,13 @@
 [build]
 target = ["aarch64-linux-android"]
 
+[build-universal]
+target = ["aarch64-linux-android", "armv7-linux-androideabi"]
+
 [target.aarch64-linux-android]
 linker = "aarch64-linux-android22-clang"
+[target.armv7-linux-androideabi]
+linker = "armv7a-linux-androideabi22-clang"
 
 [profile.release]
 opt-level = "s"
