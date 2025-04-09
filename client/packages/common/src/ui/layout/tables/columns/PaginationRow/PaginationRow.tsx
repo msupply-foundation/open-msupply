@@ -59,23 +59,14 @@ export const PaginationRow: FC<PaginationRowProps> = ({
       flexDirection="row"
       height="48px"
       minHeight="48px"
-      justifyContent={theme =>
-        theme.breakpoints.down('sm') ? 'inherit' : 'space-between'
-      }
+      justifyContent="space-between"
       alignItems="center"
       boxShadow="inset 0 0.5px 0 0 rgba(143, 144, 166, 0.5)"
       padding="0px 8px 0px 20px"
     >
       {!!total && (
         <>
-          <Box
-            sx={{
-              display: theme => theme.breakpoints.down('sm') && 'none',
-              flexDirection: 'row',
-              flexWrap: 'wrap',
-              flex: 1,
-            }}
-          >
+          <Box display="flex" flexDirection="row" flexWrap="wrap" flex={1}>
             <Typography sx={{ marginRight: '4px' }}>
               {t('label.showing')}
             </Typography>

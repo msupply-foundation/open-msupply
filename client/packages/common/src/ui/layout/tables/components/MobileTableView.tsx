@@ -14,7 +14,6 @@ interface MobileTableViewProps<T extends RecordWithId> {
   data: T[];
   width?: string | number;
   isRowAnimated?: boolean;
-  clickFocusedRow?: boolean;
   columns: Column<T>[];
   columnsToDisplay?: Column<T>[];
   additionalRows?: JSX.Element[];
@@ -30,7 +29,6 @@ export function MobileTableView<T extends RecordWithId>({
   columnsToDisplay,
   width = '100%',
   onRowClick,
-  clickFocusedRow = false,
   isRowAnimated = false,
   pagination,
   additionalRows,
@@ -63,7 +61,6 @@ export function MobileTableView<T extends RecordWithId>({
               onClick={onRowClick ? onRowClick : undefined}
               rowData={row}
               rowKey={String(idx)}
-              keyboardActivated={clickFocusedRow}
               generateRowTooltip={generateRowTooltip}
               localisedText={t}
               localisedDate={localisedDate}

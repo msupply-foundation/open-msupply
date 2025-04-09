@@ -125,7 +125,6 @@ const DataTableComponent = <T extends RecordWithId>({
         columns={columns}
         columnsToDisplay={columnsToDisplay}
         onRowClick={onRowClick}
-        clickFocusedRow={clickFocusedRow}
         generateRowTooltip={generateRowTooltip}
         isRowAnimated={isRowAnimated}
         additionalRows={additionalRows}

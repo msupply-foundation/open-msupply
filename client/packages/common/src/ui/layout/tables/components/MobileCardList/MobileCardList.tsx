@@ -1,9 +1,9 @@
-import React, { MouseEvent, useEffect } from 'react';
-import { Box, Paper, Typography, Chip, alpha } from '@mui/material';
+import React, { MouseEvent } from 'react';
+import { Box, Paper, Typography, Chip } from '@mui/material';
 import { RecordWithId } from '@common/types';
 import { TypedTFunction, LocaleKey } from '@common/intl';
 import { Column } from '../../columns/types';
-import { useIsDisabled, useIsFocused, useRowStyle } from '../../context';
+import { useIsDisabled, useRowStyle } from '../../context';
 
 interface MobileCardListProps<T extends RecordWithId> {
   columns: Column<T>[];
@@ -11,7 +11,6 @@ interface MobileCardListProps<T extends RecordWithId> {
   rowData: T;
   rowKey: string;
   rowIndex: number;
-  keyboardActivated?: boolean;
   generateRowTooltip?: (row: T) => string;
   localisedText: TypedTFunction<LocaleKey>;
   localisedDate: (date: string | number | Date) => string;
@@ -24,14 +23,12 @@ export const MobileCardList = <T extends RecordWithId>({
   rowData,
   rowKey,
   rowIndex,
-  keyboardActivated,
   localisedText: t,
   localisedDate,
   generateRowTooltip,
 }: MobileCardListProps<T>): JSX.Element => {
   const hasOnClick = !!onClick;
   const { isDisabled } = useIsDisabled(rowData.id);
-  const { isFocused } = useIsFocused(rowData.id);
   const { rowStyle } = useRowStyle(rowData.id);
   const tooltip = generateRowTooltip?.(rowData);
 
@@ -65,44 +62,22 @@ export const MobileCardList = <T extends RecordWithId>({
         col.key !== statusColumn?.key &&
         col.key !== 'selection'
     )
-    .slice(0, 3);
-
-  useEffect(() => {
-    if (isFocused && keyboardActivated && onClick) onClick(rowData);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [keyboardActivated, isFocused]);
-
-  const isEvenRow = rowIndex % 2 === 0;
+    .slice(0, 4);
 
   return (
     <Paper
-      elevation={2}
-      role="listitem"
+      elevation={1}
       title={tooltip}
       sx={{
-        my: 1.5,
+        my: 1,
         position: 'relative',
-        borderRadius: 2,
+        borderRadius: 1.5,
         overflow: 'hidden',
-        border: '2px solid',
+        border: '1px solid',
         borderColor: 'divider',
-        borderLeft: '2px solid',
+        borderLeft: '3px solid',
         borderLeftColor: 'primary.light',
-        opacity: isDisabled ? 0.7 : 1,
-        backgroundColor: isFocused
-          ? theme => alpha(theme.palette.secondary.light, 0.15)
-          : isEvenRow
-            ? 'background.paper'
-            : 'background.toolbar',
-        '&:hover': hasOnClick
-          ? {
-              backgroundColor: theme =>
-                alpha(theme.palette.secondary.main, 0.1),
-              transform: 'translateY(-2px)',
-              boxShadow: 3,
-              borderColor: theme => theme.palette.primary.light,
-            }
-          : {},
+        opacity: isDisabled ? 0.5 : 1,
         ...rowStyle,
       }}
     >
@@ -111,7 +86,7 @@ export const MobileCardList = <T extends RecordWithId>({
         sx={{
           display: 'flex',
           flexDirection: 'column',
-          padding: 2,
+          padding: 1.25,
           cursor: hasOnClick ? 'pointer' : 'default',
         }}
       >
@@ -119,15 +94,15 @@ export const MobileCardList = <T extends RecordWithId>({
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            pb: 1.5,
-            borderBottom: '2px solid',
+            alignItems: 'center',
+            pb: 1,
+            borderBottom: '1px solid',
             borderColor: 'divider',
-            mb: 1.5,
+            mb: 1,
           }}
         >
           <Typography
-            variant="h6"
+            variant="subtitle1"
             fontWeight="medium"
             sx={{
               wordBreak: 'break-word',
@@ -187,63 +162,68 @@ export const MobileCardList = <T extends RecordWithId>({
             />
           )}
         </Box>
-        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+          }}
+        >
           {displayableColumns.map((column, index) => (
             <Box
               key={`${rowKey}-${index}`}
               sx={{
-                display: 'flex',
-                py: 0.75,
-                px: 0.5,
-                borderBottom:
-                  index < displayableColumns.length - 1 ? '1px solid' : 'none',
-                borderColor: 'divider',
-                position: 'relative',
-                ...(column.getIsError?.(rowData) && {
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    left: -8,
-                    top: 0,
-                    bottom: 0,
-                    width: 3,
-                    backgroundColor: 'error.main',
-                    borderRadius: 4,
-                  },
-                }),
+                width: 'calc(50% - 8px)',
+                padding: 0.5,
+                boxSizing: 'border-box',
               }}
             >
-              {column.label && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  position: 'relative',
+                  width: '100%',
+                }}
+              >
+                {column.label && (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      pr: 2,
+                      alignSelf: 'center',
+                      flexShrink: 0,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {t(column.label as LocaleKey)}:
+                  </Typography>
+                )}
                 <Typography
                   variant="body2"
-                  color="text.secondary"
                   sx={{
-                    width: '35%',
-                    flexShrink: 0,
-                    fontWeight: 500,
-                    pr: 2,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  {t(column.label as LocaleKey)}
+                  {column.Cell && (
+                    <column.Cell
+                      isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
+                      rowData={rowData}
+                      columns={columns}
+                      isError={column.getIsError?.(rowData)}
+                      column={column}
+                      rowKey={rowKey}
+                      columnIndex={index + 1}
+                      rowIndex={Math.floor(index / 3)}
+                      autocompleteName={column.autocompleteProvider?.(rowData)}
+                      localisedText={t}
+                      localisedDate={localisedDate}
+                      {...column.cellProps}
+                    />
+                  )}
                 </Typography>
-              )}
-              <Box sx={{ flexGrow: 1 }}>
-                {column.Cell && (
-                  <column.Cell
-                    isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
-                    rowData={rowData}
-                    columns={columns}
-                    isError={column.getIsError?.(rowData)}
-                    column={column}
-                    rowKey={rowKey}
-                    columnIndex={index + 1}
-                    rowIndex={rowIndex}
-                    autocompleteName={column.autocompleteProvider?.(rowData)}
-                    localisedText={t}
-                    localisedDate={localisedDate}
-                    {...column.cellProps}
-                  />
-                )}
               </Box>
             </Box>
           ))}
