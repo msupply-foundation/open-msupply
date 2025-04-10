@@ -76,6 +76,8 @@ const useSaveLines = (id: string, invoiceId: string) => {
     draftPrescriptionLines: DraftPrescriptionLine[];
     patch?: RecordPatch<PrescriptionRowFragment>;
   }) => {
+    console.log('draftPrescriptionLines', draftPrescriptionLines);
+
     if (patch && id !== '') patch.id = id;
     const input = {
       insertPrescriptionLines: draftPrescriptionLines
@@ -83,7 +85,7 @@ const useSaveLines = (id: string, invoiceId: string) => {
           ({ type, isCreated, numberOfPacks }) =>
             isCreated &&
             type === InvoiceLineNodeType.StockOut &&
-            numberOfPacks > 0
+            numberOfPacks >= 0
         )
         .map(
           line =>
@@ -95,7 +97,7 @@ const useSaveLines = (id: string, invoiceId: string) => {
             !isCreated &&
             isUpdated &&
             type === InvoiceLineNodeType.StockOut &&
-            numberOfPacks > 0
+            numberOfPacks >= 0
         )
         .map(
           line =>
