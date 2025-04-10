@@ -6,9 +6,6 @@
 # PATH=$PATH:$NDK_BIN cargo build --target aarch64-linux-android --release
 
 [build]
-target = ["aarch64-linux-android"]
-
-[build-universal]
 target = ["aarch64-linux-android", "armv7-linux-androideabi"]
 
 [target.aarch64-linux-android]
