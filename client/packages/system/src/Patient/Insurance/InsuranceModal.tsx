@@ -144,7 +144,7 @@ export const InsuranceModal: FC = (): ReactElement => {
         </Box>
         <Box display="flex" flexDirection="column" gap={2}>
           <InputWithLabelRow
-            label={t('label.expiry-date')}
+            label={t('label.insurance-expiry-date')}
             Input={
               <BaseDatePickerInput
                 required
@@ -167,7 +167,7 @@ export const InsuranceModal: FC = (): ReactElement => {
             }}
           />
           <InputWithLabelRow
-            label={t('label.discount-rate')}
+            label={t('label.coverage-rate')}
             Input={
               <NumericTextInput
                 required
