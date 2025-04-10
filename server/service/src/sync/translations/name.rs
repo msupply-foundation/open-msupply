@@ -10,7 +10,9 @@ use repository::{
 
 use serde::{Deserialize, Serialize};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyNameRowType {
@@ -154,6 +156,24 @@ impl SyncTranslation for NameTranslation {
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
         Some(ChangelogTableName::Name)
+    }
+
+    fn should_translate_to_sync_record(
+        &self,
+        row: &ChangelogRow,
+        r#type: &ToSyncRecordTranslationType,
+    ) -> bool {
+        match r#type {
+            ToSyncRecordTranslationType::PushToLegacyCentral => {
+                self.change_log_type().as_ref() == Some(&row.table_name)
+            }
+            // We are also pushing to omsupply central so that it's available for
+            // cross site patient details sharing, same for names_store_join
+            ToSyncRecordTranslationType::PushToOmSupplyCentral => {
+                self.change_log_type().as_ref() == Some(&row.table_name)
+            }
+            _ => false,
+        }
     }
 
     fn try_translate_from_upsert_sync_record(
