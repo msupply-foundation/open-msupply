@@ -28,7 +28,7 @@ import {
   AssetCatalogueItemFragment,
   processProperties,
   useAssetProperties,
-  useStore,
+  useStoreList,
 } from '@openmsupply-client/system';
 
 interface EquipmentUploadTabProps {
@@ -206,7 +206,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
 }) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
-  const { data: stores } = useStore.document.list();
+  const { data: stores } = useStoreList();
   const { error, info } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const EquipmentBuffer: EquipmentImportModal.ImportRow[] = [];
