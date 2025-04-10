@@ -1,12 +1,12 @@
 use crate::RepositoryError;
 use repository::{
-    ItemWarningJoin, ItemWarningJoinFilter, ItemWarningJoinRepository, StorageConnectionManager,
+    ItemWarning, ItemWarningJoinFilter, ItemWarningJoinRepository, StorageConnectionManager,
 };
 
 pub fn get_item_warning_joins(
     connection_manager: &StorageConnectionManager,
     filter: Option<ItemWarningJoinFilter>,
-) -> Result<Vec<ItemWarningJoin>, RepositoryError> {
+) -> Result<Vec<ItemWarning>, RepositoryError> {
     let connection = connection_manager.connection()?;
     let repository = ItemWarningJoinRepository::new(&connection);
 

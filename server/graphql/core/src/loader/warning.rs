@@ -1,4 +1,4 @@
-use repository::{EqualFilter, ItemWarningJoin, ItemWarningJoinFilter, ItemWarningJoinRepository};
+use repository::{EqualFilter, ItemWarning, ItemWarningJoinFilter, ItemWarningJoinRepository};
 use repository::{RepositoryError, StorageConnectionManager};
 
 use async_graphql::dataloader::*;
@@ -10,7 +10,7 @@ pub struct WarningLoader {
 }
 
 impl Loader<String> for WarningLoader {
-    type Value = Vec<ItemWarningJoin>;
+    type Value = Vec<ItemWarning>;
     type Error = RepositoryError;
     async fn load(&self, item_ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
@@ -20,7 +20,7 @@ impl Loader<String> for WarningLoader {
             ItemWarningJoinFilter::new().item_id(EqualFilter::equal_any(item_ids.to_owned())),
         )?;
 
-        let mut map: HashMap<String, Vec<ItemWarningJoin>> = HashMap::new();
+        let mut map: HashMap<String, Vec<ItemWarning>> = HashMap::new();
 
         for warning in warnings {
             let id = warning.item_row.id.clone();

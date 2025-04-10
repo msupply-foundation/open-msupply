@@ -1,9 +1,9 @@
 use async_graphql::*;
 
-use repository::{ItemRow, ItemWarningJoin, WarningRow};
+use repository::{ItemRow, ItemWarning, WarningRow};
 
 pub struct WarningNode {
-    pub warning: ItemWarningJoin,
+    pub warning: ItemWarning,
 }
 
 #[Object]
@@ -29,11 +29,11 @@ impl WarningNode {
 }
 
 impl WarningNode {
-    pub fn from_domain(warning: ItemWarningJoin) -> WarningNode {
+    pub fn from_domain(warning: ItemWarning) -> WarningNode {
         WarningNode { warning }
     }
 
-    pub fn from_vec(warnings: Vec<ItemWarningJoin>) -> Vec<WarningNode> {
+    pub fn from_vec(warnings: Vec<ItemWarning>) -> Vec<WarningNode> {
         warnings.into_iter().map(WarningNode::from_domain).collect()
     }
 

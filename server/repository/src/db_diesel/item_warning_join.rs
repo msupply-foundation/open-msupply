@@ -11,7 +11,7 @@ use diesel::dsl::InnerJoin;
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Clone, Default, PartialEq, Debug)]
-pub struct ItemWarningJoin {
+pub struct ItemWarning {
     pub warning_row: WarningRow,
     pub item_row: ItemRow,
     pub item_warning_join_row: ItemWarningJoinRow,
@@ -65,14 +65,14 @@ impl<'a> ItemWarningJoinRepository<'a> {
     pub fn query_by_filter(
         &self,
         filter: ItemWarningJoinFilter,
-    ) -> Result<Vec<ItemWarningJoin>, RepositoryError> {
+    ) -> Result<Vec<ItemWarning>, RepositoryError> {
         self.query(Some(filter))
     }
 
     pub fn query(
         &self,
         filter: Option<ItemWarningJoinFilter>,
-    ) -> Result<Vec<ItemWarningJoin>, RepositoryError> {
+    ) -> Result<Vec<ItemWarning>, RepositoryError> {
         let mut query = create_filtered_query(filter);
         query = query.order(item_warning_join::id.asc());
 
@@ -85,8 +85,8 @@ impl<'a> ItemWarningJoinRepository<'a> {
 }
 fn to_domain(
     (item_warning_join_row, (_item_link_row, item_row), warning_row): ItemWarningQueryJoin,
-) -> ItemWarningJoin {
-    ItemWarningJoin {
+) -> ItemWarning {
+    ItemWarning {
         warning_row,
         item_row,
         item_warning_join_row,
