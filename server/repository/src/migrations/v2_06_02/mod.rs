@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_assign_requisition_number_processor_pg_enum_type;
 mod store_reintegrate_for_created_date;
 
 pub(crate) struct V2_06_02;
@@ -15,7 +16,10 @@ impl Migration for V2_06_02 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(store_reintegrate_for_created_date::Migrate)]
+        vec![
+            Box::new(store_reintegrate_for_created_date::Migrate),
+            Box::new(add_assign_requisition_number_processor_pg_enum_type::Migrate),
+        ]
     }
 }
 
