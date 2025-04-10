@@ -27,10 +27,10 @@ export const useReportList = ({
   subContext?: string;
   queryParams?: ReportListParams;
 }) => {
+  const t = useTranslation();
   const { reportApi, storeId } = useReportGraphQL();
   const { currentLanguage: language } = useIntlUtils();
   const { error } = useNotification();
-  const t = useTranslation();
 
   const {
     filterBy,

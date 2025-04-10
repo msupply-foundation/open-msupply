@@ -8,10 +8,10 @@ import { useReportGraphQL } from '../useReportGraphQL';
 import { REPORT } from './keys';
 
 export const useReport = (id: string) => {
+  const t = useTranslation();
   const { reportApi, storeId } = useReportGraphQL();
   const { currentLanguage: language } = useIntlUtils();
   const { error } = useNotification();
-  const t = useTranslation();
 
   const queryKey = [REPORT, storeId, id];
   const queryFn = async () => {
