@@ -15,7 +15,7 @@ Before building the Android app, the Rust server library that allows us to run t
 This requires a couple of steps.
 
 - Install Android Studio (Ladybug at time of writing 15/11/24) (Instructions [here](https://developer.android.com/studio))
-- Install NDK in Android Studio (26.1.10909125 at the time of writing on the 8/4/24) (Instructions [here](https://developer.android.com/studio/projects/install-ndk)
+- Install NDK in Android Studio (26.1.10909125 at the time of writing on the 8/4/24) (Instructions [here](https://developer.android.com/studio/projects/install-ndk))
 
 ![omSupply Android NDK](./doc/omSupply_android_ndk.png)
 

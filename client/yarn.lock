@@ -1329,6 +1329,11 @@
   dependencies:
     tslib "^2.1.0"
 
+"@capacitor/device@^6.0.2":
+  version "6.0.2"
+  resolved "https://registry.yarnpkg.com/@capacitor/device/-/device-6.0.2.tgz#14b0f69fb93625ce2608f1ecec01b2f635070bb8"
+  integrity sha512-WDUxUkkuqEtbmE1YmyDzzGVJD8r5oRFgs/1zy+Xa7Da3MlBrgKaiQKZoRVdr6FTnAVyHnVP4LabN3w2sCuA3+A==
+
 "@capacitor/filesystem@^6.0.3":
   version "6.0.3"
   resolved "https://registry.yarnpkg.com/@capacitor/filesystem/-/filesystem-6.0.3.tgz#80d8f637b2ffa5281ca6d81bbb8a8c60eef4c8a9"
@@ -1348,6 +1353,11 @@
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/@capacitor/preferences/-/preferences-6.0.1.tgz#a6cccee02ea0a8bccac879235ebc18cae15d55ba"
   integrity sha512-5UvSK3O/tgPcQ1QyX0zYjb0uujFw+PQgYUSt6i2evf609jAIo7QG1IUZzGb6swEPCpk621wEc6R7Yq/Ywa3GPA==
+
+"@capacitor/screen-orientation@^6.0.3":
+  version "6.0.3"
+  resolved "https://registry.yarnpkg.com/@capacitor/screen-orientation/-/screen-orientation-6.0.3.tgz#e6b457941d0f2421b3ba9016715309049207e70b"
+  integrity sha512-5R+tf+twRNnkZFGSWsQkEBz1MFyP1kzZDyqOA9rtXJlTQYNcFJWouSXEuNa+Ba6i6nEi4X83BuXVzEFJ7zDrgQ==
 
 "@chromatic-com/storybook@^1.6.1":
   version "1.6.1"
