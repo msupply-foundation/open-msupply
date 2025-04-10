@@ -122,7 +122,7 @@ impl<'a> VaccinationRowRepository<'a> {
             table_name: ChangelogTableName::Vaccination,
             record_id: row.id,
             row_action: action,
-            store_id: Some(row.store_id),
+            store_id: None,
             name_link_id: Some(row.patient_link_id),
         };
 
