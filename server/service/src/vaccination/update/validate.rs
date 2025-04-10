@@ -57,11 +57,14 @@ pub fn validate(
 
     // Validate existing stock line
     let existing_stock_line = match &vaccination.vaccination_row.stock_line_id {
-        Some(stock_line_id) => {
-            let stock_line = check_stock_line_exists(connection, store_id, stock_line_id)?;
-            check_doses_defined(&stock_line)?;
-            Some(stock_line)
-        }
+        Some(stock_line_id) => match check_stock_line_exists(connection, store_id, stock_line_id) {
+            Ok(stock_line) => {
+                check_doses_defined(&stock_line)?;
+                Some(stock_line)
+            }
+            // Assume that if stock line doesn't exist, this vaccination was synced from another store
+            Err(_) => None,
+        },
         None => None,
     };
 
@@ -103,12 +106,12 @@ pub fn validate(
     // Get prescription line
     let existing_prescription_line = match &vaccination.vaccination_row.invoice_id {
         Some(invoice_id) => {
-            let line = InvoiceLineRepository::new(connection)
+            InvoiceLineRepository::new(connection)
                 // Vaccination prescription should only ever have 1 line
                 .query_one(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?
-                .ok_or(RepositoryError::NotFound)?;
 
-            Some(line)
+            // Don't error if not found, assume that if invoice line not found,
+            // this vaccination was synced from another store
         }
         None => None,
     };

@@ -14,6 +14,7 @@ use crate::{
     EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
     LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
     RequisitionRow, RequisitionRowRepository, RowActionType, StorageConnection, StoreRow, Upsert,
+    VaccinationRow,
 };
 
 #[actix_rt::test]
@@ -700,4 +701,63 @@ async fn test_changelog_outgoing_sync_records() {
         .unwrap();
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
+}
+
+#[actix_rt::test]
+async fn test_changelog_outgoing_patient_sync_records() {
+    let (_, connection, _, _) = test_db::setup_all(
+        "test_changelog_outgoing_patient_sync_records",
+        MockDataInserts::all(),
+    )
+    .await;
+
+    let repo = ChangelogRepository::new(&connection);
+
+    let site1_id = mock_store_a().site_id; // Site 1 is used in mock_store_a
+
+    // create a vaccination record from store B (site 2) for patient2
+    let vaccination = VaccinationRow {
+        id: "mock_vax_id".to_string(),
+        patient_link_id: "patient2".to_string(),
+        store_id: "store_b".to_string(),
+        vaccine_course_dose_id: "vaccine_course_a_dose_a".to_string(),
+        user_id: "user_account_a".to_string(),
+        ..Default::default()
+    };
+
+    let cursor = vaccination.upsert(&connection).unwrap().unwrap();
+
+    // store A (on site1) has name_store_join for patient2
+
+    // Site 1 sync should get the vaccination changelog via name_store_join
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(cursor as u64, 1000, site1_id, true)
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results[0].record_id, vaccination.id);
+
+    // Site 1 patient_pull
+    let outgoing_results = repo
+        .outgoing_patient_sync_records_from_central(
+            // Definitely a higher cursor than the vaccination changelog (+500)
+            (cursor) as u64,
+            1000,
+            site1_id,
+            "patient2".to_string(),
+        )
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results[0].record_id, vaccination.id);
+
+    // Ensure site without name_store_join for the patient does not get the vaccination changelog
+    // on patient_pull
+    let outgoing_results = repo
+        .outgoing_patient_sync_records_from_central(
+            (cursor + 500) as u64,
+            1000,
+            5,
+            "patient2".to_string(),
+        )
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 0);
 }

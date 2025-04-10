@@ -38,8 +38,9 @@ table! {
     }
 }
 
+// NOTE: both patient_link_id and facility_name_link_id are foreign keys to name_link
+// so not defining a default joinable here, so as not to accidentally join on the wrong one
 joinable!(vaccination -> clinician_link (clinician_link_id));
-joinable!(vaccination -> name_link (facility_name_link_id));
 joinable!(vaccination -> vaccine_course_dose (vaccine_course_dose_id));
 
 allow_tables_to_appear_in_same_query!(vaccination, name_link);
@@ -121,8 +122,8 @@ impl<'a> VaccinationRowRepository<'a> {
             table_name: ChangelogTableName::Vaccination,
             record_id: row.id,
             row_action: action,
-            store_id: Some(row.store_id),
-            name_link_id: None,
+            store_id: None,
+            name_link_id: Some(row.patient_link_id),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
