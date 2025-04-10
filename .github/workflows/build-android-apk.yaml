@@ -1,7 +1,7 @@
 on:
  push:
-  tags: 
-   - 'v*'
+  # tags: 
+  #  - 'v*'
  workflow_dispatch:
 
 name: Android Build
@@ -42,7 +42,9 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-        target: aarch64-linux-android
+        targets: |
+         aarch64-linux-android
+         armv7-linux-androideabi 
 
     - name: Set Up Java
       uses: actions/setup-java@v4
@@ -63,5 +65,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Android_Build
-        path: ./client/packages/android/app/build/outputs/apk/release/
+        path: |
+            ./client/packages/android/app/build/outputs/apk/amr64/release/
+            .client/packages/android/app/build/outputs/apk/universal/release
         retention-days: 3
