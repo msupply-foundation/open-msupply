@@ -15,6 +15,7 @@ import {
   ColumnFormat,
   GenericColumnKey,
   getCommentPopoverColumn,
+  CardColumnType,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
 import { usePrescriptionList, usePrescription } from '../api';
@@ -82,6 +83,7 @@ const PrescriptionListViewComponent: FC = () => {
         {
           formatter: status =>
             getStatusTranslator(t)(status as InvoiceNodeStatus),
+          cardColumnType: CardColumnType.Status,
         },
       ],
       [

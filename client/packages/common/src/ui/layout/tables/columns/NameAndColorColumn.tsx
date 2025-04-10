@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { RecordWithId } from '@common/types';
-import { ColumnDefinition } from '../columns/types';
+import { CardColumnType, ColumnDefinition } from '../columns/types';
 import { ColorSelectButton } from '@common/components';
 
 interface RecordWithIdWithRequiredFields extends RecordWithId {
@@ -26,6 +26,7 @@ export const getNameAndColorColumn = <
   },
   accessor: ({ rowData }) => rowData.otherPartyName,
   key: 'otherPartyName',
+  cardColumnType: CardColumnType.Primary,
   Cell: ({ rowData, column, isDisabled }) => (
     <Box
       sx={{

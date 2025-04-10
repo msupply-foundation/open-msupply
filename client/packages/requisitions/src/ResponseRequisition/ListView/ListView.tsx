@@ -15,6 +15,7 @@ import {
   useToggle,
   GenericColumnKey,
   getCommentPopoverColumn,
+  CardColumnType,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -90,6 +91,7 @@ export const ResponseRequisitionListView: FC = () => {
         formatter: status =>
           getRequisitionTranslator(t)(status as RequisitionNodeStatus),
         width: 100,
+        cardColumnType: CardColumnType.Status,
       },
     ],
     {

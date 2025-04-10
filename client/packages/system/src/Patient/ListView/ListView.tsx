@@ -17,6 +17,7 @@ import {
   UserPermission,
   useTranslation,
   GenderType,
+  CardColumnType,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -86,7 +87,11 @@ const PatientListComponent: FC = () => {
   const navigate = useNavigate();
 
   const columnDefinitions: ColumnDescription<PatientRowFragment>[] = [
-    { key: 'code', label: 'label.patient-id' },
+    {
+      key: 'code',
+      label: 'label.patient-id',
+      cardColumnType: CardColumnType.Primary,
+    },
     { key: 'code2', label: 'label.patient-nuic' },
     {
       key: 'createdDatetime',

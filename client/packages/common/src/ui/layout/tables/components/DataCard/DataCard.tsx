@@ -2,7 +2,7 @@ import React, { MouseEvent, useState } from 'react';
 import { Box, Collapse, Paper } from '@mui/material';
 import { RecordWithId } from '@common/types';
 import { TypedTFunction, LocaleKey } from '@common/intl';
-import { Column } from '../../columns/types';
+import { CardColumnType, Column } from '../../columns/types';
 import { useIsDisabled, useRowStyle } from '../../context';
 import { CardHeader } from './CardHeader';
 import { CardContent } from './CardContent';
@@ -37,33 +37,20 @@ export const DataCard = <T extends RecordWithId>({
   const { isDisabled } = useIsDisabled(rowData.id);
   const [showAllColumns, setShowAllColumns] = useState(false);
 
-  // Need to manage this information at the useColumn hook
-  // e.g. have a column type that tells if it is a primary column or a status column
+  const primaryColumn = columns.find(
+    column => column.cardColumnType === CardColumnType.Primary
+  );
 
-  // if theres a card column type this can be a bit easier to follow
-  // we can allocate the primary when we define the columns
-
-  const primaryColumn =
-    columns
-      .filter(col => col.key !== 'selection')
-      .find(
-        col =>
-          col.key === 'otherPartyName' ||
-          col.key === 'title' ||
-          col.key === 'name' ||
-          col.key === 'code'
-      ) ||
-    columns.find(col => col.key !== 'selection') ||
-    columns[0];
-
-  const statusColumn = columns.find(col => col.key === 'status');
+  const statusColumn = columns.find(
+    column => column.cardColumnType === CardColumnType.Status
+  );
 
   const displayableColumns = columns.filter(
-    col =>
-      col.Cell &&
-      col.key !== primaryColumn?.key &&
-      col.key !== statusColumn?.key &&
-      col.key !== 'selection'
+    column =>
+      column.Cell &&
+      column.cardColumnType !== CardColumnType.Primary &&
+      column.cardColumnType !== CardColumnType.Status &&
+      column.key !== 'selection'
   );
 
   const initialColumns = displayableColumns.slice(0, COLUMN_LENGTH);

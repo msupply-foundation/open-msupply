@@ -12,6 +12,7 @@ import {
   useEditModal,
   useTableStore,
   RnRFormNodeStatus,
+  CardColumnType,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -69,6 +70,7 @@ const RnRFormListComponent = () => {
           label: 'label.status',
           formatter: status =>
             getStatusTranslator(t)(status as RnRFormNodeStatus),
+          cardColumnType: CardColumnType.Status,
         },
       ],
     ],

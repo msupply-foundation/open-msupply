@@ -13,6 +13,7 @@ import {
   ColumnFormat,
   GenericColumnKey,
   getCommentPopoverColumn,
+  CardColumnType,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -49,7 +50,14 @@ export const StocktakeListView: FC = () => {
   const columns = useColumns<StocktakeRowFragment>(
     [
       GenericColumnKey.Selection,
-      ['stocktakeNumber', { maxWidth: 75, sortable: false }],
+      [
+        'stocktakeNumber',
+        {
+          maxWidth: 75,
+          sortable: false,
+          cardColumnType: CardColumnType.Primary,
+        },
+      ],
       [
         'status',
         {
@@ -57,6 +65,7 @@ export const StocktakeListView: FC = () => {
             rowData.isLocked
               ? t('label.stocktake-on-hold')
               : statusTranslator(rowData.status),
+          cardColumnType: CardColumnType.Status,
         },
       ],
       ['description', { sortable: false }],

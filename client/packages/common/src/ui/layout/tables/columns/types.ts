@@ -60,7 +60,11 @@ export enum GenericColumnKey {
   Selection = 'selection',
 }
 
-export type CardColumnType = 'Primary' | 'Status' | 'General';
+export enum CardColumnType {
+  Primary = 'Primary',
+  Status = 'Status',
+  General = 'General',
+}
 
 export interface Column<T extends RecordWithId> {
   key: keyof T | GenericColumnKey | string;

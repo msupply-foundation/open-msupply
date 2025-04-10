@@ -16,6 +16,7 @@ import {
   TooltipTextCell,
   GenericColumnKey,
   getCommentPopoverColumn,
+  CardColumnType,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -71,6 +72,7 @@ const SupplierReturnListViewComponent: FC = () => {
         {
           formatter: status =>
             getStatusTranslator(t)(status as InvoiceNodeStatus),
+          cardColumnType: CardColumnType.Status,
         },
       ],
       [

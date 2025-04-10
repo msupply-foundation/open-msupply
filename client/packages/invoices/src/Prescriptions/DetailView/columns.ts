@@ -14,6 +14,7 @@ import {
   ColumnDescription,
   NumUtils,
   useAuthContext,
+  CardColumnType,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -124,6 +125,7 @@ export const usePrescriptionColumn = ({
             { path: ['lines', 'itemName'] },
             { path: ['itemName'], default: '' },
           ]),
+        cardColumnType: CardColumnType.Primary,
       },
     ],
     [

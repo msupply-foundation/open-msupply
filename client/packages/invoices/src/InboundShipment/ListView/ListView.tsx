@@ -15,6 +15,7 @@ import {
   TooltipTextCell,
   GenericColumnKey,
   getCommentPopoverColumn,
+  CardColumnType,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -71,6 +72,7 @@ export const InboundListView: FC = () => {
         {
           formatter: status =>
             getStatusTranslator(t)(status as InvoiceNodeStatus),
+          cardColumnType: CardColumnType.Status,
         },
       ],
       ['invoiceNumber', { maxWidth: 100 }],

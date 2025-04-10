@@ -6,6 +6,7 @@ import {
   ColumnFormat,
   ColumnAlign,
   Column,
+  CardColumnType,
 } from '../../columns/types';
 import { useFormatDateTime, DateUtils } from '@common/intl';
 import { BasicCell, BasicHeader } from '../../components';
@@ -130,6 +131,7 @@ export const createColumnWithDefaults = <T extends RecordWithId>(
     labelProps: {},
     description: '',
     format: ColumnFormat.Text,
+    cardColumnType: CardColumnType.General,
 
     Cell: BasicCell,
     Header: BasicHeader,
