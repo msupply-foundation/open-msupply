@@ -8,7 +8,10 @@ export interface ConfirmationModalState {
   title: string;
   iconType?: IconType;
   buttonLabel?: string | undefined;
-  onConfirm?: (() => void) | (() => Promise<void>);
+  cancelButtonLabel?: string | undefined;
+  onConfirm?:
+    | ((state: ConfirmationModalState) => void)
+    | ((state: ConfirmationModalState) => Promise<void>);
   onCancel?: (() => void) | (() => Promise<void>);
 }
 
@@ -20,8 +23,12 @@ export interface ConfirmationModalControllerState
   setInfo: (info: string | undefined) => void;
   setTitle: (title: string) => void;
   setButtonLabel: (buttonLabel: string | undefined) => void;
+  setCancelButtonLabel: (cancelButtonLabel: string | undefined) => void;
   setOnConfirm: (
-    onConfirm: (() => Promise<void>) | (() => void) | undefined
+    onConfirm:
+      | ((state: ConfirmationModalState) => Promise<void>)
+      | ((state: ConfirmationModalState) => void)
+      | undefined
   ) => void;
   setOnCancel: (
     onCancel: (() => Promise<void>) | (() => void) | undefined

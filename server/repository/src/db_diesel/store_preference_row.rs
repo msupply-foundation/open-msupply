@@ -6,6 +6,8 @@ use super::{store_row::store, user_row::user_account};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
+use util::constants::DEFAULT_AMC_LOOKBACK_MONTHS;
 
 table! {
     store_preference (id) {
@@ -27,6 +29,7 @@ table! {
         keep_requisition_lines_with_zero_requested_quantity_on_finalised -> Bool,
         use_consumption_and_stock_from_customers_for_internal_orders -> Bool,
         manually_link_internal_order_to_inbound_shipment -> Bool,
+        edit_prescribed_quantity_on_prescription -> Bool,
     }
 }
 
@@ -36,14 +39,15 @@ allow_tables_to_appear_in_same_query!(store_preference, store);
 allow_tables_to_appear_in_same_query!(store_preference, user_store_join);
 allow_tables_to_appear_in_same_query!(store_preference, user_account);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum StorePreferenceType {
-    #[default]
     StorePreferences,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, TS, Serialize, Deserialize,
+)]
 #[diesel(table_name = store_preference)]
 pub struct StorePreferenceRow {
     pub id: String, // store_id
@@ -65,6 +69,35 @@ pub struct StorePreferenceRow {
     pub keep_requisition_lines_with_zero_requested_quantity_on_finalised: bool,
     pub use_consumption_and_stock_from_customers_for_internal_orders: bool,
     pub manually_link_internal_order_to_inbound_shipment: bool,
+    pub edit_prescribed_quantity_on_prescription: bool,
+}
+
+impl Default for StorePreferenceRow {
+    fn default() -> Self {
+        Self {
+            r#type: StorePreferenceType::StorePreferences,
+            monthly_consumption_look_back_period: DEFAULT_AMC_LOOKBACK_MONTHS,
+            months_overstock: 6.0,
+            months_understock: 3.0,
+            months_items_expire: Default::default(),
+            stocktake_frequency: 1.0,
+            months_lead_time: 0.0,
+            pack_to_one: false,
+            response_requisition_requires_authorisation: false,
+            request_requisition_requires_authorisation: false,
+            om_program_module: false,
+            vaccine_module: false,
+            issue_in_foreign_currency: false,
+            extra_fields_in_requisition: false,
+            keep_requisition_lines_with_zero_requested_quantity_on_finalised: false,
+            use_consumption_and_stock_from_customers_for_internal_orders: false,
+            manually_link_internal_order_to_inbound_shipment: false,
+            edit_prescribed_quantity_on_prescription: false,
+
+            // Default
+            id: Default::default(),
+        }
+    }
 }
 
 pub struct StorePreferenceRowRepository<'a> {
@@ -86,22 +119,26 @@ impl<'a> StorePreferenceRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<StorePreferenceRow>, RepositoryError> {
+    pub fn find_one_by_id_or_default(
+        &self,
+        id: &str,
+    ) -> Result<StorePreferenceRow, RepositoryError> {
+        let result = store_preference::table
+            .filter(store_preference::id.eq(id))
+            .first(self.connection.lock().connection())
+            .optional();
+
+        result
+            .map_err(RepositoryError::from)
+            .map(|r| r.unwrap_or_default())
+    }
+
+    fn find_one_by_id(&self, id: &str) -> Result<Option<StorePreferenceRow>, RepositoryError> {
         let result = store_preference::table
             .filter(store_preference::id.eq(id))
             .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)
-    }
-
-    pub fn find_many_by_id(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<StorePreferenceRow>, RepositoryError> {
-        let result = store_preference::table
-            .filter(store_preference::id.eq_any(ids))
-            .load(self.connection.lock().connection())?;
-        Ok(result)
     }
 }
 

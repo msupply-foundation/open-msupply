@@ -46,6 +46,8 @@ pub enum ReportContext {
     OutboundReturn,
     InboundReturn,
     Report,
+    Prescription,
+    InternalOrder
 }
 
 #[derive(InputObject, Clone)]
@@ -61,6 +63,7 @@ pub struct ReportFilterInput {
     pub name: Option<StringFilterInput>,
     pub context: Option<EqualFilterReportContextInput>,
     pub sub_context: Option<EqualFilterStringInput>,
+    pub is_active: Option<bool>,
 }
 
 #[derive(Union)]
@@ -129,6 +132,10 @@ impl ReportNode {
 
     pub async fn is_custom(&self) -> bool {
         self.row.report_row.is_custom
+    }
+
+    pub async fn is_active(&self) -> bool {
+        self.row.report_row.is_active
     }
 
     pub async fn argument_schema(&self) -> Option<FormSchemaNode> {
@@ -208,13 +215,13 @@ impl ReportFilterInput {
         ReportFilter {
             id: self.id.map(EqualFilter::from),
             name: self.name.map(StringFilter::from),
-            r#type: None,
             context: self
                 .context
                 .map(|t| map_filter!(t, ReportContext::to_domain)),
             sub_context: self.sub_context.map(EqualFilter::from),
             code: None,
             is_custom: None,
+            is_active: self.is_active,
         }
     }
 }
@@ -247,6 +254,8 @@ impl ReportContext {
             ReportContext::OutboundReturn => ReportContextDomain::OutboundReturn,
             ReportContext::InboundReturn => ReportContextDomain::InboundReturn,
             ReportContext::Report => ReportContextDomain::Report,
+            ReportContext::Prescription => ReportContextDomain::Prescription,
+            ReportContext::InternalOrder => ReportContextDomain::InternalOrder,
         }
     }
 
@@ -264,6 +273,8 @@ impl ReportContext {
             ReportContextDomain::OutboundReturn => ReportContext::OutboundReturn,
             ReportContextDomain::InboundReturn => ReportContext::InboundReturn,
             ReportContextDomain::Report => ReportContext::Report,
+            ReportContextDomain::Prescription => ReportContext::Prescription,
+            ReportContextDomain::InternalOrder => ReportContext::InternalOrder,
         }
     }
 }
@@ -271,14 +282,14 @@ impl ReportContext {
 fn map_report_error(error: GetReportError) -> Result<ReportResponse> {
     match error {
         GetReportError::TranslationError(error) => {
-            return Ok(ReportResponse::Error(QueryReportError {
+            Ok(ReportResponse::Error(QueryReportError {
                 error: QueryReportErrorInterface::ReportTranslationError(FailedTranslation(
                     error.to_string(),
                 )),
             }))
         }
         GetReportError::RepositoryError(error) => {
-            return Err(StandardGraphqlError::from_repository_error(error))
+            Err(StandardGraphqlError::from_repository_error(error))
         }
     }
 }
@@ -286,12 +297,12 @@ fn map_report_error(error: GetReportError) -> Result<ReportResponse> {
 fn map_reports_error(error: GetReportsError) -> Result<ReportsResponse> {
     match error {
         GetReportsError::TranslationError(error) => {
-            return Ok(ReportsResponse::Error(QueryReportsError {
+            Ok(ReportsResponse::Error(QueryReportsError {
                 error: QueryReportsErrorInterface::ReportsTranslationError(FailedTranslation(
                     error.to_string(),
                 )),
             }))
         }
-        GetReportsError::ListError(error) => return Err(list_error_to_gql_err(error)),
+        GetReportsError::ListError(error) => Err(list_error_to_gql_err(error)),
     }
 }

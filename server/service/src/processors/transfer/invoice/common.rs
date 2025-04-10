@@ -35,6 +35,7 @@ pub(crate) fn generate_inbound_lines(
                  cost_price_per_pack: _,
                  sell_price_per_pack,
                  number_of_packs,
+                 prescribed_quantity,
                  note,
                  r#type,
                  total_after_tax: _,
@@ -44,6 +45,7 @@ pub(crate) fn generate_inbound_lines(
                  return_reason_id,
                  foreign_currency_price_before_tax,
                  item_variant_id,
+                 linked_invoice_id: _,
              }| {
                 let cost_price_per_pack = sell_price_per_pack;
 
@@ -71,11 +73,13 @@ pub(crate) fn generate_inbound_lines(
                         _ => InvoiceLineType::StockIn,
                     },
                     number_of_packs,
+                    prescribed_quantity,
                     note,
                     tax_percentage,
                     foreign_currency_price_before_tax,
                     return_reason_id,
                     item_variant_id,
+                    linked_invoice_id: Some(source_invoice.invoice_row.id.to_string()),
                     // Default
                     stock_line_id: None,
                     location_id: None,

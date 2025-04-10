@@ -12,6 +12,8 @@ import {
   AdjustmentTypeInput,
   useNavigate,
   RouteBuilder,
+  usePluginEvents,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import { useStockLine } from '../api';
 import { StockLineForm } from './StockLineForm';
@@ -33,7 +35,10 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
 }) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { success } = useNotification();
+  const { success, error } = useNotification();
+  const pluginEvents = usePluginEvents({
+    isDirty: false,
+  });
 
   const { Modal } = useDialog({ isOpen, onClose });
 
@@ -47,20 +52,45 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   const isDisabled =
     !draft.itemId || !draft.packSize || !draft.totalNumberOfPacks;
 
+  const mapStructuredErrors = (result: Awaited<ReturnType<typeof create>>) => {
+    if (result.insertStockLine.__typename === 'StockLineNode') {
+      return;
+    }
+    const { error } = result.insertStockLine;
+    switch (error.__typename) {
+      case 'AdjustmentReasonNotProvided':
+        return t('error.provide-reason-new-stock');
+      default:
+        return noOtherVariants(error.__typename);
+    }
+  };
+
   const save = async () => {
     try {
       const result = await create();
-      const successSnack = success(t('messages.stock-line-saved'));
-      successSnack();
-      onClose();
-      navigate(
-        RouteBuilder.create(AppRoute.Inventory)
-          .addPart(AppRoute.Stock)
-          .addPart(result.insertStockLine.id)
-          .build()
-      );
+
+      if (result?.insertStockLine.__typename === 'InsertStockLineError') {
+        const errorMessage = mapStructuredErrors(result);
+        if (errorMessage) {
+          error(errorMessage)();
+        }
+      }
+
+      if (result?.insertStockLine.__typename === 'StockLineNode') {
+        const successSnack = success(t('messages.stock-line-saved'));
+        successSnack();
+        onClose();
+        navigate(
+          RouteBuilder.create(AppRoute.Inventory)
+            .addPart(AppRoute.Stock)
+            .addPart(result?.insertStockLine.id)
+            .build()
+        );
+      }
+
+      updatePatch(draft);
     } catch {
-      // todo
+      error(t('messages.could-not-save'))(); // generic could not save message
     }
   };
 
@@ -87,7 +117,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
             label={t('label.item', { count: 1 })}
             justifyContent="flex-end"
           />
-          <Grid item flex={1}>
+          <Grid flex={1}>
             <StockItemSearchInput
               autoFocus={!draft.itemId}
               openOnFocus={!draft.itemId}
@@ -107,16 +137,16 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
         <Divider />
 
         {draft.itemId && (
-          <Grid item width={'100%'}>
+          <Grid width={'100%'}>
             <StockLineForm
               draft={draft}
               loading={isLoading}
               onUpdate={updatePatch}
               packEditable
               isInModal
+              pluginEvents={pluginEvents}
             />
-
-            <Grid item width={'50%'}>
+            <Grid width={'50%'}>
               <StyledInputRow
                 label={t('label.reason')}
                 Input={

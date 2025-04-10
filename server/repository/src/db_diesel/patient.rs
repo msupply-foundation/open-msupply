@@ -32,6 +32,7 @@ pub struct PatientFilter {
     pub address2: Option<StringFilter>,
     pub country: Option<StringFilter>,
     pub email: Option<StringFilter>,
+    pub next_of_kin_name: Option<StringFilter>,
 
     /// Filter for any identifier associated with a name entry.
     /// Currently:
@@ -121,9 +122,9 @@ impl<'a> PatientRepository<'a> {
                     apply_sort_no_case!(query, sort, name::first_name)
                 }
                 PatientSortField::LastName => apply_sort_no_case!(query, sort, name::last_name),
-                PatientSortField::Gender => apply_sort_no_case!(query, sort, name::gender),
+                PatientSortField::Gender => apply_sort!(query, sort, name::gender),
                 PatientSortField::DateOfBirth => {
-                    apply_sort_no_case!(query, sort, name::date_of_birth)
+                    apply_sort!(query, sort, name::date_of_birth)
                 }
                 PatientSortField::Phone => apply_sort_no_case!(query, sort, name::phone),
                 PatientSortField::Address1 => apply_sort_no_case!(query, sort, name::address1),
@@ -187,6 +188,7 @@ impl<'a> PatientRepository<'a> {
                 email,
                 identifier,
                 program_enrolment_name,
+                next_of_kin_name,
             } = f;
 
             // or filters need to be applied first
@@ -206,6 +208,21 @@ impl<'a> PatientRepository<'a> {
                 .select(name::id);
 
                 query = query.or_filter(name::id.eq_any(sub_query))
+            }
+
+            if next_of_kin_name.is_some() {
+                let sub_query = Self::create_filtered_query(
+                    Some(PatientFilter {
+                        name: next_of_kin_name.clone(),
+                        ..Default::default()
+                    }),
+                    None,
+                )
+                .select(name::id);
+
+                query = query.filter(name::next_of_kin_id.eq_any(sub_query.nullable()));
+
+                apply_string_or_filter!(query, next_of_kin_name, name::next_of_kin_name);
             }
 
             if program_enrolment_name.is_some() {
@@ -299,6 +316,11 @@ impl PatientFilter {
         self
     }
 
+    pub fn next_of_kin_name(mut self, filter: StringFilter) -> Self {
+        self.next_of_kin_name = Some(filter);
+        self
+    }
+
     pub fn gender(mut self, filter: EqualFilter<GenderType>) -> Self {
         self.gender = Some(filter);
         self
@@ -388,6 +410,53 @@ mod tests {
             )
             .unwrap();
         result.first().unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn test_patient_next_of_kin_name_query() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "patient_next_of_kin_name_query",
+            MockDataInserts::none().names().stores().name_store_joins(),
+        )
+        .await;
+
+        let next_of_kin_patient_row = NameRow {
+            id: "next_of_kin".to_string(),
+            name: "Bestie guy".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+
+        let patient_1_row = NameRow {
+            id: "patient_1".to_string(),
+            // NOK recorded via next_of_kin_id
+            next_of_kin_id: Some(next_of_kin_patient_row.id.clone()),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+
+        let patient_2_row = NameRow {
+            id: "patient_2".to_string(),
+            r#type: NameRowType::Patient,
+            // NOK recorded via name plaintext
+            next_of_kin_name: Some("Bestie guy".to_string()),
+            ..Default::default()
+        };
+
+        let name_repo = NameRowRepository::new(&connection);
+
+        name_repo.upsert_one(&next_of_kin_patient_row).unwrap();
+        name_repo.upsert_one(&patient_1_row).unwrap();
+        name_repo.upsert_one(&patient_2_row).unwrap();
+
+        let result = PatientRepository::new(&connection)
+            .query_by_filter(
+                PatientFilter::new().next_of_kin_name(StringFilter::like("Bestie")),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(result.len(), 2);
     }
 
     #[actix_rt::test]

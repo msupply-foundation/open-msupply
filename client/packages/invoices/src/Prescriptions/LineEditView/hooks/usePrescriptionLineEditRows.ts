@@ -1,51 +1,61 @@
 import { useEffect, useMemo } from 'react';
 import { useTableStore, SortUtils } from '@openmsupply-client/common';
 import { isA } from '../../../utils';
-import { DraftStockOutLine } from '../../../types';
+import { DraftPrescriptionLine } from '../../../types';
 
 export const usePrescriptionLineEditRows = (
-  rows: DraftStockOutLine[],
+  rows: DraftPrescriptionLine[],
   isDisabled: boolean
 ) => {
   const tableStore = useTableStore();
 
-  const isOnHold = (row: DraftStockOutLine) =>
+  const isOnHold = (row: DraftPrescriptionLine) =>
     !!row.stockLine?.onHold || !!row.location?.onHold;
-  const hasNoStock = (row: DraftStockOutLine) =>
+  const hasNoStock = (row: DraftPrescriptionLine) =>
     row.stockLine?.availableNumberOfPacks === 0;
 
-  const { allocatableRows, wrongPackSizeRows, onHoldRows, noStockRows } =
-    useMemo(() => {
-      const rowsWithoutPlaceholder = rows
-        .filter(line => !isA.placeholderLine(line))
-        .sort(SortUtils.byExpiryAsc);
+  const {
+    allocatableRows,
+    wrongPackSizeRows,
+    onHoldRows,
+    noStockRows,
+    placeholderRows,
+  } = useMemo(() => {
+    const allocatableRows: DraftPrescriptionLine[] = [];
+    const onHoldRows: DraftPrescriptionLine[] = [];
+    const noStockRows: DraftPrescriptionLine[] = [];
+    const wrongPackSizeRows: DraftPrescriptionLine[] = [];
 
-      const allocatableRows: DraftStockOutLine[] = [];
-      const onHoldRows: DraftStockOutLine[] = [];
-      const noStockRows: DraftStockOutLine[] = [];
-      const wrongPackSizeRows: DraftStockOutLine[] = [];
+    const placeholderRows: DraftPrescriptionLine[] = rows.filter(line =>
+      isA.placeholderLine(line)
+    );
 
-      rowsWithoutPlaceholder.forEach(row => {
-        if (isOnHold(row)) {
-          onHoldRows.push(row);
-          return;
-        }
+    const rowsWithoutPlaceholder = rows
+      .filter(line => !isA.placeholderLine(line))
+      .sort(SortUtils.byExpiryAsc);
 
-        if (hasNoStock(row)) {
-          noStockRows.push(row);
-          return;
-        }
+    rowsWithoutPlaceholder.forEach(row => {
+      if (isOnHold(row)) {
+        onHoldRows.push(row);
+        return;
+      }
 
-        allocatableRows.push(row);
-      });
+      if (hasNoStock(row)) {
+        noStockRows.push(row);
+        return;
+      }
 
-      return {
-        allocatableRows,
-        onHoldRows,
-        noStockRows,
-        wrongPackSizeRows,
-      };
-    }, [rows]);
+      allocatableRows.push(row);
+    });
+
+    return {
+      allocatableRows,
+      onHoldRows,
+      noStockRows,
+      wrongPackSizeRows,
+      placeholderRows,
+    };
+  }, [rows]);
 
   const orderedRows = useMemo(() => {
     return [
@@ -53,8 +63,15 @@ export const usePrescriptionLineEditRows = (
       ...wrongPackSizeRows,
       ...onHoldRows,
       ...noStockRows,
+      ...placeholderRows,
     ];
-  }, [allocatableRows, wrongPackSizeRows, onHoldRows, noStockRows]);
+  }, [
+    allocatableRows,
+    wrongPackSizeRows,
+    onHoldRows,
+    noStockRows,
+    placeholderRows,
+  ]);
 
   const disabledRows = useMemo(() => {
     if (isDisabled) return orderedRows;
@@ -72,5 +89,6 @@ export const usePrescriptionLineEditRows = (
     onHoldRows,
     noStockRows,
     wrongPackSizeRows,
+    placeholderRows,
   };
 };

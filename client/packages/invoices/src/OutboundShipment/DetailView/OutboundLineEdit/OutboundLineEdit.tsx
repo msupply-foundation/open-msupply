@@ -102,6 +102,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const onUpdateQuantity = (batchId: string, quantity: number) => {
     updateQuantity(batchId, quantity);
     setIsAutoAllocated(false);
+    setIsDirty(true);
   };
 
   const onSave = async () => {
@@ -145,7 +146,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     const newAllocateQuantities = allocateQuantities(
       status,
       draftStockOutLines
-    )(newVal, packSize);
+    )(newVal, packSize, undefined);
     setIsDirty(true);
     setDraftStockOutLines(newAllocateQuantities ?? draftStockOutLines);
     setIsAutoAllocated(autoAllocated);

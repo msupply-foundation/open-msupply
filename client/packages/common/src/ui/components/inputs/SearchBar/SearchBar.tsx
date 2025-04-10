@@ -80,30 +80,32 @@ export const SearchBar: FC<SearchBarProps> = ({
         fontSize="small"
       />
       <BasicTextInput
-        InputProps={{
-          endAdornment: (
-            <EndAdornment
-              isLoading={isLoading || loading}
-              hasValue={!!buffer}
-              onClear={() => handleChange('')}
-            />
-          ),
-          sx: {
-            paddingLeft: '6px',
-            alignItems: 'center',
-            width: '220px',
-            ...(expandOnFocus
-              ? {
-                  transition: theme =>
-                    theme.transitions.create('width', {
-                      delay: 100,
-                    }),
-                  '&.Mui-focused': {
-                    width: '360px',
-                  },
-                }
-              : {}),
-            backgroundColor: theme => theme.palette.background.menu,
+        slotProps={{
+          input: {
+            endAdornment: (
+              <EndAdornment
+                isLoading={isLoading || loading}
+                hasValue={!!buffer}
+                onClear={() => handleChange('')}
+              />
+            ),
+            sx: {
+              paddingLeft: '6px',
+              alignItems: 'center',
+              width: '220px',
+              ...(expandOnFocus
+                ? {
+                    transition: theme =>
+                      theme.transitions.create('width', {
+                        delay: 100,
+                      }),
+                    '&.Mui-focused': {
+                      width: '360px',
+                    },
+                  }
+                : {}),
+              backgroundColor: theme => theme.palette.background.menu,
+            },
           },
         }}
         value={buffer}

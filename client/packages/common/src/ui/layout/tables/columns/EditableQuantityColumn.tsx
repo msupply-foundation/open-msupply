@@ -51,14 +51,16 @@ export const getEditableQuantityColumn = <
         hiddenLabel
         value={buffer}
         onBlur={() => rowData.updateQuantity(value)}
-        InputProps={{
-          endAdornment: error ? (
-            <InputAdornment position="end">
-              <Tooltip title="Mate, what you doing?">
-                <Typography sx={{ color: 'red' }}>⚠</Typography>
-              </Tooltip>
-            </InputAdornment>
-          ) : null,
+        slotProps={{
+          input: {
+            endAdornment: error ? (
+              <InputAdornment position="end">
+                <Tooltip title="Mate, what you doing?">
+                  <Typography sx={{ color: 'red' }}>⚠</Typography>
+                </Tooltip>
+              </InputAdornment>
+            ) : null,
+          },
         }}
         onChange={tryUpdateValue}
       />

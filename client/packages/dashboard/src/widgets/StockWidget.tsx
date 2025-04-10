@@ -79,11 +79,11 @@ export const StockWidget: React.FC = () => {
                 otherPartyId,
               },
               { onError }
-            ).then(({ requisitionNumber }) => {
+            ).then(({ id }) => {
               navigate(
                 RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InternalOrder)
-                  .addPart(String(requisitionNumber))
+                  .addPart(id)
                   .build()
               );
             });
@@ -97,7 +97,7 @@ export const StockWidget: React.FC = () => {
           flex={1}
           flexDirection="column"
         >
-          <Grid item>
+          <Grid>
             <StatsPanel
               error={expiryError as ApiException}
               isError={hasExpiryError}
@@ -174,7 +174,6 @@ export const StockWidget: React.FC = () => {
             />
           </Grid>
           <Grid
-            item
             flex={1}
             container
             justifyContent="flex-end"

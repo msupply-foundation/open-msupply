@@ -1,6 +1,8 @@
 use std::ops::Range;
 
 use chrono::{NaiveDate, NaiveDateTime};
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 use util::inline_init;
 
 #[derive(Clone, PartialEq, Debug, Default)]
@@ -100,13 +102,22 @@ impl StringFilter {
     }
 }
 
-#[derive(Clone, PartialEq, Debug)]
-pub struct EqualFilter<T> {
+#[derive(Clone, PartialEq, Debug, TS, Serialize, Deserialize)]
+pub struct EqualFilter<T>
+where
+    T: 'static,
+{
+    #[ts(optional)]
     pub equal_to: Option<T>,
+    #[ts(optional)]
     pub not_equal_to: Option<T>,
+    #[ts(optional)]
     pub equal_any: Option<Vec<T>>,
+    #[ts(optional)]
     pub equal_any_or_null: Option<Vec<T>>,
+    #[ts(optional)]
     pub not_equal_all: Option<Vec<T>>,
+    #[ts(optional)]
     pub is_null: Option<bool>,
 }
 
@@ -228,6 +239,7 @@ impl<T> NumberFilter<T> {
 pub struct DatetimeFilter {
     pub equal_to: Option<NaiveDateTime>,
     pub before_or_equal_to: Option<NaiveDateTime>,
+    pub before: Option<NaiveDateTime>,
     pub after_or_equal_to: Option<NaiveDateTime>,
     pub is_null: Option<bool>,
 }
@@ -238,6 +250,7 @@ impl DatetimeFilter {
             equal_to: None,
             after_or_equal_to: Some(from),
             before_or_equal_to: Some(to),
+            before: None,
             is_null: None,
         }
     }
@@ -247,6 +260,7 @@ impl DatetimeFilter {
             equal_to: Some(value.to_owned()),
             after_or_equal_to: None,
             before_or_equal_to: None,
+            before: None,
             is_null: None,
         }
     }
@@ -256,6 +270,7 @@ impl DatetimeFilter {
             equal_to: None,
             after_or_equal_to: Some(value.to_owned()),
             before_or_equal_to: None,
+            before: None,
             is_null: None,
         }
     }
@@ -265,6 +280,17 @@ impl DatetimeFilter {
             equal_to: None,
             after_or_equal_to: None,
             before_or_equal_to: Some(value),
+            before: None,
+            is_null: None,
+        }
+    }
+
+    pub fn before(value: NaiveDateTime) -> Self {
+        DatetimeFilter {
+            equal_to: None,
+            after_or_equal_to: None,
+            before_or_equal_to: None,
+            before: Some(value),
             is_null: None,
         }
     }
@@ -274,6 +300,7 @@ impl DatetimeFilter {
             equal_to: None,
             after_or_equal_to: None,
             before_or_equal_to: None,
+            before: None,
             is_null: Some(value),
         }
     }

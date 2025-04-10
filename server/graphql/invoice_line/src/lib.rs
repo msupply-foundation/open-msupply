@@ -16,13 +16,12 @@ impl InvoiceLineQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        invoice_id: String,
         page: Option<PaginationInput>,
         filter: Option<InvoiceLineFilterInput>,
         sort: Option<Vec<InvoiceLineSortInput>>,
         report_sort: Option<PrintReportSortInput>,
     ) -> Result<InvoiceLinesResponse> {
-        invoice_lines(ctx, &store_id, &invoice_id, page, filter, sort, report_sort)
+        invoice_lines(ctx, &store_id, page, filter, sort, report_sort)
     }
 }
 

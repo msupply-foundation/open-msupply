@@ -21,6 +21,9 @@ pub fn get_invoices(
 
     let mut filter = filter.unwrap_or_default();
     filter.store_id = store_id_option.map(EqualFilter::equal_to);
+    // For invoice list we don't want to show any that are cancellation
+    // reversals
+    filter.is_cancellation = Some(false);
 
     Ok(ListResult {
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
@@ -50,6 +53,10 @@ pub fn get_invoice_by_number(
     let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(
         InvoiceFilter::new()
             .invoice_number(EqualFilter::equal_to_i64(invoice_number as i64))
+            // Reverse "cancellation" prescription will have the same Invoice
+            // Number as their linked prescription, so we don't want to return
+            // them
+            .is_cancellation(false)
             .store_id(EqualFilter::equal_to(store_id))
             .r#type(r#type.equal_to()),
     )?;

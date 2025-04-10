@@ -91,7 +91,7 @@ export function useVaccination({
     notGivenReason,
     itemId: stockLine?.itemId,
 
-    createTransactions: false,
+    createTransactions: true,
   };
 
   const draft: VaccinationDraft = { ...defaults, ...patch };

@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -9,6 +9,9 @@ import {
   useTranslation,
   createQueryParamsStore,
   DetailTabs,
+  ModalMode,
+  useEditModal,
+  useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
@@ -20,19 +23,30 @@ import { SidePanel } from './SidePanel';
 import { Footer } from './Footer';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
+import { HistoryModal } from './History/HistoryModal';
+import { Draft } from '../..';
 
 export const PrescriptionDetailView: FC = () => {
+  const {
+    entity: historyEntity,
+    mode: historyMode,
+    onOpen: onOpenHistory,
+    onClose: onCloseHistory,
+    isOpen: isHistoryOpen,
+    setMode: setHistoryMode,
+  } = useEditModal<Draft>();
   const {
     query: { data, loading },
   } = usePrescription();
   const t = useTranslation();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const onRowClick = useCallback(
     (item: StockOutLineFragment | StockOutItem) => {
       navigate(
         RouteBuilder.create(AppRoute.Dispensary)
           .addPart(AppRoute.Prescription)
-          .addPart(String(data?.invoiceNumber))
+          .addPart(String(data?.id))
           .addPart(String(item.id))
           .build()
       );
@@ -43,11 +57,19 @@ export const PrescriptionDetailView: FC = () => {
     navigate(
       RouteBuilder.create(AppRoute.Dispensary)
         .addPart(AppRoute.Prescription)
-        .addPart(String(data?.invoiceNumber))
+        .addPart(String(data?.id))
         .addPart(String('new'))
         .build()
     );
   };
+  const onViewHistory = (draft?: Draft) => {
+    onOpenHistory(draft);
+    setHistoryMode(ModalMode.Create);
+  };
+
+  useEffect(() => {
+    setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
+  }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
   if (loading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
@@ -77,7 +99,15 @@ export const PrescriptionDetailView: FC = () => {
             },
           })}
         >
-          <AppBarButtons onAddItem={onAddItem} />
+          <AppBarButtons onAddItem={onAddItem} onViewHistory={onViewHistory} />
+          <HistoryModal
+            draft={historyEntity}
+            mode={historyMode}
+            isOpen={isHistoryOpen}
+            onClose={onCloseHistory}
+            patientId={data.patientId}
+            invoiceId={data.id}
+          />
           <Toolbar />
           <DetailTabs tabs={tabs} />
           <Footer />

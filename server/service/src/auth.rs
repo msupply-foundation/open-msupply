@@ -67,6 +67,7 @@ pub enum Resource {
     RequisitionChart,
     RequisitionStats,
     RequisitionSend,
+    CreateOutboundShipmentFromRequisition,
     // stock take line
     InsertStocktakeLine,
     UpdateStocktakeLine,
@@ -133,6 +134,15 @@ pub enum Resource {
     // contact form
     MutateContactForm,
     NoPermissionRequired,
+    // Plugin data
+    MutatePluginData,
+    ReadPluginData,
+    // Configure plugin
+    ConfigurePlugin,
+    // Plugin Graphql
+    PluginGraphql,
+    // Preferences
+    MutatePreferences,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -333,6 +343,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::RequisitionSend),
+        ]),
+    );
+
+    map.insert(
+        Resource::CreateOutboundShipmentFromRequisition,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::RequisitionCreateOutboundShipment),
         ]),
     );
     // r&r form
@@ -551,7 +569,10 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     map.insert(
         Resource::MutateAsset,
-        PermissionDSL::HasPermission(PermissionType::AssetMutate),
+        PermissionDSL::Any(vec![
+            PermissionDSL::HasPermission(PermissionType::AssetMutate),
+            PermissionDSL::HasPermission(PermissionType::AssetMutateViaDataMatrix),
+        ]),
     );
     map.insert(
         Resource::MutateAssetCatalogueItem,
@@ -589,6 +610,36 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     // contact form
     map.insert(Resource::MutateContactForm, PermissionDSL::HasStoreAccess);
 
+    // plugin data
+    map.insert(
+        Resource::MutatePluginData,
+        PermissionDSL::Any(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin), // Server admins can add data without store-relationship
+        ]),
+    );
+    map.insert(
+        Resource::ReadPluginData,
+        PermissionDSL::NoPermissionRequired, // Plugin data doesn't get any special protections...
+    );
+    map.insert(
+        Resource::MutatePreferences,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+
+    // configure
+    map.insert(
+        Resource::ConfigurePlugin,
+        PermissionDSL::Any(vec![
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin), // Server admins can install plugins
+        ]),
+    );
+
+    // plugin graphql
+    map.insert(
+        Resource::PluginGraphql,
+        PermissionDSL::Any(vec![PermissionDSL::HasStoreAccess]),
+    );
     map
 }
 
@@ -607,6 +658,7 @@ pub enum AuthError {
     InternalError(String),
 }
 
+#[derive(Debug)]
 pub struct ValidatedUserAuth {
     pub user_id: String,
     pub claims: OmSupplyClaim,

@@ -16,6 +16,7 @@ export const LoadingButton: React.FC<
 > = ({
   children,
   color = 'primary',
+  variant = 'outlined',
   disabled,
   endIcon,
   isLoading,
@@ -48,6 +49,7 @@ export const LoadingButton: React.FC<
       startIcon={startIcon}
       shouldShrink={shouldShrink}
       shrinkThreshold={shrinkThreshold}
+      variant={variant}
       {...rest}
     >
       {children}

@@ -55,6 +55,7 @@ pub struct StocktakeFilterInput {
     pub stocktake_date: Option<DateFilterInput>,
     pub finalised_datetime: Option<DatetimeFilterInput>,
     pub is_locked: Option<bool>,
+    pub is_program_stocktake: Option<bool>,
 }
 
 #[derive(SimpleObject)]
@@ -223,6 +224,7 @@ impl From<StocktakeFilterInput> for StocktakeFilter {
             stocktake_date: f.stocktake_date.map(DateFilter::from),
             finalised_datetime: f.finalised_datetime.map(DatetimeFilter::from),
             is_locked: f.is_locked,
+            is_program_stocktake: f.is_program_stocktake,
         }
     }
 }

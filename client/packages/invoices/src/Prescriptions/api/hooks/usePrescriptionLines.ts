@@ -4,11 +4,12 @@ import {
   InvoiceLineNodeType,
   RecordPatch,
   setNullableInput,
+  SetPrescribedQuantityInput,
   UpdatePrescriptionLineInput,
   useMutation,
 } from '@openmsupply-client/common';
 import { usePrescription } from './usePrescription';
-import { DraftStockOutLine } from '@openmsupply-client/invoices/src/types';
+import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { PrescriptionRowFragment } from '../operations.generated';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
@@ -32,13 +33,13 @@ export const usePrescriptionLines = (id?: string) => {
     mutateAsync: updateMutation,
     isLoading: isSavingLines,
     error: saveLineError,
-  } = useSaveLines(data?.id ?? '', data?.invoiceNumber ?? -1);
+  } = useSaveLines(data?.id ?? '', data?.id ?? '');
 
   const saveLines = async ({
     draftPrescriptionLines,
     patch,
   }: {
-    draftPrescriptionLines: DraftStockOutLine[];
+    draftPrescriptionLines: DraftPrescriptionLine[];
     patch?: RecordPatch<PrescriptionRowFragment>;
   }) => {
     return await updateMutation({
@@ -52,9 +53,9 @@ export const usePrescriptionLines = (id?: string) => {
     mutateAsync: deleteMutation,
     isLoading: isDeletingLines,
     error: deleteLinesError,
-  } = useDeleteLines(data?.invoiceNumber ?? -1);
+  } = useDeleteLines(data?.id ?? '');
 
-  const deleteLines = async (rowsToDelete: DraftStockOutLine[]) => {
+  const deleteLines = async (rowsToDelete: DraftPrescriptionLine[]) => {
     const lines = rowsToDelete.map(({ id }) => ({ id }));
     await deleteMutation(lines);
   };
@@ -65,14 +66,14 @@ export const usePrescriptionLines = (id?: string) => {
   };
 };
 
-const useSaveLines = (id: string, invoiceNum: number) => {
+const useSaveLines = (id: string, invoiceId: string) => {
   const { prescriptionApi, storeId, queryClient } = usePrescriptionGraphQL();
 
   const mutationFn = async ({
     draftPrescriptionLines,
     patch,
   }: {
-    draftPrescriptionLines: DraftStockOutLine[];
+    draftPrescriptionLines: DraftPrescriptionLine[];
     patch?: RecordPatch<PrescriptionRowFragment>;
   }) => {
     if (patch && id !== '') patch.id = id;
@@ -119,9 +120,27 @@ const useSaveLines = (id: string, invoiceNum: number) => {
               status: mapStatus(patch),
               clinicianId: setNullableInput('clinicianId', patch),
               diagnosisId: setNullableInput('diagnosisId', patch),
+              programId: setNullableInput('programId', patch),
+              theirReference: setNullableInput('theirReference', patch),
+              nameInsuranceJoinId: setNullableInput(
+                'nameInsuranceJoinId',
+                patch
+              ),
             },
           ]
         : undefined,
+      setPrescribedQuantity: draftPrescriptionLines
+        .filter(
+          ({ invoiceId, item, prescribedQuantity }) =>
+            invoiceId && item && (prescribedQuantity ?? 0) > 0
+        )
+        .map(
+          line =>
+            createInputObject(
+              line,
+              'setPrescribedQuantity'
+            ) as SetPrescribedQuantityInput
+        ),
     };
 
     const result = await prescriptionApi.upsertPrescription({ storeId, input });
@@ -135,14 +154,14 @@ const useSaveLines = (id: string, invoiceNum: number) => {
       queryClient.invalidateQueries([
         PRESCRIPTION,
         PRESCRIPTION_LINE,
-        invoiceNum,
+        invoiceId,
       ]);
       queryClient.invalidateQueries([HISTORICAL_STOCK_LINES]);
     },
   });
 };
 
-const useDeleteLines = (invoiceNum: number) => {
+const useDeleteLines = (invocieId: string) => {
   const { prescriptionApi, storeId, queryClient } = usePrescriptionGraphQL();
 
   const toDeleteLine = (line: { id: string }): DeletePrescriptionLineInput => ({
@@ -162,7 +181,7 @@ const useDeleteLines = (invoiceNum: number) => {
       queryClient.invalidateQueries([
         PRESCRIPTION,
         PRESCRIPTION_LINE,
-        invoiceNum,
+        invocieId,
       ]);
       queryClient.invalidateQueries([HISTORICAL_STOCK_LINES]);
     },

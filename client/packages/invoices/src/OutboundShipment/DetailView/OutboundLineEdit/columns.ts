@@ -95,7 +95,10 @@ export const useOutboundLineEditColumns = ({
       key: 'availableNumberOfPacks',
       align: ColumnAlign.Right,
       width: 90,
-      accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
+      accessor: ({ rowData }) =>
+        rowData.location?.onHold || rowData.stockLine?.onHold
+          ? 0
+          : rowData.stockLine?.availableNumberOfPacks,
     },
     [
       'numberOfPacks',
@@ -120,7 +123,8 @@ export const useOutboundLineEditColumns = ({
       label: 'label.on-hold',
       key: 'onHold',
       Cell: CheckCell,
-      accessor: ({ rowData }) => rowData.stockLine?.onHold,
+      accessor: ({ rowData }) =>
+        rowData.stockLine?.onHold || rowData.location?.onHold,
       align: ColumnAlign.Center,
       width: 70,
     }

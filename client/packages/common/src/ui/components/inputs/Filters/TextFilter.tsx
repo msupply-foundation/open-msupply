@@ -35,15 +35,17 @@ export const TextFilter: FC<{
 
   return (
     <BasicTextInput
-      InputProps={{
-        endAdornment: (
-          <EndAdornment
-            isLoading={false}
-            hasValue={!!value}
-            onClear={() => handleChange('')}
-          />
-        ),
-        sx: { width: FILTER_WIDTH },
+      slotProps={{
+        input: {
+          endAdornment: (
+            <EndAdornment
+              isLoading={false}
+              hasValue={!!value}
+              onClear={() => handleChange('')}
+            />
+          ),
+          sx: { width: FILTER_WIDTH },
+        },
       }}
       value={value}
       onChange={e => handleChange(e.target.value)}

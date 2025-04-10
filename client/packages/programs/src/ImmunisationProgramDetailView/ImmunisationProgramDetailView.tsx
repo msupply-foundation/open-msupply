@@ -131,7 +131,9 @@ export const ProgramComponent: FC = () => {
         isLoading={vaccineCoursesLoading}
         isError={vaccineCoursesError}
         onRowClick={onOpen}
-        noDataElement={<NothingHere body={t('error.no-items')} />}
+        noDataElement={
+          <NothingHere body={t('error.no-vaccine-courses')} onCreate={onOpen} />
+        }
       />
       <AppFooterPortal
         Content={

@@ -10,7 +10,10 @@ import {
   DownloadIcon,
   ArrowLeftIcon,
 } from '@common/icons';
+import { useKeyboardShortcut } from '@common/hooks';
 import { ButtonWithIcon } from './ButtonWithIcon';
+import { useRegisterActions } from 'kbar';
+import { EnvUtils } from '@common/utils';
 
 type DialogButtonVariant =
   | 'cancel'
@@ -23,7 +26,8 @@ type DialogButtonVariant =
   | 'copy'
   | 'delete'
   | 'export'
-  | 'close';
+  | 'close'
+  | 'select';
 
 interface DialogButtonProps {
   disabled?: boolean;
@@ -114,6 +118,12 @@ const getButtonProps = (
         labelKey: 'button.previous',
         variant: 'contained',
       };
+    case 'select':
+      return {
+        icon: <CheckIcon />,
+        labelKey: 'button.select',
+        variant: 'contained',
+      };
   }
 };
 
@@ -129,6 +139,57 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
 }) => {
   const t = useTranslation();
   const { variant: buttonVariant, icon, labelKey } = getButtonProps(variant);
+  const ref = React.useRef<HTMLButtonElement>(null);
+  const altOrOptionString = EnvUtils.os === 'Mac OS' ? 'Option' : 'Alt';
+
+  const isKeyValid = (e: KeyboardEvent) => {
+    if (disabled) return false;
+
+    switch (variant) {
+      case 'save':
+        return e.altKey && e.code === 'KeyS';
+      case 'cancel':
+        return e.code === 'Escape';
+      default:
+        return false;
+    }
+  };
+
+  const getButtonActions = () => {
+    switch (variant) {
+      case 'save':
+        return [
+          {
+            id: 'button:save',
+            name: `${customLabel ?? t(labelKey)} (${altOrOptionString}+S)`,
+            perform: () => ref.current?.click(),
+          },
+        ];
+      case 'cancel':
+        return [
+          {
+            id: 'button:cancel',
+            name: `${customLabel ?? t(labelKey)} (Escape)`,
+            keywords: 'cancel',
+            perform: () => ref.current?.click(),
+          },
+        ];
+      default:
+        return [];
+    }
+  };
+
+  // registers a keyboard shortcut for the button which fires even when focus is in an input
+  useKeyboardShortcut(
+    {
+      isKeyValid,
+      onKeyPressed: () => ref.current?.click(),
+    },
+    [disabled, variant]
+  );
+
+  // adds the command to the cmd+K menu so that the keys are visible
+  useRegisterActions(getButtonActions(), [disabled, variant]);
 
   return (
     <ButtonWithIcon
@@ -155,6 +216,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
           : {}
       }
       shouldShrink={shouldShrink}
+      ref={ref}
     />
   );
 };

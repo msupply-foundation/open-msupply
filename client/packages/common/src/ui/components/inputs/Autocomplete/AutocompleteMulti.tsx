@@ -9,6 +9,7 @@ import {
   ChipProps,
 } from '@mui/material';
 import { BasicTextInput } from '../TextInput';
+import { useTranslation } from '@common/intl';
 
 export interface AutocompleteMultiProps<
   T,
@@ -46,19 +47,27 @@ export function AutocompleteMulti<
   options,
   renderInput,
   width = 'auto',
-  inputProps,
+  slotProps,
+  loadingText,
+  noOptionsText,
   ...restOfAutocompleteProps
 }: PropsWithChildren<
   AutocompleteMultiProps<T, true, DisableClearable, FreeSolo, ChipComponent>
 >): JSX.Element {
+  const t = useTranslation();
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
-      {...inputProps}
       autoFocus={autoFocus}
-      InputProps={{
-        disableUnderline: false,
-        ...props.InputProps,
+      slotProps={{
+        input: {
+          disableUnderline: false,
+          ...props?.InputProps,
+        },
+        htmlInput: {
+          ...props.inputProps,
+        },
+        ...slotProps,
       }}
       sx={{ width }}
     />
@@ -79,34 +88,40 @@ export function AutocompleteMulti<
   return (
     <MuiAutocomplete
       {...restOfAutocompleteProps}
-      ChipProps={
-        {
+      slotProps={{
+        chip: {
           sx: {
             backgroundColor: 'secondary.main',
             color: 'secondary.contrastText',
           },
-        } as ChipProps<ChipComponent>
-      }
-      defaultValue={defaultValue}
-      getOptionLabel={getOptionLabel || defaultGetOptionLabel}
-      multiple
-      onChange={onChange}
-      options={options}
-      componentsProps={{
+        } as Partial<ChipProps<ChipComponent>>,
         paper: {
           elevation: 3,
           sx: {
             borderRadius: 4,
           },
         },
+        ...slotProps,
       }}
+      defaultValue={defaultValue}
+      getOptionLabel={getOptionLabel || defaultGetOptionLabel}
+      multiple
+      onChange={onChange}
+      options={options}
       renderInput={renderInput || defaultRenderInput}
       size="small"
       sx={{
+        background: theme => theme.palette.background.drawer,
+        borderRadius: 2,
+        paddingTop: 0.5,
+        paddingBottom: 0.5,
         '& .MuiChip-deleteIcon': {
-          fill: theme => theme.palette.secondary.contrastText,
+          fill: theme => theme.palette.background.drawer,
+          borderRadius: 2,
         },
       }}
+      noOptionsText={noOptionsText ?? t('label.no-options')}
+      loadingText={loadingText ?? t('loading')}
     />
   );
 }

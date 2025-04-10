@@ -1,6 +1,5 @@
 use std::io::ErrorKind;
 use std::sync::Arc;
-use std::sync::Mutex;
 
 use actix_files as fs;
 use actix_multipart::form::tempfile::TempFile;
@@ -22,8 +21,6 @@ use serde::Deserialize;
 use repository::sync_file_reference_row::SyncFileReferenceRow;
 
 use service::auth_data::AuthData;
-use service::plugin::plugin_files::{PluginFileService, PluginInfo};
-use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 use service::static_files::StaticFile;
@@ -42,13 +39,12 @@ use crate::middleware::limit_content_length;
 #[derive(Debug, MultipartForm)]
 pub(crate) struct UploadForm {
     #[multipart(rename = "files")]
-    pub(crate) file: TempFile,
+    pub(crate) file: Vec<TempFile>,
 }
 
 // this function could be located in different module
 pub fn config_static_files(cfg: &mut web::ServiceConfig) {
     cfg.service(web::resource("/files").guard(guard::Get()).to(files));
-    cfg.service(plugins);
     cfg.service(
         web::scope("/sync_files")
             .service(download_sync_file)
@@ -82,28 +78,6 @@ async fn files(
             disposition: DispositionType::Inline,
             parameters: vec![DispositionParam::Filename(file.name)],
         })
-        .into_response(&req);
-
-    Ok(response)
-}
-
-#[get(r#"/plugins/{plugin}/{filename:.*\..+$}"#)]
-async fn plugins(
-    req: HttpRequest,
-    settings: Data<Settings>,
-    plugin_info: web::Path<PluginInfo>,
-    plugin_bucket: Data<Mutex<ValidatedPluginBucket>>,
-) -> Result<HttpResponse, Error> {
-    let file = PluginFileService::find_file(
-        plugin_bucket.as_ref(),
-        &settings.server.base_dir,
-        &plugin_info,
-    )
-    .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
-    .ok_or(std::io::Error::new(ErrorKind::NotFound, "Plugin not found"))?;
-
-    let response = fs::NamedFile::open(file)?
-        .set_content_type("application/javascript; charset=utf-8".parse().unwrap())
         .into_response(&req);
 
     Ok(response)
@@ -174,17 +148,26 @@ async fn upload_sync_file(
         )
     })?;
 
-    let static_file = upload_sync_file_inner(&service_provider, &settings, path.into_inner(), file)
-        .await
-        .map_err(|error| {
-            log::error!("Error while uploading file: {}", format_error(&error));
-            InternalError::new(
-                "Error uploading file, please check server logs",
-                StatusCode::INTERNAL_SERVER_ERROR,
-            )
-        })?;
+    let path_inner = path.into_inner();
 
-    Ok(HttpResponse::Ok().json(static_file.id))
+    let mut static_file_ids: Vec<String> = vec![];
+
+    for f in file {
+        let static_file =
+            upload_sync_file_inner(&service_provider, &settings, path_inner.clone(), f)
+                .await
+                .map_err(|error| {
+                    log::error!("Error while uploading file: {}", format_error(&error));
+                    InternalError::new(
+                        "Error uploading file, please check server logs",
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                    )
+                })?;
+
+        static_file_ids.push(static_file.id);
+    }
+
+    Ok(HttpResponse::Ok().json(static_file_ids))
 }
 
 #[derive(Error, Debug)]
@@ -209,7 +192,7 @@ async fn upload_sync_file_inner(
     let mime_type = file.content_type.as_ref().map(|mime| mime.to_string());
 
     let static_file = file_service.move_temp_file(
-        file,
+        &file,
         &StaticFileCategory::SyncFile(table_name.clone(), record_id.clone()),
         None,
     )?;

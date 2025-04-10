@@ -6,7 +6,7 @@ import {
   DesktopDatePicker,
 } from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
-import { BasicTextInput } from '../../TextInput';
+import { DeprecatedBasicTextInput } from '../../TextInput';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
 import {
   DateUtils,
@@ -20,7 +20,7 @@ const TextField = (params: TextFieldProps) => {
     ...params,
     variant: 'standard',
   };
-  return <BasicTextInput {...textInputProps} />;
+  return <DeprecatedBasicTextInput {...textInputProps} />;
 };
 
 export const getFormattedDateError = (
@@ -53,6 +53,7 @@ export const BaseDatePickerInput: FC<
     // This allows a calling component to know whether the date was changed via
     // keyboard input or the picker UI
     setIsOpen?: (open: boolean) => void;
+    required?: boolean;
   }
 > = ({
   error,
@@ -62,12 +63,13 @@ export const BaseDatePickerInput: FC<
   label,
   textFieldProps,
   setIsOpen,
+  required,
   ...props
 }) => {
+  const t = useTranslation();
   const theme = useAppTheme();
   const [internalError, setInternalError] = useState<string | null>(null);
   const [isInitialEntry, setIsInitialEntry] = useState(true);
-  const t = useTranslation();
 
   return (
     <DesktopDatePicker
@@ -122,8 +124,9 @@ export const BaseDatePickerInput: FC<
         },
         textField: {
           error: !isInitialEntry && (!!error || !!internalError),
-          helperText: !isInitialEntry ? error ?? internalError ?? '' : '',
+          helperText: !isInitialEntry ? (error ?? internalError ?? '') : '',
           label,
+          required,
           onBlur: () => setIsInitialEntry(false),
           ...textFieldProps,
           sx: {
@@ -134,6 +137,12 @@ export const BaseDatePickerInput: FC<
             ...textFieldProps?.sx,
           },
         },
+      }}
+      localeText={{
+        okButtonLabel: t('button.ok'),
+        cancelButtonLabel: t('button.cancel'),
+        clearButtonLabel: t('button.clear'),
+        todayButtonLabel: t('button.today'),
       }}
       {...props}
       value={DateUtils.getDateOrNull(props.value)}

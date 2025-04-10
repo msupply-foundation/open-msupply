@@ -1,4 +1,5 @@
 use crate::requisition::program_settings::common::{period_is_available, reduce_and_sort_periods};
+use repository::ProgramSupplier;
 
 use super::{prepare::PrepareProgramSettings, OrderType, SupplierProgramSettings};
 
@@ -48,7 +49,7 @@ pub(super) fn map_supplier_program_settings(
                 .collect();
 
             // Filter by program_id
-            let suppliers = program_suppliers
+            let mut suppliers: Vec<ProgramSupplier> = program_suppliers
                 .iter()
                 .filter(|s| {
                     s.program.id == program_setting.program_row.id
@@ -57,6 +58,15 @@ pub(super) fn map_supplier_program_settings(
                 })
                 .cloned()
                 .collect();
+
+            // A supplier can be matched multiple times as they can be found by program id or by elmis code.
+            // this is to allow ordering from suppliers who don't have the same program assigned to their store
+            // but do have an equivalent program with the same elmis_code
+            // Note: for some reason we seem to have situations where supplier can match the same elmis code multiple times?
+
+            // So... we dedup by supplier id so we don't get duplicates in the app
+            suppliers.sort_by(|a, b| a.supplier.name_row.id.cmp(&b.supplier.name_row.id));
+            suppliers.dedup_by(|a, b| a.supplier.name_row.id == b.supplier.name_row.id);
 
             SupplierProgramSettings {
                 order_types,
@@ -84,7 +94,10 @@ fn test_reduce_and_sort_periods() {
         .map(make_date)
         .collect();
 
-    let result: Vec<PeriodRow> = [-4, -2, 2, 3].iter().map(make_date).collect();
+    let result: Vec<PeriodRow> = [-10, -10, -5, -4, -2, 2, 3, 4, 10, 11]
+        .iter()
+        .map(make_date)
+        .collect();
 
     assert_eq!(reduce_and_sort_periods(periods), result)
 }

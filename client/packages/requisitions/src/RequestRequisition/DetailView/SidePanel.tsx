@@ -135,7 +135,7 @@ const RelatedDocumentsSection: FC = () => {
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
-      <Grid item flexDirection="column" gap={0.5}>
+      <Grid flexDirection="column" gap={0.5}>
         {!shipments?.totalCount && (
           <PanelLabel>{t('messages.no-shipments-yet')}</PanelLabel>
         )}
@@ -147,14 +147,14 @@ const RelatedDocumentsSection: FC = () => {
               shipment.user?.username ?? UNDEFINED_STRING_VALUE
             )}
           >
-            <Grid item>
+            <Grid>
               <RelatedDocumentsRow
                 key={shipment.id}
                 label={t('label.shipment')}
                 value={shipment.invoiceNumber}
                 to={RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InboundShipment)
-                  .addPart(String(shipment.invoiceNumber))
+                  .addPart(shipment.id)
                   .build()}
               />
             </Grid>
@@ -186,7 +186,7 @@ export const SidePanel: FC = () => {
   const copyToClipboard = () => {
     navigator.clipboard
       .writeText(JSON.stringify(data, null, 4) ?? '')
-      .then(() => success('Copied to clipboard successfully')());
+      .then(() => success(t('message.copy-success'))());
   };
 
   const onDelete = useDeleteConfirmation({

@@ -13,6 +13,7 @@ import {
   CurrencyCell,
   ColumnDescription,
   NumUtils,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -64,6 +65,9 @@ export const usePrescriptionColumn = ({
 >[] => {
   const t = useTranslation();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
+
+  const { store: { preferences } = {} } = useAuthContext();
+  const hasPrescribedQty = preferences?.editPrescribedQuantityOnPrescription;
 
   const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
     GenericColumnKey.Selection,
@@ -219,7 +223,40 @@ export const usePrescriptionColumn = ({
         },
       },
     ],
+  ];
 
+  if (hasPrescribedQty) {
+    columns.push({
+      label: 'label.prescribed-quantity',
+      key: 'prescribedQuantity',
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => {
+        if ('lines' in rowData) {
+          // Multiple lines, so we need to get the prescribed quantity from the first line with a value
+
+          const lineWithPrescribedQty = rowData.lines.find(
+            line => line.prescribedQuantity
+          );
+          return lineWithPrescribedQty?.prescribedQuantity ?? 0;
+        } else {
+          return rowData.prescribedQuantity ?? 0;
+        }
+      },
+      getSortValue: rowData => {
+        if ('lines' in rowData) {
+          return Object.values(rowData.lines).reduce(
+            (sum, batch) =>
+              sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
+            0
+          );
+        } else {
+          return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
+        }
+      },
+    });
+  }
+
+  columns.push(
     [
       'numberOfPacks',
       {
@@ -260,7 +297,6 @@ export const usePrescriptionColumn = ({
         },
       },
     ],
-
     {
       label: 'label.unit-price',
       key: 'sellPricePerUnit',
@@ -278,6 +314,7 @@ export const usePrescriptionColumn = ({
             totalUnits += line.numberOfPacks * line.packSize;
           }
 
+          if (totalSellPrice === 0 && totalUnits === 0) return 0;
           return totalSellPrice / totalUnits;
         } else {
           return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
@@ -295,6 +332,7 @@ export const usePrescriptionColumn = ({
         }
       },
     },
+
     {
       label: 'label.line-total',
       key: 'lineTotal',
@@ -302,29 +340,60 @@ export const usePrescriptionColumn = ({
       Cell: CurrencyCell,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
-          return Object.values(rowData.lines).reduce(
-            (sum, batch) => sum + batch.sellPricePerPack * batch.numberOfPacks,
-            0
-          );
+          // Multiple lines, so we need to calculate the average price per unit
+          let totalSellPrice = 0;
+          for (const line of rowData.lines) {
+            totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
+          }
+          return totalSellPrice;
         } else {
-          const x = rowData.sellPricePerPack * rowData.numberOfPacks;
-          return x;
+          return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
         }
       },
-      getSortValue: row => {
-        if ('lines' in row) {
-          return Object.values(row.lines).reduce(
-            (sum, batch) => sum + batch.sellPricePerPack * batch.numberOfPacks,
+      getSortValue: rowData => {
+        if ('lines' in rowData) {
+          return Object.values(rowData.lines).reduce(
+            (sum, batch) =>
+              sum + (batch.sellPricePerPack ?? 0) * batch.numberOfPacks,
             0
           );
         } else {
-          const x = row.sellPricePerPack * row.numberOfPacks;
-          return x;
+          return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
         }
       },
     },
-    expansionColumn,
-  ];
+
+    {
+      label: 'label.total-cost-price',
+      key: 'totalCostPrice',
+      align: ColumnAlign.Right,
+      Cell: CurrencyCell,
+      accessor: ({ rowData }) => {
+        if ('lines' in rowData) {
+          // Multiple lines, so we need to calculate the average price per unit
+          let totalCostPrice = 0;
+          for (const line of rowData.lines) {
+            totalCostPrice += line.costPricePerPack * line.numberOfPacks;
+          }
+          return totalCostPrice;
+        } else {
+          return (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks;
+        }
+      },
+      getSortValue: rowData => {
+        if ('lines' in rowData) {
+          return Object.values(rowData.lines).reduce(
+            (sum, batch) =>
+              sum + (batch.costPricePerPack ?? 0) * batch.numberOfPacks,
+            0
+          );
+        } else {
+          return (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks;
+        }
+      },
+    },
+    expansionColumn
+  );
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
 };

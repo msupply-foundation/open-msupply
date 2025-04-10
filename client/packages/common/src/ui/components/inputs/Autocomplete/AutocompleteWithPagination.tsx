@@ -22,6 +22,7 @@ import { StyledPopper } from './components';
 import { ArrayUtils } from '@common/utils';
 import { RecordWithId } from '@common/types';
 import { useOpenStateWithKeyboard } from '@common/components';
+import { useTranslation } from '@common/intl';
 
 const LOADER_HIDE_TIMEOUT = 500;
 
@@ -68,6 +69,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   mapOptions,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteWithPaginationProps<T>>) {
+  const t = useTranslation();
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const [isLoading, setIsLoading] = useState(true);
   const lastOptions = useRef<T[]>([]);
@@ -93,26 +95,33 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
     lastOptions.current = newOptions;
 
     return newOptions;
-  }, [pages]);
+  }, [pages, value]);
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
       {...inputProps}
       autoFocus={autoFocus}
-      InputProps={{
-        ...props.InputProps,
-        disableUnderline: false,
-        endAdornment: (
-          <>
-            {isLoading || loading ? (
-              <CircularProgress color="primary" size={18} />
-            ) : null}
-            {props.InputProps.endAdornment}
-          </>
-        ),
+      slotProps={{
+        input: {
+          ...props.InputProps,
+          disableUnderline: false,
+          sx: {
+            paddingY: '4px !important',
+          },
+          endAdornment: (
+            <>
+              {isLoading || loading ? (
+                <CircularProgress color="primary" size={18} />
+              ) : null}
+              {props.InputProps.endAdornment}
+            </>
+          ),
+        },
+        htmlInput: {
+          ...props?.inputProps,
+        },
       }}
-      sx={{ width }}
     />
   );
 
@@ -157,13 +166,15 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         },
       };
 
-  const CustomPopper: React.FC<PopperProps> = props => (
+  const CustomPopper = (props: PopperProps) => (
     <StyledPopper
       {...props}
       placement="bottom-start"
       style={{ minWidth: popperMinWidth, width: 'auto' }}
     />
   );
+
+  const popper = popperMinWidth ? CustomPopper : StyledPopper;
 
   useEffect(() => {
     setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
@@ -183,16 +194,25 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       getOptionDisabled={getOptionDisabled}
       filterOptions={filter}
       loading={loading}
-      loadingText={loadingText}
-      noOptionsText={noOptionsText}
+      loadingText={loadingText ?? t('loading')}
+      noOptionsText={noOptionsText ?? t('label.no-options')}
       options={options}
       size="small"
       renderInput={renderInput || defaultRenderInput}
       renderOption={renderOption || DefaultRenderOption}
       onChange={onChange}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
-      PopperComponent={popperMinWidth ? CustomPopper : StyledPopper}
-      ListboxProps={listboxProps}
+      sx={{
+        paddingTop: 0.5,
+        paddingBottom: 0.5,
+        width,
+      }}
+      slots={{
+        popper: popper,
+      }}
+      slotProps={{
+        listbox: listboxProps,
+      }}
     />
   );
 }

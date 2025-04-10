@@ -112,6 +112,7 @@ fn generate_line(
         cost_price_per_pack,
         r#type: InvoiceLineType::StockIn,
         number_of_packs,
+        prescribed_quantity: None,
         item_name,
         item_code,
         stock_line_id,
@@ -123,6 +124,7 @@ fn generate_line(
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
         foreign_currency_price_before_tax: None,
+        linked_invoice_id: None,
     }
 }
 

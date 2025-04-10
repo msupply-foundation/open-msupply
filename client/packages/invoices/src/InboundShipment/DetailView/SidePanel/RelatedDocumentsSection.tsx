@@ -33,19 +33,19 @@ export const RelatedDocumentsSectionComponent = () => {
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
-      <Grid item flexDirection="column" gap={0.5}>
+      <Grid flexDirection="column" gap={0.5}>
         {!requisition ? (
           <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
         ) : (
           <Tooltip title={tooltip}>
-            <Grid item>
+            <Grid>
               <PanelRow>
                 <PanelLabel>{t('label.requisition')}</PanelLabel>
                 <PanelField>
                   <Link
                     to={RouteBuilder.create(AppRoute.Replenishment)
                       .addPart(AppRoute.InternalOrder)
-                      .addPart(String(requisition?.requisitionNumber))
+                      .addPart(requisition?.id)
                       .build()}
                   >{`#${requisition?.requisitionNumber}`}</Link>
                 </PanelField>

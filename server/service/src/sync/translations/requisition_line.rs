@@ -8,7 +8,7 @@ use repository::{
     RequisitionLineRowDelete, RequisitionLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
-use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
+use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
@@ -111,7 +111,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             suggested_quantity: data.suggested_quantity,
             supply_quantity: data.actualQuan,
             available_stock_on_hand: data.stock_on_hand,
-            average_monthly_consumption: (data.daily_usage * NUMBER_OF_DAYS_IN_A_MONTH),
+            average_monthly_consumption: (data.daily_usage * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30).ceil(),
             comment: data.comment,
             snapshot_datetime: data.snapshot_datetime,
             approved_quantity: data.approved_quantity,
@@ -191,7 +191,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             suggested_quantity,
             actualQuan: supply_quantity,
             stock_on_hand: available_stock_on_hand,
-            daily_usage: average_monthly_consumption / NUMBER_OF_DAYS_IN_A_MONTH,
+            daily_usage: average_monthly_consumption / APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30,
             comment,
             snapshot_datetime,
             approved_quantity,

@@ -1,5 +1,6 @@
 use crate::{
-    db_diesel::store_row::store, diesel_macros::apply_equal_filter, name_link, DBType, EqualFilter,
+    db_diesel::store_row::store, diesel_macros::apply_equal_filter, name_link,
+    name_store_join::name_store_join, vaccination_row::vaccination, DBType, EqualFilter,
     LockedConnection, NameLinkRow, RepositoryError, StorageConnection,
 };
 use diesel::{
@@ -59,6 +60,7 @@ pub enum RowActionType {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
+    BackendPlugin,
     Number,
     Location,
     LocationMovement,
@@ -114,20 +116,29 @@ pub enum ChangelogTableName {
     Item,
     ContactForm,
     SystemLog,
+    InsuranceProvider,
+    FrontendPlugin,
+    NameInsuranceJoin,
+    Report,
+    FormSchema,
+    PluginData,
+    Preference,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
-    Legacy,
-    Central,
+    Legacy,  // Everything that goes to Legacy mSupply server
+    Central, // Data created on Open-mSupply central server
     Remote,
     File,
-    RemoteToCentral, // These records won't sync back to the remote site on re-initalisation
+    RemoteAndCentral, // These records will sync like remote record if store_id exist, otherwise they will sync like central records
+    RemoteToCentral,  // These records won't sync back to the remote site on re-initalisation
 }
 // When adding a new change log record type, specify how it should be synced
 // If new requirements are needed a different ChangeLogSyncStyle can be added
 impl ChangelogTableName {
     pub(crate) fn sync_style(&self) -> ChangeLogSyncStyle {
         match self {
+            ChangelogTableName::BackendPlugin => ChangeLogSyncStyle::Central,
             ChangelogTableName::Number => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Location => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::LocationMovement => ChangeLogSyncStyle::Legacy,
@@ -182,6 +193,13 @@ impl ChangelogTableName {
             ChangelogTableName::BundledItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::ContactForm => ChangeLogSyncStyle::RemoteToCentral,
             ChangelogTableName::SystemLog => ChangeLogSyncStyle::RemoteToCentral, // System Log records won't be synced to remote site on initialisation
+            ChangelogTableName::InsuranceProvider => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::FrontendPlugin => ChangeLogSyncStyle::Central,
+            ChangelogTableName::NameInsuranceJoin => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::Report => ChangeLogSyncStyle::Central,
+            ChangelogTableName::FormSchema => ChangeLogSyncStyle::Central,
+            ChangelogTableName::PluginData => ChangeLogSyncStyle::RemoteAndCentral,
+            ChangelogTableName::Preference => ChangeLogSyncStyle::Central,
         }
     }
 }
@@ -481,7 +499,6 @@ fn create_filtered_outgoing_sync_query(
     // Loop through all the Sync tables and add them to the query if they have the right sync style
 
     // Central Records
-
     let central_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
         .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::Central))
         .collect();
@@ -489,14 +506,42 @@ fn create_filtered_outgoing_sync_query(
     // Remote Records
     let remote_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
         .filter(|table| {
-            matches!(table.sync_style(), ChangeLogSyncStyle::Remote)
-                || matches!(table.sync_style(), ChangeLogSyncStyle::RemoteToCentral)
+            matches!(
+                table.sync_style(),
+                ChangeLogSyncStyle::Remote | ChangeLogSyncStyle::RemoteAndCentral
+            )
         })
+        .collect();
+
+    // Central record where store id is null
+    let central_by_empty_store_id: Vec<ChangelogTableName> = ChangelogTableName::iter()
+        .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::RemoteAndCentral))
         .collect();
 
     let active_stores_for_site = store::table
         .filter(store::site_id.eq(sync_site_id))
-        .select(store::id.nullable())
+        .select(store::id.nullable());
+
+    // ids of patients visible on active stores for the site
+    let visible_patient_ids = name_store_join::table
+        .inner_join(name_link::table)
+        .filter(
+            name_store_join::store_id
+                .nullable()
+                .eq_any(active_stores_for_site.clone().into_boxed()),
+        )
+        .select(name_link::name_id)
+        .into_boxed();
+
+    // Ideally this would be by changelog name_link_id, but that has an FK constraint
+    // requiring all names to exist on OMS central, which currently isn't the case.
+    // Instead, for visible patient sync - filter changelogs by record id of vaccinations
+    // for visible patients
+    // Bit of a hack, subquery unlikely to scale well - bring on v7 sync :cry:
+    let vaccinations_for_visible_patients = vaccination::table
+        .left_join(name_link::table)
+        .filter(name_link::name_id.eq_any(visible_patient_ids))
+        .select(vaccination::id)
         .into_boxed();
 
     // Filter the query for the matching records for each type
@@ -506,7 +551,15 @@ fn create_filtered_outgoing_sync_query(
             .or(changelog_deduped::table_name.eq(ChangelogTableName::SyncFileReference)) // All sites get all sync file references (not necessarily files)
             .or(changelog_deduped::table_name
                 .eq_any(remote_sync_table_names)
-                .and(changelog_deduped::store_id.eq_any(active_stores_for_site))),
+                .and(changelog_deduped::store_id.eq_any(active_stores_for_site.into_boxed())))
+            .or(changelog_deduped::table_name
+                .eq_any(central_by_empty_store_id)
+                .and(changelog_deduped::store_id.is_null()))
+            // Special case: patient Vaccination records
+            // where patient is visible, regardless of the store_id in the changelog
+            .or(changelog_deduped::table_name
+                .eq(ChangelogTableName::Vaccination)
+                .and(changelog_deduped::record_id.eq_any(vaccinations_for_visible_patients))),
         // Any other special cases could be handled here...
     );
 

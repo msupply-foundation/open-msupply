@@ -7,7 +7,6 @@ import {
   useTranslation,
   BasicTextInput,
   DateUtils,
-  TimePickerInput,
   UserIcon,
   useFormatDateTime,
   ClinicianNode,
@@ -18,6 +17,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   EncounterFragment,
+  useClinicians,
   useDocumentRegistry,
 } from '@openmsupply-client/programs';
 import {
@@ -65,7 +65,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   const [startDatetime, setStartDatetime] = useState<string | undefined>();
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation();
-  const { localisedDate } = useFormatDateTime();
+  const { localisedDate, getDisplayAge } = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
   const [clinician, setClinician] =
     useState<ClinicianAutocompleteOption | null>();
@@ -76,6 +76,9 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
         contextId: { equalTo: encounter?.contextId },
       },
     });
+
+  const { data: clinicians } = useClinicians.document.list({});
+  const hasClinicians = clinicians?.nodes.length !== 0;
 
   useEffect(() => {
     setStartDatetime(encounter.startDatetime);
@@ -91,6 +94,8 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
 
   const { patient } = encounter;
 
+  const dateOfBirth = DateUtils.getNaiveDate(patient?.dateOfBirth);
+
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
@@ -101,23 +106,25 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
         alignItems="center"
       >
         <Grid
-          item
-          sx={{
+          sx={theme => ({
             alignItems: 'center',
             backgroundColor: 'background.menu',
             borderRadius: '50%',
-            display: 'flex',
+            display: 'none',
             height: '100px',
             justifyContent: 'center',
             marginRight: 2,
             width: '100px',
-          }}
+            [theme.breakpoints.up('lg')]: {
+              display: 'flex',
+            },
+          })}
         >
           <Box>
             <UserIcon fontSize="large" style={{ flex: 1 }} />
           </Box>
         </Grid>
-        <Grid item display="flex" flex={1}>
+        <Grid display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={0.5}>
             <Box display="flex" gap={1.5}>
               <Row
@@ -135,6 +142,16 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                   />
                 }
               />
+              <InputWithLabelRow
+                label={t('label.age')}
+                labelWidth={'40px'}
+                Input={
+                  <BasicTextInput
+                    disabled
+                    value={getDisplayAge(dateOfBirth ?? null)}
+                  />
+                }
+              />
             </Box>
             <Box display="flex" gap={1.5}>
               <Row
@@ -146,20 +163,22 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                   />
                 }
               />
-              <Row
-                label={t('label.clinician')}
-                Input={
-                  <ClinicianSearchInput
-                    onChange={clinician => {
-                      setClinician(clinician);
-                      onChange({
-                        clinician: clinician?.value as ClinicianNode,
-                      });
-                    }}
-                    clinicianValue={clinician?.value}
-                  />
-                }
-              />
+              {hasClinicians && (
+                <Row
+                  label={t('label.clinician')}
+                  Input={
+                    <ClinicianSearchInput
+                      onChange={clinician => {
+                        setClinician(clinician);
+                        onChange({
+                          clinician: clinician?.value as ClinicianNode,
+                        });
+                      }}
+                      clinicianValue={clinician?.value}
+                    />
+                  }
+                />
+              )}
             </Box>
             <Box display="flex" gap={1}>
               <Row
@@ -177,48 +196,6 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                           ? updateEndDatetimeFromStartDate(endDt, startDatetime)
                           : undefined,
                       });
-                    }}
-                  />
-                }
-              />
-              <InputWithLabelRow
-                label={t('label.visit-start')}
-                labelWidth="60px"
-                Input={
-                  <TimePickerInput
-                    value={DateUtils.getDateOrNull(startDatetime ?? null)}
-                    onChange={date => {
-                      const startDatetime = date
-                        ? DateUtils.formatRFC3339(date)
-                        : undefined;
-                      if (startDatetime) {
-                        setStartDatetime(startDatetime);
-                        onChange({
-                          startDatetime,
-                          endDatetime: endDatetime ?? undefined,
-                        });
-                      }
-                    }}
-                  />
-                }
-              />
-              <InputWithLabelRow
-                label={t('label.visit-end')}
-                labelWidth="60px"
-                Input={
-                  <TimePickerInput
-                    minTime={
-                      startDatetime ? new Date(startDatetime) : undefined
-                    }
-                    value={DateUtils.getDateOrNull(endDatetime ?? null)}
-                    onChange={date => {
-                      const endDatetime = date
-                        ? updateEndDatetimeFromStartDate(date, startDatetime)
-                        : undefined;
-                      if (endDatetime) {
-                        setEndDatetime(endDatetime);
-                        onChange({ endDatetime });
-                      }
                     }}
                   />
                 }

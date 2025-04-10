@@ -12,14 +12,13 @@ import { useOutboundApi } from './useOutboundApi';
 export const useAddFromMasterList = () => {
   const { error } = useNotification();
   const queryClient = useQueryClient();
-  const { id: shipmentId, invoiceNumber } = useOutboundFields([
-    'id',
-    'invoiceNumber',
+  const { id: shipmentId } = useOutboundFields([
+    'id'
   ]);
   const api = useOutboundApi();
   const mutationState = useMutation(api.addFromMasterList, {
     onSettled: () =>
-      queryClient.invalidateQueries(api.keys.detail(String(invoiceNumber))),
+      queryClient.invalidateQueries(api.keys.detail(String(shipmentId))),
   });
 
   const t = useTranslation();

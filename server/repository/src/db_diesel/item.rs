@@ -50,6 +50,7 @@ pub struct ItemFilter {
     pub code_or_name: Option<StringFilter>,
     pub is_active: Option<bool>,
     pub is_vaccine: Option<bool>,
+    pub master_list_id: Option<EqualFilter<String>>,
 }
 
 impl ItemFilter {
@@ -216,6 +217,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             is_active,
             is_vaccine,
             is_visible_or_on_hand,
+            master_list_id,
         } = f;
 
         // or filter need to be applied before and filters
@@ -303,6 +305,21 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
 
             // no visibility filters
             (_, _) => query,
+        };
+
+        if let Some(master_list_id_filter) = master_list_id {
+            let mut sub_query = item_link::table
+                .select(item_link::item_id)
+                .inner_join(
+                    master_list_line::table.on(master_list_line::item_link_id.eq(item_link::id)),
+                )
+                .into_boxed();
+            apply_equal_filter!(
+                sub_query,
+                Some(master_list_id_filter),
+                master_list_line::master_list_id
+            );
+            query = query.filter(item::id.eq_any(sub_query));
         }
     }
     query

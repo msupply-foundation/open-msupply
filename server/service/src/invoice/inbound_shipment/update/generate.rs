@@ -324,11 +324,13 @@ pub fn generate_lines_and_stock_lines(
             tax_percentage: _,
             r#type: _,
             number_of_packs,
+            prescribed_quantity: _,
             note,
             inventory_adjustment_reason_id: _,
             return_reason_id: _,
             foreign_currency_price_before_tax: _,
             item_variant_id,
+            linked_invoice_id: _,
         }: InvoiceLineRow = invoice_lines;
 
         if number_of_packs > 0.0 {

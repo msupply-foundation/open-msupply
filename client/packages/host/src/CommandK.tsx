@@ -10,16 +10,15 @@ import {
   KBarAnimator,
   KBarResults,
   KBarSearch,
-  KBarProvider,
   KBarPositioner,
   KBarPortal,
   PropsWithChildrenOnly,
   useAuthContext,
-  UserPermission,
   StoreModeNodeType,
   useRegisterActions,
   useConfirmationModal,
   useDetailPanelStore,
+  EnvUtils,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Action } from 'kbar/lib/types';
@@ -89,7 +88,7 @@ const Actions = () => {
   const navigate = useNavigate();
   const drawer = useDrawer();
   const t = useTranslation();
-  const { store, logout, user, userHasPermission } = useAuthContext();
+  const { store, logout, user } = useAuthContext();
   const showEasterEgg = useEasterEggModal();
   const showSync = useSyncModal();
   const confirmLogout = useConfirmationModal({
@@ -101,26 +100,24 @@ const Actions = () => {
     title: t('heading.logout-confirm'),
   });
   const { close, open } = useDetailPanelStore();
+  const altOrOptionString = EnvUtils.os === 'Mac OS' ? 'Option' : 'Alt';
 
   const actions = [
     {
       id: 'navigation-drawer:toggle',
-      name: `${t('cmdk.drawer-toggle')} (Ctrl+M)`,
-      shortcut: ['$mod+KeyM'],
+      name: t('cmdk.drawer-toggle'),
       keywords: 'drawer, close',
       perform: () => drawer.toggle(),
     },
     {
       id: 'navigation-drawer:report',
-      name: `${t('cmdk.goto-reports')} (Alt+R)`,
-      shortcut: ['Alt+KeyR'],
+      name: t('cmdk.goto-reports'),
       keywords: 'report',
       perform: () => navigate(RouteBuilder.create(AppRoute.Reports).build()),
     },
     {
       id: 'navigation:outbound-shipment',
-      name: `${t('cmdk.goto-outbound')} (Alt+O)`,
-      shortcut: ['Alt+KeyO'],
+      name: t('cmdk.goto-outbound'),
       keywords: 'shipment',
       perform: () =>
         navigate(
@@ -131,8 +128,7 @@ const Actions = () => {
     },
     {
       id: 'navigation:inbound-shipment',
-      name: `${t('cmdk.goto-inbound')} (Alt+I)`,
-      shortcut: ['Alt+KeyI'],
+      name: t('cmdk.goto-inbound'),
       keywords: 'shipment',
       perform: () =>
         navigate(
@@ -143,9 +139,8 @@ const Actions = () => {
     },
     {
       id: 'navigation:customers',
-      name: `${t('cmdk.goto-customers')} (Ctrl+Alt+C)`,
+      name: t('cmdk.goto-customers'),
       keywords: 'customers',
-      shortcut: ['$mod+Alt+KeyC'],
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Distribution)
@@ -155,15 +150,14 @@ const Actions = () => {
     },
     {
       id: 'navigation:dashboard',
-      name: `${t('cmdk.goto-dashboard')} (Alt+D)`,
+      name: `${t('cmdk.goto-dashboard')} (${altOrOptionString}+D)`,
       shortcut: ['Alt+KeyD'],
       keywords: 'dashboard',
       perform: () => navigate(RouteBuilder.create(AppRoute.Dashboard).build()),
     },
     {
       id: 'navigation:items',
-      name: `${t('cmdk.goto-items')} (Alt+Shift+I)`,
-      shortcut: ['Alt+Shift+KeyI'],
+      name: t('cmdk.goto-items'),
       keywords: 'items',
       perform: () =>
         navigate(
@@ -174,8 +168,7 @@ const Actions = () => {
     },
     {
       id: 'navigation:customer-requisition',
-      name: `${t('cmdk.goto-customer-requisition')} (Alt+R)`,
-      shortcut: ['Alt+Shift+KeyR'],
+      name: t('cmdk.goto-customer-requisition'),
       keywords: 'distribution',
       perform: () =>
         navigate(
@@ -186,8 +179,7 @@ const Actions = () => {
     },
     {
       id: 'navigation:internal-order',
-      name: `${t('cmdk.goto-internal-order')} (Alt+Shift+O)`,
-      shortcut: ['Alt+Shift+KeyO'],
+      name: t('cmdk.goto-internal-order'),
       keywords: 'replenishment',
       perform: () =>
         navigate(
@@ -198,9 +190,8 @@ const Actions = () => {
     },
     {
       id: 'navigation:suppliers',
-      name: `${t('cmdk.goto-suppliers')} (Ctrl+S)`,
+      name: t('cmdk.goto-suppliers'),
       keywords: 'suppliers',
-      shortcut: ['$mod+KeyS'],
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Replenishment)
@@ -210,8 +201,7 @@ const Actions = () => {
     },
     {
       id: 'navigation:stock',
-      name: `${t('cmdk.goto-stock')} (Alt+S)`,
-      shortcut: ['Alt+KeyS'],
+      name: t('cmdk.goto-stock'),
       keywords: 'stock',
       perform: () =>
         navigate(
@@ -222,8 +212,7 @@ const Actions = () => {
     },
     {
       id: 'navigation:stocktakes',
-      name: `${t('cmdk.goto-stocktakes')} (Shift+S)`,
-      shortcut: ['Shift+KeyS'],
+      name: t('cmdk.goto-stocktakes'),
       keywords: 'stocktakes',
       perform: () =>
         navigate(
@@ -234,8 +223,7 @@ const Actions = () => {
     },
     {
       id: 'navigation:locations',
-      name: `${t('cmdk.goto-locations')} (Alt+L)`,
-      shortcut: ['Alt+KeyL'],
+      name: t('cmdk.goto-locations'),
       keywords: 'locations',
       perform: () =>
         navigate(
@@ -246,8 +234,7 @@ const Actions = () => {
     },
     {
       id: 'navigation:master-lists',
-      name: `${t('cmdk.goto-master-lists')} (Alt+M)`,
-      shortcut: ['Alt+KeyM'],
+      name: t('cmdk.goto-master-lists'),
       keywords: 'master lists',
       perform: () =>
         navigate(
@@ -258,50 +245,46 @@ const Actions = () => {
     },
     {
       id: 'action:logout',
-      name: `${t('logout')} (Ctrl+L)`,
-      shortcut: ['$mod+KeyL'],
+      name: `${t('logout')} (${altOrOptionString}+Shift+L)`,
+      shortcut: ['Alt+Shift+KeyL'],
       keywords: 'logout',
       perform: () => confirmLogout({}),
     },
     {
       id: 'action:easter-egg',
-      name: `${t('easter-egg')}`,
-      shortcut: ['$mod+Shift+KeyE'],
+      name: `${t('easter-egg')} (${altOrOptionString}+Shift+E)`,
+      shortcut: ['Alt+Shift+KeyE'],
       keywords: 'easter egg game',
       perform: showEasterEgg,
     },
     {
       id: 'navigation:help',
-      name: `${t('help')} (Alt+H)`,
+      name: `${t('help')} (${altOrOptionString}+H)`,
       keywords: 'help, docs, guide',
       shortcut: ['Alt+KeyH'],
       perform: () => navigate(RouteBuilder.create(AppRoute.Help).build()),
     },
     {
       id: 'action:sync',
-      name: `${t('sync')} (Alt+Control+S)`,
+      name: `${t('sync')} (${altOrOptionString}+Shift+S)`,
       keywords: 'sync',
-      shortcut: ['Alt+$mod+KeyS'],
+      shortcut: ['Alt+Shift+KeyS'],
       perform: showSync,
     },
   ];
 
-  if (userHasPermission(UserPermission.ServerAdmin)) {
-    actions.push({
-      id: 'navigation:settings',
-      name: `${t('settings')} (Alt+Shift+S)`,
-      shortcut: ['Alt+Shift+KeyS'],
-      keywords: 'settings',
-      perform: () => navigate(RouteBuilder.create(AppRoute.Settings).build()),
-    });
-  }
+  actions.push({
+    id: 'navigation:settings',
+    name: t('settings'),
+    keywords: 'settings',
+    perform: () => navigate(RouteBuilder.create(AppRoute.Settings).build()),
+  });
 
   if (store?.storeMode === StoreModeNodeType.Dispensary) {
     actions.push({
       id: 'navigation:prescription',
-      name: `${t('cmdk.goto-prescriptions')} (Alt+P)`,
+      name: t('cmdk.goto-prescriptions'),
       keywords: 'prescription',
-      shortcut: ['Alt+KeyP'],
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Dispensary)
@@ -311,9 +294,8 @@ const Actions = () => {
     });
     actions.push({
       id: 'navigation:patients',
-      name: `${t('cmdk.goto-patients')} (Alt+Control+P)`,
+      name: t('cmdk.goto-patients'),
       keywords: 'patient',
-      shortcut: ['Alt+$mod+KeyP'],
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Dispensary)
@@ -325,16 +307,16 @@ const Actions = () => {
     actions.push(
       {
         id: 'action:more-open',
-        name: `${t('cmdk.more-info-open')} (Ctrl+M)`,
+        name: `${t('cmdk.more-info-open')} (${altOrOptionString}+M)`,
         keywords: 'more open',
-        shortcut: ['$mod+KeyM'],
+        shortcut: ['Alt+KeyM'],
         perform: open,
       },
       {
         id: 'action:more-close',
-        name: `${t('cmdk.more-info-close')} (Ctrl+Shift+M)`,
+        name: `${t('cmdk.more-info-close')} (${altOrOptionString}+Shift+M)`,
         keywords: 'more close',
-        shortcut: ['$mod+Shift+KeyM'],
+        shortcut: ['Alt+Shift+KeyM'],
         perform: close,
       }
     );
@@ -342,8 +324,7 @@ const Actions = () => {
     if (store?.preferences.vaccineModule ?? false) {
       actions.push({
         id: 'navigation:coldchain-monitoring',
-        name: `${t('cmdk.goto-cold-chain-monitoring')} (Alt+C)`,
-        shortcut: ['Alt+KeyC'],
+        name: t('cmdk.goto-cold-chain-monitoring'),
         keywords: 'cold chain coldchain monitoring',
         perform: () =>
           navigate(
@@ -354,8 +335,7 @@ const Actions = () => {
       });
       actions.push({
         id: 'navigation:coldchain-equipment',
-        name: `${t('cmdk.goto-cold-chain-equipment')} (Alt+E)`,
-        shortcut: ['Alt+KeyE'],
+        name: t('cmdk.goto-cold-chain-equipment'),
         keywords: 'cold chain coldchain equipment',
         perform: () =>
           navigate(
@@ -375,7 +355,11 @@ const Actions = () => {
 export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
   const t = useTranslation();
   return (
-    <KBarProvider actions={[]}>
+    // This should be inside KBar's own <KbarProvider>, and it is, but we're now
+    // rendering that at the top level of <Host> as it needs to be defined in
+    // order to be used within certain dialogs/modals which MUI renders outside
+    // the main DOM content.
+    <>
       <Actions />
       <KBarPortal>
         <KBarPositioner style={{ zIndex: 1001 }}>
@@ -386,6 +370,6 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
         </KBarPositioner>
       </KBarPortal>
       {children}
-    </KBarProvider>
+    </>
   );
 };

@@ -228,6 +228,7 @@ fn generate_inbound_invoice(
         tax_percentage: outbound_invoice_row.tax_percentage,
         currency_id: outbound_invoice_row.currency_id.clone(),
         currency_rate: outbound_invoice_row.currency_rate,
+        expected_delivery_date: outbound_invoice_row.expected_delivery_date,
         original_shipment_id,
         // Default
         colour: None,
@@ -236,9 +237,15 @@ fn generate_inbound_invoice(
         allocated_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
+        cancelled_datetime: None,
         clinician_link_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
+        program_id: None,
+        name_insurance_join_id: None,
+        insurance_discount_amount: None,
+        insurance_discount_percentage: None,
+        is_cancellation: false,
     };
 
     Ok(result)

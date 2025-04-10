@@ -33,6 +33,7 @@ impl Default for SchemaPatient {
             marital_status: Default::default(),
             contacts: Default::default(),
             extension: Default::default(),
+            next_of_kin: Default::default(),
         }
     }
 }

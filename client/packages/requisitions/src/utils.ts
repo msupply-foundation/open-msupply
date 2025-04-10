@@ -1,7 +1,4 @@
-import {
-  RequestLineFragment,
-  RequestRowFragment,
-} from './RequestRequisition/api/operations.generated';
+import { RequestRowFragment } from './RequestRequisition/api/operations.generated';
 import {
   RequisitionNodeStatus,
   LocaleKey,
@@ -12,6 +9,7 @@ import {
   noOtherVariants,
 } from '@openmsupply-client/common';
 import { ResponseRowFragment } from './ResponseRequisition/api';
+import { RequestLineFragment } from './RequestRequisition/api';
 
 export const requestStatuses = [
   RequisitionNodeStatus.Draft,
@@ -155,12 +153,15 @@ enum IndicatorColumnName {
   Value = 'Value',
 }
 
-export const indicatorColumnNameToLocal = (columnName: string) => {
+export const indicatorColumnNameToLocal = (
+  columnName: string,
+  t: TypedTFunction<LocaleKey>
+) => {
   switch (columnName) {
     case IndicatorColumnName.Comment:
-      return 'label.comment';
+      return t('label.comment');
     case IndicatorColumnName.Value:
-      return 'label.value';
+      return t('label.value');
     default:
       return columnName;
   }

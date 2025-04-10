@@ -30,11 +30,11 @@ export const RelatedDocumentsSectionComponent = () => {
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
-      <Grid item flexDirection="column" gap={0.5}>
+      <Grid flexDirection="column" gap={0.5}>
         {!originalShipment ? (
           <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
         ) : (
-          <Grid item>
+          <Grid>
             <PanelRow>
               <PanelLabel>
                 {getLabel(
@@ -46,7 +46,7 @@ export const RelatedDocumentsSectionComponent = () => {
                 <Link
                   to={RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InboundShipment)
-                    .addPart(String(originalShipment?.invoiceNumber))
+                    .addPart(String(originalShipment?.id))
                     .build()}
                 >{`#${originalShipment?.invoiceNumber}`}</Link>
               </PanelField>

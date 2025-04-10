@@ -70,16 +70,36 @@ const useProgramRequisitionOptions = (
   const [period, setPeriod] = useState<Period | null>(null);
   const t = useTranslation();
 
+  const handleSetSupplier = (value: Supplier | null) => {
+    setSupplier(value);
+    setProgram(null);
+    setOrderType(null);
+    setPeriod(null);
+  };
+
   const handleSetProgram = (value: ProgramSetting | null) => {
     setProgram(value);
     setOrderType(null);
-    setSupplier(null);
     setPeriod(null);
   };
   const handleSetOrderType = (value: OrderType | null) => {
     setOrderType(value);
     setPeriod(null);
   };
+
+  const allSuppliers = programSettings
+    .flatMap(program => program.suppliers)
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .reduce((acc: Supplier[], currentValue: Supplier) => {
+      if (acc.length === 0 || acc[acc.length - 1]?.id !== currentValue.id) {
+        acc.push(currentValue);
+      }
+      return acc;
+    }, []);
+
+  const availablePrograms = programSettings.filter(program =>
+    program.suppliers.some(supplier => supplier.id)
+  );
 
   const allOptions: {
     programs: Common<ProgramSetting>;
@@ -88,7 +108,7 @@ const useProgramRequisitionOptions = (
     periods: Common<Period>;
   } = {
     programs: {
-      options: programSettings,
+      options: availablePrograms,
       value: program,
       set: handleSetProgram,
       label: t('label.program'),
@@ -104,10 +124,9 @@ const useProgramRequisitionOptions = (
       renderOption: getOrderTypeRenderer(),
     },
     suppliers: {
-      options: program?.suppliers || [],
+      options: allSuppliers || [],
       value: supplier,
-      set: setSupplier,
-      disabled: program === null,
+      set: handleSetSupplier,
       labelNoOptions: t('messages.not-configured'),
       label: t('label.supplier-name'),
       renderOption: getNameOptionRenderer(t('label.on-hold')),
@@ -153,11 +172,11 @@ const LabelAndOptions = <T,>({
     !!labelNoOptions && <Typography>{labelNoOptions}</Typography>;
 
   return (
-    <Grid item container spacing={2} direction="row">
-      <Grid xs={3} item>
+    <Grid container flexDirection="row">
+      <Grid size={3} marginTop={-1}>
         <Typography>{label}</Typography>
       </Grid>
-      <Grid item>
+      <Grid>
         {noOptionsDisplay || (
           <Autocomplete
             width="450"
@@ -169,6 +188,10 @@ const LabelAndOptions = <T,>({
             value={value}
             disabled={disabled}
             onChange={(_, newValue) => set(newValue)}
+            sx={{
+              background: theme => theme.palette.background.toolbar,
+              borderRadius: 2,
+            }}
           />
         )}
       </Grid>
@@ -189,24 +212,29 @@ export const ProgramRequisitionOptions = ({
   const ProgramOptionRenderer = getProgramOptionRenderer();
 
   return (
-    <Grid
-      container
-      paddingTop={2}
-      spacing="15"
-      direction="column"
-      justifyContent="center"
-      alignItems="center"
-    >
+    <Grid container paddingTop={2} direction="column">
+      <LabelAndOptions {...suppliers} optionKey="name" autoFocus={true} />
       <LabelAndOptions
         {...programs}
         renderOption={ProgramOptionRenderer}
         optionKey="programName"
-        autoFocus={true}
       />
-      <LabelAndOptions {...suppliers} optionKey="name" />
       <LabelAndOptions {...orderTypes} optionKey="name" />
-      <LabelAndOptions {...periods} optionKey="name" />
-      <Grid item>
+      <Grid>
+        <Typography
+          sx={{
+            fontStyle: 'italic',
+            color: 'gray.main',
+            fontSize: '12px',
+            paddingLeft: 20,
+            marginBottom: 0,
+          }}
+        >
+          {t('message.program-period')}
+        </Typography>
+        <LabelAndOptions {...periods} optionKey="name" />
+      </Grid>
+      <Grid display="flex" justifyContent="center">
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           disabled={!createOptions}
@@ -229,13 +257,7 @@ const getProgramOptionRenderer =
   (props, item) => (
     <DefaultAutocompleteItemOption {...props} key={item.programId}>
       <Box display="flex" flexDirection="row" gap={1} alignItems="center">
-        <Typography
-          overflow="hidden"
-          textOverflow="ellipsis"
-          sx={{
-            whiteSpace: 'nowrap',
-          }}
-        >
+        <Typography overflow="hidden" textOverflow="ellipsis">
           {item.programName} ({item.tagName})
         </Typography>
       </Box>

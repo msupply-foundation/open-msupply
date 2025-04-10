@@ -38,11 +38,14 @@ export const LoginLayout = ({
     <Box display="flex" style={{ width: '100%' }}>
       <Box
         flex="1 0 50%"
-        sx={{
+        sx={theme => ({
+          [theme.breakpoints.down('sm')]: {
+            display: 'none',
+          },
           backgroundImage: (theme: Theme) => theme.mixins.gradient.primary,
           backgroundSize: (theme: Theme) => theme.mixins.gradient.size,
           padding: '0 5% 7%',
-        }}
+        })}
         display="flex"
         alignItems="flex-start"
         justifyContent="flex-end"
@@ -102,21 +105,19 @@ export const LoginLayout = ({
             alignItems: 'center',
           }}
         >
-          <Box style={{ width: 285 }}>
-            <form onSubmit={onLogin} onKeyDown={handleKeyDown}>
-              <Stack spacing={5}>
-                <Box display="flex" justifyContent="center">
-                  <LoginIcon />
-                </Box>
-                {UsernameInput}
-                {PasswordInput}
-                {ErrorMessage}
-                <Box display="flex" justifyContent="flex-end">
-                  {LoginButton}
-                </Box>
-              </Stack>
-            </form>
-          </Box>
+          <form onSubmit={onLogin} onKeyDown={handleKeyDown}>
+            <Stack spacing={5}>
+              <Box display="flex" justifyContent="center">
+                <LoginIcon />
+              </Box>
+              {UsernameInput}
+              {PasswordInput}
+              {ErrorMessage}
+              <Box display="flex" justifyContent="flex-end">
+                {LoginButton}
+              </Box>
+            </Stack>
+          </form>
         </Box>
         <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
       </Box>

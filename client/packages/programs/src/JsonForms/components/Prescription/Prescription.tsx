@@ -7,9 +7,7 @@ import {
   FnUtils,
   InlineSpinner,
   InvoiceNodeStatus,
-  Link,
-  RouteBuilder,
-  Typography,
+  TextWithLabelRow,
   extractProperty,
   useNotification,
   useTranslation,
@@ -18,7 +16,6 @@ import {
   ItemStockOnHandFragment,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
-import { AppRoute } from '@openmsupply-client/config';
 import { DefaultFormRowSx, useZodOptionsValidation } from '../../common';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import {
@@ -27,7 +24,8 @@ import {
 } from '@openmsupply-client/invoices/src/Prescriptions';
 import { useDraftPrescriptionLines } from '@openmsupply-client/invoices/src/Prescriptions/LineEditView/hooks';
 import { StockLineTable } from './StockLineTable';
-import { DraftStockOutLine } from '@openmsupply-client/invoices/src/types';
+import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
+import { PrescriptionInfo } from './PrescriptionInfo';
 
 export const prescriptionTester = rankWith(10, uiTypeIs('Prescription'));
 
@@ -74,7 +72,7 @@ const UIComponent = (props: ControlProps) => {
     );
 
   const [draftPrescriptionLines, setDraftPrescriptionLines] = useState<
-    DraftStockOutLine[]
+    DraftPrescriptionLine[]
   >([]);
 
   useDraftPrescriptionLines(
@@ -96,7 +94,7 @@ const UIComponent = (props: ControlProps) => {
   // Ensures that when this component is re-mounted (e.g. in a Modal), it will
   // populate the draft line data with previously acquired state
   useEffect(() => {
-    const existing: DraftStockOutLine[] = formActions.getState(
+    const existing: DraftPrescriptionLine[] = formActions.getState(
       `${path}_stockline`
     );
     if (existing && existing[0]?.item.id === selectedItem?.id)
@@ -127,7 +125,7 @@ const UIComponent = (props: ControlProps) => {
       handleChange(prescriptionIdPath, FnUtils.generateUUID());
   };
 
-  const handleStockLineUpdate = (draftLines: DraftStockOutLine[]) => {
+  const handleStockLineUpdate = (draftLines: DraftPrescriptionLine[]) => {
     setDraftPrescriptionLines(draftLines);
     formActions.setState(`${path}_stockline`, draftLines);
     formActions.register(
@@ -135,7 +133,7 @@ const UIComponent = (props: ControlProps) => {
       async (formActionState: Record<string, unknown>) => {
         if (!prescription && prescriptionId) {
           // Create prescription
-          const prescriptionNumber = await create({
+          const prescription = await create({
             id: prescriptionId,
             patientId: config.patientId,
           });
@@ -143,7 +141,7 @@ const UIComponent = (props: ControlProps) => {
           const allPrescriptionLines = Object.entries(formActionState)
             .filter(([key, _]) => key.endsWith('_stockline'))
             .map(([_, value]) => value)
-            .flat() as DraftStockOutLine[];
+            .flat() as DraftPrescriptionLine[];
           // Mutation requires invoice (prescription) ID to be defined on each
           // line
           allPrescriptionLines.forEach(
@@ -155,7 +153,7 @@ const UIComponent = (props: ControlProps) => {
             patch: { id: prescriptionId, status: InvoiceNodeStatus.Picked },
           });
           success(
-            t('messages.prescription-created', { count: prescriptionNumber })
+            t('messages.prescription-created', { count: prescription.invoiceNumber })
           )();
         }
       },
@@ -184,45 +182,33 @@ const UIComponent = (props: ControlProps) => {
           sx={DefaultFormRowSx}
           label={t('label.create-prescription')}
           inputAlignment={'start'}
-          Input={null}
+          Input={
+            <StockItemSearchInput
+              onChange={selected => handleItemSelect(selected)}
+              currentItemId={selectedItem?.id}
+              itemCategoryName={categoryName}
+            />
+          }
         />
-        <Box sx={{ maxWidth: 550, marginLeft: 5 }}>
-          <Typography sx={{ fontSize: '90%' }}>
-            <em>{t('messages.prescription-will-be-created')}</em>
-          </Typography>
-          <StockItemSearchInput
-            onChange={selected => handleItemSelect(selected)}
-            currentItemId={selectedItem?.id}
-            itemCategoryName={categoryName}
-          />
-          {selectedItem && (
+        {selectedItem && (
+          <Box sx={{ marginLeft: 5 }}>
+            <PrescriptionInfo prescription={prescription} />
+            <TextWithLabelRow
+              label={t('label.item_one')}
+              text={selectedItem.name}
+              textProps={{ textAlign: 'end' }}
+            />
+
             <StockLineTable
               stocklines={draftPrescriptionLines}
               handleStockLineUpdate={handleStockLineUpdate}
             />
-          )}
-        </Box>
+          </Box>
+        )}
       </Box>
     );
 
-  return (
-    <DetailInputWithLabelRow
-      sx={DefaultFormRowSx}
-      label={label}
-      inputAlignment={'start'}
-      Input={
-        <Link
-          to={RouteBuilder.create(AppRoute.Dispensary)
-            .addPart(AppRoute.Prescription)
-            .addPart(String(prescription?.invoiceNumber))
-            .build()}
-          target="_blank"
-        >
-          {t('label.click-to-view')}
-        </Link>
-      }
-    />
-  );
+  return <PrescriptionInfo prescription={prescription} />;
 };
 
 export const Prescription = withJsonFormsControlProps(UIComponent);

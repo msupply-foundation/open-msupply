@@ -48,9 +48,11 @@ export const Initialise = () => {
           value={username}
           disabled={isInputDisabled}
           onChange={e => setUsername(e.target.value)}
-          inputProps={{
-            autoComplete: 'username',
-            autoCapitalize: 'off',
+          slotProps={{
+            htmlInput: {
+              autoComplete: 'username',
+              autoCapitalize: 'off',
+            },
           }}
           autoFocus
         />
@@ -63,9 +65,11 @@ export const Initialise = () => {
           value={password}
           disabled={isInputDisabled}
           onChange={e => setPassword(e.target.value)}
-          inputProps={{
-            autoComplete: 'current-password',
-            autoCapitalize: 'off',
+          slotProps={{
+            htmlInput: {
+              autoComplete: 'current-password',
+              autoCapitalize: 'off',
+            },
           }}
         />
       }

@@ -25,6 +25,10 @@ pub fn generate_create_prescription(
         id: prescription_id.clone(),
         patient_id,
         diagnosis_id: None,
+        program_id: None,
+        their_reference: None,
+        clinician_id: None,
+        prescription_date: None,
     };
 
     let number_of_packs =
@@ -39,6 +43,7 @@ pub fn generate_create_prescription(
         number_of_packs,
 
         // default
+        prescribed_quantity: None,
         total_before_tax: None,
         tax_percentage: None,
         note: None,
@@ -63,6 +68,11 @@ pub fn generate_create_prescription(
         colour: None,
         backdated_datetime: None,
         diagnosis_id: None,
+        program_id: None,
+        their_reference: None,
+        name_insurance_join_id: None,
+        insurance_discount_amount: None,
+        insurance_discount_percentage: None,
     };
 
     CreatePrescription {

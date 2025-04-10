@@ -1,8 +1,10 @@
-import React, { FC, PropsWithChildren, useEffect } from 'react';
+import React, { FC, PropsWithChildren, useCallback, useEffect } from 'react';
 import {
+  LocaleKey,
   Typography,
   UnhappyMan,
   useAuthContext,
+  useIntlUtils,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
 import { Box, useTranslation, BasicSpinner } from '@openmsupply-client/common';
@@ -45,6 +47,8 @@ import {
   Spacer,
   keyedItemArrayTester,
   KeyedItemArray,
+  ToolbarLayout,
+  toolbarLayoutTester,
 } from './components';
 import {
   AccordionGroup,
@@ -129,6 +133,8 @@ const FormComponent = ({
   config,
   onChange,
 }: JsonFormsComponentProps & JsonFormsReactProps) => {
+  const t = useTranslation();
+  const { currentLanguage } = useIntlUtils();
   const { user, store } = useAuthContext();
   const fullConfig: JsonFormsConfig = {
     store,
@@ -156,8 +162,21 @@ const FormComponent = ({
       return error.message ?? '';
     });
 
-  // This allows "default" values to be set in the JSON schema
+  // This allows "default" values to be set in the JSON schema, though it
+  // currently can't add defaults on nested properties unless a
+  // default object is defined at the root level -- see issue #6971
   const handleDefaultsAjv = createAjv({ useDefaults: true });
+
+  const translateError = useCallback(
+    (error: { keyword: string; message?: string }) => {
+      const { keyword, message } = error;
+      const localeKey = `json-forms-error.${keyword}` as LocaleKey;
+      // If a specific type of error is not defined in our localisations, just
+      // return the default error message
+      return t(localeKey, message);
+    },
+    [t]
+  );
 
   return !data ? null : (
     <JsonForms
@@ -178,6 +197,7 @@ const FormComponent = ({
         onChange?.({ errors, data });
       }}
       ajv={handleDefaultsAjv}
+      i18n={{ locale: currentLanguage, translateError }}
     />
   );
 };
@@ -202,6 +222,7 @@ const renderers = [
   { tester: noteTester, renderer: Note },
   { tester: spacerTester, renderer: Spacer },
   { tester: headerTester, renderer: Header },
+  { tester: toolbarLayoutTester, renderer: ToolbarLayout },
   // We should be able to remove materialRenderers once we are sure we have custom components to cover all cases.
   ...materialRenderers,
 ];
@@ -258,6 +279,9 @@ export const JsonForm: FC<
           width: FORM_LABEL_COLUMN_WIDTH,
           textAlign: 'right',
           whiteSpace: 'nowrap',
+        },
+        '&:empty': {
+          display: 'none',
         },
       }}
     >

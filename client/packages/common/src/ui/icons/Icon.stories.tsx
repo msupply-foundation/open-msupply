@@ -2,7 +2,8 @@
 
 import React, { ChangeEvent, useState } from 'react';
 import { StoryFn, Meta } from '@storybook/react';
-import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
+import { Box, Paper, styled, TextField, Typography } from '@mui/material';
+import { Grid } from '@openmsupply-client/common';
 import { EmergencyIcon, SvgIconProps } from '.';
 
 import { AlertIcon } from './Alert';
@@ -43,6 +44,7 @@ import { InfoOutlineIcon } from './InfoOutline';
 import { InvoiceIcon } from './Invoice';
 import { LinkIcon } from './Link';
 import { ListIcon } from './List';
+import { LocationIcon } from './Location';
 import { MSupplyGuy, AnimatedMSupplyGuy } from './MSupplyGuy';
 import { MedicineIcon } from './MedicineIcon';
 import { MenuDotsIcon } from './MenuDots';
@@ -69,6 +71,7 @@ import { SortDescIcon } from './SortDesc';
 import { StockIcon } from './Stock';
 import { SunIcon } from './Sun';
 import { SuppliersIcon } from './Suppliers';
+import { SwipeIcon } from './Swipe';
 import { ThermometerIcon } from './Thermometer';
 import { ToolsIcon } from './Tools';
 import { TranslateIcon } from './Translate';
@@ -146,6 +149,7 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
     { icon: <InvoiceIcon {...args} />, name: 'Invoice' },
     { icon: <LinkIcon {...args} />, name: 'Link' },
     { icon: <ListIcon {...args} />, name: 'List' },
+    { icon: <LocationIcon {...args} />, name: 'Location' },
     { icon: <MSupplyGuy {...args} size="medium" />, name: 'MSupplyGuy' },
     {
       icon: <AnimatedMSupplyGuy {...args} size="medium" />,
@@ -176,6 +180,7 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
     { icon: <StockIcon {...args} />, name: 'Stock' },
     { icon: <SunIcon {...args} />, name: 'Sun' },
     { icon: <SuppliersIcon {...args} />, name: 'Suppliers' },
+    { icon: <SwipeIcon {...args} />, name: 'Swipe' },
     { icon: <ThermometerIcon {...args} />, name: 'Thermometer' },
     { icon: <ToolsIcon {...args} />, name: 'Tools' },
     { icon: <TranslateIcon {...args} />, name: 'Translate' },
@@ -201,10 +206,10 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
           variant="outlined"
         />
       </Box>
-      <Grid item>
+      <Grid>
         <Grid container spacing={1}>
           {filteredIcons.map(i => (
-            <Grid item xs key={i.name}>
+            <Grid key={i.name}>
               <StyledPaper>
                 {i.icon}
                 <Typography>{i.name}</Typography>

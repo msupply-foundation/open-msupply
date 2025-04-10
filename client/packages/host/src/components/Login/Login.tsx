@@ -133,9 +133,11 @@ export const Login = () => {
           value={username}
           disabled={isLoggingIn}
           onChange={e => setUsername(e.target.value)}
-          inputProps={{
-            autoComplete: 'username',
-            name: 'username',
+          slotProps={{
+            htmlInput: {
+              autoComplete: 'username',
+              name: 'username',
+            },
           }}
           autoFocus
         />
@@ -148,15 +150,18 @@ export const Login = () => {
           value={password}
           disabled={isLoggingIn}
           onChange={e => setPassword(e.target.value)}
-          inputProps={{
-            autoComplete: 'current-password',
-            name: 'password',
+          slotProps={{
+            htmlInput: {
+              autoComplete: 'current-password',
+              name: 'password',
+            },
           }}
           inputRef={passwordRef}
         />
       }
       LoginButton={
         <LoadingButton
+          shouldShrink={false}
           isLoading={isLoggingIn}
           onClick={onLogin}
           variant="outlined"

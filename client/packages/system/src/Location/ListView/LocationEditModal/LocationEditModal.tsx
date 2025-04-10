@@ -10,8 +10,8 @@ import {
   ToggleButton,
   InlineSpinner,
 } from '@openmsupply-client/common';
-import { LocationRowFragment, useLocation } from '../../api';
-import { ColdStorageTypeInput } from '@openmsupply-client/system/src/Item/Components/ColdStorageTypeInput';
+import { LocationRowFragment, useLocationList, useLocation } from '../../api';
+import { ColdStorageTypeInput } from '@openmsupply-client/system';
 interface LocationEditModalProps {
   mode: ModalMode | null;
   isOpen: boolean;
@@ -46,11 +46,16 @@ const useDraftLocation = (
   const [location, setLocation] = useState<LocationRowFragment>(() =>
     createNewLocation(seed)
   );
-  const nextLocation = useLocation.document.next(location);
-  const { mutate: insert, isLoading: insertIsLoading } =
-    useLocation.document.insert();
-  const { mutate: update, isLoading: updateIsLoading } =
-    useLocation.document.update();
+  const { nextLocation } = useLocationList(
+    {
+      sortBy: { key: 'name', direction: 'asc' },
+    },
+    location
+  );
+  const {
+    create: { create, isCreating },
+    update: { update, isUpdating },
+  } = useLocation();
 
   const onUpdate = (patch: Partial<LocationRowFragment>) => {
     setLocation({ ...location, ...patch });
@@ -58,7 +63,7 @@ const useDraftLocation = (
 
   const onSave = async () => {
     if (mode === ModalMode.Create) {
-      return insert(location);
+      return create(location);
     } else {
       return update(location);
     }
@@ -77,7 +82,7 @@ const useDraftLocation = (
     onUpdate,
     onChangeLocation,
     onSave,
-    isLoading: updateIsLoading || insertIsLoading,
+    isLoading: isUpdating || isCreating,
   };
 };
 
@@ -131,14 +136,14 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
             value={draft.name}
             onChange={e => onUpdate({ name: e.target.value })}
             label={t('label.name')}
-            InputLabelProps={{ shrink: true }}
+            slotProps={{ inputLabel: { shrink: true } }}
           />
           <BasicTextInput
             fullWidth
             value={draft.code}
             onChange={e => onUpdate({ code: e.target.value })}
             label={t('label.code')}
-            InputLabelProps={{ shrink: true }}
+            slotProps={{ inputLabel: { shrink: true } }}
           />
           <ColdStorageTypeInput
             value={draft.coldStorageType ?? null}

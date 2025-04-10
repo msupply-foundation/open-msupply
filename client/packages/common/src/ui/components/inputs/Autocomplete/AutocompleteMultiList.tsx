@@ -105,10 +105,12 @@ export const AutocompleteMultiList = <T extends { id: string }>({
         </Box>
         <TextField
           autoFocus
-          InputProps={{
-            ...InputProps,
-            endAdornment: clearInputButton,
-            startAdornment: undefined,
+          slotProps={{
+            input: {
+              ...InputProps,
+              endAdornment: clearInputButton,
+              startAdornment: undefined,
+            },
           }}
           {...rest}
           //   TODO: this one

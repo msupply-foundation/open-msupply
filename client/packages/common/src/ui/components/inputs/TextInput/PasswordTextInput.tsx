@@ -37,22 +37,22 @@ export const PasswordTextInput = React.forwardRef<
     <BasicTextInput
       {...rest}
       type={showPassword ? 'text' : 'password'}
-      InputLabelProps={{
-        shrink: true,
+      slotProps={{
+        inputLabel: { shrink: true },
+        input: {
+          endAdornment: visibilityInputButton,
+          onKeyUp: event =>
+            setWarning(
+              event.getModifierState('CapsLock')
+                ? t('warning.caps-lock')
+                : defaultWarning
+            ),
+          ...props.slotProps?.input,
+        },
+        formHelperText: { error: true },
       }}
       ref={ref}
       helperText={warning}
-      InputProps={{
-        endAdornment: visibilityInputButton,
-        onKeyUp: event =>
-          setWarning(
-            event.getModifierState('CapsLock')
-              ? t('warning.caps-lock')
-              : defaultWarning
-          ),
-        ...props.InputProps,
-      }}
-      FormHelperTextProps={{ error: true }}
     />
   );
 });

@@ -4,11 +4,12 @@ import {
   AlertModalControllerState,
   AlertModalState,
 } from './AlertModalContext';
-import { Grid, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { DialogButton } from '../../buttons';
 import { AlertIcon } from '@common/icons';
 import { BasicModal } from '@common/components';
 import { PropsWithChildrenOnly } from '@common/types';
+import { Grid } from '@openmsupply-client/common';
 
 const AlertModal = ({
   open,
@@ -24,19 +25,17 @@ const AlertModal = ({
   <BasicModal open={open} width={400} height={150}>
     <Grid padding={4} container gap={1} flexDirection="column">
       <Grid container gap={1}>
-        <Grid item>
+        <Grid>
           <AlertIcon color="primary" />
         </Grid>
-        <Grid item>
+        <Grid>
           <Typography id="transition-modal-title" variant="h6" component="span">
             {title}
           </Typography>
         </Grid>
       </Grid>
-      <Grid item style={{ whiteSpace: 'pre-line' }}>
-        {message}
-      </Grid>
-      <Grid item display="flex" justifyContent="flex-end" flex={1}>
+      <Grid style={{ whiteSpace: 'pre-line' }}>{message}</Grid>
+      <Grid display="flex" justifyContent="flex-end" flex={1}>
         <DialogButton variant="ok" onClick={onClick} autoFocus />
       </Grid>
     </Grid>

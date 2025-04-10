@@ -10,7 +10,8 @@ import {
   useConfirmationModal,
   AlertModal,
 } from '@openmsupply-client/common';
-import { LocationRowFragment, useLocation } from '../api';
+import { LocationRowFragment } from '../api';
+import { useLocationDelete } from '../api/hooks/document/useLocationDelete';
 
 type DeleteError = {
   locationName: string;
@@ -22,7 +23,7 @@ export const FooterComponent: FC<{ data: LocationRowFragment[] }> = ({
 }) => {
   const t = useTranslation();
 
-  const { mutateAsync: deleteLocation } = useLocation.document.delete();
+  const { mutateAsync: deleteLocation } = useLocationDelete();
   const { error, success, info } = useNotification();
   const [deleteErrors, setDeleteErrors] = React.useState<DeleteError[]>([]);
   const { selectedRows } = useTableStore(state => ({

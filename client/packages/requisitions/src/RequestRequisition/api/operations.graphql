@@ -1,20 +1,3 @@
-fragment ItemWithStats on ItemNode {
-  id
-  name
-  code
-  unitName
-  defaultPackSize
-  availableStockOnHand(storeId: $storeId)
-  stats(storeId: $storeId) {
-    averageMonthlyConsumption
-    availableStockOnHand
-    availableMonthsOfStockOnHand
-    totalConsumption
-    stockOnHand
-    monthsOfStockOnHand
-  }
-}
-
 fragment RequestRow on RequisitionNode {
   colour
   comment
@@ -45,136 +28,6 @@ fragment RequestRow on RequisitionNode {
   orderType
 }
 
-fragment itemInformation on RequisitionItemInformationNode {
-  id
-  adjustmentsInUnits
-  amcInUnits
-  name(storeId: $storeId) {
-    id
-    name
-  }
-  outgoingUnits
-  dateRange
-  stockInUnits
-}
-
-fragment RequestLine on RequisitionLineNode {
-  id
-  itemId
-  requestedQuantity
-  suggestedQuantity
-  comment
-  itemName
-  requisitionNumber
-  initialStockOnHandUnits
-  incomingUnits
-  outgoingUnits
-  lossInUnits
-  additionInUnits
-  expiringUnits
-  daysOutOfStock
-
-  itemStats {
-    __typename
-    availableStockOnHand
-    availableMonthsOfStockOnHand
-    averageMonthlyConsumption
-  }
-  linkedRequisitionLine {
-    approvedQuantity
-    approvalComment
-  }
-  itemInformation {
-    __typename
-    ...itemInformation
-  }
-  item {
-    ...ItemWithStats
-  }
-  reason {
-    ...ReasonOptionRow
-  }
-}
-
-fragment Request on RequisitionNode {
-  __typename
-  id
-  type
-  status
-  createdDatetime
-  sentDatetime
-  finalisedDatetime
-  requisitionNumber
-  colour
-  theirReference
-  comment
-  otherPartyName
-  otherPartyId
-  maxMonthsOfStock
-  minMonthsOfStock
-  approvalStatus
-
-  user {
-    __typename
-    username
-    email
-  }
-
-  lines {
-    __typename
-    totalCount
-    nodes {
-      ...RequestLine
-    }
-  }
-
-  program {
-    id
-  }
-
-  shipments {
-    __typename
-    totalCount
-    nodes {
-      __typename
-      id
-      invoiceNumber
-      createdDatetime
-
-      user {
-        __typename
-        username
-      }
-    }
-  }
-
-  otherParty(storeId: $storeId) {
-    id
-    code
-    isCustomer
-    isSupplier
-    isOnHold
-    name
-    store {
-      id
-      code
-    }
-  }
-
-  linkedRequisition {
-    approvalStatus
-  }
-  programName
-  period {
-    id
-    name
-    startDate
-    endDate
-  }
-  orderType
-  isEmergency
-}
-
 fragment ConsumptionHistory on ConsumptionHistoryNode {
   averageMonthlyConsumption
   consumption
@@ -187,6 +40,32 @@ query requestByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
     requisitionNumber: $requisitionNumber
     type: REQUEST
+    storeId: $storeId
+  ) {
+    __typename
+    ... on RequisitionNode {
+      ...Request
+      otherParty(storeId: $storeId) {
+        __typename
+        ... on NameNode {
+          id
+          name
+          code
+          isCustomer
+          isSupplier
+        }
+      }
+    }
+    ... on RecordNotFound {
+      __typename
+      description
+    }
+  }
+}
+
+query requestById($storeId: String!, $requisitionId: String!) {
+  requisition(
+    id: $requisitionId
     storeId: $storeId
   ) {
     __typename
@@ -437,7 +316,6 @@ mutation insertRequest(
     ... on RequisitionNode {
       __typename
       id
-      requisitionNumber
     }
     ... on InsertRequestRequisitionError {
       __typename
@@ -460,7 +338,16 @@ mutation insertProgramRequest(
     ... on RequisitionNode {
       __typename
       id
-      requisitionNumber
+    }
+    ... on InsertProgramRequestRequisitionError {
+      __typename
+      error {
+        description
+        ... on MaxOrdersReachedForPeriod {
+          __typename
+          description
+        }
+      }
     }
   }
 }
@@ -489,7 +376,6 @@ mutation updateRequest(
     ... on RequisitionNode {
       __typename
       id
-      requisitionNumber
     }
     ... on UpdateRequestRequisitionError {
       __typename

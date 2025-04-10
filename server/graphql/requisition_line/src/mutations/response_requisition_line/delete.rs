@@ -1,6 +1,9 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{CannotEditRequisition, ForeignKey, ForeignKeyError, RecordNotFound},
+    simple_generic_errors::{
+        CannotDeleteLineLinkedToShipment, CannotEditRequisition, ForeignKey, ForeignKeyError,
+        RecordNotFound,
+    },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -27,6 +30,7 @@ pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
     RequisitionDoesNotExist(ForeignKeyError),
     CannotEditRequisition(CannotEditRequisition),
+    CannotDeleteLineLinkedToShipment(CannotDeleteLineLinkedToShipment),
 }
 
 #[derive(SimpleObject)]
@@ -103,10 +107,16 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
                 CannotEditRequisition {},
             ))
         }
+        ServiceError::CannotDeleteLineLinkedToShipment => {
+            return Ok(DeleteErrorInterface::CannotDeleteLineLinkedToShipment(
+                CannotDeleteLineLinkedToShipment {},
+            ))
+        }
 
         // Standard Graphql Errors
-        ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
-        ServiceError::NotAResponseRequisition => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreRequisition
+        | ServiceError::InvoiceDoesNotExist
+        | ServiceError::NotAResponseRequisition => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

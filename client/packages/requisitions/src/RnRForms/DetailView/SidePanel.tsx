@@ -75,8 +75,12 @@ export const SidePanel = ({ rnrFormId }: { rnrFormId: string }) => {
                   updateRnRForm({ theirReference: e.target.value })
                 }
                 value={bufferedDetails?.theirReference ?? ''}
-                InputProps={{
-                  sx: { backgroundColor: 'white' },
+                slotProps={{
+                  input: {
+                    sx: {
+                      backgroundColor: theme => theme.palette.background.white,
+                    },
+                  },
                 }}
               />
             </PanelField>

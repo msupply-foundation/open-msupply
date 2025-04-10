@@ -2,8 +2,11 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BasicSpinner,
   Box,
+  ColumnAlign,
   DataTable,
+  DotCell,
   DownloadIcon,
+  FnUtils,
   GenderType,
   HomeIcon,
   InfoTooltipIcon,
@@ -12,14 +15,18 @@ import {
   noOtherVariants,
   useColumns,
   useFormatDateTime,
+  useLocation,
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PatientPanel } from './PatientPanel';
 import { FetchPatientModal } from './FetchPatientModal';
 import { usePatient } from '../api';
-import { Gender, usePatientStore } from '@openmsupply-client/programs';
 import { CentralPatientSearchResponse } from '../api/api';
+import { AppRoute } from '@openmsupply-client/config';
+import { Gender, usePatientStore } from '@openmsupply-client/programs';
+import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
+import { getGenderTranslationKey } from '../PatientView/utils';
 
 const genderToGenderType = (gender: Gender): GenderType => {
   switch (gender) {
@@ -113,7 +120,11 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
   const { setCreateNewPatient } = usePatientStore();
   const t = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { localisedDate } = useFormatDateTime();
+  const {
+    create: { create: createPrescription },
+  } = usePrescription();
 
   const columns = useColumns<PatientColumnData>([
     {
@@ -141,10 +152,14 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     {
       key: 'gender',
       label: 'label.gender',
+      formatter: gender => t(getGenderTranslationKey(gender as GenderType)),
     },
     {
       key: 'isDeceased',
       label: 'label.deceased',
+      align: ColumnAlign.Center,
+      Cell: DotCell,
+      sortable: false,
     },
     {
       key: 'isOnCentral',
@@ -184,6 +199,28 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     search(searchParams);
     setFetchingPatient(undefined);
   }, [search, searchParams]);
+
+  const handleRowClick = async (row: PatientColumnData): Promise<void> => {
+    const urlSegments = location.pathname.split('/');
+
+    if (row.isOnCentral) {
+      setFetchingPatient(row);
+      return;
+    }
+
+    setCreateNewPatient(undefined);
+
+    if (urlSegments.includes(AppRoute.Prescription)) {
+      const invoice = await createPrescription({
+        id: FnUtils.generateUUID(),
+        patientId: String(row.id),
+      });
+      navigate(invoice.id ?? "");
+      return;
+    }
+
+    navigate(String(row.id));
+  };
 
   if (!active) {
     return null;
@@ -241,14 +278,7 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
         data={data}
         columns={columns}
         noDataMessage={t('messages.no-matching-patients')}
-        onRowClick={row => {
-          if (row.isOnCentral) {
-            setFetchingPatient(row);
-          } else {
-            setCreateNewPatient(undefined);
-            navigate(String(row.id));
-          }
-        }}
+        onRowClick={handleRowClick}
         generateRowTooltip={({ firstName, lastName, isOnCentral }) => {
           if (isOnCentral) {
             return t('messages.click-to-fetch');

@@ -13,6 +13,8 @@ import {
   DeleteIcon,
   Action,
   ActionsFooter,
+  PrinterIcon,
+  AlertModal,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, prescriptionStatuses } from '../../../utils';
 import { StatusChangeButton } from './StatusChangeButton';
@@ -21,6 +23,7 @@ import {
   usePrescription,
   usePrescriptionLines,
 } from '../../api';
+import { usePrintLabels } from '../hooks/usePrinter';
 
 const createStatusLog = (invoice: PrescriptionRowFragment) => {
   const statusIdx = prescriptionStatuses.findIndex(s => invoice.status === s);
@@ -29,6 +32,7 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
     [InvoiceNodeStatus.New]: null,
     [InvoiceNodeStatus.Picked]: null,
     [InvoiceNodeStatus.Verified]: null,
+    [InvoiceNodeStatus.Cancelled]: null,
     // placeholder not used in prescriptions
     [InvoiceNodeStatus.Allocated]: null,
     [InvoiceNodeStatus.Shipped]: null,
@@ -44,6 +48,9 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
   if (statusIdx >= 2) {
     statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
   }
+  if (statusIdx >= 3) {
+    statusLog[InvoiceNodeStatus.Cancelled] = invoice.cancelledDatetime;
+  }
 
   return statusLog;
 };
@@ -51,7 +58,7 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
 export const FooterComponent: FC = () => {
   const t = useTranslation();
   const {
-    query: { data },
+    query: { data: prescription },
     isDisabled,
     rows: items,
   } = usePrescription();
@@ -69,9 +76,13 @@ export const FooterComponent: FC = () => {
     delete: { deleteLines },
   } = usePrescriptionLines();
 
+  const deleteAction = async () => {
+    await deleteLines(selectedRows);
+  };
+
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
-    deleteAction: () => deleteLines(selectedRows),
+    deleteAction,
     canDelete: !isDisabled,
     messages: {
       confirmMessage: t('messages.confirm-delete-lines', {
@@ -83,27 +94,59 @@ export const FooterComponent: FC = () => {
     },
   });
 
+  const {
+    printLabels: printPrescriptionLabels,
+    isPrintingLabels,
+    printerExists,
+    setPrinterExists,
+  } = usePrintLabels();
+
+  const handlePrintLabels = () => {
+    if (prescription) {
+      printPrescriptionLabels(prescription, selectedRows);
+    }
+  };
+
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
-      disabled: isDisabled,
-      disabledToastMessage: t('messages.cant-delete-generic'),
+    },
+    {
+      label: t('button.print-prescription-label'),
+      icon: <PrinterIcon />,
+      onClick: handlePrintLabels,
+      disabled: isDisabled || isPrintingLabels,
     },
   ];
+
+  // Don't show "Cancelled" status unless this prescription is already cancelled
+  const statusList = prescriptionStatuses.filter(status =>
+    prescription?.status === InvoiceNodeStatus.Cancelled
+      ? true
+      : status !== InvoiceNodeStatus.Cancelled
+  );
 
   return (
     <AppFooterPortal
       Content={
         <>
           {selectedRows.length !== 0 && (
-            <ActionsFooter
-              actions={actions}
-              selectedRowCount={selectedRows.length}
-            />
+            <>
+              <ActionsFooter
+                actions={actions}
+                selectedRowCount={selectedRows.length}
+              />
+              <AlertModal
+                title={t('heading.unable-to-print')}
+                message={t('error.label-printer-not-configured')}
+                open={printerExists}
+                onOk={() => setPrinterExists(false)}
+              />
+            </>
           )}
-          {data?.id && selectedRows.length === 0 && (
+          {prescription?.id && selectedRows.length === 0 && (
             <Box
               gap={2}
               display="flex"
@@ -112,8 +155,8 @@ export const FooterComponent: FC = () => {
               height={64}
             >
               <StatusCrumbs
-                statuses={prescriptionStatuses}
-                statusLog={createStatusLog(data)}
+                statuses={statusList}
+                statusLog={createStatusLog(prescription)}
                 statusFormatter={getStatusTranslator(t)}
               />
 
@@ -126,7 +169,6 @@ export const FooterComponent: FC = () => {
                   sx={{ fontSize: '12px' }}
                   onClick={() => navigateUpOne()}
                 />
-
                 <StatusChangeButton />
               </Box>
             </Box>

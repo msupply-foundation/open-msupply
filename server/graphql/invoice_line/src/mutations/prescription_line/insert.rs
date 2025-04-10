@@ -162,6 +162,7 @@ impl InsertInput {
             number_of_packs,
             note,
             // Default
+            prescribed_quantity: None,
             total_before_tax: None,
             tax_percentage: None,
             location_id: None,
@@ -534,6 +535,7 @@ mod test {
                     invoice_id: "invoice input".to_string(),
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
+                    prescribed_quantity: None,
                     total_before_tax: None,
                     note: None,
                     tax_percentage: None,

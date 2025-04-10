@@ -41,7 +41,7 @@ pub struct InvoiceFilter {
     pub status: Option<EqualFilter<InvoiceStatus>>,
     pub on_hold: Option<bool>,
     pub comment: Option<StringFilter>,
-    pub their_reference: Option<EqualFilter<String>>,
+    pub their_reference: Option<StringFilter>,
     pub transport_reference: Option<EqualFilter<String>>,
     pub created_datetime: Option<DatetimeFilter>,
     pub allocated_datetime: Option<DatetimeFilter>,
@@ -49,10 +49,13 @@ pub struct InvoiceFilter {
     pub shipped_datetime: Option<DatetimeFilter>,
     pub delivered_datetime: Option<DatetimeFilter>,
     pub verified_datetime: Option<DatetimeFilter>,
+    pub created_or_backdated_datetime: Option<DatetimeFilter>,
     pub colour: Option<EqualFilter<String>>,
     pub requisition_id: Option<EqualFilter<String>>,
     pub linked_invoice_id: Option<EqualFilter<String>>,
     pub stock_line_id: Option<String>,
+    pub is_program_invoice: Option<bool>,
+    pub is_cancellation: Option<bool>,
 }
 
 pub enum InvoiceSortField {
@@ -241,10 +244,13 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
             shipped_datetime,
             delivered_datetime,
             verified_datetime,
+            created_or_backdated_datetime,
             colour,
             requisition_id,
             linked_invoice_id,
             stock_line_id,
+            is_program_invoice,
+            is_cancellation,
         } = f;
 
         apply_equal_filter!(query, id, invoice::id);
@@ -252,7 +258,7 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
         apply_equal_filter!(query, name_id, name::id);
         apply_string_filter!(query, name, name::name_);
         apply_equal_filter!(query, store_id, invoice::store_id);
-        apply_equal_filter!(query, their_reference, invoice::their_reference);
+        apply_string_filter!(query, their_reference, invoice::their_reference);
         apply_equal_filter!(query, requisition_id, invoice::requisition_id);
         apply_string_filter!(query, comment, invoice::comment);
         apply_equal_filter!(query, linked_invoice_id, invoice::linked_invoice_id);
@@ -273,6 +279,11 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
         apply_date_time_filter!(query, shipped_datetime, invoice::shipped_datetime);
         apply_date_time_filter!(query, delivered_datetime, invoice::delivered_datetime);
         apply_date_time_filter!(query, verified_datetime, invoice::verified_datetime);
+        apply_date_time_filter!(
+            query,
+            created_or_backdated_datetime,
+            datetime_coalesce::coalesce(invoice::backdated_datetime, invoice::created_datetime)
+        );
 
         if let Some(stock_line_id) = stock_line_id {
             let invoice_line_query = invoice_line::table
@@ -280,6 +291,14 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
                 .select(invoice_line::invoice_id);
 
             query = query.filter(invoice::id.eq_any(invoice_line_query));
+        }
+
+        if is_program_invoice.is_some() {
+            query = query.filter(invoice::program_id.is_not_null());
+        }
+
+        if let Some(value) = is_cancellation {
+            query = query.filter(invoice::is_cancellation.eq(value));
         }
     }
     query
@@ -413,7 +432,7 @@ impl InvoiceFilter {
         self
     }
 
-    pub fn their_reference(mut self, filter: EqualFilter<String>) -> Self {
+    pub fn their_reference(mut self, filter: StringFilter) -> Self {
         self.their_reference = Some(filter);
         self
     }
@@ -430,6 +449,11 @@ impl InvoiceFilter {
         self.stock_line_id = Some(stock_line_id);
         self
     }
+
+    pub fn is_cancellation(mut self, filter: bool) -> Self {
+        self.is_cancellation = Some(filter);
+        self
+    }
 }
 
 impl InvoiceStatus {
@@ -441,6 +465,7 @@ impl InvoiceStatus {
             InvoiceStatus::Shipped => 4,
             InvoiceStatus::Delivered => 5,
             InvoiceStatus::Verified => 6,
+            InvoiceStatus::Cancelled => 7,
         }
     }
 }

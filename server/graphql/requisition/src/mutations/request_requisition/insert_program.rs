@@ -101,7 +101,9 @@ pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::ProgramOrderTypeDoesNotExist => BadUserInput(formatted_error),
 
         ServiceError::NewlyCreatedRequisitionDoesNotExist => InternalError(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::DatabaseError(_) | ServiceError::PluginError(_) => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())

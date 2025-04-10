@@ -16,6 +16,7 @@ import {
   getDefaultOptionRenderer,
   useOpenStateWithKeyboard,
 } from './utils';
+import { useTranslation } from '@common/intl';
 
 export type AutocompleteListProps<T> = {
   options: T[];
@@ -71,12 +72,32 @@ export const AutocompleteList = <T,>({
   getOptionDisabled,
   onInputChange,
 }: AutocompleteListProps<T>): JSX.Element => {
+  const t = useTranslation();
   // Open by default
   const openOverrides = useOpenStateWithKeyboard({ open: true });
   const createdFilterOptions = createFilterOptions(filterOptionConfig);
   const optionRenderer = optionKey
     ? getDefaultOptionRenderer<T>(optionKey)
     : renderOption;
+
+  const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
+    <BasicTextInput
+      {...props}
+      slotProps={{
+        input: {
+          disableUnderline: false,
+          sx: {
+            paddingLeft: 1,
+            minWidth: width,
+          },
+          ...props.InputProps,
+        },
+        inputLabel: { shrink: true },
+        htmlInput: { ...props?.inputProps },
+      }}
+      sx={{ minWidth: width }}
+    />
+  );
 
   let mappedOptions: T[] = [];
 
@@ -99,37 +120,40 @@ export const AutocompleteList = <T,>({
       )}
       <MuiAutocomplete
         {...openOverrides}
+        open
         disableClearable={disableClearable}
         autoSelect={false}
         loading={loading}
-        loadingText={loadingText}
-        noOptionsText={noOptionsText}
+        loadingText={loadingText ?? t('loading')}
+        noOptionsText={noOptionsText ?? t('label.no-options')}
         onChange={onChange}
         onInputChange={onInputChange}
         sx={{
           '& .MuiAutocomplete-inputRoot': {
             width: width ? `${width}px` : 'auto',
+            background: theme => theme.palette.background.drawer,
+            borderRadius: 2,
+            paddingTop: 0.5,
+            paddingBottom: 0.5,
           },
         }}
         classes={{ noOptions: 'something' }}
-        ListboxProps={{
-          style: {
-            minHeight: height ? `${height}` : 'auto',
-            maxHeight: height ? `${height}` : 'auto',
-          },
-        }}
-        renderInput={
-          renderInput || (props => <BasicTextInput {...props} autoFocus />)
-        }
+        renderInput={renderInput || defaultRenderInput}
         filterOptions={filterOptions ?? createdFilterOptions}
         forcePopupIcon={false}
         options={mappedOptions}
         renderOption={optionRenderer}
-        componentsProps={{
+        slotProps={{
           paper: {
             sx: {
               backgroundColor: theme => theme.palette.background.toolbar,
               minHeight: height ? `${height}` : 'auto',
+            },
+          },
+          listbox: {
+            style: {
+              minHeight: height ? `${height}` : 'auto',
+              maxHeight: height ? `${height}` : 'auto',
             },
           },
         }}

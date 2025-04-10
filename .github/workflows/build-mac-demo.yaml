@@ -43,7 +43,7 @@ jobs:
           # Below would add it env.artifactName and env.zippedArtifactName, so it can be used in upload-artifact action
           echo "artifactName=${ARTIFACT_NAME}" >> $GITHUB_ENV
           echo "zippedArtifactName=${ZIPPED_ARTIFACT_NAME}" >> $GITHUB_ENV
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ env.artifactName }}
           path: ${{ env.zippedArtifactName }}

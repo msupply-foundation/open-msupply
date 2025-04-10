@@ -37,7 +37,11 @@ use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
 use graphql_item_bundle::BundledItemMutations;
 use graphql_item_variant::{ItemVariantMutations, ItemVariantQueries};
 use graphql_location::{LocationMutations, LocationQueries};
-use graphql_plugin::{PluginMutations, PluginQueries};
+use graphql_plugin::{
+    CentralPluginMutations, CentralPluginQueries, PluginMutations, PluginQueries,
+};
+use graphql_preference::{PreferenceMutations, PreferenceQueries};
+use graphql_printer::{PrinterMutations, PrinterQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::ReportQueries;
@@ -89,6 +93,23 @@ impl CentralServerMutationNode {
     async fn general(&self) -> CentralGeneralMutations {
         CentralGeneralMutations
     }
+
+    async fn plugins(&self) -> CentralPluginMutations {
+        CentralPluginMutations
+    }
+
+    async fn preferences(&self) -> PreferenceMutations {
+        PreferenceMutations
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct CentralServerQueryNode;
+#[Object]
+impl CentralServerQueryNode {
+    async fn plugin(&self) -> CentralPluginQueries {
+        CentralPluginQueries
+    }
 }
 
 #[derive(Default, Clone)]
@@ -104,6 +125,18 @@ impl CentralServerMutations {
     }
 }
 
+#[derive(Default, Clone)]
+pub struct CentralServerQueries;
+#[Object]
+impl CentralServerQueries {
+    async fn central_server(&self) -> async_graphql::Result<CentralServerQueryNode> {
+        if !CentralServerConfig::is_central_server() {
+            return Err(StandardGraphqlError::from_str_slice("Not a central server"));
+        };
+
+        Ok(CentralServerQueryNode)
+    }
+}
 #[derive(MergedObject, Default, Clone)]
 pub struct Queries(
     pub InvoiceQueries,
@@ -117,6 +150,7 @@ pub struct Queries(
     pub ReportQueries,
     pub StockLineQueries,
     pub RepackQueries,
+    pub PrinterQueries,
     pub ProgramsQueries,
     pub FormSchemaQueries,
     pub ClinicianQueries,
@@ -129,6 +163,8 @@ pub struct Queries(
     pub DemographicIndicatorQueries,
     pub VaccineCourseQueries,
     pub ItemVariantQueries,
+    pub PreferenceQueries,
+    pub CentralServerQueries,
 );
 
 impl Queries {
@@ -145,6 +181,7 @@ impl Queries {
             ReportQueries,
             StockLineQueries,
             RepackQueries,
+            PrinterQueries,
             ProgramsQueries,
             FormSchemaQueries,
             ClinicianQueries,
@@ -157,6 +194,8 @@ impl Queries {
             DemographicIndicatorQueries,
             VaccineCourseQueries,
             ItemVariantQueries,
+            PreferenceQueries,
+            CentralServerQueries,
         )
     }
 }
@@ -173,6 +212,7 @@ pub struct Mutations(
     pub RequisitionLineMutations,
     pub StockLineMutations,
     pub RepackMutations,
+    pub PrinterMutations,
     pub GeneralMutations,
     pub ProgramsMutations,
     pub FormSchemaMutations,
@@ -198,6 +238,7 @@ impl Mutations {
             RequisitionLineMutations,
             StockLineMutations,
             RepackMutations,
+            PrinterMutations,
             GeneralMutations,
             ProgramsMutations,
             FormSchemaMutations,
@@ -268,7 +309,7 @@ impl GraphqlSchema {
                 .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)));
 
         // Initialisation schema should ony need service_provider
-        let initialisiation_builder = InitialisationSchema::build(
+        let initialisation_builder = InitialisationSchema::build(
             InitialisationQueries,
             InitialisationMutations,
             EmptySubscription,
@@ -277,7 +318,7 @@ impl GraphqlSchema {
 
         GraphqlSchema {
             operational: operational_builder.finish(),
-            initialisation: initialisiation_builder.finish(),
+            initialisation: initialisation_builder.finish(),
             is_operational: RwLock::new(is_operational),
         }
     }

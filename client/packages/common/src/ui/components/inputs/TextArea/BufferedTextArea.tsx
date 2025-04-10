@@ -7,7 +7,7 @@ export const BufferedTextArea: FC<StandardTextFieldProps> = ({
   onChange,
   maxRows = 4,
   minRows = 4,
-  InputProps,
+  slotProps,
   ...props
 }) => {
   const [buffer, setBuffer] = React.useState(value);
@@ -19,11 +19,15 @@ export const BufferedTextArea: FC<StandardTextFieldProps> = ({
   return (
     <BasicTextInput
       sx={{ width: '100%' }}
-      InputProps={{
-        ...InputProps,
-        sx: {
-          backgroundColor: 'white',
-          ...InputProps?.sx,
+      slotProps={{
+        input: {
+          ...slotProps?.input,
+          sx: {
+            backgroundColor: 'white',
+            // Ignoring below, see https://github.com/mui/material-ui/issues/45041
+            // @ts-expect-error: use mergeSlotProps when it's available in MUI-6
+            ...slotProps?.input?.sx,
+          },
         },
       }}
       multiline

@@ -30,6 +30,7 @@ pub enum UserPermission {
     RequisitionQuery,
     RequisitionMutate,
     RequisitionSend,
+    RequisitionCreateOutboundShipment,
     RnRFormQuery,
     RnRFormMutate,
     OutboundShipmentQuery,
@@ -53,6 +54,7 @@ pub enum UserPermission {
     DocumentMutate,
     ColdChainApi,
     AssetMutate,
+    AssetMutateViaDataMatrix,
     AssetQuery,
     AssetCatalogueItemMutate,
     NamePropertiesMutate,
@@ -113,6 +115,9 @@ impl UserPermission {
             PermissionType::InventoryAdjustmentMutate => UserPermission::InventoryAdjustmentMutate,
             PermissionType::RequisitionQuery => UserPermission::RequisitionQuery,
             PermissionType::RequisitionMutate => UserPermission::RequisitionMutate,
+            PermissionType::RequisitionCreateOutboundShipment => {
+                UserPermission::RequisitionCreateOutboundShipment
+            }
             PermissionType::RnrFormQuery => UserPermission::RnRFormQuery,
             PermissionType::RnrFormMutate => UserPermission::RnRFormMutate,
             PermissionType::RequisitionSend => UserPermission::RequisitionSend,
@@ -140,6 +145,7 @@ impl UserPermission {
 
             PermissionType::ColdChainApi => UserPermission::ColdChainApi,
             PermissionType::AssetMutate => UserPermission::AssetMutate,
+            PermissionType::AssetMutateViaDataMatrix => UserPermission::AssetMutateViaDataMatrix,
             PermissionType::AssetQuery => UserPermission::AssetQuery,
             PermissionType::AssetCatalogueItemMutate => UserPermission::AssetCatalogueItemMutate,
             PermissionType::NamePropertiesMutate => UserPermission::NamePropertiesMutate,
@@ -164,6 +170,9 @@ impl UserPermission {
             UserPermission::RequisitionQuery => PermissionType::RequisitionQuery,
             UserPermission::RequisitionMutate => PermissionType::RequisitionMutate,
             UserPermission::RequisitionSend => PermissionType::RequisitionSend,
+            UserPermission::RequisitionCreateOutboundShipment => {
+                PermissionType::RequisitionCreateOutboundShipment
+            }
             UserPermission::RnRFormQuery => PermissionType::RnrFormQuery,
             UserPermission::RnRFormMutate => PermissionType::RnrFormMutate,
             UserPermission::OutboundShipmentQuery => PermissionType::OutboundShipmentQuery,
@@ -189,6 +198,7 @@ impl UserPermission {
             }
             UserPermission::ColdChainApi => PermissionType::ColdChainApi,
             UserPermission::AssetMutate => PermissionType::AssetMutate,
+            UserPermission::AssetMutateViaDataMatrix => PermissionType::AssetMutateViaDataMatrix,
             UserPermission::AssetQuery => PermissionType::AssetQuery,
             UserPermission::AssetCatalogueItemMutate => PermissionType::AssetCatalogueItemMutate,
             UserPermission::NamePropertiesMutate => PermissionType::NamePropertiesMutate,

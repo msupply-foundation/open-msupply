@@ -6,9 +6,8 @@ import {
   Grid,
   useDetailPanel,
   useTranslation,
-  PrinterIcon,
-  LoadingButton,
   ReportContext,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import {
   ReportRowFragment,
@@ -23,15 +22,18 @@ import { JsonData } from '@openmsupply-client/programs';
 interface AppBarButtonProps {
   isDisabled: boolean;
   onAddItem: () => void;
+  showIndicators?: boolean;
 }
 
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
+  isDisabled,
+  showIndicators = false,
 }) => {
-  const isDisabled = useRequest.utils.isDisabled();
+  const t = useTranslation();
+  const { store } = useAuthContext();
   const isProgram = useRequest.utils.isProgram();
   const { OpenButton } = useDetailPanel();
-  const t = useTranslation();
   const { data } = useRequest.document.get();
   const { print, isPrinting } = usePrintReport();
 
@@ -57,18 +59,22 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <UseSuggestedQuantityButton />
 
         <ReportSelector
-          context={ReportContext.Requisition}
+          context={ReportContext.InternalOrder}
           onPrint={printReport}
           // Filters out reports that have a subContext (i.e. `R&R`)
           queryParams={{ filterBy: { subContext: { equalAnyOrNull: [] } } }}
-        >
-          <LoadingButton
-            variant="outlined"
-            startIcon={<PrinterIcon />}
-            isLoading={isPrinting}
-            label={t('button.print')}
-          />
-        </ReportSelector>
+          isPrinting={isPrinting}
+          buttonLabel={t('button.print')}
+          extraArguments={
+            showIndicators
+              ? {
+                  periodId: data?.period?.id,
+                  programId: data?.program?.id,
+                  customerNameId: store?.nameId,
+                }
+              : undefined
+          }
+        />
         {OpenButton}
       </Grid>
     </AppBarButtonsPortal>

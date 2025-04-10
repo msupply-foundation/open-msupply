@@ -1,0 +1,12 @@
+{
+  "is_custom": false,
+  "version": "2.6.2",
+  "code": "stock-take-without-quantity",
+  "context": "STOCKTAKE",
+  "name": "Stocktake without Quantity",
+  "queries": {},
+  "arguments": {},
+  "header": "header.html",
+  "footer": "footer.html",
+  "query_default": "stocktake"
+}

@@ -21,3 +21,13 @@ export const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
   return String(error);
 };
+
+export type ArrayElement<T> = T extends (infer U)[] ? U : T;
+
+export type JsonValue =
+  | number
+  | string
+  | boolean
+  | Array<JsonValue>
+  | { [key in string]?: JsonValue }
+  | null;

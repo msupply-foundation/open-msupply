@@ -8,13 +8,14 @@ import {
 import { useHistoricalStockLines } from '@openmsupply-client/system';
 import { usePrescription } from '../../api';
 import { DraftItem } from '../../../..';
-import { DraftStockOutLine } from '../../../types';
+import { DraftPrescriptionLine } from '../../../types';
 import {
-  createDraftStockOutLine,
-  createDraftStockOutLineFromStockLine,
-  issueStock,
+  createDraftPrescriptionLine,
+  createDraftPrescriptionLineFromStockLine,
+  createPrescriptionPlaceholderRow,
+  issuePrescriptionStock,
   updateNotes,
-} from '../../../StockOut/utils';
+} from '../../api/hooks/utils';
 
 export interface UseDraftPrescriptionLinesControl {
   updateNotes: (note: string) => void;
@@ -24,8 +25,8 @@ export interface UseDraftPrescriptionLinesControl {
 
 export const useDraftPrescriptionLines = (
   item: DraftItem | null,
-  draftLines: DraftStockOutLine[],
-  updateDraftLines: (lines: DraftStockOutLine[]) => void,
+  draftLines: DraftPrescriptionLine[],
+  updateDraftLines: (lines: DraftPrescriptionLine[]) => void,
   date?: Date | null
 ): UseDraftPrescriptionLinesControl => {
   const {
@@ -58,8 +59,13 @@ export const useDraftPrescriptionLines = (
 
     const noStockLines = stockLines.length == 0;
 
+    const placeholderItem = createPrescriptionPlaceholderRow(
+      invoiceId ?? '',
+      item?.id ?? ''
+    );
+
     if (noStockLines || !item) {
-      return updateDraftLines([]);
+      return updateDraftLines([placeholderItem]);
     }
 
     const rows = stockLines
@@ -68,19 +74,20 @@ export const useDraftPrescriptionLines = (
           ({ stockLine }) => stockLine?.id === batch.id
         );
         if (invoiceLine && invoiceId && status) {
-          return createDraftStockOutLine({
+          return createDraftPrescriptionLine({
             invoiceLine,
             invoiceId,
             stockLine: batch,
             invoiceStatus: status,
           });
         } else {
-          return createDraftStockOutLineFromStockLine({
+          return createDraftPrescriptionLineFromStockLine({
             stockLine: batch,
             invoiceId: invoiceId ?? '',
           });
         }
       })
+      .filter(stockLine => !stockLine.location?.onHold)
       .sort(SortUtils.byExpiryAsc);
 
     if (status === InvoiceNodeStatus.New) {
@@ -96,7 +103,7 @@ export const useDraftPrescriptionLines = (
         const placeholderItem = lines?.find(l => l.item.id === item.id)?.item;
         if (!!placeholderItem) placeholder.item = placeholderItem;
         rows.push(
-          createDraftStockOutLine({
+          createDraftPrescriptionLine({
             invoiceId: invoiceId ?? '',
             invoiceLine: placeholder,
             invoiceStatus: status,
@@ -114,7 +121,7 @@ export const useDraftPrescriptionLines = (
 
   const onChangeRowQuantity = useCallback(
     (batchId: string, packs: number) => {
-      updateDraftLines(issueStock(draftLines, batchId, packs));
+      updateDraftLines(issuePrescriptionStock(draftLines, batchId, packs));
     },
     [draftLines]
   );

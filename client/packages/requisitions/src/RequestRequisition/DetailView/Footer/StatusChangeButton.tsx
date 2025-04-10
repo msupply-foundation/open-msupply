@@ -79,10 +79,10 @@ const useStatusChangeButton = () => {
     'comment',
     'lines',
   ]);
+  const t = useTranslation();
   const { mutateAsync: update } = useRequest.document.update();
   const { success, error } = useNotification();
-  const t = useTranslation();
-  const { user } = useAuthContext();
+  const { user, store } = useAuthContext();
   const { getLocalisedFullName } = useIntlUtils();
   const errorsContext = useRequestRequisitionLineErrorContext();
 
@@ -105,12 +105,16 @@ const useStatusChangeButton = () => {
       getLocalisedFullName(user?.firstName, user?.lastName) || user?.name;
     const job = !!user?.jobTitle ? ` (${user?.jobTitle})` : '';
 
-    return `${comment ? comment + '\n' : ''}${t('template.requisition-sent', {
-      name,
-      job,
-      phone: user?.phoneNumber ?? UNDEFINED_STRING_VALUE,
-      email: user?.email ?? UNDEFINED_STRING_VALUE,
-    })}`;
+    if (comment) return comment;
+
+    return store?.preferences.requestRequisitionRequiresAuthorisation
+      ? t('template.requisition-sent', {
+          name,
+          job,
+          phone: user?.phoneNumber ?? UNDEFINED_STRING_VALUE,
+          email: user?.email ?? UNDEFINED_STRING_VALUE,
+        })
+      : '';
   };
 
   const mapStructuredErrors = (result: Awaited<ReturnType<typeof update>>) => {
@@ -191,12 +195,13 @@ const useStatusChangeButton = () => {
 };
 
 export const StatusChangeButton = () => {
+  const t = useTranslation();
   const { selectedOption, getConfirmation, lines } = useStatusChangeButton();
   const isDisabled = useRequest.utils.isDisabled();
   const { userHasPermission } = useAuthContext();
-  const t = useTranslation();
-  const cantSend = lines?.totalCount === 0;
-
+  const cantSend =
+    lines?.totalCount === 0 ||
+    lines?.nodes?.every(line => line?.requestedQuantity === 0);
   const showPermissionDenied = useDisabledNotificationToast(
     t('auth.permission-denied')
   );

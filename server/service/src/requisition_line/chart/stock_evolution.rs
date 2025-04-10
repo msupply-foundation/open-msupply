@@ -5,7 +5,7 @@ use repository::{
     DatetimeFilter, EqualFilter, RepositoryError, StockMovementFilter, StockMovementRepository,
     StockMovementRow, StorageConnection,
 };
-use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, date_with_days_offset};
+use util::{constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH, date_with_days_offset};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct StockEvolutionOptions {
@@ -170,7 +170,7 @@ fn calculate_projected_stock_evolution(
     expected_delivery_date: NaiveDate,
     projected_points: Vec<NaiveDate>,
 ) -> Vec<StockEvolution> {
-    let average_daily_consumption = average_monthly_consumption / NUMBER_OF_DAYS_IN_A_MONTH;
+    let average_daily_consumption = average_monthly_consumption / AVG_NUMBER_OF_DAYS_IN_A_MONTH;
     let mut result = Vec::new();
     let mut running_stock_on_hand = reference_stock_on_hand as f64;
     for reference_date in projected_points.into_iter() {
@@ -321,7 +321,7 @@ mod tests {
         assert_eq!(
             calculate_projected_stock_evolution(
                 30,
-                25.5 * NUMBER_OF_DAYS_IN_A_MONTH, // amc
+                25.5 * AVG_NUMBER_OF_DAYS_IN_A_MONTH, // amc
                 100,
                 NaiveDate::from_ymd_opt(2021, 1, 5).unwrap(),
                 vec![

@@ -34,6 +34,7 @@ const createStatusLog = (invoice: InboundFragment) => {
     [InvoiceNodeStatus.Verified]: null,
     // Placeholder for typescript, not used in inbounds
     [InvoiceNodeStatus.Allocated]: null,
+    [InvoiceNodeStatus.Cancelled]: null,
   };
 
   if (statusIdx >= 0) {
@@ -67,7 +68,6 @@ export const FooterComponent: FC<FooterComponentProps> = ({
 
   const { data } = useInbound.document.get();
   const isManuallyCreated = !data?.linkedShipment?.id;
-  const isDisabled = useInbound.utils.isDisabled();
   const onDelete = useInbound.lines.deleteSelected();
   const onZeroQuantities = useInbound.lines.zeroQuantities();
   const selectedLines = useInbound.utils.selectedLines();
@@ -77,10 +77,6 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: onDelete,
-      disabled: isDisabled || !isManuallyCreated,
-      disabledToastMessage: !isManuallyCreated
-        ? t('messages.cant-delete-transferred')
-        : t('messages.cant-delete-generic'),
     },
     {
       label: t('button.return-lines'),
@@ -92,9 +88,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       label: t('button.zero-line-quantity'),
       icon: <RewindIcon />,
       onClick: onZeroQuantities,
-      disabled: isDisabled,
       shouldShrink: false,
-      disabledToastMessage: t('label.cant-zero-quantity-disabled'),
     },
   ];
 

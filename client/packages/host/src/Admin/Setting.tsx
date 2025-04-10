@@ -22,16 +22,16 @@ export const Setting: React.FC<SettingProps> = ({
 }) => {
   return (
     <Grid container style={{ paddingBottom: 15 }}>
-      <Grid item style={{ width: 50, display: 'flex' }} justifyContent="center">
+      <Grid style={{ width: 50, display: 'flex' }} justifyContent="center">
         {icon}
       </Grid>
-      <Grid item flexShrink={0} flexGrow={1}>
+      <Grid flexShrink={0} flexGrow={1}>
         <Box display={'flex'}>
           <Typography style={{ fontSize: 16 }}>{title}</Typography>
           {infoText ? <InfoTooltipIcon title={infoText} /> : null}
         </Box>
       </Grid>
-      <Grid item display="flex" justifyContent="flex-end">
+      <Grid display="flex" justifyContent="flex-end">
         {component}
       </Grid>
     </Grid>

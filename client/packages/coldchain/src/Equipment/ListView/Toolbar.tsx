@@ -6,11 +6,13 @@ import {
   FilterDefinition,
   FilterMenu,
   useIsCentralServerApi,
+  usePathnameIncludes,
   useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
-import { mapIdNameToOptions, useAssetData } from '@openmsupply-client/system';
+import { mapIdNameToOptions, useAssetTypes } from '@openmsupply-client/system';
 import { CCE_CLASS_ID } from '../utils';
+import { useAssetCategories } from '@openmsupply-client/system';
 
 type ReferenceData = {
   id: string;
@@ -18,19 +20,20 @@ type ReferenceData = {
   categoryId?: string;
 };
 
-export const Toolbar = () => {
-  const { data: categoryData } = useAssetData.utils.categories({
+export const useToolbar = () => {
+  const t = useTranslation();
+  const isCentralServer = useIsCentralServerApi();
+  const isColdChain = usePathnameIncludes('cold-chain');
+  const [types, setTypes] = useState<ReferenceData[]>([]);
+
+  const { data: typeData } = useAssetTypes();
+  const { data: categoryData } = useAssetCategories({
     classId: { equalTo: CCE_CLASS_ID },
   });
-  const { data: typeData } = useAssetData.utils.types();
-  const t = useTranslation();
+
   const { urlQuery, updateQuery } = useUrlQuery({
     skipParse: ['classId', 'categoryId', 'typeId'],
   });
-  const [types, setTypes] = useState<ReferenceData[]>([]);
-
-  const isCentralServer = useIsCentralServerApi();
-
   const categoryId = urlQuery['categoryId'];
   const typeId = urlQuery['typeId'];
 
@@ -69,9 +72,7 @@ export const Toolbar = () => {
           value: AssetLogStatusInput.Functioning,
         },
         {
-          label: t('status.functioning-but-needs-attention', {
-            ns: 'coldchain',
-          }),
+          label: t('status.functioning-but-needs-attention'),
           value: AssetLogStatusInput.FunctioningButNeedsAttention,
         },
         {
@@ -132,13 +133,22 @@ export const Toolbar = () => {
     },
   ];
 
-  if (isCentralServer)
+  if (isCentralServer && !isColdChain) {
     filters.push({
       type: 'text',
       name: t('label.store'),
-      urlParameter: 'store',
+      urlParameter: 'storeCodeOrName',
       isDefault: true,
     });
+  }
+
+  return {
+    filters,
+  };
+};
+
+export const Toolbar = () => {
+  const { filters } = useToolbar();
 
   return (
     <AppBarContentPortal

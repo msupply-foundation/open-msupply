@@ -34,6 +34,9 @@ pub use self::invoice_query::*;
 pub mod invoice_line;
 pub use self::invoice_line::*;
 
+pub mod item_direction;
+pub use self::item_direction::*;
+
 pub mod store;
 pub use self::store::*;
 
@@ -54,6 +57,9 @@ pub use self::period::*;
 
 pub mod permissions;
 pub use self::permissions::*;
+
+pub mod preferences;
+pub use self::preferences::*;
 
 pub mod response_requisition_stats;
 pub use self::response_requisition_stats::*;
@@ -118,12 +124,30 @@ pub use self::reason_option::*;
 pub mod cold_storage_type;
 pub use self::cold_storage_type::*;
 
-mod requisition_item_information;
+pub mod abbreviation;
+pub use self::abbreviation::*;
+
+pub mod printer;
+pub use self::printer::*;
+
+pub mod insurance_policy;
+pub use self::insurance_policy::*;
+
+pub mod insurance_provider;
+pub use self::insurance_provider::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]
 impl DeleteResponse {
+    pub async fn id(&self) -> &str {
+        &self.0
+    }
+}
+
+pub struct IdResponse(pub String);
+#[Object]
+impl IdResponse {
     pub async fn id(&self) -> &str {
         &self.0
     }

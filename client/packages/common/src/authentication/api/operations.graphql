@@ -12,6 +12,7 @@ fragment UserStoreNode on UserStoreNode {
     omProgramModule
     vaccineModule
     issueInForeignCurrency
+    # TODO standardise LookBack vs Lookback (lookback vs look_back)
     monthlyConsumptionLookBackPeriod
     monthsLeadTime
     monthsOverstock
@@ -21,6 +22,7 @@ fragment UserStoreNode on UserStoreNode {
     extraFieldsInRequisition
     manuallyLinkInternalOrderToInboundShipment
     useConsumptionAndStockFromCustomersForInternalOrders
+    editPrescribedQuantityOnPrescription
   }
   createdDate
   homeCurrencyCode
@@ -146,12 +148,9 @@ query permissions($storeId: String!) {
   }
 }
 
-query storePreferences($storeId: String!) {
-  storePreferences(storeId: $storeId) {
-    responseRequisitionRequiresAuthorisation
-    requestRequisitionRequiresAuthorisation
-    packToOne
-    id
+query preferences($storeId: String!) {
+  preferences(storeId: $storeId) {
+    showContactTracing
   }
 }
 

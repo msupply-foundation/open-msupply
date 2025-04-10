@@ -1,10 +1,13 @@
-use super::{ItemStatsNode, ItemVariantNode, StockLineConnector};
+use super::{
+    ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode, StockLineConnector,
+};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::{
     loader::{
-        ItemStatsLoaderInput, ItemVariantsByItemIdLoader, ItemsStatsForItemLoader,
-        ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, StockLineByItemAndStoreIdLoader,
+        ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemVariantsByItemIdLoader,
+        ItemsStatsForItemLoader, ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput,
+        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
         StockLineByItemAndStoreIdLoaderInput,
     },
     simple_generic_errors::InternalError,
@@ -143,6 +146,16 @@ impl ItemNode {
         Ok(ItemVariantNode::from_vec(result))
     }
 
+    pub async fn item_directions(&self, ctx: &Context<'_>) -> Result<Vec<ItemDirectionNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemDirectionsByItemIdLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(ItemDirectionNode::from_vec(result))
+    }
+
     pub async fn msupply_universal_code(&self) -> String {
         self.legacy_string("universalcodes_code")
     }
@@ -177,6 +190,27 @@ impl ItemNode {
 
     pub async fn ddd(&self) -> String {
         self.legacy_string("ddd_value")
+    }
+
+    pub async fn master_lists(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<Vec<MasterListNode>>> {
+        let loader = ctx.get_loader::<DataLoader<MasterListByItemIdLoader>>();
+        let master_list_option = loader
+            .load_one(MasterListByItemIdLoaderInput::new(
+                &store_id,
+                &self.row().id,
+            ))
+            .await?;
+
+        Ok(master_list_option.map(|master_list| {
+            master_list
+                .into_iter()
+                .map(MasterListNode::from_domain)
+                .collect()
+        }))
     }
 }
 
@@ -315,14 +349,14 @@ mod test {
     use super::*;
 
     #[actix_rt::test]
-    async fn graphq_test_item_node_details() {
+    async fn graphql_test_item_node_details() {
         #[derive(Clone)]
         struct TestQuery;
 
         let (_, _, _, settings) = setup_graphql_test(
             TestQuery,
             EmptyMutation,
-            "graphq_test_item_node_details",
+            "graphql_test_item_node_details",
             MockDataInserts::none(),
         )
         .await;

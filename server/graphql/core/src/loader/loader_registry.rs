@@ -7,6 +7,8 @@ use item_variant::{ItemVariantByItemVariantIdLoader, ItemVariantsByItemIdLoader}
 use repository::StorageConnectionManager;
 use service::service_provider::ServiceProvider;
 
+use super::previous_encounter::PreviousEncounterLoader;
+
 pub type LoaderMap = Map<AnyLoader>;
 pub type AnyLoader = dyn Any + Send + Sync;
 
@@ -456,13 +458,31 @@ pub async fn get_loaders(
         async_std::task::spawn,
     ));
     loaders.insert(DataLoader::new(
-        RequisitionItemInfoLoader {
+        DiagnosisLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        PreviousEncounterLoader {
             service_provider: service_provider.clone(),
         },
         async_std::task::spawn,
     ));
     loaders.insert(DataLoader::new(
-        DiagnosisLoader {
+        ItemDirectionsByItemIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        InsuranceProviderByIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        NameInsuranceJoinLoader {
             connection_manager: connection_manager.clone(),
         },
         async_std::task::spawn,

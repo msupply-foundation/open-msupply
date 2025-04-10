@@ -46,9 +46,15 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
       name: t('label.gender'),
       urlParameter: 'gender',
       options: [
-        { label: 'Male', value: GenderType.Male },
-        { label: 'Female', value: GenderType.Female },
+        { label: t('gender.male'), value: GenderType.Male },
+        { label: t('gender.female'), value: GenderType.Female },
       ],
+    },
+    {
+      type: 'text',
+      name: t('label.next-of-kin'),
+      urlParameter: 'nextOfKinName',
+      placeholder: t('placeholder.search-by-name'),
     },
   ];
 

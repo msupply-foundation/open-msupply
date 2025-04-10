@@ -9,6 +9,7 @@ import {
   Typography,
   BufferedTextInput,
   Tooltip,
+  BasicTextInput,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
@@ -20,11 +21,12 @@ export const Toolbar: FC = () => {
   const isDisabled = useResponse.utils.isDisabled();
   const { itemFilter, setItemFilter } = useResponse.line.list();
 
-  const { approvalStatus, otherParty, theirReference, update } =
+  const { approvalStatus, otherParty, theirReference, programName, update } =
     useResponse.document.fields([
       'approvalStatus',
       'otherParty',
       'theirReference',
+      'programName',
     ]);
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
 
@@ -38,7 +40,7 @@ export const Toolbar: FC = () => {
         alignItems="flex-end"
         gap={1}
       >
-        <Grid item display="flex" flex={1}>
+        <Grid display="flex" flex={1}>
           <Box display="flex" flexDirection="row" gap={4}>
             <Box display="flex" flex={1} flexDirection="column" gap={1}>
               {otherParty && (
@@ -79,6 +81,12 @@ export const Toolbar: FC = () => {
                   }
                 />
               )}
+            </Box>
+            <Box display="flex" flex={1} flexDirection="column" gap={1}>
+              <InputWithLabelRow
+                label={t('label.program')}
+                Input={<BasicTextInput disabled value={programName ?? ''} />}
+              />
             </Box>
           </Box>
         </Grid>

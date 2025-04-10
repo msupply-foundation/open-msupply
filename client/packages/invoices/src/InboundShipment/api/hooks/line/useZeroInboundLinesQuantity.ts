@@ -8,10 +8,10 @@ import { useInboundRows } from './useInboundRows';
 import { useSaveInboundLines } from './useSaveInboundLines';
 
 export const useZeroInboundLinesQuantity = (): (() => void) => {
+  const t = useTranslation();
   const { items, lines } = useInboundRows();
   const { mutateAsync } = useSaveInboundLines();
   const isDisabled = useIsInboundDisabled();
-  const t = useTranslation();
 
   const selectedRows =
     useTableStore(state => {
@@ -36,11 +36,23 @@ export const useZeroInboundLinesQuantity = (): (() => void) => {
               isUpdated: true,
             }));
     }) || [];
+  const { clearSelected } = useTableStore();
 
   const onZeroQuantities = async () => {
-    await mutateAsync(selectedRows).catch(err => {
-      throw err;
-    });
+    await mutateAsync(selectedRows)
+      .then(() => clearSelected())
+      .catch(err => {
+        throw err;
+      });
+  };
+
+  interface handleCantZeroQuantity {
+    isDisabled: boolean;
+  }
+
+  const handleCantZeroQuantity = ({ isDisabled }: handleCantZeroQuantity) => {
+    if (isDisabled) return t('label.cant-zero-quantity-disabled');
+    return (err: Error) => err.message;
   };
 
   const confirmAndZeroLines = useDeleteConfirmation({
@@ -54,7 +66,7 @@ export const useZeroInboundLinesQuantity = (): (() => void) => {
       deleteSuccess: t('messages.zero-line-quantities', {
         count: selectedRows.length,
       }),
-      cantDelete: t('label.cant-zero-quantity-disabled'),
+      cantDelete: handleCantZeroQuantity({ isDisabled }),
     },
   });
 

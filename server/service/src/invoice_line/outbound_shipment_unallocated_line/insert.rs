@@ -125,6 +125,8 @@ fn generate(
         return_reason_id: None,
         foreign_currency_price_before_tax: None,
         item_variant_id: None,
+        prescribed_quantity: None,
+        linked_invoice_id: None,
     };
 
     Ok(new_line)

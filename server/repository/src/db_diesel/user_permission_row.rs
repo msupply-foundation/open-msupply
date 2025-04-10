@@ -44,6 +44,7 @@ pub enum PermissionType {
     RequisitionQuery,
     RequisitionMutate,
     RequisitionSend,
+    RequisitionCreateOutboundShipment,
     // r&r form,
     RnrFormQuery,
     RnrFormMutate,
@@ -78,6 +79,7 @@ pub enum PermissionType {
     ColdChainApi,
     AssetQuery,
     AssetMutate,
+    AssetMutateViaDataMatrix,
     AssetCatalogueItemMutate,
     // Names
     NamePropertiesMutate,

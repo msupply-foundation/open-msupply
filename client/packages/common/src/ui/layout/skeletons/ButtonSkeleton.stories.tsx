@@ -8,8 +8,6 @@ export default {
   component: ButtonSkeleton,
 } as Meta<typeof ButtonSkeleton>;
 
-const Template: StoryFn<typeof ButtonSkeleton> = () => (
-  <ButtonSkeleton />
-);
+const Template: StoryFn<typeof ButtonSkeleton> = () => <ButtonSkeleton />;
 
 export const Primary = Template.bind({});

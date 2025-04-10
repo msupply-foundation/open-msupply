@@ -2,7 +2,8 @@ import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 
 import { CurrencyInput } from './CurrencyInput';
-import { Grid, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
+import { Grid } from '@openmsupply-client/common';
 
 export default {
   title: 'Inputs/CurrencyInput',
@@ -17,12 +18,12 @@ const Template: StoryFn<typeof CurrencyInput> = () => {
 
   return (
     <Grid container spacing={5} flexDirection="column">
-      <Grid item>
+      <Grid>
         <Typography>CurrencyInput</Typography>
         <CurrencyInput defaultValue={value1} onChangeNumber={setValue1} />
         <Typography>Stored value: {value1}</Typography>
       </Grid>
-      <Grid item>
+      <Grid>
         <Typography>Disabled</Typography>
         <CurrencyInput
           defaultValue={value1}

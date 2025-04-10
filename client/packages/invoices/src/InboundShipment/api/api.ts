@@ -16,6 +16,10 @@ import {
   InsertInboundShipmentServiceLineInput,
   UpdateInboundShipmentServiceLineInput,
   DeleteInboundShipmentServiceLineInput,
+  RequisitionSortFieldInput,
+  RequisitionNodeType,
+  InsertInboundShipmentLineFromInternalOrderLineInput,
+  RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA } from '../../utils';
@@ -107,6 +111,15 @@ const inboundParsers = {
       itemVariantId: line.itemVariantId,
     };
   },
+  toInsertLineFromInternalOrder: (line: {
+    invoiceId: string;
+    requisitionLineId: string;
+  }): InsertInboundShipmentLineFromInternalOrderLineInput => {
+    return {
+      invoiceId: line.invoiceId,
+      requisitionLineId: line.requisitionLineId,
+    };
+  },
   toUpdateLine: (line: DraftInboundLine): UpdateInboundShipmentLineInput => ({
     id: line.id,
     itemId: line.item.id,
@@ -183,7 +196,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result?.invoices;
     },
-    byId: async (id: string): Promise<InboundRowFragment> => {
+    byId: async (id: string) => {
       const result = await sdk.invoice({ id, storeId });
 
       const invoice = result?.invoice;
@@ -208,6 +221,31 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Could not find invoice!');
     },
+    listInternalOrders: async (otherPartyId: string) => {
+      const filter = {
+        type: { equalTo: RequisitionNodeType.Request },
+        status: { equalTo: RequisitionNodeStatus.Sent },
+        otherPartyId: { equalTo: otherPartyId },
+      };
+      const result = await sdk.requests({
+        storeId,
+        sort: {
+          key: RequisitionSortFieldInput.CreatedDatetime,
+          desc: true,
+        },
+        filter,
+      });
+      return result?.requisitions;
+    },
+    listInternalOrderLines: async (requisitionId: string) => {
+      const result = await sdk.request({
+        storeId,
+        id: requisitionId,
+      });
+      if (result?.requisition?.__typename === 'RequisitionNode') {
+        return result.requisition;
+      }
+    },
   },
   delete: async (invoices: InboundRowFragment[]): Promise<string[]> => {
     const result =
@@ -226,18 +264,19 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   },
   insert: async (
     patch: Omit<InsertInboundShipmentMutationVariables, 'storeId'>
-  ): Promise<number> => {
+  ): Promise<string> => {
     const result =
       (await sdk.insertInboundShipment({
         id: patch.id,
         otherPartyId: patch.otherPartyId,
         storeId,
+        requisitionId: patch.requisitionId,
       })) || {};
 
     const { insertInboundShipment } = result;
 
     if (insertInboundShipment?.__typename === 'InvoiceNode') {
-      return insertInboundShipment.invoiceNumber;
+      return insertInboundShipment.id;
     }
 
     throw new Error(insertInboundShipment.error.description);
@@ -249,6 +288,20 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       input: inboundParsers.toUpdate(patch),
       storeId,
     }),
+  insertLinesFromInternalOrder: async (
+    lines: { invoiceId: string; requisitionLineId: string }[]
+  ) => {
+    const result = await sdk.insertLinesFromInternalOrder({
+      storeId,
+      input: {
+        insertFromInternalOrderLines: lines.map(
+          inboundParsers.toInsertLineFromInternalOrder
+        ),
+      },
+    });
+
+    return result;
+  },
   deleteLines: async (lines: { id: string }[]) => {
     return sdk.deleteInboundShipmentLines({
       storeId,

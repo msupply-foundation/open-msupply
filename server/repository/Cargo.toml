@@ -17,7 +17,7 @@ diesel = { version = "2.2.6", default-features = false, features = [
     "r2d2",
     "numeric",
     "chrono",
-    "32-column-tables",
+    "64-column-tables",
     "with-deprecated",
 ] }
 diesel-derive-enum = { version = "2.1.0", default-features = false }
@@ -38,6 +38,7 @@ rust-embed = { version = "8.4.0", features = ["debug-embed"] }
 anyhow.workspace = true
 pretty_assertions = { workspace = true }
 strum = { workspace = true }
+ts-rs = { workspace = true }
 
 [dev-dependencies]
 tokio = { version = "1.38.0", features = ["time", "rt-multi-thread", "macros"] }

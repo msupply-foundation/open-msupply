@@ -1,8 +1,32 @@
 use super::{version::Version, Migration, MigrationFragment};
-
-mod add_index_to_sync_buffer;
-mod add_program_deleted_datetime;
 use crate::StorageConnection;
+
+mod add_cancellation_fields_to_invoice;
+mod add_cancelled_status_to_invoice;
+mod add_create_invoice_from_requisition_permission;
+mod add_form_schema_sync;
+mod add_index_to_sync_buffer;
+mod add_insurance_fields_to_invoice;
+mod add_insurance_provider;
+mod add_invoice_line_prescribed_quantity;
+mod add_load_plugin_processor_pg_enum_type;
+mod add_name_insurance_join;
+mod add_name_next_of_kin_id;
+mod add_name_next_of_kin_name;
+mod add_program_deleted_datetime;
+mod add_program_id_on_stocktake;
+mod add_program_id_to_invoice;
+mod add_report_sync;
+mod backend_plugins;
+mod frontend_plugins;
+mod plugin_data;
+mod plugin_data_changelog;
+mod prescribed_quantity_store_pref;
+mod printer_create_table;
+mod reinitialise_reports;
+mod report_add_prescription_context;
+mod add_report_is_active;
+mod report_fix_prescriptions_report_code;
 
 pub(crate) struct V2_06_00;
 
@@ -18,7 +42,31 @@ impl Migration for V2_06_00 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(add_index_to_sync_buffer::Migrate),
+            Box::new(add_invoice_line_prescribed_quantity::Migrate),
             Box::new(add_program_deleted_datetime::Migrate),
+            Box::new(backend_plugins::Migrate),
+            Box::new(add_create_invoice_from_requisition_permission::Migrate),
+            Box::new(add_name_next_of_kin_id::Migrate),
+            Box::new(add_load_plugin_processor_pg_enum_type::Migrate),
+            Box::new(add_program_id_to_invoice::Migrate),
+            Box::new(add_insurance_provider::Migrate),
+            Box::new(plugin_data::Migrate),
+            Box::new(frontend_plugins::Migrate),
+            Box::new(prescribed_quantity_store_pref::Migrate),
+            Box::new(add_name_next_of_kin_name::Migrate),
+            Box::new(add_program_id_on_stocktake::Migrate),
+            Box::new(add_name_insurance_join::Migrate),
+            Box::new(printer_create_table::Migrate),
+            Box::new(add_insurance_fields_to_invoice::Migrate),
+            Box::new(add_cancelled_status_to_invoice::Migrate),
+            Box::new(report_add_prescription_context::Migrate),
+            Box::new(add_cancellation_fields_to_invoice::Migrate),
+            Box::new(reinitialise_reports::Migrate),
+            Box::new(add_report_sync::Migrate),
+            Box::new(add_form_schema_sync::Migrate),
+            Box::new(add_report_is_active::Migrate),
+            Box::new(plugin_data_changelog::Migrate),
+            Box::new(report_fix_prescriptions_report_code::Migrate),
         ]
     }
 }

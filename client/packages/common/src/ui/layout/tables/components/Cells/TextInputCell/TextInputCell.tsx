@@ -13,6 +13,7 @@ export const TextInputCell = <T extends RecordWithId>({
   columnIndex,
   autocompleteName,
   fullWidth,
+  isRequired,
 }: CellProps<T> & { fullWidth?: boolean }): React.ReactElement<
   CellProps<T>
 > => {
@@ -32,7 +33,14 @@ export const TextInputCell = <T extends RecordWithId>({
       fullWidth={fullWidth}
       disabled={isDisabled}
       autoFocus={autoFocus}
-      InputProps={maxLength ? { inputProps: { maxLength } } : undefined}
+      required={isRequired}
+      slotProps={{
+        input: {
+          inputProps: {
+            maxLength: maxLength ? maxLength : undefined,
+          },
+        },
+      }}
       value={buffer}
       onChange={e => {
         const newValue = e.target.value;

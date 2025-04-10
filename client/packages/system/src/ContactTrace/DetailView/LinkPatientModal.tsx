@@ -175,7 +175,7 @@ const ModalContent: FC<ModalContentProps> = ({
         paddingBottom={2}
         boxShadow={theme => theme.shadows[2]}
       >
-        <Grid item>
+        <Grid>
           <InputWithLabelRow
             label={t('label.linked-patient')}
             Input={
@@ -186,7 +186,7 @@ const ModalContent: FC<ModalContentProps> = ({
             }
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <ButtonWithIcon
             Icon={<RewindIcon />}
             disabled={!linkedPatientId}

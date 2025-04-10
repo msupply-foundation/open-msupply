@@ -56,12 +56,8 @@ export const ReturnSteps = ({
 
   const alertMessage =
     zeroQuantityAlert === 'warning'
-      ? t('messages.zero-return-quantity-will-delete-lines', {
-          ns: 'replenishment',
-        })
-      : t('messages.alert-zero-return-quantity', {
-          ns: 'replenishment',
-        });
+      ? t('messages.zero-return-quantity-will-delete-lines')
+      : t('messages.alert-zero-return-quantity');
 
   const inputsDisabled = !!returnId && isDisabled;
 

@@ -42,7 +42,7 @@ export const Toolbar = () => {
         flex={1}
         alignItems="flex-end"
       >
-        <Grid item display="flex" flex={1} flexDirection="column" gap={1}>
+        <Grid display="flex" flex={1} flexDirection="column" gap={1}>
           <InputWithLabelRow
             label={t('heading.description')}
             Input={
@@ -74,7 +74,6 @@ export const Toolbar = () => {
           {isDisabled && <Alert severity="info">{infoMessage}</Alert>}
         </Grid>
         <Grid
-          item
           display="flex"
           gap={1}
           justifyContent="flex-end"

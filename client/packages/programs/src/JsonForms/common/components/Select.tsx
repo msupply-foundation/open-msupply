@@ -4,6 +4,9 @@ import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import {
   Autocomplete,
   DetailInputWithLabelRow,
+  LocaleKey,
+  TypedTFunction,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
 import { z } from 'zod';
@@ -80,6 +83,7 @@ type DisplayOption = {
 };
 
 const getDisplayOptions = (
+  t: TypedTFunction<LocaleKey>,
   schemaEnum: string[],
   options?: Options
 ): DisplayOption[] => {
@@ -98,7 +102,12 @@ const getDisplayOptions = (
         );
         return prev;
       }
-      prev.push({ value: key, label: value ?? key, description, right });
+      prev.push({
+        value: key,
+        label: t(`${value as LocaleKey}`) ?? key,
+        description,
+        right,
+      });
       return prev;
     },
     []
@@ -125,8 +134,8 @@ const filterOptions = (
       const rank = lowerCaseOption.startsWith(searchTerm)
         ? searchRanking.STARTS_WITH
         : lowerCaseOption.includes(searchTerm)
-        ? searchRanking.CONTAINS
-        : searchRanking.NO_MATCH;
+          ? searchRanking.CONTAINS
+          : searchRanking.NO_MATCH;
       return { ...option, rank };
     })
     .filter(({ rank }) => rank !== searchRanking.NO_MATCH)
@@ -230,6 +239,7 @@ const useFilteredItems = (
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, schema, path, uischema, enabled } = props;
+  const t = useTranslation();
   const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
     Options,
     uischema.options
@@ -255,14 +265,14 @@ const UIComponent = (props: ControlProps) => {
     value: DisplayOption | null
   ) => handleChange(path, value?.value);
 
-  const options = getDisplayOptions(items, schemaOptions);
+  const options = getDisplayOptions(t, items, schemaOptions);
 
   const value = data ? options.find(o => o.value === data) : null;
 
   return (
     <DetailInputWithLabelRow
       sx={DefaultFormRowSx}
-      label={label}
+      label={t(label as LocaleKey)}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment={'start'}
       Input={

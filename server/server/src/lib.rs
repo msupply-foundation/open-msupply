@@ -2,11 +2,10 @@
 extern crate machine_uid;
 
 use crate::{
-    certs::Certificates, cold_chain::config_cold_chain, configuration::get_or_create_token_secret,
-    cors::cors_policy, middleware::central_server_only, print::config_print,
-    serve_frontend::config_serve_frontend, static_files::config_static_files,
-    support::config_support, sync_on_central::config_sync_on_central,
-    upload_fridge_tag::config_upload_fridge_tag,
+    central::config_central, certs::Certificates, cold_chain::config_cold_chain,
+    configuration::get_or_create_token_secret, cors::cors_policy, middleware::central_server_only,
+    print::config_print, serve_frontend::config_serve_frontend, static_files::config_static_files,
+    support::config_support, upload_fridge_tag::config_upload_fridge_tag,
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
@@ -24,10 +23,11 @@ use repository::{get_storage_connection_manager, migrations::migrate};
 use scheduled_tasks::spawn_scheduled_task_runner;
 use service::{
     auth_data::AuthData,
+    boajs::context::BoaJsContext,
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
-    settings::{is_develop, ServerSettings, Settings},
+    settings::{is_develop, DiscoveryMode, ServerSettings, Settings},
     standard_reports::StandardReports,
     sync::{
         file_sync_driver::FileSyncDriver,
@@ -53,10 +53,14 @@ pub mod static_files;
 pub mod support;
 mod upload_fridge_tag;
 pub use self::logging::*;
+mod serve_frontend_plugins;
+mod upload;
 
+mod central;
 pub mod print;
-mod sync_on_central;
 
+use serve_frontend_plugins::config_server_frontend_plugins;
+use upload::config_upload;
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
 #[cfg(not(target_os = "android"))]
 mod discovery;
@@ -93,7 +97,7 @@ pub async fn start_server(
     info!("Run DB migrations...done");
 
     // Upsert standard reports
-    StandardReports::load_reports(&connection_manager.connection().unwrap()).unwrap();
+    StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");
@@ -142,6 +146,16 @@ pub async fn start_server(
             .update_log_level(&service_context, settings.logging.clone().unwrap().level)
             .unwrap();
     }
+
+    // PLUGIN CONTEXT
+    BoaJsContext {
+        service_provider: service_provider.clone(),
+    }
+    .bind();
+    service_provider
+        .plugin_service
+        .reload_all_plugins(&service_context)
+        .unwrap();
 
     // SET LOG CALLBACK FOR WASM FUNCTIONS
     info!("Setting wasm function log callback..");
@@ -260,8 +274,24 @@ pub async fn start_server(
     // Don't do discovery in android
     #[cfg(not(target_os = "android"))]
     {
-        info!("Starting server DNS-SD discovery",);
-        discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
+        let discovery_enabled = match settings.server.discovery {
+            DiscoveryMode::Disabled => false,
+            DiscoveryMode::Enabled => true,
+            DiscoveryMode::Auto => {
+                if is_develop() {
+                    log::warn!("DNS-SD discovery is automatically disabled in dev mode, add `discovery: Enabled` to local.yaml to turn it on");
+                    false
+                } else {
+                    true
+                }
+            }
+        };
+        if discovery_enabled {
+            info!("Starting server DNS-SD discovery",);
+            discovery::start_discovery(certificates.protocol(), settings.server.port, machine_uid);
+        } else {
+            info!("Server DNS-SD discovery disabled",);
+        }
     }
 
     info!("Starting discovery graphql server",);
@@ -311,9 +341,11 @@ pub async fn start_server(
             .configure(config_static_files)
             .configure(config_cold_chain)
             .configure(config_upload_fridge_tag)
-            .configure(config_sync_on_central)
+            .configure(config_server_frontend_plugins)
+            .configure(config_central)
             .configure(config_support)
             .configure(config_print)
+            .configure(config_upload)
             // Needs to be last to capture all unmatches routes
             .configure(config_serve_frontend)
     })

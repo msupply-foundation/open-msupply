@@ -29,7 +29,7 @@ const RelatedDocumentsSectionComponent = () => {
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
-      <Grid item flexDirection="column" container gap={0.5}>
+      <Grid flexDirection="column" container gap={0.5}>
         {!requisition ? (
           <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
         ) : (
@@ -39,14 +39,14 @@ const RelatedDocumentsSectionComponent = () => {
               requisition.user?.username ?? UNDEFINED_STRING_VALUE
             )}
           >
-            <Grid item>
+            <Grid>
               <PanelRow>
                 <PanelLabel>{t('label.requisition')}</PanelLabel>
                 <PanelField>
                   <Link
                     to={RouteBuilder.create(AppRoute.Distribution)
                       .addPart(AppRoute.CustomerRequisition)
-                      .addPart(String(requisition?.requisitionNumber))
+                      .addPart(requisition?.id)
                       .build()}
                   >{`#${requisition?.requisitionNumber}`}</Link>
                 </PanelField>

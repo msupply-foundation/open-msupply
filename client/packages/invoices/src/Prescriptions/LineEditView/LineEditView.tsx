@@ -7,7 +7,6 @@ import {
   RouteBuilder,
   useBreadcrumbs,
   useConfirmOnLeaving,
-  useDirtyCheck,
   useNavigate,
   useParams,
 } from '@openmsupply-client/common';
@@ -18,17 +17,19 @@ import { PageLayout } from './PageLayout';
 import { usePrescription, usePrescriptionLines } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { PrescriptionLineEdit } from './PrescriptionLineEdit';
-import { DraftStockOutLine } from '../../types';
+import { DraftPrescriptionLine } from '../../types';
 import { Footer } from './Footer';
 import { NavBar } from './NavBar';
 
 export const PrescriptionLineEditView = () => {
-  const { invoiceNumber, itemId } = useParams();
+  const { invoiceId = '', itemId } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const isDirty = useRef(false);
   const navigate = useNavigate();
 
   const {
     query: { data, loading: isLoading },
+    isDisabled,
   } = usePrescription();
 
   const {
@@ -46,23 +47,20 @@ export const PrescriptionLineEditView = () => {
     // the list before scrolling to it
     setTimeout(() => scrollRef.current?.scrollIntoView(), 100);
 
-  const { isDirty, setIsDirty } = useDirtyCheck();
-
   const lines =
     data?.lines.nodes.sort((a, b) => a.id.localeCompare(b.id)) ?? [];
 
-  const invoiceId = data?.id ?? '';
   const status = data?.status;
 
   const [allDraftLines, setAllDraftLines] = useState<
-    Record<string, DraftStockOutLine[]>
+    Record<string, DraftPrescriptionLine[]>
   >({});
 
-  let currentItem = lines.find(line => line.item.id === itemId)?.item;
+  const currentItem = lines.find(line => line.item.id === itemId)?.item;
 
-  let items = useMemo(() => {
-    let itemSet = new Set();
-    let items: ItemRowFragment[] = [];
+  const items = useMemo(() => {
+    const itemSet = new Set();
+    const items: ItemRowFragment[] = [];
     lines.forEach(line => {
       if (!itemSet.has(line.item.id)) {
         items.push(line.item);
@@ -78,27 +76,33 @@ export const PrescriptionLineEditView = () => {
 
   useEffect(() => {
     setCustomBreadcrumbs({
+      1: data?.invoiceNumber.toString() ?? '',
       2: currentItem?.name || '',
     });
   }, [currentItem]);
 
   useConfirmOnLeaving(
-    isDirty,
+    'prescription-line-edit',
     // Need a custom checking method here, as we don't want to warn user when
     // switching to a different item within this page
-    (current, next) => {
-      if (!isDirty) return false;
+    {
+      customCheck: {
+        navigate: (current, next) => {
+          if (!isDirty.current) return false;
 
-      const currentPathParts = current.pathname.split('/');
-      const nextPathParts = next.pathname.split('/');
-      // Compare URLS, but don't include the last part, which is the ItemID
-      currentPathParts.pop();
-      nextPathParts.pop();
-      return !isEqual(currentPathParts, nextPathParts);
+          const currentPathParts = current.pathname.split('/');
+          const nextPathParts = next.pathname.split('/');
+          // Compare URLS, but don't include the last part, which is the ItemID
+          currentPathParts.pop();
+          nextPathParts.pop();
+          return !isEqual(currentPathParts, nextPathParts);
+        },
+        refresh: () => isDirty.current,
+      },
     }
   );
 
-  const updateAllLines = (lines: DraftStockOutLine[]) => {
+  const updateAllLines = (lines: DraftPrescriptionLine[]) => {
     if (itemId === 'new') {
       newItemId.current = lines[0]?.item.id;
     }
@@ -108,7 +112,7 @@ export const PrescriptionLineEditView = () => {
   };
 
   const onSave = async () => {
-    if (!isDirty) return;
+    if (!isDirty.current) return;
 
     const flattenedLines = Object.values(allDraftLines).flat();
 
@@ -140,12 +144,13 @@ export const PrescriptionLineEditView = () => {
       navigate(
         RouteBuilder.create(AppRoute.Dispensary)
           .addPart(AppRoute.Prescription)
-          .addPart(invoiceNumber ?? '')
+          .addPart(invoiceId)
           .addPart(itemId)
-          .build()
+          .build(),
+        { replace: true }
       );
     }
-    setIsDirty(false);
+    isDirty.current = false;
     setAllDraftLines({});
   };
 
@@ -157,7 +162,7 @@ export const PrescriptionLineEditView = () => {
 
   return (
     <>
-      <AppBarButtons invoiceNumber={data?.invoiceNumber} />
+      <AppBarButtons invoiceId={data?.id} />
       <PageLayout
         Left={
           <ListItems
@@ -165,10 +170,10 @@ export const PrescriptionLineEditView = () => {
             items={items}
             route={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Prescription)
-              .addPart(String(invoiceNumber))}
+              .addPart(invoiceId)}
             enteredLineIds={enteredLineIds}
-            showNew={status !== InvoiceNodeStatus.Verified}
-            isDirty={isDirty}
+            showNew={!isDisabled}
+            isDirty={isDirty.current}
             handleSaveNew={onSave}
             scrollRef={scrollRef}
           />
@@ -179,7 +184,10 @@ export const PrescriptionLineEditView = () => {
               item={currentItem ?? null}
               draftLines={allDraftLines[itemId] ?? []}
               updateLines={updateAllLines}
-              setIsDirty={setIsDirty}
+              setIsDirty={dirty => {
+                isDirty.current = dirty;
+              }}
+              programId={data?.programId ?? undefined}
             />
             <NavBar
               items={itemIdList}
@@ -188,7 +196,7 @@ export const PrescriptionLineEditView = () => {
                 navigate(
                   RouteBuilder.create(AppRoute.Dispensary)
                     .addPart(AppRoute.Prescription)
-                    .addPart(invoiceNumber ?? '')
+                    .addPart(invoiceId)
                     .addPart(itemId)
                     .build()
                 )
@@ -200,13 +208,13 @@ export const PrescriptionLineEditView = () => {
       />
       <Footer
         isSaving={isSavingLines}
-        isDirty={isDirty}
+        isDirty={isDirty.current}
         handleSave={onSave}
         handleCancel={() =>
           navigate(
             RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Prescription)
-              .addPart(String(invoiceNumber))
+              .addPart(invoiceId)
               .build()
           )
         }

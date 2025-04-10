@@ -179,10 +179,17 @@ mod test {
         StockLineRow, StoreRow,
     };
     use util::{
-        constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now, inline_edit, inline_init, uuid::uuid,
+        constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH, date_now, inline_edit, inline_init, uuid::uuid,
     };
 
     type ServiceError = RequisitionLineChartError;
+
+    fn consumption_history_options() -> ConsumptionHistoryOptions {
+        ConsumptionHistoryOptions {
+            amc_lookback_months: 3,
+            number_of_data_points: 3,
+        }
+    }
 
     #[actix_rt::test]
     async fn get_requisition_line_chart_errors() {
@@ -200,7 +207,7 @@ mod test {
             service.get_requisition_line_chart(
                 &context,
                 "n/a",
-                ConsumptionHistoryOptions::default(),
+                consumption_history_options(),
                 StockEvolutionOptions::default(),
             ),
             Err(ServiceError::RequisitionLineDoesNotExist)
@@ -213,7 +220,7 @@ mod test {
             service.get_requisition_line_chart(
                 &context,
                 &test_line.id,
-                ConsumptionHistoryOptions::default(),
+                consumption_history_options(),
                 StockEvolutionOptions::default(),
             ),
             Err(ServiceError::NotARequestRequisition)
@@ -225,7 +232,7 @@ mod test {
             service.get_requisition_line_chart(
                 &context,
                 &test_line.id,
-                ConsumptionHistoryOptions::default(),
+                consumption_history_options(),
                 StockEvolutionOptions::default(),
             ),
             Err(ServiceError::RequisitionLineDoesNotBelongToCurrentStore)
@@ -440,7 +447,7 @@ mod test {
                         / (NaiveDate::from_ymd_opt(2020, 11, 30).unwrap()
                             - NaiveDate::from_ymd_opt(2020, 7, 1).unwrap())
                         .num_days() as f64
-                        * NUMBER_OF_DAYS_IN_A_MONTH,
+                        * AVG_NUMBER_OF_DAYS_IN_A_MONTH,
                     date: NaiveDate::from_ymd_opt(2020, 11, 30).unwrap()
                 },
                 ConsumptionHistory {
@@ -451,7 +458,7 @@ mod test {
                         / (NaiveDate::from_ymd_opt(2020, 12, 31).unwrap()
                             - NaiveDate::from_ymd_opt(2020, 8, 1).unwrap())
                         .num_days() as f64
-                        * NUMBER_OF_DAYS_IN_A_MONTH,
+                        * AVG_NUMBER_OF_DAYS_IN_A_MONTH,
                     date: NaiveDate::from_ymd_opt(2020, 12, 31).unwrap()
                 },
                 ConsumptionHistory {
@@ -463,7 +470,7 @@ mod test {
                         / (NaiveDate::from_ymd_opt(2021, 1, 31).unwrap()
                             - NaiveDate::from_ymd_opt(2020, 9, 1).unwrap())
                         .num_days() as f64
-                        * NUMBER_OF_DAYS_IN_A_MONTH,
+                        * AVG_NUMBER_OF_DAYS_IN_A_MONTH,
                     date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap()
                 },
                 ConsumptionHistory {
@@ -513,7 +520,7 @@ mod test {
                         .and_hms_opt(12, 10, 11)
                         .unwrap(),
                 );
-                r.average_monthly_consumption = 25.0 * NUMBER_OF_DAYS_IN_A_MONTH;
+                r.average_monthly_consumption = 25.0 * AVG_NUMBER_OF_DAYS_IN_A_MONTH;
                 r.available_stock_on_hand = 30.0;
                 r.requested_quantity = 100.0;
             })
@@ -656,7 +663,7 @@ mod test {
             .get_requisition_line_chart(
                 &context,
                 &requisition_line().id,
-                ConsumptionHistoryOptions::default(),
+                consumption_history_options(),
                 StockEvolutionOptions {
                     number_of_historic_data_points: 3,
                     number_of_projected_data_points: 4,

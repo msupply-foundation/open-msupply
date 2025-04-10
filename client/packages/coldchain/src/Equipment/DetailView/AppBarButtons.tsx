@@ -32,14 +32,14 @@ export const AppBarButtonsComponent = () => {
   };
 
   const printAssetLabel = () => {
+    const date = new Date().toLocaleDateString();
     setIsPrinting(true);
     fetch(Environment.PRINT_LABEL_QR, {
       method: 'POST',
       body: JSON.stringify({
         code: data?.id,
-        message: `${t('label.serial')}: ${data?.serialNumber ?? ''}\n${t(
-          'label.asset-number'
-        )}: ${data?.assetNumber ?? ''}`,
+        assetNumber: `${data?.assetNumber ?? ''}`,
+        datePrinted: `${date}`,
       }),
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -49,10 +49,10 @@ export const AppBarButtonsComponent = () => {
           const text = await response.text();
           throw new Error(text);
         }
-        success(t('messages.success-printing-asset-label'))();
+        success(t('messages.success-printing-label'))();
       })
       .catch(e => {
-        error(`${t('error.printing-asset-label')}: ${e.message}`)();
+        error(`${t('error.printing-label')}: ${e.message}`)();
       })
       .finally(() => setIsPrinting(false));
   };
@@ -66,6 +66,7 @@ export const AppBarButtonsComponent = () => {
           isLoading={isPrinting}
           onClick={onClick}
           label={t('button.print-asset-label')}
+          variant="outlined"
         />
       </Grid>
       <DisabledNotification />

@@ -18,10 +18,16 @@ import {
   LocaleKey,
   NumUtils,
   ItemNode,
+  useAuthContext,
+  DropdownMenu,
+  DropdownMenuItem,
+  TextArea,
+  InputWithLabelRow,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
-  ItemRowFragment,
+  ItemRowWithDirectionsFragment,
 } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
 import { PackSizeController } from '../../StockOut';
@@ -30,33 +36,37 @@ import {
   StockOutAlerts,
   getAllocationAlerts,
 } from '../../StockOut';
-import { DraftStockOutLine } from '../../types';
+import { DraftPrescriptionLine } from '../../types';
 import { isA } from '../../utils';
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
+import { getPrescriptionDirections } from './getPrescriptionDirections';
+import { useAbbreviations } from '../api/hooks/useAbbreviations';
 
 interface PrescriptionLineEditFormProps {
   allocatedUnits: number;
   availableUnits: number;
-  item: ItemRowFragment | null;
-  onChangeItem: (newItem: ItemRowFragment | null) => void;
+  item: ItemRowWithDirectionsFragment | null;
+  onChangeItem: (newItem: ItemRowWithDirectionsFragment | null) => void;
   onChangeQuantity: (
     quantity: number,
     packSize: number | null,
-    isAutoAllocated: boolean
-  ) => DraftStockOutLine[] | undefined;
+    isAutoAllocated: boolean,
+    prescribedQuantity: number | null
+  ) => DraftPrescriptionLine[] | undefined;
   packSizeController: PackSizeController;
   disabled: boolean;
   isNew: boolean;
   canAutoAllocate: boolean;
   isAutoAllocated: boolean;
   updateNotes: (note: string) => void;
-  draftPrescriptionLines: DraftStockOutLine[];
+  draftPrescriptionLines: DraftPrescriptionLine[];
   showZeroQuantityConfirmation: boolean;
   hasOnHold: boolean;
   hasExpired: boolean;
   isLoading: boolean;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
+  programId?: string;
 }
 
 export const PrescriptionLineEditForm: React.FC<
@@ -78,23 +88,38 @@ export const PrescriptionLineEditForm: React.FC<
   hasExpired,
   isLoading,
   updateQuantity,
+  programId,
 }) => {
   const t = useTranslation();
-  const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
-  const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
+  const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
+  const { store: { preferences } = {} } = useAuthContext();
+
+  const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
+  const [prescribedQuantity, setPrescribedQuantity] = useState<number | null>(
+    null
+  );
+  const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
+  const [defaultDirection, setDefaultDirection] = useState<string>('');
+  const [abbreviation, setAbbreviation] = useState<string>('');
 
   const debouncedSetAllocationAlerts = useDebounceCallback(
     warning => setAllocationAlerts(warning),
     []
   );
+  const isDirectionsDisabled = !issueUnitQuantity;
 
-  const allocate = (numPacks: number, packSize: number) => {
+  const allocate = (
+    numPacks: number,
+    packSize: number,
+    prescribedQuantity: number
+  ) => {
     const newAllocateQuantities = onChangeQuantity(
       numPacks,
       packSize === -1 || packSize === 1 ? null : packSize,
-      true
+      true,
+      prescribedQuantity
     );
     const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
     const allocatedQuantity =
@@ -145,15 +170,18 @@ export const PrescriptionLineEditForm: React.FC<
   // See https://github.com/msupply-foundation/open-msupply/issues/2727
   // and https://github.com/msupply-foundation/open-msupply/issues/3532
   const debouncedAllocate = useDebouncedValueCallback(
-    (numPacks, packSize) => {
-      allocate(numPacks, packSize);
+    (numPacks, packSize, prescribedQuantity) => {
+      allocate(numPacks, packSize, prescribedQuantity);
     },
     [],
     500,
     [draftPrescriptionLines] // this is needed to prevent a captured enclosure of onChangeQuantity
   );
 
-  const handleIssueQuantityChange = (inputUnitQuantity?: number) => {
+  const handleIssueQuantityChange = (
+    inputUnitQuantity?: number,
+    quantityType: 'issue' | 'prescribed' = 'issue'
+  ) => {
     // this method is also called onBlur... check that there actually has been a
     // change in quantity (to prevent triggering auto allocation if only focus
     // has moved)
@@ -168,26 +196,71 @@ export const PrescriptionLineEditForm: React.FC<
         : 1;
 
     const numPacks = quantity / packSize;
-    debouncedAllocate(numPacks, Number(packSize));
+    debouncedAllocate(
+      numPacks,
+      Number(packSize),
+      quantityType === 'prescribed' ? inputUnitQuantity : prescribedQuantity
+    );
+  };
+
+  const handlePrescribedQuantityChange = (inputPrescribedQuantity?: number) => {
+    if (inputPrescribedQuantity == null) return;
+    setPrescribedQuantity(inputPrescribedQuantity);
+    handleIssueQuantityChange(inputPrescribedQuantity, 'prescribed');
   };
 
   const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);
   const note = prescriptionLineWithNote?.note ?? '';
 
   useEffect(() => {
-    const newIssueQuantity = Math.round(
-      allocatedUnits / Math.abs(Number(packSizeController.selected?.value || 1))
+    if (preferences?.editPrescribedQuantityOnPrescription) {
+      const selectedItem = items.find(
+        prescriptionItem => prescriptionItem.id === item?.id
+      );
+      const newPrescribedQuantity =
+        selectedItem?.lines?.find(
+          ({ prescribedQuantity }) => prescribedQuantity != null
+        )?.prescribedQuantity ?? 0;
+      setPrescribedQuantity(newPrescribedQuantity);
+    }
+
+    const newIssueQuantity = NumUtils.round(
+      allocatedUnits /
+        Math.abs(Number(packSizeController.selected?.value || 1)),
+      2
     );
     if (newIssueQuantity !== issueUnitQuantity)
       setIssueUnitQuantity(newIssueQuantity);
     setAllocationAlerts([]);
+
+    setAbbreviation('');
+    setDefaultDirection('');
   }, [item?.id]);
 
   useEffect(() => {
-    if (!isAutoAllocated) setIssueUnitQuantity(allocatedUnits);
-  }, [packSizeController.selected?.value, allocatedUnits]);
+    setIssueUnitQuantity(allocatedUnits);
+  }, [allocatedUnits]);
 
   const key = item?.id ?? 'new';
+
+  const { data: options = [] } = useAbbreviations();
+
+  const saveAbbreviation = () => {
+    if (!abbreviation) return;
+    const note = getPrescriptionDirections(abbreviation, options);
+    updateNotes(note);
+    setDefaultDirection('');
+  };
+
+  const saveDefaultDirection = (direction: string) => {
+    if (!direction) return;
+    setDefaultDirection(direction);
+    const note = getPrescriptionDirections(direction, options);
+    updateNotes(note);
+    setAbbreviation('');
+  };
+
+  const abbreviationRef = React.useRef<HTMLInputElement>(null);
 
   return (
     <Grid
@@ -203,7 +276,7 @@ export const PrescriptionLineEditForm: React.FC<
         closedSummary={item?.name}
         defaultExpanded={isNew && !disabled}
       >
-        <Grid item flex={1}>
+        <Grid flex={1}>
           <StockItemSearchInput
             autoFocus={!item}
             openOnFocus={!item}
@@ -216,6 +289,7 @@ export const PrescriptionLineEditForm: React.FC<
                 ? undefined
                 : item => !items?.some(({ id }) => id === item.id)
             }
+            programId={programId}
           />
         </Grid>
       </AccordionPanelSection>
@@ -230,7 +304,7 @@ export const PrescriptionLineEditForm: React.FC<
           )}
           <AccordionPanelSection
             title={t('label.quantity')}
-            closedSummary={summarise(draftPrescriptionLines, t)}
+            closedSummary={summarise(draftPrescriptionLines, t, getPlural)}
             defaultExpanded={isNew && !disabled}
             key={key + '_quantity'}
           >
@@ -239,62 +313,167 @@ export const PrescriptionLineEditForm: React.FC<
               alignItems="center"
               display="flex"
               flexDirection="row"
-              justifyContent="flex-start"
-              gap={1}
+              gap={5}
+              paddingBottom={2}
             >
-              <Grid item>
-                <InputLabel style={{ fontSize: 12 }}>
+              {preferences?.editPrescribedQuantityOnPrescription && (
+                <Grid display="flex" alignItems="center" gap={1}>
+                  <InputLabel sx={{ fontSize: 12 }}>
+                    {t('label.prescribed-quantity')}
+                  </InputLabel>
+                  <NumericTextInput
+                    autoFocus={
+                      preferences?.editPrescribedQuantityOnPrescription
+                    }
+                    disabled={disabled}
+                    value={prescribedQuantity ?? undefined}
+                    onChange={handlePrescribedQuantityChange}
+                    min={0}
+                    decimalLimit={2}
+                    onBlur={() => {}}
+                    slotProps={{
+                      htmlInput: {
+                        sx: {
+                          backgroundColor: 'background.white',
+                        },
+                      },
+                    }}
+                  />
+                </Grid>
+              )}
+              <Grid display="flex" alignItems="center" gap={1}>
+                <InputLabel sx={{ fontSize: 12 }}>
                   {t('label.issue')}
                 </InputLabel>
-              </Grid>
-              <Grid item>
                 <NumericTextInput
-                  autoFocus
+                  autoFocus={!preferences?.editPrescribedQuantityOnPrescription}
                   disabled={disabled}
                   value={issueUnitQuantity}
                   onChange={handleIssueQuantityChange}
                   min={0}
                   decimalLimit={2}
+                  slotProps={{
+                    htmlInput: {
+                      sx: {
+                        backgroundColor: 'background.white',
+                      },
+                    },
+                  }}
+                  onKeyDown={e => {
+                    if (e.code === 'Tab') {
+                      e.preventDefault();
+                      abbreviationRef.current?.focus();
+                    }
+                  }}
                 />
-              </Grid>
-              <Grid item>
-                <InputLabel style={{ fontSize: 12 }}>
-                  {t('label.unit-plural', {
-                    count: issueUnitQuantity,
-                    unit: item?.unitName,
-                  })}
+                <InputLabel sx={{ fontSize: 12 }}>
+                  {item.unitName && getPlural(item.unitName, issueUnitQuantity)}
                 </InputLabel>
               </Grid>
             </Grid>
-            <TableWrapper
-              canAutoAllocate={canAutoAllocate}
-              currentItem={item}
-              isLoading={isLoading}
-              packSizeController={packSizeController}
-              updateQuantity={updateQuantity}
-              draftPrescriptionLines={draftPrescriptionLines}
-              allocatedUnits={allocatedUnits}
-              isDisabled={disabled}
-            />
+            <AccordionPanelSection
+              title={t('label.batches')}
+              defaultExpanded={false}
+              key={key + '_table'}
+              backgroundColor="background.white"
+            >
+              <TableWrapper
+                canAutoAllocate={canAutoAllocate}
+                currentItem={item}
+                isLoading={isLoading}
+                packSizeController={packSizeController}
+                updateQuantity={updateQuantity}
+                draftPrescriptionLines={draftPrescriptionLines}
+                allocatedUnits={allocatedUnits}
+                isDisabled={disabled}
+              />
+            </AccordionPanelSection>
           </AccordionPanelSection>
         </>
       )}
       {item && (
         <AccordionPanelSection
           title={t('label.directions')}
-          closedSummary={note}
+          closedSummary={isDirectionsDisabled ? '' : note}
           defaultExpanded={(isNew || !note) && !disabled}
           key={item?.id ?? 'new'}
         >
-          <BasicTextInput
-            value={note}
-            disabled={disabled}
-            onChange={e => {
-              updateNotes(e.target.value);
-            }}
-            fullWidth
-            style={{ flex: 1 }}
-          />
+          {isDirectionsDisabled ? (
+            <Typography>{t('messages.cannot-add-directions')}</Typography>
+          ) : (
+            <>
+              <Grid container paddingBottom={1} gap={1} width={'100%'}>
+                <InputWithLabelRow
+                  label={t('label.abbreviation')}
+                  Input={
+                    <BasicTextInput
+                      inputRef={abbreviationRef}
+                      value={abbreviation}
+                      onChange={e => {
+                        setAbbreviation(e.target.value);
+                      }}
+                      onBlur={saveAbbreviation}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          saveAbbreviation();
+                        }
+                      }}
+                      style={{ flex: 1 }}
+                    />
+                  }
+                />
+                <DropdownMenu
+                  sx={{ flex: 1 }}
+                  selectSx={{ width: '100%' }}
+                  label={
+                    defaultDirection
+                      ? defaultDirection
+                      : t('placeholder.item-directions')
+                  }
+                >
+                  {item.itemDirections.length == 0 ? (
+                    <DropdownMenuItem sx={{ fontSize: 14 }}>
+                      {t('message.no-directions')}
+                    </DropdownMenuItem>
+                  ) : (
+                    item.itemDirections
+                      .sort((a, b) => a.priority - b.priority)
+                      .map(
+                        direction =>
+                          direction && (
+                            <DropdownMenuItem
+                              key={direction.id}
+                              value={defaultDirection}
+                              onClick={() => {
+                                saveDefaultDirection(direction.directions);
+                              }}
+                              sx={{ fontSize: 14 }}
+                            >
+                              {direction.directions}
+                            </DropdownMenuItem>
+                          )
+                      )
+                  )}
+                </DropdownMenu>
+              </Grid>
+              <Grid>
+                <InputWithLabelRow
+                  label={t('label.directions')}
+                  Input={
+                    <TextArea
+                      value={note}
+                      onChange={e => {
+                        updateNotes(e.target.value);
+                        setAbbreviation('');
+                        setDefaultDirection('');
+                      }}
+                      style={{ flex: 1 }}
+                    />
+                  }
+                />
+              </Grid>
+            </>
+          )}
         </AccordionPanelSection>
       )}
       {/* {!item && <Box height={100} />} */}
@@ -304,11 +483,11 @@ export const PrescriptionLineEditForm: React.FC<
 
 interface TableProps {
   canAutoAllocate: boolean;
-  currentItem: ItemRowFragment | null;
+  currentItem: ItemRowWithDirectionsFragment | null;
   isLoading: boolean;
   packSizeController: PackSizeController;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
-  draftPrescriptionLines: DraftStockOutLine[];
+  draftPrescriptionLines: DraftPrescriptionLine[];
   allocatedUnits: number;
   isDisabled: boolean;
 }
@@ -369,8 +548,9 @@ const TableWrapper: React.FC<TableProps> = ({
 };
 
 const summarise = (
-  lines: DraftStockOutLine[],
-  t: TypedTFunction<LocaleKey>
+  lines: DraftPrescriptionLine[],
+  t: TypedTFunction<LocaleKey>,
+  getPlural: (word: string, count: number) => string
 ) => {
   // Count how many of each pack size
   const counts: Record<number, { unitName: string; count: number }> = {};
@@ -381,23 +561,33 @@ const summarise = (
     } else {
       counts[packSize] = {
         unitName: (stockLine?.item as ItemNode)?.unitName ?? 'unit',
-        count: NumUtils.round(packSize * numberOfPacks),
+        count: NumUtils.round(packSize * numberOfPacks, 2),
       };
     }
   });
 
   // Summarise counts in words
   const summary: string[] = [];
-  Object.entries(counts).forEach(([size, { unitName, count }]) => {
-    const unitWord = t('label.unit-plural', {
-      count,
-      unit: unitName,
-    });
-    if (Number(size) > 1) {
-      const packs = NumUtils.round(count / Number(size), 3);
-      summary.push(t('label.packs-of-size', { packs, count, size, unitWord }));
+  Object.entries(counts).forEach(([size, { unitName, count: numUnits }]) => {
+    const packSize = Number(size);
+    if (packSize > 1) {
+      const numPacks = NumUtils.round(numUnits / packSize, 3);
+      const packWord = t('label.packs-of', { count: numPacks }); // pack or packs
+      const unitWord = t('label.units-plural', { count: numUnits }); // unit or units
+      const unitType = getPlural(unitName, packSize);
+      summary.push(
+        t('label.packs-of-size', {
+          numPacks,
+          numUnits,
+          packSize,
+          unitType,
+          packWord,
+          unitWord,
+        })
+      );
     } else {
-      summary.push(t('label.packs-of-1', { count, unitWord }));
+      const unitType = getPlural(unitName, numUnits);
+      summary.push(t('label.packs-of-1', { numUnits, unitType }));
     }
   });
 

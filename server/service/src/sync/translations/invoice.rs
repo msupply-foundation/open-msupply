@@ -1,11 +1,12 @@
 use crate::sync::{
     sync_serde::{
         date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
-        empty_str_as_option_string, naive_time, zero_date_as_option,
+        empty_str_as_option_string, naive_time, zero_date_as_option, zero_f64_as_none,
     },
     translations::{
         clinician::ClinicianTranslation, currency::CurrencyTranslation,
-        diagnosis::DiagnosisTranslation, name::NameTranslation, store::StoreTranslation,
+        diagnosis::DiagnosisTranslation, name::NameTranslation,
+        name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -13,6 +14,7 @@ use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
     InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceStatus, InvoiceType,
     NameRow, NameRowRepository, StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
+    UserAccountRow, UserAccountRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
@@ -109,6 +111,15 @@ pub struct LegacyTransactRow {
     pub requisition_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub linked_transaction_id: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "nameInsuranceJoinID")]
+    pub name_insurance_join_id: Option<String>,
+    #[serde(deserialize_with = "zero_f64_as_none")]
+    #[serde(rename = "insuranceDiscountAmount")]
+    pub insurance_discount_amount: Option<f64>,
+    #[serde(deserialize_with = "zero_f64_as_none")]
+    #[serde(rename = "insuranceDiscountRate")]
+    pub insurance_discount_percentage: Option<f64>,
 
     /// creation time
     #[serde(serialize_with = "date_to_isostring")]
@@ -165,6 +176,11 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub verified_datetime: Option<NaiveDateTime>,
 
+    #[serde(default)]
+    #[serde(rename = "om_cancelled_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub cancelled_datetime: Option<NaiveDateTime>,
+
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(default)]
     pub om_status: Option<InvoiceStatus>,
@@ -191,6 +207,20 @@ pub struct LegacyTransactRow {
     #[serde(rename = "diagnosis_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub diagnosis_id: Option<String>,
+
+    #[serde(default)]
+    #[serde(rename = "programID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub program_id: Option<String>,
+
+    #[serde(default)]
+    pub is_cancellation: bool,
+
+    #[serde(default)]
+    #[serde(rename = "arrival_date_estimated")]
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub expected_delivery_date: Option<NaiveDate>,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -247,6 +277,7 @@ impl SyncTranslation for InvoiceTranslation {
             ClinicianTranslation.table_name(),
             CurrencyTranslation.table_name(),
             DiagnosisTranslation.table_name(),
+            NameInsuranceJoinTranslation.table_name(),
         ]
     }
 
@@ -333,6 +364,9 @@ impl SyncTranslation for InvoiceTranslation {
             shipped_datetime: mapping.shipped_datetime,
             delivered_datetime: mapping.delivered_datetime,
             verified_datetime: mapping.verified_datetime,
+            // Cancelled datetime handled in processor (To-DO)
+            cancelled_datetime: data.cancelled_datetime,
+            is_cancellation: data.is_cancellation,
             colour: mapping.colour,
 
             requisition_id: data.requisition_ID,
@@ -341,7 +375,28 @@ impl SyncTranslation for InvoiceTranslation {
             original_shipment_id: data.original_shipment_id,
             backdated_datetime: mapping.backdated_datetime,
             diagnosis_id: data.diagnosis_id,
+            program_id: data.program_id,
+            name_insurance_join_id: data.name_insurance_join_id,
+            insurance_discount_amount: data.insurance_discount_amount,
+            insurance_discount_percentage: data.insurance_discount_percentage,
+            expected_delivery_date: data.expected_delivery_date,
         };
+
+        // HACK...
+        // Inactive user aren't always synced from mSupply
+        // To avoid referential issues we'll create a blank placeholder user
+        // If the user is synced later the record will be updated to the correct data
+        if let Some(user_id) = &result.user_id {
+            if UserAccountRowRepository::new(connection)
+                .find_one_by_id(user_id)?
+                .is_none()
+            {
+                UserAccountRowRepository::new(connection).insert_one(&UserAccountRow {
+                    id: user_id.clone(),
+                    ..Default::default()
+                })?;
+            }
+        }
 
         Ok(PullTranslateResult::upsert(result))
     }
@@ -391,6 +446,7 @@ impl SyncTranslation for InvoiceTranslation {
                     shipped_datetime,
                     delivered_datetime,
                     verified_datetime,
+                    cancelled_datetime,
                     colour,
                     requisition_id,
                     linked_invoice_id,
@@ -402,6 +458,12 @@ impl SyncTranslation for InvoiceTranslation {
                     original_shipment_id,
                     backdated_datetime,
                     diagnosis_id,
+                    program_id,
+                    name_insurance_join_id,
+                    insurance_discount_amount,
+                    insurance_discount_percentage,
+                    is_cancellation,
+                    expected_delivery_date,
                 },
             name_row,
             clinician_row,
@@ -462,6 +524,7 @@ impl SyncTranslation for InvoiceTranslation {
             shipped_datetime,
             delivered_datetime,
             verified_datetime,
+            cancelled_datetime,
             om_status: Some(status),
             om_type: Some(r#type),
             om_colour: colour,
@@ -471,6 +534,12 @@ impl SyncTranslation for InvoiceTranslation {
             original_shipment_id,
             backdated_datetime,
             diagnosis_id,
+            program_id,
+            name_insurance_join_id,
+            insurance_discount_amount,
+            insurance_discount_percentage,
+            is_cancellation,
+            expected_delivery_date,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
@@ -732,6 +801,7 @@ fn legacy_invoice_status(t: &InvoiceType, status: &InvoiceStatus) -> Option<Lega
             InvoiceStatus::Shipped => LegacyTransactStatus::Fn,
             InvoiceStatus::Delivered => LegacyTransactStatus::Fn,
             InvoiceStatus::Verified => LegacyTransactStatus::Fn,
+            InvoiceStatus::Cancelled => LegacyTransactStatus::Fn, // TODO enable cancelled status to sync with mSupply https://github.com/msupply-foundation/open-msupply/issues/6495
         },
         InvoiceType::InboundShipment | InvoiceType::CustomerReturn => match status {
             InvoiceStatus::New => LegacyTransactStatus::Nw,
@@ -740,6 +810,7 @@ fn legacy_invoice_status(t: &InvoiceType, status: &InvoiceStatus) -> Option<Lega
             InvoiceStatus::Shipped => LegacyTransactStatus::Nw,
             InvoiceStatus::Delivered => LegacyTransactStatus::Cn,
             InvoiceStatus::Verified => LegacyTransactStatus::Fn,
+            InvoiceStatus::Cancelled => LegacyTransactStatus::Fn, // TODO enable cancelled status to sync with mSupply https://github.com/msupply-foundation/open-msupply/issues/6495
         },
         InvoiceType::Prescription => match status {
             InvoiceStatus::New => LegacyTransactStatus::Nw,
@@ -748,6 +819,7 @@ fn legacy_invoice_status(t: &InvoiceType, status: &InvoiceStatus) -> Option<Lega
             InvoiceStatus::Shipped => LegacyTransactStatus::Fn,
             InvoiceStatus::Delivered => LegacyTransactStatus::Fn,
             InvoiceStatus::Verified => LegacyTransactStatus::Fn,
+            InvoiceStatus::Cancelled => LegacyTransactStatus::Fn, // TODO enable cancelled status to sync with mSupply https://github.com/msupply-foundation/open-msupply/issues/6495
         },
         InvoiceType::InventoryAddition | InvoiceType::InventoryReduction | InvoiceType::Repack => {
             match status {
@@ -757,6 +829,7 @@ fn legacy_invoice_status(t: &InvoiceType, status: &InvoiceStatus) -> Option<Lega
                 InvoiceStatus::Shipped => LegacyTransactStatus::Nw,
                 InvoiceStatus::Delivered => LegacyTransactStatus::Nw,
                 InvoiceStatus::Verified => LegacyTransactStatus::Fn,
+                InvoiceStatus::Cancelled => LegacyTransactStatus::Fn, // TODO enable cancelled status to sync with mSupply https://github.com/msupply-foundation/open-msupply/issues/6495
             }
         }
     };
@@ -803,6 +876,13 @@ mod tests {
 
             assert_eq!(translation_result, record.translated_record);
         }
+
+        // Check missing user got created
+        let user = UserAccountRowRepository::new(&connection)
+            .find_one_by_id("MISSING_USER_ID")
+            .unwrap()
+            .unwrap();
+        assert_eq!(user.id, "MISSING_USER_ID");
     }
 
     #[actix_rt::test]

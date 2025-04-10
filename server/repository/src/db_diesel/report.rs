@@ -1,7 +1,7 @@
 use super::{
     form_schema_row::{self, form_schema},
     report_row::report,
-    ContextType, ReportMetaDataRow, ReportRow, ReportType, StorageConnection,
+    ContextType, ReportMetaDataRow, ReportRow, StorageConnection,
 };
 
 use crate::{
@@ -14,7 +14,6 @@ use crate::{EqualFilter, Sort, StringFilter};
 use crate::{diesel_macros::apply_string_filter, DBType, RepositoryError};
 
 use diesel::{dsl::IntoBoxed, helper_types::LeftJoin, prelude::*};
-use util::inline_init;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Report {
@@ -28,6 +27,7 @@ pub struct ReportMetaData {
     pub is_custom: bool,
     pub version: Version,
     pub code: String,
+    pub is_active: bool,
 }
 
 impl ReportMetaData {
@@ -37,6 +37,7 @@ impl ReportMetaData {
             is_custom: report.is_custom,
             version: Version::from_str(&report.version),
             code: report.code,
+            is_active: report.is_active,
         }
     }
 }
@@ -45,11 +46,11 @@ impl ReportMetaData {
 pub struct ReportFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
-    pub r#type: Option<EqualFilter<ReportType>>,
     pub context: Option<EqualFilter<ContextType>>,
     pub sub_context: Option<EqualFilter<String>>,
     pub code: Option<EqualFilter<String>>,
     pub is_custom: Option<bool>,
+    pub is_active: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -75,11 +76,6 @@ impl ReportFilter {
         self
     }
 
-    pub fn r#type(mut self, filter: EqualFilter<ReportType>) -> Self {
-        self.r#type = Some(filter);
-        self
-    }
-
     pub fn context(mut self, filter: EqualFilter<ContextType>) -> Self {
         self.context = Some(filter);
         self
@@ -94,19 +90,10 @@ impl ReportFilter {
         self.is_custom = Some(value);
         self
     }
-}
 
-impl ReportType {
-    pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
-    }
-
-    pub fn not_equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
-    }
-
-    pub fn equal_any(value: Vec<Self>) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_any = Some(value))
+    pub fn is_active(mut self, value: bool) -> Self {
+        self.is_active = Some(value);
+        self
     }
 }
 
@@ -193,21 +180,23 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
         let ReportFilter {
             id,
             name,
-            r#type,
             context,
             sub_context,
             code,
             is_custom,
+            is_active,
         } = f;
 
         apply_equal_filter!(query, id, report::id);
         apply_string_filter!(query, name, report::name);
-        apply_equal_filter!(query, r#type, report::type_);
         apply_equal_filter!(query, context, report::context);
         apply_equal_filter!(query, sub_context, report::sub_context);
         apply_equal_filter!(query, code, report::code);
         if let Some(is_custom) = is_custom {
             query = query.filter(report::is_custom.eq(is_custom));
+        }
+        if let Some(is_active) = is_active {
+            query = query.filter(report::is_active.eq(is_active));
         }
     }
 

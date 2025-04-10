@@ -14,6 +14,7 @@ import {
   useUrlQueryParams,
   TooltipTextCell,
   GenericColumnKey,
+  getCommentPopoverColumn,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -53,7 +54,8 @@ export const InboundListView: FC = () => {
   const queryParams = { ...filter, sortBy, first, offset };
 
   const navigate = useNavigate();
-  const modalController = useToggle();
+  const invoiceModalController = useToggle();
+  const linkRequestModalController = useToggle();
 
   const { data, isError, isLoading } = useInbound.document.list(queryParams);
   useDisableInboundRows(data?.nodes);
@@ -74,12 +76,12 @@ export const InboundListView: FC = () => {
       ['invoiceNumber', { maxWidth: 100 }],
       'createdDatetime',
       'deliveredDatetime',
-      ['comment', { width: 125, Cell: TooltipTextCell }],
+      getCommentPopoverColumn(),
       [
         'theirReference',
         {
           Cell: TooltipTextCell,
-          width: 125,
+          width: 225,
         },
       ],
       [
@@ -96,7 +98,10 @@ export const InboundListView: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons modalController={modalController} />
+      <AppBarButtons
+        invoiceModalController={invoiceModalController}
+        linkRequestModalController={linkRequestModalController}
+      />
 
       <DataTable
         id="inbound-line-list"
@@ -106,13 +111,13 @@ export const InboundListView: FC = () => {
         data={data?.nodes ?? []}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(String(row.invoiceNumber));
+          navigate(row.id);
         }}
         isError={isError}
         noDataElement={
           <NothingHere
             body={t('error.no-inbound-shipments')}
-            onCreate={modalController.toggleOn}
+            onCreate={invoiceModalController.toggleOn}
           />
         }
         enableColumnSelection

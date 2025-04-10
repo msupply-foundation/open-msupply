@@ -49,7 +49,7 @@ export const assetsToCsv = (
 
     const status =
       node.statusLog?.status && parseLogStatus(node.statusLog.status);
-
+      
     return [
       node.id,
       ...(isCentralServer ? [node.store?.code] : []),
@@ -61,7 +61,7 @@ export const assetsToCsv = (
       Formatter.csvDateString(node.warrantyEnd),
       node.serialNumber,
       status ? t(status.key) : '',
-      node.needsReplacement,
+      node.needsReplacement ? node.needsReplacement : false,
       node.notes,
       Formatter.csvDateTimeString(node.createdDatetime),
       Formatter.csvDateTimeString(node.modifiedDatetime),
@@ -214,4 +214,23 @@ export const parseStatusFromString = (
     case t('status.unserviceable').toLowerCase():
       return StatusType.Unserviceable;
   }
+};
+
+export const base64ToBlob = (base64: string, contentType: string) => {
+  const byteCharacters = atob(base64);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+    const slice = byteCharacters.slice(offset, offset + 512);
+    const byteNumbers = new Array(slice.length);
+
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+
+  return new Blob(byteArrays, { type: contentType });
 };

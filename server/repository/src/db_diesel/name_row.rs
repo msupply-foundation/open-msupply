@@ -42,6 +42,8 @@ table! {
         is_manufacturer -> Bool,
         is_donor -> Bool,
         on_hold -> Bool,
+        next_of_kin_id -> Nullable<Text>,
+        next_of_kin_name -> Nullable<Text>,
         created_datetime -> Nullable<Timestamp>,
         is_deceased -> Bool,
         national_health_number -> Nullable<Text>,
@@ -164,6 +166,9 @@ pub struct NameRow {
     pub is_manufacturer: bool,
     pub is_donor: bool,
     pub on_hold: bool,
+
+    pub next_of_kin_id: Option<String>,
+    pub next_of_kin_name: Option<String>,
 
     pub created_datetime: Option<NaiveDateTime>,
 

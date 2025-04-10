@@ -15,11 +15,13 @@ import { useStocktake } from '../api';
 interface ChangeLocationConfirmationModalProps {
   isOpen: boolean;
   onCancel: () => void;
+  clearSelected: () => void;
 }
 
 export const ChangeLocationConfirmationModal = ({
   isOpen,
   onCancel,
+  clearSelected,
 }: ChangeLocationConfirmationModalProps) => {
   const t = useTranslation();
 
@@ -34,14 +36,15 @@ export const ChangeLocationConfirmationModal = ({
       message={t('messages.confirm-change-location')}
       buttons={
         <>
-          <Grid item>
+          <Grid>
             <DialogButton variant="cancel" onClick={onCancel} />
           </Grid>
-          <Grid item>
+          <Grid>
             <DialogButton
               variant="ok"
               onClick={async () => {
                 await onChangeLocation(location);
+                clearSelected();
                 onCancel();
               }}
             />

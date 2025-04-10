@@ -2,6 +2,7 @@ use async_graphql::*;
 
 pub mod delete;
 pub mod insert;
+pub mod insert_from_internal_order;
 pub mod update;
 
 pub struct BatchIsReserved;
@@ -12,10 +13,10 @@ impl BatchIsReserved {
     }
 }
 
-pub struct TransferredShipment;
+pub struct LineLinkedToTransferredInvoice;
 #[Object]
-impl TransferredShipment {
+impl LineLinkedToTransferredInvoice {
     pub async fn description(&self) -> &str {
-        "Cannot delete an inbound shipment transferred from another store"
+        "Cannot delete line generated from a generated invoice"
     }
 }
