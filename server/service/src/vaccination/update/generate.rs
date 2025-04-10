@@ -30,11 +30,12 @@ pub struct GenerateResult {
 }
 
 pub fn generate(
+    store_id: &str,
     validate_result: ValidateResult,
     update_input: UpdateVaccination,
 ) -> GenerateResult {
     match validate_result {
-        ValidateResult::ChangeToGiven(change) => generate_given(change, update_input),
+        ValidateResult::ChangeToGiven(change) => generate_given(store_id, change, update_input),
         ValidateResult::ChangeToNotGiven(change) => generate_not_given(change, update_input),
         ValidateResult::ChangeStockLine(change) => generate_change_stock_line(change, update_input),
         ValidateResult::NoStatusChangeEdit(existing_vaccination) => {
@@ -44,6 +45,7 @@ pub fn generate(
 }
 
 fn generate_given(
+    store_id: &str,
     ChangeToGiven {
         existing_vaccination,
         patient_id,
@@ -74,6 +76,7 @@ fn generate_given(
     // apply given status, stock and invoice ids
     let vaccination = VaccinationRow {
         given: true,
+        given_store_id: Some(store_id.to_string()),
         stock_line_id,
         invoice_id: create_prescription
             .as_ref()
@@ -117,6 +120,7 @@ fn generate_not_given(
 
     let vaccination = VaccinationRow {
         given: false,
+        given_store_id: None,
         not_given_reason,
 
         stock_line_id: None,
@@ -215,6 +219,7 @@ fn get_vaccination_with_updated_base_fields(
 
         vaccination_date,
         given,
+        given_store_id,
         not_given_reason,
         invoice_id,
         stock_line_id,
@@ -238,6 +243,7 @@ fn get_vaccination_with_updated_base_fields(
 
         // Copy from existing, could be overwritten by further generate logic
         given,
+        given_store_id,
         invoice_id,
         stock_line_id,
 
