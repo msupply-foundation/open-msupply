@@ -21,7 +21,7 @@ impl VaccinationNode {
         &self.row().id
     }
 
-    pub async fn vaccination_date(&self) -> &Option<NaiveDate> {
+    pub async fn vaccination_date(&self) -> &NaiveDate {
         &self.row().vaccination_date
     }
 

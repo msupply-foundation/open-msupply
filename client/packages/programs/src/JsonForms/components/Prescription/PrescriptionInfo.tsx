@@ -5,6 +5,7 @@ import {
   ChevronDownIcon,
   Link,
   RouteBuilder,
+  useAuthContext,
   useFormatDateTime,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -18,6 +19,8 @@ interface PrescriptionInfoProps {
 export const PrescriptionInfo = ({ prescription }: PrescriptionInfoProps) => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
+  const { store } = useAuthContext();
+  const prescriptionCreatedAtStore = store?.id === prescription?.store?.id;
 
   const getPrescriptionInfo = () => {
     const prescriptionLine = prescription?.lines.nodes[0];
@@ -61,7 +64,7 @@ export const PrescriptionInfo = ({ prescription }: PrescriptionInfoProps) => {
     >
       <Box display="flex" alignItems="center" justifyContent="space-between">
         {getPrescriptionInfo()}
-        {prescription.id && (
+        {prescription.id && prescriptionCreatedAtStore && (
           <Link
             style={{
               paddingLeft: 6,

@@ -110,13 +110,13 @@ pub(crate) async fn check_test_records_against_database(
             // Should this throw an assertion ?
             _ => continue,
         };
-        check_integrated(con, translated_records)
+        check_integrated(con, &translated_records)
     }
 }
 
 pub(crate) fn check_integrated(
     con: &StorageConnection,
-    integration_records: Vec<IntegrationOperation>,
+    integration_records: &Vec<IntegrationOperation>,
 ) {
     for record in integration_records {
         match record {
