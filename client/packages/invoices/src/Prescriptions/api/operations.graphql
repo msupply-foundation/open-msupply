@@ -148,9 +148,6 @@ fragment PrescriptionLine on InvoiceLineNode {
       itemDirections {
         ...ItemDirection
       }
-      warnings {
-        ...Warning
-      }
     }
   }
 }
@@ -546,9 +543,6 @@ fragment historicalStockLine on StockLineNode {
     code
     itemDirections {
       ...ItemDirection
-    }
-    warnings {
-      ...Warning
     }
   }
 }

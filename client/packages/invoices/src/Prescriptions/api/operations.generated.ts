@@ -113,14 +113,6 @@ export type PrescriptionRowFragment = {
             itemId: string;
             priority: number;
           }>;
-          warnings: Array<{
-            __typename: 'WarningNode';
-            warningText: string;
-            id: string;
-            itemId: string;
-            priority: boolean;
-            code: string;
-          }>;
         };
       } | null;
     }>;
@@ -231,14 +223,6 @@ export type PrescriptionLineFragment = {
         id: string;
         itemId: string;
         priority: number;
-      }>;
-      warnings: Array<{
-        __typename: 'WarningNode';
-        warningText: string;
-        id: string;
-        itemId: string;
-        priority: boolean;
-        code: string;
       }>;
     };
   } | null;
@@ -425,14 +409,6 @@ export type PrescriptionsQuery = {
                 itemId: string;
                 priority: number;
               }>;
-              warnings: Array<{
-                __typename: 'WarningNode';
-                warningText: string;
-                id: string;
-                itemId: string;
-                priority: boolean;
-                code: string;
-              }>;
             };
           } | null;
         }>;
@@ -594,14 +570,6 @@ export type PrescriptionByNumberQuery = {
                   id: string;
                   itemId: string;
                   priority: number;
-                }>;
-                warnings: Array<{
-                  __typename: 'WarningNode';
-                  warningText: string;
-                  id: string;
-                  itemId: string;
-                  priority: boolean;
-                  code: string;
                 }>;
               };
             } | null;
@@ -773,14 +741,6 @@ export type PrescriptionByIdQuery = {
                   id: string;
                   itemId: string;
                   priority: number;
-                }>;
-                warnings: Array<{
-                  __typename: 'WarningNode';
-                  warningText: string;
-                  id: string;
-                  itemId: string;
-                  priority: boolean;
-                  code: string;
                 }>;
               };
             } | null;
@@ -1082,14 +1042,6 @@ export type HistoricalStockLineFragment = {
       itemId: string;
       priority: number;
     }>;
-    warnings: Array<{
-      __typename: 'WarningNode';
-      warningText: string;
-      id: string;
-      itemId: string;
-      priority: boolean;
-      code: string;
-    }>;
   };
 };
 
@@ -1226,9 +1178,6 @@ export const PrescriptionLineFragmentDoc = gql`
         itemDirections {
           ...ItemDirection
         }
-        warnings {
-          ...Warning
-        }
       }
     }
   }
@@ -1361,13 +1310,9 @@ export const HistoricalStockLineFragmentDoc = gql`
       itemDirections {
         ...ItemDirection
       }
-      warnings {
-        ...Warning
-      }
     }
   }
   ${ItemDirectionFragmentDoc}
-  ${WarningFragmentDoc}
 `;
 export const DiagnosisFragmentDoc = gql`
   fragment diagnosis on DiagnosisNode {

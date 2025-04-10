@@ -26,9 +26,6 @@ fragment StockLine on StockLineNode {
     itemDirections {
       ...ItemDirection
     }
-    warnings {
-      ...Warning
-    }
   }
   note
   onHold
@@ -204,9 +201,6 @@ fragment Item on ItemNode {
   }
   itemDirections {
     ...ItemDirection
-  }
-  warnings {
-    ...Warning
   }
 }
 
