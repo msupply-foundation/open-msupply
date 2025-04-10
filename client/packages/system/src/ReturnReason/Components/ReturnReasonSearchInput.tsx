@@ -5,7 +5,7 @@ import {
   defaultOptionMapper,
   getDefaultOptionRenderer,
 } from '@openmsupply-client/common';
-import { useReturnReason } from '../api';
+import { useReturnReasons } from '../api/hooks/useReturnReasons';
 
 interface ReturnReasonSearchInputProps {
   selectedReasonId: string | null;
@@ -21,7 +21,7 @@ export const ReturnReasonSearchInput: FC<ReturnReasonSearchInputProps> = ({
   autoFocus = false,
   isDisabled,
 }) => {
-  const { data, isLoading } = useReturnReason.document.listAllActive();
+  const { data, isLoading } = useReturnReasons();
   const reasons = data?.nodes ?? [];
 
   const value = reasons.find(reason => reason.id === selectedReasonId);
