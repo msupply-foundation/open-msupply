@@ -152,13 +152,13 @@ fn requisition_has_program_items(
     // 3. Checks if any item in the requisition is included in any program master list
     // 4. Returns true if any program item is found, false otherwise
     let requisition_lines = get_lines_for_requisition(connection, requisition_id)?;
-    if requisition_lines.len() == 0 {
+    if requisition_lines.is_empty() {
         return Ok(false);
     }
 
     let program_master_lists = MasterListRepository::new(connection)
         .query_by_filter(MasterListFilter::new().is_program(true))?;
-    if program_master_lists.len() == 0 {
+    if program_master_lists.is_empty() {
         return Ok(false);
     }
 
@@ -175,10 +175,10 @@ fn requisition_has_program_items(
     let matched_lines = MasterListLineRepository::new(connection).query_by_filter(
         MasterListLineFilter::new()
             .item_id(EqualFilter::equal_any(item_ids))
-            .master_list_id(EqualFilter::equal_any(program_master_list_ids.clone())),
+            .master_list_id(EqualFilter::equal_any(program_master_list_ids)),
     )?;
 
-    if matched_lines.len() > 0 {
+    if !matched_lines.is_empty() {
         return Ok(true);
     }
 
