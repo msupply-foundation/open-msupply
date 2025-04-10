@@ -8,6 +8,7 @@ export type ReportRowFragment = {
   context: Types.ReportContext;
   id: string;
   name: string;
+  code: string;
   subContext?: string | null;
   isCustom: boolean;
   argumentSchema?: {
@@ -37,6 +38,7 @@ export type ReportQuery = {
         context: Types.ReportContext;
         id: string;
         name: string;
+        code: string;
         subContext?: string | null;
         isCustom: boolean;
         argumentSchema?: {
@@ -72,6 +74,7 @@ export type ReportsQuery = {
           context: Types.ReportContext;
           id: string;
           name: string;
+          code: string;
           subContext?: string | null;
           isCustom: boolean;
           argumentSchema?: {
@@ -115,6 +118,7 @@ export const ReportRowFragmentDoc = gql`
     context
     id
     name
+    code
     subContext
     isCustom
     argumentSchema {
