@@ -348,6 +348,9 @@ const VaccineInfoBox = ({
 }) => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
+  const { store } = useAuthContext();
+  const prescriptionCreatedAtStore =
+    vaccination?.invoice?.store?.id === store?.id;
 
   return vaccination?.given ? (
     <Alert severity="success">
@@ -355,7 +358,7 @@ const VaccineInfoBox = ({
         {t('messages.vaccination-was-given', {
           date: localisedDate(vaccination.vaccinationDate ?? ''),
         })}
-        {vaccination.invoice && (
+        {vaccination.invoice && prescriptionCreatedAtStore && (
           <Link
             style={{
               marginLeft: 6,
