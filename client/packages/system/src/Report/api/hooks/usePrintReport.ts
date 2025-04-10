@@ -7,6 +7,7 @@ import {
   useIntlUtils,
   useMutation,
   useNotification,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { Printer } from '@bcyesil/capacitor-plugin-printer';
@@ -63,6 +64,7 @@ const printPage = (url: string) => {
 };
 
 export const usePrintReport = () => {
+  const t = useTranslation();
   const { reportApi, storeId } = useReportGraphQL();
   const { error } = useNotification();
   const { currentLanguage } = useIntlUtils();
@@ -89,13 +91,13 @@ export const usePrintReport = () => {
       return result.generateReport.fileId;
     }
 
-    throw new Error('Unable to print report');
+    throw new Error(t('messages.error-printing-report'));
   };
 
   const { mutate, isLoading } = useMutation({
     mutationFn,
     onSuccess: (fileId, { format = EnvUtils.printFormat }) => {
-      if (!fileId) throw new Error('Error printing report');
+      if (!fileId) throw new Error(t('messages.error-printing-report'));
       const url = `${Environment.FILE_URL}${fileId}`;
       if (format === PrintFormat.Html) {
         printPage(url);
