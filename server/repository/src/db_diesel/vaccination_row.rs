@@ -20,6 +20,7 @@ table! {
     vaccination (id) {
         id -> Text,
         store_id -> Text,
+        given_store_id -> Nullable<Text>,
         program_enrolment_id -> Text,
         encounter_id -> Text,
         patient_link_id -> Text,
@@ -62,7 +63,10 @@ allow_tables_to_appear_in_same_query!(vaccine_course_dose, name);
 #[diesel(treat_none_as_null = true)]
 pub struct VaccinationRow {
     pub id: String,
+    // Store where record was originally created
     pub store_id: String,
+    // Store where vaccination was marked as Given
+    pub given_store_id: Option<String>,
     pub program_enrolment_id: String,
     pub encounter_id: String,
     pub patient_link_id: String,

@@ -66,7 +66,7 @@ pub fn update_vaccination(
                 vaccination,
                 create_customer_return,
                 create_prescription,
-            } = generate(validate_result, input.clone());
+            } = generate(store_id, validate_result, input.clone());
 
             // Update the vaccination
             VaccinationRowRepository::new(connection).upsert_one(&vaccination)?;
