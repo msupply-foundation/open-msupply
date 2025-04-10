@@ -70,4 +70,3 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: Android_Build
-          path: $GITHUB_WORKSPACE
