@@ -56,7 +56,7 @@ const DetailViewInner = ({
   t: TypedTFunction<LocaleKey>;
 }) => {
   const { setCustomBreadcrumbs } = useBreadcrumbs(['reports']);
-  const { translateReportName } = useIntlUtils();
+  const { translateDynamicKey } = useIntlUtils();
   const [state, setState] = useState<
     | { s: 'loading' }
     | { s: 'error'; errorMessage: string }
@@ -74,7 +74,7 @@ const DetailViewInner = ({
 
   useEffect(() => {
     setCustomBreadcrumbs({
-      1: translateReportName(report.code, report.name),
+      1: translateDynamicKey(`report-code.${report.code}`, report.name),
     });
 
     // Initial report generation
