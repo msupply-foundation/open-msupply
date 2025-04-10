@@ -126,9 +126,8 @@ export const useIntlUtils = () => {
     return t(localeKey, Formatter.fromCamelCase(serverKey));
   };
 
-  const translateReportName = (code: string, name: string) => {
-    const localeKey = `report.${code}`
-    return isLocaleKey(localeKey) ? t(localeKey) : name;
+  const translateDynamicKey = (key: string, fallback: string) => {
+    return isLocaleKey(key) ? t(key) : fallback;
   }
 
   const isLocaleKey = (key: string): key is LocaleKey => {
@@ -149,7 +148,7 @@ export const useIntlUtils = () => {
     getPlural,
     translateServerError,
     isLocaleKey,
-    translateReportName,
+    translateDynamicKey,
   };
 };
 

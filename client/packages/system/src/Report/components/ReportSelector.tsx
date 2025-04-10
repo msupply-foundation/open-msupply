@@ -55,7 +55,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
     queryParams,
   });
   const t = useTranslation();
-  const { translateReportName } = useIntlUtils();
+  const { translateDynamicKey } = useIntlUtils();
 
   // Report Content
   const onReportSelected = (
@@ -90,7 +90,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
     const reports = data
       ? data?.nodes?.map(report => ({
           value: report.id,
-          label: translateReportName(report.code, report.name),
+          label: translateDynamicKey(`report-code.${report.code}`, report.name),
           isDisabled: disabled,
         }))
       : [];
