@@ -36,14 +36,6 @@ android {
 
         project.logger.lifecycle("versionName: $versionName versionCode: $versionCode")
     }
-    splits {
-        abi {
-            enable true
-            reset()
-            include 'armeabi-v7a', 'arm64-v8a'
-            universalApk true // create one APK with both ABIs
-        }
-    }
     signingConfigs {
         release {
             // Check for release and if in release mode try to load signing info
@@ -69,27 +61,22 @@ android {
             signingConfig signingConfigs.release
         }
     }
-    android.applicationVariants.all { variant ->
-    variant.outputs.all { output ->
-        def versionName = getVersionFromPackageJson()
-        def outputFileName
-        def abiFilters = variant.getNdkCompileAbiFilters()
-        def arm64Dest = file("${buildDir}/outputs/release/")
-        def universalDest = file("${buildDir}/outputs/release-universal/")
-
-        arm64Dest.mkdirs()
-        universalDest.mkdirs()
-
-        if (abiFilters != null && abiFilters.size() == 1 && abiFilters.contains("arm64-v8a")) {
-            // 64-bit APK
-            outputFileName = "open-msupply-v${versionName}(${versionCode}).apk"
-            output.outputFile = new File(arm64Dest, outputFileName)
+    flavorDimensions "abi"
+    productFlavors {
+        arm64 {
+            dimension "abi"
+            applicationIdSuffix ".arm64"
+            versionNameSuffix "-arm64"
+            ndk {
+                abiFilters "arm64-v8a"
             }
-
-        if (output.getName().contains("universal")) {
-            // Universal APK
-            outputFileName = "open-msupply-v${versionName}(${versionCode})-universal.apk"
-            output.outputFile = new File(universalDest, outputFileName)
+        }
+        universal {
+            dimension "abi"
+            applicationIdSuffix ".universal"
+            versionNameSuffix "-universal"
+            ndk {
+                abiFilters "armeabi-v7a", "arm64-v8a"
             }
         }
     }
