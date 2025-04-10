@@ -98,8 +98,7 @@
     "tsconfig-paths-webpack-plugin": "^4.0.1",
     "typescript": "^5.0.2",
     "webpack": "^5.76.2",
-    "yarn-outdated-formatter": "^4.0.0",
-    "lodash": "^4.17.21"
+    "yarn-outdated-formatter": "^4.0.0"
   },
   "dependencies": {
     "@bugsnag/js": "^7.25.0",

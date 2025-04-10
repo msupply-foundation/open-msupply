@@ -28,8 +28,6 @@ jobs:
 
       - name: Install dependencies
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
-        run: cd ./standard_reports && rm -rf node_modules && yarn install --frozen-lockfile
-
         env:
           NODE_AUTH_TOKEN: ${{secrets.TOKEN_REPO}}
 
