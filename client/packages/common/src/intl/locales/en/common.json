@@ -1972,7 +1972,7 @@
   "warning.cannot-create-placeholder-packs": "There is a total of {{allocatedQuantity}} packs available. Unable to allocate all {{requestedQuantity}} packs.",
   "warning.cannot-create-placeholder-units": "There is a total of {{allocatedQuantity}} units available. Unable to allocate all {{requestedQuantity}} units.",
   "warning.caps-lock": "Warning: Caps lock is on",
-  "warning.check-before-vaccinating": "Vaccination records from other stores may not be up to date. Ensure you have synced recently, and always confirm with the patient first.",
+  "warning.check-before-vaccinating": "Vaccination records from other stores may not be up to date. Ensure you have synced recently, and always confirm against the patient's physical vaccination card first.",
   "warning.field-not-parsed": "{{field}} not parsed",
   "warning.nothing-to-supply": "Nothing left to supply!",
   "tooltip.defined-by-gs1-matrix": "Defined by GS1 datamatrix"
