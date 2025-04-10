@@ -16,6 +16,7 @@ import {
   ExpiryDateCell,
   usePluginProvider,
   useEditModal,
+  CardColumnType,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -75,6 +76,7 @@ const StockListComponent: FC = () => {
       label: 'label.name',
       Cell: TooltipTextCell,
       width: 350,
+      cardColumnType: CardColumnType.Primary,
     },
     // TODO: Add back when design has been decided
     // {

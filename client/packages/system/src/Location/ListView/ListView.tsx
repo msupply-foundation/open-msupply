@@ -9,6 +9,7 @@ import {
   useTranslation,
   useUrlQueryParams,
   GenericColumnKey,
+  CardColumnType,
 } from '@openmsupply-client/common';
 import { useLocation, LocationRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -42,7 +43,7 @@ const LocationListComponent: FC = () => {
     [
       GenericColumnKey.Selection,
       'code',
-      'name',
+      { key: 'name', cardColumnType: CardColumnType.Primary },
       {
         key: 'coldStorageType',
         label: 'label.cold-storage-type',
