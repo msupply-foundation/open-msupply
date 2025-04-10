@@ -34,6 +34,7 @@ import { Discovery } from './components/Discovery';
 import { Android } from './components/Android';
 import { BackButtonHandler } from './BackButtonHandler';
 import { useInitPlugins } from './useInitPlugins';
+import { ScreenOrientation } from '@capacitor/screen-orientation';
 
 const appVersion = require('../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
@@ -71,6 +72,36 @@ const Init = () => {
   useInitPlugins();
   return <></>;
 };
+
+/**
+ * If app is being used on an Android phone, we lock the screen to "Portrait"
+ * mode, as the UI will be restricted to GAPS functionality only, which is
+ * optimised for mobile portrait mode.
+ *
+ * We can't use the existing screen size hooks, as they only consider screen
+ * width, but we need to check both width and height (as we don't know what
+ * orientation the device is in on launch)
+ *
+ * The 600px here corresponds to the "sm" breakpoint in the theme, which is used
+ * to determine if the device is a phone or not.
+ *
+ * Including here, outside the component functions, as this is a one-time check
+ * at startup.
+ *
+ * TO-DO: Once we have a proper "is Gaps Store" check, we can consolidate this
+ * functionality and decide exactly what should be visible where, and under what
+ * conditions.
+ */
+EnvUtils.deviceInfo.then(info => {
+  if (
+    info.platform === 'android' &&
+    (info.screen.width < 600 || info.screen.height < 600)
+  ) {
+    ScreenOrientation.lock({
+      orientation: 'portrait',
+    });
+  }
+});
 
 const router = createBrowserRouter(
   createRoutesFromElements(
