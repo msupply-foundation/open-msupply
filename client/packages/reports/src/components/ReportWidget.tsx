@@ -31,7 +31,7 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
   onReportClick,
   hasReports = false,
 }) => {
-  const { translateReportName } = useIntlUtils();
+  const { translateDynamicKey } = useIntlUtils();
 
   return (
     <>
@@ -111,7 +111,10 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
                             paddingBottom: 2,
                           }}
                         >
-                          {translateReportName(report.code, report.name)}
+                          {translateDynamicKey(
+                            `report-code.${report.code}`,
+                            report.name
+                          )}
                         </Typography>
                         <ChevronDownIcon
                           color="secondary"
