@@ -16,15 +16,20 @@ pub fn create_patient_name_store_join(
     con: &StorageConnection,
     store_id: &str,
     name_id: &str,
+    name_store_join_id: Option<String>,
 ) -> Result<(), RepositoryError> {
     let name_store_join = NameStoreJoinRepository::new(con)
-        .query_by_filter(NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(name_id)))?
+        .query_by_filter(
+            NameStoreJoinFilter::new()
+                .store_id(EqualFilter::equal_to(store_id))
+                .name_id(EqualFilter::equal_to(name_id)),
+        )?
         .pop();
     if name_store_join.is_none() {
         // add name store join
         let name_store_join_repo = NameStoreJoinRepository::new(con);
         name_store_join_repo.upsert_one(&NameStoreJoinRow {
-            id: uuid(),
+            id: name_store_join_id.unwrap_or(uuid()),
             name_link_id: name_id.to_string(),
             store_id: store_id.to_string(),
             name_is_customer: true,

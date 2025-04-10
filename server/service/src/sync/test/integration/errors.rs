@@ -1,8 +1,10 @@
 #[cfg(test)]
 mod tests {
-    use repository::{mock::MockDataInserts, StorageConnectionManager, SyncApiErrorCode};
+    use std::sync::Arc;
+
+    use repository::{StorageConnectionManager, SyncApiErrorCode};
     use reqwest::StatusCode;
-    use std::{io::Error, sync::Arc};
+
     use util::assert_matches;
 
     use crate::{
@@ -15,11 +17,11 @@ mod tests {
             settings::SyncSettings,
             sync_status::SyncLogError,
             synchroniser::{SyncError, Synchroniser},
-            test::integration::central_server_configurations::{
-                ConfigureCentralServer, SiteConfiguration,
+            test::integration::{
+                central_server_configurations::SiteConfiguration, create_site, FullSiteConfig,
             },
         },
-        test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+        test_helpers::ServiceTestContext,
     };
 
     fn get_synchroniser_with_hardware_id(
@@ -30,57 +32,45 @@ mod tests {
         let mut service_provider = ServiceProvider::new(connection_manager.clone());
         struct TestService1(String);
         impl AppDataServiceTrait for TestService1 {
-            fn get_hardware_id(&self) -> Result<String, Error> {
+            fn get_hardware_id(&self) -> Result<String, std::io::Error> {
                 Ok(self.0.clone())
             }
-            fn set_hardware_id(&self, _: String) -> Result<(), Error> {
-                todo!()
+            fn set_hardware_id(&self, _: String) -> Result<(), std::io::Error> {
+                unimplemented!()
             }
         }
         service_provider.app_data_service = Box::new(TestService1(hardware_id.to_string()));
 
         Synchroniser::new(settings.clone(), Arc::new(service_provider)).unwrap()
     }
+
     #[actix_rt::test]
     async fn integration_sync_parsed_error() {
-        let SiteConfiguration { sync_settings, .. } = ConfigureCentralServer::from_env()
-            .create_sync_site(vec![])
-            .await
-            .expect("Problem creating sync site");
+        let FullSiteConfig {
+            context:
+                ServiceTestContext {
+                    connection_manager,
+                    service_provider,
+                    service_context,
+                    ..
+                },
 
-        let ServiceTestContext {
-            connection_manager,
-            service_provider,
-            service_context,
+            config: SiteConfiguration { sync_settings, .. },
             ..
-        } = setup_all_and_service_provider(
-            "sync_integration_test_parsed_error",
-            MockDataInserts::none(),
-        )
-        .await;
-
-        service_provider
-            .site_info_service
-            .request_and_set_site_info(&service_provider, &sync_settings)
-            .await
-            .unwrap();
-        service_provider
-            .settings
-            .update_sync_settings(&service_context, &sync_settings)
-            .unwrap();
+        } = create_site("sync_integration_test_parsed_error", vec![]).await;
 
         let hardware_id = service_provider.app_data_service.get_hardware_id().unwrap();
-
         let synchroniser =
             get_synchroniser_with_hardware_id(&connection_manager, &sync_settings, &hardware_id);
-        synchroniser.sync().await.unwrap();
+
+        synchroniser.sync(None).await.unwrap();
 
         // Change hardware id
         let synchroniser =
             get_synchroniser_with_hardware_id(&connection_manager, &sync_settings, "id2");
 
         let error = synchroniser
-            .sync()
+            .sync(None)
             .await
             .err()
             .expect("Should result in error");
@@ -113,26 +103,14 @@ mod tests {
 
     #[actix_rt::test]
     async fn api_incompatible_error() {
-        let SiteConfiguration { sync_settings, .. } = ConfigureCentralServer::from_env()
-            .create_sync_site(vec![])
-            .await
-            .expect("Problem creating sync site");
+        let FullSiteConfig {
+            context: ServiceTestContext {
+                service_provider, ..
+            },
 
-        let ServiceTestContext {
-            service_provider,
-            service_context,
+            config: SiteConfiguration { sync_settings, .. },
             ..
-        } = setup_all_and_service_provider("api_incompatible_error", MockDataInserts::none()).await;
-
-        service_provider
-            .site_info_service
-            .request_and_set_site_info(&service_provider, &sync_settings)
-            .await
-            .unwrap();
-        service_provider
-            .settings
-            .update_sync_settings(&service_context, &sync_settings)
-            .unwrap();
+        } = create_site("api_incompatible_error", vec![]).await;
 
         let synchroniser = Synchroniser::new_with_version(
             sync_settings.clone(),
@@ -143,7 +121,7 @@ mod tests {
         .unwrap();
 
         let error = synchroniser
-            .sync()
+            .sync(None)
             .await
             .err()
             .expect("Should result in error");
@@ -169,7 +147,7 @@ mod tests {
                 .unwrap();
 
         let error = synchroniser
-            .sync()
+            .sync(None)
             .await
             .err()
             .expect("Should result in error");

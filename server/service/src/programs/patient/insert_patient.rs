@@ -109,7 +109,7 @@ pub(crate) fn insert_patient(
 
             let name_repo = NameRowRepository::new(con);
             name_repo.upsert_one(&row)?;
-            create_patient_name_store_join(con, store_id, &row.id)?;
+            create_patient_name_store_join(con, store_id, &row.id, None)?;
 
             let patient = service_provider
                 .patient_service

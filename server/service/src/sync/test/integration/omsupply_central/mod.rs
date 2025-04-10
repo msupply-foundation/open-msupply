@@ -1,10 +1,10 @@
 mod asset;
 mod plugin_data;
 mod test;
+mod vaccine_card;
 
 use std::time::Duration;
 
-use repository::ChangelogRepository;
 use reqwest::Client;
 use url::Url;
 use util::assert_variant;
@@ -13,11 +13,10 @@ use crate::sync::{
     test::{
         check_integrated,
         integration::{
-            central_server_configurations::{ConfigureCentralServer, SiteConfiguration},
-            init_test_context, SyncIntegrationContext,
+            central_server_configurations::ConfigureCentralServer, create_site, init_test_context,
+            integrate_with_is_sync_reset,
         },
     },
-    translation_and_integration::integrate,
     CentralServerConfig,
 };
 
@@ -33,23 +32,11 @@ async fn test_omsupply_central_records(identifier: &str, tester: &dyn SyncRecord
     println!("test_omsupply_central_records{}_init", identifier);
 
     let central_server_configurations = ConfigureCentralServer::from_env();
-    let SiteConfiguration {
-        new_site_properties,
-        sync_settings,
-    } = central_server_configurations
-        .create_sync_site(vec![])
-        .await
-        .expect("Problem creating sync site");
+    let site_config = create_site(identifier, vec![]).await;
 
-    let SyncIntegrationContext {
-        connection,
-        synchroniser,
-        ..
-    } = init_test_context(&sync_settings, identifier).await;
-
-    let steps_data = tester.test_step_data(&new_site_properties);
+    let steps_data = tester.test_step_data(&site_config.config.new_site_properties);
     // First sync is required to get central server URL (before graphql queries are called)
-    synchroniser.sync().await.unwrap();
+    site_config.synchroniser.sync(None).await.unwrap();
 
     let CentralServerConfig::CentralServerUrl(central_server_url) = CentralServerConfig::get()
     else {
@@ -75,8 +62,11 @@ async fn test_omsupply_central_records(identifier: &str, tester: &dyn SyncRecord
             graphql(&central_server_url, graphql_operation).await;
         }
 
-        synchroniser.sync().await.unwrap();
-        check_integrated(&connection, step_data.integration_records)
+        site_config.synchroniser.sync(None).await.unwrap();
+        check_integrated(
+            &site_config.context.connection,
+            &step_data.integration_records,
+        )
     }
 }
 
@@ -91,28 +81,16 @@ async fn test_omsupply_central_remote_records(identifier: &str, tester: &dyn Syn
     println!("test_omsupply_central_remote_records{}_init", identifier);
 
     let central_server_configurations = ConfigureCentralServer::from_env();
-    let SiteConfiguration {
-        new_site_properties,
-        sync_settings,
-    } = central_server_configurations
-        .create_sync_site(vec![])
-        .await
-        .expect("Problem creating sync site");
+    let mut site_config = create_site(identifier, vec![]).await;
 
-    let SyncIntegrationContext {
-        connection,
-        synchroniser,
-        ..
-    } = init_test_context(&sync_settings, identifier).await;
-
-    let steps_data = tester.test_step_data(&new_site_properties);
+    let steps_data = tester.test_step_data(&site_config.config.new_site_properties);
     // First sync is required to get central server URL (before graphql queries are called)
-    synchroniser.sync().await.unwrap();
+    site_config.synchroniser.sync(None).await.unwrap();
 
     let central_server_url = assert_variant!(CentralServerConfig::get(), CentralServerConfig::CentralServerUrl(url) => url);
 
-    let mut previous_connection = connection;
-    let mut previous_synchroniser = synchroniser;
+    let mut previous_connection = site_config.context.connection;
+    let mut previous_synchroniser = site_config.synchroniser;
 
     for (index, step_data) in steps_data.into_iter().enumerate() {
         let inner_identifier = format!("{}_step_{}", identifier, index + 1);
@@ -130,33 +108,21 @@ async fn test_omsupply_central_remote_records(identifier: &str, tester: &dyn Syn
             graphql(&central_server_url, graphql_operation).await;
         }
 
-        previous_synchroniser.sync().await.unwrap();
+        previous_synchroniser.sync(None).await.unwrap();
 
         let integration_records = step_data.integration_records;
 
         // Integrate
-        {
-            let changelog_repo = ChangelogRepository::new(&previous_connection);
-            let cursor = changelog_repo.latest_cursor().unwrap();
-            integrate(&previous_connection, &integration_records, None).unwrap();
-            // Need to reset is_sync_update since we've inserted test data with sync methods
-            // they need to sync to central (if is_sync_update is set to true they will not sync to central)
-            changelog_repo.reset_is_sync_update(cursor).unwrap();
-        } // Extra scope is needed to drop changelog_repo since it has ref to mutable previous_connection
-          // Push integrated changes
-        previous_synchroniser.sync().await.unwrap();
+        integrate_with_is_sync_reset(&previous_connection, &integration_records); // Push integrated changes
+        previous_synchroniser.sync(None).await.unwrap();
         // Re initialise
-        let SyncIntegrationContext {
-            connection,
-            synchroniser,
-            ..
-        } = init_test_context(&sync_settings, &inner_identifier).await;
-        previous_connection = connection;
-        previous_synchroniser = synchroniser;
-        previous_synchroniser.sync().await.unwrap();
+        site_config = init_test_context(site_config.config, &inner_identifier).await;
+        previous_connection = site_config.context.connection;
+        previous_synchroniser = site_config.synchroniser;
+        previous_synchroniser.sync(None).await.unwrap();
 
         // Confirm records have synced back correctly
-        check_integrated(&previous_connection, integration_records)
+        check_integrated(&previous_connection, &integration_records)
     }
 }
 
@@ -186,7 +152,7 @@ async fn graphql(url: &str, graphql: GraphqlRequest) -> serde_json::Value {
 }
 
 // Call manual sync mutation and then wait for synchronisation
-async fn sync_omsupply_central(url: &str) {
+pub(crate) async fn sync_omsupply_central(url: &str) {
     graphql(
         url,
         GraphqlRequest {
