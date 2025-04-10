@@ -1164,7 +1164,7 @@
   "label.toggle-password-visibility": "changer la visibilité du mot de passe",
   "label.total": "Total",
   "label.total-before-tax": "Total avant taxe",
-  "label.total-cost-price": "Coût total",
+  "label.purchase-cost-price": "Coût d'Achat",
   "label.total-items_few": "Total articles",
   "label.total-items_many": "Total articles",
   "label.total-items_one": "Article",
