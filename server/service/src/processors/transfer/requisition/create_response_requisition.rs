@@ -70,8 +70,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
 
         // TODO Rework once plugin functionality has been implemented
         let approval_status = if store_preference.response_requisition_requires_authorisation
-            && request_requisition.requisition_row.program_id.is_some()
-            || has_program_items
+            && (request_requisition.requisition_row.program_id.is_some() || has_program_items)
         {
             Some(ApprovalStatusType::Pending)
         } else {
@@ -168,16 +167,19 @@ fn requisition_has_program_items(
         .map(|ml| ml.id)
         .collect::<Vec<String>>();
 
-    for line in &requisition_lines {
-        let master_list_lines = MasterListLineRepository::new(connection).query_by_filter(
-            MasterListLineFilter::new()
-                .item_id(EqualFilter::equal_to(&line.item_row.id))
-                .master_list_id(EqualFilter::equal_any(program_master_list_ids.clone())),
-        )?;
+    let item_ids = requisition_lines
+        .into_iter()
+        .map(|line| line.item_row.id)
+        .collect::<Vec<String>>();
 
-        if master_list_lines.len() > 0 {
-            return Ok(true);
-        }
+    let matched_lines = MasterListLineRepository::new(connection).query_by_filter(
+        MasterListLineFilter::new()
+            .item_id(EqualFilter::equal_any(item_ids))
+            .master_list_id(EqualFilter::equal_any(program_master_list_ids.clone())),
+    )?;
+
+    if matched_lines.len() > 0 {
+        return Ok(true);
     }
 
     Ok(false)
