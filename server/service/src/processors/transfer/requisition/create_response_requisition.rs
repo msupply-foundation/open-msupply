@@ -145,24 +145,25 @@ fn requisition_has_program_items(
     connection: &StorageConnection,
     requisition_id: &str,
 ) -> Result<bool, RepositoryError> {
-    // Checks if any items in the requisition are part of program master lists
+    // Checks if any items in the requisition are part of master lists,
+    // Regardless if they are program or not
     //
     // 1. Gets all requisition lines for the given requisition ID
-    // 2. Gets all master lists that are marked as programs
-    // 3. Checks if any item in the requisition is included in any program master list
-    // 4. Returns true if any program item is found, false otherwise
+    // 2. Gets all master lists
+    // 3. Checks if any item in the requisition is included in any master list
+    // 4. Returns true if any item is found, false otherwise
     let requisition_lines = get_lines_for_requisition(connection, requisition_id)?;
     if requisition_lines.is_empty() {
         return Ok(false);
     }
 
-    let program_master_lists = MasterListRepository::new(connection)
-        .query_by_filter(MasterListFilter::new().is_program(true))?;
-    if program_master_lists.is_empty() {
+    let master_lists =
+        MasterListRepository::new(connection).query_by_filter(MasterListFilter::new())?;
+    if master_lists.is_empty() {
         return Ok(false);
     }
 
-    let program_master_list_ids = program_master_lists
+    let master_list_ids = master_lists
         .into_iter()
         .map(|ml| ml.id)
         .collect::<Vec<String>>();
@@ -175,7 +176,7 @@ fn requisition_has_program_items(
     let matched_lines = MasterListLineRepository::new(connection).query_by_filter(
         MasterListLineFilter::new()
             .item_id(EqualFilter::equal_any(item_ids))
-            .master_list_id(EqualFilter::equal_any(program_master_list_ids)),
+            .master_list_id(EqualFilter::equal_any(master_list_ids)),
     )?;
 
     if !matched_lines.is_empty() {
