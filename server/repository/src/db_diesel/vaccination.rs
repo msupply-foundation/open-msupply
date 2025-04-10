@@ -11,7 +11,7 @@ use crate::{
 };
 
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
+    dsl::{Eq, InnerJoin, IntoBoxed, LeftJoin, LeftJoinOn, Nullable},
     prelude::*,
 };
 
@@ -116,12 +116,13 @@ fn to_domain(
 
 type BoxedVaccinationQuery = IntoBoxed<
     'static,
-    LeftJoin<
+    LeftJoinOn<
         InnerJoin<
             LeftJoin<vaccination::table, InnerJoin<clinician_link::table, clinician::table>>,
             vaccine_course_dose::table,
         >,
         InnerJoin<name_link::table, name::table>,
+        Eq<vaccination::facility_name_link_id, Nullable<name_link::id>>,
     >,
     DBType,
 >;
@@ -130,7 +131,11 @@ fn create_filtered_query(filter: Option<VaccinationFilter>) -> BoxedVaccinationQ
     let mut query = vaccination::table
         .left_join(clinician_link::table.inner_join(clinician::table))
         .inner_join(vaccine_course_dose::table)
-        .left_join(name_link::table.inner_join(name::table))
+        .left_join(
+            name_link::table
+                .on(vaccination::facility_name_link_id.eq(name_link::id.nullable()))
+                .inner_join(name::table),
+        )
         .into_boxed();
 
     if let Some(f) = filter {

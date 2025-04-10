@@ -361,8 +361,11 @@ async fn integration_sync_transfer_return_initialise() {
     };
     // Since this test check transfers are forward on initialisation, we want to re-set database for site_receiving_return
     let (site_receiving_return, site_receiving_return_processors_task) =
-        new_instance_of_existing_site(site_receiving_return, &format!("{}_site1_2", identifier))
-            .await;
+        new_instance_of_existing_site(
+            site_receiving_return.config,
+            &format!("{}_site1_2", identifier),
+        )
+        .await;
 
     let test = async move {
         // Site 1 should be re-initialised here

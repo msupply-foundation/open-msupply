@@ -13,6 +13,7 @@ import { Clinician } from '../../Clinician';
 import { useVaccinationsGraphQL } from './useVaccinationsGraphQL';
 import { VACCINATION, VACCINATION_CARD } from './keys';
 import { OTHER_FACILITY } from '../Components/FacilitySearchInput';
+import { VaccinationCardItemFragment } from './operations.generated';
 
 export interface VaccinationStockLine {
   id: string;
@@ -32,20 +33,25 @@ export interface VaccinationDraft {
   stockLine?: VaccinationStockLine | null;
   notGivenReason?: string | null;
   createTransactions: boolean;
+  enteredAtOtherFacility?: {
+    id: string;
+    name: string;
+  };
 }
 
 export function useVaccination({
-  vaccineCourseDoseId,
-  vaccinationId,
+  cardRow,
   encounterId,
   defaultClinician,
 }: {
-  vaccineCourseDoseId: string;
   encounterId?: string;
-  vaccinationId: string | undefined;
   defaultClinician?: Clinician;
+  cardRow: VaccinationCardItemFragment;
 }) {
   const { store } = useVaccinationsGraphQL();
+
+  const vaccineCourseDoseId = cardRow.vaccineCourseDoseId;
+  const vaccinationId = cardRow.vaccinationId ?? undefined;
 
   const { data: dose, isLoading: doseLoading } =
     useDoseQuery(vaccineCourseDoseId);
@@ -92,6 +98,10 @@ export function useVaccination({
     itemId: stockLine?.itemId,
 
     createTransactions: true,
+    enteredAtOtherFacility:
+      facilityNameId && facilityNameId !== store?.nameId
+        ? { id: facilityNameId, name: cardRow.facilityName ?? '' }
+        : undefined,
   };
 
   const draft: VaccinationDraft = { ...defaults, ...patch };
@@ -172,9 +182,7 @@ const useInsert = ({
         clinicianId: isOtherFacility ? undefined : input?.clinician?.id,
 
         given: input.given ?? false,
-        vaccinationDate: input.given
-          ? Formatter.naiveDate(input.date ?? new Date())
-          : undefined,
+        vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
         comment: input.comment,
         notGivenReason: input.notGivenReason,
         stockLineId:
@@ -213,14 +221,13 @@ const useUpdate = (vaccinationId: string | undefined) => {
     }
 
     const isOtherFacility = input.facilityId === OTHER_FACILITY;
-    const date = Formatter.naiveDate(input.date ?? new Date());
 
     const apiResult = await api.updateVaccination({
       storeId,
       input: {
         id: vaccinationId,
         given: input.given ?? false,
-        vaccinationDate: input.given ? { value: date } : { value: null },
+        vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
         comment: input.comment,
         notGivenReason: !input.given ? input.notGivenReason : null,
 

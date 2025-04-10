@@ -5147,6 +5147,10 @@ export type MutationsLinkPatientToStoreArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsManualSyncArgs = {
+  fetchPatientId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type MutationsSupplyRequestedQuantityArgs = {
   input: SupplyRequestedQuantityInput;
   storeId: Scalars['String']['input'];
@@ -9465,7 +9469,7 @@ export type UpdateVaccinationInput = {
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
   stockLineId?: InputMaybe<NullableStringUpdate>;
   updateTransactions?: InputMaybe<Scalars['Boolean']['input']>;
-  vaccinationDate?: InputMaybe<NullableDateUpdate>;
+  vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type UpdateVaccinationResponse =

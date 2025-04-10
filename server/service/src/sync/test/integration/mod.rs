@@ -8,44 +8,45 @@ mod transfer;
 
 use self::central_server_configurations::NewSiteProperties;
 use crate::{
-    service_provider::ServiceProvider,
     sync::{
-        settings::SyncSettings, synchroniser::Synchroniser, translations::IntegrationOperation,
+        synchroniser::Synchroniser, translation_and_integration::integrate,
+        translations::IntegrationOperation,
     },
     test_helpers::{setup_all_and_service_provider, ServiceTestContext},
 };
-use repository::{mock::MockDataInserts, StorageConnection};
+use central_server_configurations::{ConfigureCentralServer, SiteConfiguration};
+use repository::{mock::MockDataInserts, ChangelogRepository, StorageConnection};
 use serde::Serialize;
 use serde_json::json;
-use std::{error::Error, future::Future, sync::Arc};
-use tokio::task::JoinHandle;
+use std::{error::Error, future::Future};
 
-struct SyncIntegrationContext {
-    connection: StorageConnection,
+pub(super) struct FullSiteConfig {
+    config: SiteConfiguration,
+    context: ServiceTestContext,
     synchroniser: Synchroniser,
-    service_provider: Arc<ServiceProvider>,
-    processors_task: JoinHandle<()>,
 }
 
-async fn init_test_context(
-    sync_settings: &SyncSettings,
+pub(super) async fn init_test_context(
+    config: SiteConfiguration,
     identifier: &str,
-) -> SyncIntegrationContext {
-    let ServiceTestContext {
-        connection,
-        service_provider,
-        processors_task,
-        service_context,
-        ..
-    } = setup_all_and_service_provider(
+) -> FullSiteConfig {
+    let context = setup_all_and_service_provider(
         &format!("sync_integration_{}_tests", identifier),
         MockDataInserts::none(),
     )
     .await;
 
+    let ServiceTestContext {
+        service_provider,
+        service_context,
+        ..
+    } = &context;
+
+    let SiteConfiguration { sync_settings, .. } = &config;
+
     service_provider
         .site_info_service
-        .request_and_set_site_info(&service_provider, &sync_settings)
+        .request_and_set_site_info(service_provider, sync_settings)
         .await
         .unwrap();
     service_provider
@@ -56,12 +57,20 @@ async fn init_test_context(
     let synchroniser =
         Synchroniser::new(sync_settings.clone(), service_provider.clone().into()).unwrap();
 
-    SyncIntegrationContext {
-        connection,
+    FullSiteConfig {
+        config,
+        context,
         synchroniser,
-        service_provider,
-        processors_task,
     }
+}
+
+pub(super) async fn create_site(identifier: &str, visible_name_ids: Vec<String>) -> FullSiteConfig {
+    let config = ConfigureCentralServer::from_env()
+        .create_sync_site(visible_name_ids)
+        .await
+        .expect("Problem creating sync site");
+
+    init_test_context(config, identifier).await
 }
 
 #[derive(Default, Serialize)]
@@ -135,4 +144,16 @@ async fn random_delay(min_millisecond: u64, max_millisecond: u64) {
     let delay_millisecond =
         (rand::thread_rng().gen::<f64>() * diff as f64) as u64 + min_millisecond;
     tokio::time::sleep(std::time::Duration::from_millis(delay_millisecond)).await;
+}
+
+pub(crate) fn integrate_with_is_sync_reset(
+    connection: &StorageConnection,
+    integrations: &[IntegrationOperation],
+) {
+    let changelog_repo = ChangelogRepository::new(&connection);
+    let cursor = changelog_repo.latest_cursor().unwrap();
+    // Need to reset is_sync_update since we've inserted test data with sync methods
+    // they need to sync to central (if is_sync_update is set to true they will not sync to central)
+    integrate(&connection, integrations, None).unwrap();
+    changelog_repo.reset_is_sync_update(cursor).unwrap();
 }

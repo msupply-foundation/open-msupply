@@ -113,6 +113,47 @@ impl SyncApiV6 {
         })
     }
 
+    pub async fn patient_pull(
+        &self,
+        cursor: u64,
+        batch_size: u32,
+        fetch_patient_id: String,
+    ) -> Result<SyncBatchV6, SyncApiErrorV6> {
+        let Self {
+            sync_v5_settings,
+            url,
+            sync_v6_version,
+        } = self;
+
+        let route = "patient-pull";
+        let url = url.join(route).unwrap();
+
+        let request = SyncPatientPullRequestV6 {
+            cursor,
+            batch_size,
+            sync_v5_settings: sync_v5_settings.clone(),
+            sync_v6_version: *sync_v6_version,
+            fetch_patient_id,
+        };
+
+        let result = with_retries(RetrySeconds::default(), |client| {
+            client.post(url.clone()).json(&request)
+        })
+        .await;
+
+        let error = match response_or_err(result).await {
+            Ok(SyncPullResponseV6::Data(data)) => return Ok(data),
+            Ok(SyncPullResponseV6::Error(error)) => error.into(),
+            Err(error) => error,
+        };
+
+        Err(SyncApiErrorV6 {
+            url,
+            route: route.to_string(),
+            source: error,
+        })
+    }
+
     pub async fn get_site_status(&self) -> Result<SiteStatusV6, SyncApiErrorV6> {
         let Self {
             sync_v5_settings,

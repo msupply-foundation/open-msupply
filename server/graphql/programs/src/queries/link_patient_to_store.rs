@@ -75,6 +75,8 @@ fn map_result(
         })),
         Err(err) => {
             let formatted_error = format!("{:#?}", err);
+            println!("Error while linking patient: {}", formatted_error);
+
             let graphql_error = match err {
                 CentralPatientRequestError::DatabaseError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
@@ -89,7 +91,7 @@ fn map_result(
                                 ConnectionError,
                             ),
                         },
-                    ))
+                    ));
                 }
             };
 

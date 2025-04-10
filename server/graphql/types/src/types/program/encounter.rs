@@ -300,12 +300,13 @@ impl EncounterNode {
             .load_one(ClinicianLoaderInput::new(&self.store_id, clinician_id))
             .await?
             .map(ClinicianNode::from_domain)
-            .ok_or(Error::new(format!(
-                "Failed to load clinician: {}",
-                clinician_id
-            )))?;
+            .or_else(|| {
+                // Likely this encounter synced from another store, and we don't have visibility of that clinician here
+                println!("Clinician {} not found for store {}", clinician_id, self.store_id);
+                None
+            });
 
-        Ok(Some(result))
+        Ok(result)
     }
 
     /// Returns the matching program enrolment for the patient of this encounter
