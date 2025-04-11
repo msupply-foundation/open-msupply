@@ -66,7 +66,12 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Android_Build
-        path: |
-            ./client/packages/android/app/build/outputs/apk/amr64/release/*.apk
-            ./client/packages/android/app/build/outputs/apk/universal/release/*.apk
+        path: ./client/packages/android/app/build/outputs/apk/universal/release/*.apk
+        retention-days: 3
+        
+    - name: Create the Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Android_Build
+        path: ./client/packages/android/app/build/outputs/apk/amr64/release/*.apk
         retention-days: 3
