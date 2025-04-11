@@ -9465,7 +9465,7 @@ export type UpdateVaccinationInput = {
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
   stockLineId?: InputMaybe<NullableStringUpdate>;
   updateTransactions?: InputMaybe<Scalars['Boolean']['input']>;
-  vaccinationDate?: InputMaybe<NullableDateUpdate>;
+  vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type UpdateVaccinationResponse =
