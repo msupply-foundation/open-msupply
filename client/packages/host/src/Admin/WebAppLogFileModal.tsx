@@ -16,20 +16,15 @@ import { LogTextDisplay } from './LogTextDisplay';
 
 export const LogDisplay = ({
   fileName,
+  logContent,
   setLogContent,
 }: {
   fileName: string;
   setLogContent: (content: string[]) => void;
 }) => {
   const {
-    logContents: { mutateAsync, data, isLoading },
-  } = useLog();
-
-  useEffect(() => {
-    if (!!fileName) {
-      mutateAsync(fileName);
-    }
-  }, [fileName]);
+    logContents: { data, isLoading },
+  } = useLog(fileName);
 
   useEffect(() => {
     if (!!data?.fileContent) {
@@ -41,9 +36,9 @@ export const LogDisplay = ({
     return <BasicSpinner />;
   }
 
-  return !!data?.fileContent ? (
+  return !!logContent ? (
     <Box paddingTop={2} maxHeight={400}>
-      <LogTextDisplay logText={data?.fileContent} />
+      <LogTextDisplay logText={logContent} />
     </Box>
   ) : null;
 };
@@ -156,7 +151,11 @@ export const WebAppLogFileModal = ({
               ))}
           </DropdownMenu>
 
-          <LogDisplay fileName={logToRender} setLogContent={setLogContent} />
+          <LogDisplay
+            fileName={logToRender}
+            logContent={logContent}
+            setLogContent={setLogContent}
+          />
         </>
       )}
     </Modal>
