@@ -7,15 +7,15 @@ import {
 } from '@openmsupply-client/common';
 import { OutboundFragment } from './../../operations.generated';
 import { useOutboundApi } from './../utils/useOutboundApi';
-import { useOutboundNumber } from './../utils/useOutboundNumber';
+import { useOutboundId } from '../utils/useOutboundId';
 import { useOutboundIsDisabled } from './../utils/useOutboundIsDisabled';
 import { useOutboundRows } from './useOutboundRows';
 
 export const useOutboundDeleteLines = () => {
-  const outboundNumber = useOutboundNumber();
+  const outboundId = useOutboundId();
   const queryClient = useQueryClient();
   const api = useOutboundApi();
-  const queryKey = api.keys.detail(outboundNumber);
+  const queryKey = api.keys.detail(outboundId);
 
   return useMutation(api.deleteLines, {
     onMutate: async lines => {
@@ -62,9 +62,9 @@ export const useOutboundDeleteSelectedLines = (): (() => void) => {
 
       return isGrouped
         ? items
-            ?.filter(({ id }) => state.rowState[id]?.isSelected)
-            .map(({ lines }) => lines.flat())
-            .flat()
+          ?.filter(({ id }) => state.rowState[id]?.isSelected)
+          .map(({ lines }) => lines.flat())
+          .flat()
         : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
     }) || [];
 

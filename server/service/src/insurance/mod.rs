@@ -1,5 +1,5 @@
 use insert::{insert_insurance, InsertInsurance, InsertInsuranceError};
-use query::insurances;
+use query::{insurance, insurances};
 use repository::{
     name_insurance_join_row::{NameInsuranceJoinRow, NameInsuranceJoinSort},
     RepositoryError, StorageConnection,
@@ -20,6 +20,14 @@ pub trait InsuranceServiceTrait: Sync + Send {
         sort: Option<NameInsuranceJoinSort>,
     ) -> Result<Vec<NameInsuranceJoinRow>, RepositoryError> {
         insurances(connection, name_id, sort)
+    }
+
+    fn insurance(
+        &self,
+        connection: &StorageConnection,
+        id: &str,
+    ) -> Result<NameInsuranceJoinRow, RepositoryError> {
+        insurance(connection, id)
     }
 
     fn insert_insurance(

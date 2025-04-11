@@ -59,13 +59,25 @@ impl<'a> NameStoreJoinRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(row)?;
+        self.insert_changelog(row, RowActionType::Upsert)
+    }
+
+    pub fn upsert_one_without_changelog(
+        &self,
+        row: &NameStoreJoinRow,
+    ) -> Result<(), RepositoryError> {
+        self._upsert_one(row)
+    }
+
+    fn _upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_store_join::table)
             .values(row)
             .on_conflict(name_store_join::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        Ok(())
     }
 
     fn insert_changelog(

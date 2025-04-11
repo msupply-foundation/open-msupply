@@ -1,12 +1,9 @@
 import React from 'react';
 import {
   AppBarButtonsPortal,
-  DownloadIcon,
   EnvUtils,
   Grid,
-  LoadingButton,
   Platform,
-  PrinterIcon,
   PrintFormat,
   ReportContext,
   useDetailPanel,
@@ -51,28 +48,18 @@ export const AppBarButtonsComponent = () => {
           context={ReportContext.Requisition}
           subContext="R&R"
           onPrint={printReport(PrintFormat.Html)}
-        >
-          <LoadingButton
-            variant="outlined"
-            startIcon={<PrinterIcon />}
-            isLoading={isPrinting}
-            label={t('button.print')}
-          />
-        </ReportSelector>
-
+          isPrinting={isPrinting}
+          buttonLabel={t('button.print')}
+        />
         <ReportSelector
           context={ReportContext.Requisition}
           subContext="R&R"
           onPrint={printReport(PrintFormat.Excel)}
-        >
-          <LoadingButton
-            startIcon={<DownloadIcon />}
-            variant="outlined"
-            disabled={EnvUtils.platform === Platform.Android}
-            isLoading={isPrinting}
-            label={t('button.export')}
-          />
-        </ReportSelector>
+          disabled={EnvUtils.platform === Platform.Android}
+          isPrinting={isPrinting}
+          buttonLabel={t('button.export')}
+        />
+
         {OpenButton}
       </Grid>
     </AppBarButtonsPortal>

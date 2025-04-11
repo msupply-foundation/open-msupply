@@ -3,11 +3,19 @@ use reqwest::ClientBuilder;
 use url::Url;
 
 use crate::{
-    apis::patient_v4::{
-        NameStoreJoinParamsV4, NameStoreJoinV2, PatientApiV4, PatientParamsV4, PatientV4,
+    apis::{
+        api_on_central::NameStoreJoinParams,
+        oms_central::OmsCentralApi,
+        patient_v4::{
+            NameStoreJoinParamsV4, NameStoreJoinV2, PatientApiV4, PatientParamsV4, PatientV4,
+        },
     },
     service_provider::{ServiceContext, ServiceProvider},
-    sync::settings::SyncSettings,
+    sync::{
+        api::SyncApiV5,
+        settings::{SyncSettings, SYNC_V5_VERSION},
+        CentralServerConfig,
+    },
 };
 
 use super::PatientSearch;
@@ -114,11 +122,65 @@ pub async fn link_patient_to_store(
         })
         .await
         .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
-    Ok(NameStoreJoin {
+
+    let result = NameStoreJoin {
         id,
         name_id,
         store_id,
-    })
+    };
+
+    link_patient_to_store_v6(service_provider, &sync_settings, &result).await?;
+
+    Ok(result)
+}
+
+/// Creates a name_store_join for the patient on Open mSupply Central Server
+/// v6 records for the patient are also synced to this store
+async fn link_patient_to_store_v6(
+    service_provider: &ServiceProvider,
+    sync_settings: &SyncSettings,
+    NameStoreJoin {
+        id,
+        name_id,
+        store_id,
+    }: &NameStoreJoin,
+) -> Result<(), CentralPatientRequestError> {
+    let om_central_url = match CentralServerConfig::get() {
+        CentralServerConfig::NotConfigured => {
+            return Err(CentralPatientRequestError::InternalError(
+                "Open mSupply Central Server not configured".to_string(),
+            ))
+        }
+        // Don't need to push to central if we are central :)
+        CentralServerConfig::IsCentralServer => return Ok(()),
+        CentralServerConfig::CentralServerUrl(url) => url,
+    };
+
+    let client = ClientBuilder::new()
+        .build()
+        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
+
+    let server_url = Url::parse(&om_central_url).map_err(|_| {
+        CentralPatientRequestError::InternalError(format!("Cannot parse central server URL: "))
+    })?;
+
+    let om_central_api = OmsCentralApi::new(client, server_url);
+
+    let sync_v5_settings =
+        SyncApiV5::new_settings(sync_settings, service_provider, SYNC_V5_VERSION)
+            .map_err(|err| CentralPatientRequestError::InternalError(format!("{:?}", err)))?;
+
+    om_central_api
+        .name_store_join(NameStoreJoinParams {
+            id: id.clone(),
+            name_id: name_id.clone(),
+            store_id: store_id.clone(),
+            sync_v5_settings,
+        })
+        .await
+        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
+
+    Ok(())
 }
 
 impl From<RepositoryError> for CentralPatientRequestError {

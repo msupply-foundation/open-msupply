@@ -48,6 +48,12 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               isDefault: false,
             },
             {
+              type: 'text',
+              name: t('label.reference'),
+              urlParameter: 'theirReference',
+              isDefault: false,
+            },
+            {
               type: 'number',
               name: t('label.invoice-number'),
               urlParameter: 'invoiceNumber',
@@ -60,14 +66,14 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
                 {
                   type: 'date',
                   name: t('label.from-date'),
-                  urlParameter: 'pickedDatetime',
+                  urlParameter: 'createdOrBackdatedDatetime',
                   range: 'from',
                   isDefault: true,
                 },
                 {
                   type: 'date',
                   name: t('label.to-date'),
-                  urlParameter: 'pickedDatetime',
+                  urlParameter: 'createdOrBackdatedDatetime',
                   range: 'to',
                   isDefault: true,
                 },

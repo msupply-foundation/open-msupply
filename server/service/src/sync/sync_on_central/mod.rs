@@ -34,7 +34,7 @@ use super::{
 
 // See ../README.md for when to increment versions!
 static MIN_VERSION: u32 = 0;
-static MAX_VERSION: u32 = 3;
+static MAX_VERSION: u32 = 4;
 
 /// Send Records to a remote open-mSupply Server
 pub async fn pull(
@@ -98,7 +98,7 @@ pub async fn pull(
     let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
         &ctx.connection,
         changelogs,
-        ToSyncRecordTranslationType::PullFromOmSupplyCentral,
+        vec![ToSyncRecordTranslationType::PullFromOmSupplyCentral],
     )
     .map_err(|e| Error::OtherServerError(format_error(&e)))?
     .into_iter()
@@ -347,7 +347,7 @@ pub async fn upload_file(
         .ok_or(Error::SyncFileNotFound(file_id.clone()))?;
 
     file_service.move_temp_file(
-        file_part,
+        &file_part,
         &StaticFileCategory::SyncFile(
             sync_file_reference.table_name.clone(),
             sync_file_reference.record_id.clone(),

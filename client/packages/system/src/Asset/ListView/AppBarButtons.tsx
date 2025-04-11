@@ -6,7 +6,6 @@ import {
   Grid,
   useTranslation,
   FileUtils,
-  LoadingButton,
   EnvUtils,
   Platform,
   ButtonWithIcon,
@@ -19,29 +18,28 @@ import {
   EditIcon,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { useAssetData } from '../api';
+import { AssetCatalogueItemFragment } from '../api';
 import { assetCatalogueItemsListToCsv } from '../utils';
 
 export const AppBarButtonsComponent = ({
   importModalController,
+  assets,
 }: {
   importModalController: ToggleState;
+  assets: AssetCatalogueItemFragment[];
 }) => {
+  const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const { success, error } = useNotification();
-  const t = useTranslation();
   const navigate = useNavigate();
 
-  const { fetchAsync, isLoading } = useAssetData.document.listAll();
-
   const csvExport = async () => {
-    const data = await fetchAsync();
-    if (!data || !data?.nodes.length) {
+    if (!assets || !assets?.length) {
       error(t('error.no-data'))();
       return;
     }
 
-    const csv = assetCatalogueItemsListToCsv(data.nodes, t);
+    const csv = assetCatalogueItemsListToCsv(assets, t);
     FileUtils.exportCSV(csv, t('filename.asset-categories'));
     success(t('success'))();
   };
@@ -60,14 +58,14 @@ export const AppBarButtonsComponent = ({
             onClick={importModalController.toggleOn}
           />
         )}
-        <LoadingButton
+        <BaseButton
           startIcon={<DownloadIcon />}
-          isLoading={isLoading}
           variant="outlined"
           onClick={csvExport}
           disabled={EnvUtils.platform === Platform.Android}
-          label={t('button.export')}
-        />
+        >
+          {t('button.export')}
+        </BaseButton>
         {isCentralServer && (
           <BaseButton
             startIcon={<EditIcon />}
@@ -75,7 +73,6 @@ export const AppBarButtonsComponent = ({
             onClick={() => {
               navigate(path);
             }}
-            disabled={EnvUtils.platform === Platform.Android}
           >
             {t('button.manage-asset-log-reasons')}
           </BaseButton>

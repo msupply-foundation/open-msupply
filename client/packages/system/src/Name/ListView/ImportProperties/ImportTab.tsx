@@ -24,7 +24,7 @@ export const ImportTab: FC<ImportPanel & ImportTabProps> = ({
         style={{ minHeight: '50vh' }}
       >
         <Typography>
-          {importErrorCount ?? 0 > 0
+          {(importErrorCount ?? 0 > 0)
             ? '(' +
               t('messages.error-generic', { count: importErrorCount }) +
               ')'

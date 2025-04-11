@@ -14,6 +14,7 @@ import {
   useUrlQueryParams,
   TooltipTextCell,
   GenericColumnKey,
+  getCommentPopoverColumn,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -43,6 +44,9 @@ const OutboundShipmentListViewComponent: FC = () => {
     filters: [
       { key: 'otherPartyName' },
       { key: 'status', condition: 'equalTo' },
+      { key: 'theirReference' },
+      { key: 'createdDatetime', condition: 'between' },
+      { key: 'shippedDatetime', condition: 'between' },
     ],
   });
   const navigate = useNavigate();
@@ -76,12 +80,7 @@ const OutboundShipmentListViewComponent: FC = () => {
         Cell: TooltipTextCell,
         width: 175,
       },
-      [
-        'comment',
-        {
-          Cell: TooltipTextCell,
-        },
-      ],
+      getCommentPopoverColumn(),
       [
         'totalAfterTax',
         {
@@ -115,7 +114,7 @@ const OutboundShipmentListViewComponent: FC = () => {
           />
         }
         onRowClick={row => {
-          navigate(String(row.invoiceNumber));
+          navigate(row.id);
         }}
       />
       <Footer />

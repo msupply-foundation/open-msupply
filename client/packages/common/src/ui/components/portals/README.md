@@ -10,6 +10,4 @@ Grouping of portal related components.
 
 ### Tips & Things to keep in mind
 
-
-
 ### Future considerations

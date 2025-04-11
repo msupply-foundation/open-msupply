@@ -40,6 +40,7 @@ use graphql_location::{LocationMutations, LocationQueries};
 use graphql_plugin::{
     CentralPluginMutations, CentralPluginQueries, PluginMutations, PluginQueries,
 };
+use graphql_preference::{PreferenceMutations, PreferenceQueries};
 use graphql_printer::{PrinterMutations, PrinterQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
@@ -95,6 +96,10 @@ impl CentralServerMutationNode {
 
     async fn plugins(&self) -> CentralPluginMutations {
         CentralPluginMutations
+    }
+
+    async fn preferences(&self) -> PreferenceMutations {
+        PreferenceMutations
     }
 }
 
@@ -158,6 +163,7 @@ pub struct Queries(
     pub DemographicIndicatorQueries,
     pub VaccineCourseQueries,
     pub ItemVariantQueries,
+    pub PreferenceQueries,
     pub CentralServerQueries,
 );
 
@@ -188,6 +194,7 @@ impl Queries {
             DemographicIndicatorQueries,
             VaccineCourseQueries,
             ItemVariantQueries,
+            PreferenceQueries,
             CentralServerQueries,
         )
     }
@@ -302,7 +309,7 @@ impl GraphqlSchema {
                 .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)));
 
         // Initialisation schema should ony need service_provider
-        let initialisiation_builder = InitialisationSchema::build(
+        let initialisation_builder = InitialisationSchema::build(
             InitialisationQueries,
             InitialisationMutations,
             EmptySubscription,
@@ -311,7 +318,7 @@ impl GraphqlSchema {
 
         GraphqlSchema {
             operational: operational_builder.finish(),
-            initialisation: initialisiation_builder.finish(),
+            initialisation: initialisation_builder.finish(),
             is_operational: RwLock::new(is_operational),
         }
     }

@@ -94,7 +94,7 @@ pub fn update_contact_trace(
                 UpsertContactTraceError::InvalidContactPatientId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpsertContactTraceError::DocumentTypeDoesNotExit => {
+                UpsertContactTraceError::DocumentTypeDoesNotExist => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
             };

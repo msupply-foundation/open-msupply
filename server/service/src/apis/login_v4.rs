@@ -36,11 +36,12 @@ pub struct LoginResponseErrorV4 {
 }
 
 #[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LoginInputV4 {
     pub username: String,
     pub password: String,
-    #[serde(rename = "loginType")]
     pub login_type: LoginUserTypeV4,
+    pub site_name: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

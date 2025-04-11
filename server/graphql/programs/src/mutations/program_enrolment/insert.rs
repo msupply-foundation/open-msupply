@@ -86,7 +86,7 @@ pub fn insert_program_enrolment(
                 UpsertProgramEnrolmentError::DatabaseError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
-                UpsertProgramEnrolmentError::DocumentTypeDoesNotExit => {
+                UpsertProgramEnrolmentError::DocumentTypeDoesNotExist => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 UpsertProgramEnrolmentError::ProgramDoesNotExist => {

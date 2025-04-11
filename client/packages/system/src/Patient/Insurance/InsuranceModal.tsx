@@ -1,20 +1,13 @@
 import React, { FC, ReactElement } from 'react';
-
-import {
-  // ErrorWrapper,
-  useDialog,
-  useFormErrors,
-  useNotification,
-} from '@common/hooks';
+import { useDialog, useNotification } from '@common/hooks';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
   BaseDatePickerInput,
   BasicTextInput,
-  Checkbox,
   DialogButton,
   InputWithLabelRow,
   NumericTextInput,
-  Typography,
+  Switch,
 } from '@common/components';
 import { Box, Stack } from '@openmsupply-client/common';
 import {
@@ -24,7 +17,7 @@ import {
 import { usePatient } from '../api';
 import { InsurancePolicySelect } from './InsurancePolicySelect';
 import { InsuranceProvidersSelect } from './InsuranceProvidersSelect';
-import { useInsurances } from '../apiModern/hooks/useInsurances';
+import { useInsurancePolicies } from '../apiModern/hooks/useInsurancesPolicies';
 
 export const InsuranceModal: FC = (): ReactElement => {
   const t = useTranslation();
@@ -45,8 +38,8 @@ export const InsuranceModal: FC = (): ReactElement => {
     insuranceId,
     haveInsuranceId,
     draft,
-    updatePatch: updateDraft,
-  } = useInsurances(nameId);
+    updatePatch,
+  } = useInsurancePolicies(nameId);
 
   const { ErrorWrapper, checkRequired, ErrorDisplay, resetRequired } =
     useFormErrors(draft);
@@ -70,6 +63,10 @@ export const InsuranceModal: FC = (): ReactElement => {
 
   const handleInsuranceInsert = async (): Promise<void> => {
     try {
+      // Temp hotfix for when both policy number fields are empty. Will be
+      // improved with new Error State handler
+      if (draft.policyNumberFamily === '' && draft.policyNumberPerson === '')
+        throw new Error('missing policy numbers');
       const result = await create();
       if (result != null) setModal(undefined);
       success(t('messages.insurance-created'))();
@@ -105,114 +102,90 @@ export const InsuranceModal: FC = (): ReactElement => {
         '& .MuiDialogContent-root': { display: 'flex', alignItems: 'center' },
       }}
     >
-      <>
-        <Stack gap={8} flexDirection="row">
-          <Box display="flex" flexDirection="column" gap={2}>
-            <InputWithLabelRow
-              label={t('label.policy-number-family')}
-              Input={
-                <ErrorWrapper code="policyNumberFamily" required>
-                  <BasicTextInput
-                    disabled={haveInsuranceId}
-                    value={draft.policyNumberFamily}
-                    onChange={event => {
-                      updatePatch({
-                        policyNumberFamily: event.target.value,
-                      });
-                    }}
-                  />
-                </ErrorWrapper>
-              }
-            />
-            <InputWithLabelRow
-              label={t('label.policy-number-person')}
-              Input={
-                <ErrorWrapper code="policyNumberPerson" required>
-                  <BasicTextInput
-                    disabled={haveInsuranceId}
-                    value={draft.policyNumberPerson}
-                    onChange={event => {
-                      updatePatch({
-                        policyNumberPerson: event.target.value,
-                      });
-                    }}
-                  />
-                </ErrorWrapper>
-              }
-            />
-            <ErrorWrapper code="policyType" required>
-              <InsurancePolicySelect
-                policyType={draft.policyType}
-                onChange={value =>
+      <Stack gap={8} flexDirection="row">
+        <Box display="flex" flexDirection="column" gap={2}>
+          <InputWithLabelRow
+            label={t('label.policy-number-family')}
+            Input={
+              <BasicTextInput
+                required={draft.policyNumberPerson === ''}
+                disabled={haveInsuranceId}
+                value={draft.policyNumberFamily}
+                onChange={event => {
                   updatePatch({
-                    policyType: value,
-                  })
-                }
+                    policyNumberFamily: event.target.value,
+                  });
+                }}
               />
-            </ErrorWrapper>
-            <InputWithLabelRow
-              label={t('label.status')}
-              Input={
-                <ErrorWrapper code="isActive">
-                  <Box sx={{ gap: 2, display: 'flex', flexDirection: 'row' }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Checkbox
-                        checked={draft.isActive}
-                        onChange={() => updatePatch({ isActive: true })}
-                      />
-                      <Typography variant="body1">
-                        {t('label.active')}
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Checkbox
-                        checked={!draft.isActive}
-                        onChange={() => updatePatch({ isActive: false })}
-                      />
-                      <Typography variant="body1">
-                        {t('label.inactive')}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </ErrorWrapper>
-              }
-            />
-          </Box>
-          <Box display="flex" flexDirection="column" gap={2}>
-            <InputWithLabelRow
-              label={t('label.expiry-date')}
-              Input={
-                <ErrorWrapper code="expiryDate">
-                  <BaseDatePickerInput
-                    value={DateUtils.getNaiveDate(draft.expiryDate)}
-                    onChange={date => {
-                      if (date)
-                        updatePatch({
-                          expiryDate: formatDateTime.customDate(
-                            date,
-                            'yyyy-MM-dd'
-                          ),
-                        });
-                    }}
-                  />
-                </ErrorWrapper>
-              }
-            />
-            <ErrorWrapper code="insuranceProviderId">
-              <InsuranceProvidersSelect
-                insuranceProviderId={draft.insuranceProviderId}
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.policy-number-person')}
+            Input={
+              <BasicTextInput
+                required={draft.policyNumberFamily === ''}
+                disabled={haveInsuranceId}
+                value={draft.policyNumberPerson}
+                onChange={event => {
+                  updatePatch({
+                    policyNumberPerson: event.target.value,
+                  });
+                }}
+              />
+            }
+          />
+          <InsurancePolicySelect
+            policyType={draft.policyType}
+            onChange={value =>
+              updatePatch({
+                policyType: value,
+              })
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.insurance-active')}
+            Input={
+              <Switch
+                onChange={() => updatePatch({ isActive: !draft.isActive })}
+                checked={draft.isActive}
+                switchSx={{ left: '-13px' }}
+                color="secondary"
+              />
+            }
+          />
+        </Box>
+        <Box display="flex" flexDirection="column" gap={2}>
+          <InputWithLabelRow
+            label={t('label.expiry-date')}
+            Input={
+              <BaseDatePickerInput
+                required
+                value={DateUtils.getNaiveDate(draft.expiryDate)}
+                onChange={date => {
+                  if (date)
+                    updatePatch({
+                      expiryDate: formatDateTime.customDate(date, 'yyyy-MM-dd'),
+                    });
+                }}
+              />
+            }
+          />
+          <InsuranceProvidersSelect
+            insuranceProviderId={draft.insuranceProviderId}
+            onChange={value => {
+              updatePatch({
+                insuranceProviderId: value,
+              });
+            }}
+          />
+          <InputWithLabelRow
+            label={t('label.discount-rate')}
+            Input={
+              <NumericTextInput
+                required
+                min={0}
+                decimalLimit={2}
+                value={draft.discountPercentage ?? 0}
                 onChange={value => {
                   updatePatch({
                     insuranceProviderId: value,

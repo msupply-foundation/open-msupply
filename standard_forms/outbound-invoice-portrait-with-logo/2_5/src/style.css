@@ -3,6 +3,12 @@
         size: portrait
     }
 }
+
+.logo {
+    display: block;
+    height: 96px;
+}
+
 .header_image_section, .header_supplied_section, .header_date_section, .body_section, .body_total_section {
     margin-left: 8px;
     width: 100%;

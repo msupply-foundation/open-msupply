@@ -1,8 +1,8 @@
 import { useCallback, useContext, useState } from 'react';
-import { EnvUtils } from '@common/utils';
+import { EnvUtils, Formatter } from '@common/utils';
 import { LanguageType } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
-import { IntlContext } from '../context';
+import { LocaleKey, useTranslation, IntlContext } from '@common/intl';
 
 // importing individually to reduce bundle size
 // the date-fns methods are tree shaking correctly
@@ -14,6 +14,7 @@ import { ar } from 'date-fns/locale/ar';
 import { es } from 'date-fns/locale/es';
 import { ru } from 'date-fns/locale/ru';
 import { pt } from 'date-fns/locale/pt';
+import pluralize from 'pluralize';
 
 // Map locale string (from i18n) to locale object (from date-fns)
 const getLocaleObj = { fr, ar, es, ru };
@@ -66,6 +67,7 @@ type StringOrEmpty = string | null | undefined;
 export const useIntlUtils = () => {
   const { i18n } = useIntl();
   const { language: i18nLanguage } = i18n;
+  const t = useTranslation();
   const [language, setLanguage] = useState<string>(i18nLanguage);
 
   const changeLanguage = useCallback(
@@ -109,6 +111,20 @@ export const useIntlUtils = () => {
     [language]
   );
 
+  // pluralize only works for English words. Any other language strings are returned unchanged
+  const getPlural = (word: string, count: number) => {
+    if (language !== 'en') return word;
+    return pluralize(word, count);
+  };
+
+  // For mapping server errors. The locale strings probably won't contain an
+  // exhaustive list of all possible errors, so just return a sentence-case
+  // version of the server message if not defined
+  const translateServerError = (serverKey: string) => {
+    const localeKey = `server-error.${serverKey}` as LocaleKey;
+    return t(localeKey, Formatter.fromCamelCase(serverKey));
+  };
+
   return {
     currentLanguage,
     currentLanguageName,
@@ -120,6 +136,8 @@ export const useIntlUtils = () => {
     getUserLocale,
     setUserLocale,
     getLocalisedFullName,
+    getPlural,
+    translateServerError,
   };
 };
 

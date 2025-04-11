@@ -1,7 +1,7 @@
 import { RecordWithId } from '@common/types';
 
 export interface FilterByConditionByType {
-  string: 'equalTo' | 'like' | 'notEqualTo';
+  string: 'equalTo' | 'like' | 'notEqualTo' | 'equalAnyOrNull';
   date: 'beforeOrEqualTo' | 'afterOrEqualTo' | 'equalTo' | 'between';
 }
 

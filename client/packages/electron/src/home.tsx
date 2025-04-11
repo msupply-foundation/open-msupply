@@ -4,6 +4,7 @@ import '@fontsource-variable/inter';
 import {
   AppThemeProvider,
   HashRouter,
+  initialiseI18n,
   IntlProvider,
   QueryClient,
   QueryClientProvider,
@@ -15,9 +16,11 @@ import {
 import { Viewport } from '@openmsupply-client/host/src/components';
 import { ErrorPage } from './error';
 
+initialiseI18n({ isElectron: true });
+
 const ClientHomeScreen = () => (
   <React.Suspense fallback={<div />}>
-    <IntlProvider isElectron={true}>
+    <IntlProvider>
       <React.Suspense fallback={<RandomLoader />}>
         <AppThemeProvider>
           <QueryClientProvider client={new QueryClient()}>

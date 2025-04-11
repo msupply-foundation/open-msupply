@@ -56,9 +56,18 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               name: t('label.status'),
               urlParameter: 'status',
               options: [
-                { label: 'Pending', value: 'PENDING' },
-                { label: 'Visited', value: 'VISITED' },
-                { label: 'Cancelled', value: 'CANCELLED' },
+                {
+                  label: t('label.encounter-status-pending'),
+                  value: 'PENDING',
+                },
+                {
+                  label: t('label.encounter-status-visited'),
+                  value: 'VISITED',
+                },
+                {
+                  label: t('label.encounter-status-cancelled'),
+                  value: 'CANCELLED',
+                },
               ],
             },
           ]}

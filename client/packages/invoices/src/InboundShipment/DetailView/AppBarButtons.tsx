@@ -3,18 +3,16 @@ import {
   AppBarButtonsPortal,
   Grid,
   useDetailPanel,
-  useTranslation,
-  PrinterIcon,
-  ReportContext,
-  LoadingButton,
   useUrlQueryParams,
   usePluginProvider,
   useAuthContext,
+  ReportContext,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useInbound } from '../api';
 import {
-  ReportSelector,
   ReportRowFragment,
+  ReportSelector,
   usePrintReport,
 } from '@openmsupply-client/system';
 import { JsonData } from '@openmsupply-client/programs';
@@ -71,15 +69,9 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
         <ReportSelector
           context={ReportContext.InboundShipment}
           onPrint={printReport}
-        >
-          <LoadingButton
-            variant="outlined"
-            startIcon={<PrinterIcon />}
-            isLoading={isPrinting}
-            label={t('button.print')}
-          />
-        </ReportSelector>
-
+          isPrinting={isPrinting}
+          buttonLabel={t('button.print')}
+        />
         {OpenButton}
       </Grid>
     </AppBarButtonsPortal>

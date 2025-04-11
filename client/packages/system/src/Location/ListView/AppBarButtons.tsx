@@ -1,5 +1,4 @@
-import React, { FC } from 'react';
-
+import React from 'react';
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -13,29 +12,30 @@ import {
   EnvUtils,
   Platform,
 } from '@openmsupply-client/common';
-import { useLocation } from '..';
+import { LocationRowFragment } from '..';
 import { locationsToCsv } from '../../utils';
 
 interface AppBarButtonsProps {
   onCreate: () => void;
+  locations?: LocationRowFragment[];
+  reportIsLoading: boolean;
 }
 
-export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
+export const AppBarButtons = ({
+  onCreate,
+  locations,
+  reportIsLoading,
+}: AppBarButtonsProps) => {
   const { success, error } = useNotification();
   const t = useTranslation();
-  const { isLoading, fetchAsync } = useLocation.document.listAll({
-    key: 'name',
-    direction: 'asc',
-  });
 
   const csvExport = async () => {
-    const data = await fetchAsync();
-    if (!data || !data?.nodes.length) {
+    if (!locations) {
       error(t('error.no-data'))();
       return;
     }
 
-    const csv = locationsToCsv(data.nodes, t);
+    const csv = locationsToCsv(locations, t);
     FileUtils.exportCSV(csv, t('filename.locations'));
     success(t('success'))();
   };
@@ -52,9 +52,9 @@ export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
           disabled={EnvUtils.platform === Platform.Android}
           startIcon={<DownloadIcon />}
           variant="outlined"
-          isLoading={isLoading}
           onClick={csvExport}
           label={t('button.export')}
+          isLoading={reportIsLoading}
         />
       </Grid>
     </AppBarButtonsPortal>

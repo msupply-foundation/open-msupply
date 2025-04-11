@@ -23,6 +23,7 @@ import {
   DropdownMenuItem,
   TextArea,
   InputWithLabelRow,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -93,6 +94,7 @@ export const PrescriptionLineEditForm: React.FC<
   programId,
 }) => {
   const t = useTranslation();
+  const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
   const { store: { preferences } = {} } = useAuthContext();
@@ -111,6 +113,7 @@ export const PrescriptionLineEditForm: React.FC<
     warning => setAllocationAlerts(warning),
     []
   );
+  const isDirectionsDisabled = !issueUnitQuantity;
 
   const allocate = (
     numPacks: number,
@@ -226,15 +229,16 @@ export const PrescriptionLineEditForm: React.FC<
       setPrescribedQuantity(newPrescribedQuantity);
     }
 
-    const newIssueQuantity = Math.round(
-      allocatedUnits / Math.abs(Number(packSizeController.selected?.value || 1))
+    const newIssueQuantity = NumUtils.round(
+      allocatedUnits /
+        Math.abs(Number(packSizeController.selected?.value || 1)),
+      2
     );
     if (newIssueQuantity !== issueUnitQuantity)
       setIssueUnitQuantity(newIssueQuantity);
     setAllocationAlerts([]);
 
-    if (items.find(prescriptionItem => prescriptionItem.id === item?.id))
-      setAbbreviation('');
+    setAbbreviation('');
     setDefaultDirection('');
   }, [item?.id]);
 
@@ -260,6 +264,8 @@ export const PrescriptionLineEditForm: React.FC<
     updateNotes(note);
     setAbbreviation('');
   };
+
+  const abbreviationRef = React.useRef<HTMLInputElement>(null);
 
   return (
     <Grid
@@ -303,7 +309,7 @@ export const PrescriptionLineEditForm: React.FC<
           )}
           <AccordionPanelSection
             title={t('label.quantity')}
-            closedSummary={summarise(draftPrescriptionLines, t)}
+            closedSummary={summarise(draftPrescriptionLines, t, getPlural)}
             defaultExpanded={isNew && !disabled}
             key={key + '_quantity'}
           >
@@ -313,6 +319,7 @@ export const PrescriptionLineEditForm: React.FC<
               display="flex"
               flexDirection="row"
               gap={5}
+              paddingBottom={2}
             >
               {preferences?.editPrescribedQuantityOnPrescription && (
                 <Grid display="flex" alignItems="center" gap={1}>
@@ -358,109 +365,121 @@ export const PrescriptionLineEditForm: React.FC<
                       },
                     },
                   }}
-                  // error
-                  // errorMessage={formState.getError('issueQuantity')}
+                  onKeyDown={e => {
+                    if (e.code === 'Tab') {
+                      e.preventDefault();
+                      abbreviationRef.current?.focus();
+                    }
+                  }}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
-                  {t('label.unit-plural', {
-                    count: issueUnitQuantity,
-                    unit: item?.unitName,
-                  })}
+                  {item.unitName && getPlural(item.unitName, issueUnitQuantity)}
                 </InputLabel>
               </Grid>
             </Grid>
-            <TableWrapper
-              canAutoAllocate={canAutoAllocate}
-              currentItem={item}
-              isLoading={isLoading}
-              packSizeController={packSizeController}
-              updateQuantity={updateQuantity}
-              draftPrescriptionLines={draftPrescriptionLines}
-              allocatedUnits={allocatedUnits}
-              isDisabled={disabled}
-            />
+            <AccordionPanelSection
+              title={t('label.batches')}
+              defaultExpanded={false}
+              key={key + '_table'}
+              backgroundColor="background.white"
+            >
+              <TableWrapper
+                canAutoAllocate={canAutoAllocate}
+                currentItem={item}
+                isLoading={isLoading}
+                packSizeController={packSizeController}
+                updateQuantity={updateQuantity}
+                draftPrescriptionLines={draftPrescriptionLines}
+                allocatedUnits={allocatedUnits}
+                isDisabled={disabled}
+              />
+            </AccordionPanelSection>
           </AccordionPanelSection>
         </>
       )}
       {item && (
         <AccordionPanelSection
           title={t('label.directions')}
-          closedSummary={note}
+          closedSummary={isDirectionsDisabled ? '' : note}
           defaultExpanded={(isNew || !note) && !disabled}
           key={item?.id ?? 'new'}
         >
-          <Grid container paddingBottom={1} gap={1} width={'100%'}>
-            <InputWithLabelRow
-              label={t('label.abbreviation')}
-              Input={
-                <BasicTextInput
-                  value={abbreviation}
-                  disabled={disabled}
-                  onChange={e => {
-                    setAbbreviation(e.target.value);
-                  }}
-                  onBlur={saveAbbreviation}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      saveAbbreviation();
-                    }
-                  }}
-                  style={{ flex: 1 }}
+          {isDirectionsDisabled ? (
+            <Typography>{t('messages.cannot-add-directions')}</Typography>
+          ) : (
+            <>
+              <Grid container paddingBottom={1} gap={1} width={'100%'}>
+                <InputWithLabelRow
+                  label={t('label.abbreviation')}
+                  Input={
+                    <BasicTextInput
+                      inputRef={abbreviationRef}
+                      value={abbreviation}
+                      onChange={e => {
+                        setAbbreviation(e.target.value);
+                      }}
+                      onBlur={saveAbbreviation}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          saveAbbreviation();
+                        }
+                      }}
+                      style={{ flex: 1 }}
+                    />
+                  }
                 />
-              }
-            />
-            <DropdownMenu
-              sx={{ flex: 1 }}
-              selectSx={{ width: '100%' }}
-              label={
-                defaultDirection
-                  ? defaultDirection
-                  : t('placeholder.item-directions')
-              }
-              disabled={disabled}
-            >
-              {item.itemDirections.length == 0 ? (
-                <DropdownMenuItem sx={{ fontSize: 14 }}>
-                  {t('message.no-directions')}
-                </DropdownMenuItem>
-              ) : (
-                item.itemDirections
-                  .sort((a, b) => a.priority - b.priority)
-                  .map(
-                    direction =>
-                      direction && (
-                        <DropdownMenuItem
-                          key={direction.id}
-                          value={defaultDirection}
-                          onClick={() => {
-                            saveDefaultDirection(direction.directions);
-                          }}
-                          sx={{ fontSize: 14 }}
-                        >
-                          {direction.directions}
-                        </DropdownMenuItem>
+                <DropdownMenu
+                  sx={{ flex: 1 }}
+                  selectSx={{ width: '100%' }}
+                  label={
+                    defaultDirection
+                      ? defaultDirection
+                      : t('placeholder.item-directions')
+                  }
+                >
+                  {item.itemDirections.length == 0 ? (
+                    <DropdownMenuItem sx={{ fontSize: 14 }}>
+                      {t('message.no-directions')}
+                    </DropdownMenuItem>
+                  ) : (
+                    item.itemDirections
+                      .sort((a, b) => a.priority - b.priority)
+                      .map(
+                        direction =>
+                          direction && (
+                            <DropdownMenuItem
+                              key={direction.id}
+                              value={defaultDirection}
+                              onClick={() => {
+                                saveDefaultDirection(direction.directions);
+                              }}
+                              sx={{ fontSize: 14 }}
+                            >
+                              {direction.directions}
+                            </DropdownMenuItem>
+                          )
                       )
-                  )
-              )}
-            </DropdownMenu>
-          </Grid>
-          <Grid>
-            <InputWithLabelRow
-              label={t('label.directions')}
-              Input={
-                <TextArea
-                  value={note}
-                  disabled={disabled}
-                  onChange={e => {
-                    updateNotes(e.target.value);
-                    setAbbreviation('');
-                    setDefaultDirection('');
-                  }}
-                  style={{ flex: 1 }}
+                  )}
+                </DropdownMenu>
+              </Grid>
+              <Grid>
+                <InputWithLabelRow
+                  label={t('label.directions')}
+                  Input={
+                    <TextArea
+                      value={note}
+                      onChange={e => {
+                        updateNotes(e.target.value);
+                        setAbbreviation('');
+                        setDefaultDirection('');
+                      }}
+                      style={{ flex: 1 }}
+                    />
+                  }
                 />
-              }
-            />
-          </Grid>
+              </Grid>
+            </>
+          )}
         </AccordionPanelSection>
       )}
       {/* {!item && <Box height={100} />} */}
@@ -536,7 +555,8 @@ const TableWrapper: React.FC<TableProps> = ({
 
 const summarise = (
   lines: DraftPrescriptionLine[],
-  t: TypedTFunction<LocaleKey>
+  t: TypedTFunction<LocaleKey>,
+  getPlural: (word: string, count: number) => string
 ) => {
   // Count how many of each pack size
   const counts: Record<number, { unitName: string; count: number }> = {};
@@ -547,23 +567,33 @@ const summarise = (
     } else {
       counts[packSize] = {
         unitName: (stockLine?.item as ItemNode)?.unitName ?? 'unit',
-        count: NumUtils.round(packSize * numberOfPacks),
+        count: NumUtils.round(packSize * numberOfPacks, 2),
       };
     }
   });
 
   // Summarise counts in words
   const summary: string[] = [];
-  Object.entries(counts).forEach(([size, { unitName, count }]) => {
-    const unitWord = t('label.unit-plural', {
-      count,
-      unit: unitName,
-    });
-    if (Number(size) > 1) {
-      const packs = NumUtils.round(count / Number(size), 3);
-      summary.push(t('label.packs-of-size', { packs, count, size, unitWord }));
+  Object.entries(counts).forEach(([size, { unitName, count: numUnits }]) => {
+    const packSize = Number(size);
+    if (packSize > 1) {
+      const numPacks = NumUtils.round(numUnits / packSize, 3);
+      const packWord = t('label.packs-of', { count: numPacks }); // pack or packs
+      const unitWord = t('label.units-plural', { count: numUnits }); // unit or units
+      const unitType = getPlural(unitName, packSize);
+      summary.push(
+        t('label.packs-of-size', {
+          numPacks,
+          numUnits,
+          packSize,
+          unitType,
+          packWord,
+          unitWord,
+        })
+      );
     } else {
-      summary.push(t('label.packs-of-1', { count, unitWord }));
+      const unitType = getPlural(unitName, numUnits);
+      summary.push(t('label.packs-of-1', { numUnits, unitType }));
     }
   });
 

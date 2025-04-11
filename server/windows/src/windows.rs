@@ -1,3 +1,4 @@
+#![recursion_limit = "256"]
 /// Creates the entry points and event handling to manage running the server
 // under a windows service context
 
@@ -13,6 +14,7 @@ fn main() {
 
 #[cfg(windows)]
 mod omsupply_service {
+    use clap::Parser;
     use eventlog;
     use log::error;
     use server::{configuration, logging_init, start_server};
@@ -32,6 +34,13 @@ mod omsupply_service {
         service_control_handler::{self, ServiceControlHandlerResult, ServiceStatusHandle},
         service_dispatcher, Result,
     };
+
+    #[derive(clap::Parser)]
+    #[clap(version, about)]
+    struct Args {
+        #[clap(flatten)]
+        config_args: configuration::ConfigArgs,
+    }
 
     // used internally by the service control handler - the actual service name can differ
     const SERVICE_NAME: &str = "omsupply_server";
@@ -56,7 +65,8 @@ mod omsupply_service {
         let executable_path = current_exe().unwrap();
         let executable_directory = executable_path.parent().unwrap();
         set_current_dir(&executable_directory).unwrap();
-        let settings: Settings = match configuration::get_configuration() {
+        let args = Args::parse();
+        let settings: Settings = match configuration::get_configuration(args.config_args) {
             Ok(settings) => settings,
             Err(e) => {
                 eventlog::init("Application", log::Level::Error).unwrap();

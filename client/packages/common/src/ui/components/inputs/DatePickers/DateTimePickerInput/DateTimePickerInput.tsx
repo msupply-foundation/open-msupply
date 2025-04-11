@@ -29,6 +29,9 @@ export const DateTimePickerInput: FC<
     textFieldProps?: TextFieldProps;
     showTime?: boolean;
     actions?: PickersActionBarAction[];
+    dateAsEndOfDay?: boolean;
+    disableFuture?: boolean;
+    displayAs?: 'date' | 'dateTime';
   }
 > = ({
   error,
@@ -41,6 +44,9 @@ export const DateTimePickerInput: FC<
   maxDate,
   showTime,
   actions,
+  dateAsEndOfDay,
+  disableFuture,
+  displayAs,
   ...props
 }) => {
   const theme = useAppTheme();
@@ -70,7 +76,9 @@ export const DateTimePickerInput: FC<
       updateDate(maxDate);
       return;
     }
-    updateDate(date);
+
+    const dateToSave = date && dateAsEndOfDay ? DateUtils.endOfDay(date) : date;
+    updateDate(dateToSave);
   };
 
   return (
@@ -142,7 +150,16 @@ export const DateTimePickerInput: FC<
             width,
           },
         },
+        tabs: {
+          hidden: displayAs === 'dateTime' ? false : true,
+        },
         ...(actions ? { actionBar: { actions } } : {}),
+      }}
+      localeText={{
+        okButtonLabel: t('button.ok'),
+        cancelButtonLabel: t('button.cancel'),
+        clearButtonLabel: t('button.clear'),
+        todayButtonLabel: t('button.today'),
       }}
       views={
         showTime
@@ -151,6 +168,7 @@ export const DateTimePickerInput: FC<
       }
       minDate={minDate}
       maxDate={maxDate}
+      disableFuture={disableFuture}
       {...props}
       value={value}
     />

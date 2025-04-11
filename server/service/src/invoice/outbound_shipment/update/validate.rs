@@ -4,6 +4,7 @@ use crate::invoice::{
     check_status_change, check_store, InvoiceRowStatusError,
 };
 use crate::validate::get_other_party;
+use chrono::Utc;
 use repository::{EqualFilter, NameLinkRowRepository};
 use repository::{
     InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
@@ -55,6 +56,9 @@ pub fn validate(
             },
         )?;
         check_can_change_status_to_allocated(connection, &invoice, patch.full_status())?;
+        if check_expected_delivery_date_before_shipped_date(patch.full_status(), &invoice) {
+            return Err(CannotHaveEstimatedDeliveryDateBeforeShippedDate);
+        }
     }
     Ok((invoice, status_changed))
 }
@@ -94,4 +98,19 @@ fn check_can_change_status_to_allocated(
     }
 
     Ok(())
+}
+
+fn check_expected_delivery_date_before_shipped_date(
+    status_option: Option<InvoiceStatus>,
+    invoice: &InvoiceRow,
+) -> bool {
+    if status_option != Some(InvoiceStatus::Shipped) {
+        return false;
+    }
+
+    if let Some(expected_delivery_date) = invoice.expected_delivery_date {
+        return expected_delivery_date < Utc::now().date_naive();
+    }
+
+    false
 }

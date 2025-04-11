@@ -33,7 +33,6 @@ const defaultDraftStockLine: DraftStockLine = {
     name: '',
   },
   inventoryAdjustmentReason: null,
-  masterList: [],
 };
 
 export function useStockLine(id?: string) {
@@ -50,7 +49,7 @@ export function useStockLine(id?: string) {
   } = useUpdate(id ?? '');
 
   const { patch, updatePatch, resetDraft, isDirty } =
-    usePatchState<DraftStockLine>(data ?? {});
+    usePatchState<DraftStockLine>(data?.nodes[0] ?? {});
 
   const draft: DraftStockLine = data
     ? { ...defaultDraftStockLine, ...data?.nodes[0], ...patch }

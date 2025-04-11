@@ -7,6 +7,7 @@ import {
   AutocompleteInputChangeReason,
   AutocompleteProps as MuiAutocompleteProps,
   PopperProps,
+  SxProps,
 } from '@mui/material';
 import {
   AutocompleteOption,
@@ -16,6 +17,7 @@ import {
 import { BasicTextInput, BasicTextInputProps } from '../TextInput';
 import { StyledPopper } from './components';
 import { useOpenStateWithKeyboard } from './utils';
+import { useTranslation } from '@common/intl';
 
 export interface AutocompleteProps<T>
   extends Omit<
@@ -47,6 +49,8 @@ export interface AutocompleteProps<T>
   inputValue?: string;
   popperMinWidth?: number;
   inputProps?: BasicTextInputProps;
+  required?: boolean;
+  textSx?: SxProps;
 }
 
 export function Autocomplete<T>({
@@ -73,12 +77,16 @@ export function Autocomplete<T>({
   getOptionLabel,
   popperMinWidth,
   inputProps,
+  required,
+  textSx,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
+  const t = useTranslation();
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
+      required={required}
       {...props}
       {...inputProps}
       autoFocus={autoFocus}
@@ -86,7 +94,8 @@ export function Autocomplete<T>({
         input: {
           disableUnderline: false,
           sx: {
-            paddingLeft: 1,
+            padding: '4px !important',
+            ...textSx,
           },
           ...props.InputProps,
         },
@@ -127,8 +136,8 @@ export function Autocomplete<T>({
       getOptionDisabled={getOptionDisabled}
       filterOptions={filter}
       loading={loading}
-      loadingText={loadingText}
-      noOptionsText={noOptionsText}
+      loadingText={loadingText ?? t('loading')}
+      noOptionsText={noOptionsText ?? t('label.no-options')}
       options={options}
       size="small"
       renderInput={renderInput || defaultRenderInput}
@@ -140,11 +149,6 @@ export function Autocomplete<T>({
       }}
       sx={{
         ...restOfAutocompleteProps.sx,
-        background: theme =>
-          disabled
-            ? theme.palette.background.toolbar
-            : theme.palette.background.drawer,
-        borderRadius: 2,
         paddingTop: 0.5,
         paddingBottom: 0.5,
       }}

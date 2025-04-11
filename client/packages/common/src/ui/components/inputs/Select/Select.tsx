@@ -53,7 +53,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                 props.disabled
                   ? theme.palette.background.toolbar
                   : theme.palette.background.menu,
-              borderRadius: '8px',
+              borderRadius: 1,
               padding: '4px 8px',
             },
           },

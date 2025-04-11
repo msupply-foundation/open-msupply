@@ -29,7 +29,14 @@ export const useImmunisationProgramList = (queryParams: ListParams) => {
     filterBy,
   } = queryParams;
 
-  const queryKey = [IMMUNISATION_PROGRAM, LIST, sortBy, first, offset, filterBy];
+  const queryKey = [
+    IMMUNISATION_PROGRAM,
+    LIST,
+    sortBy,
+    first,
+    offset,
+    filterBy,
+  ];
   const queryFn = async (): Promise<{
     nodes: ImmunisationProgramFragment[];
     totalCount: number;

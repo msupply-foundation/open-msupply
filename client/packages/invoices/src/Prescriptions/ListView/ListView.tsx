@@ -14,6 +14,7 @@ import {
   useUrlQueryParams,
   ColumnFormat,
   GenericColumnKey,
+  getCommentPopoverColumn,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
 import { usePrescriptionList, usePrescription } from '../api';
@@ -46,9 +47,10 @@ const PrescriptionListViewComponent: FC = () => {
     initialSort: { key: 'prescriptionDatetime', dir: 'desc' },
     filters: [
       { key: 'otherPartyName' },
+      { key: 'theirReference' },
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
       {
-        key: 'pickedDatetime',
+        key: 'createdOrBackdatedDatetime',
         condition: 'between',
       },
       {
@@ -96,7 +98,8 @@ const PrescriptionListViewComponent: FC = () => {
             : rowData.createdDatetime,
         sortable: true,
       },
-      ['comment'],
+      ['theirReference', { description: '', maxWidth: 110 }],
+      getCommentPopoverColumn(),
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
@@ -125,7 +128,7 @@ const PrescriptionListViewComponent: FC = () => {
           />
         }
         onRowClick={row => {
-          navigate(String(row.invoiceNumber));
+          navigate(row.id);
         }}
       />
       <Footer listParams={listParams} />

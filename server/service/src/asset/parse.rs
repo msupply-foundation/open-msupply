@@ -4,9 +4,23 @@ use repository::{
     asset_catalogue_item::{AssetCatalogueItemFilter, AssetCatalogueItemRepository},
     EqualFilter, RepositoryError, StringFilter,
 };
+use serde::{Deserialize, Serialize};
 use util::{GS1DataElement, GS1};
 
 use crate::service_provider::ServiceContext;
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LockedAssetFields {
+    #[serde(default)]
+    pub serial_number: bool,
+    #[serde(default)]
+    pub catalogue_item_id: bool,
+    #[serde(default)]
+    pub warranty_start: bool,
+    #[serde(default)]
+    pub warranty_end: bool,
+}
 
 #[derive(Debug)]
 pub enum AssetFromGs1Error {
@@ -72,7 +86,12 @@ fn lookup_asset_catalogue_id_by_pqs_code(
 fn create_draft_asset_from_gs1(ctx: &ServiceContext, gs1: GS1) -> Result<Asset, AssetFromGs1Error> {
     let mut asset = Asset::default();
 
+    let mut locked_fields = LockedAssetFields::default();
+
     asset.serial_number = gs1.serial_number();
+    if asset.serial_number.is_some() {
+        locked_fields.serial_number = true;
+    }
 
     // Default the asset Number to the part number and serial number
     asset.asset_number = Some(format!(
@@ -86,13 +105,25 @@ fn create_draft_asset_from_gs1(ctx: &ServiceContext, gs1: GS1) -> Result<Asset, 
     if let Some((warranty_start, warranty_end)) = warranty_option {
         asset.warranty_start = Some(warranty_start);
         asset.warranty_end = Some(warranty_end);
+        locked_fields.warranty_start = true;
+        locked_fields.warranty_end = true;
     }
 
     if let Some(part_number) = gs1.part_number() {
         asset.catalogue_item_id = lookup_asset_catalogue_id_by_pqs_code(ctx, &part_number)?;
+        if asset.catalogue_item_id.is_some() {
+            locked_fields.catalogue_item_id = true;
+        }
     }
 
     asset.installation_date = Some(Utc::now().naive_local().date()); // Default to today's date
+
+    let locked_fields_json = serde_json::to_string(&locked_fields).map_err(|e| {
+        log::error!("Failed to serialize locked fields: {}", e);
+        AssetFromGs1Error::ParseError
+    })?;
+
+    asset.locked_fields_json = Some(locked_fields_json);
 
     Ok(asset)
 }

@@ -8,6 +8,7 @@ import {
   useBreadcrumbs,
   DeleteIcon,
   LoadingButton,
+  SaveIcon,
   // useAuthContext,
   // UserPermission,
 } from '@openmsupply-client/common';
@@ -66,6 +67,7 @@ export const FooterComponent = ({
                   // !userHasPermission(UserPermission.AssetMutate)
                 }
                 isLoading={isSaving}
+                startIcon={<SaveIcon />}
                 onClick={showSaveConfirmation}
                 label={t('button.save')}
               />

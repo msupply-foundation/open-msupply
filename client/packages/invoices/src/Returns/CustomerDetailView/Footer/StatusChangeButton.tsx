@@ -53,8 +53,8 @@ const getStatusOptions = (
     },
   ];
 
-  if (currentStatus === InvoiceNodeStatus.New) {
-    // When new, can change to delivered or verified
+  if (currentStatus === InvoiceNodeStatus.Shipped) {
+    // When shipped, can change to delivered or verified
     options[3].isDisabled = false;
     options[4].isDisabled = false;
   }

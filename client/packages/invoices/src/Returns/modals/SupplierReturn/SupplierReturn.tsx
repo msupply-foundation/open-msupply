@@ -10,6 +10,7 @@ import {
   ModalMode,
   AlertColor,
   useFormErrors,
+  useNotification,
 } from '@openmsupply-client/common';
 import { ItemSelector } from './ItemSelector';
 import { ReturnSteps, Tabs } from './ReturnSteps';
@@ -20,6 +21,7 @@ interface SupplierReturnEditModalProps {
   isOpen: boolean;
   stockLineIds: string[];
   onClose: () => void;
+  onCreate?: () => void;
   supplierId: string;
   returnId?: string;
   inboundShipmentId?: string;
@@ -34,6 +36,7 @@ export const SupplierReturnEditModal = ({
   isOpen,
   stockLineIds,
   onClose,
+  onCreate,
   supplierId,
   returnId,
   initialItemId,
@@ -45,6 +48,7 @@ export const SupplierReturnEditModal = ({
 }: SupplierReturnEditModalProps) => {
   const t = useTranslation();
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
+  const { success } = useNotification();
   const [itemId, setItemId] = useState<string | undefined>(
     initialItemId ?? undefined
   );
@@ -77,7 +81,12 @@ export const SupplierReturnEditModal = ({
 
   const onOk = async () => {
     try {
-      !isDisabled && (await save());
+      const supplierReturn = !isDisabled && (await save());
+      onCreate?.();
+      !!supplierReturn &&
+        supplierReturn?.originalShipment?.id &&
+        isNewReturn &&
+        success(t('messages.supplier-return-created-shipped'))();
       onClose();
     } catch {
       // TODO: handle error display...

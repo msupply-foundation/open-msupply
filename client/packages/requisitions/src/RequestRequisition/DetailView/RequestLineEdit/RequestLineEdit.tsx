@@ -19,14 +19,16 @@ import {
   TextArea,
   useAuthContext,
   useNavigate,
+  usePluginProvider,
+  useTheme,
   useToggle,
+  useWindowDimensions,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { Footer } from './Footer';
 import { RequestStats } from './ItemCharts/RequestStats';
-import { RequestLineFragment } from '../../api';
+import { RequestFragment, RequestLineFragment } from '../../api';
 import { buildItemEditRoute } from '../utils';
-import { ItemInformationView } from './ItemInformation';
 
 const INPUT_WIDTH = 100;
 const LABEL_WIDTH = '150px';
@@ -45,10 +47,10 @@ interface RequestLineEditProps {
   isPacks: boolean;
   setIsPacks: (isPacks: boolean) => void;
   lines: RequestLineFragment[];
-  requisitionNumber?: number;
-  requisitionId: string;
+  requisition: RequestFragment;
   insert: (patch: InsertRequestRequisitionLineInput) => void;
   scrollIntoView: () => void;
+  disabled?: boolean;
 }
 
 export const RequestLineEdit = ({
@@ -64,25 +66,26 @@ export const RequestLineEdit = ({
   isPacks,
   setIsPacks,
   lines,
-  requisitionNumber,
-  requisitionId,
+  requisition,
   insert,
   scrollIntoView,
+  disabled: isSent,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const { plugins } = usePluginProvider();
   const { isOn, toggle } = useToggle();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const { store } = useAuthContext();
   const useConsumptionData =
     store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
   const isNew = !draft?.id;
-  const showItemInformation =
-    useConsumptionData && !!draft?.itemInformation && isProgram;
-  const itemInformationSorted = draft?.itemInformation
-    ?.sort((a, b) => a.name.name.localeCompare(b.name.name))
-    .sort((a, b) => b.amcInUnits - a.amcInUnits)
-    .sort((a, b) => b.stockInUnits - a.stockInUnits);
+
+  const line = lines.find(line => line.id === draft?.id);
+  const { width } = useWindowDimensions();
+  const { id: requisitionId } = requisition;
+  const theme = useTheme();
+
   return (
     <Box display="flex" flexDirection="column" padding={2}>
       <Box display="flex" justifyContent="space-between">
@@ -96,7 +99,9 @@ export const RequestLineEdit = ({
                     requisitionId: requisitionId,
                     itemId: newItem.id,
                   });
-                  navigate(buildItemEditRoute(requisitionNumber, newItem.id));
+                  navigate(buildItemEditRoute(requisitionId, newItem.id), {
+                    replace: true,
+                  });
                 }
               }}
               openOnFocus={true}
@@ -213,6 +218,10 @@ export const RequestLineEdit = ({
                 label={t('label.amc')}
                 sx={{ marginBottom: 1 }}
               />
+              {line &&
+                plugins.requestRequisitionLine?.editViewField?.map(
+                  (Field, index) => <Field key={index} line={line} />
+                )}
               {isProgram && useConsumptionData && (
                 <InputWithLabelRow
                   Input={
@@ -245,8 +254,15 @@ export const RequestLineEdit = ({
                       checked={isPacks}
                       onChange={(_event, checked) => setIsPacks(checked)}
                       size="small"
+                      disabled={isSent}
                     />
-                    <Box paddingLeft={2} paddingRight={2}>
+                    <Box
+                      paddingLeft={2}
+                      paddingRight={2}
+                      sx={{
+                        color: isSent ? theme.palette.text.disabled : '',
+                      }}
+                    >
                       {t('label.packs')}
                     </Box>
                   </Box>
@@ -259,7 +275,7 @@ export const RequestLineEdit = ({
                     <NumericTextInput
                       width={INPUT_WIDTH}
                       value={Math.ceil(draft?.requestedQuantity)}
-                      disabled={isPacks}
+                      disabled={isPacks || isSent}
                       onChange={value => {
                         const newValue = isNaN(Number(value)) ? 0 : value;
                         if (draft?.suggestedQuantity === newValue) {
@@ -311,10 +327,10 @@ export const RequestLineEdit = ({
                   <InputWithLabelRow
                     Input={
                       <NumericTextInput
-                        disabled={!isPacks}
+                        disabled={!isPacks || isSent}
                         value={NumUtils.round(
                           (draft?.requestedQuantity ?? 0) /
-                            (draft?.defaultPackSize ?? 1),
+                          (draft?.defaultPackSize ?? 1),
                           2
                         )}
                         decimalLimit={2}
@@ -377,7 +393,8 @@ export const RequestLineEdit = ({
                       width={200}
                       type={ReasonOptionNodeType.RequisitionLineVariance}
                       isDisabled={
-                        draft?.requestedQuantity === draft?.suggestedQuantity
+                        draft?.requestedQuantity === draft?.suggestedQuantity ||
+                        isSent
                       }
                       onBlur={save}
                     />
@@ -401,6 +418,7 @@ export const RequestLineEdit = ({
                       },
                     }}
                     onBlur={save}
+                    disabled={isSent}
                   />
                 }
                 sx={{ width: 275 }}
@@ -411,21 +429,21 @@ export const RequestLineEdit = ({
           </>
         )}
       </Box>
-      {showItemInformation && (
-        <Box paddingTop={1} maxHeight={200} width="100%" display="flex">
-          <ItemInformationView
-            itemInformation={itemInformationSorted}
-            storeNameId={store?.nameId}
-          />
-        </Box>
-      )}
+
+      <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
+        {line &&
+          plugins.requestRequisitionLine?.editViewInfo?.map((Info, index) => (
+            <Info key={index} line={line} requisition={requisition} />
+          ))}
+      </Box>
+
       <Box>
         <Footer
           hasNext={hasNext}
           next={next}
           hasPrevious={hasPrevious}
           previous={previous}
-          requisitionNumber={draft?.requisitionNumber}
+          requisitionId={draft?.requisitionId}
           scrollIntoView={scrollIntoView}
         />
       </Box>

@@ -3,10 +3,7 @@ import { StoryFn, Meta } from '@storybook/react';
 import { InlineSpinner } from './InlineSpinner';
 import { Box } from '@mui/material';
 
-const Template: StoryFn<typeof InlineSpinner> = ({
-  color,
-  messageKey,
-}) => (
+const Template: StoryFn<typeof InlineSpinner> = ({ color, messageKey }) => (
   <Box>
     <Box style={{ width: 250, height: 100, border: '1px solid green' }}>
       Showing three boxes, all 100 x 250px, with default flex alignment.

@@ -1,4 +1,5 @@
 mod asset;
+mod plugin_data;
 mod test;
 
 use std::time::Duration;
@@ -44,7 +45,7 @@ async fn test_omsupply_central_records(identifier: &str, tester: &dyn SyncRecord
         connection,
         synchroniser,
         ..
-    } = init_test_context(&sync_settings, &identifier).await;
+    } = init_test_context(&sync_settings, identifier).await;
 
     let steps_data = tester.test_step_data(&new_site_properties);
     // First sync is required to get central server URL (before graphql queries are called)
@@ -102,7 +103,7 @@ async fn test_omsupply_central_remote_records(identifier: &str, tester: &dyn Syn
         connection,
         synchroniser,
         ..
-    } = init_test_context(&sync_settings, &identifier).await;
+    } = init_test_context(&sync_settings, identifier).await;
 
     let steps_data = tester.test_step_data(&new_site_properties);
     // First sync is required to get central server URL (before graphql queries are called)

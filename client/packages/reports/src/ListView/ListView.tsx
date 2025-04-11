@@ -48,6 +48,7 @@ export const ListView = () => {
       report?.context === ReportContext.Dispensary &&
       store?.preferences?.omProgramModule &&
       (report?.subContext === 'HIVCareProgram' ||
+        report.subContext === 'Vaccinations' ||
         report.subContext === 'Encounters')
   );
   const otherReports = data?.nodes?.filter(

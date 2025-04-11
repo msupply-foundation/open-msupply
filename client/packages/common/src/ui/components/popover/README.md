@@ -10,5 +10,4 @@ Components related to showing some sort of popover - i.e. some container which h
 
 ### Tips & Things to keep in mind
 
-
 ### Future considerations

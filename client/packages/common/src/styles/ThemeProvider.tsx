@@ -49,18 +49,18 @@ const ThemeProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const { getLocale } = useIntlUtils();
 
   return (
-    <LocalizationProvider
-      dateAdapter={AdapterDateFns}
-      adapterLocale={getLocale()}
-    >
-      <CacheProvider value={appTheme.direction === 'rtl' ? cacheRtl : cacheLtr}>
-        <RTLProvider>
+    <CacheProvider value={appTheme.direction === 'rtl' ? cacheRtl : cacheLtr}>
+      <RTLProvider>
+        <LocalizationProvider
+          dateAdapter={AdapterDateFns}
+          adapterLocale={getLocale()}
+        >
           <ThemeContext.Provider value={{ theme: appTheme }}>
             <ThemeProviderProxy>{children}</ThemeProviderProxy>
           </ThemeContext.Provider>
-        </RTLProvider>
-      </CacheProvider>
-    </LocalizationProvider>
+        </LocalizationProvider>
+      </RTLProvider>
+    </CacheProvider>
   );
 };
 

@@ -17,7 +17,7 @@ export const useInitPlugins = () => {
     const plugins = await query();
 
     for (const plugin of plugins) {
-      let pluginBundle = await loadRemotePlugin(plugin);
+      const pluginBundle = await loadRemotePlugin(plugin);
       addPluginBundle(pluginBundle, plugin.code);
     }
   };

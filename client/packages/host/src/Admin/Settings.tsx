@@ -24,6 +24,8 @@ import { LabelPrinterSettings } from './LabelPrinterSettings';
 import { Printers } from './Printers';
 import { ConfigurationSettings } from './ConfigurationSettings';
 import { ServerInfo } from './ServerInfo';
+import { Environment } from 'packages/config/src';
+import { useIsGapsStoreOnly } from '@openmsupply-client/common';
 
 export const Settings: React.FC = () => {
   const { data: initStatus } = useInitialisationStatus();
@@ -31,6 +33,7 @@ export const Settings: React.FC = () => {
 
   const isCentralServer = useIsCentralServerApi();
   const { userHasPermission } = useAuthContext();
+  const isGapsStoreOnly = useIsGapsStoreOnly();
 
   const toggleSection = (index: number) => () =>
     setActiveSection(activeSection === index ? null : index);
@@ -74,15 +77,17 @@ export const Settings: React.FC = () => {
         <LabelPrinterSettings />
         <ElectronSettings />
       </SettingsSection>
-      <SettingsSection
-        Icon={PrinterIcon}
-        titleKey="heading.printers"
-        expanded={activeSection === 4}
-        onChange={toggleSection(4)}
-        visible={true}
-      >
-        <Printers />
-      </SettingsSection>
+      {Environment.FEATURE_PRINTER_SETTINGS && (
+        <SettingsSection
+          Icon={PrinterIcon}
+          titleKey="heading.printers"
+          expanded={activeSection === 4}
+          onChange={toggleSection(4)}
+          visible={true}
+        >
+          <Printers />
+        </SettingsSection>
+      )}
       {isCentralServer && (
         <SettingsSection
           Icon={ListIcon}
@@ -94,16 +99,18 @@ export const Settings: React.FC = () => {
           <ConfigurationSettings />
         </SettingsSection>
       )}
-      <AppBarButtonsPortal>
-        <Box
-          flex={1}
-          display="flex"
-          justifyContent="flex-end"
-          flexDirection="column"
-        >
-          <ServerInfo siteName={initStatus?.siteName} />
-        </Box>
-      </AppBarButtonsPortal>
+      {!isGapsStoreOnly && (
+        <AppBarButtonsPortal>
+          <Box
+            flex={1}
+            display="flex"
+            justifyContent="flex-end"
+            flexDirection="column"
+          >
+            <ServerInfo siteName={initStatus?.siteName} />
+          </Box>
+        </AppBarButtonsPortal>
+      )}
     </Box>
   );
 };

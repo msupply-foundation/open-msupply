@@ -11,14 +11,14 @@ import { canDeleteSupplierReturn } from '../../../../utils';
 import { useSupplierReturns } from './useSupplierReturns';
 
 export const useSupplierDeleteRows = () => {
+  const t = useTranslation();
   const queryClient = useQueryClient();
+  const api = useReturnsApi();
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
   });
   const { data: rows } = useSupplierReturns(queryParams);
-  const api = useReturnsApi();
   const { mutateAsync } = useMutation(api.deleteSupplier);
-  const t = useTranslation();
 
   const selectedRows = useTableStore(
     state =>

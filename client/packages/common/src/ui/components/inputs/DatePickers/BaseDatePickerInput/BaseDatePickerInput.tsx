@@ -53,6 +53,7 @@ export const BaseDatePickerInput: FC<
     // This allows a calling component to know whether the date was changed via
     // keyboard input or the picker UI
     setIsOpen?: (open: boolean) => void;
+    required?: boolean;
   }
 > = ({
   error,
@@ -62,12 +63,13 @@ export const BaseDatePickerInput: FC<
   label,
   textFieldProps,
   setIsOpen,
+  required,
   ...props
 }) => {
+  const t = useTranslation();
   const theme = useAppTheme();
   const [internalError, setInternalError] = useState<string | null>(null);
   const [isInitialEntry, setIsInitialEntry] = useState(true);
-  const t = useTranslation();
 
   return (
     <DesktopDatePicker
@@ -124,6 +126,7 @@ export const BaseDatePickerInput: FC<
           error: !isInitialEntry && (!!error || !!internalError),
           helperText: !isInitialEntry ? (error ?? internalError ?? '') : '',
           label,
+          required,
           onBlur: () => setIsInitialEntry(false),
           ...textFieldProps,
           sx: {
@@ -134,6 +137,12 @@ export const BaseDatePickerInput: FC<
             ...textFieldProps?.sx,
           },
         },
+      }}
+      localeText={{
+        okButtonLabel: t('button.ok'),
+        cancelButtonLabel: t('button.cancel'),
+        clearButtonLabel: t('button.clear'),
+        todayButtonLabel: t('button.today'),
       }}
       {...props}
       value={DateUtils.getDateOrNull(props.value)}

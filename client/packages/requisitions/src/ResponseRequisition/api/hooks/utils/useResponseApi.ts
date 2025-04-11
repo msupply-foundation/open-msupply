@@ -13,8 +13,7 @@ export const useResponseApi = () => {
     statsData: (lineId: string) => [...keys.base(), lineId, storeId] as const,
     programSettings: () =>
       [...keys.base(), 'programSettings', storeId] as const,
-    indicators: () =>
-      [...keys.base(), 'indicators', storeId] as const,
+    indicators: () => [...keys.base(), 'indicators', storeId] as const,
   };
 
   const { client } = useGql();

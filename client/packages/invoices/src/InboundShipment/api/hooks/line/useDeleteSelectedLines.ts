@@ -7,12 +7,14 @@ import {
 import { useIsInboundDisabled } from '../utils/useIsInboundDisabled';
 import { useDeleteInboundLines } from './useDeleteInboundLines';
 import { useInboundRows } from './useInboundRows';
+import { useInboundShipmentLineErrorContext } from '../../../context/inboundShipmentLineError';
 
 export const useDeleteSelectedLines = (): (() => void) => {
+  const t = useTranslation();
   const { items, lines } = useInboundRows();
   const { mutateAsync } = useDeleteInboundLines();
   const isDisabled = useIsInboundDisabled();
-  const t = useTranslation();
+  const errorsContext = useInboundShipmentLineErrorContext();
 
   const selectedRows =
     useTableStore(state => {
@@ -44,30 +46,38 @@ export const useDeleteSelectedLines = (): (() => void) => {
     if (!deletedLines) {
       return;
     }
-    for (const line of deletedLines) {
-      if (line.response.__typename !== 'DeleteResponse') {
-        switch (line.response.error.__typename) {
-          case 'BatchIsReserved':
-            const row = selectedRows.find(it => it.id === line.id);
-            throw Error(
-              t('label.inbound-shipment-cant-delete-reserved-line', {
-                batch: row?.batch ?? '',
-                itemCode: row?.item.code ?? '?',
-              })
-            );
-            break;
-          case 'TransferredShipment':
-            throw Error(t('messages.cant-delete-transferred'));
-          case 'CannotEditInvoice':
-          case 'ForeignKeyError':
-          case 'RecordNotFound':
-            // We don't have an error message for it return the original message
-            throw Error(line.response.error.description);
-          default:
-            noOtherVariants(line.response.error);
-        }
+    errorsContext.unsetAll();
+
+    deletedLines?.forEach(line => {
+      if (line.response.__typename === 'DeleteResponse') return;
+      const { error } = line.response;
+      switch (error.__typename) {
+        case 'BatchIsReserved':
+          const row = selectedRows.find(it => it.id === line.id);
+          throw Error(
+            t('label.inbound-shipment-cant-delete-reserved-line', {
+              batch: row?.batch ?? '',
+              itemCode: row?.item.code ?? '?',
+            })
+          );
+        case 'LineLinkedToTransferredInvoice':
+          errorsContext.setError(line.id, error);
+          throw Error(t('messages.cant-delete-transferred'));
+        case 'CannotEditInvoice':
+        case 'ForeignKeyError':
+        case 'RecordNotFound':
+          throw Error(t('error.database-error'));
+        default:
+          noOtherVariants(error);
       }
-    }
+    });
+  };
+
+
+  const handleCantDelete = ({ isDisabled }: { isDisabled: boolean }
+  ) => {
+    if (isDisabled) return t('label.cant-delete-disabled');
+    return (err: Error) => err.message;
   };
 
   const confirmAndDelete = useDeleteConfirmation({
@@ -81,7 +91,7 @@ export const useDeleteSelectedLines = (): (() => void) => {
       deleteSuccess: t('messages.deleted-lines', {
         count: selectedRows.length,
       }),
-      cantDelete: (err: Error) => err.message,
+      cantDelete: handleCantDelete({ isDisabled }),
     },
   });
 

@@ -1,11 +1,16 @@
 use crate::{
-    activity_log::activity_log_entry, requisition::query::get_requisition,
+    activity_log::activity_log_entry,
+    backend_plugin::{
+        plugin_provider::{PluginError, PluginInstance},
+        types::transform_request_requisition_lines::Context,
+    },
+    requisition::query::get_requisition,
     service_provider::ServiceContext,
 };
 use chrono::NaiveDate;
 use repository::{
-    ActivityLogType, RepositoryError, Requisition, RequisitionLine, RequisitionLineRowRepository,
-    RequisitionRowRepository,
+    ActivityLogType, PluginDataRowRepository, RepositoryError, Requisition, RequisitionLine,
+    RequisitionLineRowRepository, RequisitionRowRepository,
 };
 
 mod generate;
@@ -53,6 +58,7 @@ pub enum UpdateRequestRequisitionError {
     ReasonsNotProvided(Vec<RequisitionLine>),
     // Internal
     UpdatedRequisitionDoesNotExist,
+    PluginError(PluginError),
     DatabaseError(RepositoryError),
     // Cannot be an error, names are filtered so that name linked to current store is not shown
     // OtherPartyIsThisStore
@@ -73,7 +79,20 @@ pub fn update_request_requisition(
                 updated_requisition_lines,
                 empty_lines_to_trim,
             } = generate(connection, requisition_row, input.clone())?;
+
             RequisitionRowRepository::new(connection).upsert_one(&updated_requisition_row)?;
+
+            let (updated_requisition_lines, plugin_data_rows) =
+                PluginInstance::transform_request_requisition_lines(
+                    Context::UpdateRequestRequisition,
+                    updated_requisition_lines,
+                    &updated_requisition_row,
+                )
+                .map_err(OutError::PluginError)?;
+            let plugin_data_repository = PluginDataRowRepository::new(connection);
+            for plugin_data in plugin_data_rows {
+                plugin_data_repository.upsert_one(&plugin_data)?;
+            }
 
             let requisition_line_row_repository = RequisitionLineRowRepository::new(connection);
 

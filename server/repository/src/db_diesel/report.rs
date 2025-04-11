@@ -27,6 +27,7 @@ pub struct ReportMetaData {
     pub is_custom: bool,
     pub version: Version,
     pub code: String,
+    pub is_active: bool,
 }
 
 impl ReportMetaData {
@@ -36,6 +37,7 @@ impl ReportMetaData {
             is_custom: report.is_custom,
             version: Version::from_str(&report.version),
             code: report.code,
+            is_active: report.is_active,
         }
     }
 }
@@ -48,6 +50,7 @@ pub struct ReportFilter {
     pub sub_context: Option<EqualFilter<String>>,
     pub code: Option<EqualFilter<String>>,
     pub is_custom: Option<bool>,
+    pub is_active: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -85,6 +88,11 @@ impl ReportFilter {
 
     pub fn is_custom(mut self, value: bool) -> Self {
         self.is_custom = Some(value);
+        self
+    }
+
+    pub fn is_active(mut self, value: bool) -> Self {
+        self.is_active = Some(value);
         self
     }
 }
@@ -176,6 +184,7 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
             sub_context,
             code,
             is_custom,
+            is_active,
         } = f;
 
         apply_equal_filter!(query, id, report::id);
@@ -185,6 +194,9 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
         apply_equal_filter!(query, code, report::code);
         if let Some(is_custom) = is_custom {
             query = query.filter(report::is_custom.eq(is_custom));
+        }
+        if let Some(is_active) = is_active {
+            query = query.filter(report::is_active.eq(is_active));
         }
     }
 

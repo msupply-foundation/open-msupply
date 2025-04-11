@@ -8,7 +8,7 @@ export { UseTranslationResponse } from 'react-i18next';
 
 export interface TypedTFunction<Keys> {
   // basic usage
-  (key: Keys, options?: TOptions<Record<string, unknown>>): string;
+  (key: Keys, options?: TOptions<Record<string, unknown>> | string): string;
 }
 
 // export { useTranslation };
@@ -33,13 +33,13 @@ export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
 
       return key
         ? t(key, options)
-        : String(defaultValue || opts?.defaultValue || '');
+        : String(defaultValue || options?.defaultValue || '');
     },
     [t]
   );
 };
 
-export const translationExistsInLocale = (key: string): boolean => {
+export const useTranslationExistsInLocale = (key: string): boolean => {
   const { i18n } = useIntl();
   return i18n.exists(key);
 };

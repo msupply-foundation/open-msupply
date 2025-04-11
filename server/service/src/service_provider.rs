@@ -36,6 +36,7 @@ use crate::{
     name::{NameService, NameServiceTrait},
     plugin::{FrontendPluginCache, PluginService, PluginServiceTrait},
     plugin_data::{PluginDataService, PluginDataServiceTrait},
+    preference::{PreferenceService, PreferenceServiceTrait},
     pricing::{PricingService, PricingServiceTrait},
     printer::{PrinterService, PrinterServiceTrait},
     processors::ProcessorsTrigger,
@@ -176,6 +177,8 @@ pub struct ServiceProvider {
     pub contact_form_service: Box<dyn ContactFormServiceTrait>,
     // Cache
     pub(crate) frontend_plugins_cache: FrontendPluginCache,
+    // Preferences
+    pub preference_service: Box<dyn PreferenceServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -277,6 +280,7 @@ impl ServiceProvider {
             insurance_provider_service: Box::new(InsuranceProviderService {}),
             printer_service: Box::new(PrinterService {}),
             frontend_plugins_cache: FrontendPluginCache::new(),
+            preference_service: Box::new(PreferenceService {}),
         }
     }
 

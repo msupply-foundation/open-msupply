@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   TableProvider,
   DataTable,
@@ -13,13 +13,18 @@ import {
   useAuthContext,
   useNavigate,
   ColumnDescription,
-  Formatter,
+  useCallbackWithPermission,
+  UserPermission,
+  useTranslation,
+  GenderType,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { usePatientStore } from '@openmsupply-client/programs';
 import { ChipTableCell } from '../Components';
+import { CreatePatientModal } from '../CreatePatientModal';
+import { getGenderTranslationKey } from '../PatientView/utils';
 
 export const programEnrolmentLabelAccessor: ColumnDataAccessor<
   PatientRowFragment,
@@ -34,6 +39,8 @@ export const programEnrolmentLabelAccessor: ColumnDataAccessor<
 };
 
 const PatientListComponent: FC = () => {
+  const t = useTranslation();
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -65,6 +72,11 @@ const PatientListComponent: FC = () => {
     sortBy,
   };
 
+  const onCreatePatient = useCallbackWithPermission(
+    UserPermission.PatientMutate,
+    () => setCreateModalOpen(true)
+  );
+
   const { setDocumentName } = usePatientStore();
 
   const { data, isError, isLoading } = usePatient.document.list(queryParams);
@@ -94,7 +106,7 @@ const PatientListComponent: FC = () => {
     {
       key: 'gender',
       label: 'label.gender',
-      formatter: gender => Formatter.enumCase((gender as string) ?? ''),
+      formatter: gender => t(getGenderTranslationKey(gender as GenderType)),
     },
     {
       key: 'dateOfBirth',
@@ -153,8 +165,16 @@ const PatientListComponent: FC = () => {
           setDocumentName(row.document?.name);
           navigate(String(row.id));
         }}
-        noDataElement={<NothingHere />}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-patients')}
+            onCreate={onCreatePatient}
+          />
+        }
       />
+      {createModalOpen ? (
+        <CreatePatientModal onClose={() => setCreateModalOpen(false)} />
+      ) : null}
     </>
   );
 };

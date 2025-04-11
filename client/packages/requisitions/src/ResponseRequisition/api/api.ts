@@ -149,6 +149,18 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Record not found');
     },
+    byId: async (requisitionId: string): Promise<ResponseFragment> => {
+      const result = await sdk.responseById({
+        storeId,
+        requisitionId: requisitionId,
+      });
+
+      if (result?.requisition.__typename === 'RequisitionNode') {
+        return result?.requisition;
+      }
+
+      throw new Error('Record not found');
+    },
     stats: async (requisitionLineId: string) => {
       const result = await sdk.responseRequisitionStats({
         requisitionLineId,
@@ -171,11 +183,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
   }: {
     id: string;
     otherPartyId: string;
-  }): Promise<{
-    __typename: 'RequisitionNode';
-    id: string;
-    requisitionNumber: number;
-  }> => {
+  }): Promise<string> => {
     const result = await sdk.insertResponse({
       storeId,
       input: {
@@ -189,7 +197,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     const { insertResponseRequisition } = result || {};
 
     if (insertResponseRequisition?.__typename === 'RequisitionNode') {
-      return insertResponseRequisition;
+      return insertResponseRequisition.id;
     }
 
     throw new Error('Unable to create requisition');
@@ -257,7 +265,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     return result;
   },
-  createOutboundFromResponse: async (responseId: string): Promise<number> => {
+  createOutboundFromResponse: async (responseId: string): Promise<string> => {
     const result =
       (await sdk.createOutboundFromResponse({
         storeId,
@@ -265,7 +273,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
       })) || {};
 
     if (result?.createRequisitionShipment.__typename === 'InvoiceNode') {
-      return result.createRequisitionShipment.invoiceNumber;
+      return result.createRequisitionShipment.id;
     }
 
     if (
@@ -293,7 +301,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     periodId: string,
     programId: string
   ) => {
-    let result = await sdk.programIndicators({
+    const result = await sdk.programIndicators({
       storeId,
       customerNameId,
       periodId,
@@ -305,7 +313,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     }
   },
   updateIndicatorValue: async (patch: UpdateIndicatorValueInput) => {
-    let result = await sdk.updateIndicatorValue({ storeId, input: patch });
+    const result = await sdk.updateIndicatorValue({ storeId, input: patch });
 
     if (!!result?.updateIndicatorValue) {
       return result.updateIndicatorValue;

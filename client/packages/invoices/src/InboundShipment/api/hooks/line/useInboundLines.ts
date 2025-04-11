@@ -2,18 +2,18 @@ import { useCallback } from 'react';
 import { isA } from './../../../../utils';
 import { InboundFragment } from '../../operations.generated';
 import { useQuery } from '@openmsupply-client/common';
-import { useInboundNumber } from '../document/useInbound';
+import { useInboundId } from '../document/useInbound';
 import { useInboundApi } from '../utils/useInboundApi';
 
 export const useInboundSelector = <T = InboundFragment>(
   select?: (data: InboundFragment) => T
 ) => {
-  const invoiceNumber = useInboundNumber();
+  const invoiceId = useInboundId();
   const api = useInboundApi();
 
   return useQuery(
-    api.keys.detail(invoiceNumber),
-    () => api.get.byNumber(invoiceNumber),
+    api.keys.detail(invoiceId),
+    () => api.get.byId(invoiceId),
     { select }
   );
 };

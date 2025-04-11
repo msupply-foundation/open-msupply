@@ -1,13 +1,10 @@
 on:
   pull_request:
-    branches:
-      - main
-      - develop
     paths:
-      - 'server/**'
+      - "server/**"
   workflow_dispatch:
 
-name: CI
+name: Backend Tests
 
 jobs:
   build_and_test:

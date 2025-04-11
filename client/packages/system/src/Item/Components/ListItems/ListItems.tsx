@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Tooltip,
   ListOptions,
   RouteBuilder,
   useNavigate,
@@ -41,7 +40,7 @@ export const ListItems = ({
     title: t('heading.save-new'),
   });
 
-  let options =
+  const options =
     items?.map(({ id, name }) => ({
       id,
       value: name,
@@ -51,20 +50,18 @@ export const ListItems = ({
   }
 
   return (
-    <Tooltip title={value?.name}>
-      <Box sx={{ flexGrowY: 1, overflow: 'auto', scrollBehavior: 'smooth' }}>
-        <ListOptions
-          currentId={value?.id ?? 'new'}
-          onClick={id => {
-            if (currentItemId === 'new' && isDirty) {
-              showSaveConfirmation();
-            } else navigate(route.addPart(id).build());
-          }}
-          options={options}
-          enteredLineIds={enteredLineIds}
-          scrollRef={scrollRef}
-        />
-      </Box>
-    </Tooltip>
+    <Box sx={{ flexGrowY: 1, overflow: 'auto', scrollBehavior: 'smooth' }}>
+      <ListOptions
+        currentId={value?.id ?? 'new'}
+        onClick={id => {
+          if (currentItemId === 'new' && isDirty) {
+            showSaveConfirmation();
+          } else navigate(route.addPart(id).build());
+        }}
+        options={options}
+        enteredLineIds={enteredLineIds}
+        scrollRef={scrollRef}
+      />
+    </Box>
   );
 };

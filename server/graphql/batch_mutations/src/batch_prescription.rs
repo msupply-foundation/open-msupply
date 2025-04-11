@@ -34,6 +34,10 @@ use crate::{to_standard_error, VecOrNone};
     name = "DeletePrescriptionLineResponseWithId",
     params(prescription_line::delete::DeleteResponse)
 ))]
+#[graphql(concrete(
+    name = "SetPrescribedQuantityWithId",
+    params(prescription_line::set_prescribed_quantity::SetPrescribedQuantityResponse)
+))]
 
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
@@ -52,6 +56,9 @@ type UpdatePrescriptionsResponse =
     Option<Vec<MutationWithId<prescription::update::UpdateResponse>>>;
 type DeletePrescriptionsResponse =
     Option<Vec<MutationWithId<prescription::delete::DeleteResponse>>>;
+type SetPrescribedQuantityResponse = Option<
+    Vec<MutationWithId<prescription_line::set_prescribed_quantity::SetPrescribedQuantityResponse>>,
+>;
 
 #[derive(SimpleObject)]
 #[graphql(name = "BatchPrescriptionResponse")]
@@ -62,6 +69,7 @@ pub struct BatchResponse {
     delete_prescription_lines: DeleteLinesResponse,
     update_prescriptions: UpdatePrescriptionsResponse,
     delete_prescriptions: DeletePrescriptionsResponse,
+    set_prescribed_quantity: SetPrescribedQuantityResponse,
 }
 
 #[derive(InputObject)]
@@ -71,6 +79,8 @@ pub struct BatchInput {
     pub insert_prescription_lines: Option<Vec<prescription_line::insert::InsertInput>>,
     pub update_prescription_lines: Option<Vec<prescription_line::update::UpdateInput>>,
     pub delete_prescription_lines: Option<Vec<prescription_line::delete::DeleteInput>>,
+    pub set_prescribed_quantity:
+        Option<Vec<prescription_line::set_prescribed_quantity::SetPrescribedQuantityInput>>,
     pub update_prescriptions: Option<Vec<prescription::update::UpdateInput>>,
     pub delete_prescriptions: Option<Vec<String>>,
     pub continue_on_error: Option<bool>,
@@ -105,6 +115,7 @@ impl BatchInput {
             update_prescriptions,
             delete_prescriptions,
             continue_on_error,
+            set_prescribed_quantity,
         } = self;
 
         ServiceInput {
@@ -115,6 +126,8 @@ impl BatchInput {
             update_line: update_prescription_lines
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
             delete_line: delete_prescription_lines
+                .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
+            set_prescribed_quantity: set_prescribed_quantity
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
             update_prescription: update_prescriptions
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
@@ -133,6 +146,7 @@ impl BatchResponse {
             delete_line,
             update_prescription,
             delete_prescription,
+            set_prescribed_quantity,
         }: ServiceResult,
     ) -> Result<BatchResponse> {
         let result = BatchResponse {
@@ -142,6 +156,7 @@ impl BatchResponse {
             delete_prescription_lines: map_delete_lines(delete_line)?,
             update_prescriptions: map_update_prescriptions(update_prescription)?,
             delete_prescriptions: map_delete_prescriptions(delete_prescription)?,
+            set_prescribed_quantity: map_set_prescribed_quantity(set_prescribed_quantity)?,
         };
 
         Ok(result)
@@ -250,6 +265,27 @@ fn map_delete_lines(responses: DeleteLinesResult) -> Result<DeleteLinesResponse>
     Ok(result.vec_or_none())
 }
 
+fn map_set_prescribed_quantity(
+    responses: SetPrescribedQuantityResult,
+) -> Result<SetPrescribedQuantityResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response =
+            match prescription_line::set_prescribed_quantity::map_response(response.result) {
+                Ok(response) => response,
+                Err(standard_error) => {
+                    return Err(to_standard_error(response.input, standard_error))
+                }
+            };
+        result.push(MutationWithId {
+            id: response.input.invoice_id.clone(),
+            response: mapped_response,
+        })
+    }
+
+    Ok(result.vec_or_none())
+}
+
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
@@ -271,7 +307,8 @@ mod test {
         },
         invoice_line::stock_out_line::{
             DeleteStockOutLine, DeleteStockOutLineError, InsertStockOutLine,
-            InsertStockOutLineError, StockOutType, UpdateStockOutLine, UpdateStockOutLineError,
+            InsertStockOutLineError, SetPrescribedQuantity, SetPrescribedQuantityError,
+            StockOutType, UpdateStockOutLine, UpdateStockOutLineError,
         },
         service_provider::{ServiceContext, ServiceProvider},
         InputWithResult,
@@ -475,6 +512,12 @@ mod test {
                     input: "id13".to_string(),
                     result: Err(DeletePrescriptionError::InvoiceDoesNotExist {}),
                 }],
+                set_prescribed_quantity: vec![InputWithResult {
+                    input: inline_init(|input: &mut SetPrescribedQuantity| {
+                        input.invoice_id = "id15".to_string()
+                    }),
+                    result: Err(SetPrescribedQuantityError::InvoiceDoesNotExist),
+                }],
             })
         }));
 
@@ -514,6 +557,7 @@ mod test {
                     input: "id12".to_string(),
                     result: Err(DeletePrescriptionError::NotAPrescriptionInvoice {}),
                 }],
+                set_prescribed_quantity: vec![],
             })
         }));
         let expected_message = "Bad user input";
@@ -564,6 +608,7 @@ mod test {
                 delete_line: vec![],
                 update_prescription: vec![],
                 delete_prescription: vec![],
+                set_prescribed_quantity: vec![],
             })
         }));
 

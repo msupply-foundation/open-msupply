@@ -145,8 +145,9 @@ export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
         );
       }
 
-      const id = facilitiesData?.nodes?.find(facility => facility.code == code)
-        ?.id;
+      const id = facilitiesData?.nodes?.find(
+        facility => facility.code == code
+      )?.id;
       importRow.id = id ?? '';
 
       importRow.code = code;

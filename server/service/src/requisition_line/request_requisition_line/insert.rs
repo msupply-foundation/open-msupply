@@ -1,5 +1,8 @@
 use crate::{
-    backend_plugin::plugin_provider::PluginError,
+    backend_plugin::{
+        plugin_provider::{PluginError, PluginInstance},
+        types::transform_request_requisition_lines::Context,
+    },
     item::item::check_item_exists,
     requisition::{
         common::check_requisition_row_exists, request_requisition::generate_requisition_lines,
@@ -14,8 +17,8 @@ use crate::{
 
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    RepositoryError, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository,
-    StorageConnection,
+    PluginDataRowRepository, RepositoryError, RequisitionLine, RequisitionLineRow,
+    RequisitionLineRowRepository, StorageConnection,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -54,8 +57,24 @@ pub fn insert_request_requisition_line(
         .connection
         .transaction_sync(|connection| {
             let requisition_row = validate(connection, &ctx.store_id, &input)?;
-            let new_requisition_line_row = generate(ctx, &ctx.store_id, requisition_row, input)?;
+            let lines = vec![generate(ctx, &ctx.store_id, &requisition_row, input)?];
 
+            // Plugin
+            let (mut lines, plugin_data_rows) =
+                PluginInstance::transform_request_requisition_lines(
+                    Context::InsertRequestRequisitionLine,
+                    lines,
+                    &requisition_row,
+                )
+                .map_err(OutError::PluginError)?;
+            let plugin_data_repository = PluginDataRowRepository::new(connection);
+            for plugin_data in plugin_data_rows {
+                plugin_data_repository.upsert_one(&plugin_data)?;
+            }
+
+            let new_requisition_line_row = lines
+                .pop()
+                .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
             RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;
 
             get_requisition_line(ctx, &new_requisition_line_row.id)
@@ -110,21 +129,21 @@ fn validate(
 fn generate(
     ctx: &ServiceContext,
     store_id: &str,
-    requisition_row: RequisitionRow,
+    requisition_row: &RequisitionRow,
     InsertRequestRequisitionLine {
         id,
         requisition_id: _,
         item_id,
     }: InsertRequestRequisitionLine,
 ) -> Result<RequisitionLineRow, OutError> {
-    let mut new_requisition_line =
-        generate_requisition_lines(ctx, store_id, &requisition_row, vec![item_id])?
+    let mut requisition_line =
+        generate_requisition_lines(ctx, store_id, requisition_row, vec![item_id])?
             .pop()
             .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
 
-    new_requisition_line.id = id;
+    requisition_line.id = id;
 
-    Ok(new_requisition_line)
+    Ok(requisition_line)
 }
 
 impl From<RepositoryError> for InsertRequestRequisitionLineError {

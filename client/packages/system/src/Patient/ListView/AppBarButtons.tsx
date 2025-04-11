@@ -12,6 +12,8 @@ import {
   SortBy,
   UserPermission,
   useCallbackWithPermission,
+  EnvUtils,
+  Platform,
 } from '@openmsupply-client/common';
 import { PatientRowFragment, usePatient } from '../api';
 import { patientsToCsv } from '../utils';
@@ -55,6 +57,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
           variant="outlined"
           onClick={csvExport}
           isLoading={isLoading}
+          disabled={EnvUtils.platform === Platform.Android}
           label={t('button.export')}
         />
       </Grid>

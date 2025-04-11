@@ -46,7 +46,8 @@ pub fn get_indicator_information(
         Some(
             NameFilter::new()
                 .supplying_store_id(EqualFilter::equal_to(store_id))
-                .is_customer(true),
+                .is_customer(true)
+                .is_store(true),
         ),
         None,
     )?;

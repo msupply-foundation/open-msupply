@@ -6,13 +6,16 @@ use std::{
 use base64::{prelude::BASE64_STANDARD, Engine};
 use repository::{
     BackendPluginRowRepository, FrontendPluginFile, FrontendPluginRow, FrontendPluginRowRepository,
-    RepositoryError,
+    PluginType, RepositoryError,
 };
 use serde::Deserialize;
 use thiserror::Error;
 
 use crate::{
-    backend_plugin::plugin_provider::{PluginBundle, PluginInstance},
+    backend_plugin::{
+        plugin_provider::{PluginBundle, PluginError, PluginInstance},
+        types::graphql_query,
+    },
     processors::ProcessorType,
     service_provider::ServiceContext,
     settings::Settings,
@@ -42,6 +45,13 @@ pub enum InstallUploadedPluginError {
     UploadedFileJsonError(#[from] UploadedFileJsonError),
     #[error(transparent)]
     DatabaseError(#[from] RepositoryError),
+}
+#[derive(Error, Debug)]
+pub enum PluginGraphqlQueryError {
+    #[error(transparent)]
+    PluginError(#[from] PluginError),
+    #[error("Graphql query plugin with specified code not found")]
+    NotFound,
 }
 
 #[derive(Clone, Debug)]
@@ -199,6 +209,22 @@ pub trait PluginServiceTrait: Sync + Send {
         ctx.processors_trigger
             .trigger_processor(ProcessorType::LoadPlugin);
         Ok(result_bundle)
+    }
+
+    fn plugin_graphql_query(
+        &self,
+        store_id: String,
+        plugin_code: &str,
+        input: serde_json::Value,
+    ) -> Result<serde_json::Value, PluginGraphqlQueryError> {
+        use PluginGraphqlQueryError as Error;
+        let plugin = PluginInstance::get_one_with_code(plugin_code, PluginType::GraphqlQuery)
+            .ok_or(Error::NotFound)?;
+
+        Ok(graphql_query::Trait::call(
+            &(*plugin),
+            graphql_query::Input { store_id, input },
+        )?)
     }
 }
 

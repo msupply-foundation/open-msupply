@@ -11,8 +11,7 @@ import { useFormatDateTime } from '@common/intl';
 import { useActivityLog, ActivityLogRowFragment } from '../api';
 
 export const ActivityLogList: FC<{ recordId: string }> = ({ recordId }) => {
-  const { data, isError, isLoading } =
-    useActivityLog.document.listByRecord(recordId);
+  const { data, isError, isLoading } = useActivityLog(recordId);
   const t = useTranslation();
   const { localisedTime } = useFormatDateTime();
 

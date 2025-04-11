@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useBeforeUnload, useBlocker } from 'react-router-dom';
 import { create } from 'zustand';
 import { useTranslation } from '@common/intl';
@@ -10,19 +10,24 @@ import { Location, useConfirmationModal } from '@openmsupply-client/common';
  */
 export const useConfirmOnLeaving = (key: string, options?: BlockerOptions) => {
   const { blocking, setBlocking, clearKey } = useBlockNavigationState();
+  const setIsDirty = useRef<(dirty: boolean) => void>(() => {});
 
   // Register the key for blocking navigation
   useEffect(() => {
     setBlocking(key, false, options);
+
+    // Need to define this in here to ensure the returned `setIsDirty` remains
+    // stable, otherwise causes infinite re-render loop in components using
+    // `formState`
+    setIsDirty.current = (dirty: boolean) => setBlocking(key, dirty, options);
 
     // Cleanup
     return () => clearKey(key);
   }, []);
 
   const isDirty = blocking.get(key)?.shouldBlock ?? false;
-  const setIsDirty = (dirty: boolean) => setBlocking(key, dirty, options);
 
-  return { isDirty, setIsDirty };
+  return { isDirty, setIsDirty: setIsDirty.current };
 };
 
 /**
@@ -51,7 +56,7 @@ export const useBlockNavigation = () => {
       // If there is a custom check on one of the registered blockers, use that
       if (b.options?.customCheck) {
         setActiveBlocker(b);
-        return b.options.customCheck(currentLocation, nextLocation);
+        return b.options.customCheck.navigate(currentLocation, nextLocation);
       }
 
       if (b.shouldBlock && currentLocation.pathname !== nextLocation.pathname) {
@@ -64,19 +69,18 @@ export const useBlockNavigation = () => {
     return false;
   });
 
-  const shouldBlockRefresh = blockers.some(
-    b => b.shouldBlock && !b.options?.allowRefresh
-  );
-
   // handle page refresh events
   useBeforeUnload(
-    useCallback(
-      event => {
-        // Cancel the refresh
-        if (shouldBlockRefresh) event.preventDefault();
-      },
-      [shouldBlockRefresh]
-    ),
+    event => {
+      const shouldBlockRefresh = blockers.some(b => {
+        if (b.options?.customCheck) {
+          return b.options.customCheck.refresh();
+        }
+        return b.shouldBlock && !b.options?.allowRefresh;
+      });
+      // Cancel the refresh
+      if (shouldBlockRefresh) event.preventDefault();
+    },
     { capture: true }
   );
 
@@ -98,7 +102,10 @@ interface BlockerOptions {
    * Only one registered customCheck will be used at a time, the first one,
    * even if multiple blockers are registered
    */
-  customCheck?: (currentLocation: Location, nextLocation: Location) => boolean;
+  customCheck?: {
+    navigate: (currentLocation: Location, nextLocation: Location) => boolean;
+    refresh: () => boolean;
+  };
   customConfirmation?: (proceed: () => void) => void;
   /**
    * Will block when navigating away from the page, but not when refreshing

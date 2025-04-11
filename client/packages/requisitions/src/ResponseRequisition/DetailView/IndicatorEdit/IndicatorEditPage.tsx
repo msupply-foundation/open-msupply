@@ -80,7 +80,7 @@ export const IndicatorEditPage = () => {
 
   return (
     <>
-      <AppBarButtons requisitionNumber={response?.requisitionNumber} />
+      <AppBarButtons requisitionId={response?.id} />
       <DetailContainer>
         <PageLayout
           Left={
@@ -90,7 +90,7 @@ export const IndicatorEditPage = () => {
                 lines={sortedLines}
                 route={RouteBuilder.create(AppRoute.Distribution)
                   .addPart(AppRoute.CustomerRequisition)
-                  .addPart(String(response?.requisitionNumber))
+                  .addPart(String(response?.id))
                   .addPart(AppRoute.Indicators)
                   .addPart(String(programIndicatorCode))}
                 scrollRef={scrollRef}
@@ -105,7 +105,7 @@ export const IndicatorEditPage = () => {
                 next={next}
                 hasPrevious={hasPrevious}
                 previous={previous}
-                requisitionNumber={response?.requisitionNumber}
+                requisitionId={response?.id}
                 disabled={isDisabled}
                 scrollIntoView={scrollSelectedItemIntoView}
               />

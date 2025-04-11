@@ -105,6 +105,7 @@ pub struct CheckExceededOrdersForPeriod<'a> {
     pub max_orders_per_period: i64,
     pub requisition_type: RequisitionType,
     pub other_party_id: Option<&'a str>,
+    pub store_id: &'a str,
 }
 
 pub fn check_exceeded_max_orders_for_period(
@@ -121,6 +122,7 @@ pub fn check_exceeded_max_orders_for_period(
                 .program_id(EqualFilter::equal_to(input.program_id))
                 .order_type(EqualFilter::equal_to(&order_type.name))
                 .period_id(EqualFilter::equal_to(input.period_id))
+                .store_id(EqualFilter::equal_to(&input.store_id))
                 .r#type(input.requisition_type.equal_to());
 
             if let Some(other_party_id) = input.other_party_id {

@@ -17,12 +17,12 @@ export const useSupplierReturn = () => {
       .build()
   );
 
-  const { invoiceNumber } = useParams();
+  const { invoiceId = '' } = useParams();
   const api = useReturnsApi();
 
   const query = useQuery(
-    api.keys.supplierDetail(invoiceNumber ?? ''),
-    () => api.get.supplierReturnByNumber(Number(invoiceNumber)),
+    api.keys.supplierDetail(invoiceId ?? ''),
+    () => api.get.supplierReturnById(invoiceId),
     {
       enabled: !!isSupplierReturnPage,
     }

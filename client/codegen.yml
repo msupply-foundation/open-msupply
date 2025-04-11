@@ -13,6 +13,7 @@ generates:
   packages/:
     documents:
       - ./**/*.graphql
+      - '!/**/node_modules/**'
     preset: near-operation-file
     presetConfig:
       extension: .generated.ts
@@ -25,3 +26,7 @@ generates:
       scalars:
         DateTime: string
         NaiveDate: string
+        NaiveDateTime: string
+hooks:
+  afterAllFileWrite:
+    - prettier --write

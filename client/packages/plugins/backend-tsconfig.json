@@ -6,9 +6,10 @@
         "moduleResolution": "node",
         "strict": true,
         "esModuleInterop": true,
+        "resolveJsonModule": true,
         "paths": {
-            "@backendPlugins": [
-                "./backendTypes/types.ts"
+            "@common/*": [
+                "./backendCommon/*"
             ]
         }
     }

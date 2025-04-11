@@ -1,0 +1,13 @@
+{
+  "is_custom": false,
+  "version": "2.6.1",
+  "code": "repack",
+  "context": "REPACK",
+  "name": "Repack",
+  "queries": {
+    "gql": "repack.graphql"
+  },
+  "arguments": {},
+  "header": "header.html",
+  "footer": "footer.html"
+}

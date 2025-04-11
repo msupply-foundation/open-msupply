@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -12,6 +12,8 @@ import {
   DetailTabs,
   useNotification,
   ModalMode,
+  useTableStore,
+  useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -28,10 +30,14 @@ import { InboundItem } from '../../types';
 import { useInbound, InboundLineFragment } from '../api';
 import { SupplierReturnEditModal } from '../../Returns';
 import { canReturnInboundLines } from '../../utils';
+import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLineError';
 
 type InboundLineItem = InboundLineFragment['item'];
 
-export const DetailView: FC = () => {
+const DetailViewInner = () => {
+  const t = useTranslation();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const navigate = useNavigate();
   const { data, isLoading } = useInbound.document.get();
   const isDisabled = useInbound.utils.isDisabled();
   const { onOpen, onClose, mode, entity, isOpen } =
@@ -44,9 +50,8 @@ export const DetailView: FC = () => {
     mode: returnModalMode,
     setMode: setReturnMode,
   } = useEditModal<string[]>();
-  const navigate = useNavigate();
-  const t = useTranslation();
   const { info, error } = useNotification();
+  const { clearSelected } = useTableStore();
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
@@ -83,6 +88,10 @@ export const DetailView: FC = () => {
     setReturnMode(ModalMode.Create);
   };
 
+  useEffect(() => {
+    setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
+  }, [setCustomBreadcrumbs, data?.invoiceNumber]);
+
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
@@ -106,48 +115,42 @@ export const DetailView: FC = () => {
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
     >
       {data ? (
-        <TableProvider
-          createStore={createTableStore}
-          queryParamsStore={createQueryParamsStore<
-            InboundLineFragment | InboundItem
-          >({
-            initialSortBy: {
-              key: 'itemName',
-            },
-          })}
-        >
-          <AppBarButtons onAddItem={() => onOpen()} />
+        <>
+          <InboundShipmentLineErrorProvider>
+            <AppBarButtons onAddItem={() => onOpen()} />
 
-          <Toolbar />
+            <Toolbar />
 
-          <DetailTabs tabs={tabs} />
+            <DetailTabs tabs={tabs} />
 
-          <Footer onReturnLines={onReturn} />
-          <SidePanel />
+            <Footer onReturnLines={onReturn} />
+            <SidePanel />
 
-          {isOpen && (
-            <InboundLineEdit
-              isDisabled={isDisabled}
-              isOpen={isOpen}
-              onClose={onClose}
-              mode={mode}
-              item={entity}
-              currency={data.currency}
-              isExternalSupplier={!data.otherParty.store}
-            />
-          )}
-          {returnsIsOpen && (
-            <SupplierReturnEditModal
-              isOpen={returnsIsOpen}
-              onClose={onCloseReturns}
-              stockLineIds={stockLineIds || []}
-              supplierId={data.otherParty.id}
-              modalMode={returnModalMode}
-              inboundShipmentId={data.id}
-              isNewReturn
-            />
-          )}
-        </TableProvider>
+            {isOpen && (
+              <InboundLineEdit
+                isDisabled={isDisabled}
+                isOpen={isOpen}
+                onClose={onClose}
+                mode={mode}
+                item={entity}
+                currency={data.currency}
+                isExternalSupplier={!data.otherParty.store}
+              />
+            )}
+            {returnsIsOpen && (
+              <SupplierReturnEditModal
+                isOpen={returnsIsOpen}
+                onCreate={clearSelected}
+                onClose={onCloseReturns}
+                stockLineIds={stockLineIds || []}
+                supplierId={data.otherParty.id}
+                modalMode={returnModalMode}
+                inboundShipmentId={data.id}
+                isNewReturn
+              />
+            )}
+          </InboundShipmentLineErrorProvider>
+        </>
       ) : (
         <AlertModal
           open={true}
@@ -163,5 +166,22 @@ export const DetailView: FC = () => {
         />
       )}
     </React.Suspense>
+  );
+};
+
+export const DetailView = () => {
+  return (
+    <TableProvider
+      createStore={createTableStore}
+      queryParamsStore={createQueryParamsStore<
+        InboundLineFragment | InboundItem
+      >({
+        initialSortBy: {
+          key: 'itemName',
+        },
+      })}
+    >
+      <DetailViewInner />
+    </TableProvider>
   );
 };

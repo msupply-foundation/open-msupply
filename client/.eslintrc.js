@@ -40,6 +40,7 @@ module.exports = {
       {
         argsIgnorePattern: '^_',
         caughtErrorsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
       },
     ],
     'react/prop-types': 'off',
@@ -60,5 +61,4 @@ module.exports = {
       },
     ],
   },
-  ignorePatterns: ['**/operations.generated.ts', '**/types/schema.ts'],
 };

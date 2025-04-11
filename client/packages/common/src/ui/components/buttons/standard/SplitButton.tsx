@@ -4,7 +4,12 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { ChevronDownIcon } from '../../../icons';
 import { ButtonWithIcon, ButtonWithIconProps } from './ButtonWithIcon';
-import { ShrinkableBaseButton, Tooltip } from '@common/components';
+import {
+  FlatButton,
+  LoadingButton,
+  ShrinkableBaseButton,
+  Tooltip,
+} from '@common/components';
 import { PopoverOrigin } from '@mui/material';
 
 export interface SplitButtonOption<T> {
@@ -18,13 +23,22 @@ export interface SplitButtonProps<T> {
   ariaLabel?: string;
   ariaControlLabel?: string;
   options: SplitButtonOption<T>[];
-  onClick: (option: SplitButtonOption<T>) => void;
+  onClick: (
+    option: SplitButtonOption<T>,
+    e?: React.MouseEvent<HTMLButtonElement>
+  ) => void;
   Icon?: ButtonWithIconProps['Icon'];
   isDisabled?: boolean;
   selectedOption: SplitButtonOption<T>;
-  onSelectOption: (option: SplitButtonOption<T>) => void;
+  onSelectOption: (
+    option: SplitButtonOption<T>,
+    e?: React.MouseEvent<HTMLButtonElement>
+  ) => void;
   label?: string;
+  staticLabel?: string;
   openFrom?: PopoverOrigin['vertical'];
+  isLoadingType?: boolean;
+  isLoading?: boolean;
 }
 
 export const SplitButton = <T,>({
@@ -38,10 +52,13 @@ export const SplitButton = <T,>({
   selectedOption,
   onSelectOption,
   label,
+  staticLabel,
   openFrom = 'top',
+  isLoadingType = false,
+  isLoading = false,
 }: SplitButtonProps<T>) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const buttonLabel = selectedOption.label;
+  const buttonLabel = staticLabel ?? selectedOption.label;
   const open = !!anchorEl;
 
   const popoverOrigin: {
@@ -51,6 +68,20 @@ export const SplitButton = <T,>({
     openFrom === 'top'
       ? { anchorOrigin: 'top', transformOrigin: 'bottom' }
       : { anchorOrigin: 'bottom', transformOrigin: 'top' };
+
+  const sharedButtonProps = {
+    color: color,
+    disabled: isDisabled || selectedOption.isDisabled,
+    sx: {
+      borderRadius: 0,
+      borderStartStartRadius: '24px',
+      borderEndStartRadius: '24px',
+    },
+    onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
+      onClick(selectedOption, e);
+    },
+    label: buttonLabel,
+  };
 
   return (
     <>
@@ -64,20 +95,15 @@ export const SplitButton = <T,>({
             borderRadius: 24,
           }}
         >
-          <ButtonWithIcon
-            color={color}
-            disabled={isDisabled || selectedOption.isDisabled}
-            sx={{
-              borderRadius: 0,
-              borderStartStartRadius: '24px',
-              borderEndStartRadius: '24px',
-            }}
-            onClick={() => {
-              onClick(selectedOption);
-            }}
-            label={buttonLabel}
-            Icon={Icon}
-          />
+          {isLoadingType ? (
+            <LoadingButton
+              isLoading={isLoading}
+              startIcon={Icon}
+              {...sharedButtonProps}
+            />
+          ) : (
+            <ButtonWithIcon Icon={Icon} {...sharedButtonProps} />
+          )}
 
           <ShrinkableBaseButton
             shouldShrink={true}
@@ -123,12 +149,14 @@ export const SplitButton = <T,>({
             key={option.label}
             disabled={option?.isDisabled}
             selected={option.value === selectedOption.value}
-            onClick={() => {
-              onSelectOption(option);
-              setAnchorEl(null);
-            }}
           >
-            {option.label}
+            <FlatButton
+              label={option.label}
+              onClick={e => {
+                onSelectOption(option, e);
+                setAnchorEl(null);
+              }}
+            />
           </MenuItem>
         ))}
       </Menu>

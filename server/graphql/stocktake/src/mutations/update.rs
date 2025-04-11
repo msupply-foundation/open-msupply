@@ -24,6 +24,8 @@ pub struct UpdateInput {
     pub status: Option<UpdateStocktakeStatusInput>,
     pub stocktake_date: Option<NaiveDate>,
     pub is_locked: Option<bool>,
+    pub counted_by: Option<String>,
+    pub verified_by: Option<String>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -164,6 +166,8 @@ impl UpdateInput {
             status,
             is_locked,
             stocktake_date,
+            counted_by,
+            verified_by,
         } = self;
 
         ServiceInput {
@@ -173,6 +177,8 @@ impl UpdateInput {
             status: status.map(|status| status.to_domain()),
             is_locked,
             stocktake_date,
+            counted_by,
+            verified_by,
         }
     }
 }

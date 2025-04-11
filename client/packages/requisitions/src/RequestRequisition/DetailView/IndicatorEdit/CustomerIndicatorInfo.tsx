@@ -8,6 +8,7 @@ import {
   TableProvider,
   TooltipTextCell,
   useColumns,
+  useTranslation,
 } from '@openmsupply-client/common';
 import {
   CustomerIndicatorInfoFragment,
@@ -17,13 +18,14 @@ import { indicatorColumnNameToLocal } from '../../../utils';
 
 interface CustomerIndicatorInfoProps {
   columns: IndicatorColumnFragment[];
-  customerInfos: CustomerIndicatorInfoFragment[];
+  customerInfos?: CustomerIndicatorInfoFragment[];
 }
 
 const CustomerIndicatorInfo = ({
   columns,
   customerInfos,
 }: CustomerIndicatorInfoProps) => {
+  const t = useTranslation();
   const columnDefinitions: ColumnDescription<CustomerIndicatorInfoFragment>[] =
     [
       [
@@ -40,7 +42,7 @@ const CustomerIndicatorInfo = ({
   columns.forEach(({ name, id }) => {
     columnDefinitions.push({
       key: name,
-      label: indicatorColumnNameToLocal(name),
+      label: indicatorColumnNameToLocal(name, t),
       sortable: false,
       accessor: ({ rowData }) => {
         const indicator = rowData?.indicatorInformation?.find(

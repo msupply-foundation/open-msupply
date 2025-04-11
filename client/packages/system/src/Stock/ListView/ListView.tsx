@@ -15,12 +15,14 @@ import {
   CurrencyCell,
   ExpiryDateCell,
   usePluginProvider,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { AppRoute } from '@openmsupply-client/config';
 import { useStockList } from '../api/hooks/useStockList';
+import { NewStockLineModal } from '../Components/NewStockLineModal';
 
 const StockListComponent: FC = () => {
   const {
@@ -57,6 +59,8 @@ const StockListComponent: FC = () => {
   const { data, isLoading, isError } = useStockList(queryParams);
   const { plugins } = usePluginProvider();
 
+  const { isOpen, onClose, onOpen } = useEditModal();
+
   const columnDefinitions: ColumnDescription<StockLineRowFragment>[] = [
     {
       key: 'itemCode',
@@ -78,7 +82,7 @@ const StockListComponent: FC = () => {
     //   label: 'label.master-list',
     //   Cell: ChipTableCell,
     //   width: 150,
-    //   accessor: ({ rowData }) => rowData.masterList.map(m => m.name),
+    //   accessor: ({ rowData }) => rowData.item.masterLists.map(m => m.name),
     // },
     { key: 'batch', label: 'label.batch', Cell: TooltipTextCell, width: 100 },
     {
@@ -112,7 +116,7 @@ const StockListComponent: FC = () => {
     [
       'numberOfPacks',
       {
-        accessor: ({ rowData }) => rowData.totalNumberOfPacks,
+        accessor: ({ rowData }) => rowData.totalNumberOfPacks.toFixed(2),
         width: 125,
       },
     ],
@@ -120,7 +124,18 @@ const StockListComponent: FC = () => {
       'stockOnHand',
       {
         accessor: ({ rowData }) =>
-          rowData.totalNumberOfPacks * rowData.packSize,
+          (rowData.totalNumberOfPacks * rowData.packSize).toFixed(2),
+        sortable: false,
+        width: 125,
+      },
+    ],
+    [
+      'availableStockOnHand',
+      {
+        label: 'label.available-soh',
+        description: 'description.available-soh',
+        accessor: ({ rowData }) =>
+          (rowData.availableNumberOfPacks * rowData.packSize).toFixed(2),
         sortable: false,
         width: 125,
       },
@@ -149,7 +164,7 @@ const StockListComponent: FC = () => {
       Cell: TooltipTextCell,
       width: 190,
     },
-    ...(plugins.stockColumn?.columns || []),
+    ...(plugins.stockLine?.tableColumn || []),
   ];
 
   const columns = useColumns<StockLineRowFragment>(
@@ -158,23 +173,30 @@ const StockListComponent: FC = () => {
       sortBy,
       onChangeSortBy: updateSortQuery,
     },
-    [sortBy, plugins.stockColumn?.columns]
+    [sortBy, plugins.stockLine?.tableColumn]
   );
 
   return (
     <>
       <Toolbar filter={filter} />
       <AppBarButtons />
-      {plugins.stockColumn?.StateLoader?.map((StateLoader, index) => (
+      {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
         <StateLoader key={index} stockLines={data?.nodes ?? []} />
       ))}
+      {isOpen && <NewStockLineModal isOpen={isOpen} onClose={onClose} />}
       <DataTable
         id="stock-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         columns={columns}
         data={data?.nodes ?? []}
         onChangePage={updatePaginationQuery}
-        noDataElement={<NothingHere body={t('error.no-stock')} />}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-stock')}
+            onCreate={onOpen}
+            buttonText={t('button.add-new-stock')}
+          />
+        }
         isError={isError}
         isLoading={isLoading}
         enableColumnSelection

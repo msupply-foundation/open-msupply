@@ -62,7 +62,7 @@ impl SyncLoggerError {
 }
 
 impl<'a> SyncLogger<'a> {
-    pub fn start(connection: &'a StorageConnection) -> Result<SyncLogger, SyncLoggerError> {
+    pub fn start(connection: &'a StorageConnection) -> Result<SyncLogger<'a>, SyncLoggerError> {
         info!("Sync started");
         let row = SyncLogRow {
             id: util::uuid::uuid(),

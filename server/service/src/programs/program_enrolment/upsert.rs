@@ -24,7 +24,7 @@ pub enum UpsertProgramEnrolmentError {
     ProgramEnrolmentExists,
     ProgramDoesNotExist,
     InvalidDataSchema(String),
-    DocumentTypeDoesNotExit,
+    DocumentTypeDoesNotExist,
     DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
@@ -186,7 +186,7 @@ fn validate(
 
     let document_registry = match validate_document_type(ctx, &input.r#type)? {
         Some(document_registry) => document_registry,
-        None => return Err(UpsertProgramEnrolmentError::DocumentTypeDoesNotExit),
+        None => return Err(UpsertProgramEnrolmentError::DocumentTypeDoesNotExist),
     };
 
     let program_row = match validate_program(ctx, &document_registry.context_id)? {

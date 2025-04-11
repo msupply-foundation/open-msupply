@@ -458,12 +458,6 @@ pub async fn get_loaders(
         async_std::task::spawn,
     ));
     loaders.insert(DataLoader::new(
-        RequisitionItemInfoLoader {
-            service_provider: service_provider.clone(),
-        },
-        async_std::task::spawn,
-    ));
-    loaders.insert(DataLoader::new(
         DiagnosisLoader {
             connection_manager: connection_manager.clone(),
         },
@@ -483,6 +477,12 @@ pub async fn get_loaders(
     ));
     loaders.insert(DataLoader::new(
         InsuranceProviderByIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        NameInsuranceJoinLoader {
             connection_manager: connection_manager.clone(),
         },
         async_std::task::spawn,

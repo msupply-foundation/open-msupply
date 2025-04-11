@@ -14,7 +14,6 @@ Colocation of generic and utility hooks for common state-based features.
 - A story for a hook can be really helpful for visualising what the function does.
 - As with components, composing hooks is often a useful strategy. If you're using multiple hook primitive (useState, useEffect etc), see if it makes sense to break the uses into separate custom hooks.
 
-
 ### Future considerations
 
 - Grouping hooks into sub modules might be required once there are a sufficient number of them. I.e. webApi hooks, component hooks, layout hooks etc.

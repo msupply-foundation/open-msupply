@@ -1,14 +1,12 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::IdResponse;
+use graphql_types::types::{IdResponse, InsurancePolicyNodeType};
 use repository::name_insurance_join_row::NameInsuranceJoinRow;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     insurance::insert::{InsertInsurance as ServiceInput, InsertInsuranceError as ServiceError},
 };
-
-use crate::types::InsurancePolicyNodeType as InsertInsurancePolicyNodeType;
 
 #[derive(InputObject)]
 pub struct InsertInsuranceInput {
@@ -17,7 +15,7 @@ pub struct InsertInsuranceInput {
     pub insurance_provider_id: String,
     pub policy_number_person: String,
     pub policy_number_family: String,
-    pub policy_type: InsertInsurancePolicyNodeType,
+    pub policy_type: InsurancePolicyNodeType,
     pub discount_percentage: f64,
     pub expiry_date: chrono::NaiveDate,
     pub is_active: bool,

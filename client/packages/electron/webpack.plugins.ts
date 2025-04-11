@@ -23,6 +23,18 @@ export const plugins = [
         from: '**/*.json',
         to: './locales/',
       },
+      {
+        context: path.resolve(
+          __dirname,
+          '..',
+          'common',
+          'src',
+          'intl',
+          'locales'
+        ),
+        from: '**/*.json',
+        to: './main_window/locales/',
+      },
     ],
   }),
 ];

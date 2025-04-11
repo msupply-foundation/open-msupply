@@ -7,7 +7,7 @@ import {
   noOtherVariants,
 } from '@openmsupply-client/common';
 import { useResponse } from '..';
-import { useResponseNumber } from '../document/useResponse';
+import { useResponseId } from '../document/useResponse';
 import { useResponseApi } from '../utils/useResponseApi';
 import { useResponseLines } from './useResponseLines';
 import { useResponseRequisitionLineErrorContext } from '../../../context';
@@ -16,21 +16,24 @@ export const useDeleteResponseLines = () => {
   const t = useTranslation();
   const queryClient = useQueryClient();
   const api = useResponseApi();
-  const requestNumber = useResponseNumber();
+  const responseId = useResponseId();
   const { lines } = useResponseLines();
   const isDisabled = useResponse.utils.isDisabled();
   const { mutateAsync } = useMutation(api.deleteLines, {
     onSettled: () =>
-      queryClient.invalidateQueries(api.keys.detail(requestNumber)),
+      queryClient.invalidateQueries(api.keys.detail(responseId)),
   });
   const errorsContext = useResponseRequisitionLineErrorContext();
+  const { linkedRequisition } = useResponse.document.fields([
+    'linkedRequisition',
+  ]);
 
   const selectedRows = useTableStore(state =>
     lines.filter(({ id }) => state.rowState[id]?.isSelected)
   );
 
   const onDelete = async () => {
-    let result = await mutateAsync(selectedRows).catch(err => {
+    const result = await mutateAsync(selectedRows).catch(err => {
       console.error(err);
     });
     errorsContext.unsetAll();
@@ -57,10 +60,25 @@ export const useDeleteResponseLines = () => {
     });
   };
 
+  interface handleCantDelete {
+    isDisabled: boolean;
+    hasLinkedRequisition: boolean;
+  }
+
+  const handleCantDelete = ({
+    isDisabled,
+    hasLinkedRequisition,
+  }: handleCantDelete) => {
+    if (isDisabled) return t('label.cant-delete-disabled-requisition');
+    if (hasLinkedRequisition)
+      return t('messages.cannot-delete-linked-requisition');
+    return (err: Error) => err.message;
+  };
+
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
     deleteAction: onDelete,
-    canDelete: !isDisabled,
+    canDelete: !isDisabled && !linkedRequisition,
     messages: {
       confirmMessage: t('messages.confirm-delete-requisition-lines', {
         count: selectedRows.length,
@@ -68,8 +86,10 @@ export const useDeleteResponseLines = () => {
       deleteSuccess: t('messages.deleted-lines', {
         count: selectedRows.length,
       }),
-      cantDelete: (err: Error) =>
-        err.message || t('label.cant-delete-disabled-requisition'),
+      cantDelete: handleCantDelete({
+        isDisabled,
+        hasLinkedRequisition: !!linkedRequisition,
+      }),
     },
   });
 

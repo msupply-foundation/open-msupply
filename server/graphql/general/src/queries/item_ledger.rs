@@ -63,6 +63,9 @@ impl ItemLedgerNode {
     pub async fn invoice_number(&self) -> &i64 {
         &self.ledger.invoice_number
     }
+    pub async fn invoice_id(&self) -> &String {
+        &self.ledger.invoice_id
+    }
     pub async fn reason(&self) -> &Option<String> {
         if self.ledger.return_reason.is_some() {
             return &self.ledger.return_reason;

@@ -74,6 +74,14 @@ pub struct LegacyStocktakeRow {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub program_id: Option<String>,
+    #[serde(rename = "om_counted_by")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub counted_by: Option<String>,
+    #[serde(rename = "om_verified_by")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub verified_by: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -141,6 +149,8 @@ impl SyncTranslation for StocktakeTranslation {
             stocktake_date: data.stocktake_date,
             is_locked: data.is_locked,
             program_id: data.program_id,
+            counted_by: data.counted_by,
+            verified_by: data.verified_by,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -166,6 +176,8 @@ impl SyncTranslation for StocktakeTranslation {
             inventory_addition_id,
             inventory_reduction_id,
             program_id,
+            counted_by,
+            verified_by,
         } = StocktakeRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg("Stocktake row not found"))?;
@@ -187,6 +199,8 @@ impl SyncTranslation for StocktakeTranslation {
             created_datetime: Some(created_datetime),
             finalised_datetime,
             program_id,
+            counted_by,
+            verified_by,
         };
 
         Ok(PushTranslateResult::upsert(

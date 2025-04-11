@@ -4,12 +4,12 @@ import { HistoryItem } from './HistoryModal';
 export const useHistoryColumns = () => {
   const columns: ColumnDescription<HistoryItem>[] = [
     {
-      label: 'label.qty-item-name',
-      key: 'qtyItemName',
-      accessor: ({ rowData }) => {
-        const { unitQuantity, itemName } = rowData;
-        return `${unitQuantity}, ${itemName}`;
-      },
+      label: 'report.item-name',
+      key: 'itemName',
+    },
+    {
+      label: 'label.unit-quantity',
+      key: 'unitQuantity',
     },
     {
       label: 'label.directions',

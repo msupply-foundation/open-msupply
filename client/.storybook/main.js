@@ -1,11 +1,11 @@
-import { dirname, join } from "path";
+import { dirname, join } from 'path';
 const path = require('path');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const toPath = filePath => path.join(process.cwd(), filePath);
 module.exports = {
   staticDirs: ['../packages/host/public'],
   framework: {
-    name: getAbsolutePath("@storybook/react-webpack5"),
+    name: getAbsolutePath('@storybook/react-webpack5'),
     options: {
       builder: {
         lazyCompilation: true,
@@ -14,11 +14,11 @@ module.exports = {
   },
   stories: ['../packages/**/*.stories.@(js|jsx|ts|tsx)'],
   addons: [
-    getAbsolutePath("@storybook/addon-links"),
-    getAbsolutePath("@storybook/addon-essentials"),
-    getAbsolutePath("@storybook/addon-interactions"),
+    getAbsolutePath('@storybook/addon-links'),
+    getAbsolutePath('@storybook/addon-essentials'),
+    getAbsolutePath('@storybook/addon-interactions'),
     '@storybook/addon-webpack5-compiler-swc',
-    '@chromatic-com/storybook'
+    '@chromatic-com/storybook',
   ],
   typescript: {
     check: false,
@@ -77,5 +77,5 @@ module.exports = {
 };
 
 function getAbsolutePath(value) {
-  return dirname(require.resolve(join(value, "package.json")));
+  return dirname(require.resolve(join(value, 'package.json')));
 }

@@ -41,7 +41,7 @@ async fn upload(
     let file_service = StaticFileService::new(&settings.server.base_dir).unwrap();
 
     let static_file = file_service
-        .move_temp_file(file, &StaticFileCategory::Temporary, None)
+        .move_temp_file(&file, &StaticFileCategory::Temporary, None)
         .unwrap();
 
     HttpResponse::Ok().json(UploadedFile {

@@ -30,6 +30,7 @@ fragment Document on DocumentNode {
 
 fragment Program on ProgramNode {
   id
+  elmisCode
   name
 }
 

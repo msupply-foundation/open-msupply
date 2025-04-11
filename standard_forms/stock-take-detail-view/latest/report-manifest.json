@@ -1,0 +1,11 @@
+{
+  "is_custom": false,
+  "version": "2.6.3",
+  "code": "stock-take-detail-view",
+  "context": "STOCKTAKE",
+  "name": "Stocktake",
+  "queries": { "gql": "StocktakeDetailQuery.graphql" },
+  "arguments": {},
+  "header": "header.html",
+  "footer": "footer.html"
+}

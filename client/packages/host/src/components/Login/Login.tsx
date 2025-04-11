@@ -161,6 +161,7 @@ export const Login = () => {
       }
       LoginButton={
         <LoadingButton
+          shouldShrink={false}
           isLoading={isLoggingIn}
           onClick={onLogin}
           variant="outlined"

@@ -17,6 +17,7 @@ import {
   InsertOutboundShipmentServiceLineInput,
   UpdateOutboundShipmentServiceLineInput,
   DeleteOutboundShipmentServiceLineInput,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../types';
 import { isA } from '../../utils';
@@ -96,6 +97,7 @@ const outboundParsers = {
         : undefined,
     currencyId: 'currency' in patch ? patch.currency?.id : undefined,
     currencyRate: 'currency' in patch ? patch.currency?.rate : undefined,
+    expectedDeliveryDate: setNullableInput('expectedDeliveryDate', patch),
   }),
   toUpdateName: (
     patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
@@ -220,7 +222,6 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     byId: async (id: string): Promise<OutboundFragment> => {
       const result = await sdk.invoice({ id, storeId });
       const invoice = result?.invoice;
-
       if (invoice?.__typename === 'InvoiceNode') {
         return invoice;
       } else {
@@ -233,7 +234,6 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
         storeId,
       });
       const invoice = result?.invoiceByNumber;
-
       if (invoice?.__typename === 'InvoiceNode') {
         return invoice;
       } else {
@@ -265,7 +265,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     },
     outbound: async (
       invoice: Omit<InsertOutboundShipmentMutationVariables, 'storeId'>
-    ): Promise<number> => {
+    ): Promise<string> => {
       const result =
         (await sdk.insertOutboundShipment({
           id: invoice.id,
@@ -276,7 +276,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
       const { insertOutboundShipment } = result;
 
       if (insertOutboundShipment?.__typename === 'InvoiceNode') {
-        return insertOutboundShipment.invoiceNumber;
+        return insertOutboundShipment.id;
       }
 
       throw new Error('Could not insert invoice');
@@ -310,7 +310,9 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     const { batchOutboundShipment } = result;
 
     if (batchOutboundShipment?.__typename === 'BatchOutboundShipmentResponse') {
-      return patch;
+      return batchOutboundShipment.updateOutboundShipments?.map(
+        response => response.response
+      );
     }
 
     throw new Error('Unable to update invoice');
@@ -337,88 +339,88 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
   },
   updateLines:
     (status: InvoiceNodeStatus) =>
-    async (draftOutboundLines: DraftStockOutLine[]) => {
-      const input = {
-        insertOutboundShipmentLines: draftOutboundLines
-          .filter(
-            ({ type, isCreated, numberOfPacks, isUpdated }) =>
-              isCreated &&
-              type === InvoiceLineNodeType.StockOut &&
-              (numberOfPacks > 0 ||
-                (status === InvoiceNodeStatus.New && isUpdated))
-          )
-          .map(outboundParsers.toInsertLine),
-        updateOutboundShipmentLines: draftOutboundLines
-          .filter(
-            ({ type, isCreated, isUpdated, numberOfPacks }) =>
-              !isCreated &&
-              isUpdated &&
-              type === InvoiceLineNodeType.StockOut &&
-              (numberOfPacks > 0 || status === InvoiceNodeStatus.New)
-          )
-          .map(outboundParsers.toUpdateLine),
-        deleteOutboundShipmentLines: draftOutboundLines
-          .filter(
-            ({ type, isCreated, isUpdated, numberOfPacks }) =>
-              !isCreated &&
-              isUpdated &&
-              type === InvoiceLineNodeType.StockOut &&
-              numberOfPacks === 0 &&
-              !(status === InvoiceNodeStatus.New && isUpdated)
-          )
-          .map(outboundParsers.toDeleteLine),
-        insertOutboundShipmentUnallocatedLines: draftOutboundLines
-          .filter(
-            ({ type, isCreated, numberOfPacks }) =>
-              type === InvoiceLineNodeType.UnallocatedStock &&
-              isCreated &&
-              numberOfPacks > 0
-          )
-          .map(outboundParsers.toInsertPlaceholder),
-        updateOutboundShipmentUnallocatedLines: draftOutboundLines
-          .filter(
-            ({ type, isCreated, isUpdated, numberOfPacks }) =>
-              type === InvoiceLineNodeType.UnallocatedStock &&
-              !isCreated &&
-              isUpdated &&
-              numberOfPacks > 0
-          )
-          .map(outboundParsers.toUpdatePlaceholder),
-        deleteOutboundShipmentUnallocatedLines: draftOutboundLines
-          .filter(
-            ({ type, numberOfPacks, isCreated }) =>
-              type === InvoiceLineNodeType.UnallocatedStock &&
-              numberOfPacks === 0 &&
-              !isCreated
-          )
-          .map(outboundParsers.toDeletePlaceholder),
-        insertOutboundShipmentServiceLines: draftOutboundLines
-          .filter(
-            ({ type, isCreated, isDeleted }) =>
-              type === InvoiceLineNodeType.Service && !isDeleted && isCreated
-          )
-          .map(outboundParsers.toInsertServiceCharge),
-        updateOutboundShipmentServiceLines: draftOutboundLines
-          .filter(
-            ({ type, isUpdated, isCreated, isDeleted }) =>
-              type === InvoiceLineNodeType.Service &&
-              !isDeleted &&
-              !isCreated &&
-              isUpdated
-          )
-          .map(outboundParsers.toUpdateServiceCharge),
-        deleteOutboundShipmentServiceLines: draftOutboundLines
-          .filter(
-            ({ type, isCreated, isDeleted }) =>
-              type === InvoiceLineNodeType.Service && isDeleted && !isCreated
-          )
-          .map(outboundParsers.toDeleteServiceCharge),
-      };
+      async (draftOutboundLines: DraftStockOutLine[]) => {
+        const input = {
+          insertOutboundShipmentLines: draftOutboundLines
+            .filter(
+              ({ type, isCreated, numberOfPacks, isUpdated }) =>
+                isCreated &&
+                type === InvoiceLineNodeType.StockOut &&
+                (numberOfPacks > 0 ||
+                  (status === InvoiceNodeStatus.New && isUpdated))
+            )
+            .map(outboundParsers.toInsertLine),
+          updateOutboundShipmentLines: draftOutboundLines
+            .filter(
+              ({ type, isCreated, isUpdated, numberOfPacks }) =>
+                !isCreated &&
+                isUpdated &&
+                type === InvoiceLineNodeType.StockOut &&
+                (numberOfPacks > 0 || status === InvoiceNodeStatus.New)
+            )
+            .map(outboundParsers.toUpdateLine),
+          deleteOutboundShipmentLines: draftOutboundLines
+            .filter(
+              ({ type, isCreated, isUpdated, numberOfPacks }) =>
+                !isCreated &&
+                isUpdated &&
+                type === InvoiceLineNodeType.StockOut &&
+                numberOfPacks === 0 &&
+                !(status === InvoiceNodeStatus.New && isUpdated)
+            )
+            .map(outboundParsers.toDeleteLine),
+          insertOutboundShipmentUnallocatedLines: draftOutboundLines
+            .filter(
+              ({ type, isCreated, numberOfPacks }) =>
+                type === InvoiceLineNodeType.UnallocatedStock &&
+                isCreated &&
+                numberOfPacks > 0
+            )
+            .map(outboundParsers.toInsertPlaceholder),
+          updateOutboundShipmentUnallocatedLines: draftOutboundLines
+            .filter(
+              ({ type, isCreated, isUpdated, numberOfPacks }) =>
+                type === InvoiceLineNodeType.UnallocatedStock &&
+                !isCreated &&
+                isUpdated &&
+                numberOfPacks > 0
+            )
+            .map(outboundParsers.toUpdatePlaceholder),
+          deleteOutboundShipmentUnallocatedLines: draftOutboundLines
+            .filter(
+              ({ type, numberOfPacks, isCreated }) =>
+                type === InvoiceLineNodeType.UnallocatedStock &&
+                numberOfPacks === 0 &&
+                !isCreated
+            )
+            .map(outboundParsers.toDeletePlaceholder),
+          insertOutboundShipmentServiceLines: draftOutboundLines
+            .filter(
+              ({ type, isCreated, isDeleted }) =>
+                type === InvoiceLineNodeType.Service && !isDeleted && isCreated
+            )
+            .map(outboundParsers.toInsertServiceCharge),
+          updateOutboundShipmentServiceLines: draftOutboundLines
+            .filter(
+              ({ type, isUpdated, isCreated, isDeleted }) =>
+                type === InvoiceLineNodeType.Service &&
+                !isDeleted &&
+                !isCreated &&
+                isUpdated
+            )
+            .map(outboundParsers.toUpdateServiceCharge),
+          deleteOutboundShipmentServiceLines: draftOutboundLines
+            .filter(
+              ({ type, isCreated, isDeleted }) =>
+                type === InvoiceLineNodeType.Service && isDeleted && !isCreated
+            )
+            .map(outboundParsers.toDeleteServiceCharge),
+        };
 
-      const result = await sdk.upsertOutboundShipment({ storeId, input });
+        const result = await sdk.upsertOutboundShipment({ storeId, input });
 
-      return result;
-    },
+        return result;
+      },
   allocateLines: async (
     allocatedOutboundShipmentUnallocatedLines: string[]
   ) => {

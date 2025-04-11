@@ -2,6 +2,8 @@ use crate::db_diesel::{item_link_row::item_link, requisition_row::requisition};
 use crate::repository_error::RepositoryError;
 use crate::{RequisitionRowRepository, StorageConnection};
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{Delete, Upsert};
@@ -39,7 +41,9 @@ joinable!(requisition_line -> item_link (item_link_id));
 joinable!(requisition_line -> requisition (requisition_id));
 allow_tables_to_appear_in_same_query!(requisition_line, item_link);
 
-#[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
+#[derive(
+    TS, Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default, Serialize, Deserialize,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = requisition_line)]
 pub struct RequisitionLineRow {

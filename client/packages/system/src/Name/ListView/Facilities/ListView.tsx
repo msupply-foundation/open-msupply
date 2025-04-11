@@ -11,6 +11,7 @@ import {
   useEditModal,
   useToggle,
   TooltipTextCell,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
 import { Toolbar } from './Toolbar';
@@ -20,6 +21,7 @@ import { PropertiesImportModal } from '../ImportProperties/PropertiesImportModal
 import { FacilityNameRowFragment } from '../../api/operations.generated';
 
 const FacilitiesListComponent = () => {
+  const t = useTranslation();
   const [selectedId, setSelectedId] = useState('');
   const {
     filter,
@@ -109,7 +111,7 @@ const FacilitiesListComponent = () => {
         data={data?.nodes}
         isLoading={isLoading}
         isError={isError}
-        noDataElement={<NothingHere />}
+        noDataElement={<NothingHere body={t('error.no-facilities')} />}
         onRowClick={onRowClick}
       />
     </>

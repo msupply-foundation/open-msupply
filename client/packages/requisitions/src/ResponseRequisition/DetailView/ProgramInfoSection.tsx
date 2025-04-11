@@ -25,10 +25,6 @@ export const ProgramInfoSection = () => {
           <PanelField>{orderType ?? ''}</PanelField>
         </PanelRow>
         <PanelRow>
-          <PanelLabel>{t('label.program')}</PanelLabel>
-          <PanelField>{programName ?? ''}</PanelField>
-        </PanelRow>
-        <PanelRow>
           <PanelLabel>{t('label.period')}</PanelLabel>
           <PanelField>{period?.name ?? ''}</PanelField>
         </PanelRow>

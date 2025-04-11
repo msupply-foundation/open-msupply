@@ -29,6 +29,7 @@ pub struct LegacyListMasterRow {
     #[serde(rename = "programSettings")]
     program_settings: Option<LegacyProgramSettings>,
     is_immunisation: Option<bool>,
+    inactive: Option<bool>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -205,10 +206,10 @@ fn generate_requisition_program(
         context_id: context_row.id.clone(),
         is_immunisation: master_list.is_immunisation.unwrap_or(false),
         elmis_code: program_settings.elmis_code.clone(),
-        deleted_datetime: if master_list.is_program {
-            None
-        } else {
+        deleted_datetime: if master_list.inactive.unwrap_or(false) {
             Some(chrono::Utc::now().naive_utc())
+        } else {
+            None
         },
     };
 

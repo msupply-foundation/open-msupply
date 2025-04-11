@@ -5,6 +5,7 @@ import { getPatientOptionRenderer } from '../PatientOptionRenderer';
 import { useSearchPatient } from '../utils';
 
 export const PatientSearchInput: FC<NameSearchInputProps> = ({
+  autoFocus,
   onChange,
   width = 250,
   value,
@@ -43,6 +44,7 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
 
   return (
     <Autocomplete
+      autoFocus={autoFocus}
       options={options}
       disabled={disabled}
       clearable={false}
