@@ -8,8 +8,6 @@ use super::{PullTranslateResult, SyncTranslation};
 #[derive(Deserialize, Serialize)]
 
 pub struct LegacyItemWarningJoinRow {
-    #[serde(rename = "Spare")] // Spare column not used in oms
-    spare: f64,
     #[serde(rename = "item_ID")]
     item_link_id: String,
     #[serde(rename = "warning_ID")]
@@ -43,13 +41,18 @@ impl SyncTranslation for ItemWarningJoinTranslation {
         _connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyItemWarningJoinRow>(&sync_record.data)?;
+        let LegacyItemWarningJoinRow {
+            id,
+            item_link_id,
+            warning_id,
+            priority,
+        } = serde_json::from_str::<LegacyItemWarningJoinRow>(&sync_record.data)?;
 
         let result = ItemWarningJoinRow {
-            id: data.id,
-            item_link_id: data.item_link_id,
-            warning_id: data.warning_id,
-            priority: data.priority,
+            id,
+            item_link_id,
+            warning_id,
+            priority,
         };
         Ok(PullTranslateResult::upsert(result))
     }
