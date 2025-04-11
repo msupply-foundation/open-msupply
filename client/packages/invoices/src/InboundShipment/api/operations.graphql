@@ -72,6 +72,7 @@ fragment Inbound on InvoiceNode {
   transportReference
   type
   taxPercentage
+  expectedDeliveryDate
 
   linkedShipment {
     __typename
@@ -346,6 +347,11 @@ mutation insertInboundShipment(
   }
 }
 
+fragment LineLinkedToTransferredInvoiceError on LineLinkedToTransferredInvoice {
+  __typename
+  description
+}
+
 mutation deleteInboundShipmentLines(
   $storeId: String!
   $input: BatchInboundShipmentInput!
@@ -366,9 +372,8 @@ mutation deleteInboundShipmentLines(
               __typename
               description
             }
-            ... on TransferredShipment {
-              __typename
-              description
+            ... on LineLinkedToTransferredInvoice {
+              ...LineLinkedToTransferredInvoiceError
             }
             ... on CannotEditInvoice {
               __typename

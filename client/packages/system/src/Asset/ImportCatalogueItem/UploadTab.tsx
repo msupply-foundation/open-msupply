@@ -18,7 +18,7 @@ import {
 import * as AssetItemImportModal from './CatalogueItemImportModal';
 import { ImportRow } from './CatalogueItemImportModal';
 import { importRowToCsv } from '../utils';
-import { useAssetData, AssetCatalogueItemFragment } from '../api';
+import { AssetCatalogueItemFragment, useAssetProperties } from '../api';
 import { processProperties } from '../../utils';
 
 interface AssetItemUploadTabProps {
@@ -69,7 +69,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const AssetItemBuffer: AssetItemImportModal.ImportRow[] = [];
-  const { data: properties } = useAssetData.utils.properties();
+  const { data: properties } = useAssetProperties();
 
   const csvExample = async () => {
     const exampleRows: ImportRow[] = [

@@ -1,14 +1,11 @@
 import { RequestLineFragment } from '../api';
 import {
-  useTranslation,
   ColumnAlign,
   useColumns,
   GenericColumnKey,
   getCommentPopoverColumn,
-  useFormatNumber,
   useUrlQueryParams,
   ColumnDescription,
-  ColumnDataAccessor,
   TooltipTextCell,
   useAuthContext,
   getLinesFromRow,
@@ -17,25 +14,6 @@ import {
 import { useRequest } from '../api';
 import { PackQuantityCell } from '@openmsupply-client/system';
 import { useRequestRequisitionLineErrorContext } from '../context';
-
-const useStockOnHand: ColumnDataAccessor<RequestLineFragment, string> = ({
-  rowData,
-}) => {
-  const t = useTranslation();
-  const formatNumber = useFormatNumber();
-  const { itemStats } = rowData;
-  const { availableStockOnHand, availableMonthsOfStockOnHand } = itemStats;
-
-  const monthsString = availableMonthsOfStockOnHand
-    ? `(${formatNumber.round(availableMonthsOfStockOnHand, 1)} ${t(
-        'label.months',
-        {
-          count: availableMonthsOfStockOnHand,
-        }
-      )})`
-    : '';
-  return `${availableStockOnHand} ${monthsString}`;
-};
 
 export const useRequestColumns = () => {
   const { maxMonthsOfStock, programName } = useRequest.document.fields([
@@ -88,11 +66,11 @@ export const useRequestColumns = () => {
     },
     {
       key: 'availableStockOnHand',
-      label: 'label.stock-on-hand',
-      description: 'description.stock-on-hand',
+      label: 'label.available-soh',
+      description: 'description.available-soh',
       align: ColumnAlign.Right,
       width: 200,
-      accessor: useStockOnHand,
+      accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
       getSortValue: rowData => rowData.itemStats.availableStockOnHand,
     },
     [
@@ -105,13 +83,7 @@ export const useRequestColumns = () => {
         getSortValue: rowData => rowData.itemStats.averageMonthlyConsumption,
       },
     ],
-  ];
-
-  if (
-    programName &&
-    store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders
-  ) {
-    columnDefinitions.push({
+    {
       key: 'monthsOfStock',
       label: 'label.months-of-stock',
       description: 'description.available-months-of-stock',
@@ -119,8 +91,8 @@ export const useRequestColumns = () => {
       width: 150,
       Cell: PackQuantityCell,
       accessor: ({ rowData }) => rowData.itemStats.availableMonthsOfStockOnHand,
-    });
-  }
+    },
+  ];
 
   columnDefinitions.push(
     {
@@ -257,13 +229,13 @@ export const useRequestColumns = () => {
   const columns = useColumns<RequestLineFragment>(
     [
       ...columnDefinitions,
-      ...(plugins.requestRequisitionColumn?.tableColumns || []),
+      ...(plugins.requestRequisitionLine?.tableColumn || []),
     ],
     {
       onChangeSortBy: updateSortQuery,
       sortBy,
     },
-    [updateSortQuery, sortBy, plugins.requestRequisitionColumn]
+    [updateSortQuery, sortBy, plugins.requestRequisitionLine]
   );
 
   return { columns, sortBy, onChangeSortBy: updateSortQuery };

@@ -7,7 +7,7 @@ use repository::{
 };
 
 use serde::{Deserialize, Serialize};
-use util::constants::{MISSING_PROGRAM, NUMBER_OF_DAYS_IN_A_MONTH};
+use util::constants::{APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, MISSING_PROGRAM};
 
 use crate::sync::{
     sync_serde::{
@@ -267,9 +267,9 @@ impl SyncTranslation for RequisitionTranslation {
             ),
             None => (
                 date_and_time_to_datetime(data.date_entered, 0),
-                from_legacy_sent_datetime(data.last_modified_at, &r#type),
-                from_legacy_finalised_datetime(data.last_modified_at, &r#type),
-                data.daysToSupply as f64 / NUMBER_OF_DAYS_IN_A_MONTH,
+                from_legacy_sent_datetime(data.last_modified_at, &r#type, &data.status),
+                from_legacy_finalised_datetime(data.last_modified_at, &r#type, &data.status),
+                data.daysToSupply as f64 / APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30,
                 from_legacy_status(&data.r#type, &data.status).ok_or(anyhow::Error::msg(
                     format!("Unsupported requisition status: {:?}", data.status),
                 ))?,
@@ -402,7 +402,7 @@ impl SyncTranslation for RequisitionTranslation {
             requester_reference: their_reference,
             linked_requisition_id,
             thresholdMOS: min_months_of_stock,
-            daysToSupply: (NUMBER_OF_DAYS_IN_A_MONTH * max_months_of_stock) as i64,
+            daysToSupply: (APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30 * max_months_of_stock) as i64,
             max_months_of_stock: Some(max_months_of_stock),
             om_colour: colour.clone(),
             comment,
@@ -432,10 +432,13 @@ impl SyncTranslation for RequisitionTranslation {
 fn from_legacy_sent_datetime(
     last_modified_at: i64,
     r#type: &RequisitionType,
+    status: &LegacyRequisitionStatus,
 ) -> Option<NaiveDateTime> {
     match r#type {
         RequisitionType::Request => {
-            if last_modified_at > 0 {
+            // In OG, a finalised "fn" request requisition is the equivalent of a "sent" request requisition in OMS.
+            // There are no date/time fields in OG requisition table for this, there are logs though. Hence using last_modified_at.
+            if last_modified_at > 0 && matches!(status, LegacyRequisitionStatus::Fn) {
                 Some(
                     DateTime::from_timestamp(last_modified_at, 0)
                         .unwrap()
@@ -445,6 +448,7 @@ fn from_legacy_sent_datetime(
                 None
             }
         }
+        // In OMS a response requisition should never be "sent" so the concept doesn't map here
         RequisitionType::Response => None,
     }
 }
@@ -452,11 +456,12 @@ fn from_legacy_sent_datetime(
 fn from_legacy_finalised_datetime(
     last_modified_at: i64,
     r#type: &RequisitionType,
+    status: &LegacyRequisitionStatus,
 ) -> Option<NaiveDateTime> {
     match r#type {
         RequisitionType::Request => None,
         RequisitionType::Response => {
-            if last_modified_at > 0 {
+            if last_modified_at > 0 && matches!(status, LegacyRequisitionStatus::Fn) {
                 Some(
                     DateTime::from_timestamp(last_modified_at, 0)
                         .unwrap()

@@ -4,15 +4,15 @@ import {
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { useOutboundApi } from './../utils/useOutboundApi';
-import { useOutboundNumber } from './../utils/useOutboundNumber';
+import { useOutboundId } from '../utils/useOutboundId';
 
 export const useOutboundSaveLines = (status: InvoiceNodeStatus) => {
-  const outboundNumber = useOutboundNumber();
+  const outboundId = useOutboundId();
   const queryClient = useQueryClient();
   const api = useOutboundApi();
   return useMutation(api.updateLines(status), {
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.detail(outboundNumber));
+      queryClient.invalidateQueries(api.keys.detail(outboundId));
     },
   });
 };

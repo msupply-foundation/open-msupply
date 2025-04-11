@@ -7,6 +7,7 @@ import {
   AutocompleteInputChangeReason,
   AutocompleteProps as MuiAutocompleteProps,
   PopperProps,
+  SxProps,
 } from '@mui/material';
 import {
   AutocompleteOption,
@@ -16,6 +17,7 @@ import {
 import { BasicTextInput, BasicTextInputProps } from '../TextInput';
 import { StyledPopper } from './components';
 import { useOpenStateWithKeyboard } from './utils';
+import { useTranslation } from '@common/intl';
 
 export interface AutocompleteProps<T>
   extends Omit<
@@ -50,6 +52,7 @@ export interface AutocompleteProps<T>
   error?: boolean;
   setError?: (error: string) => void;
   required?: boolean;
+  textSx?: SxProps;
 }
 
 export function Autocomplete<T>({
@@ -79,8 +82,10 @@ export function Autocomplete<T>({
   error,
   setError,
   required,
+  textSx,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
+  const t = useTranslation();
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
@@ -94,6 +99,7 @@ export function Autocomplete<T>({
           disableUnderline: false,
           sx: {
             padding: '4px !important',
+            ...textSx,
           },
           ...props.InputProps,
         },
@@ -136,8 +142,8 @@ export function Autocomplete<T>({
       getOptionDisabled={getOptionDisabled}
       filterOptions={filter}
       loading={loading}
-      loadingText={loadingText}
-      noOptionsText={noOptionsText}
+      loadingText={loadingText ?? t('loading')}
+      noOptionsText={noOptionsText ?? t('label.no-options')}
       options={options}
       size="small"
       renderInput={renderInput || defaultRenderInput}

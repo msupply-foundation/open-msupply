@@ -1,3 +1,13 @@
+.header_image_section,
+.header_supplied_section {
+  margin-left: 8px;
+  width: 100%;
+  font-family: Tahoma;
+  font-size: 8pt;
+  border-bottom: 0.5px solid black;
+  padding-top: 1pt;
+}
+
 .logo {
   display: block;
   height: 96px;
@@ -8,16 +18,12 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-th {
-  border: 1px dotted #181715;
-  border-collapse: collapse;
-}
-
 table.center {
   margin-left: auto;
   margin-right: auto;
   width: 98%;
   border-collapse: collapse; 
+  font-size: 12px;
 
 }
 
@@ -26,22 +32,32 @@ td.borderline {
   
 }
 
+td {
+  vertical-align: top;
+  padding: 2px;
+}
+
+th {
+  padding: 2px;
+}
+
+tr.borderline {
+  border-bottom: 1px solid black;
+
+}
+
 td.borderlineTopBottom {
   border-bottom: 1px solid black;
   border-top: 1px solid black;
   
 }
 
-
 .Report_title {
   text-align: center;
-  width: 100%;
-  height: 14px;
   padding-top: 8px;
   font-weight: bold; 
   font-size: 12pt; 
 }
-
 
 .name_centre {
   text-align: center;
@@ -60,26 +76,67 @@ td.borderlineTopBottom {
   font-size: 10pt; 
 }
 
-.table_header {
-  text-align: left;
-  font-weight: bold; 
-  font-size: 8pt; 
+.col-item-code {
+  width: 6%;
+  text-align: left;  
 }
 
-
-
-.table_text {
-  text-align: left;
-  font-weight: normal; 
-  font-size: 8pt; 
+.col-item-name {
+  text-align: left;  
 }
 
+.col-batch {
+  width: 5%;
+  text-align: left;  
+}
 
-
-.table_number {
+.col-expiry-date {
+  width: 7.5%;
   text-align: right;
-  font-weight: normal; 
-  font-size: 8pt; 
+}
+
+.col-packsize {
+  width: 5%;
+  text-align: right;
+}
+
+.col-cost-price {
+  width: 8%;
+  text-align: right;
+}
+
+.col-snapshot-packs {
+  width: 6%;
+  text-align: right;
+}
+
+.col-counted-packs {
+  width: 6%;
+  text-align: right;
+}
+
+.col-variance-packs {
+  width: 6%;
+  text-align: right;
+}
+
+.col-variance-values {
+  width: 6%;
+  text-align: right;
+}
+
+.col-reason {
+  width: 10%;
+  text-align: right;
+}
+
+.col-comment {
+  width: 12%;
+  text-align: right;
+}
+
+.batch-wrap {
+  word-break: break-word;
 }
 
 

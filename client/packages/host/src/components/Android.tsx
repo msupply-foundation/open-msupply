@@ -157,12 +157,17 @@ export const Android = () => {
           alignItems="center"
           justifyContent="center"
         >
-          <Box display="flex" flex="0 0 40%" alignSelf="center" sx={theme => ({
-            [theme.breakpoints.down('sm')]: {
-              flexDirection: 'column',
-              flex: '0 0 35%',
-            },
-          })}>
+          <Box
+            display="flex"
+            flex="0 0 40%"
+            alignSelf="center"
+            sx={theme => ({
+              [theme.breakpoints.down('sm')]: {
+                flexDirection: 'column',
+                flex: '0 0 35%',
+              },
+            })}
+          >
             <Box
               display="flex"
               alignItems="center"
@@ -171,17 +176,22 @@ export const Android = () => {
             >
               <LoginIcon />
             </Box>
-            <Box display="flex" flexDirection="column" justifyContent="center" sx={theme => ({
-              [theme.breakpoints.down('sm')]: {
-                alignItems: 'center',
-                paddingX: '1.5em',
-              },
-            })}>
+            <Box
+              display="flex"
+              flexDirection="column"
+              justifyContent="center"
+              sx={theme => ({
+                [theme.breakpoints.down('sm')]: {
+                  alignItems: 'center',
+                  paddingX: '1.5em',
+                },
+              })}
+            >
               <Heading text={t('initialise.heading')} />
               <SubHeading text={t('messages.native-mode')} />
             </Box>
           </Box>
-          <Stack spacing={3} maxWidth={400} >
+          <Stack spacing={3} maxWidth={400}>
             <ModeOption
               label={t('label.client')}
               mode={NativeMode.Client}

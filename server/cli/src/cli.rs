@@ -45,10 +45,11 @@ use util::inline_init;
 mod backup;
 use backup::*;
 
-mod plugins;
-use plugins::*;
-
-use cli::{generate_report_data, generate_reports_recursive, RefreshDatesRepository, ReportError};
+use cli::{
+    generate_and_install_plugin_bundle, generate_plugin_bundle, generate_report_data,
+    generate_reports_recursive, install_plugin_bundle, GenerateAndInstallPluginBundle,
+    GeneratePluginBundle, InstallPluginBundle, RefreshDatesRepository, ReportError,
+};
 
 const DATA_EXPORT_FOLDER: &str = "data";
 
@@ -58,6 +59,9 @@ const DATA_EXPORT_FOLDER: &str = "data";
 struct Args {
     #[clap(subcommand)]
     action: Action,
+    
+    #[clap(flatten)]
+    config_args: configuration::ConfigArgs,
 }
 
 #[derive(clap::Subcommand)]
@@ -280,7 +284,7 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     let settings: Settings =
-        configuration::get_configuration().expect("Problem loading configurations");
+        configuration::get_configuration(args.config_args).expect("Problem loading configurations");
 
     match args.action {
         Action::ExportGraphqlSchema => {
@@ -645,8 +649,13 @@ async fn main() -> anyhow::Result<()> {
                 .arg(generated_file_path.clone())
                 .status()
                 .expect(&format!("failed to open file {:?}", generated_file_path));
-        },
-        Action::ToggleReport { code, is_custom, enable, disable } => {
+        }
+        Action::ToggleReport {
+            code,
+            is_custom,
+            enable,
+            disable,
+        } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
 
@@ -654,7 +663,7 @@ async fn main() -> anyhow::Result<()> {
             match is_custom {
                 Some(value) => {
                     filter = filter.is_custom(value);
-                },
+                }
                 None => {}
             }
 
@@ -668,18 +677,17 @@ async fn main() -> anyhow::Result<()> {
                 let updated_value = {
                     if enable {
                         true
-                    } else if disable{
+                    } else if disable {
                         false
                     } else {
                         !report.report_row.is_active
                     }
                 };
                 report.report_row.is_active = updated_value;
-                row_repository.upsert_one(
-                    &report.report_row
-                )?;
+                row_repository.upsert_one(&report.report_row)?;
 
-                info!("{}: {} => {}",
+                info!(
+                    "{}: {} => {}",
                     report.report_row.id,
                     if initial_value { "ACTIVE" } else { "INACTIVE" },
                     if updated_value { "ACTIVE" } else { "INACTIVE" }

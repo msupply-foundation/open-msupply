@@ -116,7 +116,7 @@ const StockListComponent: FC = () => {
     [
       'numberOfPacks',
       {
-        accessor: ({ rowData }) => rowData.totalNumberOfPacks,
+        accessor: ({ rowData }) => rowData.totalNumberOfPacks.toFixed(2),
         width: 125,
       },
     ],
@@ -124,7 +124,18 @@ const StockListComponent: FC = () => {
       'stockOnHand',
       {
         accessor: ({ rowData }) =>
-          rowData.totalNumberOfPacks * rowData.packSize,
+          (rowData.totalNumberOfPacks * rowData.packSize).toFixed(2),
+        sortable: false,
+        width: 125,
+      },
+    ],
+    [
+      'availableStockOnHand',
+      {
+        label: 'label.available-soh',
+        description: 'description.available-soh',
+        accessor: ({ rowData }) =>
+          (rowData.availableNumberOfPacks * rowData.packSize).toFixed(2),
         sortable: false,
         width: 125,
       },
@@ -153,7 +164,7 @@ const StockListComponent: FC = () => {
       Cell: TooltipTextCell,
       width: 190,
     },
-    ...(plugins.stockColumn?.columns || []),
+    ...(plugins.stockLine?.tableColumn || []),
   ];
 
   const columns = useColumns<StockLineRowFragment>(
@@ -162,14 +173,14 @@ const StockListComponent: FC = () => {
       sortBy,
       onChangeSortBy: updateSortQuery,
     },
-    [sortBy, plugins.stockColumn?.columns]
+    [sortBy, plugins.stockLine?.tableColumn]
   );
 
   return (
     <>
       <Toolbar filter={filter} />
       <AppBarButtons />
-      {plugins.stockColumn?.StateLoader?.map((StateLoader, index) => (
+      {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
         <StateLoader key={index} stockLines={data?.nodes ?? []} />
       ))}
       {isOpen && <NewStockLineModal isOpen={isOpen} onClose={onClose} />}

@@ -20,28 +20,36 @@ import {
 import { useAssets } from '../api';
 import { assetsToCsv } from '../utils';
 import { AddFromScannerButton } from './AddFromScannerButton';
-import { useAssetData } from '@openmsupply-client/system';
+import { useAssetProperties } from '@openmsupply-client/system';
+
+interface AppBarButtonsComponentProps {
+  importModalController: ToggleState;
+  modalController: ToggleState;
+}
 
 export const AppBarButtonsComponent = ({
   importModalController,
   modalController,
-}: {
-  importModalController: ToggleState;
-  modalController: ToggleState;
-}) => {
+}: AppBarButtonsComponentProps) => {
   const { success, error } = useNotification();
   const t = useTranslation();
   const { fetchAsync, isLoading } = useAssets.document.listAll();
-  const { data: properties } = useAssetData.utils.properties();
+  const { data: properties } = useAssetProperties();
   const isCentralServer = useIsCentralServerApi();
 
-  const onAdd = useCallbackWithPermission(
+  const handleUploadAssetClick = useCallbackWithPermission(
+    UserPermission.AssetMutate,
+    importModalController.toggleOn,
+    t('error.no-asset-import-permission')
+  );
+
+  const handleCreateAssetClick = useCallbackWithPermission(
     UserPermission.AssetMutate,
     modalController.toggleOn,
     t('error.no-asset-create-permission')
   );
 
-  const csvExport = async () => {
+  const handleCsvExportClick = async () => {
     const data = await fetchAsync();
     if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
@@ -64,19 +72,19 @@ export const AppBarButtonsComponent = ({
         <ButtonWithIcon
           Icon={<UploadIcon />}
           label={t('button.upload-assets')}
-          onClick={importModalController.toggleOn}
+          onClick={handleUploadAssetClick}
         />
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-asset')}
-          onClick={onAdd}
+          onClick={handleCreateAssetClick}
         />
         <AddFromScannerButton />
         <LoadingButton
           startIcon={<DownloadIcon />}
           isLoading={isLoading}
           variant="outlined"
-          onClick={csvExport}
+          onClick={handleCsvExportClick}
           disabled={EnvUtils.platform === Platform.Android}
           label={t('button.export')}
         />

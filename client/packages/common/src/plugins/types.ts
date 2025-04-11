@@ -1,5 +1,6 @@
 import { ColumnDefinition, UsePluginEvents } from '@openmsupply-client/common';
 import {
+  RequestFragment,
   RequestLineFragment,
   StockLineRowFragment,
 } from '@openmsupply-client/system';
@@ -7,21 +8,29 @@ import { InboundFragment } from '@openmsupply-client/invoices';
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 
 export type Plugins = {
-  stockEditForm?: React.ComponentType<{
-    stockLine: StockLineRowFragment;
-    events: UsePluginEvents<{ isDirty: boolean }>;
-  }>[];
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
   dashboard?: React.ComponentType[];
-  stockColumn?: {
-    StateLoader: React.ComponentType<{ stockLines: StockLineRowFragment[] }>[];
-    columns: ColumnDefinition<StockLineRowFragment>[];
+  stockLine?: {
+    tableStateLoader: React.ComponentType<{
+      stockLines: StockLineRowFragment[];
+    }>[];
+    tableColumn: ColumnDefinition<StockLineRowFragment>[];
+    editViewField: React.ComponentType<{
+      stockLine: StockLineRowFragment;
+      events: UsePluginEvents<{ isDirty: boolean }>;
+    }>[];
   };
-  requestRequisitionColumn?: {
-    StateLoader: React.ComponentType<{ requestLines: RequestLineFragment[] }>[];
-    tableColumns: ColumnDefinition<RequestLineFragment>[];
-    editViewFields: React.ComponentType<{ line: RequestLineFragment }>[];
+  requestRequisitionLine?: {
+    tableStateLoader: React.ComponentType<{
+      requestLines: RequestLineFragment[];
+    }>[];
+    tableColumn: ColumnDefinition<RequestLineFragment>[];
+    editViewField: React.ComponentType<{ line: RequestLineFragment }>[];
+    editViewInfo: React.ComponentType<{
+      line: RequestLineFragment;
+      requisition: RequestFragment;
+    }>[];
   };
 };
 

@@ -126,7 +126,7 @@ mod query {
             )
             .unwrap();
         let asset_location_ids: Vec<String> = asset_location_repository
-            .find_all_by_asset(id.clone())
+            .find_all_by_asset(&id)
             .unwrap()
             .into_iter()
             .map(|location| location.location_id)
@@ -148,7 +148,7 @@ mod query {
             .unwrap();
 
         let asset_location_ids: Vec<String> = asset_location_repository
-            .find_all_by_asset(id.clone())
+            .find_all_by_asset(&id)
             .unwrap()
             .into_iter()
             .map(|location| location.location_id)
@@ -187,7 +187,7 @@ mod query {
             )
             .unwrap();
         let asset_location_ids: Vec<String> = asset_location_repository
-            .find_all_by_asset(id.clone())
+            .find_all_by_asset(&id)
             .unwrap()
             .into_iter()
             .map(|location| location.location_id)
@@ -209,7 +209,7 @@ mod query {
             .unwrap();
 
         let asset_location_ids: Vec<String> = asset_location_repository
-            .find_all_by_asset(id.clone())
+            .find_all_by_asset(&id)
             .unwrap()
             .into_iter()
             .map(|location| location.location_id)

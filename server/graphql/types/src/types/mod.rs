@@ -58,6 +58,9 @@ pub use self::period::*;
 pub mod permissions;
 pub use self::permissions::*;
 
+pub mod preferences;
+pub use self::preferences::*;
+
 pub mod response_requisition_stats;
 pub use self::response_requisition_stats::*;
 
@@ -123,7 +126,6 @@ pub use self::cold_storage_type::*;
 
 pub mod abbreviation;
 pub use self::abbreviation::*;
-mod requisition_item_information;
 
 pub mod printer;
 pub use self::printer::*;

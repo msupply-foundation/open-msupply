@@ -13,8 +13,8 @@ import {
   useToggle,
   useUrlQueryParams,
   ColumnDescription,
-  TooltipTextCell,
   GenericColumnKey,
+  getCommentPopoverColumn,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -105,7 +105,7 @@ export const RequestRequisitionListView: FC = () => {
           getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
       },
     ],
-    ['comment', { width: '100%', Cell: TooltipTextCell, sortable: false }]
+    getCommentPopoverColumn()
   );
 
   if (requireSupplierAuthorisation) {
@@ -127,7 +127,7 @@ export const RequestRequisitionListView: FC = () => {
 
   const onRowClick = useCallback(
     (row: RequestRowFragment) => {
-      navigate(String(row.requisitionNumber));
+      navigate(String(row.id));
     },
     [navigate]
   );

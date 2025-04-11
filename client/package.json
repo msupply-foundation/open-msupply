@@ -12,8 +12,6 @@
     "build-stats": "lerna run --scope @openmsupply-client/* build-stats",
     "build-plugins": "lerna run --scope @openmsupply-client/* build-plugin",
     "serve": "lerna run --scope @openmsupply-client/* --parallel serve",
-    "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
-    "compile": "lerna run --scope @openmsupply-client/* --parallel tsc --since HEAD -- --noEmit",
     "re-compile": "tsc --project packages/host/tsconfig.json --noEmit",
     "compile-full": "lerna run --scope @openmsupply-client/* --parallel tsc",
     "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom",
@@ -104,9 +102,11 @@
   },
   "dependencies": {
     "@bugsnag/js": "^7.25.0",
+    "@capacitor/camera": "5",
     "@mui/x-date-pickers": "^7.23.6",
     "@types/react-dom": "^18.0.1",
     "graphql": "^16.3.0",
-    "papaparse": "^5.3.2"
+    "papaparse": "^5.3.2",
+    "pluralize": "^8.0.0"
   }
 }

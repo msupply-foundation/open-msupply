@@ -3,11 +3,13 @@
         size: A4 landscape 
     }
 }
-/* @page:left{
-    @bottom-left {
-      content: "Page " counter(page) " of " counter(pages);
-    }
-  } */
+
+@page {
+    font-family: Tahoma;
+    font-size: 8pt;
+    counter-increment: page;
+    content: "Page " counter(page);
+}
 
 .logo {
     display: block;
@@ -20,11 +22,10 @@
 }
 
 .header_supplied_section {
-    /* width: 100%; */
+    width: 100%;
     font-family: Tahoma;
     font-size: 8pt;
     border-bottom: 0.5px solid black;
-    padding-top: 1pt;
 } 
 
 .header_image_section {
@@ -33,7 +34,6 @@
     font-size: 8pt;
     border-bottom: 0.5px solid black;
     padding-top: 8pt;
-    font-family: Tahoma;
 } 
 
 .header_date_section {
@@ -56,7 +56,7 @@
     font-size: 8pt;
 }
 
-.line_number, .quantity, .pack, .expiry, .sell_price, .cost_price, .total_quantity, .total_extension {
+.line_number, .quantity, .pack, .expiry, .cost_price, .total_quantity, .total_extension {
     text-align: right;
     font-family: Tahoma;
     font-size: 8pt;
@@ -87,9 +87,28 @@ hr {
     border: 0.1px solid black;
 }
 
-.pageNumber::after {
+.header_left_section {
+    text-align: left;
     font-family: Tahoma;
     font-size: 8pt;
-    counter-increment: page;
-    content: "Page " counter(page);
+    flex: 0 1 auto;
+    margin-right: 10px;
+}
+
+.header_details_section {
+    flex: 1 1 0;
+    text-align: left;
+    font-family: Tahoma;
+    font-size: 8pt;
+}
+
+.header_right_section {
+  text-align: right;
+  font-family: Tahoma;
+  font-size: 8pt;
+  flex: 0 1 auto;
+}
+
+.batch-wrap {
+    word-break: break-word;
 }

@@ -2,7 +2,9 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BasicSpinner,
   Box,
+  ColumnAlign,
   DataTable,
+  DotCell,
   DownloadIcon,
   FnUtils,
   GenderType,
@@ -24,6 +26,7 @@ import { CentralPatientSearchResponse } from '../api/api';
 import { AppRoute } from '@openmsupply-client/config';
 import { Gender, usePatientStore } from '@openmsupply-client/programs';
 import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
+import { getGenderTranslationKey } from '../PatientView/utils';
 
 const genderToGenderType = (gender: Gender): GenderType => {
   switch (gender) {
@@ -149,10 +152,14 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     {
       key: 'gender',
       label: 'label.gender',
+      formatter: gender => t(getGenderTranslationKey(gender as GenderType)),
     },
     {
       key: 'isDeceased',
       label: 'label.deceased',
+      align: ColumnAlign.Center,
+      Cell: DotCell,
+      sortable: false,
     },
     {
       key: 'isOnCentral',
@@ -204,11 +211,11 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     setCreateNewPatient(undefined);
 
     if (urlSegments.includes(AppRoute.Prescription)) {
-      const invoiceNumber = await createPrescription({
+      const invoice = await createPrescription({
         id: FnUtils.generateUUID(),
         patientId: String(row.id),
       });
-      navigate(String(invoiceNumber));
+      navigate(invoice.id ?? "");
       return;
     }
 

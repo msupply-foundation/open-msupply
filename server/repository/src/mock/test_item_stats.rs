@@ -1,5 +1,5 @@
 use chrono::{Duration, Utc};
-use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, inline_edit, inline_init, uuid::uuid};
+use util::{constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH, inline_edit, inline_init, uuid::uuid};
 
 use crate::{
     InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceType, ItemRow, ItemType, StockLineRow,
@@ -58,23 +58,26 @@ pub fn mock_item_stats() -> MockData {
         u
     }))
     .join(inline_edit(&consumption_points(), |mut u| {
-        u.invoices[0].picked_datetime =
-            Some(Utc::now().naive_utc() - Duration::days((NUMBER_OF_DAYS_IN_A_MONTH + 2.0) as i64));
+        u.invoices[0].picked_datetime = Some(
+            Utc::now().naive_utc() - Duration::days((AVG_NUMBER_OF_DAYS_IN_A_MONTH + 2.0) as i64),
+        );
         u.invoice_lines[ITEM1_INDEX].number_of_packs = 1000.0;
         u.invoice_lines[ITEM2_INDEX].number_of_packs = 30.0;
         u
     }))
     .join(inline_edit(&consumption_points(), |mut u| {
         u.invoices[0].picked_datetime = Some(
-            Utc::now().naive_utc() - Duration::days((NUMBER_OF_DAYS_IN_A_MONTH * 3.0 + 1.0) as i64),
+            Utc::now().naive_utc()
+                - Duration::days((AVG_NUMBER_OF_DAYS_IN_A_MONTH * 3.0 + 1.0) as i64),
         );
         u.invoice_lines[ITEM1_INDEX].number_of_packs = 100000.0;
         u.invoice_lines[ITEM2_INDEX].number_of_packs = 100000.0;
         u
     }))
     .join(inline_edit(&consumption_points(), |mut u| {
-        u.invoices[0].picked_datetime =
-            Some(Utc::now().naive_utc() - Duration::days((NUMBER_OF_DAYS_IN_A_MONTH * 2.0) as i64));
+        u.invoices[0].picked_datetime = Some(
+            Utc::now().naive_utc() - Duration::days((AVG_NUMBER_OF_DAYS_IN_A_MONTH * 2.0) as i64),
+        );
         u.invoices[0].store_id = mock_store_b().id;
         u.invoice_lines[ITEM1_INDEX].number_of_packs = 50.0;
         u

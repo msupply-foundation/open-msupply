@@ -41,17 +41,19 @@ export const InitialiseLayout = ({
   };
 
   return (
-    <Box display="flex" sx={theme => ({
-      [theme.breakpoints.down('sm')]: {
-        flexDirection: 'column',
-      },
-      width: '100%'
-    })}
+    <Box
+      display="flex"
+      sx={theme => ({
+        [theme.breakpoints.down('sm')]: {
+          flexDirection: 'column',
+        },
+        width: '100%',
+      })}
     >
       <Box
         flex="1 0 50%"
         sx={theme => ({
-          [theme.breakpoints.down('sm')]: {            
+          [theme.breakpoints.down('sm')]: {
             flex: '0 0 0',
             padding: '2em',
           },
@@ -117,7 +119,7 @@ export const InitialiseLayout = ({
           sx={theme => ({
             [theme.breakpoints.down('sm')]: {
               justifyContent: 'flex-start',
-              paddingTop: '1.5em'
+              paddingTop: '1.5em',
             },
             alignItems: 'center',
             justifyContent: 'center',
@@ -128,7 +130,7 @@ export const InitialiseLayout = ({
         >
           <Box style={{ width: 285 }}>
             <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
-              <Stack spacing={isMobile ? 3 : 5}>                
+              <Stack spacing={isMobile ? 3 : 5}>
                 <Box display="flex" justifyContent="center">
                   <LoginIcon small />
                 </Box>

@@ -14,18 +14,30 @@ import {
   ClinicianSearchInput,
   PatientSearchInput,
 } from '@openmsupply-client/system';
+import { ProgramSearchInput } from '@openmsupply-client/system';
+import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
+
 import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 import { usePrescription } from '../api';
 
 export const Toolbar: FC = () => {
+  const t = useTranslation();
+
   const {
     query: { data },
     update: { update },
     isDisabled,
     rows: items,
   } = usePrescription();
-  const { id, patient, prescriptionDate, createdDatetime, clinician } =
-    data ?? {};
+
+  const {
+    id,
+    patient,
+    prescriptionDate,
+    createdDatetime,
+    clinician,
+    programId,
+  } = data ?? {};
 
   const [dateValue, setDateValue] = useState(
     DateUtils.getDateOrNull(prescriptionDate) ??
@@ -36,6 +48,10 @@ export const Toolbar: FC = () => {
     clinician ?? null
   );
 
+  const { data: programData } = useProgramList();
+  const programs = programData?.nodes ?? [];
+  const selectedProgram = programs.find(prog => prog.id === programId);
+
   const {
     delete: { deleteLines },
   } = usePrescriptionLines();
@@ -45,8 +61,6 @@ export const Toolbar: FC = () => {
     if (allRows.length === 0) return;
     deleteLines(allRows);
   };
-
-  const t = useTranslation();
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
@@ -90,6 +104,26 @@ export const Toolbar: FC = () => {
         });
       },
       onCancel: () => setDateValue(currentDateValue),
+    });
+  };
+
+  const handleProgramChange = async (
+    newProgram: ProgramFragment | undefined
+  ) => {
+    if (!newProgram || !items || items.length === 0) {
+      // It's okay to *clear* program without losing current items
+      await update({ id, programId: newProgram?.id ?? null });
+      return;
+    }
+
+    getConfirmation({
+      onConfirm: async () => {
+        // For simplicity, we currently delete all items that have already been
+        // added when switching programs. We may wish to improve this in the
+        // future to only remove items that don't belong to the new program
+        await deleteAll();
+        await update({ id, programId: newProgram?.id });
+      },
     });
   };
 
@@ -139,8 +173,26 @@ export const Toolbar: FC = () => {
               format="P"
               onChange={handleDateChange}
               maxDate={new Date()}
+              actions={['cancel', 'accept']}
             />
           }
+        />
+        <InputWithLabelRow
+          label={t('label.program')}
+          Input={
+            <ProgramSearchInput
+              disabled={isDisabled}
+              programs={programs}
+              selectedProgram={selectedProgram}
+              onChange={handleProgramChange}
+            />
+          }
+          sx={{
+            '& .MuiAutocomplete-root': {
+              width: 0,
+              minWidth: 220,
+            },
+          }}
         />
       </Grid>
     </AppBarContentPortal>

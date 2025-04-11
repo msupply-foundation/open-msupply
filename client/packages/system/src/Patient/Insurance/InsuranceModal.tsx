@@ -68,6 +68,10 @@ export const InsuranceModal: FC = (): ReactElement => {
 
   const handleInsuranceInsert = async (): Promise<void> => {
     try {
+      // Temp hotfix for when both policy number fields are empty. Will be
+      // improved with new Error State handler
+      if (draft.policyNumberFamily === '' && draft.policyNumberPerson === '')
+        throw new Error('missing policy numbers');
       const result = await create();
       if (result != null) setModal(undefined);
       success(t('messages.insurance-created'))();

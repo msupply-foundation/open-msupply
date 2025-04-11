@@ -106,8 +106,8 @@ export const useColumnUtils = () => {
     [Key in keyof T & string]: T[Key] extends Function
       ? never
       : T[Key] extends object
-      ? `${Key}` | NestedKeyOf<T[Key]>
-      : `${Key}`;
+        ? `${Key}` | NestedKeyOf<T[Key]>
+        : `${Key}`;
   }[keyof T & string];
 
   const getColumnProperty = <T extends RecordWithId>(

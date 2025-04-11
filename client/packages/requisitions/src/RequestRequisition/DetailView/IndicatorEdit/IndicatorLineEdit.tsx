@@ -21,7 +21,7 @@ import { CustomerIndicatorInfoView } from './CustomerIndicatorInfo';
 import { indicatorColumnNameToLocal } from '../../../utils';
 
 interface IndicatorLineEditProps {
-  requisitionNumber: number;
+  requisitionId: string;
   hasNext: boolean;
   next: IndicatorLineRowFragment | null;
   hasPrevious: boolean;
@@ -108,7 +108,7 @@ const InputWithLabel = ({ autoFocus, data, disabled }: InputWithLabelProps) => {
 };
 
 export const IndicatorLineEdit = ({
-  requisitionNumber,
+  requisitionId,
   hasNext,
   next,
   hasPrevious,
@@ -124,8 +124,8 @@ export const IndicatorLineEdit = ({
   const { store } = useAuthContext();
   const showInfo =
     store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders &&
-    store?.preferences?.extraFieldsInRequisition;
-  !!currentLine?.customerIndicatorInfo;
+    store?.preferences?.extraFieldsInRequisition &&
+    !!currentLine?.customerIndicatorInfo;
   const { width } = useWindowDimensions();
 
   return (
@@ -157,7 +157,7 @@ export const IndicatorLineEdit = ({
           next={next}
           hasPrevious={hasPrevious}
           previous={previous}
-          requisitionNumber={requisitionNumber}
+          requisitionId={requisitionId}
           scrollIntoView={scrollIntoView}
         />
       </Box>

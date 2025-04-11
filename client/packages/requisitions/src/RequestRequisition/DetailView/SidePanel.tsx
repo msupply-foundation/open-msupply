@@ -154,7 +154,7 @@ const RelatedDocumentsSection: FC = () => {
                 value={shipment.invoiceNumber}
                 to={RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InboundShipment)
-                  .addPart(String(shipment.invoiceNumber))
+                  .addPart(shipment.id)
                   .build()}
               />
             </Grid>
@@ -186,7 +186,7 @@ export const SidePanel: FC = () => {
   const copyToClipboard = () => {
     navigator.clipboard
       .writeText(JSON.stringify(data, null, 4) ?? '')
-      .then(() => success('Copied to clipboard successfully')());
+      .then(() => success(t('message.copy-success'))());
   };
 
   const onDelete = useDeleteConfirmation({

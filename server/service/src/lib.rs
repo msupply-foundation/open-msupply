@@ -19,6 +19,7 @@ pub mod abbreviation;
 pub mod activity_log;
 pub mod apis;
 pub mod app_data;
+pub mod boajs;
 
 pub mod asset;
 pub mod auth;
@@ -60,6 +61,7 @@ pub mod number;
 pub mod permission;
 pub mod plugin;
 pub mod plugin_data;
+pub mod preference;
 pub mod pricing;
 pub mod print;
 pub mod printer;

@@ -1,15 +1,17 @@
 import React from 'react';
 import {
+  ArrayUtils,
+  Box,
+  PropertyInput,
+  useIsGapsStoreOnly,
   BasicSpinner,
   InfoTooltipIcon,
   InputWithLabelRow,
   Typography,
-} from '@common/components';
-import { useTranslation } from '@common/intl';
-import { ArrayUtils, Box, PropertyInput } from '@openmsupply-client/common';
+  useTranslation,
+} from '@openmsupply-client/common';
 import { DraftAsset } from '../../types';
-import { useAssets } from '../../api';
-import { useIsGapsStoreOnly } from '@openmsupply-client/common';
+import { useAssetProperties } from '@openmsupply-client/system';
 
 interface DetailsProps {
   draft?: DraftAsset;
@@ -87,36 +89,37 @@ const Row = ({
   label: string;
   isGaps: boolean;
 }) => {
-  if (!isGaps) return (
-    <Box paddingTop={1.5}>
-      <InputWithLabelRow
-        labelWidth="300px"
-        label={label}
-        labelProps={{
-          sx: {
-            fontSize: '16px',
-            paddingRight: 2,
-            textAlign: 'right',
-          },
-        }}
-        Input={
-          <>
-            <Box sx={{}} flex={1}>
-              {children}{' '}
-            </Box>
-            <Box>
-              {tooltip && (
-                <InfoTooltipIcon
-                  iconSx={{ color: 'gray.main' }}
-                  title={tooltip}
-                />
-              )}
-            </Box>
-          </>
-        }
-      />
-    </Box>
-  );
+  if (!isGaps)
+    return (
+      <Box paddingTop={1.5}>
+        <InputWithLabelRow
+          labelWidth="300px"
+          label={label}
+          labelProps={{
+            sx: {
+              fontSize: '16px',
+              paddingRight: 2,
+              textAlign: 'right',
+            },
+          }}
+          Input={
+            <>
+              <Box sx={{}} flex={1}>
+                {children}{' '}
+              </Box>
+              <Box>
+                {tooltip && (
+                  <InfoTooltipIcon
+                    iconSx={{ color: 'gray.main' }}
+                    title={tooltip}
+                  />
+                )}
+              </Box>
+            </>
+          }
+        />
+      </Box>
+    );
 
   return (
     <Box paddingTop={1.5}>
@@ -130,14 +133,14 @@ const Row = ({
       </Typography>
       {children}
     </Box>
-  )
+  );
 };
 
 export const Details = ({ draft, onChange }: DetailsProps) => {
   const t = useTranslation();
   const isGaps = useIsGapsStoreOnly();
 
-  const { data: assetProperties, isLoading } = useAssets.properties.list({
+  const { data: assetProperties, isLoading } = useAssetProperties({
     assetCategoryId: { equalAnyOrNull: [draft?.assetCategory?.id ?? ''] },
     assetClassId: { equalAnyOrNull: [draft?.assetClass?.id ?? ''] },
     assetTypeId: { equalAnyOrNull: [draft?.assetType?.id ?? ''] },
@@ -156,10 +159,12 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
             </Typography>
           ) : (
             <>
-                {isGaps && <Typography>
+              {isGaps && (
+                <Typography>
                   {/* Need to add to translate */}
                   {'Non-editable properties are defined in the catalogue'}
-                </Typography>}
+                </Typography>
+              )}
               {assetProperties &&
                 ArrayUtils.uniqBy(assetProperties, 'key').map(property => {
                   const isCatalogue =

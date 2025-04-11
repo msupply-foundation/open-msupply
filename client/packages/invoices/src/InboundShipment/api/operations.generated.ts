@@ -73,6 +73,7 @@ export type InboundFragment = {
   transportReference?: string | null;
   type: Types.InvoiceNodeType;
   taxPercentage?: number | null;
+  expectedDeliveryDate?: string | null;
   currencyRate: number;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
   user?: {
@@ -274,6 +275,7 @@ export type InvoiceQuery = {
         transportReference?: string | null;
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
+        expectedDeliveryDate?: string | null;
         currencyRate: number;
         linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
         user?: {
@@ -410,6 +412,7 @@ export type InboundByNumberQuery = {
         transportReference?: string | null;
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
+        expectedDeliveryDate?: string | null;
         currencyRate: number;
         linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
         user?: {
@@ -592,6 +595,11 @@ export type InsertInboundShipmentMutation = {
     | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number };
 };
 
+export type LineLinkedToTransferredInvoiceErrorFragment = {
+  __typename: 'LineLinkedToTransferredInvoice';
+  description: string;
+};
+
 export type DeleteInboundShipmentLinesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.BatchInboundShipmentInput;
@@ -615,8 +623,11 @@ export type DeleteInboundShipmentLinesMutation = {
                   description: string;
                   key: Types.ForeignKey;
                 }
-              | { __typename: 'RecordNotFound'; description: string }
-              | { __typename: 'TransferredShipment'; description: string };
+              | {
+                  __typename: 'LineLinkedToTransferredInvoice';
+                  description: string;
+                }
+              | { __typename: 'RecordNotFound'; description: string };
           }
         | { __typename: 'DeleteResponse'; id: string };
     }> | null;
@@ -785,8 +796,11 @@ export type UpsertInboundShipmentMutation = {
                   description: string;
                   key: Types.ForeignKey;
                 }
-              | { __typename: 'RecordNotFound'; description: string }
-              | { __typename: 'TransferredShipment'; description: string };
+              | {
+                  __typename: 'LineLinkedToTransferredInvoice';
+                  description: string;
+                }
+              | { __typename: 'RecordNotFound'; description: string };
           }
         | { __typename: 'DeleteResponse'; id: string };
     }> | null;
@@ -1004,6 +1018,7 @@ export const InboundFragmentDoc = gql`
     transportReference
     type
     taxPercentage
+    expectedDeliveryDate
     linkedShipment {
       __typename
       id
@@ -1094,6 +1109,12 @@ export const InboundRowFragmentDoc = gql`
       isHomeCurrency
     }
     currencyRate
+  }
+`;
+export const LineLinkedToTransferredInvoiceErrorFragmentDoc = gql`
+  fragment LineLinkedToTransferredInvoiceError on LineLinkedToTransferredInvoice {
+    __typename
+    description
   }
 `;
 export const LinkedRequestRowFragmentDoc = gql`
@@ -1338,9 +1359,8 @@ export const DeleteInboundShipmentLinesDocument = gql`
                 __typename
                 description
               }
-              ... on TransferredShipment {
-                __typename
-                description
+              ... on LineLinkedToTransferredInvoice {
+                ...LineLinkedToTransferredInvoiceError
               }
               ... on CannotEditInvoice {
                 __typename
@@ -1361,6 +1381,7 @@ export const DeleteInboundShipmentLinesDocument = gql`
       }
     }
   }
+  ${LineLinkedToTransferredInvoiceErrorFragmentDoc}
 `;
 export const UpsertInboundShipmentDocument = gql`
   mutation upsertInboundShipment(

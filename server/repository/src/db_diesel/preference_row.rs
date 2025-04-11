@@ -1,9 +1,9 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
+    RowActionType, StorageConnection, Upsert,
 };
 
-use super::{preference_row::preference::dsl::*, store_row::store};
+use super::preference_row::preference::dsl::*;
 use serde::{Deserialize, Serialize};
 
 use diesel::prelude::*;
@@ -16,10 +16,6 @@ table! {
         store_id -> Nullable<Text>,
     }
 }
-
-joinable!(preference -> store (store_id));
-
-allow_tables_to_appear_in_same_query!(preference, store);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
@@ -41,7 +37,7 @@ impl<'a> PreferenceRowRepository<'a> {
         PreferenceRowRepository { connection }
     }
 
-    fn upsert_one(&self, preference_row: &PreferenceRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, preference_row: &PreferenceRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(preference::table)
             .values(preference_row)
             .on_conflict(id)
@@ -115,6 +111,22 @@ impl Upsert for PreferenceRow {
         assert_eq!(
             PreferenceRowRepository::new(con).find_one_by_key(&self.key),
             Ok(Some(self.clone()))
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PreferenceRowDelete(pub String);
+impl Delete for PreferenceRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        PreferenceRowRepository::new(con).delete(&self.0)
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            PreferenceRowRepository::new(con).find_one_by_key(&self.0),
+            Ok(None)
         )
     }
 }

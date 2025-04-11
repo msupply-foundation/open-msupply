@@ -4,6 +4,7 @@ import {
   BasicTextInput,
   Checkbox,
   DateTimePickerInput,
+  InfoTooltipIcon,
   InputWithLabelRow,
   Typography,
 } from '@common/components';
@@ -15,6 +16,7 @@ import {
   UNDEFINED_STRING_VALUE,
   useAuthContext,
   useIsCentralServerApi,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { Status } from '../../Components';
 import {
@@ -100,31 +102,44 @@ const Row = ({
   children,
   label,
   isGaps,
+  tooltip,
 }: {
   children: React.ReactNode;
   label: string;
   isGaps: boolean;
+  tooltip?: string;
 }) => {
-
-  if (!isGaps) return (
-    <Box paddingTop={1.5}>
-      <InputWithLabelRow
-        labelWidth="160px"
-        label={label}
-        labelProps={{
-          sx: {
-            fontSize: '16px',
-            paddingRight: 2,
-            textAlign: 'right',
-          },
-        }}
-        Input={
-          <Box sx={{}} flex={1}>
-            {children}
-          </Box>
-        }
-      />
-    </Box>);
+  if (!isGaps)
+    return (
+      <Box paddingTop={1.5}>
+        <InputWithLabelRow
+          labelWidth="160px"
+          label={label}
+          labelProps={{
+            sx: {
+              fontSize: '16px',
+              paddingRight: 2,
+              textAlign: 'right',
+            },
+          }}
+          Input={
+            <>
+              <Box sx={{}} flex={1}>
+                {children}
+              </Box>
+              <Box>
+                {tooltip && (
+                  <InfoTooltipIcon
+                    iconSx={{ color: 'gray.main' }}
+                    title={tooltip}
+                  />
+                )}
+              </Box>
+            </>
+          }
+        />
+      </Box>
+    );
 
   return (
     <Box paddingTop={1.5}>
@@ -138,15 +153,17 @@ const Row = ({
       </Typography>
       {children}
     </Box>
-  )
+  );
 };
 
 export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
-  const { storeId } = useAuthContext();
+  const { storeId, userHasPermission } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
-  const isGaps = useIsGapsStoreOnly();  
+  const isGaps = useIsGapsStoreOnly();
+
+  const isServerAdmin = userHasPermission(UserPermission.ServerAdmin);
 
   if (!draft) return null;
 
@@ -219,8 +236,17 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               fullWidth
             />
           </Row>
-          <Row isGaps={isGaps} label={t('label.serial')}>
+          <Row
+            isGaps={isGaps}
+            label={t('label.serial')}
+            tooltip={
+              draft.lockedFields.serialNumber
+                ? t('tooltip.defined-by-gs1-matrix')
+                : undefined
+            }
+          >
             <BasicTextInput
+              disabled={draft.lockedFields.serialNumber && !isServerAdmin}
               value={draft.serialNumber ?? ''}
               fullWidth
               onChange={e => onChange({ serialNumber: e.target.value })}
@@ -253,8 +279,17 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               textFieldProps={{ fullWidth: true }}
             />
           </Row>
-          <Row isGaps={isGaps} label={t('label.warranty-start-date')}>
+          <Row
+            isGaps={isGaps}
+            label={t('label.warranty-start-date')}
+            tooltip={
+              draft.lockedFields.warrantyStart
+                ? t('tooltip.defined-by-gs1-matrix')
+                : undefined
+            }
+          >
             <DateTimePickerInput
+              disabled={draft.lockedFields.warrantyStart && !isServerAdmin}
               value={DateUtils.getDateOrNull(draft.warrantyStart)}
               format="P"
               onChange={date =>
@@ -263,8 +298,17 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               textFieldProps={{ fullWidth: true }}
             />
           </Row>
-          <Row isGaps={isGaps} label={t('label.warranty-end-date')}>
+          <Row
+            isGaps={isGaps}
+            label={t('label.warranty-end-date')}
+            tooltip={
+              draft.lockedFields.warrantyEnd
+                ? t('tooltip.defined-by-gs1-matrix')
+                : undefined
+            }
+          >
             <DateTimePickerInput
+              disabled={draft.lockedFields.warrantyEnd && !isServerAdmin}
               value={DateUtils.getDateOrNull(draft.warrantyEnd)}
               format="P"
               onChange={date =>

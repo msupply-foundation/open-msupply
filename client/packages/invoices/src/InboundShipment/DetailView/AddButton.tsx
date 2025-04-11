@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { SplitButton, SplitButtonOption } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { AddFromMasterListButton } from './AddFromMasterListButton';
 import { useToggle } from '@common/hooks';
 import { AddFromInternalOrder } from './AddFromInternalOrder';
+import { PlusCircleIcon } from '@common/icons';
 
 interface AddButtonProps {
   requisitionId: string;
@@ -31,26 +32,34 @@ export const AddButton = ({
     SplitButtonOption<string>,
     SplitButtonOption<string>,
     SplitButtonOption<string>,
-  ] = [
-    {
-      value: 'add-item',
-      label: t('button.add-item'),
-      isDisabled: disable,
-    },
-    {
-      value: 'add-from-master-list',
-      label: t('button.add-from-master-list'),
-      isDisabled: disableAddFromMasterListButton || disable,
-    },
-    {
-      value: 'add-from-internal-order',
-      label: t('button.add-from-internal-order'),
-      isDisabled: disableAddFromInternalOrderButton || disable,
-    },
-  ];
-  const [addItemOption] = options;
-  const [selectedOption, setSelectedOption] =
-    useState<SplitButtonOption<string>>(addItemOption);
+  ] = useMemo(
+    () => [
+      {
+        value: 'add-item',
+        label: t('button.add-item'),
+        isDisabled: disable,
+      },
+      {
+        value: 'add-from-master-list',
+        label: t('button.add-from-master-list'),
+        isDisabled: disableAddFromMasterListButton || disable,
+      },
+      {
+        value: 'add-from-internal-order',
+        label: t('button.add-from-internal-order'),
+        isDisabled: disableAddFromInternalOrderButton || disable,
+      },
+    ],
+    [disable, disableAddFromMasterListButton, disableAddFromInternalOrderButton]
+  );
+
+  const [selectedOption, setSelectedOption] = useState<
+    SplitButtonOption<string>
+  >(options[0]);
+
+  useEffect(() => {
+    setSelectedOption(options[0]);
+  }, [options]);
 
   const handleOptionSelection = (option: SplitButtonOption<string>) => {
     switch (option.value) {
@@ -81,6 +90,7 @@ export const AddButton = ({
         onClick={handleOptionSelection}
         isDisabled={disable}
         openFrom="bottom"
+        Icon={<PlusCircleIcon />}
       />
 
       {masterListModalController.isOn && (

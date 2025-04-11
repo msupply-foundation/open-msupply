@@ -20,6 +20,6 @@ export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
   width = 30,
 }) => (
   <Typography style={{ width, textAlign: 'right' }}>
-    {children ?? value != null ? value : ''}
+    {(children ?? value != null) ? value : ''}
   </Typography>
 );

@@ -1,7 +1,5 @@
 # Reports
 
-This repository contains source files for standard reports. Command-line interface (CLI) tools for generating reports, processing data, and upserting reports to OMS databases. 
-
 This readme contains information on [source file structuring](#report-source-files), report related [CLI tools](#cli-tools), information on [development](#development) and [maintenance](#maintenance-support-info) of OMS reports.
 
 ## Report Source Files
@@ -56,16 +54,17 @@ Optional fields in the manifest json are marked as '// optional'
     "ui": "argument_schemas/arguments_ui.json"
   },
   // optional
-  // path to custom wasm data conversion function. Having a path to a custom function allows users to generate a function from a language other than JS
-  "custom_wasm_function": "path to custom wasm function",
-  // optional
   // name of dir within the version dir of the report which includes js wasm function constructors.
   "convert_data": "convert_data_js",
+  // optional
+  // default: Extism
+  // type of convert data infrastructure, can be Extism or BoaJs. We are in the process of deprecating Extism report types as they generate a very large bundle
+  "convert_data_type": "BoaJs",
   // optional
   // name of html header template of the report found within the src dir
   "header": "header.html",
   // optional
-  // name of html footer template of the report found within the src dir
+  // name of tera html footer template of the report found within the src dir
   "footer": "footer.html"
 }
 ```
@@ -73,7 +72,7 @@ Optional fields in the manifest json are marked as '// optional'
 ### src dir
 
 The src dir contains:
-1. The main template file `template.html` which contains the report content. The name of this must be `template.html`
+1. The main template file `template.html` which contains the report content. The name of this must be `template.html`. 
 2. Header and footer html files. The names of these are specified in the [`report-manifest.json`](#report-manifest)
 2. GraphQL and sql query functions used by the report
 GraphQL query files must be named in full as seen in the example [`report-manifest.json`](#report-manifest)
@@ -82,21 +81,18 @@ sql files are named without suffix and within an array as seen in the example [`
 
 ### convert_data_js dir
 
-A extism plugin function can be added to reports where further data conversion is required. This functionality will be built automatically by the report build cli when a convert_data_js dir path is specified in the [`report-manifest.json`](#report-manifest)
+A javascript function can be added to reports where further data conversion is required. This functionality will be built automatically by the report build cli when a convert_data_js dir path is specified in the [`report-manifest.json`](#report-manifest)
 
-The convert_data_js dir contains
-1. generated `dist` and `node_modules` dirs. These should not be edited and are generated automatically.
-2. `esbuild.js` and `package.json` files. These are identical for all reports and should be copied without editing.
-3. Optional `input.json` and `output.json` files used to validate tests where tests are added to validate data conversion functionality
-4. src dir containing data conversion functions.
+The convert_data_js follows a typical node package structure, with `package.json` in the root, `src` directory and typescipt/packager config (`webpack` in our case). The latest example with extensive type safety is item-usage report.
+
+For vanila JS a simple `webpack.config.js` is all that is needed. For typescript `webpack.config.js` is more involved and requires `tsconfig.json` plus extra config files and dependencies for generating types for graphql queries and json form argument schemas. 
 
 #### convert_data_js src dir
 
 This src dir contains
-1. convert_data.d.ts file. This is identical for all reports and should be copied without editing
-2. convert_data.js file. This should be identical and copied directly as all data processing should be done in the utils.js file. However some changes may be required here to pass the correct data structure.
-3. utils.js file containing all data conversion and processing
-4. Optional utils.test.ts file for validating data conversion
+1. `convert_data.|js or ts|`, which is the entrypoint file exporting convert_data method
+2. optional `generated-types/` directory containing types generate by graphql queries and argument schemas
+3. `test/` directory container `|input and output|.json` and `test.ts` file containing the test
 
 ### argument_schemas dir
 
@@ -147,7 +143,7 @@ Command line interface tools used in development and maintenance of reports are:
 
 Build reports command generates all reports into a json array. 
 
-It builds these reports from source files within the dir passed as an argument to this command. It will attempt to build a report from any dir containing a `report-manifest.json` file. Any file structure can be used as this command will search recursively through the directories.
+It builds these reports from source files within the dir passed as an argument to this command. It will attempt to build a report from any dir containing a `report-manifest.json` file. This command will search through any sub directories recursively; any file structure can be used.
 
 If no path is passed, the build-reports command defaults to the `reports` dir containing OMS standard reports.
 
@@ -200,12 +196,17 @@ If `--is_custom` is include, will filter the selected reports by the `is_custom`
 
 Other functionality, and processes used in report development are:
 
+[Tera templating language](#tera-templating-language)
 [Translating of reports](#translating-reports)
 [Standard vs custom reports]
 [Report versioning](#report-versioning)
 [Wasm functions](#wasm-functions)
 [Development processes](#development-processes)
-[File Structure]
+[File Structure](#file-structure-1)
+
+### Tera templating language
+
+Open mSupply reports are rendered using [Tera](https://keats.github.io/tera/docs/), an extension of HTML where values are replaced during render and simple logic can be executed.
 
 ### Translating reports
 
@@ -314,26 +315,55 @@ if remote omSupply.version = 3.2 selected report = 3.0.1
 if remote omSupply.version = 4.5 selected report = 3.5.1 -->
 
 
-### Wasm functions
+### Convert data functions
 
-Report generations include the ability to use custom wasm functions to further extend and customise data.
-OMS includes building of JS wasm functions by adding a [convert_data_js](#convert_data_js-dir) dir in the report dir.
+Sometimes we need to manipulate data for ease of templating (templating should only deal with presentation, i.e. rounding, styles etc..), for this we can use javascript methods that will run in BoaJs runtime (on the server). 
 
-See [the extism-js docs](https://github.com/extism/js-pdk) for more details on how to build wasm functions with js within OMS.
+These javascript methods are called convert_data, they can either be typescript or vanilla JS. Typescript will require more boilerplate code and type generations, graphql queries and argument schema can be generated by running `yarn && yarn generate-types` from within convert_data folder, note that server must be running as per codegen.yaml file.
 
-`make sure extism-js version 1.3.0 and above is installed`, otherwise you may get `unreacheable error` as per this [comment](https://github.com/msupply-foundation/open-msupply/issues/5312#issuecomment-2489548208)
+Exported convert_data methods will accept all of the data that would typically be passed on to the template, it can then manipulate data and return it, manipulated data will be passed on to templating.
 
-Alternatively wasm functions can be built externally using any compatible language using extism-PDK ([see wasm docs for more details](https://webassembly.org/getting-started/developers-guide/)), and added as a custom wasm function.
+It's a good idea to test convert_data with realistic input and output data.
 
-> Note custom wasm data functions will be used if both custom functions and JS wasm function builder files are both specified
+For full typescript examples with tests please see item-usage report.
 
-#### Logging in wasm functions
+#### Debugging and Logging
 
-Console errors, infos, and logs in wasm functions are propagated up into the server under a info! macro callback. These can be saved to file, or logged to the server terminal for easy debugging.
+A `log` method is injected into javascript context, and can be used to pass a log messages to the server, which in term log them at info level, i.e. `log('debug log')` will result in the following log in server console and or file log:
 
-Log destination is configured in the `base.yaml` file under logging.
+<details>
+<summary>
+Log output
+</summary>
 
-#### Developing Reports
+```
+2025-03-06 16:52:51.149410000 [INFO ] <service::boajs::methods::log:10>:from js [
+    String(
+        "debug log",
+    ),
+]
+```
+</content>
+</details>
+
+
+Logging of object is best done with JSON.stringify inside of the log method.
+
+#### Testing
+
+Run `yarn test` to see test results
+
+#### Packager and Typescript
+
+webpack is used to package convert_data entrypoint file into a module.
+
+Typescript convert_data package will require base types (`convertDataTypes.,ts`), configuration for graphql codegen and type dependencies (`codegenTypes.ts` and `codegen.yaml`) and a typescript config (`tsconfig.json`). Also extra dependencies and generate-types script is added to package.json. Types can be generated from graphql queries and argument form json schema using `yarn generate-types` script, not the server must be running on port 8000 over http and initialised.
+
+If common types or utilities need to be shared, they must live withing rootDir specified by tsconfig.json or copied into report.
+
+NOTE: we can extend report infrastructure to share types, utility method and configurations between reports, however this becomes more difficult when dealing with custom reports that live in another repository, and copy paste approach should be sufficient for now, in the future a more strict folder structure similar to plugins can be used, together with adding a git submodules of custom reports repository.
+
+### Developing Reports
 
 #### New Report Versions
 

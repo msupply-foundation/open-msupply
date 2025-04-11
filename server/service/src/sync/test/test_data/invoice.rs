@@ -85,7 +85,7 @@ const TRANSACT_1: (&str, &str) = (
       "user2": "",
       "user3": "",
       "user4": "",
-      "user_ID": "",
+      "user_ID": "MISSING_USER_ID",
       "wardID": "",
       "waybill_number": "",
       "om_allocated_datetime": "",
@@ -94,7 +94,8 @@ const TRANSACT_1: (&str, &str) = (
       "om_delivered_datetime": "",
       "om_verified_datetime": "",
       "om_created_datetime": "",
-      "om_transport_reference": ""
+      "om_transport_reference": "",
+      "om_expected_delivery_date": ""
   }"#,
 );
 fn transact_1_pull_record() -> TestSyncIncomingRecord {
@@ -103,7 +104,7 @@ fn transact_1_pull_record() -> TestSyncIncomingRecord {
         TRANSACT_1,
         InvoiceRow {
             id: TRANSACT_1.0.to_string(),
-            user_id: None,
+            user_id: Some("MISSING_USER_ID".to_string()),
             store_id: "store_b".to_string(),
             name_link_id: "name_store_a".to_string(),
             name_store_id: Some("store_a".to_string()),
@@ -146,6 +147,7 @@ fn transact_1_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_amount: Some(10.0),
             insurance_discount_percentage: Some(2.5),
             is_cancellation: false,
+            expected_delivery_date: None,
         },
     )
 }
@@ -155,7 +157,7 @@ fn transact_1_push_record() -> TestSyncOutgoingRecord {
         record_id: TRANSACT_1.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_1.0.to_string(),
-            user_id: None,
+            user_id: Some("MISSING_USER_ID".to_string()),
             name_ID: "name_store_a".to_string(),
             store_ID: "store_b".to_string(),
             invoice_num: 1,
@@ -206,7 +208,8 @@ fn transact_1_push_record() -> TestSyncOutgoingRecord {
             name_insurance_join_id: Some("NAME_INSURANCE_JOIN_1_ID".to_string()),
             insurance_discount_amount: Some(10.0),
             insurance_discount_percentage: Some(2.5),
-            is_cancellation: false
+            is_cancellation: false,
+            expected_delivery_date: None,
         }),
     }
 }
@@ -287,7 +290,8 @@ const TRANSACT_2: (&str, &str) = (
         "wardID": "",
         "waybill_number": "",
         "om_transport_reference": "transport reference",
-        "programID": "missing_program"
+        "programID": "missing_program",
+        "om_expected_delivery_date": ""
     }"#,
 );
 fn transact_2_pull_record() -> TestSyncIncomingRecord {
@@ -333,6 +337,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
+            expected_delivery_date: None,
         },
     )
 }
@@ -388,7 +393,8 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
-            is_cancellation: false
+            is_cancellation: false,
+            expected_delivery_date: None,
         }),
     }
 }
@@ -477,7 +483,8 @@ const TRANSACT_OM_FIELDS: (&str, &str) = (
         "om_verified_datetime": "2022-08-29T14:33:00",
         "om_status": "SHIPPED",
         "om_colour": "SomeColour",
-        "om_type": "INVENTORY_ADDITION"
+        "om_type": "INVENTORY_ADDITION",
+        "om_expected_delivery_date": ""
     }"#,
 );
 
@@ -548,6 +555,7 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
+            expected_delivery_date: None,
         },
     )
 }
@@ -628,7 +636,8 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
-            is_cancellation: false
+            is_cancellation: false,
+            expected_delivery_date: None,
         }),
     }
 }
@@ -718,7 +727,8 @@ const INVENTORY_ADDITION: (&str, &str) = (
         "om_colour": null,
         "om_type": null,
         "om_transport_reference": null,
-        "finalised_date": "2023-01-16"
+        "finalised_date": "2023-01-16",
+        "om_expected_delivery_date": null
     }"#,
 );
 
@@ -770,6 +780,7 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
+            expected_delivery_date: None,
         },
     )
 }
@@ -831,7 +842,8 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
-            is_cancellation: false
+            is_cancellation: false,
+            expected_delivery_date: None,
         }),
     }
 }
@@ -921,7 +933,8 @@ const INVENTORY_REDUCTION: (&str, &str) = (
         "om_colour": null,
         "om_type": null,
         "om_transport_reference": null,
-        "finalised_date": "2023-01-16"
+        "finalised_date": "2023-01-16",
+        "om_expected_delivery_date": null
     }"#,
 );
 
@@ -973,6 +986,7 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
+            expected_delivery_date: None,
         },
     )
 }
@@ -1011,7 +1025,6 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             cancelled_datetime: None,
             mode: TransactMode::Store,
             comment: Some("Stocktake 2; Reduced stock".to_string()),
-
             arrival_date_actual: None,
             allocated_datetime: None,
             picked_datetime: None,
@@ -1034,7 +1047,8 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
-            is_cancellation: false
+            is_cancellation: false,
+            expected_delivery_date: None,
         }),
     }
 }
@@ -1120,7 +1134,8 @@ const PRESCRIPTION_1: (&str, &str) = (
       "om_delivered_datetime": "",
       "om_verified_datetime": "",
       "om_created_datetime": "",
-      "om_transport_reference": ""
+      "om_transport_reference": "",
+      "om_expected_delivery_date": ""
   }"#,
 );
 fn prescription_1_pull_record() -> TestSyncIncomingRecord {
@@ -1172,6 +1187,7 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
+            expected_delivery_date: None,
         },
     )
 }
@@ -1232,7 +1248,8 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
-            is_cancellation: false
+            is_cancellation: false,
+            expected_delivery_date: None,
         }),
     }
 }
@@ -1246,7 +1263,7 @@ const CANCELLED_PRESCRIPTION: (&str, &str) = (
       "ID": "cancelled_prescription",
       "amount_outstanding": 0,
       "arrival_date_actual": "0000-00-00",
-      "arrival_date_estimated": "0000-00-00",
+      "arrival_date_estimated": "2021-07-30",
       "authorisationStatus": "",
       "budget_period_ID": "",
       "category2_ID": "",
@@ -1319,7 +1336,8 @@ const CANCELLED_PRESCRIPTION: (&str, &str) = (
       "om_verified_datetime": "",
       "om_created_datetime": "",
       "om_cancelled_datetime": "2022-08-24T09:33:00",
-      "om_transport_reference": ""
+      "om_transport_reference": "",
+      "om_expected_delivery_date": ""
   }"#,
 );
 fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
@@ -1376,6 +1394,7 @@ fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
             is_cancellation: false,
+            expected_delivery_date: NaiveDate::from_ymd_opt(2021, 7, 30),
         },
     )
 }
@@ -1441,7 +1460,8 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
-            is_cancellation: false
+            is_cancellation: false,
+            expected_delivery_date: NaiveDate::from_ymd_opt(2021, 7, 30),
         }),
     }
 }

@@ -25,7 +25,7 @@ export type VaccinationDetailFragment = {
   id: string;
   facilityNameId?: string | null;
   facilityFreeText?: string | null;
-  vaccinationDate: string;
+  vaccinationDate?: string | null;
   given: boolean;
   notGivenReason?: string | null;
   comment?: string | null;
@@ -42,11 +42,7 @@ export type VaccinationDetailFragment = {
     itemName: string;
     batch?: string | null;
   } | null;
-  invoice?: {
-    __typename: 'InvoiceNode';
-    id: string;
-    invoiceNumber: number;
-  } | null;
+  invoice?: { __typename: 'InvoiceNode'; id: string } | null;
 };
 
 export type VaccinationCardItemFragment = {
@@ -143,7 +139,7 @@ export type VaccinationQuery = {
     id: string;
     facilityNameId?: string | null;
     facilityFreeText?: string | null;
-    vaccinationDate: string;
+    vaccinationDate?: string | null;
     given: boolean;
     notGivenReason?: string | null;
     comment?: string | null;
@@ -160,11 +156,7 @@ export type VaccinationQuery = {
       itemName: string;
       batch?: string | null;
     } | null;
-    invoice?: {
-      __typename: 'InvoiceNode';
-      id: string;
-      invoiceNumber: number;
-    } | null;
+    invoice?: { __typename: 'InvoiceNode'; id: string } | null;
   } | null;
 };
 
@@ -266,7 +258,6 @@ export const VaccinationDetailFragmentDoc = gql`
     }
     invoice {
       id
-      invoiceNumber
     }
     notGivenReason
     comment

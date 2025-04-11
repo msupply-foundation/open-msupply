@@ -14,6 +14,7 @@ use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
     InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceStatus, InvoiceType,
     NameRow, NameRowRepository, StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
+    UserAccountRow, UserAccountRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
@@ -214,6 +215,12 @@ pub struct LegacyTransactRow {
 
     #[serde(default)]
     pub is_cancellation: bool,
+
+    #[serde(default)]
+    #[serde(rename = "arrival_date_estimated")]
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub expected_delivery_date: Option<NaiveDate>,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -372,7 +379,24 @@ impl SyncTranslation for InvoiceTranslation {
             name_insurance_join_id: data.name_insurance_join_id,
             insurance_discount_amount: data.insurance_discount_amount,
             insurance_discount_percentage: data.insurance_discount_percentage,
+            expected_delivery_date: data.expected_delivery_date,
         };
+
+        // HACK...
+        // Inactive user aren't always synced from mSupply
+        // To avoid referential issues we'll create a blank placeholder user
+        // If the user is synced later the record will be updated to the correct data
+        if let Some(user_id) = &result.user_id {
+            if UserAccountRowRepository::new(connection)
+                .find_one_by_id(user_id)?
+                .is_none()
+            {
+                UserAccountRowRepository::new(connection).insert_one(&UserAccountRow {
+                    id: user_id.clone(),
+                    ..Default::default()
+                })?;
+            }
+        }
 
         Ok(PullTranslateResult::upsert(result))
     }
@@ -439,6 +463,7 @@ impl SyncTranslation for InvoiceTranslation {
                     insurance_discount_amount,
                     insurance_discount_percentage,
                     is_cancellation,
+                    expected_delivery_date,
                 },
             name_row,
             clinician_row,
@@ -514,6 +539,7 @@ impl SyncTranslation for InvoiceTranslation {
             insurance_discount_amount,
             insurance_discount_percentage,
             is_cancellation,
+            expected_delivery_date,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
@@ -850,6 +876,13 @@ mod tests {
 
             assert_eq!(translation_result, record.translated_record);
         }
+
+        // Check missing user got created
+        let user = UserAccountRowRepository::new(&connection)
+            .find_one_by_id("MISSING_USER_ID")
+            .unwrap()
+            .unwrap();
+        assert_eq!(user.id, "MISSING_USER_ID");
     }
 
     #[actix_rt::test]

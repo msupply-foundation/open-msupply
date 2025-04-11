@@ -23,6 +23,7 @@ import {
   DropdownMenuItem,
   TextArea,
   InputWithLabelRow,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -90,6 +91,7 @@ export const PrescriptionLineEditForm: React.FC<
   programId,
 }) => {
   const t = useTranslation();
+  const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
   const { store: { preferences } = {} } = useAuthContext();
@@ -222,8 +224,10 @@ export const PrescriptionLineEditForm: React.FC<
       setPrescribedQuantity(newPrescribedQuantity);
     }
 
-    const newIssueQuantity = Math.round(
-      allocatedUnits / Math.abs(Number(packSizeController.selected?.value || 1))
+    const newIssueQuantity = NumUtils.round(
+      allocatedUnits /
+        Math.abs(Number(packSizeController.selected?.value || 1)),
+      2
     );
     if (newIssueQuantity !== issueUnitQuantity)
       setIssueUnitQuantity(newIssueQuantity);
@@ -300,7 +304,7 @@ export const PrescriptionLineEditForm: React.FC<
           )}
           <AccordionPanelSection
             title={t('label.quantity')}
-            closedSummary={summarise(draftPrescriptionLines, t)}
+            closedSummary={summarise(draftPrescriptionLines, t, getPlural)}
             defaultExpanded={isNew && !disabled}
             key={key + '_quantity'}
           >
@@ -363,10 +367,7 @@ export const PrescriptionLineEditForm: React.FC<
                   }}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
-                  {t('label.unit-plural', {
-                    count: issueUnitQuantity,
-                    unit: item?.unitName,
-                  })}
+                  {item.unitName && getPlural(item.unitName, issueUnitQuantity)}
                 </InputLabel>
               </Grid>
             </Grid>
@@ -548,7 +549,8 @@ const TableWrapper: React.FC<TableProps> = ({
 
 const summarise = (
   lines: DraftPrescriptionLine[],
-  t: TypedTFunction<LocaleKey>
+  t: TypedTFunction<LocaleKey>,
+  getPlural: (word: string, count: number) => string
 ) => {
   // Count how many of each pack size
   const counts: Record<number, { unitName: string; count: number }> = {};
@@ -559,23 +561,33 @@ const summarise = (
     } else {
       counts[packSize] = {
         unitName: (stockLine?.item as ItemNode)?.unitName ?? 'unit',
-        count: NumUtils.round(packSize * numberOfPacks),
+        count: NumUtils.round(packSize * numberOfPacks, 2),
       };
     }
   });
 
   // Summarise counts in words
   const summary: string[] = [];
-  Object.entries(counts).forEach(([size, { unitName, count }]) => {
-    const unitWord = t('label.unit-plural', {
-      count,
-      unit: unitName,
-    });
-    if (Number(size) > 1) {
-      const packs = NumUtils.round(count / Number(size), 3);
-      summary.push(t('label.packs-of-size', { packs, count, size, unitWord }));
+  Object.entries(counts).forEach(([size, { unitName, count: numUnits }]) => {
+    const packSize = Number(size);
+    if (packSize > 1) {
+      const numPacks = NumUtils.round(numUnits / packSize, 3);
+      const packWord = t('label.packs-of', { count: numPacks }); // pack or packs
+      const unitWord = t('label.units-plural', { count: numUnits }); // unit or units
+      const unitType = getPlural(unitName, packSize);
+      summary.push(
+        t('label.packs-of-size', {
+          numPacks,
+          numUnits,
+          packSize,
+          unitType,
+          packWord,
+          unitWord,
+        })
+      );
     } else {
-      summary.push(t('label.packs-of-1', { count, unitWord }));
+      const unitType = getPlural(unitName, numUnits);
+      summary.push(t('label.packs-of-1', { numUnits, unitType }));
     }
   });
 

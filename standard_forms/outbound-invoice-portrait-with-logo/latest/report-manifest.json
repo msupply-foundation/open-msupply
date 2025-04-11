@@ -1,10 +1,9 @@
 {
   "is_custom": false,
-  "version": "2.6.1",
+  "version": "2.6.3",
   "code": "outbound-invoice-portrait-with-logo",
   "context": "OUTBOUND_SHIPMENT",
-  "sub_context": "picklist",
-  "name": "outbound-invoice-portrait-with-logo",
+  "name": "Outbound Shipment (portrait)",
   "queries": {
     "gql": "picklist.graphql"
   },
