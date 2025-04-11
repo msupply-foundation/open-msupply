@@ -172,9 +172,7 @@ const useInsert = ({
         clinicianId: isOtherFacility ? undefined : input?.clinician?.id,
 
         given: input.given ?? false,
-        vaccinationDate: input.given
-          ? Formatter.naiveDate(input.date ?? new Date())
-          : undefined,
+        vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
         comment: input.comment,
         notGivenReason: input.notGivenReason,
         stockLineId:
@@ -213,14 +211,13 @@ const useUpdate = (vaccinationId: string | undefined) => {
     }
 
     const isOtherFacility = input.facilityId === OTHER_FACILITY;
-    const date = Formatter.naiveDate(input.date ?? new Date());
 
     const apiResult = await api.updateVaccination({
       storeId,
       input: {
         id: vaccinationId,
         given: input.given ?? false,
-        vaccinationDate: input.given ? { value: date } : { value: null },
+        vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
         comment: input.comment,
         notGivenReason: !input.given ? input.notGivenReason : null,
 
