@@ -26,8 +26,8 @@ use crate::{
 use super::{
     api_v6::{
         SiteStatusRequestV6, SyncBatchV6, SyncDownloadFileRequestV6, SyncParsedErrorV6,
-        SyncPullRequestV6, SyncPushRequestV6, SyncPushSuccessV6, SyncRecordV6,
-        SyncUploadFileRequestV6,
+        SyncPatientPullRequestV6, SyncPullRequestV6, SyncPushRequestV6, SyncPushSuccessV6,
+        SyncRecordV6, SyncUploadFileRequestV6,
     },
     translations::translate_changelogs_to_sync_records,
 };
@@ -192,6 +192,92 @@ pub async fn push(
 
     Ok(SyncPushSuccessV6 {
         records_pushed: records_in_this_batch,
+    })
+}
+
+/// Send Records to a remote open-mSupply Server
+pub async fn patient_pull(
+    service_provider: &ServiceProvider,
+    SyncPatientPullRequestV6 {
+        cursor,
+        batch_size,
+        sync_v5_settings,
+        sync_v6_version,
+        fetch_patient_id,
+    }: SyncPatientPullRequestV6,
+) -> Result<SyncBatchV6, SyncParsedErrorV6> {
+    use SyncParsedErrorV6 as Error;
+
+    if !CentralServerConfig::is_central_server() {
+        return Err(Error::NotACentralServer);
+    }
+
+    if !is_sync_version_compatible(sync_v6_version) {
+        return Err(Error::SyncVersionMismatch(
+            MIN_VERSION,
+            MAX_VERSION,
+            sync_v6_version,
+        ));
+    }
+
+    // Check credentials again mSupply central server
+    let response = SyncApiV5::new(sync_v5_settings)
+        .map_err(|e| Error::OtherServerError(format_error(&e)))?
+        .get_site_info()
+        .await
+        .map_err(Error::from)?;
+
+    // Site should retry if we are currently integrating records for this site
+    if is_integrating(response.site_id) {
+        return Err(Error::IntegrationInProgress);
+    }
+
+    let ctx = service_provider.basic_context()?;
+    let changelog_repo = ChangelogRepository::new(&ctx.connection);
+
+    // We don't need a filter here, as we are filtering in the repository layer
+    let changelogs = changelog_repo.outgoing_patient_sync_records_from_central(
+        cursor,
+        batch_size,
+        response.site_id,
+        fetch_patient_id.clone(),
+    )?;
+    let total_records = changelog_repo.count_outgoing_patient_sync_records_from_central(
+        cursor,
+        response.site_id,
+        fetch_patient_id,
+    )?;
+    let max_cursor = changelog_repo.latest_cursor()?;
+
+    let end_cursor = changelogs
+        .last()
+        .map(|log| log.cursor as u64)
+        .unwrap_or(max_cursor);
+
+    let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
+        &ctx.connection,
+        changelogs,
+        vec![ToSyncRecordTranslationType::PullFromOmSupplyCentral],
+    )
+    .map_err(|e| Error::OtherServerError(format_error(&e)))?
+    .into_iter()
+    .map(SyncRecordV6::from)
+    .collect();
+
+    log::info!(
+        "Sending {} records to site {}",
+        records.len(),
+        response.site_id
+    );
+    log::debug!("Sending records as central server: {:#?}", records);
+
+    let is_last_batch = total_records <= batch_size as u64;
+
+    Ok(SyncBatchV6 {
+        total_records,
+        end_cursor,
+        records,
+        is_last_batch,
     })
 }
 

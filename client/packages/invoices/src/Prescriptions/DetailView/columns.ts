@@ -362,9 +362,8 @@ export const usePrescriptionColumn = ({
         }
       },
     },
-
     {
-      label: 'label.total-cost-price',
+      label: 'label.purchase-cost-price',
       key: 'totalCostPrice',
       align: ColumnAlign.Right,
       Cell: CurrencyCell,

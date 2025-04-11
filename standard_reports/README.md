@@ -72,12 +72,13 @@ Optional fields in the manifest json are marked as '// optional'
 ### src dir
 
 The src dir contains:
-1. The main template file `template.html` which contains the report content. The name of this must be `template.html`. 
+
+1. The main template file `template.html` which contains the report content. The name of this must be `template.html`.
 2. Header and footer html files. The names of these are specified in the [`report-manifest.json`](#report-manifest)
-2. GraphQL and sql query functions used by the report
-GraphQL query files must be named in full as seen in the example [`report-manifest.json`](#report-manifest)
-sql files are named without suffix and within an array as seen in the example [`report-manifest.json`](#report-manifest)
-3. css files used to format the report
+3. GraphQL and sql query functions used by the report
+   GraphQL query files must be named in full as seen in the example [`report-manifest.json`](#report-manifest)
+   sql files are named without suffix and within an array as seen in the example [`report-manifest.json`](#report-manifest)
+4. css files used to format the report
 
 ### convert_data_js dir
 
@@ -85,11 +86,12 @@ A javascript function can be added to reports where further data conversion is r
 
 The convert_data_js follows a typical node package structure, with `package.json` in the root, `src` directory and typescipt/packager config (`webpack` in our case). The latest example with extensive type safety is item-usage report.
 
-For vanila JS a simple `webpack.config.js` is all that is needed. For typescript `webpack.config.js` is more involved and requires `tsconfig.json` plus extra config files and dependencies for generating types for graphql queries and json form argument schemas. 
+For vanila JS a simple `webpack.config.js` is all that is needed. For typescript `webpack.config.js` is more involved and requires `tsconfig.json` plus extra config files and dependencies for generating types for graphql queries and json form argument schemas.
 
 #### convert_data_js src dir
 
 This src dir contains
+
 1. `convert_data.|js or ts|`, which is the entrypoint file exporting convert_data method
 2. optional `generated-types/` directory containing types generate by graphql queries and argument schemas
 3. `test/` directory container `|input and output|.json` and `test.ts` file containing the test
@@ -99,6 +101,7 @@ This src dir contains
 Argument schemas are used to present a JSON form on the front end for filter and other parameter input used to customise a report during render.
 
 This dir contains
+
 1. arguments_ui.json
 2. arguments.json
 
@@ -115,11 +118,49 @@ These files must be compliant with JSON forms.
    │   ├── dist (generated)
    |   ├── node_modules (generated)
    |   ├── src
-   |   |   ├── convert_data.d.ts (copy)
+   |   |   ├── generated-types (generated)
+   |   |   ├── test (optional)
+   |   |   |   ├── input.json
+   |   |   |   ├── output.json
+   |   |   |   └── test.ts
+   |   |   ├── convert_data.ts (copy)
+   |   |   ├── utils.ts
+   |   |   └── utils.test.ts (optional)
+   |   ├── codegen.yaml
+   |   ├── codegenTypes.ts
+   |   ├── convertDataType.ts
+   |   ├── jest.config.js
+   |   ├── package.json
+   |   ├── tsconfig.json
+   |   ├── input.json (optional)
+   |   ├── output.json (optional)
+   |   ├── webpack.config.js
+   |   └── yarn.lock (generated)
+   ├──  src
+   |   ├── footer.html (optional)
+   |   ├── header.html (optional)
+   |   ├── style.css
+   |   ├── SQL queries (optional, and possibly multiple)
+   |   ├── GraphQL query (optional)
+   |   └── template.html
+   └── report-manifest.json
+```
+
+### source file structure diagram with typescript functionality
+
+```
+├── example-report
+   ├── argument_schemas (optional)
+   │   ├── argument_ui.json
+   |   └── arguments.json
+   ├── convert_data_js (optional)
+   │   ├── dist (generated)
+   |   ├── node_modules (generated)
+   |   ├── src
    |   |   ├── convert_data.js (copy)
-   |   |   ├── utils.js 
+   |   |   ├── utils.js
    |   |   └── utils.test.js (optional)
-   |   ├── esbuild.js (copy)
+   |   ├── webpack.config.js
    |   ├── input.json (optional)
    |   ├── output.json (optional)
    |   └── package.json (copy)
@@ -141,7 +182,7 @@ Command line interface tools used in development and maintenance of reports are:
 
 `build-reports --path <optional-path>`
 
-Build reports command generates all reports into a json array. 
+Build reports command generates all reports into a json array.
 
 It builds these reports from source files within the dir passed as an argument to this command. It will attempt to build a report from any dir containing a `report-manifest.json` file. This command will search through any sub directories recursively; any file structure can be used.
 
@@ -282,7 +323,7 @@ Standard reports are included in the OMS repo, and all source files are committe
 Custom reports, which can contain client specific data, are located in the private open-msupply-reports repo. This is to ensure confidentiality
 
 Standard reports are upserted into the database on startup.
-The committed json file `standard-reports.json` includes all standard reports, and all versions of each report. 
+The committed json file `standard-reports.json` includes all standard reports, and all versions of each report.
 
 Otherwise the `open-msupply` standard reports, and `open-msupply-reports` custom reports function in the same way. They can both be built and upserted as a json array using OMS [CLI tools](#cli-tools).
 
@@ -314,18 +355,19 @@ if remote omSupply.version = 2.8 selected report = 2.8.3
 if remote omSupply.version = 3.2 selected report = 3.0.1
 if remote omSupply.version = 4.5 selected report = 3.5.1 -->
 
-
 ### Convert data functions
 
-Sometimes we need to manipulate data for ease of templating (templating should only deal with presentation, i.e. rounding, styles etc..), for this we can use javascript methods that will run in BoaJs runtime (on the server). 
+Sometimes we need to manipulate data for ease of templating (templating should only deal with presentation, i.e. rounding, styles etc..), for this we can use javascript methods that will run in BoaJs runtime (on the server).
 
-These javascript methods are called convert_data, they can either be typescript or vanilla JS. Typescript will require more boilerplate code and type generations, graphql queries and argument schema can be generated by running `yarn && yarn generate-types` from within convert_data folder, note that server must be running as per codegen.yaml file.
+These javascript methods are called convert_data, they can either be typescript or vanilla JS. Typescript will require more boilerplate code and type generations, graphql queries and argument schema can be generated by running `yarn && yarn generate-types` from within convert_data folder, note that server must be running as per codegen.yaml file which may require manual matching of ports.
 
 Exported convert_data methods will accept all of the data that would typically be passed on to the template, it can then manipulate data and return it, manipulated data will be passed on to templating.
 
 It's a good idea to test convert_data with realistic input and output data.
 
 For full typescript examples with tests please see item-usage report.
+
+> Note typescript reports often require additional dependencies which are not installed by default. You may need to navigate to the report convert_data dir and run `yarn` to allow reports to build. This may be required even if no type regeneration is needed. For example, the item-usage report will require dependency installation on a new omSupply instance before it can be built.
 
 #### Debugging and Logging
 
@@ -343,21 +385,23 @@ Log output
     ),
 ]
 ```
+
 </content>
 </details>
-
 
 Logging of object is best done with JSON.stringify inside of the log method.
 
 #### Testing
 
-Run `yarn test` to see test results
+Run `yarn test` from the 'client' directory.
+
+Any .test files within standard report or standard forms will be checked when conducting these tests.
 
 #### Packager and Typescript
 
 webpack is used to package convert_data entrypoint file into a module.
 
-Typescript convert_data package will require base types (`convertDataTypes.,ts`), configuration for graphql codegen and type dependencies (`codegenTypes.ts` and `codegen.yaml`) and a typescript config (`tsconfig.json`). Also extra dependencies and generate-types script is added to package.json. Types can be generated from graphql queries and argument form json schema using `yarn generate-types` script, not the server must be running on port 8000 over http and initialised.
+Typescript convert_data package will require base types (`convertDataTypes.ts`), configuration for graphql codegen and type dependencies (`codegenTypes.ts` and `codegen.yaml`) and a typescript config (`tsconfig.json`). Also extra dependencies and generate-types script is added to package.json. Types can be generated from graphql queries and argument form json schema using `yarn generate-types` script, note the server must be running on port 8000 over http and initialised.
 
 If common types or utilities need to be shared, they must live withing rootDir specified by tsconfig.json or copied into report.
 
@@ -369,12 +413,13 @@ NOTE: we can extend report infrastructure to share types, utility method and con
 
 When iterating on a report, the version in the report-manifest.json needs to be bumped.
 
-##### Latest Directory 
+##### Latest Directory
 
 All report directories contain a report version dir called `latest`
 When making changes to a report, changes should be made in the `latest` dir source files.
 
 Where these changes would require a major or minor version change (ie from an API change):
+
 1. First make a copy of the `latest` dir with the name of the current major and minor version of the `latest` dir
 2. Next bump the version of `latest` and make the changes that are required.
 
@@ -395,7 +440,7 @@ Where 2_4 and latest are directories containing source files of different versio
 
 ##### Patches
 
-Report files can be overwritten for patch changes. 
+Report files can be overwritten for patch changes.
 Reports of a new patch must be backwards compatible to open mSupply of the same major and minor version. Therefore we can reduce PR dif overhead, and committed file overhead in OMS, by editing a report if it is a patch change.
 
 Previous patch versions of a report can be accessed if necessary on old branches of open mSupply.
@@ -433,7 +478,7 @@ The full conventional file structure is as follows:
    |   |       |   ├── 2_6
    |   |       |   └── latest
    |   |       └── requisition
-   |   |           └── latest 
+   |   |           └── latest
    |   └── client 2
    |       └── Reports
    |           └── expiring-items
@@ -459,4 +504,3 @@ All sites will have embedded standard reports inserted on startup.
 Additional reports (both custom, and patched standard reports) can be upserted in bulk to open mSupply central servers via the `upsert-reports` command.
 
 Reports will then be synced out from there to remote sites.
-

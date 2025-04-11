@@ -4,6 +4,7 @@ use crate::{
     LockedConnection, NameLinkRow, RepositoryError, StorageConnection,
 };
 use diesel::{
+    dsl::InnerJoin,
     helper_types::{IntoBoxed, LeftJoin},
     prelude::*,
 };
@@ -43,6 +44,7 @@ table! {
 
 joinable!(changelog_deduped -> name_link (name_link_id));
 allow_tables_to_appear_in_same_query!(changelog_deduped, name_link);
+allow_tables_to_appear_in_same_query!(changelog_deduped, vaccination);
 
 #[cfg(not(feature = "postgres"))]
 define_sql_function!(
@@ -245,6 +247,21 @@ pub struct ChangelogRepository<'a> {
 
 type ChangelogJoin = (ChangelogRow, Option<NameLinkRow>);
 
+impl ChangelogRow {
+    pub fn from_join((row, name_link): (ChangelogRow, Option<NameLinkRow>)) -> Self {
+        ChangelogRow {
+            cursor: row.cursor,
+            table_name: row.table_name,
+            record_id: row.record_id,
+            row_action: row.row_action,
+            name_id: name_link.map(|r| r.name_id),
+            store_id: row.store_id,
+            is_sync_update: row.is_sync_update,
+            source_site_id: row.source_site_id,
+        }
+    }
+}
+
 impl<'a> ChangelogRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         ChangelogRepository { connection }
@@ -275,19 +292,7 @@ impl<'a> ChangelogRepository<'a> {
             // );
 
             let result: Vec<ChangelogJoin> = query.load(locked_con.connection())?;
-            Ok(result
-                .into_iter()
-                .map(|(change_log_row, name_link_row)| ChangelogRow {
-                    cursor: change_log_row.cursor,
-                    table_name: change_log_row.table_name,
-                    record_id: change_log_row.record_id,
-                    row_action: change_log_row.row_action,
-                    name_id: name_link_row.map(|r| r.name_id),
-                    store_id: change_log_row.store_id,
-                    is_sync_update: change_log_row.is_sync_update,
-                    source_site_id: change_log_row.source_site_id,
-                })
-                .collect())
+            Ok(result.into_iter().map(ChangelogRow::from_join).collect())
         })?;
         Ok(result)
     }
@@ -322,19 +327,35 @@ impl<'a> ChangelogRepository<'a> {
             // );
 
             let result: Vec<ChangelogJoin> = query.load(locked_con.connection())?;
-            Ok(result
-                .into_iter()
-                .map(|(change_log_row, name_link_row)| ChangelogRow {
-                    cursor: change_log_row.cursor,
-                    table_name: change_log_row.table_name,
-                    record_id: change_log_row.record_id,
-                    row_action: change_log_row.row_action,
-                    name_id: name_link_row.map(|r| r.name_id),
-                    store_id: change_log_row.store_id,
-                    is_sync_update: change_log_row.is_sync_update,
-                    source_site_id: change_log_row.source_site_id,
-                })
-                .collect())
+            Ok(result.into_iter().map(ChangelogRow::from_join).collect())
+        })?;
+        Ok(result)
+    }
+
+    pub fn outgoing_patient_sync_records_from_central(
+        &self,
+        earliest: u64,
+        batch_size: u32,
+        sync_site_id: i32,
+        fetch_patient_id: String,
+    ) -> Result<Vec<ChangelogRow>, RepositoryError> {
+        let result = with_locked_changelog_table(self.connection, |locked_con| {
+            let query = create_filtered_outgoing_patient_sync_query(
+                earliest,
+                sync_site_id,
+                fetch_patient_id,
+            )
+            .order(changelog_deduped::cursor.asc())
+            .limit(batch_size.into());
+
+            // Debug diesel query
+            // println!(
+            //     "{}",
+            //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
+            // );
+
+            let result: Vec<ChangelogJoin> = query.load(locked_con.connection())?;
+            Ok(result.into_iter().map(ChangelogRow::from_join).collect())
         })?;
         Ok(result)
     }
@@ -351,6 +372,19 @@ impl<'a> ChangelogRepository<'a> {
         let result = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
             .count()
             .get_result::<i64>(self.connection.lock().connection())?;
+        Ok(result as u64)
+    }
+
+    pub fn count_outgoing_patient_sync_records_from_central(
+        &self,
+        earliest: u64,
+        sync_site_id: i32,
+        fetch_patient_id: String,
+    ) -> Result<u64, RepositoryError> {
+        let result =
+            create_filtered_outgoing_patient_sync_query(earliest, sync_site_id, fetch_patient_id)
+                .count()
+                .get_result::<i64>(self.connection.lock().connection())?;
         Ok(result as u64)
     }
 
@@ -428,11 +462,15 @@ impl<'a> ChangelogRepository<'a> {
 type BoxedChangelogQuery =
     IntoBoxed<'static, LeftJoin<changelog_deduped::table, name_link::table>, DBType>;
 
-fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> BoxedChangelogQuery {
-    let mut query = changelog_deduped::table
+fn create_base_query(earliest: u64) -> BoxedChangelogQuery {
+    changelog_deduped::table
         .left_join(name_link::table)
         .filter(changelog_deduped::cursor.ge(earliest.try_into().unwrap_or(0)))
-        .into_boxed();
+        .into_boxed()
+}
+
+fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> BoxedChangelogQuery {
+    let mut query = create_base_query(earliest);
 
     if let Some(f) = filter {
         let ChangelogFilter {
@@ -480,14 +518,10 @@ fn create_filtered_outgoing_sync_query(
     sync_site_id: i32,
     is_initialized: bool,
 ) -> BoxedChangelogQuery {
-    let mut query = changelog_deduped::table
-        .left_join(name_link::table)
-        .filter(changelog_deduped::cursor.ge(earliest.try_into().unwrap_or(0)))
-        .into_boxed();
+    let mut query = create_base_query(earliest);
 
     // If we are initialising, we want to send all the records for the site, even ones that originally came from the site
     // The rest of the time we want to exclude any records that were created by the site
-
     if is_initialized {
         query = query.filter(
             changelog_deduped::source_site_id
@@ -522,27 +556,8 @@ fn create_filtered_outgoing_sync_query(
         .filter(store::site_id.eq(sync_site_id))
         .select(store::id.nullable());
 
-    // ids of patients visible on active stores for the site
-    let visible_patient_ids = name_store_join::table
-        .inner_join(name_link::table)
-        .filter(
-            name_store_join::store_id
-                .nullable()
-                .eq_any(active_stores_for_site.clone().into_boxed()),
-        )
-        .select(name_link::name_id)
-        .into_boxed();
-
-    // Ideally this would be by changelog name_link_id, but that has an FK constraint
-    // requiring all names to exist on OMS central, which currently isn't the case.
-    // Instead, for visible patient sync - filter changelogs by record id of vaccinations
-    // for visible patients
-    // Bit of a hack, subquery unlikely to scale well - bring on v7 sync :cry:
-    let vaccinations_for_visible_patients = vaccination::table
-        .left_join(name_link::table)
-        .filter(name_link::name_id.eq_any(visible_patient_ids))
-        .select(vaccination::id)
-        .into_boxed();
+    let patient_names_visible_on_site =
+        patient_names_visible_on_site(sync_site_id).select(name_link::name_id);
 
     // Filter the query for the matching records for each type
     query = query.filter(
@@ -559,9 +574,49 @@ fn create_filtered_outgoing_sync_query(
             // where patient is visible, regardless of the store_id in the changelog
             .or(changelog_deduped::table_name
                 .eq(ChangelogTableName::Vaccination)
-                .and(changelog_deduped::record_id.eq_any(vaccinations_for_visible_patients))),
+                .and(name_link::name_id.eq_any(patient_names_visible_on_site))),
         // Any other special cases could be handled here...
     );
+
+    query
+}
+
+type BoxedNameStoreJoinQuery =
+    IntoBoxed<'static, InnerJoin<name_store_join::table, name_link::table>, DBType>;
+
+fn patient_names_visible_on_site(sync_site_id: i32) -> BoxedNameStoreJoinQuery {
+    let active_stores_for_site = store::table
+        .filter(store::site_id.eq(sync_site_id))
+        .select(store::id.nullable());
+
+    let mut query = name_store_join::table
+        .inner_join(name_link::table)
+        .into_boxed();
+
+    query = query.filter(
+        name_store_join::store_id
+            .nullable()
+            .eq_any(active_stores_for_site),
+    );
+
+    query
+}
+
+// This is a manual sync to fetch all records for a specific patient
+// Managed via own cursor
+fn create_filtered_outgoing_patient_sync_query(
+    earliest: u64,
+    sync_site_id: i32,
+    fetch_patient_id: String,
+) -> BoxedChangelogQuery {
+    let mut query = create_base_query(earliest);
+
+    let patient_names_visible_on_site =
+        patient_names_visible_on_site(sync_site_id).select(name_link::name_id);
+
+    query = query
+        .filter(name_link::name_id.eq(fetch_patient_id.clone()))
+        .filter(name_link::name_id.eq_any(patient_names_visible_on_site));
 
     query
 }
