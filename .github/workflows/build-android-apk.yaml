@@ -42,9 +42,9 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-        targets: |
-         aarch64-linux-android
-         armv7-linux-androideabi 
+        target:
+          aarch64-linux-android
+          armv7-linux-androideabi
 
     - name: Set Up Java
       uses: actions/setup-java@v4
