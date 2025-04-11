@@ -320,7 +320,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
                 master_list_line::master_list_id
             );
             query = query.filter(item::id.eq_any(sub_query));
-        }
+        };
     }
     query
 }

@@ -6,7 +6,11 @@ import {
 import { createDraftPrescriptionLine } from '../../api/hooks/utils';
 import { FnUtils } from '@common/utils';
 import { generateLabel, groupItems } from './utils';
-import { PrescriptionLineFragment, PrescriptionRowFragment } from '../../api';
+import {
+  PrescriptionLineFragment,
+  PrescriptionRowFragment,
+  WarningFragment,
+} from '../../api';
 
 type TestLineParams = {
   id?: string;
@@ -21,6 +25,7 @@ type TestLineParams = {
   expiryDate?: string;
   note?: string;
   batch?: string;
+  warnings?: WarningFragment[];
 };
 
 const createTestLine = ({
@@ -36,6 +41,7 @@ const createTestLine = ({
   expiryDate,
   note = '',
   batch = FnUtils.generateUUID(),
+  warnings = [],
 }: TestLineParams): PrescriptionLineFragment =>
   createDraftPrescriptionLine({
     invoiceId: '',
@@ -62,6 +68,7 @@ const createTestLine = ({
             priority: 1,
           },
         ],
+        warnings,
       },
       type: InvoiceLineNodeType.StockOut,
       packSize,
@@ -95,6 +102,7 @@ const createTestLine = ({
               priority: 1,
             },
           ],
+          warnings,
         },
       },
     },
@@ -181,6 +189,7 @@ describe('generate labels from prescribed items', () => {
       itemDirections: 'first note',
       unitName: 'tablet',
       name: 'Ibuprofen',
+      warning: '',
     }]
    ********************************************************** */
   it('creates one item label from multiple batches of the same item', () => {
@@ -212,6 +221,7 @@ describe('generate labels from prescribed items', () => {
       itemDirections: 'first note',
       unitName: 'tablet',
       name: 'Ibuprofen',
+      warning: '',
     };
 
     const expected = [labelOne];
@@ -248,6 +258,7 @@ describe('generate labels from prescribed items', () => {
         itemDirections: 'second note',
         unitName: 'tablet',
         name: 'Ibuprofen',
+        warning: '',
       }]
      ********************************************************** */
   it('will include directions on the result if some batches are missing directions', () => {
@@ -279,6 +290,7 @@ describe('generate labels from prescribed items', () => {
       itemDirections: 'second note',
       unitName: 'tablet',
       name: 'Ibuprofen',
+      warning: '',
     };
 
     const expected = [labelOne];
@@ -313,6 +325,7 @@ describe('generate labels from prescribed items', () => {
       itemDirections: 'first item note',
       unitName: 'tablet',
       name: 'Ibuprofen',
+      warning: '',
     },
     {
       id: '2',
@@ -320,6 +333,7 @@ describe('generate labels from prescribed items', () => {
       itemDirections: 'second item note',
       unitName: 'tablet',
       name: 'Amoxicillin',
+      warning: '',
     }]
      ********************************************************** */
   it('will print a label for each item if the items are different', () => {
@@ -349,6 +363,7 @@ describe('generate labels from prescribed items', () => {
       itemDirections: 'first item note',
       unitName: 'tablet',
       name: 'Ibuprofen',
+      warning: '',
     };
     const labelTwo = {
       id: '2',
@@ -356,9 +371,95 @@ describe('generate labels from prescribed items', () => {
       itemDirections: 'second item note',
       unitName: 'tablet',
       name: 'Amoxicillin',
+      warning: '',
     };
 
     const expected = [labelOne, labelTwo];
+    const generated = generate;
+
+    expect(generated).toEqual(expected);
+  });
+  /* **********************************************************
+     input lines:
+    [{
+      id: '1',
+      itemId: '1',
+      itemName: 'Ibuprofen',
+      note: 'first item note',
+      numberOfPacks: 2,
+      packSize: 100,
+     warnings: [
+      {
+        code: '123',
+        id: 'one',
+        itemId: '1',
+        priority: false,
+        warningText: 'This is a low priority warning',
+        __typename: 'WarningNode',
+      },
+      {
+        code: 'code',
+        id: 'two',
+        itemId: '1',
+        priority: true,
+        warningText: 'Higher priority warning!!!',
+        __typename: 'WarningNode',
+      },
+    ];
+    }
+     expected:     
+      [{
+      id: '1',
+      sum: 200,
+      itemDirections: 'first item note',
+      unitName: 'tablet',
+      name: 'Ibuprofen',
+      warning: 'Higher priority warning!!!',
+    },
+     ********************************************************** */
+  it('will print the highest priority warning for an item', () => {
+    const warnings: WarningFragment[] = [
+      {
+        code: '123',
+        id: 'one',
+        itemId: '1',
+        priority: false,
+        warningText: 'This is a low priority warning',
+        __typename: 'WarningNode',
+      },
+      {
+        code: 'code',
+        id: 'two',
+        itemId: '1',
+        priority: true,
+        warningText: 'Higher priority warning!!!',
+        __typename: 'WarningNode',
+      },
+    ];
+
+    const one = createTestLine({
+      id: '1',
+      itemId: '1',
+      itemName: 'Ibuprofen',
+      note: 'first item note',
+      numberOfPacks: 2,
+      packSize: 100,
+      warnings: warnings,
+    });
+
+    const draftPrescriptionLines = [one];
+    const generate = groupItems(draftPrescriptionLines);
+
+    const labelOne = {
+      id: '1',
+      sum: 200,
+      itemDirections: 'first item note',
+      unitName: 'tablet',
+      name: 'Ibuprofen',
+      warning: 'Higher priority warning!!!',
+    };
+
+    const expected = [labelOne];
     const generated = generate;
 
     expect(generated).toEqual(expected);
@@ -372,6 +473,7 @@ describe('generate labels from prescribed items', () => {
         itemDirections: 'first item note',
         unitName: 'tablet',
         name: 'Ibuprofen',
+        warning: 'Higher priority warning!',
       },
       {
         id: '2',
@@ -387,6 +489,7 @@ describe('generate labels from prescribed items', () => {
       itemDirections: 'first item note',
       patientDetails: 'Patient A - code',
       details: 'Test Store - {date} - lastName, firstName',
+      warning: 'Higher priority warning!',
     },
     {
       itemDetails: '300 tablet Amoxicillin',
@@ -403,6 +506,7 @@ describe('generate labels from prescribed items', () => {
         itemDirections: 'first item note',
         unitName: 'tablet',
         name: 'Ibuprofen',
+        warning: 'Higher priority warning!',
       },
       {
         id: '2',
@@ -410,6 +514,7 @@ describe('generate labels from prescribed items', () => {
         itemDirections: 'second item note',
         unitName: 'tablet',
         name: 'Amoxicillin',
+        warning: '',
       },
     ];
 
@@ -422,12 +527,14 @@ describe('generate labels from prescribed items', () => {
       itemDirections: 'first item note',
       patientDetails: 'Patient A - code',
       details: `Test Store - ${new Date(prescription.createdDatetime).toLocaleDateString()} - lastName, firstName`,
+      warning: 'Higher priority warning!',
     };
     const labelTwo = {
       itemDetails: '300 tablet Amoxicillin',
       itemDirections: 'second item note',
       patientDetails: 'Patient A - code',
       details: `Test Store - ${new Date(prescription.createdDatetime).toLocaleDateString()} - lastName, firstName`,
+      warning: '',
     };
 
     const expected = [labelOne, labelTwo];
