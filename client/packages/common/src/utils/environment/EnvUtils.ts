@@ -1,6 +1,7 @@
 import { LocaleKey } from '@common/intl';
 import { PrintFormat } from '@common/types';
 import { AppRoute } from '@openmsupply-client/config';
+import { Device } from '@capacitor/device';
 
 export enum Platform {
   Android,
@@ -136,8 +137,22 @@ const getOS = () => {
   return 'Windows';
 };
 
+// V7 of the Device plugin includes screen dimensions, so bundling it in here to
+// emulate that functionality
+const getDeviceInfo = async () => {
+  const deviceInfo = await Device.getInfo();
+  return {
+    ...deviceInfo,
+    screen: {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    },
+  };
+};
+
 const platform = getPlatform();
 const os = getOS();
+const deviceInfo = getDeviceInfo();
 
 const isTouchScreen = 'ontouchstart' in document.documentElement;
 
@@ -148,6 +163,7 @@ export const EnvUtils = {
   isTouchScreen,
   mapRoute,
   os,
+  deviceInfo,
   platform,
   printFormat: PrintFormat.Html, // platform === Platform.Android ? PrintFormat.Html : PrintFormat.Pdf,
 };
