@@ -12,6 +12,7 @@ import {
   InfoTooltipIcon,
   useFormatDateTime,
   UNDEFINED_STRING_VALUE,
+  useDebouncedValueCallback,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../../api';
 
@@ -26,6 +27,12 @@ export const AdditionalInfoSectionComponent: FC = () => {
   const [colorBuffer, setColorBuffer] = useBufferState(colour);
   const [commentBuffer, setCommentBuffer] = useBufferState(comment ?? '');
   const { localisedDate } = useFormatDateTime();
+
+  const debouncedUpdate = useDebouncedValueCallback(
+    update,
+    [commentBuffer],
+    1500
+  );
 
   if (!createdDatetime) return null;
 
@@ -61,7 +68,7 @@ export const AdditionalInfoSectionComponent: FC = () => {
           disabled={isDisabled}
           onChange={e => {
             setCommentBuffer(e.target.value);
-            update({ comment: e.target.value });
+            debouncedUpdate({ comment: e.target.value });
           }}
           value={commentBuffer}
         />
