@@ -28,7 +28,11 @@ export const AdditionalInfoSectionComponent: FC = () => {
   const [commentBuffer, setCommentBuffer] = useBufferState(comment ?? '');
   const { localisedDate } = useFormatDateTime();
 
-  const debouncedUpdate = useDebouncedValueCallback(update, [commentBuffer]);
+  const debouncedUpdate = useDebouncedValueCallback(
+    update,
+    [commentBuffer],
+    1500
+  );
 
   if (!createdDatetime) return null;
 
