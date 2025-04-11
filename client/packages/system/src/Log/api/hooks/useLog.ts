@@ -1,8 +1,8 @@
-import { useMutation, useQuery } from '@openmsupply-client/common';
+import { useQuery } from '@openmsupply-client/common';
 import { useLogGraphQL } from '../useLogGraphQL';
 import { FILE_NAMES } from './keys';
 
-export const useLog = () => {
+export const useLog = (fileName?: string) => {
   // FILE NAMES
   const {
     data: fileNames,
@@ -12,11 +12,10 @@ export const useLog = () => {
 
   // LOG CONTENTS
   const {
-    mutateAsync: getLogContents,
     data: logContents,
     isLoading: isLogContentsLoading,
     isError: isLogContentsError,
-  } = useGetLogContentsByFileName();
+  } = useGetLogContentsByFileName(fileName ?? '');
 
   return {
     fileNames: {
@@ -25,7 +24,6 @@ export const useLog = () => {
       isError: isFileNamesError,
     },
     logContents: {
-      mutateAsync: getLogContents,
       data: logContents,
       isLoading: isLogContentsLoading,
       isError: isLogContentsError,
@@ -49,18 +47,21 @@ const useGetFileNames = () => {
   return query;
 };
 
-const useGetLogContentsByFileName = () => {
+const useGetLogContentsByFileName = (fileName: string) => {
   const { logApi } = useLogGraphQL();
-  const mutationKey = [FILE_NAMES];
+  const queryKey = [FILE_NAMES];
 
-  const mutationFn = async (fileName: string) => {
-    const mutation = await logApi.logContentsByFileName({ fileName });
-    return mutation?.logContents;
+  const queryFn = async () => {
+    const query = await logApi.logContentsByFileName({
+      fileName: fileName,
+    });
+    return query?.logContents;
   };
 
-  const mutation = useMutation({
-    mutationKey,
-    mutationFn,
+  const query = useQuery({
+    queryKey,
+    queryFn,
+    enabled: !!fileName,
   });
-  return mutation;
+  return query;
 };
