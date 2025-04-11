@@ -87,136 +87,121 @@ export const InsuranceModal: FC = (): ReactElement => {
   };
 
   return (
-    <Modal
-      width={800}
-      title={
-        insuranceId === undefined
-          ? t('title.new-insurance')
-          : t('title.edit-insurance')
-      }
-      cancelButton={
-        <DialogButton variant="cancel" onClick={() => setModal(undefined)} />
-      }
-      okButton={<DialogButton variant="save" onClick={handleSave} />}
-      sx={{
-        '& .MuiDialogContent-root': { display: 'flex', alignItems: 'center' },
-      }}
-    >
-      <Stack gap={8} flexDirection="row">
-        <Box display="flex" flexDirection="column" gap={2}>
-          <InputWithLabelRow
-            label={t('label.policy-number-family')}
-            Input={
-              <BasicTextInput
-                required={draft.policyNumberPerson === ''}
-                disabled={haveInsuranceId}
-                value={draft.policyNumberFamily}
-                onChange={event => {
-                  updatePatch({
-                    policyNumberFamily: event.target.value,
-                  });
-                }}
-              />
-            }
-          />
-          <InputWithLabelRow
-            label={t('label.policy-number-person')}
-            Input={
-              <BasicTextInput
-                required={draft.policyNumberFamily === ''}
-                disabled={haveInsuranceId}
-                value={draft.policyNumberPerson}
-                onChange={event => {
-                  updatePatch({
-                    policyNumberPerson: event.target.value,
-                  });
-                }}
-              />
-            }
-          />
-          <InsurancePolicySelect
-            policyType={draft.policyType}
-            onChange={value =>
-              updatePatch({
-                policyType: value,
-              })
-            }
-          />
-          <InputWithLabelRow
-            label={t('label.insurance-active')}
-            Input={
-              <Switch
-                onChange={() => updatePatch({ isActive: !draft.isActive })}
-                checked={draft.isActive}
-                switchSx={{ left: '-13px' }}
-                color="secondary"
-              />
-            }
-          />
-        </Box>
-        <Box display="flex" flexDirection="column" gap={2}>
-          <InputWithLabelRow
-            label={t('label.expiry-date')}
-            Input={
-              <BaseDatePickerInput
-                required
-                value={DateUtils.getNaiveDate(draft.expiryDate)}
-                onChange={date => {
-                  if (date)
+    <>
+      <Modal
+        width={800}
+        title={
+          insuranceId === undefined
+            ? t('title.new-insurance')
+            : t('title.edit-insurance')
+        }
+        cancelButton={
+          <DialogButton variant="cancel" onClick={() => setModal(undefined)} />
+        }
+        okButton={<DialogButton variant="save" onClick={handleSave} />}
+        sx={{
+          '& .MuiDialogContent-root': { display: 'flex', alignItems: 'center' },
+        }}
+      >
+        <Stack gap={8} flexDirection="row">
+          <Box display="flex" flexDirection="column" gap={2}>
+            <InputWithLabelRow
+              label={t('label.policy-number-family')}
+              Input={
+                <BasicTextInput
+                  required={draft.policyNumberPerson === ''}
+                  disabled={haveInsuranceId}
+                  value={draft.policyNumberFamily}
+                  onChange={event => {
                     updatePatch({
-                      expiryDate: formatDateTime.customDate(date, 'yyyy-MM-dd'),
+                      policyNumberFamily: event.target.value,
                     });
-                }}
-              />
-            }
-          />
-          <InsuranceProvidersSelect
-            insuranceProviderId={draft.insuranceProviderId}
-            onChange={value => {
-              updatePatch({
-                insuranceProviderId: value,
-              });
-            }}
-          />
-          <InputWithLabelRow
-            label={t('label.discount-rate')}
-            Input={
-              <NumericTextInput
-                required
-                min={0}
-                decimalLimit={2}
-                value={draft.discountPercentage ?? 0}
-                onChange={value => {
-                  updatePatch({
-                    insuranceProviderId: value,
-                  });
-                }}
-              />
-            </ErrorWrapper>
+                  }}
+                />
+              }
+            />
+            <InputWithLabelRow
+              label={t('label.policy-number-person')}
+              Input={
+                <BasicTextInput
+                  required={draft.policyNumberFamily === ''}
+                  disabled={haveInsuranceId}
+                  value={draft.policyNumberPerson}
+                  onChange={event => {
+                    updatePatch({
+                      policyNumberPerson: event.target.value,
+                    });
+                  }}
+                />
+              }
+            />
+            <InsurancePolicySelect
+              policyType={draft.policyType}
+              onChange={value =>
+                updatePatch({
+                  policyType: value,
+                })
+              }
+            />
+            <InputWithLabelRow
+              label={t('label.insurance-active')}
+              Input={
+                <Switch
+                  onChange={() => updatePatch({ isActive: !draft.isActive })}
+                  checked={draft.isActive}
+                  switchSx={{ left: '-13px' }}
+                  color="secondary"
+                />
+              }
+            />
+          </Box>
+          <Box display="flex" flexDirection="column" gap={2}>
+            <InputWithLabelRow
+              label={t('label.expiry-date')}
+              Input={
+                <BaseDatePickerInput
+                  required
+                  value={DateUtils.getNaiveDate(draft.expiryDate)}
+                  onChange={date => {
+                    if (date)
+                      updatePatch({
+                        expiryDate: formatDateTime.customDate(
+                          date,
+                          'yyyy-MM-dd'
+                        ),
+                      });
+                  }}
+                />
+              }
+            />
+            <InsuranceProvidersSelect
+              insuranceProviderId={draft.insuranceProviderId}
+              onChange={value => {
+                updatePatch({
+                  insuranceProviderId: value,
+                });
+              }}
+            />
             <InputWithLabelRow
               label={t('label.discount-rate')}
               Input={
-                <ErrorWrapper code="discountPercentage">
-                  <NumericTextInput
-                    min={0}
-                    max={100}
-                    decimalLimit={2}
-                    value={draft.discountPercentage ?? 0}
-                    onChange={value => {
-                      if (value) {
-                        updatePatch({
-                          discountPercentage: value,
-                        });
-                      }
-                    }}
-                  />
-                </ErrorWrapper>
+                <NumericTextInput
+                  required
+                  min={0}
+                  decimalLimit={2}
+                  value={draft.discountPercentage ?? 0}
+                  onChange={value => {
+                    updatePatch({
+                      insuranceProviderId: value,
+                    });
+                  }}
+                />
               }
             />
           </Box>
         </Stack>
         <ErrorDisplay />
-      </>
-    </Modal>
+      </Modal>
+    </>
   );
 };
