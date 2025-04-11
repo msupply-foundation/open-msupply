@@ -10,7 +10,7 @@ import {
 import { useAssetGraphQL } from '../useAssetGraphQL';
 import { ASSET } from './keys';
 
-export type ListParams = {
+type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<AssetCatalogueItemFragment>;

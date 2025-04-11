@@ -16,33 +16,30 @@ import { LogTextDisplay } from './LogTextDisplay';
 
 export const LogDisplay = ({
   fileName,
+  logContent,
   setLogContent,
 }: {
   fileName: string;
   setLogContent: (content: string[]) => void;
+  logContent: string[];
 }) => {
-  const { mutateAsync, data, isLoading } =
-    useLog.document.logContentsByFileName();
-
-  useEffect(() => {
-    if (!!fileName) {
-      mutateAsync(fileName);
-    }
-  }, [fileName]);
+  const {
+    logContents: { data, isLoading },
+  } = useLog(fileName);
 
   useEffect(() => {
     if (!!data?.fileContent) {
       setLogContent(data.fileContent);
     }
-  }, [data]);
+  }, [data?.fileContent]);
 
   if (isLoading) {
     return <BasicSpinner />;
   }
 
-  return !!data?.fileContent ? (
+  return !!logContent ? (
     <Box paddingTop={2} maxHeight={400}>
-      <LogTextDisplay logText={data?.fileContent} />
+      <LogTextDisplay logText={logContent} />
     </Box>
   ) : null;
 };
@@ -63,7 +60,9 @@ export const WebAppLogFileModal = ({
   const [isSaving, setIsSaving] = useState(false);
   const noLog = logContent.length === 0;
 
-  const { data, isError, isLoading } = useLog.document.listFileNames();
+  const {
+    fileNames: { data, isLoading, isError },
+  } = useLog();
 
   const saveLog = async () => {
     if (noLog) {
@@ -153,7 +152,11 @@ export const WebAppLogFileModal = ({
               ))}
           </DropdownMenu>
 
-          <LogDisplay fileName={logToRender} setLogContent={setLogContent} />
+          <LogDisplay
+            fileName={logToRender}
+            logContent={logContent}
+            setLogContent={setLogContent}
+          />
         </>
       )}
     </Modal>

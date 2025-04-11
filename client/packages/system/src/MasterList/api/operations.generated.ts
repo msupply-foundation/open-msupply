@@ -57,27 +57,6 @@ export type MasterListsQuery = {
   };
 };
 
-export type MasterListsByItemIdQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  itemId: Types.Scalars['String']['input'];
-}>;
-
-export type MasterListsByItemIdQuery = {
-  __typename: 'Queries';
-  masterLists: {
-    __typename: 'MasterListConnector';
-    totalCount: number;
-    nodes: Array<{
-      __typename: 'MasterListNode';
-      name: string;
-      code: string;
-      description: string;
-      id: string;
-      linesCount?: number | null;
-    }>;
-  };
-};
-
 export type MasterListQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.MasterListFilterInput>;
   storeId: Types.Scalars['String']['input'];
@@ -183,26 +162,6 @@ export const MasterListsDocument = gql`
   }
   ${MasterListRowFragmentDoc}
 `;
-export const MasterListsByItemIdDocument = gql`
-  query masterListsByItemId($storeId: String!, $itemId: String!) {
-    masterLists(
-      filter: {
-        itemId: { equalTo: $itemId }
-        existsForStoreId: { equalTo: $storeId }
-      }
-      storeId: $storeId
-    ) {
-      ... on MasterListConnector {
-        __typename
-        totalCount
-        nodes {
-          ...MasterListRow
-        }
-      }
-    }
-  }
-  ${MasterListRowFragmentDoc}
-`;
 export const MasterListDocument = gql`
   query masterList($filter: MasterListFilterInput, $storeId: String!) {
     masterLists(filter: $filter, storeId: $storeId) {
@@ -274,22 +233,6 @@ export function getSdk(
             ...wrappedRequestHeaders,
           }),
         'masterLists',
-        'query',
-        variables
-      );
-    },
-    masterListsByItemId(
-      variables: MasterListsByItemIdQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<MasterListsByItemIdQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<MasterListsByItemIdQuery>(
-            MasterListsByItemIdDocument,
-            variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
-        'masterListsByItemId',
         'query',
         variables
       );

@@ -9,7 +9,7 @@ import {
   LocationSortFieldInput,
 } from '@openmsupply-client/common';
 
-export type ListParams = {
+type ListParams = {
   sortBy: SortBy<LocationRowFragment>;
   first?: number;
   offset?: number;

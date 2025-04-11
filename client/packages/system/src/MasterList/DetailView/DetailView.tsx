@@ -9,13 +9,13 @@ import {
   useTranslation,
   useBreadcrumbs,
 } from '@openmsupply-client/common';
-import { useMasterList } from '../api';
 import { Toolbar } from './Toolbar';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
+import { useMasterList } from '../api/hooks/useMasterList';
 
 export const MasterListDetailView: FC = () => {
-  const { data, isLoading } = useMasterList.document.get();
+  const { data, isLoading } = useMasterList();
   const navigate = useNavigate();
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
@@ -28,7 +28,7 @@ export const MasterListDetailView: FC = () => {
 
   return !!data ? (
     <TableProvider createStore={createTableStore}>
-      <Toolbar />
+      <Toolbar description={data.description} />
       <ContentArea />
     </TableProvider>
   ) : (

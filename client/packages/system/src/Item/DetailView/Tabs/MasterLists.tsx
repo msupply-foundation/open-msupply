@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import {
   MasterListRowFragment,
-  useMasterList,
+  useMasterLists,
 } from '@openmsupply-client/system';
 import { BasicSpinner, NothingHere } from '@common/components';
 import {
@@ -15,8 +15,15 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 
-const MasterListsTable: FC<{ itemId?: string }> = ({ itemId }) => {
-  const { data, isLoading } = useMasterList.document.listByItemId(itemId ?? '');
+const MasterListsTable = ({ itemId }: { itemId?: string }) => {
+  const { data, isLoading } = useMasterLists({
+    queryParams: {
+      filterBy: {
+        existsForStoreId: { equalTo: 'storeId' },
+        itemId: { equalTo: itemId ?? '' },
+      },
+    },
+  });
   const t = useTranslation();
   const columns = useColumns<MasterListRowFragment>([
     ['code', { Cell: TooltipTextCell }],
