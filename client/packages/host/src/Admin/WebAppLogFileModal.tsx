@@ -21,6 +21,7 @@ export const LogDisplay = ({
 }: {
   fileName: string;
   setLogContent: (content: string[]) => void;
+  logContent: string[];
 }) => {
   const {
     logContents: { data, isLoading },
