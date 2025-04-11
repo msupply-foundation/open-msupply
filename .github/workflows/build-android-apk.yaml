@@ -42,9 +42,9 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-        target:
-          aarch64-linux-android
-          armv7-linux-androideabi
+        targets:
+         aarch64-linux-android
+         armv7-linux-androideabi
       # Targets need to match in the config.toml of the self-hosted machine
 
     - name: Set Up Java
