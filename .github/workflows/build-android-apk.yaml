@@ -45,6 +45,7 @@ jobs:
         target:
           aarch64-linux-android
           armv7-linux-androideabi
+      # Targets need to match in the config.toml of the self-hosted machine
 
     - name: Set Up Java
       uses: actions/setup-java@v4
@@ -59,13 +60,13 @@ jobs:
         dir: 'client'
       env: 
        NDK_BIN: /Users/tmfmacmini/android/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/
-      #Update this version when upgrading the NDK version on the self-hosted machine
+      # Update this version when upgrading the NDK version on the self-hosted machine
 
     - name: Create the Artifact
       uses: actions/upload-artifact@v4
       with:
         name: Android_Build
         path: |
-            ./client/packages/android/app/build/outputs/apk/amr64/release/
-            .client/packages/android/app/build/outputs/apk/universal/release
+            ./client/packages/android/app/build/outputs/apk/amr64/release/*.apk
+            ./client/packages/android/app/build/outputs/apk/universal/release/*.apk
         retention-days: 3
