@@ -24,9 +24,11 @@ export const PrescriptionDetailsSectionComponent: FC = () => {
   const [theirReferenceInput, setTheirReferenceInput] =
     useState(theirReference);
 
-  const debouncedUpdate = useDebouncedValueCallback(update, [
-    theirReferenceInput,
-  ]);
+  const debouncedUpdate = useDebouncedValueCallback(
+    update,
+    [theirReferenceInput],
+    1500
+  );
 
   useEffect(() => {
     if (!data) return;
