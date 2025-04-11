@@ -1,4 +1,4 @@
-use super::{item_link, item_row::item, warning_row::warning::dsl::*, StorageConnection};
+use super::{item_link, item_row::item, StorageConnection};
 use crate::{RepositoryError, Upsert};
 
 use diesel::prelude::*;
@@ -42,11 +42,6 @@ impl<'a> WarningRowRepository<'a> {
         Ok(())
     }
 
-    pub async fn find_all(&mut self) -> Result<Vec<WarningRow>, RepositoryError> {
-        let result = warning.load(self.connection.lock().connection());
-        Ok(result?)
-    }
-
     pub fn find_one_by_id(&self, row_id: &str) -> Result<Option<WarningRow>, RepositoryError> {
         let result = warning::table
             .filter(warning::id.eq(row_id))
@@ -54,22 +49,7 @@ impl<'a> WarningRowRepository<'a> {
             .optional();
         result.map_err(RepositoryError::from)
     }
-
-    pub fn find_many_by_id(&self, ids: &Vec<String>) -> Result<Vec<WarningRow>, RepositoryError> {
-        let result = warning
-            .filter(id.eq_any(ids))
-            .load(self.connection.lock().connection())?;
-        Ok(result)
-    }
-
-    pub fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(warning::table.filter(warning::id.eq(row_id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
 }
-#[derive(Debug, Clone)]
-pub struct WarningRowDelete(pub String);
 
 impl Upsert for WarningRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {

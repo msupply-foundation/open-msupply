@@ -50,11 +50,6 @@ impl<'a> ItemWarningJoinRowRepository<'a> {
         Ok(())
     }
 
-    pub async fn find_all(&mut self) -> Result<Vec<ItemWarningJoinRow>, RepositoryError> {
-        let result = item_warning_join::table.load(self.connection.lock().connection());
-        Ok(result?)
-    }
-
     pub fn find_one_by_id(
         &self,
         item_warning_join_id: &str,
@@ -64,24 +59,6 @@ impl<'a> ItemWarningJoinRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
-    }
-
-    pub fn find_many_by_item_id(
-        &self,
-        item_link_id: &str,
-    ) -> Result<Vec<ItemWarningJoinRow>, RepositoryError> {
-        let result = item_warning_join::table
-            .filter(item_warning_join::item_link_id.eq(item_link_id))
-            .load::<ItemWarningJoinRow>(self.connection.lock().connection())?;
-        Ok(result)
-    }
-
-    pub fn delete(&self, item_warning_join_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(
-            item_warning_join::table.filter(item_warning_join::id.eq(item_warning_join_id)),
-        )
-        .execute(self.connection.lock().connection())?;
-        Ok(())
     }
 }
 
