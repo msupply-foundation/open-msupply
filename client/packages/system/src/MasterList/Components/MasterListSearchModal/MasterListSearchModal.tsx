@@ -1,10 +1,10 @@
-import React, { FC, useEffect } from 'react';
+import React from 'react';
 import {
   FilterByWithBoolean,
   ListSearch,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useMasterList, MasterListRowFragment } from '../../api';
+import { MasterListRowFragment, useMasterLists } from '../../api';
 
 interface MasterListSearchProps {
   filterBy?: FilterByWithBoolean;
@@ -13,22 +13,19 @@ interface MasterListSearchProps {
   onChange: (name: MasterListRowFragment) => void;
 }
 
-export const MasterListSearchModal: FC<MasterListSearchProps> = ({
+export const MasterListSearchModal = ({
   filterBy,
   open,
   onClose,
   onChange,
-}) => {
-  const sortBy = { key: 'name', direction: 'asc' as 'asc' | 'desc' };
-  const { mutate, data, isLoading } = useMasterList.document.listAll(
-    sortBy,
-    filterBy
-  );
+}: MasterListSearchProps) => {
   const t = useTranslation();
-
-  useEffect(() => {
-    if (open) mutate();
-  }, [open]);
+  const { data, isLoading } = useMasterLists({
+    queryParams: {
+      filterBy,
+    },
+    enabled: open,
+  });
 
   return (
     <ListSearch

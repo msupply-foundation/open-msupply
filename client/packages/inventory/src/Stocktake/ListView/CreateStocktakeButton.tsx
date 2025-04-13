@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   BasicSpinner,
   ButtonWithIcon,
@@ -14,9 +14,9 @@ import { useFormatDateTime, useTranslation } from '@common/intl';
 import { ToggleState, useDialog } from '@common/hooks';
 import { useStocktake } from '../api';
 import {
-  useMasterList,
   useStockList,
   useLocationList,
+  useMasterLists,
 } from '@openmsupply-client/system';
 import {
   Box,
@@ -47,18 +47,15 @@ export const CreateStocktakeButton: React.FC<{
 }> = ({ modalController }) => {
   const t = useTranslation();
   const { mutateAsync, isLoading: isSaving } = useStocktake.document.insert();
-  const { user, storeId } = useAuthContext();
-  const {
-    data: masterListData,
-    isLoading: isLoadingMasterLists,
-    mutate: fetchMasterLists,
-  } = useMasterList.document.listAll(
-    {
-      key: 'name',
-      direction: 'asc',
-    },
-    { existsForStoreId: { equalTo: storeId } }
-  );
+  const { user, store } = useAuthContext();
+  const { data: masterListData, isLoading: isLoadingMasterLists } =
+    useMasterLists({
+      queryParams: {
+        filterBy: {
+          existsForStoreId: { equalTo: store?.id },
+        },
+      },
+    });
   const {
     query: { data: locationData, isLoading: isLoadingLocations },
   } = useLocationList({ sortBy: { key: 'name', direction: 'asc' } });
@@ -148,10 +145,6 @@ export const CreateStocktakeButton: React.FC<{
 
   const isLoading =
     isLoadingMasterLists || isLoadingLocations || isLoadingStock;
-
-  useEffect(() => {
-    fetchMasterLists();
-  }, []);
 
   return (
     <>
