@@ -42,6 +42,7 @@ fn vaccination1() -> VaccinationRow {
         clinician_link_id: None,
         vaccination_date: NaiveDate::from_ymd_opt(2024, 12, 17).unwrap(),
         given: false,
+        given_store_id: None,
         not_given_reason: None,
         comment: None,
         facility_name_link_id: None,

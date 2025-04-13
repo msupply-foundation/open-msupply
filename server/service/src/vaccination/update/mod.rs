@@ -33,6 +33,7 @@ pub enum UpdateVaccinationError {
     ItemDoesNotBelongToVaccineCourse,
     NotNextDose,
     NotMostRecentGivenDose,
+    NotGivenFromThisStore,
     UpdatedRecordNotFound,
     InternalError(String),
     DatabaseError(RepositoryError),
@@ -319,6 +320,22 @@ mod update {
                 }
             ),
             Err(UpdateVaccinationError::NotMostRecentGivenDose)
+        );
+
+        // NotGivenFromThisStore
+        // try to un-give from a store other than the one it was given from
+        assert_eq!(
+            service.update_vaccination(
+                &context,
+                store_id,
+                UpdateVaccination {
+                    id: mock_vaccination_b_given().id,
+                    given: Some(false),
+                    not_given_reason: Some("reason".to_string()),
+                    ..Default::default()
+                }
+            ),
+            Err(UpdateVaccinationError::NotGivenFromThisStore)
         );
 
         // NotNextDose
@@ -621,5 +638,8 @@ mod update {
 
         // Already had the return, another one was not created
         assert_eq!(created_invoices.len(), 2);
+
+        // todo - can update to given from other store
+        // todo - can update given from other store to add comment - id not overwritten
     }
 }

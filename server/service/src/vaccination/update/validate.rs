@@ -103,6 +103,7 @@ pub fn validate(
         // Changing given -> not given
         (true, Some(false)) => {
             validate_can_change_given_status(connection, &vaccination, false)?;
+            check_is_giving_store(store_id, &vaccination)?;
 
             ValidateResult::ChangeToNotGiven(ChangeToNotGiven {
                 existing_vaccination: vaccination_row.clone(),
@@ -203,16 +204,14 @@ fn validate_new_stock_line(
 // Check we can give/un-give this dose, based on previous and next doses
 pub fn validate_can_change_given_status(
     connection: &StorageConnection,
-    current_vaccination: &Vaccination,
+    existing: &Vaccination,
     new_given_status: bool,
 ) -> Result<(), UpdateVaccinationError> {
     let (previous_vaccination, next_vaccination) = get_related_vaccinations(
         connection,
-        &current_vaccination
-            .vaccine_course_dose_row
-            .vaccine_course_id,
-        &current_vaccination.vaccine_course_dose_row.id,
-        &current_vaccination.vaccination_row.program_enrolment_id,
+        &existing.vaccine_course_dose_row.vaccine_course_id,
+        &existing.vaccine_course_dose_row.id,
+        &existing.vaccination_row.program_enrolment_id,
     )
     .map_err(|err| match err {
         // If there was a previous dose, but a vaccination for it wasn't found
@@ -259,6 +258,18 @@ fn check_doses_defined(stock_line: &StockLine) -> Result<(), UpdateVaccinationEr
         return Err(UpdateVaccinationError::InternalError(
             "Item has no doses defined".to_string(),
         ));
+    }
+
+    Ok(())
+}
+
+// If a vaccination is given, key info should only be able to be changed by the store it was given from
+fn check_is_giving_store(
+    store_id: &str,
+    vaccination: &Vaccination,
+) -> Result<(), UpdateVaccinationError> {
+    if vaccination.vaccination_row.given_store_id != Some(store_id.to_string()) {
+        return Err(UpdateVaccinationError::NotGivenFromThisStore);
     }
 
     Ok(())
