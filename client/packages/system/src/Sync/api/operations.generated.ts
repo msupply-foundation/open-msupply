@@ -86,6 +86,8 @@ export type SyncStatusWithProgressFragment = {
 export type FullSyncStatusFragment = {
   __typename: 'FullSyncStatusNode';
   isSyncing: boolean;
+  errorThreshold: number;
+  warningThreshold: number;
   error?: {
     __typename: 'SyncErrorNode';
     variant: Types.SyncErrorVariant;
@@ -161,6 +163,8 @@ export type SyncInfoQuery = {
   syncStatus?: {
     __typename: 'FullSyncStatusNode';
     isSyncing: boolean;
+    errorThreshold: number;
+    warningThreshold: number;
     error?: {
       __typename: 'SyncErrorNode';
       variant: Types.SyncErrorVariant;
@@ -236,6 +240,8 @@ export type SyncStatusQuery = {
   syncStatus?: {
     __typename: 'FullSyncStatusNode';
     isSyncing: boolean;
+    errorThreshold: number;
+    warningThreshold: number;
     error?: {
       __typename: 'SyncErrorNode';
       variant: Types.SyncErrorVariant;
@@ -377,6 +383,8 @@ export const FullSyncStatusFragmentDoc = gql`
     lastSuccessfulSync {
       ...SyncStatus
     }
+    errorThreshold
+    warningThreshold
   }
   ${SyncErrorFragmentDoc}
   ${SyncStatusWithProgressFragmentDoc}

@@ -73,6 +73,8 @@ pub struct FullSyncStatusNode {
     push: Option<SyncStatusWithProgressNode>,
     push_v6: Option<SyncStatusWithProgressNode>,
     last_successful_sync: Option<SyncStatusNode>,
+    warning_threshold: i64,
+    error_threshold: i64,
 }
 
 pub fn latest_sync_status(
@@ -147,14 +149,13 @@ pub fn latest_sync_status(
             total: status.total,
             done: status.done,
         }),
-        last_successful_sync: match last_successful_sync_status {
-            None => None,
-            Some(last_successful_sync_status) => Some(SyncStatusNode {
+        last_successful_sync: last_successful_sync_status.map(|last_successful_sync_status| {
+            SyncStatusNode {
                 started: last_successful_sync_status.summary.started,
                 duration_in_seconds: last_successful_sync_status.summary.duration_in_seconds,
                 finished: last_successful_sync_status.summary.finished,
-            }),
-        },
+            }
+        }),
         pull_v6: pull_v6.map(|status| SyncStatusWithProgressNode {
             started: status.started,
             finished: status.finished,
@@ -167,6 +168,8 @@ pub fn latest_sync_status(
             total: status.total,
             done: status.done,
         }),
+        warning_threshold: 1, // constant for now, may be some sort of pref later
+        error_threshold: 3,
     };
 
     Ok(Some(result))

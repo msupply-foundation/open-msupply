@@ -2633,6 +2633,7 @@ export type FrontendPluginMetadataNode = {
 export type FullSyncStatusNode = {
   __typename: 'FullSyncStatusNode';
   error?: Maybe<SyncErrorNode>;
+  errorThreshold: Scalars['Int']['output'];
   integration?: Maybe<SyncStatusWithProgressNode>;
   isSyncing: Scalars['Boolean']['output'];
   lastSuccessfulSync?: Maybe<SyncStatusNode>;
@@ -2643,6 +2644,7 @@ export type FullSyncStatusNode = {
   push?: Maybe<SyncStatusWithProgressNode>;
   pushV6?: Maybe<SyncStatusWithProgressNode>;
   summary: SyncStatusNode;
+  warningThreshold: Scalars['Int']['output'];
 };
 
 export enum GenderType {
@@ -9755,7 +9757,7 @@ export type VaccinationNode = {
   invoiceId?: Maybe<Scalars['String']['output']>;
   notGivenReason?: Maybe<Scalars['String']['output']>;
   stockLine?: Maybe<StockLineNode>;
-  vaccinationDate?: Maybe<Scalars['NaiveDate']['output']>;
+  vaccinationDate: Scalars['NaiveDate']['output'];
 };
 
 export type VaccineCourseConnector = {

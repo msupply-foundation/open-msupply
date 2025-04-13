@@ -25,7 +25,7 @@ export type VaccinationDetailFragment = {
   id: string;
   facilityNameId?: string | null;
   facilityFreeText?: string | null;
-  vaccinationDate?: string | null;
+  vaccinationDate: string;
   given: boolean;
   notGivenReason?: string | null;
   comment?: string | null;
@@ -139,7 +139,7 @@ export type VaccinationQuery = {
     id: string;
     facilityNameId?: string | null;
     facilityFreeText?: string | null;
-    vaccinationDate?: string | null;
+    vaccinationDate: string;
     given: boolean;
     notGivenReason?: string | null;
     comment?: string | null;
