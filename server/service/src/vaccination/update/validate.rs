@@ -102,8 +102,8 @@ pub fn validate(
         }
         // Changing given -> not given
         (true, Some(false)) => {
-            validate_can_change_given_status(connection, &vaccination, false)?;
             check_is_giving_store(store_id, &vaccination)?;
+            validate_can_change_given_status(connection, &vaccination, false)?;
 
             ValidateResult::ChangeToNotGiven(ChangeToNotGiven {
                 existing_vaccination: vaccination_row.clone(),
@@ -118,6 +118,8 @@ pub fn validate(
         (true, Some(true)) | (true, None) => {
             // If still given, check if selected stock line has changed
             if input.stock_line_id.is_some() && vaccination_row.stock_line_id != stock_line_id {
+                check_is_giving_store(store_id, &vaccination)?;
+
                 ValidateResult::ChangeStockLine(ChangeStockLine {
                     existing_vaccination: vaccination_row.clone(),
                     patient_id: encounter.patient_link_id,

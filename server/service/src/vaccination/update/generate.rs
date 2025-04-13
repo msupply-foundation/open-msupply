@@ -250,7 +250,6 @@ fn get_vaccination_with_updated_base_fields(
         // Update metadata/base fields
         comment: update_input.comment.or(comment),
         vaccination_date: update_input.vaccination_date.unwrap_or(vaccination_date),
-        // TODO - these name link ids should be queried! Not assigned directly
         clinician_link_id: match update_input.clinician_id {
             Some(NullableUpdate { value }) => value,
             None => clinician_link_id,

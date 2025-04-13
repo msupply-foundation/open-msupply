@@ -163,8 +163,8 @@ mod update {
     use repository::mock::{
         mock_immunisation_encounter_a, mock_immunisation_program_enrolment_a, mock_patient,
         mock_stock_line_a, mock_stock_line_b_vaccine_item_a, mock_stock_line_vaccine_item_a,
-        mock_store_a, mock_user_account_a, mock_vaccination_a, mock_vaccine_course_a_dose_b,
-        MockData, MockDataInserts,
+        mock_store_a, mock_store_b, mock_user_account_a, mock_vaccination_a,
+        mock_vaccine_course_a_dose_b, MockData, MockDataInserts,
     };
     use repository::test_db::{setup_all, setup_all_with_data};
     use repository::{
@@ -187,6 +187,7 @@ mod update {
                 program_enrolment_id: mock_immunisation_program_enrolment_a().id,
                 vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                 encounter_id: mock_immunisation_encounter_a().id,
+                stock_line_id: Some(mock_stock_line_vaccine_item_a().id),
                 given: true,
                 created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
                     .unwrap()
@@ -323,6 +324,24 @@ mod update {
         );
 
         // NotGivenFromThisStore
+        // try to change related stock line from a store other than the one it was given from
+        assert_eq!(
+            service.update_vaccination(
+                &context,
+                store_id,
+                UpdateVaccination {
+                    id: mock_vaccination_b_given().id,
+                    given: Some(true),
+                    stock_line_id: Some(NullableUpdate {
+                        value: Some(mock_stock_line_b_vaccine_item_a().id)
+                    }),
+                    ..Default::default()
+                }
+            ),
+            Err(UpdateVaccinationError::NotGivenFromThisStore)
+        );
+
+        // NotGivenFromThisStore
         // try to un-give from a store other than the one it was given from
         assert_eq!(
             service.update_vaccination(
@@ -337,8 +356,6 @@ mod update {
             ),
             Err(UpdateVaccinationError::NotGivenFromThisStore)
         );
-
-        // NotNextDose
 
         // Update both vaccinations to be NOT given (testing purposes)
         let vaccinations_repo = VaccinationRowRepository::new(&context.connection);
@@ -355,6 +372,7 @@ mod update {
             })
             .unwrap();
 
+        // NotNextDose
         assert_eq!(
             service.update_vaccination(
                 &context,
@@ -409,7 +427,7 @@ mod update {
         );
 
         // ----------------------------
-        // Update: Not given -> given: Don't create transactions
+        // Update: Change stock line: Don't create transactions
         // ----------------------------
         let result = service_provider
             .vaccination_service
@@ -446,6 +464,43 @@ mod update {
             .unwrap();
         // Should be unchanged, still 5.0
         assert_eq!(stock_line.available_number_of_packs, 5.0);
+
+        // ----------------------------
+        // Update: Given -> Not given
+        // ----------------------------
+        let result = service_provider
+            .vaccination_service
+            .update_vaccination(
+                &context,
+                &mock_store_a().id,
+                UpdateVaccination {
+                    id: mock_vaccination_a().id,
+                    given: Some(false),
+                    not_given_reason: Some("out of stock".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        assert_eq!(result.vaccination_row.given, false);
+
+        // ----------------------------
+        // Update: Not given -> given, from another store
+        // ----------------------------
+        let result = service_provider
+            .vaccination_service
+            .update_vaccination(
+                &context,
+                &mock_store_b().id,
+                UpdateVaccination {
+                    id: mock_vaccination_a().id,
+                    given: Some(true),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        assert_eq!(result.vaccination_row.given, true);
     }
 
     #[actix_rt::test]
@@ -638,8 +693,5 @@ mod update {
 
         // Already had the return, another one was not created
         assert_eq!(created_invoices.len(), 2);
-
-        // todo - can update to given from other store
-        // todo - can update given from other store to add comment - id not overwritten
     }
 }
