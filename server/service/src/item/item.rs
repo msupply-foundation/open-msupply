@@ -19,10 +19,12 @@ pub fn get_items(
     let connection = connection_manager.connection()?;
     let repository = ItemRepository::new(&connection);
 
-    Ok(ListResult {
-        rows: repository.query(pagination, filter.clone(), sort, Some(store_id.to_owned()))?,
-        count: i64_to_u32(repository.count(store_id.to_owned(), filter)?),
-    })
+    // TODO revert this change - unwrap for easeful testing of logging
+    None.unwrap()
+    // Ok(ListResult {
+    //     rows: repository.query(pagination, filter.clone(), sort, Some(store_id.to_owned()))?,
+    //     count: i64_to_u32(repository.count(store_id.to_owned(), filter)?),
+    // })
 }
 
 pub fn check_item_exists(

@@ -8216,6 +8216,7 @@ dependencies = [
  "simple-log",
  "thiserror 1.0.69",
  "tokio",
+ "tracing-subscriber",
  "util",
  "winres",
 ]

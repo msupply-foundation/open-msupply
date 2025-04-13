@@ -22,6 +22,7 @@ repository = { path = "../repository" }
 service = { path = "../service" }
 util = { path = "../util" }
 
+
 machine-uid = { version = "0.5.1", optional = true }
 
 actix-cors = "0.7.0"
@@ -34,6 +35,7 @@ thiserror = { workspace = true }
 log = { workspace = true }
 log-panics = { workspace = true }
 base64 = { workspace = true }
+tracing-subscriber = "0.3"
 
 rustls = { version = "0.23.20", default-features = false, features = ["ring"] }
 rustls-pemfile = "2.1.2"
@@ -55,6 +57,7 @@ extism = { workspace = true }
 actix-rt = { workspace = true }
 assert-json-diff = { workspace = true }
 httpmock = { workspace = true }
+tracing-subscriber = { workspace = true }
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"

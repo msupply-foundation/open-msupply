@@ -1,4 +1,6 @@
 #![recursion_limit = "256"]
+use std::fmt::{Debug, Formatter};
+
 use clap::Parser;
 use server::{configuration, logging_init, start_server};
 use service::settings::Settings;
@@ -21,6 +23,7 @@ async fn main() -> std::io::Result<()> {
     logging_init(settings.logging.clone(), None);
     log_panics::init();
 
+    // logging_init();
     let off_switch = tokio::sync::mpsc::channel(1).1;
     start_server(settings, off_switch).await
 }

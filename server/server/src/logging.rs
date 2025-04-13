@@ -1,7 +1,14 @@
 #[cfg(not(target_os = "android"))]
 use std::env;
+use tracing_subscriber::{
+    filter::LevelFilter,
+    fmt::{self, format::FmtSpan},
+    layer::SubscriberExt,
+    util::SubscriberInitExt,
+    EnvFilter,
+};
 
-use service::settings::{Level, LogMode, LoggingSettings};
+use service::settings::{is_develop, Level, LogMode, LoggingSettings};
 use simple_log::LogConfigBuilder;
 
 // Can use log4rs to extend logging functionality beyond what is available in current
@@ -11,6 +18,44 @@ pub fn logging_init(settings: Option<LoggingSettings>, level: Option<Level>) {
         LogMode::Console,
         service::settings::Level::Info,
     ));
+
+    let crate_name = env!("CARGO_PKG_NAME").replace("-", "_");
+
+    println!("crate_name: {}", crate_name);
+    println!("is_develop: {}", is_develop());
+    println!("log level: {:?}", level);
+
+    let filter = if is_develop() {
+        EnvFilter::builder()
+            .with_default_directive(LevelFilter::WARN.into())
+            .parse(&format!("{}=debug", crate_name))
+            .unwrap()
+    } else {
+        EnvFilter::builder()
+            .with_default_directive(LevelFilter::WARN.into())
+            .parse("")
+            .unwrap()
+    };
+
+    let filter = filter.add_directive(
+        "RUST_LOG"
+            .parse()
+            .unwrap_or_else(|_| LevelFilter::WARN.into()),
+    );
+
+    println!("filter: {:?}", (filter).to_string());
+
+    // let fmt_layer = fmt::layer()
+    //     .with_target(true)
+    //     .with_span_events(FmtSpan::CLOSE)
+    //     .event_format(
+    //         fmt::format()
+    //             .with_level(true)
+    //             .with_target(true)
+    //             .with_thread_ids(cfg!(debug_assertions))
+    //             .with_thread_names(cfg!(debug_assertions))
+    //             .with_ansi(cfg!(debug_assertions)),
+    //     );
 
     let log_level = level.unwrap_or(settings.level.clone());
     let config = match settings.mode {
@@ -30,7 +75,31 @@ pub fn logging_init(settings: Option<LoggingSettings>, level: Option<Level>) {
             .build(),
     };
 
-    simple_log::new(config).expect("Unable to initialise logger");
+    println!("here");
+
+    let filter_directive = if is_develop() {
+        format!("warn,{}=debug", crate_name)
+    } else {
+        "info".to_string()
+    };
+
+    let subscriber = tracing_subscriber::fmt()
+        .with_env_filter(filter_directive)
+        .with_target(true);
+
+    // Add file output if configured
+    if let Some(file_path) = &config.path {
+        let file = std::fs::File::create(file_path).expect("Failed to create log file");
+        subscriber.with_writer(std::sync::Mutex::new(file)).init();
+    } else {
+        subscriber.init();
+    }
+
+    // log_panics::Config::new()
+    //     .backtrace_mode(log_panics::BacktraceMode::Unresolved)
+    //     .install_panic_hook();
+
+    // simple_log::new(config).expect("Unable to initialise logger");
 }
 
 fn file_logger(settings: &LoggingSettings) -> LogConfigBuilder {
