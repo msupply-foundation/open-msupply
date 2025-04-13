@@ -12,6 +12,8 @@ impl MigrationFragment for Migrate {
             connection,
             r#"
                 ALTER TABLE vaccination ADD COLUMN given_store_id TEXT;
+
+                UPDATE vaccination SET given_store_id = store_id WHERE given = TRUE;
             "#
         )?;
 
