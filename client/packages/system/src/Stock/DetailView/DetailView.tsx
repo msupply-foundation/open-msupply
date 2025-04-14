@@ -78,13 +78,12 @@ export const StockLineDetailView: React.FC = () => {
     title: t('heading.are-you-sure'),
   });
 
-  const { setIsDirty } = useConfirmOnLeaving('view-stock');
-
-  useEffect(() => {
-    // Getting isDirty from 'draftStockLine' rather than from 'useConfirmOnLeaving' hook
-    // so need to update it manually to sync external isDirty state with hook's isDirty state
-    setIsDirty(isDirty);
-  }, [isDirty]);
+  useConfirmOnLeaving('view-stock', {
+    customCheck: {
+      refresh: () => isDirty.current,
+      navigate: () => isDirty.current,
+    },
+  });
 
   const openInventoryAdjustmentModal = useCallbackWithPermission(
     UserPermission.InventoryAdjustmentMutate,
@@ -116,8 +115,8 @@ export const StockLineDetailView: React.FC = () => {
     isSaving: isUpdating,
     showSaveConfirmation,
     showCancelConfirmation,
-    disabled: !isDirty && !pluginEvents.state.isDirty,
-    isDirty,
+    disabled: !isDirty.current && !pluginEvents.state.isDirty,
+    isDirty: isDirty.current,
   };
 
   return (
