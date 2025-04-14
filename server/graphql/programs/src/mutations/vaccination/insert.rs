@@ -22,6 +22,7 @@ pub struct InsertVaccinationInput {
     pub facility_free_text: Option<String>,
     pub comment: Option<String>,
     pub given: bool,
+    pub item_id: Option<String>,
     pub stock_line_id: Option<String>,
     pub not_given_reason: Option<String>,
 }
@@ -38,6 +39,7 @@ impl From<InsertVaccinationInput> for InsertVaccination {
             facility_free_text,
             comment,
             given,
+            item_id,
             stock_line_id,
             not_given_reason,
         }: InsertVaccinationInput,
@@ -52,6 +54,7 @@ impl From<InsertVaccinationInput> for InsertVaccination {
             facility_free_text,
             comment,
             given,
+            item_id,
             stock_line_id,
             not_given_reason,
         }
@@ -108,6 +111,8 @@ fn map_error(error: ServiceError) -> Result<InsertVaccinationResponse> {
         | ServiceError::ReasonNotProvided
         | ServiceError::StockLineDoesNotExist
         | ServiceError::VaccineIsNotNextDose
+        | ServiceError::ItemDoesNotExist
+        | ServiceError::StockLineDoesNotMatchItem
         | ServiceError::ItemDoesNotBelongToVaccineCourse => BadUserInput(formatted_error),
 
         ServiceError::CreatedRecordNotFound
