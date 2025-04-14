@@ -4,7 +4,7 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "add_assign_requisition_number_processor_cursor_pg_enum_type"
+        "remove_non_custom_standard_reports"
     }
 
     // For non-transfer-related processing of requisitions
@@ -13,7 +13,9 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TYPE key_type ADD VALUE IF NOT EXISTS 'ASSIGN_REQUISITION_NUMBER_PROCESSOR_CURSOR';
+                    DELETE FROM changelog WHERE record_id IN 
+                    (SELECT id FROM report WHERE is_custom = false AND context = 'REPORT');
+                    DELETE FROM report WHERE is_custom = false AND context = 'REPORT';
                 "#
             )?;
         }
