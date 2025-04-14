@@ -90,6 +90,12 @@ pub fn validate(
             return Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse);
         };
 
+        // If vaccination is in given status,
+        // only store that gave the vaccination can change the item
+        if vaccination.vaccination_row.given {
+            check_is_giving_store(store_id, &vaccination)?;
+        }
+
         check_doses_defined(&item)?;
     }
 
