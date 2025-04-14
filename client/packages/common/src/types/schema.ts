@@ -4146,6 +4146,7 @@ export type ItemFilterInput = {
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   /** Items that are part of a masterlist which is visible in this store OR there is available stock of that item in this store */
   isVisibleOrOnHand?: InputMaybe<Scalars['Boolean']['input']>;
+  itemWarningJoinId?: InputMaybe<EqualFilterStringInput>;
   masterListId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
@@ -4209,6 +4210,7 @@ export type ItemNode = {
   venCategory: VenCategoryType;
   volumePerOuterPack: Scalars['Float']['output'];
   volumePerPack: Scalars['Float']['output'];
+  warnings: Array<WarningNode>;
   weight: Scalars['Float']['output'];
 };
 
@@ -5145,6 +5147,10 @@ export type MutationsInsertVaccinationArgs = {
 export type MutationsLinkPatientToStoreArgs = {
   nameId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
+};
+
+export type MutationsManualSyncArgs = {
+  fetchPatientId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type MutationsSupplyRequestedQuantityArgs = {
@@ -9465,7 +9471,7 @@ export type UpdateVaccinationInput = {
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
   stockLineId?: InputMaybe<NullableStringUpdate>;
   updateTransactions?: InputMaybe<Scalars['Boolean']['input']>;
-  vaccinationDate?: InputMaybe<NullableDateUpdate>;
+  vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type UpdateVaccinationResponse =
@@ -9850,3 +9856,13 @@ export enum VenCategoryType {
   NotAssigned = 'NOT_ASSIGNED',
   V = 'V',
 }
+
+export type WarningNode = {
+  __typename: 'WarningNode';
+  code: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  priority: Scalars['Boolean']['output'];
+  warningId: Scalars['String']['output'];
+  warningText: Scalars['String']['output'];
+};

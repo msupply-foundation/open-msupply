@@ -74,6 +74,14 @@ export type PrescriptionRowFragment = {
           itemId: string;
           priority: number;
         }>;
+        warnings: Array<{
+          __typename: 'WarningNode';
+          warningText: string;
+          id: string;
+          itemId: string;
+          priority: boolean;
+          code: string;
+        }>;
       };
       location?: {
         __typename: 'LocationNode';
@@ -145,6 +153,7 @@ export type PrescriptionRowFragment = {
       providerName: string;
     } | null;
   } | null;
+  store?: { __typename: 'StoreNode'; id: string } | null;
 };
 
 export type PrescriptionLineFragment = {
@@ -176,6 +185,14 @@ export type PrescriptionLineFragment = {
       id: string;
       itemId: string;
       priority: number;
+    }>;
+    warnings: Array<{
+      __typename: 'WarningNode';
+      warningText: string;
+      id: string;
+      itemId: string;
+      priority: boolean;
+      code: string;
     }>;
   };
   location?: {
@@ -220,6 +237,15 @@ export type ItemDirectionFragment = {
   priority: number;
 };
 
+export type WarningFragment = {
+  __typename: 'WarningNode';
+  warningText: string;
+  id: string;
+  itemId: string;
+  priority: boolean;
+  code: string;
+};
+
 export type PartialPrescriptionLineFragment = {
   __typename: 'StockLineNode';
   id: string;
@@ -241,6 +267,14 @@ export type PartialPrescriptionLineFragment = {
       id: string;
       itemId: string;
       priority: number;
+    }>;
+    warnings: Array<{
+      __typename: 'WarningNode';
+      warningText: string;
+      id: string;
+      itemId: string;
+      priority: boolean;
+      code: string;
     }>;
   };
   location?: {
@@ -337,6 +371,14 @@ export type PrescriptionsQuery = {
               itemId: string;
               priority: number;
             }>;
+            warnings: Array<{
+              __typename: 'WarningNode';
+              warningText: string;
+              id: string;
+              itemId: string;
+              priority: boolean;
+              code: string;
+            }>;
           };
           location?: {
             __typename: 'LocationNode';
@@ -408,6 +450,7 @@ export type PrescriptionsQuery = {
           providerName: string;
         } | null;
       } | null;
+      store?: { __typename: 'StoreNode'; id: string } | null;
     }>;
   };
 };
@@ -491,6 +534,14 @@ export type PrescriptionByNumberQuery = {
                 itemId: string;
                 priority: number;
               }>;
+              warnings: Array<{
+                __typename: 'WarningNode';
+                warningText: string;
+                id: string;
+                itemId: string;
+                priority: boolean;
+                code: string;
+              }>;
             };
             location?: {
               __typename: 'LocationNode';
@@ -562,6 +613,7 @@ export type PrescriptionByNumberQuery = {
             providerName: string;
           } | null;
         } | null;
+        store?: { __typename: 'StoreNode'; id: string } | null;
       }
     | {
         __typename: 'NodeError';
@@ -654,6 +706,14 @@ export type PrescriptionByIdQuery = {
                 itemId: string;
                 priority: number;
               }>;
+              warnings: Array<{
+                __typename: 'WarningNode';
+                warningText: string;
+                id: string;
+                itemId: string;
+                priority: boolean;
+                code: string;
+              }>;
             };
             location?: {
               __typename: 'LocationNode';
@@ -725,6 +785,7 @@ export type PrescriptionByIdQuery = {
             providerName: string;
           } | null;
         } | null;
+        store?: { __typename: 'StoreNode'; id: string } | null;
       }
     | {
         __typename: 'NodeError';
@@ -1054,6 +1115,16 @@ export const ItemDirectionFragmentDoc = gql`
     priority
   }
 `;
+export const WarningFragmentDoc = gql`
+  fragment Warning on WarningNode {
+    __typename
+    warningText
+    id
+    itemId
+    priority
+    code
+  }
+`;
 export const PrescriptionLineFragmentDoc = gql`
   fragment PrescriptionLine on InvoiceLineNode {
     __typename
@@ -1081,6 +1152,9 @@ export const PrescriptionLineFragmentDoc = gql`
       unitName
       itemDirections {
         ...ItemDirection
+      }
+      warnings {
+        ...Warning
       }
     }
     location {
@@ -1112,6 +1186,7 @@ export const PrescriptionLineFragmentDoc = gql`
     }
   }
   ${ItemDirectionFragmentDoc}
+  ${WarningFragmentDoc}
 `;
 export const PrescriptionRowFragmentDoc = gql`
   fragment PrescriptionRow on InvoiceNode {
@@ -1193,6 +1268,9 @@ export const PrescriptionRowFragmentDoc = gql`
       }
       policyNumber
     }
+    store {
+      id
+    }
   }
   ${PrescriptionLineFragmentDoc}
 `;
@@ -1213,6 +1291,9 @@ export const PartialPrescriptionLineFragmentDoc = gql`
       itemDirections {
         ...ItemDirection
       }
+      warnings {
+        ...Warning
+      }
     }
     location {
       __typename
@@ -1223,6 +1304,7 @@ export const PartialPrescriptionLineFragmentDoc = gql`
     }
   }
   ${ItemDirectionFragmentDoc}
+  ${WarningFragmentDoc}
 `;
 export const HistoricalStockLineFragmentDoc = gql`
   fragment historicalStockLine on StockLineNode {

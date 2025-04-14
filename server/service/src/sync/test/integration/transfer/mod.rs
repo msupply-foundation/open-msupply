@@ -3,12 +3,9 @@ mod returns;
 mod shipments;
 use super::{
     central_server_configurations::{ConfigureCentralServer, SiteConfiguration},
-    SyncIntegrationContext,
+    create_site, init_test_context, FullSiteConfig,
 };
-use crate::{
-    service_provider::ServiceProvider,
-    sync::{synchroniser::Synchroniser, test::integration::init_test_context},
-};
+use crate::{service_provider::ServiceProvider, sync::synchroniser::Synchroniser};
 use repository::{CurrencyRow, ItemRow, ItemType, StorageConnection, StoreRow, StoreRowRepository};
 use serde_json::json;
 use std::{sync::Arc, time::Duration};
@@ -36,37 +33,24 @@ struct SyncIntegrationTransferContext {
 async fn initialise_transfer_sites(identifier: &str) -> SyncIntegrationTransferContext {
     let central_server_configurations = ConfigureCentralServer::from_env();
 
-    let site_1_config = central_server_configurations
-        .create_sync_site(vec![])
-        .await
-        .expect("Problem creating sync site");
+    let site1 = create_site(&format!("{}_site1", identifier), vec![]).await;
 
-    let site_2_config = central_server_configurations
-        .create_sync_site(vec![site_1_config.new_site_properties.name_id.clone()])
-        .await
-        .expect("Problem creating sync site");
-
-    let site_1_context = init_test_context(
-        &site_1_config.sync_settings,
-        &format!("{}_site1", identifier),
-    )
-    .await;
-    let site_2_context = init_test_context(
-        &site_2_config.sync_settings,
-        &format!("{}_site2", identifier),
+    let site2 = create_site(
+        &format!("{}_site2", identifier,),
+        vec![site1.config.new_site_properties.name_id.clone()],
     )
     .await;
 
     let name_store_join1 = json!({
         "ID": uuid(),
-        "name_ID": site_2_config.new_site_properties.name_id,
-        "store_ID": site_1_config.new_site_properties.store_id
+        "name_ID": site2.config.new_site_properties.name_id,
+        "store_ID": site1.config.new_site_properties.store_id
     });
 
     let name_store_join2 = json!({
         "ID": uuid(),
-        "name_ID": site_1_config.new_site_properties.name_id,
-        "store_ID": site_2_config.new_site_properties.store_id
+        "name_ID": site1.config.new_site_properties.name_id,
+        "store_ID": site2.config.new_site_properties.store_id
     });
 
     central_server_configurations
@@ -82,23 +66,11 @@ async fn initialise_transfer_sites(identifier: &str) -> SyncIntegrationTransferC
         .await
         .expect("Problem inserting central data");
 
-    site_1_context.synchroniser.sync().await.unwrap();
-    site_2_context.synchroniser.sync().await.unwrap();
+    site1.synchroniser.sync(None).await.unwrap();
+    site2.synchroniser.sync(None).await.unwrap();
 
-    let site_1_store = StoreRowRepository::new(&site_1_context.connection)
-        .find_one_by_id(&site_1_config.new_site_properties.store_id)
-        .unwrap()
-        .unwrap();
-
-    let site_2_store = StoreRowRepository::new(&site_1_context.connection)
-        .find_one_by_id(&site_2_config.new_site_properties.store_id)
-        .unwrap()
-        .unwrap();
-
-    let (site_1, site_1_processors_task) =
-        to_site_context_and_processors_task(site_1_context, site_1_config, site_1_store);
-    let (site_2, site_2_processors_task) =
-        to_site_context_and_processors_task(site_2_context, site_2_config, site_2_store);
+    let (site_1, site_1_processors_task) = to_site_context_and_processors_task(site1);
+    let (site_2, site_2_processors_task) = to_site_context_and_processors_task(site2);
 
     SyncIntegrationTransferContext {
         site_1,
@@ -111,20 +83,21 @@ async fn initialise_transfer_sites(identifier: &str) -> SyncIntegrationTransferC
     }
 }
 
-fn to_site_context_and_processors_task(
-    sync_context: SyncIntegrationContext,
-    site_config: SiteConfiguration,
-    store: StoreRow,
-) -> (SiteContext, JoinHandle<()>) {
+fn to_site_context_and_processors_task(config: FullSiteConfig) -> (SiteContext, JoinHandle<()>) {
+    let store = StoreRowRepository::new(&config.context.connection)
+        .find_one_by_id(&config.config.new_site_properties.store_id)
+        .unwrap()
+        .unwrap();
+
     (
         SiteContext {
-            connection: sync_context.connection,
-            service_provider: sync_context.service_provider,
+            connection: config.context.connection,
+            service_provider: config.context.service_provider,
             store,
-            config: site_config,
-            synchroniser: sync_context.synchroniser,
+            config: config.config,
+            synchroniser: config.synchroniser,
         },
-        sync_context.processors_task,
+        config.context.processors_task,
     )
 }
 
@@ -172,26 +145,22 @@ fn items_and_currency() -> (ItemRow, ItemRow, ItemRow, CurrencyRow, serde_json::
 }
 
 async fn new_instance_of_existing_site(
-    existing_site: SiteContext,
+    config: SiteConfiguration,
     identifier: &str,
 ) -> (SiteContext, JoinHandle<()>) {
-    let sync_context = init_test_context(
-        &existing_site.config.sync_settings,
-        &format!("{}_site2_2", identifier),
-    )
-    .await;
-
-    to_site_context_and_processors_task(sync_context, existing_site.config, existing_site.store)
+    let sync_context = init_test_context(config, &format!("{}_site2_2", identifier)).await;
+    sync_context.synchroniser.sync(None).await.unwrap();
+    to_site_context_and_processors_task(sync_context)
 }
 
 async fn sync_and_delay(site_1: &SiteContext, site_2: &SiteContext) {
     log::info!("syncing site {:?}", site_1.config);
-    site_1.synchroniser.sync().await.unwrap();
+    site_1.synchroniser.sync(None).await.unwrap();
 
     tokio::time::sleep(Duration::from_secs(1)).await;
 
     log::info!("syncing site {:?}", site_2.config);
-    site_2.synchroniser.sync().await.unwrap();
+    site_2.synchroniser.sync(None).await.unwrap();
 
     tokio::time::sleep(Duration::from_secs(1)).await;
 }

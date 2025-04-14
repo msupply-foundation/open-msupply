@@ -54,6 +54,8 @@ impl SyncRecordTester for StocktakeRecordTester {
             inventory_reduction_id: None,
             is_locked: true,
             program_id: None,
+            counted_by: None,
+            verified_by: None,
         };
         let stocktake_line_row = StocktakeLineRow {
             id: uuid(),
@@ -100,6 +102,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             r.name_store_id = Some(store_id.clone());
             r.tax_percentage = Some(0.0);
             r.currency_id = Some(currency_row.id.clone());
+            r.currency_rate = 1.0;
         });
 
         let stock_line_row = inline_init(|r: &mut StockLineRow| {

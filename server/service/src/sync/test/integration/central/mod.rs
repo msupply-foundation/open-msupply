@@ -5,16 +5,13 @@ mod inventory_adjustment_reason;
 mod master_list;
 mod name_and_store_and_name_store_join;
 mod period_schedule_and_period;
-mod report;
 mod test;
 mod unit_and_item;
 
 use super::{central_server_configurations::ConfigureCentralServer, SyncRecordTester};
 use crate::sync::test::{
     check_integrated,
-    integration::{
-        central_server_configurations::SiteConfiguration, init_test_context, SyncIntegrationContext,
-    },
+    integration::{create_site, init_test_context},
 };
 
 /// Updates central server with data specified from each step of tester
@@ -28,21 +25,9 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
     println!("test_central_sync_record_{}_init", identifier);
 
     let central_server_configurations = ConfigureCentralServer::from_env();
-    let SiteConfiguration {
-        new_site_properties,
-        sync_settings,
-    } = central_server_configurations
-        .create_sync_site(vec![])
-        .await
-        .expect("Problem creating sync site");
+    let mut site_config = create_site(identifier, vec![]).await;
 
-    let SyncIntegrationContext {
-        connection,
-        synchroniser,
-        ..
-    } = init_test_context(&sync_settings, &identifier).await;
-
-    let steps_data = tester.test_step_data(&new_site_properties);
+    let steps_data = tester.test_step_data(&site_config.config.new_site_properties);
 
     for (index, step_data) in steps_data.into_iter().enumerate() {
         println!("test_central_sync_record_{}_step{}", identifier, index + 1);
@@ -57,8 +42,11 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
             .await
             .expect("Problem deleting central data");
 
-        synchroniser.sync().await.unwrap();
-        check_integrated(&connection, step_data.integration_records)
+        site_config.synchroniser.sync(None).await.unwrap();
+        check_integrated(
+            &site_config.context.connection,
+            &step_data.integration_records,
+        )
     }
 
     // With re-initialisation
@@ -66,15 +54,10 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
     println!("test_central_sync_record_{}_init", identifier);
 
     let central_server_configurations = ConfigureCentralServer::from_env();
-    let SiteConfiguration {
-        new_site_properties,
-        sync_settings,
-    } = central_server_configurations
-        .create_sync_site(vec![])
-        .await
-        .expect("Problem creating sync site");
+    site_config = create_site(&identifier, vec![]).await;
 
-    let steps_data = tester.test_step_data(&new_site_properties);
+    let steps_data = tester.test_step_data(&site_config.config.new_site_properties);
+
     for (index, step_data) in steps_data.into_iter().enumerate() {
         let inner_identifier = format!("{}_step_{}", identifier, index + 1);
         println!("test_central_sync_record_{}", inner_identifier);
@@ -89,14 +72,13 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
             .await
             .expect("Problem deleting central data");
 
-        let SyncIntegrationContext {
-            connection,
-            synchroniser,
-            ..
-        } = init_test_context(&sync_settings, &inner_identifier).await;
+        site_config = init_test_context(site_config.config, &inner_identifier).await;
 
-        synchroniser.sync().await.unwrap();
+        site_config.synchroniser.sync(None).await.unwrap();
 
-        check_integrated(&connection, step_data.integration_records)
+        check_integrated(
+            &site_config.context.connection,
+            &step_data.integration_records,
+        )
     }
 }

@@ -12,20 +12,17 @@ pub(crate) mod stocktake;
 mod test;
 pub(crate) mod user_permission;
 
-use repository::{
-    ChangelogRepository, InvoiceRow, InvoiceType, NameRowRepository, StorageConnection,
-};
+use repository::{InvoiceRow, InvoiceType, NameRowRepository, StorageConnection};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
 use crate::sync::{
     test::{
         check_integrated,
         integration::{
-            central_server_configurations::{ConfigureCentralServer, SiteConfiguration},
-            init_test_context, SyncIntegrationContext,
+            central_server_configurations::ConfigureCentralServer, create_site, init_test_context,
+            integrate_with_is_sync_reset,
         },
     },
-    translation_and_integration::integrate,
     translations::IntegrationOperation,
 };
 
@@ -41,23 +38,13 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
     println!("test_remote_sync_record_{}_init", identifier);
 
     let central_server_configurations = ConfigureCentralServer::from_env();
-    let SiteConfiguration {
-        new_site_properties,
-        sync_settings,
-    } = central_server_configurations
-        .create_sync_site(vec![])
-        .await
-        .expect("Problem creating sync site");
 
-    let SyncIntegrationContext {
-        connection,
-        synchroniser,
-        ..
-    } = init_test_context(&sync_settings, &identifier).await;
-    let steps_data = tester.test_step_data(&new_site_properties);
+    let mut site_config = create_site(identifier, vec![]).await;
 
-    let mut previous_connection = connection;
-    let mut previous_synchroniser = synchroniser;
+    let steps_data = tester.test_step_data(&site_config.config.new_site_properties);
+
+    let mut previous_connection = site_config.context.connection;
+    let mut previous_synchroniser = site_config.synchroniser;
 
     for (index, step_data) in steps_data.into_iter().enumerate() {
         let inner_identifier = format!("{}_step_{}", identifier, index + 1);
@@ -74,35 +61,24 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
             .expect("Problem deleting central data");
 
         // Pull required central data
-        previous_synchroniser.sync().await.unwrap();
+        previous_synchroniser.sync(None).await.unwrap();
 
         let mut integration_records = step_data.integration_records;
         // Replace system name codes (for inventory adjustment name etc..)
         replace_system_name_ids(&mut integration_records, &previous_connection);
 
         // Integrate
-        {
-            let changelog_repo = ChangelogRepository::new(&previous_connection);
-            let cursor = changelog_repo.latest_cursor().unwrap();
-            integrate(&previous_connection, &integration_records, None).unwrap();
-            // Need to reset is_sync_update since we've inserted test data with sync methods
-            // they need to sync to central (if is_sync_update is set to true they will not sync to central)
-            changelog_repo.reset_is_sync_update(cursor).unwrap();
-        } // Extra scope is needed to drop changelog_repo since it has ref to mutable previous_connection
-          // Push integrated changes
-        previous_synchroniser.sync().await.unwrap();
+        integrate_with_is_sync_reset(&previous_connection, &integration_records);
+        // Push integrated changes
+        previous_synchroniser.sync(None).await.unwrap();
         // Re initialise
-        let SyncIntegrationContext {
-            connection,
-            synchroniser,
-            ..
-        } = init_test_context(&sync_settings, &inner_identifier).await;
-        previous_connection = connection;
-        previous_synchroniser = synchroniser;
-        previous_synchroniser.sync().await.unwrap();
+        site_config = init_test_context(site_config.config, &inner_identifier).await;
+        previous_connection = site_config.context.connection;
+        previous_synchroniser = site_config.synchroniser;
+        previous_synchroniser.sync(None).await.unwrap();
 
         // Confirm records have synced back correctly
-        check_integrated(&previous_connection, integration_records)
+        check_integrated(&previous_connection, &integration_records)
     }
 }
 

@@ -73,6 +73,9 @@ impl SyncRecordTester for InvoiceRecordTester {
             name_insurance_join_id: None,
             insurance_discount_amount: None,
             insurance_discount_percentage: None,
+            cancelled_datetime: None,
+            is_cancellation: false,
+            expected_delivery_date: None,
         };
         let base_invoice_line_row = InvoiceLineRow {
             id: uuid(),
@@ -92,12 +95,13 @@ impl SyncRecordTester for InvoiceRecordTester {
             total_after_tax: 12.0,
             tax_percentage: Some(10.0),
             number_of_packs: 10.129,
+            foreign_currency_price_before_tax: Some(8.0),
+            inventory_adjustment_reason_id: None, // TODO: Add test to update this with update_inventory_adjustment_reason_id
             note: None,
-            inventory_adjustment_reason_id: Some(inventory_adjustment_reason_id.clone()),
-            foreign_currency_price_before_tax: Some(0.0),
             return_reason_id: None,
             item_variant_id: None,
             prescribed_quantity: None,
+            linked_invoice_id: None,
         };
         let invoice_row_1 = base_invoice_row.clone();
         let invoice_line_row_1 = base_invoice_line_row.clone();
@@ -130,7 +134,6 @@ impl SyncRecordTester for InvoiceRecordTester {
             d.id = uuid();
             d.invoice_id = invoice_row_2.id.clone();
             d.r#type = InvoiceLineType::StockOut;
-            d.inventory_adjustment_reason_id = None;
             d
         });
         let invoice_row_3 = inline_edit(&base_invoice_row, |mut d| {
@@ -269,10 +272,10 @@ impl SyncRecordTester for InvoiceRecordTester {
             d.sell_price_per_pack = 15.0;
             d.total_before_tax = 10.0;
             d.total_after_tax = 15.0;
-            d.tax_percentage = Some(0.0);
+            d.tax_percentage = Some(10.0);
             d.number_of_packs = 15.120;
             d.note = Some("invoice line note".to_string());
-            d.inventory_adjustment_reason_id = None;
+            d.foreign_currency_price_before_tax = Some(10.0);
             d
         });
 

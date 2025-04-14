@@ -81,6 +81,31 @@ export type ItemDirectionFragment = {
   priority: number;
 };
 
+export type ItemRowWithWarningsFragment = {
+  __typename: 'ItemNode';
+  id: string;
+  code: string;
+  name: string;
+  unitName?: string | null;
+  warnings: Array<{
+    __typename: 'WarningNode';
+    warningText: string;
+    id: string;
+    itemId: string;
+    priority: boolean;
+    code: string;
+  }>;
+};
+
+export type WarningFragment = {
+  __typename: 'WarningNode';
+  warningText: string;
+  id: string;
+  itemId: string;
+  priority: boolean;
+  code: string;
+};
+
 export type ItemWithPackSizeFragment = {
   __typename: 'ItemNode';
   defaultPackSize: number;
@@ -1195,6 +1220,26 @@ export const ItemRowFragmentDoc = gql`
     name
     unitName
   }
+`;
+export const WarningFragmentDoc = gql`
+  fragment Warning on WarningNode {
+    __typename
+    warningText
+    id
+    itemId
+    priority
+    code
+  }
+`;
+export const ItemRowWithWarningsFragmentDoc = gql`
+  fragment ItemRowWithWarnings on ItemNode {
+    ...ItemRow
+    warnings {
+      ...Warning
+    }
+  }
+  ${ItemRowFragmentDoc}
+  ${WarningFragmentDoc}
 `;
 export const ItemWithPackSizeFragmentDoc = gql`
   fragment ItemWithPackSize on ItemNode {
