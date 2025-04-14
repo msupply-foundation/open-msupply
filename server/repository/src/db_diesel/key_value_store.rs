@@ -30,6 +30,7 @@ pub enum KeyType {
     RequisitionTransferProcessorCursor,
     ContactFormProcessorCursor,
     LoadPluginProcessorCursor,
+    AssignRequisitionNumberProcessorCursor,
 
     SettingsSyncUrl,
     SettingsSyncUsername,
