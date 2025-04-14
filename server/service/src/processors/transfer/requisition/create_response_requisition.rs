@@ -8,7 +8,8 @@ use chrono::Utc;
 use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
     ActivityLogType, ApprovalStatusType, EqualFilter, IndicatorValueRow,
-    IndicatorValueRowRepository, ItemRow, NumberRowType, RepositoryError, Requisition,
+    IndicatorValueRowRepository, ItemRow, MasterListFilter, MasterListLineFilter,
+    MasterListLineRepository, MasterListRepository, NumberRowType, RepositoryError, Requisition,
     RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
     RequisitionRowRepository, RequisitionStatus, RequisitionType, StorageConnection, StoreFilter,
     StoreRepository,
@@ -41,7 +42,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         let RequisitionTransferProcessorRecord {
             linked_requisition: response_requisition,
             requisition: request_requisition,
-            ..
+            other_party_store_id,
         } = &record_for_processing;
         // 2.
         if request_requisition.requisition_row.r#type != RequisitionType::Request {
@@ -62,9 +63,17 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         // TODO link to documentation of how remote authorisation works
         let store_preference =
             get_store_preferences(connection, &record_for_processing.other_party_store_id)?;
+
+        // Check if requisition has items that are part of programs
+        let has_program_items = requisition_has_program_items(
+            connection,
+            &request_requisition.requisition_row.id,
+            &other_party_store_id,
+        )?;
+
         // TODO Rework once plugin functionality has been implemented
         let approval_status = if store_preference.response_requisition_requires_authorisation
-            && request_requisition.requisition_row.program_id.is_some()
+            && (request_requisition.requisition_row.program_id.is_some() || has_program_items)
         {
             Some(ApprovalStatusType::Pending)
         } else {
@@ -133,6 +142,49 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
 
         Ok(Some(result))
     }
+}
+
+fn requisition_has_program_items(
+    connection: &StorageConnection,
+    requisition_id: &str,
+    other_party_store_id: &String,
+) -> Result<bool, RepositoryError> {
+    // Get requisition lines
+    let requisition_lines = get_lines_for_requisition(connection, &requisition_id)?;
+    if requisition_lines.is_empty() {
+        return Ok(false);
+    }
+
+    // Query for master lists that are program-related and visible to the supplier store
+    let supplier_program_master_lists = MasterListRepository::new(connection).query_by_filter(
+        MasterListFilter::new()
+            .exists_for_store_id(EqualFilter::equal_to(&other_party_store_id))
+            .is_program(true),
+    )?;
+    if supplier_program_master_lists.is_empty() {
+        return Ok(false);
+    }
+
+    // Collect all item IDs from requisition lines
+    let item_ids = requisition_lines
+        .into_iter()
+        .map(|line| line.item_row.id)
+        .collect::<Vec<String>>();
+
+    // Collect all master list IDs that are program-related
+    let master_list_ids = supplier_program_master_lists
+        .into_iter()
+        .map(|master_list| master_list.id)
+        .collect::<Vec<String>>();
+
+    // Check if any requisition items appear in any program master lists
+    let matched_items = MasterListLineRepository::new(connection).query_by_filter(
+        MasterListLineFilter::new()
+            .item_id(EqualFilter::equal_any(item_ids))
+            .master_list_id(EqualFilter::equal_any(master_list_ids)),
+    )?;
+
+    Ok(!matched_items.is_empty())
 }
 
 fn generate_response_requisition(
