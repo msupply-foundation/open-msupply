@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 
 use repository::{
     migrations::Version, EqualFilter, Report, ReportFilter, ReportMetaData, ReportRepository,
-    ReportRowRepository, ReportSort, RepositoryError, StorageConnection,
+    ReportRowRepository, ReportSort, RepositoryError,
 };
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
@@ -129,7 +129,6 @@ pub trait ReportServiceTrait: Sync + Send {
     /// Converts a HTML report to a file for the target PrintFormat and returns file id
     fn generate_html_report(
         &self,
-        connection: StorageConnection,
         base_dir: &Option<String>,
         report: &ResolvedReportDefinition,
         report_data: serde_json::Value,
@@ -139,7 +138,6 @@ pub trait ReportServiceTrait: Sync + Send {
         current_language: Option<String>,
     ) -> Result<String, ReportError> {
         let document = generate_report(
-            connection,
             report,
             report_data,
             arguments,
@@ -524,14 +522,39 @@ fn resolve_report_definition(
 }
 
 #[derive(Serialize, Deserialize)]
-
 struct ReportData {
     data: serde_json::Value,
     arguments: Option<serde_json::Value>,
 }
 
+fn transform_data(
+    data: ReportData,
+    convert_data: Option<String>,
+    convert_data_type: &ConvertDataType,
+) -> Result<ReportData, ConvertDataError> {
+    let Some(convert_data) = convert_data else {
+        return Ok(data);
+    };
+
+    match convert_data_type {
+        // Mapping to string via format_error since it's better then debug output on error
+        ConvertDataType::BoaJs => transform_data_boajs(data, convert_data)
+            .map_err(|e| ConvertDataError::BoaJs(format_error(&e))),
+        ConvertDataType::Extism => Err(ConvertDataError::Extism(anyhow::anyhow!(
+            "Extism convert data no longer implemented."
+        ))),
+    }
+}
+
+fn transform_data_boajs(data: ReportData, convert_data: String) -> Result<ReportData, BoaJsError> {
+    call_method(
+        data,
+        vec!["convert_data"],
+        &BASE64_STANDARD.decode(convert_data).unwrap(),
+    )
+}
+
 fn generate_report(
-    _connection: StorageConnection,
     report: &ResolvedReportDefinition,
     data: serde_json::Value,
     arguments: Option<serde_json::Value>,
@@ -539,6 +562,12 @@ fn generate_report(
     current_language: Option<String>,
 ) -> Result<GeneratedReport, ReportError> {
     let report_data = ReportData { data, arguments };
+    let report_data = transform_data(
+        report_data,
+        report.convert_data.clone(),
+        &report.convert_data_type,
+    )
+    .map_err(ReportError::ConvertDataError)?;
 
     let mut context = tera::Context::from_serialize(report_data).map_err(|err| {
         ReportError::DocGenerationError(format!("Tera context from data: {:?}", err))
@@ -876,7 +905,6 @@ mod report_service_test {
         let resolved_def = service.resolve_report(&context, "report_1").unwrap();
 
         let doc = generate_report(
-            connection,
             &resolved_def,
             serde_json::json!({
                 "test": "Hello"
@@ -1023,7 +1051,7 @@ mod report_generation_test {
             output: ReportOutputType::Html,
         };
 
-        let (_, connection, connection_manager, _) =
+        let (_, _, connection_manager, _) =
             setup_all("test_report_translations", MockDataInserts::none()).await;
 
         let translation_service = ServiceProvider::new(connection_manager).translations_service;
@@ -1045,7 +1073,6 @@ mod report_generation_test {
         let report_data = json!(null);
 
         let generated_report = generate_report(
-            connection,
             &report,
             report_data.clone(),
             None,
@@ -1057,13 +1084,9 @@ mod report_generation_test {
         assert!(generated_report.document.contains("some text"));
         assert!(generated_report.document.contains("Name"));
 
-        let (_, connection, _, _) =
-            setup_all("test_report_translations", MockDataInserts::none()).await;
-
         // // test generation in other languages
 
         let generated_report = generate_report(
-            connection,
             &report,
             report_data,
             None,

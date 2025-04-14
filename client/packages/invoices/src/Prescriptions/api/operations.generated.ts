@@ -145,6 +145,7 @@ export type PrescriptionRowFragment = {
       providerName: string;
     } | null;
   } | null;
+  store?: { __typename: 'StoreNode'; id: string } | null;
 };
 
 export type PrescriptionLineFragment = {
@@ -408,6 +409,7 @@ export type PrescriptionsQuery = {
           providerName: string;
         } | null;
       } | null;
+      store?: { __typename: 'StoreNode'; id: string } | null;
     }>;
   };
 };
@@ -562,6 +564,7 @@ export type PrescriptionByNumberQuery = {
             providerName: string;
           } | null;
         } | null;
+        store?: { __typename: 'StoreNode'; id: string } | null;
       }
     | {
         __typename: 'NodeError';
@@ -725,6 +728,7 @@ export type PrescriptionByIdQuery = {
             providerName: string;
           } | null;
         } | null;
+        store?: { __typename: 'StoreNode'; id: string } | null;
       }
     | {
         __typename: 'NodeError';
@@ -1192,6 +1196,9 @@ export const PrescriptionRowFragmentDoc = gql`
         providerName
       }
       policyNumber
+    }
+    store {
+      id
     }
   }
   ${PrescriptionLineFragmentDoc}

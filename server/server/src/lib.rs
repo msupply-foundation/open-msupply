@@ -156,9 +156,6 @@ pub async fn start_server(
         .reload_all_plugins(&service_context)
         .unwrap();
 
-    // SET LOG CALLBACK FOR WASM FUNCTIONS
-    info!("Setting wasm function log callback..");
-
     // SET HARDWARE UUID
     info!("Getting hardware uuid..");
     #[cfg(not(target_os = "android"))]

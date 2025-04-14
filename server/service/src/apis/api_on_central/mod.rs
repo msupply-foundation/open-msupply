@@ -1,10 +1,11 @@
 use log::info;
-use repository::{NameStoreJoinRepository, NameStoreJoinRow, RepositoryError};
+use repository::RepositoryError;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use util::format_error;
 
 use crate::{
+    programs::patient::patient_updated::create_patient_name_store_join,
     service_provider::ServiceProvider,
     sync::{
         api::{SyncApiSettings, SyncApiV5},
@@ -64,19 +65,10 @@ pub async fn patient_name_store_join(
     let ctx = service_provider.basic_context()?;
     validate_auth(sync_v5_settings).await?;
 
-    let name_store_join_repo = NameStoreJoinRepository::new(&ctx.connection);
-
-    name_store_join_repo.upsert_one_without_changelog(&NameStoreJoinRow {
-        id,
-        store_id: store_id.clone(),
-        // I think ideally would do a lookup and see if we have a name_link_id,
-        // but should do the same as in sync translation
-        name_link_id: name_id.clone(),
-
-        // This is only used for adding patient visibility, so ok to set these here
-        name_is_customer: true,
-        name_is_supplier: false,
-    })?;
+    // Name link id will be created when patient is inserted
+    // patient would have been inserted because remote site would send
+    // patient to both OMS and OG central
+    create_patient_name_store_join(&ctx.connection, &store_id, &name_id, Some(id))?;
 
     info!(
         "Created name_store_join for patient {} and store {}",
