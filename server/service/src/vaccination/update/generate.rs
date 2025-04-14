@@ -79,6 +79,7 @@ fn generate_given(
 
     // apply given status, stock and invoice ids
     let vaccination = VaccinationRow {
+        not_given_reason: None,
         given: true,
         given_store_id: Some(store_id.to_string()),
         stock_line_id,
