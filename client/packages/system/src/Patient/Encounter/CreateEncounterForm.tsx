@@ -7,7 +7,11 @@ import {
   Tooltip,
 } from '@openmsupply-client/common';
 import { DateUtils, useTranslation } from '@common/intl';
-import { NoteSchema, EncounterSchema } from '@openmsupply-client/programs';
+import {
+  NoteSchema,
+  EncounterSchema,
+  useClinicians,
+} from '@openmsupply-client/programs';
 import {
   ClinicianAutocompleteOption,
   ClinicianSearchInput,
@@ -60,7 +64,9 @@ export const CreateEncounterForm: FC<{
   const [startDateTimeError, setStartDateTimeError] = useState<string>();
 
   const setStartDatetime = (date: Date | null): void => {
-    const startDatetime = date?.toISOString();
+    const startDatetime = DateUtils.formatRFC3339(
+      DateUtils.addCurrentTime(date)
+    );
     setDraft({
       ...draft,
       startDatetime,
@@ -68,6 +74,9 @@ export const CreateEncounterForm: FC<{
     setStartDateTimeError(undefined);
     setHasFormError(false);
   };
+
+  const { data: clinicians } = useClinicians.document.list({});
+  const hasClinicians = clinicians?.nodes.length !== 0;
 
   const setClinician = (option: ClinicianAutocompleteOption | null): void => {
     if (option === null) {
@@ -103,22 +112,26 @@ export const CreateEncounterForm: FC<{
               day: {
                 highlightedDays,
               } as BadgePickersDayProps,
+              tabs: {
+                hidden: true,
+              },
             }}
-            showTime
           />
         }
       />
-      <InputWithLabelRow
-        labelProps={{ sx: { flex: LABEL_FLEX } }}
-        label={t('label.clinician')}
-        Input={
-          <ClinicianSearchInput
-            fullWidth
-            onChange={setClinician}
-            clinicianValue={draft?.clinician}
-          />
-        }
-      />
+      {hasClinicians && (
+        <InputWithLabelRow
+          labelProps={{ sx: { flex: LABEL_FLEX } }}
+          label={t('label.clinician')}
+          Input={
+            <ClinicianSearchInput
+              fullWidth
+              onChange={setClinician}
+              clinicianValue={draft?.clinician}
+            />
+          }
+        />
+      )}
       <InputWithLabelRow
         labelProps={{ sx: { flex: LABEL_FLEX } }}
         label={t('label.visit-notes')}

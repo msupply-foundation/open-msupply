@@ -5,7 +5,7 @@ import {
   useTableStore,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { useRequestNumber } from '../document/useRequest';
+import { useRequestId } from '../document/useRequest';
 import { useIsRequestDisabled } from '../utils/useIsRequestDisabled';
 import { useRequestApi } from '../utils/useRequestApi';
 import { useRequestLines } from './useRequestLines';
@@ -14,12 +14,12 @@ export const useDeleteRequestLines = () => {
   const t = useTranslation();
   const api = useRequestApi();
   const queryClient = useQueryClient();
-  const requestNumber = useRequestNumber();
+  const requestId = useRequestId();
   const isDisabled = useIsRequestDisabled();
   const { lines } = useRequestLines();
   const { mutateAsync } = useMutation(api.deleteLines, {
     onSettled: () =>
-      queryClient.invalidateQueries(api.keys.detail(requestNumber)),
+      queryClient.invalidateQueries(api.keys.detail(requestId)),
   });
 
   const selectedRows = useTableStore(state =>

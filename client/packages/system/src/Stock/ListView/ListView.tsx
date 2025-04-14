@@ -15,12 +15,14 @@ import {
   CurrencyCell,
   ExpiryDateCell,
   usePluginProvider,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { AppRoute } from '@openmsupply-client/config';
 import { useStockList } from '../api/hooks/useStockList';
+import { NewStockLineModal } from '../Components/NewStockLineModal';
 
 const StockListComponent: FC = () => {
   const {
@@ -56,6 +58,8 @@ const StockListComponent: FC = () => {
   const t = useTranslation();
   const { data, isLoading, isError } = useStockList(queryParams);
   const { plugins } = usePluginProvider();
+
+  const { isOpen, onClose, onOpen } = useEditModal();
 
   const columnDefinitions: ColumnDescription<StockLineRowFragment>[] = [
     {
@@ -112,7 +116,7 @@ const StockListComponent: FC = () => {
     [
       'numberOfPacks',
       {
-        accessor: ({ rowData }) => rowData.totalNumberOfPacks,
+        accessor: ({ rowData }) => rowData.totalNumberOfPacks.toFixed(2),
         width: 125,
       },
     ],
@@ -120,7 +124,18 @@ const StockListComponent: FC = () => {
       'stockOnHand',
       {
         accessor: ({ rowData }) =>
-          rowData.totalNumberOfPacks * rowData.packSize,
+          (rowData.totalNumberOfPacks * rowData.packSize).toFixed(2),
+        sortable: false,
+        width: 125,
+      },
+    ],
+    [
+      'availableStockOnHand',
+      {
+        label: 'label.available-soh',
+        description: 'description.available-soh',
+        accessor: ({ rowData }) =>
+          (rowData.availableNumberOfPacks * rowData.packSize).toFixed(2),
         sortable: false,
         width: 125,
       },
@@ -168,13 +183,20 @@ const StockListComponent: FC = () => {
       {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
         <StateLoader key={index} stockLines={data?.nodes ?? []} />
       ))}
+      {isOpen && <NewStockLineModal isOpen={isOpen} onClose={onClose} />}
       <DataTable
         id="stock-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         columns={columns}
         data={data?.nodes ?? []}
         onChangePage={updatePaginationQuery}
-        noDataElement={<NothingHere body={t('error.no-stock')} />}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-stock')}
+            onCreate={onOpen}
+            buttonText={t('button.add-new-stock')}
+          />
+        }
         isError={isError}
         isLoading={isLoading}
         enableColumnSelection

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC, ReactNode } from 'react';
 import {
   Box,
   HomeIcon,
@@ -15,43 +15,140 @@ import {
   useEditModal,
   EditIcon,
   useTheme,
+  useIsExtraSmallScreen,
+  SxProps,
 } from '@openmsupply-client/common';
 import { StoreSelector } from './StoreSelector';
 import { LanguageSelector } from './LanguageSelector';
 import { FacilityEditModal, useName } from '@openmsupply-client/system';
 import { UserDetails } from './UserDetails';
 
-export const Footer: React.FC = () => {
-  const { user, store } = useAuthContext();
+interface PaddedCellProps {
+  sx?: SxProps;
+  text?: string;
+  icon: ReactNode;
+  tooltip?: string;
+  onClick?: () => void;
+}
+
+const PaddedCell: FC<PaddedCellProps> = ({
+  sx,
+  text,
+  icon,
+  tooltip,
+  onClick,
+}) => {
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+  return (
+    <Box
+      onClick={onClick}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        flexDirection: isExtraSmallScreen ? 'column' : 'row',
+        cursor: onClick ? 'pointer' : 'inherit',
+        ...sx,
+      }}
+    >
+      {icon}
+      {text && (
+        <Tooltip title={tooltip || ''}>
+          <Typography
+            sx={{
+              color: 'inherit',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              textAlign: 'center',
+              width: isExtraSmallScreen ? '60px' : 'inherit',
+              fontSize: isExtraSmallScreen ? '8px' : '12px',
+              marginInlineStart: isExtraSmallScreen ? 0 : '8px',
+            }}
+          >
+            {text}
+          </Typography>
+        </Tooltip>
+      )}
+    </Box>
+  );
+};
+
+export const Footer: FC = () => {
+  const theme = useTheme();
   const t = useTranslation();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const { user, store } = useAuthContext();
   const { currentLanguageName, getLocalisedFullName } = useIntlUtils();
+
   const isCentralServer = useIsCentralServerApi();
   const { isOpen, onClose, onOpen } = useEditModal();
-  const theme = useTheme();
   const { data: nameProperties } = useName.document.properties();
 
-  const PaddedCell = styled(Box)({ display: 'flex' });
   const Divider = styled(Box)({
     width: '1px',
     height: '24px',
     backgroundColor: isCentralServer ? '#fff' : theme.palette.gray.main,
   });
-  const iconStyles = { color: 'inherit', height: '16px', width: '16px' };
-  const textStyles = {
+
+  const iconStyles = {
     color: 'inherit',
-    fontSize: '12px',
-    marginInlineStart: '8px',
+    height: isExtraSmallScreen ? 24 : 16,
+    width: isExtraSmallScreen ? 24 : 16,
   };
 
   return (
     <Box
-      gap={2}
+      gap={isExtraSmallScreen ? 0 : 2}
       display="flex"
-      flex={1}
       alignItems="center"
-      paddingY={0.75}
-      paddingX={0}
+      px={0}
+      py={isExtraSmallScreen ? 1.5 : 0.75}
+      justifyContent={isExtraSmallScreen ? 'space-evenly' : 'inherit'}
     >
+      <StoreSelector>
+        <PaddedCell
+          icon={<HomeIcon sx={iconStyles} />}
+          text={store?.name}
+          tooltip={t('store-details', { ...store })}
+        />
+      </StoreSelector>
+      {!!nameProperties?.length && (
+        <PaddedCell
+          icon={<EditIcon sx={iconStyles} />}
+          text={t('label.edit')}
+          tooltip={t('label.edit-store-properties')}
+          onClick={onOpen}
+        />
+      )}
+      {user ? (
+        <>
+          <Divider />
+          <UserDetails>
+            <PaddedCell
+              icon={<UserIcon sx={iconStyles} />}
+              text={user.name}
+              tooltip={getLocalisedFullName(user.firstName, user.lastName)}
+            />
+          </UserDetails>
+        </>
+      ) : null}
+      <Divider />
+      <LanguageSelector>
+        <PaddedCell
+          icon={<TranslateIcon sx={iconStyles} />}
+          text={currentLanguageName}
+          tooltip={t('select-language', { ...store })}
+        />
+      </LanguageSelector>
+      {isExtraSmallScreen && <Divider />}
+      {isCentralServer ? (
+        <PaddedCell
+          icon={<CentralIcon />}
+          text={t('label.central-server')}
+          tooltip={t('select-language', { ...store })}
+          sx={{ ml: isExtraSmallScreen ? 0 : 'auto' }}
+        />
+      ) : null}
       {isOpen && (
         <FacilityEditModal
           nameId={store?.nameId ?? ''}
@@ -59,63 +156,6 @@ export const Footer: React.FC = () => {
           onClose={onClose}
         />
       )}
-      <StoreSelector>
-        <PaddedCell>
-          <HomeIcon sx={iconStyles} />
-          <Tooltip title={t('store-details', { ...store })}>
-            <Typography sx={textStyles}>{store?.name}</Typography>
-          </Tooltip>
-        </PaddedCell>
-      </StoreSelector>
-      {!!nameProperties?.length && (
-        <PaddedCell onClick={onOpen} sx={{ cursor: 'hand' }}>
-          <EditIcon sx={iconStyles} />
-          <Tooltip title={t('label.edit-store-properties')}>
-            <Typography sx={textStyles}>{t('label.edit')}</Typography>
-          </Tooltip>
-        </PaddedCell>
-      )}
-      {user ? (
-        <>
-          <Divider />
-          <UserDetails>
-            <PaddedCell>
-              <UserIcon sx={iconStyles} />
-              <Tooltip
-                title={getLocalisedFullName(user.firstName, user.lastName)}
-              >
-                <Typography sx={textStyles}>{user.name}</Typography>
-              </Tooltip>
-            </PaddedCell>
-          </UserDetails>
-        </>
-      ) : null}
-      <Divider />
-      <LanguageSelector>
-        <PaddedCell>
-          <TranslateIcon sx={iconStyles} />
-          <Tooltip title={t('select-language', { ...store })}>
-            <Typography sx={textStyles}>{currentLanguageName}</Typography>
-          </Tooltip>
-        </PaddedCell>
-      </LanguageSelector>
-      {isCentralServer ? (
-        <Box
-          flex={1}
-          justifyContent="flex-end"
-          display="flex"
-          alignItems="center"
-          paddingX={2}
-        >
-          <CentralIcon />
-          <Typography
-            variant="caption"
-            sx={{ color: 'inherit', whiteSpace: 'nowrap' }}
-          >
-            {t('label.central-server')}
-          </Typography>
-        </Box>
-      ) : null}
     </Box>
   );
 };

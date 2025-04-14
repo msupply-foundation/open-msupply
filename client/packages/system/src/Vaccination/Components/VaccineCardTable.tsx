@@ -165,7 +165,8 @@ const VaccinationCardComponent = ({
           // Only show age label for first of each "block", when repeated
           return sameAsPrev ? null : getAgeLabel(rowData);
         },
-        width: 140,
+        // Hack for "min-content"
+        width: '1%',
       },
       {
         key: 'label',
@@ -210,7 +211,13 @@ const VaccinationCardComponent = ({
       {
         key: 'dateGiven',
         label: 'label.date-given',
-        accessor: ({ rowData }) => localisedDate(rowData.vaccinationDate ?? ''),
+        accessor: ({ rowData }) => {
+          if (rowData.status === VaccinationCardItemNodeStatus.Given) {
+            return localisedDate(rowData.vaccinationDate ?? '');
+          } else {
+            return null;
+          }
+        },
       },
       {
         key: 'batch',

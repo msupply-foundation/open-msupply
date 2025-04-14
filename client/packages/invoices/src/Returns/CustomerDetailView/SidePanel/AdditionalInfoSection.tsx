@@ -18,8 +18,7 @@ export const AdditionalInfoSectionComponent = () => {
   const { debouncedMutateAsync } = useReturns.document.updateCustomerReturn();
   const isDisabled = useReturns.utils.customerIsDisabled();
 
-  const { draft, setDraft } =
-    useReturns.document.customerReturn();
+  const { draft, setDraft } = useReturns.document.customerReturn();
   const { user, colour, comment, id } = draft || {};
 
   const update = (data: Partial<CustomerReturnFragment>) => {

@@ -63,11 +63,11 @@ export const AppBarButtonsComponent: FC<{
               await onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId: name?.id,
-              }).then(invoiceNumber => {
+              }).then(invoiceId => {
                 navigate(
                   RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.OutboundShipment)
-                    .addPart(String(invoiceNumber))
+                    .addPart(invoiceId)
                     .build()
                 );
               });

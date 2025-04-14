@@ -12,7 +12,7 @@ import {
   RecordWithId,
   SearchBar,
   TooltipTextCell,
-  translationExistsInLocale,
+  useTranslationExistsInLocale,
   Typography,
   useColumns,
   useTranslation,
@@ -28,7 +28,7 @@ const PropertyHeader = <T extends RecordWithId>({
   column,
 }: HeaderProps<T>): ReactElement => {
   const t = useTranslation();
-  const labelExistsInLocale = translationExistsInLocale(column.label);
+  const labelExistsInLocale = useTranslationExistsInLocale(column.label);
   const header = labelExistsInLocale
     ? t(column.label as LocaleKey, column.labelProps)
     : column.label;
@@ -85,7 +85,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
       key: property.key,
       width: 150,
       sortable: false,
-      label: undefined,
+      label: property.name,
       labelProps: {
         defaultValue: property.name,
       },

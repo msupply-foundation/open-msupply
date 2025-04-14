@@ -47,7 +47,7 @@ pub fn generate(
         // if stock_line is Some, the vaccination was given, create a prescription
         Some(stock_line) => Some(generate_create_prescription(
             stock_line,
-            program_enrolment.patient_link_id,
+            program_enrolment.patient_link_id.clone(),
             clinician_id.clone(),
         )),
         None => None,
@@ -65,12 +65,13 @@ pub fn generate(
         store_id,
         program_enrolment_id: program_enrolment.id,
         user_id,
+        patient_link_id: program_enrolment.patient_link_id,
         created_datetime: now,
 
         encounter_id,
         vaccine_course_dose_id,
         clinician_link_id: clinician_id,
-        vaccination_date,
+        vaccination_date: vaccination_date.unwrap_or(now.date()),
         given,
         stock_line_id,
         not_given_reason,
