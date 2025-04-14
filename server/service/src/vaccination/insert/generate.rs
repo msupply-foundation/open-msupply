@@ -43,6 +43,11 @@ pub fn generate(
 
     let now = Utc::now().naive_utc();
 
+    // TODO: send in input
+    let item_link_id = stock_line
+        .as_ref()
+        .map(|s| s.stock_line_row.item_link_id.clone());
+
     let create_prescription = match stock_line {
         // if stock_line is Some, the vaccination was given, create a prescription
         Some(stock_line) => Some(generate_create_prescription(
@@ -75,6 +80,7 @@ pub fn generate(
         given,
         given_store_id: given.then_some(store_id),
         stock_line_id,
+        item_link_id,
         not_given_reason,
         comment,
         facility_name_link_id,

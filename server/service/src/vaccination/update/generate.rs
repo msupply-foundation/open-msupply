@@ -57,6 +57,10 @@ fn generate_given(
         .as_ref()
         .map(|sl| sl.stock_line_row.id.clone());
 
+    let item_link_id = new_stock_line
+        .as_ref()
+        .map(|sl| sl.stock_line_row.item_link_id.clone());
+
     let update_transactions = update_input.update_transactions.clone().unwrap_or(false);
 
     let vaccination = get_vaccination_with_updated_base_fields(existing_vaccination, update_input);
@@ -78,6 +82,7 @@ fn generate_given(
         given: true,
         given_store_id: Some(store_id.to_string()),
         stock_line_id,
+        item_link_id,
         invoice_id: create_prescription
             .as_ref()
             .map(|p| p.create_prescription.id.clone()),
@@ -149,6 +154,10 @@ fn generate_change_stock_line(
         .as_ref()
         .map(|sl| sl.stock_line_row.id.clone());
 
+    let item_link_id = new_stock_line
+        .as_ref()
+        .map(|sl| sl.stock_line_row.item_link_id.clone());
+
     let update_transactions = update_input.update_transactions.clone().unwrap_or(false);
 
     let vaccination = get_vaccination_with_updated_base_fields(existing_vaccination, update_input);
@@ -176,6 +185,7 @@ fn generate_change_stock_line(
     // apply new stock and invoice ids
     let vaccination = VaccinationRow {
         stock_line_id,
+        item_link_id,
         invoice_id: create_prescription
             .as_ref()
             .map(|p| p.create_prescription.id.clone()),
@@ -223,6 +233,7 @@ fn get_vaccination_with_updated_base_fields(
         not_given_reason,
         invoice_id,
         stock_line_id,
+        item_link_id,
 
         comment,
         facility_name_link_id,
@@ -246,6 +257,7 @@ fn get_vaccination_with_updated_base_fields(
         given_store_id,
         invoice_id,
         stock_line_id,
+        item_link_id,
 
         // Update metadata/base fields
         comment: update_input.comment.or(comment),
