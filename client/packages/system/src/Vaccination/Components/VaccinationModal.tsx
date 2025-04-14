@@ -14,7 +14,6 @@ import {
   RadioGroup,
   RouteBuilder,
   Select,
-  Switch,
   useAuthContext,
   useDialog,
   useFormatDateTime,
@@ -33,7 +32,6 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
-import { getSwitchReason } from './getSwitchReason';
 import { useConfirmNoStockLineSelected } from './useConfirmNoStockLineSelected';
 import { useClinicians } from '@openmsupply-client/programs';
 
@@ -156,38 +154,9 @@ const VaccinationForm = ({
     return null;
   }
 
-  const transactionSwitchReason = getSwitchReason(
-    draft,
-    !!dose.vaccineCourse.vaccineCourseItems?.length,
-    vaccination
-  );
-  const CreateTransactions = transactionSwitchReason ? (
-    <Switch
-      label={t(transactionSwitchReason)}
-      checked={draft.createTransactions}
-      onChange={() =>
-        updateDraft({
-          createTransactions: !draft.createTransactions,
-        })
-      }
-      labelPlacement="end"
-      size="small"
-    />
-  ) : null;
-
   const isFreeTextFacility = draft.facilityId === OTHER_FACILITY;
   const isOtherFacility =
     !!draft.facilityId && draft.facilityId !== store?.nameId;
-
-  const SelectBatch = (
-    <SelectItemAndBatch
-      dose={dose}
-      draft={draft}
-      updateDraft={updateDraft}
-      hasExistingSelectedBatch={!!vaccination?.stockLine}
-      isOtherFacility={isOtherFacility}
-    />
-  );
 
   return (
     <Container
@@ -246,7 +215,7 @@ const VaccinationForm = ({
         Input={
           <DatePicker
             disableFuture
-            value={draft.date}  
+            value={draft.date}
             onChange={date => updateDraft({ date })}
             sx={{ flex: 1 }}
           />
@@ -271,18 +240,13 @@ const VaccinationForm = ({
         />
       </RadioGroup>
 
-      {/* Switch makes more sense below the batch selection if you're updating the batch */}
-      {transactionSwitchReason === 'label.update-transactions' ? (
-        <>
-          {SelectBatch}
-          {CreateTransactions}
-        </>
-      ) : (
-        <>
-          {CreateTransactions}
-          {SelectBatch}
-        </>
-      )}
+      <SelectItemAndBatch
+        draft={draft}
+        vaccination={vaccination}
+        isOtherFacility={isOtherFacility}
+        dose={dose}
+        updateDraft={updateDraft}
+      />
 
       {draft.given === false && (
         <>
@@ -349,8 +313,7 @@ const VaccineInfoBox = ({
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
   const { store } = useAuthContext();
-  const prescriptionCreatedAtStore =
-    vaccination?.invoice?.store?.id === store?.id;
+  const prescriptionCreatedAtStore = vaccination?.givenStoreId === store?.id;
 
   return vaccination?.given ? (
     <Alert severity="success">

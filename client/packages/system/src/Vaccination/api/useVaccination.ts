@@ -101,7 +101,8 @@ export function useVaccination({
     item,
     itemId: item?.id,
 
-    createTransactions: true,
+    createTransactions: vaccination ? false : true, // When editing - opt in to more transactions being created
+
     enteredAtOtherFacility:
       facilityNameId && facilityNameId !== store?.nameId
         ? { id: facilityNameId, name: cardRow.facilityName ?? '' }
