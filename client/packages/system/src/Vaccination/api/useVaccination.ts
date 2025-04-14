@@ -190,6 +190,7 @@ const useInsert = ({
         vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
         comment: input.comment,
         notGivenReason: input.notGivenReason,
+        itemId: input.itemId,
         stockLineId:
           input.given && !isOtherFacility ? input.stockLine?.id : undefined,
       },
@@ -240,6 +241,7 @@ const useUpdate = (vaccinationId: string | undefined) => {
           'id',
           isOtherFacility ? null : input.clinician
         ),
+        itemId: setNullableInput('itemId', input.given ? input : null),
         stockLineId: setNullableInput(
           'id',
           input.given && !isOtherFacility ? input.stockLine : null

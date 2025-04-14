@@ -3625,6 +3625,7 @@ export type InsertVaccinationInput = {
   facilityNameId?: InputMaybe<Scalars['String']['input']>;
   given: Scalars['Boolean']['input'];
   id: Scalars['String']['input'];
+  itemId?: InputMaybe<Scalars['String']['input']>;
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
@@ -9466,6 +9467,7 @@ export type UpdateVaccinationInput = {
   facilityNameId?: InputMaybe<NullableStringUpdate>;
   given?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
+  itemId?: InputMaybe<NullableStringUpdate>;
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
   stockLineId?: InputMaybe<NullableStringUpdate>;
   updateTransactions?: InputMaybe<Scalars['Boolean']['input']>;
