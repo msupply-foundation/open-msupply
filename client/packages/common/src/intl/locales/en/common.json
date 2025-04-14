@@ -345,7 +345,6 @@
   "error.no-sensors": "No sensors found.",
   "error.no-service-charges": "There are no service charges assigned to this store",
   "error.no-site-access": "Your account does not have access to any stores on this site",
-  "error.no-status-provided-for-asset-log-reason": "Status must be provided for asset log reason",
   "error.no-stock": "There is no stock to display.",
   "error.no-stocktake-items": "No items have been added to this stocktake.",
   "error.no-stocktakes": "There are no Stocktakes to display.",
