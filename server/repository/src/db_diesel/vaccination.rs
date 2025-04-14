@@ -96,6 +96,10 @@ impl<'a> VaccinationRepository<'a> {
             query = query.order(vaccination::created_datetime.asc())
         }
 
+        // Debug diesel query
+        //
+        // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
+
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
