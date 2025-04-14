@@ -24,7 +24,8 @@ import {
   StoreRowFragment,
   StoreSearchInput,
   mapIdNameToOptions,
-  useAssetData,
+  useAssetCategories,
+  useAssetTypes,
   useInfiniteAssets,
 } from '@openmsupply-client/system';
 import { useAssets } from '../api';
@@ -93,12 +94,11 @@ export const CreateAssetModal = ({
   const { Modal } = useDialog({ isOpen, onClose });
 
   const { data: categoryData, isLoading: isLoadingCategories } =
-    useAssetData.utils.categories({ classId: { equalTo: CCE_CLASS_ID } });
+    useAssetCategories({ classId: { equalTo: CCE_CLASS_ID } });
 
-  const { data: typeData, isLoading: isLoadingTypes } =
-    useAssetData.utils.types({
-      categoryId: { equalTo: draft.categoryId ?? '' },
-    });
+  const { data: typeData, isLoading: isLoadingTypes } = useAssetTypes({
+    categoryId: { equalTo: draft.categoryId ?? '' },
+  });
 
   const {
     data: catalogueItemData,
