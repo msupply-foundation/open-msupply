@@ -115,7 +115,6 @@ export const InsuranceModal: FC = (): ReactElement => {
             <InputWithLabelRow
               label={t('label.policy-number-family')}
               Input={
-                // <ErrorWrapper>
                 <BasicTextInput
                   {...getErrorProps({
                     code: t('label.policy-number-family'),
@@ -130,7 +129,6 @@ export const InsuranceModal: FC = (): ReactElement => {
                     });
                   }}
                 />
-                // </ErrorWrapper>
               }
             />
             <InputWithLabelRow

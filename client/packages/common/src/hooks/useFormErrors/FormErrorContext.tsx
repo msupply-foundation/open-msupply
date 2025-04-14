@@ -1,7 +1,6 @@
 import React, {
   createContext,
   ReactNode,
-  useCallback,
   useContext,
   useRef,
   useState,
@@ -35,7 +34,7 @@ export interface FormErrorContextState {
   getErrorProps: <T>(input: GetErrorPropsInput<T>) => {
     error: boolean;
     errorMessage?: string;
-    setError: any;
+    setError: (error: string | null) => void;
     required?: boolean;
     value: T;
   };
@@ -52,12 +51,23 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
   children,
 }) => {
   const t = useTranslation();
+  // Keeps the error state for each code: { code: "Error message" | null, ...}
   const [errorState, setErrorState] = useState<ErrorState>({});
+
+  // Keeps the required state for each code: { code: true/false, ...}
   const [requiredState, setRequiredState] = useState<RequiredState>({});
+
+  // When displaying errors (in ErrorDisplay component), should the missing
+  // "required" fields be shown as errors?
   const [includeRequiredInErrorState, setIncludeRequiredInErrorState] =
     useState(false);
+
+  // Actual errors and missing required fields can be mixed together in
+  // ErrorState, so this object just stores the "proper" errors so we can
+  // distinguish them from missing Required fields when displaying
   const properErrors = useRef<ErrorState | null>(null);
 
+  // Sets (or unsets) the error message for a given code
   const setError = (code: Code, error: string | null) => {
     if (errorState[code] === error) return;
     setErrorState(prev => {
@@ -67,6 +77,7 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
     });
   };
 
+  // Sets (or unsets) the required state for a given code
   const updateRequired = (code: string, state: boolean | null) => {
     if (state === null) {
       if (requiredState[code] !== undefined) delete requiredState[code];
@@ -92,6 +103,7 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
     return errors.some(val => val !== null);
   };
 
+  // Set
   const setRequiredErrors = () => {
     properErrors.current = { ...errorState };
     const newErrorState = { ...errorState };
@@ -110,6 +122,7 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
     }
   };
 
+  console.log('errorState', errorState);
   /**
    * Method to return the props for the individual form components, while
    * simultaneously capturing required state for use in here
@@ -125,10 +138,8 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
     const error = failCustomValidation || errorState[code] != null;
     const errorMessage = customErrorMessage ?? errorState[code] ?? undefined;
 
-    const setThisError = useCallback(
-      (error: string | null) => setError(code, customErrorMessage ?? error),
-      [customErrorMessage, errorState[code]]
-    );
+    const setThisError = (error: string | null) =>
+      setError(code, customErrorMessage ?? error);
 
     if (required) {
       if (value === null || value === undefined || value === '')
@@ -164,7 +175,7 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
         requiredState,
         includeRequiredInErrorState,
 
-        // Currently not used, but could be useful:
+        // Currently not used outside this Context, but could be useful:
         getError,
         clearErrors,
         setRequiredErrors,
@@ -216,6 +227,7 @@ export const ErrorDisplay: React.FC<unknown> = () => {
         {errorList.map(([key, value]) => {
           return (
             <ListItem
+              key={key}
               sx={{ pt: 0, pb: 0, m: 0 }}
             >{`- ${key}: ${value}`}</ListItem>
           );
