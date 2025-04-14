@@ -9754,12 +9754,14 @@ export type VaccinationNode = {
   facilityName?: Maybe<Scalars['String']['output']>;
   facilityNameId?: Maybe<Scalars['String']['output']>;
   given: Scalars['Boolean']['output'];
+  givenStoreId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   invoice?: Maybe<InvoiceNode>;
   invoiceId?: Maybe<Scalars['String']['output']>;
+  item?: Maybe<ItemNode>;
   notGivenReason?: Maybe<Scalars['String']['output']>;
   stockLine?: Maybe<StockLineNode>;
-  vaccinationDate?: Maybe<Scalars['NaiveDate']['output']>;
+  vaccinationDate: Scalars['NaiveDate']['output'];
 };
 
 export type VaccineCourseConnector = {
