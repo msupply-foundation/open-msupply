@@ -47,6 +47,14 @@ export type StockLineFragment = {
       itemId: string;
       priority: number;
     }>;
+    warnings: Array<{
+      __typename: 'WarningNode';
+      warningText: string;
+      id: string;
+      itemId: string;
+      priority: boolean;
+      code: string;
+    }>;
   };
 };
 
@@ -334,6 +342,14 @@ export type ItemFragment = {
           itemId: string;
           priority: number;
         }>;
+        warnings: Array<{
+          __typename: 'WarningNode';
+          warningText: string;
+          id: string;
+          itemId: string;
+          priority: boolean;
+          code: string;
+        }>;
       };
     }>;
   };
@@ -498,6 +514,14 @@ export type ItemsWithStockLinesQuery = {
               id: string;
               itemId: string;
               priority: number;
+            }>;
+            warnings: Array<{
+              __typename: 'WarningNode';
+              warningText: string;
+              id: string;
+              itemId: string;
+              priority: boolean;
+              code: string;
             }>;
           };
         }>;
@@ -782,6 +806,14 @@ export type ItemByIdQuery = {
               itemId: string;
               priority: number;
             }>;
+            warnings: Array<{
+              __typename: 'WarningNode';
+              warningText: string;
+              id: string;
+              itemId: string;
+              priority: boolean;
+              code: string;
+            }>;
           };
         }>;
       };
@@ -951,6 +983,14 @@ export type GetHistoricalStockLinesQuery = {
           id: string;
           itemId: string;
           priority: number;
+        }>;
+        warnings: Array<{
+          __typename: 'WarningNode';
+          warningText: string;
+          id: string;
+          itemId: string;
+          priority: boolean;
+          code: string;
         }>;
       };
     }>;
@@ -1312,6 +1352,9 @@ export const StockLineFragmentDoc = gql`
       itemDirections {
         ...ItemDirection
       }
+      warnings {
+        ...Warning
+      }
     }
     note
     onHold
@@ -1323,6 +1366,7 @@ export const StockLineFragmentDoc = gql`
     itemVariantId
   }
   ${ItemDirectionFragmentDoc}
+  ${WarningFragmentDoc}
 `;
 export const ColdStorageTypeFragmentDoc = gql`
   fragment ColdStorageType on ColdStorageTypeNode {
