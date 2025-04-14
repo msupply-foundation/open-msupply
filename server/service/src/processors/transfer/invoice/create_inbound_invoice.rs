@@ -36,7 +36,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
     /// 3. Source outbound invoice is either Shipped or Picked
     ///    (outbounds can also be New or Allocated, but we only want to generate transfer when it's Shipped or Picked, as per
     ///     ./doc/omSupply_shipment_transfer_workflow.png)
-    /// 4. Linked invoice does not exist (the inbound invoice)
+    /// 4. The outbound_invoice.linked_invoice_id is None. This check rather than looking for the Some inbound invoice gives us an escape hatch to prevent transfers being generated.
     /// 5. Source invoice was not created a month before receiving store was created.
     ///
     /// Only runs once:

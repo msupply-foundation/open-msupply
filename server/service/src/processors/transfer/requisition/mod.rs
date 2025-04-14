@@ -1,4 +1,3 @@
-pub(crate) mod assign_requisition_number;
 pub(crate) mod create_response_requisition;
 pub(crate) mod link_request_requisition;
 pub(crate) mod update_request_requisition_approved_quantities;
@@ -21,7 +20,6 @@ use crate::{
         transfer::{
             get_requisition_and_linked_requisition,
             requisition::{
-                assign_requisition_number::AssignRequisitionNumberProcessor,
                 create_response_requisition::CreateResponseRequisitionProcessor,
                 link_request_requisition::LinkRequestRequisitionProcessor,
                 update_request_requisition_approved_quantities::UpdateRequestRequisitionApprovedQuantitiesProcessor,
@@ -109,7 +107,6 @@ pub(crate) fn process_requisition_transfers(
         Box::new(LinkRequestRequisitionProcessor),
         Box::new(UpdateRequestRequisitionApprovedQuantitiesProcessor),
         Box::new(UpdateRequestRequisitionStatusProcessor),
-        Box::new(AssignRequisitionNumberProcessor),
     ];
 
     let ctx = service_provider
