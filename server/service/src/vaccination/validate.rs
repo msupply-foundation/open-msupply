@@ -66,15 +66,14 @@ pub fn check_vaccination_does_not_exist_for_dose(
 }
 
 pub fn check_item_belongs_to_vaccine_course(
-    item_link_id: &str,
+    item_id: &str,
     vaccine_course_id: &str,
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
     let vaccine_course_item = VaccineCourseItemRepository::new(connection).query_one(
         VaccineCourseItemFilter::new()
             .vaccine_course_id(EqualFilter::equal_to(vaccine_course_id))
-            // todo -should this be item_id?
-            .item_link_id(EqualFilter::equal_to(item_link_id)),
+            .item_id(EqualFilter::equal_to(item_id)),
     )?;
 
     Ok(vaccine_course_item.is_some())
