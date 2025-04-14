@@ -74,6 +74,14 @@ export type PrescriptionRowFragment = {
           itemId: string;
           priority: number;
         }>;
+        warnings: Array<{
+          __typename: 'WarningNode';
+          warningText: string;
+          id: string;
+          itemId: string;
+          priority: boolean;
+          code: string;
+        }>;
       };
       location?: {
         __typename: 'LocationNode';
@@ -178,6 +186,14 @@ export type PrescriptionLineFragment = {
       itemId: string;
       priority: number;
     }>;
+    warnings: Array<{
+      __typename: 'WarningNode';
+      warningText: string;
+      id: string;
+      itemId: string;
+      priority: boolean;
+      code: string;
+    }>;
   };
   location?: {
     __typename: 'LocationNode';
@@ -221,6 +237,15 @@ export type ItemDirectionFragment = {
   priority: number;
 };
 
+export type WarningFragment = {
+  __typename: 'WarningNode';
+  warningText: string;
+  id: string;
+  itemId: string;
+  priority: boolean;
+  code: string;
+};
+
 export type PartialPrescriptionLineFragment = {
   __typename: 'StockLineNode';
   id: string;
@@ -242,6 +267,14 @@ export type PartialPrescriptionLineFragment = {
       id: string;
       itemId: string;
       priority: number;
+    }>;
+    warnings: Array<{
+      __typename: 'WarningNode';
+      warningText: string;
+      id: string;
+      itemId: string;
+      priority: boolean;
+      code: string;
     }>;
   };
   location?: {
@@ -337,6 +370,14 @@ export type PrescriptionsQuery = {
               id: string;
               itemId: string;
               priority: number;
+            }>;
+            warnings: Array<{
+              __typename: 'WarningNode';
+              warningText: string;
+              id: string;
+              itemId: string;
+              priority: boolean;
+              code: string;
             }>;
           };
           location?: {
@@ -492,6 +533,14 @@ export type PrescriptionByNumberQuery = {
                 id: string;
                 itemId: string;
                 priority: number;
+              }>;
+              warnings: Array<{
+                __typename: 'WarningNode';
+                warningText: string;
+                id: string;
+                itemId: string;
+                priority: boolean;
+                code: string;
               }>;
             };
             location?: {
@@ -656,6 +705,14 @@ export type PrescriptionByIdQuery = {
                 id: string;
                 itemId: string;
                 priority: number;
+              }>;
+              warnings: Array<{
+                __typename: 'WarningNode';
+                warningText: string;
+                id: string;
+                itemId: string;
+                priority: boolean;
+                code: string;
               }>;
             };
             location?: {
@@ -1058,6 +1115,16 @@ export const ItemDirectionFragmentDoc = gql`
     priority
   }
 `;
+export const WarningFragmentDoc = gql`
+  fragment Warning on WarningNode {
+    __typename
+    warningText
+    id
+    itemId
+    priority
+    code
+  }
+`;
 export const PrescriptionLineFragmentDoc = gql`
   fragment PrescriptionLine on InvoiceLineNode {
     __typename
@@ -1085,6 +1152,9 @@ export const PrescriptionLineFragmentDoc = gql`
       unitName
       itemDirections {
         ...ItemDirection
+      }
+      warnings {
+        ...Warning
       }
     }
     location {
@@ -1116,6 +1186,7 @@ export const PrescriptionLineFragmentDoc = gql`
     }
   }
   ${ItemDirectionFragmentDoc}
+  ${WarningFragmentDoc}
 `;
 export const PrescriptionRowFragmentDoc = gql`
   fragment PrescriptionRow on InvoiceNode {
@@ -1220,6 +1291,9 @@ export const PartialPrescriptionLineFragmentDoc = gql`
       itemDirections {
         ...ItemDirection
       }
+      warnings {
+        ...Warning
+      }
     }
     location {
       __typename
@@ -1230,6 +1304,7 @@ export const PartialPrescriptionLineFragmentDoc = gql`
     }
   }
   ${ItemDirectionFragmentDoc}
+  ${WarningFragmentDoc}
 `;
 export const HistoricalStockLineFragmentDoc = gql`
   fragment historicalStockLine on StockLineNode {

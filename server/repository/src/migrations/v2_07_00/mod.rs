@@ -2,14 +2,16 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_expected_delivery_date_to_invoice;
+mod add_item_warning_join_table;
 mod add_linked_invoice_id_to_invoice_line;
 mod add_patient_link_id_to_vaccination;
 mod add_preference_table;
+mod add_warning_table;
 mod asset_data_matrix_locked_fields;
 mod asset_data_matrix_permission;
+mod change_vaccination_date_to_not_nullable;
 mod new_stocktake_fields;
 mod remove_encounter_clinician_constraint;
-mod change_vaccination_date_to_not_nullable;
 pub(crate) struct V2_07_00;
 
 impl Migration for V2_07_00 {
@@ -32,6 +34,8 @@ impl Migration for V2_07_00 {
             Box::new(add_patient_link_id_to_vaccination::Migrate),
             Box::new(change_vaccination_date_to_not_nullable::Migrate),
             Box::new(remove_encounter_clinician_constraint::Migrate),
+            Box::new(add_warning_table::Migrate),
+            Box::new(add_item_warning_join_table::Migrate),
         ]
     }
 }

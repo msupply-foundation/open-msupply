@@ -67,6 +67,8 @@ pub mod item_direction_row;
 mod item_link_row;
 mod item_row;
 pub mod item_variant;
+pub mod item_warning_join;
+pub mod item_warning_join_row;
 pub mod key_value_store;
 pub mod ledger;
 pub mod location;
@@ -158,6 +160,8 @@ pub mod vaccination;
 pub mod vaccination_card;
 pub mod vaccination_row;
 pub mod vaccine_course;
+pub mod warning;
+pub mod warning_row;
 
 pub use abbreviation_row::*;
 pub use activity_log_row::*;
@@ -204,6 +208,8 @@ pub use item::*;
 pub use item_direction_row::*;
 pub use item_link_row::*;
 pub use item_row::*;
+pub use item_warning_join::*;
+pub use item_warning_join_row::*;
 pub use key_value_store::*;
 pub use location_movement_row::*;
 pub use location_row::*;
@@ -285,6 +291,8 @@ pub use user_store_join_row::*;
 pub use vaccination::*;
 pub use vaccination_card::*;
 pub use vaccination_row::*;
+pub use warning::*;
+pub use warning_row::*;
 
 use diesel::{
     prelude::*,
