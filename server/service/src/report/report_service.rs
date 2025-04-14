@@ -1,5 +1,5 @@
+use base64::prelude::*;
 use chrono::{DateTime, Utc};
-
 use repository::{
     migrations::Version, EqualFilter, Report, ReportFilter, ReportMetaData, ReportRepository,
     ReportRowRepository, ReportSort, RepositoryError,
@@ -7,9 +7,10 @@ use repository::{
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::{cmp::Ordering, collections::HashMap, time::SystemTime};
-use util::uuid::uuid;
+use util::{format_error, uuid::uuid};
 
 use crate::{
+    boajs::{call_method, BoaJsError},
     localisations::{Localisations, TranslationError},
     service_provider::ServiceContext,
     static_files::{StaticFileCategory, StaticFileService},
@@ -35,6 +36,7 @@ pub enum PrintFormat {
 
 #[derive(Debug)]
 pub enum ConvertDataError {
+    Extism(anyhow::Error),
     BoaJs(String),
 }
 
