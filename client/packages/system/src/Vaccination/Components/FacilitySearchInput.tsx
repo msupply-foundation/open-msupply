@@ -10,12 +10,14 @@ type FacilitySearchInputProps = {
     id: string;
     name: string;
   };
+  disabled?: boolean;
 };
 
 export const FacilitySearchInput = ({
   facilityId,
   onChange,
   enteredAtOtherFacility,
+  disabled,
 }: FacilitySearchInputProps) => {
   const { store } = useAuthContext();
 
@@ -49,6 +51,7 @@ export const FacilitySearchInput = ({
       onChange={(_, value) => value && onChange(value.value)}
       value={options.find(option => option.value === facilityId) || null}
       clearable={false}
+      disabled={disabled}
     />
   );
 };

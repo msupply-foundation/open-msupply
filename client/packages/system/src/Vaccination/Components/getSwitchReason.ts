@@ -5,7 +5,6 @@ import { OTHER_FACILITY } from './FacilitySearchInput';
 
 export function getSwitchReason(
   draft: VaccinationDraft,
-  hasDosesConfigured: boolean,
   vaccination?: VaccinationDetailFragment | null
 ): LocaleKey | null {
   const isHistorical = draft.date?.toDateString() !== new Date().toDateString();
@@ -17,7 +16,7 @@ export function getSwitchReason(
     noExistingSelectedBatch &&
     draft.given &&
     draft.facilityId !== OTHER_FACILITY &&
-    hasDosesConfigured
+    draft.itemId
   ) {
     return 'label.record-stock-transaction';
   }
@@ -25,7 +24,11 @@ export function getSwitchReason(
   // Invoice already exists
   if (!!vaccination?.invoice) {
     // Changing to state where invoice should not have been created
-    if (draft.facilityId === OTHER_FACILITY || draft.given === false) {
+    if (
+      draft.facilityId === OTHER_FACILITY ||
+      draft.given === false ||
+      !draft.stockLine
+    ) {
       return 'label.revert-existing-transaction';
     }
   }
@@ -34,7 +37,7 @@ export function getSwitchReason(
   if (!!vaccination) {
     // And we're changing the stock line (or changing to given and selecting a stock line)
     if (
-      hasDosesConfigured &&
+      draft.itemId &&
       draft.facilityId !== OTHER_FACILITY &&
       draft.given &&
       draft.stockLine?.id !== vaccination.stockLine?.id

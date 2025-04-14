@@ -24,7 +24,7 @@ pub struct VaccineCourseItem {
 pub struct VaccineCourseItemFilter {
     pub id: Option<EqualFilter<String>>,
     pub vaccine_course_id: Option<EqualFilter<String>>,
-    pub item_link_id: Option<EqualFilter<String>>,
+    pub item_id: Option<EqualFilter<String>>,
 }
 
 impl VaccineCourseItemFilter {
@@ -42,8 +42,8 @@ impl VaccineCourseItemFilter {
         self
     }
 
-    pub fn item_link_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.item_link_id = Some(filter);
+    pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.item_id = Some(filter);
         self
     }
 }
@@ -108,7 +108,7 @@ fn create_filtered_query(
         let VaccineCourseItemFilter {
             id,
             vaccine_course_id,
-            item_link_id,
+            item_id,
         } = f;
 
         apply_equal_filter!(query, id, vaccine_course_item::id);
@@ -117,7 +117,7 @@ fn create_filtered_query(
             vaccine_course_id,
             vaccine_course_item::vaccine_course_id
         );
-        apply_equal_filter!(query, item_link_id, vaccine_course_item::item_link_id);
+        apply_equal_filter!(query, item_id, item::id);
     }
 
     query = query.filter(vaccine_course_item::deleted_datetime.is_null());

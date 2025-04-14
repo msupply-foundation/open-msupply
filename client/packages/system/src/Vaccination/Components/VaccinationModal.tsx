@@ -14,7 +14,6 @@ import {
   RadioGroup,
   RouteBuilder,
   Select,
-  Switch,
   useAuthContext,
   useDialog,
   useFormatDateTime,
@@ -33,7 +32,6 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
-import { getSwitchReason } from './getSwitchReason';
 import { useConfirmNoStockLineSelected } from './useConfirmNoStockLineSelected';
 import { useClinicians } from '@openmsupply-client/programs';
 
@@ -147,7 +145,7 @@ const VaccinationForm = ({
   updateDraft: (update: Partial<VaccinationDraft>) => void;
 }) => {
   const t = useTranslation();
-  const { store } = useAuthContext();
+  const { store, storeId } = useAuthContext();
 
   const { data: clinicians } = useClinicians.document.list({});
   const hasClinicians = clinicians?.nodes.length !== 0;
@@ -155,39 +153,12 @@ const VaccinationForm = ({
   if (!dose) {
     return null;
   }
-
-  const transactionSwitchReason = getSwitchReason(
-    draft,
-    !!dose.vaccineCourse.vaccineCourseItems?.length,
-    vaccination
-  );
-  const CreateTransactions = transactionSwitchReason ? (
-    <Switch
-      label={t(transactionSwitchReason)}
-      checked={draft.createTransactions}
-      onChange={() =>
-        updateDraft({
-          createTransactions: !draft.createTransactions,
-        })
-      }
-      labelPlacement="end"
-      size="small"
-    />
-  ) : null;
+  const givenAtOtherStore =
+    !!vaccination?.given && vaccination.givenStoreId !== storeId;
 
   const isFreeTextFacility = draft.facilityId === OTHER_FACILITY;
   const isOtherFacility =
     !!draft.facilityId && draft.facilityId !== store?.nameId;
-
-  const SelectBatch = (
-    <SelectItemAndBatch
-      dose={dose}
-      draft={draft}
-      updateDraft={updateDraft}
-      hasExistingSelectedBatch={!!vaccination?.stockLine}
-      isOtherFacility={isOtherFacility}
-    />
-  );
 
   return (
     <Container
@@ -207,6 +178,7 @@ const VaccinationForm = ({
               }
               facilityId={draft.facilityId}
               enteredAtOtherFacility={draft.enteredAtOtherFacility}
+              disabled={givenAtOtherStore}
             />
 
             {isFreeTextFacility && (
@@ -245,8 +217,9 @@ const VaccinationForm = ({
         label={t('label.date')}
         Input={
           <DatePicker
+            disabled={givenAtOtherStore}
             disableFuture
-            value={draft.date}  
+            value={draft.date}
             onChange={date => updateDraft({ date })}
             sx={{ flex: 1 }}
           />
@@ -256,33 +229,35 @@ const VaccinationForm = ({
         sx={{ margin: '0 auto' }}
         value={draft.given ?? null}
         onChange={event =>
-          updateDraft({ given: event.target.value === 'true' })
+          updateDraft({
+            given: event.target.value === 'true',
+            // Ensure current facility is selected when changing given status
+            facilityId: isFreeTextFacility ? OTHER_FACILITY : store?.nameId,
+          })
         }
       >
         <FormControlLabel
+          disabled={givenAtOtherStore}
           value={true}
           control={<Radio />}
           label={t('label.vaccine-given')}
         />
         <FormControlLabel
+          disabled={givenAtOtherStore}
           value={false}
           control={<Radio />}
           label={t('label.vaccine-not-given')}
         />
       </RadioGroup>
 
-      {/* Switch makes more sense below the batch selection if you're updating the batch */}
-      {transactionSwitchReason === 'label.update-transactions' ? (
-        <>
-          {SelectBatch}
-          {CreateTransactions}
-        </>
-      ) : (
-        <>
-          {CreateTransactions}
-          {SelectBatch}
-        </>
-      )}
+      <SelectItemAndBatch
+        draft={draft}
+        vaccination={vaccination}
+        isOtherFacility={isOtherFacility}
+        dose={dose}
+        updateDraft={updateDraft}
+        givenAtOtherStore={givenAtOtherStore}
+      />
 
       {draft.given === false && (
         <>
@@ -349,8 +324,7 @@ const VaccineInfoBox = ({
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
   const { store } = useAuthContext();
-  const prescriptionCreatedAtStore =
-    vaccination?.invoice?.store?.id === store?.id;
+  const prescriptionCreatedAtStore = vaccination?.givenStoreId === store?.id;
 
   return vaccination?.given ? (
     <Alert severity="success">

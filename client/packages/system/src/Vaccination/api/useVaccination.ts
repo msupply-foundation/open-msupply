@@ -17,8 +17,6 @@ import { VaccinationCardItemFragment } from './operations.generated';
 
 export interface VaccinationStockLine {
   id: string;
-  itemId: string;
-  itemName?: string;
   batch?: string | null;
 }
 
@@ -29,7 +27,11 @@ export interface VaccinationDraft {
   date: Date | null;
   given?: boolean | null;
   comment?: string | null;
-  itemId?: string;
+  itemId?: string | null;
+  item?: {
+    id: string;
+    name: string;
+  } | null;
   stockLine?: VaccinationStockLine | null;
   notGivenReason?: string | null;
   createTransactions: boolean;
@@ -75,6 +77,7 @@ export function useVaccination({
     given,
     notGivenReason,
     stockLine,
+    item,
     facilityNameId,
     facilityFreeText,
   } = vaccination ?? {};
@@ -95,9 +98,11 @@ export function useVaccination({
     stockLine,
     given,
     notGivenReason,
-    itemId: stockLine?.itemId,
+    item,
+    itemId: item?.id,
 
-    createTransactions: true,
+    createTransactions: vaccination ? false : true, // When editing - opt in to more transactions being created
+
     enteredAtOtherFacility:
       facilityNameId && facilityNameId !== store?.nameId
         ? { id: facilityNameId, name: cardRow.facilityName ?? '' }
@@ -185,6 +190,7 @@ const useInsert = ({
         vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
         comment: input.comment,
         notGivenReason: input.notGivenReason,
+        itemId: input.itemId,
         stockLineId:
           input.given && !isOtherFacility ? input.stockLine?.id : undefined,
       },
@@ -235,6 +241,7 @@ const useUpdate = (vaccinationId: string | undefined) => {
           'id',
           isOtherFacility ? null : input.clinician
         ),
+        itemId: setNullableInput('itemId', input.given ? input : null),
         stockLineId: setNullableInput(
           'id',
           input.given && !isOtherFacility ? input.stockLine : null

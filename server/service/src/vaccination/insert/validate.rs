@@ -2,6 +2,7 @@ use repository::{ProgramEnrolmentRow, RepositoryError, StockLine, StorageConnect
 
 use crate::{
     common_stock::{check_stock_line_exists, CommonStockLineError},
+    invoice_line::validate::check_item_exists,
     name::validate::check_name_exists,
     vaccination::validate::{
         check_clinician_exists, check_encounter_exists, check_item_belongs_to_vaccine_course,
@@ -72,15 +73,32 @@ pub fn validate(
             return Err(InsertVaccinationError::FacilityDoesNotExist);
         }
     }
+    // If not given, reason is required
+    if !input.given {
+        if input.not_given_reason.is_none() {
+            return Err(InsertVaccinationError::ReasonNotProvided);
+        }
+    }
 
-    let stock_line = get_stock_line(
-        connection,
-        store_id,
-        input,
-        &vaccine_course_dose
-            .vaccine_course_dose_row
-            .vaccine_course_id,
-    )?;
+    let stock_line = if let Some(item_id) = &input.item_id {
+        if !check_item_exists(connection, item_id)?.is_some() {
+            return Err(InsertVaccinationError::ItemDoesNotExist);
+        }
+
+        if !check_item_belongs_to_vaccine_course(
+            item_id,
+            &vaccine_course_dose
+                .vaccine_course_dose_row
+                .vaccine_course_id,
+            connection,
+        )? {
+            return Err(InsertVaccinationError::ItemDoesNotBelongToVaccineCourse);
+        };
+
+        get_stock_line(connection, store_id, input, item_id.clone())?
+    } else {
+        None
+    };
 
     Ok((program_enrolment.row, stock_line))
 }
@@ -102,14 +120,10 @@ fn get_stock_line(
     connection: &StorageConnection,
     store_id: &str,
     input: &InsertVaccination,
-    vaccine_course_id: &str,
+    item_id: String,
 ) -> Result<Option<StockLine>, InsertVaccinationError> {
-    // If not given, reason is required
+    // If not given, we should not have associated stock line
     if !input.given {
-        if input.not_given_reason.is_none() {
-            return Err(InsertVaccinationError::ReasonNotProvided);
-        };
-
         return Ok(None);
     }
 
@@ -118,7 +132,6 @@ fn get_stock_line(
         return Ok(None);
     }
 
-    // If given at this facility (and not historical), stock line is required
     let stock_line_id = match input.stock_line_id.as_ref() {
         Some(stock_line_id) => stock_line_id,
         None => return Ok(None),
@@ -126,12 +139,8 @@ fn get_stock_line(
 
     let stock_line = check_stock_line_exists(connection, store_id, stock_line_id)?;
 
-    if !check_item_belongs_to_vaccine_course(
-        &stock_line.stock_line_row.item_link_id,
-        vaccine_course_id,
-        connection,
-    )? {
-        return Err(InsertVaccinationError::ItemDoesNotBelongToVaccineCourse);
+    if stock_line.item_row.id != item_id {
+        return Err(InsertVaccinationError::StockLineDoesNotMatchItem);
     };
 
     // This shouldn't be possible (mSupply ensures doses is at least 1 for vaccine items)

@@ -17,12 +17,14 @@ import { VaccinationStockLine } from '../api';
 
 interface SelectBatchProps {
   itemId: string;
+  isNewlyGiven: boolean;
   stockLine: VaccinationStockLine | null;
   setStockLine: (stockLine: VaccinationStockLine | null) => void;
 }
 
 export const SelectBatch = ({
   itemId,
+  isNewlyGiven,
   stockLine,
   setStockLine,
 }: SelectBatchProps) => {
@@ -30,12 +32,10 @@ export const SelectBatch = ({
 
   // Auto-select if there is only one stock line (and not already selected)
   useEffect(() => {
-    if (data?.nodes?.length === 1 && !stockLine) {
+    if (data?.nodes?.length === 1 && !stockLine && isNewlyGiven) {
       setStockLine(data.nodes[0]!);
     }
   }, [data]);
-
-  const hasSingleBatch = data?.nodes?.length === 1;
 
   const columns = useColumns<StockLineFragment>(
     [
@@ -44,7 +44,7 @@ export const SelectBatch = ({
         key: 'select',
         Cell: ({ rowData, isDisabled }) => (
           <Checkbox
-            disabled={isDisabled || hasSingleBatch}
+            disabled={isDisabled}
             checked={rowData.id === stockLine?.id}
           />
         ),
@@ -76,7 +76,13 @@ export const SelectBatch = ({
         <BatchTable
           columns={columns}
           data={data?.nodes ?? []}
-          setStockLine={setStockLine}
+          // Allow un-selecting of stock line, if don't want to record
+          // transaction
+          setStockLine={newStockLine =>
+            setStockLine(
+              newStockLine.id === stockLine?.id ? null : newStockLine
+            )
+          }
         />
       )}
     </TableProvider>
