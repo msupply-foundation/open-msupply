@@ -11,10 +11,12 @@ import { VaccinationCourseDoseFragment } from '../api/operations.generated';
 export const SelectItem = ({
   draft,
   dose,
+  disabled,
   updateDraft,
 }: {
   dose: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
+  disabled?: boolean;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
 }) => {
   const t = useTranslation();
@@ -53,7 +55,6 @@ export const SelectItem = ({
     );
   }
 
-  // tODO; only editable if not given/this store
   return (
     <InputWithLabelRow
       label={t('label.vaccine-item')}
@@ -61,6 +62,7 @@ export const SelectItem = ({
         <Select
           clearable
           options={vaccineItemOptions}
+          disabled={disabled}
           value={draft.itemId ?? ''}
           onChange={e =>
             updateDraft({ itemId: e.target.value, stockLine: null })
@@ -71,8 +73,3 @@ export const SelectItem = ({
     />
   );
 };
-
-// item select - anywhere - only edit where given
-// batch select - only visible where given
-// create/uncreate transactions - only visible where given
-// "other faclity" still should be fine though

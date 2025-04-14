@@ -145,7 +145,7 @@ const VaccinationForm = ({
   updateDraft: (update: Partial<VaccinationDraft>) => void;
 }) => {
   const t = useTranslation();
-  const { store } = useAuthContext();
+  const { store, storeId } = useAuthContext();
 
   const { data: clinicians } = useClinicians.document.list({});
   const hasClinicians = clinicians?.nodes.length !== 0;
@@ -153,6 +153,8 @@ const VaccinationForm = ({
   if (!dose) {
     return null;
   }
+  const givenAtOtherStore =
+    !!vaccination?.given && vaccination.givenStoreId !== storeId;
 
   const isFreeTextFacility = draft.facilityId === OTHER_FACILITY;
   const isOtherFacility =
@@ -176,6 +178,7 @@ const VaccinationForm = ({
               }
               facilityId={draft.facilityId}
               enteredAtOtherFacility={draft.enteredAtOtherFacility}
+              disabled={givenAtOtherStore}
             />
 
             {isFreeTextFacility && (
@@ -214,6 +217,7 @@ const VaccinationForm = ({
         label={t('label.date')}
         Input={
           <DatePicker
+            disabled={givenAtOtherStore}
             disableFuture
             value={draft.date}
             onChange={date => updateDraft({ date })}
@@ -225,15 +229,21 @@ const VaccinationForm = ({
         sx={{ margin: '0 auto' }}
         value={draft.given ?? null}
         onChange={event =>
-          updateDraft({ given: event.target.value === 'true' })
+          updateDraft({
+            given: event.target.value === 'true',
+            // Ensure current facility is selected when changing given status
+            facilityId: isFreeTextFacility ? OTHER_FACILITY : store?.nameId,
+          })
         }
       >
         <FormControlLabel
+          disabled={givenAtOtherStore}
           value={true}
           control={<Radio />}
           label={t('label.vaccine-given')}
         />
         <FormControlLabel
+          disabled={givenAtOtherStore}
           value={false}
           control={<Radio />}
           label={t('label.vaccine-not-given')}
@@ -246,6 +256,7 @@ const VaccinationForm = ({
         isOtherFacility={isOtherFacility}
         dose={dose}
         updateDraft={updateDraft}
+        givenAtOtherStore={givenAtOtherStore}
       />
 
       {draft.given === false && (

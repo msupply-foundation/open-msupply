@@ -1,8 +1,4 @@
-import {
-  Switch,
-  useAuthContext,
-  useTranslation,
-} from '@openmsupply-client/common';
+import { Switch, useTranslation } from '@openmsupply-client/common';
 import React from 'react';
 import { VaccinationDraft } from '../api';
 import {
@@ -18,21 +14,19 @@ export const SelectItemAndBatch = ({
   dose,
   vaccination,
   isOtherFacility,
+  givenAtOtherStore,
   updateDraft,
 }: {
   dose: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
   vaccination?: VaccinationDetailFragment | null;
   isOtherFacility: boolean;
+  givenAtOtherStore: boolean;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
 }) => {
   const t = useTranslation();
-  const { storeId } = useAuthContext();
 
   const isHistorical = draft.date?.toDateString() !== new Date().toDateString();
-
-  const givenAtOtherStore =
-    vaccination?.given && vaccination.givenStoreId !== storeId;
 
   const showBatchSelect =
     !givenAtOtherStore &&
@@ -45,7 +39,12 @@ export const SelectItemAndBatch = ({
     <>
       {draft.given && (
         <>
-          <SelectItem dose={dose} draft={draft} updateDraft={updateDraft} />
+          <SelectItem
+            disabled={givenAtOtherStore}
+            dose={dose}
+            draft={draft}
+            updateDraft={updateDraft}
+          />
           {draft.itemId && showBatchSelect && (
             <SelectBatch
               isNewlyGiven={!vaccination || !vaccination.given} // If only just now setting given, allow batch auto-select
