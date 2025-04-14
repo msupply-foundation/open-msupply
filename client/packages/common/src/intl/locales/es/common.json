@@ -1454,7 +1454,6 @@
   "messages.no-shipments-yet": "No se han creado envíos todavía.",
   "messages.no-status-logs": "No se han creado registros de estado para este activo. Haz clic en el botón 'Actualizar Estado' para crear un nuevo registro de estado.",
   "messages.no-stock-available": "No hay inventario disponible",
-  "messages.no-transaction-other-facility": "No se registran transacciones de inventario para las vacunas administradas en otras instalaciones",
   "messages.no-vaccine-items-configured": "No se han configurado artículos de vacuna para este esquema de vacunación. No se registrarán transacciones de inventario.",
   "messages.not-applicable": "N/A",
   "messages.not-configured": "No configurado",

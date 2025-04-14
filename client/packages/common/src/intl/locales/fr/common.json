@@ -1614,7 +1614,6 @@
   "messages.no-shipments-yet": "Aucun bon de livraison n'a encore été créé.",
   "messages.no-status-logs": "Aucun journal d'état n'a été créé pour cet actif. Cliquez sur le bouton « Mettre à jour le statut » pour créer un nouveau journal d'état.",
   "messages.no-stock-available": "Il n'y a pas de stock disponible",
-  "messages.no-transaction-other-facility": "Les transactions de stock ne sont pas enregistrées pour les vaccinations administrées dans d'autres sites",
   "messages.no-vaccine-items-configured": "Aucun article de vaccin configuré pour ce calendrier de vaccination. Les transactions de stock ne seront pas enregistrées.",
   "messages.not-applicable": "N/A",
   "messages.not-configured": "Non configuré",
