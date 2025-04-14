@@ -17,8 +17,6 @@ import { VaccinationCardItemFragment } from './operations.generated';
 
 export interface VaccinationStockLine {
   id: string;
-  itemId: string;
-  itemName?: string;
   batch?: string | null;
 }
 
@@ -29,7 +27,11 @@ export interface VaccinationDraft {
   date: Date | null;
   given?: boolean | null;
   comment?: string | null;
-  itemId?: string;
+  itemId?: string | null;
+  item?: {
+    id: string;
+    name: string;
+  } | null;
   stockLine?: VaccinationStockLine | null;
   notGivenReason?: string | null;
   createTransactions: boolean;
@@ -75,6 +77,7 @@ export function useVaccination({
     given,
     notGivenReason,
     stockLine,
+    item,
     facilityNameId,
     facilityFreeText,
   } = vaccination ?? {};
@@ -95,7 +98,8 @@ export function useVaccination({
     stockLine,
     given,
     notGivenReason,
-    itemId: stockLine?.itemId,
+    item,
+    itemId: item?.id,
 
     createTransactions: true,
     enteredAtOtherFacility:
