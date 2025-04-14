@@ -21,7 +21,7 @@ const InvoiceService: FC = () => {
   ).build();
 
   const outboundShipmentRoute = RouteBuilder.create(AppRoute.OutboundShipment)
-    .addPart(':invoiceNumber')
+    .addPart(':invoiceId')
     .build();
 
   const inboundShipmentsRoute = RouteBuilder.create(
@@ -29,17 +29,17 @@ const InvoiceService: FC = () => {
   ).build();
 
   const inboundShipmentRoute = RouteBuilder.create(AppRoute.InboundShipment)
-    .addPart(':invoiceNumber')
+    .addPart(':invoiceId')
     .build();
 
   const prescriptionsRoute = RouteBuilder.create(AppRoute.Prescription).build();
 
   const prescriptionRoute = RouteBuilder.create(AppRoute.Prescription)
-    .addPart(':invoiceNumber')
+    .addPart(':invoiceId')
     .build();
 
   const prescriptionLineRoute = RouteBuilder.create(AppRoute.Prescription)
-    .addPart(':invoiceNumber')
+    .addPart(':invoiceId')
     .addPart(':itemId')
     .build();
 
@@ -48,7 +48,7 @@ const InvoiceService: FC = () => {
   ).build();
 
   const supplierReturnRoute = RouteBuilder.create(AppRoute.SupplierReturn)
-    .addPart(':invoiceNumber')
+    .addPart(':invoiceId')
     .build();
 
   const customerReturnsRoute = RouteBuilder.create(
@@ -56,7 +56,7 @@ const InvoiceService: FC = () => {
   ).build();
 
   const customerReturnRoute = RouteBuilder.create(AppRoute.CustomerReturn)
-    .addPart(':invoiceNumber')
+    .addPart(':invoiceId')
     .build();
 
   return (

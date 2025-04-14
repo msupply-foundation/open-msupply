@@ -12,8 +12,13 @@ import {
   ColumnAlign,
   SortBy,
   ColumnDescription,
+  useTranslation,
 } from '@openmsupply-client/common';
-import { useContactTraces } from '@openmsupply-client/programs';
+import {
+  useContactTraces,
+  usePatientModalStore,
+  PatientModal,
+} from '@openmsupply-client/programs';
 import { usePatient } from '../../api';
 import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
 import { ContactTraceRowFragment } from '@openmsupply-client/programs';
@@ -83,6 +88,7 @@ const useContactTraceListColumns = ({
 };
 
 const ContactTraceComponent: FC = () => {
+  const t = useTranslation();
   const {
     sort: { sortBy, onChangeSortBy },
     pagination: { page, first, offset, onChangePage },
@@ -102,6 +108,7 @@ const ContactTraceComponent: FC = () => {
   });
   const pagination = { page, first, offset };
   const navigate = useNavigate();
+  const { setModal: selectModal } = usePatientModalStore();
 
   const columns = useContactTraceListColumns({
     sortBy,
@@ -125,7 +132,13 @@ const ContactTraceComponent: FC = () => {
             .build()
         );
       }}
-      noDataElement={<NothingHere />}
+      noDataElement={
+        <NothingHere
+          onCreate={() => selectModal(PatientModal.ContactTraceSearch)}
+          body={t('messages.no-contact-traces')}
+          buttonText={t('button.add-contact-trace')}
+        />
+      }
     />
   );
 };

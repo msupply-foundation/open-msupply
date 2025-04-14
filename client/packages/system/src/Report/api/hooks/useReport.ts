@@ -22,7 +22,7 @@ export const useReport = (id: string) => {
         id,
       });
 
-      let report = result.report;
+      const report = result.report;
 
       if (report.__typename === 'ReportNode') {
         return report;

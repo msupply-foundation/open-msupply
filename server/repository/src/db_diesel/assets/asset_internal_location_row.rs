@@ -80,7 +80,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
 
     pub fn find_all_by_asset(
         &self,
-        some_asset_id: String,
+        some_asset_id: &str,
     ) -> Result<Vec<AssetInternalLocationRow>, RepositoryError> {
         let result = asset_internal_location
             .filter(asset_id.eq(some_asset_id))

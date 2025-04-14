@@ -22,7 +22,7 @@ import { Footer } from './Footer';
 import { NavBar } from './NavBar';
 
 export const PrescriptionLineEditView = () => {
-  const { invoiceNumber, itemId } = useParams();
+  const { invoiceId = '', itemId } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const isDirty = useRef(false);
   const navigate = useNavigate();
@@ -50,18 +50,17 @@ export const PrescriptionLineEditView = () => {
   const lines =
     data?.lines.nodes.sort((a, b) => a.id.localeCompare(b.id)) ?? [];
 
-  const invoiceId = data?.id ?? '';
   const status = data?.status;
 
   const [allDraftLines, setAllDraftLines] = useState<
     Record<string, DraftPrescriptionLine[]>
   >({});
 
-  let currentItem = lines.find(line => line.item.id === itemId)?.item;
+  const currentItem = lines.find(line => line.item.id === itemId)?.item;
 
-  let items = useMemo(() => {
-    let itemSet = new Set();
-    let items: ItemRowFragment[] = [];
+  const items = useMemo(() => {
+    const itemSet = new Set();
+    const items: ItemRowFragment[] = [];
     lines.forEach(line => {
       if (!itemSet.has(line.item.id)) {
         items.push(line.item);
@@ -77,6 +76,7 @@ export const PrescriptionLineEditView = () => {
 
   useEffect(() => {
     setCustomBreadcrumbs({
+      1: data?.invoiceNumber.toString() ?? '',
       2: currentItem?.name || '',
     });
   }, [currentItem]);
@@ -86,15 +86,18 @@ export const PrescriptionLineEditView = () => {
     // Need a custom checking method here, as we don't want to warn user when
     // switching to a different item within this page
     {
-      customCheck: (current, next) => {
-        if (!isDirty.current) return false;
+      customCheck: {
+        navigate: (current, next) => {
+          if (!isDirty.current) return false;
 
-        const currentPathParts = current.pathname.split('/');
-        const nextPathParts = next.pathname.split('/');
-        // Compare URLS, but don't include the last part, which is the ItemID
-        currentPathParts.pop();
-        nextPathParts.pop();
-        return !isEqual(currentPathParts, nextPathParts);
+          const currentPathParts = current.pathname.split('/');
+          const nextPathParts = next.pathname.split('/');
+          // Compare URLS, but don't include the last part, which is the ItemID
+          currentPathParts.pop();
+          nextPathParts.pop();
+          return !isEqual(currentPathParts, nextPathParts);
+        },
+        refresh: () => isDirty.current,
       },
     }
   );
@@ -141,9 +144,10 @@ export const PrescriptionLineEditView = () => {
       navigate(
         RouteBuilder.create(AppRoute.Dispensary)
           .addPart(AppRoute.Prescription)
-          .addPart(invoiceNumber ?? '')
+          .addPart(invoiceId)
           .addPart(itemId)
-          .build()
+          .build(),
+        { replace: true }
       );
     }
     isDirty.current = false;
@@ -158,7 +162,7 @@ export const PrescriptionLineEditView = () => {
 
   return (
     <>
-      <AppBarButtons invoiceNumber={data?.invoiceNumber} />
+      <AppBarButtons invoiceId={data?.id} />
       <PageLayout
         Left={
           <ListItems
@@ -166,7 +170,7 @@ export const PrescriptionLineEditView = () => {
             items={items}
             route={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Prescription)
-              .addPart(String(invoiceNumber))}
+              .addPart(invoiceId)}
             enteredLineIds={enteredLineIds}
             showNew={!isDisabled}
             isDirty={isDirty.current}
@@ -192,7 +196,7 @@ export const PrescriptionLineEditView = () => {
                 navigate(
                   RouteBuilder.create(AppRoute.Dispensary)
                     .addPart(AppRoute.Prescription)
-                    .addPart(invoiceNumber ?? '')
+                    .addPart(invoiceId)
                     .addPart(itemId)
                     .build()
                 )
@@ -210,7 +214,7 @@ export const PrescriptionLineEditView = () => {
           navigate(
             RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Prescription)
-              .addPart(String(invoiceNumber))
+              .addPart(invoiceId)
               .build()
           )
         }

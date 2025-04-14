@@ -4,6 +4,7 @@ import { useTranslation } from '@common/intl';
 import { AddFromMasterListButton } from './AddFromMasterListButton';
 import { useToggle } from '@common/hooks';
 import { AddFromInternalOrder } from './AddFromInternalOrder';
+import { PlusCircleIcon } from '@common/icons';
 
 interface AddButtonProps {
   requisitionId: string;
@@ -89,6 +90,7 @@ export const AddButton = ({
         onClick={handleOptionSelection}
         isDisabled={disable}
         openFrom="bottom"
+        Icon={<PlusCircleIcon />}
       />
 
       {masterListModalController.isOn && (

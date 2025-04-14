@@ -95,7 +95,7 @@ const SyncSettingsForm = ({
             onChange={e => setSettings('password', e.target.value)}
             slotProps={{ input: { autoComplete: 'sync-password' } }}
             disabled={isDisabled}
-            style={{ width: 'calc(100% - 24px)' }}
+            sx={{ width: 'calc(100% - 24px)' }}
           />
         }
       />

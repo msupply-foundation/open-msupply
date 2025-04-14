@@ -1,4 +1,10 @@
-import { useQueryClient, useMutation, useTranslation, useNotification, InsertProgramRequestRequisitionInput } from '@openmsupply-client/common';
+import {
+  useQueryClient,
+  useMutation,
+  useTranslation,
+  useNotification,
+  InsertProgramRequestRequisitionInput,
+} from '@openmsupply-client/common';
 import { useRequestApi } from '../utils/useRequestApi';
 
 export const useInsertProgramRequest = () => {
@@ -15,20 +21,20 @@ export const useInsertProgramRequest = () => {
 
   const insert = async (input: InsertProgramRequestRequisitionInput) => {
     const result = await mutateAsync(input);
-    if (result.__typename == "InsertProgramRequestRequisitionError") {
+    if (result.__typename == 'InsertProgramRequestRequisitionError') {
       switch (result.error.__typename) {
-        case "MaxOrdersReachedForPeriod": {
-          error(t('error.max-orders-reached-for-period'))()
+        case 'MaxOrdersReachedForPeriod': {
+          error(t('error.max-orders-reached-for-period'))();
           break;
         }
         default:
-          error(t('error.unable-to-create-requisition'))()
+          error(t('error.unable-to-create-requisition'))();
       }
     }
-    return result
-  }
+    return result;
+  };
 
   return {
-    insert
-  }
+    insert,
+  };
 };

@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import {
   Autocomplete,
   AutocompleteOption,
@@ -6,7 +6,7 @@ import {
   MenuItem,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useLocation, LocationRowFragment } from '../api';
+import { LocationRowFragment, useLocationList } from '../api';
 
 interface LocationSearchInputProps {
   selectedLocation: LocationRowFragment | null;
@@ -62,14 +62,14 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   autoFocus = false,
 }) => {
   const t = useTranslation();
-  const { fetchAsync, data, isLoading } = useLocation.document.listAll({
-    direction: 'asc',
-    key: 'name',
+  const {
+    query: { data, isLoading },
+  } = useLocationList({
+    sortBy: {
+      direction: 'asc',
+      key: 'name',
+    },
   });
-
-  useEffect(() => {
-    fetchAsync();
-  }, []);
 
   const locations = data?.nodes || [];
   const options: AutocompleteOption<LocationOption>[] = locations.map(l => ({
@@ -78,7 +78,11 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
     code: l.code,
   }));
 
-  if (locations.length > 0 && selectedLocation !== null) {
+  if (
+    locations.length > 0 &&
+    selectedLocation !== null &&
+    selectedLocation !== undefined
+  ) {
     options.push({ value: null, label: t('label.remove') });
   }
 

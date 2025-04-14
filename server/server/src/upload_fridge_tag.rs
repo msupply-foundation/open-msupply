@@ -68,7 +68,8 @@ fn upload_fridge_tag(
 
     let file_service = StaticFileService::new(&settings.server.base_dir)?;
 
-    let static_file = file_service.move_temp_file(file, &StaticFileCategory::Temporary, None)?;
+    let static_file =
+        file_service.move_temp_file(&file[0], &StaticFileCategory::Temporary, None)?;
 
     ctx.connection
         .transaction_sync(|con| {

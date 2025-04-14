@@ -5,5 +5,5 @@ import { ListParams } from '../../api';
 export const useTemperatureLogs = (query: ListParams) => {
   const api = useTemperatureLogApi();
 
-  return useQuery(api.keys.paramList(query), api.get.list(query));  
+  return useQuery(api.keys.paramList(query), api.get.list(query));
 };

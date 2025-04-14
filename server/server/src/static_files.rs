@@ -39,7 +39,7 @@ use crate::middleware::limit_content_length;
 #[derive(Debug, MultipartForm)]
 pub(crate) struct UploadForm {
     #[multipart(rename = "files")]
-    pub(crate) file: TempFile,
+    pub(crate) file: Vec<TempFile>,
 }
 
 // this function could be located in different module
@@ -148,17 +148,26 @@ async fn upload_sync_file(
         )
     })?;
 
-    let static_file = upload_sync_file_inner(&service_provider, &settings, path.into_inner(), file)
-        .await
-        .map_err(|error| {
-            log::error!("Error while uploading file: {}", format_error(&error));
-            InternalError::new(
-                "Error uploading file, please check server logs",
-                StatusCode::INTERNAL_SERVER_ERROR,
-            )
-        })?;
+    let path_inner = path.into_inner();
 
-    Ok(HttpResponse::Ok().json(static_file.id))
+    let mut static_file_ids: Vec<String> = vec![];
+
+    for f in file {
+        let static_file =
+            upload_sync_file_inner(&service_provider, &settings, path_inner.clone(), f)
+                .await
+                .map_err(|error| {
+                    log::error!("Error while uploading file: {}", format_error(&error));
+                    InternalError::new(
+                        "Error uploading file, please check server logs",
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                    )
+                })?;
+
+        static_file_ids.push(static_file.id);
+    }
+
+    Ok(HttpResponse::Ok().json(static_file_ids))
 }
 
 #[derive(Error, Debug)]
@@ -183,7 +192,7 @@ async fn upload_sync_file_inner(
     let mime_type = file.content_type.as_ref().map(|mime| mime.to_string());
 
     let static_file = file_service.move_temp_file(
-        file,
+        &file,
         &StaticFileCategory::SyncFile(table_name.clone(), record_id.clone()),
         None,
     )?;

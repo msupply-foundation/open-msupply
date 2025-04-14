@@ -74,12 +74,12 @@ export const AppBarButtons: FC<{
               return onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId: newRequisition.name.id,
-              }).then(({ requisitionNumber }) => {
+              }).then(({ id }) => {
                 modalController.toggleOff();
                 navigate(
                   RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InternalOrder)
-                    .addPart(String(requisitionNumber))
+                    .addPart(id)
                     .build()
                 );
               });
@@ -89,13 +89,13 @@ export const AppBarButtons: FC<{
               return onProgramCreate({
                 id: FnUtils.generateUUID(),
                 ...rest,
-              }).then((response) => {
-                if (response.__typename == "RequisitionNode") {
-                  modalController.toggleOff()
+              }).then(response => {
+                if (response.__typename == 'RequisitionNode') {
+                  modalController.toggleOff();
                   navigate(
                     RouteBuilder.create(AppRoute.Replenishment)
                       .addPart(AppRoute.InternalOrder)
-                      .addPart(String(response.requisitionNumber))
+                      .addPart(String(response.id))
                       .build()
                   );
                 }

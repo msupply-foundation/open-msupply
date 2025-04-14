@@ -1,4 +1,10 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, {
+  Dispatch,
+  FC,
+  SetStateAction,
+  useEffect,
+  useState,
+} from 'react';
 import {
   useTranslation,
   DetailContainer,
@@ -12,21 +18,26 @@ import {
   InputWithLabelRow,
   ObjUtils,
   useIsCentralServerApi,
+  useIsGapsStoreOnly,
+  PropertyNodeValueType,
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
 import { NameRenderer } from '../..';
+import { DisplayCoordinates } from './DisplayCoordinates';
 
-interface FacilityEditModalProps {
-  nameId: string;
-  isOpen: boolean;
-  onClose: () => void;
-  setNextFacility?: (nameId: string) => void;
+export type DraftProperty = Record<string, string | number | boolean | null>;
+
+interface DraftFacilityProperties {
+  draftProperties: DraftProperty;
+  setDraftProperties: Dispatch<SetStateAction<DraftProperty>>;
 }
 
-const useDraftFacilityProperties = (initialProperties?: string | null) => {
-  const [draftProperties, setDraftProperties] = useState<
-    Record<string, string | number | boolean | null>
-  >(ObjUtils.parse(initialProperties));
+const useDraftFacilityProperties = (
+  initialProperties?: string | null
+): DraftFacilityProperties => {
+  const [draftProperties, setDraftProperties] = useState<DraftProperty>(
+    ObjUtils.parse(initialProperties)
+  );
 
   useEffect(() => {
     const parsedProperties = ObjUtils.parse(initialProperties);
@@ -39,6 +50,13 @@ const useDraftFacilityProperties = (initialProperties?: string | null) => {
     setDraftProperties,
   };
 };
+
+interface FacilityEditModalProps {
+  nameId: string;
+  isOpen: boolean;
+  onClose: () => void;
+  setNextFacility?: (nameId: string) => void;
+}
 
 export const FacilityEditModal: FC<FacilityEditModalProps> = ({
   nameId,
@@ -62,6 +80,7 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
   );
 
   const nextId = useName.utils.nextFacilityId(nameId);
+  const isGapsStore = useIsGapsStoreOnly();
 
   const save = async () => {
     mutateAsync({
@@ -101,18 +120,31 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
       }
       height={600}
       width={700}
+      fullscreen
     >
       <DetailContainer>
-        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+        <Box display="flex" flexDirection="column" gap={2}>
           <NameRenderer
             isStore={!!data.store}
             label={data.name}
             sx={{ fontWeight: 'bold', fontSize: 18 }}
           />
-
-          <Box display="flex">
-            <Typography fontWeight="bold">{t('label.code')}:</Typography>
-            <Typography paddingX={1}>{data.code}</Typography>
+          <Box display="flex" flexDirection="column">
+            <Box display="flex" flexDirection="row">
+              <Typography fontWeight="bold">{t('label.code')}:</Typography>
+              <Typography paddingX={1}>{data.code}</Typography>
+            </Box>
+            <DisplayCoordinates
+              latitude={(draftProperties['latitude'] as number) ?? 0}
+              longitude={(draftProperties['longitude'] as number) ?? 0}
+              onDraftPropertiesChange={(latitude, longitude) => {
+                setDraftProperties({
+                  ...draftProperties,
+                  latitude,
+                  longitude,
+                });
+              }}
+            />
           </Box>
           <DetailSection title="">
             {!properties?.length ? (
@@ -121,43 +153,41 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
               </Typography>
             ) : (
               <Box
-                sx={{
-                  width: '500px',
+                sx={theme => ({
+                  [theme.breakpoints.down('sm')]: {
+                    width: '95%',
+                    minWidth: '340px',
+                    paddingX: '2em',
+                  },
+                  width: '600px',
                   display: 'grid',
                   gap: 1,
-                }}
+                })}
               >
-                {properties.map(p => (
-                  <InputWithLabelRow
-                    key={p.id}
-                    label={p.property.name}
-                    sx={{ width: '100%' }}
-                    labelProps={{
-                      sx: {
-                        width: '250px',
-                        fontSize: '16px',
-                        paddingRight: 2,
-                        textAlign: 'right',
-                      },
-                    }}
-                    Input={
-                      <Box flex={1}>
-                        <PropertyInput
-                          disabled={!isCentralServer && !p.remoteEditable}
-                          valueType={p.property.valueType}
-                          allowedValues={p.property.allowedValues?.split(',')}
-                          value={draftProperties[p.property.key]}
-                          onChange={v =>
-                            setDraftProperties({
-                              ...draftProperties,
-                              [p.property.key]: v ?? null,
-                            })
-                          }
-                        />
-                      </Box>
-                    }
-                  />
-                ))}
+                {properties
+                  .filter(
+                    p =>
+                      p.property.key !== 'latitude' &&
+                      p.property.key !== 'longitude'
+                  )
+                  .map(p => (
+                    <Row
+                      key={p.id}
+                      label={p.property.name}
+                      isGapsStore={isGapsStore}
+                      inputProperties={{
+                        disabled: !isCentralServer && !p.remoteEditable,
+                        valueType: p.property.valueType,
+                        allowedValues: p.property.allowedValues?.split(','),
+                        value: draftProperties[p.property.key],
+                        onChange: v =>
+                          setDraftProperties({
+                            ...draftProperties,
+                            [p.property.key]: v ?? null,
+                          }),
+                      }}
+                    />
+                  ))}
               </Box>
             )}
           </DetailSection>
@@ -165,4 +195,60 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
       </DetailContainer>
     </Modal>
   ) : null;
+};
+
+type PropertyValue = string | number | boolean | undefined;
+type PropertyInput = {
+  valueType: PropertyNodeValueType;
+  allowedValues?: string[];
+  value: PropertyValue | null;
+  onChange: (value: PropertyValue) => void;
+  disabled?: boolean;
+};
+
+const Row = ({
+  key,
+  label,
+  isGapsStore,
+  inputProperties,
+}: {
+  key: string;
+  label: string;
+  isGapsStore: boolean;
+  inputProperties: PropertyInput;
+}) => {
+  if (!isGapsStore)
+    return (
+      <InputWithLabelRow
+        key={key}
+        label={label}
+        sx={{ width: '100%' }}
+        labelProps={{
+          sx: {
+            width: '250px',
+            fontSize: '16px',
+            paddingRight: 2,
+          },
+        }}
+        Input={
+          <Box flex={1}>
+            <PropertyInput {...inputProperties} />
+          </Box>
+        }
+      />
+    );
+
+  return (
+    <Box paddingTop={1.5}>
+      <Typography
+        sx={{
+          fontSize: '1rem!important',
+          fontWeight: 'bold',
+        }}
+      >
+        {label}
+      </Typography>
+      <PropertyInput {...inputProperties} />
+    </Box>
+  );
 };

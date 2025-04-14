@@ -19,7 +19,7 @@ export const getTemperatureLogQueries = (sdk: Sdk, storeId: string) => ({
             ? TemperatureLogSortFieldInput.Datetime
             : (sortBy.key as TemperatureLogSortFieldInput);
 
-        const result = await sdk.temperature_logs({
+        const result = await sdk.temperatureLogs({
           storeId,
           page: { offset, first },
           sort: {

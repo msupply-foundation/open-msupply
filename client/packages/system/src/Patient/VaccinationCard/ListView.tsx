@@ -14,7 +14,9 @@ import {
   RouteBuilder,
 } from '@openmsupply-client/common';
 import {
+  PatientModal,
   ProgramEnrolmentRowFragment,
+  usePatientModalStore,
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
@@ -22,6 +24,7 @@ import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
 import { AppRoute } from '@openmsupply-client/config';
 
 const VaccinationCardListComponent: FC = () => {
+  const t = useTranslation();
   const {
     sort: { sortBy, onChangeSortBy },
   } = useQueryParamsStore();
@@ -45,8 +48,8 @@ const VaccinationCardListComponent: FC = () => {
   });
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
-  const t = useTranslation();
   const navigate = useNavigate();
+  const { setModal: selectModal } = usePatientModalStore();
 
   const columns = useColumns<ProgramEnrolmentRowFragment>(
     [
@@ -101,6 +104,7 @@ const VaccinationCardListComponent: FC = () => {
       }
       noDataElement={
         <NothingHere
+          onCreate={() => selectModal(PatientModal.ProgramSearch)}
           body={t('messages.no-programs')}
           buttonText={t('button.add-program')}
         />

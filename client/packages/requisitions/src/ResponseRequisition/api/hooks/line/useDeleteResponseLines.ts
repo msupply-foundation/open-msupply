@@ -7,7 +7,7 @@ import {
   noOtherVariants,
 } from '@openmsupply-client/common';
 import { useResponse } from '..';
-import { useResponseNumber } from '../document/useResponse';
+import { useResponseId } from '../document/useResponse';
 import { useResponseApi } from '../utils/useResponseApi';
 import { useResponseLines } from './useResponseLines';
 import { useResponseRequisitionLineErrorContext } from '../../../context';
@@ -16,12 +16,12 @@ export const useDeleteResponseLines = () => {
   const t = useTranslation();
   const queryClient = useQueryClient();
   const api = useResponseApi();
-  const requestNumber = useResponseNumber();
+  const responseId = useResponseId();
   const { lines } = useResponseLines();
   const isDisabled = useResponse.utils.isDisabled();
   const { mutateAsync } = useMutation(api.deleteLines, {
     onSettled: () =>
-      queryClient.invalidateQueries(api.keys.detail(requestNumber)),
+      queryClient.invalidateQueries(api.keys.detail(responseId)),
   });
   const errorsContext = useResponseRequisitionLineErrorContext();
   const { linkedRequisition } = useResponse.document.fields([
@@ -33,7 +33,7 @@ export const useDeleteResponseLines = () => {
   );
 
   const onDelete = async () => {
-    let result = await mutateAsync(selectedRows).catch(err => {
+    const result = await mutateAsync(selectedRows).catch(err => {
       console.error(err);
     });
     errorsContext.unsetAll();

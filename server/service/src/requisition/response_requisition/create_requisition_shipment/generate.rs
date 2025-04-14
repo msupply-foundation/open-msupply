@@ -64,6 +64,7 @@ pub fn generate(
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
         is_cancellation: false,
+        expected_delivery_date: None,
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;
@@ -108,6 +109,7 @@ pub fn generate_invoice_lines(
             foreign_currency_price_before_tax: None,
             item_variant_id: None,
             prescribed_quantity: None,
+            linked_invoice_id: None,
         });
     }
 

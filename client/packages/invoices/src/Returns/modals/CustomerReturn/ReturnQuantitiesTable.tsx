@@ -76,7 +76,7 @@ export const QuantityReturnedTableComponent = ({
         },
       ],
       getColumnLookupWithOverrides('packSize', {
-        Cell: PackUnitEntryCell,
+        Cell: PackSizeEntryCell<GenerateCustomerReturnLineFragment>,
         setter: updateLine,
         getIsDisabled: () => isDisabled,
         label: 'label.pack-size',
@@ -128,11 +128,6 @@ export const QuantityReturnedTableComponent = ({
 };
 
 export const QuantityReturnedTable = React.memo(QuantityReturnedTableComponent);
-
-// Input cells can't be defined inline, otherwise they lose focus on re-render
-const PackUnitEntryCell =
-  // eslint-disable-next-line new-cap
-  PackSizeEntryCell<GenerateCustomerReturnLineFragment>({});
 
 const NumberOfPacksReturnedInputCell: React.FC<
   CellProps<GenerateCustomerReturnLineFragment>

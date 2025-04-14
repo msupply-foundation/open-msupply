@@ -114,9 +114,9 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
         page: { offset, first },
         sort: sortBy
           ? {
-              key: requestParser.toSortField(sortBy),
-              desc: !!sortBy.isDesc,
-            }
+            key: requestParser.toSortField(sortBy),
+            desc: !!sortBy.isDesc,
+          }
           : undefined,
         filter,
       });
@@ -144,6 +144,19 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
       if (result?.requisitionByNumber.__typename === 'RequisitionNode') {
         return result?.requisitionByNumber;
+      }
+
+      throw new Error('Record not found');
+    },
+    byId: async (requisitionId: string): Promise<RequestFragment> => {
+      const result = await sdk.requestById({
+        storeId,
+        requisitionId,
+      });
+
+
+      if (result?.requisition.__typename === 'RequisitionNode') {
+        return result?.requisition;
       }
 
       throw new Error('Record not found');
@@ -258,7 +271,6 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
   }): Promise<{
     __typename: 'RequisitionNode';
     id: string;
-    requisitionNumber: number;
   }> => {
     const result = await sdk.insertRequest({
       storeId,
@@ -338,7 +350,7 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
     periodId: string,
     programId: string
   ) => {
-    let result = await sdk.programIndicators({
+    const result = await sdk.programIndicators({
       storeId,
       customerNameId,
       periodId,
@@ -350,7 +362,7 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
     }
   },
   updateIndicatorValue: async (patch: UpdateIndicatorValueInput) => {
-    let result = await sdk.updateIndicatorValue({ storeId, input: patch });
+    const result = await sdk.updateIndicatorValue({ storeId, input: patch });
 
     if (!!result?.updateIndicatorValue) {
       return result.updateIndicatorValue;

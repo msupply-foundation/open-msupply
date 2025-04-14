@@ -1,7 +1,4 @@
-import {
-  useQueryClient,
-  useMutation,
-} from '@openmsupply-client/common';
+import { useQueryClient, useMutation } from '@openmsupply-client/common';
 import { useStocktakeApi } from '../utils/useStocktakeApi';
 
 export const useStocktakeDelete = () => {
@@ -10,7 +7,7 @@ export const useStocktakeDelete = () => {
 
   return useMutation(api.deleteStocktakes, {
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.base())
+      queryClient.invalidateQueries(api.keys.base());
     },
   });
 };

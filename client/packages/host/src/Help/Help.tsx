@@ -24,7 +24,6 @@ export const Help = () => {
       <Typography style={{ paddingBottom: 10 }}>
         {t('message.keyboard-shortcuts')}
       </Typography>
-
       <ContactFormSection />
       <AppBarButtonsPortal>
         <AppVersion SiteInfo={<SiteInfo siteName={initStatus?.siteName} />} />

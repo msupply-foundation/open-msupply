@@ -9,6 +9,7 @@ import {
   Fade,
   NothingHere,
   useUrlQueryParams,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { DetailModal } from '../DetailModal';
@@ -18,6 +19,7 @@ import { NameRenderer } from '../Components';
 const NameListComponent: FC<{
   type: 'customer' | 'supplier';
 }> = ({ type }) => {
+  const t = useTranslation();
   const [selectedId, setSelectedId] = useState<string>('');
   const {
     updateSortQuery,
@@ -71,7 +73,7 @@ const NameListComponent: FC<{
           setSelectedId(row.id);
           showDialog();
         }}
-        noDataElement={<NothingHere />}
+        noDataElement={<NothingHere body={t('error.no-items-to-display')} />}
       />
       <Modal
         title=""

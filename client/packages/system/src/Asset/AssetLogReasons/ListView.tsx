@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
 import {
-  // useNavigate,
   TableProvider,
   DataTable,
   useColumns,
@@ -12,7 +11,7 @@ import {
   InsertAssetLogReasonInput,
   GenericColumnKey,
 } from '@openmsupply-client/common';
-import { AssetLogReasonFragment, useAssetData } from '../api';
+import { AssetLogReasonFragment, useAssetLogReasonList } from '../api';
 import { Toolbar } from './Toolbar';
 import { parseStatus } from '../utils';
 import { AppBarButtons } from './AppBarButtons';
@@ -24,13 +23,19 @@ const AssetListComponent: FC = () => {
     updateSortQuery,
     updatePaginationQuery,
     filter,
-    queryParams: { sortBy, page, first, offset },
+    queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'reason', dir: 'asc' },
-    filters: [{ key: 'reason' }, { key: 'status' }],
+    filters: [
+      { key: 'reason' },
+      {
+        key: 'assetLogStatus',
+        condition: 'equalTo',
+      },
+    ],
   });
 
-  const { data, isError, isLoading } = useAssetData.log.listReasons();
+  const { data, isError, isLoading } = useAssetLogReasonList(filterBy);
   const pagination = { page, first, offset };
   const t = useTranslation();
 
@@ -78,7 +83,12 @@ const AssetListComponent: FC = () => {
         data={data?.nodes}
         isError={isError}
         isLoading={isLoading}
-        noDataElement={<NothingHere body={t('error.no-items')} />}
+        noDataElement={
+          <NothingHere
+            body={t('error.no-asset-log-reasons')}
+            onCreate={() => onOpen()}
+          />
+        }
       />
       <Footer data={data?.nodes ?? []} />
     </>

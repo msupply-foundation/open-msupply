@@ -17,6 +17,7 @@ import {
   AssetLogStatusInput,
   UserPermission,
   useAuthContext,
+  useIsGapsStoreOnly,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useAssets } from '../api';
@@ -24,6 +25,7 @@ import { DraftAsset } from '../types';
 
 export const AddFromScannerButtonComponent = () => {
   const t = useTranslation();
+  const isGaps = useIsGapsStoreOnly();
   const { isConnected, isEnabled, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
   const { error, info } = useNotification();
@@ -53,7 +55,7 @@ export const AddFromScannerButtonComponent = () => {
               await insertLog({
                 id: FnUtils.generateUUID(),
                 assetId: newAssetData.current.id,
-                comment: t('label.created'),
+                comment: t('message.asset-created'),
                 status: AssetLogStatusInput.Functioning,
               });
               invalidateQueries();
@@ -97,7 +99,7 @@ export const AddFromScannerButtonComponent = () => {
       }
 
       // If not existing, offer to create from the parsed GS1 data
-      const permission = UserPermission.AssetMutate;
+      const permission = UserPermission.AssetMutateViaDataMatrix;
       if (userHasPermission(permission)) {
         newAssetData.current = {
           ...asset,
@@ -107,7 +109,7 @@ export const AddFromScannerButtonComponent = () => {
           parsedCatalogProperties: {},
         };
         showCreateConfirmation();
-      } else info(t('error.no-asset-create-permission'))();
+      } else info(t('error.no-asset-create-scan-permission'))();
     }
   };
 
@@ -160,6 +162,7 @@ export const AddFromScannerButtonComponent = () => {
   return (
     <Box>
       <ButtonWithIcon
+        shouldShrink={!isGaps}
         ref={buttonRef}
         onClick={e => {
           handleClick(e);

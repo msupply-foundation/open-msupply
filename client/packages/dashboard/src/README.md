@@ -10,7 +10,7 @@ Contain a dashboard page. This involves displaying widgets from multiple differe
 
 ### Tips & Things to keep in mind
 
-
 ### Future considerations
+
 - Proper tree shaking would be required to ensure only importing the widget component of packages rather than the whole package.
 - Possibly all dashboard widgets should just be plugins.

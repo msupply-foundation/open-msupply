@@ -1,6 +1,6 @@
 ## Keyboard Barcode Scanner
 
-Although our preference is to use USB serial mode for barcode scanners, not all scanners support this mode and only allow keyboard emulation over USB. 
+Although our preference is to use USB serial mode for barcode scanners, not all scanners support this mode and only allow keyboard emulation over USB.
 
 To mimic existing USB serial barcode scanner implementation with keyboard scanners we have to capture keyboard input and pass through through all input that does not come from scanner.
 
@@ -12,9 +12,9 @@ Because scanner scans and sends keyboard events very fast, we can identify scann
 
 Of course it's possible for user to spam keyboard and replicate scanner input, this should be OK because:
 
-* It's highly unlikely
-* Our UI is not really catered for operations at this speed (even without barcode scanner these operations are not really considered, as they are unlikely low probably and low impact)
-* We actually recommend using USB serial scanner mode
+- It's highly unlikely
+- Our UI is not really catered for operations at this speed (even without barcode scanner these operations are not really considered, as they are unlikely low probably and low impact)
+- We actually recommend using USB serial scanner mode
 
 #### How does it work ?
 
@@ -28,7 +28,7 @@ Processor is started (setInterval) when scanning operation is started and will b
 
 #### Passing through input
 
-Any control keys (keysToPassThrough array) are passed through automatically (when input is captured). Other input that is identified by processor as not scanner input is passed through by manually calling keyDown and char event (apparently that is what [chromium](https://stackoverflow.com/a/53223619) needs to consider it input entered by keyboard). 
+Any control keys (keysToPassThrough array) are passed through automatically (when input is captured). Other input that is identified by processor as not scanner input is passed through by manually calling keyDown and char event (apparently that is what [chromium](https://stackoverflow.com/a/53223619) needs to consider it input entered by keyboard).
 
 Since we are capturing input with `window.webContents.on('before-input-event'` we have to temporary allow this input to go through with `allowEvents` flag which is set in the processor when the input is identified as not being from scanner.
 
@@ -46,6 +46,6 @@ In more complex barcodes, as per image below, special character separates lot an
 
 It is possible for actual keyboard input to be perceived as scanner input or for processor and capture functionality to cause glitches, this is minimised by:
 
-* Only capturing and processing input when scanning mode is turned on.
-* Considering that during scanning mode we only entering quantities (simple digits) or searching for item (simple alphanumeric keys)
-* We actually recommend using USB serial scanner mode and Zebra scanners, some support is provided for keyboard scanners but it's limited and at TMF discretion
+- Only capturing and processing input when scanning mode is turned on.
+- Considering that during scanning mode we only entering quantities (simple digits) or searching for item (simple alphanumeric keys)
+- We actually recommend using USB serial scanner mode and Zebra scanners, some support is provided for keyboard scanners but it's limited and at TMF discretion

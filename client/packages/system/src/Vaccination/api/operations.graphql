@@ -30,7 +30,6 @@ fragment VaccinationDetail on VaccinationNode {
   }
   invoice {
     id
-    invoiceNumber
   }
   notGivenReason
   comment
@@ -111,6 +110,9 @@ mutation insertVaccination($storeId: String!, $input: InsertVaccinationInput!) {
     ... on VaccinationNode {
       __typename
       id
+      invoice {
+        id
+      }
     }
   }
 }
@@ -121,6 +123,9 @@ mutation updateVaccination($storeId: String!, $input: UpdateVaccinationInput!) {
     ... on VaccinationNode {
       __typename
       id
+      invoice {
+        id
+      }
     }
     ... on UpdateVaccinationError {
       __typename

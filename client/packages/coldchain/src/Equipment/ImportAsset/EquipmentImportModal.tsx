@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { EquipmentReviewTab } from './ReviewTab';
 import { EquipmentUploadTab } from './UploadTab';
 import { EquipmentImportTab } from './ImportTab';
@@ -27,7 +27,8 @@ import { importEquipmentToCsvWithErrors } from '../utils';
 import {
   AssetCatalogueItemFragment,
   StoreRowFragment,
-  useAssetData,
+  useAssetList,
+  useAssetProperties,
 } from '@openmsupply-client/system';
 import { DraftAsset } from '../types';
 
@@ -138,11 +139,9 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   const [importProgress, setImportProgress] = useState(0);
   const [importErrorCount, setImportErrorCount] = useState(0);
   const {
-    data: catalogueItemData,
-    fetchAsync,
-    isLoading,
-  } = useAssetData.document.listAll();
-  const { data: properties } = useAssetData.utils.properties();
+    query: { data: catalogueItemData, isLoading },
+  } = useAssetList();
+  const { data: properties } = useAssetProperties();
   const { mutateAsync: insertAssets } = useAssets.document.insert();
   const { insertLog, invalidateQueries } = useAssets.log.insert();
   const isCentralServer = useIsCentralServerApi();
@@ -150,10 +149,6 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   const [bufferedEquipment, setBufferedEquipment] = useState<ImportRow[]>(
     () => []
   );
-
-  useEffect(() => {
-    fetchAsync();
-  }, [fetchAsync]);
 
   const csvExport = async () => {
     const csv = importEquipmentToCsvWithErrors(
@@ -174,7 +169,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
       await insertLog({
         id: FnUtils.generateUUID(),
         assetId: row.id,
-        comment: t('label.created'),
+        comment: t('message.asset-created'),
         status: toStatusTypeInput(row.status),
       });
     } catch (e) {
@@ -310,7 +305,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
           steps={importSteps}
           activeStep={activeStep}
           onClickStep={onClickStep}
-        ></ClickableStepper>
+        />
         {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
         <TabContext value={currentTab}>
           <Grid container flex={1} flexDirection="column" gap={1}>

@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { FC, useCallback, useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -10,6 +10,8 @@ import {
   createQueryParamsStore,
   DetailTabs,
   useAuthContext,
+  useBreadcrumbs,
+  useParams,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { RequestLineFragment, useRequest } from '../api';
@@ -25,8 +27,10 @@ import { buildIndicatorEditRoute, buildItemEditRoute } from './utils';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const { data, isLoading } = useRequest.document.get();
+  const { requisitionId = '' } = useParams();
   const { store } = useAuthContext();
   const isDisabled = useRequest.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
@@ -38,20 +42,20 @@ export const DetailView: FC = () => {
     );
 
   const onRowClick = useCallback((line: RequestLineFragment) => {
-    navigate(buildItemEditRoute(line.requisitionNumber, line.item.id));
+    navigate(buildItemEditRoute(requisitionId, line.item.id));
   }, []);
 
   const onProgramIndicatorClick = useCallback(
     (
-      requisitionNumber?: number,
+      requisitionId?: string,
       programIndicatorCode?: string,
       indicatorId?: string
     ) => {
-      if (!requisitionNumber || !programIndicatorCode || !indicatorId) return;
+      if (!requisitionId || !programIndicatorCode || !indicatorId) return;
 
       navigate(
         buildIndicatorEditRoute(
-          requisitionNumber,
+          requisitionId,
           programIndicatorCode,
           indicatorId
         )
@@ -60,19 +64,19 @@ export const DetailView: FC = () => {
     []
   );
 
+
+  useEffect(() => {
+    setCustomBreadcrumbs({ 1: data?.requisitionNumber.toString() ?? '' });
+  }, [setCustomBreadcrumbs, data?.requisitionNumber]);
+
   if (isLoading) return <DetailViewSkeleton />;
 
   const onAddItem = () => {
-    navigate(buildItemEditRoute(data?.requisitionNumber, 'new'));
+    navigate(buildItemEditRoute(data?.id, 'new'));
   };
   const tabs = [
     {
-      Component: (
-        <ContentArea
-          onRowClick={!isDisabled ? onRowClick : null}
-          onAddItem={onAddItem}
-        />
-      ),
+      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
       value: 'Details',
     },
     {

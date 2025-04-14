@@ -173,6 +173,7 @@ export const Toolbar: FC = () => {
               format="P"
               onChange={handleDateChange}
               maxDate={new Date()}
+              actions={['cancel', 'accept']}
             />
           }
         />

@@ -1,4 +1,4 @@
-import React, {act} from 'react';
+import React, { act } from 'react';
 import { useDrawer } from './useDrawer';
 import { render, screen, fireEvent } from '@testing-library/react';
 import LocalStorage from '../../localStorage/LocalStorage';
