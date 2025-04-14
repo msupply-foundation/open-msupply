@@ -1,10 +1,11 @@
 use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, RepositoryError, StockLine,
-    StockLineRow, StorageConnection, Vaccination, VaccinationRow,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, ItemRow, RepositoryError,
+    StockLine, StockLineRow, StorageConnection, Vaccination, VaccinationRow,
 };
 
 use crate::{
     common_stock::{check_stock_line_exists, CommonStockLineError},
+    invoice_line::validate::check_item_exists,
     name::validate::check_name_exists,
     vaccination::validate::{
         check_clinician_exists, check_encounter_exists, check_item_belongs_to_vaccine_course,
@@ -70,6 +71,7 @@ pub fn validate(
             return Err(UpdateVaccinationError::FacilityNameDoesNotExist);
         }
     }
+
     // If not given, reason is required
     if input.given == Some(false) {
         if input.not_given_reason.is_none() {
@@ -77,11 +79,26 @@ pub fn validate(
         };
     };
 
+    // If selected item is changing - validate it
+    if let Some(item_id) = input.item_id.clone().and_then(|u| u.value) {
+        let item = check_item_exists(connection, &item_id)?
+            .ok_or(UpdateVaccinationError::ItemDoesNotExist)?;
+
+        let vaccine_course_id = &vaccination.vaccine_course_dose_row.vaccine_course_id;
+
+        if !check_item_belongs_to_vaccine_course(&item_id, vaccine_course_id, connection)? {
+            return Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse);
+        };
+
+        check_doses_defined(&item)?;
+    }
+
     let vaccination_row = vaccination.vaccination_row.clone();
-    let vaccine_course_id = vaccination
-        .vaccine_course_dose_row
-        .vaccine_course_id
-        .clone();
+
+    let item_id = input
+        .item_id
+        .clone()
+        .map_or(vaccination_row.item_link_id.clone(), |u| u.value);
     let stock_line_id = input.stock_line_id.clone().and_then(|u| u.value);
 
     let result = match (vaccination_row.given, input.given) {
@@ -95,8 +112,8 @@ pub fn validate(
                 new_stock_line: validate_new_stock_line(
                     connection,
                     store_id,
-                    &vaccine_course_id,
                     stock_line_id,
+                    item_id,
                 )?,
             })
         }
@@ -131,8 +148,8 @@ pub fn validate(
                     new_stock_line: validate_new_stock_line(
                         connection,
                         store_id,
-                        &vaccine_course_id,
                         stock_line_id,
+                        item_id,
                     )?,
                 })
             } else {
@@ -164,7 +181,7 @@ fn validate_existing_prescription(
     let stock_line = match prescription_line.stock_line_option.clone().map(|s| s.id) {
         Some(stock_line_id) => {
             let stock_line = check_stock_line_exists(connection, store_id, &stock_line_id)?;
-            check_doses_defined(&stock_line)?;
+            check_doses_defined(&stock_line.item_row)?;
             stock_line
         }
         None => return Err(UpdateVaccinationError::StockLineDoesNotExist),
@@ -179,22 +196,17 @@ fn validate_existing_prescription(
 fn validate_new_stock_line(
     connection: &StorageConnection,
     store_id: &str,
-    vaccine_course_id: &str,
     stock_line_id: Option<String>,
+    item_id: Option<String>,
 ) -> Result<Option<StockLine>, UpdateVaccinationError> {
     let stock_line = match stock_line_id {
         Some(stock_line_id) => {
             let stock_line = check_stock_line_exists(connection, store_id, &stock_line_id)?;
 
-            if !check_item_belongs_to_vaccine_course(
-                &stock_line.stock_line_row.item_link_id,
-                vaccine_course_id,
-                connection,
-            )? {
-                return Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse);
+            if Some(stock_line.item_row.id.clone()) != item_id {
+                return Err(UpdateVaccinationError::StockLineDoesNotMatchItem);
             };
 
-            check_doses_defined(&stock_line)?;
             Some(stock_line)
         }
         None => None,
@@ -253,10 +265,10 @@ fn validate_change_to_not_given(
     Ok(())
 }
 
-fn check_doses_defined(stock_line: &StockLine) -> Result<(), UpdateVaccinationError> {
+fn check_doses_defined(item_row: &ItemRow) -> Result<(), UpdateVaccinationError> {
     // This shouldn't be possible (mSupply ensures doses is at least 1 for vaccine items)
     // but if it happens, we should catch it - otherwise we'll dispense infinity!
-    if stock_line.item_row.vaccine_doses == 0 {
+    if item_row.vaccine_doses == 0 {
         return Err(UpdateVaccinationError::InternalError(
             "Item has no doses defined".to_string(),
         ));

@@ -121,13 +121,14 @@ fn generate_not_given(
         None
     };
 
-    // clear given status, stock and invoice ids, apply reason
+    // clear given status, item/transaction ids, apply reason
 
     let vaccination = VaccinationRow {
         given: false,
         given_store_id: None,
         not_given_reason,
 
+        item_link_id: None,
         stock_line_id: None,
         invoice_id: None,
 
@@ -257,7 +258,6 @@ fn get_vaccination_with_updated_base_fields(
         given_store_id,
         invoice_id,
         stock_line_id,
-        item_link_id,
 
         // Update metadata/base fields
         comment: update_input.comment.or(comment),
@@ -275,8 +275,13 @@ fn get_vaccination_with_updated_base_fields(
             None => facility_free_text,
         },
 
-        // Consider not_given_reason as base field (if updating the reason when not updating status)
+        // Not really "base" fields - but can be updated without changing status
         not_given_reason: update_input.not_given_reason.or(not_given_reason),
+        // todo no update from giver store
+        item_link_id: match update_input.item_id {
+            Some(NullableUpdate { value }) => value,
+            None => item_link_id,
+        },
     }
 }
 
