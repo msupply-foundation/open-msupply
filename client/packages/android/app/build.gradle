@@ -35,9 +35,6 @@ android {
         setProperty("archivesBaseName", "open-msupply-$versionName")
 
         project.logger.lifecycle("versionName: $versionName versionCode: $versionCode")
-        ndk {
-            abiFilters 'armeabi-v7a', 'arm64-v8a'
-        }
     }
     signingConfigs {
         release {
