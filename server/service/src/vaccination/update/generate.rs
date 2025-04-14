@@ -278,7 +278,6 @@ fn get_vaccination_with_updated_base_fields(
 
         // Not really "base" fields - but can be updated without changing status
         not_given_reason: update_input.not_given_reason.or(not_given_reason),
-        // todo no update from giver store
         item_link_id: match update_input.item_id {
             Some(NullableUpdate { value }) => value,
             None => item_link_id,
