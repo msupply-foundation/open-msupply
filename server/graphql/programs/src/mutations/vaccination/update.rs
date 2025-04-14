@@ -134,6 +134,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::ReasonNotProvided
         | ServiceError::StockLineDoesNotExist
         | ServiceError::NotNextDose
+        | ServiceError::NotGivenFromThisStore
         | ServiceError::ItemDoesNotBelongToVaccineCourse => BadUserInput(formatted_error),
 
         ServiceError::UpdatedRecordNotFound
