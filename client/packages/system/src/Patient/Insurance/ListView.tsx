@@ -7,6 +7,7 @@ import {
   DataTable,
   NothingHere,
   TableProvider,
+  useTranslation,
   useUrlQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
@@ -18,9 +19,11 @@ import {
 import { useInsurancePolicies } from '../apiModern/hooks/useInsurancesPolicies';
 
 export const InsuranceListView = () => {
+  const t = useTranslation();
   const nameId = usePatient.utils.id();
   const { updateQuery } = useUrlQuery();
   const { setModal } = usePatientModalStore();
+  const { setModal: selectModal } = usePatientModalStore();
 
   const {
     updateSortQuery,
@@ -54,7 +57,13 @@ export const InsuranceListView = () => {
           updateQuery({ insuranceId: row.id });
           setModal(PatientModal.Insurance);
         }}
-        noDataElement={<NothingHere />}
+        noDataElement={
+          <NothingHere
+            onCreate={() => selectModal(PatientModal.Insurance)}
+            body={t('messages.no-insurance')}
+            buttonText={t('button.add-insurance')}
+          />
+        }
       />
     </TableProvider>
   );

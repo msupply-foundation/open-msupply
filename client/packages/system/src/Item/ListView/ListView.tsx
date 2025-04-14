@@ -99,7 +99,7 @@ const ItemListComponent: FC = () => {
         onRowClick={row => {
           navigate(`/catalogue/items/${row.id}`);
         }}
-        noDataElement={<NothingHere body={t('error.no-items')} />}
+        noDataElement={<NothingHere body={t('error.no-items-to-display')} />}
       />
     </>
   );

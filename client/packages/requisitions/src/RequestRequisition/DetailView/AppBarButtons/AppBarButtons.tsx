@@ -6,9 +6,8 @@ import {
   Grid,
   useDetailPanel,
   useTranslation,
-  PrinterIcon,
-  LoadingButton,
   ReportContext,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import {
   ReportRowFragment,
@@ -32,6 +31,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   showIndicators = false,
 }) => {
   const t = useTranslation();
+  const { store } = useAuthContext();
   const isProgram = useRequest.utils.isProgram();
   const { OpenButton } = useDetailPanel();
   const { data } = useRequest.document.get();
@@ -63,23 +63,18 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           onPrint={printReport}
           // Filters out reports that have a subContext (i.e. `R&R`)
           queryParams={{ filterBy: { subContext: { equalAnyOrNull: [] } } }}
+          isPrinting={isPrinting}
+          buttonLabel={t('button.print')}
           extraArguments={
             showIndicators
               ? {
                   periodId: data?.period?.id,
                   programId: data?.program?.id,
-                  customerNameId: data?.otherPartyId,
+                  customerNameId: store?.nameId,
                 }
               : undefined
           }
-        >
-          <LoadingButton
-            variant="outlined"
-            startIcon={<PrinterIcon />}
-            isLoading={isPrinting}
-            label={t('button.print')}
-          />
-        </ReportSelector>
+        />
         {OpenButton}
       </Grid>
     </AppBarButtonsPortal>

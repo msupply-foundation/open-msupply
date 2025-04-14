@@ -30,6 +30,7 @@ pub(crate) mod invoice_line;
 pub(crate) mod item;
 pub(crate) mod item_direction;
 pub(crate) mod item_variant;
+pub(crate) mod item_warning_join;
 pub(crate) mod location;
 pub(crate) mod location_movement;
 pub(crate) mod master_list;
@@ -47,6 +48,7 @@ pub(crate) mod packaging_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod plugin_data;
+pub(crate) mod preference;
 pub(crate) mod program_indicator;
 pub(crate) mod program_requisition_settings;
 pub(crate) mod property;
@@ -75,6 +77,7 @@ pub(crate) mod vaccination;
 pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
 pub(crate) mod vaccine_course_item;
+pub(crate) mod warning;
 
 use repository::*;
 use thiserror::Error;
@@ -134,6 +137,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         document::boxed(),
         currency::boxed(),
         contact_form::boxed(),
+        item_warning_join::boxed(),
+        warning::boxed(),
         // Cold chain
         sensor::boxed(),
         temperature_breach::boxed(),
@@ -179,6 +184,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         insurance_provider::boxed(),
         name_insurance_join::boxed(),
         report::boxed(),
+        preference::boxed(),
     ]
 }
 

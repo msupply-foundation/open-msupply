@@ -23,7 +23,7 @@ pub enum UpdateProgramPatientError {
     InvalidParentId,
     PatientExists,
     InvalidDataSchema(String),
-    PatientDocumentRegistryDoesNotExit,
+    PatientDocumentRegistryDoesNotExist,
     DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
@@ -61,7 +61,7 @@ pub fn upsert_program_patient(
                     &doc_timestamp,
                     patient,
                 )?;
-                create_patient_name_store_join(&ctx.connection, store_id, &patient_id)?;
+                create_patient_name_store_join(&ctx.connection, store_id, &patient_id, None)?;
             }
 
             service_provider
@@ -192,7 +192,7 @@ fn validate(
 
     let document_registry = match validate_document_type(ctx)? {
         Some(document_registry) => document_registry,
-        None => return Err(UpdateProgramPatientError::PatientDocumentRegistryDoesNotExit),
+        None => return Err(UpdateProgramPatientError::PatientDocumentRegistryDoesNotExist),
     };
 
     if input.parent.is_none() && !validate_patient_not_exists(ctx, service_provider, &patient.id)? {

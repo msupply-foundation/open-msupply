@@ -4,21 +4,22 @@ import {
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
-import React, { PropsWithChildren, useEffect, useMemo } from 'react';
+import React, { FC, useEffect, useMemo } from 'react';
 import { VaccinationDraft } from '../api';
 import { VaccinationCourseDoseFragment } from '../api/operations.generated';
-import { OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectBatch } from './SelectBatch';
 
 export const SelectItemAndBatch = ({
   draft,
   dose,
   hasExistingSelectedBatch,
+  isOtherFacility,
   updateDraft,
 }: {
   dose: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
   hasExistingSelectedBatch: boolean;
+  isOtherFacility: boolean;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
 }) => {
   const t = useTranslation();
@@ -58,7 +59,7 @@ export const SelectItemAndBatch = ({
     return null;
   }
 
-  if (draft.facilityId === OTHER_FACILITY) {
+  if (isOtherFacility) {
     return <InfoText>{t('messages.no-transaction-other-facility')}</InfoText>;
   }
 
@@ -97,7 +98,7 @@ export const SelectItemAndBatch = ({
   );
 };
 
-const InfoText = ({ children }: PropsWithChildren<{}>) => (
+const InfoText: FC<{ children: string }> = ({ children }) => (
   <Typography fontStyle="italic" color="gray.dark" fontSize={'small'}>
     {children}
   </Typography>

@@ -58,6 +58,9 @@ pub use self::period::*;
 pub mod permissions;
 pub use self::permissions::*;
 
+pub mod preferences;
+pub use self::preferences::*;
+
 pub mod response_requisition_stats;
 pub use self::response_requisition_stats::*;
 
@@ -132,6 +135,9 @@ pub use self::insurance_policy::*;
 
 pub mod insurance_provider;
 pub use self::insurance_provider::*;
+
+pub mod warning;
+pub use self::warning::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);

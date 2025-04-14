@@ -10,7 +10,7 @@ interface RecordWithIdWithRequiredFields extends RecordWithId {
 }
 
 export const getNameAndColorColumn = <
-  T extends RecordWithIdWithRequiredFields
+  T extends RecordWithIdWithRequiredFields,
 >(): ColumnDefinition<T> => ({
   label: 'label.name',
   setter: () => {

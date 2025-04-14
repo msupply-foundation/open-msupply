@@ -59,7 +59,6 @@ scraper = "0.22.0"
 umya-spreadsheet = "2.0.0"
 qrcode = "0.14"
 rust-embed = { version = "8.4.0", features = ["include-exclude"] }
-extism = { workspace = true }
 base64 =  { workspace = true }
 regex = { workspace = true }
 anymap = { workspace = true }

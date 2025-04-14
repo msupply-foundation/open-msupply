@@ -47,6 +47,7 @@ type NameStoreJoins = (NameStoreJoinRow, (NameLinkRow, NameRow));
 pub struct NameStoreJoinFilter {
     pub id: Option<EqualFilter<String>>,
     pub name_id: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
 }
 
 pub struct NameStoreJoinRepository<'a> {
@@ -59,13 +60,25 @@ impl<'a> NameStoreJoinRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(row)?;
+        self.insert_changelog(row, RowActionType::Upsert)
+    }
+
+    pub fn upsert_one_without_changelog(
+        &self,
+        row: &NameStoreJoinRow,
+    ) -> Result<(), RepositoryError> {
+        self._upsert_one(row)
+    }
+
+    fn _upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_store_join::table)
             .values(row)
             .on_conflict(name_store_join::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        Ok(())
     }
 
     fn insert_changelog(
@@ -136,10 +149,15 @@ fn create_filtered_query(filter: Option<NameStoreJoinFilter>) -> BoxedNameStoreJ
         .into_boxed();
 
     if let Some(f) = filter {
-        let NameStoreJoinFilter { id, name_id } = f;
+        let NameStoreJoinFilter {
+            id,
+            name_id,
+            store_id,
+        } = f;
 
         apply_equal_filter!(query, id, name_store_join::id);
         apply_equal_filter!(query, name_id, name::id);
+        apply_equal_filter!(query, store_id, name_store_join::store_id);
     }
 
     query
@@ -164,6 +182,11 @@ impl NameStoreJoinFilter {
 
     pub fn name_id(mut self, filter: EqualFilter<String>) -> Self {
         self.name_id = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
         self
     }
 }

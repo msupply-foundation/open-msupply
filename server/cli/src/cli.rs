@@ -59,6 +59,9 @@ const DATA_EXPORT_FOLDER: &str = "data";
 struct Args {
     #[clap(subcommand)]
     action: Action,
+
+    #[clap(flatten)]
+    config_args: configuration::ConfigArgs,
 }
 
 #[derive(clap::Subcommand)]
@@ -250,7 +253,7 @@ async fn initialise_from_central(
     // file_sync_trigger is not used here, but easier to just create it rather than making file sync trigger optional
     let (file_sync_trigger, _file_sync_driver) = FileSyncDriver::init(&settings);
     let (_, sync_driver) = SynchroniserDriver::init(file_sync_trigger);
-    sync_driver.sync(service_provider.clone()).await;
+    sync_driver.sync(service_provider.clone(), None).await;
 
     info!("Syncing users");
     for user in users.split(',') {
@@ -281,7 +284,7 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     let settings: Settings =
-        configuration::get_configuration().expect("Problem loading configurations");
+        configuration::get_configuration(args.config_args).expect("Problem loading configurations");
 
     match args.action {
         Action::ExportGraphqlSchema => {
@@ -323,7 +326,7 @@ async fn main() -> anyhow::Result<()> {
                 };
                 synced_user_info_rows.push((
                     input.clone(),
-                    LoginService::fetch_user_from_central(&input)
+                    LoginService::fetch_user_from_central(&service_provider.clone(), &input)
                         .await
                         .unwrap_or_else(|_| panic!("Cannot find user {:?}", input)),
                 ));

@@ -64,7 +64,7 @@ export const AppBarButtons = ({
   };
 
   const createInvoice = async (nameId: string, requisitionId?: string) => {
-    const invoiceNumber = await onCreate({
+    const invoiceId = await onCreate({
       id: FnUtils.generateUUID(),
       otherPartyId: nameId,
       requisitionId,
@@ -73,7 +73,7 @@ export const AppBarButtons = ({
     navigate(
       RouteBuilder.create(AppRoute.Replenishment)
         .addPart(AppRoute.InboundShipment)
-        .addPart(String(invoiceNumber))
+        .addPart(invoiceId)
         .build()
     );
   };

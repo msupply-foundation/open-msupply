@@ -13,10 +13,6 @@ import {
   useTheme,
   StatusCell,
   VaccinationCardItemNodeStatus,
-  useAuthContext,
-  Alert,
-  Box,
-  UnhappyMan,
 } from '@openmsupply-client/common';
 import { usePatientVaccineCard } from '../api/usePatientVaccineCard';
 import {
@@ -26,10 +22,7 @@ import {
 
 interface VaccinationCardProps {
   programEnrolmentId: string;
-  openModal: (
-    vaccinationId: string | null | undefined,
-    vaccineCourseDoseId: string
-  ) => void;
+  openModal: (row: VaccinationCardItemFragment) => void;
   encounterId?: string;
 }
 
@@ -210,7 +203,13 @@ const VaccinationCardComponent = ({
       {
         key: 'dateGiven',
         label: 'label.date-given',
-        accessor: ({ rowData }) => localisedDate(rowData.vaccinationDate ?? ''),
+        accessor: ({ rowData }) => {
+          if (rowData.status === VaccinationCardItemNodeStatus.Given) {
+            return localisedDate(rowData.vaccinationDate ?? '');
+          } else {
+            return null;
+          }
+        },
       },
       {
         key: 'batch',
@@ -234,8 +233,7 @@ const VaccinationCardComponent = ({
         columns={columns}
         data={data?.items ?? []}
         onRowClick={row => {
-          if (includeRow(isEncounter, row, data?.items))
-            openModal(row.vaccinationId, row.vaccineCourseDoseId);
+          if (includeRow(isEncounter, row, data?.items)) openModal(row);
         }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
       />
@@ -244,31 +242,11 @@ const VaccinationCardComponent = ({
 };
 
 export const VaccineCardTable: FC<VaccinationCardProps> = props => {
-  const { storeId } = useAuthContext();
-  const t = useTranslation();
   const {
     query: { data, isLoading },
   } = usePatientVaccineCard(props.programEnrolmentId);
 
   if (isLoading) return <InlineSpinner />;
-
-  if (!!data?.enrolmentStoreId && data?.enrolmentStoreId !== storeId)
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        width="100%"
-        flexDirection="column"
-      >
-        <UnhappyMan />
-        <Alert severity="info">
-          {t('messages.cannot-view-vaccine-card', {
-            programName: data?.programName,
-          })}
-        </Alert>
-      </Box>
-    );
 
   return (
     <TableProvider

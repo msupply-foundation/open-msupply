@@ -5,7 +5,8 @@ use crate::{
 
 use super::{
     clinician_link_row::clinician_link, clinician_row::clinician, name_link_row::name_link,
-    name_row::name, vaccination_row::vaccination::dsl::*,
+    name_row::name, name_store_join::name_store_join, store_row::store,
+    vaccination_row::vaccination::dsl::*,
     vaccine_course::vaccine_course_dose_row::vaccine_course_dose,
 };
 
@@ -21,6 +22,7 @@ table! {
         store_id -> Text,
         program_enrolment_id -> Text,
         encounter_id -> Text,
+        patient_link_id -> Text,
         user_id -> Text,
         vaccine_course_dose_id -> Text,
         created_datetime -> Timestamp,
@@ -29,15 +31,16 @@ table! {
         invoice_id -> Nullable<Text>,
         stock_line_id -> Nullable<Text>,
         clinician_link_id -> Nullable<Text>,
-        vaccination_date -> Nullable<Date>,
+        vaccination_date -> Date,
         given -> Bool,
         not_given_reason -> Nullable<Text>,
         comment -> Nullable<Text>,
     }
 }
 
+// NOTE: both patient_link_id and facility_name_link_id are foreign keys to name_link
+// so not defining a default joinable here, so as not to accidentally join on the wrong one
 joinable!(vaccination -> clinician_link (clinician_link_id));
-joinable!(vaccination -> name_link (facility_name_link_id));
 joinable!(vaccination -> vaccine_course_dose (vaccine_course_dose_id));
 
 allow_tables_to_appear_in_same_query!(vaccination, name_link);
@@ -45,6 +48,8 @@ allow_tables_to_appear_in_same_query!(vaccination, name);
 allow_tables_to_appear_in_same_query!(vaccination, clinician_link);
 allow_tables_to_appear_in_same_query!(vaccination, clinician);
 allow_tables_to_appear_in_same_query!(vaccination, vaccine_course_dose);
+allow_tables_to_appear_in_same_query!(vaccination, name_store_join);
+allow_tables_to_appear_in_same_query!(vaccination, store);
 allow_tables_to_appear_in_same_query!(vaccine_course_dose, clinician_link);
 allow_tables_to_appear_in_same_query!(vaccine_course_dose, clinician);
 allow_tables_to_appear_in_same_query!(vaccine_course_dose, name_link);
@@ -60,6 +65,7 @@ pub struct VaccinationRow {
     pub store_id: String,
     pub program_enrolment_id: String,
     pub encounter_id: String,
+    pub patient_link_id: String,
     pub user_id: String,
     pub vaccine_course_dose_id: String,
     pub created_datetime: NaiveDateTime,
@@ -68,7 +74,7 @@ pub struct VaccinationRow {
     pub invoice_id: Option<String>,
     pub stock_line_id: Option<String>,
     pub clinician_link_id: Option<String>,
-    pub vaccination_date: Option<NaiveDate>,
+    pub vaccination_date: NaiveDate,
     pub given: bool,
     pub not_given_reason: Option<String>,
     pub comment: Option<String>,
@@ -116,8 +122,8 @@ impl<'a> VaccinationRowRepository<'a> {
             table_name: ChangelogTableName::Vaccination,
             record_id: row.id,
             row_action: action,
-            store_id: Some(row.store_id),
-            name_link_id: None,
+            store_id: None,
+            name_link_id: Some(row.patient_link_id),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

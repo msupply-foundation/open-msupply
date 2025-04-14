@@ -4,24 +4,20 @@ The Android app can run as standalone site with a local server, as a client conn
 On Android, the server always starts on the device.
 This makes it possible to have one mobile app for all operational modes.
 The mobile app will broadcast via dns sd and will be reachable by both Mobile and Electron clients on the local network.
+
 We are using Capacitor to make use of existing optimisations and large library of native plugins.
-The UI is not bundled within Capacitor, it is served by the server the client connect to, and discovery UI is always served by local bundled server.
+The UI is not bundled within Capacitor, it is served by the server the client connects to, but the discovery UI is always served by the bundled local server.
 
 ## Building the Rust Server Library for Android
 
 Before building the Android app, the Rust server library that allows us to run the mSupply server on the mobile device needs to be built.
+
 This requires a couple of steps.
 
-- Install Android Studio (Ladybug at time of writing 15/11/24)
-- Install NDK (26.1.10909125 at the time of writing on the 8/4/24)
+- Install Android Studio (Ladybug at time of writing 15/11/24) (Instructions [here](https://developer.android.com/studio))
+- Install NDK in Android Studio (26.1.10909125 at the time of writing on the 8/4/24) (Instructions [here](https://developer.android.com/studio/projects/install-ndk))
 
 ![omSupply Android NDK](./doc/omSupply_android_ndk.png)
-
-Currently, we support only 1 Android architecture (64bit);
-
-| rust target | android ABI |
-| aarch64-linux-android | arm64-v8a |
-| ----------------------- | ----------- |
 
 To add the required build targets to Rust run:
 
@@ -29,45 +25,57 @@ To add the required build targets to Rust run:
 rustup target add aarch64-linux-android
 ```
 
-Next we have to tell Rust where to find the Android NDK binaries required to link the server library.
-This is done by setting the `NDK_BIN` env variable to the currently installed Android NDK.
-For example, to permanently add the `NDK_BIN` env variable do:
+Currently, we support only 1 Android architecture (64bit);
+
+| rust target           | android ABI |
+| --------------------- | ----------- |
+| aarch64-linux-android | arm64-v8a   |
+
+Next we have to tell Rust where to find the Android NDK binaries required to link the server library. This is done by setting the `NDK_BIN` env variable to the currently installed Android NDK.
+
+For example, to permanently add the `NDK_BIN` env variable on a mac run:
 
 ```bash
 echo "export NDK_BIN=~/Library/Android/sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/darwin-x86_64/bin/" >> ~/.zshrc
 ```
 
-Open a new terminal and validate that `$NDK_BIN` is set correctly: `ls $NDK_BIN` (this should give a list of files starting with aarch64 and armv7a)
-Note, which linker Rust should use is defined in `server/android/.cargo/config.toml`, under [target.*].
+> If you are on linux or using a different version of the NDK for some reason, you'll need to adjust this command accordingly.
+
+Run `source ~/.zshrc` to apply the changes to the current terminal.
+
+Validate that `$NDK_BIN` is set correctly using `ls $NDK_BIN` (this should give a list of files starting with aarch64 and armv7a)
+
+Note, which linker Rust uses is defined in `server/android/.cargo/config.toml`, under [target._architecture_].
 
 ### Java Installation
 
 In your terminal, run `java --version` to check if you have it installed. As at 19/12/2024 version `17.0.7-tem` is tested and works with our setup
 
-- install [SDK man](https://sdkman.io/) through your terminal by running `curl -s "https://get.sdkman.io" | bash`
-- Open a new terminal
+We normally use [SDK man](https://sdkman.io/) to manage java versions, this can be installed using the following terminal command:
+`curl -s "https://get.sdkman.io" | bash`
 
-Install Java: Run `sdk install java 17.0.7-tem`
+Then install Java 17.0.7-tem (Temurin) using the following terminal command:
+Install the last tested version of Java: Run `sdk install java 17.0.7-tem`
+To make this the default version of Java `sdk default java 17.0.7-tem`.
 
-Then set the defaults using the following commands:
+### Set up Android Studio
 
-- `sdk use java 17.0.7-tem`
-- `sdk default java 17.0.7-tem`
+Now we'll set up Android Studio so that it will use the version of Java that we want.
+First of all, open Android Studio and click Open. Open '<your Open mSupply repository>/client/packages/android'.
+Then, when you're in that project, go to Android Studio settings -> Build, Execution, Deployment -> Build Tools -> Gradle.
+You should see a dropdown to select 'Default Gradle JDK'.
+That dropdown should have an option to use a JDK called '17.0.7-temurin' - select that one.
+Here's a screenshot of what that should look like (the sidebar shows you what you should click on to get to this part of the settings):
 
-Go to Android Studio settings -> Build -> Build Settings
+![choosing OMS Android Gradle JDK](./doc/choosing_OMS_Android_Gradle_JDK.png)
 
-- Change Gradle JDK to 17.0.7-tem
-  ![omSupply Gradle JDK](./doc/omSupply_android_gradle_jdk.png)
-
-You may also see prompts in Android Studio to sync - keep an eye out for these and run the sync as needed
-
-If you don't see the option to change Gradle JDK to `17.07.7-tem`, then open the android folder from the OMS repo in Android Studio.
+You may also see prompts in Android Studio to sync - keep an eye out for these and run the sync as needed.
 
 ## Running Android Studio
 
-You can now use `yarn build:server` from the `client/packages/android/` directory, this builds the `libremote_server_lib.so` binaries and relocate them to `app/src/main/jniLibs`.
+You can now use `yarn build:server` from the `client/packages/android/` directory, this builds the `libremote_server_lib.so` binaries and relocates them to `app/src/main/jniLibs`.
 Please see `client/packages/android/app/src/main/java/org/openmsupply/client/RemoteServer.java` for more details of how these libs are loaded.
-It's important to note that web app is bundled in the remote server binary, and web app needs to be built from `client` directory with `yarn build` command, so it's best to use `yarn android:build:server` from client directory as it does both (builds web app and then build android remote server).
+It's important to note that web app is bundled in the remote server binary, and web app needs to be built from the `client` directory with `yarn build` command, so it's best to use `yarn android:build:server` from client directory as it does both (builds web app and then build android remote server).
 
 ## Scripts
 
@@ -100,20 +108,26 @@ yarn android:build:debug
 yarn android:build:release
 ```
 
+To make the an apk that you can install on a device for testing, run `yarn android:build:debug` in the client directory. You will find the resulting apk in `client/packages/android/app/build/outputs/apk/debug`, and you can then transfer it to the tablet and install it. This can be done by uploading the apk file via the android studio device manager, then clicking the apk file from the device itself. Or using [adb](https://developer.android.com/tools/adb)
+
 ### Known script issues
 
 When building apk `properties.local` files is required (it can be empty). Also can sometime get a lock on gradle build, can run `find ~/.gradle -type f -name "*.lock" -delete` to fix it
 
 ## Debugging
 
-It's recommended to use Android Studio for debugging and running Android App, there is a lot of functionality that cannot be replicated in Visual Studio Code (although there are some extensions for Visual Studio Code, they are quite limited).
+It's recommended to use Android Studio for debugging and running the Android app, because there is a lot of functionality that cannot be replicated in Visual Studio Code (although there are some extensions for Visual Studio Code, they are quite limited).
 
-Open this directory in Android Studio, this will engage gradle sync process (initialising pre-requisites etc.), if you get an error during 'sync' process Android Studio should outline the issue with suggested fix.
+Open this directory (client/packages/android) in Android Studio - this will engage the gradle sync process (initialising pre-requisites etc.), if you get an error during 'sync' process Android Studio should outline the issue with suggested fix.
 Usually you will need to either set `ANDROID_SDK_ROOT` or add `sdk.dir` in `local.properties` file, and skd is usually located in `/Users/{user}/Library/Android/sdk/`. Pressing play (run) should restart sync process.
 
 Debugging native Java code is straight forward, breakpoint in Android Studio and press debug.
 
-Debugging web app code is done by opening `chrome://inspect`, you should see the Web View when the app is running in emulator. When bundled is served from remote server (default setup), js bundle is minimised and this makes debugging very hard (and doesn't allow for hot reload), however we can run the bundle from webpack server by commenting out the plugins section in `capacitor.config.ts` and entering your local ip in the debugUrl field and running `yarn apply-config`. Please make sure that you start front end server with `yarn start` from 'client' directory for this to work. For examples: `yarn && yarn start -- -- --env API_HOST='http://192.168.1.205:8000` <- your local server will also need to be running.
+Debugging web app code is done by opening `chrome://inspect`, you should see the Web View when the app is running in emulator.
+When bundle is served from rust server (default setup), the js bundle is minimised and this makes debugging very hard (and doesn't allow for hot reload),
+however we can serve the bundle from the webpack server on your pc by commenting out the plugins section in `capacitor.config.ts` and entering your local ip in the debugUrl field and running `yarn apply-config`.
+Please make sure that you start front end server with `yarn start` from 'client' directory for this to work.
+For examples: `yarn && yarn start -- -- --env API_HOST='http://192.168.1.205:8000` <- your local server will also need to be running.
 
 Please note that when debugging with live reload, connections to a discovered server will always go through to the webpack server (regardless of which server is being selected).
 

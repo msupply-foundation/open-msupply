@@ -2,11 +2,20 @@
 include ':capacitor-android'
 project(':capacitor-android').projectDir = new File('../../node_modules/@capacitor/android/capacitor')
 
+include ':capacitor-camera'
+project(':capacitor-camera').projectDir = new File('../../node_modules/@capacitor/camera/android')
+
+include ':capacitor-geolocation'
+project(':capacitor-geolocation').projectDir = new File('../../node_modules/@capacitor/geolocation/android')
+
 include ':bcyesil-capacitor-plugin-printer'
 project(':bcyesil-capacitor-plugin-printer').projectDir = new File('../../node_modules/@bcyesil/capacitor-plugin-printer/android')
 
 include ':capacitor-community-barcode-scanner'
 project(':capacitor-community-barcode-scanner').projectDir = new File('../../node_modules/@capacitor-community/barcode-scanner/android')
+
+include ':capacitor-community-file-opener'
+project(':capacitor-community-file-opener').projectDir = new File('../../node_modules/@capacitor-community/file-opener/android')
 
 include ':capacitor-community-keep-awake'
 project(':capacitor-community-keep-awake').projectDir = new File('../../node_modules/@capacitor-community/keep-awake/android')
@@ -14,8 +23,17 @@ project(':capacitor-community-keep-awake').projectDir = new File('../../node_mod
 include ':capacitor-app'
 project(':capacitor-app').projectDir = new File('../../node_modules/@capacitor/app/android')
 
+include ':capacitor-device'
+project(':capacitor-device').projectDir = new File('../../node_modules/@capacitor/device/android')
+
+include ':capacitor-filesystem'
+project(':capacitor-filesystem').projectDir = new File('../../node_modules/@capacitor/filesystem/android')
+
 include ':capacitor-keyboard'
 project(':capacitor-keyboard').projectDir = new File('../../node_modules/@capacitor/keyboard/android')
 
 include ':capacitor-preferences'
 project(':capacitor-preferences').projectDir = new File('../../node_modules/@capacitor/preferences/android')
+
+include ':capacitor-screen-orientation'
+project(':capacitor-screen-orientation').projectDir = new File('../../node_modules/@capacitor/screen-orientation/android')

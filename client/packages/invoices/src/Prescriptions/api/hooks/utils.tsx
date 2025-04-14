@@ -100,6 +100,7 @@ export const createPrescriptionPlaceholderRow = (
     name: '',
     __typename: 'ItemNode',
     itemDirections: [],
+    warnings: [],
   },
   itemName: '',
   stockLine: {
@@ -125,6 +126,16 @@ export const createPrescriptionPlaceholderRow = (
           __typename: 'ItemDirectionNode',
           directions: '',
           priority: 0,
+        },
+      ],
+      warnings: [
+        {
+          __typename: 'WarningNode',
+          id: '',
+          itemId,
+          warningText: '',
+          code: '',
+          priority: false,
         },
       ],
     },
@@ -185,6 +196,7 @@ export const createDraftPrescriptionLineFromStockLine = ({
       code: stockLine?.item?.code,
       __typename: 'ItemNode',
       itemDirections: [],
+      warnings: [],
     },
 
     stockLine,
@@ -205,7 +217,7 @@ export const createDraftPrescriptionLine = ({
   const adjustTotalNumberOfPacks = invoiceStatus === InvoiceNodeStatus.Picked;
 
   // Note to future self, the stockLine spread here is important, if not spread you'll be modifying the passed in data which can affect the tanStack Query Cache, with unintended effects!
-  let adjustedStockLine = stockLine
+  const adjustedStockLine = stockLine
     ? { ...stockLine }
     : invoiceLine?.stockLine
       ? { ...invoiceLine?.stockLine }

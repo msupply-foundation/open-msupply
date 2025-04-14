@@ -20,6 +20,7 @@ import {
   useNavigate,
   RouteBuilder,
   UNDEFINED_STRING_VALUE,
+  BufferedTextInput,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
 import { canDeleteStocktake } from '../../utils';
@@ -27,9 +28,21 @@ import { canDeleteStocktake } from '../../utils';
 const AdditionalInfoSection: FC = () => {
   const t = useTranslation();
 
-  const { comment, user, createdDatetime, update } =
-    useStocktake.document.fields(['comment', 'user', 'createdDatetime']);
+  const { comment, user, createdDatetime, update, verifiedBy, countedBy } =
+    useStocktake.document.fields([
+      'comment',
+      'user',
+      'createdDatetime',
+      'countedBy',
+      'verifiedBy',
+    ]);
   const [bufferedComment, setBufferedComment] = useBufferState(comment ?? '');
+  const [bufferedCountedBy, setBufferedCountedBy] = useBufferState(
+    countedBy ?? ''
+  );
+  const [bufferedVerifiedBy, setBufferedVerifiedBy] = useBufferState(
+    verifiedBy ?? ''
+  );
   const isDisabled = useStocktake.utils.isDisabled();
   const { localisedDate } = useFormatDateTime();
 
@@ -44,6 +57,42 @@ const AdditionalInfoSection: FC = () => {
         <PanelRow>
           <PanelLabel>{t('label.created')}</PanelLabel>
           <PanelField>{localisedDate(createdDatetime)}</PanelField>
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('label.counted-by')}</PanelLabel>
+          <BufferedTextInput
+            disabled={isDisabled}
+            onChange={e => {
+              setBufferedCountedBy(e.target.value);
+              update({ countedBy: e.target.value });
+            }}
+            value={bufferedCountedBy}
+            slotProps={{
+              input: {
+                style: {
+                  backgroundColor: 'white',
+                },
+              },
+            }}
+          />
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('label.verified-by')}</PanelLabel>
+          <BufferedTextInput
+            disabled={isDisabled}
+            onChange={e => {
+              setBufferedVerifiedBy(e.target.value);
+              update({ verifiedBy: e.target.value });
+            }}
+            value={bufferedVerifiedBy}
+            slotProps={{
+              input: {
+                style: {
+                  backgroundColor: 'white',
+                },
+              },
+            }}
+          />
         </PanelRow>
 
         <PanelLabel>{t('heading.comment')}</PanelLabel>
@@ -88,6 +137,7 @@ export const SidePanel = () => {
     selectedRows: [stocktake],
     deleteAction,
     messages: {
+      // TODO differentiate betweeen duplicate stocktakeNumber on delete where stores have been merged (https://github.com/msupply-foundation/open-msupply/pull/6789)
       confirmMessage: t('messages.confirm-delete-stocktake', {
         number: stocktake?.stocktakeNumber,
       }),

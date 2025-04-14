@@ -1,5 +1,5 @@
 use crate::sync::{
-    sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option, zero_f64_as_none},
+    sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
     translations::{
         currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
         item_variant::ItemVariantTranslation, location::LocationTranslation,
@@ -66,7 +66,6 @@ pub struct LegacyTransLineRow {
     pub r#type: LegacyTransLineType,
     #[serde(rename = "quantity")]
     pub number_of_packs: f64,
-    #[serde(deserialize_with = "zero_f64_as_none")]
     #[serde(rename = "prescribedQuantity")]
     pub prescribed_quantity: Option<f64>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -88,6 +87,9 @@ pub struct LegacyTransLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "om_item_variant_id")]
     pub item_variant_id: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "linked_transact_id")]
+    pub linked_invoice_id: Option<String>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -145,6 +147,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             option_id,
             foreign_currency_price_before_tax,
             item_variant_id,
+            linked_invoice_id,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
         let line_type = match to_invoice_line_type(&r#type) {
             Some(line_type) => line_type,
@@ -220,12 +223,11 @@ impl SyncTranslation for InvoiceLineTranslation {
         // TODO: remove the stock_line_is_valid check once central server does not generate the inbound shipment
         // omSupply should be generating the inbound, with valid stock lines.
         // Currently a uuid is assigned by central for the stock_line id which causes a foreign key constraint violation
-        let is_stock_line_valid = match stock_line_id {
-            Some(ref stock_line_id) => StockLineRowRepository::new(connection)
-                .find_one_by_id(stock_line_id)?
-                .is_some(),
-            None => true,
-        };
+        let is_stock_line_valid = stock_line_id.as_ref().is_some_and(|stock_line_id| {
+            StockLineRowRepository::new(connection)
+                .find_one_by_id(stock_line_id)
+                .is_ok_and(|stock_line| stock_line.is_some())
+        });
 
         if !is_stock_line_valid {
             log::warn!(
@@ -286,6 +288,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             },
             foreign_currency_price_before_tax,
             item_variant_id,
+            linked_invoice_id,
         };
 
         let result = adjust_negative_values(result);
@@ -341,6 +344,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     return_reason_id,
                     foreign_currency_price_before_tax,
                     item_variant_id,
+                    linked_invoice_id,
                 },
             item_row,
             invoice_row,
@@ -378,6 +382,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             option_id,
+            linked_invoice_id,
         };
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -422,7 +427,7 @@ fn adjust_negative_values(line: InvoiceLineRow) -> InvoiceLineRow {
         return line;
     }
 
-    return InvoiceLineRow {
+    InvoiceLineRow {
         cost_price_per_pack: line.cost_price_per_pack.abs(),
         sell_price_per_pack: line.sell_price_per_pack.abs(),
         total_before_tax: line.total_before_tax.abs(),
@@ -431,7 +436,7 @@ fn adjust_negative_values(line: InvoiceLineRow) -> InvoiceLineRow {
         foreign_currency_price_before_tax: line.foreign_currency_price_before_tax.map(|n| n.abs()),
         r#type: InvoiceLineType::StockIn,
         ..line
-    };
+    }
 }
 
 #[cfg(test)]

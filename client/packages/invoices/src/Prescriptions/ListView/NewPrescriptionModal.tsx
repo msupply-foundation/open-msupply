@@ -70,7 +70,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
   const handleSave = async () => {
     try {
       if (!patient) return;
-      const prescriptionNumber = await create({
+      const prescription = await create({
         id: FnUtils.generateUUID(),
         patientId: patient.id,
         theirReference,
@@ -79,7 +79,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
         prescriptionDate: Formatter.toIsoString(DateUtils.endOfDayOrNull(date)),
       });
       handleClose();
-      navigate(String(prescriptionNumber));
+      prescription?.id && navigate(prescription.id);
     } catch (e) {
       const errorSnack = error(
         t('error.failed-to-create-prescription') + (e as Error).message
@@ -173,6 +173,11 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
                   format="P"
                   onChange={newDate => {
                     if (newDate) setDate(newDate);
+                  }}
+                  slotProps={{
+                    tabs: {
+                      hidden: true,
+                    },
                   }}
                 />
               }

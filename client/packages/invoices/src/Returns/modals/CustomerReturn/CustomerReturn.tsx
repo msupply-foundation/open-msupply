@@ -80,9 +80,12 @@ export const CustomerReturnEditModal = ({
 
   const onOk = async () => {
     try {
-      let customerReturn = !isDisabled && (await save());
+      const customerReturn = !isDisabled && (await save());
       onCreate?.();
-      !!customerReturn && customerReturn?.originalShipment?.id && isNewReturn && success(t('messages.customer-return-created-verified'))();
+      !!customerReturn &&
+        customerReturn?.originalShipment?.id &&
+        isNewReturn &&
+        success(t('messages.customer-return-created-verified'))();
       onClose();
     } catch {
       // TODO: handle error display...

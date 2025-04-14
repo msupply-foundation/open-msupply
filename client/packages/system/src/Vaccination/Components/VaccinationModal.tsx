@@ -15,16 +15,18 @@ import {
   RouteBuilder,
   Select,
   Switch,
+  useAuthContext,
   useDialog,
   useFormatDateTime,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
-import { FormControlLabel } from '@mui/material';
+import { FormControlLabel, Typography } from '@mui/material';
 import React from 'react';
 import { useVaccination, VaccinationDraft } from '../api';
 import { Clinician, ClinicianSearchInput } from '../../Clinician';
 import {
+  VaccinationCardItemFragment,
   VaccinationCourseDoseFragment,
   VaccinationDetailFragment,
 } from '../api/operations.generated';
@@ -33,11 +35,11 @@ import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
 import { getSwitchReason } from './getSwitchReason';
 import { useConfirmNoStockLineSelected } from './useConfirmNoStockLineSelected';
+import { useClinicians } from '@openmsupply-client/programs';
 
 interface VaccinationModalProps {
-  vaccinationId: string | undefined;
   encounterId?: string;
-  vaccineCourseDoseId: string;
+  cardRow: VaccinationCardItemFragment;
   isOpen: boolean;
   onClose: () => void;
   defaultClinician?: Clinician;
@@ -47,9 +49,8 @@ interface VaccinationModalProps {
 export const VaccinationModal = ({
   isOpen,
   onClose,
-  vaccineCourseDoseId,
   encounterId,
-  vaccinationId,
+  cardRow,
   defaultClinician,
   onOk,
 }: VaccinationModalProps) => {
@@ -64,8 +65,7 @@ export const VaccinationModal = ({
     saveVaccination,
   } = useVaccination({
     encounterId,
-    vaccineCourseDoseId,
-    vaccinationId,
+    cardRow,
     defaultClinician,
   });
 
@@ -79,7 +79,9 @@ export const VaccinationModal = ({
         const result = await saveVaccination(draft);
 
         if (result?.__typename === 'VaccinationNode') {
-          success(t('messages.vaccination-saved'))();
+          result?.invoice?.id && draft.createTransactions
+            ? success(t('messages.vaccination-saved-and-stock-recorded'))()
+            : success(t('messages.vaccination-saved'))();
           onOk();
           onClose();
         }
@@ -96,7 +98,7 @@ export const VaccinationModal = ({
     }
   );
 
-  const InfoBox = <GivenInfoBox vaccination={vaccination} />;
+  const InfoBox = <VaccineInfoBox vaccination={vaccination} />;
 
   const modalContent = isLoading ? (
     <BasicSpinner />
@@ -145,6 +147,10 @@ const VaccinationForm = ({
   updateDraft: (update: Partial<VaccinationDraft>) => void;
 }) => {
   const t = useTranslation();
+  const { store } = useAuthContext();
+
+  const { data: clinicians } = useClinicians.document.list({});
+  const hasClinicians = clinicians?.nodes.length !== 0;
 
   if (!dose) {
     return null;
@@ -169,16 +175,19 @@ const VaccinationForm = ({
     />
   ) : null;
 
+  const isFreeTextFacility = draft.facilityId === OTHER_FACILITY;
+  const isOtherFacility =
+    !!draft.facilityId && draft.facilityId !== store?.nameId;
+
   const SelectBatch = (
     <SelectItemAndBatch
       dose={dose}
       draft={draft}
       updateDraft={updateDraft}
       hasExistingSelectedBatch={!!vaccination?.stockLine}
+      isOtherFacility={isOtherFacility}
     />
   );
-
-  const isOtherFacility = draft.facilityId === OTHER_FACILITY;
 
   return (
     <Container
@@ -197,9 +206,10 @@ const VaccinationForm = ({
                 })
               }
               facilityId={draft.facilityId}
+              enteredAtOtherFacility={draft.enteredAtOtherFacility}
             />
 
-            {isOtherFacility && (
+            {isFreeTextFacility && (
               <BasicTextInput
                 fullWidth
                 autoFocus
@@ -214,7 +224,7 @@ const VaccinationForm = ({
           </Grid>
         }
       />
-      {!isOtherFacility && (
+      {hasClinicians && !isOtherFacility && (
         <InputWithLabelRow
           label={t('label.clinician')}
           Input={
@@ -236,7 +246,7 @@ const VaccinationForm = ({
         Input={
           <DatePicker
             disableFuture
-            value={draft.date}
+            value={draft.date}  
             onChange={date => updateDraft({ date })}
             sx={{ flex: 1 }}
           />
@@ -279,17 +289,33 @@ const VaccinationForm = ({
           <InputWithLabelRow
             label={t('label.reason')}
             Input={
-              <Select
-                options={[
-                  // TODO: make the values an enum from backend
-                  { label: t('label.refused'), value: 'REFUSED' },
-                  { label: t('label.out-of-stock'), value: 'OUT_OF_STOCK' },
-                  { label: t('label.no-reason'), value: 'NO_REASON' },
-                ]}
-                value={draft.notGivenReason ?? ''}
-                onChange={e => updateDraft({ notGivenReason: e.target.value })}
-                sx={{ flex: 1 }}
-              />
+              <Box sx={{ display: 'flex', width: 275 }}>
+                <Select
+                  options={[
+                    // TODO: make the values an enum from backend
+                    { label: t('label.refused'), value: 'REFUSED' },
+                    { label: t('label.out-of-stock'), value: 'OUT_OF_STOCK' },
+                    { label: t('label.no-reason'), value: 'NO_REASON' },
+                  ]}
+                  value={draft.notGivenReason ?? ''}
+                  onChange={e =>
+                    updateDraft({ notGivenReason: e.target.value })
+                  }
+                  sx={{ flex: 1 }}
+                />
+                <Box width={2}>
+                  <Typography
+                    sx={{
+                      color: 'primary.light',
+                      fontSize: '17px',
+                      marginLeft: 0.5,
+                      marginBottom: 2,
+                    }}
+                  >
+                    *
+                  </Typography>
+                </Box>
+              </Box>
             }
           />
         </>
@@ -315,44 +341,47 @@ const VaccinationForm = ({
   );
 };
 
-const GivenInfoBox = ({
+const VaccineInfoBox = ({
   vaccination,
 }: {
   vaccination: VaccinationDetailFragment | null | undefined;
 }) => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
+  const { store } = useAuthContext();
+  const prescriptionCreatedAtStore =
+    vaccination?.invoice?.store?.id === store?.id;
 
-  if (vaccination?.given) {
-    return (
-      <Alert severity="success">
-        <Box display="flex" alignItems="center">
-          {t('messages.vaccination-was-given', {
-            date: localisedDate(vaccination.vaccinationDate ?? ''),
-          })}
-          {vaccination.invoice && (
-            <Link
-              style={{
-                marginLeft: 6,
-                fontWeight: 'bold',
-                alignItems: 'center',
-                display: 'flex',
+  return vaccination?.given ? (
+    <Alert severity="success">
+      <Box display="flex" alignItems="center">
+        {t('messages.vaccination-was-given', {
+          date: localisedDate(vaccination.vaccinationDate ?? ''),
+        })}
+        {vaccination.invoice && prescriptionCreatedAtStore && (
+          <Link
+            style={{
+              marginLeft: 6,
+              fontWeight: 'bold',
+              alignItems: 'center',
+              display: 'flex',
+            }}
+            to={RouteBuilder.create(AppRoute.Dispensary)
+              .addPart(AppRoute.Prescription)
+              .addPart(vaccination.invoice.id)
+              .build()}
+          >
+            {t('button.view-prescription')}
+            <ChevronDownIcon
+              sx={{
+                transform: 'rotate(-90deg)',
               }}
-              to={RouteBuilder.create(AppRoute.Dispensary)
-                .addPart(AppRoute.Prescription)
-                .addPart(vaccination.invoice.invoiceNumber.toString())
-                .build()}
-            >
-              {t('button.view-prescription')}
-              <ChevronDownIcon
-                sx={{
-                  transform: 'rotate(-90deg)',
-                }}
-              />
-            </Link>
-          )}
-        </Box>
-      </Alert>
-    );
-  }
+            />
+          </Link>
+        )}
+      </Box>
+    </Alert>
+  ) : (
+    <Alert severity="warning">{t('warning.check-before-vaccinating')}</Alert>
+  );
 };

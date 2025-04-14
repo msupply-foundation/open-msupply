@@ -14,8 +14,8 @@ import {
   InsertAssetLogReasonInput,
   AssetLogStatusInput,
 } from '@openmsupply-client/common';
-import { useAssetData } from '../../api';
-import { getStatusInputOptions } from '../../utils';
+import { getStatusInputOptions, parseInputStatus } from '../../utils';
+import { useAssetLogReason } from '../../api/hooks/useAssetLogReason';
 
 type AssetLogStatus = {
   label: string;
@@ -50,7 +50,9 @@ const useDraftLogReason = (
   const [logReason, setLogReason] = useState<InsertAssetLogReasonInput>(() =>
     createNewLogReason(seed)
   );
-  const { mutate: insert, isLoading } = useAssetData.log.insertReasons();
+  const {
+    create: { create: insert, isCreating },
+  } = useAssetLogReason();
 
   const onUpdate = (patch: Partial<InsertAssetLogReasonInput>) => {
     setLogReason({ ...logReason, ...patch });
@@ -64,7 +66,7 @@ const useDraftLogReason = (
     draft: logReason,
     onUpdate,
     onSave,
-    isLoading,
+    isLoading: isCreating,
   };
 };
 
@@ -121,6 +123,10 @@ export const LogReasonCreateModal: FC<LogReasonCreateModalProps> = ({
               width="150px"
               popperMinWidth={150}
               options={getStatusInputOptions(t)}
+              value={{
+                label: parseInputStatus(draft.assetLogStatus, t),
+                value: draft.assetLogStatus,
+              }}
               onChange={updateStatus}
             />
           </Box>

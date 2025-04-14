@@ -2,8 +2,6 @@ import {
   AppBarButtonsPortal,
   Grid,
   ReportContext,
-  LoadingButton,
-  PrinterIcon,
   useTranslation,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
@@ -46,15 +44,13 @@ export const AppBarButtons: FC<{
           store={store}
         />
         {store?.preferences.omProgramModule && (
-          <ReportSelector context={ReportContext.Patient} onPrint={printReport}>
-            <LoadingButton
-              disabled={disabled}
-              variant="outlined"
-              startIcon={<PrinterIcon />}
-              isLoading={isPrinting}
-              label={t('button.print')}
-            />
-          </ReportSelector>
+          <ReportSelector
+            context={ReportContext.Patient}
+            onPrint={printReport}
+            isPrinting={isPrinting}
+            buttonLabel={t('button.print')}
+            disabled={disabled}
+          />
         )}
       </Grid>
     </AppBarButtonsPortal>

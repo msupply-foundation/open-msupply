@@ -55,6 +55,10 @@ export const InsuranceModal: FC = (): ReactElement => {
 
   const handleInsuranceInsert = async (): Promise<void> => {
     try {
+      // Temp hotfix for when both policy number fields are empty. Will be
+      // improved with new Error State handler
+      if (draft.policyNumberFamily === '' && draft.policyNumberPerson === '')
+        throw new Error('missing policy numbers');
       const result = await create();
       if (result != null) setModal(undefined);
       success(t('messages.insurance-created'))();
@@ -140,7 +144,7 @@ export const InsuranceModal: FC = (): ReactElement => {
         </Box>
         <Box display="flex" flexDirection="column" gap={2}>
           <InputWithLabelRow
-            label={t('label.expiry-date')}
+            label={t('label.insurance-expiry-date')}
             Input={
               <BaseDatePickerInput
                 required
@@ -163,7 +167,7 @@ export const InsuranceModal: FC = (): ReactElement => {
             }}
           />
           <InputWithLabelRow
-            label={t('label.discount-rate')}
+            label={t('label.coverage-rate')}
             Input={
               <NumericTextInput
                 required

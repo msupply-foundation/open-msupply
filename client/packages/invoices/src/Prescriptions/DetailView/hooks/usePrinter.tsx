@@ -23,7 +23,7 @@ export const usePrintLabels = () => {
     message: t('error.label-printer-not-configured'),
   });
 
-  //handle the popover with e, or handle the alert modal with state
+  // handle the popover with e, or handle the alert modal with state
   const printLabels = (
     prescription: PrescriptionRowFragment,
     lines: PrescriptionLineFragment[],

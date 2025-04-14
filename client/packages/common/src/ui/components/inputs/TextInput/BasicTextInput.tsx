@@ -88,8 +88,8 @@ export const BasicTextInput = React.forwardRef<
                     : theme.palette.background.menu,
                 borderRadius: 1,
                 padding: 0.5,
-                // Ignoring below, see https://github.com/mui/material-ui/issues/45041, use mergeSlotProps when it's available in MUI-6
-                // @ts-ignore
+                // Ignoring below, see https://github.com/mui/material-ui/issues/45041
+                // @ts-expect-error: use mergeSlotProps when it's available in MUI-6
                 ...slotProps?.input?.sx,
               },
             },
@@ -99,8 +99,8 @@ export const BasicTextInput = React.forwardRef<
               // Ignoring below, see https://github.com/mui/mui-x/issues/14684, slot props not merged from datepickers
               ...props.inputProps,
               ...slotProps?.htmlInput,
-              // Ignoring below, see https://github.com/mui/material-ui/issues/45041, use mergeSlotProps when it's available in MUI-6
-              // @ts-ignore
+              // Ignoring below, see https://github.com/mui/material-ui/issues/45041
+              // @ts-expect-error: use mergeSlotProps when it's available in MUI-6
               sx: { padding: 0.5, ...slotProps?.htmlInput?.sx },
             },
             inputLabel: {

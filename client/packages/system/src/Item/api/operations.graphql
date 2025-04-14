@@ -60,6 +60,22 @@ fragment ItemDirection on ItemDirectionNode {
   priority
 }
 
+fragment ItemRowWithWarnings on ItemNode {
+  ...ItemRow
+  warnings {
+    ...Warning
+  }
+}
+
+fragment Warning on WarningNode {
+  __typename
+  warningText
+  id
+  itemId
+  priority
+  code
+}
+
 fragment ItemWithPackSize on ItemNode {
   ...ItemRow
   defaultPackSize
@@ -463,6 +479,7 @@ fragment ItemLedger on ItemLedgerNode {
   datetime
   expiryDate
   invoiceNumber
+  invoiceId
   invoiceStatus
   invoiceType
   name

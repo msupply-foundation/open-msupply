@@ -1,6 +1,6 @@
 ### Overview
-The global application authentication handling - login & logout and the context which is shared across the entire application.
 
+The global application authentication handling - login & logout and the context which is shared across the entire application.
 
 ### Authentication process
 
