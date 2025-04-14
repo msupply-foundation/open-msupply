@@ -30,6 +30,8 @@ pub enum UpdateVaccinationError {
     FacilityNameDoesNotExist,
     ReasonNotProvided,
     StockLineDoesNotExist,
+    StockLineDoesNotMatchItem,
+    ItemDoesNotExist,
     ItemDoesNotBelongToVaccineCourse,
     NotNextDose,
     NotMostRecentGivenDose,
@@ -46,6 +48,7 @@ pub struct UpdateVaccination {
     pub clinician_id: Option<NullableUpdate<String>>,
     pub comment: Option<String>,
     pub given: Option<bool>,
+    pub item_id: Option<NullableUpdate<String>>,
     pub stock_line_id: Option<NullableUpdate<String>>,
     pub not_given_reason: Option<String>,
     pub facility_name_id: Option<NullableUpdate<String>>,
@@ -161,10 +164,10 @@ impl From<UpdatePrescriptionError> for UpdateVaccinationError {
 mod update {
     use chrono::NaiveDate;
     use repository::mock::{
-        mock_immunisation_encounter_a, mock_immunisation_program_enrolment_a, mock_patient,
-        mock_stock_line_a, mock_stock_line_b_vaccine_item_a, mock_stock_line_vaccine_item_a,
-        mock_store_a, mock_store_b, mock_user_account_a, mock_vaccination_a,
-        mock_vaccine_course_a_dose_b, MockData, MockDataInserts,
+        mock_immunisation_encounter_a, mock_immunisation_program_enrolment_a, mock_item_a,
+        mock_patient, mock_stock_line_a, mock_stock_line_b_vaccine_item_a,
+        mock_stock_line_vaccine_item_a, mock_store_a, mock_store_b, mock_user_account_a,
+        mock_vaccination_a, mock_vaccine_course_a_dose_b, MockData, MockDataInserts,
     };
     use repository::test_db::{setup_all, setup_all_with_data};
     use repository::{
@@ -273,6 +276,38 @@ mod update {
             Err(UpdateVaccinationError::ReasonNotProvided)
         );
 
+        // ItemDoesNotExist
+        assert_eq!(
+            service.update_vaccination(
+                &context,
+                store_id,
+                UpdateVaccination {
+                    id: mock_vaccination_a().id,
+                    item_id: Some(NullableUpdate {
+                        value: Some("non_existent_item_id".to_string())
+                    }),
+                    ..Default::default()
+                }
+            ),
+            Err(UpdateVaccinationError::ItemDoesNotExist)
+        );
+
+        // ItemDoesNotBelongToVaccineCourse
+        assert_eq!(
+            service.update_vaccination(
+                &context,
+                store_id,
+                UpdateVaccination {
+                    id: mock_vaccination_a().id,
+                    item_id: Some(NullableUpdate {
+                        value: Some(mock_item_a().id) // mock_item_a() does not belong to the vaccine course
+                    }),
+                    ..Default::default()
+                }
+            ),
+            Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse)
+        );
+
         // StockLineDoesNotExist
         assert_eq!(
             service.update_vaccination(
@@ -290,7 +325,7 @@ mod update {
             Err(UpdateVaccinationError::StockLineDoesNotExist)
         );
 
-        // ItemDoesNotBelongToVaccineCourse
+        // StockLineDoesNotMatchItem
         assert_eq!(
             service.update_vaccination(
                 &context,
@@ -304,7 +339,7 @@ mod update {
                     ..Default::default()
                 }
             ),
-            Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse)
+            Err(UpdateVaccinationError::StockLineDoesNotMatchItem)
         );
 
         // NotMostRecentGivenDose
