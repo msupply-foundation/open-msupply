@@ -30,11 +30,8 @@ Existing OMS remote sites may have patients, which may have related vaccination 
 - Add a migration, which creates changelog records for each patient and their name_store_joins
   - These changes will sync to Legacy mSupply (source of truth for these tables) but we'll also sync them to OMS Central
   - OMS Central can create name_store_join, name, and name_link records for these patients, if they don't already exist on OMS Central
-  - TODO: should we also add name_store_join between OMS central and patient here? Prob? But maybe hard to process
 - We ensure name and name_store_join are pull dependencies of vaccination records, so these definitely exist on OMS central before it integrations the vaccination records.
 - Constraints on OMS Central should then be met for pushed vaccination records, and we have the name_store_join record to know to sync future vaccination records to the all remote sites that have visibility for this patient.
-
-// Hm store A = 2.6, visible, store B 2.7, store B fetches? Treat as below probs?
 
 ## Legacy mSupply patients
 
@@ -51,9 +48,7 @@ It then calls OMS Central `name_store_join`, which adds the same `name_store_joi
 - It then triggers a sync cycle (OMS Central to Legacy) to receive the name record for this patient
 - Only after this is the name_store_join record for the remote store inserted, and success response to the remote site
 
-Risks: the `link_patient_to_store` is a one time mutation, and can't be done in a transaction. If there are connection issues, we might end up with name_store_join added on Legacy, but not OMS Central. This would not be apparent to the end user - wou
-
-// todo - finish this thought
+Risks: the `link_patient_to_store` is a one time mutation, and can't be done in a transaction. If there are connection issues, we might end up with name_store_join added on Legacy, but not OMS Central. This would not be apparent to the end user, would prevent v6 patient records from syncing between sites. Would be hard to diagnose... TODO?
 
 - Both central servers are on same server, if can connect to one, should be able to connect to both, and shouldn't be a connectivity risk between the two central servers. This can't be guaranteed in all cases though.
 
@@ -67,7 +62,7 @@ There is a small use case - remote site is upgraded 2.7, but re-initialised befo
 
 Creating a new patient on OMS remote site will create new name and name_store_join records. We sync this to both Legacy mSupply Central and OMS Central. All future records will have constraints met.
 
-// todo - process to add visibility for oms central?
+We should probably ensure OMS Central adds its own name_store_join for the new patient, for if patient is merged etc.
 
 ## Patient merge
 
