@@ -191,7 +191,7 @@ and run:
 yarn build:release
 ```
 
-The apk will be located in `app/build/outputs/apk/release`.
+The apks will be located as per file structure above.
 
 It's best to run `yarn android:build:release` from client directory to make sure front end is bundled correctly in the server
 
