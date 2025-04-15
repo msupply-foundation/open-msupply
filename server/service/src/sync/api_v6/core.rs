@@ -1,4 +1,3 @@
-use reqwest::Client;
 use thiserror::Error;
 use url::ParseError;
 use util::{with_retries, RetrySeconds};
@@ -128,7 +127,10 @@ impl SyncApiV6 {
             sync_v6_version: *sync_v6_version,
         };
 
-        let result = Client::new().post(url.clone()).json(&request).send().await;
+        let result = with_retries(RetrySeconds::default(), |client| {
+            client.post(url.clone()).json(&request)
+        })
+        .await;
 
         let error = match response_or_err(result).await {
             Ok(SiteStatusResponseV6::Data(data)) => return Ok(data),
