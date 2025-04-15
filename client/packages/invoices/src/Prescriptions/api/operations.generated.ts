@@ -113,6 +113,14 @@ export type PrescriptionRowFragment = {
             itemId: string;
             priority: number;
           }>;
+          warnings: Array<{
+            __typename: 'WarningNode';
+            warningText: string;
+            id: string;
+            itemId: string;
+            priority: boolean;
+            code: string;
+          }>;
         };
       } | null;
     }>;
@@ -224,6 +232,14 @@ export type PrescriptionLineFragment = {
         id: string;
         itemId: string;
         priority: number;
+      }>;
+      warnings: Array<{
+        __typename: 'WarningNode';
+        warningText: string;
+        id: string;
+        itemId: string;
+        priority: boolean;
+        code: string;
       }>;
     };
   } | null;
@@ -410,6 +426,14 @@ export type PrescriptionsQuery = {
                 itemId: string;
                 priority: number;
               }>;
+              warnings: Array<{
+                __typename: 'WarningNode';
+                warningText: string;
+                id: string;
+                itemId: string;
+                priority: boolean;
+                code: string;
+              }>;
             };
           } | null;
         }>;
@@ -572,6 +596,14 @@ export type PrescriptionByNumberQuery = {
                   id: string;
                   itemId: string;
                   priority: number;
+                }>;
+                warnings: Array<{
+                  __typename: 'WarningNode';
+                  warningText: string;
+                  id: string;
+                  itemId: string;
+                  priority: boolean;
+                  code: string;
                 }>;
               };
             } | null;
@@ -744,6 +776,14 @@ export type PrescriptionByIdQuery = {
                   id: string;
                   itemId: string;
                   priority: number;
+                }>;
+                warnings: Array<{
+                  __typename: 'WarningNode';
+                  warningText: string;
+                  id: string;
+                  itemId: string;
+                  priority: boolean;
+                  code: string;
                 }>;
               };
             } | null;
@@ -1181,6 +1221,9 @@ export const PrescriptionLineFragmentDoc = gql`
         code
         itemDirections {
           ...ItemDirection
+        }
+        warnings {
+          ...Warning
         }
       }
     }
