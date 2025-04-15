@@ -18,8 +18,8 @@ use repository::{ActivityLogType, RepositoryError, Vaccination, VaccinationRowRe
 mod generate;
 mod validate;
 
-use generate::{generate, CreateCustomerReturn, GenerateInput, GenerateResult};
-use validate::{validate, ValidateResult};
+use generate::{generate, CreateCustomerReturn, GenerateResult};
+use validate::validate;
 
 use super::{generate::CreatePrescription, query::get_vaccination};
 
@@ -60,26 +60,13 @@ pub fn update_vaccination(
     let vaccination = ctx
         .connection
         .transaction_sync(|connection| {
-            let ValidateResult {
-                vaccination: existing_vaccination,
-                patient_id,
-                existing_stock_line,
-                new_stock_line,
-                existing_prescription_line,
-            } = validate(&input, connection, store_id)?;
+            let validate_result = validate(&input, connection, store_id)?;
 
             let GenerateResult {
                 vaccination,
                 create_customer_return,
                 create_prescription,
-            } = generate(GenerateInput {
-                update_input: input.clone(),
-                existing_vaccination,
-                patient_id,
-                existing_stock_line,
-                new_stock_line,
-                existing_prescription_line,
-            });
+            } = generate(validate_result, input.clone());
 
             // Update the vaccination
             VaccinationRowRepository::new(connection).upsert_one(&vaccination)?;

@@ -74,6 +74,7 @@ pub struct VaccinationRow {
     pub invoice_id: Option<String>,
     pub stock_line_id: Option<String>,
     pub clinician_link_id: Option<String>,
+    /// Event date (e.g. date given, or date marked not given)
     pub vaccination_date: NaiveDate,
     pub given: bool,
     pub not_given_reason: Option<String>,
