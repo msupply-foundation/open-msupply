@@ -4146,7 +4146,6 @@ export type ItemFilterInput = {
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   /** Items that are part of a masterlist which is visible in this store OR there is available stock of that item in this store */
   isVisibleOrOnHand?: InputMaybe<Scalars['Boolean']['input']>;
-  itemWarningJoinId?: InputMaybe<EqualFilterStringInput>;
   masterListId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
@@ -9761,7 +9760,7 @@ export type VaccinationNode = {
   invoiceId?: Maybe<Scalars['String']['output']>;
   notGivenReason?: Maybe<Scalars['String']['output']>;
   stockLine?: Maybe<StockLineNode>;
-  vaccinationDate?: Maybe<Scalars['NaiveDate']['output']>;
+  vaccinationDate: Scalars['NaiveDate']['output'];
 };
 
 export type VaccineCourseConnector = {
