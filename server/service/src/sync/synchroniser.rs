@@ -307,6 +307,9 @@ impl Synchroniser {
         ctx.processors_trigger
             .trigger_processor(ProcessorType::LoadPlugin);
 
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::AssignRequisitionNumber);
+
         Ok(())
     }
 }
