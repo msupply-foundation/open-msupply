@@ -7,6 +7,7 @@ import {
   PrintFormat,
   TypedTFunction,
   useBreadcrumbs,
+  useIntlUtils,
   useParams,
   useTranslation,
   useUrlQuery,
@@ -22,7 +23,6 @@ import { Environment } from '@openmsupply-client/config';
 import { AppBarButtons } from './AppBarButton';
 import { JsonData } from '@openmsupply-client/programs';
 import { Toolbar } from './Toolbar';
-import { translateReportName } from '../utils';
 
 export const DetailView = () => {
   const { id } = useParams();
@@ -56,6 +56,7 @@ const DetailViewInner = ({
   t: TypedTFunction<LocaleKey>;
 }) => {
   const { setCustomBreadcrumbs } = useBreadcrumbs(['reports']);
+  const { translateDynamicKey } = useIntlUtils();
   const [state, setState] = useState<
     | { s: 'loading' }
     | { s: 'error'; errorMessage: string }
@@ -73,7 +74,7 @@ const DetailViewInner = ({
 
   useEffect(() => {
     setCustomBreadcrumbs({
-      1: translateReportName(t, report.name),
+      1: translateDynamicKey(`report-code.${report.code}`, report.name),
     });
 
     // Initial report generation

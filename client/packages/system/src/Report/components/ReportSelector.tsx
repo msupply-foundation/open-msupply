@@ -5,7 +5,11 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { ReportContext, useTranslation } from '@openmsupply-client/common';
+import {
+  ReportContext,
+  useIntlUtils,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { PrinterIcon } from '@common/icons';
 import { SplitButton, SplitButtonOption } from '@common/components';
 import { ReportArgumentsModal } from './ReportArgumentsModal';
@@ -51,6 +55,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
     queryParams,
   });
   const t = useTranslation();
+  const { translateDynamicKey } = useIntlUtils();
 
   // Report Content
   const onReportSelected = (
@@ -85,7 +90,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
     const reports = data
       ? data?.nodes?.map(report => ({
           value: report.id,
-          label: report.name,
+          label: translateDynamicKey(`report-code.${report.code}`, report.name),
           isDisabled: disabled,
         }))
       : [];
