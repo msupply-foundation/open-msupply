@@ -3,10 +3,6 @@
   "definitions": {
     "StockFilters": {
       "properties": {
-        "itemCode": {
-          "description": "Item Code",
-          "type": "string"
-        },
         "itemName": {
           "description": "Item Name",
           "type": "string"
@@ -26,7 +22,7 @@
         "sort": {
           "description": "sort by",
           "type": "string",
-          "enum": ["name", "code"]
+          "enum": ["name"]
         },
         "dir": {
           "description": "sort by dir",
