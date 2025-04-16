@@ -21,6 +21,12 @@ impl MigrationFragment for Migrate {
       - Changelog was inserted, so will sync to OMS Central
       - During integration OMS central will upsert vaccination - creating a changelog with the name_link_id
       - These vaccination records are now be sync-able
+
+      Note! patient_link_id is required field, so if <2.7 sites sync vaccination records to 2.7+ OMS Central, they will
+      fail to integrate. They will re-sync and integrate when remote site upgrades, but records would be lost if
+      remote site reinitialises before upgrading. Considering this low likelihood, as feature not officially rolled out
+      before 2.7.
+
     */
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
