@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use repository::{PluginDataFilter, PluginDataRow, StorePreferenceRow};
 use service::backend_plugin::types::{amc, graphql_query, transform_request_requisition_lines};
 use std::process::Command;
@@ -40,10 +40,10 @@ pub fn generate_typescript_types() -> Result<()> {
             "--nocapture",
         ])
         .status()
-        .map_err(|e| anyhow::anyhow!("Failed to run test: {}", e))?;
+        .map_err(|e| anyhow!("Failed to run test: {}", e))?;
 
     if !generate_result.success() {
-        return Err(anyhow::anyhow!("TypeScript type generation failed"));
+        return Err(anyhow!("TypeScript type generation failed"));
     }
 
     let prettier_verbose = Command::new("npx")
@@ -54,10 +54,10 @@ pub fn generate_typescript_types() -> Result<()> {
             "packages/plugins/backendCommon/generated/**/*.ts",
         ])
         .output()
-        .map_err(|e| anyhow::anyhow!("Failed to run prettier: {}", e))?;
+        .map_err(|e| anyhow!("Failed to run prettier: {}", e))?;
 
     if !prettier_verbose.status.success() {
-        return Err(anyhow::anyhow!(
+        return Err(anyhow!(
             "Prettier failed:\nstdout: {}\nstderr: {}",
             String::from_utf8_lossy(&prettier_verbose.stdout),
             String::from_utf8_lossy(&prettier_verbose.stderr),
