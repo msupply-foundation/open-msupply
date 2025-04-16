@@ -314,6 +314,17 @@ The "label" of the ui schema controls the text displayed in the front end report
 
 This function could also be used on any other serialised json value such as patient json schema.
 
+#### Translating report names
+
+Reports are translated via the unique report code.
+The translation key of the report is structured
+`report.<reportcode>`
+
+If this key does not exist in the front end common.json, the translation will fallback to the report name.
+
+Standard reports need to have a translation key added to the common.json in the client dir of OMS.
+Custom reports will use the fallback mechanism, and have client specific, human-readable name as the report name field.
+
 ### Standard and Custom Reports
 
 Reports are separated into standard and custom reports.
