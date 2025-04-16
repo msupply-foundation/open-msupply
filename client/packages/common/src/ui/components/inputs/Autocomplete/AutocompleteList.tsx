@@ -151,15 +151,9 @@ export const AutocompleteList = <T,>({
             },
           },
           listbox: {
-            sx: {
+            style: {
               minHeight: height ? `${height}` : 'auto',
               maxHeight: height ? `${height}` : 'auto',
-              '& .MuiTypography-root': {
-                maxWidth: 497,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              },
             },
           },
         }}
