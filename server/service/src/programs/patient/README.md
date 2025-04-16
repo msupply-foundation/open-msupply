@@ -31,7 +31,7 @@ Existing OMS remote sites may have patients, which may have related vaccination 
   - OMS Central receives and upserts name_store_join and name/name_link records for these patients
 - Constraints on OMS Central should then be met for pushed vaccination records, and we have the name_store_join (between patient and remote site) to know to where to sync vaccination records for this patient.
 - However, now patient `name` could exist on OMS central, without its related records. It also wouldn't get updated via sync (as Legacy mSupply doesn't know to sync patient data to OMS Central). Would be a problem if a central store is used as a dispensary.
-  - So, we add a central only processor - sees name record has been upserted, and looks up whether that patient is visible on the Central site. If not - call Legacy mSupply to add name_store_join between OMS Central and the patient. This ensure patient data is all synced correctly to OMS Central going forward.
+  - So, we add a central only processor - sees name record has been upserted, and looks up whether that patient is visible on the Central site. If not - call Legacy mSupply to add name_store_join between OMS Central and the patient. This ensures patient data is all synced correctly to OMS Central going forward.
 
 ## Fetching Legacy mSupply patients
 
@@ -52,17 +52,17 @@ Risks: the `link_patient_to_store` is a one time mutation, and can't be done in 
 
 - Both central servers are on same server, if can connect to one, should be able to connect to both, and shouldn't be a connectivity risk between the two central servers. This can't be guaranteed in all cases though.
 
+## New patient created in OMS remote site
+
+Creating a new patient on OMS remote site will create new name and name_store_join records. We sync this to both Legacy mSupply Central and OMS Central. All future records will have constraints met.
+
+Central only processor will see the new name record, and check if the patient is visible on the Central site. If not, it will call Legacy mSupply to add name_store_join between OMS Central and the patient. This ensures patient data is all synced correctly to OMS Central going forward.
+
 ## Re-initialising a site
 
 After above migrations, patient `name` and `name_link` records should exist on OMS Central server, vaccination changelogs should have correct `name_link_id` set, and `name_store_join` record for remote store to patient should exist. When site re-initialises, vaccination records should be included via name_store_join.
 
 There is a small use case - remote site is upgraded 2.7, but re-initialised before syncing. If there are vaccination records, they will be orphaned. (Per point 3 of 2.7 Changes, on OMS central the vaccination changelogs wouldn't have name_link_id, so wouldn't get re-fetched on initialisation.) Given low likelihood of existing vaccination records, and of reinitialising before a sync, we can ignore this case.
-
-## New patient created in OMS remote site
-
-Creating a new patient on OMS remote site will create new name and name_store_join records. We sync this to both Legacy mSupply Central and OMS Central. All future records will have constraints met.
-
-We should probably ensure OMS Central adds its own name_store_join for the new patient, for if patient is merged etc.
 
 ## Patient merge
 

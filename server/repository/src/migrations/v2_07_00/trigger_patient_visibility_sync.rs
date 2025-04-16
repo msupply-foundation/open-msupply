@@ -15,6 +15,8 @@ impl MigrationFragment for Migrate {
 
             // So on upgrade to 2.7, create changelog for all patients + their name_store_joins
             // Triggering remote sites to push all their patient to OMS central
+
+            // See README in service/src.programs/patient
             r#"
                 INSERT INTO changelog (table_name, record_id, row_action, store_id, name_link_id)
                     SELECT 'name_store_join', id, 'UPSERT', store_id, name_link_id

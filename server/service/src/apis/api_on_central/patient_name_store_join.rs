@@ -44,14 +44,7 @@ pub async fn add_patient_name_store_join(
     let ctx = service_provider.basic_context()?;
     validate_site_auth(sync_v5_settings).await?;
 
-    // Name link id will be created when patient is inserted
-    // patient would have been inserted because remote site would send
-    // patient to both OMS and OG central
-
-    // TODO: I think we should also do this whenever patient record arrives via sync on OMS central?
-    // Ensure we have visibility? Specifically for if patient gets merged...
-
-    // Check patient exists (see patient readme)
+    // Check patient exists (see README in service/programs/patient)
     if check_patient_exists(&ctx.connection, &name_id)?.is_none() {
         add_patient_to_central(service_provider, &ctx, &name_id).await?;
     }
@@ -113,10 +106,16 @@ async fn wait_for_sync(
             }
         };
 
-        // TODO, race condition, may not have started syncing yet in first loop?
-        // Could check for patient here actually...
+        // Potential race condition, sync is triggered in separate process so may not
+        // have started syncing yet in first loop - so name_store_join constrain would fail
         if !sync_status.is_syncing {
             break;
+
+            // Could do this - but if sync fails for some reason, we'd never get out of the loop
+            // Maybe most robust is do this check, but with a timeout?
+            // if check_patient_exists(&ctx.connection, &name_id)?.is_some() {
+            //     break;
+            // }
         }
         // Brief pause to avoid busy loop
         let duration = Duration::from_millis(500);
