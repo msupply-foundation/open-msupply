@@ -211,7 +211,22 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         popper: popper,
       }}
       slotProps={{
-        listbox: listboxProps,
+        listbox: {
+          ...listboxProps,
+          sx: {
+            '& .MuiBox-root:nth-child(2)': {
+              // select second child
+              width: 'calc(100% - 16px)', // Adjusted width for second box
+              overflow: 'hidden',
+              '& .MuiTypography-root': {
+                width: '100%', // Let typography take full width of its parent
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              },
+            },
+          },
+        },
       }}
     />
   );
