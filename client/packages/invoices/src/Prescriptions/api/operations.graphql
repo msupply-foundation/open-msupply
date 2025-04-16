@@ -121,6 +121,9 @@ fragment PrescriptionLine on InvoiceLineNode {
     itemDirections {
       ...ItemDirection
     }
+    warnings {
+      ...Warning
+    }
   }
 
   location {
@@ -149,6 +152,9 @@ fragment PrescriptionLine on InvoiceLineNode {
       itemDirections {
         ...ItemDirection
       }
+      warnings {
+        ...Warning
+      }
     }
   }
 }
@@ -159,6 +165,15 @@ fragment ItemDirection on ItemDirectionNode {
   id
   itemId
   priority
+}
+
+fragment Warning on WarningNode {
+  __typename
+  warningText
+  id
+  itemId
+  priority
+  code
 }
 
 fragment PartialPrescriptionLine on StockLineNode {
@@ -176,6 +191,9 @@ fragment PartialPrescriptionLine on StockLineNode {
     code
     itemDirections {
       ...ItemDirection
+    }
+    warnings {
+      ...Warning
     }
   }
   location {
