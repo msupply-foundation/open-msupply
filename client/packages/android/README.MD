@@ -28,10 +28,10 @@ Install NDK (26.1.10909125 at the time of writing on the 8/4/24) (Instructions [
 
 Currently we support two Android architectures (32bit and 64bit);
 
-| rust target             | android ABI |
-| ----------------------- | ----------- |
-| aarch64-linux-android   | arm64-v8a   |
-| armv7-linux-androideabi | armeabi-v7a |
+| rust target             | android ABI | Type  |
+| ----------------------- | ----------- | ----- |
+| aarch64-linux-android   | arm64-v8a   | 64bit |
+| armv7-linux-androideabi | armeabi-v7a | 32bit |
 
 To add these targets run:
 
@@ -112,10 +112,21 @@ For this reason it's often easier to run the following scripts in the `client` d
 
 # Build the frontend and the server libs
 yarn android:build:server
-# Build the frontend and assembles an Android debug apk
+# Build the frontend and assembles the Android debug apks for each architecture
 yarn android:build:debug
-# Build the frontend and assembles an Android release apk
+# Build the frontend and assembles an Android release apk for each architecture
 yarn android:build:release
+```
+
+Sometimes you may want to build just one apk. The following scripts can be run to build only the Arm64 apk for a smaller file size and quicker build time.
+
+```bash
+# in the android directory:
+
+# Build the frontend and assembles the Android debug apks for Arm64 architecture
+yarn build:debug && ./gradlew assembleArm64Debug
+# Build the frontend and assembles an Android release apk for Arm64 architecture
+yarn build:release && ./gradlew assembleArm64Release
 ```
 
 ### Known script issues
@@ -126,11 +137,9 @@ If encountering errors such as "Failed to find tool." Check the `server/android/
 
 ## Building APKs
 
-There are two types of apks that can be built locally - Debug and Release. See below sections for each type
+There are two types of apks that can be built locally - Debug and Release. See below sections for each type. Each of these can be built with either architecture compatibility - arm64 or universal
 
-You will find the resulting apks in `client/packages/android/app/build/outputs/apk/`. There will be a folder for each architecture built (arm64 and universal), and within these a folder for the type generated which contains the apk file.
-
-The Universal apk contains both 32bit and 64bit architecture, so can be run on either device type.
+You will find the resulting apks in `client/packages/android/app/build/outputs/apk/`. There will be a folder for each architecture built , and within these a folder for the type generated which contains the apk file.
 
 ```
 client/packages/android/app/build/
@@ -148,6 +157,45 @@ client/packages/android/app/build/
                    └─ open-msupply-universal-release.apk
 
 ```
+
+### Architectures
+
+We have two apk product flavors configured with Gradle in client/packages/android/app/build.gradle - Arm64 and Universal.
+
+Flavors:
+Arm64 flavor runs on 64bit devices only.
+Universal flavor contains both 32bit and 64bit architecture, so can be run on either device type. This has a much larger file size.
+
+We have chosen this design to optimise the rollout of new versions - one apk can be downloaded and installed on all devices at a site. If a site doesn't doesn't need 32bit compatibility, the smaller Arm64 file can used.
+
+When creating a build through either `yarn android:build:debug` or `yarn android:build:release`, an apk for each flavor will be created from the one command.
+
+#### How the flavors work
+
+This is the flavor configuration in the build.gradle file:
+
+```flavorDimensions "abi"
+productFlavors {
+arm64 {
+dimension "abi"
+applicationIdSuffix ".arm64"
+versionNameSuffix "-arm64"
+ndk {
+abiFilters "arm64-v8a"
+}
+}
+universal {
+dimension "abi"
+applicationIdSuffix ".universal"
+versionNameSuffix "-universal"
+ndk {
+abiFilters "armeabi-v7a", "arm64-v8a"
+}
+}
+}
+```
+
+The ABI (application binary interface) refers to the CPU architecture that the application is built to run on. Each product flavor specifies the target ABI in the ndk configuration. This allows us to build the apk for different device types.
 
 ## Debugging
 
@@ -231,13 +279,15 @@ Capacitor comes with cli, we mainly use `npx cap copy` (or `yarn apply-config`),
 When adding plugins - add them to the android package; if they are not here, then `npx cap sync` does not detect them. You should see
 
 ```
+
 ✔ Updating Android plugins in 2.09ms
 [info] Found 3 Capacitor plugins for android:
-       @capacitor-community/barcode-scanner@3.0.3
-       @capacitor/keyboard@4.1.1
-       @capacitor/preferences@4.0.2
+@capacitor-community/barcode-scanner@3.0.3
+@capacitor/keyboard@4.1.1
+@capacitor/preferences@4.0.2
 [info] Found 1 Cordova plugin for android:
-       cordova-plugin-printer@0.8.0
+cordova-plugin-printer@0.8.0
+
 ```
 
 with the new plugin showing up under the Cordova or Capacitor plugins sections.
@@ -281,3 +331,7 @@ If you get AGP compatibility error in Android Studio during gradle sync, you wil
 ### Failed to find/build :capacitor
 
 Run `npx cap sync` from android directory
+
+```
+
+```
