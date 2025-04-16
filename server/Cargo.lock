@@ -2027,6 +2027,7 @@ dependencies = [
  "simple_logger",
  "thiserror 1.0.69",
  "tokio",
+ "ts-rs",
  "util",
 ]
 
