@@ -3,10 +3,10 @@ import {
   AlertIcon,
   AppNavLink,
   RadioIcon,
+  SyncErrorVariant,
   useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
-import { getBadgeProps } from '../../utils';
 import { useSync } from '@openmsupply-client/system';
 import { useSyncModal } from '../Sync';
 
@@ -17,25 +17,39 @@ export const SyncNavLink = () => {
   const theme = useTheme();
   const showSync = useSyncModal();
 
-  const { syncStatus, numberOfRecordsInPushQueue } = useSync.utils.syncInfo(
+  const { syncStatus } = useSync.utils.syncInfo(
     POLLING_INTERVAL_IN_MILLISECONDS
   );
 
-  // the Badge does not show if the content is 0
-  // somehow though the numberOfRecordsInPushQueue can be '0' which does show
-  const syncCount = Number(numberOfRecordsInPushQueue);
-  const badgeProps = getBadgeProps(Number.isNaN(syncCount) ? 0 : syncCount);
+  const warningThreshold = syncStatus?.warningThreshold || 1;
+  const errorThreshold = syncStatus?.errorThreshold || 3;
+  const lastSuccessfulSync = syncStatus?.lastSuccessfulSync?.finished;
+  let showWarning = false;
+  let showError =
+    !!syncStatus?.error?.variant &&
+    syncStatus?.error?.variant !== SyncErrorVariant.ConnectionError;
 
-  if (syncStatus && syncStatus.error) {
-    badgeProps.color = 'default';
-    badgeProps.badgeContent = (
+  if (lastSuccessfulSync && !showError) {
+    const now = new Date();
+    const lastSuccessfulSyncDate = new Date(lastSuccessfulSync).valueOf();
+    const warningDate = new Date(now).setDate(now.getDate() - warningThreshold);
+    const errorDate = new Date(now).setDate(now.getDate() - errorThreshold);
+
+    showWarning = lastSuccessfulSyncDate < warningDate;
+    showError = lastSuccessfulSyncDate < errorDate;
+  }
+
+  const badgeProps = (showError || showWarning) && {
+    badgeContent: (
       <AlertIcon
-        color="error"
+        color={showError ? 'error' : 'warning'}
         fontSize="small"
         fill={theme.palette.background.drawer}
       />
-    );
-  }
+    ),
+    color: 'default' as 'primary' | 'default',
+  };
+
   return (
     <AppNavLink
       to="sync"
@@ -46,7 +60,7 @@ export const SyncNavLink = () => {
       }}
       icon={<RadioIcon fontSize="small" color="primary" />}
       text={t('sync')}
-      badgeProps={badgeProps}
+      badgeProps={badgeProps || undefined}
     />
   );
 };

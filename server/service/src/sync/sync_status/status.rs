@@ -207,7 +207,7 @@ impl SyncStatusTrait for SyncStatusService {}
 
 /// * If there are no sync logs then: PreInitialisation
 /// * If sync log sorted by done datetime has a value in done datetime: Initialised
-/// * If sync log sorted by done datetime has not valule in done datetime: Initialising
+/// * If sync log sorted by done datetime has not value in done datetime: Initialising
 fn get_initialisation_status(
     ctx: &ServiceContext,
 ) -> Result<InitialisationStatus, RepositoryError> {
