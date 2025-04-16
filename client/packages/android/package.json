@@ -17,8 +17,9 @@
   },
   "scripts": {
     "build:server": "./build_remote_server_libs.sh",
+    "//": "assembleDebug and assembleRelease will build both arm64 and universal flavors in client/packages/android/app/build.gradle",
     "build:debug": "yarn build:server && ./gradlew assembleDebug",
-    "build:release": "yarn build:server && ./gradlew assembleArm64Release assembleUniversalRelease",
+    "build:release": "yarn build:server && ./gradlew assembleRelease",
     "apply-config": "npx cap copy"
   },
   "dependencies": {
