@@ -114,7 +114,7 @@ For this reason it's often easier to run the following scripts in the `client` d
 yarn android:build:server
 # Build the frontend and assembles the Android debug apks for each architecture
 yarn android:build:debug
-# Build the frontend and assembles an Android release apk for each architecture
+# Build the frontend and assembles the Android release apks for each architecture
 yarn android:build:release
 ```
 
@@ -331,7 +331,3 @@ If you get AGP compatibility error in Android Studio during gradle sync, you wil
 ### Failed to find/build :capacitor
 
 Run `npx cap sync` from android directory
-
-```
-
-```
