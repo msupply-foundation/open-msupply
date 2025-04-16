@@ -1,4 +1,4 @@
-use log::info;
+use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use tokio::time::{sleep, Duration};
 use util::format_error;
@@ -46,6 +46,9 @@ pub async fn add_patient_name_store_join(
 
     // Check patient exists (see README in service/programs/patient)
     if check_patient_exists(&ctx.connection, &name_id)?.is_none() {
+        info!(
+        "Attempting to add name_store_join for a patient not visible on OMS Central, requesting patient data..."
+    );
         add_patient_to_central(service_provider, &ctx, &name_id).await?;
     }
 
@@ -67,9 +70,10 @@ async fn add_patient_to_central(
     let central_store_id = ActiveStoresOnSite::get(&ctx.connection)?
         .store_ids()
         .first()
-        .ok_or(CentralApiError::InternalError(
-            "No active stores on site".to_string(),
-        ))?
+        .ok_or_else(|| {
+            error!("No active stores found for this site");
+            CentralApiError::InternalError("Central server misconfigured".to_string())
+        })?
         .to_owned();
 
     // Add visibility for this patient to central site
@@ -82,6 +86,7 @@ async fn add_patient_to_central(
 
     // TODO: possibly should check is not pre-initialisation here?
     service_provider.sync_trigger.trigger(None);
+    info!("Sync cycle triggered to receive patient records");
 
     wait_for_sync(service_provider, &ctx, name_id).await?;
 
@@ -99,8 +104,10 @@ async fn wait_for_sync(
     loop {
         // Check if we've exceeded the timeout
         if start_time.elapsed() > timeout {
+            error!("Timeout waiting for sync to complete");
+
             return Err(CentralApiError::InternalError(
-                "Timeout waiting for sync to complete".to_string(),
+                "Error adding patient visibility".to_string(),
             ));
         }
 
@@ -114,9 +121,10 @@ async fn wait_for_sync(
         {
             Some(sync_status) => sync_status,
             None => {
+                error!("Could not find latest sync log");
                 return Err(CentralApiError::InternalError(
-                    "Sync log not found".to_string(),
-                ))
+                    "Error adding patient visibility".to_string(),
+                ));
             }
         };
 
@@ -126,9 +134,11 @@ async fn wait_for_sync(
         if !sync_status.is_syncing {
             // If sync finished but integration of patient failed, will break after timeout
             if check_patient_exists(&ctx.connection, &name_id)?.is_some() {
+                info!("Patient data received");
                 break;
             }
         }
+        debug!("Patient not yet found, awaiting sync completion...");
     }
 
     Ok(())
