@@ -215,11 +215,10 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
           ...listboxProps,
           sx: {
             '& .MuiBox-root:nth-child(2)': {
-              // select second child
-              width: 'calc(100% - 16px)', // Adjusted width for second box
+              width: 'calc(100% - 16px)',
               overflow: 'hidden',
               '& .MuiTypography-root': {
-                width: '100%', // Let typography take full width of its parent
+                width: '100%',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
