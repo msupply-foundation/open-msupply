@@ -7255,6 +7255,7 @@ export type ReportFilterInput = {
 export type ReportNode = {
   __typename: 'ReportNode';
   argumentSchema?: Maybe<FormSchemaNode>;
+  code: Scalars['String']['output'];
   context: ReportContext;
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
