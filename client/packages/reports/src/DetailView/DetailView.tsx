@@ -133,7 +133,10 @@ const DetailViewInner = ({
           }
         }
       } catch (error) {
-        console.error(error);
+        setState({
+          s: 'error',
+          errorMessage: t('error.failed-to-generate-report'),
+        });
       }
     },
     []
@@ -178,7 +181,7 @@ const DetailViewInner = ({
           } else {
             setState({
               s: 'error',
-              errorMessage: t('error.no-permission-report'),
+              errorMessage: t('error.failed-to-generate-report'),
             });
           }
         } else {
@@ -187,6 +190,10 @@ const DetailViewInner = ({
       }
     } catch (error) {
       console.error(error);
+      setState({
+        s: 'error',
+        errorMessage: t('error.failed-to-generate-report'),
+      });
     }
   }, [reportArgs]);
 
