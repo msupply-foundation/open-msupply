@@ -46,6 +46,29 @@ pub fn generate_typescript_types() -> Result<()> {
         return Err(anyhow::anyhow!("TypeScript type generation failed"));
     }
 
+    let prettier_verbose = Command::new("npx")
+        .current_dir("../client")
+        .args([
+            "prettier",
+            "--write",
+            "packages/plugins/backendCommon/generated/**/*.ts",
+        ])
+        .output()
+        .map_err(|e| anyhow::anyhow!("Failed to run prettier: {}", e))?;
+
+    if !prettier_verbose.status.success() {
+        return Err(anyhow::anyhow!(
+            "Prettier failed:\nstdout: {}\nstderr: {}",
+            String::from_utf8_lossy(&prettier_verbose.stdout),
+            String::from_utf8_lossy(&prettier_verbose.stderr),
+        ));
+    }
+
+    println!(
+        "Prettier output:\n{}",
+        String::from_utf8_lossy(&prettier_verbose.stdout)
+    );
+
     println!("TypeScript types generation completed successfully");
     Ok(())
 }
@@ -56,6 +79,7 @@ mod tests {
     #[test]
     #[ignore]
     fn export_plugin_typescript() {
-        PluginTypes::export_all_to("../../client/packages/plugins/backendTypes/generated").unwrap();
+        PluginTypes::export_all_to("../../client/packages/plugins/backendCommon/generated")
+            .unwrap();
     }
 }
