@@ -83,7 +83,7 @@ async fn add_patient_to_central(
     // TODO: possibly should check is not pre-initialisation here?
     service_provider.sync_trigger.trigger(None);
 
-    wait_for_sync(service_provider, &ctx).await?;
+    wait_for_sync(service_provider, &ctx, name_id).await?;
 
     Ok(())
 }
@@ -91,9 +91,23 @@ async fn add_patient_to_central(
 async fn wait_for_sync(
     service_provider: &ServiceProvider,
     ctx: &ServiceContext,
+    name_id: &str,
 ) -> Result<(), CentralApiError> {
-    // TODO: infinite loop protection
+    let timeout = Duration::from_secs(30);
+    let start_time = tokio::time::Instant::now();
+
     loop {
+        // Check if we've exceeded the timeout
+        if start_time.elapsed() > timeout {
+            return Err(CentralApiError::InternalError(
+                "Timeout waiting for sync to complete".to_string(),
+            ));
+        }
+
+        // Brief pause to avoid busy loop, and hopefully give time for sync to start
+        let duration = Duration::from_millis(500);
+        sleep(duration).await;
+
         let sync_status = match service_provider
             .sync_status_service
             .get_latest_sync_status(ctx)?
@@ -107,19 +121,14 @@ async fn wait_for_sync(
         };
 
         // Potential race condition, sync is triggered in separate process so may not
-        // have started syncing yet in first loop - so name_store_join constrain would fail
+        // have started syncing yet in first loop
+        // More robust to check patient record has been received
         if !sync_status.is_syncing {
-            break;
-
-            // Could do this - but if sync fails for some reason, we'd never get out of the loop
-            // Maybe most robust is do this check, but with a timeout?
-            // if check_patient_exists(&ctx.connection, &name_id)?.is_some() {
-            //     break;
-            // }
+            // If sync finished but integration of patient failed, will break after timeout
+            if check_patient_exists(&ctx.connection, &name_id)?.is_some() {
+                break;
+            }
         }
-        // Brief pause to avoid busy loop
-        let duration = Duration::from_millis(500);
-        sleep(duration).await;
     }
 
     Ok(())
