@@ -1,5 +1,4 @@
 import React, { FC, ReactElement } from 'react';
-
 import {
   useDialog,
   useFormErrors,
@@ -90,8 +89,6 @@ export const InsuranceModal: FC = (): ReactElement => {
     if (insuranceId !== undefined) await handleInsuranceUpdate();
     else await handleInsuranceInsert();
   };
-
-  console.log('draft.discountPercentage', draft.discountPercentage);
 
   return (
     <Modal
