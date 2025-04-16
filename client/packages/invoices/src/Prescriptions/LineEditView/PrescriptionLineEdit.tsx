@@ -78,10 +78,9 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
     setIsAutoAllocated(autoAllocated);
     if (showZeroQuantityConfirmation && numPacks !== 0)
       setShowZeroQuantityConfirmation(false);
-    // Don't make saveable (isDirty) if no quantity issued
-    if (numPacks === 0) {
-      setIsDirty(false);
-    }
+
+    // Don't allow save if both prescribed quantity and allocated packs are zero
+    if (prescribedQuantity === 0 && numPacks === 0) setIsDirty(false);
 
     return newAllocateQuantities;
   };

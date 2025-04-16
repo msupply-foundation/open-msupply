@@ -14,6 +14,7 @@ import {
   useCallbackWithPermission,
   UserPermission,
   usePluginEvents,
+  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButtons';
@@ -76,6 +77,14 @@ export const StockLineDetailView: React.FC = () => {
     message: t('messages.confirm-cancel-generic'),
     title: t('heading.are-you-sure'),
   });
+
+  const { setIsDirty } = useConfirmOnLeaving('view-stock');
+
+  useEffect(() => {
+    // Getting isDirty from 'draftStockLine' rather than from 'useConfirmOnLeaving' hook
+    // so need to update it manually to sync external isDirty state with hook's isDirty state
+    setIsDirty(isDirty);
+  }, [isDirty]);
 
   const openInventoryAdjustmentModal = useCallbackWithPermission(
     UserPermission.InventoryAdjustmentMutate,

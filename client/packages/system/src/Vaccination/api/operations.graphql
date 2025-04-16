@@ -30,6 +30,9 @@ fragment VaccinationDetail on VaccinationNode {
   }
   invoice {
     id
+    store {
+      id
+    }
   }
   notGivenReason
   comment

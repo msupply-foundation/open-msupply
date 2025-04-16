@@ -75,6 +75,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             insurance_discount_percentage: None,
             cancelled_datetime: None,
             is_cancellation: false,
+            expected_delivery_date: None,
         };
         let base_invoice_line_row = InvoiceLineRow {
             id: uuid(),
@@ -100,6 +101,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             return_reason_id: None,
             item_variant_id: None,
             prescribed_quantity: None,
+            linked_invoice_id: None,
         };
         let invoice_row_1 = base_invoice_row.clone();
         let invoice_line_row_1 = base_invoice_line_row.clone();

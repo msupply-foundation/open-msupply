@@ -132,11 +132,11 @@ impl Synchroniser {
         })
     }
 
-    pub(crate) async fn sync(&self) -> Result<(), SyncError> {
+    pub(crate) async fn sync(&self, fetch_patient_id: Option<String>) -> Result<(), SyncError> {
         let ctx = self.service_provider.basic_context()?;
         let mut logger = SyncLogger::start(&ctx.connection)?;
 
-        let sync_result = self.sync_inner(&mut logger, &ctx).await;
+        let sync_result = self.sync_inner(&mut logger, &ctx, fetch_patient_id).await;
 
         if let Err(error) = &sync_result {
             logger.error(error)?;
@@ -152,6 +152,7 @@ impl Synchroniser {
         &self,
         logger: &mut SyncLogger<'a>,
         ctx: &'a ServiceContext,
+        fetch_patient_id: Option<String>,
     ) -> Result<(), SyncError> {
         let batch_size = &self.settings.batch_size;
         let sync_status_service = &self.service_provider.sync_status_service;
@@ -247,9 +248,23 @@ impl Synchroniser {
         if let Some(v6_sync) = &v6_sync {
             logger.start_step(SyncStep::PullCentralV6)?;
 
-            v6_sync
-                .pull(&ctx.connection, 20, is_initialised, logger)
-                .await?;
+            match fetch_patient_id {
+                Some(patient_id) => {
+                    v6_sync
+                        .patient_pull(&ctx.connection, batch_size.central_pull, patient_id, logger)
+                        .await?;
+                }
+                None => {
+                    v6_sync
+                        .pull(
+                            &ctx.connection,
+                            batch_size.central_pull,
+                            is_initialised,
+                            logger,
+                        )
+                        .await?;
+                }
+            }
 
             logger.done_step(SyncStep::PullCentralV6)?;
         }
@@ -291,6 +306,9 @@ impl Synchroniser {
 
         ctx.processors_trigger
             .trigger_processor(ProcessorType::LoadPlugin);
+
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::AssignRequisitionNumber);
 
         Ok(())
     }
@@ -415,10 +433,10 @@ mod tests {
         .unwrap();
 
         // First check that synch fails (due to wrong url)
-        assert!(s.sync().await.is_err());
+        assert!(s.sync(None).await.is_err());
 
         // Check that disabling return Ok(())
         service.disable_sync(&ctx).unwrap();
-        assert!(s.sync().await.is_ok());
+        assert!(s.sync(None).await.is_ok());
     }
 }
