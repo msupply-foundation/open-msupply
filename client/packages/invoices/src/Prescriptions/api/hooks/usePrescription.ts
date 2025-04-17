@@ -135,7 +135,7 @@ const useGetById = (invoiceId: string | undefined) => {
     if (invoice?.__typename === 'InvoiceNode') {
       return invoice;
     } else {
-      console.log('No invoice found', invoiceId);
+      console.error('No invoice found', invoiceId);
       throw new Error(`Could not find invoice ${invoiceId}`);
     }
   };
