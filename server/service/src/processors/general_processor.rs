@@ -13,6 +13,7 @@ use crate::{
 };
 
 use super::{
+    add_central_patient_visibility::AddPatientVisibilityForCentral,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin,
 };
@@ -36,6 +37,7 @@ pub enum ProcessorType {
     ContactFormEmail,
     LoadPlugin,
     AssignRequisitionNumber,
+    AddPatientVisibilityForCentral,
 }
 
 impl ProcessorType {
@@ -44,6 +46,9 @@ impl ProcessorType {
             ProcessorType::ContactFormEmail => Box::new(QueueContactEmailProcessor),
             ProcessorType::LoadPlugin => Box::new(LoadPlugin),
             ProcessorType::AssignRequisitionNumber => Box::new(AssignRequisitionNumber),
+            ProcessorType::AddPatientVisibilityForCentral => {
+                Box::new(AddPatientVisibilityForCentral)
+            }
         }
     }
 }
