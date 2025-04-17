@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { useTranslation } from '@openmsupply-client/common';
+import {
+  alpha,
+  DetailInputWithLabelRow,
+  Theme,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
 import { FlatButton } from '@common/components';
 import { SortAscIcon, SortDescIcon } from '@common/icons';
-import { alpha, DetailInputWithLabelRow, Theme } from 'packages/common/src';
 
 export const SortToggleTester = rankWith(10, uiTypeIs('SortToggle'));
 
