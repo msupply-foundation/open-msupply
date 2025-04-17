@@ -26,7 +26,7 @@
         },
         "dir": {
           "description": "sort by dir",
-          "type": "boolean",
+          "type": ["string", "null"],
           "format": "SortToggle"
         },
         "monthlyConsumptionLookBackPeriod": {
