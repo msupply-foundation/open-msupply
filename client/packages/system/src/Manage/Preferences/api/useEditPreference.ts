@@ -30,7 +30,7 @@ export const useEditPreference = (key: string) => {
       throw new Error('Could not update preferences');
     },
     {
-      onSuccess: () => queryClient.invalidateQueries(['prefsByKey', key]),
+      onSuccess: () => queryClient.invalidateQueries(['preferences']),
     }
   );
 };
