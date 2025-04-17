@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-// import { useTranslation, LocaleKey } from '@openmsupply-client/common';
-// import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
+import { useTranslation } from '@openmsupply-client/common';
+import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
 import { FlatButton } from '@common/components';
 import { SortAscIcon, SortDescIcon } from '@common/icons';
 import { alpha, DetailInputWithLabelRow, Theme } from 'packages/common/src';
@@ -13,7 +13,7 @@ type SortDirection = 'asc' | 'desc' | null;
 
 const UIComponent = (props: ControlProps) => {
   const { handleChange, label, path, enabled } = props;
-  // const t = useTranslation();
+  const t = useTranslation();
   const [sortDirection, setSortDirection] = useState<SortDirection>();
 
   if (!props.visible) {
@@ -38,28 +38,28 @@ const UIComponent = (props: ControlProps) => {
   };
 
   return (
-    <>
-      <DetailInputWithLabelRow
-        label={label}
-        DisabledInput={!enabled}
-        Input={
-          <>
-            <FlatButton
-              label={'Ascending'}
-              onClick={() => handleClick('asc')}
-              startIcon={<SortAscIcon />}
-              sx={[getSelectedSx('asc') || {}, { borderRadius: 24 }]}
-            />
-            <FlatButton
-              label={'Descending'}
-              onClick={() => handleClick('desc')}
-              startIcon={<SortDescIcon />}
-              sx={[getSelectedSx('desc') || {}, { borderRadius: 24 }]}
-            />
-          </>
-        }
-      />
-    </>
+    <DetailInputWithLabelRow
+      label={label}
+      DisabledInput={!enabled}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      sx={DefaultFormRowSx}
+      Input={
+        <>
+          <FlatButton
+            label={t('report.ascending')}
+            onClick={() => handleClick('asc')}
+            startIcon={<SortAscIcon />}
+            sx={[getSelectedSx('asc') || {}, { borderRadius: 24 }]}
+          />
+          <FlatButton
+            label={t('report.descending')}
+            onClick={() => handleClick('desc')}
+            startIcon={<SortDescIcon />}
+            sx={[getSelectedSx('desc') || {}, { borderRadius: 24 }]}
+          />
+        </>
+      }
+    />
   );
 };
 
