@@ -17,6 +17,8 @@ import {
   useStockList,
   useLocationList,
   useMasterLists,
+  LocationSearchInput,
+  LocationRowFragment,
 } from '@openmsupply-client/system';
 import {
   Box,
@@ -27,7 +29,6 @@ import {
 } from '@openmsupply-client/common';
 
 const LABEL_FLEX = '0 0 150px';
-
 interface CreateStocktakeArgs {
   masterListId: string;
   locationId: string;
@@ -68,6 +69,9 @@ export const CreateStocktakeButton: React.FC<{
   const { localisedDate } = useFormatDateTime();
   const [createStocktakeArgs, setCreateStocktakeArgs] =
     useState<CreateStocktakeArgs>(DEFAULT_ARGS);
+
+  const [selectedLocation, setSelectedLocation] =
+    useState<LocationRowFragment | null>(null);
 
   const generateComment = () => {
     const { locationId, masterListId, itemsHaveStock } = createStocktakeArgs;
@@ -215,16 +219,17 @@ export const CreateStocktakeButton: React.FC<{
                         {t('messages.no-locations')}
                       </Typography>
                     ) : (
-                      <Select
-                        fullWidth
-                        onChange={event =>
+                      <LocationSearchInput
+                        onChange={location => {
+                          setSelectedLocation(location);
                           setCreateStocktakeArgs({
                             ...DEFAULT_ARGS,
-                            locationId: event.target.value?.toString(),
-                          })
-                        }
-                        options={locations}
-                        value={createStocktakeArgs.locationId}
+                            locationId: location?.id ?? '',
+                          });
+                        }}
+                        width={380}
+                        disabled={false}
+                        selectedLocation={selectedLocation}
                       />
                     )
                   }
