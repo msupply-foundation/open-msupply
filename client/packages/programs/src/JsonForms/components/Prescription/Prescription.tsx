@@ -58,7 +58,10 @@ const UIComponent = (props: ControlProps) => {
   const prescriptionIdPath = options?.prescriptionIdPath;
   const prescriptionId = extractProperty(core?.data, prescriptionIdPath ?? '');
   const {
-    query: { data: prescription, loading },
+    query: {
+      data: prescription,
+      // loading
+    },
     create: { create },
   } = usePrescription(prescriptionId);
 
