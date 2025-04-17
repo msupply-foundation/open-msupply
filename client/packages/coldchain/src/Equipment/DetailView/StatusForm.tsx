@@ -14,7 +14,9 @@ import {
   InsertAssetLogInput,
   StatusType,
   useDebounceCallback,
-  useIsSmallScreen,
+  useAppTheme,
+  useMediaQuery,
+  Breakpoints,
 } from '@openmsupply-client/common';
 import { FileList } from '../Components';
 import { parseLogStatus } from '../utils';
@@ -81,7 +83,8 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
   const t = useTranslation();
   const isGaps = useIsGapsStoreOnly();
   const isNative = Capacitor.isNativePlatform();
-  const isSmallScreen = useIsSmallScreen();
+  const theme = useAppTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.md));
   const debouncedOnChange = useDebounceCallback(
     (patch: Partial<InsertAssetLogInput>) => onChange(patch),
     [onChange],
