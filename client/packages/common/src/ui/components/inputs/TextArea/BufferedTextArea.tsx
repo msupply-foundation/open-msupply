@@ -24,6 +24,9 @@ export const BufferedTextArea: FC<StandardTextFieldProps> = ({
           ...slotProps?.input,
           sx: {
             backgroundColor: 'white',
+            // Ignoring below, see https://github.com/mui/material-ui/issues/45041
+            // @ts-expect-error: use mergeSlotProps when it's available in MUI-6
+            ...slotProps?.input?.sx,
           },
         },
       }}
