@@ -62,7 +62,7 @@ pub async fn link_patient_to_store(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let result = link_patient_to_store_service(service_provider, context, store_id, name_id).await;
+    let result = link_patient_to_store_service(service_provider, &context, store_id, name_id).await;
     map_result(result)
 }
 
