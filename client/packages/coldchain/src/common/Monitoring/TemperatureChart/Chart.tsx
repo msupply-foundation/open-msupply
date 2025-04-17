@@ -19,6 +19,7 @@ import {
   useMediaQuery,
   useAppTheme,
   useUrlQuery,
+  Breakpoints,
 } from '@openmsupply-client/common';
 import { BreachPopover } from './BreachPopover';
 import { BreachDot, DotProps } from './types';
@@ -73,7 +74,9 @@ export const Chart = ({
 }) => {
   const t = useTranslation();
   const theme = useAppTheme();
-  const isExtraSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const isExtraSmallScreen = useMediaQuery(
+    theme.breakpoints.down(Breakpoints.sm)
+  );
 
   const { dayMonthTime, customDate } = useFormatDateTime();
   const dateFormatter = (date: Date) => dayMonthTime(date);
