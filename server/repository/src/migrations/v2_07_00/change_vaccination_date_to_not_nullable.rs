@@ -12,6 +12,13 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
+                    -- prepare to make the vaccination_date column not null by deleting 
+                    -- all records with null vaccination_dates and their changelogs.
+                    DELETE FROM changelog WHERE record_id IS (
+                        SELECT id FROM vaccination WHERE vaccination_date IS NULL
+                    );
+                    DELETE FROM vaccination WHERE vaccination_date IS NULL;
+                    -- make the vaccination_date column not null
                     ALTER TABLE vaccination ALTER COLUMN vaccination_date SET NOT NULL;
                 "#,
             )?;
@@ -19,6 +26,13 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
+                -- prepare to make the vaccination_date column not null by deleting 
+                -- all records with null vaccination_dates and their changelogs.
+                DELETE FROM changelog WHERE record_id IS (
+                    SELECT id FROM vaccination WHERE vaccination_date IS NULL
+                );
+                DELETE FROM vaccination WHERE vaccination_date IS NULL;
+                -- make the vaccination_date column not null
                 PRAGMA foreign_keys = OFF;
                 ALTER TABLE vaccination RENAME TO vaccination_old;
                 CREATE TABLE vaccination (
