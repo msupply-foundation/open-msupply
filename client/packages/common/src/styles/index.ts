@@ -10,7 +10,7 @@ import { alpha, SxProps } from '@mui/material/styles';
 // some Mui `sx` prop.
 type AppSxProp = SxProps<ReturnType<typeof useAppTheme>>;
 
-export { themeOptions } from './theme';
+export { themeOptions, Breakpoints } from './theme';
 export {
   AppSxProp,
   alpha,
