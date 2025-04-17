@@ -1,7 +1,9 @@
+use log::{error, info};
 use repository::RepositoryError;
 use reqwest::ClientBuilder;
 use thiserror::Error;
 use url::Url;
+use util::format_error;
 
 use crate::{
     apis::{
@@ -15,7 +17,7 @@ use crate::{
     sync::{
         api::SyncApiV5,
         settings::{SyncSettings, SYNC_V5_VERSION},
-        CentralServerConfig,
+        ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
     },
 };
 
@@ -190,5 +192,56 @@ async fn link_patient_to_store_v6(
 impl From<RepositoryError> for CentralPatientRequestError {
     fn from(err: RepositoryError) -> Self {
         CentralPatientRequestError::DatabaseError(err)
+    }
+}
+
+pub enum AddPatientToCentralError {
+    NotACentralServer,
+    CentralPatientRequestError(CentralPatientRequestError),
+    InternalError(String),
+}
+
+pub async fn add_patient_to_oms_central(
+    service_provider: &ServiceProvider,
+    ctx: &ServiceContext,
+    name_id: &str,
+) -> Result<(), AddPatientToCentralError> {
+    if !CentralServerConfig::is_central_server() {
+        return Err(AddPatientToCentralError::NotACentralServer);
+    }
+
+    let central_store_id = ActiveStoresOnSite::get(&ctx.connection)?
+        .store_ids()
+        .first()
+        .ok_or_else(|| {
+            error!("No active stores found for this site");
+            AddPatientToCentralError::InternalError("Central server misconfigured".to_string())
+        })?
+        .to_owned();
+
+    // Add visibility for this patient to central site
+    link_patient_to_store(service_provider, ctx, &central_store_id, name_id).await?;
+
+    info!(
+        "Created name_store_join for patient {} and central store {}",
+        name_id, central_store_id
+    );
+
+    // TODO: possibly should check is not pre-initialisation here?
+    service_provider.sync_trigger.trigger(None);
+    info!("Sync cycle triggered to receive patient records");
+
+    Ok(())
+}
+
+impl From<GetActiveStoresOnSiteError> for AddPatientToCentralError {
+    fn from(from: GetActiveStoresOnSiteError) -> Self {
+        AddPatientToCentralError::InternalError(format_error(&from))
+    }
+}
+
+impl From<CentralPatientRequestError> for AddPatientToCentralError {
+    fn from(from: CentralPatientRequestError) -> Self {
+        AddPatientToCentralError::CentralPatientRequestError(from)
     }
 }

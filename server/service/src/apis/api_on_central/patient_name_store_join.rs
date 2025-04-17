@@ -6,13 +6,11 @@ use util::format_error;
 use crate::{
     apis::api_on_central::validate_site_auth,
     programs::patient::{
-        link_patient_to_store, patient_updated::create_patient_name_store_join,
-        CentralPatientRequestError,
+        add_patient_to_oms_central, patient_updated::create_patient_name_store_join,
+        AddPatientToCentralError,
     },
     service_provider::{ServiceContext, ServiceProvider},
-    sync::{
-        api::SyncApiSettings, ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
-    },
+    sync::{api::SyncApiSettings, CentralServerConfig},
     validate::check_patient_exists,
 };
 
@@ -49,7 +47,8 @@ pub async fn add_patient_name_store_join(
         info!(
         "Attempting to add name_store_join for a patient not visible on OMS Central, requesting patient data..."
     );
-        add_patient_to_central(service_provider, &ctx, &name_id).await?;
+        add_patient_to_oms_central(service_provider, &ctx, &name_id).await?;
+        wait_for_sync_of_patient_records(service_provider, &ctx, &name_id).await?;
     }
 
     create_patient_name_store_join(&ctx.connection, &store_id, &name_id, Some(id))?;
@@ -62,38 +61,7 @@ pub async fn add_patient_name_store_join(
     Ok(())
 }
 
-async fn add_patient_to_central(
-    service_provider: &ServiceProvider,
-    ctx: &ServiceContext,
-    name_id: &str,
-) -> Result<(), CentralApiError> {
-    let central_store_id = ActiveStoresOnSite::get(&ctx.connection)?
-        .store_ids()
-        .first()
-        .ok_or_else(|| {
-            error!("No active stores found for this site");
-            CentralApiError::InternalError("Central server misconfigured".to_string())
-        })?
-        .to_owned();
-
-    // Add visibility for this patient to central site
-    link_patient_to_store(service_provider, ctx, &central_store_id, name_id).await?;
-
-    info!(
-        "Created name_store_join for patient {} and central store {}",
-        name_id, central_store_id
-    );
-
-    // TODO: possibly should check is not pre-initialisation here?
-    service_provider.sync_trigger.trigger(None);
-    info!("Sync cycle triggered to receive patient records");
-
-    wait_for_sync(service_provider, &ctx, name_id).await?;
-
-    Ok(())
-}
-
-async fn wait_for_sync(
+async fn wait_for_sync_of_patient_records(
     service_provider: &ServiceProvider,
     ctx: &ServiceContext,
     name_id: &str,
@@ -144,14 +112,14 @@ async fn wait_for_sync(
     Ok(())
 }
 
-impl From<GetActiveStoresOnSiteError> for CentralApiError {
-    fn from(from: GetActiveStoresOnSiteError) -> Self {
-        CentralApiError::InternalError(format_error(&from))
-    }
-}
-
-impl From<CentralPatientRequestError> for CentralApiError {
-    fn from(from: CentralPatientRequestError) -> Self {
-        CentralApiError::InternalError(format_error(&from))
+impl From<AddPatientToCentralError> for CentralApiError {
+    fn from(from: AddPatientToCentralError) -> Self {
+        match from {
+            AddPatientToCentralError::NotACentralServer => CentralApiError::NotACentralServer,
+            AddPatientToCentralError::CentralPatientRequestError(err) => {
+                CentralApiError::InternalError(format_error(&err))
+            }
+            AddPatientToCentralError::InternalError(err) => CentralApiError::InternalError(err),
+        }
     }
 }
