@@ -6,7 +6,6 @@ import {
   DateTimePickerInput,
   DialogButton,
   InputWithLabelRow,
-  Select,
   Typography,
 } from '@common/components';
 import { PlusCircleIcon } from '@common/icons';
@@ -19,6 +18,8 @@ import {
   useMasterLists,
   LocationSearchInput,
   LocationRowFragment,
+  MasterListSearchInput,
+  MasterListRowFragment,
 } from '@openmsupply-client/system';
 import {
   Box,
@@ -72,6 +73,9 @@ export const CreateStocktakeButton: React.FC<{
 
   const [selectedLocation, setSelectedLocation] =
     useState<LocationRowFragment | null>(null);
+
+  const [selectedMasterList, setSelectedMasterList] =
+    useState<MasterListRowFragment | null>(null);
 
   const generateComment = () => {
     const { locationId, masterListId, itemsHaveStock } = createStocktakeArgs;
@@ -196,16 +200,17 @@ export const CreateStocktakeButton: React.FC<{
                         {t('messages.no-master-lists')}
                       </Typography>
                     ) : (
-                      <Select
-                        fullWidth
-                        onChange={event =>
+                      <MasterListSearchInput
+                        onChange={masterList => {
+                          setSelectedMasterList(masterList);
                           setCreateStocktakeArgs({
                             ...DEFAULT_ARGS,
-                            masterListId: event.target.value?.toString(),
-                          })
-                        }
-                        options={masterLists}
-                        value={createStocktakeArgs.masterListId}
+                            masterListId: masterList?.id ?? '',
+                          });
+                        }}
+                        disabled={false}
+                        selectedMasterList={selectedMasterList}
+                        width={380}
                       />
                     )
                   }
