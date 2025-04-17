@@ -5,7 +5,7 @@ import {
   Box,
   DetailInputWithLabelRow,
   FnUtils,
-  InlineSpinner,
+  // InlineSpinner,
   InvoiceNodeStatus,
   TextWithLabelRow,
   extractProperty,
@@ -49,7 +49,7 @@ type Options = z.infer<typeof Options>;
 
 const UIComponent = (props: ControlProps) => {
   const t = useTranslation();
-  const { handleChange, label, path, uischema, config } = props;
+  const { handleChange, path, uischema, config } = props;
   const { options } = useZodOptionsValidation(Options, uischema.options);
 
   const { formActions } = config;
@@ -58,7 +58,10 @@ const UIComponent = (props: ControlProps) => {
   const prescriptionIdPath = options?.prescriptionIdPath;
   const prescriptionId = extractProperty(core?.data, prescriptionIdPath ?? '');
   const {
-    query: { data: prescription, loading },
+    query: {
+      data: prescription,
+      // loading
+    },
     create: { create },
   } = usePrescription(prescriptionId);
 
@@ -153,7 +156,9 @@ const UIComponent = (props: ControlProps) => {
             patch: { id: prescriptionId, status: InvoiceNodeStatus.Picked },
           });
           success(
-            t('messages.prescription-created', { count: prescription.invoiceNumber })
+            t('messages.prescription-created', {
+              count: prescription.invoiceNumber,
+            })
           )();
         }
       },
@@ -165,15 +170,20 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
 
-  if (loading)
-    return (
-      <DetailInputWithLabelRow
-        sx={DefaultFormRowSx}
-        label={label}
-        inputAlignment={'start'}
-        Input={<InlineSpinner />}
-      />
-    );
+  // NOTE: This is temporarily disabled due to a bug in React Query in which the
+  // "loading" state is not correctly updated after an error, but only in
+  // production build. This *should* be fixed after upgrading React Query, so
+  // please re-instate this loader once that is in place.
+
+  // if (loading)
+  //   return (
+  //     <DetailInputWithLabelRow
+  //       sx={DefaultFormRowSx}
+  //       label={label}
+  //       inputAlignment={'start'}
+  //       Input={<InlineSpinner />}
+  //     />
+  //   );
 
   if (!prescription)
     return (
