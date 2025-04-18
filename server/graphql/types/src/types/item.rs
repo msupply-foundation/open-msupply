@@ -5,10 +5,10 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::{
     loader::{
-        ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemVariantsByItemIdLoader,
-        ItemsStatsForItemLoader, ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput,
-        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
-        StockLineByItemAndStoreIdLoaderInput,
+        DiscountMasterListByItemIdLoader, ItemDirectionsByItemIdLoader, ItemStatsLoaderInput,
+        ItemVariantsByItemIdLoader, ItemsStatsForItemLoader, ItemsStockOnHandLoader,
+        ItemsStockOnHandLoaderInput, MasterListByItemIdLoader, MasterListByItemIdLoaderInput,
+        StockLineByItemAndStoreIdLoader, StockLineByItemAndStoreIdLoaderInput,
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
@@ -211,6 +211,18 @@ impl ItemNode {
                 .map(MasterListNode::from_domain)
                 .collect()
         }))
+    }
+
+    pub async fn max_discount_percentage(&self, ctx: &Context<'_>) -> Result<f64> {
+        let loader = ctx.get_loader::<DataLoader<DiscountMasterListByItemIdLoader>>();
+        let max_discount_percentage = loader.load_one(self.row().id.clone()).await?.ok_or(
+            StandardGraphqlError::InternalError(format!(
+                "Cannot find max discount percentage for item {}",
+                &self.row().id
+            ))
+            .extend(),
+        )?;
+        Ok(max_discount_percentage)
     }
 }
 
