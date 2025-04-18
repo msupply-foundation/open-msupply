@@ -39,6 +39,7 @@ impl MasterListFilterInput {
             item_id: self.item_id.map(EqualFilter::from),
             is_discount_list: None,
             is_default_price_list: None,
+            include_inactive: None,
         }
     }
 }

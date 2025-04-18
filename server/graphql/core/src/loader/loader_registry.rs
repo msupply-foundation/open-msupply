@@ -403,6 +403,12 @@ pub async fn get_loaders(
         async_std::task::spawn,
     ));
     loaders.insert(DataLoader::new(
+        DiscountMasterListByItemIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
         ReasonOptionLoader {
             connection_manager: connection_manager.clone(),
         },

@@ -33,6 +33,7 @@ pub struct MasterListFilter {
     pub item_id: Option<EqualFilter<String>>,
     pub is_discount_list: Option<bool>,
     pub is_default_price_list: Option<bool>,
+    pub include_inactive: Option<bool>,
 }
 
 pub enum MasterListSortField {
@@ -67,8 +68,13 @@ impl<'a> MasterListRepository<'a> {
 
     pub fn create_filtered_query(filter: Option<MasterListFilter>) -> BoxedMasterListQuery {
         let mut query = master_list::table.into_boxed();
-        // Filter out inactive master lists by default
-        query = query.filter(master_list::is_active.eq(true));
+
+        if let Some(f) = filter.as_ref() {
+            // Include inactive master lists if requested
+            if !f.include_inactive.unwrap_or(false) {
+                query = query.filter(master_list::is_active.eq(true)); // Default to only active
+            }
+        }
 
         if let Some(f) = filter {
             apply_equal_filter!(query, f.id, master_list::id);
@@ -249,6 +255,11 @@ impl MasterListFilter {
 
     pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
         self.item_id = Some(filter);
+        self
+    }
+
+    pub fn include_inactive(mut self, filter: bool) -> Self {
+        self.include_inactive = Some(filter);
         self
     }
 }

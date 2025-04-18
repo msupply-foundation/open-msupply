@@ -62,3 +62,38 @@ impl Loader<MasterListByItemIdLoaderInput> for MasterListByItemIdLoader {
         Ok(output)
     }
 }
+
+pub struct DiscountMasterListByItemIdLoader {
+    pub service_provider: Data<ServiceProvider>,
+}
+
+impl Loader<String> for DiscountMasterListByItemIdLoader {
+    type Value = f64;
+    type Error = async_graphql::Error;
+
+    async fn load(&self, item_ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        let service_context = self.service_provider.basic_context()?;
+        let connection = service_context.connection;
+        let repository = MasterListRepository::new(&connection);
+
+        let mut result = HashMap::<String, Self::Value>::new();
+        for item_id in item_ids {
+            let discount_master_list = repository.query_by_filter(
+                MasterListFilter::new()
+                    .is_discount_list(true)
+                    .include_inactive(true)
+                    .item_id(EqualFilter::equal_to(item_id)),
+            )?;
+
+            // Get the max discount percentage from the discount master lists
+            let max_discount_percentage = discount_master_list
+                .iter()
+                .map(|master_list_row| master_list_row.discount_percentage.unwrap_or(0.0))
+                .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+                .unwrap_or(0.0);
+
+            result.insert(item_id.to_string(), max_discount_percentage);
+        }
+        Ok(result)
+    }
+}
