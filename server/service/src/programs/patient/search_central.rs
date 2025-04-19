@@ -3,7 +3,6 @@ use repository::RepositoryError;
 use reqwest::ClientBuilder;
 use thiserror::Error;
 use url::Url;
-use util::format_error;
 
 use crate::{
     apis::{
@@ -195,10 +194,16 @@ impl From<RepositoryError> for CentralPatientRequestError {
     }
 }
 
+#[derive(Error, Debug)]
 pub enum AddPatientToCentralError {
+    #[error("Not running as central server")]
     NotACentralServer,
+    #[error(transparent)]
     CentralPatientRequestError(CentralPatientRequestError),
-    InternalError(String),
+    #[error(transparent)]
+    ActiveStoresOnSiteError(GetActiveStoresOnSiteError),
+    #[error("No active store found for this site")]
+    NoActiveStore,
 }
 
 pub async fn add_patient_to_oms_central(
@@ -210,17 +215,24 @@ pub async fn add_patient_to_oms_central(
         return Err(AddPatientToCentralError::NotACentralServer);
     }
 
-    let central_store_id = ActiveStoresOnSite::get(&ctx.connection)?
+    let central_stores = ActiveStoresOnSite::get(&ctx.connection).map_err(|err| {
+        error!("Failed to get active stores on site: {}", err);
+        AddPatientToCentralError::ActiveStoresOnSiteError(err)
+    })?;
+
+    let central_store_id = central_stores
         .store_ids()
         .first()
         .ok_or_else(|| {
             error!("No active stores found for this site");
-            AddPatientToCentralError::InternalError("Central server misconfigured".to_string())
+            AddPatientToCentralError::NoActiveStore
         })?
         .to_owned();
 
     // Add visibility for this patient to central site
-    link_patient_to_store(service_provider, ctx, &central_store_id, name_id).await?;
+    link_patient_to_store(service_provider, ctx, &central_store_id, name_id)
+        .await
+        .map_err(AddPatientToCentralError::CentralPatientRequestError)?;
 
     info!(
         "Created name_store_join for patient {} and central store {}",
@@ -232,16 +244,4 @@ pub async fn add_patient_to_oms_central(
     info!("Sync cycle triggered to receive patient records");
 
     Ok(())
-}
-
-impl From<GetActiveStoresOnSiteError> for AddPatientToCentralError {
-    fn from(from: GetActiveStoresOnSiteError) -> Self {
-        AddPatientToCentralError::InternalError(format_error(&from))
-    }
-}
-
-impl From<CentralPatientRequestError> for AddPatientToCentralError {
-    fn from(from: CentralPatientRequestError) -> Self {
-        AddPatientToCentralError::CentralPatientRequestError(from)
-    }
 }

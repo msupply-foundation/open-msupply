@@ -1,13 +1,11 @@
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use tokio::time::{sleep, Duration};
-use util::format_error;
 
 use crate::{
     apis::api_on_central::validate_site_auth,
     programs::patient::{
         add_patient_to_oms_central, patient_updated::create_patient_name_store_join,
-        AddPatientToCentralError,
     },
     service_provider::{ServiceContext, ServiceProvider},
     sync::{api::SyncApiSettings, CentralServerConfig},
@@ -45,9 +43,17 @@ pub async fn add_patient_name_store_join(
     // Check patient exists (see README in service/programs/patient)
     if check_patient_exists(&ctx.connection, &name_id)?.is_none() {
         info!(
-        "Attempting to add name_store_join for a patient not visible on OMS Central, requesting patient data..."
-    );
-        add_patient_to_oms_central(service_provider, &ctx, &name_id).await?;
+            "Attempting to add name_store_join for a patient not visible on OMS Central, requesting patient data..."
+       );
+
+        add_patient_to_oms_central(service_provider, &ctx, &name_id)
+            .await
+            .map_err(|err| {
+                error!("Failed to add patient to central: {}", err);
+
+                CentralApiError::InternalError("Error adding patient visibility".to_string())
+            })?;
+
         wait_for_sync_of_patient_records(service_provider, &ctx, &name_id).await?;
     }
 
@@ -90,6 +96,7 @@ async fn wait_for_sync_of_patient_records(
             Some(sync_status) => sync_status,
             None => {
                 error!("Could not find latest sync log");
+
                 return Err(CentralApiError::InternalError(
                     "Error adding patient visibility".to_string(),
                 ));
@@ -110,16 +117,4 @@ async fn wait_for_sync_of_patient_records(
     }
 
     Ok(())
-}
-
-impl From<AddPatientToCentralError> for CentralApiError {
-    fn from(from: AddPatientToCentralError) -> Self {
-        match from {
-            AddPatientToCentralError::NotACentralServer => CentralApiError::NotACentralServer,
-            AddPatientToCentralError::CentralPatientRequestError(err) => {
-                CentralApiError::InternalError(format_error(&err))
-            }
-            AddPatientToCentralError::InternalError(err) => CentralApiError::InternalError(err),
-        }
-    }
 }

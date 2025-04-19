@@ -54,7 +54,7 @@ pub(crate) fn get_sync_push_changelogs_filter(
 }
 
 #[derive(Error, Debug)]
-pub(crate) enum GetActiveStoresOnSiteError {
+pub enum GetActiveStoresOnSiteError {
     #[error("Database error while getting active store on site")]
     DatabaseError(RepositoryError),
     #[error("Site id is not set in database")]

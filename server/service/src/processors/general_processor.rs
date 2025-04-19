@@ -28,6 +28,8 @@ pub(crate) enum ProcessorError {
     EmailServiceError(EmailServiceError),
     #[error("{0}")]
     GetActiveStoresOnSiteError(GetActiveStoresOnSiteError),
+    #[error("Other error: {0}")]
+    OtherError(String),
 }
 
 const CHANGELOG_BATCH_SIZE: u32 = 20;
