@@ -3,9 +3,11 @@ use repository::{
     ChangelogFilter, ChangelogRow, ChangelogTableName, EqualFilter, KeyType, NameRowType,
     NameStoreJoinFilter, NameStoreJoinRepository,
 };
+use util::format_error;
 
 use crate::{
     processors::general_processor::{Processor, ProcessorError},
+    programs::patient::{add_patient_to_oms_central, AddPatientToCentralError},
     service_provider::{ServiceContext, ServiceProvider},
     sync::CentralServerConfig,
 };
@@ -34,7 +36,7 @@ impl Processor for AddPatientVisibilityForCentral {
     fn try_process_record(
         &self,
         ctx: &ServiceContext,
-        _service_provider: &ServiceProvider,
+        service_provider: &ServiceProvider,
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
         debug!(
@@ -71,6 +73,21 @@ impl Processor for AddPatientVisibilityForCentral {
             debug!("Patient already visible on central, skipping");
             return Ok(None);
         }
+
+        let patient_id = patient.name.id.clone();
+
+        // Give us the ability to do an async thing in a sync context
+        // Otherwise we'd have to make all processors async...
+        tokio::runtime::Handle::current().block_on(async {
+            add_patient_to_oms_central(service_provider, ctx, &patient_id)
+                .await
+                .map_err(|err| match err {
+                    AddPatientToCentralError::ActiveStoresOnSiteError(err) => {
+                        ProcessorError::GetActiveStoresOnSiteError(err)
+                    }
+                    _ => ProcessorError::OtherError(format_error(&err)),
+                })
+        })?;
 
         let result = format!(
             "Patient visibility added to central for patient {}",
