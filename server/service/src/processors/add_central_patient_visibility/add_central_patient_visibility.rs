@@ -62,9 +62,15 @@ impl Processor for AddPatientVisibilityForCentral {
             return Ok(None);
         }
 
+        let central_store_ids = ActiveStoresOnSite::get(&ctx.connection)
+            .map_err(|err| ProcessorError::GetActiveStoresOnSiteError(err))?
+            .store_ids();
+
         let patient_visible_on_central = repo
             .query_by_filter(
-                NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&patient.name.id)),
+                NameStoreJoinFilter::new()
+                    .name_id(EqualFilter::equal_to(&patient.name.id))
+                    .store_id(EqualFilter::equal_any(central_store_ids)),
             )?
             .pop()
             .is_some();
