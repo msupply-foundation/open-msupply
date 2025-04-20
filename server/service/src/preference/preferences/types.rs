@@ -1,14 +1,43 @@
 use repository::{
-    EqualFilter, PreferenceFilter, PreferenceRepository, RepositoryError, StorageConnection,
+    EqualFilter, PreferenceFilter, PreferenceRepository, PreferenceRow, RepositoryError,
+    StorageConnection,
 };
 use serde::{de::DeserializeOwned, Serialize};
 
 use serde_json::json;
 
+pub enum PreferenceType {
+    Global,
+    Store,
+    // User,
+    // Machine,
+}
+
+pub enum PreferenceValueType {
+    Boolean,
+    String,
+    Number,
+    // Add scalar or custom value types here - mapped to frontend renderers
+}
+
 pub trait Preference: Sync + Send {
     type Value: Default + DeserializeOwned + Serialize;
 
     fn key(&self) -> &'static str;
+
+    fn preference_type(&self) -> PreferenceType;
+
+    fn value_type(&self) -> PreferenceValueType;
+
+    fn load_self(
+        &self,
+        connection: &StorageConnection,
+        store_id: Option<String>,
+    ) -> Result<Option<PreferenceRow>, RepositoryError>;
+
+    fn deserialize(&self, data: &str) -> Result<Self::Value, serde_json::Error> {
+        serde_json::from_str::<Self::Value>(data)
+    }
 
     // TODO: remove JSON forms, allow greater type safety
     // Completely hard-coded UI, or maybe still return scalar UI types? Depends on UI...
@@ -38,30 +67,13 @@ pub trait Preference: Sync + Send {
         })
     }
 
-    fn deserialize(&self, data: &str) -> Result<Self::Value, serde_json::Error> {
-        serde_json::from_str::<Self::Value>(data)
-    }
-
-    // TODO: Refactor to helper methods, get_global(), get_store() etc.
-    // Allow for different kinds of merging based on pref type
     fn load(
         &self,
         connection: &StorageConnection,
-        store_id: &str,
+        store_id: Option<String>,
     ) -> Result<Self::Value, RepositoryError> {
-        let prefs_by_key = PreferenceRepository::new(connection).query_by_filter(
-            PreferenceFilter::new()
-                .store_id(EqualFilter::equal_any_or_null(vec![store_id.to_string()]))
-                .key(EqualFilter::equal_to(&self.key())),
-        )?;
-
-        // If there is a store-specific preference, that should override any global preference
-        let store_pref = prefs_by_key.iter().find(|pref| pref.store_id.is_some());
-        let global_pref = prefs_by_key.iter().find(|pref| pref.store_id.is_none());
-
-        let configured_pref = store_pref.or(global_pref);
-
-        match configured_pref {
+        let pref = self.load_self(connection, store_id)?;
+        match pref {
             None => Ok(Self::Value::default()),
             Some(pref) => {
                 let text_pref = pref.value.as_str();

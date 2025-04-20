@@ -2,6 +2,8 @@ use repository::RepositoryError;
 
 pub mod types;
 pub use types::*;
+pub mod load_preference;
+pub use load_preference::*;
 
 mod show_contact_tracing;
 use show_contact_tracing::*;
