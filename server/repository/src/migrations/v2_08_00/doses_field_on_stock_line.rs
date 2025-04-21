@@ -11,7 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                ALTER TABLE stock_line ADD COLUMN vaccine_doses INTEGER,
+                ALTER TABLE stock_line ADD COLUMN vaccine_doses INTEGER;
             "#
         )?;
 
