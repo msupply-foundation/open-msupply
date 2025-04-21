@@ -351,6 +351,8 @@ pub fn generate_lines_and_stock_lines(
                 supplier_link_id: Some(supplier_id.to_string()),
                 barcode_id: None,
                 item_variant_id,
+                // TODO: Allow users to set this or default to item.vaccine_doses
+                vaccine_doses: None,
             };
             result.push(LineAndStockLine { line, stock_line });
         }

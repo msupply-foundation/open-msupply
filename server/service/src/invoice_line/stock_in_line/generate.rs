@@ -107,6 +107,8 @@ pub fn generate_batch(
         on_hold,
         barcode_id,
         item_variant_id,
+        // TODO: Allow users to set this or default to item.vaccine_doses
+        vaccine_doses: None,
     };
 
     Ok(stock_line_row)
