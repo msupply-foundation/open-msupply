@@ -144,7 +144,7 @@ const ITEM_LINE_2: (&str, &str) = (
       "volume_per_pack": 0,
       "vvm_status": "",
       "weight_per_pack": 0,
-      vaccine_doses: 2
+      "doses": 2
   }"#,
 );
 fn item_line_2_pull_record() -> TestSyncIncomingRecord {
