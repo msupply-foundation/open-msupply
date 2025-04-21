@@ -105,6 +105,10 @@ impl StockLineNode {
     pub async fn barcode(&self) -> Option<&str> {
         self.stock_line.barcode()
     }
+
+    pub async fn doses(&self) -> Option<i32> {
+        self.row().vaccine_doses
+    }
 }
 
 #[derive(Union)]
