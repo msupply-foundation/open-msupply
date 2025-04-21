@@ -13,7 +13,7 @@ use crate::{
         apply_sort_no_case, apply_string_filter,
     },
     repository_error::RepositoryError,
-    DBType, NameLinkRow, NameRow, PeriodRow, ProgramRow, StorageConnection, StoreRow,
+    DBType, EqualFilter, NameLinkRow, NameRow, PeriodRow, ProgramRow, StorageConnection, StoreRow,
 };
 
 use crate::Pagination;
@@ -181,6 +181,7 @@ fn create_filtered_query(
         period_id,
         program_id,
         is_emergency,
+        automatically_created,
     }) = filter
     {
         apply_equal_filter!(query, id, requisition::id);
@@ -217,6 +218,14 @@ fn create_filtered_query(
 
         if let Some(is_emergency) = is_emergency {
             query = query.filter(requisition::is_emergency.eq(is_emergency))
+        }
+
+        if let Some(value) = automatically_created {
+            apply_equal_filter!(
+                query,
+                Some(EqualFilter::is_null(value)),
+                requisition::linked_requisition_id
+            );
         }
 
         if let Some(a_shipment_has_been_created) = a_shipment_has_been_created {
