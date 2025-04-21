@@ -111,19 +111,24 @@ impl Processor for AddPatientVisibilityForCentral {
 
         // Give us the ability to do an async thing in a sync context
         // Otherwise we'd have to make all processors async...
-        tokio::runtime::Handle::current().block_on(async {
-            add_patient_to_oms_central(service_provider, ctx, &patient_id)
-                .await
-                .map_err(|err| match err {
-                    AddPatientToCentralError::ActiveStoresOnSiteError(err) => {
-                        ProcessorError::GetActiveStoresOnSiteError(err)
-                    }
-                    _ => ProcessorError::OtherError(format_error(&err)),
-                })
+        tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async {
+                add_patient_to_oms_central(service_provider, ctx, &patient_id).await
+            })
+        })
+        .map_err(|err| match err {
+            AddPatientToCentralError::ActiveStoresOnSiteError(err) => {
+                ProcessorError::GetActiveStoresOnSiteError(err)
+            }
+            _ => ProcessorError::OtherError(format!(
+                "Error adding visibility for patient {} to central: {}",
+                patient_id,
+                format_error(&err)
+            )),
         })?;
 
         let result = format!(
-            "Patient visibility added to central for patient {}",
+            "Patient visibility added to central for patient {}, records will be received on next sync",
             patient.id
         );
 
