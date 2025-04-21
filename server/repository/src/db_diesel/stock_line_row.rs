@@ -28,6 +28,7 @@ table! {
         supplier_link_id -> Nullable<Text>,
         barcode_id -> Nullable<Text>,
         item_variant_id -> Nullable<Text>,
+        vaccine_doses -> Nullable<Integer>,
     }
 }
 
@@ -59,6 +60,7 @@ pub struct StockLineRow {
     pub supplier_link_id: Option<String>,
     pub barcode_id: Option<String>,
     pub item_variant_id: Option<String>,
+    pub vaccine_doses: Option<i32>,
 }
 
 pub struct StockLineRowRepository<'a> {
