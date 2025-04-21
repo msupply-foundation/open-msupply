@@ -180,6 +180,7 @@ fn create_filtered_query(
         elmis_code,
         period_id,
         program_id,
+        is_emergency,
     }) = filter
     {
         apply_equal_filter!(query, id, requisition::id);
@@ -213,6 +214,10 @@ fn create_filtered_query(
         apply_equal_filter!(query, elmis_code, program::elmis_code);
         apply_equal_filter!(query, period_id, period::id);
         apply_equal_filter!(query, program_id, program::id);
+
+        if let Some(is_emergency) = is_emergency {
+            query = query.filter(requisition::is_emergency.eq(is_emergency))
+        }
 
         if let Some(a_shipment_has_been_created) = a_shipment_has_been_created {
             let requisition_ids = invoice::table.select(invoice::requisition_id).into_boxed();
