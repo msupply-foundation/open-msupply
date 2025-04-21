@@ -1,9 +1,5 @@
 use repository::RepositoryError;
 
-
-mod show_contact_tracing;
-use show_contact_tracing::*;
-
 use crate::service_provider::ServiceContext;
 
 pub struct Preferences {
