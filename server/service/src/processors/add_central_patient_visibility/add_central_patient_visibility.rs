@@ -1,7 +1,7 @@
 use log::debug;
 use repository::{
-    ChangelogFilter, ChangelogRow, ChangelogTableName, EqualFilter, KeyType, NameRowType,
-    NameStoreJoinFilter, NameStoreJoinRepository,
+    ChangelogFilter, ChangelogRow, ChangelogTableName, EqualFilter, KeyType, NameRowRepository,
+    NameRowType, NameStoreJoinFilter, NameStoreJoinRepository,
 };
 use util::format_error;
 
@@ -9,17 +9,25 @@ use crate::{
     processors::general_processor::{Processor, ProcessorError},
     programs::patient::{add_patient_to_oms_central, AddPatientToCentralError},
     service_provider::{ServiceContext, ServiceProvider},
-    sync::CentralServerConfig,
+    sync::{ActiveStoresOnSite, CentralServerConfig},
 };
 
 const DESCRIPTION: &str = "Add patient visibility to OMS central";
 
-// OMS remote sites may sync patient records to OMS central - meaning these patients
-// end up visible in OMS Central UI (if is dispensary).
-// At this point, we should call Legacy mSupply to add visibility for the patient to
-// OMS Central - to ensure OMS Central has all related patient records, and receives
-// appropriate updates via sync
+// If name_store_join is created between remote site and a patient (patient made visible on a remote
+// site) - add visibility for that patient to OMS Central as well, so OMS central has all required
+// patient records and receives appropriate updates via sync.
 // See service/programs/patient/README for more info
+
+// If patient is created on remote site, it is possible the patient won't exist on Legacy yet the
+// first time this processor is triggered (remote site pushes to OMS Central before Legacy Central).
+// Processor would fail after trying to add visibility to  OMS Central via call to Legacy.
+// Retry logic doesn't (yet) exist for processors.
+// Hence, this processor watches for name changelogs as well as name_store_join. Next time patient
+// record is mutated on remote site and pushed to OMS Central, we see we don't have visibility and
+// will retry. Not foolproof, but better than nothing for now.
+
+// Processor will exit early once visibility is added to central
 
 pub(crate) struct AddPatientVisibilityForCentral;
 
@@ -39,25 +47,44 @@ impl Processor for AddPatientVisibilityForCentral {
         service_provider: &ServiceProvider,
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
-        debug!(
-            "AddPatientVisibilityForCentral: Processing name_store_join changelog {}",
-            changelog.record_id
-        );
+        let name_repo = NameRowRepository::new(&ctx.connection);
+        let nsj_repo = NameStoreJoinRepository::new(&ctx.connection);
 
-        let repo = NameStoreJoinRepository::new(&ctx.connection);
+        let patient = match changelog.table_name {
+            ChangelogTableName::Name => {
+                debug!(
+                    "AddPatientVisibilityForCentral: Processing changelog for name {}",
+                    changelog.record_id
+                );
+                name_repo.find_one_by_id(&changelog.record_id)?.ok_or(
+                    ProcessorError::RecordNotFound("Name".to_string(), changelog.record_id.clone()),
+                )?
+            }
+            ChangelogTableName::NameStoreJoin => {
+                debug!(
+                    "AddPatientVisibilityForCentral: Processing changelog for name_store_join {}",
+                    changelog.record_id
+                );
+                let name_store_join = nsj_repo
+                    .query_by_filter(
+                        NameStoreJoinFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+                    )?
+                    .pop()
+                    .ok_or(ProcessorError::RecordNotFound(
+                        "NameStoreJoin".to_string(),
+                        changelog.record_id.clone(),
+                    ))?;
 
-        let patient = repo
-            .query_by_filter(
-                NameStoreJoinFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
-            )?
-            .pop()
-            .ok_or(ProcessorError::RecordNotFound(
-                "NameStoreJoin".to_string(),
-                changelog.record_id.clone(),
-            ))?;
+                name_store_join.name
+            }
+            _ => {
+                debug!("Not a name or name store join changelog, skipping");
+                return Ok(None);
+            }
+        };
 
         // Other name types should have their visibility correctly managed via Legacy
-        if patient.name.r#type != NameRowType::Patient {
+        if patient.r#type != NameRowType::Patient {
             debug!("Not a patient name, skipping");
             return Ok(None);
         }
@@ -66,10 +93,10 @@ impl Processor for AddPatientVisibilityForCentral {
             .map_err(|err| ProcessorError::GetActiveStoresOnSiteError(err))?
             .store_ids();
 
-        let patient_visible_on_central = repo
+        let patient_visible_on_central = nsj_repo
             .query_by_filter(
                 NameStoreJoinFilter::new()
-                    .name_id(EqualFilter::equal_to(&patient.name.id))
+                    .name_id(EqualFilter::equal_to(&patient.id))
                     .store_id(EqualFilter::equal_any(central_store_ids)),
             )?
             .pop()
@@ -80,7 +107,7 @@ impl Processor for AddPatientVisibilityForCentral {
             return Ok(None);
         }
 
-        let patient_id = patient.name.id.clone();
+        let patient_id = patient.id.clone();
 
         // Give us the ability to do an async thing in a sync context
         // Otherwise we'd have to make all processors async...
@@ -97,7 +124,7 @@ impl Processor for AddPatientVisibilityForCentral {
 
         let result = format!(
             "Patient visibility added to central for patient {}",
-            patient.name.id
+            patient.id
         );
 
         Ok(Some(result))
@@ -105,7 +132,10 @@ impl Processor for AddPatientVisibilityForCentral {
 
     fn changelogs_filter(&self, _ctx: &ServiceContext) -> Result<ChangelogFilter, ProcessorError> {
         let filter = ChangelogFilter::new().table_name(EqualFilter {
-            equal_to: Some(ChangelogTableName::NameStoreJoin),
+            equal_any: Some(vec![
+                ChangelogTableName::Name,
+                ChangelogTableName::NameStoreJoin,
+            ]),
             ..Default::default()
         });
 
