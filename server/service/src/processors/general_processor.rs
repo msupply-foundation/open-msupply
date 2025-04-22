@@ -9,9 +9,13 @@ use crate::{
     email::EmailServiceError,
     processors::log_system_error,
     service_provider::{ServiceContext, ServiceProvider},
+    sync::GetActiveStoresOnSiteError,
 };
 
-use super::{contact_form::QueueContactEmailProcessor, load_plugin::LoadPlugin};
+use super::{
+    assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
+    load_plugin::LoadPlugin,
+};
 
 #[derive(Error, Debug)]
 pub(crate) enum ProcessorError {
@@ -21,6 +25,8 @@ pub(crate) enum ProcessorError {
     DatabaseError(#[from] RepositoryError),
     #[error("Error in email service {0:?}")]
     EmailServiceError(EmailServiceError),
+    #[error("{0}")]
+    GetActiveStoresOnSiteError(GetActiveStoresOnSiteError),
 }
 
 const CHANGELOG_BATCH_SIZE: u32 = 20;
@@ -29,6 +35,7 @@ const CHANGELOG_BATCH_SIZE: u32 = 20;
 pub enum ProcessorType {
     ContactFormEmail,
     LoadPlugin,
+    AssignRequisitionNumber,
 }
 
 impl ProcessorType {
@@ -36,6 +43,7 @@ impl ProcessorType {
         match self {
             ProcessorType::ContactFormEmail => Box::new(QueueContactEmailProcessor),
             ProcessorType::LoadPlugin => Box::new(LoadPlugin),
+            ProcessorType::AssignRequisitionNumber => Box::new(AssignRequisitionNumber),
         }
     }
 }
@@ -59,7 +67,7 @@ pub(crate) fn process_records(
     let cursor_controller = CursorController::new(processor.cursor_type());
 
     // Only process the changelogs we care about
-    let filter = processor.changelogs_filter();
+    let filter = processor.changelogs_filter(&ctx)?;
 
     loop {
         let cursor = cursor_controller
@@ -91,12 +99,13 @@ pub(crate) fn process_records(
 
 pub(super) trait Processor {
     fn get_description(&self) -> String;
+
     /// Default to using change_log_table_names
-    fn changelogs_filter(&self) -> ChangelogFilter {
-        ChangelogFilter::new().table_name(EqualFilter {
+    fn changelogs_filter(&self, _ctx: &ServiceContext) -> Result<ChangelogFilter, ProcessorError> {
+        Ok(ChangelogFilter::new().table_name(EqualFilter {
             equal_any: Some(self.change_log_table_names()),
             ..Default::default()
-        })
+        }))
     }
 
     /// Default to empty array in case chanelogs_filter is manually implemented

@@ -1,5 +1,5 @@
 use crate::sync::{
-    sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option, zero_f64_as_none},
+    sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
     translations::{
         currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
         item_variant::ItemVariantTranslation, location::LocationTranslation,
@@ -66,7 +66,6 @@ pub struct LegacyTransLineRow {
     pub r#type: LegacyTransLineType,
     #[serde(rename = "quantity")]
     pub number_of_packs: f64,
-    #[serde(deserialize_with = "zero_f64_as_none")]
     #[serde(rename = "prescribedQuantity")]
     pub prescribed_quantity: Option<f64>,
     #[serde(deserialize_with = "empty_str_as_option_string")]

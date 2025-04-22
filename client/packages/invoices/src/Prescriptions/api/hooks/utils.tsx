@@ -100,6 +100,7 @@ export const createPrescriptionPlaceholderRow = (
     name: '',
     __typename: 'ItemNode',
     itemDirections: [],
+    warnings: [],
   },
   itemName: '',
   stockLine: {
@@ -125,6 +126,16 @@ export const createPrescriptionPlaceholderRow = (
           __typename: 'ItemDirectionNode',
           directions: '',
           priority: 0,
+        },
+      ],
+      warnings: [
+        {
+          __typename: 'WarningNode',
+          id: '',
+          itemId,
+          warningText: '',
+          code: '',
+          priority: false,
         },
       ],
     },
@@ -185,6 +196,7 @@ export const createDraftPrescriptionLineFromStockLine = ({
       code: stockLine?.item?.code,
       __typename: 'ItemNode',
       itemDirections: [],
+      warnings: [],
     },
 
     stockLine,

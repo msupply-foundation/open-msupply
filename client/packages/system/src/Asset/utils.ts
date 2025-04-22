@@ -59,7 +59,7 @@ export const parseStatus = (
   }
 };
 
-const parseInputStatus = (
+export const parseInputStatus = (
   status: AssetLogStatusInput,
   t: TypedTFunction<LocaleKey>
 ) => {

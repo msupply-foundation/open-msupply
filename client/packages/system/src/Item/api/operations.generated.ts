@@ -47,6 +47,14 @@ export type StockLineFragment = {
       itemId: string;
       priority: number;
     }>;
+    warnings: Array<{
+      __typename: 'WarningNode';
+      warningText: string;
+      id: string;
+      itemId: string;
+      priority: boolean;
+      code: string;
+    }>;
   };
 };
 
@@ -79,6 +87,31 @@ export type ItemDirectionFragment = {
   id: string;
   itemId: string;
   priority: number;
+};
+
+export type ItemRowWithWarningsFragment = {
+  __typename: 'ItemNode';
+  id: string;
+  code: string;
+  name: string;
+  unitName?: string | null;
+  warnings: Array<{
+    __typename: 'WarningNode';
+    warningText: string;
+    id: string;
+    itemId: string;
+    priority: boolean;
+    code: string;
+  }>;
+};
+
+export type WarningFragment = {
+  __typename: 'WarningNode';
+  warningText: string;
+  id: string;
+  itemId: string;
+  priority: boolean;
+  code: string;
 };
 
 export type ItemWithPackSizeFragment = {
@@ -309,6 +342,14 @@ export type ItemFragment = {
           itemId: string;
           priority: number;
         }>;
+        warnings: Array<{
+          __typename: 'WarningNode';
+          warningText: string;
+          id: string;
+          itemId: string;
+          priority: boolean;
+          code: string;
+        }>;
       };
     }>;
   };
@@ -473,6 +514,14 @@ export type ItemsWithStockLinesQuery = {
               id: string;
               itemId: string;
               priority: number;
+            }>;
+            warnings: Array<{
+              __typename: 'WarningNode';
+              warningText: string;
+              id: string;
+              itemId: string;
+              priority: boolean;
+              code: string;
             }>;
           };
         }>;
@@ -757,6 +806,14 @@ export type ItemByIdQuery = {
               itemId: string;
               priority: number;
             }>;
+            warnings: Array<{
+              __typename: 'WarningNode';
+              warningText: string;
+              id: string;
+              itemId: string;
+              priority: boolean;
+              code: string;
+            }>;
           };
         }>;
       };
@@ -926,6 +983,14 @@ export type GetHistoricalStockLinesQuery = {
           id: string;
           itemId: string;
           priority: number;
+        }>;
+        warnings: Array<{
+          __typename: 'WarningNode';
+          warningText: string;
+          id: string;
+          itemId: string;
+          priority: boolean;
+          code: string;
         }>;
       };
     }>;
@@ -1196,6 +1261,26 @@ export const ItemRowFragmentDoc = gql`
     unitName
   }
 `;
+export const WarningFragmentDoc = gql`
+  fragment Warning on WarningNode {
+    __typename
+    warningText
+    id
+    itemId
+    priority
+    code
+  }
+`;
+export const ItemRowWithWarningsFragmentDoc = gql`
+  fragment ItemRowWithWarnings on ItemNode {
+    ...ItemRow
+    warnings {
+      ...Warning
+    }
+  }
+  ${ItemRowFragmentDoc}
+  ${WarningFragmentDoc}
+`;
 export const ItemWithPackSizeFragmentDoc = gql`
   fragment ItemWithPackSize on ItemNode {
     ...ItemRow
@@ -1267,6 +1352,9 @@ export const StockLineFragmentDoc = gql`
       itemDirections {
         ...ItemDirection
       }
+      warnings {
+        ...Warning
+      }
     }
     note
     onHold
@@ -1278,6 +1366,7 @@ export const StockLineFragmentDoc = gql`
     itemVariantId
   }
   ${ItemDirectionFragmentDoc}
+  ${WarningFragmentDoc}
 `;
 export const ColdStorageTypeFragmentDoc = gql`
   fragment ColdStorageType on ColdStorageTypeNode {

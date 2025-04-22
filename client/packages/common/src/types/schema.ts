@@ -4210,6 +4210,7 @@ export type ItemNode = {
   venCategory: VenCategoryType;
   volumePerOuterPack: Scalars['Float']['output'];
   volumePerPack: Scalars['Float']['output'];
+  warnings: Array<WarningNode>;
   weight: Scalars['Float']['output'];
 };
 
@@ -7255,6 +7256,7 @@ export type ReportFilterInput = {
 export type ReportNode = {
   __typename: 'ReportNode';
   argumentSchema?: Maybe<FormSchemaNode>;
+  code: Scalars['String']['output'];
   context: ReportContext;
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
@@ -9858,3 +9860,13 @@ export enum VenCategoryType {
   NotAssigned = 'NOT_ASSIGNED',
   V = 'V',
 }
+
+export type WarningNode = {
+  __typename: 'WarningNode';
+  code: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  priority: Scalars['Boolean']['output'];
+  warningId: Scalars['String']['output'];
+  warningText: Scalars['String']['output'];
+};

@@ -12,26 +12,38 @@ The UI is not bundled within Capacitor, it is served by the server the client co
 
 Before building the Android app, the Rust server library that allows us to run the mSupply server on the mobile device needs to be built.
 
-This requires a couple of steps.
+This requires a few steps.
 
-- Install Android Studio (Ladybug at time of writing 15/11/24) (Instructions [here](https://developer.android.com/studio))
-- Install NDK in Android Studio (26.1.10909125 at the time of writing on the 8/4/24) (Instructions [here](https://developer.android.com/studio/projects/install-ndk))
+### 1. Install Android Studio
+
+Download and install Android studio (Ladybug at time of writing 15/11/24) (Instructions [here](https://developer.android.com/studio))
+
+### 2. Install NDK in Android Studio
+
+Install NDK (26.1.10909125 at the time of writing on the 8/4/24) (Instructions [here](https://developer.android.com/studio/projects/install-ndk#specific-version))
 
 ![omSupply Android NDK](./doc/omSupply_android_ndk.png)
 
-To add the required build targets to Rust run:
+### 3. Add the required build targets to Rust
+
+Currently we support two Android architectures (32bit and 64bit);
+
+| rust target             | android ABI | Type  |
+| ----------------------- | ----------- | ----- |
+| aarch64-linux-android   | arm64-v8a   | 64bit |
+| armv7-linux-androideabi | armeabi-v7a | 32bit |
+
+To add these targets run:
 
 ```bash
-rustup target add aarch64-linux-android
+rustup target add aarch64-linux-android armv7-linux-androideabi
 ```
 
-Currently, we support only 1 Android architecture (64bit);
+> Note: The linkers Rust uses are defined in `server/android/.cargo/config.toml`, under [target._architecture_].
 
-| rust target           | android ABI |
-| --------------------- | ----------- |
-| aarch64-linux-android | arm64-v8a   |
+### 4. Configure the NDK
 
-Next we have to tell Rust where to find the Android NDK binaries required to link the server library. This is done by setting the `NDK_BIN` env variable to the currently installed Android NDK.
+Now we have to tell Rust where to find the Android NDK binaries required to link the server library. This is done by setting the `NDK_BIN` env variable to the currently installed Android NDK.
 
 For example, to permanently add the `NDK_BIN` env variable on a mac run:
 
@@ -45,9 +57,7 @@ Run `source ~/.zshrc` to apply the changes to the current terminal.
 
 Validate that `$NDK_BIN` is set correctly using `ls $NDK_BIN` (this should give a list of files starting with aarch64 and armv7a)
 
-Note, which linker Rust uses is defined in `server/android/.cargo/config.toml`, under [target._architecture_].
-
-### Java Installation
+## Java Installation
 
 In your terminal, run `java --version` to check if you have it installed. As at 19/12/2024 version `17.0.7-tem` is tested and works with our setup
 
@@ -58,7 +68,7 @@ Then install Java 17.0.7-tem (Temurin) using the following terminal command:
 Install the last tested version of Java: Run `sdk install java 17.0.7-tem`
 To make this the default version of Java `sdk default java 17.0.7-tem`.
 
-### Set up Android Studio
+### Configure Java in Android Studio
 
 Now we'll set up Android Studio so that it will use the version of Java that we want.
 First of all, open Android Studio and click Open. Open '<your Open mSupply repository>/client/packages/android'.
@@ -71,7 +81,7 @@ Here's a screenshot of what that should look like (the sidebar shows you what yo
 
 You may also see prompts in Android Studio to sync - keep an eye out for these and run the sync as needed.
 
-## Running Android Studio
+## Building the Server
 
 You can now use `yarn build:server` from the `client/packages/android/` directory, this builds the `libremote_server_lib.so` binaries and relocates them to `app/src/main/jniLibs`.
 Please see `client/packages/android/app/src/main/java/org/openmsupply/client/RemoteServer.java` for more details of how these libs are loaded.
@@ -102,19 +112,95 @@ For this reason it's often easier to run the following scripts in the `client` d
 
 # Build the frontend and the server libs
 yarn android:build:server
-# Build the frontend and assembles an Android debug apk
+# Build the frontend and assembles the Android debug apks for each architecture
 yarn android:build:debug
-# Build the frontend and assembles an Android release apk
+# Build the frontend and assembles the Android release apks for each architecture
 yarn android:build:release
 ```
 
-To make the an apk that you can install on a device for testing, run `yarn android:build:debug` in the client directory. You will find the resulting apk in `client/packages/android/app/build/outputs/apk/debug`, and you can then transfer it to the tablet and install it. This can be done by uploading the apk file via the android studio device manager, then clicking the apk file from the device itself. Or using [adb](https://developer.android.com/tools/adb)
+Sometimes you may want to build just one apk. The following scripts can be run to build only the Arm64 apk for a smaller file size and quicker build time.
+
+```bash
+# in the android directory:
+
+# Build the frontend and assembles the Android debug apks for Arm64 architecture
+yarn build:debug && ./gradlew assembleArm64Debug
+# Build the frontend and assembles an Android release apk for Arm64 architecture
+yarn build:release && ./gradlew assembleArm64Release
+```
 
 ### Known script issues
 
 When building apk `properties.local` files is required (it can be empty). Also can sometime get a lock on gradle build, can run `find ~/.gradle -type f -name "*.lock" -delete` to fix it
 
+If encountering errors such as "Failed to find tool." Check the `server/android/.cargo/config.toml` file has the correct targets.
+
+## Building APKs
+
+There are two types of apks that can be built locally - Debug and Release. See below sections for each type. Each of these can be built with either architecture compatibility - arm64 or universal
+
+You will find the resulting apks in `client/packages/android/app/build/outputs/apk/`. There will be a folder for each architecture built , and within these a folder for the type generated which contains the apk file.
+
+```
+client/packages/android/app/build/
+─ outputs/
+       └─ apk/
+         ├─ arm64/
+         │     ├─debug/
+         │     │   └─ open-msupply-arm64-debug.apk
+         │     └─release/
+         │         └─ open-msupply-arm64-release.apk
+         └─ universal/
+               ├─debug/
+               │   └─ open-msupply-universal-debug.apk
+               └─release/
+                   └─ open-msupply-universal-release.apk
+
+```
+
+### Architectures
+
+We have two apk product flavors configured with Gradle in client/packages/android/app/build.gradle - Arm64 and Universal.
+
+Flavors:
+Arm64 flavor runs on 64bit devices only.
+Universal flavor contains both 32bit and 64bit architecture, so can be run on either device type. This has a much larger file size.
+
+We have chosen this design to optimise the rollout of new versions - one apk can be downloaded and installed on all devices at a site. If a site doesn't doesn't need 32bit compatibility, the smaller Arm64 file can used.
+
+When creating a build through either `yarn android:build:debug` or `yarn android:build:release`, an apk for each flavor will be created from the one command.
+
+#### How the flavors work
+
+This is the flavor configuration in the build.gradle file:
+
+```flavorDimensions "abi"
+productFlavors {
+arm64 {
+dimension "abi"
+applicationIdSuffix ".arm64"
+versionNameSuffix "-arm64"
+ndk {
+abiFilters "arm64-v8a"
+}
+}
+universal {
+dimension "abi"
+applicationIdSuffix ".universal"
+versionNameSuffix "-universal"
+ndk {
+abiFilters "armeabi-v7a", "arm64-v8a"
+}
+}
+}
+```
+
+The ABI (application binary interface) refers to the CPU architecture that the application is built to run on. Each product flavor specifies the target ABI in the ndk configuration. This allows us to build the apk for different device types.
+
 ## Debugging
+
+To make the an apk that you can install on a device for testing, run `yarn android:build:debug` in the client directory.
+You can then transfer it to the tablet and install it. This can be done by uploading the apk file via the android studio device manager, then clicking the apk file from the device itself. Or using [adb](https://developer.android.com/tools/adb)
 
 It's recommended to use Android Studio for debugging and running the Android app, because there is a lot of functionality that cannot be replicated in Visual Studio Code (although there are some extensions for Visual Studio Code, they are quite limited).
 
@@ -153,9 +239,11 @@ and run:
 yarn build:release
 ```
 
-The apk will be located in `app/build/outputs/apk/release`.
+The apks will be located as per file structure above.
 
 It's best to run `yarn android:build:release` from client directory to make sure front end is bundled correctly in the server
+
+There is also a Github Action to build release apks, this is automated when a commit is tagged as a version (tag beginning with v). These apks will be accessible on Github from the Android Build action once the action has completed.
 
 ## Adding plugins
 
@@ -191,13 +279,15 @@ Capacitor comes with cli, we mainly use `npx cap copy` (or `yarn apply-config`),
 When adding plugins - add them to the android package; if they are not here, then `npx cap sync` does not detect them. You should see
 
 ```
+
 ✔ Updating Android plugins in 2.09ms
 [info] Found 3 Capacitor plugins for android:
-       @capacitor-community/barcode-scanner@3.0.3
-       @capacitor/keyboard@4.1.1
-       @capacitor/preferences@4.0.2
+@capacitor-community/barcode-scanner@3.0.3
+@capacitor/keyboard@4.1.1
+@capacitor/preferences@4.0.2
 [info] Found 1 Cordova plugin for android:
-       cordova-plugin-printer@0.8.0
+cordova-plugin-printer@0.8.0
+
 ```
 
 with the new plugin showing up under the Cordova or Capacitor plugins sections.

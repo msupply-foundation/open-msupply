@@ -149,14 +149,12 @@ export const SplitButton = <T,>({
             key={option.label}
             disabled={option?.isDisabled}
             selected={option.value === selectedOption.value}
+            onClick={() => {
+              onSelectOption(option);
+              setAnchorEl(null);
+            }}
           >
-            <FlatButton
-              label={option.label}
-              onClick={e => {
-                onSelectOption(option, e);
-                setAnchorEl(null);
-              }}
-            />
+            <FlatButton label={option.label} onClick={() => {}} />
           </MenuItem>
         ))}
       </Menu>

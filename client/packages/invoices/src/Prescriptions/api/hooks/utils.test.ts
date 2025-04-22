@@ -58,6 +58,16 @@ const createTestLine = ({
             priority: 1,
           },
         ],
+        warnings: [
+          {
+            __typename: 'WarningNode',
+            id: '',
+            itemId,
+            warningText: 'Warning!',
+            code: '',
+            priority: true,
+          },
+        ],
       },
       type: InvoiceLineNodeType.StockOut,
       packSize,
@@ -87,6 +97,16 @@ const createTestLine = ({
               id: '',
               itemId: '',
               priority: 1,
+            },
+          ],
+          warnings: [
+            {
+              __typename: 'WarningNode',
+              id: '',
+              itemId,
+              warningText: 'Warning!',
+              code: '',
+              priority: true,
             },
           ],
         },
