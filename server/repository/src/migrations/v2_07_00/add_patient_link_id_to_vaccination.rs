@@ -51,7 +51,7 @@ impl MigrationFragment for Migrate {
                 INSERT INTO changelog (table_name, record_id, row_action, store_id, name_link_id)
                     SELECT 'vaccination', id, 'UPSERT', store_id, patient_link_id
                     FROM vaccination
-                    WHERE patient_link_id <> '';
+                    WHERE patient_link_id IN (SELECT id from name_link);
             "#
         )?;
 

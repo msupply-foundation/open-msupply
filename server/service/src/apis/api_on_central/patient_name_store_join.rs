@@ -112,7 +112,7 @@ async fn wait_for_sync(
         }
 
         // Brief pause to avoid busy loop, and hopefully give time for sync to start
-        let duration = Duration::from_millis(500);
+        let duration = Duration::from_millis(1000);
         sleep(duration).await;
 
         let sync_status = match service_provider
