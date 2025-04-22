@@ -1,5 +1,6 @@
 use repository::RepositoryError;
 use reqwest::ClientBuilder;
+use thiserror::Error;
 use url::Url;
 
 use crate::{
@@ -20,10 +21,13 @@ use crate::{
 
 use super::PatientSearch;
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum CentralPatientRequestError {
+    #[error(transparent)]
     DatabaseError(RepositoryError),
+    #[error("Internal error: {0}")]
     InternalError(String),
+    #[error("Connection error: {0}")]
     ConnectionError(String),
 }
 
@@ -85,11 +89,11 @@ pub struct NameStoreJoin {
 /// Creates a name_store_join for the patient
 pub async fn link_patient_to_store(
     service_provider: &ServiceProvider,
-    context: ServiceContext,
+    context: &ServiceContext,
     store_id: &str,
     name_id: &str,
 ) -> Result<NameStoreJoin, CentralPatientRequestError> {
-    let sync_settings = service_provider.settings.sync_settings(&context)?.ok_or(
+    let sync_settings = service_provider.settings.sync_settings(context)?.ok_or(
         CentralPatientRequestError::InternalError("Missing sync settings".to_string()),
     )?;
 
