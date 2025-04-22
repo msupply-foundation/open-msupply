@@ -8,16 +8,20 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
+                DELETE FROM changelog AS c WHERE c.record_id IN (
+                    SELECT v.id FROM vaccination AS v WHERE v.vaccination_date IS NULL
+                );
+                DELETE FROM vaccination WHERE vaccination_date IS NULL;
+            "#,
+        );
+        
         if cfg!(feature = "postgres") {
             sql!(
                 connection,
                 r#"
-                    DELETE FROM changelog AS c WHERE c.record_id IN (
-                            SELECT v.id FROM vaccination AS v WHERE v.vaccination_date IS NULL
-                    );
-
-                    DELETE FROM vaccination WHERE vaccination_date IS NULL;
-
                     ALTER TABLE vaccination ALTER COLUMN vaccination_date SET NOT NULL;
                 "#,
             )?;
@@ -25,12 +29,6 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    DELETE FROM changelog AS c WHERE c.record_id IN (
-                            SELECT v.id FROM vaccination AS v WHERE v.vaccination_date IS NULL
-                    );
-
-                    DELETE FROM vaccination WHERE vaccination_date IS NULL;
-
                     PRAGMA foreign_keys = OFF;
 
                     ALTER TABLE vaccination RENAME TO vaccination_old;
