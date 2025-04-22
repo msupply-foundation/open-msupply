@@ -19,6 +19,8 @@ import {
   ColumnAlign,
   AdjustmentTypeInput,
   NumberCell,
+  usePreferences,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -27,6 +29,7 @@ import {
   InventoryAdjustmentReasonSearchInput,
   ItemVariantInputCell,
   PackSizeEntryCell,
+  ItemRowFragment,
   useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
 import {
@@ -38,6 +41,7 @@ interface StocktakeLineEditTableProps {
   isDisabled?: boolean;
   batches: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
+  item?: ItemRowFragment | null;
 }
 
 const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
@@ -152,10 +156,15 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
   batches,
   update,
   isDisabled = false,
+  item,
 }) => {
   const t = useTranslation();
   const theme = useTheme();
+  const { data: preferences } = usePreferences();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
+  const { getColumnLabelWithPackOrUnit } = useIntlUtils();
+  const displayInDoses =
+    !!preferences?.displayVaccineInDoses && !!item?.isVaccine;
   useDisableStocktakeRows(batches);
 
   const errorsContext = useStocktakeLineErrorContext();
@@ -194,7 +203,14 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       }),
       {
         key: 'snapshotNumberOfPacks',
-        label: 'label.snapshot-num-of-packs',
+        label: getColumnLabelWithPackOrUnit({
+          t,
+          displayInDoses,
+          displayInPack: true,
+          itemUnit: item?.unitName,
+          unitTranslation: t('label.snapshot'),
+          standardTranslation: t('label.snapshot-num-of-packs'),
+        }),
         align: ColumnAlign.Right,
         width: 100,
         Cell: NumberCell,
@@ -203,6 +219,27 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
           'SnapshotCountCurrentCountMismatchLine',
         setter: patch => update({ ...patch, countThisLine: true }),
         accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '0',
+      },
+      {
+        key: 'snapshotNumberOfUnits',
+        label: getColumnLabelWithPackOrUnit({
+          t,
+          displayInDoses,
+          itemUnit: item?.unitName,
+          unitTranslation: t('label.snapshot'),
+          standardTranslation: t('label.snapshot-num-of-units'),
+        }),
+        align: ColumnAlign.Right,
+        width: 100,
+        Cell: NumberCell,
+        accessor: ({ rowData }) => {
+          const packSize = rowData?.packSize ?? 1;
+          const snapshotNumberOfPacks = rowData.snapshotNumberOfPacks ?? 0;
+          const doses = rowData?.stockLine?.doses ?? 1;
+          return displayInDoses
+            ? snapshotNumberOfPacks * doses
+            : snapshotNumberOfPacks * packSize;
+        },
       },
       {
         key: 'countedNumberOfPacks',
