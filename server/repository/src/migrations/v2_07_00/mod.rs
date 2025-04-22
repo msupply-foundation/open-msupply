@@ -40,6 +40,7 @@ impl Migration for V2_07_00 {
             Box::new(add_warning_table::Migrate),
             Box::new(add_item_warning_join_table::Migrate),
             Box::new(add_given_store_id_to_vaccination::Migrate),
+            Box::new(trigger_patient_visibility_sync::Migrate),
             Box::new(add_central_patient_visibility_processor_pg_enum_type::Migrate),
         ]
     }
