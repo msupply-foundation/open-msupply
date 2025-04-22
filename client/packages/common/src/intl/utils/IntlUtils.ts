@@ -2,7 +2,12 @@ import { useCallback, useContext, useState } from 'react';
 import { EnvUtils, Formatter } from '@common/utils';
 import { LanguageType } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
-import { LocaleKey, useTranslation, IntlContext } from '@common/intl';
+import {
+  LocaleKey,
+  useTranslation,
+  IntlContext,
+  TypedTFunction,
+} from '@common/intl';
 
 // importing individually to reduce bundle size
 // the date-fns methods are tree shaking correctly
@@ -128,11 +133,16 @@ export const useIntlUtils = () => {
 
   const translateDynamicKey = (key: string, fallback: string) => {
     return isLocaleKey(key) ? t(key) : fallback;
-  }
+  };
 
   const isLocaleKey = (key: string): key is LocaleKey => {
     return localeKeySet.has(key);
   };
+
+  const getColumnLabelWithPackOrUnit = useCallback(
+    (props: GetColumnLabelProps) => getColumnLabel(props),
+    []
+  );
 
   return {
     currentLanguage,
@@ -149,6 +159,7 @@ export const useIntlUtils = () => {
     translateServerError,
     isLocaleKey,
     translateDynamicKey,
+    getColumnLabelWithPackOrUnit,
   };
 };
 
@@ -200,4 +211,43 @@ const getFullName = (
     default:
       return `${firstName ?? ''} ${lastName ?? ''}`.trim();
   }
+};
+
+interface GetColumnLabelProps {
+  t: TypedTFunction<LocaleKey>;
+  displayInDoses: boolean;
+  displayInPack?: boolean;
+  itemUnit?: string | null;
+  unitTranslation?: string;
+  standardTranslation?: string;
+}
+
+const getColumnLabel = ({
+  t,
+  displayInDoses,
+  displayInPack,
+  itemUnit,
+  unitTranslation,
+  standardTranslation,
+}: GetColumnLabelProps) => {
+  const capitalisedItemUnit = itemUnit
+    ? itemUnit.charAt(0).toUpperCase() + itemUnit.slice(1)
+    : '';
+  const translationWithUnit = `${capitalisedItemUnit} ${unitTranslation}`;
+
+  const vaccinePackTranslation = itemUnit
+    ? translationWithUnit
+    : standardTranslation;
+
+  if (displayInDoses) {
+    return displayInPack
+      ? vaccinePackTranslation
+      : `${t('label.doses')} ${unitTranslation}`;
+  }
+
+  if (displayInPack || !itemUnit) {
+    return standardTranslation;
+  }
+
+  return translationWithUnit;
 };
