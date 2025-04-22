@@ -239,7 +239,7 @@ pub fn mock_inbound_shipment_a() -> InvoiceRow {
         r.store_id = String::from("store_a");
         r.invoice_number = 4;
         r.r#type = InvoiceType::InboundShipment;
-        r.status = InvoiceStatus::Delivered;
+        r.status = InvoiceStatus::Verified;
         r.comment = Some("Sort comment test Ac".to_owned());
         r.their_reference = Some(String::from(""));
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)

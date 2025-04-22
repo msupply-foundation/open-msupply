@@ -1,3 +1,4 @@
+use crate::invoice::check_invoice_is_editable;
 use crate::invoice::common::{
     get_lines_for_invoice, AddToShipmentFromMasterListInput as ServiceInput,
 };
@@ -6,7 +7,7 @@ use crate::service_provider::ServiceContext;
 use repository::{EqualFilter, ItemType};
 use repository::{
     InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, MasterListLineFilter,
+    InvoiceLineRowRepository, InvoiceRow, InvoiceType, MasterListLineFilter,
     MasterListLineRepository, RepositoryError, StorageConnection,
 };
 
@@ -68,7 +69,7 @@ fn validate(
     if invoice_row.store_id != store_id {
         return Err(InError::NotThisStoreShipment);
     }
-    if invoice_row.status != InvoiceStatus::New {
+    if !check_invoice_is_editable(&invoice_row) {
         return Err(InError::CannotEditShipment);
     }
 
