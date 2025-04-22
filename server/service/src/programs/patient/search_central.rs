@@ -1,5 +1,5 @@
+use log::{error, info};
 use repository::RepositoryError;
-use reqwest::ClientBuilder;
 use thiserror::Error;
 use url::Url;
 
@@ -15,7 +15,7 @@ use crate::{
     sync::{
         api::SyncApiV5,
         settings::{SyncSettings, SYNC_V5_VERSION},
-        CentralServerConfig,
+        ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
     },
 };
 
@@ -41,12 +41,8 @@ pub async fn patient_search_central(
             err
         ))
     })?;
-    let client = ClientBuilder::new()
-        .build()
-        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
 
     let api = PatientApiV4::new(
-        client,
         central_server_url.clone(),
         &sync_settings.username,
         &sync_settings.password_sha256,
@@ -103,12 +99,8 @@ pub async fn link_patient_to_store(
             err
         ))
     })?;
-    let client = ClientBuilder::new()
-        .build()
-        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
 
     let api = PatientApiV4::new(
-        client,
         central_server_url.clone(),
         &sync_settings.username,
         &sync_settings.password_sha256,
@@ -160,15 +152,11 @@ async fn link_patient_to_store_v6(
         CentralServerConfig::CentralServerUrl(url) => url,
     };
 
-    let client = ClientBuilder::new()
-        .build()
-        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
-
     let server_url = Url::parse(&om_central_url).map_err(|_| {
         CentralPatientRequestError::InternalError(format!("Cannot parse central server URL: "))
     })?;
 
-    let om_central_api = OmsCentralApi::new(client, server_url);
+    let om_central_api = OmsCentralApi::new(server_url);
 
     let sync_v5_settings =
         SyncApiV5::new_settings(sync_settings, service_provider, SYNC_V5_VERSION)
@@ -191,4 +179,56 @@ impl From<RepositoryError> for CentralPatientRequestError {
     fn from(err: RepositoryError) -> Self {
         CentralPatientRequestError::DatabaseError(err)
     }
+}
+
+#[derive(Error, Debug)]
+pub enum AddPatientToCentralError {
+    #[error("Not running as central server")]
+    NotACentralServer,
+    #[error(transparent)]
+    CentralPatientRequestError(CentralPatientRequestError),
+    #[error(transparent)]
+    ActiveStoresOnSiteError(GetActiveStoresOnSiteError),
+    #[error("No active store found for this site")]
+    NoActiveStore,
+}
+
+pub async fn add_patient_to_oms_central(
+    service_provider: &ServiceProvider,
+    ctx: &ServiceContext,
+    name_id: &str,
+) -> Result<(), AddPatientToCentralError> {
+    if !CentralServerConfig::is_central_server() {
+        return Err(AddPatientToCentralError::NotACentralServer);
+    }
+
+    let central_stores = ActiveStoresOnSite::get(&ctx.connection).map_err(|err| {
+        error!("Failed to get active stores on site: {}", err);
+        AddPatientToCentralError::ActiveStoresOnSiteError(err)
+    })?;
+
+    let central_store_id = central_stores
+        .store_ids()
+        .first()
+        .ok_or_else(|| {
+            error!("No active stores found for this site");
+            AddPatientToCentralError::NoActiveStore
+        })?
+        .to_owned();
+
+    // Add visibility for this patient to central site
+    link_patient_to_store(service_provider, ctx, &central_store_id, name_id)
+        .await
+        .map_err(AddPatientToCentralError::CentralPatientRequestError)?;
+
+    info!(
+        "Created name_store_join for patient {} and central store {}",
+        name_id, central_store_id
+    );
+
+    // TODO: possibly should check is not pre-initialisation here?
+    service_provider.sync_trigger.trigger(None);
+    info!("Sync cycle triggered to receive patient records");
+
+    Ok(())
 }

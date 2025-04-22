@@ -31,6 +31,7 @@ pub enum KeyType {
     ContactFormProcessorCursor,
     LoadPluginProcessorCursor,
     AssignRequisitionNumberProcessorCursor,
+    AddCentralPatientVisibilityProcessorCursor,
 
     SettingsSyncUrl,
     SettingsSyncUsername,

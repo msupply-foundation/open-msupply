@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_central_patient_visibility_processor_pg_enum_type;
 mod add_expected_delivery_date_to_invoice;
 mod add_given_store_id_to_vaccination;
 mod add_item_warning_join_table;
@@ -38,8 +39,9 @@ impl Migration for V2_07_00 {
             Box::new(remove_encounter_clinician_constraint::Migrate),
             Box::new(add_warning_table::Migrate),
             Box::new(add_item_warning_join_table::Migrate),
-            Box::new(trigger_patient_visibility_sync::Migrate),
             Box::new(add_given_store_id_to_vaccination::Migrate),
+            Box::new(trigger_patient_visibility_sync::Migrate),
+            Box::new(add_central_patient_visibility_processor_pg_enum_type::Migrate),
         ]
     }
 }

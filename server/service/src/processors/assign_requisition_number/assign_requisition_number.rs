@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use repository::{
     ChangelogFilter, ChangelogRow, ChangelogTableName, EqualFilter, KeyType, NumberRowType,
     RequisitionRow, RequisitionRowRepository, RequisitionType,
@@ -14,12 +15,13 @@ const DESCRIPTION: &str = "Assign requisition number to a response requisition";
 
 pub(crate) struct AssignRequisitionNumber;
 
+#[async_trait]
 impl Processor for AssignRequisitionNumber {
     fn get_description(&self) -> String {
         DESCRIPTION.to_string()
     }
 
-    fn try_process_record(
+    async fn try_process_record(
         &self,
         ctx: &ServiceContext,
         _service_provider: &ServiceProvider,
