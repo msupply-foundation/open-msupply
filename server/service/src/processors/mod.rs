@@ -108,7 +108,7 @@ impl Processors {
                         process_invoice_transfers(&service_provider).map_err(ProcessorsError::InvoiceTransfer)
                     },
                     Some(r#type) = general_processor.recv() => {
-                        process_records(&service_provider, r#type).map_err(ProcessorsError::ProcessCentralRecord)
+                        process_records(&service_provider, r#type).await.map_err(ProcessorsError::ProcessCentralRecord)
                     },
                     Some(sender) = await_process_queue.recv() => {
                         sender.send(()).map_err(ProcessorsError::AwaitProcessQueue)

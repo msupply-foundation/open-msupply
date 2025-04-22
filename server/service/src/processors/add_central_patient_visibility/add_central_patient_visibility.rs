@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use log::debug;
 use repository::{
     ChangelogFilter, ChangelogRow, ChangelogTableName, EqualFilter, KeyType, NameRowRepository,
@@ -31,6 +32,7 @@ const DESCRIPTION: &str = "Add patient visibility to OMS central";
 
 pub(crate) struct AddPatientVisibilityForCentral;
 
+#[async_trait]
 impl Processor for AddPatientVisibilityForCentral {
     fn get_description(&self) -> String {
         DESCRIPTION.to_string()
@@ -41,7 +43,7 @@ impl Processor for AddPatientVisibilityForCentral {
         CentralServerConfig::is_central_server()
     }
 
-    fn try_process_record(
+    async fn try_process_record(
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
@@ -109,23 +111,18 @@ impl Processor for AddPatientVisibilityForCentral {
 
         let patient_id = patient.id.clone();
 
-        // Give us the ability to do an async thing in a sync context
-        // Otherwise we'd have to make all processors async...
-        tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current().block_on(async {
-                add_patient_to_oms_central(service_provider, ctx, &patient_id).await
-            })
-        })
-        .map_err(|err| match err {
-            AddPatientToCentralError::ActiveStoresOnSiteError(err) => {
-                ProcessorError::GetActiveStoresOnSiteError(err)
-            }
-            _ => ProcessorError::OtherError(format!(
-                "Error adding visibility for patient {} to central: {}",
-                patient_id,
-                format_error(&err)
-            )),
-        })?;
+        add_patient_to_oms_central(service_provider, ctx, &patient_id)
+            .await
+            .map_err(|err| match err {
+                AddPatientToCentralError::ActiveStoresOnSiteError(err) => {
+                    ProcessorError::GetActiveStoresOnSiteError(err)
+                }
+                _ => ProcessorError::OtherError(format!(
+                    "Error adding visibility for patient {} to central: {}",
+                    patient_id,
+                    format_error(&err)
+                )),
+            })?;
 
         let result = format!(
             "Patient visibility added to central for patient {}, records will be received on next sync",
