@@ -47,6 +47,10 @@ export type RequisitionCountsQuery = {
     __typename: 'RequisitionCounts';
     request: { __typename: 'RequestRequisitionCounts'; draft: number };
     response: { __typename: 'ResponseRequisitionCounts'; new: number };
+    emergency: {
+      __typename: 'EmergencyAutomaticResponseRequisitionCounts';
+      emergency: number;
+    };
   };
 };
 
@@ -128,6 +132,9 @@ export const RequisitionCountsDocument = gql`
       }
       response {
         new
+      }
+      emergency {
+        emergency
       }
     }
   }
