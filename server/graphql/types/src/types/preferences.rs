@@ -12,6 +12,12 @@ impl PreferencesNode {
     pub async fn show_contact_tracing(&self) -> &bool {
         &self.preferences.show_contact_tracing
     }
+
+    // TODO: https://github.com/msupply-foundation/open-msupply/issues/7332 once
+    // preferences have been refactored
+    pub async fn display_vaccine_in_doses(&self) -> &bool {
+        &true
+    }
 }
 
 impl PreferencesNode {
