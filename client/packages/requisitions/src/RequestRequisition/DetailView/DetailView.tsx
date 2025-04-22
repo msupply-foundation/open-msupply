@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -11,28 +11,34 @@ import {
   DetailTabs,
   useAuthContext,
   useBreadcrumbs,
-  useParams,
+  useEditModal,
 } from '@openmsupply-client/common';
-import { ActivityLogList } from '@openmsupply-client/system';
+import { AppRoute } from '@openmsupply-client/config';
+import { ActivityLogList, ItemRowFragment } from '@openmsupply-client/system';
+
 import { RequestLineFragment, useRequest } from '../api';
-import { Toolbar } from './Toolbar';
+import { RequestRequisitionLineErrorProvider } from '../context';
+
 import { Footer } from './Footer';
-import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
 import { ContentArea } from './ContentArea';
-import { AppRoute } from '@openmsupply-client/config';
-import { RequestRequisitionLineErrorProvider } from '../context';
 import { IndicatorsTab } from './IndicatorsTab';
-import { buildIndicatorEditRoute, buildItemEditRoute } from './utils';
+import { AppBarButtons } from './AppBarButtons';
+import { buildIndicatorEditRoute } from './utils';
+import { RequestLineEditModal } from './RequestLineEdit';
 
 export const DetailView: FC = () => {
   const t = useTranslation();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
-  const { data, isLoading } = useRequest.document.get();
-  const { requisitionId = '' } = useParams();
+  const [selectedItemId, setSelectedItemId] = useState<string>();
+
   const { store } = useAuthContext();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const { onOpen, onClose, isOpen } = useEditModal<ItemRowFragment>();
+
   const isDisabled = useRequest.utils.isDisabled();
+  const { data, isLoading } = useRequest.document.get();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useRequest.document.indicators(
       store?.nameId ?? '',
@@ -41,11 +47,7 @@ export const DetailView: FC = () => {
       !!data
     );
 
-  const onRowClick = useCallback((line: RequestLineFragment) => {
-    navigate(buildItemEditRoute(requisitionId, line.item.id));
-  }, []);
-
-  const onProgramIndicatorClick = useCallback(
+  const handleProgramIndicatorClick = useCallback(
     (
       requisitionId?: string,
       programIndicatorCode?: string,
@@ -61,22 +63,25 @@ export const DetailView: FC = () => {
         )
       );
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
-
-  useEffect(() => {
-    setCustomBreadcrumbs({ 1: data?.requisitionNumber.toString() ?? '' });
-  }, [setCustomBreadcrumbs, data?.requisitionNumber]);
-
-  if (isLoading) return <DetailViewSkeleton />;
-
-  const onAddItem = () => {
-    navigate(buildItemEditRoute(data?.id, 'new'));
+  const handleRowClick = (line: RequestLineFragment) => {
+    setSelectedItemId(line.item.id);
+    onOpen();
   };
+
+  const handleAddItem = () => {
+    setSelectedItemId('new');
+    onOpen();
+  };
+
   const tabs = [
     {
-      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
+      Component: (
+        <ContentArea onRowClick={handleRowClick} onAddItem={handleAddItem} />
+      ),
       value: 'Details',
     },
     {
@@ -84,6 +89,12 @@ export const DetailView: FC = () => {
       value: 'Log',
     },
   ];
+
+  useEffect(() => {
+    setCustomBreadcrumbs({ 1: data?.requisitionNumber.toString() ?? '' });
+  }, [setCustomBreadcrumbs, data?.requisitionNumber]);
+
+  if (isLoading) return <DetailViewSkeleton />;
 
   const showIndicatorTab =
     !!data?.programName &&
@@ -95,7 +106,7 @@ export const DetailView: FC = () => {
     tabs.push({
       Component: (
         <IndicatorsTab
-          onClick={onProgramIndicatorClick}
+          onClick={handleProgramIndicatorClick}
           isLoading={isLoading || isProgramIndicatorsLoading}
           request={data}
           indicators={programIndicators?.nodes}
@@ -115,7 +126,7 @@ export const DetailView: FC = () => {
       >
         <AppBarButtons
           isDisabled={!data || isDisabled}
-          onAddItem={onAddItem}
+          onAddItem={handleAddItem}
           showIndicators={showIndicatorTab}
         />
         <Toolbar />
@@ -124,6 +135,13 @@ export const DetailView: FC = () => {
 
         <Footer />
         <SidePanel />
+        {isOpen && (
+          <RequestLineEditModal
+            isOpen={isOpen}
+            onClose={onClose}
+            itemId={selectedItemId}
+          />
+        )}
       </TableProvider>
     </RequestRequisitionLineErrorProvider>
   ) : (

@@ -18,7 +18,6 @@ import {
   Switch,
   TextArea,
   useAuthContext,
-  useNavigate,
   usePluginProvider,
   useTheme,
   useToggle,
@@ -28,7 +27,6 @@ import { DraftRequestLine } from './hooks';
 import { Footer } from './Footer';
 import { RequestStats } from './ItemCharts/RequestStats';
 import { RequestFragment, RequestLineFragment } from '../../api';
-import { buildItemEditRoute } from '../utils';
 
 const INPUT_WIDTH = 100;
 const LABEL_WIDTH = '150px';
@@ -72,7 +70,6 @@ export const RequestLineEdit = ({
   disabled: isSent,
 }: RequestLineEditProps) => {
   const t = useTranslation();
-  const navigate = useNavigate();
   const { plugins } = usePluginProvider();
   const { isOn, toggle } = useToggle();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -98,9 +95,6 @@ export const RequestLineEdit = ({
                     id: FnUtils.generateUUID(),
                     requisitionId: requisitionId,
                     itemId: newItem.id,
-                  });
-                  navigate(buildItemEditRoute(requisitionId, newItem.id), {
-                    replace: true,
                   });
                 }
               }}
@@ -330,7 +324,7 @@ export const RequestLineEdit = ({
                         disabled={!isPacks || isSent}
                         value={NumUtils.round(
                           (draft?.requestedQuantity ?? 0) /
-                          (draft?.defaultPackSize ?? 1),
+                            (draft?.defaultPackSize ?? 1),
                           2
                         )}
                         decimalLimit={2}
