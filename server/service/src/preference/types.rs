@@ -1,7 +1,4 @@
-use repository::{
-    EqualFilter, PreferenceFilter, PreferenceRepository, PreferenceRow, RepositoryError,
-    StorageConnection,
-};
+use repository::{PreferenceRow, RepositoryError, StorageConnection};
 use serde::{de::DeserializeOwned, Serialize};
 
 use serde_json::json;
@@ -34,6 +31,10 @@ pub trait Preference: Sync + Send {
         connection: &StorageConnection,
         store_id: Option<String>,
     ) -> Result<Option<PreferenceRow>, RepositoryError>;
+
+    fn default_value(&self) -> Self::Value {
+        Self::Value::default()
+    }
 
     fn deserialize(&self, data: &str) -> Result<Self::Value, serde_json::Error> {
         serde_json::from_str::<Self::Value>(data)
@@ -74,7 +75,7 @@ pub trait Preference: Sync + Send {
     ) -> Result<Self::Value, RepositoryError> {
         let pref = self.load_self(connection, store_id)?;
         match pref {
-            None => Ok(Self::Value::default()),
+            None => Ok(self.default_value()),
             Some(pref) => {
                 let text_pref = pref.value.as_str();
 
@@ -88,73 +89,64 @@ pub trait Preference: Sync + Send {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
     use repository::mock::{mock_store_a, MockDataInserts};
     use repository::test_db::setup_all;
-    use repository::{PreferenceRow, PreferenceRowRepository};
-    use serde::{Deserialize, Serialize};
+    use repository::PreferenceRow;
 
     #[actix_rt::test]
     async fn test_preference() {
-        #[derive(Debug, Default, Deserialize, Serialize, PartialEq)]
-        struct TestPref1 {
-            a: i32,
-            b: String,
-        }
-
-        impl Preference for TestPref1 {
-            type Value = TestPref1;
-            fn key(&self) -> &'static str {
-                "test_pref_1"
-            }
-        }
-
         #[derive(Debug, PartialEq)]
-        struct TestPref2;
+        struct TestPref;
 
-        impl Preference for TestPref2 {
+        impl Preference for TestPref {
             type Value = i32;
+
+            fn default_value(&self) -> Self::Value {
+                42
+            }
+
             fn key(&self) -> &'static str {
-                "test_pref_2"
+                "test_pref"
+            }
+            fn preference_type(&self) -> PreferenceType {
+                PreferenceType::Store
+            }
+            fn value_type(&self) -> PreferenceValueType {
+                PreferenceValueType::Number
+            }
+            fn load_self(
+                &self,
+                _connection: &StorageConnection,
+                store_id: Option<String>,
+            ) -> Result<Option<PreferenceRow>, RepositoryError> {
+                let mock_pref = PreferenceRow {
+                    id: "test_pref_store_a".to_string(),
+                    key: self.key().to_string(),
+                    value: r#"6"#.to_string(),
+                    store_id: Some(mock_store_a().id),
+                };
+
+                match store_id {
+                    Some(id) if id == mock_store_a().id => Ok(Some(mock_pref)),
+                    _ => Ok(None),
+                }
             }
         }
 
-        let (_, connection, _, _) =
-            setup_all("load_preference", MockDataInserts::none().stores()).await;
-        let prefs_repo = PreferenceRowRepository::new(&connection);
-
-        // Insert a global pref
-        prefs_repo
-            .upsert_one(&PreferenceRow {
-                id: "test_pref_2_global".to_string(),
-                key: "test_pref_2".to_string(),
-                value: r#"6"#.to_string(),
-                store_id: None,
-            })
-            .unwrap();
+        let (_, connection, _, _) = setup_all("load_preference", MockDataInserts::none()).await;
 
         let store_id = mock_store_a().id;
 
-        // Should return default, as no saved pref record exists for this pref type
-        let pref = TestPref1::default().load(&connection, &store_id).unwrap();
-        assert_eq!(pref, TestPref1::default());
-
-        // Should return 6, the saved global pref
-        let pref2 = TestPref2.load(&connection, &store_id).unwrap();
+        // Should return 6 (mocked value for store A)
+        let pref2 = TestPref.load(&connection, Some(store_id)).unwrap();
         assert_eq!(pref2, 6);
 
-        // Insert a store pref
-        prefs_repo
-            .upsert_one(&PreferenceRow {
-                id: "test_pref_2_store_a".to_string(),
-                key: "test_pref_2".to_string(),
-                value: r#"12"#.to_string(),
-                store_id: Some(store_id.clone()),
-            })
+        // Should return default (42) (no loaded pref in mock above for store B)
+        let pref = TestPref
+            .load(&connection, Some("store_b".to_string()))
             .unwrap();
-
-        // Should return 12, overriding the global pref
-        let pref2 = TestPref2.load(&connection, &store_id).unwrap();
-        assert_eq!(pref2, 12);
+        assert_eq!(pref, 42);
     }
 }

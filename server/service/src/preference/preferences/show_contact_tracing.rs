@@ -1,6 +1,8 @@
 use repository::{PreferenceRow, RepositoryError, StorageConnection};
 
-use super::{load_global, Preference, PreferenceType, PreferenceValueType};
+use crate::preference::{
+    load_preference::load_global, Preference, PreferenceType, PreferenceValueType,
+};
 
 pub struct ShowContactTracing;
 

@@ -1,10 +1,8 @@
 use repository::RepositoryError;
 
-use crate::service_provider::ServiceContext;
+use crate::{preference::preferences::ShowContactTracing, service_provider::ServiceContext};
 
-pub struct Preferences {
-    pub show_contact_tracing: bool,
-}
+use super::{preferences::Preferences, Preference};
 
 pub fn get_preferences(
     ctx: &ServiceContext,
@@ -13,7 +11,7 @@ pub fn get_preferences(
     let connection = &ctx.connection;
 
     let prefs = Preferences {
-        show_contact_tracing: ShowContactTracing.load(connection, store_id)?,
+        show_contact_tracing: ShowContactTracing.load(connection, Some(store_id.to_string()))?,
     };
 
     Ok(prefs)

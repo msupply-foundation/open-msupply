@@ -1,11 +1,10 @@
 use crate::service_provider::ServiceContext;
-use preferences::{get_preference_descriptions, get_preferences, Preference, Preferences};
+use preferences::Preferences;
 use repository::{PreferenceRow, RepositoryError};
 
 pub mod types;
 pub use types::*;
 mod load_preference;
-use load_preference::*;
 
 pub mod preferences;
 pub mod query;
