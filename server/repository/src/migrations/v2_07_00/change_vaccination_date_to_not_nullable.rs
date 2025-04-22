@@ -16,8 +16,8 @@ impl MigrationFragment for Migrate {
                 );
                 DELETE FROM vaccination WHERE vaccination_date IS NULL;
             "#,
-        );
-        
+        )?;
+
         if cfg!(feature = "postgres") {
             sql!(
                 connection,
