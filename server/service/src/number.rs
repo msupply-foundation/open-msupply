@@ -50,7 +50,11 @@ pub fn next_number(
                     repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
                 return Ok(next_number.number);
             }
-        };
+        }
+        // Invoices and requisitions synced from Legacy are given number `-1` until serial number assigned by OMS
+        // That means max_number is -1 the first time this runs, which would assign 0 as the next number (invalid)
+        // Lowest "max_number" should be 0
+        .map(|n| n.max(0));
 
         let max_next_number = max_number.map(|n| n + 1);
 
@@ -66,11 +70,12 @@ mod test {
 
     use repository::{
         mock::{
-            mock_inbound_shipment_number_store_a, mock_name_c,
+            mock_inbound_shipment_number_store_a, mock_name_a, mock_name_c,
             mock_outbound_shipment_number_store_a, mock_store_c, MockData, MockDataInserts,
         },
         test_db::{self, setup_all, setup_all_with_data},
-        InvoiceRow, InvoiceType, NumberRowType, RepositoryError, TransactionError,
+        InvoiceRow, InvoiceType, NumberRowType, RepositoryError, RequisitionRow, RequisitionType,
+        TransactionError,
     };
     use util::inline_init;
 
@@ -91,6 +96,15 @@ mod test {
                 r.invoice_number = 100;
             })
         }
+        fn unassigned_requisition() -> RequisitionRow {
+            inline_init(|r: &mut RequisitionRow| {
+                r.id = "unassigned_requisition".to_string();
+                r.name_link_id = mock_name_a().id;
+                r.store_id = mock_store_c().id;
+                r.r#type = RequisitionType::Response;
+                r.requisition_number = -1;
+            })
+        }
 
         let (_, connection, _, _) = setup_all_with_data(
             "test_number_service",
@@ -101,6 +115,7 @@ mod test {
                 .currencies(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice1()];
+                r.requisitions = vec![unassigned_requisition()];
             }),
         )
         .await;
@@ -128,6 +143,11 @@ mod test {
         // Test new with store that has existing invoice
         let result = next_number(&connection, &NumberRowType::OutboundShipment, "store_c").unwrap();
         assert_eq!(result, 101);
+
+        // Check serial 1 (not 0) assigned after records with -1
+        let result =
+            next_number(&connection, &NumberRowType::ResponseRequisition, "store_c").unwrap();
+        assert_eq!(result, 1);
     }
 
     #[actix_rt::test]
