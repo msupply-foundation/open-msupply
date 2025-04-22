@@ -28,6 +28,10 @@ const createDraftFromItem = (
     request.maxMonthsOfStock
   );
 
+  const initialStockOnHandUnits = request.program?.id
+    ? 0
+    : availableStockOnHand;
+
   return {
     id: FnUtils.generateUUID(),
     requisitionId: request.id,
@@ -38,7 +42,7 @@ const createDraftFromItem = (
     itemStats: item.stats,
     itemName: item.name,
     requisitionNumber: request.requisitionNumber,
-    initialStockOnHandUnits: 0,
+    initialStockOnHandUnits,
     incomingUnits: 0,
     outgoingUnits: 0,
     lossInUnits: 0,
@@ -61,6 +65,9 @@ const createDraftFromRequestLine = (
   isCreated: false,
   itemStats: line.itemStats,
   defaultPackSize: line.item.defaultPackSize,
+  initialStockOnHandUnits: request.program?.id
+    ? 0
+    : line.item.availableStockOnHand,
 });
 
 export const useDraftRequisitionLine = (
