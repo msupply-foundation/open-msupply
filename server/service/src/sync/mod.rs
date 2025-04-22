@@ -24,7 +24,6 @@ pub(crate) mod translations;
 use crate::service_provider::ServiceProvider;
 use std::sync::RwLock;
 
-use api::InitialisationStatus;
 use log::info;
 use repository::{
     ChangelogFilter, EqualFilter, KeyValueStoreRepository, RepositoryError, StorageConnection,
@@ -157,11 +156,13 @@ pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
 
 // TEST ONLY
 pub fn test_util_set_is_central_server(is_central: bool) {
-    CentralServerConfig::set_central_server_config(&SiteInfoV5 {
-        id: "".to_string(),
-        site_id: 1,
-        initialisation_status: InitialisationStatus::Completed,
-        central_server_url: "".to_string(),
-        is_central_server: is_central,
-    });
+    match is_central {
+        true => {
+            *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::IsCentralServer;
+        }
+        false => {
+            *CENTRAL_SERVER_CONFIG.write().unwrap() =
+                CentralServerConfig::CentralServerUrl("".to_string());
+        }
+    }
 }
