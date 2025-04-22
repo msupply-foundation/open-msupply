@@ -133,7 +133,7 @@ const getInventoryAdjustmentReasonInputColumn = (
         <InventoryAdjustmentReasonSearchInput
           autoFocus={autoFocus}
           value={value}
-          width={Number(column.width) - 12}
+          width={Number(column.width) - 20}
           onChange={onChange}
           adjustmentType={
             rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0)
@@ -243,7 +243,14 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       },
       {
         key: 'countedNumberOfPacks',
-        label: 'description.counted-num-of-packs',
+        label: getColumnLabelWithPackOrUnit({
+          t,
+          displayInDoses,
+          displayInPack: true,
+          itemUnit: item?.unitName,
+          unitTranslation: t('label.counted'),
+          standardTranslation: t('label.counted-num-of-packs'),
+        }),
         width: 100,
         getIsError: rowData =>
           errorsContext.getError(rowData)?.__typename ===
@@ -251,7 +258,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         Cell: NumberInputCell,
         cellProps: { decimalLimit: 2, min: 0 },
         setter: patch => {
-          // If counted number of packs was changed to result in no adjustment we
+          // If counted number of units was changed to result in no adjustment we
           // should remove inventoryAdjustmentReason, otherwise could have a
           // reason on a line with no adjustments
           const inventoryAdjustmentReason =
@@ -259,9 +266,63 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
             patch.snapshotNumberOfPacks == patch.countedNumberOfPacks
               ? null
               : patch.inventoryAdjustmentReason;
-          update({ ...patch, countThisLine: true, inventoryAdjustmentReason });
+
+          let countedNumberOfUnits = undefined;
+          if (patch.countedNumberOfPacks) {
+            countedNumberOfUnits = displayInDoses
+              ? patch.countedNumberOfPacks * (patch?.stockLine?.doses ?? 1)
+              : patch.countedNumberOfPacks * (patch?.packSize ?? 1);
+          }
+
+          update({
+            ...patch,
+            countThisLine: true,
+            inventoryAdjustmentReason,
+            countedNumberOfUnits,
+          });
         },
         accessor: ({ rowData }) => rowData.countedNumberOfPacks,
+      },
+      {
+        key: 'countedNumberOfUnits',
+        label: getColumnLabelWithPackOrUnit({
+          t,
+          displayInDoses,
+          itemUnit: item?.unitName,
+          unitTranslation: t('label.counted'),
+          standardTranslation: t('label.counted-num-of-units'),
+        }),
+        width: 100,
+        getIsError: rowData =>
+          errorsContext.getError(rowData)?.__typename ===
+          'StockLineReducedBelowZero',
+        Cell: NumberInputCell,
+        cellProps: { decimalLimit: 2, min: 0 },
+        setter: patch => {
+          let countedNumberOfPacks = undefined;
+          if (patch.countedNumberOfUnits) {
+            countedNumberOfPacks = displayInDoses
+              ? patch.countedNumberOfUnits / (patch?.stockLine?.doses ?? 1)
+              : patch.countedNumberOfUnits / (patch?.packSize ?? 1);
+          }
+
+          // If counted number of packs was changed to result in no adjustment we
+          // should remove inventoryAdjustmentReason, otherwise could have a
+          // reason on a line with no adjustments
+          const inventoryAdjustmentReason =
+            !countedNumberOfPacks ||
+            patch.snapshotNumberOfPacks == countedNumberOfPacks
+              ? null
+              : patch.inventoryAdjustmentReason;
+
+          update({
+            ...patch,
+            countThisLine: true,
+            inventoryAdjustmentReason,
+            countedNumberOfPacks,
+          });
+        },
+        accessor: ({ rowData }) => rowData.countedNumberOfUnits,
       },
       getInventoryAdjustmentReasonInputColumn(update, errorsContext)
     );
