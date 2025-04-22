@@ -234,7 +234,7 @@
 <Recurse>1</Recurse>
 <MatchMode>0</MatchMode>
 <Dest>%AppFolder%</Dest>
-<Overwrite>1</Overwrite>
+<Overwrite>2</Overwrite>
 <Backup>0</Backup>
 <Protect>0</Protect>
 <InstallOrder>1000</InstallOrder>
@@ -307,7 +307,7 @@
 <Recurse>1</Recurse>
 <MatchMode>0</MatchMode>
 <Dest>%AppFolder%</Dest>
-<Overwrite>1</Overwrite>
+<Overwrite>2</Overwrite>
 <Backup>0</Backup>
 <Protect>0</Protect>
 <InstallOrder>1000</InstallOrder>
@@ -380,7 +380,7 @@
 <Recurse>1</Recurse>
 <MatchMode>0</MatchMode>
 <Dest>%AppFolder%</Dest>
-<Overwrite>1</Overwrite>
+<Overwrite>2</Overwrite>
 <Backup>0</Backup>
 <Protect>0</Protect>
 <InstallOrder>1000</InstallOrder>
@@ -453,7 +453,7 @@
 <Recurse>1</Recurse>
 <MatchMode>0</MatchMode>
 <Dest>%AppFolder%</Dest>
-<Overwrite>1</Overwrite>
+<Overwrite>2</Overwrite>
 <Backup>0</Backup>
 <Protect>0</Protect>
 <InstallOrder>1000</InstallOrder>
