@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use repository::{
     ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, KeyType,
     RepositoryError, TransactionError,
@@ -13,6 +14,7 @@ use crate::{
 };
 
 use super::{
+    add_central_patient_visibility::AddPatientVisibilityForCentral,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin,
 };
@@ -27,6 +29,8 @@ pub(crate) enum ProcessorError {
     EmailServiceError(EmailServiceError),
     #[error("{0}")]
     GetActiveStoresOnSiteError(GetActiveStoresOnSiteError),
+    #[error("Other error: {0}")]
+    OtherError(String),
 }
 
 const CHANGELOG_BATCH_SIZE: u32 = 20;
@@ -36,6 +40,7 @@ pub enum ProcessorType {
     ContactFormEmail,
     LoadPlugin,
     AssignRequisitionNumber,
+    AddPatientVisibilityForCentral,
 }
 
 impl ProcessorType {
@@ -44,11 +49,14 @@ impl ProcessorType {
             ProcessorType::ContactFormEmail => Box::new(QueueContactEmailProcessor),
             ProcessorType::LoadPlugin => Box::new(LoadPlugin),
             ProcessorType::AssignRequisitionNumber => Box::new(AssignRequisitionNumber),
+            ProcessorType::AddPatientVisibilityForCentral => {
+                Box::new(AddPatientVisibilityForCentral)
+            }
         }
     }
 }
 
-pub(crate) fn process_records(
+pub(crate) async fn process_records(
     service_provider: &ServiceProvider,
     r#type: ProcessorType,
 ) -> Result<(), ProcessorError> {
@@ -84,7 +92,9 @@ pub(crate) fn process_records(
 
         for log in logs {
             // Try record against all of the processors
-            let result = processor.try_process_record_common(&ctx, &service_provider, &log);
+            let result = processor
+                .try_process_record_common(&ctx, &service_provider, &log)
+                .await;
             if let Err(e) = result {
                 log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
             }
@@ -97,7 +107,8 @@ pub(crate) fn process_records(
     Ok(())
 }
 
-pub(super) trait Processor {
+#[async_trait]
+pub(super) trait Processor: Sync + Send {
     fn get_description(&self) -> String;
 
     /// Default to using change_log_table_names
@@ -120,15 +131,16 @@ pub(super) trait Processor {
 
     fn cursor_type(&self) -> KeyType;
 
-    fn try_process_record_common(
+    async fn try_process_record_common(
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
-        let result = ctx
-            .connection
-            .transaction_sync(|_| self.try_process_record(ctx, service_provider, changelog))
+        // TODO: should be in a transaction, we need to support transaction_async
+        let result = self
+            .try_process_record(ctx, service_provider, changelog)
+            .await
             .map_err(ProcessorError::from)?;
 
         if let Some(result) = &result {
@@ -138,7 +150,7 @@ pub(super) trait Processor {
         Ok(result)
     }
 
-    fn try_process_record(
+    async fn try_process_record(
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,

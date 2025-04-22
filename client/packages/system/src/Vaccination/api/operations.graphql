@@ -22,17 +22,17 @@ fragment VaccinationDetail on VaccinationNode {
     lastName
   }
   given
+  givenStoreId
+  item {
+    id
+    name
+  }
   stockLine {
     id
-    itemId
-    itemName
     batch
   }
   invoice {
     id
-    store {
-      id
-    }
   }
   notGivenReason
   comment

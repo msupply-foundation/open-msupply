@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use repository::{
     BackendPluginRowRepository, ChangelogRow, ChangelogTableName, FrontendPluginRowRepository,
     KeyType,
@@ -13,12 +14,13 @@ const DESCRIPTION: &str = "Load plugins";
 
 pub(crate) struct LoadPlugin;
 
+#[async_trait]
 impl Processor for LoadPlugin {
     fn get_description(&self) -> String {
         DESCRIPTION.to_string()
     }
 
-    fn try_process_record(
+    async fn try_process_record(
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,

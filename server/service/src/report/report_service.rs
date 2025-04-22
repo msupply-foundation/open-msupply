@@ -1,5 +1,6 @@
 use base64::prelude::*;
 use chrono::{DateTime, Utc};
+use log::error;
 use repository::{
     migrations::Version, EqualFilter, Report, ReportFilter, ReportMetaData, ReportRepository,
     ReportRowRepository, ReportSort, RepositoryError,
@@ -7,6 +8,7 @@ use repository::{
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::{cmp::Ordering, collections::HashMap, time::SystemTime};
+use thiserror::Error;
 use util::{format_error, uuid::uuid};
 
 use crate::{
@@ -34,9 +36,11 @@ pub enum PrintFormat {
     Excel,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ConvertDataError {
+    #[error(transparent)]
     Extism(anyhow::Error),
+    #[error("BoaJs error: {0}")]
     BoaJs(String),
 }
 
@@ -569,7 +573,14 @@ fn generate_report(
         report.convert_data.clone(),
         &report.convert_data_type,
     )
-    .map_err(ReportError::ConvertDataError)?;
+    .map_err(|err| {
+        error!(
+            "Error transforming data for report {}: {}",
+            report.name,
+            format_error(&err)
+        );
+        ReportError::ConvertDataError(err)
+    })?;
 
     let mut context = tera::Context::from_serialize(report_data).map_err(|err| {
         ReportError::DocGenerationError(format!("Tera context from data: {:?}", err))

@@ -2099,7 +2099,6 @@
   "messages.no-shipments-yet": "لم يتم إنشاء أي شحنات حتى الآن.",
   "messages.no-status-logs": "لم يتم إنشاء سجلات حالة لهذا الجهاز. انقر على زر ”تحديث الحالة“ لإنشاء سجل حالة جديد.",
   "messages.no-stock-available": "لا يوجد مخزون متاح",
-  "messages.no-transaction-other-facility": "لا يتم تسجيل معاملات المخزون للتطعيمات المعطاة في منشآت أخرى",
   "messages.no-vaccine-items-configured": "لم يتم تكوين أي عناصر لقاح في دورة اللقاح هذه. لن يتم تسجيل معاملات المخزون.",
   "messages.not-applicable": "لا ينطبق",
   "messages.not-configured": "لم يتم تكوينها",
