@@ -159,12 +159,16 @@ export const useStocktakeColumns = ({
   if (preferences?.displayVaccineInDoses) {
     columns.push({
       key: 'doses',
-      // TODO: Dynamic label to show unit name?
-      label: 'label.doses-per-vial',
+      label: 'label.doses-per-unit',
       sortable: false,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
-          return rowData.lines[0]?.stockLine?.doses ?? UNDEFINED_STRING_VALUE;
+          const { lines } = rowData;
+          const doses = lines?.map(
+            ({ stockLine }) => stockLine?.doses ?? UNDEFINED_STRING_VALUE
+          );
+          const dosesTheSame = doses?.every(dose => dose === doses?.[0]);
+          return dosesTheSame ? doses?.[0] : t('multiple');
         } else {
           return rowData?.stockLine?.doses ?? UNDEFINED_STRING_VALUE;
         }
