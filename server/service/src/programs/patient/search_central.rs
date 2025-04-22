@@ -1,6 +1,5 @@
 use log::{error, info};
 use repository::RepositoryError;
-use reqwest::ClientBuilder;
 use thiserror::Error;
 use url::Url;
 
@@ -42,12 +41,8 @@ pub async fn patient_search_central(
             err
         ))
     })?;
-    let client = ClientBuilder::new()
-        .build()
-        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
 
     let api = PatientApiV4::new(
-        client,
         central_server_url.clone(),
         &sync_settings.username,
         &sync_settings.password_sha256,
@@ -104,12 +99,8 @@ pub async fn link_patient_to_store(
             err
         ))
     })?;
-    let client = ClientBuilder::new()
-        .build()
-        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
 
     let api = PatientApiV4::new(
-        client,
         central_server_url.clone(),
         &sync_settings.username,
         &sync_settings.password_sha256,
@@ -161,15 +152,11 @@ async fn link_patient_to_store_v6(
         CentralServerConfig::CentralServerUrl(url) => url,
     };
 
-    let client = ClientBuilder::new()
-        .build()
-        .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
-
     let server_url = Url::parse(&om_central_url).map_err(|_| {
         CentralPatientRequestError::InternalError(format!("Cannot parse central server URL: "))
     })?;
 
-    let om_central_api = OmsCentralApi::new(client, server_url);
+    let om_central_api = OmsCentralApi::new(server_url);
 
     let sync_v5_settings =
         SyncApiV5::new_settings(sync_settings, service_provider, SYNC_V5_VERSION)
