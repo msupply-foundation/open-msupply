@@ -1,14 +1,13 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
-mod add_assign_requisition_number_processor_pg_enum_type;
-mod store_reintegrate_for_created_date;
+mod remove_non_custom_standard_reports;
 
-pub(crate) struct V2_06_02;
+pub(crate) struct V2_06_03;
 
-impl Migration for V2_06_02 {
+impl Migration for V2_06_03 {
     fn version(&self) -> Version {
-        Version::from_str("2.6.2")
+        Version::from_str("2.6.3")
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
@@ -16,22 +15,19 @@ impl Migration for V2_06_02 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![
-            Box::new(store_reintegrate_for_created_date::Migrate),
-            Box::new(add_assign_requisition_number_processor_pg_enum_type::Migrate),
-        ]
+        vec![Box::new(remove_non_custom_standard_reports::Migrate)]
     }
 }
 
 #[cfg(test)]
 #[actix_rt::test]
-async fn migration_2_06_02() {
-    use crate::migrations::v2_06_01::V2_06_01;
+async fn migration_2_06_03() {
+    use crate::migrations::v2_06_02::V2_06_02;
     use crate::migrations::*;
     use crate::test_db::*;
 
-    let previous_version = V2_06_01.version();
-    let version = V2_06_02.version();
+    let previous_version = V2_06_02.version();
+    let version = V2_06_03.version();
 
     let SetupResult { connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),

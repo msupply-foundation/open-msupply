@@ -39,6 +39,7 @@ pub fn generate(
         given,
         stock_line_id,
         not_given_reason,
+        item_id,
     } = insert_input;
 
     let now = Utc::now().naive_utc();
@@ -62,7 +63,7 @@ pub fn generate(
 
     let vaccination = VaccinationRow {
         id,
-        store_id,
+        store_id: store_id.clone(),
         program_enrolment_id: program_enrolment.id,
         user_id,
         patient_link_id: program_enrolment.patient_link_id,
@@ -73,7 +74,9 @@ pub fn generate(
         clinician_link_id: clinician_id,
         vaccination_date: vaccination_date.unwrap_or(now.date()),
         given,
+        given_store_id: given.then_some(store_id),
         stock_line_id,
+        item_link_id: item_id,
         not_given_reason,
         comment,
         facility_name_link_id,
