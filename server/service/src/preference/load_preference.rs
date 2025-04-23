@@ -26,7 +26,8 @@ pub fn load_store(
     )
 }
 
-pub fn load_store_with_global_default(
+// Not used yet, but example of how we could merge/override
+pub fn _load_store_with_global_default(
     connection: &StorageConnection,
     key: &str,
     store_id: &str,
@@ -83,12 +84,12 @@ mod tests {
 
         // Should return the store pref, as one exists
         let pref =
-            load_store_with_global_default(&connection, key, mock_store_a().id.as_str()).unwrap();
+            _load_store_with_global_default(&connection, key, mock_store_a().id.as_str()).unwrap();
 
         assert_eq!(pref.unwrap().value, "store A says hey");
 
         // Should return the global pref, as no store pref exists for store B
-        let pref = load_store_with_global_default(&connection, key, "store_b").unwrap();
+        let pref = _load_store_with_global_default(&connection, key, "store_b").unwrap();
 
         assert_eq!(pref.unwrap().value, "global");
     }
