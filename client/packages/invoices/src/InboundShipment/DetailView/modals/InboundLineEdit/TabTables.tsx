@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   DataTable,
   useColumns,
@@ -23,6 +23,7 @@ import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
   getLocationInputColumn,
+  ItemRowFragment,
   ItemVariantInputCell,
   LocationRowFragment,
   PackSizeEntryCell,
@@ -35,6 +36,7 @@ interface TableProps {
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
+  item?: ItemRowFragment | null;
 }
 
 const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
@@ -68,10 +70,10 @@ const getExpiryColumn = (
   },
 ];
 
-const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
+const NumberOfPacksCell = ({
   rowData,
   ...props
-}) => (
+}: CellProps<DraftInboundLine>) => (
   <NumberInputCell
     {...props}
     isRequired={rowData.numberOfPacks === 0}
@@ -79,11 +81,12 @@ const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
   />
 );
 
-export const QuantityTableComponent: FC<TableProps> = ({
+export const QuantityTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled = false,
-}) => {
+  item,
+}: TableProps) => {
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
 
@@ -145,13 +148,13 @@ export const QuantityTableComponent: FC<TableProps> = ({
 
 export const QuantityTable = React.memo(QuantityTableComponent);
 
-export const PricingTableComponent: FC<TableProps> = ({
+export const PricingTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled = false,
   currency,
   isExternalSupplier,
-}) => {
+}: TableProps) => {
   const { store } = useAuthContext();
 
   const CurrencyCell = useCurrencyCell<DraftInboundLine>(
@@ -273,11 +276,11 @@ export const PricingTableComponent: FC<TableProps> = ({
 
 export const PricingTable = React.memo(PricingTableComponent);
 
-export const LocationTableComponent: FC<TableProps> = ({
+export const LocationTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled,
-}) => {
+}: TableProps) => {
   const columns = useColumns<DraftInboundLine>(
     [
       [
