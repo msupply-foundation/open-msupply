@@ -6,7 +6,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { LineEditBase } from './LineEditBase';
-import { useAvailablePreferences } from '../api';
+import { usePreferenceDescriptions } from '../api';
 import { EditPreference } from './EditPreference';
 
 export const EditPreferencesPage = () => {
@@ -14,7 +14,7 @@ export const EditPreferencesPage = () => {
   const { key } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
 
-  const { data } = useAvailablePreferences();
+  const { data } = usePreferenceDescriptions();
 
   useEffect(() => {
     if (key)
@@ -26,7 +26,6 @@ export const EditPreferencesPage = () => {
   const selectedPref = data?.find(d => key === d.key);
 
   return (
-    // TODO: Consider alternative UI - more explicit than JSON forms?
     <LineEditBase currentKey={key ?? ''} prefs={data ?? []}>
       {selectedPref && (
         <EditPreference key={selectedPref.key} selected={selectedPref} />

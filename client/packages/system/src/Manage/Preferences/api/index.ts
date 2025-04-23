@@ -1,1 +1,1 @@
-export * from './useAvailablePreferences';
+export * from './usePreferenceDescriptions';

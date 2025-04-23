@@ -5888,14 +5888,13 @@ export type PluginInfoNode = {
 
 export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
-  jsonSchema: Scalars['JSON']['output'];
   key: Scalars['String']['output'];
-  uiSchema: Scalars['JSON']['output'];
+  valueType: PreferenceValueNodeType;
 };
 
 export type PreferenceMutations = {
   __typename: 'PreferenceMutations';
-  upsertPreference: PreferenceNode;
+  upsertPreference: IdResponse;
 };
 
 export type PreferenceMutationsUpsertPreferenceArgs = {
@@ -5903,14 +5902,11 @@ export type PreferenceMutationsUpsertPreferenceArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type PreferenceNode = {
-  __typename: 'PreferenceNode';
-  id: Scalars['String']['output'];
-  key: Scalars['String']['output'];
-  storeId?: Maybe<Scalars['String']['output']>;
-  /** JSON serialized value */
-  value: Scalars['String']['output'];
-};
+export enum PreferenceValueNodeType {
+  Boolean = 'BOOLEAN',
+  Integer = 'INTEGER',
+  String = 'STRING',
+}
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
@@ -6246,7 +6242,6 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
-  availablePreferences: Array<PreferenceDescriptionNode>;
   barcodeByGtin: BarcodeResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
@@ -6341,6 +6336,7 @@ export type Queries = {
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
   pluginGraphqlQuery: Scalars['JSON']['output'];
+  preferenceDescriptions: Array<PreferenceDescriptionNode>;
   preferences: PreferencesNode;
   printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
@@ -6486,10 +6482,6 @@ export type QueriesAssetsArgs = {
 export type QueriesAuthTokenArgs = {
   password: Scalars['String']['input'];
   username: Scalars['String']['input'];
-};
-
-export type QueriesAvailablePreferencesArgs = {
-  storeId: Scalars['String']['input'];
 };
 
 export type QueriesBarcodeByGtinArgs = {
@@ -6798,6 +6790,10 @@ export type QueriesPluginDataArgs = {
 export type QueriesPluginGraphqlQueryArgs = {
   input: Scalars['JSON']['input'];
   pluginCode: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPreferenceDescriptionsArgs = {
   storeId: Scalars['String']['input'];
 };
 

@@ -3,17 +3,16 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type AvailablePreferencesQueryVariables = Types.Exact<{
+export type PreferenceDescriptionsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
-export type AvailablePreferencesQuery = {
+export type PreferenceDescriptionsQuery = {
   __typename: 'Queries';
-  availablePreferences: Array<{
+  preferenceDescriptions: Array<{
     __typename: 'PreferenceDescriptionNode';
     key: string;
-    jsonSchema: any;
-    uiSchema: any;
+    valueType: Types.PreferenceValueNodeType;
   }>;
 };
 
@@ -37,17 +36,16 @@ export type UpsertPreferenceMutation = {
     __typename: 'CentralServerMutationNode';
     preferences: {
       __typename: 'PreferenceMutations';
-      upsertPreference: { __typename: 'PreferenceNode'; id: string };
+      upsertPreference: { __typename: 'IdResponse'; id: string };
     };
   };
 };
 
-export const AvailablePreferencesDocument = gql`
-  query availablePreferences($storeId: String!) {
-    availablePreferences(storeId: $storeId) {
+export const PreferenceDescriptionsDocument = gql`
+  query preferenceDescriptions($storeId: String!) {
+    preferenceDescriptions(storeId: $storeId) {
       key
-      jsonSchema
-      uiSchema
+      valueType
     }
   }
 `;
@@ -89,18 +87,18 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
-    availablePreferences(
-      variables: AvailablePreferencesQueryVariables,
+    preferenceDescriptions(
+      variables: PreferenceDescriptionsQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<AvailablePreferencesQuery> {
+    ): Promise<PreferenceDescriptionsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AvailablePreferencesQuery>(
-            AvailablePreferencesDocument,
+          client.request<PreferenceDescriptionsQuery>(
+            PreferenceDescriptionsDocument,
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'availablePreferences',
+        'preferenceDescriptions',
         'query',
         variables
       );

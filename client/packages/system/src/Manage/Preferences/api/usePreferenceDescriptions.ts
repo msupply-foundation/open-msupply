@@ -1,15 +1,15 @@
 import { useQuery } from '@openmsupply-client/common';
 import { usePreferencesGraphQL } from './usePreferencesGraphQL';
 
-export const useAvailablePreferences = () => {
+export const usePreferenceDescriptions = () => {
   const { api, storeId } = usePreferencesGraphQL();
 
   return useQuery({
-    queryKey: 'availablePreferences',
+    queryKey: 'preference-descriptions',
     queryFn: async () => {
-      const result = await api.availablePreferences({ storeId });
+      const result = await api.preferenceDescriptions({ storeId });
 
-      return result.availablePreferences;
+      return result.preferenceDescriptions;
     },
   });
 };

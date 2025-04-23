@@ -1,8 +1,7 @@
-query availablePreferences($storeId: String!) {
-  availablePreferences(storeId: $storeId) {
+query preferenceDescriptions($storeId: String!) {
+  preferenceDescriptions(storeId: $storeId) {
     key
-    jsonSchema
-    uiSchema
+    valueType
   }
 }
 
