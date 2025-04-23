@@ -241,6 +241,7 @@ export const useStocktakeColumns = ({
           const { lines } = rowData;
           const displayDoses =
             preferences?.displayVaccineInDoses && lines[0]?.item.isVaccine;
+
           const total =
             lines.reduce(
               (total, line) =>
@@ -272,7 +273,7 @@ export const useStocktakeColumns = ({
               : ''
           }`;
         } else if (rowData.countedNumberOfPacks === null) {
-          return null;
+          return UNDEFINED_STRING_VALUE;
         } else {
           const total =
             (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
@@ -285,6 +286,7 @@ export const useStocktakeColumns = ({
           const totalInDosesRounded = totalInDoses
             ? Math.round(totalInDoses * 100) / 100
             : null;
+
           return `${totalRounded}
             ${totalInDosesRounded ? `(${totalInDosesRounded} ${t('label.doses')})` : ''}`;
         }
