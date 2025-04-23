@@ -105,6 +105,17 @@ const responseParser = {
     requestedQuantity: patch.requestedQuantity,
     optionId: patch?.reason?.id ?? null,
   }),
+  toListFilter: (
+    filterBy: FilterByWithBoolean | null
+  ): FilterByWithBoolean | null => {
+    Object.assign(filterBy ?? {},  {type: { equalTo: RequisitionNodeType.Response }});
+    if (filterBy?.['isEmergencyAndAutomatic']) {
+      filterBy['isEmergency'] = filterBy['isEmergencyAndAutomatic'];
+      filterBy['automaticallyCreated'] = filterBy['isEmergencyAndAutomatic'];
+    }
+    filterBy && delete filterBy['isEmergencyAndAutomatic'];
+    return filterBy;
+  },
 };
 
 export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
@@ -117,10 +128,7 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
           key: responseParser.toSortField(sortBy),
           desc: !!sortBy.isDesc,
         },
-        filter: {
-          ...filterBy,
-          type: { equalTo: RequisitionNodeType.Response },
-        },
+        filter: responseParser.toListFilter(filterBy),
       });
       return result?.requisitions;
     },

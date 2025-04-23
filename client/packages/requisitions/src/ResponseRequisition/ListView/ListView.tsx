@@ -60,6 +60,10 @@ export const ResponseRequisitionListView: FC = () => {
         key: 'aShipmentHasBeenCreated',
         condition: '=',
       },
+      {
+        key: 'isEmergencyAndAutomatic',
+        condition: '=',
+      },
     ],
   });
   const pagination = { page, first, offset };
