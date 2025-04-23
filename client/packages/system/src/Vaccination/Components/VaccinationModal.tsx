@@ -92,6 +92,7 @@ export const VaccinationModal = ({
         }
       } catch (e) {
         console.error(e);
+        error(t('error.something-wrong'))();
       }
     }
   );
