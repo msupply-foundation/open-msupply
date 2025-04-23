@@ -166,6 +166,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
   const displayInDoses =
     !!preferences?.displayVaccineInDoses && !!item?.isVaccine;
   useDisableStocktakeRows(batches);
+  const itemUnitName = item?.unitName ? item.unitName : t('label.unit');
 
   const errorsContext = useStocktakeLineErrorContext();
 
@@ -201,7 +202,17 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         cellProps: {
           getIsDisabled: (rowData: DraftStocktakeLine) => !!rowData?.stockLine,
         },
-      }),
+      })
+    );
+    if (displayInDoses) {
+      columnDefinitions.push({
+        key: 'doses-per-pack',
+        label: `${t('label.doses-per')} ${itemUnitName}`,
+        width: 80,
+        accessor: ({ rowData }) => rowData.stockLine?.doses,
+      });
+    }
+    columnDefinitions.push(
       {
         key: 'snapshotNumberOfPacks',
         label: getColumnLabelWithPackOrUnit({
