@@ -11,10 +11,10 @@ import {
   AssetLogStatusInput,
   Box,
   CameraIcon,
+  EnvUtils,
   InsertAssetLogInput,
   StatusType,
   useDebounceCallback,
-  useIsMediumScreen,
 } from '@openmsupply-client/common';
 import { FileList } from '../Components';
 import { parseLogStatus } from '../utils';
@@ -81,7 +81,6 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
   const t = useTranslation();
   const isGaps = useIsGapsStoreOnly();
   const isNative = Capacitor.isNativePlatform();
-  const isMediumScreen = useIsMediumScreen();
   const debouncedOnChange = useDebounceCallback(
     (patch: Partial<InsertAssetLogInput>) => onChange(patch),
     [onChange],
@@ -128,7 +127,8 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
   };
 
   const renderUploadButton = (): ReactNode => {
-    if (!isMediumScreen) return <Upload onUpload={onUpload} />;
+    if (!Capacitor.isNativePlatform() || EnvUtils.os !== 'Android')
+      return <Upload onUpload={onUpload} />;
 
     return (
       <UploadButton
@@ -140,7 +140,7 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
   };
 
   const renderTakePhotoButton = (): ReactNode => {
-    if (!isMediumScreen) return null;
+    if (!Capacitor.isNativePlatform() || EnvUtils.os !== 'Android') return null;
 
     return isNative ? (
       <TakePhotoButton onUpload={onUpload} files={draft.files} />
