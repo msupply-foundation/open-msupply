@@ -26,23 +26,42 @@ export const OrderSection = ({
   const t = useTranslation();
   const [isPacks, setIsPacks] = useState(isPacksEnabled);
 
-  const options = [
-    { label: t('label.units'), value: 'units' },
-    { label: t('label.packs'), value: 'packs' },
-  ];
+  const options = useMemo(() => {
+    if (isPacksEnabled) {
+      return [{ label: t('label.units'), value: 'units' }];
+    }
+    return [
+      { label: t('label.units'), value: 'units' },
+      { label: t('label.packs'), value: 'packs' },
+    ];
+  }, [isPacksEnabled, t]);
 
-  const defaultValue = options.find(
+  const defaultOption = options.find(
     option => option.value === (isPacks ? 'packs' : 'units')
   );
 
+  const calculatePackQuantity = (precision: number = 0): number => {
+    return NumUtils.round(
+      (draft?.requestedQuantity ?? 0) / (draft?.defaultPackSize ?? 1),
+      precision
+    );
+  };
+
+  const alternativeQuantityLabel = useMemo((): string => {
+    if (isPacks)
+      return t('label.order-count-units', {
+        count: Math.ceil(draft?.requestedQuantity ?? 0),
+      });
+    return t('label.order-count-packs', { count: calculatePackQuantity() });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPacks, draft?.requestedQuantity]);
+
   const currentValue = useMemo(() => {
     if (isPacks) {
-      return NumUtils.round(
-        (draft?.requestedQuantity ?? 0) / (draft?.defaultPackSize ?? 1),
-        2
-      );
+      return calculatePackQuantity(2);
     }
     return Math.ceil(draft?.requestedQuantity ?? 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPacks, draft?.requestedQuantity, draft?.defaultPackSize]);
 
   const handleValueChange = (value?: number) => {
@@ -95,7 +114,7 @@ export const OrderSection = ({
               width="150px"
               clearable={false}
               options={options}
-              value={defaultValue}
+              value={defaultOption}
               onChange={() => setIsPacks(!isPacks)}
               getOptionLabel={option => option.label}
               textSx={{ borderRadius: 2 }}
@@ -121,16 +140,7 @@ export const OrderSection = ({
       </Box>
       {isPacksEnabled && (
         <Typography variant="body2" color="text.secondary">
-          {isPacks
-            ? t('label.order-count-units', {
-                count: Math.ceil(draft?.requestedQuantity ?? 0),
-              })
-            : t('label.order-count-packs', {
-                count: NumUtils.round(
-                  (draft?.requestedQuantity ?? 0) /
-                    (draft?.defaultPackSize ?? 1)
-                ),
-              })}
+          {alternativeQuantityLabel}
         </Typography>
       )}
     </Box>
