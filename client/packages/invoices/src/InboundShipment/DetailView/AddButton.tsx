@@ -27,7 +27,7 @@ export const AddButton = ({
   disableAddFromInternalOrderButton,
 }: AddButtonProps) => {
   const t = useTranslation();
-  const { error } = useNotification();
+  const { info } = useNotification();
   const masterListModalController = useToggle();
   const internalOrderModalController = useToggle();
 
@@ -72,7 +72,7 @@ export const AddButton = ({
       case 'add-from-master-list':
         invoice?.status === InvoiceNodeStatus.New
           ? masterListModalController.toggleOn()
-          : error(t('error.cannot-add-from-masterlist-if-not-new'))();
+          : info(t('error.cannot-add-from-masterlist-if-not-new'))();
         break;
       case 'add-from-internal-order':
         internalOrderModalController.toggleOn();
