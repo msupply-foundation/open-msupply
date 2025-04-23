@@ -39,7 +39,7 @@ impl PreferenceQueries {
         ))
     }
 
-    pub async fn preference_list(
+    pub async fn preference_descriptions(
         &self,
         ctx: &Context<'_>,
         store_id: String,

@@ -16,9 +16,14 @@ pub enum PreferenceType {
 pub enum PreferenceValueType {
     Boolean,
     String,
-    Number,
+    Integer,
     // Add scalar or custom value types here - mapped to frontend renderers
 }
+
+// OK SO THE TODOS ARE
+// 1. Remove JSON forms, allow greater type safety
+// 2. UI renderers based on value types
+// 3. Upsert should be typed
 
 #[derive(Clone, Error, Debug, PartialEq)]
 pub enum PreferenceError {
@@ -94,6 +99,8 @@ pub trait Preference: Sync + Send {
     fn load(
         &self,
         connection: &StorageConnection,
+        // As we implement user/machine prefs, also accept those optional ids
+        // load_self will determine which are actually required
         store_id: Option<String>,
     ) -> Result<Self::Value, PreferenceError> {
         let pref = self.load_self(connection, store_id)?;
@@ -106,6 +113,22 @@ pub trait Preference: Sync + Send {
                     PreferenceError::DeserializeError(pref.key, pref.value, e.to_string())
                 })
             }
+        }
+    }
+}
+
+pub struct PreferenceDescription {
+    pub key: String,
+    pub preference_type: PreferenceType,
+    pub value_type: PreferenceValueType,
+}
+
+impl PreferenceDescription {
+    pub fn from_preference<T: Preference>(pref: &T) -> Self {
+        Self {
+            key: pref.key().to_string(),
+            preference_type: pref.preference_type(),
+            value_type: pref.value_type(),
         }
     }
 }
@@ -143,7 +166,7 @@ mod tests {
                 PreferenceType::Store
             }
             fn value_type(&self) -> PreferenceValueType {
-                PreferenceValueType::Number
+                PreferenceValueType::Integer
             }
             fn load_self(
                 &self,

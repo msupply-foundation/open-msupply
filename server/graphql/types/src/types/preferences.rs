@@ -1,8 +1,9 @@
 use async_graphql::*;
 use repository::{PreferenceRow, StorageConnection};
-use service::preference::{preferences::PreferenceRegistry, Preference};
+use service::preference::{
+    preferences::PreferenceRegistry, Preference, PreferenceDescription, PreferenceValueType,
+};
 
-/// Defines the preferences object for a store
 pub struct PreferencesNode {
     pub connection: StorageConnection,
     pub store_id: Option<String>,
@@ -35,28 +36,39 @@ impl PreferencesNode {
     }
 }
 
-// Central only node types:
-
-/// Describes a preference, how it is configured
 pub struct PreferenceDescriptionNode {
-    pub pref: Box<dyn Preference<Value = bool>>,
+    pub pref: PreferenceDescription,
 }
 
 #[Object]
 impl PreferenceDescriptionNode {
     pub async fn key(&self) -> &str {
-        self.pref.key()
+        &self.pref.key
     }
 
-    pub async fn json_schema(&self) -> serde_json::Value {
-        self.pref.json_schema()
-    }
-
-    pub async fn ui_schema(&self) -> serde_json::Value {
-        self.pref.ui_schema()
+    pub async fn value_type(&self) -> PreferenceValueNodeType {
+        PreferenceValueNodeType::from_domain(&self.pref.value_type)
     }
 }
 
+#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
+pub enum PreferenceValueNodeType {
+    Boolean,
+    String,
+    Integer,
+}
+
+impl PreferenceValueNodeType {
+    pub fn from_domain(domain_type: &PreferenceValueType) -> Self {
+        match domain_type {
+            PreferenceValueType::Boolean => PreferenceValueNodeType::Boolean,
+            PreferenceValueType::Integer => PreferenceValueNodeType::Integer,
+            PreferenceValueType::String => PreferenceValueNodeType::String,
+        }
+    }
+}
+
+// tODO, remove
 pub struct PreferenceNode {
     pub preference: PreferenceRow,
 }
