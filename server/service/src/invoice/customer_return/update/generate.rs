@@ -162,11 +162,15 @@ pub fn generate_lines_and_stock_lines(
                 StockLineInput {
                     stock_line_id: return_line.stock_line_id,
                     store_id: store_id.to_string(),
-                    on_hold: existing_stock_line.map_or(false, |stock_line| stock_line.on_hold),
+                    on_hold: existing_stock_line
+                        .clone()
+                        .map_or(false, |stock_line| stock_line.on_hold),
                     barcode_id: None,
                     supplier_link_id: supplier_id.to_string(),
                     // Update existing stock levels if the stock line already exists
                     overwrite_stock_levels: false,
+                    vaccine_doses: existing_stock_line
+                        .and_then(|stock_line| stock_line.vaccine_doses),
                 },
             )?;
 

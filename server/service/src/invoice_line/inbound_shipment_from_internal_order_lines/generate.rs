@@ -21,7 +21,11 @@ pub fn generate(
     existing_invoice_row: InvoiceRow,
     requisition_row: RequisitionLineRow,
 ) -> Result<GenerateResult, RepositoryError> {
-    let mut invoice_line = generate_line(requisition_row, item_row, existing_invoice_row.clone());
+    let mut invoice_line = generate_line(
+        requisition_row,
+        item_row.clone(),
+        existing_invoice_row.clone(),
+    );
 
     let stock_line = generate_batch(
         connection,
@@ -33,6 +37,7 @@ pub fn generate(
             on_hold: false,
             barcode_id: None,
             overwrite_stock_levels: true,
+            vaccine_doses: item_row.is_vaccine.then_some(item_row.vaccine_doses),
         },
     )?;
     // If a new stock line has been created, update the stock_line_id on the invoice line

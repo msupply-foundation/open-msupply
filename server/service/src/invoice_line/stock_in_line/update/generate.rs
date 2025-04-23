@@ -39,7 +39,7 @@ pub fn generate(
         connection,
         input.clone(),
         current_line.invoice_line_row,
-        new_item_option,
+        new_item_option.clone(),
         existing_invoice_row.currency_id.clone(),
         &existing_invoice_row.currency_rate,
     )?;
@@ -66,6 +66,8 @@ pub fn generate(
                 on_hold: false,
                 barcode_id: None,
                 overwrite_stock_levels: true,
+                vaccine_doses: new_item_option
+                    .and_then(|item| item.is_vaccine.then_some(item.vaccine_doses)),
             },
         )?;
         update_line.stock_line_id = Some(new_batch.id.clone());
