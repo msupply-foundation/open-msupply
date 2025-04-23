@@ -37,9 +37,7 @@ export const ScheduleNextEncounterModal = ({
   const t = useTranslation();
   const [draft, setDraft] = useState<EncounterSchema>({
     createdDatetime: new Date().toISOString(),
-    startDatetime: DateUtils.formatRFC3339(
-      DateUtils.addCurrentTime(suggestedDate)
-    ),
+    startDatetime: suggestedDate?.toISOString(),
     createdBy: { id: user?.id ?? '', username: user?.name ?? '' },
     status: EncounterNodeStatus.Pending,
     location: {
