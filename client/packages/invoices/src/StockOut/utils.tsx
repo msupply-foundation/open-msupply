@@ -32,7 +32,13 @@ export const createStockOutPlaceholderRow = (
   totalBeforeTax: 0,
   expiryDate: undefined,
   type: InvoiceLineNodeType.UnallocatedStock,
-  item: { id: itemId, code: '', name: '', __typename: 'ItemNode' },
+  item: {
+    id: itemId,
+    code: '',
+    name: '',
+    isVaccine: false,
+    __typename: 'ItemNode',
+  },
   itemName: '',
 });
 
@@ -87,6 +93,7 @@ export const createDraftStockOutLineFromStockLine = ({
       id: stockLine?.itemId ?? '',
       name: stockLine?.item?.name,
       code: stockLine?.item?.code,
+      isVaccine: stockLine?.item?.isVaccine ?? false,
       __typename: 'ItemNode',
     },
 

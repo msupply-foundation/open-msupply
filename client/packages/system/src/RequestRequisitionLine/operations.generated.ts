@@ -11,6 +11,7 @@ export type ItemWithStatsFragment = {
   code: string;
   unitName?: string | null;
   defaultPackSize: number;
+  isVaccine: boolean;
   availableStockOnHand: number;
   stats: {
     __typename: 'ItemStatsNode';
@@ -57,6 +58,7 @@ export type RequestLineFragment = {
     code: string;
     unitName?: string | null;
     defaultPackSize: number;
+    isVaccine: boolean;
     availableStockOnHand: number;
     stats: {
       __typename: 'ItemStatsNode';
@@ -139,6 +141,7 @@ export type RequestFragment = {
         code: string;
         unitName?: string | null;
         defaultPackSize: number;
+        isVaccine: boolean;
         availableStockOnHand: number;
         stats: {
           __typename: 'ItemStatsNode';
@@ -210,6 +213,7 @@ export const ItemWithStatsFragmentDoc = gql`
     code
     unitName
     defaultPackSize
+    isVaccine
     availableStockOnHand(storeId: $storeId)
     stats(storeId: $storeId) {
       averageMonthlyConsumption

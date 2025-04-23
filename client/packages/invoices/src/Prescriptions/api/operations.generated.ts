@@ -67,6 +67,7 @@ export type PrescriptionRowFragment = {
         name: string;
         code: string;
         unitName?: string | null;
+        isVaccine: boolean;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -106,6 +107,7 @@ export type PrescriptionRowFragment = {
           __typename: 'ItemNode';
           name: string;
           code: string;
+          isVaccine: boolean;
           itemDirections: Array<{
             __typename: 'ItemDirectionNode';
             directions: string;
@@ -187,6 +189,7 @@ export type PrescriptionLineFragment = {
     name: string;
     code: string;
     unitName?: string | null;
+    isVaccine: boolean;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -226,6 +229,7 @@ export type PrescriptionLineFragment = {
       __typename: 'ItemNode';
       name: string;
       code: string;
+      isVaccine: boolean;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
         directions: string;
@@ -277,6 +281,7 @@ export type PartialPrescriptionLineFragment = {
     __typename: 'ItemNode';
     name: string;
     code: string;
+    isVaccine: boolean;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -380,6 +385,7 @@ export type PrescriptionsQuery = {
             name: string;
             code: string;
             unitName?: string | null;
+            isVaccine: boolean;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -419,6 +425,7 @@ export type PrescriptionsQuery = {
               __typename: 'ItemNode';
               name: string;
               code: string;
+              isVaccine: boolean;
               itemDirections: Array<{
                 __typename: 'ItemDirectionNode';
                 directions: string;
@@ -551,6 +558,7 @@ export type PrescriptionByNumberQuery = {
               name: string;
               code: string;
               unitName?: string | null;
+              isVaccine: boolean;
               itemDirections: Array<{
                 __typename: 'ItemDirectionNode';
                 directions: string;
@@ -590,6 +598,7 @@ export type PrescriptionByNumberQuery = {
                 __typename: 'ItemNode';
                 name: string;
                 code: string;
+                isVaccine: boolean;
                 itemDirections: Array<{
                   __typename: 'ItemDirectionNode';
                   directions: string;
@@ -731,6 +740,7 @@ export type PrescriptionByIdQuery = {
               name: string;
               code: string;
               unitName?: string | null;
+              isVaccine: boolean;
               itemDirections: Array<{
                 __typename: 'ItemDirectionNode';
                 directions: string;
@@ -770,6 +780,7 @@ export type PrescriptionByIdQuery = {
                 __typename: 'ItemNode';
                 name: string;
                 code: string;
+                isVaccine: boolean;
                 itemDirections: Array<{
                   __typename: 'ItemDirectionNode';
                   directions: string;
@@ -1079,6 +1090,7 @@ export type HistoricalStockLineFragment = {
     __typename: 'ItemNode';
     name: string;
     code: string;
+    isVaccine: boolean;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -1190,6 +1202,7 @@ export const PrescriptionLineFragmentDoc = gql`
       name
       code
       unitName
+      isVaccine
       itemDirections {
         ...ItemDirection
       }
@@ -1219,6 +1232,7 @@ export const PrescriptionLineFragmentDoc = gql`
       item {
         name
         code
+        isVaccine
         itemDirections {
           ...ItemDirection
         }
@@ -1331,6 +1345,7 @@ export const PartialPrescriptionLineFragmentDoc = gql`
     item {
       name
       code
+      isVaccine
       itemDirections {
         ...ItemDirection
       }
@@ -1357,6 +1372,7 @@ export const HistoricalStockLineFragmentDoc = gql`
     item {
       name
       code
+      isVaccine
       itemDirections {
         ...ItemDirection
       }
