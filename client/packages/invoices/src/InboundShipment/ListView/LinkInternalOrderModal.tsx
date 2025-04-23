@@ -11,7 +11,7 @@ import {
   DialogButton,
   Typography,
 } from '@openmsupply-client/common';
-import { NameRowFragment } from 'packages/system/src';
+import { NameRowFragment } from '@openmsupply-client/system';
 
 interface LinkInternalOrderModalProps {
   isOpen: boolean;

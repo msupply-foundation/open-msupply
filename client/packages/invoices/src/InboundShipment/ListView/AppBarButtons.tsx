@@ -76,10 +76,18 @@ export const AppBarButtons = ({
     );
   };
 
-  const handleRowClick = async (row: NameRowFragment): Promise<void> => {
+  const handleSupplierSelected = async (
+    row: NameRowFragment
+  ): Promise<void> => {
     invoiceModalController.toggleOff();
+    if (!manuallyLinkInternalOrder) {
+      createInvoice(row.id);
+      return;
+    }
+
     const data = await fetchInternalOrders(row.id);
-    if (data?.internalOrders.totalCount === 0 || !manuallyLinkInternalOrder) {
+
+    if (data?.internalOrders.totalCount === 0) {
       createInvoice(row.id);
     } else {
       setName(row);
@@ -121,9 +129,7 @@ export const AppBarButtons = ({
       <SupplierSearchModal
         open={invoiceModalController.isOn}
         onClose={invoiceModalController.toggleOff}
-        onChange={async nameRow => {
-          handleRowClick(nameRow);
-        }}
+        onChange={handleSupplierSelected}
       />
     </AppBarButtonsPortal>
   );
