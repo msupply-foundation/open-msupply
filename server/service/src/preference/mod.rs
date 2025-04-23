@@ -1,44 +1,43 @@
 use crate::service_provider::ServiceContext;
-use repository::{PreferenceRow, RepositoryError};
 
 pub mod types;
 pub use types::*;
-mod load_preference;
+mod query_preference;
 
 pub mod preferences;
 pub use preferences::*;
 pub mod upsert;
+pub mod upsert_helpers;
 
 pub use upsert::*;
 
 pub trait PreferenceServiceTrait: Sync + Send {
     fn get_preference_registry(&self) -> PreferenceRegistry {
-        PreferenceRegistry {
-            show_contact_tracing: ShowContactTracing,
-        }
+        get_preference_registry()
     }
 
-    // TODO: implement filtering by pref type
-    fn get_preference_descriptions(&self) -> Vec<PreferenceDescription> {
+    fn get_preference_descriptions(&self, pref_type: PreferenceType) -> Vec<PreferenceDescription> {
         let PreferenceRegistry {
             show_contact_tracing,
         } = &self.get_preference_registry();
 
-        // TODO: filter by type
         let all_prefs_descriptions = vec![
-            // Add for each pref
+            // Add each pref here
             PreferenceDescription::from_preference(show_contact_tracing),
         ];
 
         all_prefs_descriptions
+            .into_iter()
+            .filter(|pref| pref.preference_type == pref_type)
+            .collect()
     }
 
     fn upsert(
         &self,
         ctx: &ServiceContext,
-        input: UpsertPreference,
-    ) -> Result<PreferenceRow, RepositoryError> {
-        upsert_preference(ctx, input)
+        input: UpsertPreferences,
+    ) -> Result<(), UpsertPreferenceError> {
+        upsert_preferences(ctx, input)
     }
 }
 

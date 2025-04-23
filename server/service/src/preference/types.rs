@@ -1,11 +1,14 @@
 use repository::{PreferenceRow, RepositoryError, StorageConnection};
 use serde::{de::DeserializeOwned, Serialize};
 
-use serde_json::json;
 use thiserror::Error;
 
-use super::load_preference::{load_global, load_store};
+use super::{
+    query_preference::{query_global, query_store},
+    upsert_helpers::{upsert_global, upsert_store},
+};
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum PreferenceType {
     Global,
     Store,
@@ -20,17 +23,22 @@ pub enum PreferenceValueType {
     // Add scalar or custom value types here - mapped to frontend renderers
 }
 
-// OK SO THE TODOS ARE
-// 1. Remove JSON forms, allow greater type safety
-// 2. UI renderers based on value types
-// 3. Upsert should be typed
-
 #[derive(Clone, Error, Debug, PartialEq)]
 pub enum PreferenceError {
     #[error(transparent)]
     DatabaseError(RepositoryError),
     #[error("Failed to deserialize preference {0} from value {1}: {2}")]
     DeserializeError(String, String, String),
+    #[error("Store ID is required for store preference")]
+    StoreIdNotProvided,
+}
+
+#[derive(Clone, Error, Debug, PartialEq)]
+pub enum UpsertPreferenceError {
+    #[error(transparent)]
+    DatabaseError(RepositoryError),
+    #[error("Failed to serialize preference {0}: {1}")]
+    SerializeError(String, String),
     #[error("Store ID is required for store preference")]
     StoreIdNotProvided,
 }
@@ -44,16 +52,16 @@ pub trait Preference: Sync + Send {
 
     fn value_type(&self) -> PreferenceValueType;
 
-    fn load_self(
+    fn query(
         &self,
         connection: &StorageConnection,
         store_id: Option<String>,
     ) -> Result<Option<PreferenceRow>, PreferenceError> {
         let pref = match self.preference_type() {
-            PreferenceType::Global => load_global(connection, self.key())?,
+            PreferenceType::Global => query_global(connection, self.key())?,
             PreferenceType::Store => {
                 let store_id = store_id.ok_or(PreferenceError::StoreIdNotProvided)?;
-                load_store(connection, self.key(), &store_id)?
+                query_store(connection, self.key(), &store_id)?
             }
         };
 
@@ -68,42 +76,14 @@ pub trait Preference: Sync + Send {
         serde_json::from_str::<Self::Value>(data)
     }
 
-    // TODO: remove JSON forms, allow greater type safety
-    // Completely hard-coded UI, or maybe still return scalar UI types? Depends on UI...
-
-    /// Use this for scalar types - otherwise you should implement json_schema()
-    fn json_forms_input_type(&self) -> String {
-        "boolean".to_string()
-    }
-
-    /// IMPORTANT! The frontend does expect the properties > value structure
-    /// Below that you can customise
-    fn json_schema(&self) -> serde_json::Value {
-        json!({
-          "properties": {
-            "value": {
-                "type": &self.json_forms_input_type()
-            }
-          },
-        })
-    }
-
-    fn ui_schema(&self) -> serde_json::Value {
-        json!({
-          "type": "Control",
-          "label": "label.value",
-          "scope": "#/properties/value"
-        })
-    }
-
     fn load(
         &self,
         connection: &StorageConnection,
         // As we implement user/machine prefs, also accept those optional ids
-        // load_self will determine which are actually required
+        // self.query will determine which are actually required
         store_id: Option<String>,
     ) -> Result<Self::Value, PreferenceError> {
-        let pref = self.load_self(connection, store_id)?;
+        let pref = self.query(connection, store_id)?;
         match pref {
             None => Ok(self.default_value()),
             Some(pref) => {
@@ -115,12 +95,35 @@ pub trait Preference: Sync + Send {
             }
         }
     }
+
+    // Implement custom upsert if you need further validation
+    fn upsert(
+        &self,
+        connection: &StorageConnection,
+        value: Self::Value,
+        store_id: Option<String>,
+    ) -> Result<(), UpsertPreferenceError> {
+        let serialised_value = serde_json::to_string(&value).map_err(|e| {
+            UpsertPreferenceError::SerializeError(self.key().to_string(), e.to_string())
+        })?;
+
+        match self.preference_type() {
+            PreferenceType::Global => upsert_global(connection, self.key(), serialised_value)?,
+            PreferenceType::Store => {
+                let store_id = store_id.ok_or(UpsertPreferenceError::StoreIdNotProvided)?;
+                upsert_store(connection, self.key(), serialised_value, store_id)?;
+            }
+        };
+
+        Ok(())
+    }
 }
 
 pub struct PreferenceDescription {
     pub key: String,
     pub preference_type: PreferenceType,
     pub value_type: PreferenceValueType,
+    // pub serialised_value: String,
 }
 
 impl PreferenceDescription {
@@ -129,6 +132,7 @@ impl PreferenceDescription {
             key: pref.key().to_string(),
             preference_type: pref.preference_type(),
             value_type: pref.value_type(),
+            // serialised_value: pref.query(connection, store_id),
         }
     }
 }
@@ -136,6 +140,11 @@ impl PreferenceDescription {
 impl From<RepositoryError> for PreferenceError {
     fn from(error: RepositoryError) -> Self {
         PreferenceError::DatabaseError(error)
+    }
+}
+impl From<RepositoryError> for UpsertPreferenceError {
+    fn from(error: RepositoryError) -> Self {
+        UpsertPreferenceError::DatabaseError(error)
     }
 }
 
@@ -168,7 +177,7 @@ mod tests {
             fn value_type(&self) -> PreferenceValueType {
                 PreferenceValueType::Integer
             }
-            fn load_self(
+            fn query(
                 &self,
                 _connection: &StorageConnection,
                 store_id: Option<String>,

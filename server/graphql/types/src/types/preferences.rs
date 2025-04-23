@@ -1,7 +1,8 @@
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{
-    preferences::PreferenceRegistry, Preference, PreferenceDescription, PreferenceValueType,
+    preferences::PreferenceRegistry, Preference, PreferenceDescription, PreferenceType,
+    PreferenceValueType,
 };
 
 pub struct PreferencesNode {
@@ -48,6 +49,21 @@ impl PreferenceDescriptionNode {
 
     pub async fn value_type(&self) -> PreferenceValueNodeType {
         PreferenceValueNodeType::from_domain(&self.pref.value_type)
+    }
+}
+
+#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
+pub enum PreferenceNodeType {
+    Global,
+    Store,
+}
+
+impl PreferenceNodeType {
+    pub fn to_domain(self) -> PreferenceType {
+        match self {
+            PreferenceNodeType::Global => PreferenceType::Global,
+            PreferenceNodeType::Store => PreferenceType::Store,
+        }
     }
 }
 

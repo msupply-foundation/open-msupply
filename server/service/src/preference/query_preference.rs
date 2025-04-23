@@ -3,7 +3,7 @@ use repository::{
     StorageConnection,
 };
 
-pub fn load_global(
+pub fn query_global(
     connection: &StorageConnection,
     key: &str,
 ) -> Result<Option<PreferenceRow>, RepositoryError> {
@@ -14,7 +14,7 @@ pub fn load_global(
     )
 }
 
-pub fn load_store(
+pub fn query_store(
     connection: &StorageConnection,
     key: &str,
     store_id: &str,
@@ -27,15 +27,15 @@ pub fn load_store(
 }
 
 // Not used yet, but example of how we could merge/override
-pub fn _load_store_with_global_default(
+pub fn _query_store_with_global_default(
     connection: &StorageConnection,
     key: &str,
     store_id: &str,
 ) -> Result<Option<PreferenceRow>, RepositoryError> {
     // If there is a store-specific preference, that should override any global preference
-    let store_pref = load_store(connection, key, store_id)?;
+    let store_pref = query_store(connection, key, store_id)?;
     // Otherwise let's see if there is a globally defined default
-    let global_pref = load_global(connection, key)?;
+    let global_pref = query_global(connection, key)?;
 
     Ok(store_pref.or(global_pref))
 }
@@ -48,12 +48,12 @@ mod tests {
     use repository::{PreferenceRow, PreferenceRowRepository};
 
     #[actix_rt::test]
-    async fn test_load_global() {}
+    async fn test_pref_query() {}
 
     #[actix_rt::test]
-    async fn test_load_store_with_global_default() {
+    async fn test_query_store_with_global_default() {
         let (_, connection, _, _) = setup_all(
-            "load_store_with_global_default",
+            "query_store_with_global_default",
             MockDataInserts::none().stores(),
         )
         .await;
@@ -84,12 +84,12 @@ mod tests {
 
         // Should return the store pref, as one exists
         let pref =
-            _load_store_with_global_default(&connection, key, mock_store_a().id.as_str()).unwrap();
+            _query_store_with_global_default(&connection, key, mock_store_a().id.as_str()).unwrap();
 
         assert_eq!(pref.unwrap().value, "store A says hey");
 
         // Should return the global pref, as no store pref exists for store B
-        let pref = _load_store_with_global_default(&connection, key, "store_b").unwrap();
+        let pref = _query_store_with_global_default(&connection, key, "store_b").unwrap();
 
         assert_eq!(pref.unwrap().value, "global");
     }

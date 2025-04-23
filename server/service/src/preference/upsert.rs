@@ -1,38 +1,37 @@
-use repository::{PreferenceRow, PreferenceRowRepository, RepositoryError};
+use repository::TransactionError;
 
 use crate::service_provider::ServiceContext;
 
+use super::{get_preference_registry, Preference, PreferenceRegistry, UpsertPreferenceError};
+
 #[derive(Debug, PartialEq, Clone)]
-pub struct UpsertPreference {
-    pub id: String,
-    pub store_id: Option<String>,
-    pub key: String,
-    pub value: String,
+pub struct UpsertPreferences {
+    pub show_contact_tracing: Option<bool>,
 }
 
-pub fn upsert_preference(
+pub fn upsert_preferences(
     ctx: &ServiceContext,
-    UpsertPreference {
-        id,
-        store_id,
-        key,
-        value,
-    }: UpsertPreference,
-) -> Result<PreferenceRow, RepositoryError> {
-    // TODO: validation here (i.e. can't set store pref where it is global only?)
-    // more validation would be needed once we allow remote stores to set preferences
+    UpsertPreferences {
+        show_contact_tracing: show_contact_tracing_input,
+    }: UpsertPreferences,
+) -> Result<(), UpsertPreferenceError> {
+    let PreferenceRegistry {
+        show_contact_tracing,
+    } = get_preference_registry();
+
     ctx.connection
         .transaction_sync(|connection| {
-            PreferenceRowRepository::new(connection).upsert_one(&PreferenceRow {
-                id: id.clone(),
-                store_id,
-                key,
-                value,
-            })
-        })
-        .map_err(|error| error.to_inner_error())?;
+            // Call upsert for each preference, if input is Some
 
-    PreferenceRowRepository::new(&ctx.connection)
-        .find_one_by_id(&id)?
-        .ok_or(RepositoryError::NotFound)
+            if let Some(input) = show_contact_tracing_input {
+                show_contact_tracing.upsert(connection, input, None)?;
+            }
+
+            // For a store pref, input could be array of store IDs and values - iterate and insert...
+
+            Ok(())
+        })
+        .map_err(|error: TransactionError<UpsertPreferenceError>| error.to_inner_error())?;
+
+    Ok(())
 }

@@ -1,6 +1,8 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::{IdResponse, PreferenceDescriptionNode, PreferencesNode};
+use graphql_types::types::{
+    OkResponse, PreferenceDescriptionNode, PreferenceNodeType, PreferencesNode,
+};
 use service::auth::{Resource, ResourceAccessRequest};
 
 mod upsert;
@@ -10,6 +12,7 @@ use upsert::*;
 pub struct PreferenceQueries;
 #[Object]
 impl PreferenceQueries {
+    /// Returns the relevant set of preferences based on context (e.g. current store)
     pub async fn preferences(
         &self,
         ctx: &Context<'_>,
@@ -43,12 +46,12 @@ impl PreferenceQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        // TODO: filter (store prefs, global prefs, etc)
+        pref_type: PreferenceNodeType,
     ) -> Result<Vec<PreferenceDescriptionNode>> {
         validate_auth(
             ctx,
             &ResourceAccessRequest {
-                resource: Resource::QueryStorePreferences,
+                resource: Resource::MutatePreferences,
                 store_id: Some(store_id),
             },
         )?;
@@ -56,7 +59,7 @@ impl PreferenceQueries {
         let service_provider = ctx.service_provider();
         let service = &service_provider.preference_service;
 
-        let prefs = service.get_preference_descriptions();
+        let prefs = service.get_preference_descriptions(pref_type.to_domain());
 
         Ok(prefs
             .into_iter()
@@ -73,13 +76,15 @@ pub struct PreferenceMutations;
 
 #[Object]
 impl PreferenceMutations {
-    pub async fn upsert_preference(
+    pub async fn upsert_preferences(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        // TODO: upsert should have defined input types for each pref
-        input: UpsertPreferenceInput,
-    ) -> Result<IdResponse> {
-        upsert_preference(ctx, store_id, input)
+        input: UpsertPreferencesInput,
+    ) -> Result<OkResponse> {
+        // map/extend error??
+        upsert_preferences(ctx, store_id, input)?;
+
+        Ok(OkResponse)
     }
 }
