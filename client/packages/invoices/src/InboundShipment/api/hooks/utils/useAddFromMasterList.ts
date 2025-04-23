@@ -40,18 +40,16 @@ export const useAddFromMasterList = () => {
                 const { message } = e as Error;
                 switch (message) {
                   case 'CannotEditInvoice': {
-                    return error('Cannot edit shipment')();
+                    return error(t('label.cannot-edit-invoice'))();
                   }
                   case 'RecordNotFound': {
-                    return error('This master list has been deleted!')();
+                    return error(t('label.record-not-found'))();
                   }
                   case 'MasterListNotFoundForThisName': {
-                    return error(
-                      "Uh oh this is not the master list you're looking for"
-                    )();
+                    return error(t('label.master-list-not-found'))();
                   }
                   default:
-                    return error('Could not add items to shipment')();
+                    return error(t('label.cannot-add-item-to-shipment'))();
                 }
               },
             }
