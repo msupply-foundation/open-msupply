@@ -7,8 +7,8 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, StockLine, StockLineFilter, StockLineRepository,
-    StockLineRow, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, ItemRowRepository, StockLine, StockLineFilter,
+    StockLineRepository, StockLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -104,6 +104,20 @@ impl SyncTranslation for StockLineTranslation {
 
         let barcode_id = clear_invalid_barcode_id(connection, barcode_id)?;
         let location_id = clear_invalid_location_id(connection, location_ID)?;
+
+        let item_doses = ItemRowRepository::new(connection)
+            .find_active_by_id(&item_ID)
+            .ok()
+            .flatten()
+            .and_then(|item| {
+                if item.is_vaccine {
+                    Some(item.vaccine_doses)
+                } else {
+                    None
+                }
+            });
+        let doses = vaccine_doses.or(item_doses);
+
         let result = StockLineRow {
             id: ID,
             store_id: store_ID,
@@ -121,7 +135,7 @@ impl SyncTranslation for StockLineTranslation {
             supplier_link_id: supplier_id,
             barcode_id,
             item_variant_id,
-            vaccine_doses,
+            vaccine_doses: doses,
         };
 
         Ok(PullTranslateResult::upsert(result))
