@@ -1,22 +1,37 @@
 use async_graphql::*;
-use repository::PreferenceRow;
-use service::preference::preferences::{Preference, Preferences};
+use repository::{PreferenceRow, StorageConnection};
+use service::preference::{preferences::PreferenceRegistry, Preference};
 
 /// Defines the preferences object for a store
 pub struct PreferencesNode {
-    pub preferences: Preferences,
+    pub connection: StorageConnection,
+    pub store_id: Option<String>,
+    pub preferences: PreferenceRegistry,
 }
 
 #[Object]
 impl PreferencesNode {
-    pub async fn show_contact_tracing(&self) -> &bool {
-        &self.preferences.show_contact_tracing
+    pub async fn show_contact_tracing(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.show_contact_tracing)
     }
 }
 
 impl PreferencesNode {
-    pub fn from_domain(prefs: Preferences) -> PreferencesNode {
-        PreferencesNode { preferences: prefs }
+    pub fn from_domain(
+        connection: StorageConnection,
+        store_id: Option<String>,
+        prefs: PreferenceRegistry,
+    ) -> PreferencesNode {
+        PreferencesNode {
+            connection,
+            store_id,
+            preferences: prefs,
+        }
+    }
+
+    pub fn load_preference<T>(&self, pref: &impl Preference<Value = T>) -> Result<T> {
+        let result = pref.load(&self.connection, self.store_id.clone())?;
+        Ok(result)
     }
 }
 

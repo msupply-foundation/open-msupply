@@ -27,10 +27,16 @@ impl PreferenceQueries {
         let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
         let service = &service_provider.preference_service;
 
-        // TODO - pass `load`ing of prefs through to GQL layer, so only query for what is needed
-        let prefs = service.get_preferences(&service_ctx, &store_id)?;
+        // Instead of all service/DB calls, errors handled here, we just get registry
+        let pref_registry = service.get_preference_registry();
 
-        Ok(PreferencesNode::from_domain(prefs))
+        // Loading (DB call) of each pref is done in the node resolver, so we only query for the
+        // prefs we need
+        Ok(PreferencesNode::from_domain(
+            service_ctx.connection,
+            Some(store_id),
+            pref_registry,
+        ))
     }
 
     // TODO: consider UI, maybe list of prefs not required?
