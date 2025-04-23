@@ -281,12 +281,16 @@ export const useStocktakeColumns = ({
         } else if (rowData.countedNumberOfPacks === null) {
           return UNDEFINED_STRING_VALUE;
         } else {
+          const displayDoses =
+            preferences?.displayVaccineInDoses && rowData?.item.isVaccine;
+
           const total =
             (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
             rowData.snapshotNumberOfPacks;
           const totalRounded = Math.round(total * 100) / 100;
+
           const totalInDoses =
-            preferences?.displayVaccineInDoses && rowData?.stockLine?.doses
+            displayDoses && rowData?.stockLine?.doses
               ? rowData?.stockLine?.doses * total
               : null;
           const totalInDosesRounded = totalInDoses
