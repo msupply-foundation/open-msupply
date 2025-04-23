@@ -18,6 +18,7 @@ export const useInbound = {
     next: Document.useNextItem,
 
     listInternalOrders: Document.useListInternalOrders,
+    listInternalOrdersPromise: Document.useListInternalOrdersPromise,
     listInternalOrderLines: Document.useListInternalOrderLines,
   },
   lines: {
