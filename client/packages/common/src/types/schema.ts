@@ -7903,7 +7903,6 @@ export type StockLineNode = {
   barcode?: Maybe<Scalars['String']['output']>;
   batch?: Maybe<Scalars['String']['output']>;
   costPricePerPack: Scalars['Float']['output'];
-  doses?: Maybe<Scalars['Int']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   item: ItemNode;

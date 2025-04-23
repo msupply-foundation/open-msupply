@@ -209,7 +209,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         key: 'doses-per-pack',
         label: `${t('label.doses-per')} ${itemUnitName}`,
         width: 80,
-        accessor: ({ rowData }) => rowData.stockLine?.doses,
+        accessor: ({ rowData }) => rowData.item?.doses,
       });
     }
     columnDefinitions.push(
@@ -245,7 +245,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         accessor: ({ rowData }) => {
           const snapshotNumberOfPacks = rowData.snapshotNumberOfPacks ?? 0;
           const packSize = rowData?.packSize ?? 1;
-          const doses = rowData?.stockLine?.doses ?? 1;
+          const doses = rowData?.item?.doses ?? 1;
           return displayInDoses
             ? snapshotNumberOfPacks * doses
             : snapshotNumberOfPacks * packSize;
@@ -279,7 +279,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
           let countedNumberOfUnits = undefined;
           if (patch.countedNumberOfPacks) {
             countedNumberOfUnits = displayInDoses
-              ? patch.countedNumberOfPacks * (patch?.stockLine?.doses ?? 1)
+              ? patch.countedNumberOfPacks * (patch?.item?.doses ?? 1)
               : patch.countedNumberOfPacks * (patch?.packSize ?? 1);
           }
 
@@ -310,7 +310,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
           let countedNumberOfPacks = undefined;
           if (patch.countedNumberOfUnits) {
             countedNumberOfPacks = displayInDoses
-              ? patch.countedNumberOfUnits / (patch?.stockLine?.doses ?? 1)
+              ? patch.countedNumberOfUnits / (patch?.item?.doses ?? 1)
               : patch.countedNumberOfUnits / (patch?.packSize ?? 1);
           }
 
@@ -333,7 +333,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         accessor: ({ rowData }) => {
           if (rowData.countedNumberOfPacks) {
             return displayInDoses
-              ? rowData.countedNumberOfPacks * (rowData?.stockLine?.doses ?? 1)
+              ? rowData.countedNumberOfPacks * (rowData?.item?.doses ?? 1)
               : rowData.countedNumberOfPacks * (rowData?.packSize ?? 1);
           }
         },

@@ -166,7 +166,7 @@ export const useStocktakeColumns = ({
           const { lines } = rowData;
           if (lines[0]?.item.isVaccine) {
             const doses = lines?.map(
-              ({ stockLine }) => stockLine?.doses ?? UNDEFINED_STRING_VALUE
+              ({ item }) => item?.doses ?? UNDEFINED_STRING_VALUE
             );
             const dosesTheSame = doses?.every(dose => dose === doses?.[0]);
             return dosesTheSame ? doses?.[0] : t('multiple');
@@ -175,7 +175,7 @@ export const useStocktakeColumns = ({
           }
         } else {
           return rowData?.item?.isVaccine
-            ? (rowData?.stockLine?.doses ?? UNDEFINED_STRING_VALUE)
+            ? (rowData?.item?.doses ?? UNDEFINED_STRING_VALUE)
             : UNDEFINED_STRING_VALUE;
         }
       },
@@ -260,7 +260,7 @@ export const useStocktakeColumns = ({
             ? (lines.reduce(
                 (total, line) =>
                   total +
-                  (line.stockLine?.doses ?? 0) *
+                  (line.item?.doses ?? 0) *
                     (line.snapshotNumberOfPacks -
                       (line.countedNumberOfPacks ??
                         line.snapshotNumberOfPacks)),
@@ -290,8 +290,8 @@ export const useStocktakeColumns = ({
           const totalRounded = Math.round(total * 100) / 100;
 
           const totalInDoses =
-            displayDoses && rowData?.stockLine?.doses
-              ? rowData?.stockLine?.doses * total
+            displayDoses && rowData?.item?.doses
+              ? rowData?.item?.doses * total
               : null;
           const totalInDosesRounded = totalInDoses
             ? Math.round(totalInDoses * 100) / 100

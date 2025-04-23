@@ -37,7 +37,6 @@ fragment StocktakeLine on StocktakeLineNode {
   stockLine {
     __typename
     id
-    doses
   }
 
   item {
@@ -47,6 +46,7 @@ fragment StocktakeLine on StocktakeLineNode {
     name
     unitName
     isVaccine
+    doses
   }
 
   itemVariantId
