@@ -1,8 +1,4 @@
-use repository::{PreferenceRow, RepositoryError, StorageConnection};
-
-use crate::preference::{
-    load_preference::load_global, Preference, PreferenceType, PreferenceValueType,
-};
+use crate::preference::{Preference, PreferenceType, PreferenceValueType};
 
 pub struct ShowContactTracing;
 
@@ -19,13 +15,5 @@ impl Preference for ShowContactTracing {
 
     fn value_type(&self) -> PreferenceValueType {
         PreferenceValueType::Boolean
-    }
-
-    fn load_self(
-        &self,
-        connection: &StorageConnection,
-        _store_id: Option<String>,
-    ) -> Result<Option<PreferenceRow>, RepositoryError> {
-        load_global(connection, self.key())
     }
 }

@@ -2,6 +2,9 @@ use repository::{PreferenceRow, RepositoryError, StorageConnection};
 use serde::{de::DeserializeOwned, Serialize};
 
 use serde_json::json;
+use thiserror::Error;
+
+use super::load_preference::{load_global, load_store};
 
 pub enum PreferenceType {
     Global,
@@ -17,6 +20,16 @@ pub enum PreferenceValueType {
     // Add scalar or custom value types here - mapped to frontend renderers
 }
 
+#[derive(Clone, Error, Debug, PartialEq)]
+pub enum PreferenceError {
+    #[error(transparent)]
+    DatabaseError(RepositoryError),
+    #[error("Failed to deserialize preference {0} from value {1}: {2}")]
+    DeserializeError(String, String, String),
+    #[error("Store ID is required for store preference")]
+    StoreIdNotProvided,
+}
+
 pub trait Preference: Sync + Send {
     type Value: Default + DeserializeOwned + Serialize;
 
@@ -30,7 +43,17 @@ pub trait Preference: Sync + Send {
         &self,
         connection: &StorageConnection,
         store_id: Option<String>,
-    ) -> Result<Option<PreferenceRow>, RepositoryError>;
+    ) -> Result<Option<PreferenceRow>, PreferenceError> {
+        let pref = match self.preference_type() {
+            PreferenceType::Global => load_global(connection, self.key())?,
+            PreferenceType::Store => {
+                let store_id = store_id.ok_or(PreferenceError::StoreIdNotProvided)?;
+                load_store(connection, self.key(), &store_id)?
+            }
+        };
+
+        Ok(pref)
+    }
 
     fn default_value(&self) -> Self::Value {
         Self::Value::default()
@@ -72,7 +95,7 @@ pub trait Preference: Sync + Send {
         &self,
         connection: &StorageConnection,
         store_id: Option<String>,
-    ) -> Result<Self::Value, RepositoryError> {
+    ) -> Result<Self::Value, PreferenceError> {
         let pref = self.load_self(connection, store_id)?;
         match pref {
             None => Ok(self.default_value()),
@@ -80,10 +103,16 @@ pub trait Preference: Sync + Send {
                 let text_pref = pref.value.as_str();
 
                 self.deserialize(text_pref).map_err(|e| {
-                    RepositoryError::as_db_error("Failed to deserialize preference", e)
+                    PreferenceError::DeserializeError(pref.key, pref.value, e.to_string())
                 })
             }
         }
+    }
+}
+
+impl From<RepositoryError> for PreferenceError {
+    fn from(error: RepositoryError) -> Self {
+        PreferenceError::DatabaseError(error)
     }
 }
 
@@ -120,7 +149,7 @@ mod tests {
                 &self,
                 _connection: &StorageConnection,
                 store_id: Option<String>,
-            ) -> Result<Option<PreferenceRow>, RepositoryError> {
+            ) -> Result<Option<PreferenceRow>, PreferenceError> {
                 let mock_pref = PreferenceRow {
                     id: "test_pref_store_a".to_string(),
                     key: self.key().to_string(),

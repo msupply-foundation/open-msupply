@@ -39,11 +39,11 @@ impl PreferenceQueries {
         ))
     }
 
-    // TODO: consider UI, maybe list of prefs not required?
-    pub async fn available_preferences(
+    pub async fn preference_list(
         &self,
         ctx: &Context<'_>,
         store_id: String,
+        // TODO: filter (store prefs, global prefs, etc)
     ) -> Result<Vec<PreferenceDescriptionNode>> {
         validate_auth(
             ctx,
