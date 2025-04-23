@@ -10,8 +10,11 @@ import {
   useColumnUtils,
   CurrencyCell,
   getLinesFromRow,
+  usePreferences,
   ColumnDescription,
   SortBy,
+  UNDEFINED_STRING_VALUE,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
@@ -44,10 +47,12 @@ export const useInboundShipmentColumns = ({
   sortBy,
   onChangeSortBy,
 }: InboundShipmentColumnsProps) => {
-  const getCostPrice = (row: InboundLineFragment) =>
-    isInboundPlaceholderRow(row) ? 0 : row.costPricePerPack / row.packSize;
+  const t = useTranslation();
+  const { data: preferences } = usePreferences();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
   const { getError } = useInboundShipmentLineErrorContext();
+  const getCostPrice = (row: InboundLineFragment) =>
+    isInboundPlaceholderRow(row) ? 0 : row.costPricePerPack / row.packSize;
 
   const columns: ColumnDescription<InboundLineFragment | InboundItem>[] = [
     [
@@ -188,6 +193,35 @@ export const useInboundShipmentColumns = ({
           ]),
       },
     ],
+  ];
+
+  if (preferences?.displayVaccineInDoses) {
+    columns.push({
+      key: 'doses',
+      label: 'label.doses-per-unit',
+      sortable: false,
+      accessor: ({ rowData }) => {
+        if ('lines' in rowData) {
+          const { lines } = rowData;
+          if (lines[0]?.item.isVaccine) {
+            const doses = lines?.map(
+              ({ item }) => item?.doses ?? UNDEFINED_STRING_VALUE
+            );
+            const dosesTheSame = doses?.every(dose => dose === doses?.[0]);
+            return dosesTheSame ? doses?.[0] : t('multiple');
+          } else {
+            return UNDEFINED_STRING_VALUE;
+          }
+        } else {
+          return rowData?.item?.isVaccine
+            ? (rowData?.item?.doses ?? UNDEFINED_STRING_VALUE)
+            : UNDEFINED_STRING_VALUE;
+        }
+      },
+    });
+  }
+
+  columns.push(
     [
       'numberOfPacks',
       {
@@ -255,8 +289,8 @@ export const useInboundShipmentColumns = ({
       accessor: ({ rowData }) => calculateRowTotalCost(rowData),
       getSortValue: rowData => calculateRowTotalCost(rowData),
     },
-    getRowExpandColumn(),
-  ];
+    getRowExpandColumn()
+  );
 
   return useColumns(columns, { sortBy, onChangeSortBy }, [
     sortBy,
