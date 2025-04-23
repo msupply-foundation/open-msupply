@@ -68,6 +68,7 @@ export type PrescriptionRowFragment = {
         code: string;
         unitName?: string | null;
         isVaccine: boolean;
+        doses: number;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -108,6 +109,7 @@ export type PrescriptionRowFragment = {
           name: string;
           code: string;
           isVaccine: boolean;
+          doses: number;
           itemDirections: Array<{
             __typename: 'ItemDirectionNode';
             directions: string;
@@ -190,6 +192,7 @@ export type PrescriptionLineFragment = {
     code: string;
     unitName?: string | null;
     isVaccine: boolean;
+    doses: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -230,6 +233,7 @@ export type PrescriptionLineFragment = {
       name: string;
       code: string;
       isVaccine: boolean;
+      doses: number;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
         directions: string;
@@ -282,6 +286,7 @@ export type PartialPrescriptionLineFragment = {
     name: string;
     code: string;
     isVaccine: boolean;
+    doses: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -386,6 +391,7 @@ export type PrescriptionsQuery = {
             code: string;
             unitName?: string | null;
             isVaccine: boolean;
+            doses: number;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -426,6 +432,7 @@ export type PrescriptionsQuery = {
               name: string;
               code: string;
               isVaccine: boolean;
+              doses: number;
               itemDirections: Array<{
                 __typename: 'ItemDirectionNode';
                 directions: string;
@@ -559,6 +566,7 @@ export type PrescriptionByNumberQuery = {
               code: string;
               unitName?: string | null;
               isVaccine: boolean;
+              doses: number;
               itemDirections: Array<{
                 __typename: 'ItemDirectionNode';
                 directions: string;
@@ -599,6 +607,7 @@ export type PrescriptionByNumberQuery = {
                 name: string;
                 code: string;
                 isVaccine: boolean;
+                doses: number;
                 itemDirections: Array<{
                   __typename: 'ItemDirectionNode';
                   directions: string;
@@ -741,6 +750,7 @@ export type PrescriptionByIdQuery = {
               code: string;
               unitName?: string | null;
               isVaccine: boolean;
+              doses: number;
               itemDirections: Array<{
                 __typename: 'ItemDirectionNode';
                 directions: string;
@@ -781,6 +791,7 @@ export type PrescriptionByIdQuery = {
                 name: string;
                 code: string;
                 isVaccine: boolean;
+                doses: number;
                 itemDirections: Array<{
                   __typename: 'ItemDirectionNode';
                   directions: string;
@@ -1091,6 +1102,7 @@ export type HistoricalStockLineFragment = {
     name: string;
     code: string;
     isVaccine: boolean;
+    doses: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -1203,6 +1215,7 @@ export const PrescriptionLineFragmentDoc = gql`
       code
       unitName
       isVaccine
+      doses
       itemDirections {
         ...ItemDirection
       }
@@ -1233,6 +1246,7 @@ export const PrescriptionLineFragmentDoc = gql`
         name
         code
         isVaccine
+        doses
         itemDirections {
           ...ItemDirection
         }
@@ -1346,6 +1360,7 @@ export const PartialPrescriptionLineFragmentDoc = gql`
       name
       code
       isVaccine
+      doses
       itemDirections {
         ...ItemDirection
       }
@@ -1373,6 +1388,7 @@ export const HistoricalStockLineFragmentDoc = gql`
       name
       code
       isVaccine
+      doses
       itemDirections {
         ...ItemDirection
       }

@@ -44,6 +44,7 @@ export const DraftLine = {
         unitName: item.unitName,
         name: item.name,
         isVaccine: item.isVaccine,
+        doses: item.doses,
       },
     };
   },
@@ -71,6 +72,7 @@ export const DraftLine = {
         unitName: stockLine.item.unitName,
         name: stockLine.item.name,
         isVaccine: stockLine.item.isVaccine,
+        doses: stockLine.item.doses,
       },
     };
   },

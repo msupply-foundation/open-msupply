@@ -119,6 +119,7 @@ fragment PrescriptionLine on InvoiceLineNode {
     code
     unitName
     isVaccine
+    doses
     itemDirections {
       ...ItemDirection
     }
@@ -151,6 +152,7 @@ fragment PrescriptionLine on InvoiceLineNode {
       name
       code
       isVaccine
+      doses
       itemDirections {
         ...ItemDirection
       }
@@ -192,6 +194,7 @@ fragment PartialPrescriptionLine on StockLineNode {
     name
     code
     isVaccine
+    doses
     itemDirections {
       ...ItemDirection
     }
@@ -552,6 +555,7 @@ fragment historicalStockLine on StockLineNode {
     name
     code
     isVaccine
+    doses
     itemDirections {
       ...ItemDirection
     }

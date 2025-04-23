@@ -11,6 +11,7 @@ export type ServiceItemRowFragment = {
   name: string;
   unitName?: string | null;
   isVaccine: boolean;
+  doses: number;
 };
 
 export type StockLineFragment = {
@@ -67,6 +68,7 @@ export type ItemRowFragment = {
   name: string;
   unitName?: string | null;
   isVaccine: boolean;
+  doses: number;
 };
 
 export type ItemRowWithDirectionsFragment = {
@@ -76,6 +78,7 @@ export type ItemRowWithDirectionsFragment = {
   name: string;
   unitName?: string | null;
   isVaccine: boolean;
+  doses: number;
   itemDirections: Array<{
     __typename: 'ItemDirectionNode';
     directions: string;
@@ -100,6 +103,7 @@ export type ItemRowWithWarningsFragment = {
   name: string;
   unitName?: string | null;
   isVaccine: boolean;
+  doses: number;
   warnings: Array<{
     __typename: 'WarningNode';
     warningText: string;
@@ -127,6 +131,7 @@ export type ItemWithPackSizeFragment = {
   name: string;
   unitName?: string | null;
   isVaccine: boolean;
+  doses: number;
 };
 
 export type ItemStockOnHandFragment = {
@@ -138,6 +143,7 @@ export type ItemStockOnHandFragment = {
   name: string;
   unitName?: string | null;
   isVaccine: boolean;
+  doses: number;
   itemDirections: Array<{
     __typename: 'ItemDirectionNode';
     directions: string;
@@ -156,6 +162,7 @@ export type ItemRowWithStatsFragment = {
   name: string;
   unitName?: string | null;
   isVaccine: boolean;
+  doses: number;
   stats: {
     __typename: 'ItemStatsNode';
     averageMonthlyConsumption: number;
@@ -648,6 +655,7 @@ export type ItemsQuery = {
       name: string;
       unitName?: string | null;
       isVaccine: boolean;
+      doses: number;
     }>;
   };
 };
@@ -675,6 +683,7 @@ export type ItemStockOnHandQuery = {
       name: string;
       unitName?: string | null;
       isVaccine: boolean;
+      doses: number;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
         directions: string;
@@ -1265,6 +1274,7 @@ export const ServiceItemRowFragmentDoc = gql`
     name
     unitName
     isVaccine
+    doses
   }
 `;
 export const ItemRowFragmentDoc = gql`
@@ -1275,6 +1285,7 @@ export const ItemRowFragmentDoc = gql`
     name
     unitName
     isVaccine
+    doses
   }
 `;
 export const WarningFragmentDoc = gql`

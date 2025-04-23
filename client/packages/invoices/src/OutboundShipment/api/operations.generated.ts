@@ -65,6 +65,7 @@ export type OutboundFragment = {
         code: string;
         unitName?: string | null;
         isVaccine: boolean;
+        doses: number;
       };
       location?: {
         __typename: 'LocationNode';
@@ -289,6 +290,7 @@ export type InvoiceQuery = {
               code: string;
               unitName?: string | null;
               isVaccine: boolean;
+              doses: number;
             };
             location?: {
               __typename: 'LocationNode';
@@ -428,6 +430,7 @@ export type OutboundByNumberQuery = {
               code: string;
               unitName?: string | null;
               isVaccine: boolean;
+              doses: number;
             };
             location?: {
               __typename: 'LocationNode';

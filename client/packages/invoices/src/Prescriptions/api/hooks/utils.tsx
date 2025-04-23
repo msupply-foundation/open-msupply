@@ -99,6 +99,7 @@ export const createPrescriptionPlaceholderRow = (
     code: '',
     name: '',
     isVaccine: false,
+    doses: 0,
     __typename: 'ItemNode',
     itemDirections: [],
     warnings: [],
@@ -121,6 +122,7 @@ export const createPrescriptionPlaceholderRow = (
       code: '',
       name: '',
       isVaccine: false,
+      doses: 0,
       itemDirections: [
         {
           id: '',
@@ -197,6 +199,7 @@ export const createDraftPrescriptionLineFromStockLine = ({
       name: stockLine?.item?.name,
       code: stockLine?.item?.code,
       isVaccine: stockLine?.item?.isVaccine ?? false,
+      doses: stockLine?.item?.doses ?? 0,
       __typename: 'ItemNode',
       itemDirections: [],
       warnings: [],
