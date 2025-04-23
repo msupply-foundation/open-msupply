@@ -99,7 +99,6 @@ const requestParser = {
     requestedQuantity: line.requestedQuantity,
     comment: line.comment,
     optionId: line?.reason?.id ?? null,
-    initialStockOnHandUnits: line.initialStockOnHandUnits,
   }),
 };
 
@@ -154,7 +153,6 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
         storeId,
         requisitionId,
       });
-
       if (result?.requisition.__typename === 'RequisitionNode') {
         return result?.requisition;
       }

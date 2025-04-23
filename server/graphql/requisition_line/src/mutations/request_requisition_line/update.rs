@@ -21,7 +21,6 @@ pub struct UpdateInput {
     pub requested_quantity: Option<f64>,
     pub comment: Option<String>,
     pub option_id: Option<String>,
-    pub initial_stock_on_hand_units: Option<f64>,
 }
 
 #[derive(Interface)]
@@ -84,7 +83,6 @@ impl UpdateInput {
             requested_quantity,
             comment,
             option_id,
-            initial_stock_on_hand_units,
         } = self;
 
         ServiceInput {
@@ -92,7 +90,6 @@ impl UpdateInput {
             requested_quantity,
             comment,
             option_id,
-            initial_stock_on_hand_units,
         }
     }
 }
@@ -336,7 +333,6 @@ mod test {
                     requested_quantity: Some(1.0),
                     comment: Some("comment".to_string()),
                     option_id: None,
-                    initial_stock_on_hand_units: None,
                 }
             );
             Ok(RequisitionLine {

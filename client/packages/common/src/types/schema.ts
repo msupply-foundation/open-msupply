@@ -9157,7 +9157,6 @@ export type UpdateRequestRequisitionLineErrorInterface = {
 export type UpdateRequestRequisitionLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  initialStockOnHandUnits?: InputMaybe<Scalars['Float']['input']>;
   optionId?: InputMaybe<Scalars['String']['input']>;
   requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
 };
