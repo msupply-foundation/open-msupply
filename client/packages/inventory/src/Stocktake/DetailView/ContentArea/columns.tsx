@@ -239,6 +239,8 @@ export const useStocktakeColumns = ({
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           const { lines } = rowData;
+          const displayDoses =
+            preferences?.displayVaccineInDoses && lines[0]?.item.isVaccine;
           const total =
             lines.reduce(
               (total, line) =>
@@ -247,7 +249,7 @@ export const useStocktakeColumns = ({
                   (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks)),
               0
             ) ?? 0;
-          const totalInDoses = preferences?.displayVaccineInDoses
+          const totalInDoses = displayDoses
             ? (lines.reduce(
                 (total, line) =>
                   total +
@@ -259,26 +261,32 @@ export const useStocktakeColumns = ({
               ) ?? 0)
             : null;
 
-          const totalFormatted = (
-            total < 0 ? Math.abs(total) : -total
-          ).toString();
-          const totalInDosesFormatted = totalInDoses
-            ? `(${totalInDoses} ${t('label.doses')})`
-            : '';
+          const totalRounded = Math.round(total * 100) / 100;
+          const totalInDosesRounded = totalInDoses
+            ? Math.round(totalInDoses * 100) / 100
+            : null;
 
-          return `${totalFormatted} ${totalInDosesFormatted}`;
+          return `${totalRounded} ${
+            totalInDosesRounded
+              ? `(${totalInDosesRounded} ${t('label.doses')})`
+              : ''
+          }`;
         } else if (rowData.countedNumberOfPacks === null) {
           return null;
         } else {
           const total =
             (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
             rowData.snapshotNumberOfPacks;
+          const totalRounded = Math.round(total * 100) / 100;
           const totalInDoses =
             preferences?.displayVaccineInDoses && rowData?.stockLine?.doses
               ? rowData?.stockLine?.doses * total
               : null;
-          return `${total}
-            ${totalInDoses ? `(${totalInDoses} ${t('label.doses')})` : ''}`;
+          const totalInDosesRounded = totalInDoses
+            ? Math.round(totalInDoses * 100) / 100
+            : null;
+          return `${totalRounded}
+            ${totalInDosesRounded ? `(${totalInDosesRounded} ${t('label.doses')})` : ''}`;
         }
       },
     },
