@@ -76,14 +76,17 @@ export const DetailView: FC = () => {
     isError,
   } = useEncounter.document.byId(id);
 
+  const isVaccinationEncounter =
+    encounter?.programEnrolment?.isImmunisationProgram;
+
   // If this is a vaccination encounter, we want to use the suggested
   // next vaccination dates for the next encounter
   const {
     query: { data: vaccineCard },
   } = usePatientVaccineCard(encounter?.programEnrolment?.id ?? '');
-  const suggestedNextEncounterDate = getNextVaccinationEncounterDate(
-    vaccineCard?.items ?? []
-  );
+  const suggestedNextEncounterDate = isVaccinationEncounter
+    ? getNextVaccinationEncounterDate(vaccineCard?.items ?? [])
+    : null;
 
   const handleSave = useEncounter.document.upsertDocument(
     encounter?.patient.id ?? '',
@@ -241,10 +244,10 @@ export const DetailView: FC = () => {
       dataStatus === EncounterNodeStatus.Pending
     : false;
 
-  const VaxCard = encounter?.programEnrolment?.isImmunisationProgram ? (
+  const VaxCard = isVaccinationEncounter ? (
     <VaccinationCard
       encounterId={encounter.id}
-      programEnrolmentId={encounter.programEnrolment.id}
+      programEnrolmentId={encounter.programEnrolment?.id ?? ''}
       clinician={encounter.clinician ?? undefined}
       onOk={() => {
         // After changes to vax card, if the encounter is still pending
