@@ -1988,4 +1988,5 @@
   "label.record-not-found": "Record not found",
   "label.master-list-not-found": "Master list not found",
   "label.cannot-add-item-to-shipment": "Cannot add items to shipment",
+  "error.cannot-add-from-masterlist-if-not-new": "Can only add from master list on 'New' invoice"
 }
