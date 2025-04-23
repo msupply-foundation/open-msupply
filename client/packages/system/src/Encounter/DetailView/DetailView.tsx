@@ -336,6 +336,7 @@ export const DetailView: FC = () => {
         isSaving={isSaving}
         isDisabled={!isDirty || !!validationError}
         encounter={data as EncounterFragment}
+        scheduleNextEncounter={() => nextEncounterModal.onOpen()}
       />
     </React.Suspense>
   );

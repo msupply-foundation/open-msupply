@@ -22,6 +22,7 @@ import {
 } from '@openmsupply-client/programs';
 import { encounterStatusTranslation } from '../utils';
 import { StatusChangeButton } from './StatusChangeButton';
+import { CalendarIcon } from '@mui/x-date-pickers';
 
 interface FooterProps {
   documentName?: string;
@@ -30,6 +31,7 @@ interface FooterProps {
   onCancel: () => void;
   onChangeStatus: (status: EncounterNodeStatus) => void;
   onSave: () => void;
+  scheduleNextEncounter: () => void;
   encounter?: EncounterFragment;
 }
 
@@ -69,6 +71,7 @@ export const Footer: FC<FooterProps> = ({
   isSaving,
   onCancel,
   onChangeStatus,
+  scheduleNextEncounter,
   onSave,
   encounter,
 }) => {
@@ -120,12 +123,23 @@ export const Footer: FC<FooterProps> = ({
               startIcon={<SaveIcon />}
               label={t('button.save')}
             />
-            {encounter?.status && (
-              <StatusChangeButton
-                currentStatus={encounter.status}
-                onSave={onChangeStatus}
-              />
-            )}
+            {encounter?.status &&
+              // Status no longer editable once visited
+              // Instead show schedule next encounter button
+              (encounter.status === EncounterNodeStatus.Visited ? (
+                <ButtonWithIcon
+                  variant="outlined"
+                  color="secondary"
+                  Icon={<CalendarIcon />}
+                  onClick={scheduleNextEncounter}
+                  label={t('button.schedule-encounter')}
+                />
+              ) : (
+                <StatusChangeButton
+                  currentStatus={encounter.status}
+                  onSave={onChangeStatus}
+                />
+              ))}
           </Box>
 
           <Modal

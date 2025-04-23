@@ -103,6 +103,7 @@
   "button.save-and-confirm-status": "Confirmer {{status}}",
   "button.save-log": "Enregistrer le journal",
   "button.scan": "Scanner",
+  "button.schedule-encounter": "Planifier Rendez-vous",
   "button.select": "Sélectionner",
   "button.select-a-color": "Sélectionner une couleur",
   "button.send": "Envoyer",

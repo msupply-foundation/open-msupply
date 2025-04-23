@@ -105,6 +105,7 @@
   "button.save-and-confirm-status": "Confirm {{status}}",
   "button.save-log": "Save log",
   "button.scan": "Scan",
+  "button.schedule-encounter": "Schedule Encounter",
   "button.select": "Select",
   "button.select-a-color": "Select a colour",
   "button.send": "Send",
