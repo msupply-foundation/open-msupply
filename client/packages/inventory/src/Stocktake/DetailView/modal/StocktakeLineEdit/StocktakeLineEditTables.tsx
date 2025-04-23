@@ -220,8 +220,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
           displayInDoses,
           displayInPack: true,
           itemUnit: item?.unitName,
-          unitTranslation: t('label.snapshot'),
-          standardTranslation: t('label.snapshot-num-of-packs'),
+          columnName: t('label.snapshot'),
         }),
         align: ColumnAlign.Right,
         width: 100,
@@ -238,8 +237,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
           t,
           displayInDoses,
           itemUnit: item?.unitName,
-          unitTranslation: t('label.snapshot'),
-          standardTranslation: t('label.snapshot-num-of-units'),
+          columnName: t('label.snapshot'),
         }),
         align: ColumnAlign.Right,
         width: 100,
@@ -260,8 +258,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
           displayInDoses,
           displayInPack: true,
           itemUnit: item?.unitName,
-          unitTranslation: t('label.counted'),
-          standardTranslation: t('label.counted-num-of-packs'),
+          columnName: t('label.counted'),
         }),
         width: 100,
         getIsError: rowData =>
@@ -270,7 +267,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         Cell: NumberInputCell,
         cellProps: { decimalLimit: 2, min: 0 },
         setter: patch => {
-          // If counted number of units was changed to result in no adjustment we
+          // If counted number of packs was changed to result in no adjustment we
           // should remove inventoryAdjustmentReason, otherwise could have a
           // reason on a line with no adjustments
           const inventoryAdjustmentReason =
@@ -301,8 +298,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
           t,
           displayInDoses,
           itemUnit: item?.unitName,
-          unitTranslation: t('label.counted'),
-          standardTranslation: t('label.counted-num-of-units'),
+          columnName: t('label.counted'),
         }),
         width: 100,
         getIsError: rowData =>

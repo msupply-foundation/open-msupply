@@ -218,8 +218,7 @@ interface GetColumnLabelProps {
   displayInDoses: boolean;
   displayInPack?: boolean;
   itemUnit?: string | null;
-  unitTranslation?: string;
-  standardTranslation?: string;
+  columnName?: string;
 }
 
 const getColumnLabel = ({
@@ -227,26 +226,21 @@ const getColumnLabel = ({
   displayInDoses,
   displayInPack,
   itemUnit,
-  unitTranslation,
-  standardTranslation,
+  columnName,
 }: GetColumnLabelProps) => {
   const capitalisedItemUnit = itemUnit
     ? itemUnit.charAt(0).toUpperCase() + itemUnit.slice(1)
-    : '';
-  const translationWithUnit = `${capitalisedItemUnit} ${unitTranslation}`;
-
-  const vaccinePackTranslation = itemUnit
-    ? translationWithUnit
-    : standardTranslation;
+    : t('label.units');
+  const translationWithUnit = `${capitalisedItemUnit} ${columnName}`;
 
   if (displayInDoses) {
     return displayInPack
-      ? vaccinePackTranslation
-      : `${t('label.doses')} ${unitTranslation}`;
+      ? translationWithUnit
+      : `${t('label.doses')} ${columnName}`;
   }
 
-  if (displayInPack || !itemUnit) {
-    return standardTranslation;
+  if (displayInPack) {
+    return `${t('label.packs')} ${columnName}`;
   }
 
   return translationWithUnit;
