@@ -33,7 +33,7 @@ query requisitionCounts($storeId: String!) {
       new
     }
     emergency {
-      emergency
+      new
     }
   }
 }

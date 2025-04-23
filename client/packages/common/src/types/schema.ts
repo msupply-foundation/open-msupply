@@ -2271,7 +2271,7 @@ export type DocumentSortInput = {
 
 export type EmergencyAutomaticResponseRequisitionCounts = {
   __typename: 'EmergencyAutomaticResponseRequisitionCounts';
-  emergency: Scalars['Int']['output'];
+  new: Scalars['Int']['output'];
 };
 
 export type EncounterConnector = {
