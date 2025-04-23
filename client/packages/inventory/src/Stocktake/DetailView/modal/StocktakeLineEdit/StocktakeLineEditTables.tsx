@@ -267,7 +267,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         Cell: NumberInputCell,
         cellProps: { decimalLimit: 2, min: 0 },
         setter: patch => {
-          // If counted number of units was changed to result in no adjustment we
+          // If counted number of packs was changed to result in no adjustment we
           // should remove inventoryAdjustmentReason, otherwise could have a
           // reason on a line with no adjustments
           const inventoryAdjustmentReason =
