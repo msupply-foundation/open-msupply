@@ -31,30 +31,37 @@ export const useAddFromMasterList = () => {
     id: masterListId,
   }: MasterListRowFragment) => {
     getConfirmation({
-      onConfirm: () =>
-        mutationState.mutateAsync(
-          { masterListId, shipmentId },
-          {
-            onError: e => {
-              const { message } = e as Error;
-              switch (message) {
-                case 'CannotEditInvoice': {
-                  return error('Cannot edit shipment')();
+      onConfirm: async () => {
+        try {
+          const result = await mutationState.mutateAsync(
+            { masterListId, shipmentId },
+            {
+              onError: e => {
+                const { message } = e as Error;
+                switch (message) {
+                  case 'CannotEditInvoice': {
+                    return error('Cannot edit shipment')();
+                  }
+                  case 'RecordNotFound': {
+                    return error('This master list has been deleted!')();
+                  }
+                  case 'MasterListNotFoundForThisName': {
+                    return error(
+                      "Uh oh this is not the master list you're looking for"
+                    )();
+                  }
+                  default:
+                    return error('Could not add items to shipment')();
                 }
-                case 'RecordNotFound': {
-                  return error('This master list has been deleted!')();
-                }
-                case 'MasterListNotFoundForThisName': {
-                  return error(
-                    "Uh oh this is not the master list you're looking for"
-                  )();
-                }
-                default:
-                  return error('Could not add items to shipment')();
-              }
-            },
-          }
-        ),
+              },
+            }
+          );
+
+          return result;
+        } catch (err) {
+          // Error handling is done in the onError callback, so swallow here
+        }
+      },
     });
   };
 
