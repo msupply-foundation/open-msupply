@@ -3,10 +3,9 @@ import {
   Box,
   AppFooterPortal,
   DialogButton,
-  useNavigate,
+  // useNavigate,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
-import { buildItemEditRoute } from '../utils';
 
 interface FooterProps {
   hasNext: boolean;
@@ -19,13 +18,13 @@ interface FooterProps {
 
 export const Footer = ({
   hasNext,
-  next,
+  // next,
   hasPrevious,
-  previous,
-  requisitionId,
+  // previous,
+  // requisitionId,
   scrollIntoView,
 }: FooterProps) => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   return (
     <AppFooterPortal
@@ -48,7 +47,7 @@ export const Footer = ({
               variant="previous"
               disabled={!hasPrevious}
               onClick={() => {
-                navigate(buildItemEditRoute(requisitionId, previous?.id));
+                // navigate(buildItemEditRoute(requisitionId, previous?.id));
                 scrollIntoView();
               }}
             />
@@ -56,7 +55,7 @@ export const Footer = ({
               variant="next"
               disabled={!hasNext}
               onClick={() => {
-                navigate(buildItemEditRoute(requisitionId, next?.id));
+                // navigate(buildItemEditRoute(requisitionId, next?.id));
                 scrollIntoView();
               }}
             />

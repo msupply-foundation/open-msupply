@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import {
   BasicSpinner,
   DialogButton,
@@ -34,8 +34,6 @@ export const ModalContent = ({
   const { draft, save, update } = useDraftRequisitionLine(currentItem);
 
   const isNew = !draft?.id;
-  const isPacksEnabled = !!draft?.defaultPackSize;
-  const [isPacks, setIsPacks] = useState(isPacksEnabled);
 
   const { hasNext, next, hasPrevious, previous } = usePreviousNextRequestLine(
     lines,
@@ -76,9 +74,6 @@ export const ModalContent = ({
           hasPrevious={hasPrevious}
           previous={previous}
           isProgram={isProgram}
-          isPacksEnabled={isPacksEnabled}
-          isPacks={isPacks}
-          setIsPacks={setIsPacks}
           insert={mutateAsync}
           requisition={requisition}
           lines={lines}
