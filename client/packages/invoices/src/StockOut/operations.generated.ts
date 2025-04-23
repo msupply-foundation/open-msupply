@@ -14,7 +14,12 @@ export type PartialStockLineFragment = {
   sellPricePerPack: number;
   packSize: number;
   expiryDate?: string | null;
-  item: { __typename: 'ItemNode'; name: string; code: string };
+  item: {
+    __typename: 'ItemNode';
+    name: string;
+    code: string;
+    isVaccine: boolean;
+  };
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -47,6 +52,7 @@ export type StockOutLineFragment = {
     name: string;
     code: string;
     unitName?: string | null;
+    isVaccine: boolean;
   };
   location?: {
     __typename: 'LocationNode';
@@ -67,7 +73,12 @@ export type StockOutLineFragment = {
     costPricePerPack: number;
     packSize: number;
     expiryDate?: string | null;
-    item: { __typename: 'ItemNode'; name: string; code: string };
+    item: {
+      __typename: 'ItemNode';
+      name: string;
+      code: string;
+      isVaccine: boolean;
+    };
   } | null;
 };
 
@@ -92,6 +103,7 @@ export const PartialStockLineFragmentDoc = gql`
     item {
       name
       code
+      isVaccine
     }
     location {
       __typename
@@ -127,6 +139,7 @@ export const StockOutLineFragmentDoc = gql`
       name
       code
       unitName
+      isVaccine
     }
     location {
       __typename
@@ -150,6 +163,7 @@ export const StockOutLineFragmentDoc = gql`
       item {
         name
         code
+        isVaccine
       }
     }
   }

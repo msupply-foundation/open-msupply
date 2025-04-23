@@ -4,6 +4,7 @@ fragment ServiceItemRow on ItemNode {
   code
   name
   unitName
+  isVaccine
 }
 
 fragment StockLine on StockLineNode {
