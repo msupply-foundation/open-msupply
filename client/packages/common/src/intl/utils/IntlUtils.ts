@@ -140,7 +140,7 @@ export const useIntlUtils = () => {
   };
 
   const getColumnLabelWithPackOrUnit = useCallback(
-    (props: GetColumnLabelProps) => getColumnLabel(props),
+    (props: GetNumberColumnLabelProps) => getNumberColumnLabel(props),
     []
   );
 
@@ -213,7 +213,7 @@ const getFullName = (
   }
 };
 
-interface GetColumnLabelProps {
+interface GetNumberColumnLabelProps {
   t: TypedTFunction<LocaleKey>;
   displayInDoses: boolean;
   displayInPack?: boolean;
@@ -221,13 +221,13 @@ interface GetColumnLabelProps {
   columnName?: string;
 }
 
-const getColumnLabel = ({
+const getNumberColumnLabel = ({
   t,
   displayInDoses,
   displayInPack,
   itemUnit,
   columnName,
-}: GetColumnLabelProps) => {
+}: GetNumberColumnLabelProps) => {
   const capitalisedItemUnit = itemUnit
     ? itemUnit.charAt(0).toUpperCase() + itemUnit.slice(1)
     : t('label.units');
