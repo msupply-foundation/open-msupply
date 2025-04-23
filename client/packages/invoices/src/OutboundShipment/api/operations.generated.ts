@@ -91,6 +91,7 @@ export type OutboundFragment = {
           name: string;
           code: string;
           isVaccine: boolean;
+          doses: number;
         };
       } | null;
     }>;
@@ -316,6 +317,7 @@ export type InvoiceQuery = {
                 name: string;
                 code: string;
                 isVaccine: boolean;
+                doses: number;
               };
             } | null;
           }>;
@@ -456,6 +458,7 @@ export type OutboundByNumberQuery = {
                 name: string;
                 code: string;
                 isVaccine: boolean;
+                doses: number;
               };
             } | null;
           }>;

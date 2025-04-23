@@ -80,6 +80,7 @@ export type StockOutLineFragment = {
       name: string;
       code: string;
       isVaccine: boolean;
+      doses: number;
     };
   } | null;
 };
@@ -168,6 +169,7 @@ export const StockOutLineFragmentDoc = gql`
         name
         code
         isVaccine
+        doses
       }
     }
   }
