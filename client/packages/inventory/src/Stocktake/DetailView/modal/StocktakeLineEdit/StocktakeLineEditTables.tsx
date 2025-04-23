@@ -133,7 +133,7 @@ const getInventoryAdjustmentReasonInputColumn = (
         <InventoryAdjustmentReasonSearchInput
           autoFocus={autoFocus}
           value={value}
-          width={Number(column.width) - 20}
+          width={Number(column.width) - 16}
           onChange={onChange}
           adjustmentType={
             rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0)
@@ -176,7 +176,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       [
         expiryDateColumn,
         {
-          width: 150,
+          width: 160,
           setter: patch => update({ ...patch, countThisLine: true }),
         },
       ],
@@ -197,6 +197,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         Cell: PackSizeEntryCell<DraftStocktakeLine>,
         setter: update,
         label: 'label.pack-size',
+        width: 100,
         cellProps: {
           getIsDisabled: (rowData: DraftStocktakeLine) => !!rowData?.stockLine,
         },
@@ -233,8 +234,8 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         width: 100,
         Cell: NumberCell,
         accessor: ({ rowData }) => {
-          const packSize = rowData?.packSize ?? 1;
           const snapshotNumberOfPacks = rowData.snapshotNumberOfPacks ?? 0;
+          const packSize = rowData?.packSize ?? 1;
           const doses = rowData?.stockLine?.doses ?? 1;
           return displayInDoses
             ? snapshotNumberOfPacks * doses
@@ -322,7 +323,13 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
             countedNumberOfPacks,
           });
         },
-        accessor: ({ rowData }) => rowData.countedNumberOfUnits,
+        accessor: ({ rowData }) => {
+          if (rowData.countedNumberOfPacks) {
+            return displayInDoses
+              ? rowData.countedNumberOfPacks * (rowData?.stockLine?.doses ?? 1)
+              : rowData.countedNumberOfPacks * (rowData?.packSize ?? 1);
+          }
+        },
       },
       getInventoryAdjustmentReasonInputColumn(update, errorsContext)
     );
@@ -408,6 +415,7 @@ export const LocationTable: FC<StocktakeLineEditTableProps> = ({
         label: 'label.stocktake-comment',
         Cell: TextInputCell,
         width: 200,
+        cellProps: { fullWidth: true },
         setter: patch => update({ ...patch, countThisLine: true }),
         accessor: ({ rowData }) => rowData.comment || '',
       },
