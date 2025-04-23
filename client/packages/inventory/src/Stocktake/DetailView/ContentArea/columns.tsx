@@ -164,13 +164,19 @@ export const useStocktakeColumns = ({
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           const { lines } = rowData;
-          const doses = lines?.map(
-            ({ stockLine }) => stockLine?.doses ?? UNDEFINED_STRING_VALUE
-          );
-          const dosesTheSame = doses?.every(dose => dose === doses?.[0]);
-          return dosesTheSame ? doses?.[0] : t('multiple');
+          if (lines[0]?.item.isVaccine) {
+            const doses = lines?.map(
+              ({ stockLine }) => stockLine?.doses ?? UNDEFINED_STRING_VALUE
+            );
+            const dosesTheSame = doses?.every(dose => dose === doses?.[0]);
+            return dosesTheSame ? doses?.[0] : t('multiple');
+          } else {
+            return UNDEFINED_STRING_VALUE;
+          }
         } else {
-          return rowData?.stockLine?.doses ?? UNDEFINED_STRING_VALUE;
+          return rowData?.item?.isVaccine
+            ? (rowData?.stockLine?.doses ?? UNDEFINED_STRING_VALUE)
+            : UNDEFINED_STRING_VALUE;
         }
       },
     });
