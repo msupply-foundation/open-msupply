@@ -23,10 +23,7 @@ pub fn generate(
     let existing_line = existing.line;
 
     let item_variant_id: Option<String> = match item_variant_id {
-        Some(update) => match update.value {
-            Some(id) => Some(id),
-            None => None,
-        },
+        Some(update) => update.value,
         None => existing_line.item_variant_id,
     };
 

@@ -30,6 +30,7 @@ pub struct StockLineInput {
     pub barcode_id: Option<String>,
     pub supplier_link_id: String,
     pub overwrite_stock_levels: bool,
+    pub vaccine_doses: Option<i32>,
 }
 
 struct StockLevels {
@@ -59,6 +60,7 @@ pub fn generate_batch(
         barcode_id,
         supplier_link_id,
         overwrite_stock_levels,
+        vaccine_doses,
     }: StockLineInput,
 ) -> Result<StockLineRow, RepositoryError> {
     // Generate new stock line id if not provided
@@ -107,8 +109,8 @@ pub fn generate_batch(
         on_hold,
         barcode_id,
         item_variant_id,
+        vaccine_doses,
         // TODO: Allow users to set this or default to item.vaccine_doses
-        vaccine_doses: None,
     };
 
     Ok(stock_line_row)

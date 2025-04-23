@@ -29,7 +29,11 @@ pub fn generate(
 ) -> Result<GenerateResult, RepositoryError> {
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
 
-    let mut new_line = generate_line(input.clone(), item_row, existing_invoice_row.clone());
+    let mut new_line = generate_line(
+        input.clone(),
+        item_row.clone(),
+        existing_invoice_row.clone(),
+    );
 
     if StockInType::InventoryAddition != input.r#type && store_preferences.pack_to_one {
         new_line = convert_invoice_line_to_single_pack(new_line);
@@ -52,6 +56,7 @@ pub fn generate(
                     StockInType::InventoryAddition => false,
                     _ => true,
                 },
+                vaccine_doses: item_row.is_vaccine.then_some(item_row.vaccine_doses),
             },
         )?;
         // If a new stock line has been created, update the stock_line_id on the invoice line
