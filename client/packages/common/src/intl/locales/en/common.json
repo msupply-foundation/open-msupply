@@ -1985,8 +1985,6 @@
   "warning.nothing-to-supply": "Nothing left to supply!",
   "tooltip.defined-by-gs1-matrix": "Defined by GS1 datamatrix",
   "label.cannot-edit-invoice": "Cannot edit invoice",
-  "label.record-not-found": "Record not found",
-  "label.master-list-not-found": "Master list not found",
   "label.cannot-add-item-to-shipment": "Cannot add items to shipment",
   "error.cannot-add-from-masterlist-if-not-new": "Can only add from master list on 'New' invoice"
 }

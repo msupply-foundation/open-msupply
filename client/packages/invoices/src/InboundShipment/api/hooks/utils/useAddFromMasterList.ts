@@ -43,10 +43,10 @@ export const useAddFromMasterList = () => {
                     return error(t('label.cannot-edit-invoice'))();
                   }
                   case 'RecordNotFound': {
-                    return error(t('label.record-not-found'))();
+                    return error(t('messages.record-not-found'))();
                   }
                   case 'MasterListNotFoundForThisName': {
-                    return error(t('label.master-list-not-found'))();
+                    return error(t('error.master-list-not-found'))();
                   }
                   default:
                     return error(t('label.cannot-add-item-to-shipment'))();
