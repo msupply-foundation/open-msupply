@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::PreferenceNode;
+use graphql_types::types::IdResponse;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::UpsertPreference,
@@ -18,7 +18,7 @@ pub fn upsert_preference(
     ctx: &Context<'_>,
     store_id: String,
     input: UpsertPreferenceInput,
-) -> Result<PreferenceNode> {
+) -> Result<IdResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -33,7 +33,7 @@ pub fn upsert_preference(
         .preference_service
         .upsert(&service_context, input.to_domain())?;
 
-    Ok(PreferenceNode { preference })
+    Ok(IdResponse(preference.id))
 }
 
 impl UpsertPreferenceInput {

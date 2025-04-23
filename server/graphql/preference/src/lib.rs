@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::{PreferenceDescriptionNode, PreferenceNode, PreferencesNode};
+use graphql_types::types::{IdResponse, PreferenceDescriptionNode, PreferencesNode};
 use service::auth::{Resource, ResourceAccessRequest};
 
 mod upsert;
@@ -79,7 +79,7 @@ impl PreferenceMutations {
         store_id: String,
         // TODO: upsert should have defined input types for each pref
         input: UpsertPreferenceInput,
-    ) -> Result<PreferenceNode> {
+    ) -> Result<IdResponse> {
         upsert_preference(ctx, store_id, input)
     }
 }

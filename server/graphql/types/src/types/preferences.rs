@@ -1,5 +1,5 @@
 use async_graphql::*;
-use repository::{PreferenceRow, StorageConnection};
+use repository::StorageConnection;
 use service::preference::{
     preferences::PreferenceRegistry, Preference, PreferenceDescription, PreferenceValueType,
 };
@@ -65,30 +65,5 @@ impl PreferenceValueNodeType {
             PreferenceValueType::Integer => PreferenceValueNodeType::Integer,
             PreferenceValueType::String => PreferenceValueNodeType::String,
         }
-    }
-}
-
-// tODO, remove
-pub struct PreferenceNode {
-    pub preference: PreferenceRow,
-}
-
-#[Object]
-impl PreferenceNode {
-    pub async fn id(&self) -> &String {
-        &self.preference.id
-    }
-
-    pub async fn key(&self) -> &String {
-        &self.preference.key
-    }
-
-    /// JSON serialized value
-    pub async fn value(&self) -> &String {
-        &self.preference.value
-    }
-
-    pub async fn store_id(&self) -> Option<String> {
-        self.preference.store_id.clone()
     }
 }
