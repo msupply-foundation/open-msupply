@@ -332,7 +332,7 @@ mod test {
                     id: "update line id input".to_string(),
                     requested_quantity: Some(1.0),
                     comment: Some("comment".to_string()),
-                    option_id: None,
+                    option_id: None
                 }
             );
             Ok(RequisitionLine {
