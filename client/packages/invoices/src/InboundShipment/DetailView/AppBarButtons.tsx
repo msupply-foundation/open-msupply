@@ -57,7 +57,7 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
         <AddButton
           onAddItem={onAddItem}
           requisitionId={data?.requisition?.id ?? ''}
-          invoiceId={data?.id ?? ''}
+          invoice={data}
           disable={isDisabled}
           disableAddFromMasterListButton={!!data?.linkedShipment}
           disableAddFromInternalOrderButton={disableInternalOrderButton}
