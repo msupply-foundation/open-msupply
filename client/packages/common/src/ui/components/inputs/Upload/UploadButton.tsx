@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, ReactNode } from 'react';
 import {
   ButtonWithIcon,
   PlusCircleIcon,
@@ -7,17 +7,19 @@ import {
   FnUtils,
 } from '@openmsupply-client/common';
 
+interface UploadButtonProps {
+  onUpload: (files: File[]) => void;
+  files?: File[];
+  customLabel?: string;
+  icon?: ReactNode;
+}
+
 export const UploadButton = ({
   onUpload,
   files,
   customLabel,
   icon,
-}: {
-  onUpload: (files: File[]) => void;
-  files?: File[];
-  customLabel?: string;
-  icon?: React.ReactNode;
-}) => {
+}: UploadButtonProps) => {
   const t = useTranslation();
   const elementId = FnUtils.generateUUID();
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import Dropzone, { Accept } from 'react-dropzone';
-import { useTranslation } from '@common/intl';
 import {
+  useTranslation,
   alpha,
   Paper,
   FileUploadIcon,
@@ -12,18 +12,18 @@ import {
   useIsScreen,
 } from '@openmsupply-client/common';
 
-export interface UploadProps {
+interface UploadDragAndDropProps {
   accept?: Accept;
   color?: 'primary' | 'secondary' | 'gray';
   maxSize?: number;
   onUpload: <T extends File>(files: T[]) => void;
 }
 
-export const Upload = ({
+export const UploadDragAndDrop = ({
   accept,
   color = 'secondary',
   onUpload,
-}: UploadProps) => {
+}: UploadDragAndDropProps) => {
   const t = useTranslation();
   const isMobile = useIsScreen('sm');
 
