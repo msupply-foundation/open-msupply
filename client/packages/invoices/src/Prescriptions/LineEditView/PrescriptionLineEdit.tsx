@@ -85,9 +85,9 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
     // TODO: refactor prescription view
     // Validation should be managed against overall `draft`, and not using `isDirty`
     if (
-      newAllocateQuantities?.some(
+      // Don't allow save if both prescribed quantity and allocated packs are zero for all lines
+      newAllocateQuantities?.every(
         line =>
-          // Don't allow save if both prescribed quantity and allocated packs are zero
           line.numberOfPacks === 0 &&
           (!line.prescribedQuantity || line.prescribedQuantity === 0)
       )
