@@ -11,7 +11,7 @@ export const UploadButton = ({
   icon,
 }: {
   onUpload: (files: File[]) => void;
-  files: File[] | undefined;
+  files?: File[] | undefined;
   customLabel?: string;
   icon?: React.ReactNode;
 }) => {

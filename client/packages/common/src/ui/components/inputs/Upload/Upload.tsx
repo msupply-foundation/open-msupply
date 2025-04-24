@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import Dropzone, { Accept } from 'react-dropzone';
 import { useTranslation } from '@common/intl';
 import {
@@ -19,11 +19,11 @@ export interface UploadProps {
   onUpload: <T extends File>(files: T[]) => void;
 }
 
-export const Upload: FC<UploadProps> = ({
+export const Upload = ({
   accept,
   color = 'secondary',
   onUpload,
-}) => {
+}: UploadProps) => {
   const t = useTranslation();
   const isMobile = useIsScreen('sm');
 

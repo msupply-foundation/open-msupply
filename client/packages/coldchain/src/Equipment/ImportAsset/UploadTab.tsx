@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { ReactNode, useState } from 'react';
 import Papa, { ParseResult } from 'papaparse';
 import { ImportPanel } from './ImportPanel';
 import { useNotification } from '@common/hooks';
@@ -30,6 +30,8 @@ import {
   useStore,
 } from '@openmsupply-client/system';
 import { useAssetData } from '@openmsupply-client/system';
+import { UploadButton } from '../DetailView/UploadButton';
+import { Capacitor } from '@capacitor/core';
 
 interface EquipmentUploadTabProps {
   setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
@@ -196,16 +198,17 @@ function getImportHelpers<T, P>(
   };
 }
 
-export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
+export const EquipmentUploadTab = ({
   tab,
   setErrorMessage,
   setWarningMessage,
   setEquipment,
   onUploadComplete,
   catalogueItemData,
-}) => {
+}: ImportPanel & EquipmentUploadTabProps) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
+  const isNative = Capacitor.isNativePlatform();
   const { data: stores } = useStore.document.list();
   const { error, info } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
@@ -344,6 +347,14 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
     EquipmentBuffer.push(...rows);
   };
 
+  const renderUploadButton = (): ReactNode => {
+    return isNative ? (
+      <UploadButton onUpload={csvImport} />
+    ) : (
+      <Upload onUpload={csvImport} />
+    );
+  };
+
   return (
     <ImportPanel tab={tab}>
       {isLoading ? (
@@ -356,9 +367,9 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
           <InlineProgress variant={'indeterminate'} color={'secondary'} />
         </Grid>
       ) : null}
-      <Stack spacing={2}>
-        <Upload onUpload={csvImport} />
-        <Typography textAlign="center">
+      <Stack spacing={2} alignItems={'center'}>
+        {renderUploadButton()}
+        <Typography>
           {t('messages.template-download-text')}
           <Link onClick={csvExample} to={''}>
             {t('heading.download-example')}

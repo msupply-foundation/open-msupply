@@ -126,11 +126,7 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
 
   const renderUploadButton = (): ReactNode => {
     return isNative ? (
-      <UploadButton
-        onUpload={onUpload}
-        files={draft.files}
-        customLabel={t('button.browse-files')}
-      />
+      <UploadButton onUpload={onUpload} files={draft.files} />
     ) : (
       <Upload onUpload={onUpload} />
     );
