@@ -40,7 +40,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
     query: { data },
     isDisabled,
   } = usePrescription();
-  const { status = InvoiceNodeStatus.New, prescriptionDate } = data ?? {};
+  const { prescriptionDate } = data ?? {};
   const { isLoading, updateQuantity, updateNotes } = useDraftPrescriptionLines(
     currentItem,
     draftPrescriptionLines,
@@ -69,7 +69,10 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
     prescribedQuantity: number | null
   ) => {
     const newAllocateQuantities = allocateQuantities(
-      status,
+      // Hack - we're using shared allocateQuantities function, which supports placeholder lines in
+      // New status. Placeholder lines aren't supported for prescriptions though, so we'll just pretend
+      // we're already in pick :)
+      InvoiceNodeStatus.Picked,
       draftPrescriptionLines
     )(numPacks, packSize, true, prescribedQuantity);
 
