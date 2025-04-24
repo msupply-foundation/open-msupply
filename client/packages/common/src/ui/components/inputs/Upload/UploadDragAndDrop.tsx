@@ -7,9 +7,6 @@ import {
   FileUploadIcon,
   Typography,
   BaseButton,
-  ButtonWithIcon,
-  LinkIcon,
-  useIsScreen,
 } from '@openmsupply-client/common';
 
 interface UploadDragAndDropProps {
@@ -25,7 +22,6 @@ export const UploadDragAndDrop = ({
   onUpload,
 }: UploadDragAndDropProps) => {
   const t = useTranslation();
-  const isMobile = useIsScreen('sm');
 
   return (
     <Paper
@@ -62,33 +58,21 @@ export const UploadDragAndDrop = ({
         {({ getRootProps, getInputProps }) => (
           <div {...getRootProps()}>
             <input {...getInputProps()} />
-            {!isMobile && (
-              <>
-                <FileUploadIcon
-                  sx={{
-                    fontSize: 36,
-                    stroke: theme => theme.palette[color].main,
-                  }}
-                />
-                <Typography sx={{ fontWeight: 'bold', color: `${color}.main` }}>
-                  {t('messages.upload-invite')}
-                </Typography>
-                <Typography color={color}>{t('messages.upload-or')}</Typography>
-                <BaseButton color="secondary" variant="outlined">
-                  {t('button.browse-files')}
-                </BaseButton>
-              </>
-            )}
-            {isMobile && (
-              <ButtonWithIcon
-                shouldShrink={false}
-                color="secondary"
-                variant="outlined"
-                label={t('button.browse-files')}
-                onClick={() => {}}
-                Icon={<LinkIcon />}
+            <>
+              <FileUploadIcon
+                sx={{
+                  fontSize: 36,
+                  stroke: theme => theme.palette[color].main,
+                }}
               />
-            )}
+              <Typography sx={{ fontWeight: 'bold', color: `${color}.main` }}>
+                {t('messages.upload-invite')}
+              </Typography>
+              <Typography color={color}>{t('messages.upload-or')}</Typography>
+              <BaseButton color="secondary" variant="outlined">
+                {t('button.browse-files')}
+              </BaseButton>
+            </>
           </div>
         )}
       </Dropzone>
