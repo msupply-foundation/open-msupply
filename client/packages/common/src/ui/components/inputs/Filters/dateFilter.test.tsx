@@ -29,7 +29,7 @@ describe('getMinMaxDates', () => {
   });
 
   describe('when range is "from"', () => {
-    it('should return max date from as to date query when no max provided', () => {
+    it('max date should be the "to" value from query when no max provided', () => {
       const query = { to: '2025-10-31' };
       const range = 'from';
       const min = undefined;
@@ -71,7 +71,7 @@ describe('getMinMaxDates', () => {
   });
 
   describe('when range is "to"', () => {
-    it('should return min date from as from date query when no min provided', () => {
+    it('min date should be the "from" value from query when no min provided', () => {
       const query = { from: '2025-10-01' };
       const range = 'to';
       const min = undefined;
