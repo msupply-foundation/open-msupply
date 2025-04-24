@@ -1,8 +1,11 @@
 import React, { ChangeEvent } from 'react';
-import { ButtonWithIcon } from '@common/components';
-import { PlusCircleIcon } from '@common/icons';
-import { useTranslation } from '@common/intl';
-import { Box, FnUtils } from 'packages/common/src';
+import {
+  ButtonWithIcon,
+  PlusCircleIcon,
+  useTranslation,
+  Box,
+  FnUtils,
+} from '@openmsupply-client/common';
 
 export const UploadButton = ({
   onUpload,
@@ -11,7 +14,7 @@ export const UploadButton = ({
   icon,
 }: {
   onUpload: (files: File[]) => void;
-  files?: File[] | undefined;
+  files?: File[];
   customLabel?: string;
   icon?: React.ReactNode;
 }) => {
