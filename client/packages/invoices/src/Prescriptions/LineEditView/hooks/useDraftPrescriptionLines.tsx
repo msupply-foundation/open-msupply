@@ -53,10 +53,6 @@ export const useDraftPrescriptionLines = (
     ).filter(stockLine => !stockLine.onHold); // Filter out on hold stock lines
 
     const noStockLines = stockLines.length == 0;
-    const allStockLinesExpired = stockLines.every(
-      stockLine =>
-        stockLine.expiryDate && DateUtils.isExpired(stockLine.expiryDate)
-    );
 
     const placeholderLine = createPrescriptionPlaceholderRow(
       invoiceId ?? '',
@@ -88,6 +84,11 @@ export const useDraftPrescriptionLines = (
       })
       .filter(stockLine => !stockLine.location?.onHold)
       .sort(SortUtils.byExpiryAsc);
+
+    const allStockLinesExpired = stockLines.every(
+      stockLine =>
+        stockLine.expiryDate && DateUtils.isExpired(stockLine.expiryDate)
+    );
 
     // In cases where there are no valid stock lines to allocate we should
     // append a placeholder line in case of user setting prescribed quantity
