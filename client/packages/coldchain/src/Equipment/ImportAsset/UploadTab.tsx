@@ -1,14 +1,5 @@
-import React, { ReactNode, useState } from 'react';
+import React, { useState } from 'react';
 import Papa, { ParseResult } from 'papaparse';
-import { ImportPanel } from './ImportPanel';
-import { useNotification } from '@common/hooks';
-import { InlineProgress, Typography, Upload } from '@common/components';
-import {
-  DateUtils,
-  LocaleKey,
-  TypedTFunction,
-  useTranslation,
-} from '@common/intl';
 import {
   Grid,
   Stack,
@@ -20,7 +11,16 @@ import {
   EnvUtils,
   Platform,
   StatusType,
+  DateUtils,
+  LocaleKey,
+  TypedTFunction,
+  useTranslation,
+  InlineProgress,
+  Typography,
+  useNotification,
+  UploadFile,
 } from '@openmsupply-client/common';
+import { ImportPanel } from './ImportPanel';
 import * as EquipmentImportModal from './EquipmentImportModal';
 import { ImportRow } from './EquipmentImportModal';
 import { importEquipmentToCsv, parseStatusFromString } from '../utils';
@@ -28,10 +28,8 @@ import {
   AssetCatalogueItemFragment,
   processProperties,
   useStore,
+  useAssetData,
 } from '@openmsupply-client/system';
-import { useAssetData } from '@openmsupply-client/system';
-import { UploadButton } from '../DetailView/UploadButton';
-import { Capacitor } from '@capacitor/core';
 
 interface EquipmentUploadTabProps {
   setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
@@ -208,7 +206,6 @@ export const EquipmentUploadTab = ({
 }: ImportPanel & EquipmentUploadTabProps) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
-  const isNative = Capacitor.isNativePlatform();
   const { data: stores } = useStore.document.list();
   const { error, info } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
@@ -347,14 +344,6 @@ export const EquipmentUploadTab = ({
     EquipmentBuffer.push(...rows);
   };
 
-  const renderUploadButton = (): ReactNode => {
-    return isNative ? (
-      <UploadButton onUpload={csvImport} />
-    ) : (
-      <Upload onUpload={csvImport} />
-    );
-  };
-
   return (
     <ImportPanel tab={tab}>
       {isLoading ? (
@@ -368,7 +357,7 @@ export const EquipmentUploadTab = ({
         </Grid>
       ) : null}
       <Stack spacing={2} alignItems={'center'}>
-        {renderUploadButton()}
+        <UploadFile onUpload={csvImport} />
         <Typography>
           {t('messages.template-download-text')}
           <Link onClick={csvExample} to={''}>

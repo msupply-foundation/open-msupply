@@ -1,25 +1,23 @@
 import React, { ReactNode } from 'react';
-import {
-  Autocomplete,
-  BasicTextInput,
-  InputWithLabelRow,
-  Typography,
-  Upload,
-} from '@common/components';
-import { LocaleKey, useTranslation } from '@common/intl';
+import { Capacitor } from '@capacitor/core';
 import {
   AssetLogStatusInput,
   Box,
   InsertAssetLogInput,
   StatusType,
   useDebounceCallback,
+  LocaleKey,
+  useTranslation,
+  Autocomplete,
+  BasicTextInput,
+  InputWithLabelRow,
+  Typography,
+  useIsGapsStoreOnly,
+  UploadFile,
 } from '@openmsupply-client/common';
 import { FileList } from '../Components';
 import { parseLogStatus } from '../utils';
 import { useAssetLogReasonList } from '@openmsupply-client/system';
-import { useIsGapsStoreOnly } from '@openmsupply-client/common';
-import { Capacitor } from '@capacitor/core';
-import { UploadButton } from './UploadButton';
 import { TakePhotoButton } from './TakePhotoButton';
 
 interface StatusForm {
@@ -124,14 +122,6 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
     onChange({ files });
   };
 
-  const renderUploadButton = (): ReactNode => {
-    return isNative ? (
-      <UploadButton onUpload={onUpload} files={draft.files} />
-    ) : (
-      <Upload onUpload={onUpload} />
-    );
-  };
-
   return (
     <Box
       sx={{
@@ -189,7 +179,7 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
             justifyContent: 'center',
           }}
         >
-          {renderUploadButton()}
+          {<UploadFile onUpload={onUpload} files={draft.files} />}
           {isNative && (
             <TakePhotoButton onUpload={onUpload} files={draft.files} />
           )}

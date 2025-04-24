@@ -1,17 +1,17 @@
-import React, { ReactNode } from 'react';
-import { Typography, Upload, useConfirmationModal } from '@common/components';
+import React from 'react';
 import {
   Box,
   useNotification,
   useQueryClient,
   useTranslation,
+  Typography,
+  useConfirmationModal,
+  UploadFile,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { FileList } from '../../Components';
 import { DraftAsset } from '../../types';
 import { useAssets } from '../../api';
-import { Capacitor } from '@capacitor/core';
-import { UploadButton } from '../UploadButton';
 
 const Container = ({ children }: { children: React.ReactNode }) => (
   <Box
@@ -40,7 +40,6 @@ const Heading = ({ text }: { text: string }) => (
 
 export const Documents = ({ draft }: { draft: DraftAsset }) => {
   const t = useTranslation();
-  const isNative = Capacitor.isNativePlatform();
   const { error, success } = useNotification();
   const api = useAssets.utils.api();
   const queryClient = useQueryClient();
@@ -107,14 +106,6 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
     }
   };
 
-  const renderUploadButton = (): ReactNode => {
-    return isNative ? (
-      <UploadButton onUpload={onUpload} />
-    ) : (
-      <Upload onUpload={onUpload} color="gray" />
-    );
-  };
-
   return (
     <Box
       display="flex"
@@ -149,7 +140,7 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
       ></Box>
       <Container>
         <Heading text={t('heading.upload-cce-documents')} />
-        {renderUploadButton()}
+        <UploadFile onUpload={onUpload} color="gray" />
         <Box
           marginY={4}
           sx={theme => ({
