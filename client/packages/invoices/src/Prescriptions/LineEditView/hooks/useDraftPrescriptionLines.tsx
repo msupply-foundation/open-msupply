@@ -63,9 +63,7 @@ export const useDraftPrescriptionLines = (
       item?.id ?? ''
     );
 
-    // In cases where there are no valid stock lines to allocate we should
-    // use a placeholder - for prescribed quantities
-    if (noStockLines || !item || allStockLinesExpired) {
+    if (noStockLines || !item) {
       return updateDraftLines([placeholderLine]);
     }
 
@@ -90,6 +88,12 @@ export const useDraftPrescriptionLines = (
       })
       .filter(stockLine => !stockLine.location?.onHold)
       .sort(SortUtils.byExpiryAsc);
+
+    // In cases where there are no valid stock lines to allocate we should
+    // append a placeholder line in case of user setting prescribed quantity
+    if (allStockLinesExpired) {
+      rows.push(placeholderLine);
+    }
 
     updateDraftLines(rows);
   }, [data, item, prescriptionData]);

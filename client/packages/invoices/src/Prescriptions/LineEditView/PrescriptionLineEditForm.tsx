@@ -95,6 +95,7 @@ export const PrescriptionLineEditForm: React.FC<
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
   const { store: { preferences } = {} } = useAuthContext();
+  preferences.editPrescribedQuantityOnPrescription = true;
 
   const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
   const [prescribedQuantity, setPrescribedQuantity] = useState<number | null>(
