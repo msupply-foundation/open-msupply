@@ -8,6 +8,7 @@ import {
   useNavigate,
   useNotification,
   useAuthContext,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { DateUtils, useTranslation } from '@common/intl';
 import {
@@ -36,9 +37,7 @@ export const ScheduleNextEncounterModal = ({
   const t = useTranslation();
   const [draft, setDraft] = useState<EncounterSchema>({
     createdDatetime: new Date().toISOString(),
-    startDatetime: DateUtils.formatRFC3339(
-      DateUtils.addCurrentTime(suggestedDate)
-    ),
+    startDatetime: suggestedDate?.toISOString(),
     createdBy: { id: user?.id ?? '', username: user?.name ?? '' },
     status: EncounterNodeStatus.Pending,
     location: {
@@ -63,6 +62,33 @@ export const ScheduleNextEncounterModal = ({
   const canSubmit = () =>
     draft !== undefined && draft.startDatetime && !hasFormError;
 
+  const saveNextEncounter = async () => {
+    setIsCreating(true);
+    const { id } = await handleSave(draft, encounterConfig.formSchemaId);
+
+    if (!id) {
+      setIsCreating(false);
+      error(t('error.encounter-not-created'))();
+      return;
+    }
+
+    onClose();
+
+    navigate(
+      RouteBuilder.create(AppRoute.Dispensary)
+        .addPart(AppRoute.Patients)
+        .addPart(patientId)
+        .addQuery({ tab: PatientTabValue.Encounters })
+        .build()
+    );
+  };
+
+  const confirmEncounterEarlierThanRecommended = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.scheduling-encounter-earlier-than-recommended'),
+    onConfirm: saveNextEncounter,
+  });
+
   return (
     <Modal
       title={t('label.schedule-next-encounter')}
@@ -79,28 +105,20 @@ export const ScheduleNextEncounterModal = ({
         <DialogButton
           variant={'save'}
           disabled={!canSubmit() || isCreating}
-          onClick={async () => {
-            setIsCreating(true);
-            const { id } = await handleSave(
-              draft,
-              encounterConfig.formSchemaId
-            );
-
-            if (!id) {
-              setIsCreating(false);
-              error(t('error.encounter-not-created'))();
-              return;
+          onClick={() => {
+            if (
+              // If there is a suggested date (based on vaccination intervals/patient age...)
+              suggestedDate &&
+              // (should be set, save button disabled if no startDatetime, but we'll double check)
+              draft.startDatetime &&
+              // If user is scheduling an encounter earlier than the suggested date
+              DateUtils.isBefore(draft.startDatetime, suggestedDate)
+            ) {
+              // Show a warning and confirmation modal
+              confirmEncounterEarlierThanRecommended();
+            } else {
+              saveNextEncounter();
             }
-
-            onClose();
-
-            navigate(
-              RouteBuilder.create(AppRoute.Dispensary)
-                .addPart(AppRoute.Patients)
-                .addPart(patientId)
-                .addQuery({ tab: PatientTabValue.Encounters })
-                .build()
-            );
           }}
         />
       }
