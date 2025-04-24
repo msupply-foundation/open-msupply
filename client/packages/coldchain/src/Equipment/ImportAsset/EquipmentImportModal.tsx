@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { EquipmentReviewTab } from './ReviewTab';
 import { EquipmentUploadTab } from './UploadTab';
 import { EquipmentImportTab } from './ImportTab';
@@ -123,10 +123,10 @@ export const toUpdateEquipmentInput = (
   id: row.id,
 });
 
-export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
+export const EquipmentImportModal = ({
   isOpen,
   onClose,
-}) => {
+}: EquipmentImportModalProps) => {
   const t = useTranslation();
   const { success } = useNotification();
   const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
