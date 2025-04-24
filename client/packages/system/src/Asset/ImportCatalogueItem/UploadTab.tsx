@@ -1,9 +1,5 @@
 import React, { FC, useState } from 'react';
 import Papa, { ParseResult } from 'papaparse';
-import { ImportPanel } from './ImportPanel';
-import { useNotification } from '@common/hooks';
-import { InlineProgress, Typography, Upload } from '@common/components';
-import { useTranslation } from '@common/intl';
 import {
   Grid,
   Stack,
@@ -14,8 +10,14 @@ import {
   AssetCategoryNode,
   AssetTypeNode,
   ArrayUtils,
+  useTranslation,
+  InlineProgress,
+  Typography,
+  useNotification,
+  UploadDragAndDrop,
 } from '@openmsupply-client/common';
 import * as AssetItemImportModal from './CatalogueItemImportModal';
+import { ImportPanel } from './ImportPanel';
 import { ImportRow } from './CatalogueItemImportModal';
 import { importRowToCsv } from '../utils';
 import { useAssetData, AssetCatalogueItemFragment } from '../api';
@@ -279,7 +281,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
         </Grid>
       ) : null}
       <Stack spacing={2}>
-        <Upload onUpload={csvImport} />
+        <UploadDragAndDrop onUpload={csvImport} />
         <Typography textAlign="center">
           {t('messages.template-download-text')}
           <Link
