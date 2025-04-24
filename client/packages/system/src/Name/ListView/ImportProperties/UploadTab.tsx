@@ -9,7 +9,7 @@ import {
   PropertyNode,
   useNotification,
   NamePropertyNode,
-  UploadDragAndDrop,
+  UploadFile,
   InlineProgress,
   Typography,
 } from '@openmsupply-client/common';
@@ -188,7 +188,7 @@ export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
         </Grid>
       ) : null}
       <Stack spacing={2}>
-        <UploadDragAndDrop onUpload={csvImport} />
+        <UploadFile onUpload={csvImport} />
         <Typography textAlign="center">
           <Link onClick={csvExample} to={''}>
             {t('messages.properties-download-example')}

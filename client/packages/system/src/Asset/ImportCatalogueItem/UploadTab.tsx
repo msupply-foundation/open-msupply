@@ -14,7 +14,7 @@ import {
   InlineProgress,
   Typography,
   useNotification,
-  UploadDragAndDrop,
+  UploadFile,
 } from '@openmsupply-client/common';
 import * as AssetItemImportModal from './CatalogueItemImportModal';
 import { ImportPanel } from './ImportPanel';
@@ -281,7 +281,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
         </Grid>
       ) : null}
       <Stack spacing={2}>
-        <UploadDragAndDrop onUpload={csvImport} />
+        <UploadFile onUpload={csvImport} />
         <Typography textAlign="center">
           {t('messages.template-download-text')}
           <Link
