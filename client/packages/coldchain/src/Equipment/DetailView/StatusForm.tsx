@@ -10,8 +10,6 @@ import { LocaleKey, useTranslation } from '@common/intl';
 import {
   AssetLogStatusInput,
   Box,
-  CameraIcon,
-  EnvUtils,
   InsertAssetLogInput,
   StatusType,
   useDebounceCallback,
@@ -20,9 +18,9 @@ import { FileList } from '../Components';
 import { parseLogStatus } from '../utils';
 import { useAssetLogReasonList } from '@openmsupply-client/system';
 import { useIsGapsStoreOnly } from '@openmsupply-client/common';
-import { TakePhotoButton } from './TakePhotoButton';
 import { Capacitor } from '@capacitor/core';
 import { UploadButton } from './UploadButton';
+import { TakePhotoButton } from './TakePhotoButton';
 
 interface StatusForm {
   draft: Partial<Draft>;
@@ -127,30 +125,14 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
   };
 
   const renderUploadButton = (): ReactNode => {
-    if (!Capacitor.isNativePlatform() || EnvUtils.os !== 'Android')
-      return <Upload onUpload={onUpload} />;
-
-    return (
+    return isNative ? (
       <UploadButton
         onUpload={onUpload}
         files={draft.files}
         customLabel={t('button.browse-files')}
       />
-    );
-  };
-
-  const renderTakePhotoButton = (): ReactNode => {
-    if (!Capacitor.isNativePlatform() || EnvUtils.os !== 'Android') return null;
-
-    return isNative ? (
-      <TakePhotoButton onUpload={onUpload} files={draft.files} />
     ) : (
-      <UploadButton
-        onUpload={onUpload}
-        files={draft.files}
-        icon={<CameraIcon />}
-        customLabel={t('button.photo')}
-      />
+      <Upload onUpload={onUpload} />
     );
   };
 
@@ -212,7 +194,9 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
           }}
         >
           {renderUploadButton()}
-          {renderTakePhotoButton()}
+          {isNative && (
+            <TakePhotoButton onUpload={onUpload} files={draft.files} />
+          )}
         </Box>
         <Box sx={{ display: 'flex', width: '300px' }}>
           <FileList
