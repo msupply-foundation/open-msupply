@@ -15,6 +15,7 @@ import {
   StatusCrumbs,
   EncounterNodeStatus,
   LoadingButton,
+  EditIcon,
 } from '@openmsupply-client/common';
 import {
   DocumentHistory,
@@ -22,7 +23,6 @@ import {
 } from '@openmsupply-client/programs';
 import { encounterStatusTranslation } from '../utils';
 import { StatusChangeButton } from './StatusChangeButton';
-import { CalendarIcon } from '@mui/x-date-pickers';
 
 interface FooterProps {
   documentName?: string;
@@ -130,7 +130,7 @@ export const Footer: FC<FooterProps> = ({
                 <ButtonWithIcon
                   variant="outlined"
                   color="secondary"
-                  Icon={<CalendarIcon />}
+                  Icon={<EditIcon />}
                   onClick={scheduleNextEncounter}
                   label={t('button.schedule-encounter')}
                 />
