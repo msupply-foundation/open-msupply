@@ -1,10 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import {
-  InvoiceLineNodeType,
-  InvoiceNodeStatus,
-  SortUtils,
-  uniqBy,
-} from '@openmsupply-client/common';
+import { DateUtils, SortUtils, uniqBy } from '@openmsupply-client/common';
 import { useHistoricalStockLines } from '@openmsupply-client/system';
 import { usePrescription } from '../../api';
 import { DraftItem } from '../../../..';
@@ -58,14 +53,20 @@ export const useDraftPrescriptionLines = (
     ).filter(stockLine => !stockLine.onHold); // Filter out on hold stock lines
 
     const noStockLines = stockLines.length == 0;
+    const allStockLinesExpired = stockLines.every(
+      stockLine =>
+        stockLine.expiryDate && DateUtils.isExpired(stockLine.expiryDate)
+    );
 
-    const placeholderItem = createPrescriptionPlaceholderRow(
+    const placeholderLine = createPrescriptionPlaceholderRow(
       invoiceId ?? '',
       item?.id ?? ''
     );
 
-    if (noStockLines || !item) {
-      return updateDraftLines([placeholderItem]);
+    // In cases where there are no valid stock lines to allocate we should
+    // use a placeholder - for prescribed quantities
+    if (noStockLines || !item || allStockLinesExpired) {
+      return updateDraftLines([placeholderLine]);
     }
 
     const rows = stockLines
@@ -89,32 +90,6 @@ export const useDraftPrescriptionLines = (
       })
       .filter(stockLine => !stockLine.location?.onHold)
       .sort(SortUtils.byExpiryAsc);
-
-    if (status === InvoiceNodeStatus.New) {
-      let placeholder = lines?.find(
-        ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-      );
-      if (!placeholder) {
-        placeholder = draftLines.find(
-          ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-        );
-      }
-      if (placeholder) {
-        const placeholderItem = lines?.find(l => l.item.id === item.id)?.item;
-        if (!!placeholderItem) placeholder.item = placeholderItem;
-        rows.push(
-          createDraftPrescriptionLine({
-            invoiceId: invoiceId ?? '',
-            invoiceLine: placeholder,
-            invoiceStatus: status,
-          })
-        );
-      } else {
-        // Commented out for now until placeholders are implemented for
-        // prescriptions
-        // rows.push(createStockOutPlaceholderRow(invoiceId, item.id));
-      }
-    }
 
     updateDraftLines(rows);
   }, [data, item, prescriptionData]);
