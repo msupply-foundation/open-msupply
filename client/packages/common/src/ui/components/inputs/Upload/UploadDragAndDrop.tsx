@@ -1,7 +1,7 @@
-import React, { FC } from 'react';
+import React from 'react';
 import Dropzone, { Accept } from 'react-dropzone';
-import { useTranslation } from '@common/intl';
 import {
+  useTranslation,
   alpha,
   Breakpoints,
   Paper,
@@ -14,18 +14,18 @@ import {
   useMediaQuery,
 } from '@openmsupply-client/common';
 
-export interface UploadProps {
+interface UploadDragAndDropProps {
   accept?: Accept;
   color?: 'primary' | 'secondary' | 'gray';
   maxSize?: number;
   onUpload: <T extends File>(files: T[]) => void;
 }
 
-export const Upload: FC<UploadProps> = ({
+export const UploadDragAndDrop = ({
   accept,
   color = 'secondary',
   onUpload,
-}) => {
+}: UploadDragAndDropProps) => {
   const t = useTranslation();
   const theme = useAppTheme();
   const isExtraSmallScreen = useMediaQuery(

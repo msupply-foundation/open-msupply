@@ -11,6 +11,7 @@ use repository::{
 use util::format_error;
 
 use crate::{
+    processors::ProcessorType,
     service_provider::ServiceProvider,
     settings::Settings,
     static_files::{StaticFile, StaticFileCategory, StaticFileService},
@@ -334,6 +335,10 @@ fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
         }
 
         set_integrating(site_id, false);
+
+        // After OMS Central has integrated received records, trigger processing
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::AddPatientVisibilityForCentral);
     });
 }
 

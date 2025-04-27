@@ -1,30 +1,24 @@
 import React, { ReactNode } from 'react';
+import { Capacitor } from '@capacitor/core';
 import {
+  AssetLogStatusInput,
+  Box,
+  InsertAssetLogInput,
+  StatusType,
+  useDebounceCallback,
+  LocaleKey,
+  useTranslation,
   Autocomplete,
   BasicTextInput,
   InputWithLabelRow,
   Typography,
-  Upload,
-} from '@common/components';
-import { LocaleKey, useTranslation } from '@common/intl';
-import {
-  AssetLogStatusInput,
-  Box,
-  CameraIcon,
-  InsertAssetLogInput,
-  StatusType,
-  useDebounceCallback,
-  useAppTheme,
-  useMediaQuery,
-  Breakpoints,
+  useIsGapsStoreOnly,
+  UploadFile,
 } from '@openmsupply-client/common';
 import { FileList } from '../Components';
 import { parseLogStatus } from '../utils';
 import { useAssetLogReasonList } from '@openmsupply-client/system';
-import { useIsGapsStoreOnly } from '@openmsupply-client/common';
 import { TakePhotoButton } from './TakePhotoButton';
-import { Capacitor } from '@capacitor/core';
-import { UploadButton } from './UploadButton';
 
 interface StatusForm {
   draft: Partial<Draft>;
@@ -83,8 +77,6 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
   const t = useTranslation();
   const isGaps = useIsGapsStoreOnly();
   const isNative = Capacitor.isNativePlatform();
-  const theme = useAppTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.md));
   const debouncedOnChange = useDebounceCallback(
     (patch: Partial<InsertAssetLogInput>) => onChange(patch),
     [onChange],
@@ -128,33 +120,6 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
 
   const onUpload = (files: File[]) => {
     onChange({ files });
-  };
-
-  const renderUploadButton = (): ReactNode => {
-    if (!isSmallScreen) return <Upload onUpload={onUpload} />;
-
-    return (
-      <UploadButton
-        onUpload={onUpload}
-        files={draft.files}
-        customLabel={t('button.browse-files')}
-      />
-    );
-  };
-
-  const renderTakePhotoButton = (): ReactNode => {
-    if (!isSmallScreen) return null;
-
-    return isNative ? (
-      <TakePhotoButton onUpload={onUpload} files={draft.files} />
-    ) : (
-      <UploadButton
-        onUpload={onUpload}
-        files={draft.files}
-        icon={<CameraIcon />}
-        customLabel={t('button.photo')}
-      />
-    );
   };
 
   return (
@@ -214,8 +179,10 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
             justifyContent: 'center',
           }}
         >
-          {renderUploadButton()}
-          {renderTakePhotoButton()}
+          {<UploadFile onUpload={onUpload} files={draft.files} />}
+          {isNative && (
+            <TakePhotoButton onUpload={onUpload} files={draft.files} />
+          )}
         </Box>
         <Box sx={{ display: 'flex', width: '300px' }}>
           <FileList

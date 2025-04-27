@@ -1549,7 +1549,6 @@
   "messages.no-shipments-yet": "Пока не создано ни одной поставки.",
   "messages.no-status-logs": "Для этого актива не было создано ни одного статусного журнала. Нажмите кнопку 'Обновить статус', чтобы создать новый статусный журнал.",
   "messages.no-stock-available": "Не имеется в наличии",
-  "messages.no-transaction-other-facility": "Операции с запасами не учитываются для прививок, сделанных в других учреждениях",
   "messages.no-vaccine-items-configured": "Для этого курса вакцин не настроено ни одной вакцины. Операции с запасами не будут учтены.",
   "messages.not-applicable": "Н/Д",
   "messages.not-configured": "Не настроено",
