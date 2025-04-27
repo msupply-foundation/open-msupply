@@ -1,85 +1,32 @@
+use crate::run_command_with_error;
 use anyhow::{anyhow, Result};
-use repository::{PluginDataFilter, PluginDataRow, StorePreferenceRow};
-use service::backend_plugin::types::{amc, graphql_query, transform_request_requisition_lines};
+use log::info;
 use std::process::Command;
-use ts_rs::TS;
-
-#[derive(TS)]
-#[allow(unused)]
-struct Function<I: TS, O: TS> {
-    input: I,
-    output: O,
-}
-
-#[derive(TS)]
-#[allow(unused)]
-struct PluginTypes {
-    // Fields here must match PluginTypes in backend_plugin_row repository
-    average_monthly_consumption: Function<amc::Input, amc::Output>,
-    transform_request_requisition_lines: Function<
-        transform_request_requisition_lines::Input,
-        transform_request_requisition_lines::Output,
-    >,
-    graphql_query: Function<graphql_query::Input, graphql_query::Output>,
-    // Extra types to expose, not directly related to plugin interface
-    // like for input or output of global methods
-    get_store_preferences: StorePreferenceRow,
-    get_plugin_data: Function<PluginDataFilter, Vec<PluginDataRow>>,
-}
 
 pub fn generate_typescript_types() -> Result<()> {
-    println!("Running test to generate TypeScript types...");
-    let generate_result = Command::new("cargo")
-        .args([
-            "test",
-            "--package",
-            "cli",
-            "export_plugin_typescript",
-            "--",
-            "--ignored",
-            "--nocapture",
-        ])
-        .status()
-        .map_err(|e| anyhow!("Failed to run test: {}", e))?;
+    info!("Running test to generate TypeScript types...");
 
-    if !generate_result.success() {
-        return Err(anyhow!("TypeScript type generation failed"));
-    }
+    run_command_with_error(Command::new("cargo").args([
+        "test",
+        "--package",
+        "service",
+        "backend_plugin::types::generate_typescript_types::export_plugin_types",
+        "--",
+        "--ignored",
+        "--nocapture",
+    ]))
+    .map_err(|e| anyhow!("Failed to run test: {}", e))?;
 
-    let prettier_verbose = Command::new("npx")
-        .current_dir("../client")
-        .args([
-            "prettier",
-            "--write",
-            "packages/plugins/backendCommon/generated/**/*.ts",
-        ])
-        .output()
-        .map_err(|e| anyhow!("Failed to run prettier: {}", e))?;
+    info!("Test completed successfully, generating TypeScript types...");
 
-    if !prettier_verbose.status.success() {
-        return Err(anyhow!(
-            "Prettier failed:\nstdout: {}\nstderr: {}",
-            String::from_utf8_lossy(&prettier_verbose.stdout),
-            String::from_utf8_lossy(&prettier_verbose.stderr),
-        ));
-    }
+    // Assuming you are running the command from the server directory
+    run_command_with_error(Command::new("npx").current_dir("../client").args([
+        "prettier",
+        "--write",
+        "packages/plugins/backendCommon/generated/**/*.ts",
+    ]))
+    .map_err(|e| anyhow!("Failed to run prettier: {}", e))?;
 
-    println!(
-        "Prettier output:\n{}",
-        String::from_utf8_lossy(&prettier_verbose.stdout)
-    );
-
-    println!("TypeScript types generation completed successfully");
+    info!("TypeScript types generation completed successfully");
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    #[ignore]
-    fn export_plugin_typescript() {
-        PluginTypes::export_all_to("../../client/packages/plugins/backendCommon/generated")
-            .unwrap();
-    }
 }
