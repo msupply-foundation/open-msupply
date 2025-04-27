@@ -68,10 +68,9 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
     textFieldProps: {
       sx: FilterLabelSx,
     },
-    minDate: getRangeBoundary(urlValue, range, minDate),
-    maxDate: getRangeBoundary(urlValue, range, maxDate),
     actions: ['clear', 'accept'] as PickersActionBarAction[],
     displayAs,
+    ...getMinMaxDates(urlValue, range, minDate, maxDate),
   };
 
   return displayAs === 'dateTime' ? (
@@ -86,22 +85,40 @@ const getDateFromUrl = (query: string, range: RangeOption | undefined) => {
   return DateUtils.getDateOrNull(value);
 };
 
-const getRangeBoundary = (
+export const getMinMaxDates = (
   query: string | RangeObject<string>,
   range: RangeOption | undefined,
-  limit: Date | string | undefined
+  min: Date | string | undefined,
+  max: Date | string | undefined
 ) => {
-  const limitDate = DateUtils.getNaiveDate(limit);
-  if (typeof query !== 'object' || !range) return limitDate || undefined;
+  const minDate = DateUtils.getDateOrNull(min);
+  const maxDate = DateUtils.getDateOrNull(max);
+
+  if (typeof query !== 'object' || !range) {
+    return {
+      minDate: minDate || undefined,
+      maxDate: maxDate || undefined,
+    };
+  }
+
   const { from, to } = query as RangeObject<string>;
 
-  if (range === 'from')
-    return to
-      ? (DateUtils.minDate(DateUtils.getNaiveDate(to), limitDate) ?? undefined)
-      : (limitDate ?? undefined);
-  else
-    return from
-      ? (DateUtils.maxDate(DateUtils.getNaiveDate(from), limitDate) ??
-          undefined)
-      : (limitDate ?? undefined);
+  if (range === 'from') {
+    const toDate = DateUtils.getDateOrNull(to);
+    return {
+      minDate: minDate || undefined,
+      maxDate: DateUtils.minDate(toDate, maxDate) ?? undefined,
+    };
+  } else {
+    const fromDate = DateUtils.getDateOrNull(from);
+
+    return {
+      minDate:
+        // Only use maxDate if both defined (otherwise the undefined date is considered the max)
+        fromDate && minDate
+          ? (DateUtils.maxDate(fromDate, minDate) ?? undefined)
+          : (fromDate ?? minDate ?? undefined),
+      maxDate: maxDate || undefined,
+    };
+  }
 };
