@@ -10,9 +10,11 @@ import {
   Grid,
   InputWithLabelRow,
   Link,
+  LoadingButton,
   Radio,
   RadioGroup,
   RouteBuilder,
+  SaveIcon,
   Select,
   useAuthContext,
   useDialog,
@@ -21,7 +23,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { FormControlLabel, Typography } from '@mui/material';
-import React from 'react';
+import React, { useState } from 'react';
 import { useVaccination, VaccinationDraft } from '../api';
 import { Clinician, ClinicianSearchInput } from '../../Clinician';
 import {
@@ -54,6 +56,7 @@ export const VaccinationModal = ({
 }: VaccinationModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
+  const [isSaving, setIsSaving] = useState(false);
   const {
     draft,
     updateDraft,
@@ -74,7 +77,9 @@ export const VaccinationModal = ({
     !!dose?.vaccineCourse.vaccineCourseItems?.length,
     async () => {
       try {
+        setIsSaving(true);
         const result = await saveVaccination(draft);
+        setIsSaving(false);
 
         if (result?.__typename === 'VaccinationNode') {
           result?.invoice?.id && draft.createTransactions
@@ -91,7 +96,9 @@ export const VaccinationModal = ({
           }
         }
       } catch (e) {
+        setIsSaving(false);
         console.error(e);
+        error(t('error.something-wrong'))();
       }
     }
   );
@@ -117,9 +124,13 @@ export const VaccinationModal = ({
       title={dose?.label ?? t('label.vaccination')}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
-        <DialogButton
+        <LoadingButton
+          label={t('button.save')}
+          isLoading={isSaving}
           disabled={!isDirty || !isComplete}
-          variant="ok"
+          startIcon={<SaveIcon />}
+          variant="contained"
+          color="secondary"
           onClick={save}
         />
       }

@@ -423,7 +423,7 @@ export const ResponseLineEdit = ({
                     width={INPUT_WIDTH}
                     value={Math.max(
                       (draft?.supplyQuantity ?? 0) -
-                      (draft?.alreadyIssued ?? 0),
+                        (draft?.alreadyIssued ?? 0),
                       0
                     )}
                     disabled
@@ -545,7 +545,7 @@ export const ResponseLineEdit = ({
           next={next}
           hasPrevious={hasPrevious}
           previous={previous}
-          requisitionId={draft?.id}
+          requisitionId={draft?.requisitionId}
           scrollIntoView={scrollIntoView}
         />
       </Box>

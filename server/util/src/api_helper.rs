@@ -20,7 +20,9 @@ where
     loop {
         let client = Client::builder()
             .connect_timeout(Duration::from_secs(connection_timeouts.0[index]))
-            .timeout(Duration::from_secs(300)) // generous because some sync records may have big payloads like reports that take a long time to sync on low bandwidth
+            // generous because some sync records may have big payloads like reports that take a long time to sync on low bandwidth
+            // we also had issues with batch size = 500 taking more then 5 minutes to generate during testing, maybe due to 4d flushing
+            .timeout(Duration::from_secs(60 * 30))
             .build()
             .unwrap(); // This method fails if a TLS backend cannot be initialized, or the resolver cannot load the system configuration.
 

@@ -185,7 +185,12 @@ export const PrescriptionLineEditForm: React.FC<
     // this method is also called onBlur... check that there actually has been a
     // change in quantity (to prevent triggering auto allocation if only focus
     // has moved)
-    if (inputUnitQuantity === issueUnitQuantity) return;
+    if (
+      quantityType === 'issue'
+        ? inputUnitQuantity === issueUnitQuantity
+        : inputUnitQuantity === prescribedQuantity
+    )
+      return;
 
     const quantity = inputUnitQuantity === undefined ? 0 : inputUnitQuantity;
     setIssueUnitQuantity(quantity);
@@ -204,9 +209,8 @@ export const PrescriptionLineEditForm: React.FC<
   };
 
   const handlePrescribedQuantityChange = (inputPrescribedQuantity?: number) => {
-    if (inputPrescribedQuantity == null) return;
-    setPrescribedQuantity(inputPrescribedQuantity);
-    handleIssueQuantityChange(inputPrescribedQuantity, 'prescribed');
+    setPrescribedQuantity(inputPrescribedQuantity ?? 0);
+    handleIssueQuantityChange(inputPrescribedQuantity ?? 0, 'prescribed');
   };
 
   const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);

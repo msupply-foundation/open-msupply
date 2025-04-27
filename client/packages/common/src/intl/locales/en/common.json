@@ -105,6 +105,7 @@
   "button.save-and-confirm-status": "Confirm {{status}}",
   "button.save-log": "Save log",
   "button.scan": "Scan",
+  "button.schedule-encounter": "Schedule Encounter",
   "button.select": "Select",
   "button.select-a-color": "Select a colour",
   "button.send": "Send",
@@ -1685,6 +1686,7 @@
   "messages.scanner-connected": "Connected",
   "messages.scanner-disconnected": "Not connected",
   "messages.scanner-found": "Scanner found! 🥳",
+  "messages.scheduling-encounter-earlier-than-recommended": "The scheduled date is before any of the recommended next vaccination dates",
   "messages.search": "Search",
   "messages.select-rows-to-delete": "Select rows to delete them",
   "messages.select-rows-to-delete-them": "Select rows to delete them",
@@ -1896,6 +1898,11 @@
   "report-code.item-usage": "Item Usage",
   "report-code.stock-detail": "Stock Detail",
   "report-code.encounters": "Encounters",
+  "report.expiring-items": "Expiring Items",
+  "report.stock-status": "Stock Status",
+  "report.item-usage": "Item Usage",
+  "report.stock-detail": "Stock Detail",
+  "report.encounters": "Encounters",
   "reports": "Reports",
   "returns": "Returns",
   "saving": "Saving…",
@@ -1985,5 +1992,8 @@
   "warning.check-before-vaccinating": "Vaccination records from other stores may not be up to date. Ensure you have synced recently, and always confirm against the patient's physical vaccination card first.",
   "warning.field-not-parsed": "{{field}} not parsed",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "tooltip.defined-by-gs1-matrix": "Defined by GS1 datamatrix"
+  "tooltip.defined-by-gs1-matrix": "Defined by GS1 datamatrix",
+  "label.cannot-edit-invoice": "Cannot edit invoice",
+  "label.cannot-add-item-to-shipment": "Cannot add items to shipment",
+  "error.cannot-add-from-masterlist-if-not-new": "Can only add from master list on 'New' invoice"
 }
