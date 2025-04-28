@@ -30,11 +30,12 @@ pub struct GenerateResult {
 }
 
 pub fn generate(
+    store_id: &str,
     validate_result: ValidateResult,
     update_input: UpdateVaccination,
 ) -> GenerateResult {
     match validate_result {
-        ValidateResult::ChangeToGiven(change) => generate_given(change, update_input),
+        ValidateResult::ChangeToGiven(change) => generate_given(store_id, change, update_input),
         ValidateResult::ChangeToNotGiven(change) => generate_not_given(change, update_input),
         ValidateResult::ChangeStockLine(change) => generate_change_stock_line(change, update_input),
         ValidateResult::NoStatusChangeEdit(existing_vaccination) => {
@@ -44,6 +45,7 @@ pub fn generate(
 }
 
 fn generate_given(
+    store_id: &str,
     ChangeToGiven {
         existing_vaccination,
         patient_id,
@@ -54,6 +56,10 @@ fn generate_given(
     let stock_line_id = new_stock_line
         .as_ref()
         .map(|sl| sl.stock_line_row.id.clone());
+
+    let item_link_id = new_stock_line
+        .as_ref()
+        .map(|sl| sl.stock_line_row.item_link_id.clone());
 
     let update_transactions = update_input.update_transactions.clone().unwrap_or(false);
 
@@ -73,8 +79,11 @@ fn generate_given(
 
     // apply given status, stock and invoice ids
     let vaccination = VaccinationRow {
+        not_given_reason: None,
         given: true,
+        given_store_id: Some(store_id.to_string()),
         stock_line_id,
+        item_link_id,
         invoice_id: create_prescription
             .as_ref()
             .map(|p| p.create_prescription.id.clone()),
@@ -113,12 +122,14 @@ fn generate_not_given(
         None
     };
 
-    // clear given status, stock and invoice ids, apply reason
+    // clear given status, item/transaction ids, apply reason
 
     let vaccination = VaccinationRow {
         given: false,
+        given_store_id: None,
         not_given_reason,
 
+        item_link_id: None,
         stock_line_id: None,
         invoice_id: None,
 
@@ -144,6 +155,10 @@ fn generate_change_stock_line(
     let stock_line_id = new_stock_line
         .as_ref()
         .map(|sl| sl.stock_line_row.id.clone());
+
+    let item_link_id = new_stock_line
+        .as_ref()
+        .map(|sl| sl.stock_line_row.item_link_id.clone());
 
     let update_transactions = update_input.update_transactions.clone().unwrap_or(false);
 
@@ -172,6 +187,7 @@ fn generate_change_stock_line(
     // apply new stock and invoice ids
     let vaccination = VaccinationRow {
         stock_line_id,
+        item_link_id,
         invoice_id: create_prescription
             .as_ref()
             .map(|p| p.create_prescription.id.clone()),
@@ -215,9 +231,11 @@ fn get_vaccination_with_updated_base_fields(
 
         vaccination_date,
         given,
+        given_store_id,
         not_given_reason,
         invoice_id,
         stock_line_id,
+        item_link_id,
 
         comment,
         facility_name_link_id,
@@ -238,13 +256,13 @@ fn get_vaccination_with_updated_base_fields(
 
         // Copy from existing, could be overwritten by further generate logic
         given,
+        given_store_id,
         invoice_id,
         stock_line_id,
 
         // Update metadata/base fields
         comment: update_input.comment.or(comment),
         vaccination_date: update_input.vaccination_date.unwrap_or(vaccination_date),
-        // TODO - these name link ids should be queried! Not assigned directly
         clinician_link_id: match update_input.clinician_id {
             Some(NullableUpdate { value }) => value,
             None => clinician_link_id,
@@ -258,8 +276,12 @@ fn get_vaccination_with_updated_base_fields(
             None => facility_free_text,
         },
 
-        // Consider not_given_reason as base field (if updating the reason when not updating status)
+        // Not really "base" fields - but can be updated without changing status
         not_given_reason: update_input.not_given_reason.or(not_given_reason),
+        item_link_id: match update_input.item_id {
+            Some(NullableUpdate { value }) => value,
+            None => item_link_id,
+        },
     }
 }
 
