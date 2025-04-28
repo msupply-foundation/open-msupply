@@ -246,9 +246,9 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
           const snapshotNumberOfPacks = rowData.snapshotNumberOfPacks ?? 0;
           const packSize = rowData?.packSize ?? 1;
           const doses = rowData?.item?.doses ?? 1;
-          return displayInDoses
-            ? snapshotNumberOfPacks * packSize * doses
-            : snapshotNumberOfPacks * packSize;
+          const total = snapshotNumberOfPacks * packSize;
+
+          return displayInDoses ? total * doses : total;
         },
       },
       {
@@ -277,13 +277,11 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
               : patch.inventoryAdjustmentReason;
 
           let countedNumberOfUnits = undefined;
-          const packSize = patch?.packSize ?? 1;
           if (patch.countedNumberOfPacks) {
+            const total = patch.countedNumberOfPacks * (patch?.packSize ?? 1);
             countedNumberOfUnits = displayInDoses
-              ? patch.countedNumberOfPacks *
-                packSize *
-                (patch?.item?.doses ?? 1)
-              : patch.countedNumberOfPacks * packSize;
+              ? total * (patch?.item?.doses ?? 1)
+              : total;
           }
 
           update({
@@ -311,13 +309,11 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         cellProps: { decimalLimit: 2, min: 0 },
         setter: patch => {
           let countedNumberOfPacks = undefined;
-          const packSize = patch?.packSize ?? 1;
           if (patch.countedNumberOfUnits) {
+            const total = patch.countedNumberOfUnits / (patch?.packSize ?? 1);
             countedNumberOfPacks = displayInDoses
-              ? patch.countedNumberOfUnits /
-                packSize /
-                (patch?.item?.doses ?? 1)
-              : patch.countedNumberOfUnits / packSize;
+              ? total / (patch?.item?.doses ?? 1)
+              : total;
           }
 
           // If counted number of packs was changed to result in no adjustment we
@@ -338,12 +334,9 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         },
         accessor: ({ rowData }) => {
           if (rowData.countedNumberOfPacks) {
-            const packSize = rowData?.packSize ?? 1;
-            return displayInDoses
-              ? rowData.countedNumberOfPacks *
-                  packSize *
-                  (rowData?.item?.doses ?? 1)
-              : rowData.countedNumberOfPacks * packSize;
+            const total =
+              rowData.countedNumberOfPacks * (rowData?.packSize ?? 1);
+            return displayInDoses ? total * (rowData?.item?.doses ?? 1) : total;
           }
         },
       },
