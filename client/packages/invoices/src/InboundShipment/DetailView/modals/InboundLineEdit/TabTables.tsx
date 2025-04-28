@@ -18,6 +18,9 @@ import {
   Currencies,
   useCurrencyCell,
   useAuthContext,
+  useTranslation,
+  usePreferences,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -87,8 +90,14 @@ export const QuantityTableComponent = ({
   isDisabled = false,
   item,
 }: TableProps) => {
+  const t = useTranslation();
   const theme = useTheme();
+  const { data: preferences } = usePreferences();
+  const { getColumnLabelWithPackOrUnit } = useIntlUtils();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
+  const displayInDoses =
+    !!preferences?.displayVaccineInDoses && !!item?.isVaccine;
+  const itemUnitName = item?.unitName ? item.unitName : t('label.unit');
 
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     getBatchColumn(updateDraftLine, theme),
@@ -106,24 +115,50 @@ export const QuantityTableComponent = ({
       setter: updateDraftLine,
     });
   }
+
+  if (displayInDoses) {
+    columnDefinitions.push({
+      key: 'doses-per-pack',
+      label: `${t('label.doses-per')} ${itemUnitName}`,
+      width: 100,
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => rowData.item?.doses,
+    });
+  }
+
   columnDefinitions.push(
-    [
-      'numberOfPacks',
-      {
-        Cell: NumberOfPacksCell,
-        width: 100,
-        setter: updateDraftLine,
-      },
-    ],
     getColumnLookupWithOverrides('packSize', {
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: updateDraftLine,
       label: 'label.pack-size',
     }),
     [
+      'numberOfPacks',
+      {
+        label: getColumnLabelWithPackOrUnit({
+          t,
+          displayInDoses,
+          displayInPack: true,
+          itemUnit: item?.unitName,
+        }),
+        Cell: NumberOfPacksCell,
+        width: 100,
+        setter: updateDraftLine,
+      },
+    ],
+    [
       'unitQuantity',
       {
-        accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
+        label: getColumnLabelWithPackOrUnit({
+          t,
+          displayInDoses,
+          itemUnit: item?.unitName,
+        }),
+        accessor: ({ rowData }) => {
+          return displayInDoses
+            ? rowData.numberOfPacks * rowData.item.doses
+            : rowData.packSize * rowData.numberOfPacks;
+        },
       },
     ]
   );
