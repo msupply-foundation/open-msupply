@@ -26,11 +26,11 @@ impl Migration for V2_06_02 {
 #[cfg(test)]
 #[actix_rt::test]
 async fn migration_2_06_02() {
-    use crate::migrations::v2_06_00::V2_06_00;
+    use crate::migrations::v2_06_01::V2_06_01;
     use crate::migrations::*;
     use crate::test_db::*;
 
-    let previous_version = V2_06_00.version();
+    let previous_version = V2_06_01.version();
     let version = V2_06_02.version();
 
     let SetupResult { connection, .. } = setup_test(SetupOption {

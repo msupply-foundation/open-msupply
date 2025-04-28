@@ -21,7 +21,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { Footer } from './Footer';
 import { useAssetColumns } from './columns';
 
-const AssetList: FC = () => {
+const AssetList = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const isColdChain = usePathnameIncludes('cold-chain');
