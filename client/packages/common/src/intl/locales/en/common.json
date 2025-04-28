@@ -649,6 +649,7 @@
   "label.business": "Business",
   "label.calculate-demand": "Include in GAPS calculations",
   "label.calculated-demand": "Calculated Demand",
+  "label.received": "Received",
   "label.cancel-prescription": "Cancel prescription",
   "label.cancelled": "Cancelled",
   "label.cant-change-location": "Can only change location of lines when status is New",

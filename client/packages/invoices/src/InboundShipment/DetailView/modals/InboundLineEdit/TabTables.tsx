@@ -140,6 +140,7 @@ export const QuantityTableComponent = ({
           displayInDoses,
           displayInPack: true,
           itemUnit: item?.unitName,
+          columnLabel: t('label.received'),
         }),
         Cell: NumberOfPacksCell,
         width: 100,
@@ -153,11 +154,11 @@ export const QuantityTableComponent = ({
           t,
           displayInDoses,
           itemUnit: item?.unitName,
+          columnLabel: t('label.received'),
         }),
         accessor: ({ rowData }) => {
-          return displayInDoses
-            ? rowData.numberOfPacks * rowData.item.doses
-            : rowData.packSize * rowData.numberOfPacks;
+          const total = rowData.numberOfPacks * rowData.packSize;
+          return displayInDoses ? total * rowData.item.doses : total;
         },
       },
     ]
