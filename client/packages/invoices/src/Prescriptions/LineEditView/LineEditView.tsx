@@ -79,7 +79,7 @@ export const PrescriptionLineEditView = () => {
       1: data?.invoiceNumber.toString() ?? '',
       2: currentItem?.name || '',
     });
-  }, [currentItem]);
+  }, [currentItem, data?.invoiceNumber]);
 
   useConfirmOnLeaving(
     'prescription-line-edit',
