@@ -11,7 +11,11 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                DELETE FROM report WHERE code = 'encounters';
+            INSERT INTO changelog (table_name, record_id, row_action)
+                SELECT 'report', id, 'DELETE'
+                FROM report
+                WHERE code = 'encounters';
+            DELETE FROM report WHERE code = 'encounters';
             "#
         )?;
 
