@@ -36,6 +36,7 @@ import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
 import { useConfirmNoStockLineSelected } from './useConfirmNoStockLineSelected';
 import { useClinicians } from '@openmsupply-client/programs';
+import { useConfirmEarlyVaccination } from './useConfirmEarlyVaccination';
 
 interface VaccinationModalProps {
   encounterId?: string;
@@ -72,35 +73,43 @@ export const VaccinationModal = ({
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const save = useConfirmNoStockLineSelected(
+  const onSave = async () => {
+    try {
+      setIsSaving(true);
+      const result = await saveVaccination(draft);
+      setIsSaving(false);
+
+      if (result?.__typename === 'VaccinationNode') {
+        result?.invoice?.id && draft.createTransactions
+          ? success(t('messages.vaccination-saved-and-stock-recorded'))()
+          : success(t('messages.vaccination-saved'))();
+        onOk();
+        onClose();
+      }
+
+      if (result?.__typename === 'UpdateVaccinationError') {
+        if (result.error.__typename === 'NotMostRecentGivenDose') {
+          const errorSnack = error(t('error.not-most-recent-given-dose'));
+          errorSnack();
+        }
+      }
+    } catch (e) {
+      setIsSaving(false);
+      console.error(e);
+      error(t('error.something-wrong'))();
+    }
+  };
+
+  const confirmNoStockLine = useConfirmNoStockLineSelected(
     draft,
     !!dose?.vaccineCourse.vaccineCourseItems?.length,
-    async () => {
-      try {
-        setIsSaving(true);
-        const result = await saveVaccination(draft);
-        setIsSaving(false);
+    onSave
+  );
 
-        if (result?.__typename === 'VaccinationNode') {
-          result?.invoice?.id && draft.createTransactions
-            ? success(t('messages.vaccination-saved-and-stock-recorded'))()
-            : success(t('messages.vaccination-saved'))();
-          onOk();
-          onClose();
-        }
-
-        if (result?.__typename === 'UpdateVaccinationError') {
-          if (result.error.__typename === 'NotMostRecentGivenDose') {
-            const errorSnack = error(t('error.not-most-recent-given-dose'));
-            errorSnack();
-          }
-        }
-      } catch (e) {
-        setIsSaving(false);
-        console.error(e);
-        error(t('error.something-wrong'))();
-      }
-    }
+  const save = useConfirmEarlyVaccination(
+    cardRow.suggestedDate,
+    draft.date,
+    confirmNoStockLine
   );
 
   const InfoBox = <VaccineInfoBox vaccination={vaccination} />;
