@@ -10,19 +10,19 @@ import {
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from '../hooks';
 
-interface OrderSectionProps {
+interface OrderProps {
   disabled?: boolean;
   isPacksEnabled?: boolean;
   draft?: DraftRequestLine | null;
   update: (patch: Partial<DraftRequestLine>) => void;
 }
 
-export const OrderSection = ({
+export const Order = ({
   disabled,
   isPacksEnabled,
   draft,
   update,
-}: OrderSectionProps): ReactElement => {
+}: OrderProps): ReactElement => {
   const t = useTranslation();
   const [itemType, setItemType] = useState('units');
 

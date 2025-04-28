@@ -21,7 +21,7 @@ import { RequestStats } from '../ItemCharts/RequestStats';
 
 const LABEL_WIDTH = '400px';
 
-interface DetailsSectionProps {
+interface DetailsProps {
   update: (patch: Partial<DraftRequestLine>) => void;
   plugins: Plugins;
   draft?: DraftRequestLine | null;
@@ -32,7 +32,7 @@ interface DetailsSectionProps {
   line?: RequestLineFragment;
 }
 
-export const DetailsSection = ({
+export const Details = ({
   draft,
   save,
   update,
@@ -41,7 +41,7 @@ export const DetailsSection = ({
   plugins,
   disabled,
   line,
-}: DetailsSectionProps): ReactElement => {
+}: DetailsProps): ReactElement => {
   const t = useTranslation();
   const { store } = useAuthContext();
   const formatNumber = useFormatNumber();

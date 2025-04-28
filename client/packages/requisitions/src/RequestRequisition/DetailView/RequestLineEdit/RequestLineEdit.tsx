@@ -15,8 +15,7 @@ import {
 import { DraftRequestLine } from './hooks';
 import { RequestFragment, RequestLineFragment } from '../../api';
 import { AccordionPanelSection } from '@openmsupply-client/invoices/src/Prescriptions/LineEditView/PanelSection';
-import { OrderSection } from './Sections';
-import { DetailsSection } from './Sections/DetailsSection';
+import { Details, Order } from './Sections';
 
 interface RequestLineEditProps {
   item?: ItemRowFragment | null;
@@ -51,6 +50,16 @@ export const RequestLineEdit = ({
   const line = lines.find(line => line.id === draft?.id);
   const { id: requisitionId } = requisition;
 
+  const handleChange = (newItem: ItemRowFragment | null) => {
+    if (newItem) {
+      insert({
+        id: FnUtils.generateUUID(),
+        requisitionId: requisitionId,
+        itemId: newItem.id,
+      });
+    }
+  };
+
   return (
     <Box display="flex" flexDirection="column" padding={2} gap={1}>
       <AccordionPanelSection
@@ -61,15 +70,7 @@ export const RequestLineEdit = ({
       >
         <StockItemSearchInput
           currentItemId={draft?.itemId}
-          onChange={(newItem: ItemRowFragment | null) => {
-            if (newItem) {
-              insert({
-                id: FnUtils.generateUUID(),
-                requisitionId: requisitionId,
-                itemId: newItem.id,
-              });
-            }
-          }}
+          onChange={handleChange}
           disabled={!isNew || isSent}
           extraFilter={item => !lines.some(line => line.item.id === item.id)}
         />
@@ -79,7 +80,7 @@ export const RequestLineEdit = ({
         title={t('title.order')}
         defaultExpanded={!isNew && !isSent}
       >
-        <OrderSection
+        <Order
           disabled={isSent}
           isPacksEnabled={isPacksEnabled}
           draft={draft}
@@ -91,7 +92,7 @@ export const RequestLineEdit = ({
         title={t('label.details')}
         defaultExpanded={false}
       >
-        <DetailsSection
+        <Details
           isProgram={isProgram}
           draft={draft}
           update={update}

@@ -36,13 +36,12 @@ export const ModalContent = ({
   );
   const { draft, save, update } = useDraftRequisitionLine(currentItem);
 
-  const isNew = !draft?.id;
-
   const { hasNext, next, previous } = usePreviousNextRequestLine(
     lines,
     currentItem
   );
 
+  const isNew = !draft?.id;
   const isProgram = !!requisition.programName;
   const isDisabled = requisition.status !== 'DRAFT';
 
