@@ -38,7 +38,7 @@ const UIComponent = (props: ControlProps) => {
   const handleClick = (value: SortDirection) => {
     const newValue = sortDirection === value ? null : value;
     setSortDirection(newValue);
-    handleChange(path, sortDirection);
+    handleChange(path, newValue);
   };
 
   return (
