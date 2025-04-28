@@ -1,6 +1,7 @@
 import {
   ConfirmationModalContext,
   useConfirmationModal,
+  useFormatDateTime,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useContext } from 'react';
@@ -12,7 +13,7 @@ export const useConfirmEarlyVaccination = (
 ) => {
   const t = useTranslation();
   const { setOpen } = useContext(ConfirmationModalContext);
-  // todo - messag es include date?
+  const { localisedDate } = useFormatDateTime();
   const showConfirmation = useConfirmationModal({
     // Typical onConfirm cleanup is to close the confirmation modal after
     // the onConfirm function is called. This is a bit different as we want to
@@ -24,7 +25,10 @@ export const useConfirmEarlyVaccination = (
     },
     cleanupConfirm: () => {},
 
-    message: t('messages.confirm-early-vaccination'),
+    message: t('messages.confirm-early-vaccination', {
+      date: localisedDate(suggestedDate || ''),
+    }),
+
     title: t('heading.are-you-sure'),
   });
 
