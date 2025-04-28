@@ -24,7 +24,7 @@ export const OrderSection = ({
   update,
 }: OrderSectionProps): ReactElement => {
   const t = useTranslation();
-  const [isPacks, setIsPacks] = useState(isPacksEnabled);
+  const [itemType, setItemType] = useState('units');
 
   const options = useMemo(() => {
     if (!isPacksEnabled) {
@@ -36,9 +36,7 @@ export const OrderSection = ({
     ];
   }, [isPacksEnabled, t]);
 
-  const defaultOption = options.find(
-    option => option.value === (isPacks ? 'packs' : 'units')
-  );
+  const defaultOption = options.find(option => option.value === itemType);
 
   const calculatePackQuantity = (precision: number = 0): number => {
     return NumUtils.round(
@@ -48,26 +46,27 @@ export const OrderSection = ({
   };
 
   const alternativeQuantityLabel = useMemo((): string => {
-    if (isPacks) {
+    if (itemType === 'packs') {
       return t('label.order-count-units', {
         count: Math.ceil(draft?.requestedQuantity ?? 0),
       });
     }
     return t('label.order-count-packs', { count: calculatePackQuantity() });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPacks, draft?.requestedQuantity]);
+  }, [itemType, draft?.requestedQuantity]);
 
   const currentValue = useMemo(() => {
-    if (isPacks) return calculatePackQuantity(2);
+    if (itemType === 'packs') return calculatePackQuantity(2);
     return Math.ceil(draft?.requestedQuantity ?? 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPacks, draft?.requestedQuantity, draft?.defaultPackSize]);
+  }, [itemType, draft?.requestedQuantity, draft?.defaultPackSize]);
 
   const handleValueChange = (value?: number) => {
     const newValue = isNaN(Number(value)) ? 0 : (value ?? 0);
-    const requestedQuantity = isPacks
-      ? newValue * (draft?.defaultPackSize ?? 0)
-      : newValue;
+    const requestedQuantity =
+      itemType === 'packs'
+        ? newValue * (draft?.defaultPackSize ?? 0)
+        : newValue;
 
     if (draft?.suggestedQuantity === requestedQuantity) {
       update({
@@ -113,7 +112,9 @@ export const OrderSection = ({
               clearable={false}
               options={options}
               value={defaultOption}
-              onChange={() => setIsPacks(!isPacks)}
+              onChange={(_, option) => {
+                setItemType(option?.value ?? '');
+              }}
               getOptionLabel={option => option.label}
               textSx={{ borderRadius: 2 }}
             />
