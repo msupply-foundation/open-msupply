@@ -37,7 +37,8 @@ export const useConfirmEarlyVaccination = (
       suggestedDate &&
       draft.date &&
       // Compare dates agnostic to time
-      new Date(suggestedDate).toDateString() > draft.date.toDateString();
+      new Date(new Date(suggestedDate).toDateString()) >
+        new Date(draft.date.toDateString());
 
     if (shouldShowConfirmation) {
       showConfirmation();
