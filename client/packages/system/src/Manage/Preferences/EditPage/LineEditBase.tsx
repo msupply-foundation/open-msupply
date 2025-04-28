@@ -27,7 +27,7 @@ export const LineEditBase = ({
   const setSelectedPref = (id: string) =>
     navigate(
       RouteBuilder.create(AppRoute.Manage)
-        .addPart(AppRoute.Preferences)
+        .addPart(AppRoute.GlobalPreferences)
         .addPart(id)
         .build()
     );
