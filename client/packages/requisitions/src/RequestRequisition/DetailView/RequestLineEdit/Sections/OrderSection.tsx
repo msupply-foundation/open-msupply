@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { ReactElement, useMemo, useState } from 'react';
 import {
   Autocomplete,
   Box,
@@ -11,23 +11,23 @@ import {
 import { DraftRequestLine } from '../hooks';
 
 interface OrderSectionProps {
-  isSent?: boolean;
+  disabled?: boolean;
   isPacksEnabled?: boolean;
   draft?: DraftRequestLine | null;
   update: (patch: Partial<DraftRequestLine>) => void;
 }
 
 export const OrderSection = ({
-  isSent,
+  disabled,
   isPacksEnabled,
   draft,
   update,
-}: OrderSectionProps) => {
+}: OrderSectionProps): ReactElement => {
   const t = useTranslation();
   const [isPacks, setIsPacks] = useState(isPacksEnabled);
 
   const options = useMemo(() => {
-    if (isPacksEnabled) {
+    if (!isPacksEnabled) {
       return [{ label: t('label.units'), value: 'units' }];
     }
     return [
@@ -48,25 +48,23 @@ export const OrderSection = ({
   };
 
   const alternativeQuantityLabel = useMemo((): string => {
-    if (isPacks)
+    if (isPacks) {
       return t('label.order-count-units', {
         count: Math.ceil(draft?.requestedQuantity ?? 0),
       });
+    }
     return t('label.order-count-packs', { count: calculatePackQuantity() });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPacks, draft?.requestedQuantity]);
 
   const currentValue = useMemo(() => {
-    if (isPacks) {
-      return calculatePackQuantity(2);
-    }
+    if (isPacks) return calculatePackQuantity(2);
     return Math.ceil(draft?.requestedQuantity ?? 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPacks, draft?.requestedQuantity, draft?.defaultPackSize]);
 
   const handleValueChange = (value?: number) => {
     const newValue = isNaN(Number(value)) ? 0 : (value ?? 0);
-
     const requestedQuantity = isPacks
       ? newValue * (draft?.defaultPackSize ?? 0)
       : newValue;
@@ -90,7 +88,7 @@ export const OrderSection = ({
             <NumericTextInput
               width={150}
               value={currentValue}
-              disabled={isSent}
+              disabled={disabled}
               onChange={handleValueChange}
               sx={{
                 py: '3px',
@@ -139,7 +137,7 @@ export const OrderSection = ({
         </Typography>
       </Box>
       {isPacksEnabled && (
-        <Typography variant="body2" color="text.secondary">
+        <Typography pl={1} variant="body2" color="text.secondary">
           {alternativeQuantityLabel}
         </Typography>
       )}

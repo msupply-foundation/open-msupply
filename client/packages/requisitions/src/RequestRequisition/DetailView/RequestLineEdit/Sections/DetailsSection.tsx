@@ -1,351 +1,290 @@
-// import React, { useState } from 'react';
-// import { useTranslation } from '@common/intl';
-// import {
-//   ItemRowFragment,
-//   ReasonOptionsSearchInput,
-//   StockItemSearchInput,
-// } from '@openmsupply-client/system';
-// import {
-//   BarIcon,
-//   Box,
-//   FnUtils,
-//   InputWithLabelRow,
-//   InsertRequestRequisitionLineInput,
-//   NumericTextInput,
-//   NumUtils,
-//   Popover,
-//   ReasonOptionNodeType,
-//   Switch,
-//   TextArea,
-//   useAuthContext,
-//   usePluginProvider,
-//   useTheme,
-//   useToggle,
-//   useWindowDimensions,
-// } from '@openmsupply-client/common';
-// import { DraftRequestLine } from './hooks';
-// import { Footer } from './Footer';
-// import { RequestStats } from './ItemCharts/RequestStats';
-// import { RequestFragment, RequestLineFragment } from '../../api';
-// import { AccordionPanelSection } from '@openmsupply-client/invoices/src/Prescriptions/LineEditView/PanelSection';
-// import { OrderSection } from './Sections';
+import React, { ReactElement } from 'react';
+import {
+  ReasonOptionsSearchInput,
+  RequestLineFragment,
+} from '@openmsupply-client/system';
+import {
+  Grid,
+  InputWithLabelRow,
+  NumUtils,
+  Plugins,
+  ReadOnlyInput,
+  ReasonOptionNodeType,
+  Stack,
+  useAuthContext,
+  useFormatNumber,
+  useTranslation,
+} from '@openmsupply-client/common';
+import { useRequest } from '../../../api';
+import { DraftRequestLine } from '../hooks';
+import { RequestStats } from '../ItemCharts/RequestStats';
 
-// export const DetailsSection = () => {
-//   return (
-//     <>
-//       <Box paddingLeft={4} paddingRight={7}>
-//         {/* Left column content */}
-//         <InputWithLabelRow
-//           Input={
-//             <NumericTextInput
-//               width={INPUT_WIDTH}
-//               value={draft?.itemStats.availableStockOnHand}
-//               disabled
-//             />
-//           }
-//           labelWidth={LABEL_WIDTH}
-//           label={t('label.our-soh')}
-//           sx={{ marginBottom: 1 }}
-//         />
-//         {isProgram && useConsumptionData && (
-//           <>
-//             <InputWithLabelRow
-//               Input={
-//                 <NumericTextInput
-//                   width={INPUT_WIDTH}
-//                   value={draft?.incomingUnits}
-//                   disabled
-//                 />
-//               }
-//               labelWidth={LABEL_WIDTH}
-//               label={t('label.incoming-stock')}
-//               sx={{ marginBottom: 1 }}
-//             />
-//             <InputWithLabelRow
-//               Input={
-//                 <NumericTextInput
-//                   width={INPUT_WIDTH}
-//                   value={draft?.outgoingUnits}
-//                   disabled
-//                 />
-//               }
-//               labelWidth={LABEL_WIDTH}
-//               label={t('label.outgoing')}
-//               sx={{ marginBottom: 1 }}
-//             />
-//             <InputWithLabelRow
-//               Input={
-//                 <NumericTextInput
-//                   width={INPUT_WIDTH}
-//                   value={draft?.lossInUnits}
-//                   disabled
-//                 />
-//               }
-//               labelWidth={LABEL_WIDTH}
-//               label={t('label.losses')}
-//               sx={{ marginBottom: 1 }}
-//             />
-//             <InputWithLabelRow
-//               Input={
-//                 <NumericTextInput
-//                   width={INPUT_WIDTH}
-//                   value={draft?.additionInUnits}
-//                   disabled
-//                 />
-//               }
-//               labelWidth={LABEL_WIDTH}
-//               label={t('label.additions')}
-//               sx={{ marginBottom: 1 }}
-//             />
-//             <InputWithLabelRow
-//               Input={
-//                 <NumericTextInput
-//                   width={INPUT_WIDTH}
-//                   value={draft?.expiringUnits}
-//                   disabled
-//                 />
-//               }
-//               labelWidth={LABEL_WIDTH}
-//               label={t('label.short-expiry')}
-//               sx={{ marginBottom: 1 }}
-//             />
-//             <InputWithLabelRow
-//               Input={
-//                 <NumericTextInput
-//                   width={INPUT_WIDTH}
-//                   value={draft?.daysOutOfStock}
-//                   disabled
-//                 />
-//               }
-//               labelWidth={LABEL_WIDTH}
-//               label={t('label.days-out-of-stock')}
-//               sx={{ marginBottom: 1 }}
-//             />
-//           </>
-//         )}
-//         <InputWithLabelRow
-//           Input={
-//             <NumericTextInput
-//               width={INPUT_WIDTH}
-//               value={NumUtils.round(
-//                 draft?.itemStats.averageMonthlyConsumption ?? 0,
-//                 2
-//               )}
-//               decimalLimit={2}
-//               disabled
-//             />
-//           }
-//           labelWidth={LABEL_WIDTH}
-//           label={t('label.amc')}
-//           sx={{ marginBottom: 1 }}
-//         />
-//         {line &&
-//           plugins.requestRequisitionLine?.editViewField?.map((Field, index) => (
-//             <Field key={index} line={line} />
-//           ))}
-//         {isProgram && useConsumptionData && (
-//           <InputWithLabelRow
-//             Input={
-//               <NumericTextInput
-//                 width={INPUT_WIDTH}
-//                 value={draft?.itemStats.availableMonthsOfStockOnHand ?? 0}
-//                 disabled
-//                 decimalLimit={2}
-//                 sx={{ marginBottom: 1 }}
-//               />
-//             }
-//             labelWidth={LABEL_WIDTH}
-//             label={t('label.months-of-stock')}
-//           />
-//         )}
-//       </Box>
-//       <Box>
-//         {/* Right column content */}
-//         <Box
-//           display="flex"
-//           flexDirection="row"
-//           justifyContent="flex-end"
-//           paddingBottom={1}
-//           paddingRight={2.5}
-//         >
-//           {isPacksEnabled && (
-//             <Box display="flex">
-//               <Switch
-//                 label={t('label.units')}
-//                 checked={isPacks}
-//                 onChange={(_event, checked) => setIsPacks(checked)}
-//                 size="small"
-//                 disabled={isSent}
-//               />
-//               <Box
-//                 paddingLeft={2}
-//                 paddingRight={2}
-//                 sx={{
-//                   color: isSent ? theme.palette.text.disabled : '',
-//                 }}
-//               >
-//                 {t('label.packs')}
-//               </Box>
-//             </Box>
-//           )}
-//         </Box>
+const LABEL_WIDTH = '400px';
 
-//         <Box display="flex" flexDirection="row">
-//           <InputWithLabelRow
-//             Input={
-//               <NumericTextInput
-//                 width={INPUT_WIDTH}
-//                 value={Math.ceil(draft?.requestedQuantity)}
-//                 disabled={isPacks || isSent}
-//                 onChange={value => {
-//                   const newValue = isNaN(Number(value)) ? 0 : value;
-//                   if (draft?.suggestedQuantity === newValue) {
-//                     update({
-//                       requestedQuantity: newValue,
-//                       reason: null,
-//                     });
-//                   } else {
-//                     update({ requestedQuantity: newValue });
-//                   }
-//                 }}
-//                 onBlur={save}
-//               />
-//             }
-//             labelWidth={LABEL_WIDTH}
-//             label={t('label.requested-quantity')}
-//             sx={{ marginBottom: 1 }}
-//           />
-//           <Box
-//             paddingLeft={1}
-//             paddingTop={0.5}
-//             onClick={e => {
-//               toggle();
-//               setAnchorEl(e?.currentTarget);
-//             }}
-//             sx={{ cursor: 'pointer' }}
-//           >
-//             <BarIcon
-//               sx={{
-//                 color: 'primary.main',
-//                 backgroundColor: 'background.drawer',
-//                 borderRadius: '30%',
-//                 padding: '2px',
-//               }}
-//             />
-//             {isOn && (
-//               <Popover
-//                 anchorOrigin={{ vertical: 'center', horizontal: 'left' }}
-//                 anchorEl={anchorEl}
-//                 open={isOn}
-//               >
-//                 <RequestStats draft={draft} />
-//               </Popover>
-//             )}
-//           </Box>
-//         </Box>
-//         <Box display="flex" flexDirection="row">
-//           {isPacksEnabled && (
-//             <InputWithLabelRow
-//               Input={
-//                 <NumericTextInput
-//                   disabled={!isPacks || isSent}
-//                   value={NumUtils.round(
-//                     (draft?.requestedQuantity ?? 0) /
-//                       (draft?.defaultPackSize ?? 1),
-//                     2
-//                   )}
-//                   decimalLimit={2}
-//                   width={100}
-//                   onChange={value => {
-//                     const newValue =
-//                       (value ?? 0) * (draft?.defaultPackSize ?? 0);
-//                     if (draft?.suggestedQuantity === newValue) {
-//                       update({
-//                         requestedQuantity: newValue,
-//                         reason: null,
-//                       });
-//                     } else {
-//                       update({ requestedQuantity: newValue });
-//                     }
-//                   }}
-//                   onBlur={save}
-//                 />
-//               }
-//               labelWidth={LABEL_WIDTH}
-//               sx={{ marginBottom: 1 }}
-//               label={t('label.requested-packs')}
-//             />
-//           )}
-//         </Box>
-//         {isPacksEnabled ? (
-//           <InputWithLabelRow
-//             Input={
-//               <NumericTextInput
-//                 width={INPUT_WIDTH}
-//                 value={draft?.defaultPackSize}
-//                 disabled
-//               />
-//             }
-//             labelWidth={LABEL_WIDTH}
-//             label={t('label.default-pack-size')}
-//             sx={{ marginBottom: 1 }}
-//           />
-//         ) : null}
-//         <InputWithLabelRow
-//           Input={
-//             <NumericTextInput
-//               width={INPUT_WIDTH}
-//               value={NumUtils.round(draft?.suggestedQuantity, 2)}
-//               disabled
-//             />
-//           }
-//           labelWidth={LABEL_WIDTH}
-//           label={t('label.suggested-quantity')}
-//           sx={{ marginBottom: 1 }}
-//         />
-//         {isProgram && useConsumptionData && (
-//           <InputWithLabelRow
-//             Input={
-//               <ReasonOptionsSearchInput
-//                 value={draft?.reason}
-//                 onChange={value => {
-//                   update({ reason: value });
-//                 }}
-//                 width={200}
-//                 type={ReasonOptionNodeType.RequisitionLineVariance}
-//                 isDisabled={
-//                   draft?.requestedQuantity === draft?.suggestedQuantity ||
-//                   isSent
-//                 }
-//                 onBlur={save}
-//               />
-//             }
-//             labelWidth={'66px'}
-//             label={t('label.reason')}
-//             sx={{ marginBottom: 1 }}
-//           />
-//         )}
-//         <InputWithLabelRow
-//           Input={
-//             <TextArea
-//               value={draft?.comment ?? ''}
-//               onChange={e => update({ comment: e.target.value })}
-//               slotProps={{
-//                 input: {
-//                   sx: {
-//                     backgroundColor: theme => theme.palette.background.menu,
-//                   },
-//                 },
-//               }}
-//               onBlur={save}
-//               disabled={isSent}
-//             />
-//           }
-//           sx={{ width: 275 }}
-//           labelWidth={LABEL_WIDTH}
-//           label={t('label.comment')}
-//         />
-//       </Box>
-//     </>
-//   );
-// };
+interface DetailsSectionProps {
+  update: (patch: Partial<DraftRequestLine>) => void;
+  plugins: Plugins;
+  draft?: DraftRequestLine | null;
+  save?: () => void;
+  isProgram?: boolean;
+  isPacksEnabled?: boolean;
+  disabled?: boolean;
+  line?: RequestLineFragment;
+}
+
+export const DetailsSection = ({
+  draft,
+  save,
+  update,
+  isProgram,
+  isPacksEnabled,
+  plugins,
+  disabled,
+  line,
+}: DetailsSectionProps): ReactElement => {
+  const t = useTranslation();
+  const { store } = useAuthContext();
+  const formatNumber = useFormatNumber();
+
+  const { maxMonthsOfStock, minMonthsOfStock } = useRequest.document.fields([
+    'maxMonthsOfStock',
+    'minMonthsOfStock',
+  ]);
+
+  const targetStock =
+    (draft?.itemStats.averageMonthlyConsumption ?? 0) * maxMonthsOfStock;
+
+  const useConsumptionData =
+    store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
+
+  const NumericReadOnlyInput = ({ value }: { value?: number | null }) => {
+    return (
+      <ReadOnlyInput value={NumUtils.round(value ?? 0, 2).toString()} number />
+    );
+  };
+
+  return (
+    <>
+      <Grid container spacing={10} direction="row">
+        {/* Left Column Content */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Stack spacing={1.5}>
+            <InputWithLabelRow
+              Input={
+                <ReadOnlyInput
+                  value={draft?.unitName ?? ''}
+                  style={{ textAlign: 'right' }}
+                />
+              }
+              labelWidth={LABEL_WIDTH}
+              label={t('label.unit')}
+            />
+            {isPacksEnabled ? (
+              <InputWithLabelRow
+                Input={
+                  <ReadOnlyInput
+                    value={t('format.quantity-with-units', {
+                      count: draft?.defaultPackSize,
+                    })}
+                    style={{ textAlign: 'right' }}
+                  />
+                }
+                labelWidth={LABEL_WIDTH}
+                label={t('label.default-pack-size')}
+              />
+            ) : null}
+            <InputWithLabelRow
+              Input={
+                <ReadOnlyInput
+                  value={t('format.quantity-with-units', {
+                    count: draft?.itemStats.availableStockOnHand,
+                  })}
+                  style={{ textAlign: 'right' }}
+                />
+              }
+              labelWidth={LABEL_WIDTH}
+              label={t('label.our-soh')}
+            />
+            <InputWithLabelRow
+              Input={
+                <ReadOnlyInput
+                  value={t('format.quantity-with-units', {
+                    count: draft?.itemStats.averageMonthlyConsumption,
+                  })}
+                  style={{ textAlign: 'right' }}
+                />
+              }
+              labelWidth={LABEL_WIDTH}
+              label={t('label.amc')}
+              sx={{ marginBottom: 1 }}
+            />
+            {isProgram && useConsumptionData && (
+              <>
+                <InputWithLabelRow
+                  Input={
+                    <ReadOnlyInput
+                      value={t('format.quantity-with-units', {
+                        count: draft?.incomingUnits,
+                      })}
+                      style={{ textAlign: 'right' }}
+                    />
+                  }
+                  labelWidth={LABEL_WIDTH}
+                  label={t('label.incoming-stock')}
+                />
+                <InputWithLabelRow
+                  Input={
+                    <ReadOnlyInput
+                      value={t('format.quantity-with-units', {
+                        count: draft?.outgoingUnits,
+                      })}
+                      style={{ textAlign: 'right' }}
+                    />
+                  }
+                  labelWidth={LABEL_WIDTH}
+                  label={t('label.outgoing')}
+                />
+                <InputWithLabelRow
+                  Input={
+                    <ReadOnlyInput
+                      value={t('format.quantity-with-units', {
+                        count: draft?.lossInUnits,
+                      })}
+                      style={{ textAlign: 'right' }}
+                    />
+                  }
+                  labelWidth={LABEL_WIDTH}
+                  label={t('label.losses')}
+                />
+                <InputWithLabelRow
+                  Input={
+                    <ReadOnlyInput
+                      value={t('format.quantity-with-units', {
+                        count: draft?.additionInUnits,
+                      })}
+                      style={{ textAlign: 'right' }}
+                    />
+                  }
+                  labelWidth={LABEL_WIDTH}
+                  label={t('label.additions')}
+                />
+              </>
+            )}
+          </Stack>
+        </Grid>
+
+        {/* Right Column Content */}
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Stack spacing={1.5}>
+            <InputWithLabelRow
+              Input={
+                <ReadOnlyInput
+                  value={t('format.quantity-with-months', {
+                    count: maxMonthsOfStock,
+                  })}
+                  style={{ textAlign: 'right' }}
+                />
+              }
+              labelWidth={LABEL_WIDTH}
+              label={t('label.mos')}
+            />
+            <InputWithLabelRow
+              Input={
+                <ReadOnlyInput
+                  value={t('format.quantity-with-months', {
+                    count: minMonthsOfStock ?? maxMonthsOfStock,
+                  })}
+                  style={{ textAlign: 'right' }}
+                />
+              }
+              labelWidth={LABEL_WIDTH}
+              label={t('label.reorder-threshold')}
+            />
+            <InputWithLabelRow
+              Input={
+                <ReadOnlyInput
+                  value={`${formatNumber.round(targetStock)} ${t('label.units-plural', { count: targetStock })}`}
+                  style={{ textAlign: 'right' }}
+                />
+              }
+              labelWidth={LABEL_WIDTH}
+              label={t('label.target-stock')}
+            />
+            <InputWithLabelRow
+              Input={
+                <ReadOnlyInput
+                  value={t('format.quantity-with-units', {
+                    count: NumUtils.round(draft?.suggestedQuantity ?? 0),
+                  })}
+                  style={{ textAlign: 'right' }}
+                />
+              }
+              labelWidth={LABEL_WIDTH}
+              label={t('label.suggested-quantity')}
+            />
+            {isProgram && useConsumptionData && (
+              <>
+                <InputWithLabelRow
+                  Input={
+                    <NumericReadOnlyInput
+                      value={draft?.itemStats.availableMonthsOfStockOnHand}
+                    />
+                  }
+                  labelWidth={LABEL_WIDTH}
+                  label={t('label.months-of-stock')}
+                />
+                <InputWithLabelRow
+                  Input={
+                    <ReadOnlyInput
+                      value={t('format.quantity-with-units', {
+                        count: draft?.expiringUnits,
+                      })}
+                      style={{ textAlign: 'right' }}
+                    />
+                  }
+                  labelWidth={LABEL_WIDTH}
+                  label={t('label.short-expiry')}
+                />
+                <InputWithLabelRow
+                  Input={<NumericReadOnlyInput value={draft?.daysOutOfStock} />}
+                  labelWidth={LABEL_WIDTH}
+                  label={t('label.days-out-of-stock')}
+                />
+                <InputWithLabelRow
+                  Input={
+                    <ReasonOptionsSearchInput
+                      value={draft?.reason}
+                      onChange={value => {
+                        update({ reason: value });
+                      }}
+                      width={150}
+                      type={ReasonOptionNodeType.RequisitionLineVariance}
+                      isDisabled={
+                        draft?.requestedQuantity === draft?.suggestedQuantity ||
+                        disabled
+                      }
+                      onBlur={save}
+                    />
+                  }
+                  labelWidth={'66px'}
+                  label={t('label.reason')}
+                />
+              </>
+            )}
+          </Stack>
+        </Grid>
+      </Grid>
+
+      {/* Plugins and Request Stats */}
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12 }}>
+          {line &&
+            plugins.requestRequisitionLine?.editViewField?.map(
+              (Field, index) => <Field key={index} line={line} />
+            )}
+          <RequestStats draft={draft} />
+        </Grid>
+      </Grid>
+    </>
+  );
+};
