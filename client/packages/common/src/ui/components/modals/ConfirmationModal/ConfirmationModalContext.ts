@@ -13,6 +13,7 @@ export interface ConfirmationModalState {
     | ((state: ConfirmationModalState) => void)
     | ((state: ConfirmationModalState) => Promise<void>);
   onCancel?: (() => void) | (() => Promise<void>);
+  cleanupConfirm?: () => void;
 }
 
 export interface ConfirmationModalControllerState
@@ -34,6 +35,7 @@ export interface ConfirmationModalControllerState
     onCancel: (() => Promise<void>) | (() => void) | undefined
   ) => void;
   setOpen: (open: boolean) => void;
+  setCleanupConfirm: (cleanupConfirm: (() => void) | undefined) => void;
 }
 
 export const ConfirmationModalContext =
