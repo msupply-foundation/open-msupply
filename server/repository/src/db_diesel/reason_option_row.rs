@@ -20,6 +20,7 @@ table! {
 pub enum ReasonOptionType {
     PositiveInventoryAdjustment,
     NegativeInventoryAdjustment,
+    OpenVialWastage,
     ReturnReason,
     RequisitionLineVariance,
 }
