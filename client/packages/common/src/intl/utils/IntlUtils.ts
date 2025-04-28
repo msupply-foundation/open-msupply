@@ -140,7 +140,11 @@ export const useIntlUtils = () => {
   };
 
   const getColumnLabelWithPackOrUnit = useCallback(
-    (props: GetNumberColumnLabelProps) => getNumberColumnLabel(props),
+    (props: GetNumberColumnLabelProps) =>
+      getNumberColumnLabel({
+        ...props,
+        itemUnit: getPlural(props.itemUnit ?? '', 2),
+      }),
     []
   );
 
@@ -231,16 +235,17 @@ const getNumberColumnLabel = ({
   const capitalisedItemUnit = itemUnit
     ? itemUnit.charAt(0).toUpperCase() + itemUnit.slice(1)
     : t('label.units');
-  const translationWithUnit = `${capitalisedItemUnit} ${columnName}`;
+  const colName = columnName ?? '';
+  const translationWithUnit = `${capitalisedItemUnit} ${colName}`;
 
   if (displayInDoses) {
     return displayInPack
       ? translationWithUnit
-      : `${t('label.doses')} ${columnName}`;
+      : `${t('label.doses')} ${colName}`;
   }
 
   if (displayInPack) {
-    return `${t('label.packs')} ${columnName}`;
+    return `${t('label.packs')} ${colName}`;
   }
 
   return translationWithUnit;
