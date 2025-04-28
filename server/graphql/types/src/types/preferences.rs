@@ -12,6 +12,10 @@ impl PreferencesNode {
     pub async fn show_contact_tracing(&self) -> &bool {
         &self.preferences.show_contact_tracing
     }
+
+    pub async fn allow_tracking_of_received_stock_by_donor(&self) -> &bool {
+        &self.preferences.allow_tracking_of_received_stock_by_donor
+    }
 }
 
 impl PreferencesNode {

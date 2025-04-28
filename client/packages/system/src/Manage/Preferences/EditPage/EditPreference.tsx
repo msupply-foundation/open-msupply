@@ -9,6 +9,7 @@ import {
   usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
+
 import { EditField } from './EditField';
 import { useEditPreference } from '../api/useEditPreference';
 
@@ -54,5 +55,7 @@ function getPrefKey(key: string): keyof PreferencesNode | undefined {
   switch (key) {
     case 'show_contact_tracing':
       return 'showContactTracing';
+    case 'allow_tracking_of_received_stock_by_donor':
+      return 'allowTrackingOfReceivedStockByDonor';
   }
 }

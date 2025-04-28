@@ -1754,6 +1754,7 @@
   "policyType.BUSINESS": "Business",
   "policyType.PERSONAL": "Personal",
   "preference.show_contact_tracing": "Show Contact Tracing",
+  "preference.allow_tracking_of_received_stock_by_donor": "Allow tracking of received stock by donor",
   "preferences": "Preferences",
   "prescription": "Prescriptions",
   "prescriptions": "Prescriptions",

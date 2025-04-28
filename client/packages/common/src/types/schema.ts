@@ -5917,6 +5917,7 @@ export type PreferenceNode = {
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
+  allowTrackingOfReceivedStockByDonor: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
 };
 
