@@ -55,7 +55,7 @@ export const WebAppLogFileModal = ({
   const { success, warning } = useNotification();
   const [logToRender, setLogToRender] = useState('');
   const [logContent, setLogContent] = useState<string[]>([]);
-  const { Modal } = useDialog({ isOpen });
+  const { Modal } = useDialog({ isOpen, onClose });
   const { saveFile } = useWebClient();
   const [isSaving, setIsSaving] = useState(false);
   const noLog = logContent.length === 0;

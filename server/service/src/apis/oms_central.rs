@@ -1,11 +1,11 @@
-use reqwest::{Client, StatusCode, Url};
+use reqwest::{StatusCode, Url};
+use util::{with_retries, RetrySeconds};
 
 use super::api_on_central::NameStoreJoinParams;
 
 // Non-sync related APIs on the OMS Central server
 pub struct OmsCentralApi {
     server_url: Url,
-    client: Client,
 }
 
 #[derive(Debug)]
@@ -16,8 +16,8 @@ pub enum OmsCentralApiError {
 }
 
 impl OmsCentralApi {
-    pub fn new(client: Client, server_url: Url) -> Self {
-        OmsCentralApi { server_url, client }
+    pub fn new(server_url: Url) -> Self {
+        OmsCentralApi { server_url }
     }
 
     /// Creates/updates a name_store_join
@@ -25,13 +25,13 @@ impl OmsCentralApi {
         &self,
         body: NameStoreJoinParams,
     ) -> Result<(), OmsCentralApiError> {
-        let response = self
-            .client
-            .post(self.server_url.join("/central/name-store-join").unwrap())
-            .json(&body)
-            .send()
-            .await
-            .map_err(OmsCentralApiError::ConnectionError)?;
+        let response = with_retries(RetrySeconds::default(), |client| {
+            client
+                .post(self.server_url.join("/central/name-store-join").unwrap())
+                .json(&body)
+        })
+        .await
+        .map_err(OmsCentralApiError::ConnectionError)?;
 
         match response.status() {
             StatusCode::OK => Ok(()),
