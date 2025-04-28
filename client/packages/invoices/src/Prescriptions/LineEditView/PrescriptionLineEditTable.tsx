@@ -33,6 +33,7 @@ export const PrescriptionLineEditTable: React.FC<
   const columns = usePrescriptionLineEditColumns({
     onChange: onEditStockLine,
     unit,
+    isVaccine: item?.isVaccine,
   });
 
   return (
