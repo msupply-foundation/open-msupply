@@ -33,6 +33,8 @@ Existing OMS remote sites may have patients, which may have related vaccination 
 - However, now patient `name` could exist on OMS central, without its related records. It also wouldn't get updated via sync (as Legacy mSupply doesn't know to sync patient data to OMS Central). Would be a problem if a central store is used as a dispensary.
   - So, we add a central only processor - sees name record has been upserted, and looks up whether that patient is visible on the Central site. If not - call Legacy mSupply to add name_store_join between OMS Central and the patient. This ensures patient data is all synced correctly to OMS Central going forward.
 
+> Note: ideally, patients wouldn't be visible for a store on OMS Central, unless specifically set up to be. OMS Central should have a mechanism where data can exist there, be synced there, without it being visible in any of its own stores. This should either be as a central "ghost store" (would also resolve any risk of a store being moved off of OMS Central), or resolved via the v7 sync (where all data is synced through OMS Central).
+
 ## Fetching Legacy mSupply patients
 
 This applies where:
