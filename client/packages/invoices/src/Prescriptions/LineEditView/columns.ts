@@ -96,17 +96,33 @@ export const usePrescriptionLineEditColumns = ({
     },
     {
       Cell: UnitQuantityCell,
-      label: 'label.units-issued',
+      label: getColumnLabelWithPackOrUnit({
+        t,
+        displayInDoses,
+        itemUnit: unit,
+        columnName: t('label.issued'),
+      }),
       key: 'unitQuantity',
       align: ColumnAlign.Right,
       width: 120,
-      setter: ({ packSize, id, unitQuantity }) =>
-        onChange(id, (unitQuantity ?? 0) / (packSize ?? 1)),
-      accessor: ({ rowData }) =>
-        NumUtils.round(
-          (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
-          3
-        ),
+      setter: ({ packSize, id, unitQuantity, item }) => {
+        if (displayInDoses) {
+          onChange(id, (unitQuantity ?? 0) / (item?.doses ?? 1));
+        } else {
+          onChange(id, (unitQuantity ?? 0) / (packSize ?? 1));
+        }
+      },
+      accessor: ({ rowData }) => {
+        return displayInDoses
+          ? NumUtils.round(
+              (rowData.numberOfPacks ?? 0) * (rowData.item?.doses ?? 1),
+              3
+            )
+          : NumUtils.round(
+              (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
+              3
+            );
+      },
     }
   );
 

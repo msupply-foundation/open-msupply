@@ -222,7 +222,7 @@ interface GetNumberColumnLabelProps {
   displayInDoses: boolean;
   displayInPack?: boolean;
   itemUnit?: string | null;
-  columnName?: string;
+  columnLabel?: string;
 }
 
 const getNumberColumnLabel = ({
@@ -230,22 +230,20 @@ const getNumberColumnLabel = ({
   displayInDoses,
   displayInPack,
   itemUnit,
-  columnName,
+  columnLabel,
 }: GetNumberColumnLabelProps) => {
   const capitalisedItemUnit = itemUnit
     ? itemUnit.charAt(0).toUpperCase() + itemUnit.slice(1)
     : t('label.units');
-  const colName = columnName ?? '';
-  const translationWithUnit = `${capitalisedItemUnit} ${colName}`;
+  const label = columnLabel ?? '';
+  const translationWithUnit = `${capitalisedItemUnit} ${label}`;
 
   if (displayInDoses) {
-    return displayInPack
-      ? translationWithUnit
-      : `${t('label.doses')} ${colName}`;
+    return displayInPack ? translationWithUnit : `${t('label.doses')} ${label}`;
   }
 
   if (displayInPack) {
-    return `${t('label.packs')} ${colName}`;
+    return `${t('label.packs')} ${label}`;
   }
 
   return translationWithUnit;
