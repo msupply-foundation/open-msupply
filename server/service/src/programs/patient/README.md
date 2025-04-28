@@ -54,6 +54,8 @@ Risks: the `link_patient_to_store` is a one time mutation, and can't be done in 
 
 - Both central servers are on same server, if can connect to one, should be able to connect to both, and shouldn't be a connectivity risk between the two central servers. This can't be guaranteed in all cases though.
 
+OMS Central stores would need to be running in dispensary mode, in order to receive the synced patient records.
+
 ## New patient created in OMS remote site
 
 Creating a new patient on OMS remote site will create new name and name_store_join records. We sync this to both Legacy mSupply Central and OMS Central. All future records will have constraints met.
