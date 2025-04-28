@@ -7074,6 +7074,7 @@ export type ReasonOptionNode = {
 
 export enum ReasonOptionNodeType {
   NegativeInventoryAdjustment = 'NEGATIVE_INVENTORY_ADJUSTMENT',
+  OpenVialWastage = 'OPEN_VIAL_WASTAGE',
   PositiveInventoryAdjustment = 'POSITIVE_INVENTORY_ADJUSTMENT',
   RequisitionLineVariance = 'REQUISITION_LINE_VARIANCE',
   ReturnReason = 'RETURN_REASON',

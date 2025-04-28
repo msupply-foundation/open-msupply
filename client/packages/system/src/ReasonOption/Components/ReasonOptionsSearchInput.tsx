@@ -39,6 +39,8 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
         return reason.type === ReasonOptionNodeType.PositiveInventoryAdjustment;
       case ReasonOptionNodeType.NegativeInventoryAdjustment:
         return reason.type === ReasonOptionNodeType.NegativeInventoryAdjustment;
+      case ReasonOptionNodeType.OpenVialWastage:
+        return reason.type === ReasonOptionNodeType.OpenVialWastage;
       case ReasonOptionNodeType.RequisitionLineVariance:
         return reason.type === ReasonOptionNodeType.RequisitionLineVariance;
       case ReasonOptionNodeType.ReturnReason:
