@@ -13,7 +13,6 @@ import {
   useTranslation,
   isBoolean,
   isNumber,
-  NumericTextInput,
 } from '@openmsupply-client/common';
 import { useEditPreference } from '../api/useEditPreference';
 
@@ -24,6 +23,7 @@ export const EditPreference = ({
 }) => {
   const t = useTranslation();
 
+  // TODO - clean up this page and make PR!
   const { data: prefs, isLoading } = usePreferences();
   const { mutateAsync: update } = useEditPreference();
 
@@ -53,7 +53,7 @@ export const EditPreference = ({
         return (
           <Switch
             checked={value}
-            onChange={(_, checked) => update({ [selected.key]: checked })}
+            onChange={(_, checked) => update({ [prefKey]: checked })}
           />
         );
 
@@ -61,12 +61,9 @@ export const EditPreference = ({
         if (!isNumber(value)) {
           return <NothingHere />;
         }
-        return (
-          <NumericTextInput
-            value={value}
-            onChange={newValue => update({ [selected.key]: newValue })}
-          />
-        );
+        // Adding NumericTextInput here would currently get a type error,
+        // because there are no editPreference inputs that accept a number
+        return <>To be implemented</>;
 
       default:
         noOtherVariants(selected.valueType);
@@ -85,14 +82,32 @@ export const EditPreference = ({
   );
 };
 
-// todo - make key an enum... maybe not at db level idk?
-// OK BASICALLY, HOW TO MAKE THIS ERROR WHEN WE ADD A PREF
-// argh more tos and froms?
+// Mapping between the backend pref key, and the camelcase key from the PreferencesNode
+// (not just converting to camelcase, as we might name the key differently in the backend
+// vs when served to the frontend)
+const SERVER_TO_CLIENT_PREFS = {
+  ['show_contact_tracing']: 'showContactTracing',
+} as const;
+
+type ServerKey = keyof typeof SERVER_TO_CLIENT_PREFS;
+type ClientKey = (typeof SERVER_TO_CLIENT_PREFS)[ServerKey];
+
+type AllClientPrefKeys = Exclude<keyof PreferencesNode, '__typename'>;
+type MissingClientKeys = Exclude<AllClientPrefKeys, ClientKey>;
+
+type EnsureNoMissingKeys = [MissingClientKeys] extends [never]
+  ? true
+  : { error: 'Missing client keys in mapping'; missing: MissingClientKeys };
+
 function getPrefKey(
   key: string
 ): Exclude<keyof PreferencesNode, '__typename'> | undefined {
-  switch (key) {
-    case 'show_contact_tracing':
-      return 'showContactTracing';
+  // Typescript error if any keys are missing
+  const noMissingKeys: EnsureNoMissingKeys = true;
+
+  if (noMissingKeys) {
+    return SERVER_TO_CLIENT_PREFS[key as ServerKey] as
+      | Exclude<keyof PreferencesNode, '__typename'>
+      | undefined;
   }
 }

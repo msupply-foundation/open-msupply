@@ -10,6 +10,7 @@ pub fn upsert_global(
     let repo = PreferenceRowRepository::new(connection);
 
     let pref = PreferenceRow {
+        // We should only ever have one global preference per key - ID shape ensures upsert
         id: format!("{}_global", key),
         key: key.to_string(),
         value,
@@ -31,6 +32,7 @@ pub fn upsert_store(
     let repo = PreferenceRowRepository::new(connection);
 
     let pref = PreferenceRow {
+        // We should only ever have one store preference per key per store - ID shape ensures upsert
         id: format!("{}_{}", key, store_id),
         key: key.to_string(),
         value,
