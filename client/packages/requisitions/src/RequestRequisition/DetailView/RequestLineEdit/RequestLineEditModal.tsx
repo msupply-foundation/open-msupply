@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useState } from 'react';
 import {
   BasicSpinner,
   DialogButton,
@@ -30,12 +30,15 @@ export const ModalContent = ({
   const lines = requisition.lines.nodes.sort((a, b) =>
     a.item.name.localeCompare(b.item.name)
   );
-  const currentItem = lines.find(line => line.item.id === itemId)?.item;
+
+  const [currentItem, setCurrentItem] = useState(
+    lines.find(line => line.item.id === itemId)?.item
+  );
   const { draft, save, update } = useDraftRequisitionLine(currentItem);
 
   const isNew = !draft?.id;
 
-  const { hasNext, next, hasPrevious, previous } = usePreviousNextRequestLine(
+  const { hasNext, next, previous } = usePreviousNextRequestLine(
     lines,
     currentItem
   );
@@ -43,45 +46,45 @@ export const ModalContent = ({
   const isProgram = !!requisition.programName;
   const isDisabled = requisition.status !== 'DRAFT';
 
-  // This ref is attached to the currently selected list item, and is used to
-  // "scroll into view" when the Previous/Next buttons are clicked in the NavBar
-  const scrollRef = useRef<null | HTMLLIElement>(null);
-  const scrollSelectedItemIntoView = () =>
-    // Small time delay to allow the ref to change to the previous/next item in
-    // the list before scrolling to it
-    setTimeout(() => scrollRef.current?.scrollIntoView(), 100);
-
   const handleOkClick = () => {
     onClose();
     save();
   };
 
+  const handleNextClick = () => {
+    if (next) {
+      const nextItem = lines.find(line => line.item.id === next.id)?.item;
+      setCurrentItem(nextItem);
+    }
+  };
+
   return (
-    <>
-      <Modal
-        width={700}
-        title={isNew ? t('title.new-item') : t('title.edit-item')}
-        cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-        okButton={<DialogButton variant="save" onClick={handleOkClick} />}
-      >
-        <RequestLineEdit
-          item={currentItem}
-          draft={draft}
-          update={update}
-          save={save}
-          hasNext={hasNext}
-          next={next}
-          hasPrevious={hasPrevious}
-          previous={previous}
-          isProgram={isProgram}
-          insert={mutateAsync}
-          requisition={requisition}
-          lines={lines}
-          scrollIntoView={scrollSelectedItemIntoView}
-          disabled={isDisabled}
+    <Modal
+      width={700}
+      title={isNew ? t('title.new-item') : t('title.edit-item')}
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      okButton={<DialogButton variant="save" onClick={handleOkClick} />}
+      nextButton={
+        <DialogButton
+          disabled={!hasNext}
+          variant="next-and-ok"
+          onClick={handleNextClick}
         />
-      </Modal>
-    </>
+      }
+    >
+      <RequestLineEdit
+        item={currentItem}
+        draft={draft}
+        update={update}
+        save={save}
+        previous={previous}
+        isProgram={isProgram}
+        insert={mutateAsync}
+        requisition={requisition}
+        lines={lines}
+        disabled={isDisabled}
+      />
+    </Modal>
   );
 };
 

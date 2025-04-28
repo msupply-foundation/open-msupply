@@ -13,7 +13,6 @@ import {
   useWindowDimensions,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
-import { Footer } from './Footer';
 import { RequestFragment, RequestLineFragment } from '../../api';
 import { AccordionPanelSection } from '@openmsupply-client/invoices/src/Prescriptions/LineEditView/PanelSection';
 import { OrderSection } from './Sections';
@@ -24,15 +23,11 @@ interface RequestLineEditProps {
   draft?: DraftRequestLine | null;
   update: (patch: Partial<DraftRequestLine>) => void;
   save?: () => void;
-  hasNext: boolean;
-  next: ItemRowFragment | null;
-  hasPrevious: boolean;
   previous: ItemRowFragment | null;
   isProgram: boolean;
   lines: RequestLineFragment[];
   requisition: RequestFragment;
   insert: (patch: InsertRequestRequisitionLineInput) => void;
-  scrollIntoView: () => void;
   disabled?: boolean;
 }
 
@@ -40,15 +35,10 @@ export const RequestLineEdit = ({
   draft,
   update,
   save,
-  hasNext,
-  next,
-  hasPrevious,
-  previous,
   isProgram,
   lines,
   requisition,
   insert,
-  scrollIntoView,
   disabled: isSent,
 }: RequestLineEditProps): ReactElement => {
   const t = useTranslation();
@@ -70,6 +60,7 @@ export const RequestLineEdit = ({
         defaultExpanded={isNew && !isSent}
       >
         <StockItemSearchInput
+          currentItemId={draft?.itemId}
           onChange={(newItem: ItemRowFragment | null) => {
             if (newItem) {
               insert({
@@ -79,6 +70,7 @@ export const RequestLineEdit = ({
               });
             }
           }}
+          disabled={!isNew || isSent}
           extraFilter={item => !lines.some(line => line.item.id === item.id)}
         />
       </AccordionPanelSection>
@@ -97,7 +89,7 @@ export const RequestLineEdit = ({
       <AccordionPanelSection
         key={`${key}_details`}
         title={t('label.details')}
-        defaultExpanded={true}
+        defaultExpanded={false}
       >
         <DetailsSection
           isProgram={isProgram}
@@ -125,16 +117,6 @@ export const RequestLineEdit = ({
           plugins.requestRequisitionLine?.editViewInfo?.map((Info, index) => (
             <Info key={index} line={line} requisition={requisition} />
           ))}
-      </Box>
-      <Box>
-        <Footer
-          hasNext={hasNext}
-          next={next}
-          hasPrevious={hasPrevious}
-          previous={previous}
-          requisitionId={draft?.requisitionId}
-          scrollIntoView={scrollIntoView}
-        />
       </Box>
     </Box>
   );
