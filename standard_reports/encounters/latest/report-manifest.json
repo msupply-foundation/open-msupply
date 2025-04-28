@@ -1,7 +1,7 @@
 {
   "is_custom": false,
-  "version": "2.6.3",
-  "code": "encounters",
+  "version": "2.6.4",
+  "code": "pending-encounters",
   "context": "DISPENSARY",
   "sub_context": "Encounters",
   "name": "Pending Encounters",

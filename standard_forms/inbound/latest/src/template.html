@@ -49,8 +49,8 @@
             <td class="batch batch-wrap" style="width: 50px;">{{ line.batch }}</td>
             <td class="expiry" style="width: 80px;">{{ self::dateOrNA(datetime=line.expiryDate) }}</td>
             <td class="cost_price" style="width: 80px;">{{ line.costPricePerPack }}</td>
-            {% if line.costPricePerPack and line.packSize and line.numberOfPacks%}
-            <td class="cost_price" style="width: 80px;">{{ line.costPricePerPack / (line.packSize * line.numberOfPacks) | round(precision=2) }}</td>
+            {% if line.costPricePerPack and line.packSize %}
+            <td class="cost_price" style="width: 80px;">{{ line.costPricePerPack / line.packSize | round(precision=2) }}</td>
             {% else %} 
             <td class="cost_price" style="width: 80px;">0</td>
             {% endif %}
