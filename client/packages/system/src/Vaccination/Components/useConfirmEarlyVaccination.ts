@@ -5,16 +5,21 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useContext } from 'react';
+import { VaccinationDraft } from '../api';
 
 export const useConfirmEarlyVaccination = (
   suggestedDate: string | null | undefined,
-  selectedDate: Date | null,
+  draft: VaccinationDraft,
   onConfirm: () => void
 ) => {
   const t = useTranslation();
   const { setOpen } = useContext(ConfirmationModalContext);
   const { localisedDate } = useFormatDateTime();
   const showConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-early-vaccination', {
+      date: localisedDate(suggestedDate || ''),
+    }),
     // Typical onConfirm cleanup is to close the confirmation modal after
     // the onConfirm function is called. This is a bit different as we want to
     // close the confirmation modal, before a subsequent call in the onConfirm
@@ -24,17 +29,15 @@ export const useConfirmEarlyVaccination = (
       onConfirm();
     },
     cleanupConfirm: () => {},
-
-    message: t('messages.confirm-early-vaccination', {
-      date: localisedDate(suggestedDate || ''),
-    }),
-
-    title: t('heading.are-you-sure'),
   });
 
   return () => {
     const shouldShowConfirmation =
-      suggestedDate && selectedDate && new Date(suggestedDate) > selectedDate;
+      draft.given &&
+      suggestedDate &&
+      draft.date &&
+      // Compare dates agnostic to time
+      new Date(suggestedDate).toDateString() > draft.date.toDateString();
 
     if (shouldShowConfirmation) {
       showConfirmation();

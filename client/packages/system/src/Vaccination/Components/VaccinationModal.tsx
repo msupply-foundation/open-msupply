@@ -108,7 +108,7 @@ export const VaccinationModal = ({
 
   const save = useConfirmEarlyVaccination(
     cardRow.suggestedDate,
-    draft.date,
+    draft,
     confirmNoStockLine
   );
 
