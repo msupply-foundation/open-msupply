@@ -5,6 +5,7 @@ import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type PreferenceDescriptionsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
+  prefType: Types.PreferenceNodeType;
 }>;
 
 export type PreferenceDescriptionsQuery = {
@@ -25,25 +26,28 @@ export type PreferencesQuery = {
   preferences: { __typename: 'PreferencesNode'; showContactTracing: boolean };
 };
 
-export type UpsertPreferenceMutationVariables = Types.Exact<{
+export type UpsertPreferencesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  input: Types.UpsertPreferenceInput;
+  input: Types.UpsertPreferencesInput;
 }>;
 
-export type UpsertPreferenceMutation = {
+export type UpsertPreferencesMutation = {
   __typename: 'Mutations';
   centralServer: {
     __typename: 'CentralServerMutationNode';
     preferences: {
       __typename: 'PreferenceMutations';
-      upsertPreference: { __typename: 'IdResponse'; id: string };
+      upsertPreferences: { __typename: 'OkResponse'; ok: boolean };
     };
   };
 };
 
 export const PreferenceDescriptionsDocument = gql`
-  query preferenceDescriptions($storeId: String!) {
-    preferenceDescriptions(storeId: $storeId) {
+  query preferenceDescriptions(
+    $storeId: String!
+    $prefType: PreferenceNodeType!
+  ) {
+    preferenceDescriptions(storeId: $storeId, prefType: $prefType) {
       key
       valueType
     }
@@ -56,12 +60,15 @@ export const PreferencesDocument = gql`
     }
   }
 `;
-export const UpsertPreferenceDocument = gql`
-  mutation upsertPreference($storeId: String!, $input: UpsertPreferenceInput!) {
+export const UpsertPreferencesDocument = gql`
+  mutation upsertPreferences(
+    $storeId: String!
+    $input: UpsertPreferencesInput!
+  ) {
     centralServer {
       preferences {
-        upsertPreference(storeId: $storeId, input: $input) {
-          id
+        upsertPreferences(storeId: $storeId, input: $input) {
+          ok
         }
       }
     }
@@ -118,18 +125,18 @@ export function getSdk(
         variables
       );
     },
-    upsertPreference(
-      variables: UpsertPreferenceMutationVariables,
+    upsertPreferences(
+      variables: UpsertPreferencesMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<UpsertPreferenceMutation> {
+    ): Promise<UpsertPreferencesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpsertPreferenceMutation>(
-            UpsertPreferenceDocument,
+          client.request<UpsertPreferencesMutation>(
+            UpsertPreferencesDocument,
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'upsertPreference',
+        'upsertPreferences',
         'mutation',
         variables
       );

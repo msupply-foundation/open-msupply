@@ -70,7 +70,6 @@ impl PreferenceNodeType {
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum PreferenceValueNodeType {
     Boolean,
-    String,
     Integer,
 }
 
@@ -79,7 +78,6 @@ impl PreferenceValueNodeType {
         match domain_type {
             PreferenceValueType::Boolean => PreferenceValueNodeType::Boolean,
             PreferenceValueType::Integer => PreferenceValueNodeType::Integer,
-            PreferenceValueType::String => PreferenceValueNodeType::String,
         }
     }
 }

@@ -5592,6 +5592,11 @@ export type NumberNode = {
   number: Scalars['Int']['output'];
 };
 
+export type OkResponse = {
+  __typename: 'OkResponse';
+  ok: Scalars['Boolean']['output'];
+};
+
 export type OrderingTooManyItems = UpdateRequestRequisitionErrorInterface &
   UpdateResponseRequisitionErrorInterface & {
     __typename: 'OrderingTooManyItems';
@@ -5894,18 +5899,22 @@ export type PreferenceDescriptionNode = {
 
 export type PreferenceMutations = {
   __typename: 'PreferenceMutations';
-  upsertPreference: IdResponse;
+  upsertPreferences: OkResponse;
 };
 
-export type PreferenceMutationsUpsertPreferenceArgs = {
-  input: UpsertPreferenceInput;
+export type PreferenceMutationsUpsertPreferencesArgs = {
+  input: UpsertPreferencesInput;
   storeId: Scalars['String']['input'];
 };
+
+export enum PreferenceNodeType {
+  Global = 'GLOBAL',
+  Store = 'STORE',
+}
 
 export enum PreferenceValueNodeType {
   Boolean = 'BOOLEAN',
   Integer = 'INTEGER',
-  String = 'STRING',
 }
 
 export type PreferencesNode = {
@@ -6337,6 +6346,7 @@ export type Queries = {
   pluginData: PluginDataResponse;
   pluginGraphqlQuery: Scalars['JSON']['output'];
   preferenceDescriptions: Array<PreferenceDescriptionNode>;
+  /** Returns the relevant set of preferences based on context (e.g. current store) */
   preferences: PreferencesNode;
   printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
@@ -6794,6 +6804,7 @@ export type QueriesPluginGraphqlQueryArgs = {
 };
 
 export type QueriesPreferenceDescriptionsArgs = {
+  prefType: PreferenceNodeType;
   storeId: Scalars['String']['input'];
 };
 
@@ -9560,11 +9571,8 @@ export type UpsertPackVariantResponse =
   | ItemVariantNode
   | UpsertItemVariantError;
 
-export type UpsertPreferenceInput = {
-  id: Scalars['String']['input'];
-  key: Scalars['String']['input'];
-  storeId?: InputMaybe<Scalars['String']['input']>;
-  value: Scalars['String']['input'];
+export type UpsertPreferencesInput = {
+  showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type UpsertVaccineCourseDoseInput = {

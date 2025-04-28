@@ -18,8 +18,8 @@ pub enum PreferenceType {
 
 pub enum PreferenceValueType {
     Boolean,
-    String,
     Integer,
+    // String,
     // Add scalar or custom value types here - mapped to frontend renderers
 }
 

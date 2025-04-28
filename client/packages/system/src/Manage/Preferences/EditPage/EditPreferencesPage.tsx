@@ -6,7 +6,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { LineEditBase } from './LineEditBase';
-import { usePreferenceDescriptions } from '../api';
+import { useGlobalPrefList } from '../api';
 import { EditPreference } from './EditPreference';
 
 export const EditPreferencesPage = () => {
@@ -14,7 +14,7 @@ export const EditPreferencesPage = () => {
   const { key } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
 
-  const { data } = usePreferenceDescriptions();
+  const { data } = useGlobalPrefList();
 
   useEffect(() => {
     if (key)

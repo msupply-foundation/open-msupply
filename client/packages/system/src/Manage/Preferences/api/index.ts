@@ -1,1 +1,1 @@
-export * from './usePreferenceDescriptions';
+export * from './useGlobalPrefList';
