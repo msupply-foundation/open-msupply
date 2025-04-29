@@ -122,7 +122,9 @@ pub fn get_suggested_date(
     };
 
     let suggested_date_by_min_interval = previous_dose.vaccination_date.and_then(|date| {
-        date.checked_add_signed(chrono::Duration::days(row.min_interval_days as i64))
+        date.checked_add_signed(chrono::Duration::days(
+            previous_dose.min_interval_days as i64,
+        ))
     });
 
     match (suggested_date_by_age, suggested_date_by_min_interval) {
@@ -234,6 +236,7 @@ mod tests {
             min_age: 1.0,
             given: Some(true),
             vaccination_date: NaiveDate::from_ymd_opt(2020, 2, 3),
+            min_interval_days: 60,
             ..Default::default()
         };
         let not_given = VaccinationCardRow {
@@ -295,7 +298,7 @@ mod tests {
 
         // If previous dose was given, add min interval for suggested date (if later than min age)
         let date = get_suggested_date(&pending, dob.clone(), vec![given.clone(), pending.clone()]);
-        assert_eq!(date, NaiveDate::from_ymd_opt(2020, 5, 3)); // 90 days after 3/2/2020
+        assert_eq!(date, NaiveDate::from_ymd_opt(2020, 4, 3)); // 60 days after 3/2/2020 (based on interval from the first dose)
 
         // If previous dose was given, add min age for suggested date (if later than min interval)
         let date = get_suggested_date(&pending_2, dob, vec![given, pending_2.clone()]);
