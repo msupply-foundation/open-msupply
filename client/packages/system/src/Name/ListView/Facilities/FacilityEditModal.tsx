@@ -1,55 +1,26 @@
-import React, {
-  Dispatch,
-  FC,
-  SetStateAction,
-  useEffect,
-  useState,
-} from 'react';
+import React, { FC, useState } from 'react';
 import {
   useTranslation,
   DetailContainer,
-  DetailSection,
   Box,
   BasicSpinner,
   useDialog,
   DialogButton,
   Typography,
-  PropertyInput,
-  InputWithLabelRow,
-  ObjUtils,
-  useIsCentralServerApi,
-  useIsGapsStoreOnly,
-  PropertyNodeValueType,
+  TabList,
+  Tab,
+  TabContext,
+  TabPanel,
+  NamePropertyNode,
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
 import { NameRenderer } from '../..';
 import { DisplayCoordinates } from './DisplayCoordinates';
-
-export type DraftProperty = Record<string, string | number | boolean | null>;
-
-interface DraftFacilityProperties {
-  draftProperties: DraftProperty;
-  setDraftProperties: Dispatch<SetStateAction<DraftProperty>>;
-}
-
-const useDraftFacilityProperties = (
-  initialProperties?: string | null
-): DraftFacilityProperties => {
-  const [draftProperties, setDraftProperties] = useState<DraftProperty>(
-    ObjUtils.parse(initialProperties)
-  );
-
-  useEffect(() => {
-    const parsedProperties = ObjUtils.parse(initialProperties);
-
-    setDraftProperties(parsedProperties);
-  }, [initialProperties]);
-
-  return {
-    draftProperties,
-    setDraftProperties,
-  };
-};
+import { FacilityProperties } from './FacilityProperties';
+import {
+  DraftProperties,
+  useDraftFacilityProperties,
+} from './useDraftFacilityProperties';
 
 interface FacilityEditModalProps {
   nameId: string;
@@ -65,7 +36,8 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
   setNextFacility,
 }) => {
   const t = useTranslation();
-  const isCentralServer = useIsCentralServerApi();
+  // todo, prefs only if store
+
   const { data: properties, isLoading: propertiesLoading } =
     useName.document.properties();
 
@@ -80,7 +52,6 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
   );
 
   const nextId = useName.utils.nextFacilityId(nameId);
-  const isGapsStore = useIsGapsStoreOnly();
 
   const save = async () => {
     mutateAsync({
@@ -90,6 +61,10 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
   };
 
   if (isLoading || propertiesLoading) return <BasicSpinner />;
+
+  // OK so - properties and store prefs, sep tabs. Display accordingly
+  // Ensure doesn't show (?) on own view?
+  // OR we get it for free but disabled, if we have that state available
 
   return !!data ? (
     <Modal
@@ -146,109 +121,53 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
               }}
             />
           </Box>
-          <DetailSection title="">
-            {!properties?.length ? (
-              <Typography sx={{ textAlign: 'center' }}>
-                {t('messages.no-properties')}
-              </Typography>
-            ) : (
-              <Box
-                sx={theme => ({
-                  [theme.breakpoints.down('sm')]: {
-                    width: '95%',
-                    minWidth: '340px',
-                    paddingX: '2em',
-                  },
-                  width: '600px',
-                  display: 'grid',
-                  gap: 1,
-                })}
-              >
-                {properties
-                  .filter(
-                    p =>
-                      p.property.key !== 'latitude' &&
-                      p.property.key !== 'longitude'
-                  )
-                  .map(p => (
-                    <Row
-                      key={p.id}
-                      label={p.property.name}
-                      isGapsStore={isGapsStore}
-                      inputProperties={{
-                        disabled: !isCentralServer && !p.remoteEditable,
-                        valueType: p.property.valueType,
-                        allowedValues: p.property.allowedValues?.split(','),
-                        value: draftProperties[p.property.key],
-                        onChange: v =>
-                          setDraftProperties({
-                            ...draftProperties,
-                            [p.property.key]: v ?? null,
-                          }),
-                      }}
-                    />
-                  ))}
-              </Box>
-            )}
-          </DetailSection>
+          <ModalTabs
+            propertyConfigs={properties ?? []}
+            draftProperties={draftProperties}
+            updateProperty={patch =>
+              setDraftProperties({ ...draftProperties, ...patch })
+            }
+          />
         </Box>
       </DetailContainer>
     </Modal>
   ) : null;
 };
 
-type PropertyValue = string | number | boolean | undefined;
-type PropertyInput = {
-  valueType: PropertyNodeValueType;
-  allowedValues?: string[];
-  value: PropertyValue | null;
-  onChange: (value: PropertyValue) => void;
-  disabled?: boolean;
-};
+export enum Tabs {
+  Properties = 'Properties',
+}
 
-const Row = ({
-  key,
-  label,
-  isGapsStore,
-  inputProperties,
-}: {
-  key: string;
-  label: string;
-  isGapsStore: boolean;
-  inputProperties: PropertyInput;
-}) => {
-  if (!isGapsStore)
-    return (
-      <InputWithLabelRow
-        key={key}
-        label={label}
-        sx={{ width: '100%' }}
-        labelProps={{
-          sx: {
-            width: '250px',
-            fontSize: '16px',
-            paddingRight: 2,
-          },
-        }}
-        Input={
-          <Box flex={1}>
-            <PropertyInput {...inputProperties} />
-          </Box>
-        }
-      />
-    );
+interface ModalTabProps {
+  propertyConfigs: NamePropertyNode[];
+  draftProperties: DraftProperties;
+  updateProperty: (update: DraftProperties) => void;
+}
+
+const ModalTabs = ({
+  propertyConfigs,
+  draftProperties,
+  updateProperty,
+}: ModalTabProps) => {
+  const t = useTranslation();
+  const [currentTab, setCurrentTab] = useState(Tabs.Properties);
 
   return (
-    <Box paddingTop={1.5}>
-      <Typography
-        sx={{
-          fontSize: '1rem!important',
-          fontWeight: 'bold',
-        }}
+    <TabContext value={currentTab}>
+      <TabList
+        value={currentTab}
+        centered
+        onChange={(_, v) => setCurrentTab(v)}
       >
-        {label}
-      </Typography>
-      <PropertyInput {...inputProperties} />
-    </Box>
+        <Tab value={Tabs.Properties} label={t('label.properties')} />
+      </TabList>
+      <TabPanel value={Tabs.Properties}>
+        <FacilityProperties
+          propertyConfigs={propertyConfigs}
+          draftProperties={draftProperties}
+          updateProperty={updateProperty}
+        />
+      </TabPanel>
+    </TabContext>
   );
 };
