@@ -11,6 +11,7 @@ query preferenceDescriptions(
 query preferences($storeId: String!) {
   preferences(storeId: $storeId) {
     showContactTracing
+    displayPopulationBasedForecasting
   }
 }
 

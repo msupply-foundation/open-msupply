@@ -23,7 +23,11 @@ export type PreferencesQueryVariables = Types.Exact<{
 
 export type PreferencesQuery = {
   __typename: 'Queries';
-  preferences: { __typename: 'PreferencesNode'; showContactTracing: boolean };
+  preferences: {
+    __typename: 'PreferencesNode';
+    showContactTracing: boolean;
+    displayPopulationBasedForecasting: boolean;
+  };
 };
 
 export type UpsertPreferencesMutationVariables = Types.Exact<{
@@ -57,6 +61,7 @@ export const PreferencesDocument = gql`
   query preferences($storeId: String!) {
     preferences(storeId: $storeId) {
       showContactTracing
+      displayPopulationBasedForecasting
     }
   }
 `;

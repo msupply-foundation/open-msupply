@@ -16,6 +16,9 @@ impl PreferencesNode {
     pub async fn show_contact_tracing(&self) -> Result<bool> {
         self.load_preference(&self.preferences.show_contact_tracing)
     }
+    pub async fn display_population_based_forecasting(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.display_population_based_forecasting)
+    }
 }
 
 impl PreferencesNode {

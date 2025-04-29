@@ -19,11 +19,13 @@ pub trait PreferenceServiceTrait: Sync + Send {
     fn get_preference_descriptions(&self, pref_type: PreferenceType) -> Vec<PreferenceDescription> {
         let PreferenceRegistry {
             show_contact_tracing,
+            display_population_based_forecasting,
         } = &self.get_preference_registry();
 
         let all_prefs_descriptions = vec![
             // Add each pref here
             PreferenceDescription::from_preference(show_contact_tracing),
+            PreferenceDescription::from_preference(display_population_based_forecasting),
         ];
 
         all_prefs_descriptions

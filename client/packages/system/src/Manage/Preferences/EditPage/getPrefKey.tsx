@@ -9,12 +9,13 @@ export function getPrefKey(key: string): ClientPrefKey | undefined {
   }
 }
 
-// Mapping between the backend pref key, and the camelcase key from the PreferencesNode
-// (not just converting to camelcase, as we might name the key differently in the backend
-// vs when served to the frontend)
+// Mapping between the backend pref key, and the camelcase key from the
+// PreferencesNode (not just converting to camelcase, as we might name the key
+// differently in the backend vs when served to the frontend)
 const SERVER_TO_CLIENT_PREFS = {
   // Add each new pref key here
   ['show_contact_tracing']: 'showContactTracing',
+  ['display_population_based_forecasting']: 'displayPopulationBasedForecasting',
 } as const;
 
 // Helper types
