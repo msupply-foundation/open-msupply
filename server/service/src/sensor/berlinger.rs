@@ -284,6 +284,23 @@ pub enum ReadSensorError {
     Other(#[from] anyhow::Error),
 }
 
+fn resolve_localtime(timestamp: &NaiveDateTime, context: &str) -> Option<NaiveDateTime> {
+    // Local time conversion can fail if a time doesn't exist in the local timezone (e.g. due to Daylight Saving skipping an hour)
+    // We also need to handle the case where the time is ambiguous e.g. there can be 2 different 2am times in the same day due to daylight saving
+    match Local.from_local_datetime(timestamp) {
+        LocalResult::None => {
+            log::error!(
+                "Cannot convert to local timestamp ({}) - {}",
+                context,
+                timestamp
+            );
+            None
+        }
+        LocalResult::Single(r) => Some(r.naive_utc()),
+        LocalResult::Ambiguous(r, _) => Some(r.naive_utc()),
+    }
+}
+
 fn convert_from_localtime(
     sensor: &temperature_sensor::Sensor,
 ) -> Result<temperature_sensor::Sensor, ReadSensorError> {
@@ -292,19 +309,14 @@ fn convert_from_localtime(
         None => None,
         Some(logs) => Some(
             logs.into_iter()
+                .filter(|log| resolve_localtime(&log.timestamp, "Temperature log").is_some())
                 .map(
                     |temperature_sensor::TemperatureLog {
                          timestamp,
                          temperature,
                      }| {
-                        let local = match Local.from_local_datetime(&timestamp) {
-                            LocalResult::None => {
-                                log::error!("Cannot convert to local timestamp {}", timestamp);
-                                timestamp
-                            }
-                            LocalResult::Single(r) => r.naive_utc(),
-                            LocalResult::Ambiguous(r, _) => r.naive_utc(),
-                        };
+                        let local =
+                            resolve_localtime(&timestamp, "Temperature log").unwrap_or(timestamp);
                         temperature_sensor::TemperatureLog {
                             temperature,
                             timestamp: local,
@@ -329,28 +341,10 @@ fn convert_from_localtime(
                              duration,
                              acknowledged,
                          }| {
-                            let local_start = match Local.from_local_datetime(&start_timestamp) {
-                                LocalResult::None => {
-                                    log::error!(
-                                        "Cannot convert to local timestamp (breach start) {}",
-                                        start_timestamp
-                                    );
-                                    start_timestamp
-                                }
-                                LocalResult::Single(r) => r.naive_utc(),
-                                LocalResult::Ambiguous(r, _) => r.naive_utc(),
-                            };
-                            let local_end = match Local.from_local_datetime(&end_timestamp) {
-                                LocalResult::None => {
-                                    log::error!(
-                                        "Cannot convert to local timestamp (breach end) {}",
-                                        end_timestamp
-                                    );
-                                    end_timestamp
-                                }
-                                LocalResult::Single(r) => r.naive_utc(),
-                                LocalResult::Ambiguous(r, _) => r.naive_utc(),
-                            };
+                            let local_start = resolve_localtime(&start_timestamp, "Breach start")
+                                .unwrap_or(start_timestamp);
+                            let local_end = resolve_localtime(&end_timestamp, "Breach end")
+                                .unwrap_or(end_timestamp);
                             temperature_sensor::TemperatureBreach {
                                 breach_type,
                                 start_timestamp: local_start,
@@ -364,19 +358,11 @@ fn convert_from_localtime(
             ),
         };
     // convert last connected timestamp
-    let last_connected_timestamp_converted = match sensor.clone().last_connected_timestamp {
+    let last_connected_timestamp_converted = match sensor.last_connected_timestamp {
         None => None,
-        Some(timestamp) => Some(match Local.from_local_datetime(&timestamp) {
-            LocalResult::None => {
-                log::error!(
-                    "Cannot convert to local timestamp (last connected time) {}",
-                    timestamp
-                );
-                timestamp
-            }
-            LocalResult::Single(r) => r.naive_utc(),
-            LocalResult::Ambiguous(r, _) => r.naive_utc(),
-        }),
+        Some(last_connected_timestamp) => {
+            resolve_localtime(&last_connected_timestamp, "Last connected timestamp")
+        }
     };
 
     let mut sensor_mapped = sensor.clone();
