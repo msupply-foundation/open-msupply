@@ -299,69 +299,80 @@ fn convert_from_localtime(
                      }| {
                         let local = match Local.from_local_datetime(&timestamp) {
                             LocalResult::None => {
-                                return Err(anyhow::anyhow!("Cannot convert to local timestamp"))
+                                log::error!("Cannot convert to local timestamp {}", timestamp);
+                                timestamp
                             }
-                            LocalResult::Single(r) => r,
-                            LocalResult::Ambiguous(r, _) => r,
+                            LocalResult::Single(r) => r.naive_utc(),
+                            LocalResult::Ambiguous(r, _) => r.naive_utc(),
                         };
-                        Ok(temperature_sensor::TemperatureLog {
+                        temperature_sensor::TemperatureLog {
                             temperature,
-                            timestamp: local.naive_utc(),
-                        })
+                            timestamp: local,
+                        }
                     },
                 )
-                .collect::<Result<_, _>>()?,
+                .collect::<Vec<_>>(),
         ),
     };
     // map temperature breaches
-    let breaches_mapped: Option<Vec<temperature_sensor::TemperatureBreach>> = match sensor
-        .clone()
-        .breaches
-    {
-        None => None,
-        Some(breaches) => Some(
-            breaches
-                .into_iter()
-                .map(
-                    |temperature_sensor::TemperatureBreach {
-                         breach_type,
-                         start_timestamp,
-                         end_timestamp,
-                         duration,
-                         acknowledged,
-                     }| {
-                        let local_start = match Local.from_local_datetime(&start_timestamp) {
-                            LocalResult::None => {
-                                return Err(anyhow::anyhow!("Cannot convert to local timestamp"))
+    let breaches_mapped: Option<Vec<temperature_sensor::TemperatureBreach>> =
+        match sensor.clone().breaches {
+            None => None,
+            Some(breaches) => Some(
+                breaches
+                    .into_iter()
+                    .map(
+                        |temperature_sensor::TemperatureBreach {
+                             breach_type,
+                             start_timestamp,
+                             end_timestamp,
+                             duration,
+                             acknowledged,
+                         }| {
+                            let local_start = match Local.from_local_datetime(&start_timestamp) {
+                                LocalResult::None => {
+                                    log::error!(
+                                        "Cannot convert to local timestamp (breach start) {}",
+                                        start_timestamp
+                                    );
+                                    start_timestamp
+                                }
+                                LocalResult::Single(r) => r.naive_utc(),
+                                LocalResult::Ambiguous(r, _) => r.naive_utc(),
+                            };
+                            let local_end = match Local.from_local_datetime(&end_timestamp) {
+                                LocalResult::None => {
+                                    log::error!(
+                                        "Cannot convert to local timestamp (breach end) {}",
+                                        end_timestamp
+                                    );
+                                    end_timestamp
+                                }
+                                LocalResult::Single(r) => r.naive_utc(),
+                                LocalResult::Ambiguous(r, _) => r.naive_utc(),
+                            };
+                            temperature_sensor::TemperatureBreach {
+                                breach_type,
+                                start_timestamp: local_start,
+                                end_timestamp: local_end,
+                                duration,
+                                acknowledged,
                             }
-                            LocalResult::Single(r) => r,
-                            LocalResult::Ambiguous(r, _) => r,
-                        };
-                        let local_end = match Local.from_local_datetime(&end_timestamp) {
-                            LocalResult::None => {
-                                return Err(anyhow::anyhow!("Cannot convert to local timestamp"))
-                            }
-                            LocalResult::Single(r) => r,
-                            LocalResult::Ambiguous(r, _) => r,
-                        };
-                        Ok(temperature_sensor::TemperatureBreach {
-                            breach_type,
-                            start_timestamp: local_start.naive_utc(),
-                            end_timestamp: local_end.naive_utc(),
-                            duration,
-                            acknowledged,
-                        })
-                    },
-                )
-                .collect::<Result<_, _>>()?,
-        ),
-    };
+                        },
+                    )
+                    .collect::<Vec<_>>(),
+            ),
+        };
     // convert last connected timestamp
     let last_connected_timestamp_converted = match sensor.clone().last_connected_timestamp {
         None => None,
         Some(timestamp) => Some(match Local.from_local_datetime(&timestamp) {
             LocalResult::None => {
-                return Err(anyhow::anyhow!("Cannot convert to local timestamp").into())
+                log::error!(
+                    "Cannot convert to local timestamp (last connected time) {}",
+                    timestamp
+                );
+                timestamp
             }
             LocalResult::Single(r) => r.naive_utc(),
             LocalResult::Ambiguous(r, _) => r.naive_utc(),
