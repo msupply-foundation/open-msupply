@@ -125,7 +125,6 @@ pub struct PreferenceDescription {
     pub key: String,
     pub preference_type: PreferenceType,
     pub value_type: PreferenceValueType,
-    // pub serialised_value: String,
 }
 
 impl PreferenceDescription {
@@ -134,7 +133,6 @@ impl PreferenceDescription {
             key: pref.key().to_string(),
             preference_type: pref.preference_type(),
             value_type: pref.value_type(),
-            // serialised_value: pref.query(connection, store_id),
         }
     }
 }
