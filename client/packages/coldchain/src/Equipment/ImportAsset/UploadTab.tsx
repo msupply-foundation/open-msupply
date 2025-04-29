@@ -29,7 +29,6 @@ import {
   processProperties,
   useAssetProperties,
   useStore,
-  useAssetData,
 } from '@openmsupply-client/system';
 
 interface EquipmentUploadTabProps {

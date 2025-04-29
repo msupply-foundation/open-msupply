@@ -12,6 +12,7 @@ mod add_warning_table;
 mod asset_data_matrix_locked_fields;
 mod asset_data_matrix_permission;
 mod change_vaccination_date_to_not_nullable;
+mod drop_encounters_report;
 mod new_stocktake_fields;
 mod remove_encounter_clinician_constraint;
 mod trigger_patient_visibility_sync;
@@ -42,6 +43,7 @@ impl Migration for V2_07_00 {
             Box::new(add_given_store_id_to_vaccination::Migrate),
             Box::new(trigger_patient_visibility_sync::Migrate),
             Box::new(add_central_patient_visibility_processor_pg_enum_type::Migrate),
+            Box::new(drop_encounters_report::Migrate),
         ]
     }
 }

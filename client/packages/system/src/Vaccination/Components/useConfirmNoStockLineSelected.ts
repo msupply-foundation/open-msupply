@@ -1,7 +1,9 @@
-import { useConfirmationModal } from '@common/components';
-import { useTranslation } from '@common/intl';
+import {
+  useAuthContext,
+  useConfirmationModal,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { VaccinationDraft } from '../api';
-import { OTHER_FACILITY } from './FacilitySearchInput';
 
 export const useConfirmNoStockLineSelected = (
   draft: VaccinationDraft,
@@ -9,6 +11,7 @@ export const useConfirmNoStockLineSelected = (
   onConfirm: () => Promise<void>
 ) => {
   const t = useTranslation('dispensary');
+  const { store } = useAuthContext();
   const showConfirmation = useConfirmationModal({
     onConfirm,
     message: t('messages.no-batch-selected'),
@@ -16,7 +19,11 @@ export const useConfirmNoStockLineSelected = (
   });
 
   return () => {
-    const shouldShowConfirmation = getShouldShowConfirmation(draft, hasItems);
+    const shouldShowConfirmation = getShouldShowConfirmation(
+      draft,
+      hasItems,
+      store?.nameId ?? ''
+    );
 
     if (shouldShowConfirmation) {
       showConfirmation();
@@ -28,14 +35,16 @@ export const useConfirmNoStockLineSelected = (
 
 const getShouldShowConfirmation = (
   draft: VaccinationDraft,
-  hasItems: boolean
+  hasItems: boolean,
+  facilityId: string
 ) => {
   const noSelectedBatch =
     // If the vaccine course has vaccine items configured
     // vaccinations given at this facility should have an associated stock line
     hasItems &&
     draft.given &&
-    draft.facilityId !== OTHER_FACILITY &&
+    // Should only warn if vaccination given at the current store
+    draft.facilityId === facilityId &&
     !draft.stockLine;
 
   const isHistorical = draft.date?.toDateString() !== new Date().toDateString();

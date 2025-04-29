@@ -128,7 +128,7 @@ export const useIntlUtils = () => {
 
   const translateDynamicKey = (key: string, fallback: string) => {
     return isLocaleKey(key) ? t(key) : fallback;
-  }
+  };
 
   const isLocaleKey = (key: string): key is LocaleKey => {
     return localeKeySet.has(key);
