@@ -8,9 +8,9 @@ import { VaccinationDraft } from '../api';
 export const useConfirmNoStockLineSelected = (
   draft: VaccinationDraft,
   hasItems: boolean,
-  onConfirm: () => Promise<void>
+  onConfirm: () => void
 ) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { store } = useAuthContext();
   const showConfirmation = useConfirmationModal({
     onConfirm,
