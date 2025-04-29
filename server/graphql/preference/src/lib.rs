@@ -82,8 +82,10 @@ impl PreferenceMutations {
         store_id: String,
         input: UpsertPreferencesInput,
     ) -> Result<OkResponse> {
-        // map/extend error??
-        upsert_preferences(ctx, store_id, input)?;
+        upsert_preferences(ctx, store_id, input).map_err(|err| {
+            log::error!("Error upserting preferences: {:?}", err);
+            err
+        })?;
 
         Ok(OkResponse)
     }

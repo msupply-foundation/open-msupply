@@ -1,12 +1,18 @@
-use repository::{PreferenceRow, PreferenceRowRepository, RepositoryError, StorageConnection};
+use repository::{PreferenceRow, PreferenceRowRepository, StorageConnection};
+
+use crate::sync::CentralServerConfig;
+
+use super::UpsertPreferenceError;
 
 pub fn upsert_global(
     connection: &StorageConnection,
     key: &str,
     value: String,
-) -> Result<(), RepositoryError> {
-    // tODO
-    // CentralServerConfig::is_central_server()
+) -> Result<(), UpsertPreferenceError> {
+    if !CentralServerConfig::is_central_server() {
+        return Err(UpsertPreferenceError::NotACentralServer);
+    }
+
     let repo = PreferenceRowRepository::new(connection);
 
     let pref = PreferenceRow {
@@ -26,8 +32,12 @@ pub fn upsert_store(
     key: &str,
     value: String,
     store_id: String,
-) -> Result<(), RepositoryError> {
-    // validate - is this store, or central?
+) -> Result<(), UpsertPreferenceError> {
+    // Currently, only central server can edit store prefs. Might allow store to edit its own
+    // preferences in the future
+    if !CentralServerConfig::is_central_server() {
+        return Err(UpsertPreferenceError::NotACentralServer);
+    }
 
     let repo = PreferenceRowRepository::new(connection);
 

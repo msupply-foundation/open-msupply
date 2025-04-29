@@ -39,6 +39,8 @@ pub enum UpsertPreferenceError {
     DatabaseError(RepositoryError),
     #[error("Failed to serialize preference {0}: {1}")]
     SerializeError(String, String),
+    #[error("Not running as central server")]
+    NotACentralServer,
     #[error("Store ID is required for store preference")]
     StoreIdNotProvided,
 }
