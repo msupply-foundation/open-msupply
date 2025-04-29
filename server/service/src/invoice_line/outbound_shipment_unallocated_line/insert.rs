@@ -127,6 +127,7 @@ fn generate(
         item_variant_id: None,
         prescribed_quantity: None,
         linked_invoice_id: None,
+        default_donor_id: None,
     };
 
     Ok(new_line)

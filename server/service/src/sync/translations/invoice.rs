@@ -114,6 +114,8 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "nameInsuranceJoinID")]
     pub name_insurance_join_id: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub default_donor_id: Option<String>,
     #[serde(deserialize_with = "zero_f64_as_none")]
     #[serde(rename = "insuranceDiscountAmount")]
     pub insurance_discount_amount: Option<f64>,
@@ -371,6 +373,7 @@ impl SyncTranslation for InvoiceTranslation {
 
             requisition_id: data.requisition_ID,
             linked_invoice_id: data.linked_transaction_id,
+            default_donor_id: data.default_donor_id,
             transport_reference: data.transport_reference,
             original_shipment_id: data.original_shipment_id,
             backdated_datetime: mapping.backdated_datetime,
@@ -464,6 +467,7 @@ impl SyncTranslation for InvoiceTranslation {
                     insurance_discount_percentage,
                     is_cancellation,
                     expected_delivery_date,
+                    default_donor_id,
                 },
             name_row,
             clinician_row,
@@ -540,6 +544,7 @@ impl SyncTranslation for InvoiceTranslation {
             insurance_discount_percentage,
             is_cancellation,
             expected_delivery_date,
+            default_donor_id,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
