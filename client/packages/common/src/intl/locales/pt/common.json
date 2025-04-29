@@ -1912,5 +1912,6 @@
   "error.provide-reason-new-stock": "Uma razão deve ser fornecida antes de adicionar stock",
   "messages.customer-return-created-verified": "Retorno de Cliente criado com sucesso como Verificado",
   "messages.supplier-return-created-shipped": "Retorno de Cliente criado com sucesso como Enviado",
-  "button.add-new-stock": "Adicionar novo estoque"
+  "button.add-new-stock": "Adicionar novo estoque",
+  "button.today": "Hoje"
 }
