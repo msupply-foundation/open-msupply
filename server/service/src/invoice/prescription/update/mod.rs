@@ -76,7 +76,6 @@ pub fn update_prescription(
             } = generate(invoice, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
-            let invoice_line_repo = InvoiceLineRowRepository::new(connection);
 
             if let Some(stock_lines) = batches_to_update {
                 let repository = StockLineRowRepository::new(connection);
