@@ -73,7 +73,6 @@ pub fn update_prescription(
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
-                lines_to_trim,
             } = generate(invoice, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
@@ -86,11 +85,11 @@ pub fn update_prescription(
                 }
             }
 
-            if let Some(lines) = lines_to_trim {
-                for line in lines {
-                    invoice_line_repo.delete(&line.id)?;
-                }
-            }
+            // if let Some(lines) = lines_to_trim {
+            //     for line in lines {
+            //         invoice_line_repo.delete(&line.id)?;
+            //     }
+            // }
 
             if status_changed {
                 activity_log_entry(
