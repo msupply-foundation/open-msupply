@@ -85,12 +85,6 @@ pub fn update_prescription(
                 }
             }
 
-            // if let Some(lines) = lines_to_trim {
-            //     for line in lines {
-            //         invoice_line_repo.delete(&line.id)?;
-            //     }
-            // }
-
             if status_changed {
                 activity_log_entry(
                     ctx,
