@@ -47,8 +47,9 @@ use backup::*;
 
 use cli::{
     generate_and_install_plugin_bundle, generate_plugin_bundle, generate_report_data,
-    generate_reports_recursive, install_plugin_bundle, GenerateAndInstallPluginBundle,
-    GeneratePluginBundle, InstallPluginBundle, RefreshDatesRepository, ReportError,
+    generate_reports_recursive, generate_typescript_types, install_plugin_bundle,
+    GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
+    RefreshDatesRepository, ReportError,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -207,6 +208,8 @@ enum Action {
         #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="enable")]
         disable: bool,
     },
+    /// Generate TypeScript Types for backend plugins and format with Prettier
+    GenerateTypeScriptTypes,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -693,6 +696,9 @@ async fn main() -> anyhow::Result<()> {
                     if updated_value { "ACTIVE" } else { "INACTIVE" }
                 );
             }
+        }
+        Action::GenerateTypeScriptTypes => {
+            generate_typescript_types()?;
         }
     }
 
