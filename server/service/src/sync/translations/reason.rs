@@ -13,6 +13,8 @@ pub enum LegacyOptionsType {
     PositiveInventoryAdjustment,
     #[serde(rename = "negativeInventoryAdjustment")]
     NegativeInventoryAdjustment,
+    #[serde(rename = "openVialWastage")]
+    OpenVialWastage,
     #[serde(rename = "returnReason")]
     ReturnReason,
     #[serde(rename = "requisitionLineVariance")]
@@ -85,6 +87,12 @@ impl SyncTranslation for ReasonTranslation {
                     r#type: ReasonOptionType::RequisitionLineVariance,
                 })
             }
+            LegacyOptionsType::OpenVialWastage => PullTranslateResult::upsert(ReasonOptionRow {
+                id: data.id.to_string(),
+                is_active: data.is_active,
+                reason: data.reason,
+                r#type: ReasonOptionType::OpenVialWastage,
+            }),
         };
 
         Ok(result)
