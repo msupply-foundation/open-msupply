@@ -934,6 +934,11 @@ export type BatchStocktakeResponse = {
   updateStocktakes?: Maybe<Array<UpdateStocktakeResponseWithId>>;
 };
 
+export type BoolStorePrefInput = {
+  storeId: Scalars['String']['input'];
+  value: Scalars['Boolean']['input'];
+};
+
 export type BundledItemMutations = {
   __typename: 'BundledItemMutations';
   deleteBundledItem: DeleteBundledItemResponse;
@@ -5931,6 +5936,7 @@ export enum PreferenceValueNodeType {
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
+  displayVaccineInDoses: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
 };
 
@@ -9586,6 +9592,7 @@ export type UpsertPackVariantResponse =
   | UpsertItemVariantError;
 
 export type UpsertPreferencesInput = {
+  displayVaccineInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
