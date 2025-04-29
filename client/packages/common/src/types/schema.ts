@@ -5927,6 +5927,7 @@ export enum PreferenceValueNodeType {
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
+  displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
 };
 
@@ -9582,6 +9583,7 @@ export type UpsertPackVariantResponse =
   | UpsertItemVariantError;
 
 export type UpsertPreferencesInput = {
+  displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
