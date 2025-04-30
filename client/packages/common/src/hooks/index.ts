@@ -14,7 +14,6 @@ export * from './useEffectAfterMounting';
 export * from './useGetPageTitle';
 export * from './useHostContext';
 export * from './useIsMountedRef';
-export * from './useIsScreen';
 export * from './useNotification';
 export * from './useOpenInNewTab';
 export * from './usePatchState';
