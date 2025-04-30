@@ -25,7 +25,8 @@ export const useConfigureNameProperties = () => {
   const api = useHostApi();
   const queryClient = useQueryClient();
   const { currentLanguage } = useIntlUtils();
-  const { gapsConfigured, populationConfigured } = useCheckNamePropertyStatus();
+  const { gapsConfigured, populationConfigured } =
+    useCheckConfiguredProperties();
 
   const propertyConfigurations: Record<PropertyType, PropertyConfigurations> = {
     gaps: {
@@ -75,7 +76,7 @@ interface NamePropertyStatus {
 
 // Temporary solution to check if the name/population properties are configured
 // Add functionality to check store for 'GAPS Only' settings etc... (once available)
-export const useCheckNamePropertyStatus = (): NamePropertyStatus => {
+export const useCheckConfiguredProperties = (): NamePropertyStatus => {
   const { data } = useName.document.properties();
 
   const gapsConfigured =

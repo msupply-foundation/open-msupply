@@ -7,7 +7,7 @@ import { Setting } from './Setting';
 
 import {
   useConfigureNameProperties,
-  useCheckNamePropertyStatus,
+  useCheckConfiguredProperties,
   PropertyType,
 } from '../api/hooks/settings/useConfigureNameProperties';
 
@@ -16,7 +16,8 @@ export const ConfigurationSettings = () => {
 
   const { mutateAsync, isLoading } = useConfigureNameProperties();
   const { isLoading: dataLoading } = useName.document.properties();
-  const { gapsConfigured, populationConfigured } = useCheckNamePropertyStatus();
+  const { gapsConfigured, populationConfigured } =
+    useCheckConfiguredProperties();
 
   const handleClick = (propertyType: PropertyType) => async () => {
     await mutateAsync(propertyType);
