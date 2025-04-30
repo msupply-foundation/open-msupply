@@ -19,7 +19,6 @@ jobs:
         with:
           ref: ${{ github.ref }}
           token: ${{ secrets.JSON_SORT_PAT }}
-
       - name: Sort files
         run: |
           chmod +x .github/workflows/sort-json.sh 
