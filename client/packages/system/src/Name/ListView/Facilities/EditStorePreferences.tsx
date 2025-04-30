@@ -4,6 +4,7 @@ import {
   LocaleKey,
   NothingHere,
   PreferenceNodeType,
+  useIsCentralServerApi,
   useTranslation,
 } from '@openmsupply-client/common';
 import {
@@ -13,6 +14,7 @@ import {
 
 export const EditStorePreferences = ({ storeId }: { storeId: string }) => {
   const t = useTranslation();
+  const isCentralServer = useIsCentralServerApi();
   const { update, preferences } = useEditPreferences(
     PreferenceNodeType.Store,
     storeId
@@ -27,6 +29,7 @@ export const EditStorePreferences = ({ storeId }: { storeId: string }) => {
         label={t(`preference.${pref.key}` as LocaleKey)}
         Input={
           <EditPreference
+            disabled={!isCentralServer}
             preference={pref}
             update={value => {
               // For store prefs, send an array with storeId and value

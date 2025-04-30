@@ -13,9 +13,11 @@ import {
 export const EditPreference = ({
   preference,
   update,
+  disabled = false,
 }: {
   preference: PreferenceDescriptionNode;
   update: (input: UpsertPreferencesInput[keyof UpsertPreferencesInput]) => void;
+  disabled?: boolean;
 }) => {
   const t = useTranslation();
 
@@ -30,6 +32,7 @@ export const EditPreference = ({
       }
       return (
         <Switch
+          disabled={disabled}
           checked={value}
           onChange={(_, checked) => {
             setValue(checked);
