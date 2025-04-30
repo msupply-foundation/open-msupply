@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import {
   noOtherVariants,
-  NothingHere,
   PreferenceValueNodeType,
   Switch,
   isBoolean,
   isNumber,
   UpsertPreferencesInput,
   PreferenceDescriptionNode,
+  useTranslation,
 } from '@openmsupply-client/common';
 
 export const EditPreference = ({
@@ -17,14 +17,16 @@ export const EditPreference = ({
   preference: PreferenceDescriptionNode;
   update: (input: Partial<UpsertPreferencesInput>) => void;
 }) => {
-  // preference.value only updates after mutation completes and cache
+  const t = useTranslation();
+
+  // The preference.value only updates after mutation completes and cache
   // is invalidated - use local state for fast UI change
   const [value, setValue] = useState(preference.value);
 
   switch (preference.valueType) {
     case PreferenceValueNodeType.Boolean:
       if (!isBoolean(value)) {
-        return <NothingHere />;
+        return t('error.something-wrong');
       }
       return (
         <Switch
@@ -38,7 +40,7 @@ export const EditPreference = ({
 
     case PreferenceValueNodeType.Integer:
       if (!isNumber(preference.value)) {
-        return <NothingHere />;
+        return t('error.something-wrong');
       }
       // Adding NumericTextInput here would currently get a type error,
       // because there are no editPreference inputs that accept a number
