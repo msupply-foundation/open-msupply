@@ -27,17 +27,15 @@ pub trait PreferenceServiceTrait: Sync + Send {
             show_contact_tracing,
         } = self.get_preference_provider();
 
-        let descriptions = preference_descriptions(
-            connection,
-            store_id,
-            pref_type,
-            vec![
-                // Add each pref here
-                show_contact_tracing,
-            ],
-        )?;
+        let all_prefs_descriptions = vec![
+            // Add each pref here
+            show_contact_tracing.as_description(connection, store_id)?,
+        ];
 
-        Ok(descriptions)
+        Ok(all_prefs_descriptions
+            .into_iter()
+            .filter(|pref| pref.preference_type == pref_type)
+            .collect())
     }
 
     fn upsert(
@@ -51,28 +49,3 @@ pub trait PreferenceServiceTrait: Sync + Send {
 
 pub struct PreferenceService {}
 impl PreferenceServiceTrait for PreferenceService {}
-
-fn preference_descriptions(
-    connection: &StorageConnection,
-    store_id: Option<String>,
-    pref_type: PreferenceType,
-    prefs: Vec<impl Preference>,
-) -> Result<Vec<PreferenceDescription>, PreferenceError> {
-    prefs
-        .into_iter()
-        .filter(|pref| pref.preference_type() == pref_type)
-        .map(|pref| {
-            let value = pref.load(connection, store_id.clone())?;
-
-            let value = serde_json::to_value(value).map_err(|e| {
-                PreferenceError::ConversionError(pref.key_str().to_string(), e.to_string())
-            })?;
-
-            Ok(PreferenceDescription {
-                key: pref.key(),
-                value_type: pref.value_type(),
-                value,
-            })
-        })
-        .collect()
-}

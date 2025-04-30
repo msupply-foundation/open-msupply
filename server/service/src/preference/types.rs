@@ -133,10 +133,30 @@ pub trait Preference: Sync + Send {
 
         Ok(())
     }
+
+    fn as_description(
+        &self,
+        connection: &StorageConnection,
+        store_id: Option<String>,
+    ) -> Result<PreferenceDescription, PreferenceError> {
+        let value = self.load(connection, store_id)?;
+
+        let value = serde_json::to_value(value).map_err(|e| {
+            PreferenceError::ConversionError(self.key_str().to_string(), e.to_string())
+        })?;
+
+        Ok(PreferenceDescription {
+            key: self.key(),
+            preference_type: self.preference_type(),
+            value_type: self.value_type(),
+            value,
+        })
+    }
 }
 
 pub struct PreferenceDescription {
     pub key: PrefKey,
+    pub preference_type: PreferenceType,
     pub value_type: PreferenceValueType,
     /// WARNING: Type loss - holds any kind of pref value (for edit UI).
     /// Use the PreferenceProvider to load the strictly typed value.
