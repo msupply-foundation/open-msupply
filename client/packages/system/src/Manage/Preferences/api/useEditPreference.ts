@@ -11,11 +11,14 @@ import { usePreferencesGraphQL } from './usePreferencesGraphQL';
 import { PREFERENCE_DESCRIPTIONS } from './keys';
 import { useAdminPrefsList } from './useAdminPrefsList';
 
-export const useEditPreferences = (prefType: PreferenceNodeType) => {
+export const useEditPreferences = (
+  prefType: PreferenceNodeType,
+  storeId?: string
+) => {
   const t = useTranslation();
   const { error } = useNotification();
 
-  const { data } = useAdminPrefsList(prefType);
+  const { data } = useAdminPrefsList(prefType, storeId);
   const { mutateAsync } = useUpsertPref();
 
   // Please add debouncing when string prefs are implemented

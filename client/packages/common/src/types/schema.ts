@@ -5899,6 +5899,10 @@ export type PluginInfoNode = {
   pluginInfo: Scalars['JSON']['output'];
 };
 
+export type PreferenceDescriptionContext = {
+  storeId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
   key: PreferenceKey;
@@ -6824,6 +6828,7 @@ export type QueriesPluginGraphqlQueryArgs = {
 };
 
 export type QueriesPreferenceDescriptionsArgs = {
+  context: PreferenceDescriptionContext;
   prefType: PreferenceNodeType;
   storeId: Scalars['String']['input'];
 };

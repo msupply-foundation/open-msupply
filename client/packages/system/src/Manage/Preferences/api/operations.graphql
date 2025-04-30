@@ -1,5 +1,13 @@
-query adminPreferenceList($storeId: String!, $prefType: PreferenceNodeType!) {
-  preferenceDescriptions(storeId: $storeId, prefType: $prefType) {
+query adminPreferenceList(
+  $storeId: String!
+  $prefType: PreferenceNodeType!
+  $context: PreferenceDescriptionContext!
+) {
+  preferenceDescriptions(
+    storeId: $storeId
+    prefType: $prefType
+    context: $context
+  ) {
     key
     valueType
     value

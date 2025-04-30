@@ -13,7 +13,10 @@ import {
 
 export const EditStorePreferences = ({ storeId }: { storeId: string }) => {
   const t = useTranslation();
-  const { update, preferences } = useEditPreferences(PreferenceNodeType.Global);
+  const { update, preferences } = useEditPreferences(
+    PreferenceNodeType.Store,
+    storeId
+  );
 
   if (!preferences.length) return <NothingHere />;
 
