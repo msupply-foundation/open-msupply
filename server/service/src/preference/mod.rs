@@ -13,8 +13,8 @@ pub mod upsert_helpers;
 pub use upsert::*;
 
 pub trait PreferenceServiceTrait: Sync + Send {
-    fn get_preference_registry(&self) -> PreferenceRegistry {
-        get_preference_registry()
+    fn get_preference_provider(&self) -> PreferenceProvider {
+        get_preference_provider()
     }
 
     fn get_preference_descriptions(
@@ -23,9 +23,9 @@ pub trait PreferenceServiceTrait: Sync + Send {
         store_id: Option<String>,
         pref_type: PreferenceType,
     ) -> Result<Vec<PreferenceDescription>, PreferenceError> {
-        let PreferenceRegistry {
+        let PreferenceProvider {
             show_contact_tracing,
-        } = self.get_preference_registry();
+        } = self.get_preference_provider();
 
         let descriptions = preference_descriptions(
             connection,

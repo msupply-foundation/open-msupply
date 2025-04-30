@@ -138,6 +138,8 @@ pub trait Preference: Sync + Send {
 pub struct PreferenceDescription {
     pub key: PrefKey,
     pub value_type: PreferenceValueType,
+    /// WARNING: Type loss - holds any kind of pref value (for edit UI).
+    /// Use the PreferenceProvider to load the strictly typed value.
     pub value: serde_json::Value,
 }
 

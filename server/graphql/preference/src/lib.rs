@@ -31,7 +31,7 @@ impl PreferenceQueries {
         let service = &service_provider.preference_service;
 
         // Instead of all service/DB calls, errors handled here, we just get registry
-        let pref_registry = service.get_preference_registry();
+        let pref_registry = service.get_preference_provider();
 
         // Loading (DB call) of each pref is done in the node resolver, so we only query for the
         // prefs we need

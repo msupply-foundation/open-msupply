@@ -1,14 +1,14 @@
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{
-    get_preference_registry, preferences::PreferenceRegistry, Preference, PreferenceDescription,
-    PreferenceType, PreferenceValueType,
+    preferences::PreferenceProvider, PrefKey, Preference, PreferenceDescription, PreferenceType,
+    PreferenceValueType,
 };
 
 pub struct PreferencesNode {
     pub connection: StorageConnection,
     pub store_id: Option<String>,
-    pub preferences: PreferenceRegistry,
+    pub preferences: PreferenceProvider,
 }
 
 #[Object]
@@ -22,7 +22,7 @@ impl PreferencesNode {
     pub fn from_domain(
         connection: StorageConnection,
         store_id: Option<String>,
-        prefs: PreferenceRegistry,
+        prefs: PreferenceProvider,
     ) -> PreferencesNode {
         PreferencesNode {
             connection,
@@ -51,6 +51,8 @@ impl PreferenceDescriptionNode {
         PreferenceValueNodeType::from_domain(&self.pref.value_type)
     }
 
+    /// WARNING: Type loss - holds any kind of pref value (for edit UI).
+    /// Use the PreferencesNode to load the strictly typed value.
     pub async fn value(&self) -> &serde_json::Value {
         &self.pref.value
     }
