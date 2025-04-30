@@ -20,6 +20,7 @@ pub enum PreferenceValueType {
     Boolean,
     Integer,
     // String,
+    // MultilineString,
     // Add scalar or custom value types here - mapped to frontend renderers
 }
 
@@ -29,6 +30,8 @@ pub enum PreferenceError {
     DatabaseError(RepositoryError),
     #[error("Failed to deserialize preference {0} from value {1}: {2}")]
     DeserializeError(String, String, String),
+    #[error("Failed to convert preference {0} to JSON value: {1}")]
+    ConversionError(String, String),
     #[error("Store ID is required for store preference")]
     StoreIdNotProvided,
 }
@@ -123,18 +126,8 @@ pub trait Preference: Sync + Send {
 
 pub struct PreferenceDescription {
     pub key: String,
-    pub preference_type: PreferenceType,
     pub value_type: PreferenceValueType,
-}
-
-impl PreferenceDescription {
-    pub fn from_preference<T: Preference>(pref: &T) -> Self {
-        Self {
-            key: pref.key().to_string(),
-            preference_type: pref.preference_type(),
-            value_type: pref.value_type(),
-        }
-    }
+    pub value: serde_json::Value,
 }
 
 impl From<RepositoryError> for PreferenceError {

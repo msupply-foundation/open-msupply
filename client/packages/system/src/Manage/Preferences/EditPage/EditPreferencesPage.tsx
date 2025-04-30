@@ -1,15 +1,15 @@
 import React, { useEffect } from 'react';
 import {
   LocaleKey,
+  PreferenceNodeType,
   UpsertPreferencesInput,
   useBreadcrumbs,
   useNotification,
   useParams,
-  usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
 import { LineEditBase } from './LineEditBase';
-import { useGlobalPrefList } from '../api';
+import { useAdminPrefsList } from '../api';
 import { EditPreference } from './EditPreference';
 import { useEditPreference } from '../api/useEditPreference';
 import { getPrefKey } from './getPrefKey';
@@ -20,8 +20,7 @@ export const EditPreferencesPage = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { error } = useNotification();
 
-  const { data: prefOptions } = useGlobalPrefList();
-  const { data: configuredPrefs } = usePreferences();
+  const { data: preferences } = useAdminPrefsList(PreferenceNodeType.Global);
   const { mutateAsync } = useEditPreference();
 
   const update = async (input: Partial<UpsertPreferencesInput>) => {
@@ -40,21 +39,21 @@ export const EditPreferencesPage = () => {
       });
   }, [key]);
 
-  const selectedPref = prefOptions?.find(d => key === d.key);
+  const selectedPref = preferences?.find(d => key === d.key);
 
   const clientKey = getPrefKey(selectedPref?.key ?? '');
 
   return (
-    <LineEditBase currentKey={key ?? ''} prefs={prefOptions ?? []}>
+    <LineEditBase currentKey={key ?? ''} prefs={preferences ?? []}>
       {selectedPref &&
-        (!clientKey || !configuredPrefs ? (
+        (!clientKey ? (
           t('error.something-wrong')
         ) : (
           <EditPreference
             key={selectedPref.key}
             valueType={selectedPref.valueType}
             clientKey={clientKey}
-            value={configuredPrefs[clientKey]}
+            value={selectedPref.value}
             update={update}
           />
         ))}

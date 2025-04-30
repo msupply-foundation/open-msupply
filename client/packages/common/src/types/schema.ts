@@ -5897,6 +5897,7 @@ export type PluginInfoNode = {
 export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
   key: Scalars['String']['output'];
+  value: Scalars['JSON']['output'];
   valueType: PreferenceValueNodeType;
 };
 
@@ -6348,6 +6349,7 @@ export type Queries = {
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
   pluginGraphqlQuery: Scalars['JSON']['output'];
+  /** The list of preferences and their current values (used for the admin/edit page) */
   preferenceDescriptions: Array<PreferenceDescriptionNode>;
   /** Returns the relevant set of preferences based on context (e.g. current store) */
   preferences: PreferencesNode;

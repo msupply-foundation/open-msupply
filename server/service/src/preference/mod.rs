@@ -1,6 +1,7 @@
 use crate::service_provider::ServiceContext;
 
 pub mod types;
+use repository::StorageConnection;
 pub use types::*;
 mod query_preference;
 
@@ -16,20 +17,27 @@ pub trait PreferenceServiceTrait: Sync + Send {
         get_preference_registry()
     }
 
-    fn get_preference_descriptions(&self, pref_type: PreferenceType) -> Vec<PreferenceDescription> {
+    fn get_preference_descriptions(
+        &self,
+        connection: &StorageConnection,
+        store_id: Option<String>,
+        pref_type: PreferenceType,
+    ) -> Result<Vec<PreferenceDescription>, PreferenceError> {
         let PreferenceRegistry {
             show_contact_tracing,
-        } = &self.get_preference_registry();
+        } = self.get_preference_registry();
 
-        let all_prefs_descriptions = vec![
-            // Add each pref here
-            PreferenceDescription::from_preference(show_contact_tracing),
-        ];
+        let descriptions = preference_descriptions(
+            connection,
+            store_id,
+            pref_type,
+            vec![
+                // Add each pref here
+                show_contact_tracing,
+            ],
+        )?;
 
-        all_prefs_descriptions
-            .into_iter()
-            .filter(|pref| pref.preference_type == pref_type)
-            .collect()
+        Ok(descriptions)
     }
 
     fn upsert(
@@ -43,3 +51,28 @@ pub trait PreferenceServiceTrait: Sync + Send {
 
 pub struct PreferenceService {}
 impl PreferenceServiceTrait for PreferenceService {}
+
+fn preference_descriptions(
+    connection: &StorageConnection,
+    store_id: Option<String>,
+    pref_type: PreferenceType,
+    prefs: Vec<impl Preference>,
+) -> Result<Vec<PreferenceDescription>, PreferenceError> {
+    prefs
+        .into_iter()
+        .filter(|pref| pref.preference_type() == pref_type)
+        .map(|pref| {
+            let value = pref.load(connection, store_id.clone())?;
+
+            let value = serde_json::to_value(value).map_err(|e| {
+                PreferenceError::ConversionError(pref.key().to_string(), e.to_string())
+            })?;
+
+            Ok(PreferenceDescription {
+                key: pref.key().to_string(),
+                value_type: pref.value_type(),
+                value,
+            })
+        })
+        .collect()
+}

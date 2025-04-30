@@ -5,6 +5,7 @@ import {
   useMutation,
 } from '@openmsupply-client/common';
 import { usePreferencesGraphQL } from './usePreferencesGraphQL';
+import { PREFERENCE_DESCRIPTIONS } from './keys';
 
 export const useEditPreference = () => {
   const { api, storeId: requestStoreId, queryClient } = usePreferencesGraphQL();
@@ -22,7 +23,10 @@ export const useEditPreference = () => {
       throw new Error('Could not update preferences');
     },
     {
-      onSuccess: () => queryClient.invalidateQueries(keys.preferences()),
+      onSuccess: () => {
+        queryClient.invalidateQueries(keys.preferences());
+        queryClient.invalidateQueries(PREFERENCE_DESCRIPTIONS);
+      },
     }
   );
 };

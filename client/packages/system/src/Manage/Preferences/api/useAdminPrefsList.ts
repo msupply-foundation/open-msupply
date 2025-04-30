@@ -1,15 +1,16 @@
 import { PreferenceNodeType, useQuery } from '@openmsupply-client/common';
 import { usePreferencesGraphQL } from './usePreferencesGraphQL';
+import { PREFERENCE_DESCRIPTIONS } from './keys';
 
-export const useGlobalPrefList = () => {
+export const useAdminPrefsList = (prefType: PreferenceNodeType) => {
   const { api, storeId } = usePreferencesGraphQL();
 
   return useQuery({
-    queryKey: 'preference-descriptions',
+    queryKey: [PREFERENCE_DESCRIPTIONS, prefType],
     queryFn: async () => {
-      const result = await api.preferenceDescriptions({
+      const result = await api.adminPreferenceList({
         storeId,
-        prefType: PreferenceNodeType.Global,
+        prefType,
       });
 
       return result.preferenceDescriptions;

@@ -43,12 +43,16 @@ pub struct PreferenceDescriptionNode {
 
 #[Object]
 impl PreferenceDescriptionNode {
-    pub async fn key(&self) -> &str {
-        &self.pref.key
+    pub async fn key(&self) -> String {
+        self.pref.key.to_string()
     }
 
     pub async fn value_type(&self) -> PreferenceValueNodeType {
         PreferenceValueNodeType::from_domain(&self.pref.value_type)
+    }
+
+    pub async fn value(&self) -> &serde_json::Value {
+        &self.pref.value
     }
 }
 
