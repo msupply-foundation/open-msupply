@@ -1,1 +1,1 @@
-export * from './useGlobalPrefList';
+export * from './useAdminPrefsList';

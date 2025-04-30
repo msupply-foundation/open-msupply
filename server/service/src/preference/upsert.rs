@@ -2,7 +2,7 @@ use repository::TransactionError;
 
 use crate::service_provider::ServiceContext;
 
-use super::{get_preference_registry, Preference, PreferenceRegistry, UpsertPreferenceError};
+use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct UpsertPreferences {
@@ -17,10 +17,10 @@ pub fn upsert_preferences(
         display_population_based_forecasting: display_population_based_forecasting_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
-    let PreferenceRegistry {
+    let PreferenceProvider {
         show_contact_tracing,
         display_population_based_forecasting,
-    } = get_preference_registry();
+    } = get_preference_provider();
 
     ctx.connection
         .transaction_sync(|connection| {

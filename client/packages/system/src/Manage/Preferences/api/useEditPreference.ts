@@ -1,12 +1,40 @@
 import {
   isEmpty,
+  PreferenceNodeType,
   UpsertPreferencesInput,
   useAuthApi,
   useMutation,
+  useNotification,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { usePreferencesGraphQL } from './usePreferencesGraphQL';
+import { PREFERENCE_DESCRIPTIONS } from './keys';
+import { useAdminPrefsList } from './useAdminPrefsList';
 
-export const useEditPreference = () => {
+export const useEditPreferences = (prefType: PreferenceNodeType) => {
+  const t = useTranslation();
+  const { error } = useNotification();
+
+  const { data } = useAdminPrefsList(prefType);
+  const { mutateAsync } = useUpsertPref();
+
+  // Probably worth debouncing at some stage :)
+  const update = async (input: Partial<UpsertPreferencesInput>) => {
+    try {
+      await mutateAsync(input);
+    } catch (err) {
+      console.error('Error updating preferences:', err);
+      error(t('error.something-wrong'))();
+    }
+  };
+
+  return {
+    preferences: data ?? [],
+    update,
+  };
+};
+
+const useUpsertPref = () => {
   const { api, storeId: requestStoreId, queryClient } = usePreferencesGraphQL();
   const { keys } = useAuthApi();
 
@@ -22,7 +50,10 @@ export const useEditPreference = () => {
       throw new Error('Could not update preferences');
     },
     {
-      onSuccess: () => queryClient.invalidateQueries(keys.preferences()),
+      onSuccess: () => {
+        queryClient.invalidateQueries(keys.preferences());
+        queryClient.invalidateQueries(PREFERENCE_DESCRIPTIONS);
+      },
     }
   );
 };

@@ -1,6 +1,7 @@
 use crate::service_provider::ServiceContext;
 
 pub mod types;
+use repository::StorageConnection;
 pub use types::*;
 mod query_preference;
 
@@ -12,26 +13,31 @@ pub mod upsert_helpers;
 pub use upsert::*;
 
 pub trait PreferenceServiceTrait: Sync + Send {
-    fn get_preference_registry(&self) -> PreferenceRegistry {
-        get_preference_registry()
+    fn get_preference_provider(&self) -> PreferenceProvider {
+        get_preference_provider()
     }
 
-    fn get_preference_descriptions(&self, pref_type: PreferenceType) -> Vec<PreferenceDescription> {
-        let PreferenceRegistry {
+    fn get_preference_descriptions(
+        &self,
+        connection: &StorageConnection,
+        store_id: Option<String>,
+        pref_type: PreferenceType,
+    ) -> Result<Vec<PreferenceDescription>, PreferenceError> {
+        let PreferenceProvider {
             show_contact_tracing,
             display_population_based_forecasting,
-        } = &self.get_preference_registry();
+        } = self.get_preference_provider();
 
         let all_prefs_descriptions = vec![
             // Add each pref here
-            PreferenceDescription::from_preference(show_contact_tracing),
-            PreferenceDescription::from_preference(display_population_based_forecasting),
+            show_contact_tracing.as_description(connection, store_id.clone())?,
+            display_population_based_forecasting.as_description(connection, store_id.clone())?,
         ];
 
-        all_prefs_descriptions
+        Ok(all_prefs_descriptions
             .into_iter()
             .filter(|pref| pref.preference_type == pref_type)
-            .collect()
+            .collect())
     }
 
     fn upsert(

@@ -1,63 +1,37 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
+  Box,
+  InputWithLabelRow,
   LocaleKey,
-  UpsertPreferencesInput,
-  useBreadcrumbs,
-  useNotification,
-  useParams,
-  usePreferences,
+  NothingHere,
+  PreferenceNodeType,
   useTranslation,
 } from '@openmsupply-client/common';
-import { LineEditBase } from './LineEditBase';
-import { useGlobalPrefList } from '../api';
 import { EditPreference } from './EditPreference';
-import { useEditPreference } from '../api/useEditPreference';
-import { getPrefKey } from './getPrefKey';
+import { useEditPreferences } from '../api/useEditPreference';
 
 export const EditPreferencesPage = () => {
   const t = useTranslation();
-  const { key } = useParams();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const { error } = useNotification();
 
-  const { data: prefOptions } = useGlobalPrefList();
-  const { data: configuredPrefs } = usePreferences();
-  const { mutateAsync } = useEditPreference();
+  const { update, preferences } = useEditPreferences(PreferenceNodeType.Global);
 
-  const update = async (input: Partial<UpsertPreferencesInput>) => {
-    try {
-      await mutateAsync(input);
-    } catch (err) {
-      console.error('Error updating preferences:', err);
-      error(t('error.something-wrong'))();
-    }
-  };
-
-  useEffect(() => {
-    if (key)
-      setCustomBreadcrumbs({
-        1: t(`preference.${key}` as LocaleKey),
-      });
-  }, [key]);
-
-  const selectedPref = prefOptions?.find(d => key === d.key);
-
-  const clientKey = getPrefKey(selectedPref?.key ?? '');
+  if (!preferences.length) return <NothingHere />;
 
   return (
-    <LineEditBase currentKey={key ?? ''} prefs={prefOptions ?? []}>
-      {selectedPref &&
-        (!clientKey || !configuredPrefs ? (
-          t('error.something-wrong')
-        ) : (
-          <EditPreference
-            key={selectedPref.key}
-            valueType={selectedPref.valueType}
-            clientKey={clientKey}
-            value={configuredPrefs[clientKey]}
-            update={update}
+    <Box display="flex" justifyContent="center" width="100%" marginTop={2}>
+      <Box width="600px">
+        {preferences.map(pref => (
+          <InputWithLabelRow
+            key={pref.key}
+            label={t(`preference.${pref.key}` as LocaleKey)}
+            Input={<EditPreference preference={pref} update={update} />}
+            labelWidth="200px"
+            sx={{
+              justifyContent: 'center',
+            }}
           />
         ))}
-    </LineEditBase>
+      </Box>
+    </Box>
   );
 };

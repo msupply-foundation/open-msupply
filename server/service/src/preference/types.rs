@@ -1,12 +1,20 @@
 use repository::{PreferenceRow, RepositoryError, StorageConnection};
 use serde::{de::DeserializeOwned, Serialize};
 
+use strum::{Display, EnumString};
 use thiserror::Error;
 
 use super::{
     query_preference::{query_global, query_store},
     upsert_helpers::{upsert_global, upsert_store},
 };
+
+#[derive(Display, EnumString)]
+#[strum(serialize_all = "snake_case")]
+pub enum PrefKey {
+    ShowContactTracing,
+    DisplayPopulationBasedForecasting,
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum PreferenceType {
@@ -20,6 +28,7 @@ pub enum PreferenceValueType {
     Boolean,
     Integer,
     // String,
+    // MultilineString,
     // Add scalar or custom value types here - mapped to frontend renderers
 }
 
@@ -29,6 +38,8 @@ pub enum PreferenceError {
     DatabaseError(RepositoryError),
     #[error("Failed to deserialize preference {0} from value {1}: {2}")]
     DeserializeError(String, String, String),
+    #[error("Failed to convert preference {0} to JSON value: {1}")]
+    ConversionError(String, String),
     #[error("Store ID is required for store preference")]
     StoreIdNotProvided,
 }
@@ -48,7 +59,11 @@ pub enum UpsertPreferenceError {
 pub trait Preference: Sync + Send {
     type Value: Default + DeserializeOwned + Serialize;
 
-    fn key(&self) -> &'static str;
+    fn key(&self) -> PrefKey;
+
+    fn key_str(&self) -> String {
+        self.key().to_string()
+    }
 
     fn preference_type(&self) -> PreferenceType;
 
@@ -60,10 +75,10 @@ pub trait Preference: Sync + Send {
         store_id: Option<String>,
     ) -> Result<Option<PreferenceRow>, PreferenceError> {
         let pref = match self.preference_type() {
-            PreferenceType::Global => query_global(connection, self.key())?,
+            PreferenceType::Global => query_global(connection, &self.key_str())?,
             PreferenceType::Store => {
                 let store_id = store_id.ok_or(PreferenceError::StoreIdNotProvided)?;
-                query_store(connection, self.key(), &store_id)?
+                query_store(connection, &self.key_str(), &store_id)?
             }
         };
 
@@ -106,35 +121,47 @@ pub trait Preference: Sync + Send {
         store_id: Option<String>,
     ) -> Result<(), UpsertPreferenceError> {
         let serialised_value = serde_json::to_string(&value).map_err(|e| {
-            UpsertPreferenceError::SerializeError(self.key().to_string(), e.to_string())
+            UpsertPreferenceError::SerializeError(self.key_str().to_string(), e.to_string())
         })?;
 
         match self.preference_type() {
-            PreferenceType::Global => upsert_global(connection, self.key(), serialised_value)?,
+            PreferenceType::Global => upsert_global(connection, self.key_str(), serialised_value)?,
             PreferenceType::Store => {
                 let store_id = store_id.ok_or(UpsertPreferenceError::StoreIdNotProvided)?;
-                upsert_store(connection, self.key(), serialised_value, store_id)?;
+                upsert_store(connection, self.key_str(), serialised_value, store_id)?;
             }
         };
 
         Ok(())
     }
+
+    fn as_description(
+        &self,
+        connection: &StorageConnection,
+        store_id: Option<String>,
+    ) -> Result<PreferenceDescription, PreferenceError> {
+        let value = self.load(connection, store_id)?;
+
+        let value = serde_json::to_value(value).map_err(|e| {
+            PreferenceError::ConversionError(self.key_str().to_string(), e.to_string())
+        })?;
+
+        Ok(PreferenceDescription {
+            key: self.key(),
+            preference_type: self.preference_type(),
+            value_type: self.value_type(),
+            value,
+        })
+    }
 }
 
 pub struct PreferenceDescription {
-    pub key: String,
+    pub key: PrefKey,
     pub preference_type: PreferenceType,
     pub value_type: PreferenceValueType,
-}
-
-impl PreferenceDescription {
-    pub fn from_preference<T: Preference>(pref: &T) -> Self {
-        Self {
-            key: pref.key().to_string(),
-            preference_type: pref.preference_type(),
-            value_type: pref.value_type(),
-        }
-    }
+    /// WARNING: Type loss - holds any kind of pref value (for edit UI).
+    /// Use the PreferenceProvider to load the strictly typed value.
+    pub value: serde_json::Value,
 }
 
 impl From<RepositoryError> for PreferenceError {
@@ -168,8 +195,8 @@ mod tests {
                 42
             }
 
-            fn key(&self) -> &'static str {
-                "test_pref"
+            fn key(&self) -> PrefKey {
+                PrefKey::ShowContactTracing
             }
             fn preference_type(&self) -> PreferenceType {
                 PreferenceType::Store
@@ -183,8 +210,8 @@ mod tests {
                 store_id: Option<String>,
             ) -> Result<Option<PreferenceRow>, PreferenceError> {
                 let mock_pref = PreferenceRow {
-                    id: "test_pref_store_a".to_string(),
-                    key: self.key().to_string(),
+                    id: "show_contact_tracing_store_a".to_string(),
+                    key: self.key_str().to_string(),
                     value: r#"6"#.to_string(),
                     store_id: Some(mock_store_a().id),
                 };

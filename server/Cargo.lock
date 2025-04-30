@@ -7728,6 +7728,7 @@ dependencies = [
  "serde_yaml",
  "sha2",
  "simple-log",
+ "strum",
  "telnet",
  "temperature-sensor",
  "tempfile",

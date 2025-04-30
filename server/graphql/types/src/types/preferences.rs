@@ -1,14 +1,14 @@
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{
-    preferences::PreferenceRegistry, Preference, PreferenceDescription, PreferenceType,
+    preferences::PreferenceProvider, PrefKey, Preference, PreferenceDescription, PreferenceType,
     PreferenceValueType,
 };
 
 pub struct PreferencesNode {
     pub connection: StorageConnection,
     pub store_id: Option<String>,
-    pub preferences: PreferenceRegistry,
+    pub preferences: PreferenceProvider,
 }
 
 #[Object]
@@ -25,7 +25,7 @@ impl PreferencesNode {
     pub fn from_domain(
         connection: StorageConnection,
         store_id: Option<String>,
-        prefs: PreferenceRegistry,
+        prefs: PreferenceProvider,
     ) -> PreferencesNode {
         PreferencesNode {
             connection,
@@ -46,12 +46,37 @@ pub struct PreferenceDescriptionNode {
 
 #[Object]
 impl PreferenceDescriptionNode {
-    pub async fn key(&self) -> &str {
-        &self.pref.key
+    pub async fn key(&self) -> PreferenceKey {
+        PreferenceKey::from_domain(&self.pref.key)
     }
 
     pub async fn value_type(&self) -> PreferenceValueNodeType {
         PreferenceValueNodeType::from_domain(&self.pref.value_type)
+    }
+
+    /// WARNING: Type loss - holds any kind of pref value (for edit UI).
+    /// Use the PreferencesNode to load the strictly typed value.
+    pub async fn value(&self) -> &serde_json::Value {
+        &self.pref.value
+    }
+}
+
+#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
+#[graphql(rename_items = "camelCase")]
+pub enum PreferenceKey {
+    // These keys (once camelCased) should match fields of PreferencesNode
+    ShowContactTracing,
+    DisplayPopulationBasedForecasting,
+}
+
+impl PreferenceKey {
+    pub fn from_domain(pref_key: &PrefKey) -> Self {
+        match pref_key {
+            PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
+            PrefKey::DisplayPopulationBasedForecasting => {
+                PreferenceKey::DisplayPopulationBasedForecasting
+            }
+        }
     }
 }
 

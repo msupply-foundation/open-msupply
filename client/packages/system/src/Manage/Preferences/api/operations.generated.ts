@@ -3,17 +3,18 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type PreferenceDescriptionsQueryVariables = Types.Exact<{
+export type AdminPreferenceListQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   prefType: Types.PreferenceNodeType;
 }>;
 
-export type PreferenceDescriptionsQuery = {
+export type AdminPreferenceListQuery = {
   __typename: 'Queries';
   preferenceDescriptions: Array<{
     __typename: 'PreferenceDescriptionNode';
-    key: string;
+    key: Types.PreferenceKey;
     valueType: Types.PreferenceValueNodeType;
+    value: any;
   }>;
 };
 
@@ -46,14 +47,12 @@ export type UpsertPreferencesMutation = {
   };
 };
 
-export const PreferenceDescriptionsDocument = gql`
-  query preferenceDescriptions(
-    $storeId: String!
-    $prefType: PreferenceNodeType!
-  ) {
+export const AdminPreferenceListDocument = gql`
+  query adminPreferenceList($storeId: String!, $prefType: PreferenceNodeType!) {
     preferenceDescriptions(storeId: $storeId, prefType: $prefType) {
       key
       valueType
+      value
     }
   }
 `;
@@ -99,18 +98,18 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
-    preferenceDescriptions(
-      variables: PreferenceDescriptionsQueryVariables,
+    adminPreferenceList(
+      variables: AdminPreferenceListQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<PreferenceDescriptionsQuery> {
+    ): Promise<AdminPreferenceListQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PreferenceDescriptionsQuery>(
-            PreferenceDescriptionsDocument,
+          client.request<AdminPreferenceListQuery>(
+            AdminPreferenceListDocument,
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'preferenceDescriptions',
+        'adminPreferenceList',
         'query',
         variables
       );
