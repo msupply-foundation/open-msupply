@@ -208,7 +208,8 @@ mod test {
               "comment": "comment",
               "description": "description",
               "stocktakeDate": "2022-01-03",
-              "isLocked": true
+              "isLocked": true,
+              "isInitialStocktake": false
             }
         }));
         let expected = json!({

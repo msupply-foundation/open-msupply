@@ -32,7 +32,7 @@ const STOCKTAKE_1: (&str, &str) = (
       "om_created_datetime": "",
       "om_counted_by": "",
       "om_verified_by": "",
-      "om_is_initial_stocktake": ""
+      "om_is_initial_stocktake": "false"
     }"#,
 );
 fn stocktake_pull_record() -> TestSyncIncomingRecord {
@@ -213,7 +213,7 @@ const STOCKTAKE_INITIAL: (&str, &str) = (
       "om_created_datetime": "",
       "om_counted_by": "",
       "om_verified_by": "",
-      "om_is_initial_stocktake": ""
+      "om_is_initial_stocktake": "true"
     }"#,
 );
 fn stocktake_initial_pull_record() -> TestSyncIncomingRecord {

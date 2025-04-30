@@ -85,8 +85,8 @@ mod stocktake_line_test {
         mock::{
             mock_item_a, mock_item_a_lines, mock_locked_stocktake,
             mock_new_stock_line_for_stocktake_a, mock_stock_line_b, mock_stock_line_si_d,
-            mock_stocktake_a, mock_stocktake_finalised, mock_stocktake_line_a, mock_store_a,
-            MockData, MockDataInserts,
+            mock_stocktake_a, mock_stocktake_c, mock_stocktake_finalised, mock_stocktake_line_a,
+            mock_store_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository,
@@ -504,6 +504,31 @@ mod stocktake_line_test {
                 r.item_link_id = stock_line.item_link_id;
                 r.item_name = "Item A".to_string();
                 r.comment = Some("Some comment".to_string());
+            })
+        );
+
+        // test initial stocktake saves with no adjustment reason
+        let stocktake_c = mock_stocktake_c();
+        let item_a = mock_item_a();
+        let result = service
+            .insert_stocktake_line(
+                &context,
+                inline_init(|r: &mut InsertStocktakeLine| {
+                    r.id = uuid();
+                    r.stocktake_id.clone_from(&stocktake_c.id);
+                    r.counted_number_of_packs = Some(20.0);
+                    r.item_id = Some(item_a.id);
+                }),
+            )
+            .unwrap();
+        pretty_assertions::assert_eq!(
+            result.line,
+            inline_init(|r: &mut StocktakeLineRow| {
+                r.id.clone_from(&result.line.id);
+                r.stocktake_id = stocktake_c.id;
+                r.item_name = "Item A".to_string();
+                r.counted_number_of_packs = Some(20.0);
+                r.item_link_id = "item_a".to_string();
             })
         );
     }

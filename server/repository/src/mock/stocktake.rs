@@ -12,6 +12,7 @@ pub fn mock_stocktake_a() -> StocktakeRow {
             .unwrap()
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
+        r.is_initial_stocktake = false
     })
 }
 
@@ -26,6 +27,19 @@ pub fn mock_stocktake_b() -> StocktakeRow {
             .unwrap()
             .and_hms_milli_opt(22, 15, 0, 0)
             .unwrap();
+        r.is_initial_stocktake = false
+    })
+}
+pub fn mock_stocktake_c() -> StocktakeRow {
+    inline_init(|r: &mut StocktakeRow| {
+        r.id = "stocktake_c".to_string();
+        r.store_id = "store_a".to_string();
+        r.stocktake_number = 11;
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 12, 14)
+            .unwrap()
+            .and_hms_milli_opt(12, 30, 0, 0)
+            .unwrap();
+        r.is_initial_stocktake = true
     })
 }
 
@@ -61,6 +75,7 @@ pub fn mock_stocktake_data() -> Vec<StocktakeRow> {
     vec![
         mock_stocktake_a(),
         mock_stocktake_b(),
+        mock_stocktake_c(),
         mock_stocktake_no_line_a(),
         mock_stocktake_no_line_b(),
     ]
