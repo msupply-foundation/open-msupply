@@ -181,7 +181,7 @@ export const InboundLineEdit = ({
           />
         }
         height={600}
-        width={1024}
+        width={1200}
         enableAutocomplete /* Required for previously entered batches to be remembered and suggested in future shipments */
       >
         {isLoading ? (

@@ -118,9 +118,9 @@ export const QuantityTableComponent = ({
 
   if (displayInDoses) {
     columnDefinitions.push({
-      key: 'doses-per-pack',
+      key: 'dosesPerPack',
       label: `${t('label.doses-per')} ${itemUnitName}`,
-      width: 100,
+      width: 120,
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.item?.doses,
     });
@@ -135,34 +135,46 @@ export const QuantityTableComponent = ({
     [
       'numberOfPacks',
       {
-        label: getColumnLabelWithPackOrUnit({
-          t,
-          displayInDoses,
-          displayInPack: true,
-          itemUnit: item?.unitName,
-          columnLabel: t('label.received'),
-        }),
+        label: 'label.packs',
         Cell: NumberOfPacksCell,
         width: 100,
         setter: updateDraftLine,
       },
-    ],
-    [
-      'unitQuantity',
-      {
-        label: getColumnLabelWithPackOrUnit({
-          t,
-          displayInDoses,
-          itemUnit: item?.unitName,
-          columnLabel: t('label.received'),
-        }),
-        accessor: ({ rowData }) => {
-          const total = rowData.numberOfPacks * rowData.packSize;
-          return displayInDoses ? total * rowData.item.doses : total;
-        },
-      },
     ]
   );
+
+  if (displayInDoses) {
+    columnDefinitions.push({
+      key: 'unitsPerPack',
+      label: getColumnLabelWithPackOrUnit({
+        t,
+        displayInDoses,
+        displayInPack: true,
+        itemUnit: item?.unitName,
+      }),
+      width: 100,
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => {
+        return rowData.numberOfPacks * rowData.packSize;
+      },
+    });
+  }
+
+  columnDefinitions.push([
+    'unitQuantity',
+    {
+      label: getColumnLabelWithPackOrUnit({
+        t,
+        displayInDoses,
+        itemUnit: item?.unitName,
+      }),
+      width: 100,
+      accessor: ({ rowData }) => {
+        const total = rowData.numberOfPacks * rowData.packSize;
+        return displayInDoses ? total * rowData.item.doses : total;
+      },
+    },
+  ]);
 
   const columns = useColumns<DraftInboundLine>(columnDefinitions, {}, [
     updateDraftLine,
@@ -176,7 +188,6 @@ export const QuantityTableComponent = ({
       isDisabled={isDisabled}
       columns={columns}
       data={lines}
-      noDataMessage="Add a new line"
       dense
     />
   );
@@ -304,7 +315,6 @@ export const PricingTableComponent = ({
       isDisabled={isDisabled}
       columns={columns}
       data={lines}
-      noDataMessage="Add a new line"
       dense
     />
   );

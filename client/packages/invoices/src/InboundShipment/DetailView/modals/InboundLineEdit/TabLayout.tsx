@@ -35,7 +35,7 @@ enum Tabs {
   Location = 'Location',
 }
 
-export function TabLayout({
+export const TabLayout = ({
   addDraftLine,
   draftLines,
   isDisabled,
@@ -43,7 +43,7 @@ export function TabLayout({
   currency,
   isExternalSupplier,
   item,
-}: TabLayoutProps) {
+}: TabLayoutProps) => {
   const t = useTranslation();
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
   const isMediumScreen = useIsMediumScreen();
@@ -135,4 +135,4 @@ export function TabLayout({
       </TableContainer>
     </TabContext>
   );
-}
+};

@@ -206,7 +206,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
     );
     if (displayInDoses) {
       columnDefinitions.push({
-        key: 'doses-per-pack',
+        key: 'dosesPerPack',
         label: `${t('label.doses-per')} ${itemUnitName}`,
         width: 80,
         accessor: ({ rowData }) => rowData.item?.doses,

@@ -236,15 +236,16 @@ const getNumberColumnLabel = ({
     ? itemUnit.charAt(0).toUpperCase() + itemUnit.slice(1)
     : t('label.units');
   const label = columnLabel ?? '';
-  const translationWithUnit = `${capitalisedItemUnit} ${label}`;
+  const unitTranslation = `${capitalisedItemUnit} ${label}`;
+  const packTranslation = `${t('label.packs')} ${label}`;
 
   if (displayInDoses) {
-    return displayInPack ? translationWithUnit : `${t('label.doses')} ${label}`;
+    return displayInPack ? unitTranslation : `${t('label.doses')} ${label}`;
   }
 
   if (displayInPack) {
-    return `${t('label.packs')} ${label}`;
+    return packTranslation;
   }
 
-  return translationWithUnit;
+  return unitTranslation;
 };
