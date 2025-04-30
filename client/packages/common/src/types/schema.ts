@@ -3554,6 +3554,7 @@ export type InsertStocktakeInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   expiresBefore?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  isInitialStocktake: Scalars['Boolean']['input'];
   isLocked?: InputMaybe<Scalars['Boolean']['input']>;
   itemsHaveStock?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<NullableStringUpdate>;

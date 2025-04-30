@@ -25,6 +25,7 @@ pub struct InsertInput {
     pub location: Option<NullableUpdateInput<String>>,
     pub items_have_stock: Option<bool>,
     pub expires_before: Option<NaiveDate>,
+    pub is_initial_stocktake: bool,
 }
 
 #[derive(Union)]
@@ -100,6 +101,7 @@ impl InsertInput {
             master_list_id,
             items_have_stock,
             expires_before,
+            is_initial_stocktake,
         } = self;
 
         ServiceInput {
@@ -114,6 +116,7 @@ impl InsertInput {
             master_list_id,
             items_have_stock,
             expires_before,
+            is_initial_stocktake,
         }
     }
 }
@@ -191,7 +194,8 @@ mod test {
                     location: None,
                     master_list_id: None,
                     items_have_stock: None,
-                    expires_before: None
+                    expires_before: None,
+                    is_initial_stocktake: false,
                 }
             );
             // StocktakeNode result is checked in queries

@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use chrono::{NaiveDate, Utc};
 use repository::{
     DateFilter, EqualFilter, ItemRowRepository, ItemType, MasterListLineFilter,
@@ -25,6 +27,7 @@ pub fn generate(
         master_list_id,
         items_have_stock,
         expires_before,
+        is_initial_stocktake,
     }: InsertStocktake,
 ) -> Result<(StocktakeRow, Vec<StocktakeLineRow>), RepositoryError> {
     let stocktake_number = next_number(connection, &NumberRowType::Stocktake, store_id)?;
@@ -56,11 +59,18 @@ pub fn generate(
         }
         None => Vec::new(),
     };
+
+    let initial_stocktake_lines = match is_initial_stocktake {
+        true => generate_lines_initial_stocktake(connection, store_id, &id)?,
+        false => Vec::new(),
+    };
+
     let lines = [
         master_list_lines,
         location_lines,
         items_have_stock_lines,
         expiring_items_lines,
+        initial_stocktake_lines,
     ]
     .concat();
 
@@ -89,6 +99,7 @@ pub fn generate(
             inventory_reduction_id: None,
             counted_by: None,
             verified_by: None,
+            is_initial_stocktake: false,
         },
         lines,
     ))
@@ -252,6 +263,50 @@ pub fn generate_lines_from_location(
             }
         })
         .collect();
+    Ok(result)
+}
+
+pub fn generate_lines_initial_stocktake(
+    connection: &StorageConnection,
+    _store_id: &str,
+    stocktake_id: &str,
+) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
+    let item_ids: HashSet<String> = MasterListLineRepository::new(connection)
+        .query_by_filter(MasterListLineFilter::new().item_type(ItemType::Stock.equal_to()))?
+        .into_iter()
+        .map(|r| r.item_id)
+        .collect();
+
+    let mut result = Vec::<StocktakeLineRow>::new();
+
+    item_ids.iter().for_each(|item_id| {
+        let item_name = ItemRowRepository::new(connection)
+            .find_active_by_id(item_id)
+            .unwrap()
+            .unwrap()
+            .name;
+
+        result.push(StocktakeLineRow {
+            id: uuid(),
+            stocktake_id: stocktake_id.to_string(),
+            snapshot_number_of_packs: 0.0,
+            item_link_id: item_id.to_string(),
+            item_name,
+            location_id: None,
+            batch: None,
+            expiry_date: None,
+            note: None,
+            stock_line_id: None,
+            pack_size: None,
+            cost_price_per_pack: None,
+            sell_price_per_pack: None,
+            comment: None,
+            counted_number_of_packs: None,
+            inventory_adjustment_reason_id: None,
+            item_variant_id: None,
+        })
+    });
+
     Ok(result)
 }
 

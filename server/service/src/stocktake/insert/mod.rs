@@ -24,6 +24,7 @@ pub struct InsertStocktake {
     pub location: Option<NullableUpdate<String>>,
     pub items_have_stock: Option<bool>,
     pub expires_before: Option<NaiveDate>,
+    pub is_initial_stocktake: bool,
 }
 
 #[derive(Debug, PartialEq)]
@@ -149,6 +150,7 @@ mod test {
                     master_list_id: None,
                     items_have_stock: None,
                     expires_before: None,
+                    is_initial_stocktake: false,
                 },
             )
             .unwrap();
@@ -205,6 +207,7 @@ mod test {
                 master_list_id: Some("invalid".to_string()),
                 items_have_stock: None,
                 expires_before: None,
+                is_initial_stocktake: false,
             },
         );
         assert!(invalid_result.is_err());
@@ -231,6 +234,7 @@ mod test {
                     master_list_id: Some(master_list_id.clone()),
                     items_have_stock: None,
                     expires_before: None,
+                    is_initial_stocktake: false,
                 },
             )
             .unwrap();
@@ -282,6 +286,7 @@ mod test {
                     master_list_id: Some(master_list_id.clone()),
                     items_have_stock: None,
                     expires_before: None,
+                    is_initial_stocktake: false,
                 },
             )
             .unwrap();
@@ -333,6 +338,7 @@ mod test {
                     master_list_id: None,
                     items_have_stock: None,
                     expires_before: None,
+                    is_initial_stocktake: false,
                 },
             )
             .unwrap();
@@ -374,6 +380,7 @@ mod test {
                     master_list_id: None,
                     items_have_stock: None,
                     expires_before: None,
+                    is_initial_stocktake: false,
                 },
             )
             .unwrap();
@@ -463,6 +470,7 @@ mod test {
                     master_list_id: None,
                     items_have_stock: None,
                     expires_before: None,
+                    is_initial_stocktake: false,
                 },
             )
             .unwrap();
@@ -489,6 +497,7 @@ mod test {
                     master_list_id: None,
                     items_have_stock: Some(true),
                     expires_before: None,
+                    is_initial_stocktake: false,
                 },
             )
             .unwrap();
@@ -527,6 +536,7 @@ mod test {
                     master_list_id: None,
                     items_have_stock: None,
                     expires_before: Some(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap()),
+                    is_initial_stocktake: false,
                 },
             )
             .unwrap();
@@ -556,6 +566,7 @@ mod test {
                     master_list_id: None,
                     items_have_stock: None,
                     expires_before: Some(NaiveDate::from_ymd_opt(2020, 4, 22).unwrap()),
+                    is_initial_stocktake: false,
                 },
             )
             .unwrap();
