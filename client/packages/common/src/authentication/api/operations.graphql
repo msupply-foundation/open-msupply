@@ -148,13 +148,6 @@ query permissions($storeId: String!) {
   }
 }
 
-query preferences($storeId: String!) {
-  preferences(storeId: $storeId) {
-    showContactTracing
-    displayPopulationBasedForecasting
-  }
-}
-
 fragment UpdateUser on UpdateUserNode {
   lastSuccessfulSync
 }

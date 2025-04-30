@@ -5897,6 +5897,10 @@ export type PluginInfoNode = {
 export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
   key: PreferenceKey;
+  /**
+   * WARNING: Type loss - holds any kind of pref value (for edit UI).
+   * Use the PreferencesNode to load the strictly typed value.
+   */
   value: Scalars['JSON']['output'];
   valueType: PreferenceValueNodeType;
 };
