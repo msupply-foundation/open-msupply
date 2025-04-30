@@ -15,7 +15,7 @@ export const EditPreference = ({
   update,
 }: {
   preference: PreferenceDescriptionNode;
-  update: (input: Partial<UpsertPreferencesInput>) => void;
+  update: (input: UpsertPreferencesInput[keyof UpsertPreferencesInput]) => void;
 }) => {
   const t = useTranslation();
 
@@ -33,7 +33,7 @@ export const EditPreference = ({
           checked={value}
           onChange={(_, checked) => {
             setValue(checked);
-            update({ [preference.key]: checked });
+            update(checked);
           }}
         />
       );

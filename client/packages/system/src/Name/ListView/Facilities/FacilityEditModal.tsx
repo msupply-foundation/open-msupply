@@ -21,6 +21,7 @@ import {
   DraftProperties,
   useDraftFacilityProperties,
 } from './useDraftFacilityProperties';
+import { EditStorePreferences } from './EditStorePreferences';
 
 interface FacilityEditModalProps {
   nameId: string;
@@ -122,6 +123,7 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
             />
           </Box>
           <ModalTabs
+            storeId={data.store?.id}
             propertyConfigs={properties ?? []}
             draftProperties={draftProperties}
             updateProperty={patch =>
@@ -136,21 +138,26 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
 
 export enum Tabs {
   Properties = 'Properties',
+  Preferences = 'Preferences',
 }
 
 interface ModalTabProps {
+  storeId: string | undefined;
   propertyConfigs: NamePropertyNode[];
   draftProperties: DraftProperties;
   updateProperty: (update: DraftProperties) => void;
 }
 
 const ModalTabs = ({
+  storeId,
   propertyConfigs,
   draftProperties,
   updateProperty,
 }: ModalTabProps) => {
   const t = useTranslation();
-  const [currentTab, setCurrentTab] = useState(Tabs.Properties);
+  const [currentTab, setCurrentTab] = useState(
+    storeId ? Tabs.Preferences : Tabs.Properties
+  );
 
   return (
     <TabContext value={currentTab}>
@@ -159,8 +166,16 @@ const ModalTabs = ({
         centered
         onChange={(_, v) => setCurrentTab(v)}
       >
+        {storeId && (
+          <Tab value={Tabs.Preferences} label={t('label.preferences')} />
+        )}
         <Tab value={Tabs.Properties} label={t('label.properties')} />
       </TabList>
+      {storeId && (
+        <TabPanel value={Tabs.Preferences}>
+          <EditStorePreferences storeId={storeId} />
+        </TabPanel>
+      )}
       <TabPanel value={Tabs.Properties}>
         <FacilityProperties
           propertyConfigs={propertyConfigs}
