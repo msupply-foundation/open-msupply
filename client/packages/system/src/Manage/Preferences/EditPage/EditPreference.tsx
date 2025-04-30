@@ -1,66 +1,49 @@
 import React from 'react';
 import {
-  Box,
-  DetailPanelSection,
   noOtherVariants,
   NothingHere,
   PreferenceValueNodeType,
   Switch,
-  useTranslation,
   isBoolean,
   isNumber,
-  PreferencesNode,
   UpsertPreferencesInput,
+  PreferenceDescriptionNode,
 } from '@openmsupply-client/common';
-import { ClientPrefKey } from './getPrefKey';
+import { getPrefKey } from './getPrefKey';
 
 export const EditPreference = ({
-  valueType,
-  clientKey,
-  value,
+  preference,
   update,
 }: {
-  valueType: PreferenceValueNodeType;
-  clientKey: ClientPrefKey;
-  value: PreferencesNode[ClientPrefKey];
+  preference: PreferenceDescriptionNode;
   update: (input: Partial<UpsertPreferencesInput>) => void;
 }) => {
-  const t = useTranslation();
+  const clientKey = getPrefKey(preference.key);
+  if (!clientKey) {
+    return 'uh oh';
+  }
 
-  const getRenderer = () => {
-    switch (valueType) {
-      case PreferenceValueNodeType.Boolean:
-        if (!isBoolean(value)) {
-          return <NothingHere />;
-        }
-        return (
-          <Switch
-            checked={value}
-            onChange={(_, checked) => update({ [clientKey]: checked })}
-          />
-        );
+  switch (preference.valueType) {
+    case PreferenceValueNodeType.Boolean:
+      if (!isBoolean(preference.value)) {
+        return <NothingHere />;
+      }
+      return (
+        <Switch
+          checked={preference.value}
+          onChange={(_, checked) => update({ [clientKey]: checked })}
+        />
+      );
 
-      case PreferenceValueNodeType.Integer:
-        if (!isNumber(value)) {
-          return <NothingHere />;
-        }
-        // Adding NumericTextInput here would currently get a type error,
-        // because there are no editPreference inputs that accept a number
-        return <>To be implemented</>;
+    case PreferenceValueNodeType.Integer:
+      if (!isNumber(preference.value)) {
+        return <NothingHere />;
+      }
+      // Adding NumericTextInput here would currently get a type error,
+      // because there are no editPreference inputs that accept a number
+      return <>To be implemented</>;
 
-      default:
-        noOtherVariants(valueType);
-    }
-  };
-
-  return (
-    <Box>
-      <DetailPanelSection title={t('label.global-preference')}>
-        <Box sx={{ backgroundColor: 'white', padding: 1, borderRadius: 1 }}>
-          {getRenderer()}
-        </Box>
-      </DetailPanelSection>
-      <Box sx={{ height: 10 }} />
-    </Box>
-  );
+    default:
+      noOtherVariants(preference.valueType);
+  }
 };

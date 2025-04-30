@@ -1,23 +1,20 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
+  Box,
+  InputWithLabelRow,
   LocaleKey,
+  NothingHere,
   PreferenceNodeType,
   UpsertPreferencesInput,
-  useBreadcrumbs,
   useNotification,
-  useParams,
   useTranslation,
 } from '@openmsupply-client/common';
-import { LineEditBase } from './LineEditBase';
 import { useAdminPrefsList } from '../api';
 import { EditPreference } from './EditPreference';
 import { useEditPreference } from '../api/useEditPreference';
-import { getPrefKey } from './getPrefKey';
 
 export const EditPreferencesPage = () => {
   const t = useTranslation();
-  const { key } = useParams();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { error } = useNotification();
 
   const { data: preferences } = useAdminPrefsList(PreferenceNodeType.Global);
@@ -32,31 +29,23 @@ export const EditPreferencesPage = () => {
     }
   };
 
-  useEffect(() => {
-    if (key)
-      setCustomBreadcrumbs({
-        1: t(`preference.${key}` as LocaleKey),
-      });
-  }, [key]);
-
-  const selectedPref = preferences?.find(d => key === d.key);
-
-  const clientKey = getPrefKey(selectedPref?.key ?? '');
+  if (!preferences?.length) return <NothingHere />;
 
   return (
-    <LineEditBase currentKey={key ?? ''} prefs={preferences ?? []}>
-      {selectedPref &&
-        (!clientKey ? (
-          t('error.something-wrong')
-        ) : (
-          <EditPreference
-            key={selectedPref.key}
-            valueType={selectedPref.valueType}
-            clientKey={clientKey}
-            value={selectedPref.value}
-            update={update}
+    <Box display="flex" justifyContent="center" width="100%" marginTop={2}>
+      <Box width="600px">
+        {preferences.map(pref => (
+          <InputWithLabelRow
+            key={pref.key}
+            label={t(`preference.${pref.key}` as LocaleKey)}
+            Input={<EditPreference preference={pref} update={update} />}
+            labelWidth="200px"
+            sx={{
+              justifyContent: 'center',
+            }}
           />
         ))}
-    </LineEditBase>
+      </Box>
+    </Box>
   );
 };
