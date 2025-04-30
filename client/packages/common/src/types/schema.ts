@@ -5896,10 +5896,14 @@ export type PluginInfoNode = {
 
 export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
-  key: Scalars['String']['output'];
+  key: PreferenceKey;
   value: Scalars['JSON']['output'];
   valueType: PreferenceValueNodeType;
 };
+
+export enum PreferenceKey {
+  ShowContactTracing = 'showContactTracing',
+}
 
 export type PreferenceMutations = {
   __typename: 'PreferenceMutations';

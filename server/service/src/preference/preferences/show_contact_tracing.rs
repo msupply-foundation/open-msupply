@@ -1,12 +1,12 @@
-use crate::preference::{Preference, PreferenceType, PreferenceValueType};
+use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
 pub struct ShowContactTracing;
 
 impl Preference for ShowContactTracing {
     type Value = bool;
 
-    fn key(&self) -> &'static str {
-        "show_contact_tracing"
+    fn key(&self) -> PrefKey {
+        PrefKey::ShowContactTracing
     }
 
     fn preference_type(&self) -> PreferenceType {

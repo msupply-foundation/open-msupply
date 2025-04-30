@@ -1,8 +1,8 @@
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{
-    preferences::PreferenceRegistry, Preference, PreferenceDescription, PreferenceType,
-    PreferenceValueType,
+    get_preference_registry, preferences::PreferenceRegistry, Preference, PreferenceDescription,
+    PreferenceType, PreferenceValueType,
 };
 
 pub struct PreferencesNode {
@@ -43,8 +43,8 @@ pub struct PreferenceDescriptionNode {
 
 #[Object]
 impl PreferenceDescriptionNode {
-    pub async fn key(&self) -> String {
-        self.pref.key.to_string()
+    pub async fn key(&self) -> PreferenceKey {
+        PreferenceKey::from_domain(&self.pref.key)
     }
 
     pub async fn value_type(&self) -> PreferenceValueNodeType {
@@ -53,6 +53,21 @@ impl PreferenceDescriptionNode {
 
     pub async fn value(&self) -> &serde_json::Value {
         &self.pref.value
+    }
+}
+
+#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
+#[graphql(rename_items = "camelCase")]
+pub enum PreferenceKey {
+    // These keys (once camelCased) should match fields of UpsertPreferencesInput
+    ShowContactTracing,
+}
+
+impl PreferenceKey {
+    pub fn from_domain(pref_key: &PrefKey) -> Self {
+        match pref_key {
+            PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
+        }
     }
 }
 

@@ -12,7 +12,7 @@ export type AdminPreferenceListQuery = {
   __typename: 'Queries';
   preferenceDescriptions: Array<{
     __typename: 'PreferenceDescriptionNode';
-    key: string;
+    key: Types.PreferenceKey;
     valueType: Types.PreferenceValueNodeType;
     value: any;
   }>;

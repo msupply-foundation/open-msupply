@@ -9,7 +9,6 @@ import {
   UpsertPreferencesInput,
   PreferenceDescriptionNode,
 } from '@openmsupply-client/common';
-import { getPrefKey } from './getPrefKey';
 
 export const EditPreference = ({
   preference,
@@ -22,11 +21,6 @@ export const EditPreference = ({
   // is invalidated - use local state for fast UI change
   const [value, setValue] = useState(preference.value);
 
-  const clientKey = getPrefKey(preference.key);
-  if (!clientKey) {
-    return 'uh oh';
-  }
-
   switch (preference.valueType) {
     case PreferenceValueNodeType.Boolean:
       if (!isBoolean(value)) {
@@ -37,7 +31,7 @@ export const EditPreference = ({
           checked={value}
           onChange={(_, checked) => {
             setValue(checked);
-            update({ [clientKey]: checked });
+            update({ [preference.key]: checked });
           }}
         />
       );

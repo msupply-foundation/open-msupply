@@ -65,11 +65,11 @@ fn preference_descriptions(
             let value = pref.load(connection, store_id.clone())?;
 
             let value = serde_json::to_value(value).map_err(|e| {
-                PreferenceError::ConversionError(pref.key().to_string(), e.to_string())
+                PreferenceError::ConversionError(pref.key_str().to_string(), e.to_string())
             })?;
 
             Ok(PreferenceDescription {
-                key: pref.key().to_string(),
+                key: pref.key(),
                 value_type: pref.value_type(),
                 value,
             })
