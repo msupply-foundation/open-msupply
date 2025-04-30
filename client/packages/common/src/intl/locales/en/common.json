@@ -1,6 +1,6 @@
 {
-  "admin": "Admin",
   "app": "mSupply",
+  "admin": "Admin",
   "app.initialise": "Initialise",
   "app.login": "Login",
   "approval-status.approved": "Approved",
