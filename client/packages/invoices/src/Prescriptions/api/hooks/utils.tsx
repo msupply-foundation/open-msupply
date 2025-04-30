@@ -534,7 +534,7 @@ export const assignPrescribedQuantity = (
   let prescribedQuantityAssigned = false;
 
   newDraftPrescriptionLines.forEach(stockOutLine => {
-    if (stockOutLine.numberOfPacks > 0 && !prescribedQuantityAssigned) {
+    if (stockOutLine.numberOfPacks >= 0 && !prescribedQuantityAssigned) {
       stockOutLine.prescribedQuantity = prescribedQuantity;
       prescribedQuantityAssigned = true;
     } else {
