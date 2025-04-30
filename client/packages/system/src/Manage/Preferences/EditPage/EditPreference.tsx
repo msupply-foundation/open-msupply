@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   noOtherVariants,
   NothingHere,
@@ -18,6 +18,10 @@ export const EditPreference = ({
   preference: PreferenceDescriptionNode;
   update: (input: Partial<UpsertPreferencesInput>) => void;
 }) => {
+  // preference.value only updates after mutation completes and cache
+  // is invalidated - use local state for fast UI change
+  const [value, setValue] = useState(preference.value);
+
   const clientKey = getPrefKey(preference.key);
   if (!clientKey) {
     return 'uh oh';
@@ -25,13 +29,16 @@ export const EditPreference = ({
 
   switch (preference.valueType) {
     case PreferenceValueNodeType.Boolean:
-      if (!isBoolean(preference.value)) {
+      if (!isBoolean(value)) {
         return <NothingHere />;
       }
       return (
         <Switch
-          checked={preference.value}
-          onChange={(_, checked) => update({ [clientKey]: checked })}
+          checked={value}
+          onChange={(_, checked) => {
+            setValue(checked);
+            update({ [clientKey]: checked });
+          }}
         />
       );
 

@@ -5,31 +5,17 @@ import {
   LocaleKey,
   NothingHere,
   PreferenceNodeType,
-  UpsertPreferencesInput,
-  useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useAdminPrefsList } from '../api';
 import { EditPreference } from './EditPreference';
-import { useEditPreference } from '../api/useEditPreference';
+import { useEditPreferences } from '../api/useEditPreference';
 
 export const EditPreferencesPage = () => {
   const t = useTranslation();
-  const { error } = useNotification();
 
-  const { data: preferences } = useAdminPrefsList(PreferenceNodeType.Global);
-  const { mutateAsync } = useEditPreference();
+  const { update, preferences } = useEditPreferences(PreferenceNodeType.Global);
 
-  const update = async (input: Partial<UpsertPreferencesInput>) => {
-    try {
-      await mutateAsync(input);
-    } catch (err) {
-      console.error('Error updating preferences:', err);
-      error(t('error.something-wrong'))();
-    }
-  };
-
-  if (!preferences?.length) return <NothingHere />;
+  if (!preferences.length) return <NothingHere />;
 
   return (
     <Box display="flex" justifyContent="center" width="100%" marginTop={2}>
