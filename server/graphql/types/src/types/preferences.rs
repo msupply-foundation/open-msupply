@@ -61,7 +61,7 @@ impl PreferenceDescriptionNode {
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
 #[graphql(rename_items = "camelCase")]
 pub enum PreferenceKey {
-    // These keys (once camelCased) should match fields of UpsertPreferencesInput
+    // These keys (once camelCased) should match fields of PreferencesNode
     ShowContactTracing,
 }
 
