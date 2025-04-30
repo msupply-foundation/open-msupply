@@ -9,12 +9,10 @@ import { StocktakeLineFragment } from './../../../api';
 //   - isCreated: Indicates whether the line is a new line. Determines the mutation type when saved.
 //   - isUpdated: Indicates whether the line has been updated. Determines the
 //     mutation type when saved.
-//   - countedNumberOfUnits: The number of units counted for this line.
 export type DraftStocktakeLine = Omit<StocktakeLineFragment, '__typename'> & {
   countThisLine: boolean;
   isCreated?: boolean;
   isUpdated?: boolean;
-  countedNumberOfUnits?: number;
 };
 
 export const DraftLine = {

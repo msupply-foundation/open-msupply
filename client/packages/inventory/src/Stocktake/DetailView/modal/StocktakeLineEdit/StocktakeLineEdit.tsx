@@ -175,7 +175,6 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                           isDisabled={isDisabled}
                           batches={reversedDraftLines}
                           update={update}
-                          item={currentItem}
                         />
                       </StyledTabContainer>
                     </StyledTabPanel>
