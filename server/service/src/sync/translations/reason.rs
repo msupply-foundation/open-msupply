@@ -1,7 +1,6 @@
 use repository::{
-    reason_option_row::{ReasonOptionRow, ReasonOptionType},
-    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowDelete, InventoryAdjustmentType,
-    ReturnReasonRow, StorageConnection, SyncBufferRow,
+    reason_option_row::{ReasonOptionRow, ReasonOptionRowDelete, ReasonOptionType},
+    StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -57,23 +56,24 @@ impl SyncTranslation for ReasonTranslation {
 
         let result = match data.r#type {
             LegacyOptionsType::PositiveInventoryAdjustment => {
-                PullTranslateResult::upsert(InventoryAdjustmentReasonRow {
+                PullTranslateResult::upsert(ReasonOptionRow {
                     id: data.id.to_string(),
-                    r#type: InventoryAdjustmentType::Positive,
+                    r#type: ReasonOptionType::PositiveInventoryAdjustment,
                     is_active: data.is_active,
                     reason: data.reason,
                 })
             }
             LegacyOptionsType::NegativeInventoryAdjustment => {
-                PullTranslateResult::upsert(InventoryAdjustmentReasonRow {
+                PullTranslateResult::upsert(ReasonOptionRow {
                     id: data.id.to_string(),
-                    r#type: InventoryAdjustmentType::Negative,
+                    r#type: ReasonOptionType::NegativeInventoryAdjustment,
                     is_active: data.is_active,
                     reason: data.reason,
                 })
             }
-            LegacyOptionsType::ReturnReason => PullTranslateResult::upsert(ReturnReasonRow {
+            LegacyOptionsType::ReturnReason => PullTranslateResult::upsert(ReasonOptionRow {
                 id: data.id.to_string(),
+                r#type: ReasonOptionType::ReturnReason,
                 is_active: data.is_active,
                 reason: data.reason,
             }),
@@ -96,9 +96,9 @@ impl SyncTranslation for ReasonTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(
-            InventoryAdjustmentReasonRowDelete(sync_record.record_id.clone()),
-        ))
+        Ok(PullTranslateResult::delete(ReasonOptionRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 }
 
