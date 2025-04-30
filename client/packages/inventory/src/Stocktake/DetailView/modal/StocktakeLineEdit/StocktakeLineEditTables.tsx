@@ -309,7 +309,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         cellProps: { decimalLimit: 2, min: 0 },
         setter: patch => {
           let countedNumberOfPacks = undefined;
-          if (patch.countedNumberOfUnits) {
+          if (patch.countedNumberOfUnits !== undefined) {
             const total = patch.countedNumberOfUnits / (patch?.packSize ?? 1);
             countedNumberOfPacks = displayInDoses
               ? total / (patch?.item?.doses ?? 1)
@@ -320,7 +320,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
           // should remove inventoryAdjustmentReason, otherwise could have a
           // reason on a line with no adjustments
           const inventoryAdjustmentReason =
-            !countedNumberOfPacks ||
+            countedNumberOfPacks === undefined ||
             patch.snapshotNumberOfPacks == countedNumberOfPacks
               ? null
               : patch.inventoryAdjustmentReason;
@@ -333,7 +333,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
           });
         },
         accessor: ({ rowData }) => {
-          if (rowData.countedNumberOfPacks) {
+          if (rowData.countedNumberOfPacks != null) {
             const total =
               rowData.countedNumberOfPacks * (rowData?.packSize ?? 1);
             return displayInDoses ? total * (rowData?.item?.doses ?? 1) : total;
