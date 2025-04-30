@@ -866,6 +866,7 @@
   "label.indicators": "Indicators",
   "label.initial-stock-on-hand": "Initial SOH",
   "label.initialise-store-properties": "Initialise store properties for GAPS",
+  "label.initialise-store-properties-population-based-forecasting": "Initialise store properties for population based forecasting",
   "label.initialised": "Initialised",
   "label.installation-date": "Installation date",
   "label.insurance": "Insurance",

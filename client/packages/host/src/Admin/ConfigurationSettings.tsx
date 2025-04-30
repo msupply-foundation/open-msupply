@@ -5,33 +5,51 @@ import { useName } from '@openmsupply-client/system';
 
 import { Setting } from './Setting';
 
-import { useConfigureNameProperties } from '../api/hooks/settings/useConfigureNameProperties';
+import {
+  useConfigureNameProperties,
+  useCheckNamePropertyStatus,
+  PropertyType,
+} from '../api/hooks/settings/useConfigureNameProperties';
 
 export const ConfigurationSettings = () => {
-  const { mutateAsync, isLoading } = useConfigureNameProperties();
   const t = useTranslation();
 
-  const configure = async () => {
-    await mutateAsync();
+  const { mutateAsync, isLoading } = useConfigureNameProperties();
+  const { isLoading: dataLoading } = useName.document.properties();
+  const { gapsConfigured, populationConfigured } = useCheckNamePropertyStatus();
+
+  const handleClick = (propertyType: PropertyType) => async () => {
+    await mutateAsync(propertyType);
   };
 
-  const { data, isLoading: dataLoading } = useName.document.properties();
-
-  const propertiesAlreadyConfigured = !!data?.length;
-
   return (
-    <Setting
-      title={t('label.initialise-store-properties')}
-      component={
-        <BaseButton
-          onClick={configure}
-          disabled={dataLoading || isLoading || propertiesAlreadyConfigured}
-        >
-          {propertiesAlreadyConfigured
-            ? t('label.initialised')
-            : t('button.initialise')}
-        </BaseButton>
-      }
-    />
+    <>
+      <Setting
+        title={t('label.initialise-store-properties')}
+        component={
+          <BaseButton
+            onClick={handleClick('gaps')}
+            disabled={dataLoading || isLoading || gapsConfigured}
+          >
+            {gapsConfigured ? t('label.initialised') : t('button.initialise')}
+          </BaseButton>
+        }
+      />
+      <Setting
+        title={t(
+          'label.initialise-store-properties-population-based-forecasting'
+        )}
+        component={
+          <BaseButton
+            onClick={handleClick('population')}
+            disabled={dataLoading || isLoading || populationConfigured}
+          >
+            {populationConfigured
+              ? t('label.initialised')
+              : t('button.initialise')}
+          </BaseButton>
+        }
+      />
+    </>
   );
 };
