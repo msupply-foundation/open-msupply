@@ -283,12 +283,19 @@ impl SyncTranslation for InvoiceLineTranslation {
                 _ => None,
             },
             return_reason_id: match invoice.r#type {
-                InvoiceType::CustomerReturn | InvoiceType::SupplierReturn => option_id,
+                InvoiceType::CustomerReturn | InvoiceType::SupplierReturn => option_id.clone(),
                 _ => None,
             },
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
+            reason_option_id: match invoice.r#type {
+                InvoiceType::InventoryAddition
+                | InvoiceType::InventoryReduction
+                | InvoiceType::CustomerReturn
+                | InvoiceType::SupplierReturn => option_id,
+                _ => None,
+            },
         };
 
         let result = adjust_negative_values(result);
@@ -345,6 +352,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     foreign_currency_price_before_tax,
                     item_variant_id,
                     linked_invoice_id,
+                    reason_option_id,
                 },
             item_row,
             invoice_row,

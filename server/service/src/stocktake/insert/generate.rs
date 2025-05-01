@@ -147,6 +147,7 @@ pub fn generate_lines_from_master_list(
                 counted_number_of_packs: None,
                 inventory_adjustment_reason_id: None,
                 item_variant_id: None,
+                reason_option_id: None,
             });
         } else {
             stock_lines.into_iter().for_each(|line| {
@@ -187,6 +188,7 @@ pub fn generate_lines_from_master_list(
                     counted_number_of_packs: None,
                     inventory_adjustment_reason_id: None,
                     item_variant_id,
+                    reason_option_id: None,
                 });
             });
         }
@@ -249,6 +251,7 @@ pub fn generate_lines_from_location(
                 counted_number_of_packs: None,
                 inventory_adjustment_reason_id: None,
                 item_variant_id,
+                reason_option_id: None,
             }
         })
         .collect();
@@ -307,6 +310,7 @@ pub fn generate_lines_with_stock(
                 counted_number_of_packs: None,
                 inventory_adjustment_reason_id: None,
                 item_variant_id,
+                reason_option_id: None,
             }
         })
         .collect();
@@ -366,6 +370,7 @@ pub fn generate_lines_expiring_before(
                 inventory_adjustment_reason_id: None,
                 item_name: line.item_row.name,
                 item_variant_id,
+                reason_option_id: None,
             }
         })
         .collect();

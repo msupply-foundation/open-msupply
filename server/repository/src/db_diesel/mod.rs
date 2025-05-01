@@ -245,6 +245,7 @@ pub use program_indicator_row::*;
 pub use program_requisition::*;
 pub use property_row::*;
 pub use reason_option::*;
+pub use reason_option_row::*;
 pub use replenishment::*;
 pub use report::*;
 pub use report_query::*;
