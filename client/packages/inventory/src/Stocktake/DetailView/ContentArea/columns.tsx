@@ -17,7 +17,8 @@ import {
   ColumnDescription,
   UNDEFINED_STRING_VALUE,
   getCommentPopoverColumn,
-  usePreferences,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
@@ -66,7 +67,9 @@ export const useStocktakeColumns = ({
 >[] => {
   const t = useTranslation();
   const { getError } = useStocktakeLineErrorContext();
-  const { data: preferences } = usePreferences();
+  const { data: preferences } = usePreference(
+    PreferenceKey.DisplayVaccineInDoses
+  );
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const columns: ColumnDescription<

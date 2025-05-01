@@ -5906,6 +5906,7 @@ export type PreferenceDescriptionNode = {
 };
 
 export enum PreferenceKey {
+  DisplayVaccineInDoses = 'displayVaccineInDoses',
   ShowContactTracing = 'showContactTracing',
 }
 

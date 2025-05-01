@@ -69,12 +69,14 @@ impl PreferenceDescriptionNode {
 pub enum PreferenceKey {
     // These keys (once camelCased) should match fields of PreferencesNode
     ShowContactTracing,
+    DisplayVaccineInDoses,
 }
 
 impl PreferenceKey {
     pub fn from_domain(pref_key: &PrefKey) -> Self {
         match pref_key {
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
+            PrefKey::DisplayVaccineInDoses => PreferenceKey::ShowContactTracing,
         }
     }
 }
