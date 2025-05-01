@@ -2638,6 +2638,7 @@ export type FrontendPluginMetadataNode = {
 export type FullSyncStatusNode = {
   __typename: 'FullSyncStatusNode';
   error?: Maybe<SyncErrorNode>;
+  errorThreshold: Scalars['Int']['output'];
   integration?: Maybe<SyncStatusWithProgressNode>;
   isSyncing: Scalars['Boolean']['output'];
   lastSuccessfulSync?: Maybe<SyncStatusNode>;
@@ -2648,6 +2649,7 @@ export type FullSyncStatusNode = {
   push?: Maybe<SyncStatusWithProgressNode>;
   pushV6?: Maybe<SyncStatusWithProgressNode>;
   summary: SyncStatusNode;
+  warningThreshold: Scalars['Int']['output'];
 };
 
 export enum GenderType {
@@ -3630,6 +3632,7 @@ export type InsertVaccinationInput = {
   facilityNameId?: InputMaybe<Scalars['String']['input']>;
   given: Scalars['Boolean']['input'];
   id: Scalars['String']['input'];
+  itemId?: InputMaybe<Scalars['String']['input']>;
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
@@ -5597,6 +5600,11 @@ export type NumberNode = {
   number: Scalars['Int']['output'];
 };
 
+export type OkResponse = {
+  __typename: 'OkResponse';
+  ok: Scalars['Boolean']['output'];
+};
+
 export type OrderingTooManyItems = UpdateRequestRequisitionErrorInterface &
   UpdateResponseRequisitionErrorInterface & {
     __typename: 'OrderingTooManyItems';
@@ -5893,29 +5901,38 @@ export type PluginInfoNode = {
 
 export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
-  jsonSchema: Scalars['JSON']['output'];
-  key: Scalars['String']['output'];
-  uiSchema: Scalars['JSON']['output'];
+  key: PreferenceKey;
+  /**
+   * WARNING: Type loss - holds any kind of pref value (for edit UI).
+   * Use the PreferencesNode to load the strictly typed value.
+   */
+  value: Scalars['JSON']['output'];
+  valueType: PreferenceValueNodeType;
 };
+
+export enum PreferenceKey {
+  ShowContactTracing = 'showContactTracing',
+}
 
 export type PreferenceMutations = {
   __typename: 'PreferenceMutations';
-  upsertPreference: PreferenceNode;
+  upsertPreferences: OkResponse;
 };
 
-export type PreferenceMutationsUpsertPreferenceArgs = {
-  input: UpsertPreferenceInput;
+export type PreferenceMutationsUpsertPreferencesArgs = {
+  input: UpsertPreferencesInput;
   storeId: Scalars['String']['input'];
 };
 
-export type PreferenceNode = {
-  __typename: 'PreferenceNode';
-  id: Scalars['String']['output'];
-  key: Scalars['String']['output'];
-  storeId?: Maybe<Scalars['String']['output']>;
-  /** JSON serialized value */
-  value: Scalars['String']['output'];
-};
+export enum PreferenceNodeType {
+  Global = 'GLOBAL',
+  Store = 'STORE',
+}
+
+export enum PreferenceValueNodeType {
+  Boolean = 'BOOLEAN',
+  Integer = 'INTEGER',
+}
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
@@ -6251,7 +6268,6 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
-  availablePreferences: Array<PreferenceDescriptionNode>;
   barcodeByGtin: BarcodeResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
@@ -6346,6 +6362,9 @@ export type Queries = {
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
   pluginGraphqlQuery: Scalars['JSON']['output'];
+  /** The list of preferences and their current values (used for the admin/edit page) */
+  preferenceDescriptions: Array<PreferenceDescriptionNode>;
+  /** Returns the relevant set of preferences based on context (e.g. current store) */
   preferences: PreferencesNode;
   printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
@@ -6491,10 +6510,6 @@ export type QueriesAssetsArgs = {
 export type QueriesAuthTokenArgs = {
   password: Scalars['String']['input'];
   username: Scalars['String']['input'];
-};
-
-export type QueriesAvailablePreferencesArgs = {
-  storeId: Scalars['String']['input'];
 };
 
 export type QueriesBarcodeByGtinArgs = {
@@ -6803,6 +6818,11 @@ export type QueriesPluginDataArgs = {
 export type QueriesPluginGraphqlQueryArgs = {
   input: Scalars['JSON']['input'];
   pluginCode: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPreferenceDescriptionsArgs = {
+  prefType: PreferenceNodeType;
   storeId: Scalars['String']['input'];
 };
 
@@ -9476,6 +9496,7 @@ export type UpdateVaccinationInput = {
   facilityNameId?: InputMaybe<NullableStringUpdate>;
   given?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
+  itemId?: InputMaybe<NullableStringUpdate>;
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
   stockLineId?: InputMaybe<NullableStringUpdate>;
   updateTransactions?: InputMaybe<Scalars['Boolean']['input']>;
@@ -9572,11 +9593,8 @@ export type UpsertPackVariantResponse =
   | ItemVariantNode
   | UpsertItemVariantError;
 
-export type UpsertPreferenceInput = {
-  id: Scalars['String']['input'];
-  key: Scalars['String']['input'];
-  storeId?: InputMaybe<Scalars['String']['input']>;
-  value: Scalars['String']['input'];
+export type UpsertPreferencesInput = {
+  showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type UpsertVaccineCourseDoseInput = {
@@ -9764,9 +9782,11 @@ export type VaccinationNode = {
   facilityName?: Maybe<Scalars['String']['output']>;
   facilityNameId?: Maybe<Scalars['String']['output']>;
   given: Scalars['Boolean']['output'];
+  givenStoreId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   invoice?: Maybe<InvoiceNode>;
   invoiceId?: Maybe<Scalars['String']['output']>;
+  item?: Maybe<ItemNode>;
   notGivenReason?: Maybe<Scalars['String']['output']>;
   stockLine?: Maybe<StockLineNode>;
   vaccinationDate: Scalars['NaiveDate']['output'];

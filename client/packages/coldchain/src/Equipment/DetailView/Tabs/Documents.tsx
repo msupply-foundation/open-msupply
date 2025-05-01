@@ -1,10 +1,12 @@
 import React from 'react';
-import { Typography, Upload, useConfirmationModal } from '@common/components';
 import {
   Box,
   useNotification,
   useQueryClient,
   useTranslation,
+  Typography,
+  useConfirmationModal,
+  UploadFile,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { FileList } from '../../Components';
@@ -138,7 +140,7 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
       ></Box>
       <Container>
         <Heading text={t('heading.upload-cce-documents')} />
-        <Upload onUpload={onUpload} color="gray" />
+        <UploadFile onUpload={onUpload} color="gray" />
         <Box
           marginY={4}
           sx={theme => ({

@@ -3,12 +3,12 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
-    loader::{InvoiceByIdLoader, StockLineByIdLoader},
+    loader::{InvoiceByIdLoader, ItemLoader, StockLineByIdLoader},
     ContextExt,
 };
 use repository::{Vaccination, VaccinationRow};
 
-use crate::types::{ClinicianNode, InvoiceNode, StockLineNode};
+use crate::types::{ClinicianNode, InvoiceNode, ItemNode, StockLineNode};
 
 #[derive(PartialEq, Debug)]
 pub struct VaccinationNode {
@@ -40,6 +40,10 @@ impl VaccinationNode {
         &self.row().given
     }
 
+    pub async fn given_store_id(&self) -> &Option<String> {
+        &self.row().given_store_id
+    }
+
     pub async fn invoice_id(&self) -> &Option<String> {
         &self.row().invoice_id
     }
@@ -65,6 +69,19 @@ impl VaccinationNode {
             Some(name_row) => Some(name_row.name.clone()),
             None => self.row().facility_free_text.clone(),
         }
+    }
+
+    pub async fn item(&self, ctx: &Context<'_>) -> Result<Option<ItemNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
+
+        let item_id = match &self.vaccination.item_row {
+            None => return Ok(None),
+            Some(item) => item.id.clone(),
+        };
+
+        let result = loader.load_one(item_id).await?;
+
+        Ok(result.map(ItemNode::from_domain))
     }
 
     pub async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {

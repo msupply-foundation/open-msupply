@@ -110,7 +110,6 @@ export const DisplaySettings: React.FC = () => {
 
   return (
     <>
-      {' '}
       <Setting
         component={<LanguageMenu />}
         title={t('button.language')}

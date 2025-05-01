@@ -1,8 +1,8 @@
-query availablePreferences($storeId: String!) {
-  availablePreferences(storeId: $storeId) {
+query adminPreferenceList($storeId: String!, $prefType: PreferenceNodeType!) {
+  preferenceDescriptions(storeId: $storeId, prefType: $prefType) {
     key
-    jsonSchema
-    uiSchema
+    valueType
+    value
   }
 }
 
@@ -12,11 +12,11 @@ query preferences($storeId: String!) {
   }
 }
 
-mutation upsertPreference($storeId: String!, $input: UpsertPreferenceInput!) {
+mutation upsertPreferences($storeId: String!, $input: UpsertPreferencesInput!) {
   centralServer {
     preferences {
-      upsertPreference(storeId: $storeId, input: $input) {
-        id
+      upsertPreferences(storeId: $storeId, input: $input) {
+        ok
       }
     }
   }

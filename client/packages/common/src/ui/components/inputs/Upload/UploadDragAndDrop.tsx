@@ -1,31 +1,36 @@
-import React, { FC } from 'react';
+import React from 'react';
 import Dropzone, { Accept } from 'react-dropzone';
-import { useTranslation } from '@common/intl';
 import {
+  useTranslation,
   alpha,
+  Breakpoints,
   Paper,
   FileUploadIcon,
   Typography,
   BaseButton,
   ButtonWithIcon,
   LinkIcon,
-  useIsScreen,
+  useAppTheme,
+  useMediaQuery,
 } from '@openmsupply-client/common';
 
-export interface UploadProps {
+interface UploadDragAndDropProps {
   accept?: Accept;
   color?: 'primary' | 'secondary' | 'gray';
   maxSize?: number;
   onUpload: <T extends File>(files: T[]) => void;
 }
 
-export const Upload: FC<UploadProps> = ({
+export const UploadDragAndDrop = ({
   accept,
   color = 'secondary',
   onUpload,
-}) => {
+}: UploadDragAndDropProps) => {
   const t = useTranslation();
-  const isMobile = useIsScreen('sm');
+  const theme = useAppTheme();
+  const isExtraSmallScreen = useMediaQuery(
+    theme.breakpoints.down(Breakpoints.sm)
+  );
 
   return (
     <Paper
@@ -62,7 +67,7 @@ export const Upload: FC<UploadProps> = ({
         {({ getRootProps, getInputProps }) => (
           <div {...getRootProps()}>
             <input {...getInputProps()} />
-            {!isMobile && (
+            {!isExtraSmallScreen && (
               <>
                 <FileUploadIcon
                   sx={{
@@ -79,7 +84,7 @@ export const Upload: FC<UploadProps> = ({
                 </BaseButton>
               </>
             )}
-            {isMobile && (
+            {isExtraSmallScreen && (
               <ButtonWithIcon
                 shouldShrink={false}
                 color="secondary"

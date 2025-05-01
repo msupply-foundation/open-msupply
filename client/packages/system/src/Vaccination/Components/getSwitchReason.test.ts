@@ -5,30 +5,30 @@ import { OTHER_FACILITY } from './FacilitySearchInput';
 
 describe('getSwitchReason', () => {
   describe('no existing vaccination (create)', () => {
-    it('should return "record transaction" if the date is historical & doses configured', () => {
+    it('should return "record transaction" if the date is historical & item selected', () => {
       const draft = {
         date: new Date('2021-01-01'),
         given: true,
+        itemId: 'id',
       } as VaccinationDraft;
-      const hasDosesConfigured = true;
-      expect(getSwitchReason(draft, hasDosesConfigured)).toBe(
-        'label.record-stock-transaction'
-      );
+      expect(getSwitchReason(draft)).toBe('label.record-stock-transaction');
     });
 
-    it('should return null if no doses configured', () => {
+    it('should return null if no item selected', () => {
       const draft = {
         date: new Date('2021-01-01'),
         given: true,
       } as VaccinationDraft;
-      const hasDosesConfigured = false;
-      expect(getSwitchReason(draft, hasDosesConfigured)).toBeNull();
+      expect(getSwitchReason(draft)).toBeNull();
     });
 
     it('should return null if the date is not historical', () => {
-      const draft = { date: new Date(), given: true } as VaccinationDraft;
-      const hasDosesConfigured = true;
-      expect(getSwitchReason(draft, hasDosesConfigured)).toBeNull();
+      const draft = {
+        date: new Date(),
+        given: true,
+        itemId: 'id',
+      } as VaccinationDraft;
+      expect(getSwitchReason(draft)).toBeNull();
     });
 
     it('should return null if the facility is other', () => {
@@ -36,21 +36,20 @@ describe('getSwitchReason', () => {
         date: new Date('2021-01-01'),
         facilityId: OTHER_FACILITY,
         given: true,
+        itemId: 'id',
       } as VaccinationDraft;
-      const hasDosesConfigured = true;
-      expect(getSwitchReason(draft, hasDosesConfigured)).toBeNull();
+      expect(getSwitchReason(draft)).toBeNull();
     });
   });
 
   describe('existing vaccination with associated invoice (wanting to revert)', () => {
     const vaccination = { invoice: { id: 'id' } } as VaccinationDetailFragment;
-    const hasDosesConfigured = true;
     it('should return "revert" if facility is "other"', () => {
       const draft = {
         date: new Date(),
         facilityId: OTHER_FACILITY,
       } as VaccinationDraft;
-      expect(getSwitchReason(draft, hasDosesConfigured, vaccination)).toBe(
+      expect(getSwitchReason(draft, vaccination)).toBe(
         'label.revert-existing-transaction'
       );
     });
@@ -60,7 +59,18 @@ describe('getSwitchReason', () => {
         date: new Date(),
         given: false,
       } as VaccinationDraft;
-      expect(getSwitchReason(draft, hasDosesConfigured, vaccination)).toBe(
+      expect(getSwitchReason(draft, vaccination)).toBe(
+        'label.revert-existing-transaction'
+      );
+    });
+
+    it('should return "revert" if stock line has been un-selected', () => {
+      const draft = {
+        date: new Date(),
+        given: true,
+        stockLine: null,
+      } as VaccinationDraft;
+      expect(getSwitchReason(draft, vaccination)).toBe(
         'label.revert-existing-transaction'
       );
     });
@@ -70,71 +80,60 @@ describe('getSwitchReason', () => {
     const vaccination = {
       stockLine: { id: 'id' },
     } as VaccinationDetailFragment;
-    const hasDosesConfigured = true;
 
     it('should return null if stock line has not changed', () => {
       const draft = {
         date: new Date(),
         stockLine: { id: 'id' },
+        itemId: 'id',
       } as VaccinationDraft;
-      expect(
-        getSwitchReason(draft, hasDosesConfigured, vaccination)
-      ).toBeNull();
+      expect(getSwitchReason(draft, vaccination)).toBeNull();
     });
 
     it('should return null if given is false', () => {
       const draft = {
         date: new Date(),
         given: false,
+        itemId: 'id',
       } as VaccinationDraft;
-      expect(
-        getSwitchReason(draft, hasDosesConfigured, vaccination)
-      ).toBeNull();
+      expect(getSwitchReason(draft, vaccination)).toBeNull();
     });
     it('should return null if given is false & no stock line', () => {
       const draft = {
         date: new Date('2021-01-01'),
         given: false,
+        itemId: 'id',
       } as VaccinationDraft;
       expect(
-        getSwitchReason(
-          draft,
-          hasDosesConfigured,
-          {} as VaccinationDetailFragment
-        )
+        getSwitchReason(draft, {} as VaccinationDetailFragment)
       ).toBeNull();
     });
     it('should return null if given is false', () => {
       const draft = {
         date: new Date(),
         given: false,
+        itemId: 'id',
       } as VaccinationDraft;
-      expect(
-        getSwitchReason(draft, hasDosesConfigured, vaccination)
-      ).toBeNull();
+      expect(getSwitchReason(draft, vaccination)).toBeNull();
     });
 
     it('should return null if facility is "other"', () => {
       const draft = {
         date: new Date(),
         facilityId: OTHER_FACILITY,
+        itemId: 'id',
       } as VaccinationDraft;
-      expect(
-        getSwitchReason(draft, hasDosesConfigured, vaccination)
-      ).toBeNull();
+      expect(getSwitchReason(draft, vaccination)).toBeNull();
     });
 
-    it('should return null if no doses configured', () => {
+    it('should return null if no item selected', () => {
       const draft = {
         date: new Date(),
         facilityId: 'my-facility',
         given: true,
         stockLine: { id: 'new' },
       } as VaccinationDraft;
-      const hasDosesConfigured = false;
-      expect(
-        getSwitchReason(draft, hasDosesConfigured, vaccination)
-      ).toBeNull();
+      expect(getSwitchReason(draft, vaccination)).toBeNull();
     });
     it('should return "update" if stock line has changed', () => {
       const draft = {
@@ -142,8 +141,9 @@ describe('getSwitchReason', () => {
         facilityId: 'my-facility',
         given: true,
         stockLine: { id: 'new' },
+        itemId: 'id',
       } as VaccinationDraft;
-      expect(getSwitchReason(draft, hasDosesConfigured, vaccination)).toBe(
+      expect(getSwitchReason(draft, vaccination)).toBe(
         'label.update-transactions'
       );
     });
