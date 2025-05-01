@@ -2000,5 +2000,5 @@
   "warning.field-not-parsed": "{{field}} not parsed",
   "warning.nothing-to-supply": "Nothing left to supply!",
   "label.emergency": "Emergency",
-  "label.new-emergency": "New emergency requisitions"
+  "label.new-emergency-requisitions": "Emergency"
 }
