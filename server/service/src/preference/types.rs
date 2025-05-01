@@ -14,6 +14,7 @@ use super::{
 pub enum PrefKey {
     ShowContactTracing,
     AllowTrackingOfReceivedStockByDonor,
+    DisplayPopulationBasedForecasting,
 }
 
 #[derive(Clone, Debug, PartialEq)]

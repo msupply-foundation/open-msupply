@@ -1755,6 +1755,7 @@
   "placeholder.search-by-notes": "Search by notes",
   "policyType.BUSINESS": "Business",
   "policyType.PERSONAL": "Personal",
+  "preference.displayPopulationBasedForecasting": "Display Population Based Forecasting",
   "preference.showContactTracing": "Show Contact Tracing",
   "preference.allowTrackingOfReceivedStockByDonor": "Allow tracking of received stock by donor",
   "prescription": "Prescriptions",
