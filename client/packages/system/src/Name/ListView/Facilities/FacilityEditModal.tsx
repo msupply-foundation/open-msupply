@@ -12,6 +12,7 @@ import {
   TabContext,
   TabPanel,
   NamePropertyNode,
+  useIsGapsStoreOnly,
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
 import { NameRenderer } from '../..';
@@ -155,8 +156,9 @@ const ModalTabs = ({
   updateProperty,
 }: ModalTabProps) => {
   const t = useTranslation();
+  const isGapsMobileStore = useIsGapsStoreOnly();
   const [currentTab, setCurrentTab] = useState(
-    storeId ? Tabs.Preferences : Tabs.Properties
+    storeId && !isGapsMobileStore ? Tabs.Preferences : Tabs.Properties
   );
 
   return (
