@@ -62,6 +62,7 @@ export const usePrescriptionLineEditColumns = ({
       label: getColumnLabelWithPackOrUnit({
         t,
         displayInDoses,
+        displayDosesInUnitName: true,
         itemUnit: unit,
         columnLabel: t('label.in-stock'),
       }),
@@ -69,10 +70,10 @@ export const usePrescriptionLineEditColumns = ({
       align: ColumnAlign.Right,
       width: 80,
       accessor: ({ rowData }) => {
-        const total =
+        return (
           (rowData.stockLine?.totalNumberOfPacks ?? 0) *
-          (rowData.stockLine?.packSize ?? 1);
-        return displayInDoses ? total * (rowData.item?.doses ?? 1) : total;
+          (rowData.stockLine?.packSize ?? 1)
+        );
       },
     },
     {

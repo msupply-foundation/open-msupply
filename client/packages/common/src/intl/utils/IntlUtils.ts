@@ -221,6 +221,7 @@ interface GetNumberColumnLabelProps {
   t: TypedTFunction<LocaleKey>;
   displayInDoses: boolean;
   displayInPack?: boolean;
+  displayDosesInUnitName?: boolean;
   itemUnit?: string | null;
   columnLabel?: string;
 }
@@ -229,6 +230,7 @@ const getNumberColumnLabel = ({
   t,
   displayInDoses,
   displayInPack,
+  displayDosesInUnitName,
   itemUnit,
   columnLabel,
 }: GetNumberColumnLabelProps) => {
@@ -238,9 +240,13 @@ const getNumberColumnLabel = ({
   const label = columnLabel ?? '';
   const unitTranslation = `${capitalisedItemUnit} ${label}`;
   const packTranslation = `${t('label.packs')} ${label}`;
+  const dosesTranslation = `${t('label.doses')} ${label}`;
 
   if (displayInDoses) {
-    return displayInPack ? unitTranslation : `${t('label.doses')} ${label}`;
+    if (displayDosesInUnitName) {
+      return unitTranslation;
+    }
+    return displayDosesInUnitName ? packTranslation : dosesTranslation;
   }
 
   if (displayInPack) {
