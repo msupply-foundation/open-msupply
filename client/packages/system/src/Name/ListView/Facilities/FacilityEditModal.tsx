@@ -38,7 +38,6 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
   setNextFacility,
 }) => {
   const t = useTranslation();
-  // todo, prefs only if store
 
   const { data: properties, isLoading: propertiesLoading } =
     useName.document.properties();
@@ -63,10 +62,6 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
   };
 
   if (isLoading || propertiesLoading) return <BasicSpinner />;
-
-  // OK so - properties and store prefs, sep tabs. Display accordingly
-  // Ensure doesn't show (?) on own view?
-  // OR we get it for free but disabled, if we have that state available
 
   return !!data ? (
     <Modal
