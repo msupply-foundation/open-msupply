@@ -14,6 +14,7 @@ export type StocktakeRowFragment = {
   stocktakeNumber: number;
   status: Types.StocktakeNodeStatus;
   isLocked: boolean;
+  isInitialStocktake: boolean;
 };
 
 export type StocktakeLineFragment = {
@@ -66,6 +67,7 @@ export type StocktakeFragment = {
   isLocked: boolean;
   countedBy?: string | null;
   verifiedBy?: string | null;
+  isInitialStocktake: boolean;
   user?: {
     __typename: 'UserNode';
     username: string;
@@ -138,6 +140,7 @@ export type StocktakesQuery = {
       stocktakeNumber: number;
       status: Types.StocktakeNodeStatus;
       isLocked: boolean;
+      isInitialStocktake: boolean;
     }>;
   };
 };
@@ -164,6 +167,7 @@ export type StocktakeQuery = {
         isLocked: boolean;
         countedBy?: string | null;
         verifiedBy?: string | null;
+        isInitialStocktake: boolean;
         user?: {
           __typename: 'UserNode';
           username: string;
@@ -234,6 +238,7 @@ export type StocktakeByNumberQuery = {
         isLocked: boolean;
         countedBy?: string | null;
         verifiedBy?: string | null;
+        isInitialStocktake: boolean;
         user?: {
           __typename: 'UserNode';
           username: string;
@@ -561,6 +566,7 @@ export const StocktakeRowFragmentDoc = gql`
     stocktakeNumber
     status
     isLocked
+    isInitialStocktake
   }
 `;
 export const StocktakeLineFragmentDoc = gql`
@@ -618,6 +624,7 @@ export const StocktakeFragmentDoc = gql`
     isLocked
     countedBy
     verifiedBy
+    isInitialStocktake
     user {
       __typename
       username

@@ -8058,6 +8058,7 @@ export type StocktakeNode = {
   inventoryAdditionId?: Maybe<Scalars['String']['output']>;
   inventoryReduction?: Maybe<InvoiceNode>;
   inventoryReductionId?: Maybe<Scalars['String']['output']>;
+  isInitialStocktake: Scalars['Boolean']['output'];
   isLocked: Scalars['Boolean']['output'];
   lines: StocktakeLineConnector;
   program?: Maybe<ProgramNode>;

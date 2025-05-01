@@ -9,6 +9,7 @@ fragment StocktakeRow on StocktakeNode {
   stocktakeNumber
   status
   isLocked
+  isInitialStocktake
 }
 
 fragment StocktakeLine on StocktakeLineNode {
@@ -69,6 +70,7 @@ fragment Stocktake on StocktakeNode {
   isLocked
   countedBy
   verifiedBy
+  isInitialStocktake
 
   user {
     __typename
