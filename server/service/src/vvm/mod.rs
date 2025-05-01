@@ -1,5 +1,6 @@
 use repository::{vvm_status_row::VVMStatusRow, RepositoryError, StorageConnection};
 use vvm_status::query::active_vvm_statuses;
+
 pub mod vvm_status;
 pub trait VVMServiceTrait: Sync + Send {
     fn active_vvm_statuses(

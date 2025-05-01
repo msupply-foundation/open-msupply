@@ -12,8 +12,28 @@ impl VVMStatusNode {
         &self.row().id
     }
 
-    pub async fn is_active(&self) -> bool {
-        self.row().is_active
+    pub async fn description(&self) -> &str {
+        &self.row().description
+    }
+
+    pub async fn code(&self) -> &str {
+        &self.row().code
+    }
+
+    pub async fn level(&self) -> &i32 {
+        &self.row().level
+    }
+
+    pub async fn is_active(&self) -> &bool {
+        &self.row().is_active
+    }
+
+    pub async fn unusable(&self) -> &bool {
+        &self.row().unusable
+    }
+
+    pub async fn reason_id(&self) -> Option<&str> {
+        self.row().reason_id.as_deref()
     }
 }
 

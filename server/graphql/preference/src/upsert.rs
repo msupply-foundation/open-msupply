@@ -1,24 +1,20 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::PreferenceNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    preference::UpsertPreference,
+    preference::UpsertPreferences,
 };
 
 #[derive(InputObject)]
-pub struct UpsertPreferenceInput {
-    pub id: String,
-    pub key: String,
-    pub value: String,
-    pub store_id: Option<String>,
+pub struct UpsertPreferencesInput {
+    pub show_contact_tracing: Option<bool>,
 }
 
-pub fn upsert_preference(
+pub fn upsert_preferences(
     ctx: &Context<'_>,
     store_id: String,
-    input: UpsertPreferenceInput,
-) -> Result<PreferenceNode> {
+    input: UpsertPreferencesInput,
+) -> Result<()> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -29,27 +25,21 @@ pub fn upsert_preference(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    let preference = service_provider
+    service_provider
         .preference_service
         .upsert(&service_context, input.to_domain())?;
 
-    Ok(PreferenceNode { preference })
+    Ok(())
 }
 
-impl UpsertPreferenceInput {
-    pub fn to_domain(self) -> UpsertPreference {
-        let UpsertPreferenceInput {
-            id,
-            key,
-            value,
-            store_id,
+impl UpsertPreferencesInput {
+    pub fn to_domain(self) -> UpsertPreferences {
+        let UpsertPreferencesInput {
+            show_contact_tracing,
         } = self;
 
-        UpsertPreference {
-            id,
-            key,
-            value,
-            store_id,
+        UpsertPreferences {
+            show_contact_tracing,
         }
     }
 }
