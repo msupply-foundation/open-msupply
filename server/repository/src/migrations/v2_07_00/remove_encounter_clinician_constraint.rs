@@ -16,7 +16,7 @@ impl MigrationFragment for Migrate {
             let result = sql!(
                 connection,
                 r#"
-                    ALTER TABLE encounter CONSTRAINT encounter_clinician_link_id_fkey;
+                    ALTER TABLE encounter DROP CONSTRAINT encounter_clinician_link_id_fkey;
                 "#
             );
             if result.is_err() {
