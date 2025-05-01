@@ -7,16 +7,19 @@ use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPrefe
 #[derive(Debug, PartialEq, Clone)]
 pub struct UpsertPreferences {
     pub show_contact_tracing: Option<bool>,
+    pub allow_tracking_of_received_stock_by_donor: Option<bool>,
 }
 
 pub fn upsert_preferences(
     ctx: &ServiceContext,
     UpsertPreferences {
         show_contact_tracing: show_contact_tracing_input,
+        allow_tracking_of_received_stock_by_donor: allow_tracking_of_received_stock_by_donor_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
         show_contact_tracing,
+        allow_tracking_of_received_stock_by_donor,
     } = get_preference_provider();
 
     ctx.connection
@@ -25,6 +28,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = show_contact_tracing_input {
                 show_contact_tracing.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = allow_tracking_of_received_stock_by_donor_input {
+                allow_tracking_of_received_stock_by_donor.upsert(connection, input, None)?;
             }
 
             // For a store pref, input could be array of store IDs and values - iterate and insert...
