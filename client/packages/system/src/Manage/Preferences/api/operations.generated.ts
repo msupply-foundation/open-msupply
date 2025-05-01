@@ -18,19 +18,6 @@ export type AdminPreferenceListQuery = {
   }>;
 };
 
-export type PreferencesQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-}>;
-
-export type PreferencesQuery = {
-  __typename: 'Queries';
-  preferences: {
-    __typename: 'PreferencesNode';
-    showContactTracing: boolean;
-    displayPopulationBasedForecasting: boolean;
-  };
-};
-
 export type UpsertPreferencesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpsertPreferencesInput;
@@ -53,14 +40,6 @@ export const AdminPreferenceListDocument = gql`
       key
       valueType
       value
-    }
-  }
-`;
-export const PreferencesDocument = gql`
-  query preferences($storeId: String!) {
-    preferences(storeId: $storeId) {
-      showContactTracing
-      displayPopulationBasedForecasting
     }
   }
 `;
@@ -110,21 +89,6 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'adminPreferenceList',
-        'query',
-        variables
-      );
-    },
-    preferences(
-      variables: PreferencesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<PreferencesQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<PreferencesQuery>(PreferencesDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
-          }),
-        'preferences',
         'query',
         variables
       );

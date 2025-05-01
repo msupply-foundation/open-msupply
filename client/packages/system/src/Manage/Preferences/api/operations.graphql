@@ -6,13 +6,6 @@ query adminPreferenceList($storeId: String!, $prefType: PreferenceNodeType!) {
   }
 }
 
-query preferences($storeId: String!) {
-  preferences(storeId: $storeId) {
-    showContactTracing
-    displayPopulationBasedForecasting
-  }
-}
-
 mutation upsertPreferences($storeId: String!, $input: UpsertPreferencesInput!) {
   centralServer {
     preferences {
