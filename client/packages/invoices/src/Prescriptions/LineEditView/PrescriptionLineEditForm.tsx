@@ -24,7 +24,8 @@ import {
   TextArea,
   InputWithLabelRow,
   useIntlUtils,
-  usePreferences,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -96,7 +97,7 @@ export const PrescriptionLineEditForm: React.FC<
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
   const { store: { preferences } = {} } = useAuthContext();
-  const { data: newPrefs } = usePreferences();
+  const { data: newPrefs } = usePreference(PreferenceKey.DisplayVaccineInDoses);
 
   const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
   const [prescribedQuantity, setPrescribedQuantity] = useState<number | null>(

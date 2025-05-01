@@ -4,9 +4,10 @@ import {
   ExpiryDateCell,
   NumberCell,
   NumUtils,
+  PreferenceKey,
   useColumns,
   useIntlUtils,
-  usePreferences,
+  usePreference,
   useTranslation,
 } from '@openmsupply-client/common';
 import { DraftPrescriptionLine } from '../../types';
@@ -22,7 +23,9 @@ export const usePrescriptionLineEditColumns = ({
   isVaccine?: boolean;
 }) => {
   const t = useTranslation();
-  const { data: preferences } = usePreferences();
+  const { data: preferences } = usePreference(
+    PreferenceKey.DisplayVaccineInDoses
+  );
   const { getColumnLabelWithPackOrUnit } = useIntlUtils();
   const displayInDoses = !!preferences?.displayVaccineInDoses && !!isVaccine;
 

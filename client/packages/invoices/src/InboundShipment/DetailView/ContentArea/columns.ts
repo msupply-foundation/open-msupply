@@ -10,11 +10,12 @@ import {
   useColumnUtils,
   CurrencyCell,
   getLinesFromRow,
-  usePreferences,
+  usePreference,
   ColumnDescription,
   SortBy,
   UNDEFINED_STRING_VALUE,
   useTranslation,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
@@ -48,7 +49,9 @@ export const useInboundShipmentColumns = ({
   onChangeSortBy,
 }: InboundShipmentColumnsProps) => {
   const t = useTranslation();
-  const { data: preferences } = usePreferences();
+  const { data: preferences } = usePreference(
+    PreferenceKey.DisplayVaccineInDoses
+  );
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
   const { getError } = useInboundShipmentLineErrorContext();
   const getCostPrice = (row: InboundLineFragment) =>

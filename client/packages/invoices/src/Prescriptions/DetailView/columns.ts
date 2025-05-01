@@ -14,8 +14,9 @@ import {
   ColumnDescription,
   NumUtils,
   useAuthContext,
-  usePreferences,
+  usePreference,
   UNDEFINED_STRING_VALUE,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -67,7 +68,7 @@ export const usePrescriptionColumn = ({
 >[] => {
   const t = useTranslation();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
-  const { data: newPrefs } = usePreferences();
+  const { data: newPrefs } = usePreference(PreferenceKey.DisplayVaccineInDoses);
   const { store: { preferences } = {} } = useAuthContext();
   const hasPrescribedQty = preferences?.editPrescribedQuantityOnPrescription;
 

@@ -19,8 +19,9 @@ import {
   useCurrencyCell,
   useAuthContext,
   useTranslation,
-  usePreferences,
+  usePreference,
   useIntlUtils,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -94,7 +95,9 @@ export const QuantityTableComponent = ({
 }: TableProps) => {
   const t = useTranslation();
   const theme = useTheme();
-  const { data: preferences } = usePreferences();
+  const { data: preferences } = usePreference(
+    PreferenceKey.DisplayVaccineInDoses
+  );
   const { getColumnLabelWithPackOrUnit } = useIntlUtils();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
   const displayInDoses =
