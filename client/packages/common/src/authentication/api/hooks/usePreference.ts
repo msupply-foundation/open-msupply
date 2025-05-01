@@ -15,7 +15,7 @@ export const usePreference = <T extends PreferenceKey>(pref: T) => {
   // pass in the desired preference key as a variable
   const PreferencesDocument = gql`
   query preferences {
-    preferences(storeId: ${storeId}) {
+    preferences(storeId: "${storeId}") {
       ${pref}
     }
   }
