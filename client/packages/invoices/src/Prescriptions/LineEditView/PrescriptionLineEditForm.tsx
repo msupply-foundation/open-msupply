@@ -193,7 +193,8 @@ export const PrescriptionLineEditForm: React.FC<
     if (inputUnitQuantity === issueUnitQuantity) return;
 
     const quantity = inputUnitQuantity === undefined ? 0 : inputUnitQuantity;
-    setIssueUnitQuantity(quantity);
+    const qtyWithDoses = displayInDoses ? quantity / item?.doses : quantity;
+    setIssueUnitQuantity(qtyWithDoses);
 
     const packSize =
       packSizeController.selected?.value !== -1
@@ -311,7 +312,13 @@ export const PrescriptionLineEditForm: React.FC<
           )}
           <AccordionPanelSection
             title={t('label.quantity')}
-            closedSummary={summarise(draftPrescriptionLines, t, getPlural)}
+            closedSummary={summarise(
+              draftPrescriptionLines,
+              t,
+              getPlural,
+              displayInDoses,
+              item?.doses
+            )}
             defaultExpanded={isNew && !disabled}
             key={key + '_quantity'}
           >
@@ -355,7 +362,11 @@ export const PrescriptionLineEditForm: React.FC<
                 <NumericTextInput
                   autoFocus={!preferences?.editPrescribedQuantityOnPrescription}
                   disabled={disabled}
-                  value={issueUnitQuantity}
+                  value={
+                    displayInDoses
+                      ? NumUtils.round(issueUnitQuantity * item?.doses)
+                      : issueUnitQuantity
+                  }
                   onChange={handleIssueQuantityChange}
                   min={0}
                   decimalLimit={2}
@@ -557,7 +568,9 @@ const TableWrapper: React.FC<TableProps> = ({
 const summarise = (
   lines: DraftPrescriptionLine[],
   t: TypedTFunction<LocaleKey>,
-  getPlural: (word: string, count: number) => string
+  getPlural: (word: string, count: number) => string,
+  displayInDoses: boolean,
+  doses: number
 ) => {
   // Count how many of each pack size
   const counts: Record<number, { unitName: string; count: number }> = {};
@@ -577,15 +590,22 @@ const summarise = (
   const summary: string[] = [];
   Object.entries(counts).forEach(([size, { unitName, count: numUnits }]) => {
     const packSize = Number(size);
+    const dosesCount = doses ?? 0;
+    const numUnitsWithDoses = displayInDoses
+      ? NumUtils.round(numUnits * dosesCount)
+      : numUnits;
+
     if (packSize > 1) {
       const numPacks = NumUtils.round(numUnits / packSize, 3);
       const packWord = t('label.packs-of', { count: numPacks }); // pack or packs
-      const unitWord = t('label.units-plural', { count: numUnits }); // unit or units
+      const unitWord = displayInDoses
+        ? t('label.doses-plural', { count: numUnitsWithDoses }) // dose or doses
+        : t('label.units-plural', { count: numUnits }); // unit or units
       const unitType = getPlural(unitName, packSize);
       summary.push(
         t('label.packs-of-size', {
           numPacks,
-          numUnits,
+          numUnits: numUnitsWithDoses,
           packSize,
           unitType,
           packWord,
@@ -594,7 +614,17 @@ const summarise = (
       );
     } else {
       const unitType = getPlural(unitName, numUnits);
-      summary.push(t('label.packs-of-1', { numUnits, unitType }));
+      const dosesWord = t('label.doses-plural', { count: numUnitsWithDoses });
+      const displayDoses = displayInDoses
+        ? t('label.num-in-brackets', {
+            num: numUnitsWithDoses,
+            unitWord: dosesWord,
+          })
+        : '';
+
+      summary.push(
+        t('label.packs-of-1', { numUnits, unitType }) + ` ${displayDoses}`
+      );
     }
   });
 

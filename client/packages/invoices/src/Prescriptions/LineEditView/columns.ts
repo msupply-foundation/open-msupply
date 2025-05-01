@@ -3,6 +3,7 @@ import {
   ColumnDescription,
   ExpiryDateCell,
   NumberCell,
+  NumUtils,
   useColumns,
   useIntlUtils,
   usePreferences,
@@ -112,7 +113,9 @@ export const usePrescriptionLineEditColumns = ({
       },
       accessor: ({ rowData }) => {
         const total = (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1);
-        return displayInDoses ? total * (rowData.item?.doses ?? 1) : total;
+        return displayInDoses
+          ? NumUtils.round(total * (rowData.item?.doses ?? 1))
+          : total;
       },
     }
   );
