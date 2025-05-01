@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   TextInputCell,
   alpha,
@@ -19,8 +19,6 @@ import {
   ColumnAlign,
   AdjustmentTypeInput,
   NumberCell,
-  usePreferences,
-  useIntlUtils,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -29,7 +27,6 @@ import {
   InventoryAdjustmentReasonSearchInput,
   ItemVariantInputCell,
   PackSizeEntryCell,
-  ItemRowFragment,
   useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
 import {
@@ -41,7 +38,6 @@ interface StocktakeLineEditTableProps {
   isDisabled?: boolean;
   batches: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
-  item?: ItemRowFragment | null;
 }
 
 const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
@@ -133,7 +129,7 @@ const getInventoryAdjustmentReasonInputColumn = (
         <InventoryAdjustmentReasonSearchInput
           autoFocus={autoFocus}
           value={value}
-          width={Number(column.width) - 16}
+          width={Number(column.width)}
           onChange={onChange}
           adjustmentType={
             rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0)
@@ -152,21 +148,15 @@ const getInventoryAdjustmentReasonInputColumn = (
   };
 };
 
-export const BatchTable: FC<StocktakeLineEditTableProps> = ({
+export const BatchTable = ({
   batches,
   update,
   isDisabled = false,
-  item,
-}) => {
+}: StocktakeLineEditTableProps) => {
   const t = useTranslation();
   const theme = useTheme();
-  const { data: preferences } = usePreferences();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
-  const { getColumnLabelWithPackOrUnit } = useIntlUtils();
-  const displayInDoses =
-    !!preferences?.displayVaccineInDoses && !!item?.isVaccine;
   useDisableStocktakeRows(batches);
-  const itemUnitName = item?.unitName ? item.unitName : t('label.unit');
 
   const errorsContext = useStocktakeLineErrorContext();
 
@@ -177,7 +167,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       [
         expiryDateColumn,
         {
-          width: 160,
+          width: 150,
           setter: patch => update({ ...patch, countThisLine: true }),
         },
       ],
@@ -198,30 +188,13 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         Cell: PackSizeEntryCell<DraftStocktakeLine>,
         setter: update,
         label: 'label.pack-size',
-        width: 100,
         cellProps: {
           getIsDisabled: (rowData: DraftStocktakeLine) => !!rowData?.stockLine,
         },
-      })
-    );
-    if (displayInDoses) {
-      columnDefinitions.push({
-        key: 'dosesPerPack',
-        label: `${t('label.doses-per')} ${itemUnitName}`,
-        width: 80,
-        accessor: ({ rowData }) => rowData.item?.doses,
-      });
-    }
-    columnDefinitions.push(
+      }),
       {
         key: 'snapshotNumberOfPacks',
-        label: getColumnLabelWithPackOrUnit({
-          t,
-          displayInDoses,
-          displayInPack: true,
-          itemUnit: item?.unitName,
-          columnLabel: t('label.snapshot'),
-        }),
+        label: 'label.snapshot-num-of-packs',
         align: ColumnAlign.Right,
         width: 100,
         Cell: NumberCell,
@@ -232,34 +205,8 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '0',
       },
       {
-        key: 'snapshotNumberOfUnits',
-        label: getColumnLabelWithPackOrUnit({
-          t,
-          displayInDoses,
-          itemUnit: item?.unitName,
-          columnLabel: t('label.snapshot'),
-        }),
-        align: ColumnAlign.Right,
-        width: 100,
-        Cell: NumberCell,
-        accessor: ({ rowData }) => {
-          const snapshotNumberOfPacks = rowData.snapshotNumberOfPacks ?? 0;
-          const packSize = rowData?.packSize ?? 1;
-          const doses = rowData?.item?.doses ?? 1;
-          return displayInDoses
-            ? snapshotNumberOfPacks * doses
-            : snapshotNumberOfPacks * packSize;
-        },
-      },
-      {
         key: 'countedNumberOfPacks',
-        label: getColumnLabelWithPackOrUnit({
-          t,
-          displayInDoses,
-          displayInPack: true,
-          itemUnit: item?.unitName,
-          columnLabel: t('label.counted'),
-        }),
+        label: 'description.counted-num-of-packs',
         width: 100,
         getIsError: rowData =>
           errorsContext.getError(rowData)?.__typename ===
@@ -275,68 +222,9 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
             patch.snapshotNumberOfPacks == patch.countedNumberOfPacks
               ? null
               : patch.inventoryAdjustmentReason;
-
-          let countedNumberOfUnits = undefined;
-          if (patch.countedNumberOfPacks) {
-            countedNumberOfUnits = displayInDoses
-              ? patch.countedNumberOfPacks * (patch?.item?.doses ?? 1)
-              : patch.countedNumberOfPacks * (patch?.packSize ?? 1);
-          }
-
-          update({
-            ...patch,
-            countThisLine: true,
-            inventoryAdjustmentReason,
-            countedNumberOfUnits,
-          });
+          update({ ...patch, countThisLine: true, inventoryAdjustmentReason });
         },
         accessor: ({ rowData }) => rowData.countedNumberOfPacks,
-      },
-      {
-        key: 'countedNumberOfUnits',
-        label: getColumnLabelWithPackOrUnit({
-          t,
-          displayInDoses,
-          itemUnit: item?.unitName,
-          columnLabel: t('label.counted'),
-        }),
-        width: 100,
-        getIsError: rowData =>
-          errorsContext.getError(rowData)?.__typename ===
-          'StockLineReducedBelowZero',
-        Cell: NumberInputCell,
-        cellProps: { decimalLimit: 2, min: 0 },
-        setter: patch => {
-          let countedNumberOfPacks = undefined;
-          if (patch.countedNumberOfUnits) {
-            countedNumberOfPacks = displayInDoses
-              ? patch.countedNumberOfUnits / (patch?.item?.doses ?? 1)
-              : patch.countedNumberOfUnits / (patch?.packSize ?? 1);
-          }
-
-          // If counted number of packs was changed to result in no adjustment we
-          // should remove inventoryAdjustmentReason, otherwise could have a
-          // reason on a line with no adjustments
-          const inventoryAdjustmentReason =
-            !countedNumberOfPacks ||
-            patch.snapshotNumberOfPacks == countedNumberOfPacks
-              ? null
-              : patch.inventoryAdjustmentReason;
-
-          update({
-            ...patch,
-            countThisLine: true,
-            inventoryAdjustmentReason,
-            countedNumberOfPacks,
-          });
-        },
-        accessor: ({ rowData }) => {
-          if (rowData.countedNumberOfPacks) {
-            return displayInDoses
-              ? rowData.countedNumberOfPacks * (rowData?.item?.doses ?? 1)
-              : rowData.countedNumberOfPacks * (rowData?.packSize ?? 1);
-          }
-        },
       },
       getInventoryAdjustmentReasonInputColumn(update, errorsContext)
     );
@@ -359,11 +247,11 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
   );
 };
 
-export const PricingTable: FC<StocktakeLineEditTableProps> = ({
+export const PricingTable = ({
   batches,
   update,
   isDisabled,
-}) => {
+}: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
   const columns = useColumns<DraftStocktakeLine>([
@@ -399,11 +287,11 @@ export const PricingTable: FC<StocktakeLineEditTableProps> = ({
   );
 };
 
-export const LocationTable: FC<StocktakeLineEditTableProps> = ({
+export const LocationTable = ({
   batches,
   update,
   isDisabled,
-}) => {
+}: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
   const columns = useColumns<DraftStocktakeLine>([
@@ -421,8 +309,10 @@ export const LocationTable: FC<StocktakeLineEditTableProps> = ({
       {
         label: 'label.stocktake-comment',
         Cell: TextInputCell,
+        cellProps: {
+          fullWidth: true,
+        },
         width: 200,
-        cellProps: { fullWidth: true },
         setter: patch => update({ ...patch, countThisLine: true }),
         accessor: ({ rowData }) => rowData.comment || '',
       },

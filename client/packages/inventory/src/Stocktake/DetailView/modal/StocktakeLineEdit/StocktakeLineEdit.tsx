@@ -5,15 +5,17 @@ import {
 } from '@openmsupply-client/system';
 import {
   BasicSpinner,
+  Breakpoints,
   Divider,
-  useIsMediumScreen,
   Box,
   ModalMode,
   TableProvider,
   createTableStore,
   createQueryParamsStore,
   QueryParamsProvider,
+  useAppTheme,
   useRowHighlight,
+  useMediaQuery,
   useNotification,
   useIsGrouped,
   useUrlQueryParams,
@@ -46,8 +48,9 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   onClose,
   isOpen,
 }) => {
+  const theme = useAppTheme();
+  const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const [currentItem, setCurrentItem] = useState(item);
-  const isMediumScreen = useIsMediumScreen();
   const { isDisabled, items, totalLineCount } = useStocktake.line.rows();
   const { draftLines, update, addLine, isSaving, save, nextItem } =
     useStocktakeLineEdit(currentItem);
@@ -175,7 +178,6 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                           isDisabled={isDisabled}
                           batches={reversedDraftLines}
                           update={update}
-                          item={currentItem}
                         />
                       </StyledTabContainer>
                     </StyledTabPanel>

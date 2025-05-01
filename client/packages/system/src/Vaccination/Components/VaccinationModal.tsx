@@ -10,9 +10,11 @@ import {
   Grid,
   InputWithLabelRow,
   Link,
+  LoadingButton,
   Radio,
   RadioGroup,
   RouteBuilder,
+  SaveIcon,
   Select,
   useAuthContext,
   useDialog,
@@ -21,7 +23,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { FormControlLabel, Typography } from '@mui/material';
-import React from 'react';
+import React, { useState } from 'react';
 import { useVaccination, VaccinationDraft } from '../api';
 import { Clinician, ClinicianSearchInput } from '../../Clinician';
 import {
@@ -34,6 +36,7 @@ import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
 import { useConfirmNoStockLineSelected } from './useConfirmNoStockLineSelected';
 import { useClinicians } from '@openmsupply-client/programs';
+import { useConfirmEarlyVaccination } from './useConfirmEarlyVaccination';
 
 interface VaccinationModalProps {
   encounterId?: string;
@@ -54,6 +57,7 @@ export const VaccinationModal = ({
 }: VaccinationModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
+  const [isSaving, setIsSaving] = useState(false);
   const {
     draft,
     updateDraft,
@@ -69,31 +73,43 @@ export const VaccinationModal = ({
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const save = useConfirmNoStockLineSelected(
+  const onSave = async () => {
+    try {
+      setIsSaving(true);
+      const result = await saveVaccination(draft);
+      setIsSaving(false);
+
+      if (result?.__typename === 'VaccinationNode') {
+        result?.invoice?.id && draft.createTransactions
+          ? success(t('messages.vaccination-saved-and-stock-recorded'))()
+          : success(t('messages.vaccination-saved'))();
+        onOk();
+        onClose();
+      }
+
+      if (result?.__typename === 'UpdateVaccinationError') {
+        if (result.error.__typename === 'NotMostRecentGivenDose') {
+          const errorSnack = error(t('error.not-most-recent-given-dose'));
+          errorSnack();
+        }
+      }
+    } catch (e) {
+      setIsSaving(false);
+      console.error(e);
+      error(t('error.something-wrong'))();
+    }
+  };
+
+  const confirmNoStockLine = useConfirmNoStockLineSelected(
     draft,
     !!dose?.vaccineCourse.vaccineCourseItems?.length,
-    async () => {
-      try {
-        const result = await saveVaccination(draft);
+    onSave
+  );
 
-        if (result?.__typename === 'VaccinationNode') {
-          result?.invoice?.id && draft.createTransactions
-            ? success(t('messages.vaccination-saved-and-stock-recorded'))()
-            : success(t('messages.vaccination-saved'))();
-          onOk();
-          onClose();
-        }
-
-        if (result?.__typename === 'UpdateVaccinationError') {
-          if (result.error.__typename === 'NotMostRecentGivenDose') {
-            const errorSnack = error(t('error.not-most-recent-given-dose'));
-            errorSnack();
-          }
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
+  const save = useConfirmEarlyVaccination(
+    cardRow.suggestedDate,
+    draft,
+    confirmNoStockLine
   );
 
   const InfoBox = <VaccineInfoBox vaccination={vaccination} />;
@@ -117,9 +133,13 @@ export const VaccinationModal = ({
       title={dose?.label ?? t('label.vaccination')}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
-        <DialogButton
+        <LoadingButton
+          label={t('button.save')}
+          isLoading={isSaving}
           disabled={!isDirty || !isComplete}
-          variant="ok"
+          startIcon={<SaveIcon />}
+          variant="contained"
+          color="secondary"
           onClick={save}
         />
       }

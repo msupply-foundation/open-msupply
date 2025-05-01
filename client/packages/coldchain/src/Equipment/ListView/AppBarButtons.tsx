@@ -31,11 +31,11 @@ export const AppBarButtonsComponent = ({
   importModalController,
   modalController,
 }: AppBarButtonsComponentProps) => {
-  const { success, error } = useNotification();
   const t = useTranslation();
+  const isCentralServer = useIsCentralServerApi();
+  const { success, error } = useNotification();
   const { fetchAsync, isLoading } = useAssets.document.listAll();
   const { data: properties } = useAssetProperties();
-  const isCentralServer = useIsCentralServerApi();
 
   const handleUploadAssetClick = useCallbackWithPermission(
     UserPermission.AssetMutate,

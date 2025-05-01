@@ -17,7 +17,8 @@ import {
   ColumnDescription,
   UNDEFINED_STRING_VALUE,
   getCommentPopoverColumn,
-  usePreferences,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
@@ -66,7 +67,9 @@ export const useStocktakeColumns = ({
 >[] => {
   const t = useTranslation();
   const { getError } = useStocktakeLineErrorContext();
-  const { data: preferences } = usePreferences();
+  const { data: preferences } = usePreference(
+    PreferenceKey.DisplayVaccineInDoses
+  );
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const columns: ColumnDescription<
@@ -261,6 +264,7 @@ export const useStocktakeColumns = ({
                 (total, line) =>
                   total +
                   (line.item?.doses ?? 0) *
+                    (line?.packSize ?? 1) *
                     (line.snapshotNumberOfPacks -
                       (line.countedNumberOfPacks ??
                         line.snapshotNumberOfPacks)),
@@ -291,7 +295,7 @@ export const useStocktakeColumns = ({
 
           const totalInDoses =
             displayDoses && rowData?.item?.doses
-              ? rowData?.item?.doses * total
+              ? total * (rowData?.packSize ?? 1) * rowData?.item?.doses
               : null;
           const totalInDosesRounded = totalInDoses
             ? Math.round(totalInDoses * 100) / 100

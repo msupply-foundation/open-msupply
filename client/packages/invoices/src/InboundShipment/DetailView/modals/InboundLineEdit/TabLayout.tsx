@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Box,
+  Breakpoints,
   Tab,
   TableContainer,
   PlusCircleIcon,
@@ -9,7 +10,8 @@ import {
   TabKeybindings,
   TabList,
   ButtonWithIcon,
-  useIsMediumScreen,
+  useAppTheme,
+  useMediaQuery,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
@@ -47,8 +49,9 @@ export const TabLayout = ({
   hasLinkedShipment,
 }: TabLayoutProps) => {
   const t = useTranslation();
+  const theme = useAppTheme();
+  const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
-  const isMediumScreen = useIsMediumScreen();
 
   if (draftLines.length === 0)
     return <Box sx={{ height: isMediumScreen ? 400 : 500 }} />;
