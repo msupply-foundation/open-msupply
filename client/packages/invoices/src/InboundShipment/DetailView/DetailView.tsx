@@ -135,6 +135,7 @@ const DetailViewInner = () => {
                 item={entity}
                 currency={data.currency}
                 isExternalSupplier={!data.otherParty.store}
+                hasLinkedShipment={!!data.linkedShipment}
               />
             )}
             {returnsIsOpen && (

@@ -40,6 +40,7 @@ interface TableProps {
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
   item?: ItemRowFragment | null;
+  hasLinkedShipment?: boolean;
 }
 
 const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
@@ -89,6 +90,7 @@ export const QuantityTableComponent = ({
   updateDraftLine,
   isDisabled = false,
   item,
+  hasLinkedShipment,
 }: TableProps) => {
   const t = useTranslation();
   const theme = useTheme();
@@ -126,34 +128,36 @@ export const QuantityTableComponent = ({
     });
   }
 
-  columnDefinitions.push(
-    getColumnLookupWithOverrides('packSize', {
-      Cell: PackSizeEntryCell<DraftInboundLine>,
-      setter: updateDraftLine,
-      label: 'label.pack-size',
-    }),
-    [
-      'numberOfPacks',
-      {
-        label: 'label.packs',
-        Cell: NumberOfPacksCell,
-        width: 100,
-        setter: patch => {
-          const { packSize, numberOfPacks } = patch;
+  if (!displayInDoses && !hasLinkedShipment) {
+    columnDefinitions.push(
+      getColumnLookupWithOverrides('packSize', {
+        Cell: PackSizeEntryCell<DraftInboundLine>,
+        setter: updateDraftLine,
+        label: 'label.pack-size',
+      }),
+      [
+        'numberOfPacks',
+        {
+          label: 'label.packs',
+          Cell: NumberOfPacksCell,
+          width: 100,
+          setter: patch => {
+            const { packSize, numberOfPacks } = patch;
 
-          if (!!packSize && !!numberOfPacks) {
-            const packsToVials = packSize * numberOfPacks;
+            if (!!packSize && !!numberOfPacks) {
+              const packsToVials = packSize * numberOfPacks;
 
-            updateDraftLine({
-              ...patch,
-              unitsPerPack: packsToVials,
-              numberOfPacks: numberOfPacks,
-            });
-          }
+              updateDraftLine({
+                ...patch,
+                unitsPerPack: packsToVials,
+                numberOfPacks: numberOfPacks,
+              });
+            }
+          },
         },
-      },
-    ]
-  );
+      ]
+    );
+  }
 
   if (displayInDoses) {
     columnDefinitions.push({

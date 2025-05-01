@@ -27,6 +27,7 @@ interface TabLayoutProps {
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
   item: ItemRowFragment | null;
+  hasLinkedShipment?: boolean;
 }
 
 enum Tabs {
@@ -43,6 +44,7 @@ export const TabLayout = ({
   currency,
   isExternalSupplier,
   item,
+  hasLinkedShipment,
 }: TabLayoutProps) => {
   const t = useTranslation();
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
@@ -112,6 +114,7 @@ export const TabLayout = ({
             lines={draftLines}
             updateDraftLine={updateDraftLine}
             item={item}
+            hasLinkedShipment={hasLinkedShipment}
           />
         </InboundLineEditPanel>
 

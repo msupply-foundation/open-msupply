@@ -28,6 +28,7 @@ interface InboundLineEditProps {
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
+  hasLinkedShipment?: boolean;
 }
 
 const useDraftInboundLines = (item: InboundLineItem | null) => {
@@ -119,6 +120,7 @@ export const InboundLineEdit = ({
   isDisabled = false,
   currency,
   isExternalSupplier,
+  hasLinkedShipment,
 }: InboundLineEditProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -202,6 +204,7 @@ export const InboundLineEdit = ({
               currency={currency}
               isExternalSupplier={isExternalSupplier}
               item={currentItem}
+              hasLinkedShipment={hasLinkedShipment}
             />
           </>
         )}
