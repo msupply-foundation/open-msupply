@@ -1756,6 +1756,7 @@
   "policyType.BUSINESS": "Business",
   "policyType.PERSONAL": "Personal",
   "preference.showContactTracing": "Show Contact Tracing",
+  "preference.displayPopulationBasedForecasting": "Display Population Based Forecasting",
   "prescription": "Prescriptions",
   "prescriptions": "Prescriptions",
   "programs": "Programs",
