@@ -48,7 +48,7 @@ pub struct ItemFilter {
     /// If true it returns ItemAndMasterList that have a name join row (including items with no stock), or items with stock on hand
     pub is_visible_or_on_hand: Option<bool>,
     /// Return items with stock on hand, including non-visible items (ignored if is_visible_or_on_hand is true!)
-    pub is_on_hand: Option<bool>,
+    pub has_stock_on_hand: Option<bool>,
     pub code_or_name: Option<StringFilter>,
     pub is_active: Option<bool>,
     pub is_vaccine: Option<bool>,
@@ -110,8 +110,8 @@ impl ItemFilter {
         self
     }
 
-    pub fn is_on_hand(mut self, value: bool) -> Self {
-        self.is_on_hand = Some(value);
+    pub fn has_stock_on_hand(mut self, value: bool) -> Self {
+        self.has_stock_on_hand = Some(value);
         self
     }
 
@@ -223,7 +223,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             code_or_name,
             is_active,
             is_vaccine,
-            is_on_hand,
+            has_stock_on_hand,
             is_visible_or_on_hand,
             master_list_id,
         } = f;
@@ -296,7 +296,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             )
             .group_by(item_link::item_id);
 
-        query = match (is_visible_or_on_hand, is_on_hand) {
+        query = match (is_visible_or_on_hand, has_stock_on_hand) {
             // visible items AND non-visible items with stock on hand
             (Some(true), _) => query.filter(
                 item::id
