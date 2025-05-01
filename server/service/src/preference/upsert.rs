@@ -13,6 +13,7 @@ pub struct StorePrefUpdate<T> {
 #[derive(Debug, PartialEq, Clone)]
 pub struct UpsertPreferences {
     pub show_contact_tracing: Option<bool>,
+    pub display_population_based_forecasting: Option<bool>,
     pub display_vaccine_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
 }
 
@@ -20,11 +21,13 @@ pub fn upsert_preferences(
     ctx: &ServiceContext,
     UpsertPreferences {
         show_contact_tracing: show_contact_tracing_input,
+        display_population_based_forecasting: display_population_based_forecasting_input,
         display_vaccine_in_doses: display_vaccine_in_doses_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
         show_contact_tracing,
+        display_population_based_forecasting,
         display_vaccine_in_doses,
     } = get_preference_provider();
 
@@ -34,6 +37,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = show_contact_tracing_input {
                 show_contact_tracing.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = display_population_based_forecasting_input {
+                display_population_based_forecasting.upsert(connection, input, None)?;
             }
 
             // For a store pref, input could be array of store IDs and values - iterate and insert...

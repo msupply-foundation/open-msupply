@@ -5915,6 +5915,7 @@ export type PreferenceDescriptionNode = {
 };
 
 export enum PreferenceKey {
+  DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   DisplayVaccineInDoses = 'displayVaccineInDoses',
   ShowContactTracing = 'showContactTracing',
 }
@@ -5941,6 +5942,7 @@ export enum PreferenceValueNodeType {
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
+  displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   displayVaccineInDoses: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
 };
@@ -6253,6 +6255,7 @@ export type Queries = {
    * `active_start_datetime <= at && active_end_datetime + 1 >= at`
    */
   activeProgramEvents: ProgramEventResponse;
+  activeVvmStatuses: VvmstatusesResponse;
   activityLogs: ActivityLogResponse;
   apiVersion: Scalars['String']['output'];
   assetCatalogueItem: AssetCatalogueItemResponse;
@@ -6434,6 +6437,10 @@ export type QueriesActiveProgramEventsArgs = {
   filter?: InputMaybe<ProgramEventFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ProgramEventSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesActiveVvmStatusesArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -9598,6 +9605,7 @@ export type UpsertPackVariantResponse =
   | UpsertItemVariantError;
 
 export type UpsertPreferencesInput = {
+  displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   displayVaccineInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
 };
@@ -9889,6 +9897,24 @@ export enum VenCategoryType {
   NotAssigned = 'NOT_ASSIGNED',
   V = 'V',
 }
+
+export type VvmstatusConnector = {
+  __typename: 'VvmstatusConnector';
+  nodes: Array<VvmstatusNode>;
+};
+
+export type VvmstatusNode = {
+  __typename: 'VvmstatusNode';
+  code: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  level: Scalars['Int']['output'];
+  reasonId?: Maybe<Scalars['String']['output']>;
+  unusable: Scalars['Boolean']['output'];
+};
+
+export type VvmstatusesResponse = VvmstatusConnector;
 
 export type WarningNode = {
   __typename: 'WarningNode';

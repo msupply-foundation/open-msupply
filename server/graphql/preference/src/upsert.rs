@@ -13,6 +13,7 @@ pub struct BoolStorePrefInput {
 #[derive(InputObject)]
 pub struct UpsertPreferencesInput {
     pub show_contact_tracing: Option<bool>,
+    pub display_population_based_forecasting: Option<bool>,
     pub display_vaccine_in_doses: Option<Vec<BoolStorePrefInput>>,
 }
 
@@ -42,11 +43,13 @@ impl UpsertPreferencesInput {
     pub fn to_domain(self) -> UpsertPreferences {
         let UpsertPreferencesInput {
             show_contact_tracing,
+            display_population_based_forecasting,
             display_vaccine_in_doses,
         } = self;
 
         UpsertPreferences {
             show_contact_tracing,
+            display_population_based_forecasting,
             display_vaccine_in_doses: display_vaccine_in_doses
                 .map(|i| i.into_iter().map(|i| i.to_domain()).collect()),
         }

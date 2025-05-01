@@ -14,12 +14,6 @@ query adminPreferenceList(
   }
 }
 
-query preferences($storeId: String!) {
-  preferences(storeId: $storeId) {
-    showContactTracing
-  }
-}
-
 mutation upsertPreferences($storeId: String!, $input: UpsertPreferencesInput!) {
   centralServer {
     preferences {

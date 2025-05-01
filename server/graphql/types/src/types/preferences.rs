@@ -17,6 +17,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.show_contact_tracing)
     }
 
+    pub async fn display_population_based_forecasting(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.display_population_based_forecasting)
+    }
+
     pub async fn display_vaccine_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.display_vaccine_in_doses)
     }
@@ -67,6 +71,7 @@ impl PreferenceDescriptionNode {
 pub enum PreferenceKey {
     // These keys (once camelCased) should match fields of PreferencesNode
     ShowContactTracing,
+    DisplayPopulationBasedForecasting,
     DisplayVaccineInDoses,
 }
 
@@ -74,6 +79,10 @@ impl PreferenceKey {
     pub fn from_domain(pref_key: &PrefKey) -> Self {
         match pref_key {
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
+            PrefKey::DisplayPopulationBasedForecasting => {
+                PreferenceKey::DisplayPopulationBasedForecasting
+            }
+
             PrefKey::DisplayVaccineInDoses => PreferenceKey::DisplayVaccineInDoses,
         }
     }

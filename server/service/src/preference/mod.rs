@@ -25,6 +25,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
     ) -> Result<Vec<PreferenceDescription>, PreferenceError> {
         let PreferenceProvider {
             show_contact_tracing,
+            display_population_based_forecasting,
             display_vaccine_in_doses,
         } = self.get_preference_provider();
 
@@ -34,13 +35,14 @@ pub trait PreferenceServiceTrait: Sync + Send {
             store_id: store_id.clone(),
         };
 
-        let mut descriptions: Vec<PreferenceDescription> = Vec::new();
+        let mut prefs: Vec<PreferenceDescription> = Vec::new();
 
         // Add each pref here
-        append_if_type(show_contact_tracing, &mut descriptions, &input)?;
-        append_if_type(display_vaccine_in_doses, &mut descriptions, &input)?;
+        append_if_type(show_contact_tracing, &mut prefs, &input)?;
+        append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
+        append_if_type(display_vaccine_in_doses, &mut prefs, &input)?;
 
-        Ok(descriptions)
+        Ok(prefs)
     }
 
     fn upsert(
