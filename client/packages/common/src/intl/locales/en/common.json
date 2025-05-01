@@ -1774,7 +1774,7 @@
   "replenishment": "Replenishment",
   "report-code.encounters": "Encounters",
   "report-code.expiring-items": "Expiring Items",
-  "report-code.inbound": "Inbound",
+  "report-code.inbound": "Inbound Shipment",
   "report-code.internal-order": "Internal Order",
   "report-code.item-usage": "Item Usage",
   "report-code.outbound-invoice-landscape-with-logo": "Outbound Shipment (landscape)",
