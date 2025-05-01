@@ -46,7 +46,7 @@ impl SyncTranslation for VVMStatusTranslation {
             level: data.level,
             is_active: data.is_active,
             unusable: data.unusable,
-            reason_id: Some(data.option_id),
+            reason_id: data.option_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
