@@ -9587,8 +9587,8 @@ export type UpsertPackVariantResponse =
   | UpsertItemVariantError;
 
 export type UpsertPreferencesInput = {
-  displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
+  displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type UpsertVaccineCourseDoseInput = {
