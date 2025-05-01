@@ -24,7 +24,7 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 pub(super) struct VVMStatusTranslation;
 impl SyncTranslation for VVMStatusTranslation {
     fn table_name(&self) -> &str {
-        "vvm_status"
+        "vaccine_vial_monitor_status"
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
