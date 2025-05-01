@@ -25,11 +25,13 @@ pub trait PreferenceServiceTrait: Sync + Send {
     ) -> Result<Vec<PreferenceDescription>, PreferenceError> {
         let PreferenceProvider {
             show_contact_tracing,
+            display_population_based_forecasting,
         } = self.get_preference_provider();
 
         let all_prefs_descriptions = vec![
             // Add each pref here
-            show_contact_tracing.as_description(connection, store_id)?,
+            show_contact_tracing.as_description(connection, store_id.clone())?,
+            display_population_based_forecasting.as_description(connection, store_id.clone())?,
         ];
 
         Ok(all_prefs_descriptions

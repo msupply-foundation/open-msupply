@@ -8,6 +8,7 @@ use service::{
 #[derive(InputObject)]
 pub struct UpsertPreferencesInput {
     pub show_contact_tracing: Option<bool>,
+    pub display_population_based_forecasting: Option<bool>,
 }
 
 pub fn upsert_preferences(
@@ -36,10 +37,12 @@ impl UpsertPreferencesInput {
     pub fn to_domain(self) -> UpsertPreferences {
         let UpsertPreferencesInput {
             show_contact_tracing,
+            display_population_based_forecasting,
         } = self;
 
         UpsertPreferences {
             show_contact_tracing,
+            display_population_based_forecasting,
         }
     }
 }
