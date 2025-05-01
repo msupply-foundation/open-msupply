@@ -23,6 +23,7 @@ interface InventoryAdjustmentReasonSearchInputProps {
   adjustmentType: AdjustmentTypeInput;
   isError?: boolean;
   isDisabled?: boolean;
+  initialStocktake: boolean;
 }
 
 export const InventoryAdjustmentReasonSearchInput: FC<
@@ -35,6 +36,7 @@ export const InventoryAdjustmentReasonSearchInput: FC<
   adjustmentType,
   isError,
   isDisabled,
+  initialStocktake,
 }) => {
   const { data, isLoading } = useInventoryAdjustmentReasonList();
   const reasonFilter = (reason: InventoryAdjustmentReasonRowFragment) => {
@@ -44,13 +46,14 @@ export const InventoryAdjustmentReasonSearchInput: FC<
   };
   const reasons = (data?.nodes ?? []).filter(reasonFilter);
 
-  const isRequired = reasons.length !== 0;
+  const reasonsAvailable = reasons.length !== 0;
+  const isRequired = reasonsAvailable && initialStocktake != true;
 
   return (
     <Box display="flex" flexDirection="row" width={120}>
       <Autocomplete
         autoFocus={autoFocus}
-        disabled={isDisabled || !isRequired}
+        disabled={isDisabled || !reasonsAvailable}
         width={`${width}px`}
         clearable={false}
         value={

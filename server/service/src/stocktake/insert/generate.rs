@@ -95,13 +95,13 @@ pub fn generate(
             store_id: store_id.to_string(),
             is_locked: is_locked.unwrap_or(false),
             program_id,
+            is_initial_stocktake,
             // Default
             finalised_datetime: None,
             inventory_addition_id: None,
             inventory_reduction_id: None,
             counted_by: None,
             verified_by: None,
-            is_initial_stocktake: false,
         },
         lines,
     ))
