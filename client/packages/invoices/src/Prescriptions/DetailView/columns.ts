@@ -14,6 +14,8 @@ import {
   ColumnDescription,
   NumUtils,
   useAuthContext,
+  usePreferences,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -65,7 +67,7 @@ export const usePrescriptionColumn = ({
 >[] => {
   const t = useTranslation();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
-
+  const { data: newPrefs } = usePreferences();
   const { store: { preferences } = {} } = useAuthContext();
   const hasPrescribedQty = preferences?.editPrescribedQuantityOnPrescription;
 
@@ -202,28 +204,84 @@ export const usePrescriptionColumn = ({
           ]),
       },
     ],
-    [
-      'unitQuantity',
-      {
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.getUnitQuantity(lines);
-          } else {
-            return rowData.packSize * rowData.numberOfPacks;
-          }
-        },
-        getSortValue: rowData => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.getUnitQuantity(lines);
-          } else {
-            return rowData.packSize * rowData.numberOfPacks;
-          }
-        },
-      },
-    ],
   ];
+
+  if (newPrefs?.displayVaccineInDoses) {
+    columns.push({
+      key: 'doses',
+      label: 'label.doses-per-unit',
+      sortable: false,
+      accessor: ({ rowData }) => {
+        if ('lines' in rowData) {
+          const { lines } = rowData;
+          if (lines[0]?.item.isVaccine) {
+            const doses = lines?.map(
+              ({ item }) => item?.doses ?? UNDEFINED_STRING_VALUE
+            );
+            const dosesTheSame = doses?.every(dose => dose === doses?.[0]);
+            return dosesTheSame ? doses?.[0] : t('multiple');
+          } else {
+            return UNDEFINED_STRING_VALUE;
+          }
+        } else {
+          return rowData?.item?.isVaccine
+            ? (rowData?.item?.doses ?? UNDEFINED_STRING_VALUE)
+            : UNDEFINED_STRING_VALUE;
+        }
+      },
+    });
+  }
+  columns.push([
+    'unitQuantity',
+    {
+      accessor: ({ rowData }) => {
+        if ('lines' in rowData) {
+          const { lines } = rowData;
+          const displayVaccineInDoses =
+            newPrefs?.displayVaccineInDoses && lines[0]?.item.isVaccine;
+          const unitQuantity = ArrayUtils.getUnitQuantity(lines);
+
+          // TODO: Different doses with item variants
+          if (displayVaccineInDoses) {
+            const doses = lines[0]?.item.doses ?? 1;
+            return unitQuantity * doses;
+          }
+
+          return unitQuantity;
+        } else {
+          const displayVaccineInDoses =
+            newPrefs?.displayVaccineInDoses && rowData?.item.isVaccine;
+          const unitQuantity = rowData.numberOfPacks * rowData.packSize;
+          return displayVaccineInDoses
+            ? unitQuantity * (rowData.item.doses ?? 1)
+            : unitQuantity;
+        }
+      },
+      getSortValue: rowData => {
+        if ('lines' in rowData) {
+          const { lines } = rowData;
+          const displayVaccineInDoses =
+            newPrefs?.displayVaccineInDoses && lines[0]?.item.isVaccine;
+          const unitQuantity = ArrayUtils.getUnitQuantity(lines);
+
+          // TODO: Different doses with item variants
+          if (displayVaccineInDoses) {
+            const doses = lines[0]?.item.doses ?? 1;
+            return unitQuantity * doses;
+          }
+
+          return unitQuantity;
+        } else {
+          const displayVaccineInDoses =
+            newPrefs?.displayVaccineInDoses && rowData?.item.isVaccine;
+          const unitQuantity = rowData.numberOfPacks * rowData.packSize;
+          return displayVaccineInDoses
+            ? unitQuantity * (rowData.item.doses ?? 1)
+            : unitQuantity;
+        }
+      },
+    },
+  ]);
 
   if (hasPrescribedQty) {
     columns.push({
@@ -305,19 +363,33 @@ export const usePrescriptionColumn = ({
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           // Multiple lines, so we need to calculate the average price per unit
-
+          const { lines } = rowData;
+          const displayVaccineInDoses =
+            newPrefs?.displayVaccineInDoses && lines[0]?.item.isVaccine;
           let totalSellPrice = 0;
           let totalUnits = 0;
 
-          for (const line of rowData.lines) {
-            totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
-            totalUnits += line.numberOfPacks * line.packSize;
+          for (const line of lines) {
+            const units = line.numberOfPacks * line.packSize;
+
+            if (displayVaccineInDoses) {
+              totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
+              totalUnits += units * line.item.doses;
+            } else {
+              totalUnits += units;
+            }
           }
 
           if (totalSellPrice === 0 && totalUnits === 0) return 0;
           return totalSellPrice / totalUnits;
         } else {
-          return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
+          const displayVaccineInDoses =
+            newPrefs?.displayVaccineInDoses && rowData?.item.isVaccine;
+          const sellPricePerPack = rowData.sellPricePerPack ?? 0;
+
+          return displayVaccineInDoses
+            ? (sellPricePerPack * rowData.numberOfPacks) / rowData.item.doses
+            : sellPricePerPack / rowData.packSize;
         }
       },
       getSortValue: rowData => {
@@ -332,7 +404,6 @@ export const usePrescriptionColumn = ({
         }
       },
     },
-
     {
       label: 'label.line-total',
       key: 'lineTotal',
