@@ -1,33 +1,51 @@
 use crate::service_provider::ServiceContext;
-use preferences::{get_preference_descriptions, get_preferences, Preference, Preferences};
-use repository::{PreferenceRow, RepositoryError};
+
+pub mod types;
+use repository::StorageConnection;
+pub use types::*;
+mod query_preference;
 
 pub mod preferences;
+pub use preferences::*;
 pub mod upsert;
+pub mod upsert_helpers;
 
 pub use upsert::*;
 
 pub trait PreferenceServiceTrait: Sync + Send {
-    // Maybe should be called get_store_preferences, but wanting to maintain
-    // distinction from existing store preferences at this stage
-    fn get_preferences(
-        &self,
-        ctx: &ServiceContext,
-        store_id: &str,
-    ) -> Result<Preferences, RepositoryError> {
-        get_preferences(ctx, store_id)
+    fn get_preference_provider(&self) -> PreferenceProvider {
+        get_preference_provider()
     }
 
-    fn get_preference_descriptions(&self) -> Vec<Box<dyn Preference<Value = bool>>> {
-        get_preference_descriptions()
+    fn get_preference_descriptions(
+        &self,
+        connection: &StorageConnection,
+        store_id: Option<String>,
+        pref_type: PreferenceType,
+    ) -> Result<Vec<PreferenceDescription>, PreferenceError> {
+        let PreferenceProvider {
+            show_contact_tracing,
+            display_population_based_forecasting,
+        } = self.get_preference_provider();
+
+        let all_prefs_descriptions = vec![
+            // Add each pref here
+            show_contact_tracing.as_description(connection, store_id.clone())?,
+            display_population_based_forecasting.as_description(connection, store_id.clone())?,
+        ];
+
+        Ok(all_prefs_descriptions
+            .into_iter()
+            .filter(|pref| pref.preference_type == pref_type)
+            .collect())
     }
 
     fn upsert(
         &self,
         ctx: &ServiceContext,
-        input: UpsertPreference,
-    ) -> Result<PreferenceRow, RepositoryError> {
-        upsert_preference(ctx, input)
+        input: UpsertPreferences,
+    ) -> Result<(), UpsertPreferenceError> {
+        upsert_preferences(ctx, input)
     }
 }
 

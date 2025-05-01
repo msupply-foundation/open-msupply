@@ -140,6 +140,14 @@ declare module '@mui/material/styles/createTypography' {
   }
 }
 
+export enum Breakpoints {
+  xs = 'xs',
+  sm = 'sm',
+  md = 'md',
+  lg = 'lg',
+  xl = 'xl',
+}
+
 export const themeOptions = {
   breakpoints: {
     values: {

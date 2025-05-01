@@ -42,6 +42,7 @@ graphql_clinician = { path = "clinician" }
 graphql_plugin = { path = "plugin" }
 graphql_contact_form = { path = "contact_form" }
 graphql_preference = { path = "preference" }
+graphql_vvm = { path = "vvm" }
 
 actix-web = { workspace = true }
 async-graphql = { workspace = true }
