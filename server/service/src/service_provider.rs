@@ -73,6 +73,7 @@ use crate::{
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
     vaccination::{VaccinationService, VaccinationServiceTrait},
     vaccine_course::VaccineCourseServiceTrait,
+    vvm::{VVMService, VVMServiceTrait},
     ListError, ListResult,
 };
 use repository::{
@@ -179,6 +180,8 @@ pub struct ServiceProvider {
     pub(crate) frontend_plugins_cache: FrontendPluginCache,
     // Preferences
     pub preference_service: Box<dyn PreferenceServiceTrait>,
+    // VVM
+    pub vvm_service: Box<dyn VVMServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -281,6 +284,7 @@ impl ServiceProvider {
             printer_service: Box::new(PrinterService {}),
             frontend_plugins_cache: FrontendPluginCache::new(),
             preference_service: Box::new(PreferenceService {}),
+            vvm_service: Box::new(VVMService {}),
         }
     }
 
