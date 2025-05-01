@@ -9,7 +9,7 @@ export const ManageService: FC = () => {
     AppRoute.IndicatorsDemographics
   ).build();
 
-  const preferencesRoute = RouteBuilder.create(AppRoute.Preferences)
+  const preferencesRoute = RouteBuilder.create(AppRoute.GlobalPreferences)
     .addPart(':key?')
     .build();
 

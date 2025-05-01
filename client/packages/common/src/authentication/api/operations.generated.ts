@@ -407,7 +407,6 @@ export const PreferencesDocument = gql`
   query preferences($storeId: String!) {
     preferences(storeId: $storeId) {
       showContactTracing
-      allowTrackingOfReceivedStockByDonor
     }
   }
 `;
@@ -540,21 +539,6 @@ export function getSdk(
             ...wrappedRequestHeaders,
           }),
         'permissions',
-        'query',
-        variables
-      );
-    },
-    preferences(
-      variables: PreferencesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<PreferencesQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<PreferencesQuery>(PreferencesDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
-          }),
-        'preferences',
         'query',
         variables
       );

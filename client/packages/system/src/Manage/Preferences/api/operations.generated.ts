@@ -3,17 +3,18 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type AvailablePreferencesQueryVariables = Types.Exact<{
+export type AdminPreferenceListQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
+  prefType: Types.PreferenceNodeType;
 }>;
 
-export type AvailablePreferencesQuery = {
+export type AdminPreferenceListQuery = {
   __typename: 'Queries';
-  availablePreferences: Array<{
+  preferenceDescriptions: Array<{
     __typename: 'PreferenceDescriptionNode';
-    key: string;
-    jsonSchema: any;
-    uiSchema: any;
+    key: Types.PreferenceKey;
+    valueType: Types.PreferenceValueNodeType;
+    value: any;
   }>;
 };
 
@@ -30,28 +31,28 @@ export type PreferencesQuery = {
   };
 };
 
-export type UpsertPreferenceMutationVariables = Types.Exact<{
+export type UpsertPreferencesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  input: Types.UpsertPreferenceInput;
+  input: Types.UpsertPreferencesInput;
 }>;
 
-export type UpsertPreferenceMutation = {
+export type UpsertPreferencesMutation = {
   __typename: 'Mutations';
   centralServer: {
     __typename: 'CentralServerMutationNode';
     preferences: {
       __typename: 'PreferenceMutations';
-      upsertPreference: { __typename: 'PreferenceNode'; id: string };
+      upsertPreferences: { __typename: 'OkResponse'; ok: boolean };
     };
   };
 };
 
-export const AvailablePreferencesDocument = gql`
-  query availablePreferences($storeId: String!) {
-    availablePreferences(storeId: $storeId) {
+export const AdminPreferenceListDocument = gql`
+  query adminPreferenceList($storeId: String!, $prefType: PreferenceNodeType!) {
+    preferenceDescriptions(storeId: $storeId, prefType: $prefType) {
       key
-      jsonSchema
-      uiSchema
+      valueType
+      value
     }
   }
 `;
@@ -63,12 +64,15 @@ export const PreferencesDocument = gql`
     }
   }
 `;
-export const UpsertPreferenceDocument = gql`
-  mutation upsertPreference($storeId: String!, $input: UpsertPreferenceInput!) {
+export const UpsertPreferencesDocument = gql`
+  mutation upsertPreferences(
+    $storeId: String!
+    $input: UpsertPreferencesInput!
+  ) {
     centralServer {
       preferences {
-        upsertPreference(storeId: $storeId, input: $input) {
-          id
+        upsertPreferences(storeId: $storeId, input: $input) {
+          ok
         }
       }
     }
@@ -94,18 +98,18 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
-    availablePreferences(
-      variables: AvailablePreferencesQueryVariables,
+    adminPreferenceList(
+      variables: AdminPreferenceListQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<AvailablePreferencesQuery> {
+    ): Promise<AdminPreferenceListQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AvailablePreferencesQuery>(
-            AvailablePreferencesDocument,
+          client.request<AdminPreferenceListQuery>(
+            AdminPreferenceListDocument,
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'availablePreferences',
+        'adminPreferenceList',
         'query',
         variables
       );
@@ -125,18 +129,18 @@ export function getSdk(
         variables
       );
     },
-    upsertPreference(
-      variables: UpsertPreferenceMutationVariables,
+    upsertPreferences(
+      variables: UpsertPreferencesMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<UpsertPreferenceMutation> {
+    ): Promise<UpsertPreferencesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpsertPreferenceMutation>(
-            UpsertPreferenceDocument,
+          client.request<UpsertPreferencesMutation>(
+            UpsertPreferencesDocument,
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'upsertPreference',
+        'upsertPreferences',
         'mutation',
         variables
       );
