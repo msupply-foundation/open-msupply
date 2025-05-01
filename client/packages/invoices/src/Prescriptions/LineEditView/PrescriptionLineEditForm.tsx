@@ -24,6 +24,7 @@ import {
   TextArea,
   InputWithLabelRow,
   useIntlUtils,
+  usePreferences,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -95,6 +96,7 @@ export const PrescriptionLineEditForm: React.FC<
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
   const { store: { preferences } = {} } = useAuthContext();
+  const { data: newPrefs } = usePreferences();
 
   const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
   const [prescribedQuantity, setPrescribedQuantity] = useState<number | null>(
@@ -109,6 +111,9 @@ export const PrescriptionLineEditForm: React.FC<
     []
   );
   const isDirectionsDisabled = !issueUnitQuantity;
+  const displayInDoses = !!newPrefs?.displayVaccineInDoses && !!item?.isVaccine;
+  const unitName = item?.unitName ?? t('label.unit');
+  const unit = displayInDoses ? t('label.doses') : unitName;
 
   const allocate = (
     numPacks: number,
@@ -195,7 +200,9 @@ export const PrescriptionLineEditForm: React.FC<
         ? (packSizeController.selected?.value ?? 1)
         : 1;
 
-    const numPacks = quantity / packSize;
+    const numPacks = displayInDoses
+      ? quantity / item?.doses
+      : quantity / packSize;
     debouncedAllocate(
       numPacks,
       Number(packSize),
@@ -367,7 +374,7 @@ export const PrescriptionLineEditForm: React.FC<
                   }}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
-                  {item.unitName && getPlural(item.unitName, issueUnitQuantity)}
+                  {getPlural(unit, issueUnitQuantity)}
                 </InputLabel>
               </Grid>
             </Grid>

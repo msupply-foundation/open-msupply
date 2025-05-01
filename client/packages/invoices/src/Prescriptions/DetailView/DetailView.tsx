@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -26,7 +26,7 @@ import { StockOutItem } from '../../types';
 import { HistoryModal } from './History/HistoryModal';
 import { Draft } from '../..';
 
-export const PrescriptionDetailView: FC = () => {
+export const PrescriptionDetailView = () => {
   const {
     entity: historyEntity,
     mode: historyMode,

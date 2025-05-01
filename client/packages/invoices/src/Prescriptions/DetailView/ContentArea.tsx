@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useTranslation,
   NothingHere,
@@ -11,15 +11,19 @@ import { usePrescriptionColumn } from './columns';
 import { StockOutItem } from '../../types';
 import { StockOutLineFragment } from '../../StockOut';
 import { useExpansionColumns } from './columns';
+import { ItemRowFragment } from 'packages/system/src';
 
 interface ContentAreaProps {
   onAddItem: () => void;
   onRowClick?: null | ((rowData: StockOutLineFragment | StockOutItem) => void);
+  item?: ItemRowFragment;
 }
 
-const Expand: FC<{
+const Expand = ({
+  rowData,
+}: {
   rowData: StockOutLineFragment | StockOutItem;
-}> = ({ rowData }) => {
+}) => {
   const expandoColumns = useExpansionColumns();
 
   if ('lines' in rowData && rowData.lines.length > 1) {
@@ -29,10 +33,10 @@ const Expand: FC<{
   }
 };
 
-export const ContentAreaComponent: FC<ContentAreaProps> = ({
+export const ContentAreaComponent = ({
   onAddItem,
   onRowClick,
-}) => {
+}: ContentAreaProps) => {
   const t = useTranslation();
   const {
     updateSortQuery,

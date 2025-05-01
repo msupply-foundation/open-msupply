@@ -3,7 +3,6 @@ import {
   ColumnDescription,
   ExpiryDateCell,
   NumberCell,
-  NumUtils,
   useColumns,
   useIntlUtils,
   usePreferences,
@@ -46,33 +45,33 @@ export const usePrescriptionLineEditColumns = ({
 
   if (displayInDoses) {
     columns.push({
-      key: 'doses-per-pack',
+      key: 'dosesPerPack',
       label: `${t('label.doses-per')} ${unit}`,
       width: 100,
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.item?.doses,
     });
+  } else {
+    columns.push(['packSize', { width: 90 }]);
   }
 
   columns.push(
-    ['packSize', { width: 90 }],
     {
       Cell: NumberCell,
       label: getColumnLabelWithPackOrUnit({
         t,
         displayInDoses,
         itemUnit: unit,
-        columnName: t('label.in-stock'),
+        columnLabel: t('label.in-stock'),
       }),
       key: 'totalUnits',
       align: ColumnAlign.Right,
       width: 80,
       accessor: ({ rowData }) => {
-        return displayInDoses
-          ? (rowData.stockLine?.totalNumberOfPacks ?? 0) *
-              (rowData.item?.doses ?? 1)
-          : (rowData.stockLine?.totalNumberOfPacks ?? 0) *
-              (rowData.stockLine?.packSize ?? 1);
+        const total =
+          (rowData.stockLine?.totalNumberOfPacks ?? 0) *
+          (rowData.stockLine?.packSize ?? 1);
+        return displayInDoses ? total * (rowData.item?.doses ?? 1) : total;
       },
     },
     {
@@ -81,17 +80,16 @@ export const usePrescriptionLineEditColumns = ({
         t,
         displayInDoses,
         itemUnit: unit,
-        columnName: t('label.available'),
+        columnLabel: t('label.available'),
       }),
       key: 'availableUnits',
       align: ColumnAlign.Right,
       width: 85,
       accessor: ({ rowData }) => {
-        return displayInDoses
-          ? (rowData.stockLine?.availableNumberOfPacks ?? 0) *
-              (rowData.item?.doses ?? 1)
-          : (rowData.stockLine?.availableNumberOfPacks ?? 0) *
-              (rowData.stockLine?.packSize ?? 1);
+        const total =
+          (rowData.stockLine?.availableNumberOfPacks ?? 0) *
+          (rowData.stockLine?.packSize ?? 1);
+        return displayInDoses ? total * (rowData.item?.doses ?? 1) : total;
       },
     },
     {
@@ -100,28 +98,21 @@ export const usePrescriptionLineEditColumns = ({
         t,
         displayInDoses,
         itemUnit: unit,
-        columnName: t('label.issued'),
+        columnLabel: t('label.issued'),
       }),
       key: 'unitQuantity',
       align: ColumnAlign.Right,
       width: 120,
       setter: ({ packSize, id, unitQuantity, item }) => {
-        if (displayInDoses) {
-          onChange(id, (unitQuantity ?? 0) / (item?.doses ?? 1));
+        if (displayInDoses && item?.isVaccine && item?.doses) {
+          onChange(id, (unitQuantity ?? 0) / (packSize ?? 1) / item.doses);
         } else {
           onChange(id, (unitQuantity ?? 0) / (packSize ?? 1));
         }
       },
       accessor: ({ rowData }) => {
-        return displayInDoses
-          ? NumUtils.round(
-              (rowData.numberOfPacks ?? 0) * (rowData.item?.doses ?? 1),
-              3
-            )
-          : NumUtils.round(
-              (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
-              3
-            );
+        const total = (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1);
+        return displayInDoses ? total * (rowData.item?.doses ?? 1) : total;
       },
     }
   );
