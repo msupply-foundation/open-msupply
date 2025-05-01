@@ -13,7 +13,8 @@ pub struct LegacyVVMStatusRow {
     level: i32,
     is_active: bool,
     unusable: bool,
-    option_id: String,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    option_id: Option<String>,
 }
 
 // Needs to be added to all_translators()
