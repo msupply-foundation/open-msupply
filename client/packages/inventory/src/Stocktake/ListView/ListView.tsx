@@ -7,7 +7,6 @@ import {
   createTableStore,
   useTranslation,
   useTableStore,
-  useToggle,
   NothingHere,
   useUrlQueryParams,
   ColumnFormat,
@@ -33,7 +32,6 @@ const useDisableStocktakeRows = (rows?: StocktakeRowFragment[]) => {
 export const StocktakeListView: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation();
-  const modalController = useToggle();
   const { createStocktake } = useCreateStocktake();
 
   const {
@@ -82,8 +80,7 @@ export const StocktakeListView: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons modalController={modalController} />
-
+      <AppBarButtons />
       <DataTable
         id="stocktake-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
