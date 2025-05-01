@@ -138,7 +138,19 @@ export const QuantityTableComponent = ({
         label: 'label.packs',
         Cell: NumberOfPacksCell,
         width: 100,
-        setter: updateDraftLine,
+        setter: patch => {
+          const { packSize, numberOfPacks } = patch;
+
+          if (!!packSize && !!numberOfPacks) {
+            const packsToVials = packSize * numberOfPacks;
+
+            updateDraftLine({
+              ...patch,
+              unitsPerPack: packsToVials,
+              numberOfPacks: numberOfPacks,
+            });
+          }
+        },
       },
     ]
   );
@@ -149,11 +161,25 @@ export const QuantityTableComponent = ({
       label: getColumnLabelWithPackOrUnit({
         t,
         displayInDoses,
-        displayInPack: true,
+        displayDosesInUnitName: true,
         itemUnit: item?.unitName,
       }),
+      Cell: NumberOfPacksCell,
       width: 100,
       align: ColumnAlign.Right,
+      setter: patch => {
+        const { unitsPerPack, packSize } = patch;
+
+        if (!!packSize && !!unitsPerPack) {
+          const vialsToPacks = unitsPerPack / packSize;
+
+          updateDraftLine({
+            ...patch,
+            unitsPerPack,
+            numberOfPacks: vialsToPacks,
+          });
+        }
+      },
       accessor: ({ rowData }) => {
         return rowData.numberOfPacks * rowData.packSize;
       },

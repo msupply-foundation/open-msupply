@@ -246,7 +246,7 @@ const getNumberColumnLabel = ({
     if (displayDosesInUnitName) {
       return unitTranslation;
     }
-    return displayDosesInUnitName ? packTranslation : dosesTranslation;
+    return displayInPack ? packTranslation : dosesTranslation;
   }
 
   if (displayInPack) {
