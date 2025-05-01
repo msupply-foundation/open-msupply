@@ -10,29 +10,25 @@ import {
   Typography,
 } from '@common/components';
 import { PlusCircleIcon } from '@common/icons';
-import { useFormatDateTime, useTranslation } from '@common/intl';
+import { useTranslation } from '@common/intl';
 import { ToggleState, useDialog } from '@common/hooks';
-import { useStocktake } from '../api';
 import {
   useStockList,
   useLocationList,
   useMasterLists,
 } from '@openmsupply-client/system';
-import {
-  Box,
-  FnUtils,
-  Formatter,
-  InsertStocktakeInput,
-  useAuthContext,
-} from '@openmsupply-client/common';
+import { Box, useAuthContext } from '@openmsupply-client/common';
+import { useCreateStocktake } from './createStocktake';
 
 const LABEL_FLEX = '0 0 150px';
 
 interface CreateStocktakeArgs {
-  masterListId: string;
-  locationId: string;
-  itemsHaveStock: boolean;
-  expiresBefore: Date | null;
+  masterListId?: string;
+  locationId?: string;
+  itemsHaveStock?: boolean;
+  expiresBefore?: Date | null;
+  isInitialStocktake: boolean;
+  comment: string | undefined;
 }
 
 const DEFAULT_ARGS: CreateStocktakeArgs = {
@@ -40,14 +36,18 @@ const DEFAULT_ARGS: CreateStocktakeArgs = {
   locationId: '',
   itemsHaveStock: false,
   expiresBefore: null,
+  isInitialStocktake: false,
+  comment: '',
 };
 
 export const CreateStocktakeButton: React.FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
   const t = useTranslation();
-  const { mutateAsync, isLoading: isSaving } = useStocktake.document.insert();
-  const { user, store } = useAuthContext();
+  const [createStocktakeArgs, setCreateStocktakeArgs] =
+    useState<CreateStocktakeArgs>(DEFAULT_ARGS);
+  const { isLoading: isSaving, createStocktake } = useCreateStocktake();
+  const { store } = useAuthContext();
   const { data: masterListData, isLoading: isLoadingMasterLists } =
     useMasterLists({
       queryParams: {
@@ -65,9 +65,6 @@ export const CreateStocktakeButton: React.FC<{
       direction: 'asc',
     },
   });
-  const { localisedDate } = useFormatDateTime();
-  const [createStocktakeArgs, setCreateStocktakeArgs] =
-    useState<CreateStocktakeArgs>(DEFAULT_ARGS);
 
   const generateComment = () => {
     const { locationId, masterListId, itemsHaveStock } = createStocktakeArgs;
@@ -94,29 +91,18 @@ export const CreateStocktakeButton: React.FC<{
     }
   };
 
-  const onChange = async () => {
-    const description = t('stocktake.description-template', {
-      username: user ? user.name : 'unknown user',
-      date: localisedDate(new Date()),
-    });
+  const onChange = () => {
     const { locationId, masterListId, itemsHaveStock, expiresBefore } =
       createStocktakeArgs;
-    const input: InsertStocktakeInput = {
-      id: FnUtils.generateUUID(),
-      description,
+    const args: CreateStocktakeArgs = {
       masterListId: masterListId ? masterListId : undefined,
-      location: locationId
-        ? {
-            value: locationId,
-          }
-        : undefined,
+      locationId: locationId ? locationId : undefined,
       itemsHaveStock: itemsHaveStock ? itemsHaveStock : undefined,
-      expiresBefore: expiresBefore
-        ? Formatter.naiveDate(expiresBefore)
-        : undefined,
+      expiresBefore: expiresBefore ? expiresBefore : undefined,
+      isInitialStocktake: false,
       comment: generateComment(),
     };
-    await mutateAsync(input);
+    createStocktake(args);
   };
 
   const onClose = () => {
