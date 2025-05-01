@@ -64,7 +64,7 @@ impl PreferenceQueries {
 
         let prefs = service.get_preference_descriptions(
             service_context.connection,
-            context.store_id.or(Some(store_id)),
+            context.store_id,
             pref_type.to_domain(),
         )?;
 
