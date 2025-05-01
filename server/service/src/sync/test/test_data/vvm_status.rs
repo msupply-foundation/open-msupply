@@ -13,7 +13,7 @@ const VVM_STATUS_1: (&str, &str) = (
         "is_active":true,
         "level":1,
         "unusable":false,
-        "option_id":"TEST OPTION ID 1"
+        "option_id":""
     }"#,
 );
 
