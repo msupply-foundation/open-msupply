@@ -102,6 +102,8 @@ export const QuantityTableComponent = ({
   const itemVariantsEnabled = useIsItemVariantsEnabled();
   const displayInDoses =
     !!preferences?.displayVaccineInDoses && !!item?.isVaccine;
+  const shouldShowNumberOfPacks =
+    !displayInDoses || (displayInDoses && !hasLinkedShipment);
   const itemUnitName = item?.unitName ? item.unitName : t('label.unit');
 
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
@@ -131,7 +133,7 @@ export const QuantityTableComponent = ({
     });
   }
 
-  if (!displayInDoses && !hasLinkedShipment) {
+  if (shouldShowNumberOfPacks) {
     columnDefinitions.push(
       getColumnLookupWithOverrides('packSize', {
         Cell: PackSizeEntryCell<DraftInboundLine>,
