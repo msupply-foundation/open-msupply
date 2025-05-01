@@ -12,6 +12,7 @@ pub struct LegacyVVMStatusRow {
     code: String,
     level: i32,
     is_active: bool,
+    #[serde(default)]
     unusable: bool,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     option_id: Option<String>,
