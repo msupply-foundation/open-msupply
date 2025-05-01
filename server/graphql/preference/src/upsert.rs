@@ -9,6 +9,7 @@ use service::{
 pub struct UpsertPreferencesInput {
     pub show_contact_tracing: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
+    pub allow_tracking_of_received_stock_by_donor: Option<bool>,
 }
 
 pub fn upsert_preferences(
@@ -38,11 +39,13 @@ impl UpsertPreferencesInput {
         let UpsertPreferencesInput {
             show_contact_tracing,
             display_population_based_forecasting,
+            allow_tracking_of_received_stock_by_donor,
         } = self;
 
         UpsertPreferences {
             show_contact_tracing,
             display_population_based_forecasting,
+            allow_tracking_of_received_stock_by_donor,
         }
     }
 }

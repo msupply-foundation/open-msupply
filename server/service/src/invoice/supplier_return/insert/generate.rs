@@ -74,7 +74,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_id: None,
+        donor_default_id: None,
     };
 
     let lines_with_packs: Vec<&SupplierReturnLineInput> = supplier_return_lines

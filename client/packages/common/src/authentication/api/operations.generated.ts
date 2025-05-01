@@ -544,6 +544,21 @@ export function getSdk(
         variables
       );
     },
+    preferences(
+      variables: PreferencesQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<PreferencesQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PreferencesQuery>(PreferencesDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'preferences',
+        'query',
+        variables
+      );
+    },
     updateUser(
       variables?: UpdateUserMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders

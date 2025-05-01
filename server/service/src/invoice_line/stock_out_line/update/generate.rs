@@ -135,7 +135,7 @@ fn generate_line(
         foreign_currency_price_before_tax,
         item_variant_id,
         linked_invoice_id: None,
-        default_donor_id: None,
+        donor_default_id: None,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {

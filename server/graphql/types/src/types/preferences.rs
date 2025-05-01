@@ -71,6 +71,7 @@ pub enum PreferenceKey {
     // These keys (once camelCased) should match fields of PreferencesNode
     ShowContactTracing,
     DisplayPopulationBasedForecasting,
+    AllowTrackingOfReceivedStockByDonor,
 }
 
 impl PreferenceKey {
@@ -79,8 +80,10 @@ impl PreferenceKey {
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
             PrefKey::DisplayPopulationBasedForecasting => {
                 PreferenceKey::DisplayPopulationBasedForecasting
-            },
-            PrefKey::
+            }
+            PrefKey::AllowTrackingOfReceivedStockByDonor => {
+                PreferenceKey::AllowTrackingOfReceivedStockByDonor
+            }
         }
     }
 }

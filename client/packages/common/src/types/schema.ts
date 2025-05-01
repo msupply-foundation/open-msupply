@@ -5906,6 +5906,7 @@ export type PreferenceDescriptionNode = {
 };
 
 export enum PreferenceKey {
+  AllowTrackingOfReceivedStockByDonor = 'allowTrackingOfReceivedStockByDonor',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   ShowContactTracing = 'showContactTracing',
 }
@@ -5932,6 +5933,7 @@ export enum PreferenceValueNodeType {
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
+  allowTrackingOfReceivedStockByDonor: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
 };
@@ -9593,6 +9595,7 @@ export type UpsertPackVariantResponse =
   | UpsertItemVariantError;
 
 export type UpsertPreferencesInput = {
+  allowTrackingOfReceivedStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
 };

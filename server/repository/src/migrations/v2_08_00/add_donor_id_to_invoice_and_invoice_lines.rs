@@ -11,14 +11,14 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                ALTER TABLE invoice_line ADD COLUMN default_donor_id TEXT;
+                ALTER TABLE invoice_line ADD COLUMN donor_default_id TEXT;
             "#
         )?;
 
         sql!(
             connection,
             r#"
-                ALTER TABLE invoice ADD COLUMN default_donor_id TEXT;
+                ALTER TABLE invoice ADD COLUMN donor_default_id TEXT;
             "#
         )?;
 
