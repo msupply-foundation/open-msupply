@@ -2,7 +2,7 @@ use repository::vvm_status_row::{VVMStatusRow, VVMStatusRowDelete};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
-const TABLE_NAME: &str = "vvm_status";
+const TABLE_NAME: &str = "vaccine_vial_monitor_status";
 
 const VVM_STATUS_1: (&str, &str) = (
     "VVM_STATUS_1",
@@ -13,7 +13,7 @@ const VVM_STATUS_1: (&str, &str) = (
         "is_active":true,
         "level":1,
         "unusable":false,
-        "option_id":""
+        "option_id":"TEST OPTION ID 1"
     }"#,
 );
 

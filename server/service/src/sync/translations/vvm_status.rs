@@ -1,5 +1,5 @@
 use repository::{vvm_status_row::{VVMStatusRow, VVMStatusRowDelete}, StorageConnection, SyncBufferRow};
-
+use crate::sync::sync_serde::empty_str_as_option_string;
 use serde::Deserialize;
 
 use super::{PullTranslateResult, SyncTranslation};
