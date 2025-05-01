@@ -1,8 +1,8 @@
 use super::{
     inventory_adjustment_reason_row::inventory_adjustment_reason,
     invoice_line_row::invoice_line::dsl::*, invoice_row::invoice, item_link_row::item_link,
-    location_row::location, name_link_row::name_link, return_reason_row::return_reason,
-    stock_line_row::stock_line, StorageConnection,
+    location_row::location, name_link_row::name_link, reason_option_row::reason_option,
+    return_reason_row::return_reason, stock_line_row::stock_line, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -43,6 +43,7 @@ table! {
         foreign_currency_price_before_tax -> Nullable<Double>,
         item_variant_id -> Nullable<Text>,
         linked_invoice_id -> Nullable<Text>,
+        reason_option_id -> Nullable<Text>,
     }
 }
 
@@ -52,9 +53,11 @@ joinable!(invoice_line -> invoice (invoice_id));
 joinable!(invoice_line -> location (location_id));
 joinable!(invoice_line -> inventory_adjustment_reason (inventory_adjustment_reason_id));
 joinable!(invoice_line -> return_reason (return_reason_id));
+joinable!(invoice_line -> reason_option (reason_option_id));
 allow_tables_to_appear_in_same_query!(invoice_line, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line, name_link);
 allow_tables_to_appear_in_same_query!(invoice_line, inventory_adjustment_reason);
+allow_tables_to_appear_in_same_query!(invoice_line, reason_option);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -97,6 +100,7 @@ pub struct InvoiceLineRow {
     pub foreign_currency_price_before_tax: Option<f64>,
     pub item_variant_id: Option<String>,
     pub linked_invoice_id: Option<String>,
+    pub reason_option_id: Option<String>,
 }
 
 pub struct InvoiceLineRowRepository<'a> {
@@ -160,6 +164,18 @@ impl<'a> InvoiceLineRowRepository<'a> {
         diesel::update(invoice_line)
             .filter(id.eq(record_id))
             .set(return_reason_id.eq(reason_id))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub fn update_reason_option_id(
+        &self,
+        record_id: &str,
+        reason_id: Option<String>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(invoice_line)
+            .filter(id.eq(record_id))
+            .set(reason_option_id.eq(reason_id))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
