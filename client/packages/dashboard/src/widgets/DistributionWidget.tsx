@@ -117,11 +117,11 @@ export const DistributionWidget: React.FC = () => {
                     .build(),
                 },
                 {
-                  label: t('label.emergency'),
+                  label: t('label.new-emergency'),
                   value: formatNumber.round(requisitionCount?.emergency?.new),
                   link: RouteBuilder.create(AppRoute.Distribution)
                     .addPart(AppRoute.CustomerRequisition)
-                    .addQuery({ isEmergencyAndAutomatic: true })
+                    .addQuery({ isEmergency: true })
                     .addQuery({ status: RequisitionNodeStatus.New })
                     .build(),
                 },

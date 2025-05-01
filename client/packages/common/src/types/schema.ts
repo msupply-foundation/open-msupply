@@ -2269,8 +2269,8 @@ export type DocumentSortInput = {
   key: DocumentSortFieldInput;
 };
 
-export type EmergencyAutomaticResponseRequisitionCounts = {
-  __typename: 'EmergencyAutomaticResponseRequisitionCounts';
+export type EmergencyResponseRequisitionCounts = {
+  __typename: 'EmergencyResponseRequisitionCounts';
   new: Scalars['Int']['output'];
 };
 
@@ -7310,7 +7310,7 @@ export type RequisitionConnector = {
 
 export type RequisitionCounts = {
   __typename: 'RequisitionCounts';
-  emergency: EmergencyAutomaticResponseRequisitionCounts;
+  emergency: EmergencyResponseRequisitionCounts;
   request: RequestRequisitionCounts;
   response: ResponseRequisitionCounts;
 };

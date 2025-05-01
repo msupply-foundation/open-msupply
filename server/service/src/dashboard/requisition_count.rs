@@ -22,12 +22,12 @@ pub trait RequisitionCountServiceTrait: Send + Sync {
         RequisitionCountService {}.draft_request_requisition_count(ctx, store_id)
     }
 
-    fn new_automatic_emergency_response_requisition_count(
+    fn new_emergency_response_requisition_count(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
     ) -> Result<i64, RepositoryError> {
-        RequisitionCountService {}.new_automatic_emergency_response_requisition_count(ctx, store_id)
+        RequisitionCountService {}.new_emergency_response_requisition_count(ctx, store_id)
     }
 }
 
@@ -62,7 +62,7 @@ impl RequisitionCountServiceTrait for RequisitionCountService {
         ))
     }
 
-    fn new_automatic_emergency_response_requisition_count(
+    fn new_emergency_response_requisition_count(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
@@ -72,7 +72,6 @@ impl RequisitionCountServiceTrait for RequisitionCountService {
             RequisitionFilter::new()
                 .store_id(EqualFilter::equal_to(store_id))
                 .r#type(RequisitionType::Response.equal_to())
-                .automatically_created(true)
                 .status(RequisitionStatus::New.equal_to())
                 .is_emergency(true),
         ))

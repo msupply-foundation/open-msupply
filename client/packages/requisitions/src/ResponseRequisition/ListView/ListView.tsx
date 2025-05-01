@@ -61,7 +61,7 @@ export const ResponseRequisitionListView: FC = () => {
         condition: '=',
       },
       {
-        key: 'isEmergencyAndAutomatic',
+        key: 'isEmergency',
         condition: '=',
       },
     ],
@@ -170,7 +170,6 @@ export const ResponseRequisitionListView: FC = () => {
           />
         }
       />
-
       <Footer />
     </>
   );

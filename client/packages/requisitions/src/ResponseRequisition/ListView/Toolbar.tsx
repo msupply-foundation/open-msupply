@@ -51,7 +51,7 @@ export const Toolbar: FC<{
             {
               type: 'boolean',
               name: t('label.emergency'),
-              urlParameter: 'isEmergencyAndAutomatic',
+              urlParameter: 'isEmergency',
             },
           ]}
         />

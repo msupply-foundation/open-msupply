@@ -1255,7 +1255,6 @@
   "label.year": "Year",
   "label.years-abbreviation": "Y",
   "label.your-email-address": "Your email address",
-  "label.emergency-and-automatic": "Emergency and automatic",
   "link.copy-to-clipboard": "Copy to Clipboard",
   "loading": "Loading…",
   "locations": "Locations",
@@ -1988,5 +1987,6 @@
   "warning.field-not-parsed": "{{field}} not parsed",
   "warning.nothing-to-supply": "Nothing left to supply!",
   "tooltip.defined-by-gs1-matrix": "Defined by GS1 datamatrix",
-  "label.emergency": "Emergency"
+  "label.emergency": "Emergency",
+  "label.new-emergency": "New emergency requisitions"
 }

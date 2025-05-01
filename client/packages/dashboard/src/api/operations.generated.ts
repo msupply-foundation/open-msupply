@@ -48,7 +48,7 @@ export type RequisitionCountsQuery = {
     request: { __typename: 'RequestRequisitionCounts'; draft: number };
     response: { __typename: 'ResponseRequisitionCounts'; new: number };
     emergency: {
-      __typename: 'EmergencyAutomaticResponseRequisitionCounts';
+      __typename: 'EmergencyResponseRequisitionCounts';
       new: number;
     };
   };
