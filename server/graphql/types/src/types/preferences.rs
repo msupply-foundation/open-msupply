@@ -21,7 +21,7 @@ impl PreferencesNode {
     }
 
     pub async fn allow_tracking_of_received_stock_by_donor(&self) -> Result<bool> {
-        &self.load_preference(&self.preferences.allow_tracking_of_received_stock_by_donor)
+        self.load_preference(&self.preferences.allow_tracking_of_received_stock_by_donor)
     }
 }
 
@@ -79,7 +79,8 @@ impl PreferenceKey {
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
             PrefKey::DisplayPopulationBasedForecasting => {
                 PreferenceKey::DisplayPopulationBasedForecasting
-            }
+            },
+            PrefKey::
         }
     }
 }
