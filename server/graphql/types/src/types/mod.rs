@@ -155,3 +155,11 @@ impl IdResponse {
         &self.0
     }
 }
+
+pub struct OkResponse;
+#[Object]
+impl OkResponse {
+    pub async fn ok(&self) -> bool {
+        true
+    }
+}

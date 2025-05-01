@@ -17,5 +17,5 @@ export const useAuthApi = () => {
     preferences: () => ['preferences'] as const,
   };
 
-  return { ...queries, sdk, keys };
+  return { ...queries, sdk, keys, client };
 };

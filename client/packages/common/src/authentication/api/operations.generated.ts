@@ -197,15 +197,6 @@ export type PermissionsQuery = {
   };
 };
 
-export type PreferencesQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-}>;
-
-export type PreferencesQuery = {
-  __typename: 'Queries';
-  preferences: { __typename: 'PreferencesNode'; showContactTracing: boolean };
-};
-
 export type UpdateUserFragment = {
   __typename: 'UpdateUserNode';
   lastSuccessfulSync?: string | null;
@@ -399,13 +390,6 @@ export const PermissionsDocument = gql`
     }
   }
 `;
-export const PreferencesDocument = gql`
-  query preferences($storeId: String!) {
-    preferences(storeId: $storeId) {
-      showContactTracing
-    }
-  }
-`;
 export const UpdateUserDocument = gql`
   mutation updateUser {
     updateUser {
@@ -535,21 +519,6 @@ export function getSdk(
             ...wrappedRequestHeaders,
           }),
         'permissions',
-        'query',
-        variables
-      );
-    },
-    preferences(
-      variables: PreferencesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<PreferencesQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<PreferencesQuery>(PreferencesDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
-          }),
-        'preferences',
         'query',
         variables
       );
