@@ -20,8 +20,8 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.display_population_based_forecasting)
     }
 
-    pub async fn allow_tracking_of_received_stock_by_donor(&self) -> &bool {
-        &self.load_preference(self.preferences.allow_tracking_of_received_stock_by_donor)
+    pub async fn allow_tracking_of_received_stock_by_donor(&self) -> Result<bool> {
+        &self.load_preference(&self.preferences.allow_tracking_of_received_stock_by_donor)
     }
 }
 
