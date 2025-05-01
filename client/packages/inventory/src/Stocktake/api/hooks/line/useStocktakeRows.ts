@@ -15,9 +15,12 @@ const getStocktakeItems = (lines: StocktakeLineFragment[]) =>
     } as StocktakeSummaryItem;
   });
 
-export const useStocktakeRows = () => {
+export const useStocktakeRows = (itemCode?: string) => {
   const { data: stocktake } = useStocktake.document.get();
-  const { data: lineData, isLoading } = useStocktakeLines(stocktake?.id ?? '');
+  const { data: lineData, isLoading } = useStocktakeLines(
+    stocktake?.id ?? '',
+    itemCode
+  );
   const lines = lineData?.nodes;
   const items = useMemo(() => getStocktakeItems(lines ?? []), [lines]);
   const totalLineCount = lineData?.totalCount ?? 0;
