@@ -510,6 +510,34 @@ mod test {
             .unwrap();
 
         assert_eq!(stocktake_rows.len(), 2);
+
+        // test that stock items are added only to the stocktake when items_have_stock is true
+        service
+            .insert_stocktake(
+                &context,
+                InsertStocktake {
+                    id: "stocktake_3".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
+                    is_locked: Some(true),
+                    location: Some(NullableUpdate { value: None }),
+                    master_list_id: None,
+                    items_have_stock: Some(false),
+                    expires_before: None,
+                    is_initial_stocktake: false,
+                },
+            )
+            .unwrap();
+
+        let stocktake_rows = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_3")),
+                None,
+            )
+            .unwrap();
+
+        pretty_assertions::assert_eq!(stocktake_rows.len(), 0);
     }
 
     #[actix_rt::test]
