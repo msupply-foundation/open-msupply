@@ -18,7 +18,7 @@ export const useEditPreferences = (prefType: PreferenceNodeType) => {
   const { data } = useAdminPrefsList(prefType);
   const { mutateAsync } = useUpsertPref();
 
-  // Probably worth debouncing at some stage :)
+  // Please add debouncing when string prefs are implemented
   const update = async (input: Partial<UpsertPreferencesInput>) => {
     try {
       await mutateAsync(input);
