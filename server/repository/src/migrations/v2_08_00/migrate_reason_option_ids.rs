@@ -26,16 +26,6 @@ impl MigrationFragment for Migrate {
             UPDATE stocktake_line
             SET reason_option_id = inventory_adjustment_reason_id
             WHERE inventory_adjustment_reason_id IS NOT NULL;
-
-            ALTER TABLE invoice_line
-            ADD CONSTRAINT invoice_line_reason_fkey
-            FOREIGN KEY (reason_option_id)
-            REFERENCES reason_option(id);
-
-            ALTER TABLE stocktake_line
-            ADD CONSTRAINT stocktake_line_reason_fkey
-            FOREIGN KEY (reason_option_id)
-            REFERENCES reason_option(id);
             "#
         )?;
 
