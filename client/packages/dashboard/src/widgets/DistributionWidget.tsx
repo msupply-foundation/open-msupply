@@ -124,6 +124,9 @@ export const DistributionWidget: React.FC = () => {
                     .addQuery({ isEmergency: true })
                     .addQuery({ status: RequisitionNodeStatus.New })
                     .build(),
+                  alertFlag:
+                    !!requisitionCount?.emergency?.new &&
+                    requisitionCount?.emergency?.new > 0,
                 },
               ]}
               link={RouteBuilder.create(AppRoute.Distribution)
