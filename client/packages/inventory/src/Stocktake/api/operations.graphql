@@ -54,6 +54,13 @@ fragment StocktakeLine on StocktakeLineNode {
     id
     reason
   }
+
+  reasonOption {
+    reason
+    type
+    isActive
+    id
+  }
 }
 
 fragment Stocktake on StocktakeNode {

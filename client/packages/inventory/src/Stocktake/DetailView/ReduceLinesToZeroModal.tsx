@@ -5,14 +5,14 @@ import {
   ConfirmationModalLayout,
   Grid,
   DialogButton,
-  AdjustmentTypeInput,
+  ReasonOptionNodeType,
 } from '@openmsupply-client/common';
 import {
-  InventoryAdjustmentReasonRowFragment,
-  InventoryAdjustmentReasonSearchInput,
-  useInventoryAdjustmentReasonList,
+  ReasonOptionRowFragment,
+  ReasonOptionsSearchInput,
 } from '@openmsupply-client/system';
 import { useStocktake } from '../api';
+import { useReasonOptions } from 'packages/system/src/ReasonOption/api/hooks/document/useReasonOptions';
 
 interface ReduceLinesToZeroConfirmationModalProps {
   isOpen: boolean;
@@ -27,12 +27,11 @@ export const ReduceLinesToZeroConfirmationModal = ({
 }: ReduceLinesToZeroConfirmationModalProps) => {
   const t = useTranslation();
 
-  const [reason, setReason] =
-    useState<InventoryAdjustmentReasonRowFragment | null>(null);
+  const [reason, setReason] = useState<ReasonOptionRowFragment | null>(null);
 
   const onZeroQuantities = useStocktake.line.zeroQuantities();
 
-  const { data } = useInventoryAdjustmentReasonList();
+  const { data } = useReasonOptions();
   const reasonIsRequired = data?.totalCount !== 0;
 
   return (
@@ -64,8 +63,8 @@ export const ReduceLinesToZeroConfirmationModal = ({
           label={t('label.reason')}
           labelWidth="100px"
           Input={
-            <InventoryAdjustmentReasonSearchInput
-              adjustmentType={AdjustmentTypeInput.Reduction}
+            <ReasonOptionsSearchInput
+              type={ReasonOptionNodeType.NegativeInventoryAdjustment}
               value={reason}
               onChange={reason => setReason(reason)}
             />

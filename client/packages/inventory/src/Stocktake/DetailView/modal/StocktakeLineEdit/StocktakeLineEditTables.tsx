@@ -17,16 +17,16 @@ import {
   getColumnLookupWithOverrides,
   NumberInputCell,
   ColumnAlign,
-  AdjustmentTypeInput,
   NumberCell,
+  ReasonOptionNodeType,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
   getLocationInputColumn,
-  InventoryAdjustmentReasonRowFragment,
-  InventoryAdjustmentReasonSearchInput,
   ItemVariantInputCell,
   PackSizeEntryCell,
+  ReasonOptionRowFragment,
+  ReasonOptionsSearchInput,
   useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
 import {
@@ -104,16 +104,14 @@ const getInventoryAdjustmentReasonInputColumn = (
     label: 'label.reason',
     sortable: false,
     width: 120,
-    accessor: ({ rowData }) => rowData.inventoryAdjustmentReason || '',
+    accessor: ({ rowData }) => rowData.reasonOption || '',
     Cell: ({ rowData, column, columnIndex, rowIndex }) => {
       const value = column.accessor({
         rowData,
-      }) as InventoryAdjustmentReasonRowFragment | null;
+      }) as ReasonOptionRowFragment | null;
 
-      const onChange = (
-        inventoryAdjustmentReason: InventoryAdjustmentReasonRowFragment | null
-      ) => {
-        setter({ ...rowData, inventoryAdjustmentReason });
+      const onChange = (reasonOption: ReasonOptionRowFragment | null) => {
+        setter({ ...rowData, reasonOption });
       };
 
       const autoFocus = columnIndex === 0 && rowIndex === 0;
@@ -126,15 +124,15 @@ const getInventoryAdjustmentReasonInputColumn = (
       // https://github.com/openmsupply/open-msupply/pull/1252#discussion_r1119577142, this would ideally live in inventory package
       // and instead of this method we do all of the logic in InventoryAdjustmentReasonSearchInput and use it in `Cell` field of the column
       return (
-        <InventoryAdjustmentReasonSearchInput
+        <ReasonOptionsSearchInput
           autoFocus={autoFocus}
           value={value}
           width={Number(column.width) - 12}
           onChange={onChange}
-          adjustmentType={
+          type={
             rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0)
-              ? AdjustmentTypeInput.Reduction
-              : AdjustmentTypeInput.Addition
+              ? ReasonOptionNodeType.NegativeInventoryAdjustment
+              : ReasonOptionNodeType.PositiveInventoryAdjustment
           }
           isError={isAdjustmentReasonError}
           isDisabled={
