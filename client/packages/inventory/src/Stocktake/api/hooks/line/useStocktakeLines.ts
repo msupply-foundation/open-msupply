@@ -2,16 +2,16 @@ import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
 import { useStocktakeApi } from '../utils/useStocktakeApi';
 import { useStocktakeNumber } from '../document/useStocktake';
 
-export const useStocktakeLines = (id: string, itemCode?: string) => {
+export const useStocktakeLines = (id: string, itemId?: string) => {
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'itemName', dir: 'asc' },
     filters: [{ key: 'itemCodeOrName' }],
   });
 
-  if (itemCode) {
+  if (itemId) {
     queryParams.filterBy = {
       ...queryParams.filterBy,
-      itemCodeOrName: { equalTo: itemCode },
+      itemId: { equalTo: itemId },
     };
     // We use itemCode when we want to get all the lines for a specific item
     // Get 1000 lines back, assuming that there's never more than 1000 lines for a single item
