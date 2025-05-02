@@ -4248,6 +4248,7 @@ export type MasterListNode = {
   __typename: 'MasterListNode';
   code: Scalars['String']['output'];
   description: Scalars['String']['output'];
+  discountPercentage: Scalars['Float']['output'];
   id: Scalars['String']['output'];
   linesCount?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
@@ -7709,6 +7710,7 @@ export type StocktakeLineConnector = {
 export type StocktakeLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   stocktakeId?: InputMaybe<EqualFilterStringInput>;
 };
