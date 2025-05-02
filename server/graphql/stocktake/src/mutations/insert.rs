@@ -77,6 +77,7 @@ pub fn map_response(from: Result<Stocktake, ServiceError>) -> Result<InsertRespo
             let graphql_error = match error {
                 ServiceError::InvalidStore => BadUserInput(formatted_error),
                 ServiceError::StocktakeAlreadyExists => BadUserInput(formatted_error),
+                ServiceError::InitialStocktakeAlreadyExists => BadUserInput(formatted_error),
                 ServiceError::InternalError(err) => InternalError(err),
                 ServiceError::DatabaseError(_) => InternalError(formatted_error),
                 ServiceError::InvalidMasterList => BadUserInput(formatted_error),
