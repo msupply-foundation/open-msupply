@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -14,7 +14,7 @@ import {
   useEditModal,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { ActivityLogList, ItemRowFragment } from '@openmsupply-client/system';
+import { ActivityLogList } from '@openmsupply-client/system';
 
 import { RequestLineFragment, useRequest } from '../api';
 import { RequestRequisitionLineErrorProvider } from '../context';
@@ -31,11 +31,15 @@ import { RequestLineEditModal } from './RequestLineEdit';
 export const DetailView: FC = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const [selectedItemId, setSelectedItemId] = useState<string>();
 
   const { store } = useAuthContext();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const { onOpen, onClose, isOpen } = useEditModal<ItemRowFragment>();
+  const {
+    onOpen,
+    onClose,
+    isOpen,
+    entity: selectedItemId,
+  } = useEditModal<string>();
 
   const isDisabled = useRequest.utils.isDisabled();
   const { data, isLoading } = useRequest.document.get();
@@ -68,12 +72,10 @@ export const DetailView: FC = () => {
   );
 
   const handleRowClick = (line: RequestLineFragment) => {
-    setSelectedItemId(line.item.id);
-    onOpen();
+    onOpen(line.item.id);
   };
 
   const handleAddItem = () => {
-    setSelectedItemId('new');
     onOpen();
   };
 
