@@ -372,9 +372,9 @@ export const usePrescriptionColumn = ({
 
           for (const line of lines) {
             const units = line.numberOfPacks * line.packSize;
+            totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
 
             if (displayVaccineInDoses) {
-              totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
               totalUnits += units * line.item.doses;
             } else {
               totalUnits += units;
