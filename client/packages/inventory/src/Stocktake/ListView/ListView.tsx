@@ -96,6 +96,7 @@ export const StocktakeListView: FC = () => {
           <NothingHere
             body={t('error.no-stocktakes')}
             onCreate={createInitialStocktake}
+            buttonText={t('button.initial-stocktake')}
           />
         }
       />
