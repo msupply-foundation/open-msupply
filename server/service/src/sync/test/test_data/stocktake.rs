@@ -32,7 +32,7 @@ const STOCKTAKE_1: (&str, &str) = (
       "om_created_datetime": "",
       "om_counted_by": "",
       "om_verified_by": "",
-      "om_is_initial_stocktake": "false"
+      "om_is_initial_stocktake": false
     }"#,
 );
 fn stocktake_pull_record() -> TestSyncIncomingRecord {
@@ -116,8 +116,8 @@ const STOCKTAKE_OM_FIELD: (&str, &str) = (
       "om_created_datetime": "2021-07-30T15:15:15",
       "om_finalised_datetime": "2021-07-31T15:15:15",
       "om_counted_by": "testuser1",
-      "om_verified_by": "testuser2"
-      "om_is_initial_stocktake": "false"
+      "om_verified_by": "testuser2",
+      "om_is_initial_stocktake": false
     }"#,
 );
 fn stocktake_om_field_pull_record() -> TestSyncIncomingRecord {
@@ -192,10 +192,10 @@ fn stocktake_om_field_push_record() -> TestSyncOutgoingRecord {
 }
 
 const STOCKTAKE_INITIAL: (&str, &str) = (
-    "0a375950f0d211eb8dddb54df6d741bc",
+    "8dddb54df6d741bc0a375950f0d211eb",
     r#"{
       "Description": "Test",
-      "ID": "0a375950f0d211eb8dddb54df6d741bc",
+      "ID": "8dddb54df6d741bc0a375950f0d211eb",
       "Locked": false,
       "comment": "",
       "created_by_ID": "",
@@ -213,7 +213,7 @@ const STOCKTAKE_INITIAL: (&str, &str) = (
       "om_created_datetime": "",
       "om_counted_by": "",
       "om_verified_by": "",
-      "om_is_initial_stocktake": "true"
+      "om_is_initial_stocktake": true
     }"#,
 );
 fn stocktake_initial_pull_record() -> TestSyncIncomingRecord {
