@@ -18,6 +18,7 @@ pub struct StocktakeLineFilterInput {
     pub stocktake_id: Option<EqualFilterStringInput>,
     pub location_id: Option<EqualFilterStringInput>,
     pub item_code_or_name: Option<StringFilterInput>,
+    pub item_id: Option<EqualFilterStringInput>,
 }
 
 impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
@@ -27,6 +28,7 @@ impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
             stocktake_id: f.stocktake_id.map(EqualFilter::from),
             location_id: f.location_id.map(EqualFilter::from),
             item_code_or_name: f.item_code_or_name.map(StringFilterInput::into),
+            item_id: f.item_id.map(EqualFilter::from),
         }
     }
 }
