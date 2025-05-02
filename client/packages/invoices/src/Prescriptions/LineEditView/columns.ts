@@ -94,7 +94,8 @@ export const usePrescriptionLineEditColumns = ({
         const total =
           (rowData.stockLine?.availableNumberOfPacks ?? 0) *
           (rowData.stockLine?.packSize ?? 1);
-        return displayInDoses ? total * (rowData.item?.doses ?? 1) : total;
+        const totalDoses = NumUtils.round(total * (rowData.item?.doses ?? 1));
+        return displayInDoses ? total * totalDoses : total;
       },
     },
     {
@@ -117,9 +118,8 @@ export const usePrescriptionLineEditColumns = ({
       },
       accessor: ({ rowData }) => {
         const total = (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1);
-        return displayInDoses
-          ? NumUtils.round(total * (rowData.item?.doses ?? 1))
-          : total;
+        const totalDoses = NumUtils.round(total * (rowData.item?.doses ?? 1));
+        return displayInDoses ? totalDoses : total;
       },
     }
   );
