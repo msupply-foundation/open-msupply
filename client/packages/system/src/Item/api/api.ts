@@ -81,9 +81,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
       first,
       offset,
       sortBy,
-    }: ListParams<ItemRowFragment> & {
-      includeNonVisibleWithStockOnHand?: boolean;
-    }) => {
+    }: ListParams<ItemRowFragment>) => {
       const result = await sdk.itemStockOnHand({
         key: itemParsers.toSortField(sortBy),
         first,

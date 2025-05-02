@@ -4,7 +4,6 @@ import { useItemApi } from '../useItemApi';
 type UseItemStockOnHandParams = {
   filter?: ItemFilterInput;
   rowsPerPage: number;
-  includeNonVisibleWithStockOnHand?: boolean;
 };
 
 export const useItemStockOnHandInfinite = ({
