@@ -1449,12 +1449,6 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
-export type CustomerAndOrderTypeNode = {
-  __typename: 'CustomerAndOrderTypeNode';
-  customer: NameNode;
-  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
-};
-
 export type CustomerIndicatorInformationNode = {
   __typename: 'CustomerIndicatorInformationNode';
   customer: NameNode;
@@ -1470,11 +1464,8 @@ export type CustomerIndicatorInformationNodeCustomerArgs = {
 
 export type CustomerProgramRequisitionSettingNode = {
   __typename: 'CustomerProgramRequisitionSettingNode';
-  customerAndOrderTypes: Array<CustomerAndOrderTypeNode>;
-  masterList: MasterListNode;
-  programId: Scalars['String']['output'];
-  programName: Scalars['String']['output'];
-  tagName: Scalars['String']['output'];
+  customerName: Scalars['String']['output'];
+  masterLists: Array<MasterListAndOrderAndPeriodTypesNode>;
 };
 
 export type CustomerReturnInput = {
@@ -4532,6 +4523,12 @@ export enum LowStockStatus {
   Ok = 'OK',
 }
 
+export type MasterListAndOrderAndPeriodTypesNode = {
+  __typename: 'MasterListAndOrderAndPeriodTypesNode';
+  masterList: MasterListNode;
+  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
+};
+
 export type MasterListConnector = {
   __typename: 'MasterListConnector';
   nodes: Array<MasterListNode>;
@@ -6274,7 +6271,6 @@ export type Queries = {
   coldStorageTypes: ColdStorageTypesResponse;
   contactTraces: ContactTraceResponse;
   currencies: CurrenciesResponse;
-  customerProgramRequisitionSettings: Array<CustomerProgramRequisitionSettingNode>;
   databaseSettings: DatabaseSettingsNode;
   demographicIndicators: DemographicIndicatorsResponse;
   demographicProjectionByBaseYear: DemographicProjectionResponse;
@@ -6368,6 +6364,7 @@ export type Queries = {
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
   programIndicators: ProgramIndicatorResponse;
+  programRequisitionSettingsByCustomer: CustomerProgramRequisitionSettingNode;
   programs: ProgramsResponse;
   rAndRForm: RnRFormResponse;
   rAndRForms: RnRFormsResponse;
@@ -6548,10 +6545,6 @@ export type QueriesContactTracesArgs = {
 export type QueriesCurrenciesArgs = {
   filter?: InputMaybe<CurrencyFilterInput>;
   sort?: InputMaybe<Array<CurrencySortInput>>;
-};
-
-export type QueriesCustomerProgramRequisitionSettingsArgs = {
-  storeId: Scalars['String']['input'];
 };
 
 export type QueriesDemographicIndicatorsArgs = {
@@ -6852,6 +6845,11 @@ export type QueriesProgramEventsArgs = {
 export type QueriesProgramIndicatorsArgs = {
   filter?: InputMaybe<ProgramIndicatorFilterInput>;
   sort?: InputMaybe<ProgramIndicatorSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesProgramRequisitionSettingsByCustomerArgs = {
+  customerStoreId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 

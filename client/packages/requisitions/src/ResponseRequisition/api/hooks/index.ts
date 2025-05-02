@@ -34,5 +34,6 @@ export const useResponse = {
     supplyRequested: Utils.useSupplyRequestedQuantity,
     isDisabledByAuthorisation: Utils.useIsDisabledByAuthorisation,
     programSettings: Utils.useProgramSettings,
+    programRequisitionSettingsByCustomer: Utils.useProgramRequisitionSettingsByCustomer,
   },
 };

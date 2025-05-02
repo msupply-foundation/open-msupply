@@ -1,14 +1,15 @@
 use repository::{
-    EqualFilter, MasterListFilter, NameTagFilter, PeriodRow, PeriodRowRepository, ProgramCustomer,
-    ProgramCustomerFilter, ProgramCustomerRepository, ProgramRequisitionOrderTypeRow,
-    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettings,
-    ProgramRequisitionSettingsFilter, ProgramRequisitionSettingsRepository, RepositoryError,
-    RequisitionType, RequisitionsInPeriod, RequisitionsInPeriodFilter,
-    RequisitionsInPeriodRepository,
+    EqualFilter, MasterList, MasterListFilter, NameRowRepository, NameTagFilter, PeriodRow,
+    PeriodRowRepository, ProgramCustomer, ProgramCustomerFilter, ProgramCustomerRepository,
+    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
+    ProgramRequisitionSettings, ProgramRequisitionSettingsFilter,
+    ProgramRequisitionSettingsRepository, RepositoryError, RequisitionType, RequisitionsInPeriod,
+    RequisitionsInPeriodFilter, RequisitionsInPeriodRepository,
 };
 
 use crate::{
-    requisition::program_settings::common::get_program_ids, service_provider::ServiceContext,
+    requisition::program_settings::common::{get_program_ids, period_is_available},
+    service_provider::ServiceContext,
 };
 
 pub(super) struct PrepareProgramSettings {
@@ -99,6 +100,133 @@ pub(super) fn prepare_customer_program_settings(
         periods,
         program_customer_and_requisitions_in_periods,
     }))
+}
+
+pub struct ProgramRequisitionOrderType {
+    pub name: String,
+    pub id: String,
+    pub available_periods: Vec<PeriodRow>,
+    pub is_emergency: bool,
+}
+
+pub struct MasterListAndOrderAndPeriodTypes {
+    pub master_list: MasterList,
+    pub order_types: Vec<ProgramRequisitionOrderType>,
+}
+
+pub struct CustomerProgramRequisitionSetting {
+    pub customer_name: String,
+    pub master_lists: Vec<MasterListAndOrderAndPeriodTypes>,
+}
+
+/// Get program_settings, order_types, periods and requisitions_in_periods for a store.
+/// program_requisition_settings are matched to store by name_tag and by visibility of the program master_list.
+pub(super) fn prepare_program_requisition_settings_by_customer(
+    ctx: &ServiceContext,
+    customer_name_id: &str,
+) -> Result<CustomerProgramRequisitionSetting, RepositoryError> {
+    let equal_to_store_id = EqualFilter::equal_to(customer_name_id);
+
+    // get customer name
+    let customer_name: Option<repository::NameRow> =
+        match NameRowRepository::new(&ctx.connection).find_one_by_id(&customer_name_id) {
+            Ok(Some(name_row)) => Some(name_row),
+            Ok(None) => None,
+            Err(_) => None,
+        };
+
+    // All program settings for store
+    let filter = ProgramRequisitionSettingsFilter::new()
+        .name_tag(NameTagFilter::new().store_id(EqualFilter::equal_to(customer_name_id)));
+
+    let settings =
+        ProgramRequisitionSettingsRepository::new(&ctx.connection).query(Some(filter))?;
+
+    // Order Types (matching settings program_settings_ids)
+    let program_requisition_settings_ids: Vec<String> = settings
+        .iter()
+        .map(|s| s.program_settings_row.id.clone())
+        .collect();
+
+    let program_ids = get_program_ids(&ctx.connection, &settings)?;
+
+    let order_types = ProgramRequisitionOrderTypeRowRepository::new(&ctx.connection)
+        .find_many_by_program_requisition_settings_ids(&program_requisition_settings_ids)?;
+    // Periods (matching settings program_schedule_ids)
+    let program_schedule_ids = settings
+        .iter()
+        .map(|s| s.program_settings_row.period_schedule_id.as_str())
+        .collect();
+
+    let periods = PeriodRowRepository::new(&ctx.connection)
+        .find_many_by_program_schedule_ids(program_schedule_ids)?;
+
+    let period_ids = periods.iter().map(|p| p.id.clone()).collect();
+
+    // Requisitions in Period (for all periods and store)
+    let filter = RequisitionsInPeriodFilter::new()
+        .store_id(equal_to_store_id)
+        .program_id(EqualFilter::equal_any(program_ids.clone()))
+        .period_id(EqualFilter::equal_any(period_ids))
+        .r#type(RequisitionType::Response.equal_to());
+
+    let requisitions_in_periods =
+        RequisitionsInPeriodRepository::new(&ctx.connection).query(filter)?;
+
+    Ok(CustomerProgramRequisitionSetting {
+        customer_name: customer_name.unwrap().name,
+        master_lists: settings
+            .iter()
+            .map(|setting| {
+                let order_types_mapped = order_types
+                    .iter()
+                    .map(|order_type| {
+                        map_period_rows_and_requisitions_to_order_type(
+                            order_type.clone(),
+                            periods.clone(),
+                            setting,
+                            requisitions_in_periods.clone(),
+                        )
+                    })
+                    .collect();
+
+                MasterListAndOrderAndPeriodTypes {
+                    master_list: setting.master_list.clone(),
+                    order_types: order_types_mapped,
+                }
+            })
+            .collect(),
+    })
+}
+
+fn map_period_rows_and_requisitions_to_order_type(
+    order_type: ProgramRequisitionOrderTypeRow,
+    periods: Vec<PeriodRow>,
+    settings: &ProgramRequisitionSettings,
+    requisitions_in_periods: Vec<RequisitionsInPeriod>,
+) -> ProgramRequisitionOrderType {
+    ProgramRequisitionOrderType {
+        name: order_type.clone().name,
+        id: order_type.clone().id,
+        available_periods: periods
+            .clone()
+            .iter()
+            .filter_map(|period| {
+                if period_is_available(
+                    period,
+                    settings,
+                    &order_type.clone(),
+                    &requisitions_in_periods,
+                ) {
+                    Some(period)
+                } else {
+                    None
+                }
+            })
+            .cloned()
+            .collect(),
+        is_emergency: order_type.is_emergency,
+    }
 }
 
 #[cfg(test)]
