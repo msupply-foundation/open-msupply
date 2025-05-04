@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarButtonsPortal,
   ButtonWithIcon,
@@ -22,11 +22,13 @@ import { Draft } from '../..';
 
 interface AppBarButtonProps {
   onAddItem: (draft?: Draft) => void;
+  isVaccine: boolean;
 }
 
-export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
+export const AppBarButtonsComponent = ({
   onAddItem,
-}) => {
+  isVaccine,
+}: AppBarButtonProps) => {
   const isDisabled = useOutbound.utils.isDisabled();
   const { data } = useOutbound.document.get();
   const { OpenButton } = useDetailPanel();
@@ -59,7 +61,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           onClick={() => onAddItem()}
         />
         <AddFromMasterListButton />
-        <AddFromScannerButton onAddItem={onAddItem} />
+        <AddFromScannerButton onAddItem={onAddItem} isVaccine={isVaccine} />
         <ReportSelector
           context={ReportContext.OutboundShipment}
           onPrint={printReport}
