@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Box,
   AppFooterPortal,
@@ -9,27 +9,45 @@ import {
   useNotification,
   useConfirmationModal,
   useKeyboard,
+  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
-import { useRnRForm } from '../api';
+import {
+  RnRFormQuery,
+  useRnRForm,
+  useRnRFormContext,
+  useShallow,
+} from '../api';
 
-export const Footer = ({
-  rnrFormId,
-  linesUnconfirmed,
-  unsavedChanges,
-}: {
-  rnrFormId: string;
-  linesUnconfirmed: boolean;
-  unsavedChanges: boolean;
-}) => {
+export const Footer = ({ data }: { data: RnRFormQuery }) => {
   const { keyboardIsOpen } = useKeyboard();
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
   const { error, info, success } = useNotification();
   const {
-    query: { data },
     finalise: { finalise, isFinalising },
     confirmRemainingLines,
-  } = useRnRForm({ rnrFormId });
+  } = useRnRForm({ rnrFormId: data.id });
+
+  const linesUnconfirmed = data.lines.some(line => !line.confirmed);
+
+  const { rnrFormIsDirty, clearAllDraftLines } = useRnRFormContext(
+    useShallow(state => ({
+      rnrFormIsDirty: !!Object.values(state.draftLines).length,
+      clearAllDraftLines: state.clearAllDraftLines,
+    }))
+  );
+
+  const { setIsDirty } = useConfirmOnLeaving('rnr-form');
+
+  useEffect(() => {
+    return () => clearAllDraftLines();
+  }, []);
+
+  useEffect(() => {
+    // Usually we track isDirty state from `useConfirmOnLeaving` hook
+    // In this case we derive from the draft line context, so we need to update it manually
+    setIsDirty(rnrFormIsDirty);
+  }, [rnrFormIsDirty]);
 
   const showFinaliseConfirmation = useConfirmationModal({
     onConfirm: async () => {
@@ -50,7 +68,7 @@ export const Footer = ({
   });
 
   const onFinalise = async () => {
-    if (unsavedChanges) {
+    if (rnrFormIsDirty) {
       info(t('messages.all-changes-must-be-confirmed'))();
       return;
     }

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   AlertIcon,
   BasicTextInput,
@@ -19,17 +19,17 @@ import {
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { getLowStockStatus, getAmc } from './helpers';
-import { useRnRFormContext } from '../api';
+import { useRnRDraftLine, useRnRFormContext, useUpdateLine } from '../api';
 
 export const RnRFormLine = ({
+  rnrFormId,
   line: baseLine,
-  saveLine,
   periodLength,
   disabled,
 }: {
+  rnrFormId: string;
   line: RnRFormLineFragment;
   periodLength: number;
-  saveLine: (line: RnRFormLineFragment) => Promise<void>;
   disabled: boolean;
 }) => {
   const theme = useTheme();
@@ -37,15 +37,18 @@ export const RnRFormLine = ({
 
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
-  const { draftLine, setLine } = useRnRFormContext(state => ({
-    draftLine: state.draftLines[baseLine.id],
-    setLine: state.setDraftLine,
-  }));
+  const { mutateAsync: updateLine } = useUpdateLine(rnrFormId);
 
-  const line = useMemo(() => {
-    return draftLine ?? baseLine;
-  }, [draftLine, baseLine]);
+  const { draftLine, setLine, clearDraftLine } = useRnRFormContext(
+    useRnRDraftLine(baseLine.id, state => ({
+      draftLine: state.draftLines[baseLine.id],
+      setLine: state.setDraftLine,
+      clearDraftLine: state.clearDraftLine,
+    }))
+  );
 
+  const line = { ...baseLine, ...(draftLine || { isDirty: false }) };
+  console.log(baseLine.id, baseLine, draftLine);
   if (!line) return null;
 
   const updateDraft = (update: Partial<RnRFormLineFragment>) => {
@@ -286,7 +289,8 @@ export const RnRFormLine = ({
               onClick={async () => {
                 try {
                   setIsLoading(true);
-                  await saveLine({ ...line, confirmed: !line.confirmed });
+                  await updateLine([{ ...line, confirmed: !line.confirmed }]);
+                  clearDraftLine(line.id);
                   setIsLoading(false);
                 } catch (e) {
                   error((e as Error).message)();
@@ -299,7 +303,7 @@ export const RnRFormLine = ({
             <CircleIcon
               sx={{
                 width: '10px',
-                visibility: draftLine ? 'visible' : 'hidden',
+                visibility: draftLine?.isDirty ? 'visible' : 'hidden',
                 color: 'secondary.main',
               }}
             />

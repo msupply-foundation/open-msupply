@@ -13,8 +13,8 @@ import { RnRFormLineFragment } from '../api/operations.generated';
 import { RnRFormLine } from './RnRFormLine';
 
 interface ContentAreaProps {
+  rnrFormId: string;
   data: RnRFormLineFragment[];
-  saveLine: (line: RnRFormLineFragment) => Promise<void>;
   periodLength: number;
   disabled: boolean;
 }
@@ -41,9 +41,9 @@ const HeaderCell = ({ className, label, tooltip, width }: HeaderCellProps) => {
 
 export const ContentArea = ({
   data,
-  saveLine,
   periodLength,
   disabled,
+  rnrFormId,
 }: ContentAreaProps) => {
   const t = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
@@ -195,10 +195,10 @@ export const ContentArea = ({
           >
             {line => (
               <RnRFormLine
+                rnrFormId={rnrFormId}
                 key={line.id}
                 line={line}
                 periodLength={periodLength}
-                saveLine={saveLine}
                 disabled={disabled}
               />
             )}
