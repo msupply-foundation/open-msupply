@@ -68,7 +68,7 @@ export const usePrescriptionColumn = ({
 >[] => {
   const t = useTranslation();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
-  const { data: newPrefs } = usePreference(PreferenceKey.DisplayVaccineInDoses);
+  const { data: OMSPrefs } = usePreference(PreferenceKey.DisplayVaccineInDoses);
   const { store: { preferences } = {} } = useAuthContext();
   const hasPrescribedQty = preferences?.editPrescribedQuantityOnPrescription;
 
@@ -207,7 +207,7 @@ export const usePrescriptionColumn = ({
     ],
   ];
 
-  if (newPrefs?.displayVaccineInDoses) {
+  if (OMSPrefs?.displayVaccineInDoses) {
     columns.push({
       key: 'doses',
       label: 'label.doses-per-unit',
@@ -239,7 +239,7 @@ export const usePrescriptionColumn = ({
         if ('lines' in rowData) {
           const { lines } = rowData;
           const displayVaccineInDoses =
-            newPrefs?.displayVaccineInDoses && lines[0]?.item.isVaccine;
+            OMSPrefs?.displayVaccineInDoses && lines[0]?.item.isVaccine;
           const unitQuantity = ArrayUtils.getUnitQuantity(lines);
 
           // TODO: Different doses with item variants
@@ -251,7 +251,7 @@ export const usePrescriptionColumn = ({
           return unitQuantity;
         } else {
           const displayVaccineInDoses =
-            newPrefs?.displayVaccineInDoses && rowData?.item.isVaccine;
+            OMSPrefs?.displayVaccineInDoses && rowData?.item.isVaccine;
           const unitQuantity = rowData.numberOfPacks * rowData.packSize;
           return displayVaccineInDoses
             ? unitQuantity * (rowData.item.doses ?? 1)
@@ -262,7 +262,7 @@ export const usePrescriptionColumn = ({
         if ('lines' in rowData) {
           const { lines } = rowData;
           const displayVaccineInDoses =
-            newPrefs?.displayVaccineInDoses && lines[0]?.item.isVaccine;
+            OMSPrefs?.displayVaccineInDoses && lines[0]?.item.isVaccine;
           const unitQuantity = ArrayUtils.getUnitQuantity(lines);
 
           // TODO: Different doses with item variants
@@ -274,7 +274,7 @@ export const usePrescriptionColumn = ({
           return unitQuantity;
         } else {
           const displayVaccineInDoses =
-            newPrefs?.displayVaccineInDoses && rowData?.item.isVaccine;
+            OMSPrefs?.displayVaccineInDoses && rowData?.item.isVaccine;
           const unitQuantity = rowData.numberOfPacks * rowData.packSize;
           return displayVaccineInDoses
             ? unitQuantity * (rowData.item.doses ?? 1)
@@ -366,7 +366,7 @@ export const usePrescriptionColumn = ({
           // Multiple lines, so we need to calculate the average price per unit
           const { lines } = rowData;
           const displayVaccineInDoses =
-            newPrefs?.displayVaccineInDoses && lines[0]?.item.isVaccine;
+            OMSPrefs?.displayVaccineInDoses && lines[0]?.item.isVaccine;
           let totalSellPrice = 0;
           let totalUnits = 0;
 
@@ -385,7 +385,7 @@ export const usePrescriptionColumn = ({
           return totalSellPrice / totalUnits;
         } else {
           const displayVaccineInDoses =
-            newPrefs?.displayVaccineInDoses && rowData?.item.isVaccine;
+            OMSPrefs?.displayVaccineInDoses && rowData?.item.isVaccine;
           const sellPricePerPack = rowData.sellPricePerPack ?? 0;
 
           return displayVaccineInDoses
