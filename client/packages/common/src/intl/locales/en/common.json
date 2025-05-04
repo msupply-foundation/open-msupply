@@ -1095,7 +1095,7 @@
   "label.rnr-final-balance": "Final balance",
   "label.rnr-initial-balance": "Initial balance",
   "label.rnr-maximum-quantity": "Maximum",
-  "label.rnr-minimum-quantity": "Minimum",
+  "label.rnr-minimum-quantity": "Min/Max",
   "label.rnr-received": "Received",
   "label.rnr-stock-out-duration": "Stock out duration",
   "label.rows-per-page": "Rows per page:",

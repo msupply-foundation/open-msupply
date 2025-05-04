@@ -134,7 +134,7 @@ export const RnRFormLine = ({
       {/* Read only Item data */}
       {/* Add the tooltip here, as we hide overflow in the code column
           to fix the code column width for side scroll */}
-      <Tooltip title={line.item.code}>
+      {/* <Tooltip title={line.item.code}>
         <td className="sticky-column first-column" style={readOnlyColumn}>
           {line.item.code}
         </td>
@@ -143,7 +143,7 @@ export const RnRFormLine = ({
         {line.item.name}
       </td>
       <td style={readOnlyColumn}>{line.item.strength}</td>
-      <td style={readOnlyColumn}>{line.item.unitName}</td>
+      <td style={readOnlyColumn}>{line.item.unitName}</td> */}
       <td style={{ ...readOnlyColumn, textAlign: 'center' }}>{venCategory}</td>
 
       {/* Enterable consumption data */}
@@ -175,13 +175,13 @@ export const RnRFormLine = ({
       />
 
       {/* Losses/adjustments and stock out */}
-      <RnRNumberCell
+      {/* <RnRNumberCell
         value={line.losses}
         onChange={val => updateDraft({ losses: val })}
         textColor={textColor}
         allowNegative
         disabled={disabled}
-      />
+      /> */}
       <RnRNumberCell
         value={line.adjustments}
         onChange={val => updateDraft({ adjustments: val })}
@@ -210,34 +210,27 @@ export const RnRFormLine = ({
         onChange={() => {}}
         textColor={textColor}
       />
-      <RnRNumberCell
+      {/* <RnRNumberCell
         readOnly
         value={line.minimumQuantity}
         onChange={() => {}}
         textColor={textColor}
-      />
-      <RnRNumberCell
+      /> */}
+      {/* <RnRNumberCell
         readOnly
         value={line.maximumQuantity}
         onChange={() => {}}
         textColor={textColor}
-      />
+      /> */}
+
+      <td>
+        <div
+          style={{ maxWidth: '100px' }}
+        >{`${Math.floor(line.minimumQuantity)}/${Math.floor(line.maximumQuantity)}`}</div>
+      </td>
 
       {/* Enterable fields: expiry, requested quantity, comment */}
-      <td>
-        <DatePicker
-          sx={{
-            width: '160px',
-            '& fieldset': { border: 'none' },
-            '& input': { color: textColor },
-          }}
-          value={line.expiryDate ? new Date(line.expiryDate) : null}
-          onChange={date =>
-            updateDraft({ expiryDate: Formatter.naiveDate(date) })
-          }
-          disabled={disabled}
-        />
-      </td>
+
       <RnRNumberCell
         value={
           line.enteredRequestedQuantity ?? line.calculatedRequestedQuantity
@@ -259,57 +252,9 @@ export const RnRFormLine = ({
           />
         )}
       </td>
-      <td>
-        <BasicTextInput
-          multiline
-          sx={{ width: '200px', color: textColor }}
-          slotProps={{
-            input: {
-              sx: {
-                backgroundColor: theme.palette.background.default,
-                '& .MuiInput-input': { color: textColor },
-              },
-            },
-          }}
-          value={line.comment ?? ''}
-          onChange={e => updateDraft({ comment: e.target.value })}
-          disabled={disabled}
-        />
-      </td>
 
       {/* Confirm the line */}
-      <td style={{ textAlign: 'center' }}>
-        {isLoading ? (
-          <CircularProgress size={20} />
-        ) : (
-          <>
-            <Checkbox
-              checked={!!line.confirmed}
-              size="medium"
-              onClick={async () => {
-                try {
-                  setIsLoading(true);
-                  await updateLine([{ ...line, confirmed: !line.confirmed }]);
-                  clearDraftLine(line.id);
-                  setIsLoading(false);
-                } catch (e) {
-                  error((e as Error).message)();
-                  setIsLoading(false);
-                }
-              }}
-              disabled={disabled}
-              sx={{ marginLeft: '10px' }}
-            />
-            <CircleIcon
-              sx={{
-                width: '10px',
-                visibility: draftLine?.isDirty ? 'visible' : 'hidden',
-                color: 'secondary.main',
-              }}
-            />
-          </>
-        )}
-      </td>
+
       {/* Readonly - populated from Response Requisition */}
       <RnRNumberCell
         readOnly
@@ -324,7 +269,7 @@ export const RnRFormLine = ({
 const RnRNumberCell = ({
   value,
   disabled,
-  readOnly,
+  readOnly = undefined,
   onChange,
   textColor,
   max,
@@ -344,35 +289,45 @@ const RnRNumberCell = ({
   const [buffer, setBuffer] = useBufferState<number | undefined>(
     NumUtils.round(value)
   );
-
+  // <Tooltip title={value === buffer ? '' : value}>
+  //   <NumericTextInput
+  //     InputProps={{
+  //       sx: {
+  //         backgroundColor,
+  //         '& .MuiInput-input': {
+  //           WebkitTextFillColor: textColor,
+  //         },
+  //       },
+  //     }}
+  //     value={buffer}
+  //     disabled={readOnly ?? disabled}
+  //     onChange={newValue => {
+  //       setBuffer(newValue);
+  //       if (newValue !== undefined) onChange(newValue);
+  //     }}
+  //     max={max}
+  //     allowNegative={allowNegative}
+  //     defaultValue={0}
+  //     // NOTE: not setting input mode to text, because on Samsung tablets,
+  //     // the numeric keyboard doesn't allow entering negative numbers!
+  //     // Only needed for the negative columns, but better feel to have a consistent
+  //     // keyboard as you click through the whole R&R form
+  //     inputMode="text"
+  //   />
+  // </Tooltip>
   return (
-    <td style={{ backgroundColor }}>
-      <Tooltip title={value === buffer ? '' : value}>
-        <NumericTextInput
-          InputProps={{
-            sx: {
-              backgroundColor,
-              '& .MuiInput-input': {
-                WebkitTextFillColor: textColor,
-              },
-            },
-          }}
-          value={buffer}
-          disabled={readOnly ?? disabled}
-          onChange={newValue => {
-            setBuffer(newValue);
-            if (newValue !== undefined) onChange(newValue);
-          }}
-          max={max}
-          allowNegative={allowNegative}
-          defaultValue={0}
-          // NOTE: not setting input mode to text, because on Samsung tablets,
-          // the numeric keyboard doesn't allow entering negative numbers!
-          // Only needed for the negative columns, but better feel to have a consistent
-          // keyboard as you click through the whole R&R form
-          inputMode="text"
+    <td>
+      {readOnly ? (
+        <div style={{ textAlign: 'center' }}> {Math.floor(value)}</div>
+      ) : (
+        <input
+          onFocus={e => e.target.select()}
+          className="input-for-number"
+          type="number"
+          value={value}
+          onChange={event => onChange(Number(event.target.value))}
         />
-      </Tooltip>
+      )}
     </td>
   );
 };

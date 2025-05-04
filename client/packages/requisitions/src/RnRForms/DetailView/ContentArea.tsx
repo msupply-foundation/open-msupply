@@ -74,6 +74,8 @@ export const ContentArea = ({
           '.sticky-column': {
             backgroundColor: '#fff',
             position: 'sticky',
+            left: 0,
+            width: 'fit-content',
             zIndex: 99,
           },
           '.first-column': {
@@ -88,6 +90,14 @@ export const ContentArea = ({
             left: 90,
             minWidth: '300px',
             position: '-webkit-sticky',
+          },
+          '.input-for-number': {
+            borderRadius: '4px',
+            height: '40px',
+            fontSize: 'medium',
+            textAlign: 'end',
+            borderWidth: 1,
+            width: '100px',
           },
         }}
       />
@@ -116,7 +126,7 @@ export const ContentArea = ({
       >
         <thead>
           <tr>
-            <HeaderCell
+            {/* <HeaderCell
               className="sticky-column first-column"
               label="label.code"
             />
@@ -125,7 +135,7 @@ export const ContentArea = ({
               label="label.name"
             />
             <HeaderCell label="label.strength" width={85} />
-            <HeaderCell label="label.unit" width={80} />
+            <HeaderCell label="label.unit" width={80} /> */}
             <HeaderCell label="label.ven" width={55} />
             <HeaderCell
               label="label.rnr-initial-balance"
@@ -144,10 +154,6 @@ export const ContentArea = ({
               tooltip="description.rnr-consumed-adjusted"
             />
             <HeaderCell
-              label="label.losses"
-              tooltip="description.rnr-adjustments"
-            />
-            <HeaderCell
               label="label.rnr-adjustments"
               tooltip="description.rnr-adjustments"
             />
@@ -161,11 +167,7 @@ export const ContentArea = ({
               label="label.rnr-minimum-quantity"
               tooltip="description.rnr-minimum-quantity"
             />
-            <HeaderCell
-              label="label.rnr-maximum-quantity"
-              tooltip="description.rnr-maximum-quantity"
-            />
-            <HeaderCell label="label.expiry" tooltip="description.expiry" />
+            {/* <HeaderCell label="label.expiry" tooltip="description.expiry" /> */}
             <HeaderCell
               label="label.requested"
               tooltip="description.rnr-requested-quantity"
@@ -174,8 +176,8 @@ export const ContentArea = ({
               label="label.low-stock"
               tooltip="description.rnr-low-stock"
             />
-            <HeaderCell label="label.comment" />
-            <HeaderCell label="label.confirmed" />
+            {/* <HeaderCell label="label.comment" /> */}
+            {/* <HeaderCell label="label.confirmed" /> */}
             <HeaderCell
               label="label.approved-quantity"
               tooltip="description.rnr-approved-quantity"
@@ -191,16 +193,23 @@ export const ContentArea = ({
             renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
             initialDelay={1}
             itemSize={60}
-            overscan={5} // Gives a buffer for when android keyboard opens
+            overscan={15} // Gives a buffer for when android keyboard opens
           >
             {line => (
-              <RnRFormLine
-                rnrFormId={rnrFormId}
-                key={line.id}
-                line={line}
-                periodLength={periodLength}
-                disabled={disabled}
-              />
+              <React.Fragment key={line.id}>
+                <tr key={`${line.id} item_name`}>
+                  <td colSpan={23}>
+                    <div className="sticky-column">{line.item.name}</div>
+                  </td>
+                </tr>
+                <RnRFormLine
+                  rnrFormId={rnrFormId}
+                  line={line}
+                  key={line.id}
+                  periodLength={periodLength}
+                  disabled={disabled}
+                />
+              </React.Fragment>
             )}
           </ViewportList>
         </tbody>
