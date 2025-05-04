@@ -90,9 +90,8 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
           />
         )
       }
-      height={600}
-      width={700}
-      fullscreen
+      height={1000}
+      width={800}
     >
       <DetailContainer>
         <Box display="flex" flexDirection="column" gap={2}>
