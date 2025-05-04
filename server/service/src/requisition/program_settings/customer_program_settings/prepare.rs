@@ -4,7 +4,8 @@ use repository::{
     ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettings, ProgramRequisitionSettingsFilter,
     ProgramRequisitionSettingsRepository, RepositoryError, RequisitionType, RequisitionsInPeriod,
-    RequisitionsInPeriodFilter, RequisitionsInPeriodRepository,
+    RequisitionsInPeriodFilter, RequisitionsInPeriodRepository, StoreFilter, StoreRepository,
+    StoreRowRepository,
 };
 
 use crate::{
@@ -125,8 +126,6 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
     ctx: &ServiceContext,
     customer_name_id: &str,
 ) -> Result<CustomerProgramRequisitionSetting, RepositoryError> {
-    let equal_to_store_id = EqualFilter::equal_to(customer_name_id);
-
     // get customer name
     let customer_name: Option<repository::NameRow> =
         match NameRowRepository::new(&ctx.connection).find_one_by_id(&customer_name_id) {
@@ -135,10 +134,19 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
             Err(_) => None,
         };
 
-    // All program settings for store
-    let filter = ProgramRequisitionSettingsFilter::new()
-        .name_tag(NameTagFilter::new().store_id(EqualFilter::equal_to(customer_name_id)));
+    let filter = StoreFilter::new().name_id(EqualFilter::equal_to(customer_name_id));
+    // Find customer store id by customer name id
+    let Some(customer_store) = StoreRepository::new(&ctx.connection).query_one(filter)? else {
+        return Err(RepositoryError::NotFound);
+    };
 
+    let equal_to_store_id = EqualFilter::equal_to(&customer_store.store_row.id);
+
+    let filter = ProgramRequisitionSettingsFilter::new()
+        .master_list(MasterListFilter::new().exists_for_store_id(equal_to_store_id.clone()))
+        .name_tag(NameTagFilter::new().store_id(equal_to_store_id.clone()));
+
+    // All program settings for store
     let settings =
         ProgramRequisitionSettingsRepository::new(&ctx.connection).query(Some(filter))?;
 
@@ -152,6 +160,7 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
 
     let order_types = ProgramRequisitionOrderTypeRowRepository::new(&ctx.connection)
         .find_many_by_program_requisition_settings_ids(&program_requisition_settings_ids)?;
+
     // Periods (matching settings program_schedule_ids)
     let program_schedule_ids = settings
         .iter()
@@ -172,6 +181,8 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
 
     let requisitions_in_periods =
         RequisitionsInPeriodRepository::new(&ctx.connection).query(filter)?;
+
+    println!("requisitions_in_periods: {:?}", requisitions_in_periods);
 
     Ok(CustomerProgramRequisitionSetting {
         customer_name: customer_name.unwrap().name,

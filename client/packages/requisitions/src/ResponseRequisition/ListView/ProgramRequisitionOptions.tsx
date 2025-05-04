@@ -17,7 +17,7 @@ import {
 } from '@openmsupply-client/common';
 import { getNameOptionRenderer } from '@openmsupply-client/system';
 
-import { ProgramSettingsByCustomerFragment, useResponse } from '../api';
+import { useResponse } from '../api';
 import { NewRequisitionType } from '../../types';
 import { getOrderTypeRenderer } from '../../RequestRequisition/ListView/ProgramRequisitionOptions';
 
@@ -87,6 +87,7 @@ const useProgramRequisitionOptions = (
       disabled: customer === null,
       set: handleSetProgram,
       label: t('label.program'),
+      renderOption: getProgramOptionRenderer(),
     },
     orderTypes: {
       options:
@@ -147,6 +148,8 @@ const LabelAndOptions = <T,>({
   const noOptionsDisplay = options.length == 0 &&
     !disabled &&
     !!labelNoOptions && <Typography>{labelNoOptions}</Typography>;
+
+  console.log('value', value);
 
   return (
     <Grid container flexDirection="row">
@@ -248,18 +251,23 @@ export const ProgramRequisitionOptions = ({
 
 const getProgramOptionRenderer =
   (): AutocompleteOptionRenderer<MasterListAndOrderAndPeriodTypesNode> =>
-  (props, item) => (
-    <DefaultAutocompleteItemOption {...props} key={item.masterList.id}>
-      <Box display="flex" flexDirection="row" gap={1} alignItems="center">
-        <Typography
-          overflow="hidden"
-          textOverflow="ellipsis"
-          sx={{
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {item.masterList.name}
-        </Typography>
-      </Box>
-    </DefaultAutocompleteItemOption>
-  );
+  (props, item) => {
+    console.log('item', item);
+    console.log('props', props);
+    console.log('item.masterList.name', item.masterList.name);
+    return (
+      <DefaultAutocompleteItemOption {...props} key={item.masterList.id}>
+        <Box display="flex" flexDirection="row" gap={1} alignItems="center">
+          <Typography
+            overflow="hidden"
+            textOverflow="ellipsis"
+            sx={{
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {item.masterList.name}
+          </Typography>
+        </Box>
+      </DefaultAutocompleteItemOption>
+    );
+  };
