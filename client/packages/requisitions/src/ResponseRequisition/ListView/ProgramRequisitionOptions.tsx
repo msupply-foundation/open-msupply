@@ -6,16 +6,24 @@ import {
   BasicSpinner,
   Box,
   ButtonWithIcon,
-  CustomerProgramRequisitionSettingNode,
   DefaultAutocompleteItemOption,
   Grid,
-  MasterListAndOrderAndPeriodTypesNode,
   NameNode,
   PlusCircleIcon,
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
 import { getNameOptionRenderer } from '@openmsupply-client/system';
+import { ProgramRequisitionSettingsByCustomerQuery } from '../api/operations.generated';
+
+// convert to fragment
+type CustomerProgramRequisitionSettingNode =
+  ProgramRequisitionSettingsByCustomerQuery['programRequisitionSettingsByCustomer'];
+
+type MasterListAndOrderAndPeriodTypesNode =
+  CustomerProgramRequisitionSettingNode['masterLists'][number];
+
+type MasterListNode = MasterListAndOrderAndPeriodTypesNode['masterList'];
 
 import { useResponse } from '../api';
 import { NewRequisitionType } from '../../types';
@@ -51,12 +59,17 @@ const useProgramRequisitionOptions = (
   type Period = OrderType['availablePeriods'][number];
   type Customer = NameNode;
 
-  const [program, setProgram] = useState<Program | null>(null);
+  const [selectedProgram, setSelectedProgram] =
+    useState<MasterListAndOrderAndPeriodTypesNode | null>();
   const [orderType, setOrderType] = useState<OrderType | null>(null);
   const [period, setPeriod] = useState<Period | null>(null);
 
-  const handleSetProgram = (value: Program | null) => {
-    setProgram(value);
+  const handleSetProgram = (value: MasterListNode | null) => {
+    setSelectedProgram(
+      data?.masterLists.find(
+        (program: Program) => program.masterList.id === value?.id
+      ) ?? null
+    );
     setOrderType(null);
     setPeriod(null);
   };
@@ -66,37 +79,32 @@ const useProgramRequisitionOptions = (
   };
   const handleSetCustomer = (value: NameNode | null) => {
     setCustomer(value);
-    setProgram(null);
+    setSelectedProgram(null);
     setOrderType(null);
     setPeriod(null);
   };
 
   const allOptions: {
-    programs: Common<Program>;
+    programs: Common<MasterListNode>;
     orderTypes: Common<OrderType>;
     customers: Common<Customer>;
     periods: Common<Period>;
   } = {
     programs: {
-      options: (data?.masterLists ?? []).map(program => ({
-        __typename: 'MasterListAndOrderAndPeriodTypesNode',
-        masterList: program.masterList,
-        orderTypes: program.orderTypes,
-      })),
-      value: program,
+      options: (data?.masterLists ?? []).map(program => program.masterList),
+      value: selectedProgram?.masterList,
       disabled: customer === null,
       set: handleSetProgram,
       label: t('label.program'),
-      renderOption: getProgramOptionRenderer(),
     },
     orderTypes: {
       options:
-        program?.orderTypes?.filter(
+        selectedProgram?.orderTypes?.filter(
           (orderType: OrderType) => orderType.availablePeriods.length > 0
         ) || [],
       value: orderType,
       set: handleSetOrderType,
-      disabled: program === null || customer === null,
+      disabled: selectedProgram === null || customer === null,
       labelNoOptions: t('messages.not-configured'),
       label: t('label.order-type'),
       renderOption: getOrderTypeRenderer(),
@@ -123,7 +131,7 @@ const useProgramRequisitionOptions = (
   return {
     ...allOptions,
     createOptions:
-      !!program && !!orderType && !!customer && !!period
+      !!selectedProgram && !!orderType && !!customer && !!period
         ? {
             programOrderTypeId: orderType.id,
             otherPartyId: customer.id,
@@ -148,8 +156,6 @@ const LabelAndOptions = <T,>({
   const noOptionsDisplay = options.length == 0 &&
     !disabled &&
     !!labelNoOptions && <Typography>{labelNoOptions}</Typography>;
-
-  console.log('value', value);
 
   return (
     <Grid container flexDirection="row">
@@ -213,7 +219,7 @@ export const ProgramRequisitionOptions = ({
       <LabelAndOptions
         {...programs}
         renderOption={ProgramOptionRenderer}
-        optionKey="masterList"
+        optionKey="name"
         autoFocus={true}
       />
       <LabelAndOptions {...orderTypes} optionKey="name" />
@@ -250,13 +256,9 @@ export const ProgramRequisitionOptions = ({
 };
 
 const getProgramOptionRenderer =
-  (): AutocompleteOptionRenderer<MasterListAndOrderAndPeriodTypesNode> =>
-  (props, item) => {
-    console.log('item', item);
-    console.log('props', props);
-    console.log('item.masterList.name', item.masterList.name);
+  (): AutocompleteOptionRenderer<MasterListNode> => (props, item) => {
     return (
-      <DefaultAutocompleteItemOption {...props} key={item.masterList.id}>
+      <DefaultAutocompleteItemOption {...props} key={item.id}>
         <Box display="flex" flexDirection="row" gap={1} alignItems="center">
           <Typography
             overflow="hidden"
@@ -265,7 +267,7 @@ const getProgramOptionRenderer =
               whiteSpace: 'nowrap',
             }}
           >
-            {item.masterList.name}
+            {item.name}
           </Typography>
         </Box>
       </DefaultAutocompleteItemOption>
