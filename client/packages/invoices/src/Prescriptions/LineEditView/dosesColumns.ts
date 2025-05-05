@@ -7,7 +7,7 @@ import {
   TypedTFunction,
 } from '@openmsupply-client/common';
 import { DraftPrescriptionLine } from '../../types';
-import { UnitQuantityCell } from '../api/hooks/utils';
+import { DosesQuantityCell } from '../api/hooks/utils';
 
 export const getDosesPerPackColumn = (
   t: TypedTFunction<LocaleKey>,
@@ -47,7 +47,7 @@ export const getPrescriptionDosesColumns = (
     },
   },
   {
-    Cell: UnitQuantityCell,
+    Cell: DosesQuantityCell,
     label: getColumnLabelWithPackOrUnit({
       t,
       displayInDoses: true,

@@ -317,13 +317,11 @@ export const PrescriptionLineEditForm: React.FC<
           )}
           <AccordionPanelSection
             title={t('label.quantity')}
-            closedSummary={summarise(
-              draftPrescriptionLines,
-              t,
-              getPlural,
-              displayInDoses,
-              item?.doses
-            )}
+            closedSummary={
+              displayInDoses
+                ? dosesSummary(t, draftPrescriptionLines, item?.doses)
+                : summarise(t, draftPrescriptionLines, getPlural)
+            }
             defaultExpanded={isNew && !disabled}
             key={key + '_quantity'}
           >
@@ -571,11 +569,9 @@ const TableWrapper: React.FC<TableProps> = ({
 };
 
 const summarise = (
-  lines: DraftPrescriptionLine[],
   t: TypedTFunction<LocaleKey>,
-  getPlural: (word: string, count: number) => string,
-  displayInDoses: boolean,
-  doses: number
+  lines: DraftPrescriptionLine[],
+  getPlural: (word: string, count: number) => string
 ) => {
   // Count how many of each pack size
   const counts: Record<number, { unitName: string; count: number }> = {};
@@ -595,22 +591,15 @@ const summarise = (
   const summary: string[] = [];
   Object.entries(counts).forEach(([size, { unitName, count: numUnits }]) => {
     const packSize = Number(size);
-    const dosesCount = doses ?? 0;
-    const numUnitsWithDoses = displayInDoses
-      ? NumUtils.round(numUnits * dosesCount)
-      : numUnits;
-
     if (packSize > 1) {
       const numPacks = NumUtils.round(numUnits / packSize, 3);
       const packWord = t('label.packs-of', { count: numPacks }); // pack or packs
-      const unitWord = displayInDoses
-        ? t('label.doses-plural', { count: numUnitsWithDoses }) // dose or doses
-        : t('label.units-plural', { count: numUnits }); // unit or units
+      const unitWord = t('label.units-plural', { count: numUnits }); // unit or units
       const unitType = getPlural(unitName, packSize);
       summary.push(
         t('label.packs-of-size', {
           numPacks,
-          numUnits: numUnitsWithDoses,
+          numUnits,
           packSize,
           unitType,
           packWord,
@@ -619,19 +608,23 @@ const summarise = (
       );
     } else {
       const unitType = getPlural(unitName, numUnits);
-      const dosesWord = t('label.doses-plural', { count: numUnitsWithDoses });
-      const displayDoses = displayInDoses
-        ? t('label.num-in-brackets', {
-            num: numUnitsWithDoses,
-            unitWord: dosesWord,
-          })
-        : '';
-
-      summary.push(
-        t('label.packs-of-1', { numUnits, unitType }) + ` ${displayDoses}`
-      );
+      summary.push(t('label.packs-of-1', { numUnits, unitType }));
     }
   });
 
   return summary.join('\n');
+};
+
+const dosesSummary = (
+  t: TypedTFunction<LocaleKey>,
+  lines: DraftPrescriptionLine[],
+  doses: number | undefined
+) => {
+  const totalUnits = lines.reduce(
+    (sum, { packSize, numberOfPacks }) => sum + packSize * numberOfPacks,
+    0
+  );
+  const totalDoses = NumUtils.round(totalUnits * (doses ?? 0));
+  const unitWord = t('label.doses-plural', { count: totalDoses });
+  return `${totalDoses} ${unitWord}`;
 };
