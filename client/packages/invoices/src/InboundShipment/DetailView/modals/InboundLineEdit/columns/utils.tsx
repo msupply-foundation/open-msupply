@@ -1,0 +1,74 @@
+import React from 'react';
+import {
+  alpha,
+  CellProps,
+  ColumnDescription,
+  getExpiryDateInputColumn,
+  NumberInputCell,
+  TextInputCell,
+  Theme,
+} from '@openmsupply-client/common';
+import { DraftInboundLine } from '../../../../../types';
+import { ItemVariantInputCell } from '@openmsupply-client/system';
+
+const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
+const getBatchColumn = (
+  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void,
+  theme: Theme
+): ColumnDescription<DraftInboundLine> => [
+  'batch',
+  {
+    width: 150,
+    maxWidth: 150,
+    maxLength: 50,
+    Cell: TextInputCell,
+    setter: updateDraftLine,
+    backgroundColor: alpha(theme.palette.background.menu, 0.4),
+    // Remember previously entered batches for this item and suggest them in future shipments
+    autocompleteProvider: data => `inboundshipment${data.item.id}`,
+    accessor: ({ rowData }) => rowData.batch || '',
+  },
+];
+const getExpiryColumn = (
+  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void,
+  theme: Theme
+): ColumnDescription<DraftInboundLine> => [
+  expiryInputColumn,
+  {
+    width: 150,
+    maxWidth: 150,
+    setter: updateDraftLine,
+    backgroundColor: alpha(theme.palette.background.menu, 0.4),
+  },
+];
+
+export const NumberOfPacksCell = ({
+  rowData,
+  ...props
+}: CellProps<DraftInboundLine>) => (
+  <NumberInputCell
+    {...props}
+    isRequired={rowData.numberOfPacks === 0}
+    rowData={rowData}
+  />
+);
+
+export const getBatchExpiryColumns = (
+  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void,
+  theme: Theme
+): ColumnDescription<DraftInboundLine>[] => [
+  getBatchColumn(updateDraftLine, theme),
+  getExpiryColumn(updateDraftLine, theme),
+];
+
+export const itemVariantColumn = (
+  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void
+): ColumnDescription<DraftInboundLine> => ({
+  key: 'itemVariantId',
+  label: 'label.item-variant',
+  width: 170,
+  Cell: props => (
+    <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+  ),
+  setter: updateDraftLine,
+});
