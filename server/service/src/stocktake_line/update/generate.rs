@@ -55,6 +55,6 @@ pub fn generate(
         inventory_adjustment_reason_id: inventory_adjustment_reason_id
             .or(existing_line.inventory_adjustment_reason_id),
         item_variant_id,
-        reason_option_id,
+        reason_option_id: reason_option_id.or(existing_line.reason_option_id),
     })
 }
