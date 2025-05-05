@@ -19,25 +19,30 @@ pub trait PreferenceServiceTrait: Sync + Send {
 
     fn get_preference_descriptions(
         &self,
-        connection: &StorageConnection,
+        connection: StorageConnection,
         store_id: Option<String>,
         pref_type: PreferenceType,
     ) -> Result<Vec<PreferenceDescription>, PreferenceError> {
         let PreferenceProvider {
             show_contact_tracing,
             display_population_based_forecasting,
+            display_vaccine_in_doses,
         } = self.get_preference_provider();
 
-        let all_prefs_descriptions = vec![
-            // Add each pref here
-            show_contact_tracing.as_description(connection, store_id.clone())?,
-            display_population_based_forecasting.as_description(connection, store_id.clone())?,
-        ];
+        let input = AppendIfTypeInputs {
+            pref_type,
+            connection,
+            store_id: store_id.clone(),
+        };
 
-        Ok(all_prefs_descriptions
-            .into_iter()
-            .filter(|pref| pref.preference_type == pref_type)
-            .collect())
+        let mut prefs: Vec<PreferenceDescription> = Vec::new();
+
+        // Add each pref here
+        append_if_type(show_contact_tracing, &mut prefs, &input)?;
+        append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
+        append_if_type(display_vaccine_in_doses, &mut prefs, &input)?;
+
+        Ok(prefs)
     }
 
     fn upsert(
@@ -51,3 +56,24 @@ pub trait PreferenceServiceTrait: Sync + Send {
 
 pub struct PreferenceService {}
 impl PreferenceServiceTrait for PreferenceService {}
+
+struct AppendIfTypeInputs {
+    pref_type: PreferenceType,
+    connection: StorageConnection,
+    store_id: Option<String>,
+}
+
+fn append_if_type(
+    pref: impl Preference,
+    pref_descriptions: &mut Vec<PreferenceDescription>,
+    AppendIfTypeInputs {
+        pref_type,
+        connection,
+        store_id,
+    }: &AppendIfTypeInputs,
+) -> Result<(), PreferenceError> {
+    if &pref.preference_type() == pref_type {
+        pref_descriptions.push(pref.as_description(connection, store_id.clone())?);
+    }
+    Ok(())
+}

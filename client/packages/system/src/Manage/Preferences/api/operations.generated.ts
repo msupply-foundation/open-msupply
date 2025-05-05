@@ -6,6 +6,7 @@ type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type AdminPreferenceListQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   prefType: Types.PreferenceNodeType;
+  prefContext: Types.PreferenceDescriptionContext;
 }>;
 
 export type AdminPreferenceListQuery = {
@@ -35,8 +36,16 @@ export type UpsertPreferencesMutation = {
 };
 
 export const AdminPreferenceListDocument = gql`
-  query adminPreferenceList($storeId: String!, $prefType: PreferenceNodeType!) {
-    preferenceDescriptions(storeId: $storeId, prefType: $prefType) {
+  query adminPreferenceList(
+    $storeId: String!
+    $prefType: PreferenceNodeType!
+    $prefContext: PreferenceDescriptionContext!
+  ) {
+    preferenceDescriptions(
+      storeId: $storeId
+      prefType: $prefType
+      prefContext: $prefContext
+    ) {
       key
       valueType
       value

@@ -934,6 +934,11 @@ export type BatchStocktakeResponse = {
   updateStocktakes?: Maybe<Array<UpdateStocktakeResponseWithId>>;
 };
 
+export type BoolStorePrefInput = {
+  storeId: Scalars['String']['input'];
+  value: Scalars['Boolean']['input'];
+};
+
 export type BundledItemMutations = {
   __typename: 'BundledItemMutations';
   deleteBundledItem: DeleteBundledItemResponse;
@@ -5896,6 +5901,11 @@ export type PluginInfoNode = {
   pluginInfo: Scalars['JSON']['output'];
 };
 
+/** The context we are editing pref within (e.g. prefs for given store, user, etc.) */
+export type PreferenceDescriptionContext = {
+  storeId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
   key: PreferenceKey;
@@ -5909,6 +5919,7 @@ export type PreferenceDescriptionNode = {
 
 export enum PreferenceKey {
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
+  DisplayVaccineInDoses = 'displayVaccineInDoses',
   ShowContactTracing = 'showContactTracing',
 }
 
@@ -5935,6 +5946,7 @@ export enum PreferenceValueNodeType {
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
+  displayVaccineInDoses: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
 };
 
@@ -6826,6 +6838,7 @@ export type QueriesPluginGraphqlQueryArgs = {
 };
 
 export type QueriesPreferenceDescriptionsArgs = {
+  prefContext: PreferenceDescriptionContext;
   prefType: PreferenceNodeType;
   storeId: Scalars['String']['input'];
 };
@@ -9596,6 +9609,7 @@ export type UpsertPackVariantResponse =
 
 export type UpsertPreferencesInput = {
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
+  displayVaccineInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
