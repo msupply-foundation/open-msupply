@@ -26,7 +26,7 @@ export const ConfigurationSettings = () => {
   return (
     <>
       <Setting
-        title={t('label.initialise-store-properties')}
+        title={t('label.initialise-store-properties-gaps')}
         component={
           <BaseButton
             onClick={handleClick('gaps')}

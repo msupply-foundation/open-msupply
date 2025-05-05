@@ -74,8 +74,6 @@ interface NamePropertyStatus {
   populationConfigured: boolean;
 }
 
-// Temporary solution to check if the name/population properties are configured
-// Add functionality to check store for 'GAPS Only' settings etc... (once available)
 export const useCheckConfiguredProperties = (): NamePropertyStatus => {
   const { data } = useName.document.properties();
 
