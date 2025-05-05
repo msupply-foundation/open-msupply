@@ -77,7 +77,7 @@ pub enum PreferenceKey {
     ShowContactTracing,
     DisplayPopulationBasedForecasting,
     DisplayVaccineInDoses,
-    InputVVMStatus,
+    InputVvmStatus,
 }
 
 impl PreferenceKey {
@@ -88,7 +88,7 @@ impl PreferenceKey {
                 PreferenceKey::DisplayPopulationBasedForecasting
             }
             PrefKey::DisplayVaccineInDoses => PreferenceKey::DisplayVaccineInDoses,
-            PrefKey::InputVVMStatus => PreferenceKey::InputVVMStatus,
+            PrefKey::InputVvmStatus => PreferenceKey::InputVvmStatus,
         }
     }
 }

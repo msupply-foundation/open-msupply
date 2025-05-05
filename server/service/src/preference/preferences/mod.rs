@@ -12,7 +12,7 @@ pub struct PreferenceProvider {
     pub show_contact_tracing: ShowContactTracing,
     pub display_population_based_forecasting: DisplayPopulationBasedForecasting,
     pub display_vaccine_in_doses: DisplayVaccineInDoses,
-    pub input_vvm_status: InputVVMStatus,
+    pub input_vvm_status: InputVvmStatus,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -20,6 +20,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         show_contact_tracing: ShowContactTracing,
         display_population_based_forecasting: DisplayPopulationBasedForecasting,
         display_vaccine_in_doses: DisplayVaccineInDoses,
-        input_vvm_status: InputVVMStatus,
+        input_vvm_status: InputVvmStatus,
     }
 }
