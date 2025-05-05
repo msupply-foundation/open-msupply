@@ -104,7 +104,7 @@ export const QuantityTableComponent = ({
     !!preferences?.displayVaccineInDoses && !!item?.isVaccine;
   const shouldShowNumberOfPacks =
     !displayInDoses || (displayInDoses && !hasLinkedShipment);
-  const itemUnitName = item?.unitName ? item.unitName : t('label.unit');
+  const unitName = item?.unitName ? item.unitName : t('label.unit');
 
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     getBatchColumn(updateDraftLine, theme),
@@ -126,7 +126,7 @@ export const QuantityTableComponent = ({
   if (displayInDoses) {
     columnDefinitions.push({
       key: 'dosesPerPack',
-      label: `${t('label.doses-per')} ${itemUnitName}`,
+      label: `${t('label.doses-per')} ${unitName}`,
       width: 120,
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.item?.doses,
@@ -143,7 +143,7 @@ export const QuantityTableComponent = ({
       [
         'numberOfPacks',
         {
-          label: 'label.packs',
+          label: 'label.packs-receieved',
           Cell: NumberOfPacksCell,
           width: 100,
           setter: patch => {
@@ -171,7 +171,8 @@ export const QuantityTableComponent = ({
         t,
         displayInDoses,
         displayInPack: true,
-        itemUnit: item?.unitName,
+        unitName: item?.unitName,
+        inputKey: 'received',
       }),
       Cell: NumberOfPacksCell,
       width: 100,
@@ -201,7 +202,7 @@ export const QuantityTableComponent = ({
       label: getColumnLabelWithPackOrUnit({
         t,
         displayInDoses,
-        itemUnit: item?.unitName,
+        unitName: item?.unitName,
       }),
       width: 100,
       accessor: ({ rowData }) => {

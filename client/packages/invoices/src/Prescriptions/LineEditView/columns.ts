@@ -12,15 +12,19 @@ import {
 } from '@openmsupply-client/common';
 import { DraftPrescriptionLine } from '../../types';
 import { UnitQuantityCell } from '../api/hooks/utils';
+import {
+  getDosesPerPackColumn,
+  getPrescriptionDosesColumns,
+} from './dosesColumns';
 
 export const usePrescriptionLineEditColumns = ({
   onChange,
   isVaccine,
-  unit,
+  unitName,
 }: {
   onChange: (key: string, numPacks: number) => void;
-  unit: string;
   isVaccine?: boolean;
+  unitName: string;
 }) => {
   const t = useTranslation();
   const { data: preferences } = usePreference(
@@ -48,81 +52,66 @@ export const usePrescriptionLineEditColumns = ({
   ];
 
   if (displayInDoses) {
-    columns.push({
-      key: 'dosesPerPack',
-      label: `${t('label.doses-per')} ${unit}`,
-      width: 100,
-      align: ColumnAlign.Right,
-      accessor: ({ rowData }) => rowData.item?.doses,
-    });
+    columns.push(getDosesPerPackColumn(t, unitName));
   } else {
     columns.push(['packSize', { width: 90 }]);
   }
 
-  columns.push(
-    {
-      Cell: NumberCell,
-      label: getColumnLabelWithPackOrUnit({
-        t,
-        displayInDoses,
-        displayInPack: true,
-        itemUnit: unit,
-        columnLabel: t('label.in-stock'),
-      }),
-      key: 'totalUnits',
-      align: ColumnAlign.Right,
-      width: 80,
-      accessor: ({ rowData }) => {
-        return (
-          (rowData.stockLine?.totalNumberOfPacks ?? 0) *
-          (rowData.stockLine?.packSize ?? 1)
-        );
-      },
-    },
-    {
-      Cell: NumberCell,
-      label: getColumnLabelWithPackOrUnit({
-        t,
-        displayInDoses,
-        itemUnit: unit,
-        columnLabel: t('label.available'),
-      }),
-      key: 'availableUnits',
-      align: ColumnAlign.Right,
-      width: 85,
-      accessor: ({ rowData }) => {
-        const total =
+  columns.push({
+    Cell: NumberCell,
+    label: getColumnLabelWithPackOrUnit({
+      t,
+      unitName,
+      inputKey: 'in-stock',
+    }),
+    key: 'totalUnits',
+    align: ColumnAlign.Right,
+    width: 80,
+    accessor: ({ rowData }) =>
+      (rowData.stockLine?.totalNumberOfPacks ?? 0) *
+      (rowData.stockLine?.packSize ?? 1),
+  });
+
+  if (displayInDoses) {
+    columns.push(
+      ...getPrescriptionDosesColumns(t, onChange, getColumnLabelWithPackOrUnit)
+    );
+  } else {
+    columns.push(
+      {
+        Cell: NumberCell,
+        label: getColumnLabelWithPackOrUnit({
+          t,
+          unitName,
+          inputKey: 'available',
+        }),
+        key: 'availableUnits',
+        align: ColumnAlign.Right,
+        width: 85,
+        accessor: ({ rowData }) =>
           (rowData.stockLine?.availableNumberOfPacks ?? 0) *
-          (rowData.stockLine?.packSize ?? 1);
-        const totalDoses = NumUtils.round(total * (rowData.item?.doses ?? 1));
-        return displayInDoses ? total * totalDoses : total;
+          (rowData.stockLine?.packSize ?? 1),
       },
-    },
-    {
-      Cell: UnitQuantityCell,
-      label: getColumnLabelWithPackOrUnit({
-        t,
-        displayInDoses,
-        itemUnit: unit,
-        columnLabel: t('label.issued'),
-      }),
-      key: 'unitQuantity',
-      align: ColumnAlign.Right,
-      width: 120,
-      setter: ({ packSize, id, unitQuantity, item }) => {
-        if (displayInDoses && item?.isVaccine && item?.doses) {
-          onChange(id, (unitQuantity ?? 0) / (packSize ?? 1) / item.doses);
-        } else {
-          onChange(id, (unitQuantity ?? 0) / (packSize ?? 1));
-        }
-      },
-      accessor: ({ rowData }) => {
-        const total = (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1);
-        const totalDoses = NumUtils.round(total * (rowData.item?.doses ?? 1));
-        return displayInDoses ? totalDoses : total;
-      },
-    }
-  );
+      {
+        Cell: UnitQuantityCell,
+        label: getColumnLabelWithPackOrUnit({
+          t,
+          unitName,
+          inputKey: 'issued',
+        }),
+        key: 'unitQuantity',
+        align: ColumnAlign.Right,
+        width: 120,
+        setter: ({ packSize, id, unitQuantity }) =>
+          onChange(id, (unitQuantity ?? 0) / (packSize ?? 1)),
+        accessor: ({ rowData }) =>
+          NumUtils.round(
+            (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
+            3
+          ),
+      }
+    );
+  }
 
   return useColumns(columns, {}, [onChange]);
 };

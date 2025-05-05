@@ -143,7 +143,7 @@ export const useIntlUtils = () => {
     (props: GetNumberColumnLabelProps) =>
       getNumberColumnLabel({
         ...props,
-        itemUnit: getPlural(props.itemUnit ?? '', 2),
+        unitName: getPlural(props.unitName ?? '', 2),
       }),
     []
   );
@@ -217,31 +217,34 @@ const getFullName = (
   }
 };
 
-interface GetNumberColumnLabelProps {
+type InputKey = 'received' | 'in-stock' | 'available' | 'issued';
+
+export interface GetNumberColumnLabelProps {
   t: TypedTFunction<LocaleKey>;
-  displayInDoses: boolean;
+  displayInDoses?: boolean;
   displayInPack?: boolean;
-  itemUnit?: string | null;
-  columnLabel?: string;
+  unitName?: string | null;
+  inputKey?: InputKey;
 }
 
 const getNumberColumnLabel = ({
   t,
   displayInDoses,
-  displayInPack,
-  itemUnit,
-  columnLabel,
+  displayInPack = false,
+  unitName,
+  inputKey,
 }: GetNumberColumnLabelProps) => {
-  const capitalisedItemUnit = itemUnit
-    ? itemUnit.charAt(0).toUpperCase() + itemUnit.slice(1)
+  const capitalisedunitName = unitName
+    ? unitName.charAt(0).toUpperCase() + unitName.slice(1)
     : t('label.units');
-  const label = columnLabel ?? '';
-  const unitTranslation = `${capitalisedItemUnit} ${label}`;
-  const packTranslation = `${t('label.packs')} ${label}`;
-  const dosesTranslation = `${t('label.doses')} ${label}`;
+  const unitTranslation = t(`label.units-${inputKey}` as LocaleKey, {
+    unit: capitalisedunitName,
+  });
+  const packTranslation = t(`label.packs-${inputKey}` as LocaleKey);
+  const dosesTranslation = t(`label.doses-${inputKey}` as LocaleKey);
 
   if (displayInDoses) {
-    if (displayInPack && !itemUnit) {
+    if (displayInPack && !unitName) {
       return packTranslation;
     }
     return displayInPack ? unitTranslation : dosesTranslation;
