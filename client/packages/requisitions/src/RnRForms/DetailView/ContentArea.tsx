@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Box,
   GlobalStyles,
@@ -14,7 +14,6 @@ import { RnRFormLine } from './RnRFormLine';
 
 interface ContentAreaProps {
   data: RnRFormLineFragment[];
-  saveLine: (line: RnRFormLineFragment) => Promise<void>;
   periodLength: number;
   disabled: boolean;
 }
@@ -41,7 +40,6 @@ const HeaderCell = ({ className, label, tooltip, width }: HeaderCellProps) => {
 
 export const ContentArea = ({
   data,
-  saveLine,
   periodLength,
   disabled,
 }: ContentAreaProps) => {
@@ -196,9 +194,8 @@ export const ContentArea = ({
             {line => (
               <RnRFormLine
                 key={line.id}
-                line={line}
+                lineId={line.id}
                 periodLength={periodLength}
-                saveLine={saveLine}
                 disabled={disabled}
               />
             )}

@@ -1,10 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import {
   AlertIcon,
   BasicTextInput,
   Checkbox,
   CircleIcon,
-  CircularProgress,
   DatePicker,
   Formatter,
   LowStockStatus,
@@ -19,34 +18,29 @@ import {
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { getLowStockStatus, getAmc } from './helpers';
-import { useRnRFormContext } from '../api';
+import { useCachedRnRDraftLine, useRnRFormContext } from '../api';
 
 export const RnRFormLine = ({
-  line: baseLine,
-  saveLine,
   periodLength,
   disabled,
+  lineId,
 }: {
-  line: RnRFormLineFragment;
+  lineId: string;
+
   periodLength: number;
-  saveLine: (line: RnRFormLineFragment) => Promise<void>;
   disabled: boolean;
 }) => {
   const theme = useTheme();
   const { store } = useAuthContext();
-
   const { error } = useNotification();
-  const [isLoading, setIsLoading] = useState(false);
-  const { draftLine, setLine } = useRnRFormContext(state => ({
-    draftLine: state.draftLines[baseLine.id],
-    setLine: state.setDraftLine,
-  }));
 
-  const line = useMemo(() => {
-    return draftLine ?? baseLine;
-  }, [draftLine, baseLine]);
+  const lineState = useRnRFormContext(useCachedRnRDraftLine(lineId));
 
-  if (!line) return null;
+  console.log('rendering', lineState?.line.id, lineId);
+
+  if (!lineState) return null;
+
+  const { line, setLine } = lineState;
 
   const updateDraft = (update: Partial<RnRFormLineFragment>) => {
     const newPatch = {
@@ -198,6 +192,7 @@ export const RnRFormLine = ({
       <RnRNumberCell
         readOnly
         value={line.finalBalance}
+        error={line.finalBalance < 0}
         textColor={textColor}
         onChange={() => {}}
       />
@@ -276,22 +271,17 @@ export const RnRFormLine = ({
 
       {/* Confirm the line */}
       <td style={{ textAlign: 'center' }}>
-        {isLoading ? (
-          <CircularProgress size={20} />
-        ) : (
+        {
           <>
             <Checkbox
               checked={!!line.confirmed}
               size="medium"
               onClick={async () => {
-                try {
-                  setIsLoading(true);
-                  await saveLine({ ...line, confirmed: !line.confirmed });
-                  setIsLoading(false);
-                } catch (e) {
-                  error((e as Error).message)();
-                  setIsLoading(false);
+                if (line.finalBalance < 0) {
+                  error('Final balance should not be below 0')();
+                  return;
                 }
+                setLine({ ...line, confirmed: !line.confirmed });
               }}
               disabled={disabled}
               sx={{ marginLeft: '10px' }}
@@ -299,12 +289,12 @@ export const RnRFormLine = ({
             <CircleIcon
               sx={{
                 width: '10px',
-                visibility: draftLine ? 'visible' : 'hidden',
+                visibility: line?.isDirty ? 'visible' : 'hidden',
                 color: 'secondary.main',
               }}
             />
           </>
-        )}
+        }
       </td>
       {/* Readonly - populated from Response Requisition */}
       <RnRNumberCell
@@ -324,9 +314,11 @@ const RnRNumberCell = ({
   onChange,
   textColor,
   max,
+  error,
   allowNegative,
 }: {
   value: number;
+  error?: boolean;
   disabled?: boolean;
   readOnly?: boolean;
   onChange: (val: number) => void;
@@ -353,6 +345,7 @@ const RnRNumberCell = ({
               },
             },
           }}
+          error={error}
           value={buffer}
           disabled={readOnly ?? disabled}
           onChange={newValue => {
