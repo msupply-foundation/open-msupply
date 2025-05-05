@@ -1,6 +1,6 @@
 {
   "admin": "Administrador",
-  "app": "mSupply",
+  "app": "Open mSupply",
   "app.initialise": "Inicializar",
   "app.login": "Inicie sessão",
   "approval-status.approved": "Aprovado",
@@ -111,6 +111,7 @@
   "button.supply-to-requested": "Fornecimento solicitado",
   "button.sync-now": "Sincronizar agora!",
   "button.test": "Testar",
+  "button.today": "Hoje",
   "button.try-again": "Tentar Novamente",
   "button.unlink-patient": "Desvincular Paciente",
   "button.update-status": "Atualizar o Estado",
