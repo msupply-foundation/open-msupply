@@ -10,7 +10,7 @@ import { STOCK_LINE } from './keys';
 import { useStockGraphQL } from '../useStockGraphQL';
 
 export interface DraftStockLine extends StockLineRowFragment {
-  reason: ReasonOptionRowFragment | null;
+  reasonOption: ReasonOptionRowFragment | null;
 }
 
 const defaultDraftStockLine: DraftStockLine = {
@@ -29,7 +29,7 @@ const defaultDraftStockLine: DraftStockLine = {
     code: '',
     name: '',
   },
-  reason: null,
+  reasonOption: null,
 };
 
 export function useStockLine(id?: string) {
@@ -101,7 +101,7 @@ const useCreate = () => {
 
   const mutationFn = async ({
     itemId,
-    reason,
+    reasonOption,
     packSize,
     totalNumberOfPacks,
     barcode,
@@ -127,7 +127,7 @@ const useCreate = () => {
         onHold,
         numberOfPacks: totalNumberOfPacks,
         location: setNullableInput('id', location),
-        inventoryAdjustmentReasonId: reason?.id,
+        inventoryAdjustmentReasonId: reasonOption?.id,
         itemVariantId,
       },
     });

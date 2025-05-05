@@ -151,8 +151,8 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
                     <ReasonOptionsSearchInput
                       width={INPUT_WIDTH}
                       type={ReasonOptionNodeType.PositiveInventoryAdjustment}
-                      value={draft.reason}
-                      onChange={reason => updatePatch({ reason })}
+                      value={draft.reasonOption}
+                      onChange={reason => updatePatch({ reasonOption: reason })}
                     />
                   </Box>
                 }
