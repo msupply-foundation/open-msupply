@@ -46,8 +46,6 @@ export const useDraftSupplierReturnLines = ({
     });
   };
 
-  console.log(draftLines);
-
   const { mutateAsync: insert } = useReturns.document.insertSupplierReturn();
   const { mutateAsync: updateLines } = useReturns.lines.updateSupplierLines();
 
@@ -65,9 +63,6 @@ export const useDraftSupplierReturnLines = ({
         };
       }
     );
-
-    console.log('SAVE', supplierReturnLines);
-    console.log('AFTER', draftLines);
 
     return !returnId
       ? await insert({
