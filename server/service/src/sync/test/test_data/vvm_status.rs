@@ -12,9 +12,8 @@ const VVM_STATUS_1: (&str, &str) = (
         "description":"TEST DESCRIPTION 1",
         "is_active":true,
         "level":1,
-        "unusable":false,
-        "option_id":"TEST OPTION ID 1"
-    }"#,
+        "unusable":false
+       }"#,
 );
 
 const VVM_STATUS_2: (&str, &str) = (
@@ -26,7 +25,7 @@ const VVM_STATUS_2: (&str, &str) = (
         "is_active":false,
         "level":2,
         "unusable":true,
-        "option_id":"TEST OPTION ID 2"
+        "option_id":""
     }"#,
 );
 
@@ -35,27 +34,27 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             VVM_STATUS_1,
-            VVMStatusRow { 
+            VVMStatusRow {
                 id: "VVM_STATUS_1".to_owned(),
                 code: "2".to_owned(),
                 description: "TEST DESCRIPTION 1".to_owned(),
                 is_active: true.to_owned(),
                 level: 1.to_owned(),
                 unusable: false.to_owned(),
-                reason_id: Some("TEST OPTION ID 1".to_owned()),
+                reason_id: None,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             VVM_STATUS_2,
-            VVMStatusRow { 
+            VVMStatusRow {
                 id: "VVM_STATUS_2".to_owned(),
                 code: "4".to_owned(),
                 description: "TEST DESCRIPTION 2".to_owned(),
                 is_active: false.to_owned(),
                 level: 2.to_owned(),
                 unusable: true.to_owned(),
-                reason_id: Some("TEST OPTION ID 2".to_owned()),
+                reason_id: None,
             },
         ),
     ]

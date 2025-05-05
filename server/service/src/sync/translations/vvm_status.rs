@@ -1,5 +1,8 @@
-use repository::{vvm_status_row::{VVMStatusRow, VVMStatusRowDelete}, StorageConnection, SyncBufferRow};
 use crate::sync::sync_serde::empty_str_as_option_string;
+use repository::{
+    vvm_status_row::{VVMStatusRow, VVMStatusRowDelete},
+    StorageConnection, SyncBufferRow,
+};
 use serde::Deserialize;
 
 use super::{PullTranslateResult, SyncTranslation};
@@ -14,6 +17,7 @@ pub struct LegacyVVMStatusRow {
     is_active: bool,
     #[serde(default)]
     unusable: bool,
+    #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     option_id: Option<String>,
 }
