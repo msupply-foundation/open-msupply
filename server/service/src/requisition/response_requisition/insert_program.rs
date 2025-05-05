@@ -330,3 +330,192 @@ impl From<RepositoryError> for InsertProgramResponseRequisitionError {
         InsertProgramResponseRequisitionError::DatabaseError(error)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::{
+            mock_name_store_a, mock_name_store_b, mock_name_store_c, mock_store_a, mock_store_b,
+            mock_store_c, MockData, MockDataInserts,
+        },
+        ContextRow, MasterListNameJoinRow, MasterListRow, NameStoreJoinRow, NameTagJoinRow,
+        NameTagRow, PeriodRow, PeriodScheduleRow, ProgramRequisitionOrderTypeRow,
+        ProgramRequisitionSettingsRow, ProgramRow, RequisitionRow, RequisitionType,
+    };
+
+    use crate::{
+        requisition::program_settings::customer_program_settings::prepare::{
+            CustomerProgramRequisitionSetting, MasterListWithOrderTypes,
+            ProgramRequisitionOrderType,
+        },
+        test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
+    };
+
+    use super::{InsertProgramResponseRequisition, InsertProgramResponseRequisitionError};
+
+    #[actix_rt::test]
+    async fn get_customer_program_requisition_settings(
+    ) -> Result<(), InsertProgramResponseRequisitionError> {
+        // Mock Data
+
+        // Two tags for store a
+        let name_tag1 = NameTagRow {
+            id: "name_tag1".to_string(),
+            name: "tag1".to_string(),
+            ..Default::default()
+        };
+        let name_tag_join1 = NameTagJoinRow {
+            id: "name_tag_join1".to_string(),
+            name_tag_id: name_tag1.id.clone(),
+            name_link_id: mock_name_store_a().id,
+        };
+        let name_tag2 = NameTagRow {
+            id: "name_tag2".to_string(),
+            name: "tag2".to_string(),
+            ..Default::default()
+        };
+        let name_tag_join2 = NameTagJoinRow {
+            id: "name_tag_join2".to_string(),
+            name_tag_id: name_tag2.id.clone(),
+            name_link_id: mock_name_store_a().id,
+        };
+
+        // Two programs, with master list both joined to store a
+        let master_list1 = MasterListRow {
+            id: "master_list1".to_string(),
+            is_active: true,
+            ..Default::default()
+        };
+        let master_list_name_join1 = MasterListNameJoinRow {
+            id: "master_list_name_join1".to_string(),
+            name_link_id: mock_name_store_a().id,
+            master_list_id: master_list1.id.clone(),
+        };
+        let context1 = ContextRow {
+            id: "program1".to_string(),
+            name: "program1".to_string(),
+        };
+        let program1 = ProgramRow {
+            id: "program1".to_string(),
+            master_list_id: Some(master_list1.id.clone()),
+            context_id: context1.id.clone(),
+            ..Default::default()
+        };
+        // Two periods schedules with two periods
+        let period_schedule1 = PeriodScheduleRow {
+            id: "period_schedule1".to_string(),
+            ..Default::default()
+        };
+        let period1 = PeriodRow {
+            id: "period1".to_string(),
+            period_schedule_id: period_schedule1.id.clone(),
+            ..Default::default()
+        };
+        let period2 = PeriodRow {
+            id: "period2".to_string(),
+            period_schedule_id: period_schedule1.id.clone(),
+            ..Default::default()
+        };
+
+        // Two program settings, for tag1 and tag2, with one order type
+        let program_requisition_setting1 = ProgramRequisitionSettingsRow {
+            id: "program_setting1".to_string(),
+            program_id: program1.id.clone(),
+            name_tag_id: name_tag1.id.clone(),
+            period_schedule_id: period_schedule1.id.clone(),
+        };
+        let order_type1 = ProgramRequisitionOrderTypeRow {
+            id: "order_type1".to_string(),
+            name: "Order Type 1".to_string(),
+            program_requisition_settings_id: program_requisition_setting1.id.clone(),
+            max_order_per_period: 1,
+            ..Default::default()
+        };
+        let order_type2 = ProgramRequisitionOrderTypeRow {
+            id: "order_type2".to_string(),
+            name: "Order Type 2".to_string(),
+            program_requisition_settings_id: program_requisition_setting1.id.clone(),
+            max_order_per_period: 1,
+            ..Default::default()
+        };
+
+        // Two requisitions, one for period 1 for program 1 for order type 1
+        // second for period 4 for program 2 for order type 2
+        let requisition1 = RequisitionRow {
+            id: "requisition1".to_string(),
+            order_type: Some("Order Type 1".to_string()),
+            name_link_id: mock_name_store_b().id,
+            store_id: mock_store_a().id,
+            period_id: Some(period1.id.clone()),
+            program_id: Some(program1.id.clone()),
+            r#type: RequisitionType::Response,
+            ..Default::default()
+        };
+
+        // mock_name_store_b and mock_name_store_c to be joined
+        // to program 1 and program 2 respectively and visible in mock_store_a
+        let master_list_name_join3 = MasterListNameJoinRow {
+            id: "master_list_name_join3".to_string(),
+            name_link_id: mock_name_store_b().id,
+            master_list_id: master_list1.id.clone(),
+        };
+
+        let name_store_join1 = NameStoreJoinRow {
+            id: "name_store_join1".to_string(),
+            name_link_id: mock_name_store_b().id.clone(),
+            store_id: mock_store_a().id,
+            name_is_customer: true,
+            ..Default::default()
+        };
+        let name_store_join2 = NameStoreJoinRow {
+            id: "name_store_join2".to_string(),
+            name_link_id: mock_name_store_c().id.clone(),
+            store_id: mock_store_a().id,
+            name_is_customer: true,
+            ..Default::default()
+        };
+
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "get_customer_program_requisition_settings",
+            MockDataInserts::none().names().stores(),
+            MockData {
+                periods: vec![period1.clone(), period2.clone()],
+                period_schedules: vec![period_schedule1],
+                name_tags: vec![name_tag1.clone(), name_tag2.clone()],
+                name_tag_joins: vec![name_tag_join1, name_tag_join2],
+                name_store_joins: vec![name_store_join1.clone(), name_store_join2.clone()],
+                master_lists: vec![master_list1.clone()],
+                master_list_name_joins: vec![master_list_name_join1, master_list_name_join3],
+                program_requisition_settings: vec![program_requisition_setting1.clone()],
+                program_order_types: vec![order_type1.clone(), order_type2.clone()],
+                contexts: vec![context1.clone()],
+                programs: vec![program1.clone()],
+                requisitions: vec![requisition1.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // Should not be able to insert for store A period 1 (because requisition already exists)
+
+        let result = service_provider
+            .requisition_service
+            .insert_program_response_requisition(
+                &service_context,
+                InsertProgramResponseRequisition {
+                    id: "requisition2".to_string(),
+                    other_party_id: mock_name_store_b().id.clone(),
+                    program_order_type_id: order_type1.id.clone(),
+                    period_id: period1.id.clone(),
+                },
+            );
+        assert!(result.is_err());
+
+        // Should be able to insert for store A period 2
+        // Should not be able to insert second time for store A period 2 (because now requisition already exists)
+    }
+}
