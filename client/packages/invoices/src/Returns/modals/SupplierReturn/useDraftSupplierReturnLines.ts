@@ -46,16 +46,28 @@ export const useDraftSupplierReturnLines = ({
     });
   };
 
+  console.log(draftLines);
+
   const { mutateAsync: insert } = useReturns.document.insertSupplierReturn();
   const { mutateAsync: updateLines } = useReturns.lines.updateSupplierLines();
 
   const save = async () => {
     const supplierReturnLines: SupplierReturnLineInput[] = draftLines.map(
       line => {
-        const { id, reasonId, numberOfPacksToReturn, stockLineId, note } = line;
-        return { id, stockLineId, reasonId, note, numberOfPacksToReturn };
+        const { id, reasonOption, numberOfPacksToReturn, stockLineId, note } =
+          line;
+        return {
+          id,
+          stockLineId,
+          reasonId: reasonOption?.id,
+          note,
+          numberOfPacksToReturn,
+        };
       }
     );
+
+    console.log('SAVE', supplierReturnLines);
+    console.log('AFTER', draftLines);
 
     return !returnId
       ? await insert({

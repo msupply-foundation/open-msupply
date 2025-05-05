@@ -8252,6 +8252,7 @@ export type SupplierReturnLineNode = {
   numberOfPacksToReturn: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
+  reasonOption?: Maybe<ReasonOptionNode>;
   stockLineId: Scalars['String']['output'];
 };
 

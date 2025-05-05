@@ -1,4 +1,4 @@
-use repository::{RepositoryError, ReturnReasonRow, ReturnReasonRowRepository, StorageConnection};
+use repository::{ReasonOptionRow, ReasonOptionRowRepository, RepositoryError, StorageConnection};
 
 use crate::invoice_line::validate::check_line_exists;
 
@@ -26,10 +26,10 @@ pub fn validate(
 fn check_reason_exists_option(
     connection: &StorageConnection,
     id: &str,
-) -> Result<Option<ReturnReasonRow>, RepositoryError> {
-    ReturnReasonRowRepository::new(connection).find_one_by_id(id)
+) -> Result<Option<ReasonOptionRow>, RepositoryError> {
+    ReasonOptionRowRepository::new(connection).find_one_by_id(id)
 }
 
-fn check_reason_is_active(reason: &ReturnReasonRow) -> bool {
+fn check_reason_is_active(reason: &ReasonOptionRow) -> bool {
     reason.is_active
 }

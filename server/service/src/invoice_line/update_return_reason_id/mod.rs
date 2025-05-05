@@ -32,7 +32,7 @@ pub fn update_return_reason_id(
 
             let invoice_line_repo = InvoiceLineRowRepository::new(connection);
 
-            invoice_line_repo.update_return_reason_id(&input.line_id, input.reason_id.clone())?;
+            invoice_line_repo.update_reason_option_id(&input.line_id, input.reason_id.clone())?;
 
             get_invoice_line(ctx, &input.line_id)
                 .map_err(UpdateLineReturnReasonError::DatabaseError)?

@@ -1,10 +1,15 @@
 import {
   CellProps,
   DataTable,
+  ReasonOptionNodeType,
   TextInputCell,
   useColumns,
 } from '@openmsupply-client/common';
-import { ReturnReasonSearchInput } from '@openmsupply-client/system';
+import {
+  ReasonOptionRowFragment,
+  ReasonOptionsSearchInput,
+} from '@openmsupply-client/system';
+import { INPUT_WIDTH } from 'packages/system/src/Stock/Components/StyledInputRow';
 import React from 'react';
 
 interface ReturnWithReason {
@@ -14,7 +19,7 @@ interface ReturnWithReason {
   expiryDate?: string | null;
   batch?: string | null;
   note?: string | null;
-  reasonId?: string | null;
+  reasonOption?: ReasonOptionRowFragment | null;
 }
 
 const ReturnReasonCell = ({
@@ -23,11 +28,13 @@ const ReturnReasonCell = ({
   column,
   isDisabled,
 }: CellProps<ReturnWithReason>): JSX.Element => (
-  <ReturnReasonSearchInput
-    autoFocus={rowIndex === 0}
-    selectedReasonId={rowData.reasonId ?? null}
-    onChange={id => column.setter({ ...rowData, reasonId: id })}
+  <ReasonOptionsSearchInput
+    type={ReasonOptionNodeType.ReturnReason}
+    onChange={reason => column.setter({ ...rowData, reasonOption: reason })}
     isDisabled={isDisabled}
+    autoFocus={rowIndex === 0}
+    width={INPUT_WIDTH}
+    value={rowData.reasonOption}
   />
 );
 
