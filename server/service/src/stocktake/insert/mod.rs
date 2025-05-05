@@ -27,6 +27,15 @@ pub struct InsertStocktake {
     pub is_initial_stocktake: bool,
 }
 
+#[derive(Default, Debug, PartialEq, Clone)]
+pub struct InsertStocktakeInput {
+    pub master_list_id: Option<String>,
+    pub location: Option<NullableUpdate<String>>,
+    pub items_have_stock: Option<bool>,
+    pub expires_before: Option<NaiveDate>,
+    pub is_initial_stocktake: bool,
+}
+
 #[derive(Debug, PartialEq)]
 pub enum InsertStocktakeError {
     DatabaseError(RepositoryError),
