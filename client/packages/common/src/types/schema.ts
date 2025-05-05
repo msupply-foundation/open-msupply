@@ -4147,10 +4147,10 @@ export type ItemFilterInput = {
   categoryName?: InputMaybe<Scalars['String']['input']>;
   code?: InputMaybe<StringFilterInput>;
   codeOrName?: InputMaybe<StringFilterInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   /** Items with available stock on hand, regardless of item visibility. This filter is ignored if `is_visible_or_on_hand` is true */
   hasStockOnHand?: InputMaybe<Scalars['Boolean']['input']>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isVaccine?: InputMaybe<Scalars['Boolean']['input']>;
   /** Items that are part of a masterlist which is visible in this store. This filter is ignored if `is_visible_or_on_hand` is true */
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
@@ -5918,7 +5918,6 @@ export type PreferenceDescriptionNode = {
 };
 
 export enum PreferenceKey {
-  DisplayVaccineInDoses = 'displayVaccineInDoses',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   DisplayVaccineInDoses = 'displayVaccineInDoses',
   ShowContactTracing = 'showContactTracing',
@@ -5946,7 +5945,6 @@ export enum PreferenceValueNodeType {
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
-  displayVaccineInDoses: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   displayVaccineInDoses: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
