@@ -244,7 +244,7 @@ const getNumberColumnLabel = ({
   const dosesTranslation = t(`label.doses-${inputKey}` as LocaleKey);
 
   if (displayInDoses) {
-    if (displayInPack && !unitName) {
+    if (!unitName) {
       return packTranslation;
     }
     return displayInPack ? unitTranslation : dosesTranslation;

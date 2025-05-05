@@ -23,7 +23,7 @@ export const getDosesPerPackColumn = (
   accessor: ({ rowData }) => rowData.item?.doses,
 });
 
-export const getPrescriptionDosesColumns = (
+export const getPrescriptionLineDosesColumns = (
   t: TypedTFunction<LocaleKey>,
   onChange: (key: string, numPacks: number) => void,
   getColumnLabelWithPackOrUnit: (props: GetNumberColumnLabelProps) => string

@@ -20,6 +20,11 @@ import {
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
+import {
+  getPrescriptionDosesSellPriceColumn,
+  getPrescriptionDosesQuantityColumn,
+  getPrescriptionDosesCostColumn,
+} from './dosesColumns';
 
 interface UsePrescriptionColumnOptions {
   sortBy: SortBy<StockOutLineFragment | StockOutItem>;
@@ -217,51 +222,25 @@ export const usePrescriptionColumn = ({
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           const { lines } = rowData;
-          const displayVaccineInDoses =
-            OMSPrefs?.displayVaccineInDoses && lines[0]?.item.isVaccine;
-          const unitQuantity = ArrayUtils.getUnitQuantity(lines);
-
-          // TODO: Different doses with item variants
-          if (displayVaccineInDoses) {
-            const doses = lines[0]?.item.doses ?? 1;
-            return unitQuantity * doses;
-          }
-
-          return unitQuantity;
+          return ArrayUtils.getUnitQuantity(lines);
         } else {
-          const displayVaccineInDoses =
-            OMSPrefs?.displayVaccineInDoses && rowData?.item.isVaccine;
-          const unitQuantity = rowData.numberOfPacks * rowData.packSize;
-          return displayVaccineInDoses
-            ? unitQuantity * (rowData.item.doses ?? 1)
-            : unitQuantity;
+          return rowData.packSize * rowData.numberOfPacks;
         }
       },
       getSortValue: rowData => {
         if ('lines' in rowData) {
           const { lines } = rowData;
-          const displayVaccineInDoses =
-            OMSPrefs?.displayVaccineInDoses && lines[0]?.item.isVaccine;
-          const unitQuantity = ArrayUtils.getUnitQuantity(lines);
-
-          // TODO: Different doses with item variants
-          if (displayVaccineInDoses) {
-            const doses = lines[0]?.item.doses ?? 1;
-            return unitQuantity * doses;
-          }
-
-          return unitQuantity;
+          return ArrayUtils.getUnitQuantity(lines);
         } else {
-          const displayVaccineInDoses =
-            OMSPrefs?.displayVaccineInDoses && rowData?.item.isVaccine;
-          const unitQuantity = rowData.numberOfPacks * rowData.packSize;
-          return displayVaccineInDoses
-            ? unitQuantity * (rowData.item.doses ?? 1)
-            : unitQuantity;
+          return rowData.packSize * rowData.numberOfPacks;
         }
       },
     },
   ]);
+
+  if (OMSPrefs?.displayVaccineInDoses) {
+    columns.push(getPrescriptionDosesQuantityColumn());
+  }
 
   if (hasPrescribedQty) {
     columns.push({
@@ -343,33 +322,18 @@ export const usePrescriptionColumn = ({
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           // Multiple lines, so we need to calculate the average price per unit
-          const { lines } = rowData;
-          const displayVaccineInDoses =
-            OMSPrefs?.displayVaccineInDoses && lines[0]?.item.isVaccine;
           let totalSellPrice = 0;
           let totalUnits = 0;
 
-          for (const line of lines) {
-            const units = line.numberOfPacks * line.packSize;
+          for (const line of rowData.lines) {
             totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
-
-            if (displayVaccineInDoses) {
-              totalUnits += units * line.item.doses;
-            } else {
-              totalUnits += units;
-            }
+            totalUnits += line.numberOfPacks * line.packSize;
           }
 
           if (totalSellPrice === 0 && totalUnits === 0) return 0;
           return totalSellPrice / totalUnits;
         } else {
-          const displayVaccineInDoses =
-            OMSPrefs?.displayVaccineInDoses && rowData?.item.isVaccine;
-          const sellPricePerPack = rowData.sellPricePerPack ?? 0;
-
-          return displayVaccineInDoses
-            ? (sellPricePerPack * rowData.numberOfPacks) / rowData.item.doses
-            : sellPricePerPack / rowData.packSize;
+          return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
         }
       },
       getSortValue: rowData => {
@@ -383,36 +347,48 @@ export const usePrescriptionColumn = ({
           return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
         }
       },
-    },
-    {
-      label: 'label.line-total',
-      key: 'lineTotal',
-      align: ColumnAlign.Right,
-      Cell: CurrencyCell,
-      accessor: ({ rowData }) => {
-        if ('lines' in rowData) {
-          // Multiple lines, so we need to calculate the average price per unit
-          let totalSellPrice = 0;
-          for (const line of rowData.lines) {
-            totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
-          }
-          return totalSellPrice;
-        } else {
-          return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
+    }
+  );
+
+  if (OMSPrefs?.displayVaccineInDoses) {
+    columns.push(getPrescriptionDosesSellPriceColumn());
+  }
+
+  columns.push({
+    label: 'label.line-total',
+    key: 'lineTotal',
+    align: ColumnAlign.Right,
+    Cell: CurrencyCell,
+    accessor: ({ rowData }) => {
+      if ('lines' in rowData) {
+        // Multiple lines, so we need to calculate the average price per unit
+        let totalSellPrice = 0;
+        for (const line of rowData.lines) {
+          totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
         }
-      },
-      getSortValue: rowData => {
-        if ('lines' in rowData) {
-          return Object.values(rowData.lines).reduce(
-            (sum, batch) =>
-              sum + (batch.sellPricePerPack ?? 0) * batch.numberOfPacks,
-            0
-          );
-        } else {
-          return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
-        }
-      },
+        return totalSellPrice;
+      } else {
+        return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
+      }
     },
+    getSortValue: rowData => {
+      if ('lines' in rowData) {
+        return Object.values(rowData.lines).reduce(
+          (sum, batch) =>
+            sum + (batch.sellPricePerPack ?? 0) * batch.numberOfPacks,
+          0
+        );
+      } else {
+        return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
+      }
+    },
+  });
+
+  if (OMSPrefs?.displayVaccineInDoses) {
+    columns.push(getPrescriptionDosesCostColumn());
+  }
+
+  columns.push(
     {
       label: 'label.purchase-cost-price',
       key: 'totalCostPrice',

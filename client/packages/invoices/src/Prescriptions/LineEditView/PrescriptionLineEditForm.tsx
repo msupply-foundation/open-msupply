@@ -199,19 +199,20 @@ export const PrescriptionLineEditForm: React.FC<
       return;
 
     const quantity = inputUnitQuantity === undefined ? 0 : inputUnitQuantity;
-    const qtyWithDoses = displayInDoses ? quantity / item?.doses : quantity;
-    setIssueUnitQuantity(qtyWithDoses);
+    const unitQty = displayInDoses ? quantity / item?.doses : quantity;
+    setIssueUnitQuantity(unitQty);
 
     const packSize =
       packSizeController.selected?.value !== -1
         ? (packSizeController.selected?.value ?? 1)
         : 1;
 
-    const numPacks = displayInDoses
-      ? quantity / item?.doses
+    const qty = displayInDoses
+      ? quantity / packSize / item?.doses
       : quantity / packSize;
+
     debouncedAllocate(
-      numPacks,
+      qty,
       Number(packSize),
       quantityType === 'prescribed' ? inputUnitQuantity : prescribedQuantity
     );

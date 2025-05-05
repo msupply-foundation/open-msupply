@@ -14,7 +14,7 @@ import { DraftPrescriptionLine } from '../../types';
 import { UnitQuantityCell } from '../api/hooks/utils';
 import {
   getDosesPerPackColumn,
-  getPrescriptionDosesColumns,
+  getPrescriptionLineDosesColumns,
 } from './dosesColumns';
 
 export const usePrescriptionLineEditColumns = ({
@@ -74,7 +74,11 @@ export const usePrescriptionLineEditColumns = ({
 
   if (displayInDoses) {
     columns.push(
-      ...getPrescriptionDosesColumns(t, onChange, getColumnLabelWithPackOrUnit)
+      ...getPrescriptionLineDosesColumns(
+        t,
+        onChange,
+        getColumnLabelWithPackOrUnit
+      )
     );
   } else {
     columns.push(
