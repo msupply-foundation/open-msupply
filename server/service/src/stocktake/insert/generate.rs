@@ -1,11 +1,9 @@
-use std::collections::HashSet;
-
 use chrono::{NaiveDate, Utc};
 use repository::{
-    DateFilter, EqualFilter, ItemRowRepository, ItemType, MasterListLineFilter,
-    MasterListLineRepository, NumberRowType, ProgramRowRepository, RepositoryError,
-    StockLineFilter, StockLineRepository, StockLineRow, StocktakeLineRow, StocktakeRow,
-    StocktakeStatus, StorageConnection,
+    DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow, ItemRowRepository, ItemType,
+    MasterListLineFilter, MasterListLineRepository, NumberRowType, ProgramRowRepository,
+    RepositoryError, StockLineFilter, StockLineRepository, StockLineRow, StocktakeLineRow,
+    StocktakeRow, StocktakeStatus, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -296,30 +294,26 @@ pub fn generate_lines_from_location(
 
 pub fn generate_lines_initial_stocktake(
     connection: &StorageConnection,
-    _store_id: &str,
+    store_id: &str,
     stocktake_id: &str,
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
-    let item_ids: HashSet<String> = MasterListLineRepository::new(connection)
-        .query_by_filter(MasterListLineFilter::new().item_type(ItemType::Stock.equal_to()))?
+    let item_rows: Vec<ItemRow> = ItemRepository::new(connection)
+        .query_by_filter(
+            ItemFilter::new().is_visible(true),
+            Some(store_id.to_string()),
+        )?
         .into_iter()
-        .map(|r| r.item_id)
+        .map(|r| r.item_row)
         .collect();
 
-    let mut result = Vec::<StocktakeLineRow>::new();
-
-    item_ids.iter().for_each(|item_id| {
-        let item_name = ItemRowRepository::new(connection)
-            .find_active_by_id(item_id)
-            .unwrap()
-            .unwrap()
-            .name;
-
-        result.push(StocktakeLineRow {
+    let result = item_rows
+        .into_iter()
+        .map(|line| StocktakeLineRow {
             id: uuid(),
             stocktake_id: stocktake_id.to_string(),
             snapshot_number_of_packs: 0.0,
-            item_link_id: item_id.to_string(),
-            item_name,
+            item_link_id: line.id,
+            item_name: line.name,
             location_id: None,
             batch: None,
             expiry_date: None,
@@ -333,7 +327,7 @@ pub fn generate_lines_initial_stocktake(
             inventory_adjustment_reason_id: None,
             item_variant_id: None,
         })
-    });
+        .collect();
 
     Ok(result)
 }
