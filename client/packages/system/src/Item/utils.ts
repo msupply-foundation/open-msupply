@@ -5,6 +5,7 @@ import {
   ItemWithPackSizeFragment,
 } from './api';
 import { styled } from '@common/styles';
+import { ItemFilterInput } from '@common/types';
 
 export const toItemRow = (line: ItemLike): ItemRowFragment => ({
   __typename: 'ItemNode',
@@ -39,7 +40,7 @@ export interface StockItemSearchInputProps
   extends GenericStockItemSearchInputProps {
   onChange: (item: ItemStockOnHandFragment | null) => void;
   extraFilter?: (item: ItemStockOnHandFragment) => boolean;
-  includeNonVisibleWithStockOnHand?: boolean;
+  filter?: ItemFilterInput;
   itemCategoryName?: string;
   programId?: string;
 }

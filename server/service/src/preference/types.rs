@@ -15,6 +15,7 @@ pub enum PrefKey {
     ShowContactTracing,
     DisplayVaccineInDoses,
     DisplayPopulationBasedForecasting,
+    DisplayVaccineInDoses,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -149,7 +150,6 @@ pub trait Preference: Sync + Send {
 
         Ok(PreferenceDescription {
             key: self.key(),
-            preference_type: self.preference_type(),
             value_type: self.value_type(),
             value,
         })
@@ -158,7 +158,6 @@ pub trait Preference: Sync + Send {
 
 pub struct PreferenceDescription {
     pub key: PrefKey,
-    pub preference_type: PreferenceType,
     pub value_type: PreferenceValueType,
     /// WARNING: Type loss - holds any kind of pref value (for edit UI).
     /// Use the PreferenceProvider to load the strictly typed value.
