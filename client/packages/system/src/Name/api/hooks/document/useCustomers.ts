@@ -5,7 +5,6 @@ export const useCustomers = () => {
   const api = useNameApi();
   const queryParams = useQueryParamsStore();
 
-  console.log('useCustomers', queryParams);
   return useQuery(api.keys.paramList(queryParams.paramList()), () =>
     api.get.customers(queryParams.paramList())
   );

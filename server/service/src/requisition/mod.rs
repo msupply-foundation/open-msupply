@@ -25,9 +25,8 @@ use crate::service_provider::ServiceContext;
 use program_settings::{
     customer_program_settings::{
         get_program_requisition_settings_by_customer, prepare::CustomerProgramRequisitionSetting,
-        CustomerProgramSettings,
     },
-    get_customer_program_requisition_settings, get_supplier_program_requisition_settings,
+    get_supplier_program_requisition_settings,
     supplier_program_settings::SupplierProgramSettings,
 };
 use repository::{
@@ -206,14 +205,6 @@ pub trait RequisitionServiceTrait: Sync + Send {
         store_id: &str,
     ) -> Result<Vec<SupplierProgramSettings>, RepositoryError> {
         get_supplier_program_requisition_settings(ctx, store_id)
-    }
-
-    fn get_customer_program_requisition_settings(
-        &self,
-        ctx: &ServiceContext,
-        store_id: &str,
-    ) -> Result<Vec<CustomerProgramSettings>, RepositoryError> {
-        get_customer_program_requisition_settings(ctx, store_id)
     }
 
     fn get_program_requisition_settings_by_customer(

@@ -7,7 +7,7 @@ use crate::{
             default_indicator_value, CheckExceededOrdersForPeriod,
         },
         program_indicator::query::{program_indicators, ProgramIndicator},
-        program_settings::get_customer_program_requisition_settings,
+        program_settings::get_program_requisition_settings_by_customer,
         query::get_requisition,
     },
     service_provider::ServiceContext,
@@ -31,6 +31,7 @@ pub enum InsertProgramResponseRequisitionError {
     // Program validation
     ProgramOrderTypeDoesNotExist,
     MaxOrdersReachedForPeriod,
+    NoProgramsExistForCustomer,
     // Internal
     NewlyCreatedRequisitionDoesNotExist,
     DatabaseError(RepositoryError),
@@ -100,40 +101,22 @@ fn validate(
         return Err(OutError::RequisitionAlreadyExists);
     }
 
-    let program_settings = get_customer_program_requisition_settings(ctx, &ctx.store_id)?;
+    let program_settings =
+        get_program_requisition_settings_by_customer(ctx, &input.other_party_id)?;
 
-    if !program_settings.iter().any(|setting| {
-        setting
-            .customer_and_order_types
-            .iter()
-            .any(|(customer, _)| customer.customer.name_row.id == input.other_party_id)
-    }) {
-        return Err(OutError::CustomerNotValid);
+    if !program_settings.master_lists.len() == 0 {
+        return Err(OutError::NoProgramsExistForCustomer);
     }
-
-    let (program_setting, order_type) = program_settings
+    // find the master list and order type which corrrespond to the input order type
+    let (master_list, order_type) = program_settings
+        .master_lists
         .iter()
-        .find_map(|setting| {
-            setting
-                .customer_and_order_types
+        .find_map(|master_list| {
+            master_list
+                .order_types
                 .iter()
-                .find(|(customer, order_types)| {
-                    customer.customer.name_row.id == input.other_party_id
-                        && order_types.iter().any(|order_type| {
-                            order_type.order_type.id == input.program_order_type_id
-                        })
-                })
-                .map(|(_, order_types)| {
-                    (
-                        setting,
-                        order_types
-                            .iter()
-                            .find(|order_type| {
-                                order_type.order_type.id == input.program_order_type_id
-                            })
-                            .unwrap(),
-                    )
-                })
+                .find(|(order_type)| order_type.id == input.program_order_type_id)
+                .map(|(order_type)| (master_list.clone(), order_type.clone()))
         })
         .ok_or(OutError::ProgramOrderTypeDoesNotExist)?;
 
@@ -144,10 +127,10 @@ fn validate(
     if check_exceeded_max_orders_for_period(
         connection,
         CheckExceededOrdersForPeriod {
-            program_id: &program_setting.program_requisition_settings.program_row.id,
+            program_id: &master_list.id,
             period_id: &input.period_id,
             program_order_type_id: &input.program_order_type_id,
-            max_orders_per_period: i64::from(order_type.order_type.max_order_per_period),
+            max_orders_per_period: i64::from(order_type.max_order_per_period),
             requisition_type: RequisitionType::Response,
             store_id: &ctx.store_id,
             other_party_id: Some(&input.other_party_id),
@@ -157,11 +140,23 @@ fn validate(
     }
 
     Ok((
-        program_setting
-            .program_requisition_settings
-            .program_row
-            .clone(),
-        order_type.order_type.clone(),
+        ProgramRow {
+            id: master_list.id.clone(),
+            name: master_list.name.clone(),
+            master_list_id: Some(master_list.id.clone()),
+            // Add other fields as required based on ProgramRow definition
+            ..Default::default()
+        },
+        ProgramRequisitionOrderTypeRow {
+            id: order_type.id.clone(),
+            name: order_type.name.clone(),
+            max_order_per_period: order_type.max_order_per_period,
+            max_mos: order_type.max_mos,
+            threshold_mos: order_type.threshold_mos,
+            is_emergency: order_type.is_emergency,
+            // Add other fields as required based on ProgramRequisitionOrderTypeRow definition
+            ..Default::default()
+        },
     ))
 }
 

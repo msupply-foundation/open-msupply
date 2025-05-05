@@ -4,7 +4,6 @@ import {
   Box,
   createQueryParamsStore,
   ModalTabs,
-  NameNode,
   QueryParamsProvider,
   useDialog,
   useTranslation,
@@ -40,9 +39,9 @@ export const CreateRequisitionModalComponent: FC<
 
   const { data, isLoading } = useName.document.customers();
 
-  const [customer, setCustomer] = React.useState<NameNode | null>(null);
+  const [customer, setCustomer] = React.useState<NameRowFragment | null>(null);
 
-  const handleCustomerChange = (customer: NameNode | null) => {
+  const handleCustomerChange = (customer: NameRowFragment | null) => {
     setCustomer(customer);
   };
 

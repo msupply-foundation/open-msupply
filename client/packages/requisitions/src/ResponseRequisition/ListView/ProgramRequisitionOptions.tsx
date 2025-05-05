@@ -24,6 +24,7 @@ import {
 import { useResponse } from '../api';
 import { NewRequisitionType } from '../../types';
 import { getOrderTypeRenderer } from '../../RequestRequisition/ListView/ProgramRequisitionOptions';
+import { NameRowFragment } from 'packages/system/src/Name/api/operations.generated';
 
 export interface NewProgramRequisition {
   type: NewRequisitionType.Program;
@@ -44,15 +45,15 @@ type Common<T> = Pick<
 
 const useProgramRequisitionOptions = (
   data: ProgramSettingsByCustomerFragment | undefined,
-  customerOptions: NameNode[],
-  setCustomer: (customer: NameNode | null) => void,
-  customer: NameNode | null
+  customerOptions: NameRowFragment[],
+  setCustomer: (customer: NameRowFragment | null) => void,
+  customer: NameRowFragment | null
 ) => {
   const t = useTranslation();
   type Program = MasterListWithOrderTypesFragment;
   type OrderType = ProgramRequisitionOrderTypeFragment;
   type Period = AvailablePeriodFragment;
-  type Customer = NameNode;
+  type Customer = NameRowFragment;
 
   const [program, setProgram] =
     useState<MasterListWithOrderTypesFragment | null>();
@@ -185,9 +186,9 @@ export const ProgramRequisitionOptions = ({
   customer,
 }: {
   onCreate: (props: NewProgramRequisition) => void;
-  customerOptions: NameNode[];
-  onChangeCustomer: (customer: NameNode | null) => void;
-  customer: NameNode | null;
+  customerOptions: NameRowFragment[];
+  onChangeCustomer: (customer: NameRowFragment | null) => void;
+  customer: NameRowFragment | null;
 }) => {
   const { data, isLoading } =
     useResponse.utils.programRequisitionSettingsByCustomer(customer?.id ?? '');
@@ -259,7 +260,7 @@ const getProgramOptionRenderer =
               whiteSpace: 'nowrap',
             }}
           >
-            {item.name}
+            {item.name} {item.nameTagName}
           </Typography>
         </Box>
       </DefaultAutocompleteItemOption>

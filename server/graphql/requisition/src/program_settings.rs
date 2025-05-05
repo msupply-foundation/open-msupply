@@ -36,6 +36,8 @@ pub struct MasterListWithOrderTypesNode {
     pub is_active: bool,
     pub is_default_price_list: bool,
     pub discount_percentage: Option<f64>,
+    pub name_tag_id: String,
+    pub name_tag_name: String,
     pub order_types: Vec<ProgramRequisitionOrderTypeNode>,
 }
 
@@ -146,6 +148,8 @@ pub fn get_program_requisition_settings_by_customer(
                 is_active: master_list_and_orders.is_active,
                 is_default_price_list: master_list_and_orders.is_default_price_list,
                 discount_percentage: master_list_and_orders.discount_percentage,
+                name_tag_id: master_list_and_orders.name_tag_id,
+                name_tag_name: master_list_and_orders.name_tag,
                 order_types: master_list_and_orders
                     .order_types
                     .into_iter()

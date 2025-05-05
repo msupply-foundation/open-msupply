@@ -796,6 +796,8 @@ export type MasterListWithOrderTypesFragment = {
   id: string;
   code: string;
   name: string;
+  nameTagId: string;
+  nameTagName: string;
   orderTypes: Array<{
     __typename: 'ProgramRequisitionOrderTypeNode';
     id: string;
@@ -819,6 +821,8 @@ export type ProgramSettingsByCustomerFragment = {
     id: string;
     code: string;
     name: string;
+    nameTagId: string;
+    nameTagName: string;
     orderTypes: Array<{
       __typename: 'ProgramRequisitionOrderTypeNode';
       id: string;
@@ -850,6 +854,8 @@ export type ProgramRequisitionSettingsByCustomerQuery = {
       id: string;
       code: string;
       name: string;
+      nameTagId: string;
+      nameTagName: string;
       orderTypes: Array<{
         __typename: 'ProgramRequisitionOrderTypeNode';
         id: string;
@@ -1127,6 +1133,8 @@ export const MasterListWithOrderTypesFragmentDoc = gql`
     id
     code
     name
+    nameTagId
+    nameTagName
     orderTypes {
       ...ProgramRequisitionOrderType
     }

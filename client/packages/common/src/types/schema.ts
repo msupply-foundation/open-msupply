@@ -4626,6 +4626,8 @@ export type MasterListWithOrderTypesNode = {
   isActive: Scalars['Boolean']['output'];
   isDefaultPriceList: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
+  nameTagId: Scalars['String']['output'];
+  nameTagName: Scalars['String']['output'];
   orderTypes: Array<ProgramRequisitionOrderTypeNode>;
 };
 
