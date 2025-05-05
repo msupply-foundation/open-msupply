@@ -5,6 +5,7 @@ import {
   NumUtils,
   RecordWithId,
   Tooltip,
+  UNDEFINED_STRING_VALUE,
   useCurrency,
 } from '@openmsupply-client/common';
 
@@ -18,7 +19,7 @@ export const useCurrencyCell = <T extends RecordWithId>(
 };
 
 /**
- * Expects an accessor that returns a number | undefined
+ * Expects an accessor that returns a number | `-` for undefined
  */
 export const CurrencyCell = <T extends RecordWithId>({
   column,
@@ -28,7 +29,8 @@ export const CurrencyCell = <T extends RecordWithId>({
   CellProps<T>
 > => {
   const { c } = useCurrency(currencyCode);
-  const price = Number(column.accessor({ rowData }) ?? 0);
+  const value = column.accessor({ rowData });
+  const price = Number(value ?? 0);
   const fullText = c(price, 10).format();
   let text = fullText;
   // If the price has more than 2 decimal places, round to 2 DP and add
@@ -47,7 +49,7 @@ export const CurrencyCell = <T extends RecordWithId>({
           textOverflow: 'ellipsis',
         }}
       >
-        {text}
+        {value ? text : UNDEFINED_STRING_VALUE}
       </div>
     </Tooltip>
   );
