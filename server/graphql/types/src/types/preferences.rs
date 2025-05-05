@@ -24,6 +24,10 @@ impl PreferencesNode {
     pub async fn display_vaccine_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.display_vaccine_in_doses)
     }
+
+    pub async fn input_vvm_status(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.input_vvm_status)
+    }
 }
 
 impl PreferencesNode {
@@ -73,6 +77,7 @@ pub enum PreferenceKey {
     ShowContactTracing,
     DisplayPopulationBasedForecasting,
     DisplayVaccineInDoses,
+    InputVVMStatus,
 }
 
 impl PreferenceKey {
@@ -82,8 +87,8 @@ impl PreferenceKey {
             PrefKey::DisplayPopulationBasedForecasting => {
                 PreferenceKey::DisplayPopulationBasedForecasting
             }
-
             PrefKey::DisplayVaccineInDoses => PreferenceKey::DisplayVaccineInDoses,
+            PrefKey::InputVVMStatus => PreferenceKey::InputVVMStatus,
         }
     }
 }
