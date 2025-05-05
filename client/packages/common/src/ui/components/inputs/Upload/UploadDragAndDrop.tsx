@@ -3,13 +3,15 @@ import Dropzone, { Accept } from 'react-dropzone';
 import {
   useTranslation,
   alpha,
+  Breakpoints,
   Paper,
   FileUploadIcon,
   Typography,
   BaseButton,
   ButtonWithIcon,
   LinkIcon,
-  useIsScreen,
+  useAppTheme,
+  useMediaQuery,
 } from '@openmsupply-client/common';
 
 interface UploadDragAndDropProps {
@@ -25,7 +27,10 @@ export const UploadDragAndDrop = ({
   onUpload,
 }: UploadDragAndDropProps) => {
   const t = useTranslation();
-  const isMobile = useIsScreen('sm');
+  const theme = useAppTheme();
+  const isExtraSmallScreen = useMediaQuery(
+    theme.breakpoints.down(Breakpoints.sm)
+  );
 
   return (
     <Paper
@@ -62,7 +67,7 @@ export const UploadDragAndDrop = ({
         {({ getRootProps, getInputProps }) => (
           <div {...getRootProps()}>
             <input {...getInputProps()} />
-            {!isMobile && (
+            {!isExtraSmallScreen && (
               <>
                 <FileUploadIcon
                   sx={{
@@ -79,7 +84,7 @@ export const UploadDragAndDrop = ({
                 </BaseButton>
               </>
             )}
-            {isMobile && (
+            {isExtraSmallScreen && (
               <ButtonWithIcon
                 shouldShrink={false}
                 color="secondary"

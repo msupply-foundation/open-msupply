@@ -1,22 +1,24 @@
-query availablePreferences($storeId: String!) {
-  availablePreferences(storeId: $storeId) {
+query adminPreferenceList(
+  $storeId: String!
+  $prefType: PreferenceNodeType!
+  $prefContext: PreferenceDescriptionContext!
+) {
+  preferenceDescriptions(
+    storeId: $storeId
+    prefType: $prefType
+    prefContext: $prefContext
+  ) {
     key
-    jsonSchema
-    uiSchema
+    valueType
+    value
   }
 }
 
-query preferences($storeId: String!) {
-  preferences(storeId: $storeId) {
-    showContactTracing
-  }
-}
-
-mutation upsertPreference($storeId: String!, $input: UpsertPreferenceInput!) {
+mutation upsertPreferences($storeId: String!, $input: UpsertPreferencesInput!) {
   centralServer {
     preferences {
-      upsertPreference(storeId: $storeId, input: $input) {
-        id
+      upsertPreferences(storeId: $storeId, input: $input) {
+        ok
       }
     }
   }

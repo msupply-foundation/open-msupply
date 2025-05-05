@@ -35,8 +35,8 @@
         },
         "dir": {
           "description": "sort by dir",
-          "type": "string",
-          "enum": ["asc", "desc"]
+          "type": ["string", "null"],
+          "format": "SortToggle"
         }
       }
     }

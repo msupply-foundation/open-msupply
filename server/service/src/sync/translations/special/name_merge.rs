@@ -244,7 +244,7 @@ mod tests {
         // This prevents names (nameK in this case) showing twice in lists after a merge.
         // What's more, a store shouldn't become visible to itself! e.g. if storeA above is actually nameK.
         let (_, connection, _, _) = setup_all(
-            "test_name_merge_message_translation_removes_duplicate_name_store_joins",
+            "test_name_merge_message_translation_removes_duplicate_namesj",
             MockDataInserts::none()
                 .units()
                 .names()

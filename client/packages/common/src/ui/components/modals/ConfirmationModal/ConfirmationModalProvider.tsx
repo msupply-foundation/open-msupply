@@ -29,6 +29,7 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
     iconType,
     onConfirm,
     onCancel,
+    cleanupConfirm,
   } = confirmationModalState;
 
   const confirmationModalController: ConfirmationModalControllerState = useMemo(
@@ -54,6 +55,8 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
         onCancel: (() => Promise<void>) | (() => void) | undefined
       ) => setState(state => ({ ...state, onCancel })),
       setOpen: (open: boolean) => setState(state => ({ ...state, open })),
+      setCleanupConfirm: (cleanupConfirm: (() => void) | undefined) =>
+        setState(state => ({ ...state, cleanupConfirm })),
       setState,
       ...confirmationModalState,
     }),
@@ -70,7 +73,9 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
         title={title}
         onConfirm={async () => {
           onConfirm && (await onConfirm(confirmationModalState));
-          setState(state => ({ ...state, open: false }));
+          cleanupConfirm
+            ? cleanupConfirm()
+            : setState(state => ({ ...state, open: false }));
         }}
         onCancel={() => {
           setState(state => ({ ...state, open: false }));

@@ -2,6 +2,7 @@ import React from 'react';
 import { Property } from 'csstype';
 import {
   Box,
+  Breakpoints,
   DashboardIcon,
   Divider,
   List,
@@ -11,13 +12,14 @@ import {
   useDrawer,
   useTranslation,
   AppNavLink,
-  useIsMediumScreen,
   useAuthContext,
   EnvUtils,
   ReportsIcon,
   useHostContext,
   HelpIcon,
   SettingsIcon,
+  useAppTheme,
+  useMediaQuery,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -138,7 +140,8 @@ const StyledDrawer = styled(Box, {
 
 export const AppDrawer: React.FC = () => {
   const t = useTranslation();
-  const isMediumScreen = useIsMediumScreen();
+  const theme = useAppTheme();
+  const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const drawer = useDrawer();
   const { store } = useAuthContext();
   const { fullScreen } = useHostContext();

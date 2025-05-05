@@ -1,5 +1,9 @@
 import React from 'react';
-import { Autocomplete, useAuthContext } from '@openmsupply-client/common';
+import {
+  Autocomplete,
+  useAuthContext,
+  useTranslation,
+} from '@openmsupply-client/common';
 
 export const OTHER_FACILITY = 'other';
 
@@ -19,6 +23,7 @@ export const FacilitySearchInput = ({
   enteredAtOtherFacility,
   disabled,
 }: FacilitySearchInputProps) => {
+  const t = useTranslation();
   const { store } = useAuthContext();
 
   const options = [
@@ -39,7 +44,7 @@ export const FacilitySearchInput = ({
         ]
       : []),
     {
-      label: 'Other',
+      label: t('heading.other'),
       value: OTHER_FACILITY,
     },
   ];
