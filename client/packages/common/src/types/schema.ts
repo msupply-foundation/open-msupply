@@ -5899,6 +5899,7 @@ export type PluginInfoNode = {
   pluginInfo: Scalars['JSON']['output'];
 };
 
+/** The context we are editing pref within (e.g. prefs for given store, user, etc.) */
 export type PreferenceDescriptionContext = {
   storeId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -6835,7 +6836,7 @@ export type QueriesPluginGraphqlQueryArgs = {
 };
 
 export type QueriesPreferenceDescriptionsArgs = {
-  context: PreferenceDescriptionContext;
+  prefContext: PreferenceDescriptionContext;
   prefType: PreferenceNodeType;
   storeId: Scalars['String']['input'];
 };

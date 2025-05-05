@@ -14,7 +14,7 @@ export const useAdminPrefsList = (
       const result = await api.adminPreferenceList({
         storeId: loggedInStoreId,
         prefType,
-        context: {
+        prefContext: {
           storeId,
         },
       });
