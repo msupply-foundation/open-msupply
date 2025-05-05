@@ -65,7 +65,7 @@ export const usePrescriptionLineEditColumns = ({
       label: getColumnLabelWithPackOrUnit({
         t,
         displayInDoses,
-        displayDosesInUnitName: true,
+        displayInPack: true,
         itemUnit: unit,
         columnLabel: t('label.in-stock'),
       }),

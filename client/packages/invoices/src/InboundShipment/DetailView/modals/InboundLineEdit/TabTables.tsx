@@ -170,7 +170,7 @@ export const QuantityTableComponent = ({
       label: getColumnLabelWithPackOrUnit({
         t,
         displayInDoses,
-        displayDosesInUnitName: true,
+        displayInPack: true,
         itemUnit: item?.unitName,
       }),
       Cell: NumberOfPacksCell,
