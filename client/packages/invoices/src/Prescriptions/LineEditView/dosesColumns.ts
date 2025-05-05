@@ -14,7 +14,9 @@ export const getDosesPerPackColumn = (
   unitName: string
 ): ColumnDescription<DraftPrescriptionLine> => ({
   key: 'dosesPerPack',
-  label: `${t('label.doses-per')} ${unitName}`,
+  label: t('label.doses-per-unit-name', {
+    unit: unitName,
+  }),
   width: 100,
   align: ColumnAlign.Right,
   Cell: NumberCell,

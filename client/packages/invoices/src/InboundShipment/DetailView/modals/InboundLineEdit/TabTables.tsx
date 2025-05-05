@@ -126,7 +126,9 @@ export const QuantityTableComponent = ({
   if (displayInDoses) {
     columnDefinitions.push({
       key: 'dosesPerPack',
-      label: `${t('label.doses-per')} ${unitName}`,
+      label: t('label.doses-per-unit-name', {
+        unit: unitName,
+      }),
       width: 120,
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.item?.doses,
