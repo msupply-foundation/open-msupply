@@ -58,20 +58,18 @@ export const getInboundDosesColumns = (
       return rowData.numberOfPacks * rowData.packSize;
     },
   },
-  [
-    'unitQuantity',
-    {
-      label: getColumnLabelWithPackOrUnit({
-        t,
-        displayInDoses: true,
-        unitName,
-        inputKey: 'received',
-      }),
-      width: 100,
-      accessor: ({ rowData }) => {
-        const total = rowData.numberOfPacks * rowData.packSize;
-        return total * rowData.item.doses;
-      },
+  {
+    key: 'doseQuantity',
+    label: getColumnLabelWithPackOrUnit({
+      t,
+      displayInDoses: true,
+      unitName,
+      inputKey: 'received',
+    }),
+    width: 100,
+    accessor: ({ rowData }) => {
+      const total = rowData.numberOfPacks * rowData.packSize;
+      return total * rowData.item.doses;
     },
-  ],
+  },
 ];

@@ -16,6 +16,7 @@ import {
   useTranslation,
   PreferenceKey,
   getDosesPerUnitColumn,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
@@ -244,7 +245,32 @@ export const useInboundShipmentColumns = ({
           }
         },
       },
-    ],
+    ]
+  );
+
+  if (preferences?.displayVaccineInDoses) {
+    columns.push({
+      key: 'doseQuantity',
+      label: 'label.doses',
+      width: 100,
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => {
+        if ('lines' in rowData) {
+          const { lines } = rowData;
+          const isVaccine = lines[0]?.item?.isVaccine ?? false;
+          const unitQuantity = ArrayUtils.getUnitQuantity(lines);
+
+          return isVaccine
+            ? unitQuantity * (lines[0]?.item.doses ?? 1)
+            : UNDEFINED_STRING_VALUE;
+        } else {
+          return getUnitQuantity(rowData) * rowData.item.doses;
+        }
+      },
+    });
+  }
+
+  columns.push(
     {
       label: 'label.cost-per-unit',
       key: 'costPricePerUnit',
@@ -291,6 +317,16 @@ export const useExpansionColumns = (): Column<InboundLineFragment>[] => {
     ],
     'packSize',
     'numberOfPacks',
+    {
+      key: 'doseQuantity',
+      label: 'label.doses',
+      width: 100,
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => {
+        const total = rowData.numberOfPacks * rowData.packSize;
+        return total * (rowData.item?.doses ?? 1);
+      },
+    },
     [
       'costPricePerPack',
       {
