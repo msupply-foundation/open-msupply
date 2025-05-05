@@ -1,9 +1,6 @@
 use chrono::Utc;
 
-use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceRow,
-    InvoiceStatus, RepositoryError, StockLineRow, StorageConnection,
-};
+use repository::{InvoiceRow, InvoiceStatus, StockLineRow, StorageConnection};
 
 use crate::invoice::{
     common::{
@@ -18,7 +15,6 @@ use super::{UpdatePrescription, UpdatePrescriptionError, UpdatePrescriptionStatu
 pub(crate) struct GenerateResult {
     pub(crate) batches_to_update: Option<Vec<StockLineRow>>,
     pub(crate) update_invoice: InvoiceRow,
-    pub(crate) lines_to_trim: Option<Vec<InvoiceLineRow>>,
 }
 
 pub(crate) fn generate(
@@ -105,12 +101,9 @@ pub(crate) fn generate(
         None
     };
 
-    let lines_to_trim = lines_to_trim(connection, &existing_invoice, &input_status)?;
-
     Ok(GenerateResult {
         batches_to_update,
         update_invoice,
-        lines_to_trim,
     })
 }
 
@@ -159,43 +152,4 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, status: &Option<UpdatePresc
         }
         _ => {}
     }
-}
-
-// If status changed to verified, remove empty lines
-fn lines_to_trim(
-    connection: &StorageConnection,
-    invoice: &InvoiceRow,
-    status: &Option<UpdatePrescriptionStatus>,
-) -> Result<Option<Vec<InvoiceLineRow>>, RepositoryError> {
-    // Status sequence for outbound shipment: New, Picked, Verified
-    if invoice.status == InvoiceStatus::Verified {
-        return Ok(None);
-    }
-
-    let new_prescription_status = match UpdatePrescriptionStatus::full_status_option(status) {
-        Some(new_prescription_status) => new_prescription_status,
-        None => return Ok(None),
-    };
-
-    if new_prescription_status != InvoiceStatus::Verified {
-        return Ok(None);
-    }
-
-    // If new status is Verified and previous invoice status is Picked
-    // add all lines to be deleted
-    let empty_lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(&invoice.id))
-            .number_of_packs(EqualFilter::equal_to_f64(0.0)),
-    )?;
-
-    if empty_lines.is_empty() {
-        return Ok(None);
-    }
-
-    let invoice_line_rows = empty_lines
-        .into_iter()
-        .map(|l| l.invoice_line_row)
-        .collect();
-    Ok(Some(invoice_line_rows))
 }
