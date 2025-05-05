@@ -10,7 +10,9 @@ export const useZeroStocktakeLines = () => {
 
   const selectedRows = useSelectedRows();
 
-  const onZeroQuantities = async (reason: ReasonOptionRowFragment | null) => {
+  const onZeroQuantities = async (
+    reasonOption: ReasonOptionRowFragment | null
+  ) => {
     try {
       const { errorMessages } = await saveAndMapStructuredErrors(
         selectedRows.map(line => ({
@@ -18,7 +20,7 @@ export const useZeroStocktakeLines = () => {
           countedNumberOfPacks: 0,
           isUpdated: true,
           countThisLine: true,
-          reasonOption: reason,
+          reasonOption,
         }))
       );
 
