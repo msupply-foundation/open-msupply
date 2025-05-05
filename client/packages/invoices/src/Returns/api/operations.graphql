@@ -282,6 +282,12 @@ fragment GenerateCustomerReturnLine on CustomerReturnLineNode {
     code
     name
   }
+  reasonOption {
+    id
+    isActive
+    reason
+    type
+  }
 }
 
 query generateCustomerReturnLines(

@@ -1510,6 +1510,7 @@ export type CustomerReturnLineNode = {
   numberOfPacksReturned: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
+  reasonOption?: Maybe<ReasonOptionNode>;
   stockLineId?: Maybe<Scalars['String']['output']>;
 };
 

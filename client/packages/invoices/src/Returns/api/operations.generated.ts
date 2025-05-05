@@ -301,6 +301,13 @@ export type GenerateCustomerReturnLineFragment = {
     code: string;
     name: string;
   };
+  reasonOption?: {
+    __typename: 'ReasonOptionNode';
+    id: string;
+    isActive: boolean;
+    reason: string;
+    type: Types.ReasonOptionNodeType;
+  } | null;
 };
 
 export type GenerateCustomerReturnLinesQueryVariables = Types.Exact<{
@@ -333,6 +340,13 @@ export type GenerateCustomerReturnLinesQuery = {
         code: string;
         name: string;
       };
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
+        id: string;
+        isActive: boolean;
+        reason: string;
+        type: Types.ReasonOptionNodeType;
+      } | null;
     }>;
   };
 };
@@ -991,6 +1005,12 @@ export const GenerateCustomerReturnLineFragmentDoc = gql`
       unitName
       code
       name
+    }
+    reasonOption {
+      id
+      isActive
+      reason
+      type
     }
   }
 `;
