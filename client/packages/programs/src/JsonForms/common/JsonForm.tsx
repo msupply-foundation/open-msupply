@@ -1,4 +1,10 @@
-import React, { FC, PropsWithChildren, useCallback, useEffect } from 'react';
+import React, {
+  FC,
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
 import {
   LocaleKey,
   Typography,
@@ -178,6 +184,22 @@ const FormComponent = ({
     [t]
   );
 
+  // const hasMounted = useRef(false);
+
+  // useEffect(() => {
+  //   // if (!pattern) return;
+  //   if (!hasMounted.current) {
+  //     console.log('Component mounted');
+  //     hasMounted.current = true;
+  //   } else {
+  //     console.log('Component re-rendered');
+  //   }
+
+  //   return () => {
+  //     console.log('Component unmounted');
+  //   };
+  // });
+
   return !data ? null : (
     <JsonForms
       schema={jsonSchema}
@@ -229,7 +251,7 @@ const renderers = [
 
 export const JsonForm: FC<
   PropsWithChildren<JsonFormProps> & JsonFormsReactProps
-> = ({
+> = React.memo(({
   children,
   data,
   jsonSchema,
@@ -243,6 +265,22 @@ export const JsonForm: FC<
   onChange,
 }) => {
   const t = useTranslation();
+
+  const hasMounted = useRef(false);
+
+  useEffect(() => {
+    // if (!pattern) return;
+    if (!hasMounted.current) {
+      console.log('Component mounted');
+      hasMounted.current = true;
+    } else {
+      console.log('Component re-rendered');
+    }
+
+    return () => {
+      console.log('Component unmounted');
+    };
+  });
 
   if (isError)
     return (
@@ -303,4 +341,13 @@ export const JsonForm: FC<
       {children}
     </Box>
   );
-};
+}, (prevProps, nextProps) => {
+  // Deep compare the most important props
+  const areEqual = 
+    prevProps.data === nextProps.data &&
+    prevProps.isError === nextProps.isError &&
+    prevProps.isLoading === nextProps.isLoading &&
+    JSON.stringify(prevProps.jsonSchema) === JSON.stringify(nextProps.jsonSchema) &&
+    JSON.stringify(prevProps.uiSchema) === JSON.stringify(nextProps.uiSchema);
+  return areEqual;
+});

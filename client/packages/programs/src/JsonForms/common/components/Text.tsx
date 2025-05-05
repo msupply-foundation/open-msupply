@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
@@ -100,6 +100,9 @@ const UIComponent = (props: ControlProps) => {
     options: schemaOptions,
     pattern,
   } = useOptions(props.uischema.options);
+
+  if (pattern) console.log(path, pattern);
+
   const customErrors = usePatternValidation(path, pattern, data);
   const error = !!errors || !!zErrors || !!customErrors;
   const onChange = (value: string | undefined) =>
@@ -111,6 +114,20 @@ const UIComponent = (props: ControlProps) => {
 
   const t = useTranslation();
 
+  // useEffect(() => {
+  //   // if (!pattern) return;
+  //   if (!hasMounted.current) {
+  //     console.log(path, 'Component mounted');
+  //     hasMounted.current = true;
+  //   } else {
+  //     console.log(path, 'Component re-rendered');
+  //   }
+
+  //   return () => {
+  //     console.log(path, 'Component unmounted');
+  //   };
+  // });
+
   const examples =
     (props.schema as Record<string, string[]>)['examples'] ??
     schemaOptions?.examples;
@@ -120,6 +137,8 @@ const UIComponent = (props: ControlProps) => {
           examples: examples.join('", "'),
         })
       : (zErrors ?? errors ?? customErrors);
+
+  // if (helperText) console.log(path, helperText);
 
   if (!props.visible) {
     return null;

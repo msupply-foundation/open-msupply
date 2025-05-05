@@ -58,7 +58,7 @@ export function initialiseI18n({
           },
         ],
       },
-      debug: isDevelopment,
+      debug: false,
       defaultNS,
       detection: {
         order: [

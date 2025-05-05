@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   useTranslation,
   useNotification,
@@ -194,25 +194,53 @@ export const useJsonFormsHandler = <R,>(
   }, [initialData]);
 
   const schema = jsonFormData.schema;
-  return {
-    JsonForm: (
-      <JsonForm
-        data={data}
-        jsonSchema={schema?.jsonSchema ?? {}}
-        uiSchema={schema?.uiSchema ?? { type: 'Control' }}
-        isError={!!error}
-        isLoading={isLoading}
-        setError={setValidationError}
-        updateData={updateData}
-        additionalRenderers={additionalRenderers}
-        config={{
-          ...config,
-          initialData,
-          formActions,
-        }}
-      />
-    ),
+  const jsonFormProps = useMemo(() => ({
     data,
+    jsonSchema: schema?.jsonSchema ?? {},
+    uiSchema: schema?.uiSchema ?? { type: 'Control' },
+    isError: !!error,
+    isLoading,
+    setError: setValidationError,
+    updateData,
+    additionalRenderers,
+    config: {
+      ...config,
+      initialData,
+      formActions,
+    },
+  }), [
+    data, 
+    schema?.jsonSchema, 
+    schema?.uiSchema, 
+    error, 
+    isLoading, 
+    updateData, 
+    additionalRenderers, 
+    config, 
+    initialData, 
+    formActions
+  ]);
+
+  return {
+    JsonForm,
+    jsonFormProps,
+    // : (
+    //   <JsonForm
+    //     data={data}
+    //     jsonSchema={schema?.jsonSchema ?? {}}
+    //     uiSchema={schema?.uiSchema ?? { type: 'Control' }}
+    //     isError={!!error}
+    //     isLoading={isLoading}
+    //     setError={setValidationError}
+    //     updateData={updateData}
+    //     additionalRenderers={additionalRenderers}
+    //     config={{
+    //       ...config,
+    //       initialData,
+    //       formActions,
+    //     }}
+    //   />
+    // ),
     setData,
     saveData,
     revert,

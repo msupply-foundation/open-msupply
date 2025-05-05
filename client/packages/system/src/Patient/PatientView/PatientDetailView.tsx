@@ -214,14 +214,20 @@ export const PatientDetailView = ({
         },
       };
 
-  const { JsonForm, saveData, isSaving, isDirty, validationError } =
-    useJsonFormsHandler(
-      {
-        documentName: createNewPatient ? undefined : documentName,
-        patientId: patientId,
-      },
-      accessor
-    );
+  const {
+    JsonForm,
+    jsonFormProps,
+    saveData,
+    isSaving,
+    isDirty,
+    validationError,
+  } = useJsonFormsHandler(
+    {
+      documentName: createNewPatient ? undefined : documentName,
+      patientId: patientId,
+    },
+    accessor
+  );
 
   useEffect(() => {
     return () => setCreateNewPatient(undefined);
@@ -270,7 +276,9 @@ export const PatientDetailView = ({
 
   return (
     <Box flex={1} display="flex" justifyContent="center">
-      <Box style={{ maxWidth: 1200, flex: 1 }}>{JsonForm}</Box>
+      <Box style={{ maxWidth: 1200, flex: 1 }}>
+        <JsonForm {...jsonFormProps} />
+      </Box>
       <Footer
         documentName={documentName}
         isSaving={isSaving}
