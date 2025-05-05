@@ -1,13 +1,12 @@
-import React, { ReactElement } from 'react';
+import React, { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from '@common/intl';
 import {
   ItemRowFragment,
+  ItemWithStatsFragment,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
 import {
   Box,
-  FnUtils,
-  InsertRequestRequisitionLineInput,
   TextArea,
   usePluginProvider,
   useWindowDimensions,
@@ -21,23 +20,21 @@ interface RequestLineEditProps {
   item?: ItemRowFragment | null;
   draft?: DraftRequestLine | null;
   update: (patch: Partial<DraftRequestLine>) => void;
-  save?: () => void;
   previous: ItemRowFragment | null;
   isProgram: boolean;
   lines: RequestLineFragment[];
   requisition: RequestFragment;
-  insert: (patch: InsertRequestRequisitionLineInput) => void;
+  setCurrentItem: Dispatch<SetStateAction<ItemWithStatsFragment | undefined>>;
   disabled?: boolean;
 }
 
 export const RequestLineEdit = ({
   draft,
   update,
-  save,
   isProgram,
   lines,
   requisition,
-  insert,
+  setCurrentItem,
   disabled: isSent,
 }: RequestLineEditProps): ReactElement => {
   const t = useTranslation();
@@ -48,15 +45,18 @@ export const RequestLineEdit = ({
   const isNew = !draft?.id;
   const isPacksEnabled = !!draft?.defaultPackSize;
   const line = lines.find(line => line.id === draft?.id);
-  const { id: requisitionId } = requisition;
 
   const handleChange = (newItem: ItemRowFragment | null) => {
     if (newItem) {
-      insert({
-        id: FnUtils.generateUUID(),
-        requisitionId: requisitionId,
-        itemId: newItem.id,
-      });
+      const item = {
+        ...newItem,
+        stats: {
+          availableStockOnHand: 0,
+          averageMonthlyConsumption: 0,
+        },
+      } as ItemWithStatsFragment;
+
+      setCurrentItem(item);
     }
   };
 
@@ -87,16 +87,11 @@ export const RequestLineEdit = ({
           update={update}
         />
       </AccordionPanelSection>
-      <AccordionPanelSection
-        key={`${key}_details`}
-        title={t('label.details')}
-        defaultExpanded={false}
-      >
+      <AccordionPanelSection key={`${key}_details`} title={t('label.details')}>
         <Details
           isProgram={isProgram}
           draft={draft}
           update={update}
-          save={save}
           plugins={plugins}
           isPacksEnabled={isPacksEnabled}
           disabled={isSent}

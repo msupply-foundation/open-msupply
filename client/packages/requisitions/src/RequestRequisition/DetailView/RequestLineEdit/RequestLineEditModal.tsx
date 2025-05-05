@@ -11,7 +11,7 @@ import { useDraftRequisitionLine, usePreviousNextRequestLine } from './hooks';
 import { RequestLineEdit } from './RequestLineEdit';
 
 interface ModalContentProps {
-  itemId: string;
+  itemId?: string | null;
   requisition: RequestFragment;
   isOpen: boolean;
   onClose: () => void;
@@ -25,7 +25,6 @@ export const ModalContent = ({
 }: ModalContentProps) => {
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose });
-  const { mutateAsync } = useRequest.line.insert();
 
   const lines = requisition.lines.nodes.sort((a, b) =>
     a.item.name.localeCompare(b.item.name)
@@ -75,10 +74,9 @@ export const ModalContent = ({
         item={currentItem}
         draft={draft}
         update={update}
-        save={save}
         previous={previous}
         isProgram={isProgram}
-        insert={mutateAsync}
+        setCurrentItem={setCurrentItem}
         requisition={requisition}
         lines={lines}
         disabled={isDisabled}
@@ -90,7 +88,7 @@ export const ModalContent = ({
 interface RequestLineEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  itemId?: string;
+  itemId?: string | null;
 }
 
 export const RequestLineEditModal = ({
@@ -100,7 +98,7 @@ export const RequestLineEditModal = ({
 }: RequestLineEditModalProps) => {
   const { data, isLoading } = useRequest.document.get();
 
-  if (isLoading || !itemId) return <BasicSpinner />;
+  if (isLoading) return <BasicSpinner />;
   if (!data) return <NothingHere />;
 
   return (
