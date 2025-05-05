@@ -511,7 +511,7 @@ mod test {
                         name_tag_id: name_tag1.id.clone(),
                         name_tag: name_tag1.name.clone(),
                         program_requisition_settings_id: program_requisition_setting3.id.clone(),
-                        // no order types because requisitions in both periods
+                        // no order types because no order types corresponding to requisition settings id
                         order_types: vec![],
                     },
                     MasterListWithOrderTypes {
@@ -552,7 +552,7 @@ mod test {
                         name_tag_id: name_tag2.id.clone(),
                         name_tag: name_tag2.name.clone(),
                         program_requisition_settings_id: program_requisition_setting4.id.clone(),
-                        // no order types because requisitions in both periods
+                        // no order types because no order types corresponding to requisition settings id
                         order_types: vec![],
                     },
                 ]
