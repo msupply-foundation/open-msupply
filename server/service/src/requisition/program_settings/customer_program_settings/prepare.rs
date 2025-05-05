@@ -1,11 +1,10 @@
 use repository::{
-    EqualFilter, MasterList, MasterListFilter, NameRowRepository, NameTagFilter, PeriodRow,
+    EqualFilter, MasterListFilter, NameRowRepository, NameTagFilter, PeriodRow,
     PeriodRowRepository, ProgramCustomer, ProgramCustomerFilter, ProgramCustomerRepository,
     ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettings, ProgramRequisitionSettingsFilter,
     ProgramRequisitionSettingsRepository, RepositoryError, RequisitionType, RequisitionsInPeriod,
     RequisitionsInPeriodFilter, RequisitionsInPeriodRepository, StoreFilter, StoreRepository,
-    StoreRowRepository,
 };
 
 use crate::{
@@ -110,14 +109,21 @@ pub struct ProgramRequisitionOrderType {
     pub is_emergency: bool,
 }
 
-pub struct MasterListAndOrderAndPeriodTypes {
-    pub master_list: MasterList,
+// TODO automatically spread MasterList values rather than manual mapping
+pub struct MasterListWithOrderTypes {
+    pub id: String,
+    pub name: String,
+    pub code: String,
+    pub description: String,
+    pub is_active: bool,
+    pub is_default_price_list: bool,
+    pub discount_percentage: Option<f64>,
     pub order_types: Vec<ProgramRequisitionOrderType>,
 }
 
 pub struct CustomerProgramRequisitionSetting {
     pub customer_name: String,
-    pub master_lists: Vec<MasterListAndOrderAndPeriodTypes>,
+    pub master_lists: Vec<MasterListWithOrderTypes>,
 }
 
 /// Get program_settings, order_types, periods and requisitions_in_periods for a store.
@@ -201,8 +207,14 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
                     })
                     .collect();
 
-                MasterListAndOrderAndPeriodTypes {
-                    master_list: setting.master_list.clone(),
+                MasterListWithOrderTypes {
+                    id: setting.master_list.id.clone(),
+                    name: setting.master_list.name.clone(),
+                    code: setting.master_list.code.clone(),
+                    description: setting.master_list.description.clone(),
+                    is_active: setting.master_list.is_active,
+                    is_default_price_list: setting.master_list.is_default_price_list,
+                    discount_percentage: setting.master_list.discount_percentage,
                     order_types: order_types_mapped,
                 }
             })

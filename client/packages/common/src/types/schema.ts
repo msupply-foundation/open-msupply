@@ -1465,7 +1465,7 @@ export type CustomerIndicatorInformationNodeCustomerArgs = {
 export type CustomerProgramRequisitionSettingNode = {
   __typename: 'CustomerProgramRequisitionSettingNode';
   customerName: Scalars['String']['output'];
-  masterLists: Array<MasterListAndOrderAndPeriodTypesNode>;
+  masterLists: Array<MasterListWithOrderTypesNode>;
 };
 
 export type CustomerReturnInput = {
@@ -4523,12 +4523,6 @@ export enum LowStockStatus {
   Ok = 'OK',
 }
 
-export type MasterListAndOrderAndPeriodTypesNode = {
-  __typename: 'MasterListAndOrderAndPeriodTypesNode';
-  masterList: MasterListNode;
-  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
-};
-
 export type MasterListConnector = {
   __typename: 'MasterListConnector';
   nodes: Array<MasterListNode>;
@@ -4621,6 +4615,18 @@ export type MasterListSortInput = {
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: MasterListSortFieldInput;
+};
+
+export type MasterListWithOrderTypesNode = {
+  __typename: 'MasterListWithOrderTypesNode';
+  code: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  discountPercentage?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  isDefaultPriceList: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
 };
 
 export type MasterListsResponse = MasterListConnector;

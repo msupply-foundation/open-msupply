@@ -14,16 +14,12 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { getNameOptionRenderer } from '@openmsupply-client/system';
-import { ProgramRequisitionSettingsByCustomerQuery } from '../api/operations.generated';
-
-// convert to fragment
-type CustomerProgramRequisitionSettingNode =
-  ProgramRequisitionSettingsByCustomerQuery['programRequisitionSettingsByCustomer'];
-
-type MasterListAndOrderAndPeriodTypesNode =
-  CustomerProgramRequisitionSettingNode['masterLists'][number];
-
-type MasterListNode = MasterListAndOrderAndPeriodTypesNode['masterList'];
+import {
+  AvailablePeriodFragment,
+  MasterListWithOrderTypesFragment,
+  ProgramRequisitionOrderTypeFragment,
+  ProgramSettingsByCustomerFragment,
+} from '../api/operations.generated';
 
 import { useResponse } from '../api';
 import { NewRequisitionType } from '../../types';
@@ -47,29 +43,24 @@ type Common<T> = Pick<
 };
 
 const useProgramRequisitionOptions = (
-  data: CustomerProgramRequisitionSettingNode | undefined,
+  data: ProgramSettingsByCustomerFragment | undefined,
   customerOptions: NameNode[],
   setCustomer: (customer: NameNode | null) => void,
   customer: NameNode | null
 ) => {
   const t = useTranslation();
-  type Programs = CustomerProgramRequisitionSettingNode['masterLists'];
-  type Program = Programs[number];
-  type OrderType = Program['orderTypes'][number];
-  type Period = OrderType['availablePeriods'][number];
+  type Program = MasterListWithOrderTypesFragment;
+  type OrderType = ProgramRequisitionOrderTypeFragment;
+  type Period = AvailablePeriodFragment;
   type Customer = NameNode;
 
-  const [selectedProgram, setSelectedProgram] =
-    useState<MasterListAndOrderAndPeriodTypesNode | null>();
+  const [program, setProgram] =
+    useState<MasterListWithOrderTypesFragment | null>();
   const [orderType, setOrderType] = useState<OrderType | null>(null);
   const [period, setPeriod] = useState<Period | null>(null);
 
-  const handleSetProgram = (value: MasterListNode | null) => {
-    setSelectedProgram(
-      data?.masterLists.find(
-        (program: Program) => program.masterList.id === value?.id
-      ) ?? null
-    );
+  const handleSetProgram = (value: MasterListWithOrderTypesFragment | null) => {
+    setProgram(value);
     setOrderType(null);
     setPeriod(null);
   };
@@ -79,32 +70,32 @@ const useProgramRequisitionOptions = (
   };
   const handleSetCustomer = (value: NameNode | null) => {
     setCustomer(value);
-    setSelectedProgram(null);
+    setProgram(null);
     setOrderType(null);
     setPeriod(null);
   };
 
   const allOptions: {
-    programs: Common<MasterListNode>;
+    programs: Common<Program>;
     orderTypes: Common<OrderType>;
     customers: Common<Customer>;
     periods: Common<Period>;
   } = {
     programs: {
-      options: (data?.masterLists ?? []).map(program => program.masterList),
-      value: selectedProgram?.masterList,
+      options: data?.masterLists ?? [],
+      value: program,
       disabled: customer === null,
       set: handleSetProgram,
       label: t('label.program'),
     },
     orderTypes: {
       options:
-        selectedProgram?.orderTypes?.filter(
+        program?.orderTypes?.filter(
           (orderType: OrderType) => orderType.availablePeriods.length > 0
         ) || [],
       value: orderType,
       set: handleSetOrderType,
-      disabled: selectedProgram === null || customer === null,
+      disabled: program === null || customer === null,
       labelNoOptions: t('messages.not-configured'),
       label: t('label.order-type'),
       renderOption: getOrderTypeRenderer(),
@@ -131,7 +122,7 @@ const useProgramRequisitionOptions = (
   return {
     ...allOptions,
     createOptions:
-      !!selectedProgram && !!orderType && !!customer && !!period
+      !!program && !!orderType && !!customer && !!period
         ? {
             programOrderTypeId: orderType.id,
             otherPartyId: customer.id,
@@ -256,7 +247,8 @@ export const ProgramRequisitionOptions = ({
 };
 
 const getProgramOptionRenderer =
-  (): AutocompleteOptionRenderer<MasterListNode> => (props, item) => {
+  (): AutocompleteOptionRenderer<MasterListWithOrderTypesFragment> =>
+  (props, item) => {
     return (
       <DefaultAutocompleteItemOption {...props} key={item.id}>
         <Box display="flex" flexDirection="row" gap={1} alignItems="center">

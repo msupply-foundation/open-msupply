@@ -502,26 +502,38 @@ query responseRequisitionStats($storeId: String!, $requisitionLineId: String!) {
   }
 }
 
+fragment AvailablePeriod on PeriodNode {
+  id
+  name
+  startDate
+  endDate
+}
+
+fragment ProgramRequisitionOrderType on ProgramRequisitionOrderTypeNode {
+  __typename
+  id
+  name
+  availablePeriods {
+    ...AvailablePeriod
+  }
+  isEmergency
+}
+
+fragment MasterListWithOrderTypes on MasterListWithOrderTypesNode {
+  __typename
+  id
+  code
+  name
+  orderTypes {
+    ...ProgramRequisitionOrderType
+  }
+}
+
 fragment ProgramSettingsByCustomer on CustomerProgramRequisitionSettingNode {
   __typename
   customerName
   masterLists {
-    masterList {
-      code
-      id
-      name
-    }
-    orderTypes {
-      availablePeriods {
-        endDate
-        name
-        startDate
-        id
-      }
-      isEmergency
-      id
-      name
-    }
+    ...MasterListWithOrderTypes
   }
 }
 
@@ -535,22 +547,7 @@ query programRequisitionSettingsByCustomer(
   ) {
     customerName
     masterLists {
-      masterList {
-        code
-        id
-        name
-      }
-      orderTypes {
-        availablePeriods {
-          endDate
-          name
-          startDate
-          id
-        }
-        isEmergency
-        id
-        name
-      }
+      ...MasterListWithOrderTypes
     }
   }
 }

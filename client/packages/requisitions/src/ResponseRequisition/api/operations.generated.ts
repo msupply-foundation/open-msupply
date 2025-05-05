@@ -769,28 +769,67 @@ export type ResponseRequisitionStatsQuery = {
       };
 };
 
+export type AvailablePeriodFragment = {
+  __typename: 'PeriodNode';
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+};
+
+export type ProgramRequisitionOrderTypeFragment = {
+  __typename: 'ProgramRequisitionOrderTypeNode';
+  id: string;
+  name: string;
+  isEmergency: boolean;
+  availablePeriods: Array<{
+    __typename: 'PeriodNode';
+    id: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+  }>;
+};
+
+export type MasterListWithOrderTypesFragment = {
+  __typename: 'MasterListWithOrderTypesNode';
+  id: string;
+  code: string;
+  name: string;
+  orderTypes: Array<{
+    __typename: 'ProgramRequisitionOrderTypeNode';
+    id: string;
+    name: string;
+    isEmergency: boolean;
+    availablePeriods: Array<{
+      __typename: 'PeriodNode';
+      id: string;
+      name: string;
+      startDate: string;
+      endDate: string;
+    }>;
+  }>;
+};
+
 export type ProgramSettingsByCustomerFragment = {
   __typename: 'CustomerProgramRequisitionSettingNode';
   customerName: string;
   masterLists: Array<{
-    __typename: 'MasterListAndOrderAndPeriodTypesNode';
-    masterList: {
-      __typename: 'MasterListNode';
-      code: string;
-      id: string;
-      name: string;
-    };
+    __typename: 'MasterListWithOrderTypesNode';
+    id: string;
+    code: string;
+    name: string;
     orderTypes: Array<{
       __typename: 'ProgramRequisitionOrderTypeNode';
-      isEmergency: boolean;
       id: string;
       name: string;
+      isEmergency: boolean;
       availablePeriods: Array<{
         __typename: 'PeriodNode';
-        endDate: string;
+        id: string;
         name: string;
         startDate: string;
-        id: string;
+        endDate: string;
       }>;
     }>;
   }>;
@@ -807,24 +846,21 @@ export type ProgramRequisitionSettingsByCustomerQuery = {
     __typename: 'CustomerProgramRequisitionSettingNode';
     customerName: string;
     masterLists: Array<{
-      __typename: 'MasterListAndOrderAndPeriodTypesNode';
-      masterList: {
-        __typename: 'MasterListNode';
-        code: string;
-        id: string;
-        name: string;
-      };
+      __typename: 'MasterListWithOrderTypesNode';
+      id: string;
+      code: string;
+      name: string;
       orderTypes: Array<{
         __typename: 'ProgramRequisitionOrderTypeNode';
-        isEmergency: boolean;
         id: string;
         name: string;
+        isEmergency: boolean;
         availablePeriods: Array<{
           __typename: 'PeriodNode';
-          endDate: string;
+          id: string;
           name: string;
           startDate: string;
-          id: string;
+          endDate: string;
         }>;
       }>;
     }>;
@@ -1065,29 +1101,47 @@ export const CannotDeleteLineLinkedToShipmentErrorFragmentDoc = gql`
     __typename
   }
 `;
+export const AvailablePeriodFragmentDoc = gql`
+  fragment AvailablePeriod on PeriodNode {
+    id
+    name
+    startDate
+    endDate
+  }
+`;
+export const ProgramRequisitionOrderTypeFragmentDoc = gql`
+  fragment ProgramRequisitionOrderType on ProgramRequisitionOrderTypeNode {
+    __typename
+    id
+    name
+    availablePeriods {
+      ...AvailablePeriod
+    }
+    isEmergency
+  }
+  ${AvailablePeriodFragmentDoc}
+`;
+export const MasterListWithOrderTypesFragmentDoc = gql`
+  fragment MasterListWithOrderTypes on MasterListWithOrderTypesNode {
+    __typename
+    id
+    code
+    name
+    orderTypes {
+      ...ProgramRequisitionOrderType
+    }
+  }
+  ${ProgramRequisitionOrderTypeFragmentDoc}
+`;
 export const ProgramSettingsByCustomerFragmentDoc = gql`
   fragment ProgramSettingsByCustomer on CustomerProgramRequisitionSettingNode {
     __typename
     customerName
     masterLists {
-      masterList {
-        code
-        id
-        name
-      }
-      orderTypes {
-        availablePeriods {
-          endDate
-          name
-          startDate
-          id
-        }
-        isEmergency
-        id
-        name
-      }
+      ...MasterListWithOrderTypes
     }
   }
+  ${MasterListWithOrderTypesFragmentDoc}
 `;
 export const UpdateResponseDocument = gql`
   mutation updateResponse(
@@ -1463,25 +1517,11 @@ export const ProgramRequisitionSettingsByCustomerDocument = gql`
     ) {
       customerName
       masterLists {
-        masterList {
-          code
-          id
-          name
-        }
-        orderTypes {
-          availablePeriods {
-            endDate
-            name
-            startDate
-            id
-          }
-          isEmergency
-          id
-          name
-        }
+        ...MasterListWithOrderTypes
       }
     }
   }
+  ${MasterListWithOrderTypesFragmentDoc}
 `;
 export const ProgramIndicatorsDocument = gql`
   query programIndicators(

@@ -28,15 +28,21 @@ pub struct ProgramRequisitionOrderTypeNode {
 }
 
 #[derive(SimpleObject)]
-pub struct MasterListAndOrderAndPeriodTypesNode {
-    pub master_list: MasterListNode,
+pub struct MasterListWithOrderTypesNode {
+    pub id: String,
+    pub name: String,
+    pub code: String,
+    pub description: String,
+    pub is_active: bool,
+    pub is_default_price_list: bool,
+    pub discount_percentage: Option<f64>,
     pub order_types: Vec<ProgramRequisitionOrderTypeNode>,
 }
 
 #[derive(SimpleObject)]
 pub struct CustomerProgramRequisitionSettingNode {
     pub customer_name: String,
-    pub master_lists: Vec<MasterListAndOrderAndPeriodTypesNode>,
+    pub master_lists: Vec<MasterListWithOrderTypesNode>,
 }
 
 #[derive(SimpleObject)]
@@ -131,25 +137,30 @@ pub fn get_program_requisition_settings_by_customer(
         master_lists: settings
             .master_lists
             .into_iter()
-            .map(
-                |master_list_and_orders| MasterListAndOrderAndPeriodTypesNode {
-                    master_list: MasterListNode::from_domain(master_list_and_orders.master_list),
-                    order_types: master_list_and_orders
-                        .order_types
-                        .into_iter()
-                        .map(|order_type| ProgramRequisitionOrderTypeNode {
-                            name: order_type.name,
-                            id: order_type.id,
-                            available_periods: order_type
-                                .available_periods
-                                .into_iter()
-                                .map(|period| PeriodNode::from_domain(period))
-                                .collect(),
-                            is_emergency: order_type.is_emergency,
-                        })
-                        .collect(),
-                },
-            )
+            .map(|master_list_and_orders| MasterListWithOrderTypesNode {
+                // master_list: MasterListNode::from_domain(master_list_and_orders.master_list),
+                id: master_list_and_orders.id,
+                name: master_list_and_orders.name,
+                code: master_list_and_orders.code,
+                description: master_list_and_orders.description,
+                is_active: master_list_and_orders.is_active,
+                is_default_price_list: master_list_and_orders.is_default_price_list,
+                discount_percentage: master_list_and_orders.discount_percentage,
+                order_types: master_list_and_orders
+                    .order_types
+                    .into_iter()
+                    .map(|order_type| ProgramRequisitionOrderTypeNode {
+                        name: order_type.name,
+                        id: order_type.id,
+                        available_periods: order_type
+                            .available_periods
+                            .into_iter()
+                            .map(|period| PeriodNode::from_domain(period))
+                            .collect(),
+                        is_emergency: order_type.is_emergency,
+                    })
+                    .collect(),
+            })
             .collect(),
     };
 
