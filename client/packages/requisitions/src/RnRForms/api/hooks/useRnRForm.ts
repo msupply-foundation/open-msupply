@@ -7,7 +7,7 @@ import {
   useQuery,
 } from '@openmsupply-client/common';
 import { RnRFormFragment, RnRFormLineFragment } from '../operations.generated';
-import { useRnRFormContext, useRnRGraphQL } from '..';
+import { useRnRGraphQL } from '..';
 import { RNR_FORM } from './keys';
 import { useEffect, useState } from 'react';
 
@@ -19,7 +19,6 @@ const DEBOUNCE_TIME = 500;
 
 export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
   const { api, storeId } = useRnRGraphQL();
-  const { clearDraftLine } = useRnRFormContext();
   const queryKey = [RNR_FORM, rnrFormId];
 
   const {
@@ -27,12 +26,6 @@ export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
     isLoading: isFinalising,
     error: finaliseError,
   } = useFinalise(rnrFormId);
-
-  const {
-    mutateAsync: updateLines,
-    isLoading: linesUpdating,
-    error: updateLineError,
-  } = useUpdateLine(rnrFormId);
 
   const { debouncedUpdateRnRForm } = useUpdate(rnrFormId);
 
@@ -60,34 +53,29 @@ export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
     debouncedUpdateRnRForm(patch);
   };
 
-  const updateLine = async (line: RnRFormLineFragment) => {
-    await updateLines([line]);
-    clearDraftLine(line.id);
-  };
+  // const confirmRemainingLines = async () => {
+  //   if (!query.data) return;
 
-  const confirmRemainingLines = async () => {
-    if (!query.data) return;
-
-    const lines = query.data.lines
-      .filter(line => !line.confirmed)
-      .map(line => ({ ...line, confirmed: true }));
-    await updateLines(lines);
-  };
+  //   const lines = query.data.lines
+  //     .filter(line => !line.confirmed)
+  //     .map(line => ({ ...line, confirmed: true }));
+  //   await updateLines(lines);
+  // };
 
   return {
     query,
     finalise: { finalise, isFinalising, finaliseError },
-    updateLine: { updateLine, isUpdating: linesUpdating, updateLineError },
+    // updateLine: { updateLine },
     bufferedDetails: bufferedState,
     updateRnRForm,
-    confirmRemainingLines,
+    confirmRemainingLines: () => {},
   };
 };
 
 // MUTATIONS
 
-const useUpdateLine = (rnrFormId: string) => {
-  const { api, storeId, queryClient } = useRnRGraphQL();
+export const useUpdateLines = (rnrFormId: string) => {
+  const { api, storeId } = useRnRGraphQL();
 
   const mutationFn = async (lines: RnRFormLineFragment[]) => {
     const linesInput: UpdateRnRFormLineInput[] = lines.map(
@@ -153,7 +141,7 @@ const useUpdateLine = (rnrFormId: string) => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([RNR_FORM]),
+    onSuccess: () => /*queryClient.invalidateQueries([RNR_FORM])*/ {},
     // Prevents duplication of error messages
     onError: () => {},
   });
