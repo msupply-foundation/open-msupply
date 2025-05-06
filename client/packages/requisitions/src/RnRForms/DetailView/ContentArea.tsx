@@ -14,6 +14,7 @@ import {
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { RnRFormLine } from './RnRFormLine';
 import { Search } from './Search';
+import { itemMatchesSearch } from '../utils';
 
 interface ContentAreaProps {
   data: RnRFormLineFragment[];
@@ -57,14 +58,7 @@ export const ContentArea = ({
   const listRef = useRef<ViewportListRef>(null);
 
   const onSearch = (search: string) => {
-    const lowerCaseSearch = search.toLowerCase();
-
-    // Use lowerCase for case insensitive search
-    const foundIndex = data.findIndex(
-      l =>
-        l.item.name.toLowerCase().includes(lowerCaseSearch) ||
-        l.item.code.toLowerCase().includes(lowerCaseSearch)
-    );
+    const foundIndex = data.findIndex(l => itemMatchesSearch(search, l.item));
 
     foundIndex > -1 &&
       listRef.current?.scrollToIndex({
