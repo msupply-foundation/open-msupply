@@ -3,10 +3,12 @@ import { RnRFormLineFragment } from '../operations.generated';
 import { create, RecordWithId } from '@openmsupply-client/common';
 import keyBy from 'lodash/keyBy';
 import mapValues from 'lodash/mapValues';
+import { itemMatchesSearch } from '../../utils';
 
 type SetLine = (line: RecordWithId & Partial<RnRFormLineFragment>) => void;
 interface RnRFormContext {
   rnrFormId: string;
+  search: string;
   baseLines: { [id: string]: RnRFormLineFragment };
   draftLines: Record<
     string,
@@ -14,6 +16,7 @@ interface RnRFormContext {
   >;
   draftLineIteration: Record<string, number>;
   setDraftLine: SetLine;
+  setSearch: (search: string) => void;
   clearAllDirtyLines: () => void;
   getAllDirtyLines: () => RnRFormLineFragment[];
   setInitial: (rnrFormId: string, _: RnRFormLineFragment[]) => void;
@@ -22,6 +25,7 @@ interface RnRFormContext {
 }
 
 export const useRnRFormContext = create<RnRFormContext>((set, get) => ({
+  search: '',
   baseLines: {},
   draftLines: {},
   draftLineIteration: {},
@@ -37,6 +41,12 @@ export const useRnRFormContext = create<RnRFormContext>((set, get) => ({
         ...state.draftLineIteration,
         [line.id]: (state.draftLineIteration[line.id] ?? 0) + 1,
       },
+    }));
+  },
+  setSearch: search => {
+    set(state => ({
+      ...state,
+      search,
     }));
   },
   clearAllDirtyLines: () =>
@@ -138,7 +148,11 @@ export const useRnRDraft = (id: string) => {
 export const useCachedRnRDraftLine = (id: string) => {
   const prevIteration = React.useRef(-1);
   const prev = React.useRef<
-    | { line: RnRFormLineFragment & { isDirty?: boolean }; setLine: SetLine }
+    | {
+        line: RnRFormLineFragment & { isDirty?: boolean };
+        setLine: SetLine;
+        highlight: boolean;
+      }
     | undefined
   >(undefined);
 
@@ -149,11 +163,21 @@ export const useCachedRnRDraftLine = (id: string) => {
     const baseLine = state.baseLines[id];
     if (!baseLine) return undefined;
 
-    return previousIteration == (state.draftLineIteration[id] ?? 0)
-      ? prev.current
-      : (prev.current = {
-          line: { ...baseLine, ...(state.draftLines[id] || {}) },
+    const line = { ...baseLine, ...(state.draftLines[id] || {}) };
+
+    const highlight =
+      !!state.search && itemMatchesSearch(state.search, line.item);
+
+    const shouldUpdate =
+      previousIteration !== (state.draftLineIteration[id] ?? 0) ||
+      prev.current?.highlight !== highlight;
+
+    return shouldUpdate
+      ? (prev.current = {
+          line,
           setLine: state.setDraftLine,
-        });
+          highlight,
+        })
+      : prev.current;
   };
 };
