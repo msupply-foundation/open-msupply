@@ -18,6 +18,7 @@ interface SearchBarProps {
   debounceTime?: number;
   expandOnFocus?: boolean;
   autoFocus?: boolean;
+  alwaysClear?: boolean;
 }
 
 const EndAdornment = ({
@@ -51,6 +52,7 @@ export const SearchBar = ({
   onChange,
   onSearchIconClick,
   onClear,
+  alwaysClear,
   placeholder,
   isLoading = false,
   debounceTime = 500,
@@ -108,7 +110,7 @@ export const SearchBar = ({
             endAdornment: (
               <EndAdornment
                 isLoading={isLoading || loading}
-                hasValue={!!buffer}
+                hasValue={!!buffer || !!alwaysClear}
                 onClear={() => {
                   handleChange('');
                   if (onClear) onClear();

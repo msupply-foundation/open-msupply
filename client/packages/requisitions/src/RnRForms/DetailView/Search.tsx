@@ -38,12 +38,12 @@ export const Search = () => {
 
   return (
     <div>
-      {showSearch ? (
+      {showSearch && (
         <Box
           sx={{
             position: 'absolute',
             top: '2px',
-            right: '2px',
+            left: '2px',
             zIndex: 1000,
             backgroundColor: 'white',
             padding: '4px',
@@ -52,6 +52,7 @@ export const Search = () => {
           }}
         >
           <SearchBar
+            alwaysClear={true}
             value={input}
             onChange={onSearch}
             placeholder={t('placeholder.search-by-name-or-code')}
@@ -61,13 +62,12 @@ export const Search = () => {
             autoFocus
           />
         </Box>
-      ) : (
-        <IconButton
-          icon={<SearchIcon />}
-          onClick={() => setShowSearch(true)}
-          label={t('placeholder.search-by-name-or-code')}
-        />
       )}
+      <IconButton
+        icon={<SearchIcon />}
+        onClick={() => setShowSearch(true)}
+        label={t('placeholder.search-by-name-or-code')}
+      />
     </div>
   );
 };

@@ -16,6 +16,7 @@ import {
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { RnRFormLine } from './RnRFormLine';
 import { oneTime, useRnRFormContext } from '../api';
+import { Search } from './Search';
 
 interface ContentAreaProps {
   data: RnRFormLineFragment[];
@@ -222,27 +223,26 @@ const Line = ({
     </tbody>
   );
 };
-//  <th className="sticky-column second-column">
-//    <Box
-//      sx={{
-//        fontSize: 14,
-//        display: 'flex',
-//        justifyContent: 'space-between',
-//        alignItems: 'center',
-//      }}
-//    >
-//      {t('label.name')}
-//      <Search />
-//    </Box>
-//  </th>;
 
 const Headers = () => {
-  // const t = useTranslation();
+  const t = useTranslation();
 
   return (
     <thead>
       <tr>
-        <HeaderCell label="label.ven" width={55} />
+        <th>
+          <Box
+            sx={{
+              fontSize: 14,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Search />
+            {t('label.ven')}
+          </Box>
+        </th>
         <HeaderCell
           label="label.rnr-initial-balance"
           tooltip="description.rnr-initial-balance"
