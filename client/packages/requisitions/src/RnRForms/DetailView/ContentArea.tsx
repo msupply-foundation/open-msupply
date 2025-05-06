@@ -1,6 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import {
-  BasicTextInput,
   Box,
   GlobalStyles,
   InfoIcon,
@@ -14,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { RnRFormLine } from './RnRFormLine';
-import { useRnRFormContext } from '../api';
+import { Search } from './Search';
 
 interface ContentAreaProps {
   data: RnRFormLineFragment[];
@@ -169,54 +168,28 @@ export const ContentArea = ({
   );
 };
 
-const Headers = (props: { onSearch: (value: string) => void }) => {
+const Headers = ({ onSearch }: { onSearch: (value: string) => void }) => {
   const t = useTranslation();
-  const { search, setSearch } = useRnRFormContext(({ search, setSearch }) => ({
-    search,
-    setSearch,
-  }));
-  const [input, setInput] = useState(search);
-
-  const onSearch = (value: string) => {
-    setInput(value);
-    // Only search when 3+ characters are entered
-    if (value.length > 2) {
-      setSearch(value);
-      props.onSearch(value);
-    } else setSearch('');
-  };
-
   return (
     <thead>
       <tr>
         <HeaderCell className="sticky-column first-column" label="label.code" />
-        {/* TODO: proper search input */}
-        {/* <HeaderCell
-              className="sticky-column second-column"
-              label="label.name"
-            /> */}
-        <th>
-          {t('label.name')}
-          <BasicTextInput
-            slotProps={{
-              input: {
-                // endAdornment: (
-                //   <EndAdornment
-                //     isLoading={false}
-                //     hasValue={!!value}
-                //     onClear={() => handleChange('')}
-                //   />
-                // ),
-                // sx: { width: FILTER_WIDTH },
-              },
+
+        {/* Not the usual HeaderCell here, to add the search input */}
+        <th className="sticky-column second-column">
+          <Box
+            sx={{
+              fontSize: 14,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}
-            value={input}
-            onChange={e => onSearch(e.target.value)}
-            // label={filterDefinition.name}
-            // placeholder={filterDefinition.placeholder ?? ''}
-            // sx={FilterLabelSx}
-          />
+          >
+            {t('label.name')}
+            <Search onSearch={onSearch} />
+          </Box>
         </th>
+
         <HeaderCell label="label.strength" width={85} />
         <HeaderCell label="label.unit" width={80} />
         <HeaderCell label="label.ven" width={55} />
