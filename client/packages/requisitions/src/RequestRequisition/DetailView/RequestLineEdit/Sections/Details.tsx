@@ -104,21 +104,21 @@ export const Details = ({
               value={draft?.unitName ?? ''}
               label={t('label.unit')}
             />
-            {isPacksEnabled ? (
+            {isPacksEnabled && (
               <ReadOnlyField
                 type="units"
                 value={draft?.defaultPackSize}
                 label={t('label.default-pack-size')}
               />
-            ) : null}
+            )}
             <ReadOnlyField
               type="units"
-              value={draft?.itemStats.availableStockOnHand}
+              value={draft?.itemStats.availableStockOnHand ?? 0}
               label={t('label.our-soh')}
             />
             <ReadOnlyField
               type="units"
-              value={draft?.itemStats.averageMonthlyConsumption}
+              value={draft?.itemStats.averageMonthlyConsumption ?? 0}
               label={t('label.amc')}
             />
             {isProgram && useConsumptionData && (
@@ -218,7 +218,7 @@ export const Details = ({
             plugins.requestRequisitionLine?.editViewField?.map(
               (Field, index) => <Field key={index} line={line} />
             )}
-          <RequestStats draft={draft} />
+          {draft && <RequestStats draft={draft} />}
         </Grid>
       </Grid>
     </>

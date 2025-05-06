@@ -8,10 +8,6 @@ export interface RequestStatsProps {
 }
 
 export const RequestStats = ({ draft }: RequestStatsProps) => {
-  const chartKey = draft
-    ? `${draft.id}-${draft.requestedQuantity}`
-    : 'no-draft';
-
   return (
     <Paper
       sx={{
@@ -29,7 +25,7 @@ export const RequestStats = ({ draft }: RequestStatsProps) => {
         flexDirection="column"
         justifyContent="space-between"
       >
-        <ConsumptionHistory key={chartKey} id={draft?.id || ''} />
+        <ConsumptionHistory id={draft?.id || ''} />
       </Box>
     </Paper>
   );

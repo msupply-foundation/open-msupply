@@ -44,9 +44,9 @@ export const ModalContent = ({
   const isProgram = !!requisition.programName;
   const isDisabled = requisition.status !== 'DRAFT';
 
-  const handleOkClick = () => {
+  const handleOkClick = async () => {
+    await save();
     onClose();
-    save();
   };
 
   const handleNextClick = () => {
