@@ -10,7 +10,12 @@ import {
   useConfirmationModal,
   useKeyboard,
 } from '@openmsupply-client/common';
-import { RnRFormQuery, useRnRForm, useRnRFormContext } from '../api';
+import {
+  RnRFormQuery,
+  useErrorLineIndex,
+  useRnRForm,
+  useRnRFormContext,
+} from '../api';
 import { useSaveAllLines } from './AutoSave';
 
 export const Footer = ({ data }: { data: RnRFormQuery }) => {
@@ -23,29 +28,27 @@ export const Footer = ({ data }: { data: RnRFormQuery }) => {
     finalise: { finalise, isFinalising },
   } = useRnRForm({ rnrFormId: data.id });
 
-  const { hasUnconfirmedLines, confirmUnconfirmedLines } = useRnRFormContext(
-    ({ hasUnconfirmedLines, confirmUnconfirmedLines }) => ({
-      hasUnconfirmedLines,
-      confirmUnconfirmedLines,
-    })
-  );
+  const errorLineIndex = useRnRFormContext(useErrorLineIndex);
+  const scrollToIndex = useRnRFormContext(state => state.scrollToIndex);
 
   const showFinaliseConfirmation = useConfirmationModal({
     onConfirm: async () => {
       try {
-        if (hasUnconfirmedLines()) {
-          confirmUnconfirmedLines();
+        if (errorLineIndex != -1) {
+          scrollToIndex(errorLineIndex);
+        } else {
           await saveAllLines();
+          await finalise();
+          success(t('label.finalised'))();
         }
-        await finalise();
-        success(t('label.finalised'))();
       } catch (e) {
         error((e as Error).message)();
       }
     },
-    message: hasUnconfirmedLines()
-      ? `${t('messages.rnr-not-all-lines-confirmed')}\n${t('messages.confirm-finalise-rnr')}`
-      : t('messages.confirm-finalise-rnr'),
+    message:
+      errorLineIndex != -1
+        ? `You will be taken to first error line`
+        : t('messages.confirm-finalise-rnr'),
     title: t('heading.are-you-sure'),
   });
 
