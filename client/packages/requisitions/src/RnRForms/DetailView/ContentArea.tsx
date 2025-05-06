@@ -1,5 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
+  BasicTextInput,
   Box,
   GlobalStyles,
   InfoIcon,
@@ -9,9 +10,11 @@ import {
   Tooltip,
   useTranslation,
   ViewportList,
+  ViewportListRef,
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { RnRFormLine } from './RnRFormLine';
+import { useRnRFormContext } from '../api';
 
 interface ContentAreaProps {
   data: RnRFormLineFragment[];
@@ -45,14 +48,32 @@ const HeaderCell = ({ className, label, tooltip, width }: HeaderCellProps) => {
     </th>
   );
 };
-
 export const ContentArea = ({
   data,
   periodLength,
   disabled,
 }: ContentAreaProps) => {
   const t = useTranslation();
-  const ref = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<ViewportListRef>(null);
+
+  const onSearch = (search: string) => {
+    const lowerCaseSearch = search.toLowerCase();
+
+    // Use lowerCase for case insensitive search
+    const foundIndex = data.findIndex(
+      l =>
+        l.item.name.toLowerCase().includes(lowerCaseSearch) ||
+        l.item.code.toLowerCase().includes(lowerCaseSearch)
+    );
+
+    foundIndex > -1 &&
+      listRef.current?.scrollToIndex({
+        alignToTop: false,
+        // load 2 lines below the found line
+        index: foundIndex + 2,
+      });
+  };
 
   return data.length === 0 ? (
     <NothingHere body={t('error.no-items')} />
@@ -67,7 +88,7 @@ export const ContentArea = ({
         width: '100%',
         scrollSnapType: 'x mandatory',
       }}
-      ref={ref}
+      ref={containerRef}
     >
       <GlobalStyles
         styles={{
@@ -120,80 +141,17 @@ export const ContentArea = ({
           },
         }}
       >
-        <thead>
-          <tr>
-            <HeaderCell
-              className="sticky-column first-column"
-              label="label.code"
-            />
-            <HeaderCell
-              className="sticky-column second-column"
-              label="label.name"
-            />
-            <HeaderCell label="label.strength" width={85} />
-            <HeaderCell label="label.unit" width={80} />
-            <HeaderCell label="label.ven" width={55} />
-            <HeaderCell
-              label="label.rnr-initial-balance"
-              tooltip="description.rnr-initial-balance"
-            />
-            <HeaderCell
-              label="label.rnr-received"
-              tooltip="description.rnr-received"
-            />
-            <HeaderCell
-              label="label.rnr-consumed"
-              tooltip="description.rnr-consumed"
-            />
-            <HeaderCell
-              label="label.adjusted"
-              tooltip="description.rnr-consumed-adjusted"
-            />
-            <HeaderCell label="label.losses" tooltip="description.rnr-losses" />
-            <HeaderCell
-              label="label.rnr-adjustments"
-              tooltip="description.rnr-adjustments"
-            />
-            <HeaderCell label="label.rnr-stock-out-duration" />
-            <HeaderCell
-              label="label.rnr-final-balance"
-              tooltip="description.rnr-final-balance"
-            />
-            <HeaderCell label="label.amc" tooltip="description.rnr-amc" />
-            <HeaderCell
-              label="label.rnr-minimum-quantity"
-              tooltip="description.rnr-minimum-quantity"
-            />
-            <HeaderCell
-              label="label.rnr-maximum-quantity"
-              tooltip="description.rnr-maximum-quantity"
-            />
-            <HeaderCell label="label.expiry" tooltip="description.expiry" />
-            <HeaderCell
-              label="label.requested"
-              tooltip="description.rnr-requested-quantity"
-            />
-            <HeaderCell
-              label="label.low-stock"
-              tooltip="description.rnr-low-stock"
-            />
-            <HeaderCell label="label.comment" />
-            <HeaderCell label="label.confirmed" />
-            <HeaderCell
-              label="label.approved-quantity"
-              tooltip="description.rnr-approved-quantity"
-            />
-          </tr>
-        </thead>
+        <Headers onSearch={onSearch} />
 
         <tbody>
           <ViewportList
-            viewportRef={ref}
+            viewportRef={containerRef}
             items={data}
+            ref={listRef}
             axis="y"
             renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
             initialDelay={1}
-            itemSize={60}
+            itemSize={70}
             overscan={5} // Gives a buffer for when android keyboard opens
           >
             {line => (
@@ -208,5 +166,111 @@ export const ContentArea = ({
         </tbody>
       </Table>
     </Box>
+  );
+};
+
+const Headers = (props: { onSearch: (value: string) => void }) => {
+  const t = useTranslation();
+  const { search, setSearch } = useRnRFormContext(({ search, setSearch }) => ({
+    search,
+    setSearch,
+  }));
+  const [input, setInput] = useState(search);
+
+  const onSearch = (value: string) => {
+    setInput(value);
+    // Only search when 3+ characters are entered
+    if (value.length > 2) {
+      setSearch(value);
+      props.onSearch(value);
+    } else setSearch('');
+  };
+
+  return (
+    <thead>
+      <tr>
+        <HeaderCell className="sticky-column first-column" label="label.code" />
+        {/* TODO: proper search input */}
+        {/* <HeaderCell
+              className="sticky-column second-column"
+              label="label.name"
+            /> */}
+        <th>
+          {t('label.name')}
+          <BasicTextInput
+            slotProps={{
+              input: {
+                // endAdornment: (
+                //   <EndAdornment
+                //     isLoading={false}
+                //     hasValue={!!value}
+                //     onClear={() => handleChange('')}
+                //   />
+                // ),
+                // sx: { width: FILTER_WIDTH },
+              },
+            }}
+            value={input}
+            onChange={e => onSearch(e.target.value)}
+            // label={filterDefinition.name}
+            // placeholder={filterDefinition.placeholder ?? ''}
+            // sx={FilterLabelSx}
+          />
+        </th>
+        <HeaderCell label="label.strength" width={85} />
+        <HeaderCell label="label.unit" width={80} />
+        <HeaderCell label="label.ven" width={55} />
+        <HeaderCell
+          label="label.rnr-initial-balance"
+          tooltip="description.rnr-initial-balance"
+        />
+        <HeaderCell
+          label="label.rnr-received"
+          tooltip="description.rnr-received"
+        />
+        <HeaderCell
+          label="label.rnr-consumed"
+          tooltip="description.rnr-consumed"
+        />
+        <HeaderCell
+          label="label.adjusted"
+          tooltip="description.rnr-consumed-adjusted"
+        />
+        <HeaderCell label="label.losses" tooltip="description.rnr-losses" />
+        <HeaderCell
+          label="label.rnr-adjustments"
+          tooltip="description.rnr-adjustments"
+        />
+        <HeaderCell label="label.rnr-stock-out-duration" />
+        <HeaderCell
+          label="label.rnr-final-balance"
+          tooltip="description.rnr-final-balance"
+        />
+        <HeaderCell label="label.amc" tooltip="description.rnr-amc" />
+        <HeaderCell
+          label="label.rnr-minimum-quantity"
+          tooltip="description.rnr-minimum-quantity"
+        />
+        <HeaderCell
+          label="label.rnr-maximum-quantity"
+          tooltip="description.rnr-maximum-quantity"
+        />
+        <HeaderCell label="label.expiry" tooltip="description.expiry" />
+        <HeaderCell
+          label="label.requested"
+          tooltip="description.rnr-requested-quantity"
+        />
+        <HeaderCell
+          label="label.low-stock"
+          tooltip="description.rnr-low-stock"
+        />
+        <HeaderCell label="label.comment" />
+        <HeaderCell label="label.confirmed" />
+        <HeaderCell
+          label="label.approved-quantity"
+          tooltip="description.rnr-approved-quantity"
+        />
+      </tr>
+    </thead>
   );
 };
