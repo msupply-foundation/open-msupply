@@ -12,7 +12,7 @@ impl MigrationFragment for Migrate {
             connection,
             r#"
                 ALTER TABLE item_variant ADD COLUMN doses_per_unit INTEGER NOT NULL DEFAULT 0;
-                ALTER TABLE item_variant ADD COLUMN vvm_type STRING;
+                ALTER TABLE item_variant ADD COLUMN vvm_type TEXT;
             "#
         )?;
 
