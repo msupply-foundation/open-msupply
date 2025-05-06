@@ -103,7 +103,6 @@ mod test {
         StockLineRow, StockLineRowRepository, StocktakeLineFilter, StocktakeLineRepository,
         StocktakeRow, StocktakeRowRepository, StocktakeStatus,
     };
-    use util::{inline_edit, inline_init};
 
     use crate::{
         service_provider::ServiceProvider,
@@ -129,23 +128,24 @@ mod test {
         let error = service
             .insert_stocktake(
                 &context,
-                inline_init(|i: &mut InsertStocktake| {
-                    i.id = "new_initial_stocktake".to_string();
-                    i.is_initial_stocktake = true
-                }),
+                InsertStocktake {
+                    id: "new_initial_stocktake".to_string(),
+                    is_initial_stocktake: true,
+                    ..Default::default()
+                },
             )
             .unwrap_err();
-        println!("one {:?} ", error);
-        pretty_assertions::assert_eq!(error, InsertStocktakeError::InitialStocktakeAlreadyExists);
+        assert_eq!(error, InsertStocktakeError::InitialStocktakeAlreadyExists);
 
         // error: stocktake already exists
         let existing_stocktake = mock_stocktake_a();
         let error = service
             .insert_stocktake(
                 &context,
-                inline_init(|i: &mut InsertStocktake| {
-                    i.id = existing_stocktake.id;
-                }),
+                InsertStocktake {
+                    id: existing_stocktake.id,
+                    ..Default::default()
+                },
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeError::StocktakeAlreadyExists);
@@ -155,7 +155,10 @@ mod test {
         let error = service
             .insert_stocktake(
                 &context,
-                inline_init(|i: &mut InsertStocktake| i.id = "new_stocktake".to_string()),
+                InsertStocktake {
+                    id: "new_stocktake".to_string(),
+                    ..Default::default()
+                },
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeError::InvalidStore);
@@ -189,19 +192,19 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
+        pretty_assertions::assert_eq!(
             new_row,
-            inline_edit(&new_row, |mut i: StocktakeRow| {
-                i.user_id = mock_user_account_a().id;
-                i.id = "new_stocktake".to_string();
-                i.comment = Some("comment".to_string());
-                i.description = Some("description".to_string());
-                i.stocktake_date = Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap());
-                i.is_locked = true;
-                i.status = StocktakeStatus::New;
-                i.store_id = mock_store_a().id;
-                i
-            }),
+            StocktakeRow {
+                user_id: mock_user_account_a().id,
+                id: "new_stocktake".to_string(),
+                comment: Some("comment".to_string()),
+                description: Some("description".to_string()),
+                stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
+                is_locked: true,
+                status: StocktakeStatus::New,
+                store_id: mock_store_a().id,
+                ..new_row.clone()
+            },
         );
 
         assert!(
@@ -241,11 +244,12 @@ mod test {
 
         // add a stock line for another store and check that it is not added to the stocktake
         let _ = StockLineRowRepository::new(&connection).upsert_one({
-            &inline_init(|r: &mut StockLineRow| {
-                r.id = "stock_line_row_1".to_string();
-                r.store_id = mock_store_b().id;
-                r.item_link_id = item_query_test1().id;
-            })
+            &StockLineRow {
+                id: "stock_line_row_1".to_string(),
+                store_id: mock_store_b().id,
+                item_link_id: item_query_test1().id,
+                ..Default::default()
+            }
         });
 
         service
@@ -383,13 +387,14 @@ mod test {
 
         // add a stock_line for that location and try again
         let _ = StockLineRowRepository::new(&connection).upsert_one({
-            &inline_init(|r: &mut StockLineRow| {
-                r.id = "stock_line_row_1".to_string();
-                r.store_id = mock_store_a().id;
-                r.item_link_id = mock_item_a().id;
-                r.location_id = Some(location_id.clone());
-                r.total_number_of_packs = 100.0;
-            })
+            &StockLineRow {
+                id: "stock_line_row_1".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                location_id: Some(location_id.clone()),
+                total_number_of_packs: 100.0,
+                ..Default::default()
+            }
         });
 
         service
@@ -434,30 +439,33 @@ mod test {
     #[actix_rt::test]
     async fn insert_stocktake_with_stock() {
         fn item_a_stock() -> StockLineRow {
-            inline_init(|s: &mut StockLineRow| {
-                s.id = "stock_line_row_1".to_string();
-                s.store_id = mock_store_a().id;
-                s.item_link_id = mock_item_a().id;
-                s.total_number_of_packs = 100.0;
-            })
+            StockLineRow {
+                id: "stock_line_row_1".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                total_number_of_packs: 100.0,
+                ..Default::default()
+            }
         }
 
         fn item_b_stock() -> StockLineRow {
-            inline_init(|s: &mut StockLineRow| {
-                s.id = "stock_line_row_3".to_string();
-                s.store_id = mock_store_a().id;
-                s.item_link_id = mock_item_b().id;
-                s.total_number_of_packs = 10.0;
-            })
+            StockLineRow {
+                id: "stock_line_row_3".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_b().id,
+                total_number_of_packs: 10.0,
+                ..Default::default()
+            }
         }
 
         fn item_a_no_stock() -> StockLineRow {
-            inline_init(|s: &mut StockLineRow| {
-                s.id = "stock_line_row_2".to_string();
-                s.store_id = mock_store_a().id;
-                s.item_link_id = mock_item_b().id;
-                s.total_number_of_packs = 0.0;
-            })
+            StockLineRow {
+                id: "stock_line_row_2".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_b().id,
+                total_number_of_packs: 0.0,
+                ..Default::default()
+            }
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
@@ -472,9 +480,10 @@ mod test {
                 .user_store_joins()
                 .items()
                 .units(),
-            inline_init(|m: &mut MockData| {
-                m.stock_lines = vec![item_a_stock(), item_b_stock(), item_a_no_stock()]
-            }),
+            MockData {
+                stock_lines: vec![item_a_stock(), item_b_stock(), item_a_no_stock()],
+                ..Default::default()
+            },
         )
         .await;
 
