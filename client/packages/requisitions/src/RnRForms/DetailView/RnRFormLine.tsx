@@ -9,6 +9,7 @@ import {
   LowStockStatus,
   NumericTextInput,
   NumUtils,
+  sendTabKeyPress,
   Tooltip,
   useAuthContext,
   useBufferState,
@@ -34,7 +35,6 @@ export const RnRFormLine = ({
   const theme = useTheme();
   const { store } = useAuthContext();
   const { error } = useNotification();
-  const { sendTabKeyPress } = useNativeClient();
   const lineState = useRnRFormContext(useCachedRnRDraftLine(lineId));
 
   // console.log('rendering', lineState?.line.id, lineId);
@@ -334,7 +334,6 @@ const RnRNumberCell = ({
   max?: number;
   allowNegative?: boolean;
 }) => {
-  const { sendTabKeyPress } = useNativeClient();
   const [buffer, setBuffer] = useBufferState<number | undefined>(
     NumUtils.round(value)
   );
