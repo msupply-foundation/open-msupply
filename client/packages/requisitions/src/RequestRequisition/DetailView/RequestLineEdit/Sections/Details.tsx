@@ -120,7 +120,7 @@ export const Details = ({
               type="units"
               value={
                 NumUtils.round(
-                  Number(draft?.itemStats.averageMonthlyConsumption),
+                  draft?.itemStats.averageMonthlyConsumption ?? 0,
                   2
                 ).toString() ?? 0
               }
@@ -223,7 +223,7 @@ export const Details = ({
             plugins.requestRequisitionLine?.editViewField?.map(
               (Field, index) => <Field key={index} line={line} />
             )}
-          {draft && <RequestStats draft={draft} />}
+          {draft && !draft?.isCreated && <RequestStats draft={draft} />}
         </Grid>
       </Grid>
     </>
