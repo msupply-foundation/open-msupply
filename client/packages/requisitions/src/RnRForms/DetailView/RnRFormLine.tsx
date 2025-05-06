@@ -2,8 +2,6 @@ import React from 'react';
 import {
   AlertIcon,
   BasicTextInput,
-  Checkbox,
-  CircleIcon,
   DatePicker,
   Formatter,
   LowStockStatus,
@@ -13,8 +11,6 @@ import {
   Tooltip,
   useAuthContext,
   useBufferState,
-  useNativeClient,
-  useNotification,
   useTheme,
   VenCategoryType,
 } from '@openmsupply-client/common';
@@ -26,22 +22,22 @@ export const RnRFormLine = ({
   periodLength,
   disabled,
   lineId,
+  index,
 }: {
   lineId: string;
-
+  index: number;
   periodLength: number;
   disabled: boolean;
 }) => {
   const theme = useTheme();
   const { store } = useAuthContext();
-  const { error } = useNotification();
   const lineState = useRnRFormContext(useCachedRnRDraftLine(lineId));
 
-  // console.log('rendering', lineState?.line.id, lineId);
+  console.log('rendering', lineState?.line.id, lineId);
 
   if (!lineState) return null;
 
-  const { line, setLine, highlight } = lineState;
+  const { line, setLine } = lineState;
 
   const updateDraft = (update: Partial<RnRFormLineFragment>) => {
     const newPatch = {
@@ -116,33 +112,20 @@ export const RnRFormLine = ({
       : theme.palette.text.primary;
 
   const readOnlyBackgroundColor = theme.palette.background.drawer;
-  const highlightColour = theme.palette.chart.cold.light;
 
   const readOnlyColumn = {
     backgroundColor: readOnlyBackgroundColor,
     padding: '5px',
     color: textColor,
   };
-  const itemDetailStyle = {
-    ...readOnlyColumn,
-    backgroundColor: highlight ? highlightColour : readOnlyBackgroundColor,
-  };
 
   return (
-    <tr>
+    <tr
+      style={{
+        backgroundColor: index % 2 == 1 ? 'rgba(0,0,0,0.02)' : undefined,
+      }}
+    >
       {/* Read only Item data */}
-      {/* Add the tooltip here, as we hide overflow in the code column
-          to fix the code column width for side scroll */}
-      <Tooltip title={line.item.code}>
-        <td className="sticky-column first-column" style={itemDetailStyle}>
-          {line.item.code}
-        </td>
-      </Tooltip>
-      <td className="sticky-column second-column" style={itemDetailStyle}>
-        {line.item.name}
-      </td>
-      <td style={readOnlyColumn}>{line.item.strength}</td>
-      <td style={readOnlyColumn}>{line.item.unitName}</td>
       <td style={{ ...readOnlyColumn, textAlign: 'center' }}>{venCategory}</td>
 
       {/* Enterable consumption data */}
@@ -222,8 +205,9 @@ export const RnRFormLine = ({
         <DatePicker
           sx={{
             width: '160px',
+
             '& fieldset': { border: 'none' },
-            '& input': { color: textColor },
+            '& input': { color: textColor, padding: '2px' },
           }}
           value={line.expiryDate ? new Date(line.expiryDate) : null}
           onChange={date =>
@@ -277,34 +261,6 @@ export const RnRFormLine = ({
         />
       </td>
 
-      {/* Confirm the line */}
-      <td style={{ textAlign: 'center' }}>
-        {
-          <>
-            <Checkbox
-              tabIndex={-1}
-              checked={!!line.confirmed}
-              size="medium"
-              onClick={async () => {
-                if (line.finalBalance < 0) {
-                  error('Final balance should not be below 0')();
-                  return;
-                }
-                setLine({ ...line, confirmed: !line.confirmed });
-              }}
-              disabled={disabled}
-              sx={{ marginLeft: '10px' }}
-            />
-            <CircleIcon
-              sx={{
-                width: '10px',
-                visibility: line?.isDirty ? 'visible' : 'hidden',
-                color: 'secondary.main',
-              }}
-            />
-          </>
-        }
-      </td>
       {/* Readonly - populated from Response Requisition */}
       <RnRNumberCell
         backgroundColor={readOnlyBackgroundColor}
@@ -337,13 +293,20 @@ const RnRNumberCell = ({
   const [buffer, setBuffer] = useBufferState<number | undefined>(
     NumUtils.round(value)
   );
+  const theme = useTheme();
 
-  const backgroundColor = inputBackgroundColor ?? 'white';
+  const backgroundColor = inputBackgroundColor ?? 'rgba(0,0,0,0)';
 
   return (
-    <td style={{ backgroundColor }}>
-      <Tooltip title={value === buffer ? '' : value}>
-        {disabled || !onChange ? (
+    <td
+      style={{
+        backgroundColor,
+        border: error ? `2px solid ${theme.palette.error.main}` : undefined,
+        borderTop: error ? `2px solid ${theme.palette.error.main}` : '0px;',
+      }}
+    >
+      {disabled || !onChange ? (
+        <Tooltip title={value === buffer ? '' : value}>
           <p
             style={{
               padding: '8px',
@@ -353,46 +316,46 @@ const RnRNumberCell = ({
           >
             {buffer}
           </p>
-        ) : (
-          <NumericTextInput
-            slotProps={{
-              input: {
-                sx: {
-                  backgroundColor,
-                  '& .MuiInput-input': {
-                    WebkitTextFillColor: textColor,
-                  },
+        </Tooltip>
+      ) : (
+        <NumericTextInput
+          slotProps={{
+            input: {
+              sx: {
+                backgroundColor,
+                '& .MuiInput-input': {
+                  WebkitTextFillColor: textColor,
                 },
               },
-              htmlInput: {
-                sx: {
-                  backgroundColor,
-                },
+            },
+            htmlInput: {
+              sx: {
+                backgroundColor,
               },
-            }}
-            error={error}
-            value={buffer}
-            disabled={disabled}
-            onChange={newValue => {
-              setBuffer(newValue);
-              if (newValue !== undefined) onChange(newValue);
-            }}
-            max={max}
-            allowNegative={allowNegative}
-            defaultValue={0}
-            // NOTE: setting input mode to text, because on Samsung tablets,
-            // the numeric keyboard doesn't allow entering negative numbers!
-            inputMode={allowNegative ? 'text' : 'numeric'}
-            onKeyDown={e => {
-              if (e.key !== 'Enter') return;
+            },
+          }}
+          error={error}
+          value={buffer}
+          disabled={disabled}
+          onChange={newValue => {
+            setBuffer(newValue);
+            if (newValue !== undefined) onChange(newValue);
+          }}
+          max={max}
+          allowNegative={allowNegative}
+          defaultValue={0}
+          // NOTE: setting input mode to text, because on Samsung tablets,
+          // the numeric keyboard doesn't allow entering negative numbers!
+          inputMode={allowNegative ? 'text' : 'numeric'}
+          onKeyDown={e => {
+            if (e.key !== 'Enter') return;
 
-              e.preventDefault();
-              sendTabKeyPress();
-            }}
-            onFocus={e => e.target.select()}
-          />
-        )}
-      </Tooltip>
+            e.preventDefault();
+            sendTabKeyPress();
+          }}
+          onFocus={e => e.target.select()}
+        />
+      )}
     </td>
   );
 };

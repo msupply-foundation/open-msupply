@@ -53,15 +53,6 @@ export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
     debouncedUpdateRnRForm(patch);
   };
 
-  // const confirmRemainingLines = async () => {
-  //   if (!query.data) return;
-
-  //   const lines = query.data.lines
-  //     .filter(line => !line.confirmed)
-  //     .map(line => ({ ...line, confirmed: true }));
-  //   await updateLines(lines);
-  // };
-
   return {
     query,
     finalise: { finalise, isFinalising, finaliseError },

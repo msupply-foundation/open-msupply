@@ -1,20 +1,22 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Box,
+  // Fade,
   GlobalStyles,
   InfoIcon,
   LocaleKey,
   NothingHere,
   Table,
   Tooltip,
+  Typography,
   useTranslation,
   ViewportList,
   ViewportListRef,
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { RnRFormLine } from './RnRFormLine';
-import { Search } from './Search';
-import { itemMatchesSearch } from '../utils';
+// import { Search } from './Search';
+import { oneTime, useRnRFormContext } from '../api';
 
 interface ContentAreaProps {
   data: RnRFormLineFragment[];
@@ -56,17 +58,16 @@ export const ContentArea = ({
   const t = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<ViewportListRef>(null);
+  const { setListRef } = useRnRFormContext(
+    oneTime(({ setListRef }) => ({
+      setListRef,
+    }))
+  );
 
-  const onSearch = (search: string) => {
-    const foundIndex = data.findIndex(l => itemMatchesSearch(search, l.item));
-
-    foundIndex > -1 &&
-      listRef.current?.scrollToIndex({
-        alignToTop: false,
-        // load 2 lines below the found line
-        index: foundIndex + 2,
-      });
-  };
+  useEffect(() => {
+    // Store the ref in Zustand state
+    setListRef(listRef);
+  }, [setListRef]);
 
   return data.length === 0 ? (
     <NothingHere body={t('error.no-items')} />
@@ -94,6 +95,8 @@ export const ContentArea = ({
           '.sticky-column': {
             backgroundColor: '#fff',
             position: 'sticky',
+            left: 0,
+            width: 'fit-content',
             zIndex: 99,
           },
           '.first-column': {
@@ -122,70 +125,130 @@ export const ContentArea = ({
             padding: 1,
             fontWeight: 'bold',
             border: '1px solid',
-            borderLeft: '0px',
             borderColor: 'gray.light',
           },
           '& td': {
             padding: '2px',
             border: '1px solid',
-            borderLeft: '0px',
             borderColor: 'gray.light',
             fontSize: '14px',
           },
         }}
       >
-        <Headers onSearch={onSearch} />
+        <Headers />
 
-        <tbody>
-          <ViewportList
-            viewportRef={containerRef}
-            items={data}
-            ref={listRef}
-            axis="y"
-            renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
-            initialDelay={1}
-            itemSize={70}
-            overscan={5} // Gives a buffer for when android keyboard opens
-          >
-            {line => (
-              <RnRFormLine
-                key={line.id}
-                lineId={line.id}
-                periodLength={periodLength}
-                disabled={disabled}
-              />
-            )}
-          </ViewportList>
-        </tbody>
+        <ViewportList
+          viewportRef={containerRef}
+          items={data}
+          ref={listRef}
+          axis="y"
+          renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
+          initialDelay={1}
+          itemSize={70}
+          overscan={5} // Gives a buffer for when android keyboard opens
+        >
+          {(line, index) => (
+            <Line
+              key={line.id}
+              index={index}
+              line={line}
+              periodLength={periodLength}
+              disabled={disabled}
+            />
+          )}
+        </ViewportList>
       </Table>
     </Box>
   );
 };
 
-const Headers = ({ onSearch }: { onSearch: (value: string) => void }) => {
-  const t = useTranslation();
+const Line = ({
+  line,
+  periodLength,
+  disabled,
+  index,
+}: {
+  line: RnRFormLineFragment;
+  periodLength: number;
+  disabled: boolean;
+  index: number;
+}) => {
+  const [isDelayed, setIsDelayed] = useState(true);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setIsDelayed(false), 1000);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  return (
+    <tbody>
+      <tr
+        style={{
+          borderBottom: 'none',
+          backgroundColor: index % 2 == 1 ? 'rgba(0,0,0,0.02)' : undefined,
+        }}
+      >
+        <td colSpan={20} style={{ borderBottom: 'none' }}>
+          <Typography
+            className="sticky-column"
+            sx={{
+              backgroundColor: 'rgba(0,0,0,0)',
+              fontSize: '1em',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              paddingTop: 1,
+            }}
+          >
+            {`(${line.item.code}) ${line.item.name} ${line.item.unitName || ''}`}
+          </Typography>
+        </td>
+      </tr>
+      {isDelayed ? (
+        <tr
+          style={{
+            backgroundColor: index % 2 == 1 ? 'rgba(0,0,0,0.02)' : undefined,
+          }}
+        >
+          <td colSpan={20} style={{ height: '42px' }}></td>
+        </tr>
+      ) : (
+        <RnRFormLine
+          index={index}
+          key={line.id}
+          lineId={line.id}
+          periodLength={periodLength}
+          disabled={disabled}
+        />
+      )}
+    </tbody>
+  );
+};
+//  <th className="sticky-column second-column">
+//    <Box
+//      sx={{
+//        fontSize: 14,
+//        display: 'flex',
+//        justifyContent: 'space-between',
+//        alignItems: 'center',
+//      }}
+//    >
+//      {t('label.name')}
+//      <Search />
+//    </Box>
+//  </th>;
+const Headers = () => {
+  // const t = useTranslation();
+
   return (
     <thead>
       <tr>
-        <HeaderCell className="sticky-column first-column" label="label.code" />
+        {/* <HeaderCell className="sticky-column first-column" label="label.code" /> */}
 
         {/* Not the usual HeaderCell here, to add the search input */}
-        <th className="sticky-column second-column">
-          <Box
-            sx={{
-              fontSize: 14,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            {t('label.name')}
-            <Search onSearch={onSearch} />
-          </Box>
-        </th>
 
+        {/* 
         <HeaderCell label="label.strength" width={85} />
-        <HeaderCell label="label.unit" width={80} />
+        <HeaderCell label="label.unit" width={80} /> */}
         <HeaderCell label="label.ven" width={55} />
         <HeaderCell
           label="label.rnr-initial-balance"
@@ -232,7 +295,6 @@ const Headers = ({ onSearch }: { onSearch: (value: string) => void }) => {
           tooltip="description.rnr-low-stock"
         />
         <HeaderCell label="label.comment" />
-        <HeaderCell label="label.confirmed" />
         <HeaderCell
           label="label.approved-quantity"
           tooltip="description.rnr-approved-quantity"
