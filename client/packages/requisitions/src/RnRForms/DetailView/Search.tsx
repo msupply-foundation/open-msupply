@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   IconButton,
@@ -8,24 +8,32 @@ import {
 } from '@openmsupply-client/common';
 import { useRnRFormContext } from '../api';
 
-export const Search = (props: { onSearch: (value: string) => void }) => {
+export const Search = () => {
   const t = useTranslation();
 
-  const { search, setSearch } = useRnRFormContext(({ search, setSearch }) => ({
-    search,
-    setSearch,
-  }));
+  const { search, scrollToIndex, resetSearch } = useRnRFormContext(
+    ({ search, scrollToIndex, resetSearch }) => ({
+      search,
+      scrollToIndex,
+      resetSearch,
+    })
+  );
 
   const [showSearch, setShowSearch] = useState(false);
-  const [input, setInput] = useState(search);
+  const [input, setInput] = useState('');
+
+  useEffect(() => {
+    return () => resetSearch();
+  }, []);
 
   const onSearch = (value: string) => {
     setInput(value);
     // Only search when 3+ characters are entered
     if (value.length > 2) {
-      setSearch(value);
-      props.onSearch(value);
-    } else setSearch('');
+      let found = search(value);
+
+      found != -1 && scrollToIndex(found);
+    } else resetSearch();
   };
 
   return (
@@ -50,7 +58,6 @@ export const Search = (props: { onSearch: (value: string) => void }) => {
             onClear={() => setShowSearch(false)}
             onSearchIconClick={() => setShowSearch(false)}
             searchIconButtonLabel={t('button.close')}
-            debounceTime={0}
             autoFocus
           />
         </Box>
