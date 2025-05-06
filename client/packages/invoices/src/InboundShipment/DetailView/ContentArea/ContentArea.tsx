@@ -15,14 +15,17 @@ import { isInboundPlaceholderRow } from '../../../utils';
 interface ContentAreaProps {
   onAddItem: () => void;
   onRowClick?: null | ((rowData: InboundLineFragment | InboundItem) => void);
+  displayInDoses?: boolean;
 }
 
 const Expando = ({
   rowData,
+  displayInDoses,
 }: {
   rowData: InboundLineFragment | InboundItem;
+  displayInDoses?: boolean;
 }) => {
-  const expandoColumns = useExpansionColumns();
+  const expandoColumns = useExpansionColumns(displayInDoses);
   if ('lines' in rowData && rowData.lines.length > 1) {
     return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
   } else {
@@ -72,7 +75,7 @@ const useHighlightPlaceholderRows = (
 };
 
 export const ContentArea: FC<ContentAreaProps> = React.memo(
-  ({ onAddItem, onRowClick }) => {
+  ({ onAddItem, onRowClick, displayInDoses }) => {
     const t = useTranslation();
     const isDisabled = useInbound.utils.isDisabled();
     const { columns, rows } = useInbound.lines.rows();
@@ -81,7 +84,9 @@ export const ContentArea: FC<ContentAreaProps> = React.memo(
       <DataTable
         id="inbound-detail"
         onRowClick={onRowClick}
-        ExpandContent={Expando}
+        ExpandContent={props => (
+          <Expando {...props} displayInDoses={displayInDoses} />
+        )}
         columns={columns}
         data={rows}
         enableColumnSelection

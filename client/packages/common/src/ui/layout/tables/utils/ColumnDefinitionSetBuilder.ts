@@ -237,6 +237,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.location',
     key: 'location',
     width: 90,
+    align: ColumnAlign.Right,
   },
   unitQuantity: {
     description: 'description.unit-quantity',
@@ -250,6 +251,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.unit',
     key: 'unit',
     width: 125,
+    align: ColumnAlign.Right,
   },
   lineTotal: {
     label: 'label.line-total',

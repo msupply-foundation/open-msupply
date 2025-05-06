@@ -305,8 +305,10 @@ export const useInboundShipmentColumns = ({
   ]);
 };
 
-export const useExpansionColumns = (): Column<InboundLineFragment>[] => {
-  return useColumns<InboundLineFragment>([
+export const useExpansionColumns = (
+  displayInDoses?: boolean
+): Column<InboundLineFragment>[] => {
+  const columns: ColumnDescription<InboundLineFragment>[] = [
     'batch',
     'expiryDate',
     [
@@ -317,16 +319,25 @@ export const useExpansionColumns = (): Column<InboundLineFragment>[] => {
     ],
     'packSize',
     'numberOfPacks',
-    {
+  ];
+
+  if (displayInDoses) {
+    columns.push({
       key: 'doseQuantity',
       label: 'label.doses',
       width: 100,
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => {
+        const isVaccine = rowData.item?.isVaccine ?? false;
         const total = rowData.numberOfPacks * rowData.packSize;
-        return total * (rowData.item?.doses ?? 1);
+        return isVaccine
+          ? total * (rowData.item?.doses ?? 1)
+          : UNDEFINED_STRING_VALUE;
       },
-    },
+    });
+  }
+
+  columns.push(
     [
       'costPricePerPack',
       {
@@ -342,6 +353,8 @@ export const useExpansionColumns = (): Column<InboundLineFragment>[] => {
         accessor: ({ rowData }) => getTotalCost(rowData),
         Cell: CurrencyCell,
       },
-    ],
-  ]);
+    ]
+  );
+
+  return useColumns(columns, {}, []);
 };
