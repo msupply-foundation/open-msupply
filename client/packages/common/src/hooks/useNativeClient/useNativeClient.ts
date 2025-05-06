@@ -238,6 +238,8 @@ export const useNativeClient = ({
     saveFile,
     saveDatabase,
     setServerMode,
-    sendTabKeyPress: nativeAPI?.sendTabKeyPress ?? (() => {}),
   };
 };
+
+export const sendTabKeyPress = () =>
+  (getNativeAPI()?.sendTabKeyPress ?? (() => {}))();
