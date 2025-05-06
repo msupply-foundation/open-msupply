@@ -40,7 +40,7 @@ export const RnRFormLine = ({
 
   if (!lineState) return null;
 
-  const { line, setLine } = lineState;
+  const { line, setLine, highlight } = lineState;
 
   const updateDraft = (update: Partial<RnRFormLineFragment>) => {
     const newPatch = {
@@ -113,12 +113,18 @@ export const RnRFormLine = ({
     disabled || line.confirmed
       ? theme.palette.text.disabled
       : theme.palette.text.primary;
+
   const readOnlyBackgroundColor = theme.palette.background.drawer;
+  const highlightColour = theme.palette.chart.cold.light;
 
   const readOnlyColumn = {
     backgroundColor: readOnlyBackgroundColor,
     padding: '5px',
     color: textColor,
+  };
+  const itemDetailStyle = {
+    ...readOnlyColumn,
+    backgroundColor: highlight ? highlightColour : readOnlyBackgroundColor,
   };
 
   return (
@@ -127,11 +133,11 @@ export const RnRFormLine = ({
       {/* Add the tooltip here, as we hide overflow in the code column
           to fix the code column width for side scroll */}
       <Tooltip title={line.item.code}>
-        <td className="sticky-column first-column" style={readOnlyColumn}>
+        <td className="sticky-column first-column" style={itemDetailStyle}>
           {line.item.code}
         </td>
       </Tooltip>
-      <td style={readOnlyColumn} className="sticky-column second-column">
+      <td className="sticky-column second-column" style={itemDetailStyle}>
         {line.item.name}
       </td>
       <td style={readOnlyColumn}>{line.item.strength}</td>
