@@ -93,13 +93,15 @@ mod test {
     use repository::{
         mock::{
             item_query_test1, mock_item_a, mock_item_b, mock_location_1,
-            mock_master_list_item_query_test1, mock_stocktake_a, mock_store_a, mock_store_b,
-            mock_user_account_a, MockData, MockDataInserts,
+            mock_master_list_item_query_test1, mock_master_list_master_list_line_filter_test,
+            mock_master_list_program_b, mock_program_master_list_test, mock_stocktake_a,
+            mock_store_a, mock_store_b, mock_user_account_a, program_master_list_store, MockData,
+            MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, MasterListLineRow, MasterListLineRowRepository, StockLineRow,
-        StockLineRowRepository, StocktakeLineFilter, StocktakeLineRepository, StocktakeRow,
-        StocktakeRowRepository, StocktakeStatus,
+        EqualFilter, MasterListLineRow, MasterListLineRowRepository, MasterListNameJoinRow,
+        StockLineRow, StockLineRowRepository, StocktakeLineFilter, StocktakeLineRepository,
+        StocktakeRow, StocktakeRowRepository, StocktakeStatus,
     };
     use util::{inline_edit, inline_init};
 
@@ -647,32 +649,54 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_initial_stocktake() {
-        let (_, connection, connection_manager, _) =
-            setup_all("insert_initial_stocktake", MockDataInserts::all()).await;
+        // Mock data creates stocktakes for store_a and store_b
+        // Testing initial stocktake on program_master_list_store which has one master list joined with one item
+        // On success of this test, it also confirms that existing stocktakes on store_a and
+        // store_b do not prevent an initial stocktake being created on program_master_list_store
 
+        // Join some more master lists to the store
+
+        // this master list contains the same item as the already joined master list
+        // -> checks that one item will not be added to the stocktake twice
+        let master_list_name_join = MasterListNameJoinRow {
+            id: "A_program_b_Join".to_string(),
+            name_link_id: mock_program_master_list_test().id.clone(),
+            master_list_id: mock_master_list_program_b().master_list.id.clone(),
+        };
+        // this master list contains two new items
+        // -> checks that the stocktake contains items from all master lists linked to the store
+        let filter_master_list_name_join = MasterListNameJoinRow {
+            id: "Filter_program_b_Join".to_string(),
+            name_link_id: mock_program_master_list_test().id.clone(),
+            master_list_id: mock_master_list_master_list_line_filter_test()
+                .master_list
+                .id
+                .clone(),
+        };
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_initial_stocktake",
+            MockDataInserts::all(),
+            MockData {
+                master_list_name_joins: vec![master_list_name_join, filter_master_list_name_join],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let store = program_master_list_store();
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider
-            .context(mock_store_a().id, mock_user_account_a().id)
+            .context(store.id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.stocktake_service;
 
-        // TODO -  add a stock line for another store and check that it is not added to the stocktake
-        // TODO - add a stocktake for a different store and check still works
-
-        let _ = StockLineRowRepository::new(&connection).upsert_one({
-            &inline_init(|r: &mut StockLineRow| {
-                r.id = "stock_line_row_1".to_string();
-                r.store_id = mock_store_b().id;
-                r.item_link_id = item_query_test1().id;
-            })
-        });
-
-        // create the stocktake
-        service
+        // create the initial stocktake
+        let initial_stocktake = service
             .insert_stocktake(
                 &context,
                 InsertStocktake {
-                    id: "stocktake_1".to_string(),
+                    id: "initial_stocktake".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
@@ -689,12 +713,12 @@ mod test {
         // check that rows were created for the stocktake
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1")),
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("initial_stocktake")),
                 None,
             )
             .unwrap();
 
-        // do we have a stocktake row?
+        // do we have a stocktake row for each item on the master lists?
         assert_eq!(stocktake_rows.len(), 3);
 
         // check there is no associated stockline
@@ -703,27 +727,7 @@ mod test {
             .find(|r| r.line.stock_line_id == Some("stock_line_row_1".to_string()));
         assert!(stock_line_row.is_none());
 
-        // attempt to dd a second intial stocktake, check for error response
-
-        service
-            .insert_stocktake(
-                &context,
-                InsertStocktake {
-                    id: "stocktake_2".to_string(),
-                    comment: Some("comment".to_string()),
-                    description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
-                    is_locked: Some(true),
-                    location: None,
-                    master_list_id: None,
-                    items_have_stock: None,
-                    expires_before: None,
-                    is_initial_stocktake: true,
-                },
-            )
-            .unwrap();
-
-        // check for error response
+        // // attempt to do a second initial stocktake, check for error response
 
         // check the stocktake wasn't created
         let stocktake = StocktakeRowRepository::new(&connection)
@@ -735,53 +739,5 @@ mod test {
             .unwrap();
 
         assert_eq!(None, stocktake)
-
-        // // // add another item to the master list and check that it is added to the stocktake - prerequisite for checking tat the same item is not added twice
-        // let master_list_id = mock_master_list_item_query_test1().master_list.id;
-
-        // //TODO: fix this - additional item is not being added to the stocktake
-        // let _ = MasterListLineRowRepository::new(&connection).upsert_one(&MasterListLineRow {
-        //     id: "master_list_line_b".to_string(),
-        //     master_list_id: master_list_id.clone(),
-        //     item_link_id: "item_d".to_string(),
-        //     ..Default::default()
-        // });
-
-        // service
-        //     .insert_stocktake(
-        //         &context,
-        //         InsertStocktake {
-        //             id: "stocktake_2".to_string(),
-        //             comment: Some("comment".to_string()),
-        //             description: Some("description".to_string()),
-        //             stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
-        //             is_locked: Some(true),
-        //             location: None,
-        //             master_list_id: None,
-        //             items_have_stock: None,
-        //             expires_before: None,
-        //             is_initial_stocktake: true,
-        //         },
-        //     )
-        //     .unwrap();
-
-        // let stocktake_rows = StocktakeLineRepository::new(&connection)
-        //     .query_by_filter(
-        //         StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
-        //         None,
-        //     )
-        //     .unwrap();
-
-        // assert_eq!(stocktake_rows.len(), 4);
-        // // and that it does not have a stock_line linked
-        // assert_eq!(
-        //     stocktake_rows
-        //         .iter()
-        //         .find(|r| r.line.item_link_id == "item_d")
-        //         .unwrap()
-        //         .line
-        //         .stock_line_id,
-        //     None
-        // );
     }
 }

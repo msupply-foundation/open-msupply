@@ -299,7 +299,9 @@ pub fn generate_lines_initial_stocktake(
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
     let item_rows: Vec<ItemRow> = ItemRepository::new(connection)
         .query_by_filter(
-            ItemFilter::new().is_visible(true),
+            ItemFilter::new()
+                .is_visible(true)
+                .r#type(ItemType::Stock.equal_to()),
             Some(store_id.to_string()),
         )?
         .into_iter()
