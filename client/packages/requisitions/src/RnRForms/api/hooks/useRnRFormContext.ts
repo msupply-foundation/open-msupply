@@ -166,7 +166,8 @@ export const useCachedRnRDraftLine = (id: string) => {
 
     const highlight =
       !!state.search &&
-      line.item?.name.toLowerCase().includes(state.search.toLowerCase());
+      (line.item?.code.toLowerCase().includes(state.search.toLowerCase()) ||
+        line.item?.name.toLowerCase().includes(state.search.toLowerCase()));
 
     const shouldUpdate =
       previousIteration !== (state.draftLineIteration[id] ?? 0) ||
