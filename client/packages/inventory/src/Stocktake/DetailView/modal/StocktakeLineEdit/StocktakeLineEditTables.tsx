@@ -215,12 +215,12 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
           // If counted number of packs was changed to result in no adjustment we
           // should remove inventoryAdjustmentReason, otherwise could have a
           // reason on a line with no adjustments
-          const inventoryAdjustmentReason =
+          const reasonOption =
             !patch.countedNumberOfPacks ||
             patch.snapshotNumberOfPacks == patch.countedNumberOfPacks
               ? null
-              : patch.inventoryAdjustmentReason;
-          update({ ...patch, countThisLine: true, inventoryAdjustmentReason });
+              : patch.reasonOption;
+          update({ ...patch, countThisLine: true, reasonOption });
         },
         accessor: ({ rowData }) => rowData.countedNumberOfPacks,
       },
