@@ -15,7 +15,6 @@ import {
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { RnRFormLine } from './RnRFormLine';
-// import { Search } from './Search';
 import { oneTime, useRnRFormContext } from '../api';
 
 interface ContentAreaProps {
@@ -236,19 +235,13 @@ const Line = ({
 //      <Search />
 //    </Box>
 //  </th>;
+
 const Headers = () => {
   // const t = useTranslation();
 
   return (
     <thead>
       <tr>
-        {/* <HeaderCell className="sticky-column first-column" label="label.code" /> */}
-
-        {/* Not the usual HeaderCell here, to add the search input */}
-
-        {/* 
-        <HeaderCell label="label.strength" width={85} />
-        <HeaderCell label="label.unit" width={80} /> */}
         <HeaderCell label="label.ven" width={55} />
         <HeaderCell
           label="label.rnr-initial-balance"
