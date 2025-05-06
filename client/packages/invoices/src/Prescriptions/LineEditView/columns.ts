@@ -2,6 +2,7 @@ import {
   ColumnAlign,
   ColumnDescription,
   ExpiryDateCell,
+  Formatter,
   NumberCell,
   NumUtils,
   PreferenceKey,
@@ -30,8 +31,9 @@ export const usePrescriptionLineEditColumns = ({
   const { data: preferences } = usePreference(
     PreferenceKey.DisplayVaccineInDoses
   );
-  const { getColumnLabelWithPackOrUnit } = useIntlUtils();
+  const { getVaccineItemLabel } = useIntlUtils();
   const displayInDoses = !!preferences?.displayVaccineInDoses && !!isVaccine;
+  const unit = Formatter.sentenceCase(unitName);
 
   const columns: ColumnDescription<
     DraftPrescriptionLine & { unitQuantity?: number }
@@ -59,10 +61,8 @@ export const usePrescriptionLineEditColumns = ({
 
   columns.push({
     Cell: NumberCell,
-    label: getColumnLabelWithPackOrUnit({
-      t,
-      unitName,
-      columnVerb: 'in-stock',
+    label: t('label.units-in-stock', {
+      unit,
     }),
     key: 'totalUnits',
     align: ColumnAlign.Right,
@@ -74,20 +74,14 @@ export const usePrescriptionLineEditColumns = ({
 
   if (displayInDoses) {
     columns.push(
-      ...getPrescriptionLineDosesColumns(
-        t,
-        onChange,
-        getColumnLabelWithPackOrUnit
-      )
+      ...getPrescriptionLineDosesColumns(t, onChange, getVaccineItemLabel)
     );
   } else {
     columns.push(
       {
         Cell: NumberCell,
-        label: getColumnLabelWithPackOrUnit({
-          t,
-          unitName,
-          columnVerb: 'available',
+        label: t('label.units-available', {
+          unit,
         }),
         key: 'availableUnits',
         align: ColumnAlign.Right,
@@ -98,10 +92,8 @@ export const usePrescriptionLineEditColumns = ({
       },
       {
         Cell: UnitQuantityCell,
-        label: getColumnLabelWithPackOrUnit({
-          t,
-          unitName,
-          columnVerb: 'issued',
+        label: t('label.units-issued', {
+          unit,
         }),
         key: 'unitQuantity',
         align: ColumnAlign.Right,

@@ -14,8 +14,8 @@ import {
   useAuthContext,
   useTranslation,
   usePreference,
-  useIntlUtils,
   PreferenceKey,
+  Formatter,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -56,11 +56,12 @@ export const QuantityTableComponent = ({
   const { data: preferences } = usePreference(
     PreferenceKey.DisplayVaccineInDoses
   );
-  const { getColumnLabelWithPackOrUnit } = useIntlUtils();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
   const displayInDoses =
     !!preferences?.displayVaccineInDoses && !!item?.isVaccine;
-  const unitName = item?.unitName ? item.unitName : t('label.unit');
+  const unitName = Formatter.sentenceCase(
+    item?.unitName ? item.unitName : t('label.unit')
+  );
 
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     ...getBatchExpiryColumns(updateDraftLine, theme),
@@ -105,21 +106,14 @@ export const QuantityTableComponent = ({
 
   if (displayInDoses) {
     columnDefinitions.push(
-      ...getInboundDosesColumns(
-        t,
-        updateDraftLine,
-        getColumnLabelWithPackOrUnit,
-        unitName
-      )
+      ...getInboundDosesColumns(t, updateDraftLine, unitName)
     );
   } else {
     columnDefinitions.push([
       'unitQuantity',
       {
-        label: getColumnLabelWithPackOrUnit({
-          t,
-          unitName: item?.unitName,
-          columnVerb: 'received',
+        label: t('label.units-received', {
+          unit: unitName,
         }),
         width: 100,
         accessor: ({ rowData }) => {

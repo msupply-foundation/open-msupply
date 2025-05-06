@@ -1,7 +1,6 @@
 import {
   ColumnAlign,
   ColumnDescription,
-  GetNumberColumnLabelProps,
   LocaleKey,
   NumberCell,
   TypedTFunction,
@@ -25,16 +24,11 @@ export const getDosesPerPackColumn = (
 
 export const getPrescriptionLineDosesColumns = (
   t: TypedTFunction<LocaleKey>,
-  onChange: (key: string, numPacks: number) => void,
-  getColumnLabelWithPackOrUnit: (props: GetNumberColumnLabelProps) => string
+  onChange: (key: string, numPacks: number) => void
 ): ColumnDescription<DraftPrescriptionLine & { unitQuantity?: number }>[] => [
   {
     Cell: NumberCell,
-    label: getColumnLabelWithPackOrUnit({
-      t,
-      displayInDoses: true,
-      columnVerb: 'available',
-    }),
+    label: 'label.doses-available',
     key: 'availableDoses',
     align: ColumnAlign.Right,
     width: 85,
@@ -48,11 +42,7 @@ export const getPrescriptionLineDosesColumns = (
   },
   {
     Cell: DosesQuantityCell,
-    label: getColumnLabelWithPackOrUnit({
-      t,
-      displayInDoses: true,
-      columnVerb: 'issued',
-    }),
+    label: 'label.doses-issued',
     key: 'unitQuantity',
     align: ColumnAlign.Right,
     width: 120,

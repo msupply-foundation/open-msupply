@@ -1,7 +1,6 @@
 import {
   ColumnAlign,
   ColumnDescription,
-  GetNumberColumnLabelProps,
   LocaleKey,
   NumberCell,
   NumberInputCell,
@@ -26,17 +25,12 @@ export const getDosesPerPackColumn = (
 export const getInboundDosesColumns = (
   t: TypedTFunction<LocaleKey>,
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void,
-  getColumnLabelWithPackOrUnit: (props: GetNumberColumnLabelProps) => string,
-  unitName?: string | null
+  unitName: string
 ): ColumnDescription<DraftInboundLine>[] => [
   {
     key: 'unitsPerPack',
-    label: getColumnLabelWithPackOrUnit({
-      t,
-      displayInDoses: true,
-      displayInPack: true,
-      unitName,
-      columnVerb: 'received',
+    label: t('label.units-received', {
+      unit: unitName,
     }),
     Cell: NumberInputCell,
     width: 100,
@@ -60,12 +54,8 @@ export const getInboundDosesColumns = (
   },
   {
     key: 'doseQuantity',
-    label: getColumnLabelWithPackOrUnit({
-      t,
-      displayInDoses: true,
-      unitName,
-      columnVerb: 'received',
-    }),
+    label: 'label.doses-received',
+    align: ColumnAlign.Right,
     width: 100,
     accessor: ({ rowData }) => {
       const total = rowData.numberOfPacks * rowData.packSize;

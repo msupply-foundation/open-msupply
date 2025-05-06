@@ -2,12 +2,7 @@ import { useCallback, useContext, useState } from 'react';
 import { EnvUtils, Formatter } from '@common/utils';
 import { LanguageType } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
-import {
-  LocaleKey,
-  useTranslation,
-  IntlContext,
-  TypedTFunction,
-} from '@common/intl';
+import { LocaleKey, useTranslation, IntlContext } from '@common/intl';
 
 // importing individually to reduce bundle size
 // the date-fns methods are tree shaking correctly
@@ -139,15 +134,6 @@ export const useIntlUtils = () => {
     return localeKeySet.has(key);
   };
 
-  const getColumnLabelWithPackOrUnit = useCallback(
-    (props: GetNumberColumnLabelProps) =>
-      getNumberColumnLabel({
-        ...props,
-        unitName: getPlural(props.unitName ?? '', 2),
-      }),
-    []
-  );
-
   return {
     currentLanguage,
     currentLanguageName,
@@ -163,7 +149,6 @@ export const useIntlUtils = () => {
     translateServerError,
     isLocaleKey,
     translateDynamicKey,
-    getColumnLabelWithPackOrUnit,
   };
 };
 
@@ -215,44 +200,4 @@ const getFullName = (
     default:
       return `${firstName ?? ''} ${lastName ?? ''}`.trim();
   }
-};
-
-type ColumnVerb = 'received' | 'in-stock' | 'available' | 'issued';
-
-export interface GetNumberColumnLabelProps {
-  t: TypedTFunction<LocaleKey>;
-  displayInDoses?: boolean;
-  displayInPack?: boolean;
-  unitName?: string | null;
-  columnVerb?: ColumnVerb;
-}
-
-const getNumberColumnLabel = ({
-  t,
-  displayInDoses,
-  displayInPack = false,
-  unitName,
-  columnVerb,
-}: GetNumberColumnLabelProps) => {
-  const capitalisedunitName = unitName
-    ? unitName.charAt(0).toUpperCase() + unitName.slice(1)
-    : t('label.units');
-  const unitTranslation = t(`label.units-${columnVerb}` as LocaleKey, {
-    unit: capitalisedunitName,
-  });
-  const packTranslation = t(`label.packs-${columnVerb}` as LocaleKey);
-  const dosesTranslation = t(`label.doses-${columnVerb}` as LocaleKey);
-
-  if (displayInDoses) {
-    if (!unitName) {
-      return packTranslation;
-    }
-    return displayInPack ? unitTranslation : dosesTranslation;
-  }
-
-  if (displayInPack) {
-    return packTranslation;
-  }
-
-  return unitTranslation;
 };
