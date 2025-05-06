@@ -177,7 +177,7 @@ const useInsert = ({
     if (!encounterId) return;
 
     const isOtherFacility = input.facilityId === OTHER_FACILITY;
-    const shouldUpdateStockLine =
+    const shouldCreatePrescription =
       input.given && !isOtherFacility && input.createTransactions;
 
     const apiResult = await api.insertVaccination({
@@ -197,7 +197,7 @@ const useInsert = ({
         comment: input.comment,
         notGivenReason: input.notGivenReason,
         itemId: input.itemId,
-        stockLineId: shouldUpdateStockLine ? input.stockLine?.id : undefined,
+        stockLineId: shouldCreatePrescription ? input.stockLine?.id : undefined,
       },
     });
 
