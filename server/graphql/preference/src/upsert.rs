@@ -16,6 +16,7 @@ pub struct UpsertPreferencesInput {
     pub display_population_based_forecasting: Option<bool>,
     pub display_vaccine_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub input_vvm_status: Option<Vec<BoolStorePrefInput>>,
+    pub sort_by_vvm_status: Option<Vec<BoolStorePrefInput>>,
 }
 
 pub fn upsert_preferences(
@@ -36,7 +37,7 @@ pub fn upsert_preferences(
     service_provider
         .preference_service
         .upsert(&service_context, input.to_domain())?;
-        
+
     Ok(())
 }
 
@@ -47,6 +48,7 @@ impl UpsertPreferencesInput {
             display_population_based_forecasting,
             display_vaccine_in_doses,
             input_vvm_status,
+            sort_by_vvm_status,
         } = self;
 
         UpsertPreferences {
@@ -55,6 +57,8 @@ impl UpsertPreferencesInput {
             display_vaccine_in_doses: display_vaccine_in_doses
                 .map(|i| i.into_iter().map(|i| i.to_domain()).collect()),
             input_vvm_status: input_vvm_status
+                .map(|i| i.into_iter().map(|i| i.to_domain()).collect()),
+            sort_by_vvm_status: sort_by_vvm_status
                 .map(|i| i.into_iter().map(|i| i.to_domain()).collect()),
         }
     }

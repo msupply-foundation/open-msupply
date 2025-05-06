@@ -6,6 +6,8 @@ pub mod display_vaccine_in_doses;
 pub use display_vaccine_in_doses::*;
 pub mod input_vvm_status;
 pub use input_vvm_status::*;
+pub mod sort_by_vvm_status;
+pub use sort_by_vvm_status::*;
 
 pub struct PreferenceProvider {
     // Add each preference here
@@ -13,6 +15,7 @@ pub struct PreferenceProvider {
     pub display_population_based_forecasting: DisplayPopulationBasedForecasting,
     pub display_vaccine_in_doses: DisplayVaccineInDoses,
     pub input_vvm_status: InputVvmStatus,
+    pub sort_by_vvm_status: SortByVvmStatus,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -21,5 +24,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         display_population_based_forecasting: DisplayPopulationBasedForecasting,
         display_vaccine_in_doses: DisplayVaccineInDoses,
         input_vvm_status: InputVvmStatus,
+        sort_by_vvm_status: SortByVvmStatus,
     }
 }
