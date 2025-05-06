@@ -12,6 +12,7 @@ import {
   Tooltip,
   useAuthContext,
   useBufferState,
+  useNativeClient,
   useNotification,
   useTheme,
   VenCategoryType,
@@ -33,7 +34,7 @@ export const RnRFormLine = ({
   const theme = useTheme();
   const { store } = useAuthContext();
   const { error } = useNotification();
-
+  const { sendTabKeyPress } = useNativeClient();
   const lineState = useRnRFormContext(useCachedRnRDraftLine(lineId));
 
   console.log('rendering', lineState?.line.id, lineId);
@@ -165,7 +166,6 @@ export const RnRFormLine = ({
         onChange={() => {}}
       />
 
-      {/* Losses/adjustments and stock out */}
       <RnRNumberCell
         value={line.losses}
         onChange={val => updateDraft({ losses: val })}
@@ -173,7 +173,11 @@ export const RnRFormLine = ({
         allowNegative
         disabled={disabled}
       />
+
       <RnRNumberCell
+        inputMode={
+          'text' /* Some number keyboards don't have the minus, thus using normal text */
+        }
         value={line.adjustments}
         onChange={val => updateDraft({ adjustments: val })}
         textColor={textColor}
@@ -263,6 +267,12 @@ export const RnRFormLine = ({
               },
             },
           }}
+          onKeyDown={e => {
+            if (e.key !== 'Enter') return;
+
+            e.preventDefault();
+            sendTabKeyPress();
+          }}
           value={line.comment ?? ''}
           onChange={e => updateDraft({ comment: e.target.value })}
           disabled={disabled}
@@ -274,6 +284,7 @@ export const RnRFormLine = ({
         {
           <>
             <Checkbox
+              tabIndex={-1}
               checked={!!line.confirmed}
               size="medium"
               onClick={async () => {
@@ -316,6 +327,7 @@ const RnRNumberCell = ({
   max,
   error,
   allowNegative,
+  inputMode = 'numeric',
 }: {
   value: number;
   error?: boolean;
@@ -325,10 +337,11 @@ const RnRNumberCell = ({
   textColor?: string;
   max?: number;
   allowNegative?: boolean;
+  inputMode?: 'numeric' | 'text';
 }) => {
   const theme = useTheme();
   const backgroundColor = readOnly ? theme.palette.background.drawer : 'white';
-
+  const { sendTabKeyPress } = useNativeClient();
   const [buffer, setBuffer] = useBufferState<number | undefined>(
     NumUtils.round(value)
   );
@@ -359,7 +372,14 @@ const RnRNumberCell = ({
           // the numeric keyboard doesn't allow entering negative numbers!
           // Only needed for the negative columns, but better feel to have a consistent
           // keyboard as you click through the whole R&R form
-          inputMode="text"
+          inputMode={inputMode}
+          onKeyDown={e => {
+            if (e.key !== 'Enter') return;
+
+            e.preventDefault();
+            sendTabKeyPress();
+          }}
+          onFocus={e => e.target.select()}
         />
       </Tooltip>
     </td>
