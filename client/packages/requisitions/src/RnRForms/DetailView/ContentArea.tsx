@@ -2,10 +2,11 @@ import React, { useRef } from 'react';
 import {
   Box,
   GlobalStyles,
-  InfoTooltipIcon,
+  InfoIcon,
   LocaleKey,
   NothingHere,
   Table,
+  Tooltip,
   useTranslation,
   ViewportList,
 } from '@openmsupply-client/common';
@@ -28,12 +29,19 @@ interface HeaderCellProps {
 const HeaderCell = ({ className, label, tooltip, width }: HeaderCellProps) => {
   const t = useTranslation();
 
+  const Header = (
+    <Box display="flex" style={{ fontSize: 14 }}>
+      {t(label)}
+      {tooltip && (
+        <div style={{ transform: 'scale(0.7)', cursor: 'help' }}>
+          <InfoIcon fontSize="small" />
+        </div>
+      )}
+    </Box>
+  );
   return (
     <th className={className} style={{ minWidth: width }}>
-      <Box display="flex" style={{ fontSize: 14 }}>
-        {t(label)}
-        {tooltip && <InfoTooltipIcon title={t(tooltip)} />}
-      </Box>
+      {tooltip ? <Tooltip title={t(tooltip)}>{Header}</Tooltip> : Header}
     </th>
   );
 };
