@@ -1,6 +1,6 @@
 {
   "admin": "Настройки",
-  "app": "mSupply",
+  "app": "Open mSupply",
   "app.initialise": "Инициализировать",
   "app.login": "Войти",
   "approval-status.approved": "Утверждено",
@@ -809,7 +809,7 @@
   "label.increase-qty": "Увеличить количество",
   "label.indicators": "Индикаторы",
   "label.initial-stock-on-hand": "Начальные ЗВН",
-  "label.initialise-store-properties": "Инициализация свойств хранилища для GAPS",
+  "label.initialise-store-properties-gaps": "Инициализация свойств хранилища для GAPS",
   "label.initialised": "Инициализировано",
   "label.installation-date": "Дата установки",
   "label.insurance": "Страховка",
