@@ -5918,7 +5918,6 @@ export type PreferenceDescriptionNode = {
 };
 
 export enum PreferenceKey {
-  DisplayVaccineInDoses = 'displayVaccineInDoses',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   DisplayVaccineInDoses = 'displayVaccineInDoses',
   ShowContactTracing = 'showContactTracing',
@@ -5946,7 +5945,6 @@ export enum PreferenceValueNodeType {
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
-  displayVaccineInDoses: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   displayVaccineInDoses: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];

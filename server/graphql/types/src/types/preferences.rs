@@ -79,7 +79,6 @@ impl PreferenceKey {
     pub fn from_domain(pref_key: &PrefKey) -> Self {
         match pref_key {
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
-            PrefKey::DisplayVaccineInDoses => PreferenceKey::ShowContactTracing,
             PrefKey::DisplayPopulationBasedForecasting => {
                 PreferenceKey::DisplayPopulationBasedForecasting
             }
