@@ -4,6 +4,8 @@ fragment ServiceItemRow on ItemNode {
   code
   name
   unitName
+  isVaccine
+  doses
 }
 
 fragment StockLine on StockLineNode {
@@ -23,6 +25,7 @@ fragment StockLine on StockLineNode {
     code
     unitName
     doses
+    isVaccine
     itemDirections {
       ...ItemDirection
     }
@@ -46,6 +49,8 @@ fragment ItemRow on ItemNode {
   code
   name
   unitName
+  isVaccine
+  doses
 }
 
 fragment ItemRowWithDirections on ItemNode {

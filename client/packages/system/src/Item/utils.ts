@@ -15,6 +15,10 @@ export const toItemRow = (line: ItemLike): ItemRowFragment => ({
   unitName:
     ('lines' in line ? line.lines[0]?.item?.unitName : line.item?.unitName) ??
     '',
+  isVaccine:
+    ('lines' in line ? line.lines[0]?.item.isVaccine : line.item.isVaccine) ??
+    false,
+  doses: ('lines' in line ? line.lines[0]?.item.doses : line.item.doses) ?? 0,
 });
 
 export const toItemWithPackSize = (

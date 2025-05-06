@@ -126,6 +126,8 @@ export type RequestByNumberQuery = {
               code: string;
               unitName?: string | null;
               defaultPackSize: number;
+              isVaccine: boolean;
+              doses: number;
               availableStockOnHand: number;
               stats: {
                 __typename: 'ItemStatsNode';
@@ -253,6 +255,8 @@ export type RequestByIdQuery = {
               code: string;
               unitName?: string | null;
               defaultPackSize: number;
+              isVaccine: boolean;
+              doses: number;
               availableStockOnHand: number;
               stats: {
                 __typename: 'ItemStatsNode';
