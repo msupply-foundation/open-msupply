@@ -175,7 +175,7 @@ export const RnRFormLine = ({
         value={line.adjustments}
         onChange={val => updateDraft({ adjustments: val })}
         textColor={textColor}
-        allowNegative
+        // allowNegative
         disabled={disabled}
       />
       <RnRNumberCell
@@ -251,10 +251,14 @@ export const RnRFormLine = ({
           sx={{ width: '200px', color: textColor }}
           slotProps={{
             input: {
+              tabIndex: -1,
               sx: {
                 backgroundColor: theme.palette.background.default,
                 '& .MuiInput-input': { color: textColor },
               },
+            },
+            htmlInput: {
+              tabIndex: -1,
             },
           }}
           onKeyDown={e => {

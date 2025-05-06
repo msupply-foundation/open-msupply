@@ -29,7 +29,7 @@ export const itemMatchesSearch = (
   // Use lowerCase to make the search case-insensitive
   const lowerCaseSearch = search.toLowerCase();
   return (
-    item.name.toLowerCase().includes(lowerCaseSearch) ||
-    item.code.toLowerCase().includes(lowerCaseSearch)
+    item.name.toLowerCase().startsWith(lowerCaseSearch) ||
+    item.code.toLowerCase().startsWith(lowerCaseSearch)
   );
 };

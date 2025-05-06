@@ -29,7 +29,7 @@ export const Search = () => {
   const onSearch = (value: string) => {
     setInput(value);
     // Only search when 3+ characters are entered
-    if (value.length > 2) {
+    if (value.length > 0) {
       let found = search(value);
 
       found != -1 && scrollToIndex(found);
