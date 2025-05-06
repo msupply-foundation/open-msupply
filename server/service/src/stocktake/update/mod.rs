@@ -111,7 +111,7 @@ pub fn update_stocktake(
             }
             // Add inventory adjustment reasons to the invoice lines
             for update_reason in result.inventory_adjustment_reason_updates {
-                invoice_line_repo.update_inventory_adjustment_reason_id(
+                invoice_line_repo.update_reason_option_id(
                     &update_reason.invoice_line_id,
                     update_reason.reason_id,
                 )?;

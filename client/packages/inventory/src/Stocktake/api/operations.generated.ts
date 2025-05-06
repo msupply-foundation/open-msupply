@@ -46,11 +46,6 @@ export type StocktakeLineFragment = {
     name: string;
     unitName?: string | null;
   };
-  inventoryAdjustmentReason?: {
-    __typename: 'InventoryAdjustmentReasonNode';
-    id: string;
-    reason: string;
-  } | null;
   reasonOption?: {
     __typename: 'ReasonOptionNode';
     reason: string;
@@ -111,11 +106,6 @@ export type StocktakeFragment = {
         name: string;
         unitName?: string | null;
       };
-      inventoryAdjustmentReason?: {
-        __typename: 'InventoryAdjustmentReasonNode';
-        id: string;
-        reason: string;
-      } | null;
       reasonOption?: {
         __typename: 'ReasonOptionNode';
         reason: string;
@@ -216,11 +206,6 @@ export type StocktakeQuery = {
               name: string;
               unitName?: string | null;
             };
-            inventoryAdjustmentReason?: {
-              __typename: 'InventoryAdjustmentReasonNode';
-              id: string;
-              reason: string;
-            } | null;
             reasonOption?: {
               __typename: 'ReasonOptionNode';
               reason: string;
@@ -293,11 +278,6 @@ export type StocktakeByNumberQuery = {
               name: string;
               unitName?: string | null;
             };
-            inventoryAdjustmentReason?: {
-              __typename: 'InventoryAdjustmentReasonNode';
-              id: string;
-              reason: string;
-            } | null;
             reasonOption?: {
               __typename: 'ReasonOptionNode';
               reason: string;
@@ -355,11 +335,6 @@ export type StocktakeLinesQuery = {
         name: string;
         unitName?: string | null;
       };
-      inventoryAdjustmentReason?: {
-        __typename: 'InventoryAdjustmentReasonNode';
-        id: string;
-        reason: string;
-      } | null;
       reasonOption?: {
         __typename: 'ReasonOptionNode';
         reason: string;
@@ -632,11 +607,6 @@ export const StocktakeLineFragmentDoc = gql`
       unitName
     }
     itemVariantId
-    inventoryAdjustmentReason {
-      __typename
-      id
-      reason
-    }
     reasonOption {
       reason
       type

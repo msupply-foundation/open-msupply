@@ -18,7 +18,7 @@ import {
   UNDEFINED_STRING_VALUE,
   getCommentPopoverColumn,
 } from '@openmsupply-client/common';
-import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
+import { ReasonOptionRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
 import { useStocktakeLineErrorContext } from '../../context';
@@ -38,13 +38,13 @@ const getStocktakeReasons = (
 ) => {
   if ('lines' in rowData) {
     const { lines } = rowData;
-    const inventoryAdjustmentReasons = lines
-      .map(({ inventoryAdjustmentReason }) => inventoryAdjustmentReason)
-      .filter(Boolean) as InventoryAdjustmentReasonRowFragment[];
-    if (inventoryAdjustmentReasons.length !== 0) {
+    const reasonOptions = lines
+      .map(({ reasonOption }) => reasonOption)
+      .filter(Boolean) as ReasonOptionRowFragment[];
+    if (reasonOptions.length !== 0) {
       return (
         ArrayUtils.ifTheSameElseDefault(
-          inventoryAdjustmentReasons,
+          reasonOptions,
           'reason',
           t('multiple')
         ) ?? ''
@@ -53,7 +53,7 @@ const getStocktakeReasons = (
       return '';
     }
   } else {
-    return rowData.inventoryAdjustmentReason?.reason ?? '';
+    return rowData.reasonOption?.reason ?? '';
   }
 };
 
@@ -289,8 +289,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
     {
       key: 'inventoryAdjustmentReason',
       label: 'label.reason',
-      accessor: ({ rowData }) =>
-        rowData.inventoryAdjustmentReason?.reason || '',
+      accessor: ({ rowData }) => rowData.reasonOption?.reason || '',
     },
   ]);
 };

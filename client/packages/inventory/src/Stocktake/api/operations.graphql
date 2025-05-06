@@ -49,12 +49,6 @@ fragment StocktakeLine on StocktakeLineNode {
 
   itemVariantId
 
-  inventoryAdjustmentReason {
-    __typename
-    id
-    reason
-  }
-
   reasonOption {
     reason
     type
