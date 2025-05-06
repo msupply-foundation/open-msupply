@@ -7,7 +7,6 @@ import {
   NumUtils,
   PreferenceKey,
   useColumns,
-  useIntlUtils,
   usePreference,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -31,7 +30,6 @@ export const usePrescriptionLineEditColumns = ({
   const { data: preferences } = usePreference(
     PreferenceKey.DisplayVaccineInDoses
   );
-  const { getVaccineItemLabel } = useIntlUtils();
   const displayInDoses = !!preferences?.displayVaccineInDoses && !!isVaccine;
   const unit = Formatter.sentenceCase(unitName);
 
@@ -73,9 +71,7 @@ export const usePrescriptionLineEditColumns = ({
   });
 
   if (displayInDoses) {
-    columns.push(
-      ...getPrescriptionLineDosesColumns(t, onChange, getVaccineItemLabel)
-    );
+    columns.push(...getPrescriptionLineDosesColumns(onChange));
   } else {
     columns.push(
       {

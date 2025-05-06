@@ -23,7 +23,6 @@ export const getDosesPerPackColumn = (
 });
 
 export const getPrescriptionLineDosesColumns = (
-  t: TypedTFunction<LocaleKey>,
   onChange: (key: string, numPacks: number) => void
 ): ColumnDescription<DraftPrescriptionLine & { unitQuantity?: number }>[] => [
   {
