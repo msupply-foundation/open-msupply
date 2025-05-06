@@ -114,9 +114,17 @@ export const useRnRFormContext = create<RnRFormContext>((set, get) => ({
     }),
   resetSearch: () => set(state => ({ ...state, foundIds: {} })),
   search: term => {
-    let found = Object.values(get().baseLines).filter(l =>
-      itemMatchesSearch(term, l.item)
-    );
+    let numberOfMatches = 0;
+    let found = Object.values(get().baseLines).filter(l => {
+      if (numberOfMatches > 10) return false;
+
+      if (itemMatchesSearch(term, l.item)) {
+        numberOfMatches++;
+        return true;
+      } else {
+        return false;
+      }
+    });
     let first = found[0];
     if (!first) {
       set(state => ({ ...state, foundIds: {} }));
