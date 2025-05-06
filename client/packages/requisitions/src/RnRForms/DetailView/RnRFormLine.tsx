@@ -36,7 +36,7 @@ export const RnRFormLine = ({
 
   const lineState = useRnRFormContext(useCachedRnRDraftLine(lineId));
 
-  console.log('rendering', lineState?.line.id, lineId);
+  // console.log('rendering', lineState?.line.id, lineId);
 
   if (!lineState) return null;
 
@@ -335,36 +335,47 @@ const RnRNumberCell = ({
   return (
     <td style={{ backgroundColor }}>
       <Tooltip title={value === buffer ? '' : value}>
-        <NumericTextInput
-          slotProps={{
-            input: {
-            sx: {
-              backgroundColor,
-              '& .MuiInput-input': {
-                WebkitTextFillColor: textColor,
+        {disabled || readOnly ? (
+          <p
+            style={{
+              padding: '8px',
+              textAlign: 'right',
+            }}
+          >
+            {buffer}
+          </p>
+        ) : (
+          <NumericTextInput
+            slotProps={{
+              input: {
+                sx: {
+                  backgroundColor,
+                  '& .MuiInput-input': {
+                    WebkitTextFillColor: textColor,
+                  },
                 },
               },
-            },
-            htmlInput: {
-              sx: {
-                backgroundColor,
+              htmlInput: {
+                sx: {
+                  backgroundColor,
+                },
               },
-            },
-          }}
-          error={error}
-          value={buffer}
-          disabled={readOnly ?? disabled}
-          onChange={newValue => {
-            setBuffer(newValue);
-            if (newValue !== undefined) onChange(newValue);
-          }}
-          max={max}
-          allowNegative={allowNegative}
-          defaultValue={0}
-          // NOTE: setting input mode to text, because on Samsung tablets,
-          // the numeric keyboard doesn't allow entering negative numbers!
-          inputMode={allowNegative ? 'text' : 'numeric'}
-        />
+            }}
+            error={error}
+            value={buffer}
+            disabled={readOnly ?? disabled}
+            onChange={newValue => {
+              setBuffer(newValue);
+              if (newValue !== undefined) onChange(newValue);
+            }}
+            max={max}
+            allowNegative={allowNegative}
+            defaultValue={0}
+            // NOTE: setting input mode to text, because on Samsung tablets,
+            // the numeric keyboard doesn't allow entering negative numbers!
+            inputMode={allowNegative ? 'text' : 'numeric'}
+          />
+        )}
       </Tooltip>
     </td>
   );
