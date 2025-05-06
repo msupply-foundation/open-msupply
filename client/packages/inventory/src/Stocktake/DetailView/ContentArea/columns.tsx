@@ -279,9 +279,11 @@ export const useStocktakeColumns = ({
           const totalInDosesRounded = totalInDoses
             ? Math.round(totalInDoses * 100) / 100
             : null;
+          const displayDosesTotal = totalInDosesRounded
+            ? `(${totalInDosesRounded} ${t('label.doses')})`
+            : '';
 
-          return `${totalRounded}
-            ${totalInDosesRounded ? `(${totalInDosesRounded} ${t('label.doses')})` : ''}`;
+          return `${totalRounded} ${displayDosesTotal}`;
         }
       },
     },

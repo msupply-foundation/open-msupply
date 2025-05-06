@@ -293,7 +293,7 @@ export const PrescriptionLineEditForm: React.FC<
             disabled={!isNew || disabled}
             currentItemId={item?.id}
             onChange={onChangeItem}
-            includeNonVisibleWithStockOnHand
+            filter={{ isVisibleOrOnHand: true }}
             extraFilter={
               disabled
                 ? undefined

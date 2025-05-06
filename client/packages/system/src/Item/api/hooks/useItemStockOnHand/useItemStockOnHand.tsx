@@ -1,26 +1,18 @@
-import { useInfiniteQuery } from '@openmsupply-client/common';
+import { ItemFilterInput, useInfiniteQuery } from '@openmsupply-client/common';
 import { useItemApi } from '../useItemApi';
 
-export type StockOnHandFilter = Record<
-  string,
-  { like: string } | string | { equalTo: string }
->;
-
 type UseItemStockOnHandParams = {
-  filter: StockOnHandFilter;
+  filter?: ItemFilterInput;
   rowsPerPage: number;
-  includeNonVisibleWithStockOnHand?: boolean;
 };
 
 export const useItemStockOnHandInfinite = ({
   rowsPerPage,
   filter,
-  includeNonVisibleWithStockOnHand,
 }: UseItemStockOnHandParams) => {
   const queryParams = {
     filterBy: filter,
     sortBy: { key: 'name', isDesc: false, direction: 'asc' as 'asc' | 'desc' },
-    includeNonVisibleWithStockOnHand,
   };
 
   const api = useItemApi();

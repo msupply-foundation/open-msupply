@@ -761,7 +761,7 @@
   "label.increase-qty": "زيادة الكمية",
   "label.indicators": "المؤشرات",
   "label.initial-stock-on-hand": "المخزون المتوفر المتاح الابتدائي",
-  "label.initialise-store-properties": "تهيئة خصائص مخزن GAPS",
+  "label.initialise-store-properties-gaps": "تهيئة خصائص مخزن GAPS",
   "label.initialised": "تمت التهيئة",
   "label.installation-date": "تاريخ التنصيب",
   "label.invoice-number": "رقم الفاتورة",
