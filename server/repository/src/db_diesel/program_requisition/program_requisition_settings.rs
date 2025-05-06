@@ -46,7 +46,6 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
         &self,
         filter: Option<ProgramRequisitionSettingsFilter>,
     ) -> Result<Vec<ProgramRequisitionSettings>, RepositoryError> {
-        println!("filter: {:?}", filter);
         let mut query = program_requisition_settings::table
             .inner_join(program::table)
             .inner_join(
@@ -65,10 +64,10 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
             if name_tag.is_some() {
                 let name_tag_ids =
                     NameTagRepository::create_filtered_query(name_tag).select(name_tag::id);
-                println!(
-                    "name_tag_ids SQL: {}",
-                    diesel::debug_query::<crate::DBType, _>(&name_tag_ids).to_string()
-                );
+                // println!(
+                //     "name_tag_ids SQL: {}",
+                //     diesel::debug_query::<crate::DBType, _>(&name_tag_ids).to_string()
+                // );
                 query =
                     query.filter(program_requisition_settings::name_tag_id.eq_any(name_tag_ids));
             }
@@ -79,10 +78,10 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
                     .nullable();
                 // Debugging master_list_ids is not possible directly as it doesn't implement Debug.
                 // Uncomment the following line to debug the SQL query instead:
-                println!(
-                    "{}",
-                    diesel::debug_query::<crate::DBType, _>(&master_list_ids).to_string()
-                );
+                // println!(
+                //     "{}",
+                //     diesel::debug_query::<crate::DBType, _>(&master_list_ids).to_string()
+                // );
                 query = query.filter(program::master_list_id.eq_any(master_list_ids));
             }
 

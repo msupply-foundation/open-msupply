@@ -37,7 +37,13 @@ pub fn period_is_available(
     let number_of_requisitions_in_this_period =
         this_period_requisitions.map(|r| r.count).unwrap_or(0);
 
-    number_of_requisitions_in_this_period < order_type.max_order_per_period as i64
+    let res = number_of_requisitions_in_this_period < order_type.max_order_per_period as i64;
+
+    println!(
+        "res and number of reqs in this period {:?} {:?}",
+        res, number_of_requisitions_in_this_period
+    );
+    res
 }
 
 /// Reduce periods by MAX_NUMBER_OF_HISTORIC_PERIODS and MAX_NUMBER_OF_FUTURE_PERIODS

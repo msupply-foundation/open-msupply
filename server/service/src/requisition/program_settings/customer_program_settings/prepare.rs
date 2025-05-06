@@ -8,7 +8,9 @@ use repository::{
 };
 
 use crate::{
-    requisition::program_settings::common::{get_program_ids, period_is_available},
+    requisition::program_settings::common::{
+        get_program_ids, period_is_available, reduce_and_sort_periods,
+    },
     service_provider::ServiceContext,
 };
 
@@ -40,6 +42,8 @@ pub struct MasterListWithOrderTypes {
     pub name_tag_id: String,
     pub name_tag: String,
     pub program_requisition_settings_id: String,
+    pub program_id: String,
+    pub program_name: String,
     pub order_types: Vec<ProgramRequisitionOrderType>,
 }
 
@@ -56,32 +60,23 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
     customer_name_id: &str,
 ) -> Result<CustomerProgramRequisitionSetting, RepositoryError> {
     // get customer name
-    let customer_name: Option<repository::NameRow> =
-        match NameRowRepository::new(&ctx.connection).find_one_by_id(&customer_name_id) {
-            Ok(Some(name_row)) => Some(name_row),
-            Ok(None) => None,
-            Err(_) => None,
+    let customer_name =
+        match NameRowRepository::new(&ctx.connection).find_one_by_id(&customer_name_id)? {
+            Some(name_row) => name_row,
+            None => return Err(RepositoryError::NotFound),
         };
 
-    let filter = StoreFilter::new().name_id(EqualFilter::equal_to(customer_name_id));
-    // Find customer store id by customer name id
-    let Some(customer_store) = StoreRepository::new(&ctx.connection).query_one(filter)? else {
-        return Err(RepositoryError::NotFound);
-    };
-
-    let equal_to_store_id = EqualFilter::equal_to(&customer_store.store_row.id);
-
     let filter = ProgramRequisitionSettingsFilter::new()
-        .master_list(MasterListFilter::new().exists_for_store_id(equal_to_store_id.clone()))
-        .name_tag(NameTagFilter::new().store_id(equal_to_store_id.clone()));
+        .master_list(
+            MasterListFilter::new().exists_for_name_id(EqualFilter::equal_to(customer_name_id)),
+        )
+        .name_tag(NameTagFilter::new().name_id(EqualFilter::equal_to(customer_name_id)));
 
     // All program settings for store
     let mut settings =
         ProgramRequisitionSettingsRepository::new(&ctx.connection).query(Some(filter))?;
-    println!("settings length{:?}", settings.len());
     settings.sort_by(|a, b| a.master_list.id.cmp(&b.master_list.id));
     settings.dedup();
-    println!("settings length{:?}", settings.len());
 
     // Order Types (matching settings program_settings_ids)
     let program_requisition_settings_ids: Vec<String> = settings
@@ -107,16 +102,18 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
 
     // Requisitions in Period (for all periods and store)
     let filter = RequisitionsInPeriodFilter::new()
-        .store_id(equal_to_store_id)
+        .other_party_id(EqualFilter::equal_to(customer_name_id))
         .program_id(EqualFilter::equal_any(program_ids.clone()))
         .period_id(EqualFilter::equal_any(period_ids))
         .r#type(RequisitionType::Response.equal_to());
+
+    println!("filter {:?}", filter);
 
     let requisitions_in_periods =
         RequisitionsInPeriodRepository::new(&ctx.connection).query(filter)?;
 
     Ok(CustomerProgramRequisitionSetting {
-        customer_name: customer_name.unwrap().name,
+        customer_name: customer_name.name,
         master_lists: settings
             .iter()
             .map(|setting| {
@@ -151,6 +148,8 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
                     name_tag: setting.name_tag_row.name.clone(),
                     program_requisition_settings_id: setting.program_settings_row.id.clone(),
                     order_types: order_types_mapped,
+                    program_id: setting.program_row.id.clone(),
+                    program_name: setting.program_row.name.clone(),
                 }
             })
             .collect(),
@@ -163,26 +162,39 @@ fn map_period_rows_and_requisitions_to_order_type(
     settings: &ProgramRequisitionSettings,
     requisitions_in_periods: Vec<RequisitionsInPeriod>,
 ) -> ProgramRequisitionOrderType {
+    println!("requisitions in period {:?}", requisitions_in_periods);
+    println!("periods {:?}", periods);
     ProgramRequisitionOrderType {
         name: order_type.clone().name,
         id: order_type.clone().id,
-        available_periods: periods
-            .clone()
-            .iter()
-            .filter_map(|period| {
-                if period_is_available(
-                    period,
-                    settings,
-                    &order_type.clone(),
-                    &requisitions_in_periods,
-                ) {
-                    Some(period)
-                } else {
-                    None
-                }
-            })
-            .cloned()
-            .collect(),
+        // available_periods: periods
+        //     .clone()
+        //     .iter()
+        //     .filter_map(|period| {
+        //         if period_is_available(
+        //             period,
+        //             settings,
+        //             &order_type.clone(),
+        //             &requisitions_in_periods,
+        //         ) {
+        //             Some(period)
+        //         } else {
+        //             None
+        //         }
+        //     })
+        //     .cloned()
+        //     .collect(),
+        available_periods: {
+            let available_periods = periods
+                .iter()
+                .filter(|period| {
+                    period_is_available(period, &settings, &order_type, &requisitions_in_periods)
+                })
+                .cloned()
+                .collect();
+
+            reduce_and_sort_periods(available_periods)
+        },
         is_emergency: order_type.is_emergency,
         max_order_per_period: order_type.max_order_per_period,
         program_requisition_settings_id: order_type.program_requisition_settings_id.clone(),
@@ -196,8 +208,8 @@ fn map_period_rows_and_requisitions_to_order_type(
 mod test {
     use repository::{
         mock::{
-            mock_name_store_a, mock_name_store_b, mock_name_store_c, mock_store_a, mock_store_b,
-            mock_store_c, MockData, MockDataInserts,
+            mock_name_store_a, mock_name_store_b, mock_name_store_c, mock_store_a, MockData,
+            MockDataInserts,
         },
         ContextRow, MasterListNameJoinRow, MasterListRow, NameStoreJoinRow, NameTagJoinRow,
         NameTagRow, PeriodRow, PeriodScheduleRow, ProgramRequisitionOrderTypeRow,
@@ -257,6 +269,7 @@ mod test {
             id: "program1".to_string(),
             master_list_id: Some(master_list1.id.clone()),
             context_id: context1.id.clone(),
+            name: "program1".to_string(),
             ..Default::default()
         };
         let master_list2 = MasterListRow {
@@ -277,6 +290,8 @@ mod test {
             id: "program2".to_string(),
             master_list_id: Some(master_list2.id.clone()),
             context_id: context2.id.clone(),
+            name: "program2".to_string(),
+
             ..Default::default()
         };
 
@@ -465,10 +480,6 @@ mod test {
             .unwrap();
         result.master_lists.sort_by(|a, b| a.id.cmp(&b.id));
 
-        println!("result: {:?}", result.master_lists.len());
-        result.master_lists.iter().for_each(|master_list| {
-            println!("master_list: {:?}", master_list.id);
-        });
         assert_eq!(
             result,
             CustomerProgramRequisitionSetting {
@@ -496,9 +507,10 @@ mod test {
                             is_emergency: order_type1.is_emergency,
                             max_order_per_period: order_type1.max_order_per_period,
                             threshold_mos: order_type1.threshold_mos,
-                            // only one period available because requisition is already in use for period 1
                             available_periods: vec![period2.clone()]
-                        }]
+                        }],
+                        program_id: program1.id.clone(),
+                        program_name: program1.name.clone()
                     },
                     MasterListWithOrderTypes {
                         id: master_list1.id.clone(),
@@ -513,6 +525,8 @@ mod test {
                         program_requisition_settings_id: program_requisition_setting3.id.clone(),
                         // no order types because no order types corresponding to requisition settings id
                         order_types: vec![],
+                        program_id: program1.id.clone(),
+                        program_name: program1.name.clone()
                     },
                     MasterListWithOrderTypes {
                         id: master_list2.id.clone(),
@@ -540,6 +554,8 @@ mod test {
                             // only one period available because requisition is already in use for period 4
                             available_periods: vec![period3.clone()]
                         }],
+                        program_id: program2.id.clone(),
+                        program_name: program2.name.clone()
                     },
                     MasterListWithOrderTypes {
                         id: master_list2.id.clone(),
@@ -554,6 +570,8 @@ mod test {
                         program_requisition_settings_id: program_requisition_setting4.id.clone(),
                         // no order types because no order types corresponding to requisition settings id
                         order_types: vec![],
+                        program_id: program2.id.clone(),
+                        program_name: program2.name.clone()
                     },
                 ]
             }
