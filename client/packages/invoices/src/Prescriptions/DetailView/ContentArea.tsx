@@ -17,14 +17,17 @@ interface ContentAreaProps {
   onAddItem: () => void;
   onRowClick?: null | ((rowData: StockOutLineFragment | StockOutItem) => void);
   item?: ItemRowFragment;
+  displayInDoses?: boolean;
 }
 
 const Expand = ({
   rowData,
+  displayInDoses,
 }: {
   rowData: StockOutLineFragment | StockOutItem;
+  displayInDoses?: boolean;
 }) => {
-  const expandoColumns = useExpansionColumns();
+  const expandoColumns = useExpansionColumns(displayInDoses);
 
   if ('lines' in rowData && rowData.lines.length > 1) {
     return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
@@ -36,6 +39,7 @@ const Expand = ({
 export const ContentAreaComponent = ({
   onAddItem,
   onRowClick,
+  displayInDoses,
 }: ContentAreaProps) => {
   const t = useTranslation();
   const {
@@ -57,7 +61,9 @@ export const ContentAreaComponent = ({
       columns={columns}
       data={rows}
       enableColumnSelection
-      ExpandContent={Expand}
+      ExpandContent={props => (
+        <Expand {...props} displayInDoses={displayInDoses} />
+      )}
       noDataElement={
         <NothingHere
           body={t('error.no-prescriptions')}

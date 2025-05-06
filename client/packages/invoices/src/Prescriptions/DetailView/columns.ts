@@ -17,26 +17,21 @@ import {
   usePreference,
   PreferenceKey,
   getDosesPerUnitColumn,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
-import {
-  getPrescriptionDosesSellPriceColumn,
-  getPrescriptionDosesQuantityColumn,
-  getPrescriptionDosesCostColumn,
-} from './dosesColumns';
+import { getPrescriptionDosesQuantityColumn } from './dosesColumns';
 
 interface UsePrescriptionColumnOptions {
   sortBy: SortBy<StockOutLineFragment | StockOutItem>;
   onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
 }
 
-const expansionColumn = getRowExpandColumn<
-  StockOutLineFragment | StockOutItem
->();
-
-export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
-  useColumns([
+export const useExpansionColumns = (
+  displayInDoses?: boolean
+): Column<StockOutLineFragment>[] => {
+  const columns: ColumnDescription<StockOutLineFragment>[] = [
     'batch',
     'expiryDate',
     [
@@ -63,7 +58,26 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
           ),
       },
     ],
-  ]);
+  ];
+
+  if (displayInDoses) {
+    columns.push({
+      key: 'doseQuantity',
+      label: 'label.doses',
+      width: 100,
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => {
+        const isVaccine = rowData.item?.isVaccine ?? false;
+        const total = rowData.numberOfPacks * rowData.packSize;
+        return isVaccine
+          ? total * (rowData.item?.doses ?? 1)
+          : UNDEFINED_STRING_VALUE;
+      },
+    });
+  }
+
+  return useColumns(columns, {}, []);
+};
 
 export const usePrescriptionColumn = ({
   sortBy,
@@ -347,48 +361,36 @@ export const usePrescriptionColumn = ({
           return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
         }
       },
-    }
-  );
-
-  if (OMSPrefs?.displayVaccineInDoses) {
-    columns.push(getPrescriptionDosesSellPriceColumn());
-  }
-
-  columns.push({
-    label: 'label.line-total',
-    key: 'lineTotal',
-    align: ColumnAlign.Right,
-    Cell: CurrencyCell,
-    accessor: ({ rowData }) => {
-      if ('lines' in rowData) {
-        // Multiple lines, so we need to calculate the average price per unit
-        let totalSellPrice = 0;
-        for (const line of rowData.lines) {
-          totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
+    },
+    {
+      label: 'label.line-total',
+      key: 'lineTotal',
+      align: ColumnAlign.Right,
+      Cell: CurrencyCell,
+      accessor: ({ rowData }) => {
+        if ('lines' in rowData) {
+          // Multiple lines, so we need to calculate the average price per unit
+          let totalSellPrice = 0;
+          for (const line of rowData.lines) {
+            totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
+          }
+          return totalSellPrice;
+        } else {
+          return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
         }
-        return totalSellPrice;
-      } else {
-        return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
-      }
+      },
+      getSortValue: rowData => {
+        if ('lines' in rowData) {
+          return Object.values(rowData.lines).reduce(
+            (sum, batch) =>
+              sum + (batch.sellPricePerPack ?? 0) * batch.numberOfPacks,
+            0
+          );
+        } else {
+          return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
+        }
+      },
     },
-    getSortValue: rowData => {
-      if ('lines' in rowData) {
-        return Object.values(rowData.lines).reduce(
-          (sum, batch) =>
-            sum + (batch.sellPricePerPack ?? 0) * batch.numberOfPacks,
-          0
-        );
-      } else {
-        return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
-      }
-    },
-  });
-
-  if (OMSPrefs?.displayVaccineInDoses) {
-    columns.push(getPrescriptionDosesCostColumn());
-  }
-
-  columns.push(
     {
       label: 'label.purchase-cost-price',
       key: 'totalCostPrice',
@@ -418,7 +420,7 @@ export const usePrescriptionColumn = ({
         }
       },
     },
-    expansionColumn
+    getRowExpandColumn()
   );
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
