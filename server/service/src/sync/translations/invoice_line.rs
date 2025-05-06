@@ -289,13 +289,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
-            reason_option_id: match invoice.r#type {
-                InvoiceType::InventoryAddition
-                | InvoiceType::InventoryReduction
-                | InvoiceType::CustomerReturn
-                | InvoiceType::SupplierReturn => option_id,
-                _ => None,
-            },
+            reason_option_id: option_id,
         };
 
         let result = adjust_negative_values(result);
@@ -359,13 +353,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             ..
         } = invoice_line;
 
-        let option_id = match invoice_row.r#type {
-            InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => {
-                inventory_adjustment_reason_id
-            }
-            InvoiceType::CustomerReturn | InvoiceType::SupplierReturn => return_reason_id,
-            _ => None,
-        };
+        let option_id = reason_option_id;
 
         let legacy_row = LegacyTransLineRow {
             id: id.clone(),
