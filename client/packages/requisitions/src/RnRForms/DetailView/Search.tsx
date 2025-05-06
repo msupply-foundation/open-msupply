@@ -47,6 +47,7 @@ export const Search = (props: { onSearch: (value: string) => void }) => {
             value={input}
             onChange={onSearch}
             placeholder={t('placeholder.search-by-name-or-code')}
+            onClear={() => setShowSearch(false)}
             onSearchIconClick={() => setShowSearch(false)}
             searchIconButtonLabel={t('button.close')}
             debounceTime={0}

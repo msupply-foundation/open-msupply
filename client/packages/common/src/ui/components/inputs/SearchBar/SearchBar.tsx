@@ -10,6 +10,7 @@ import { useTranslation } from '@common/intl';
 interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
+  onClear?: () => void;
   onSearchIconClick?: () => void;
   searchIconButtonLabel?: string;
   placeholder: string;
@@ -49,6 +50,7 @@ export const SearchBar = ({
   value,
   onChange,
   onSearchIconClick,
+  onClear,
   placeholder,
   isLoading = false,
   debounceTime = 500,
@@ -107,7 +109,10 @@ export const SearchBar = ({
               <EndAdornment
                 isLoading={isLoading || loading}
                 hasValue={!!buffer}
-                onClear={() => handleChange('')}
+                onClear={() => {
+                  handleChange('');
+                  if (onClear) onClear();
+                }}
               />
             ),
             sx: {
