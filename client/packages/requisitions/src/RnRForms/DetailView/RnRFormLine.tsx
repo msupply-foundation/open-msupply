@@ -337,11 +337,18 @@ const RnRNumberCell = ({
     <td style={{ backgroundColor }}>
       <Tooltip title={value === buffer ? '' : value}>
         <NumericTextInput
-          InputProps={{
+          slotProps={{
+            input: {
             sx: {
               backgroundColor,
               '& .MuiInput-input': {
                 WebkitTextFillColor: textColor,
+                },
+              },
+            },
+            htmlInput: {
+              sx: {
+                backgroundColor,
               },
             },
           }}
