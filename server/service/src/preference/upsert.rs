@@ -68,7 +68,7 @@ pub fn upsert_preferences(
 
             if let Some(input) = sort_by_vvm_status_input {
                 for update in input.into_iter() {
-                    input_vvm_status.upsert(connection, update.value, Some(update.store_id))?;
+                    sort_by_vvm_status.upsert(connection, update.value, Some(update.store_id))?;
                 }
             }
 
