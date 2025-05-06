@@ -2,12 +2,7 @@ import { useCallback, useContext, useState } from 'react';
 import { EnvUtils, Formatter } from '@common/utils';
 import { LanguageType } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
-import {
-  LocaleKey,
-  useTranslation,
-  IntlContext,
-  TypedTFunction,
-} from '@common/intl';
+import { LocaleKey, useTranslation, IntlContext } from '@common/intl';
 
 // importing individually to reduce bundle size
 // the date-fns methods are tree shaking correctly
@@ -139,11 +134,6 @@ export const useIntlUtils = () => {
     return localeKeySet.has(key);
   };
 
-  const getColumnLabelWithPackOrUnit = useCallback(
-    (props: GetNumberColumnLabelProps) => getNumberColumnLabel(props),
-    []
-  );
-
   return {
     currentLanguage,
     currentLanguageName,
@@ -159,7 +149,6 @@ export const useIntlUtils = () => {
     translateServerError,
     isLocaleKey,
     translateDynamicKey,
-    getColumnLabelWithPackOrUnit,
   };
 };
 
@@ -211,37 +200,4 @@ const getFullName = (
     default:
       return `${firstName ?? ''} ${lastName ?? ''}`.trim();
   }
-};
-
-interface GetNumberColumnLabelProps {
-  t: TypedTFunction<LocaleKey>;
-  displayInDoses: boolean;
-  displayInPack?: boolean;
-  itemUnit?: string | null;
-  columnName?: string;
-}
-
-const getNumberColumnLabel = ({
-  t,
-  displayInDoses,
-  displayInPack,
-  itemUnit,
-  columnName,
-}: GetNumberColumnLabelProps) => {
-  const capitalisedItemUnit = itemUnit
-    ? itemUnit.charAt(0).toUpperCase() + itemUnit.slice(1)
-    : t('label.units');
-  const translationWithUnit = `${capitalisedItemUnit} ${columnName}`;
-
-  if (displayInDoses) {
-    return displayInPack
-      ? translationWithUnit
-      : `${t('label.doses')} ${columnName}`;
-  }
-
-  if (displayInPack) {
-    return `${t('label.packs')} ${columnName}`;
-  }
-
-  return translationWithUnit;
 };
