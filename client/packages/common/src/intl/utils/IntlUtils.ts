@@ -217,14 +217,14 @@ const getFullName = (
   }
 };
 
-type InputKey = 'received' | 'in-stock' | 'available' | 'issued';
+type ColumnVerb = 'received' | 'in-stock' | 'available' | 'issued';
 
 export interface GetNumberColumnLabelProps {
   t: TypedTFunction<LocaleKey>;
   displayInDoses?: boolean;
   displayInPack?: boolean;
   unitName?: string | null;
-  inputKey?: InputKey;
+  columnVerb?: ColumnVerb;
 }
 
 const getNumberColumnLabel = ({
@@ -232,16 +232,16 @@ const getNumberColumnLabel = ({
   displayInDoses,
   displayInPack = false,
   unitName,
-  inputKey,
+  columnVerb,
 }: GetNumberColumnLabelProps) => {
   const capitalisedunitName = unitName
     ? unitName.charAt(0).toUpperCase() + unitName.slice(1)
     : t('label.units');
-  const unitTranslation = t(`label.units-${inputKey}` as LocaleKey, {
+  const unitTranslation = t(`label.units-${columnVerb}` as LocaleKey, {
     unit: capitalisedunitName,
   });
-  const packTranslation = t(`label.packs-${inputKey}` as LocaleKey);
-  const dosesTranslation = t(`label.doses-${inputKey}` as LocaleKey);
+  const packTranslation = t(`label.packs-${columnVerb}` as LocaleKey);
+  const dosesTranslation = t(`label.doses-${columnVerb}` as LocaleKey);
 
   if (displayInDoses) {
     if (!unitName) {

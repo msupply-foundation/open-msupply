@@ -36,7 +36,7 @@ export const getInboundDosesColumns = (
       displayInDoses: true,
       displayInPack: true,
       unitName,
-      inputKey: 'received',
+      columnVerb: 'received',
     }),
     Cell: NumberInputCell,
     width: 100,
@@ -64,7 +64,7 @@ export const getInboundDosesColumns = (
       t,
       displayInDoses: true,
       unitName,
-      inputKey: 'received',
+      columnVerb: 'received',
     }),
     width: 100,
     accessor: ({ rowData }) => {

@@ -22,7 +22,7 @@ const getAccessorValue = (rowData: RowData) => {
   return column.accessor ? column.accessor({ rowData }) : undefined;
 };
 
-describe('getDosesPerUnitColumn - for single items', () => {
+describe('getDosesPerUnitColumn: for single items', () => {
   it('returns doses for a vaccine item', () => {
     const rowData: RowData = {
       id: '1',
@@ -54,7 +54,7 @@ describe('getDosesPerUnitColumn - for single items', () => {
   });
 });
 
-describe('getDosesPerUnitColumn - for multiple lines', () => {
+describe('getDosesPerUnitColumn: for multiple lines', () => {
   it('returns the same dose when all lines have the same dose', () => {
     const rowData = {
       id: '1',

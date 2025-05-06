@@ -119,7 +119,7 @@ export const QuantityTableComponent = ({
         label: getColumnLabelWithPackOrUnit({
           t,
           unitName: item?.unitName,
-          inputKey: 'received',
+          columnVerb: 'received',
         }),
         width: 100,
         accessor: ({ rowData }) => {

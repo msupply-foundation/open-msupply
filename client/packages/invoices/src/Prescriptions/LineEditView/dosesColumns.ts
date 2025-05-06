@@ -33,7 +33,7 @@ export const getPrescriptionLineDosesColumns = (
     label: getColumnLabelWithPackOrUnit({
       t,
       displayInDoses: true,
-      inputKey: 'available',
+      columnVerb: 'available',
     }),
     key: 'availableDoses',
     align: ColumnAlign.Right,
@@ -51,7 +51,7 @@ export const getPrescriptionLineDosesColumns = (
     label: getColumnLabelWithPackOrUnit({
       t,
       displayInDoses: true,
-      inputKey: 'issued',
+      columnVerb: 'issued',
     }),
     key: 'unitQuantity',
     align: ColumnAlign.Right,

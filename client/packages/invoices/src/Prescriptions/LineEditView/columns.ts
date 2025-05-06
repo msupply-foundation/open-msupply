@@ -62,7 +62,7 @@ export const usePrescriptionLineEditColumns = ({
     label: getColumnLabelWithPackOrUnit({
       t,
       unitName,
-      inputKey: 'in-stock',
+      columnVerb: 'in-stock',
     }),
     key: 'totalUnits',
     align: ColumnAlign.Right,
@@ -87,7 +87,7 @@ export const usePrescriptionLineEditColumns = ({
         label: getColumnLabelWithPackOrUnit({
           t,
           unitName,
-          inputKey: 'available',
+          columnVerb: 'available',
         }),
         key: 'availableUnits',
         align: ColumnAlign.Right,
@@ -101,7 +101,7 @@ export const usePrescriptionLineEditColumns = ({
         label: getColumnLabelWithPackOrUnit({
           t,
           unitName,
-          inputKey: 'issued',
+          columnVerb: 'issued',
         }),
         key: 'unitQuantity',
         align: ColumnAlign.Right,
