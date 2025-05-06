@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import {
   Box,
   GlobalStyles,
@@ -141,10 +141,7 @@ export const ContentArea = ({
               label="label.adjusted"
               tooltip="description.rnr-consumed-adjusted"
             />
-            <HeaderCell
-              label="label.losses"
-              tooltip="description.rnr-adjustments"
-            />
+            <HeaderCell label="label.losses" tooltip="description.rnr-losses" />
             <HeaderCell
               label="label.rnr-adjustments"
               tooltip="description.rnr-adjustments"
