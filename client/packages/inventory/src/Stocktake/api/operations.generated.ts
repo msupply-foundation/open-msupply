@@ -45,6 +45,8 @@ export type StocktakeLineFragment = {
     code: string;
     name: string;
     unitName?: string | null;
+    isVaccine: boolean;
+    doses: number;
   };
   inventoryAdjustmentReason?: {
     __typename: 'InventoryAdjustmentReasonNode';
@@ -103,6 +105,8 @@ export type StocktakeFragment = {
         code: string;
         name: string;
         unitName?: string | null;
+        isVaccine: boolean;
+        doses: number;
       };
       inventoryAdjustmentReason?: {
         __typename: 'InventoryAdjustmentReasonNode';
@@ -201,6 +205,8 @@ export type StocktakeQuery = {
               code: string;
               name: string;
               unitName?: string | null;
+              isVaccine: boolean;
+              doses: number;
             };
             inventoryAdjustmentReason?: {
               __typename: 'InventoryAdjustmentReasonNode';
@@ -271,6 +277,8 @@ export type StocktakeByNumberQuery = {
               code: string;
               name: string;
               unitName?: string | null;
+              isVaccine: boolean;
+              doses: number;
             };
             inventoryAdjustmentReason?: {
               __typename: 'InventoryAdjustmentReasonNode';
@@ -326,6 +334,8 @@ export type StocktakeLinesQuery = {
         code: string;
         name: string;
         unitName?: string | null;
+        isVaccine: boolean;
+        doses: number;
       };
       inventoryAdjustmentReason?: {
         __typename: 'InventoryAdjustmentReasonNode';
@@ -595,6 +605,8 @@ export const StocktakeLineFragmentDoc = gql`
       code
       name
       unitName
+      isVaccine
+      doses
     }
     itemVariantId
     inventoryAdjustmentReason {

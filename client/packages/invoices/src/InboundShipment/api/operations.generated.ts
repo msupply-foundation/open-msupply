@@ -28,6 +28,8 @@ export type InboundLineFragment = {
     code: string;
     unitName?: string | null;
     defaultPackSize: number;
+    isVaccine: boolean;
+    doses: number;
   };
   location?: {
     __typename: 'LocationNode';
@@ -116,6 +118,8 @@ export type InboundFragment = {
         code: string;
         unitName?: string | null;
         defaultPackSize: number;
+        isVaccine: boolean;
+        doses: number;
       };
       location?: {
         __typename: 'LocationNode';
@@ -318,6 +322,8 @@ export type InvoiceQuery = {
               code: string;
               unitName?: string | null;
               defaultPackSize: number;
+              isVaccine: boolean;
+              doses: number;
             };
             location?: {
               __typename: 'LocationNode';
@@ -455,6 +461,8 @@ export type InboundByNumberQuery = {
               code: string;
               unitName?: string | null;
               defaultPackSize: number;
+              isVaccine: boolean;
+              doses: number;
             };
             location?: {
               __typename: 'LocationNode';
@@ -972,6 +980,8 @@ export const InboundLineFragmentDoc = gql`
       code
       unitName
       defaultPackSize
+      isVaccine
+      doses
     }
     location {
       __typename

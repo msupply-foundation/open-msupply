@@ -48,6 +48,8 @@ const createTestLine = ({
         code: '',
         name: '',
         unitName: '',
+        doses: 0,
+        isVaccine: false,
         __typename: 'ItemNode',
       },
       type: InvoiceLineNodeType.StockOut,
@@ -70,6 +72,8 @@ const createTestLine = ({
         item: {
           code: '',
           name: '',
+          isVaccine: false,
+          doses: 0,
           __typename: 'ItemNode',
         },
       },
