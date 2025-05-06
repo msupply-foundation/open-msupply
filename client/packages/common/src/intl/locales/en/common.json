@@ -995,6 +995,7 @@
   "label.number-months_other": "{{count}} Months",
   "label.number-of-doses": "Number of doses",
   "label.observations": "Observations",
+  "label.of": "of",
   "label.of-unit-name_one": "of {{count}} {{unitName}}",
   "label.of-unit-name_other": "of {{count}} {{unitName}}s",
   "label.ok-and-close": "Close log viewer",
