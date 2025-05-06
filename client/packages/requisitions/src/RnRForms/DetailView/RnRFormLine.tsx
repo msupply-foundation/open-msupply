@@ -2,8 +2,6 @@ import React from 'react';
 import {
   AlertIcon,
   BasicTextInput,
-  Checkbox,
-  CircleIcon,
   DatePicker,
   Formatter,
   LowStockStatus,
@@ -13,8 +11,6 @@ import {
   Tooltip,
   useAuthContext,
   useBufferState,
-  useNativeClient,
-  useNotification,
   useTheme,
   VenCategoryType,
 } from '@openmsupply-client/common';
@@ -28,16 +24,14 @@ export const RnRFormLine = ({
   lineId,
 }: {
   lineId: string;
-
   periodLength: number;
   disabled: boolean;
 }) => {
   const theme = useTheme();
   const { store } = useAuthContext();
-  const { error } = useNotification();
   const lineState = useRnRFormContext(useCachedRnRDraftLine(lineId));
 
-  // console.log('rendering', lineState?.line.id, lineId);
+  console.log('rendering', lineState?.line.id, lineId);
 
   if (!lineState) return null;
 
@@ -141,7 +135,6 @@ export const RnRFormLine = ({
       <td className="sticky-column second-column" style={itemDetailStyle}>
         {line.item.name}
       </td>
-      <td style={readOnlyColumn}>{line.item.strength}</td>
       <td style={readOnlyColumn}>{line.item.unitName}</td>
       <td style={{ ...readOnlyColumn, textAlign: 'center' }}>{venCategory}</td>
 
@@ -277,34 +270,6 @@ export const RnRFormLine = ({
         />
       </td>
 
-      {/* Confirm the line */}
-      <td style={{ textAlign: 'center' }}>
-        {
-          <>
-            <Checkbox
-              tabIndex={-1}
-              checked={!!line.confirmed}
-              size="medium"
-              onClick={async () => {
-                if (line.finalBalance < 0) {
-                  error('Final balance should not be below 0')();
-                  return;
-                }
-                setLine({ ...line, confirmed: !line.confirmed });
-              }}
-              disabled={disabled}
-              sx={{ marginLeft: '10px' }}
-            />
-            <CircleIcon
-              sx={{
-                width: '10px',
-                visibility: line?.isDirty ? 'visible' : 'hidden',
-                color: 'secondary.main',
-              }}
-            />
-          </>
-        }
-      </td>
       {/* Readonly - populated from Response Requisition */}
       <RnRNumberCell
         backgroundColor={readOnlyBackgroundColor}

@@ -1,6 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Box,
+  // Fade,
   GlobalStyles,
   InfoIcon,
   LocaleKey,
@@ -14,7 +15,7 @@ import {
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { RnRFormLine } from './RnRFormLine';
 import { Search } from './Search';
-import { itemMatchesSearch } from '../utils';
+import { oneTime, useRnRFormContext } from '../api';
 
 interface ContentAreaProps {
   data: RnRFormLineFragment[];
@@ -56,17 +57,16 @@ export const ContentArea = ({
   const t = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<ViewportListRef>(null);
+  const { setListRef } = useRnRFormContext(
+    oneTime(({ setListRef }) => ({
+      setListRef,
+    }))
+  );
 
-  const onSearch = (search: string) => {
-    const foundIndex = data.findIndex(l => itemMatchesSearch(search, l.item));
-
-    foundIndex > -1 &&
-      listRef.current?.scrollToIndex({
-        alignToTop: false,
-        // load 2 lines below the found line
-        index: foundIndex + 2,
-      });
-  };
+  useEffect(() => {
+    // Store the ref in Zustand state
+    setListRef(listRef);
+  }, [setListRef]);
 
   return data.length === 0 ? (
     <NothingHere body={t('error.no-items')} />
@@ -134,7 +134,7 @@ export const ContentArea = ({
           },
         }}
       >
-        <Headers onSearch={onSearch} />
+        <Headers />
 
         <tbody>
           <ViewportList
@@ -162,7 +162,7 @@ export const ContentArea = ({
   );
 };
 
-const Headers = ({ onSearch }: { onSearch: (value: string) => void }) => {
+const Headers = () => {
   const t = useTranslation();
   return (
     <thead>
@@ -180,11 +180,9 @@ const Headers = ({ onSearch }: { onSearch: (value: string) => void }) => {
             }}
           >
             {t('label.name')}
-            <Search onSearch={onSearch} />
+            <Search />
           </Box>
         </th>
-
-        <HeaderCell label="label.strength" width={85} />
         <HeaderCell label="label.unit" width={80} />
         <HeaderCell label="label.ven" width={55} />
         <HeaderCell
