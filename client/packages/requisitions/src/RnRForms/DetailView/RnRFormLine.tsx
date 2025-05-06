@@ -113,9 +113,10 @@ export const RnRFormLine = ({
     disabled || line.confirmed
       ? theme.palette.text.disabled
       : theme.palette.text.primary;
+  const readOnlyBackgroundColor = theme.palette.background.drawer;
 
   const readOnlyColumn = {
-    backgroundColor: theme.palette.background.drawer,
+    backgroundColor: readOnlyBackgroundColor,
     padding: '5px',
     color: textColor,
   };
@@ -159,10 +160,9 @@ export const RnRFormLine = ({
 
       {/* Readonly calculated value */}
       <RnRNumberCell
-        readOnly
+        backgroundColor={readOnlyBackgroundColor}
         textColor={textColor}
         value={line.adjustedQuantityConsumed}
-        onChange={() => {}}
       />
 
       {/* Losses/adjustments and stock out */}
@@ -189,28 +189,24 @@ export const RnRFormLine = ({
 
       {/* Readonly calculated values */}
       <RnRNumberCell
-        readOnly
+        backgroundColor={readOnlyBackgroundColor}
         value={line.finalBalance}
         error={line.finalBalance < 0}
         textColor={textColor}
-        onChange={() => {}}
       />
       <RnRNumberCell
-        readOnly
+        backgroundColor={readOnlyBackgroundColor}
         value={line.averageMonthlyConsumption}
-        onChange={() => {}}
         textColor={textColor}
       />
       <RnRNumberCell
-        readOnly
+        backgroundColor={readOnlyBackgroundColor}
         value={line.minimumQuantity}
-        onChange={() => {}}
         textColor={textColor}
       />
       <RnRNumberCell
-        readOnly
+        backgroundColor={readOnlyBackgroundColor}
         value={line.maximumQuantity}
-        onChange={() => {}}
         textColor={textColor}
       />
 
@@ -297,10 +293,9 @@ export const RnRFormLine = ({
       </td>
       {/* Readonly - populated from Response Requisition */}
       <RnRNumberCell
-        readOnly
+        backgroundColor={readOnlyBackgroundColor}
         value={line.approvedQuantity ?? 0}
         textColor={textColor}
-        onChange={() => {}}
       />
     </tr>
   );
@@ -309,9 +304,9 @@ export const RnRFormLine = ({
 const RnRNumberCell = ({
   value,
   disabled,
-  readOnly,
   onChange,
   textColor,
+  backgroundColor: inputBackgroundColor,
   max,
   error,
   allowNegative,
@@ -319,27 +314,27 @@ const RnRNumberCell = ({
   value: number;
   error?: boolean;
   disabled?: boolean;
-  readOnly?: boolean;
-  onChange: (val: number) => void;
+  onChange?: (val: number) => void;
   textColor?: string;
+  backgroundColor?: string;
   max?: number;
   allowNegative?: boolean;
 }) => {
-  const theme = useTheme();
-  const backgroundColor = readOnly ? theme.palette.background.drawer : 'white';
-
   const [buffer, setBuffer] = useBufferState<number | undefined>(
     NumUtils.round(value)
   );
 
+  const backgroundColor = inputBackgroundColor ?? 'white';
+
   return (
     <td style={{ backgroundColor }}>
       <Tooltip title={value === buffer ? '' : value}>
-        {disabled || readOnly ? (
+        {disabled || !onChange ? (
           <p
             style={{
               padding: '8px',
               textAlign: 'right',
+              color: textColor,
             }}
           >
             {buffer}
@@ -363,7 +358,7 @@ const RnRNumberCell = ({
             }}
             error={error}
             value={buffer}
-            disabled={readOnly ?? disabled}
+            disabled={disabled}
             onChange={newValue => {
               setBuffer(newValue);
               if (newValue !== undefined) onChange(newValue);
