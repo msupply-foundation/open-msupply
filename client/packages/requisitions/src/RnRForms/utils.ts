@@ -19,3 +19,17 @@ export const getStatusTranslator =
         statusTranslation[RnRFormNodeStatus.Draft]
     );
   };
+
+export const itemMatchesSearch = (
+  search: string,
+  item: { name: string; code: string } | undefined
+) => {
+  if (!item) return false;
+
+  // Use lowerCase to make the search case-insensitive
+  const lowerCaseSearch = search.toLowerCase();
+  return (
+    item.name.toLowerCase().includes(lowerCaseSearch) ||
+    item.code.toLowerCase().includes(lowerCaseSearch)
+  );
+};

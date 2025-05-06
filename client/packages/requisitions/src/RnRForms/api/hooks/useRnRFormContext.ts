@@ -3,6 +3,7 @@ import { RnRFormLineFragment } from '../operations.generated';
 import { create, RecordWithId } from '@openmsupply-client/common';
 import keyBy from 'lodash/keyBy';
 import mapValues from 'lodash/mapValues';
+import { itemMatchesSearch } from '../../utils';
 
 type SetLine = (line: RecordWithId & Partial<RnRFormLineFragment>) => void;
 interface RnRFormContext {
@@ -165,9 +166,7 @@ export const useCachedRnRDraftLine = (id: string) => {
     const line = { ...baseLine, ...(state.draftLines[id] || {}) };
 
     const highlight =
-      !!state.search &&
-      (line.item?.code.toLowerCase().includes(state.search.toLowerCase()) ||
-        line.item?.name.toLowerCase().includes(state.search.toLowerCase()));
+      !!state.search && itemMatchesSearch(state.search, line.item);
 
     const shouldUpdate =
       previousIteration !== (state.draftLineIteration[id] ?? 0) ||
