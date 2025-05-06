@@ -713,7 +713,8 @@ mod test {
         // check that rows were created for the stocktake
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("initial_stocktake")),
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to(&initial_stocktake.id)),
                 None,
             )
             .unwrap();
