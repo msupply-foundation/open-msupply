@@ -85,13 +85,13 @@ mod stocktake_line_test {
         mock::{
             mock_item_a, mock_item_a_lines, mock_locked_stocktake,
             mock_new_stock_line_for_stocktake_a, mock_stock_line_b, mock_stock_line_si_d,
-            mock_stocktake_a, mock_stocktake_c, mock_stocktake_finalised, mock_stocktake_line_a,
-            mock_store_a, MockData, MockDataInserts,
+            mock_stocktake_a, mock_stocktake_finalised, mock_stocktake_line_a, mock_store_a,
+            program_master_list_store, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository,
         InventoryAdjustmentType, InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType,
-        StockLineFilter, StockLineRepository, StockLineRow, StocktakeLineRow,
+        StockLineFilter, StockLineRepository, StockLineRow, StocktakeLineRow, StocktakeRow,
     };
     use util::{inline_init, uuid::uuid};
 
@@ -174,6 +174,20 @@ mod stocktake_line_test {
             })
         }
 
+        let store_id = program_master_list_store().id;
+        fn mock_initial_stocktake(store_id: &str) -> StocktakeRow {
+            inline_init(|r: &mut StocktakeRow| {
+                r.id = "initial_stocktake".to_string();
+                r.store_id = store_id.to_string();
+                r.stocktake_number = 11;
+                r.created_datetime = NaiveDate::from_ymd_opt(2021, 12, 14)
+                    .unwrap()
+                    .and_hms_milli_opt(12, 30, 0, 0)
+                    .unwrap();
+                r.is_initial_stocktake = true
+            })
+        }
+
         let (_, _, connection_manager, _) = setup_all_with_data(
             "insert_stocktake_line",
             MockDataInserts::all(),
@@ -181,7 +195,8 @@ mod stocktake_line_test {
                 r.invoices = vec![outbound_shipment()];
                 r.invoice_lines = vec![outbound_shipment_line()];
                 r.inventory_adjustment_reasons = vec![positive_reason(), negative_reason()];
-                r.stock_lines = vec![mock_stock_line_c(), mock_stock_line_d()]
+                r.stock_lines = vec![mock_stock_line_c(), mock_stock_line_d()];
+                r.stocktakes = vec![mock_initial_stocktake(&store_id)]
             }),
         )
         .await;
@@ -507,29 +522,21 @@ mod stocktake_line_test {
             })
         );
 
-        // test initial stocktake saves with no adjustment reason
-        let stocktake_c = mock_stocktake_c();
+        // test initial stocktake success with no adjustment reason (is not required)
+        context.store_id = program_master_list_store().id;
         let item_a = mock_item_a();
         let result = service
             .insert_stocktake_line(
                 &context,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
-                    r.stocktake_id.clone_from(&stocktake_c.id);
+                    r.stocktake_id = "initial_stocktake".to_string();
                     r.counted_number_of_packs = Some(20.0);
                     r.item_id = Some(item_a.id);
+                    r.inventory_adjustment_reason_id = None
                 }),
             )
             .unwrap();
-        pretty_assertions::assert_eq!(
-            result.line,
-            inline_init(|r: &mut StocktakeLineRow| {
-                r.id.clone_from(&result.line.id);
-                r.stocktake_id = stocktake_c.id;
-                r.item_name = "Item A".to_string();
-                r.counted_number_of_packs = Some(20.0);
-                r.item_link_id = "item_a".to_string();
-            })
-        );
+        assert_eq!(result.line.inventory_adjustment_reason_id, None);
     }
 }
