@@ -54,38 +54,23 @@ impl SyncTranslation for ReasonTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyOptionsRow>(&sync_record.data)?;
 
-        let result = match data.r#type {
-            LegacyOptionsType::PositiveInventoryAdjustment => {
-                PullTranslateResult::upsert(ReasonOptionRow {
-                    id: data.id.to_string(),
-                    r#type: ReasonOptionType::PositiveInventoryAdjustment,
-                    is_active: data.is_active,
-                    reason: data.reason,
-                })
-            }
+        let reason_option_type = match data.r#type {
             LegacyOptionsType::NegativeInventoryAdjustment => {
-                PullTranslateResult::upsert(ReasonOptionRow {
-                    id: data.id.to_string(),
-                    r#type: ReasonOptionType::NegativeInventoryAdjustment,
-                    is_active: data.is_active,
-                    reason: data.reason,
-                })
+                ReasonOptionType::NegativeInventoryAdjustment
             }
-            LegacyOptionsType::ReturnReason => PullTranslateResult::upsert(ReasonOptionRow {
-                id: data.id.to_string(),
-                r#type: ReasonOptionType::ReturnReason,
-                is_active: data.is_active,
-                reason: data.reason,
-            }),
-            LegacyOptionsType::RequisitionLineVariance => {
-                PullTranslateResult::upsert(ReasonOptionRow {
-                    id: data.id.to_string(),
-                    is_active: data.is_active,
-                    reason: data.reason,
-                    r#type: ReasonOptionType::RequisitionLineVariance,
-                })
+            LegacyOptionsType::PositiveInventoryAdjustment => {
+                ReasonOptionType::PositiveInventoryAdjustment
             }
+            LegacyOptionsType::RequisitionLineVariance => ReasonOptionType::RequisitionLineVariance,
+            LegacyOptionsType::ReturnReason => ReasonOptionType::ReturnReason,
         };
+
+        let result = PullTranslateResult::upsert(ReasonOptionRow {
+            id: data.id.to_string(),
+            r#type: reason_option_type,
+            is_active: data.is_active,
+            reason: data.reason,
+        });
 
         Ok(result)
     }
