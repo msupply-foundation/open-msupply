@@ -230,7 +230,6 @@ const Headers = () => {
           tooltip="description.rnr-low-stock"
         />
         <HeaderCell label="label.comment" />
-        <HeaderCell label="label.confirmed" />
         <HeaderCell
           label="label.approved-quantity"
           tooltip="description.rnr-approved-quantity"
