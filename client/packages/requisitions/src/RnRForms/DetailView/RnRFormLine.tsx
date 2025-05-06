@@ -341,6 +341,7 @@ const RnRNumberCell = ({
 }) => {
   const theme = useTheme();
   const backgroundColor = readOnly ? theme.palette.background.drawer : 'white';
+
   const [buffer, setBuffer] = useBufferState<number | undefined>(
     NumUtils.round(value)
   );
