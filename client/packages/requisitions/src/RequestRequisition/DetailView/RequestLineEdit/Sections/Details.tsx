@@ -118,7 +118,12 @@ export const Details = ({
             />
             <ReadOnlyField
               type="units"
-              value={draft?.itemStats.averageMonthlyConsumption ?? 0}
+              value={
+                NumUtils.round(
+                  Number(draft?.itemStats.averageMonthlyConsumption),
+                  2
+                ).toString() ?? 0
+              }
               label={t('label.amc')}
             />
             {isProgram && useConsumptionData && (

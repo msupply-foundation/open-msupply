@@ -1,9 +1,16 @@
-import React, { Dispatch, ReactElement, SetStateAction } from 'react';
+import React, {
+  Dispatch,
+  ReactElement,
+  SetStateAction,
+  useEffect,
+  useState,
+} from 'react';
 import { useTranslation } from '@common/intl';
 import {
   ItemRowFragment,
   ItemWithStatsFragment,
   StockItemSearchInput,
+  useItemById,
 } from '@openmsupply-client/system';
 import {
   Box,
@@ -35,11 +42,13 @@ export const RequestLineEdit = ({
   lines,
   requisition,
   setCurrentItem,
-  disabled: isSent,
+  disabled,
 }: RequestLineEditProps): ReactElement => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
   const { width } = useWindowDimensions();
+  const [itemId, setItemId] = useState<string>();
+  const { data } = useItemById(itemId);
 
   const key = draft?.id ?? 'new';
   const isNew = !draft?.id;
@@ -47,18 +56,12 @@ export const RequestLineEdit = ({
   const line = lines.find(line => line.id === draft?.id);
 
   const handleChange = (newItem: ItemRowFragment | null) => {
-    if (newItem) {
-      const item = {
-        ...newItem,
-        stats: {
-          availableStockOnHand: 0,
-          averageMonthlyConsumption: 0,
-        },
-      } as ItemWithStatsFragment;
-
-      setCurrentItem(item);
-    }
+    if (newItem) setItemId(newItem.id);
   };
+
+  useEffect(() => {
+    if (data) setCurrentItem(data);
+  }, [data, setCurrentItem]);
 
   return (
     <Box display="flex" flexDirection="column" padding={2} gap={1}>
@@ -66,22 +69,22 @@ export const RequestLineEdit = ({
         key={`${key}_item_search`}
         title={t('label.item', { count: 1 })}
         closedSummary={draft?.itemName}
-        defaultExpanded={isNew && !isSent}
+        defaultExpanded={!disabled}
       >
         <StockItemSearchInput
           currentItemId={draft?.itemId}
           onChange={handleChange}
-          disabled={!isNew || isSent}
+          disabled={disabled}
           extraFilter={item => !lines.some(line => line.item.id === item.id)}
         />
       </AccordionPanelSection>
       <AccordionPanelSection
         key={`${key}_order`}
         title={t('title.order')}
-        defaultExpanded={!isNew && !isSent}
+        defaultExpanded={!isNew && !disabled}
       >
         <Order
-          disabled={isSent}
+          disabled={disabled}
           isPacksEnabled={isPacksEnabled}
           draft={draft}
           update={update}
@@ -94,7 +97,7 @@ export const RequestLineEdit = ({
           update={update}
           plugins={plugins}
           isPacksEnabled={isPacksEnabled}
-          disabled={isSent}
+          disabled={disabled}
         />
       </AccordionPanelSection>
       <AccordionPanelSection
@@ -105,7 +108,7 @@ export const RequestLineEdit = ({
         <TextArea
           value={draft?.comment ?? ''}
           onChange={e => update({ comment: e.target.value })}
-          disabled={isSent}
+          disabled={disabled}
         />
       </AccordionPanelSection>
       <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
