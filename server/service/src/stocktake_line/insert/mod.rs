@@ -227,10 +227,10 @@ mod stocktake_line_test {
         assert_eq!(error, InsertStocktakeLineError::AdjustmentReasonNotValid);
 
         ReasonOptionRowRepository::new(&context.connection)
-            .delete(&positive_reason().id)
+            .soft_delete(&positive_reason().id)
             .unwrap();
         ReasonOptionRowRepository::new(&context.connection)
-            .delete(&negative_reason().id)
+            .soft_delete(&negative_reason().id)
             .unwrap();
 
         // error: StocktakeDoesNotExist,
