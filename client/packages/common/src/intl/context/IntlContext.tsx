@@ -45,16 +45,16 @@ export function initialiseI18n({
         ],
         backendOptions: [
           {
-            /* options for primary backend */
+            /* options for primary backend (local storage) */
             expirationTime,
-            defaultVersion: 'v0.1',
-            versions: {
-              en: languageVersion,
-            },
+            defaultVersion: languageVersion,
           },
           {
-            /* options for secondary backend */
+            /* options for secondary backend (http api request) */
             loadPath,
+            queryStringParams: {
+              v: languageVersion,
+            },
           },
         ],
       },
