@@ -7,6 +7,7 @@ import {
   FlatButton,
   InputWithLabelRow,
   NothingHere,
+  NumericTextInput,
   Typography,
 } from '@common/components';
 import {
@@ -89,7 +90,7 @@ const ItemVariant = ({
         minTemperature: variant.coldStorageType.minTemperature,
         maxTemperature: variant.coldStorageType.maxTemperature,
       })
-    : null;
+    : '';
 
   return (
     <Box maxWidth="1000px" margin="25px auto" paddingBottom={6}>
@@ -140,6 +141,28 @@ const ItemVariant = ({
             Input={
               <BasicTextInput
                 value={variant.manufacturer?.name ?? ''}
+                disabled
+                fullWidth
+              />
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.doses-per-unit')}
+            labelWidth="200"
+            Input={
+              <NumericTextInput
+                value={variant.dosesPerUnit}
+                disabled
+                fullWidth
+              />
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.vvm-type')}
+            labelWidth="200"
+            Input={
+              <BasicTextInput
+                value={variant.vvmType ?? ''}
                 disabled
                 fullWidth
               />
