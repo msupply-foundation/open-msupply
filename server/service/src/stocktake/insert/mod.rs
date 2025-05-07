@@ -192,7 +192,7 @@ mod test {
             .unwrap()
             .unwrap();
 
-        pretty_assertions::assert_eq!(
+        assert_eq!(
             new_row,
             StocktakeRow {
                 user_id: mock_user_account_a().id,
@@ -574,7 +574,7 @@ mod test {
             )
             .unwrap();
 
-        pretty_assertions::assert_eq!(stocktake_rows.len(), 0);
+        assert_eq!(stocktake_rows.len(), 0);
     }
 
     #[actix_rt::test]

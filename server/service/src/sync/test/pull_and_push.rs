@@ -24,10 +24,6 @@ use super::{
         get_all_pull_upsert_central_test_records, get_all_pull_upsert_remote_test_records,
     },
 };
-// TODO: add a blurb with gotcha's
-// this is checking that each table can be transalated and saved correctly. error mesages can come from many different places - here are some to start with:
-
-// Readme
 
 #[actix_rt::test]
 async fn test_sync_pull_and_push() {
