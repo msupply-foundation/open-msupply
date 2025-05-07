@@ -11,8 +11,7 @@ interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   onClear?: () => void;
-  onSearchIconClick?: () => void;
-  searchIconButtonLabel?: string;
+  alwaysShowClear?: boolean;
   placeholder: string;
   isLoading?: boolean;
   debounceTime?: number;
@@ -49,13 +48,12 @@ const EndAdornment = ({
 export const SearchBar = ({
   value,
   onChange,
-  onSearchIconClick,
   onClear,
   placeholder,
   isLoading = false,
   debounceTime = 500,
   expandOnFocus = false,
-  searchIconButtonLabel = '',
+  alwaysShowClear = false,
   autoFocus = false,
 }: SearchBarProps) => {
   const [buffer, setBuffer] = useState(value);
@@ -80,10 +78,6 @@ export const SearchBar = ({
     setLoading(true);
   };
 
-  const searchIcon = (
-    <SearchIcon sx={{ color: 'gray.main', marginBottom: 1 }} fontSize="small" />
-  );
-
   return (
     <Box
       sx={{
@@ -91,16 +85,10 @@ export const SearchBar = ({
         alignItems: 'flex-end',
       }}
     >
-      {onSearchIconClick ? (
-        <IconButton
-          icon={searchIcon}
-          onClick={onSearchIconClick}
-          label={searchIconButtonLabel}
-        />
-      ) : (
-        searchIcon
-      )}
-
+      <SearchIcon
+        sx={{ color: 'gray.main', marginBottom: 1 }}
+        fontSize="small"
+      />
       <BasicTextInput
         autoFocus={autoFocus}
         slotProps={{
@@ -108,7 +96,7 @@ export const SearchBar = ({
             endAdornment: (
               <EndAdornment
                 isLoading={isLoading || loading}
-                hasValue={!!buffer}
+                hasValue={!!buffer || alwaysShowClear}
                 onClear={() => {
                   handleChange('');
                   if (onClear) onClear();
