@@ -11,6 +11,7 @@ type StockOutLineFragment = {
     name: string;
     code: string;
     unitName?: string | null;
+    isVaccine: boolean;
   };
 };
 type StockOutItem = {
@@ -25,13 +26,25 @@ describe('getColumnProperty', () => {
     batch: 'batch1',
     numberOfPacks: 10,
     expiryDate: '2020-01-01',
-    item: { id: 'item1', name: 'Item One', code: 'code1', unitName: 'capsule' },
+    item: {
+      id: 'item1',
+      name: 'Item One',
+      code: 'code1',
+      unitName: 'capsule',
+      isVaccine: false,
+    },
   };
   const stockRow2: StockOutLineFragment = {
     id: '2',
     batch: 'batch2',
     numberOfPacks: 5,
-    item: { id: 'item1', name: 'Item One', code: 'code1', unitName: 'capsule' },
+    item: {
+      id: 'item1',
+      name: 'Item One',
+      code: 'code1',
+      unitName: 'capsule',
+      isVaccine: false,
+    },
   };
 
   const groupedRow: StockOutItem = {
@@ -169,7 +182,13 @@ describe('getColumnPropertyAsString', () => {
     batch: 'batch1',
     numberOfPacks: 10,
     expiryDate: '2020-01-01',
-    item: { id: 'item1', name: 'Item One', code: 'code1', unitName: 'capsule' },
+    item: {
+      id: 'item1',
+      name: 'Item One',
+      code: 'code1',
+      unitName: 'capsule',
+      isVaccine: false,
+    },
   };
 
   it('handles invalid input', () => {

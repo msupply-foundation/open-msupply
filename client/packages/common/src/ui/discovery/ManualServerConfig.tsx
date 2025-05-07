@@ -80,7 +80,7 @@ export function ManualServerConfig({
     const serverConfig: FrontEndHost = {
       ...parsedServerDetails,
       path: 'login',
-      isLocal: true,
+      isLocal: false,
       clientVersion: 'unspecified',
       hardwareId,
     };

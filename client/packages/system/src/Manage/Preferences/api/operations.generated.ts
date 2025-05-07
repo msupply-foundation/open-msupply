@@ -6,6 +6,7 @@ type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type AdminPreferenceListQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   prefType: Types.PreferenceNodeType;
+  prefContext: Types.PreferenceDescriptionContext;
 }>;
 
 export type AdminPreferenceListQuery = {
@@ -16,6 +17,19 @@ export type AdminPreferenceListQuery = {
     valueType: Types.PreferenceValueNodeType;
     value: any;
   }>;
+};
+
+export type PreferencesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type PreferencesQuery = {
+  __typename: 'Queries';
+  preferences: {
+    __typename: 'PreferencesNode';
+    showContactTracing: boolean;
+    displayVaccineInDoses: boolean;
+  };
 };
 
 export type UpsertPreferencesMutationVariables = Types.Exact<{
@@ -35,11 +49,27 @@ export type UpsertPreferencesMutation = {
 };
 
 export const AdminPreferenceListDocument = gql`
-  query adminPreferenceList($storeId: String!, $prefType: PreferenceNodeType!) {
-    preferenceDescriptions(storeId: $storeId, prefType: $prefType) {
+  query adminPreferenceList(
+    $storeId: String!
+    $prefType: PreferenceNodeType!
+    $prefContext: PreferenceDescriptionContext!
+  ) {
+    preferenceDescriptions(
+      storeId: $storeId
+      prefType: $prefType
+      prefContext: $prefContext
+    ) {
       key
       valueType
       value
+    }
+  }
+`;
+export const PreferencesDocument = gql`
+  query preferences($storeId: String!) {
+    preferences(storeId: $storeId) {
+      showContactTracing
+      displayVaccineInDoses
     }
   }
 `;
@@ -89,6 +119,21 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'adminPreferenceList',
+        'query',
+        variables
+      );
+    },
+    preferences(
+      variables: PreferencesQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<PreferencesQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PreferencesQuery>(PreferencesDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'preferences',
         'query',
         variables
       );

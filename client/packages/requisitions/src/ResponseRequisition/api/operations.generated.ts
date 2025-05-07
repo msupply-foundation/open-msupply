@@ -106,6 +106,8 @@ export type ResponseLineFragment = {
     code: string;
     name: string;
     unitName?: string | null;
+    isVaccine: boolean;
+    doses: number;
   };
   linkedRequisitionLine?: {
     __typename: 'RequisitionLineNode';
@@ -204,6 +206,8 @@ export type ResponseFragment = {
         code: string;
         name: string;
         unitName?: string | null;
+        isVaccine: boolean;
+        doses: number;
       };
       linkedRequisitionLine?: {
         __typename: 'RequisitionLineNode';
@@ -332,6 +336,8 @@ export type ResponseByNumberQuery = {
               code: string;
               name: string;
               unitName?: string | null;
+              isVaccine: boolean;
+              doses: number;
             };
             linkedRequisitionLine?: {
               __typename: 'RequisitionLineNode';
@@ -468,6 +474,8 @@ export type ResponseByIdQuery = {
               code: string;
               name: string;
               unitName?: string | null;
+              isVaccine: boolean;
+              doses: number;
             };
             linkedRequisitionLine?: {
               __typename: 'RequisitionLineNode';

@@ -1,6 +1,6 @@
 {
   "admin": "Admin",
-  "app": "mSupply",
+  "app": "Open mSupply",
   "app.initialise": "Inicializar",
   "app.login": "Inicio de sesión",
   "approval-status.approved": "Aprobado",
@@ -795,7 +795,7 @@
   "label.increase-qty": "Aumentar cantidad",
   "label.indicators": "Indicadores",
   "label.initial-stock-on-hand": "Inventario inicial disponible",
-  "label.initialise-store-properties": "Inicializar propiedades del almacén para GAPS",
+  "label.initialise-store-properties-gaps": "Inicializar propiedades del almacén para GAPS",
   "label.initialised": "Inicializado",
   "label.installation-date": "Fecha de instalación",
   "label.invoice-number": "Número de factura",

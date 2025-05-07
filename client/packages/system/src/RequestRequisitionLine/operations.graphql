@@ -4,6 +4,8 @@ fragment ItemWithStats on ItemNode {
   code
   unitName
   defaultPackSize
+  isVaccine
+  doses
   availableStockOnHand(storeId: $storeId)
   stats(storeId: $storeId) {
     averageMonthlyConsumption
