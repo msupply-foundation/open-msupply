@@ -162,6 +162,7 @@ pub mod vaccination_row;
 pub mod vaccine_course;
 pub mod warning;
 pub mod warning_row;
+pub mod vvm_status_row;
 
 pub use abbreviation_row::*;
 pub use activity_log_row::*;
