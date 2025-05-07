@@ -122,6 +122,10 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
                             requisitions_in_periods.clone(),
                         )
                     })
+                    // filter out order types which do not have available periods
+                    .filter(|order_type_with_periods| {
+                        order_type_with_periods.available_periods.len() > 0
+                    })
                     .collect();
 
                 MasterListWithOrderTypes {
@@ -273,6 +277,11 @@ mod test {
             id: "period_schedule2".to_string(),
             ..Default::default()
         };
+        // period schedule 3 with no available periods
+        let period_schedule3 = PeriodScheduleRow {
+            id: "period_schedule3".to_string(),
+            ..Default::default()
+        };
         let period1 = PeriodRow {
             id: "period1".to_string(),
             period_schedule_id: period_schedule1.id.clone(),
@@ -321,18 +330,26 @@ mod test {
             max_order_per_period: 1,
             ..Default::default()
         };
+        let program_requisition_setting3 = ProgramRequisitionSettingsRow {
+            id: "program_setting3".to_string(),
+            program_id: program1.id.clone(),
+            name_tag_id: name_tag1.id.clone(),
+            period_schedule_id: period_schedule3.id.clone(),
+        };
+        // order type with no periods
+        let order_type3 = ProgramRequisitionOrderTypeRow {
+            id: "order_type3".to_string(),
+            name: "Order Type 3".to_string(),
+            program_requisition_settings_id: program_requisition_setting3.id.clone(),
+            max_order_per_period: 1,
+            ..Default::default()
+        };
 
         // store b name tag + program settings
         let name_tag_join3 = NameTagJoinRow {
             id: "name_tag_join3".to_string(),
             name_tag_id: name_tag1.id.clone(),
             name_link_id: mock_name_store_b().id,
-        };
-        let program_requisition_setting3 = ProgramRequisitionSettingsRow {
-            id: "program_setting3".to_string(),
-            program_id: program1.id.clone(),
-            name_tag_id: name_tag1.id.clone(),
-            period_schedule_id: period_schedule1.id.clone(),
         };
         // store c
         let name_tag_join4 = NameTagJoinRow {
@@ -410,7 +427,7 @@ mod test {
                     period3.clone(),
                     period4.clone(),
                 ],
-                period_schedules: vec![period_schedule1, period_schedule2],
+                period_schedules: vec![period_schedule1, period_schedule2, period_schedule3],
                 name_tags: vec![name_tag1.clone(), name_tag2.clone()],
                 name_tag_joins: vec![
                     name_tag_join1,
@@ -432,7 +449,11 @@ mod test {
                     program_requisition_setting3.clone(),
                     program_requisition_setting4.clone(),
                 ],
-                program_order_types: vec![order_type1.clone(), order_type2.clone()],
+                program_order_types: vec![
+                    order_type1.clone(),
+                    order_type2.clone(),
+                    order_type3.clone(),
+                ],
                 contexts: vec![context1.clone(), context2.clone()],
                 programs: vec![program1.clone(), program2.clone()],
                 requisitions: vec![requisition1.clone(), requisition2.clone()],
@@ -498,7 +519,8 @@ mod test {
                         name_tag_id: name_tag1.id.clone(),
                         name_tag: name_tag1.name.clone(),
                         program_requisition_settings_id: program_requisition_setting3.id.clone(),
-                        // no order types because no order types corresponding to requisition settings 3
+                        // no order types because no order types corresponding to requisition settings 3 that have available periods
+                        // order types without available periods filtered out
                         order_types: vec![],
                         program_id: program1.id.clone(),
                         program_name: program1.name.clone()
