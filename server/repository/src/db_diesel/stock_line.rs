@@ -38,6 +38,7 @@ pub enum StockLineSortField {
     PackSize,
     SupplierName,
     LocationCode,
+    VVMStatus,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -130,6 +131,9 @@ impl<'a> StockLineRepository<'a> {
                 }
                 StockLineSortField::LocationCode => {
                     apply_sort_no_case!(query, sort, location::code);
+                }
+                StockLineSortField::VVMStatus => {
+                    apply_sort_no_case!(query, sort, stock_line::vvm_status);
                 }
             }
         } else {

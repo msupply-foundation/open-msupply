@@ -47,6 +47,8 @@ pub enum StocktakeLineSortFieldInput {
     PackSize,
     /// Stocktake line item stock location code
     LocationCode,
+    /// VVVM status
+    VVMStatus,
 }
 
 #[derive(InputObject)]
@@ -69,6 +71,7 @@ impl StocktakeLineSortInput {
             from::ExpiryDate => to::ExpiryDate,
             from::PackSize => to::PackSize,
             from::LocationCode => to::LocationCode,
+            from::VVMStatus => to::VVMStatus,
         };
 
         StocktakeLineSort {

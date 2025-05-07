@@ -63,6 +63,8 @@ pub enum StocktakeLineSortField {
     PackSize,
     /// Stocktake line item stock location code
     LocationCode,
+    /// VVM Status
+    VVMStatus,
 }
 
 pub type StocktakeLineSort = Sort<StocktakeLineSortField>;
@@ -142,6 +144,9 @@ impl<'a> StocktakeLineRepository<'a> {
                 }
                 StocktakeLineSortField::LocationCode => {
                     apply_sort_no_case!(query, sort, location::code);
+                }
+                StocktakeLineSortField::VVMStatus => {
+                    apply_sort!(query, sort, stock_line::vvm_status);
                 }
             };
         } else {

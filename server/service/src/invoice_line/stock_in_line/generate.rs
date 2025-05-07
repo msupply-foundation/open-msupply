@@ -107,6 +107,7 @@ pub fn generate_batch(
         on_hold,
         barcode_id,
         item_variant_id,
+        vvm_status,
     };
 
     Ok(stock_line_row)

@@ -117,6 +117,7 @@ impl SyncTranslation for StockLineTranslation {
             supplier_link_id: supplier_id,
             barcode_id,
             item_variant_id,
+            vvm_status,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -156,6 +157,7 @@ impl SyncTranslation for StockLineTranslation {
                     supplier_link_id: _,
                     barcode_id,
                     item_variant_id,
+                    vvm_status,
                 },
             item_row,
             supplier_name_row,
