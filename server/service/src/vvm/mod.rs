@@ -1,3 +1,5 @@
+use crate::service_provider::ServiceContext;
+
 use self::{
     vvm_status::query::active_vvm_statuses,
     vvm_status_log::query::get_vvm_status_logs_by_stock_line_id,
@@ -6,6 +8,9 @@ use self::{
 use repository::{
     vvm_status::{vvm_status_log_row::VVMStatusLogRow, vvm_status_row::VVMStatusRow},
     RepositoryError, StorageConnection,
+};
+use vvm_status_log::insert::{
+    insert_vvm_status_log, InsertVVMStatusLogError, InsertVVMStatusLogInput,
 };
 
 pub mod vvm_status;
@@ -25,6 +30,14 @@ pub trait VVMServiceTrait: Sync + Send {
         stock_line_id: &str,
     ) -> Result<Vec<VVMStatusLogRow>, RepositoryError> {
         get_vvm_status_logs_by_stock_line_id(connection, stock_line_id)
+    }
+
+    fn insert_vvm_status_log(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertVVMStatusLogInput,
+    ) -> Result<VVMStatusLogRow, InsertVVMStatusLogError> {
+        insert_vvm_status_log(ctx, input)
     }
 }
 

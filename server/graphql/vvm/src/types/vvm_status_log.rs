@@ -1,6 +1,7 @@
-use async_graphql::{Object, SimpleObject, Union};
+use async_graphql::*;
 use chrono::NaiveDateTime;
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
+use service::vvm::vvm_status_log::insert::InsertVVMStatusLogInput as ServiceInput;
 
 #[derive(PartialEq, Debug)]
 pub struct VVMStatusLogNode {
@@ -67,4 +68,40 @@ impl VVMStatusLogConnector {
 #[derive(Union)]
 pub enum VVMStatusLogResponse {
     Response(VVMStatusLogConnector),
+}
+
+#[derive(InputObject)]
+#[graphql(name = "InsertVVMStatusLogInput")]
+pub struct InsertInput {
+    pub id: String,
+    pub status_id: String,
+    pub stock_line_id: String,
+    pub comment: Option<String>,
+    pub invoice_line_id: String,
+}
+
+impl InsertInput {
+    pub fn to_domain(self) -> ServiceInput {
+        let InsertInput {
+            id,
+            status_id,
+            stock_line_id,
+            comment,
+            invoice_line_id,
+        } = self;
+
+        ServiceInput {
+            id,
+            status_id,
+            stock_line_id,
+            comment,
+            invoice_line_id,
+        }
+    }
+}
+
+#[derive(Union)]
+#[graphql(name = "InsertVVMStatusLogResponse")]
+pub enum InsertResponse {
+    Response(VVMStatusLogNode),
 }
