@@ -82,11 +82,13 @@ pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
+        // Structured Errors
         ServiceError::MaxOrdersReachedForPeriod => {
             return Ok(InsertErrorInterface::MaxOrdersReachedForPeriod(
                 MaxOrdersReachedForPeriod,
             ))
         }
+        // Standard Graphql Errors
         ServiceError::RequisitionAlreadyExists => BadUserInput(formatted_error),
         ServiceError::CustomerNotValid => BadUserInput(formatted_error),
         ServiceError::ProgramOrderTypeDoesNotExist => BadUserInput(formatted_error),

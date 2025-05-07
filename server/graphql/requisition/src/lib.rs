@@ -71,14 +71,6 @@ impl RequisitionQueries {
         get_program_requisition_settings_by_customer(ctx, &store_id, &customer_store_id)
     }
 
-    // pub async fn program_requisition_settings(
-    //     &self,
-    //     ctx: &Context<'_>,
-    //     store_id: String,
-    // ) -> Result<Vec<CustomerProgramRequisitionSettingNode>> {
-    //     get_program_requisition_settings(ctx, &store_id)
-    // }
-
     pub async fn program_indicators(
         &self,
         ctx: &Context<'_>,

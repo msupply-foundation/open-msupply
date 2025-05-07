@@ -131,21 +131,9 @@ pub fn check_exceeded_max_orders_for_period(
             if let Some(other_party_id) = input.other_party_id {
                 filter = filter.name_id(EqualFilter::equal_to(other_party_id));
             };
-
-            // let current_orders = RequisitionRepository::new(connection).query_by_filter(filter)?;
-
-            // println!("input {:?}", input);
-            // let current_requisition = current_orders.first().unwrap().requisition_row.clone();
-            // println!("current requisition {:?}", current_requisition);
-
-            // let current_orders_count = current_orders.len();
-
-            // Ok(current_orders_count >= input.max_orders_per_period as usize)
-
             let current_orders = RequisitionRepository::new(connection).count(Some(filter))?;
             Ok(current_orders >= input.max_orders_per_period)
         }
-
         None => Err(RepositoryError::NotFound),
     }
 }

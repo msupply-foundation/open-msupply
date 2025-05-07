@@ -214,7 +214,11 @@ export const ProgramRequisitionOptions = ({
         optionKey="name"
         autoFocus={true}
       />
-      <LabelAndOptions {...orderTypes} optionKey="name" />
+      <LabelAndOptions
+        {...orderTypes}
+        optionKey="name"
+        labelNoOptions={t('label.no-order-options')}
+      />
       <Grid>
         <Typography
           sx={{
@@ -260,7 +264,7 @@ const getProgramOptionRenderer =
               whiteSpace: 'nowrap',
             }}
           >
-            {item.name} {item.nameTagName}
+            {item.name} ({item.nameTagName})
           </Typography>
         </Box>
       </DefaultAutocompleteItemOption>
