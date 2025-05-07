@@ -635,7 +635,6 @@
   "label.available": "Available",
   "label.available-batches": "Available batches",
   "label.available-packs": "Available (packs)",
-  "label.available-quantity": "Available quantity: {{number}} units",
   "label.available-quantity-for-return": "Quantity Available for Return",
   "label.available-soh": "Available SOH",
   "label.available-units": "Available (units)",

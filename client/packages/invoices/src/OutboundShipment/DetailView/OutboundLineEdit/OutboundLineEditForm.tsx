@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Grid,
-  BasicTextInput,
   ModalLabel,
   ModalRow,
   Select,
@@ -14,6 +13,9 @@ import {
   NumericTextInput,
   useDebouncedValueCallback,
   InputLabel,
+  useIntlUtils,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import {
   ItemStockOnHandFragment,
@@ -33,7 +35,7 @@ import { isA } from '../../../utils';
 interface OutboundLineEditFormProps {
   allocatedQuantity: number;
   availableQuantity: number;
-  item: DraftItem | null;
+  item: (DraftItem & { isVaccine: boolean; doses: number }) | null;
   onChangeItem: (newItem: ItemStockOnHandFragment | null) => void;
   onChangeQuantity: (
     quantity: number,
@@ -68,6 +70,11 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   draftStockOutLines,
 }) => {
   const t = useTranslation();
+  const { getPlural } = useIntlUtils();
+  const { data: prefs } = usePreference(PreferenceKey.DisplayVaccineInDoses);
+  const dispensingInDoses =
+    (item?.isVaccine && prefs?.displayVaccineInDoses) ?? false;
+
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
   const [issueQuantity, setIssueQuantity] = useState<number>();
   const { format } = useFormatNumber();
@@ -160,6 +167,13 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     updateIssueQuantity,
   ]);
 
+  const getDisplayQuantity = (quantity: number, unit: string) => {
+    const rounded = Math.round(quantity);
+    return `${rounded} ${getPlural(unit, rounded)}`;
+  };
+
+  const unitName = item?.unitName ?? t('label.unit');
+
   return (
     <Grid container gap="4px" width="100%">
       <ModalRow>
@@ -191,19 +205,12 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                 justifyContent: 'center',
               }}
             >
-              {t('label.available-quantity', {
-                number: availableQuantity.toFixed(0),
-              })}
+              {/* TODO: RTL! should be in a translation string */}
+              {t('label.available')}:{' '}
+              {dispensingInDoses
+                ? `${getDisplayQuantity(availableQuantity * item.doses, t('label.dose'))} (${getDisplayQuantity(availableQuantity, unitName)})`
+                : getDisplayQuantity(availableQuantity, unitName)}
             </Typography>
-          </Grid>
-
-          <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
-            <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
-            <BasicTextInput
-              disabled
-              sx={{ width: 150 }}
-              value={item?.unitName}
-            />
           </Grid>
         </ModalRow>
       )}

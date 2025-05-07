@@ -595,7 +595,6 @@
   "label.available": "Доступно",
   "label.available-batches": "Доступные партии",
   "label.available-packs": "Доступные (упаковки)",
-  "label.available-quantity": "Доступное количество: {{number}} единиц",
   "label.available-quantity-for-return": "Количество, доступное для возврата",
   "label.available-units": "Доступно (единицы)",
   "label.balance": "Баланс",
