@@ -46,6 +46,8 @@ fragment StocktakeLine on StocktakeLineNode {
     code
     name
     unitName
+    isVaccine
+    doses
   }
 
   itemVariantId

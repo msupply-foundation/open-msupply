@@ -5,7 +5,6 @@ import {
   DateTimePickerInput,
   DialogButton,
   InputWithLabelRow,
-  Select,
   Typography,
 } from '@common/components';
 import { useTranslation } from '@common/intl';
@@ -14,12 +13,15 @@ import {
   useStockList,
   useLocationList,
   useMasterLists,
+  LocationSearchInput,
+  LocationRowFragment,
+  MasterListSearchInput,
+  MasterListRowFragment,
 } from '@openmsupply-client/system';
 import { Box, useAuthContext } from '@openmsupply-client/common';
 import { useCreateStocktake } from './createStocktake';
 
 const LABEL_FLEX = '0 0 150px';
-
 interface CreateStocktakeArgs {
   masterListId?: string;
   locationId?: string;
@@ -50,6 +52,13 @@ export const CreateStocktakeModal: FC<NewStocktakeModalProps> = ({
   const t = useTranslation();
   const [createStocktakeArgs, setCreateStocktakeArgs] =
     useState<CreateStocktakeArgs>(DEFAULT_ARGS);
+
+  const [selectedLocation, setSelectedLocation] =
+    useState<LocationRowFragment | null>(null);
+
+  const [selectedMasterList, setSelectedMasterList] =
+    useState<MasterListRowFragment | null>(null);
+
   const { isLoading: isSaving, createStocktake } = useCreateStocktake();
   const { store } = useAuthContext();
   const { data: masterListData, isLoading: isLoadingMasterLists } =
@@ -169,16 +178,17 @@ export const CreateStocktakeModal: FC<NewStocktakeModalProps> = ({
                       {t('messages.no-master-lists')}
                     </Typography>
                   ) : (
-                    <Select
-                      fullWidth
-                      onChange={event =>
+                    <MasterListSearchInput
+                      onChange={masterList => {
+                        setSelectedMasterList(masterList);
                         setCreateStocktakeArgs({
                           ...DEFAULT_ARGS,
-                          masterListId: event.target.value?.toString(),
-                        })
-                      }
-                      options={masterLists}
-                      value={createStocktakeArgs.masterListId}
+                          masterListId: masterList?.id ?? '',
+                        });
+                      }}
+                      disabled={false}
+                      selectedMasterList={selectedMasterList}
+                      width={380}
                     />
                   )
                 }
@@ -192,16 +202,17 @@ export const CreateStocktakeModal: FC<NewStocktakeModalProps> = ({
                       {t('messages.no-locations')}
                     </Typography>
                   ) : (
-                    <Select
-                      fullWidth
-                      onChange={event =>
+                    <LocationSearchInput
+                      onChange={location => {
+                        setSelectedLocation(location);
                         setCreateStocktakeArgs({
                           ...DEFAULT_ARGS,
-                          locationId: event.target.value?.toString(),
-                        })
-                      }
-                      options={locations}
-                      value={createStocktakeArgs.locationId}
+                          locationId: location?.id ?? '',
+                        });
+                      }}
+                      width={380}
+                      disabled={false}
+                      selectedLocation={selectedLocation}
                     />
                   )
                 }

@@ -23,6 +23,7 @@ pub struct StocktakeLineFilter {
     pub stocktake_id: Option<EqualFilter<String>>,
     pub location_id: Option<EqualFilter<String>>,
     pub item_code_or_name: Option<StringFilter>,
+    pub item_id: Option<EqualFilter<String>>,
 }
 
 impl StocktakeLineFilter {
@@ -42,6 +43,11 @@ impl StocktakeLineFilter {
 
     pub fn location_id(mut self, filter: EqualFilter<String>) -> Self {
         self.location_id = Some(filter);
+        self
+    }
+
+    pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.item_id = Some(filter);
         self
     }
 }
@@ -174,6 +180,7 @@ fn create_filtered_query(filter: Option<StocktakeLineFilter>) -> BoxedStocktakeL
         apply_equal_filter!(query, f.id, stocktake_line::id);
         apply_equal_filter!(query, f.stocktake_id, stocktake_line::stocktake_id);
         apply_equal_filter!(query, f.location_id, stocktake_line::location_id);
+        apply_equal_filter!(query, f.item_id, item::id);
     }
 
     query

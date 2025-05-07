@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   TextInputCell,
   alpha,
@@ -131,7 +131,7 @@ const getInventoryAdjustmentReasonInputColumn = (
         <InventoryAdjustmentReasonSearchInput
           autoFocus={autoFocus}
           value={value}
-          width={Number(column.width) - 12}
+          width={Number(column.width)}
           onChange={onChange}
           adjustmentType={
             rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0)
@@ -151,12 +151,12 @@ const getInventoryAdjustmentReasonInputColumn = (
   };
 };
 
-export const BatchTable: FC<StocktakeLineEditTableProps> = ({
+export const BatchTable = ({
   batches,
   update,
   isDisabled = false,
   isInitialStocktake,
-}) => {
+}: StocktakeLineEditTableProps) => {
   const t = useTranslation();
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
@@ -255,11 +255,11 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
   );
 };
 
-export const PricingTable: FC<StocktakeLineEditTableProps> = ({
+export const PricingTable = ({
   batches,
   update,
   isDisabled,
-}) => {
+}: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
   const columns = useColumns<DraftStocktakeLine>([
@@ -295,11 +295,11 @@ export const PricingTable: FC<StocktakeLineEditTableProps> = ({
   );
 };
 
-export const LocationTable: FC<StocktakeLineEditTableProps> = ({
+export const LocationTable = ({
   batches,
   update,
   isDisabled,
-}) => {
+}: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
   const columns = useColumns<DraftStocktakeLine>([
@@ -317,6 +317,9 @@ export const LocationTable: FC<StocktakeLineEditTableProps> = ({
       {
         label: 'label.stocktake-comment',
         Cell: TextInputCell,
+        cellProps: {
+          fullWidth: true,
+        },
         width: 200,
         setter: patch => update({ ...patch, countThisLine: true }),
         accessor: ({ rowData }) => rowData.comment || '',
