@@ -119,7 +119,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
               />
             }
           />
-          {!isInModal && (
+          {!packEditable && (
             <StyledInputRow
               label={t('label.available-packs')}
               Input={
