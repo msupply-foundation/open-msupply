@@ -340,8 +340,19 @@ export const PrescriptionLineEditForm: React.FC<
                       preferences?.editPrescribedQuantityOnPrescription
                     }
                     disabled={disabled}
-                    value={prescribedQuantity ?? undefined}
-                    onChange={handlePrescribedQuantityChange}
+                    value={
+                      displayInDoses
+                        ? NumUtils.round(prescribedQuantity ?? 0 * item?.doses)
+                        : (prescribedQuantity ?? undefined)
+                    }
+                    onChange={(qty?: number) => {
+                      if (qty) {
+                        const dosesToUnit = qty / (item?.doses ?? 1);
+                        handlePrescribedQuantityChange(
+                          displayInDoses ? dosesToUnit : qty
+                        );
+                      }
+                    }}
                     min={0}
                     decimalLimit={2}
                     onBlur={() => {}}
@@ -392,7 +403,12 @@ export const PrescriptionLineEditForm: React.FC<
                   }}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
-                  {getPlural(unit, issueUnitQuantity)}
+                  {getPlural(
+                    unit,
+                    displayInDoses
+                      ? issueUnitQuantity * item?.doses
+                      : issueUnitQuantity
+                  )}
                 </InputLabel>
               </Grid>
             </Grid>
@@ -628,7 +644,7 @@ const dosesSummary = (
     (sum, { packSize, numberOfPacks }) => sum + packSize * numberOfPacks,
     0
   );
-  const totalDoses = NumUtils.round(totalUnits * (doses ?? 0));
+  const totalDoses = NumUtils.round(totalUnits * (doses ?? 1));
   const unitWord = t('label.doses-plural', { count: totalDoses });
   return `${totalDoses} ${unitWord}`;
 };

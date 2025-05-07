@@ -103,10 +103,7 @@ const DetailViewInner = () => {
     >
       {data ? (
         <>
-          <AppBarButtons
-            onAddItem={onAddItem}
-            isVaccine={entity?.item?.isVaccine ?? false}
-          />
+          <AppBarButtons onAddItem={onAddItem} />
           {isOpen && (
             <OutboundLineEdit
               draft={entity}

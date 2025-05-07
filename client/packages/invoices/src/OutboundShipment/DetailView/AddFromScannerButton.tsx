@@ -17,10 +17,8 @@ import { Draft } from '../..';
 
 export const AddFromScannerButtonComponent = ({
   onAddItem,
-  isVaccine,
 }: {
   onAddItem: (draft?: Draft) => void;
-  isVaccine: boolean;
 }) => {
   const t = useTranslation();
   const { data: outbound } = useOutbound.document.get();
@@ -42,7 +40,8 @@ export const AddFromScannerButtonComponent = ({
 
         if (!!id) {
           onAddItem({
-            item: { id, isVaccine },
+            // TODO: do call for item to get isVaccine
+            item: { id, isVaccine: false },
             barcode: { ...barcode, batch },
           });
           return;

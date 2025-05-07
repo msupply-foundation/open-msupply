@@ -16,6 +16,7 @@ import {
   usePreference,
   PreferenceKey,
   Formatter,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -53,16 +54,17 @@ export const QuantityTableComponent = ({
 }: TableProps) => {
   const t = useTranslation();
   const theme = useTheme();
+  const { getPlural } = useIntlUtils();
   const { data: preferences } = usePreference(
     PreferenceKey.DisplayVaccineInDoses
   );
   const itemVariantsEnabled = useIsItemVariantsEnabled();
   const displayInDoses =
     !!preferences?.displayVaccineInDoses && !!item?.isVaccine;
-  const unitName = Formatter.sentenceCase(
-    item?.unitName ? item.unitName : t('label.unit')
+  const unitName = getPlural(
+    Formatter.sentenceCase(item?.unitName ? item.unitName : t('label.unit')),
+    2
   );
-
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     ...getBatchExpiryColumns(updateDraftLine, theme),
   ];
@@ -91,12 +93,11 @@ export const QuantityTableComponent = ({
           const { packSize, numberOfPacks } = patch;
 
           if (!!packSize && !!numberOfPacks) {
-            const packsToVials = packSize * numberOfPacks;
+            const packToUnits = packSize * numberOfPacks;
 
             updateDraftLine({
               ...patch,
-              unitsPerPack: packsToVials,
-              numberOfPacks: numberOfPacks,
+              unitsPerPack: packToUnits,
             });
           }
         },
