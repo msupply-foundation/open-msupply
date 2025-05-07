@@ -533,7 +533,7 @@ fragment MasterListWithOrderTypes on MasterListWithOrderTypesNode {
 
 fragment ProgramSettingsByCustomer on CustomerProgramRequisitionSettingNode {
   __typename
-  customerName
+  customerNameId
   masterLists {
     ...MasterListWithOrderTypes
   }
@@ -547,10 +547,7 @@ query programRequisitionSettingsByCustomer(
     customerStoreId: $customerStoreId
     storeId: $storeId
   ) {
-    customerName
-    masterLists {
-      ...MasterListWithOrderTypes
-    }
+    ...ProgramSettingsByCustomer
   }
 }
 

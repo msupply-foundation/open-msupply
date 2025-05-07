@@ -1,6 +1,6 @@
 use repository::{
-    EqualFilter, MasterListFilter, NameRowRepository, NameTagFilter, PeriodRow,
-    PeriodRowRepository, ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
+    EqualFilter, MasterListFilter, NameTagFilter, PeriodRow, PeriodRowRepository,
+    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettings, ProgramRequisitionSettingsFilter,
     ProgramRequisitionSettingsRepository, RepositoryError, RequisitionType, RequisitionsInPeriod,
     RequisitionsInPeriodFilter, RequisitionsInPeriodRepository,
@@ -48,7 +48,7 @@ pub struct MasterListWithOrderTypes {
 
 #[derive(Debug, PartialEq)]
 pub struct CustomerProgramRequisitionSetting {
-    pub customer_name: String,
+    pub customer_name_id: String,
     pub master_lists: Vec<MasterListWithOrderTypes>,
 }
 
@@ -58,13 +58,6 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
     ctx: &ServiceContext,
     customer_name_id: &str,
 ) -> Result<CustomerProgramRequisitionSetting, RepositoryError> {
-    // get customer name
-    let customer_name =
-        match NameRowRepository::new(&ctx.connection).find_one_by_id(&customer_name_id)? {
-            Some(name_row) => name_row,
-            None => return Err(RepositoryError::NotFound),
-        };
-
     let filter = ProgramRequisitionSettingsFilter::new()
         .master_list(
             MasterListFilter::new().exists_for_name_id(EqualFilter::equal_to(customer_name_id)),
@@ -110,7 +103,7 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
         RequisitionsInPeriodRepository::new(&ctx.connection).query(filter)?;
 
     Ok(CustomerProgramRequisitionSetting {
-        customer_name: customer_name.name,
+        customer_name_id: customer_name_id.to_owned(),
         master_lists: settings
             .iter()
             .map(|setting| {
@@ -466,7 +459,7 @@ mod test {
         assert_eq!(
             result,
             CustomerProgramRequisitionSetting {
-                customer_name: mock_name_store_b().name.clone(),
+                customer_name_id: mock_name_store_b().id.clone(),
                 master_lists: vec![
                     MasterListWithOrderTypes {
                         id: master_list1.id.clone(),

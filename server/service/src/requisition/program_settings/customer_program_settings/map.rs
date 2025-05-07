@@ -1,9 +1,7 @@
-use crate::requisition::program_settings::common::{period_is_available, reduce_and_sort_periods};
-
-use super::{CustomerProgramSettings, OrderType};
-
 #[test]
 fn test_reduce_and_sort_periods() {
+    use crate::requisition::program_settings::common::reduce_and_sort_periods;
+
     use repository::PeriodRow;
 
     fn make_date(offset: &i32) -> PeriodRow {

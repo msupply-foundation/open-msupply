@@ -119,8 +119,6 @@ pub fn check_exceeded_max_orders_for_period(
     // TODO add check which matches lower case as per in period_is_available function
     match order_type {
         Some(order_type) => {
-            println!("order type name {:?}", order_type.name);
-
             let mut filter = RequisitionFilter::new()
                 .program_id(EqualFilter::equal_to(input.program_id))
                 .order_type(EqualFilter::equal_to(&order_type.name))

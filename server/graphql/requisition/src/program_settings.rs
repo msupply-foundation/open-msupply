@@ -43,7 +43,7 @@ pub struct MasterListWithOrderTypesNode {
 
 #[derive(SimpleObject)]
 pub struct CustomerProgramRequisitionSettingNode {
-    pub customer_name: String,
+    pub customer_name_id: String,
     pub master_lists: Vec<MasterListWithOrderTypesNode>,
 }
 
@@ -135,7 +135,7 @@ pub fn get_program_requisition_settings_by_customer(
         .get_program_requisition_settings_by_customer(&service_context, customer_store_id)?;
 
     let response = CustomerProgramRequisitionSettingNode {
-        customer_name: settings.customer_name,
+        customer_name_id: settings.customer_name_id,
         master_lists: settings
             .master_lists
             .into_iter()

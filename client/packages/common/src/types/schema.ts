@@ -1464,7 +1464,7 @@ export type CustomerIndicatorInformationNodeCustomerArgs = {
 
 export type CustomerProgramRequisitionSettingNode = {
   __typename: 'CustomerProgramRequisitionSettingNode';
-  customerName: Scalars['String']['output'];
+  customerNameId: Scalars['String']['output'];
   masterLists: Array<MasterListWithOrderTypesNode>;
 };
 

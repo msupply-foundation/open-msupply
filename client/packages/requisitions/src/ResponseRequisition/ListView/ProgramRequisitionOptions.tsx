@@ -43,6 +43,8 @@ type Common<T> = Pick<
   optionKey?: keyof T;
 };
 
+type OrderType = ProgramRequisitionOrderTypeFragment;
+
 const useProgramRequisitionOptions = (
   data: ProgramSettingsByCustomerFragment | undefined,
   customerOptions: NameRowFragment[],
@@ -76,6 +78,8 @@ const useProgramRequisitionOptions = (
     setPeriod(null);
   };
 
+  const orderTypes = filterOrderTypes(program?.orderTypes);
+
   const allOptions: {
     programs: Common<Program>;
     orderTypes: Common<OrderType>;
@@ -88,16 +92,14 @@ const useProgramRequisitionOptions = (
       disabled: customer === null,
       set: handleSetProgram,
       label: t('label.program'),
+      labelNoOptions: t('label.no-program-options'),
     },
     orderTypes: {
-      options:
-        program?.orderTypes?.filter(
-          (orderType: OrderType) => orderType.availablePeriods.length > 0
-        ) || [],
+      options: orderTypes,
       value: orderType,
       set: handleSetOrderType,
-      disabled: program === null || customer === null,
-      labelNoOptions: t('messages.not-configured'),
+      disabled: program === null || program === undefined,
+      labelNoOptions: t('label.no-order-options'),
       label: t('label.order-type'),
       renderOption: getOrderTypeRenderer(),
     },
@@ -214,11 +216,7 @@ export const ProgramRequisitionOptions = ({
         optionKey="name"
         autoFocus={true}
       />
-      <LabelAndOptions
-        {...orderTypes}
-        optionKey="name"
-        labelNoOptions={t('label.no-order-options')}
-      />
+      <LabelAndOptions {...orderTypes} optionKey="name" />
       <Grid>
         <Typography
           sx={{
@@ -254,6 +252,9 @@ export const ProgramRequisitionOptions = ({
 const getProgramOptionRenderer =
   (): AutocompleteOptionRenderer<MasterListWithOrderTypesFragment> =>
   (props, item) => {
+    const orderTypes = filterOrderTypes(item.orderTypes);
+    const noOrders = orderTypes.length === 0;
+    const color = noOrders ? 'red' : 'black';
     return (
       <DefaultAutocompleteItemOption {...props} key={item.id}>
         <Box display="flex" flexDirection="row" gap={1} alignItems="center">
@@ -262,6 +263,7 @@ const getProgramOptionRenderer =
             textOverflow="ellipsis"
             sx={{
               whiteSpace: 'nowrap',
+              color: color,
             }}
           >
             {item.name} ({item.nameTagName})
@@ -270,3 +272,11 @@ const getProgramOptionRenderer =
       </DefaultAutocompleteItemOption>
     );
   };
+
+const filterOrderTypes = (orderTypes: OrderType[] | undefined) => {
+  return (
+    orderTypes?.filter(
+      (orderType: OrderType) => orderType.availablePeriods.length > 0
+    ) || []
+  );
+};

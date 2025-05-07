@@ -815,7 +815,7 @@ export type MasterListWithOrderTypesFragment = {
 
 export type ProgramSettingsByCustomerFragment = {
   __typename: 'CustomerProgramRequisitionSettingNode';
-  customerName: string;
+  customerNameId: string;
   masterLists: Array<{
     __typename: 'MasterListWithOrderTypesNode';
     id: string;
@@ -848,7 +848,7 @@ export type ProgramRequisitionSettingsByCustomerQuery = {
   __typename: 'Queries';
   programRequisitionSettingsByCustomer: {
     __typename: 'CustomerProgramRequisitionSettingNode';
-    customerName: string;
+    customerNameId: string;
     masterLists: Array<{
       __typename: 'MasterListWithOrderTypesNode';
       id: string;
@@ -1144,7 +1144,7 @@ export const MasterListWithOrderTypesFragmentDoc = gql`
 export const ProgramSettingsByCustomerFragmentDoc = gql`
   fragment ProgramSettingsByCustomer on CustomerProgramRequisitionSettingNode {
     __typename
-    customerName
+    customerNameId
     masterLists {
       ...MasterListWithOrderTypes
     }
@@ -1523,13 +1523,10 @@ export const ProgramRequisitionSettingsByCustomerDocument = gql`
       customerStoreId: $customerStoreId
       storeId: $storeId
     ) {
-      customerName
-      masterLists {
-        ...MasterListWithOrderTypes
-      }
+      ...ProgramSettingsByCustomer
     }
   }
-  ${MasterListWithOrderTypesFragmentDoc}
+  ${ProgramSettingsByCustomerFragmentDoc}
 `;
 export const ProgramIndicatorsDocument = gql`
   query programIndicators(

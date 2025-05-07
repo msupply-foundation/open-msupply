@@ -336,18 +336,14 @@ mod test {
     use repository::{
         mock::{
             mock_name_store_a, mock_name_store_b, mock_name_store_c, mock_store_a, mock_store_b,
-             mock_user_account_a, MockData, MockDataInserts,
+            mock_user_account_a, MockData, MockDataInserts,
         },
         ContextRow, MasterListNameJoinRow, MasterListRow, NameStoreJoinRow, NameTagJoinRow,
         NameTagRow, PeriodRow, PeriodScheduleRow, ProgramRequisitionOrderTypeRow,
-        ProgramRequisitionSettingsRow, ProgramRow, 
+        ProgramRequisitionSettingsRow, ProgramRow,
     };
 
-    use crate::{
-        requisition::program_settings::customer_program_settings::prepare::{
-        },
-        test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
-    };
+    use crate::test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext};
 
     use super::{InsertProgramResponseRequisition, InsertProgramResponseRequisitionError};
 
@@ -442,7 +438,6 @@ mod test {
             ..Default::default()
         };
 
-
         // Two program settings, for tag1 and tag2, with one order type
         let program_requisition_setting1 = ProgramRequisitionSettingsRow {
             id: "program_setting1".to_string(),
@@ -495,20 +490,6 @@ mod test {
             name_tag_id: name_tag2.id.clone(),
             period_schedule_id: period_schedule2.id.clone(),
         };
-
-        // // Two requisitions, one for period 1 for program 1 for order type 1
-        // // second for period 4 for program 2 for order type 2
-        // let requisition1 = RequisitionRow {
-        //     id: "requisition1".to_string(),
-        //     order_type: Some("Order Type 1".to_string()),
-        //     name_link_id: mock_name_store_b().id,
-        //     store_id: mock_store_a().id,
-        //     period_id: Some(period1.id.clone()),
-        //     program_id: Some(program1.id.clone()),
-        //     r#type: RequisitionType::Response,
-        //     requisition_number: 1,
-        //     ..Default::default()
-        // };
 
         // mock_name_store_b and mock_name_store_c to be joined
         // to program 1 and program 2 respectively and visible in mock_store_a
