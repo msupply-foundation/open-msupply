@@ -22,6 +22,8 @@ pub struct UpsertItemVariantInput {
     pub cold_storage_type_id: Option<String>,
     pub manufacturer_id: Option<String>,
     pub packaging_variants: Vec<PackagingVariantInput>,
+    pub doses_per_unit: Option<i32>,
+    pub vvm_type: Option<String>,
 }
 
 #[derive(InputObject)]
@@ -83,6 +85,8 @@ impl UpsertItemVariantInput {
             cold_storage_type_id,
             manufacturer_id,
             packaging_variants,
+            doses_per_unit,
+            vvm_type,
         } = self;
 
         UpsertItemVariantWithPackaging {
@@ -95,6 +99,8 @@ impl UpsertItemVariantInput {
                 .into_iter()
                 .map(|v| PackagingVariantInput::to_domain(v, id.clone()))
                 .collect(),
+            doses_per_unit,
+            vvm_type,
         }
     }
 }
