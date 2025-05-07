@@ -1449,12 +1449,6 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
-export type CustomerAndOrderTypeNode = {
-  __typename: 'CustomerAndOrderTypeNode';
-  customer: NameNode;
-  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
-};
-
 export type CustomerIndicatorInformationNode = {
   __typename: 'CustomerIndicatorInformationNode';
   customer: NameNode;
@@ -1470,11 +1464,8 @@ export type CustomerIndicatorInformationNodeCustomerArgs = {
 
 export type CustomerProgramRequisitionSettingNode = {
   __typename: 'CustomerProgramRequisitionSettingNode';
-  customerAndOrderTypes: Array<CustomerAndOrderTypeNode>;
-  masterList: MasterListNode;
-  programId: Scalars['String']['output'];
-  programName: Scalars['String']['output'];
-  tagName: Scalars['String']['output'];
+  customerNameId: Scalars['String']['output'];
+  masterLists: Array<MasterListWithOrderTypesNode>;
 };
 
 export type CustomerReturnInput = {
@@ -4624,6 +4615,20 @@ export type MasterListSortInput = {
   key: MasterListSortFieldInput;
 };
 
+export type MasterListWithOrderTypesNode = {
+  __typename: 'MasterListWithOrderTypesNode';
+  code: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  discountPercentage?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  isDefaultPriceList: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  nameTagId: Scalars['String']['output'];
+  nameTagName: Scalars['String']['output'];
+  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
+};
+
 export type MasterListsResponse = MasterListConnector;
 
 export type MaxOrdersReachedForPeriod =
@@ -6256,7 +6261,6 @@ export type Queries = {
   coldStorageTypes: ColdStorageTypesResponse;
   contactTraces: ContactTraceResponse;
   currencies: CurrenciesResponse;
-  customerProgramRequisitionSettings: Array<CustomerProgramRequisitionSettingNode>;
   databaseSettings: DatabaseSettingsNode;
   demographicIndicators: DemographicIndicatorsResponse;
   demographicProjectionByBaseYear: DemographicProjectionResponse;
@@ -6347,6 +6351,7 @@ export type Queries = {
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
   programIndicators: ProgramIndicatorResponse;
+  programRequisitionSettingsByCustomer: CustomerProgramRequisitionSettingNode;
   programs: ProgramsResponse;
   rAndRForm: RnRFormResponse;
   rAndRForms: RnRFormsResponse;
@@ -6527,10 +6532,6 @@ export type QueriesContactTracesArgs = {
 export type QueriesCurrenciesArgs = {
   filter?: InputMaybe<CurrencyFilterInput>;
   sort?: InputMaybe<Array<CurrencySortInput>>;
-};
-
-export type QueriesCustomerProgramRequisitionSettingsArgs = {
-  storeId: Scalars['String']['input'];
 };
 
 export type QueriesDemographicIndicatorsArgs = {
@@ -6826,6 +6827,11 @@ export type QueriesProgramEventsArgs = {
 export type QueriesProgramIndicatorsArgs = {
   filter?: InputMaybe<ProgramIndicatorFilterInput>;
   sort?: InputMaybe<ProgramIndicatorSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesProgramRequisitionSettingsByCustomerArgs = {
+  customerStoreId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 

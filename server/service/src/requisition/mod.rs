@@ -23,8 +23,11 @@ use self::{
 use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
 use program_settings::{
-    customer_program_settings::CustomerProgramSettings, get_customer_program_requisition_settings,
-    get_supplier_program_requisition_settings, supplier_program_settings::SupplierProgramSettings,
+    customer_program_settings::{
+        get_program_requisition_settings_by_customer, prepare::CustomerProgramRequisitionSetting,
+    },
+    get_supplier_program_requisition_settings,
+    supplier_program_settings::SupplierProgramSettings,
 };
 use repository::{
     requisition_row::RequisitionType, Invoice, PaginationOption, RepositoryError, Requisition,
@@ -204,12 +207,12 @@ pub trait RequisitionServiceTrait: Sync + Send {
         get_supplier_program_requisition_settings(ctx, store_id)
     }
 
-    fn get_customer_program_requisition_settings(
+    fn get_program_requisition_settings_by_customer(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
-    ) -> Result<Vec<CustomerProgramSettings>, RepositoryError> {
-        get_customer_program_requisition_settings(ctx, store_id)
+        customer_store_id: &str,
+    ) -> Result<CustomerProgramRequisitionSetting, RepositoryError> {
+        get_program_requisition_settings_by_customer(ctx, customer_store_id)
     }
 
     fn get_indicator_information(

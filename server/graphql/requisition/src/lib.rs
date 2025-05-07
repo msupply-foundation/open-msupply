@@ -10,7 +10,7 @@ use graphql_types::types::program_indicator::{
 use graphql_types::types::RequisitionNodeType;
 use program_indicator::program_indicators;
 use program_settings::{
-    get_customer_program_requisition_settings, get_supplier_program_requisition_settings,
+    get_program_requisition_settings_by_customer, get_supplier_program_requisition_settings,
     CustomerProgramRequisitionSettingNode, SupplierProgramRequisitionSettingNode,
 };
 
@@ -62,12 +62,13 @@ impl RequisitionQueries {
         get_supplier_program_requisition_settings(ctx, &store_id)
     }
 
-    pub async fn customer_program_requisition_settings(
+    pub async fn program_requisition_settings_by_customer(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-    ) -> Result<Vec<CustomerProgramRequisitionSettingNode>> {
-        get_customer_program_requisition_settings(ctx, &store_id)
+        customer_store_id: String,
+    ) -> Result<CustomerProgramRequisitionSettingNode> {
+        get_program_requisition_settings_by_customer(ctx, &store_id, &customer_store_id)
     }
 
     pub async fn program_indicators(
