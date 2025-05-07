@@ -121,8 +121,8 @@ mod test {
             MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentType, InvoiceFilter,
-        InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, InvoiceStatus,
+        EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository,
+        InvoiceStatus, ReasonOptionRow, ReasonOptionType,
     };
     use util::inline_edit;
 
@@ -138,19 +138,19 @@ mod test {
 
     #[actix_rt::test]
     async fn add_new_stock_line_errors() {
-        fn addition_reason() -> InventoryAdjustmentReasonRow {
-            InventoryAdjustmentReasonRow {
+        fn addition_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
                 id: "addition".to_string(),
                 reason: "test addition".to_string(),
                 is_active: true,
-                r#type: InventoryAdjustmentType::Positive,
+                r#type: ReasonOptionType::PositiveInventoryAdjustment,
             }
         }
         let (_, _, connection_manager, _) = setup_all_with_data(
             "add_new_stock_line_errors",
             MockDataInserts::all(),
             MockData {
-                inventory_adjustment_reasons: vec![addition_reason()],
+                reason_options: vec![addition_reason()],
                 ..Default::default()
             },
         )
@@ -220,19 +220,19 @@ mod test {
 
     #[actix_rt::test]
     async fn add_new_stock_line_success() {
-        fn addition_reason() -> InventoryAdjustmentReasonRow {
-            InventoryAdjustmentReasonRow {
+        fn addition_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
                 id: "addition".to_string(),
                 reason: "test addition".to_string(),
                 is_active: true,
-                r#type: InventoryAdjustmentType::Positive,
+                r#type: ReasonOptionType::PositiveInventoryAdjustment,
             }
         }
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "add_new_stock_line_success",
             MockDataInserts::all(),
             MockData {
-                inventory_adjustment_reasons: vec![addition_reason()],
+                reason_options: vec![addition_reason()],
                 ..Default::default()
             },
         )
@@ -307,7 +307,7 @@ mod test {
             invoice_line_row,
             inline_edit(&invoice_line_row, |mut u| {
                 u.number_of_packs = 2.0;
-                u.inventory_adjustment_reason_id = Some(addition_reason().id);
+                u.reason_option_id = Some(addition_reason().id);
                 u
             })
         );

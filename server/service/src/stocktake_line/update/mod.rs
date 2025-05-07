@@ -156,7 +156,7 @@ mod stocktake_line_test {
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![outbound_shipment()];
                 r.invoice_lines = vec![outbound_shipment_line()];
-                r.options = vec![positive_reason(), negative_reason()];
+                r.reason_options = vec![positive_reason(), negative_reason()];
                 r.stocktake_lines = vec![mock_stocktake_line(), mock_reduced_stock()];
             }),
         )

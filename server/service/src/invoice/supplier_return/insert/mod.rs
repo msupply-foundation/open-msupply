@@ -155,7 +155,7 @@ mod test {
         },
         test_db::setup_all_with_data,
         InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, NameRow, NameStoreJoinRow,
-        ReturnReasonRow,
+        ReasonOptionRow,
     };
     use util::{inline_edit, inline_init};
 
@@ -371,8 +371,8 @@ mod test {
             })
         }
 
-        fn return_reason() -> ReturnReasonRow {
-            inline_init(|r: &mut ReturnReasonRow| {
+        fn return_reason() -> ReasonOptionRow {
+            inline_init(|r: &mut ReasonOptionRow| {
                 r.id = "return_reason".to_string();
                 r.is_active = true;
             })
@@ -384,7 +384,7 @@ mod test {
             inline_init(|r: &mut MockData| {
                 r.names = vec![supplier()];
                 r.name_store_joins = vec![supplier_join()];
-                r.return_reasons = vec![return_reason()];
+                r.reason_options = vec![return_reason()];
             }),
         )
         .await;

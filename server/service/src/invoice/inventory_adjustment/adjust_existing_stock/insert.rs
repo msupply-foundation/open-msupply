@@ -128,8 +128,8 @@ mod test {
             MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentType, InvoiceRowRepository,
-        InvoiceStatus, StockLineFilter, StockLineRepository, StockLineRowRepository,
+        EqualFilter, InvoiceRowRepository, InvoiceStatus, ReasonOptionRow, ReasonOptionType,
+        StockLineFilter, StockLineRepository, StockLineRowRepository,
     };
     use util::inline_edit;
 
@@ -146,19 +146,19 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_inventory_adjustment_errors() {
-        fn reduction_reason() -> InventoryAdjustmentReasonRow {
-            InventoryAdjustmentReasonRow {
+        fn reduction_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
                 id: "reduction".to_string(),
                 reason: "test reduction".to_string(),
                 is_active: true,
-                r#type: InventoryAdjustmentType::Negative,
+                r#type: ReasonOptionType::NegativeInventoryAdjustment,
             }
         }
         let (_, _, connection_manager, _) = setup_all_with_data(
             "insert_inventory_adjustment_errors",
             MockDataInserts::all(),
             MockData {
-                inventory_adjustment_reasons: vec![reduction_reason()],
+                reason_options: vec![reduction_reason()],
                 ..Default::default()
             },
         )

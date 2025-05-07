@@ -181,7 +181,7 @@ mod stocktake_line_test {
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![outbound_shipment()];
                 r.invoice_lines = vec![outbound_shipment_line()];
-                r.options = vec![positive_reason(), negative_reason()];
+                r.reason_options = vec![positive_reason(), negative_reason()];
                 r.stock_lines = vec![mock_stock_line_c(), mock_stock_line_d()]
             }),
         )
@@ -220,7 +220,7 @@ mod stocktake_line_test {
                     r.stocktake_id = stocktake.id;
                     r.stock_line_id = Some(stock_line.id);
                     r.counted_number_of_packs = Some(17.0);
-                    r.inventory_adjustment_reason_id = Some(negative_reason().id);
+                    r.reason_option_id = Some(negative_reason().id);
                 }),
             )
             .unwrap_err();

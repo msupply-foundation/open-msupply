@@ -146,7 +146,7 @@ mod test {
         },
         test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType,
-        ReturnReasonRow,
+        ReasonOptionRow,
     };
 
     #[actix_rt::test]
@@ -326,8 +326,8 @@ mod test {
 
     #[actix_rt::test]
     async fn test_update_supplier_return_lines_success() {
-        fn return_reason() -> ReturnReasonRow {
-            ReturnReasonRow {
+        fn return_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
                 id: "return_reason".to_string(),
                 is_active: true,
                 ..Default::default()
@@ -338,7 +338,7 @@ mod test {
             "test_update_supplier_return_lines_success",
             MockDataInserts::all(),
             MockData {
-                return_reasons: vec![return_reason()],
+                reason_options: vec![return_reason()],
                 ..Default::default()
             },
         )
