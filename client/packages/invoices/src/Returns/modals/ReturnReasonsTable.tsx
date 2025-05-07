@@ -8,8 +8,8 @@ import {
 import {
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
+  INPUT_WIDTH,
 } from '@openmsupply-client/system';
-import { INPUT_WIDTH } from 'packages/system/src/Stock/Components/StyledInputRow';
 import React from 'react';
 
 interface ReturnWithReason {
