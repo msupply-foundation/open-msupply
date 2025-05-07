@@ -79,8 +79,8 @@ impl PreferenceDescriptionNode {
 pub enum PreferenceKey {
     // These keys (once camelCased) should match fields of PreferencesNode
     ShowContactTracing,
-    DisplayPopulationBasedForecasting,
     DisplayVaccineInDoses,
+    DisplayPopulationBasedForecasting,
     InputVvmStatus,
     SortByVvmStatus,
 }
