@@ -17,11 +17,10 @@ import {
   usePreference,
   PreferenceKey,
   getDosesPerUnitColumn,
-  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
-import { getPrescriptionDosesQuantityColumn } from './dosesColumns';
+import { getDosesQuantityColumn } from '../../DoseQtyColumn';
 
 interface UsePrescriptionColumnOptions {
   sortBy: SortBy<StockOutLineFragment | StockOutItem>;
@@ -61,19 +60,7 @@ export const useExpansionColumns = (
   ];
 
   if (withDoseColumns) {
-    columns.push({
-      key: 'doseQuantity',
-      label: 'label.doses',
-      width: 100,
-      align: ColumnAlign.Right,
-      accessor: ({ rowData }) => {
-        const isVaccine = rowData.item?.isVaccine ?? false;
-        const total = rowData.numberOfPacks * rowData.packSize;
-        return isVaccine
-          ? total * (rowData.item?.doses ?? 1)
-          : UNDEFINED_STRING_VALUE;
-      },
-    });
+    columns.push(getDosesQuantityColumn());
   }
 
   return useColumns(columns, {}, []);
@@ -253,7 +240,7 @@ export const usePrescriptionColumn = ({
   ]);
 
   if (OMSPrefs?.displayVaccineInDoses) {
-    columns.push(getPrescriptionDosesQuantityColumn());
+    columns.push(getDosesQuantityColumn());
   }
 
   if (hasPrescribedQty) {

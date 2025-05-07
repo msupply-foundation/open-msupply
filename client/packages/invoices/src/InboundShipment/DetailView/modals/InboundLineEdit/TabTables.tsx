@@ -72,7 +72,7 @@ export const QuantityTableComponent = ({
   }
 
   if (displayInDoses) {
-    getDosesPerPackColumn(t, unitName);
+    columnDefinitions.push(getDosesPerPackColumn(t, unitName));
   }
 
   columnDefinitions.push(
