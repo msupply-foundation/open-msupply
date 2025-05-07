@@ -6,6 +6,11 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
+use crate::db_diesel::{
+    invoice_row::invoice, item_link_row::item_link, item_row::item, location_row::location,
+    stock_line_row::stock_line,
+};
+
 table! {
     reason_option (id) {
         id -> Text,
@@ -14,6 +19,12 @@ table! {
         reason -> Text,
     }
 }
+
+allow_tables_to_appear_in_same_query!(reason_option, item_link);
+allow_tables_to_appear_in_same_query!(reason_option, item);
+allow_tables_to_appear_in_same_query!(reason_option, location);
+allow_tables_to_appear_in_same_query!(reason_option, invoice);
+allow_tables_to_appear_in_same_query!(reason_option, stock_line);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]

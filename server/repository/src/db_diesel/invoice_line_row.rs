@@ -1,8 +1,7 @@
 use super::{
-    inventory_adjustment_reason_row::inventory_adjustment_reason,
     invoice_line_row::invoice_line::dsl::*, invoice_row::invoice, item_link_row::item_link,
     location_row::location, name_link_row::name_link, reason_option_row::reason_option,
-    return_reason_row::return_reason, stock_line_row::stock_line, StorageConnection,
+    stock_line_row::stock_line, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -38,8 +37,6 @@ table! {
         number_of_packs -> Double,
         prescribed_quantity -> Nullable<Double>,
         note -> Nullable<Text>,
-        inventory_adjustment_reason_id -> Nullable<Text>,
-        return_reason_id -> Nullable<Text>,
         foreign_currency_price_before_tax -> Nullable<Double>,
         item_variant_id -> Nullable<Text>,
         linked_invoice_id -> Nullable<Text>,
@@ -51,12 +48,9 @@ joinable!(invoice_line -> item_link (item_link_id));
 joinable!(invoice_line -> stock_line (stock_line_id));
 joinable!(invoice_line -> invoice (invoice_id));
 joinable!(invoice_line -> location (location_id));
-joinable!(invoice_line -> inventory_adjustment_reason (inventory_adjustment_reason_id));
-joinable!(invoice_line -> return_reason (return_reason_id));
 joinable!(invoice_line -> reason_option (reason_option_id));
 allow_tables_to_appear_in_same_query!(invoice_line, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line, name_link);
-allow_tables_to_appear_in_same_query!(invoice_line, inventory_adjustment_reason);
 allow_tables_to_appear_in_same_query!(invoice_line, reason_option);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
@@ -95,8 +89,6 @@ pub struct InvoiceLineRow {
     pub number_of_packs: f64,
     pub prescribed_quantity: Option<f64>,
     pub note: Option<String>,
-    pub inventory_adjustment_reason_id: Option<String>,
-    pub return_reason_id: Option<String>,
     pub foreign_currency_price_before_tax: Option<f64>,
     pub item_variant_id: Option<String>,
     pub linked_invoice_id: Option<String>,

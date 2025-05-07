@@ -121,8 +121,6 @@ fn generate_line(
         tax_percentage,
         note,
         item_variant_id,
-        inventory_adjustment_reason_id: None,
-        return_reason_id: None,
         foreign_currency_price_before_tax: None,
         linked_invoice_id: None,
         reason_option_id: None,

@@ -40,6 +40,12 @@ impl MigrationFragment for Migrate {
             SET reason_option_id = inventory_adjustment_reason_id
             WHERE inventory_adjustment_reason_id IS NOT NULL;
 
+            ALTER TABLE invoice_line 
+            DROP COLUMN inventory_adjustment_id,
+            DROP COLUMN return_reason_id;
+
+            ALTER TABLE stocktake_line DROP COLUMN inventory_adjustment_reason_id;
+
             UPDATE sync_buffer
             SET integration_datetime = NULL
             WHERE table_name = reason_option;   
