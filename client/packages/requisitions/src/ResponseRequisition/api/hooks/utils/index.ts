@@ -5,7 +5,6 @@ import { useSupplyRequestedQuantity } from './useSupplyRequestedQuantity';
 import { useIsRemoteAuthorisation } from './useIsRemoteAuthorisation';
 import { useRequisitionPreferences } from './useRequisitionPreferences';
 import { useIsDisabledByAuthorisation } from './useIsDisabledByAuthorisation';
-import { useProgramSettings } from './useProgramSettings';
 import { useProgramRequisitionSettingsByCustomer } from './useProgramRequisitionSettingsByCustomer';
 
 export const Utils = {
@@ -16,6 +15,5 @@ export const Utils = {
   useSupplyRequestedQuantity,
   useRequisitionPreferences,
   useIsDisabledByAuthorisation,
-  useProgramSettings,
   useProgramRequisitionSettingsByCustomer,
 };

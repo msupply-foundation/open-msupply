@@ -167,9 +167,7 @@ const LabelAndOptions = <T,>({
             optionKey={optionKey}
             value={value}
             disabled={disabled}
-            onChange={(_, newValue) => {
-              set(newValue);
-            }}
+            onChange={(_, newValue) => set(newValue)}
             sx={{
               background: theme => theme.palette.background.toolbar,
               borderRadius: 2,

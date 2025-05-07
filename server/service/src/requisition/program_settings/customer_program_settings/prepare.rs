@@ -65,10 +65,8 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
         .name_tag(NameTagFilter::new().name_id(EqualFilter::equal_to(customer_name_id)));
 
     // All program settings for store
-    let mut settings =
+    let settings =
         ProgramRequisitionSettingsRepository::new(&ctx.connection).query(Some(filter))?;
-    settings.sort_by(|a, b| a.master_list.id.cmp(&b.master_list.id));
-    settings.dedup();
 
     // Order Types (matching settings program_settings_ids)
     let program_requisition_settings_ids: Vec<String> = settings
