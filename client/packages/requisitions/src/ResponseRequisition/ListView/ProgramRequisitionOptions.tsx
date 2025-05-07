@@ -43,8 +43,6 @@ type Common<T> = Pick<
   optionKey?: keyof T;
 };
 
-type OrderType = ProgramRequisitionOrderTypeFragment;
-
 const useProgramRequisitionOptions = (
   data: ProgramSettingsByCustomerFragment | undefined,
   customerOptions: NameRowFragment[],
@@ -78,8 +76,6 @@ const useProgramRequisitionOptions = (
     setPeriod(null);
   };
 
-  const orderTypes = filterOrderTypes(program?.orderTypes);
-
   const allOptions: {
     programs: Common<Program>;
     orderTypes: Common<OrderType>;
@@ -95,7 +91,7 @@ const useProgramRequisitionOptions = (
       labelNoOptions: t('label.no-program-options'),
     },
     orderTypes: {
-      options: orderTypes,
+      options: program?.orderTypes ?? [],
       value: orderType,
       set: handleSetOrderType,
       disabled: program === null || program === undefined,
@@ -250,9 +246,7 @@ export const ProgramRequisitionOptions = ({
 const getProgramOptionRenderer =
   (): AutocompleteOptionRenderer<MasterListWithOrderTypesFragment> =>
   (props, item) => {
-    const orderTypes = filterOrderTypes(item.orderTypes);
-    const noOrders = orderTypes.length === 0;
-    const color = noOrders ? 'red' : 'black';
+    const color = item.orderTypes.length === 0 ? 'red' : 'black';
     return (
       <DefaultAutocompleteItemOption {...props} key={item.id}>
         <Box display="flex" flexDirection="row" gap={1} alignItems="center">
@@ -270,11 +264,3 @@ const getProgramOptionRenderer =
       </DefaultAutocompleteItemOption>
     );
   };
-
-const filterOrderTypes = (orderTypes: OrderType[] | undefined) => {
-  return (
-    orderTypes?.filter(
-      (orderType: OrderType) => orderType.availablePeriods.length > 0
-    ) || []
-  );
-};
