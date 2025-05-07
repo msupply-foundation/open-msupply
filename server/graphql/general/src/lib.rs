@@ -276,17 +276,6 @@ impl GeneralQueries {
         response_requisition_stats(ctx, &store_id, &requisition_line_id)
     }
 
-    pub async fn inventory_adjustment_reasons(
-        &self,
-        ctx: &Context<'_>,
-        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<InventoryAdjustmentReasonFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<InventoryAdjustmentReasonSortInput>>,
-    ) -> Result<InventoryAdjustmentReasonResponse> {
-        inventory_adjustment_reasons(ctx, page, filter, sort)
-    }
-
     pub async fn item_counts(
         &self,
         ctx: &Context<'_>,
@@ -375,17 +364,6 @@ impl GeneralQueries {
         input: GenerateSupplierReturnLinesInput,
     ) -> Result<GenerateSupplierReturnLinesResponse> {
         generate_supplier_return_lines(ctx, store_id, input)
-    }
-
-    pub async fn return_reasons(
-        &self,
-        ctx: &Context<'_>,
-        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<ReturnReasonFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<ReturnReasonSortInput>>,
-    ) -> Result<ReturnReasonResponse> {
-        return_reasons(ctx, page, filter, sort)
     }
 
     /// Generates new customer_return lines in memory, based on supplier return line ids.

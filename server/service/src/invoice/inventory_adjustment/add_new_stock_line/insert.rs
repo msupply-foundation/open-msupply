@@ -70,7 +70,7 @@ pub fn add_new_stock_line(
             let invoice_line_repo = InvoiceLineRowRepository::new(connection);
             invoice_line_repo.update_reason_option_id(
                 &update_inventory_adjustment_reason.invoice_line_id,
-                update_inventory_adjustment_reason.reason_id,
+                update_inventory_adjustment_reason.reason_option_id,
             )?;
 
             // Set invoice to verified

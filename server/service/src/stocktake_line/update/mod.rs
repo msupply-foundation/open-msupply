@@ -23,7 +23,6 @@ pub struct UpdateStocktakeLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
-    pub inventory_adjustment_reason_id: Option<String>,
     pub item_variant_id: Option<NullableUpdate<String>>,
     pub reason_option_id: Option<String>,
 }
@@ -353,7 +352,6 @@ mod stocktake_line_test {
                 expiry_date: None,
                 pack_size: None,
                 note: None,
-                inventory_adjustment_reason_id: None,
                 item_variant_id: None,
                 reason_option_id: None,
             }

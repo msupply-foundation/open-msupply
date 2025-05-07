@@ -156,7 +156,7 @@ pub fn generate(
     };
 
     let update_inventory_adjustment_reason = UpdateInventoryAdjustmentReason {
-        reason_id: reason_option_id,
+        reason_option_id,
         invoice_line_id,
     };
 
