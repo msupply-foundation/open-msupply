@@ -33,8 +33,6 @@ export const RnRFormLine = ({
   const { store } = useAuthContext();
   const lineState = useRnRFormContext(useCachedRnRDraftLine(lineId));
 
-  // console.log('rendering', lineState?.line.id, lineId);
-
   if (!lineState) return null;
 
   const { line, setLine } = lineState;
@@ -155,6 +153,7 @@ export const RnRFormLine = ({
         value={line.adjustedQuantityConsumed}
       />
 
+      {/* Losses/adjustments and stock out */}
       <RnRNumberCell
         value={line.losses}
         onChange={val => updateDraft({ losses: val })}
