@@ -26,9 +26,10 @@ import { useOutbound } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { Draft } from '../..';
 import { StockOutLineFragment } from '../../StockOut';
-import { OutboundLineEdit } from './OutboundLineEdit';
+import { OutboundLineEdit as OutboundLineEditOld } from './OutboundLineEdit';
 import { CustomerReturnEditModal } from '../../Returns';
 import { canReturnOutboundLines } from '../../utils';
+import { OutboundLineEdit } from './OutboundLineEditModal';
 
 const DetailViewInner = () => {
   const t = useTranslation();
@@ -104,6 +105,14 @@ const DetailViewInner = () => {
       {data ? (
         <>
           <AppBarButtons onAddItem={onAddItem} />
+          {false && (
+            <OutboundLineEditOld
+              draft={entity}
+              mode={mode}
+              isOpen={isOpen}
+              onClose={onClose}
+            />
+          )}
           {isOpen && (
             <OutboundLineEdit
               draft={entity}
