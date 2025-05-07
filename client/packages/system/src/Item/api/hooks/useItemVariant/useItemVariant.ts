@@ -7,6 +7,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import {
+  ItemRowFragment,
   ItemVariantFragment,
   PackagingVariantFragment,
 } from '../../operations.generated';
@@ -14,15 +15,15 @@ import { useItemApi, useItemGraphQL } from '../useItemApi';
 import { ITEM_VARIANTS } from '../../keys';
 
 export function useItemVariant({
-  itemId,
+  item,
   variant,
 }: {
-  itemId: string;
+  item: ItemRowFragment;
   variant: ItemVariantFragment | null;
 }) {
   const t = useTranslation();
   const { mutateAsync } = useUpsert({
-    itemId,
+    itemId: item.id,
   });
 
   const [draft, setDraft] = useState<ItemVariantFragment>(
@@ -30,7 +31,7 @@ export function useItemVariant({
       __typename: 'ItemVariantNode',
       id: FnUtils.generateUUID(),
       name: '',
-      itemId,
+      itemId: item.id,
       manufacturerId: null,
       coldStorageTypeId: null,
       packagingVariants: [
@@ -53,6 +54,15 @@ export function useItemVariant({
           name: t('label.tertiary'),
         },
       ],
+      item: {
+        __typename: 'ItemNode',
+        id: item.id,
+        code: item.code,
+        unitName: item.unitName,
+        name: item.name,
+        isVaccine: item.isVaccine,
+        doses: item.doses,
+      },
       bundledItemVariants: [],
       bundlesWith: [],
       dosesPerUnit: 0,

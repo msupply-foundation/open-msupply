@@ -235,6 +235,15 @@ export type ItemVariantFragment = {
   coldStorageTypeId?: string | null;
   dosesPerUnit: number;
   vvmType?: string | null;
+  item?: {
+    __typename: 'ItemNode';
+    id: string;
+    code: string;
+    name: string;
+    unitName?: string | null;
+    isVaccine: boolean;
+    doses: number;
+  } | null;
   manufacturer?: {
     __typename: 'NameNode';
     code: string;
@@ -389,6 +398,15 @@ export type ItemFragment = {
     coldStorageTypeId?: string | null;
     dosesPerUnit: number;
     vvmType?: string | null;
+    item?: {
+      __typename: 'ItemNode';
+      id: string;
+      code: string;
+      name: string;
+      unitName?: string | null;
+      isVaccine: boolean;
+      doses: number;
+    } | null;
     manufacturer?: {
       __typename: 'NameNode';
       code: string;
@@ -565,6 +583,15 @@ export type ItemsWithStockLinesQuery = {
         coldStorageTypeId?: string | null;
         dosesPerUnit: number;
         vvmType?: string | null;
+        item?: {
+          __typename: 'ItemNode';
+          id: string;
+          code: string;
+          name: string;
+          unitName?: string | null;
+          isVaccine: boolean;
+          doses: number;
+        } | null;
         manufacturer?: {
           __typename: 'NameNode';
           code: string;
@@ -854,6 +881,15 @@ export type ItemByIdQuery = {
         coldStorageTypeId?: string | null;
         dosesPerUnit: number;
         vvmType?: string | null;
+        item?: {
+          __typename: 'ItemNode';
+          id: string;
+          code: string;
+          name: string;
+          unitName?: string | null;
+          isVaccine: boolean;
+          doses: number;
+        } | null;
         manufacturer?: {
           __typename: 'NameNode';
           code: string;
@@ -1049,6 +1085,15 @@ export type UpsertItemVariantMutation = {
             coldStorageTypeId?: string | null;
             dosesPerUnit: number;
             vvmType?: string | null;
+            item?: {
+              __typename: 'ItemNode';
+              id: string;
+              code: string;
+              name: string;
+              unitName?: string | null;
+              isVaccine: boolean;
+              doses: number;
+            } | null;
             manufacturer?: {
               __typename: 'NameNode';
               code: string;
@@ -1120,11 +1165,11 @@ export type UpsertItemVariantMutation = {
         | {
             __typename: 'UpsertItemVariantError';
             error:
+              | { __typename: 'DatabaseError'; description: string }
               | {
                   __typename: 'DoseConfigurationNotAllowed';
                   description: string;
                 }
-              | { __typename: 'DatabaseError'; description: string }
               | { __typename: 'InternalError'; description: string }
               | {
                   __typename: 'UniqueValueViolation';
@@ -1457,6 +1502,9 @@ export const ItemVariantFragmentDoc = gql`
     id
     name
     itemId
+    item {
+      ...ItemRow
+    }
     manufacturerId
     manufacturer(storeId: $storeId) {
       ...NameRow
@@ -1477,6 +1525,7 @@ export const ItemVariantFragmentDoc = gql`
     dosesPerUnit
     vvmType
   }
+  ${ItemRowFragmentDoc}
   ${NameRowFragmentDoc}
   ${ColdStorageTypeFragmentDoc}
   ${PackagingVariantFragmentDoc}

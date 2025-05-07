@@ -985,11 +985,6 @@ export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
-export type DoseConfigurationNotAllowed = UpsertItemVariantErrorInterface & {
-  __typename: 'DoseConfigurationNotAllowed';
-  description: Scalars['String']['output'];
-};
-
 export type CannotDeleteInvoiceWithLines = DeleteCustomerReturnErrorInterface &
   DeleteErrorInterface &
   DeleteInboundShipmentErrorInterface &
@@ -2277,6 +2272,11 @@ export type DocumentSortInput = {
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: DocumentSortFieldInput;
+};
+
+export type DoseConfigurationNotAllowed = UpsertItemVariantErrorInterface & {
+  __typename: 'DoseConfigurationNotAllowed';
+  description: Scalars['String']['output'];
 };
 
 export type EncounterConnector = {
@@ -4318,7 +4318,10 @@ export type ItemVariantNode = {
   coldStorageTypeId?: Maybe<Scalars['String']['output']>;
   dosesPerUnit: Scalars['Int']['output'];
   id: Scalars['String']['output'];
+  item?: Maybe<ItemNode>;
+  /** @deprecated From 2.8.0. Use item instead */
   itemId: Scalars['String']['output'];
+  /** @deprecated From 2.8.0. Use item instead */
   itemName: Scalars['String']['output'];
   manufacturer?: Maybe<NameNode>;
   manufacturerId?: Maybe<Scalars['String']['output']>;

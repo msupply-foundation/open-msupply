@@ -14,6 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import { ItemPackagingVariantsTable } from './ItemPackagingVariantsTable';
 import {
+  ItemRowFragment,
   ItemVariantFragment,
   PackagingVariantFragment,
   useItemVariant,
@@ -22,11 +23,11 @@ import { ManufacturerSearchInput } from '@openmsupply-client/system';
 import { ColdStorageTypeInput } from '../../../Components/ColdStorageTypeInput';
 
 export const ItemVariantModal = ({
-  itemId,
+  item,
   variant,
   onClose,
 }: {
-  itemId: string;
+  item: ItemRowFragment;
   variant: ItemVariantFragment | null;
   onClose: () => void;
 }) => {
@@ -36,7 +37,7 @@ export const ItemVariantModal = ({
 
   const { draft, isComplete, updateDraft, updatePackagingVariant, save } =
     useItemVariant({
-      itemId,
+      item,
       variant,
     });
 
@@ -125,12 +126,12 @@ const ItemVariantForm = ({
             <Box width="100%">
               <ColdStorageTypeInput
                 value={variant.coldStorageType ?? null}
-                onChange={coldStorageType =>
+                onChange={coldStorageType => {
                   updateVariant({
                     coldStorageType,
-                    coldStorageTypeId: coldStorageType?.id ?? '',
-                  })
-                }
+                    coldStorageTypeId: coldStorageType?.id ?? null,
+                  });
+                }}
               />
             </Box>
           }

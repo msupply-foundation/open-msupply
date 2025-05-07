@@ -18,15 +18,19 @@ import {
   useEditModal,
 } from '@openmsupply-client/common';
 import { ItemPackagingVariantsTable } from './ItemPackagingVariantsTable';
-import { ItemVariantFragment, useDeleteItemVariant } from '../../../api';
+import {
+  ItemRowFragment,
+  ItemVariantFragment,
+  useDeleteItemVariant,
+} from '../../../api';
 import { ItemVariantModal } from './ItemVariantModal';
 import { BundledItemVariants } from './BundledItemVariants';
 
 export const ItemVariantsTab = ({
-  itemId,
+  item,
   itemVariants,
 }: {
-  itemId: string;
+  item: ItemRowFragment;
   itemVariants: ItemVariantFragment[];
 }) => {
   const t = useTranslation();
@@ -37,7 +41,7 @@ export const ItemVariantsTab = ({
   return (
     <>
       {isOpen && (
-        <ItemVariantModal onClose={onClose} itemId={itemId} variant={entity} />
+        <ItemVariantModal onClose={onClose} item={item} variant={entity} />
       )}
       <AppBarButtonsPortal>
         <ButtonWithIcon
@@ -58,7 +62,7 @@ export const ItemVariantsTab = ({
               key={v.id}
               variant={v}
               onOpen={onOpen}
-              itemId={itemId}
+              itemId={item.id}
             />
           ))
         )}

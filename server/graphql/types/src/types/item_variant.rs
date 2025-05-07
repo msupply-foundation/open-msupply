@@ -1,9 +1,9 @@
-use super::{BundledItemNode, ColdStorageTypeNode, NameNode};
+use super::{BundledItemNode, ColdStorageTypeNode, ItemNode, NameNode};
 use async_graphql::*;
 use dataloader::DataLoader;
 use graphql_core::loader::{
     BundledItemByBundledItemVariantIdLoader, BundledItemByPrincipalItemVariantIdLoader,
-    ColdStorageTypeLoader, NameByIdLoader, NameByIdLoaderInput,
+    ColdStorageTypeLoader, ItemLoader, NameByIdLoader, NameByIdLoaderInput,
 };
 use graphql_core::{loader::PackagingVariantRowLoader, ContextExt};
 use repository::item_variant::item_variant::ItemVariant;
@@ -30,12 +30,20 @@ impl ItemVariantNode {
         &self.item_variant.name
     }
 
+    #[graphql(deprecation = "From 2.8.0. Use item instead")]
     pub async fn item_id(&self) -> &String {
         &self.item.id
     }
-
+    #[graphql(deprecation = "From 2.8.0. Use item instead")]
     pub async fn item_name(&self) -> &String {
         &self.item.name
+    }
+
+    pub async fn item(&self, ctx: &Context<'_>) -> Result<Option<ItemNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
+        let result = loader.load_one(self.item.id.clone()).await?;
+
+        Ok(result.map(ItemNode::from_domain))
     }
 
     pub async fn manufacturer_id(&self) -> &Option<String> {
@@ -58,7 +66,7 @@ impl ItemVariantNode {
         let loader = ctx.get_loader::<DataLoader<ColdStorageTypeLoader>>();
         let result = loader.load_one(cold_storage_type_id.clone()).await?;
 
-        Ok(result.map(|cold_storage_type| ColdStorageTypeNode::from_domain(cold_storage_type)))
+        Ok(result.map(ColdStorageTypeNode::from_domain))
     }
 
     pub async fn manufacturer(
@@ -76,7 +84,7 @@ impl ItemVariantNode {
             .load_one(NameByIdLoaderInput::new(&store_id, manufacturer_link_id))
             .await?;
 
-        Ok(result.map(|manufacturer| NameNode::from_domain(manufacturer)))
+        Ok(result.map(NameNode::from_domain))
     }
 
     pub async fn packaging_variants(&self, ctx: &Context<'_>) -> Result<Vec<PackagingVariantNode>> {
