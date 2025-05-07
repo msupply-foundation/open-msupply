@@ -11,6 +11,7 @@ import {
   QueryParamsProvider,
   createQueryParamsStore,
   useNotification,
+  NumericTextInput,
 } from '@openmsupply-client/common';
 import { ItemPackagingVariantsTable } from './ItemPackagingVariantsTable';
 import {
@@ -151,6 +152,34 @@ const ItemVariantForm = ({
                 }
               />
             </Box>
+          }
+        />
+        <InputWithLabelRow
+          label={t('label.doses-per-unit')}
+          labelWidth="200"
+          Input={
+            <NumericTextInput
+              fullWidth
+              disabled={!variant.item?.isVaccine}
+              value={variant.dosesPerUnit}
+              onChange={dosesPerUnit => {
+                updateVariant({ dosesPerUnit });
+              }}
+            />
+          }
+        />
+        <InputWithLabelRow
+          label={t('label.vvm-type')}
+          labelWidth="200"
+          Input={
+            <BasicTextInput
+              disabled={!variant.item?.isVaccine}
+              value={variant.vvmType}
+              onChange={event => {
+                updateVariant({ vvmType: event.target.value });
+              }}
+              fullWidth
+            />
           }
         />
       </Box>
