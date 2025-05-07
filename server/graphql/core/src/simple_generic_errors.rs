@@ -311,9 +311,9 @@ impl UniqueValueViolation {
     }
 }
 
-pub struct CannotConfigureDosesForNonVaccineItem;
+pub struct DoseConfigurationNotAllowed;
 #[Object]
-impl CannotConfigureDosesForNonVaccineItem {
+impl DoseConfigurationNotAllowed {
     pub async fn description(&self) -> &str {
         "Cannot configure doses for non-vaccine item"
     }

@@ -985,6 +985,11 @@ export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type DoseConfigurationNotAllowed = UpsertItemVariantErrorInterface & {
+  __typename: 'DoseConfigurationNotAllowed';
+  description: Scalars['String']['output'];
+};
+
 export type CannotDeleteInvoiceWithLines = DeleteCustomerReturnErrorInterface &
   DeleteErrorInterface &
   DeleteInboundShipmentErrorInterface &
@@ -4311,6 +4316,7 @@ export type ItemVariantNode = {
   bundlesWith: Array<BundledItemNode>;
   coldStorageType?: Maybe<ColdStorageTypeNode>;
   coldStorageTypeId?: Maybe<Scalars['String']['output']>;
+  dosesPerUnit: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
@@ -4318,6 +4324,7 @@ export type ItemVariantNode = {
   manufacturerId?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   packagingVariants: Array<PackagingVariantNode>;
+  vvmType?: Maybe<Scalars['String']['output']>;
 };
 
 export type ItemVariantNodeManufacturerArgs = {
@@ -9587,12 +9594,14 @@ export type UpsertItemVariantErrorInterface = {
 };
 
 export type UpsertItemVariantInput = {
-  coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
+  coldStorageTypeId?: InputMaybe<NullableStringUpdate>;
+  dosesPerUnit: Scalars['Int']['input'];
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  manufacturerId?: InputMaybe<NullableStringUpdate>;
   name: Scalars['String']['input'];
   packagingVariants: Array<PackagingVariantInput>;
+  vvmType?: InputMaybe<NullableStringUpdate>;
 };
 
 export type UpsertLogLevelInput = {

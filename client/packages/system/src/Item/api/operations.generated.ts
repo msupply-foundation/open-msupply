@@ -233,6 +233,8 @@ export type ItemVariantFragment = {
   itemId: string;
   manufacturerId?: string | null;
   coldStorageTypeId?: string | null;
+  dosesPerUnit: number;
+  vvmType?: string | null;
   manufacturer?: {
     __typename: 'NameNode';
     code: string;
@@ -385,6 +387,8 @@ export type ItemFragment = {
     itemId: string;
     manufacturerId?: string | null;
     coldStorageTypeId?: string | null;
+    dosesPerUnit: number;
+    vvmType?: string | null;
     manufacturer?: {
       __typename: 'NameNode';
       code: string;
@@ -559,6 +563,8 @@ export type ItemsWithStockLinesQuery = {
         itemId: string;
         manufacturerId?: string | null;
         coldStorageTypeId?: string | null;
+        dosesPerUnit: number;
+        vvmType?: string | null;
         manufacturer?: {
           __typename: 'NameNode';
           code: string;
@@ -846,6 +852,8 @@ export type ItemByIdQuery = {
         itemId: string;
         manufacturerId?: string | null;
         coldStorageTypeId?: string | null;
+        dosesPerUnit: number;
+        vvmType?: string | null;
         manufacturer?: {
           __typename: 'NameNode';
           code: string;
@@ -1039,6 +1047,8 @@ export type UpsertItemVariantMutation = {
             itemId: string;
             manufacturerId?: string | null;
             coldStorageTypeId?: string | null;
+            dosesPerUnit: number;
+            vvmType?: string | null;
             manufacturer?: {
               __typename: 'NameNode';
               code: string;
@@ -1110,6 +1120,10 @@ export type UpsertItemVariantMutation = {
         | {
             __typename: 'UpsertItemVariantError';
             error:
+              | {
+                  __typename: 'DoseConfigurationNotAllowed';
+                  description: string;
+                }
               | { __typename: 'DatabaseError'; description: string }
               | { __typename: 'InternalError'; description: string }
               | {
@@ -1460,6 +1474,8 @@ export const ItemVariantFragmentDoc = gql`
     bundlesWith {
       ...BundledItem
     }
+    dosesPerUnit
+    vvmType
   }
   ${NameRowFragmentDoc}
   ${ColdStorageTypeFragmentDoc}
@@ -1766,6 +1782,9 @@ export const UpsertItemVariantDocument = gql`
               ... on UniqueValueViolation {
                 description
                 field
+              }
+              ... on DoseConfigurationNotAllowed {
+                description
               }
             }
           }

@@ -2,7 +2,7 @@ use async_graphql::*;
 use graphql_core::{
     generic_inputs::NullableUpdateInput,
     simple_generic_errors::{
-        CannotConfigureDosesForNonVaccineItem, DatabaseError, InternalError, UniqueValueKey,
+        DatabaseError, DoseConfigurationNotAllowed, InternalError, UniqueValueKey,
         UniqueValueViolation,
     },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -55,7 +55,7 @@ pub enum UpsertItemVariantResponse {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpsertItemVariantErrorInterface {
     DuplicateName(UniqueValueViolation),
-    CannotConfigureDosesForNonVaccineItem(CannotConfigureDosesForNonVaccineItem),
+    DoseConfigurationNotAllowed(DoseConfigurationNotAllowed),
     InternalError(InternalError),
     DatabaseError(DatabaseError),
 }
@@ -159,10 +159,10 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
                 UniqueValueViolation(UniqueValueKey::Name),
             ))
         }
-        ServiceError::CannotConfigureDosesForNonVaccineItem => {
+        ServiceError::DoseConfigurationNotAllowed => {
             return Ok(
-                UpsertItemVariantErrorInterface::CannotConfigureDosesForNonVaccineItem(
-                    CannotConfigureDosesForNonVaccineItem,
+                UpsertItemVariantErrorInterface::DoseConfigurationNotAllowed(
+                    DoseConfigurationNotAllowed,
                 ),
             )
         }

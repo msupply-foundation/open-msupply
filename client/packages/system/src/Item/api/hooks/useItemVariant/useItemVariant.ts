@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   FnUtils,
   isEmpty,
+  setNullableInput,
   useMutation,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -54,6 +55,8 @@ export function useItemVariant({
       ],
       bundledItemVariants: [],
       bundlesWith: [],
+      dosesPerUnit: 0,
+      vvmType: null,
     }
   );
 
@@ -87,8 +90,8 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
         id: input.id,
         itemId,
         name: input.name,
-        manufacturerId: input.manufacturerId,
-        coldStorageTypeId: input.coldStorageTypeId,
+        manufacturerId: setNullableInput('manufacturerId', input),
+        coldStorageTypeId: setNullableInput('coldStorageTypeId', input),
         packagingVariants: input.packagingVariants.map(pv => ({
           id: pv.id,
           name: pv.name,
@@ -96,6 +99,8 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
           packSize: pv.packSize,
           volumePerUnit: pv.volumePerUnit,
         })),
+        dosesPerUnit: input.dosesPerUnit,
+        vvmType: setNullableInput('vvmType', input),
       },
     });
     // will be empty if there's a generic error, such as permission denied
@@ -107,6 +112,9 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
       if (result.__typename === 'UpsertItemVariantError') {
         if (result.error.__typename === 'UniqueValueViolation') {
           throw new Error(t('error.duplicate-item-variant-name'));
+        }
+        if (result.error.__typename === 'DoseConfigurationNotAllowed') {
+          throw new Error(t('error.dose-configuration-not-allowed'));
         }
       }
     }

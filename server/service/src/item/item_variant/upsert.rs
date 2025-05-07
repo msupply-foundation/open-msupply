@@ -25,7 +25,7 @@ pub enum UpsertItemVariantError {
     CantChangeItem,
     DuplicateName,
     ColdStorageTypeDoesNotExist,
-    CannotConfigureDosesForNonVaccineItem,
+    DoseConfigurationNotAllowed,
     PackagingVariantError(UpsertPackagingVariantError),
     DatabaseError(RepositoryError),
 }
@@ -179,7 +179,7 @@ fn validate(
     }
 
     if !item.is_vaccine && input.doses_per_unit > 0 {
-        return Err(UpsertItemVariantError::CannotConfigureDosesForNonVaccineItem);
+        return Err(UpsertItemVariantError::DoseConfigurationNotAllowed);
     }
 
     Ok(())
