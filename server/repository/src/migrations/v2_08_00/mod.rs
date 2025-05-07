@@ -1,7 +1,9 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_vvm_status_log_table;
 mod add_vvm_status_table;
+
 pub(crate) struct V2_08_00;
 
 impl Migration for V2_08_00 {
@@ -16,6 +18,7 @@ impl Migration for V2_08_00 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(add_vvm_status_table::Migrate),
+            Box::new(add_vvm_status_log_table::Migrate),
         ]
     }
 }
