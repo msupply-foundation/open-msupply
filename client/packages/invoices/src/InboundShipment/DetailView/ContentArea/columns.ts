@@ -264,7 +264,9 @@ export const useInboundShipmentColumns = ({
             ? unitQuantity * (lines[0]?.item.doses ?? 1)
             : UNDEFINED_STRING_VALUE;
         } else {
-          return getUnitQuantity(rowData) * rowData.item.doses;
+          return rowData.item.isVaccine
+            ? getUnitQuantity(rowData) * rowData.item.doses
+            : UNDEFINED_STRING_VALUE;
         }
       },
     });
@@ -306,7 +308,7 @@ export const useInboundShipmentColumns = ({
 };
 
 export const useExpansionColumns = (
-  displayInDoses?: boolean
+  withDoseColumns?: boolean
 ): Column<InboundLineFragment>[] => {
   const columns: ColumnDescription<InboundLineFragment>[] = [
     'batch',
@@ -321,7 +323,7 @@ export const useExpansionColumns = (
     'numberOfPacks',
   ];
 
-  if (displayInDoses) {
+  if (withDoseColumns) {
     columns.push({
       key: 'doseQuantity',
       label: 'label.doses',

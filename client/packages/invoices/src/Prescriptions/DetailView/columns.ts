@@ -29,7 +29,7 @@ interface UsePrescriptionColumnOptions {
 }
 
 export const useExpansionColumns = (
-  displayInDoses?: boolean
+  withDoseColumns?: boolean
 ): Column<StockOutLineFragment>[] => {
   const columns: ColumnDescription<StockOutLineFragment>[] = [
     'batch',
@@ -60,7 +60,7 @@ export const useExpansionColumns = (
     ],
   ];
 
-  if (displayInDoses) {
+  if (withDoseColumns) {
     columns.push({
       key: 'doseQuantity',
       label: 'label.doses',

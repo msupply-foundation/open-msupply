@@ -27,8 +27,27 @@ const Expand = ({
   rowData: StockOutLineFragment | StockOutItem;
   displayInDoses?: boolean;
 }) => {
-  const expandoColumns = useExpansionColumns(displayInDoses);
+  if ('lines' in rowData && rowData.lines.length > 1) {
+    const isVaccineItem = rowData.lines[0]?.item.isVaccine ?? false;
+    return (
+      <ExpandoInner
+        rowData={rowData}
+        withDoseColumns={displayInDoses && isVaccineItem}
+      />
+    );
+  } else {
+    return null;
+  }
+};
 
+const ExpandoInner = ({
+  rowData,
+  withDoseColumns,
+}: {
+  rowData: StockOutLineFragment | StockOutItem;
+  withDoseColumns?: boolean;
+}) => {
+  const expandoColumns = useExpansionColumns(withDoseColumns);
   if ('lines' in rowData && rowData.lines.length > 1) {
     return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
   } else {
