@@ -163,7 +163,6 @@ export const useErrorLineIndex = (state: RnRFormContext) => {
     draftLine => (draftLine?.finalBalance || 0) < 0
   );
 
-  console.log({ firstErrorLine });
   if (!firstErrorLine) return -1;
   return state.baseLineIndexes[firstErrorLine.id] || -1;
 };
@@ -178,7 +177,7 @@ export const useCachedRnRDraftLine = (id: string) => {
       }
     | undefined
   >(undefined);
-  console.log('here');
+
   return (state: RnRFormContext) => {
     const previousIteration = prevIteration.current;
     prevIteration.current = state.draftLineIteration[id] ?? 0;
