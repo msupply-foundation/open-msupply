@@ -238,11 +238,8 @@ export type ItemVariantFragment = {
   item?: {
     __typename: 'ItemNode';
     id: string;
-    code: string;
     name: string;
-    unitName?: string | null;
     isVaccine: boolean;
-    doses: number;
   } | null;
   manufacturer?: {
     __typename: 'NameNode';
@@ -401,11 +398,8 @@ export type ItemFragment = {
     item?: {
       __typename: 'ItemNode';
       id: string;
-      code: string;
       name: string;
-      unitName?: string | null;
       isVaccine: boolean;
-      doses: number;
     } | null;
     manufacturer?: {
       __typename: 'NameNode';
@@ -586,11 +580,8 @@ export type ItemsWithStockLinesQuery = {
         item?: {
           __typename: 'ItemNode';
           id: string;
-          code: string;
           name: string;
-          unitName?: string | null;
           isVaccine: boolean;
-          doses: number;
         } | null;
         manufacturer?: {
           __typename: 'NameNode';
@@ -884,11 +875,8 @@ export type ItemByIdQuery = {
         item?: {
           __typename: 'ItemNode';
           id: string;
-          code: string;
           name: string;
-          unitName?: string | null;
           isVaccine: boolean;
-          doses: number;
         } | null;
         manufacturer?: {
           __typename: 'NameNode';
@@ -1088,11 +1076,8 @@ export type UpsertItemVariantMutation = {
             item?: {
               __typename: 'ItemNode';
               id: string;
-              code: string;
               name: string;
-              unitName?: string | null;
               isVaccine: boolean;
-              doses: number;
             } | null;
             manufacturer?: {
               __typename: 'NameNode';
@@ -1503,7 +1488,9 @@ export const ItemVariantFragmentDoc = gql`
     name
     itemId
     item {
-      ...ItemRow
+      id
+      name
+      isVaccine
     }
     manufacturerId
     manufacturer(storeId: $storeId) {
@@ -1525,7 +1512,6 @@ export const ItemVariantFragmentDoc = gql`
     dosesPerUnit
     vvmType
   }
-  ${ItemRowFragmentDoc}
   ${NameRowFragmentDoc}
   ${ColdStorageTypeFragmentDoc}
   ${PackagingVariantFragmentDoc}

@@ -148,7 +148,9 @@ fragment ItemVariant on ItemVariantNode {
   name
   itemId
   item {
-    ...ItemRow
+    id
+    name
+    isVaccine
   }
   manufacturerId
   manufacturer(storeId: $storeId) {

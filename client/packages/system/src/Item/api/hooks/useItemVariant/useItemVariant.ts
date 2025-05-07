@@ -57,11 +57,8 @@ export function useItemVariant({
       item: {
         __typename: 'ItemNode',
         id: item.id,
-        code: item.code,
-        unitName: item.unitName,
         name: item.name,
         isVaccine: item.isVaccine,
-        doses: item.doses,
       },
       bundledItemVariants: [],
       bundlesWith: [],
