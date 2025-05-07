@@ -99,7 +99,7 @@ const getCountThisLineColumn = (
 const getInventoryAdjustmentReasonInputColumn = (
   setter: DraftLineSetter,
   { getError }: UseStocktakeLineErrors,
-  initialStocktake: boolean
+  initialStocktake?: boolean
 ): ColumnDescription<DraftStocktakeLine> => {
   return {
     key: 'inventoryAdjustmentReasonInput',
@@ -163,7 +163,6 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
   useDisableStocktakeRows(batches);
 
   const errorsContext = useStocktakeLineErrorContext();
-  const initialStocktake = isInitialStocktake ? isInitialStocktake : false;
 
   const columnDefinitions = useMemo(() => {
     const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
@@ -234,7 +233,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       getInventoryAdjustmentReasonInputColumn(
         update,
         errorsContext,
-        initialStocktake
+        isInitialStocktake
       )
     );
 

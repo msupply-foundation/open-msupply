@@ -23,7 +23,7 @@ interface InventoryAdjustmentReasonSearchInputProps {
   adjustmentType: AdjustmentTypeInput;
   isError?: boolean;
   isDisabled?: boolean;
-  initialStocktake: boolean;
+  initialStocktake?: boolean;
 }
 
 export const InventoryAdjustmentReasonSearchInput: FC<

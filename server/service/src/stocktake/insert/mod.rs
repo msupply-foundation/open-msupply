@@ -736,18 +736,5 @@ mod test {
             .iter()
             .find(|r| r.line.stock_line_id == Some("stock_line_row_1".to_string()));
         assert!(stock_line_row.is_none());
-
-        // // attempt to do a second initial stocktake, check for error response
-
-        // check the stocktake wasn't created
-        let stocktake = StocktakeRowRepository::new(&connection)
-            .find_one_by_id("stocktake_2")
-            // .query_by_filter(
-            //     StocktakeFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
-            //     None,
-            // )
-            .unwrap();
-
-        assert_eq!(None, stocktake)
     }
 }
