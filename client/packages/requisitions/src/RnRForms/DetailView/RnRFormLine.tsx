@@ -33,7 +33,7 @@ export const RnRFormLine = ({
   const { store } = useAuthContext();
   const lineState = useRnRFormContext(useCachedRnRDraftLine(lineId));
 
-  console.log('rendering', lineState?.line.id, lineId);
+  // console.log('rendering', lineState?.line.id, lineId);
 
   if (!lineState) return null;
 
