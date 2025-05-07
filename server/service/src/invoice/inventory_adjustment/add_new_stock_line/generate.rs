@@ -27,7 +27,7 @@ pub fn generate(
         stock_line_id,
         item_id,
         number_of_packs,
-        inventory_adjustment_reason_id,
+        reason_option_id,
         cost_price_per_pack,
         sell_price_per_pack,
         pack_size,
@@ -111,7 +111,7 @@ pub fn generate(
     };
 
     let update_inventory_adjustment_reason = UpdateInventoryAdjustmentReason {
-        reason_id: inventory_adjustment_reason_id,
+        reason_id: reason_option_id,
         invoice_line_id,
     };
 

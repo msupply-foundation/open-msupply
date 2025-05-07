@@ -32,7 +32,7 @@ pub struct InsertInventoryAdjustment {
     pub stock_line_id: String,
     pub adjustment: f64,
     pub adjustment_type: AdjustmentType,
-    pub inventory_adjustment_reason_id: Option<String>,
+    pub reason_option_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -217,7 +217,7 @@ mod test {
                 InsertInventoryAdjustment {
                     stock_line_id: mock_stock_line_a().id,
                     adjustment: 2.0,
-                    inventory_adjustment_reason_id: Some("invalid".to_string()),
+                    reason_option_id: Some("invalid".to_string()),
                     ..Default::default()
                 }
             ),
@@ -268,7 +268,7 @@ mod test {
                     adjustment_type:
                         crate::invoice::inventory_adjustment::AdjustmentType::Reduction,
                     adjustment: 50.0,
-                    inventory_adjustment_reason_id: Some(reduction_reason().id),
+                    reason_option_id: Some(reduction_reason().id),
                 }
             ),
             Err(ServiceError::StockLineReducedBelowZero(stock_line))

@@ -65,7 +65,7 @@ const useCreate = (stockLineId: string) => {
           adjustment,
           adjustmentType,
           stockLineId,
-          inventoryAdjustmentReasonId: reason?.id,
+          reasonOptionId: reason?.id,
         },
       });
     },

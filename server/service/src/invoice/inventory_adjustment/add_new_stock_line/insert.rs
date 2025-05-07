@@ -25,7 +25,7 @@ pub struct AddNewStockLine {
     pub batch: Option<String>,
     pub location: Option<NullableUpdate<String>>,
     pub expiry_date: Option<NaiveDate>,
-    pub inventory_adjustment_reason_id: Option<String>,
+    pub reason_option_id: Option<String>,
     pub barcode: Option<String>,
     pub item_variant_id: Option<String>,
 }
@@ -181,7 +181,7 @@ mod test {
                 AddNewStockLine {
                     stock_line_id: "new".to_string(),
                     number_of_packs: 1.0,
-                    inventory_adjustment_reason_id: None,
+                    reason_option_id: None,
                     ..Default::default()
                 }
             ),
@@ -195,7 +195,7 @@ mod test {
                 AddNewStockLine {
                     stock_line_id: "new".to_string(),
                     number_of_packs: 2.0,
-                    inventory_adjustment_reason_id: Some("invalid".to_string()),
+                    reason_option_id: Some("invalid".to_string()),
                     ..Default::default()
                 }
             ),
@@ -252,7 +252,7 @@ mod test {
                     pack_size: 1.0,
                     number_of_packs: 2.0,
                     item_id: mock_item_a().id,
-                    inventory_adjustment_reason_id: Some(addition_reason().id),
+                    reason_option_id: Some(addition_reason().id),
                     on_hold: true,
                     location: Some(NullableUpdate {
                         value: Some(mock_location_1().id),
@@ -334,7 +334,7 @@ mod test {
                 pack_size: 1.0,
                 number_of_packs: 2.0,
                 item_id: mock_item_a().id,
-                inventory_adjustment_reason_id: None, // Check *no* error when reasons not defined and not provided
+                reason_option_id: None, // Check *no* error when reasons not defined and not provided
                 ..Default::default()
             },
         );
