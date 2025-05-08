@@ -7,7 +7,6 @@ import {
   TableProvider,
   createTableStore,
   createQueryParamsStore,
-  DateUtils,
   ModalRow,
   ModalLabel,
   Grid,
@@ -55,29 +54,15 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
     'currency',
     'otherParty',
   ]);
-  //   useDraftOutboundLines(item.id);
-  const { draftStockOutLines } = useAllocationContext(
-    ({ draftStockOutLines }) => ({ draftStockOutLines })
+  const { draftStockOutLines, manualAllocate } = useAllocationContext(
+    ({ draftStockOutLines, manualAllocate }) => ({
+      draftStockOutLines,
+      manualAllocate,
+    })
   );
   const packSizeController = usePackSizeController(draftStockOutLines);
 
-  // const onUpdateQuantity = (batchId: string, quantity: number) => {
-  //   updateQuantity(batchId, quantity);
-  //   setIsAutoAllocated(false);
-  // };
-
   const hasLines = !!draftStockOutLines.length;
-
-  const hasOnHold = draftStockOutLines.some(
-    ({ stockLine }) =>
-      (stockLine?.availableNumberOfPacks ?? 0) > 0 && !!stockLine?.onHold
-  );
-  const hasExpired = draftStockOutLines.some(
-    ({ stockLine }) =>
-      (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
-      !!stockLine?.expiryDate &&
-      DateUtils.isExpired(new Date(stockLine?.expiryDate))
-  );
 
   return (
     <>
@@ -103,18 +88,14 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
         </Grid>
       </ModalRow>
 
-      <AutoAllocate
-        packSizeController={packSizeController}
-        hasOnHold={hasOnHold}
-        hasExpired={hasExpired}
-      />
+      <AutoAllocate packSizeController={packSizeController} />
 
       <TableWrapper
         hasLines={hasLines}
         currentItem={item}
         isLoading={false}
         packSizeController={packSizeController}
-        updateQuantity={() => {}} // todo
+        updateQuantity={manualAllocate}
         draftOutboundLines={draftStockOutLines}
         allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
         // batch={openedWith?.batch}

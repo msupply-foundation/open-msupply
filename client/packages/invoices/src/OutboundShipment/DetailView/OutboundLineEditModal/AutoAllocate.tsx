@@ -14,25 +14,22 @@ import { useAllocationContext } from './allocation/useAllocationContext';
 
 interface AutoAllocateProps {
   packSizeController: PackSizeController;
-  hasOnHold: boolean;
-  hasExpired: boolean;
 }
 
 // AGNOSTIC OF WHAT WE ARE ISSUING IN (Packs of X, units, doses...)
-export const AutoAllocate = ({
-  packSizeController,
-  // hasOnHold,
-  // hasExpired,
-}: AutoAllocateProps) => {
+export const AutoAllocate = ({ packSizeController }: AutoAllocateProps) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
 
-  const { autoAllocate, alerts } = useAllocationContext(
-    ({ autoAllocate, alerts }) => ({
-      autoAllocate,
-      alerts,
-    })
-  );
+  const { autoAllocate, alerts, allocatedQuantity, isAutoAllocated } =
+    useAllocationContext(
+      ({ autoAllocate, alerts, allocatedQuantity, isAutoAllocated }) => ({
+        autoAllocate,
+        alerts,
+        allocatedQuantity,
+        isAutoAllocated,
+      })
+    );
 
   // TODO = prepopulate with existing (once we have initialisation)
   const [issueQuantity, setIssueQuantity] = useState<number>();
@@ -110,15 +107,6 @@ export const AutoAllocate = ({
     );
   };
 
-  // useEffect(() => {
-  //   if (!isAutoAllocated) updateIssueQuantity(allocatedQuantity);
-  // }, [
-  //   packSizeController.selected?.value,
-  //   allocatedQuantity,
-  //   isAutoAllocated,
-  //   updateIssueQuantity,
-  // ]);
-
   return (
     <Grid container gap="4px" width="100%">
       <>
@@ -131,6 +119,7 @@ export const AutoAllocate = ({
               value={issueQuantity}
               onChange={handleIssueQuantityChange}
             />
+            {allocatedQuantity}
             <Box marginLeft={1} />
 
             {/* TODO: allocate in X dropdown - see packsizecontroller */}
@@ -138,7 +127,7 @@ export const AutoAllocate = ({
           <StockOutAlerts
             allocationAlerts={alerts}
             showZeroQuantityConfirmation={false}
-            isAutoAllocated={true}
+            isAutoAllocated={isAutoAllocated}
           />
         </Box>
       </>
