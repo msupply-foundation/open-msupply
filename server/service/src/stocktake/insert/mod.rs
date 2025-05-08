@@ -9,31 +9,20 @@ use repository::{
     ActivityLogType, RepositoryError, Stocktake, StocktakeLineRowRepository, StocktakeRowRepository,
 };
 
-use crate::{activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate};
+use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 
 use super::query::get_stocktake;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct InsertStocktake {
     pub id: String,
+    pub location_id: Option<String>,
+    pub master_list_id: Option<String>,
+    pub items_have_stock: Option<bool>,
+    pub expires_before: Option<NaiveDate>,
+    pub is_initial_stocktake: Option<bool>,
     pub comment: Option<String>,
     pub description: Option<String>,
-    pub stocktake_date: Option<NaiveDate>,
-    pub is_locked: Option<bool>,
-    pub master_list_id: Option<String>,
-    pub location: Option<NullableUpdate<String>>,
-    pub items_have_stock: Option<bool>,
-    pub expires_before: Option<NaiveDate>,
-    pub is_initial_stocktake: bool,
-}
-
-#[derive(Default, Debug, PartialEq, Clone)]
-pub struct InsertStocktakeInput {
-    pub master_list_id: Option<String>,
-    pub location: Option<NullableUpdate<String>>,
-    pub items_have_stock: Option<bool>,
-    pub expires_before: Option<NaiveDate>,
-    pub is_initial_stocktake: bool,
 }
 
 #[derive(Debug, PartialEq)]
@@ -89,6 +78,10 @@ impl From<RepositoryError> for InsertStocktakeError {
 
 #[cfg(test)]
 mod test {
+    use crate::{
+        service_provider::ServiceProvider,
+        stocktake::insert::{InsertStocktake, InsertStocktakeError},
+    };
     use chrono::{NaiveDate, Utc};
     use repository::{
         mock::{
@@ -102,12 +95,6 @@ mod test {
         EqualFilter, MasterListLineRow, MasterListLineRowRepository, MasterListNameJoinRow,
         StockLineRow, StockLineRowRepository, StocktakeLineFilter, StocktakeLineRepository,
         StocktakeRow, StocktakeRowRepository, StocktakeStatus,
-    };
-
-    use crate::{
-        service_provider::ServiceProvider,
-        stocktake::insert::{InsertStocktake, InsertStocktakeError},
-        NullableUpdate,
     };
 
     #[actix_rt::test]
@@ -130,7 +117,7 @@ mod test {
                 &context,
                 InsertStocktake {
                     id: "new_initial_stocktake".to_string(),
-                    is_initial_stocktake: true,
+                    is_initial_stocktake: Some(true),
                     ..Default::default()
                 },
             )
@@ -174,13 +161,8 @@ mod test {
                     id: "new_stocktake".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
-                    is_locked: Some(true),
-                    location: None,
-                    master_list_id: None,
-                    items_have_stock: None,
-                    expires_before: None,
-                    is_initial_stocktake: false,
+                    is_initial_stocktake: Some(false),
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -199,8 +181,6 @@ mod test {
                 id: "new_stocktake".to_string(),
                 comment: Some("comment".to_string()),
                 description: Some("description".to_string()),
-                stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
-                is_locked: true,
                 status: StocktakeStatus::New,
                 store_id: mock_store_a().id,
                 ..new_row.clone()
@@ -231,13 +211,8 @@ mod test {
                 id: "stocktake_2".to_string(),
                 comment: Some("comment".to_string()),
                 description: Some("description".to_string()),
-                stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
-                is_locked: Some(true),
-                location: None,
                 master_list_id: Some("invalid".to_string()),
-                items_have_stock: None,
-                expires_before: None,
-                is_initial_stocktake: false,
+                ..Default::default()
             },
         );
         assert!(invalid_result.is_err());
@@ -259,13 +234,8 @@ mod test {
                     id: "stocktake_1".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
-                    is_locked: Some(true),
-                    location: None,
                     master_list_id: Some(master_list_id.clone()),
-                    items_have_stock: None,
-                    expires_before: None,
-                    is_initial_stocktake: false,
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -311,13 +281,8 @@ mod test {
                     id: "stocktake_2".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
-                    is_locked: Some(true),
-                    location: None,
                     master_list_id: Some(master_list_id.clone()),
-                    items_have_stock: None,
-                    expires_before: None,
-                    is_initial_stocktake: false,
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -361,15 +326,8 @@ mod test {
                     id: "stocktake_1".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
-                    is_locked: Some(true),
-                    location: Some(NullableUpdate {
-                        value: Some(location_id.clone()),
-                    }),
-                    master_list_id: None,
-                    items_have_stock: None,
-                    expires_before: None,
-                    is_initial_stocktake: false,
+                    location_id: Some(location_id.clone()),
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -404,15 +362,8 @@ mod test {
                     id: "stocktake_2".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
-                    is_locked: Some(true),
-                    location: Some(NullableUpdate {
-                        value: Some(location_id.clone()),
-                    }),
-                    master_list_id: None,
-                    items_have_stock: None,
-                    expires_before: None,
-                    is_initial_stocktake: false,
+                    location_id: Some(location_id.clone()),
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -500,13 +451,7 @@ mod test {
                     id: "stocktake_1".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
-                    is_locked: Some(true),
-                    location: Some(NullableUpdate { value: None }),
-                    master_list_id: None,
-                    items_have_stock: None,
-                    expires_before: None,
-                    is_initial_stocktake: false,
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -528,13 +473,8 @@ mod test {
                     id: "stocktake_2".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
-                    is_locked: Some(true),
-                    location: Some(NullableUpdate { value: None }),
-                    master_list_id: None,
                     items_have_stock: Some(true),
-                    expires_before: None,
-                    is_initial_stocktake: false,
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -556,13 +496,8 @@ mod test {
                     id: "stocktake_3".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
-                    is_locked: Some(true),
-                    location: Some(NullableUpdate { value: None }),
-                    master_list_id: None,
                     items_have_stock: Some(false),
-                    expires_before: None,
-                    is_initial_stocktake: false,
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -595,13 +530,8 @@ mod test {
                     id: "stocktake_1".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
-                    is_locked: Some(true),
-                    location: None,
-                    master_list_id: None,
-                    items_have_stock: None,
                     expires_before: Some(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap()),
-                    is_initial_stocktake: false,
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -625,13 +555,8 @@ mod test {
                     id: "stocktake_2".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
-                    is_locked: Some(true),
-                    location: None,
-                    master_list_id: None,
-                    items_have_stock: None,
                     expires_before: Some(NaiveDate::from_ymd_opt(2020, 4, 22).unwrap()),
-                    is_initial_stocktake: false,
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -708,13 +633,8 @@ mod test {
                     id: "initial_stocktake".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
-                    is_locked: Some(true),
-                    location: None,
-                    master_list_id: None,
-                    items_have_stock: None,
-                    expires_before: None,
-                    is_initial_stocktake: true,
+                    is_initial_stocktake: Some(true),
+                    ..Default::default()
                 },
             )
             .unwrap();

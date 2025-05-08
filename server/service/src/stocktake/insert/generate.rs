@@ -7,9 +7,9 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use crate::{number::next_number, NullableUpdate};
+use crate::number::next_number;
 
-use super::{InsertStocktake, InsertStocktakeInput};
+use super::InsertStocktake;
 
 pub fn generate(
     connection: &StorageConnection,
@@ -18,57 +18,31 @@ pub fn generate(
     input: InsertStocktake,
 ) -> Result<(StocktakeRow, Vec<StocktakeLineRow>), RepositoryError> {
     let stocktake_number = next_number(connection, &NumberRowType::Stocktake, store_id)?;
-    let stocktake_id = input.id.clone();
-    let mut program_id = None;
+    let id = input.id.clone();
+    let lines = generate_stocktake_lines(connection, store_id, &id, input.clone())?;
 
-    let lines = generate_stocktake_lines(
-        connection,
-        store_id,
-        &stocktake_id,
-        InsertStocktakeInput {
-            master_list_id: input.master_list_id.clone(),
-            location: input.location.clone(),
-            items_have_stock: input.items_have_stock,
-            expires_before: input.expires_before,
-            is_initial_stocktake: input.is_initial_stocktake,
-        },
-        &mut program_id,
-    )?;
-
-    let InsertStocktake {
-        id,
-        comment,
-        description,
-        stocktake_date,
-        is_locked,
-        is_initial_stocktake,
-        master_list_id: _,
-        location: _,
-        items_have_stock: _,
-        expires_before: _,
-    } = input;
+    let program_id = match input.master_list_id {
+        Some(master_list_id) => ProgramRowRepository::new(connection)
+            .find_one_by_id(&master_list_id)?
+            .map(|r| r.id),
+        None => None,
+    };
 
     Ok((
         StocktakeRow {
             id,
             stocktake_number,
-            comment,
-            description,
-            // TODO: Changing this to be same as created datetime for now since function is disabled in frontend
-            // but will need to remove this later when functionality is
-            stocktake_date: if stocktake_date.is_some() {
-                stocktake_date
-            } else {
-                Some(Utc::now().naive_utc().date())
-            },
+            comment: input.comment,
+            stocktake_date: Some(Utc::now().naive_utc().date()),
             status: StocktakeStatus::New,
             created_datetime: Utc::now().naive_utc(),
             user_id: user_id.to_string(),
             store_id: store_id.to_string(),
-            is_locked: is_locked.unwrap_or(false),
+            is_initial_stocktake: input.is_initial_stocktake.unwrap_or(false),
+            description: input.description,
             program_id,
-            is_initial_stocktake,
             // Default
+            is_locked: false,
             finalised_datetime: None,
             inventory_addition_id: None,
             inventory_reduction_id: None,
@@ -83,44 +57,44 @@ fn generate_stocktake_lines(
     connection: &StorageConnection,
     store_id: &str,
     id: &str,
-    InsertStocktakeInput {
+    InsertStocktake {
+        id: _,
         master_list_id,
-        location,
+        location_id,
         items_have_stock,
         expires_before,
         is_initial_stocktake,
-    }: InsertStocktakeInput,
-    program_id: &mut Option<String>,
+        comment: _,
+        description: _,
+    }: InsertStocktake,
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
-    if is_initial_stocktake {
-        return generate_lines_initial_stocktake(connection, store_id, &id);
-    };
+    if let Some(true) = is_initial_stocktake {
+        return generate_lines_initial_stocktake(connection, store_id, id);
+    }
     let master_list_lines = match master_list_id {
         Some(master_list_id) => {
-            *program_id = ProgramRowRepository::new(connection)
-                .find_one_by_id(&master_list_id)?
-                .map(|r| r.id);
-            generate_lines_from_master_list(connection, store_id, &id, &master_list_id)?
+            generate_lines_from_master_list(connection, store_id, id, &master_list_id)?
         }
         None => Vec::new(),
     };
-    let location_lines = match location {
-        Some(NullableUpdate {
-            value: Some(location_id),
-            ..
-        }) => generate_lines_from_location(connection, store_id, &id, &location_id)?,
-        _ => Vec::new(),
+
+    let location_lines = match location_id {
+        Some(location_id) => generate_lines_from_location(connection, store_id, id, &location_id)?,
+        None => Vec::new(),
     };
+
     let items_have_stock_lines = match items_have_stock {
-        Some(true) => generate_lines_with_stock(connection, store_id, &id)?,
+        Some(true) => generate_lines_with_stock(connection, store_id, id)?,
         Some(false) | None => Vec::new(),
     };
+
     let expiring_items_lines = match expires_before {
         Some(expires_before) => {
-            generate_lines_expiring_before(connection, store_id, &id, &expires_before)?
+            generate_lines_expiring_before(connection, store_id, id, &expires_before)?
         }
         None => Vec::new(),
     };
+
     let lines = [
         master_list_lines,
         location_lines,
@@ -128,6 +102,7 @@ fn generate_stocktake_lines(
         expiring_items_lines,
     ]
     .concat();
+
     Ok(lines)
 }
 
@@ -310,12 +285,13 @@ pub fn generate_lines_initial_stocktake(
 
     let result = item_rows
         .into_iter()
-        .map(|line| StocktakeLineRow {
+        .map(|item| StocktakeLineRow {
             id: uuid(),
             stocktake_id: stocktake_id.to_string(),
+            item_link_id: item.id,
+            item_name: item.name,
+            // Defaults
             snapshot_number_of_packs: 0.0,
-            item_link_id: line.id,
-            item_name: line.name,
             location_id: None,
             batch: None,
             expiry_date: None,
