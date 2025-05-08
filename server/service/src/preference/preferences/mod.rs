@@ -4,8 +4,8 @@ pub mod display_population_based_forecasting;
 pub use display_population_based_forecasting::*;
 pub mod display_vaccine_in_doses;
 pub use display_vaccine_in_doses::*;
-pub mod input_vvm_status;
-pub use input_vvm_status::*;
+pub mod manage_vvm_status;
+pub use manage_vvm_status::*;
 pub mod sort_by_vvm_status;
 pub use sort_by_vvm_status::*;
 
@@ -14,7 +14,7 @@ pub struct PreferenceProvider {
     pub show_contact_tracing: ShowContactTracing,
     pub display_population_based_forecasting: DisplayPopulationBasedForecasting,
     pub display_vaccine_in_doses: DisplayVaccineInDoses,
-    pub input_vvm_status: InputVvmStatus,
+    pub manage_vvm_status: ManageVvmStatus,
     pub sort_by_vvm_status: SortByVvmStatus,
 }
 
@@ -23,7 +23,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         show_contact_tracing: ShowContactTracing,
         display_population_based_forecasting: DisplayPopulationBasedForecasting,
         display_vaccine_in_doses: DisplayVaccineInDoses,
-        input_vvm_status: InputVvmStatus,
+        manage_vvm_status: ManageVvmStatus,
         sort_by_vvm_status: SortByVvmStatus,
     }
 }

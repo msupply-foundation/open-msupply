@@ -27,7 +27,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             show_contact_tracing,
             display_population_based_forecasting,
             display_vaccine_in_doses,
-            input_vvm_status,
+            manage_vvm_status,
             sort_by_vvm_status,
         } = self.get_preference_provider();
 
@@ -43,7 +43,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
         append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
         append_if_type(display_vaccine_in_doses, &mut prefs, &input)?;
-        append_if_type(input_vvm_status, &mut prefs, &input)?;
+        append_if_type(manage_vvm_status, &mut prefs, &input)?;
         append_if_type(sort_by_vvm_status, &mut prefs, &input)?;
 
         Ok(prefs)

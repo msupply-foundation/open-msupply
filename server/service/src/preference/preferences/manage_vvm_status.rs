@@ -1,12 +1,12 @@
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
-pub struct InputVvmStatus;
+pub struct ManageVvmStatus;
 
-impl Preference for InputVvmStatus {
+impl Preference for ManageVvmStatus {
     type Value = bool;
 
     fn key(&self) -> PrefKey {
-        PrefKey::InputVvmStatus
+        PrefKey::ManageVvmStatus
     }
 
     fn preference_type(&self) -> PreferenceType {
