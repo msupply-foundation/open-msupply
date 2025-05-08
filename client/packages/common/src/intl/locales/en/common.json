@@ -972,6 +972,8 @@
   "label.new-stocktake": "New Stocktake",
   "label.next-of-kin": "Next of Kin",
   "label.no-options": "No options",
+  "label.no-order-types": "No order types available",
+  "label.no-program-options": "No programs available for this customer",
   "label.no-reason": "No reason",
   "label.no-unallocated-rows-selected": "All of the selected rows are already allocated",
   "label.non-catalogue": "Non-catalogue",
