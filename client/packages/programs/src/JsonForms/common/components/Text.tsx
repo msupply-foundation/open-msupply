@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
@@ -75,12 +75,30 @@ const usePatternValidation = (
   value?: string
 ): string | undefined => {
   const { customError, setCustomError } = useJSONFormsCustomError(path, 'Text');
+  const lastValidatedValue = useRef<{ pattern?: string; value?: string }>({});
 
   useEffect(() => {
+    // Skip validation if pattern or value hasn't actually changed
+    const patternString = pattern?.toString();
+    if (
+      lastValidatedValue.current.pattern === patternString &&
+      lastValidatedValue.current.value === value
+    ) {
+      return;
+    }
+
+    // Update last validated values
+    lastValidatedValue.current = {
+      pattern: patternString,
+      value,
+    };
+
+    // Process validation
     if (!pattern || !value) {
       setCustomError(undefined);
       return;
     }
+
     const result = pattern.exec(value);
     if (result == null) {
       setCustomError('Invalid format');
@@ -88,6 +106,7 @@ const usePatternValidation = (
       setCustomError(undefined);
     }
   }, [pattern, setCustomError, value]);
+
   return customError;
 };
 
