@@ -1,32 +1,41 @@
 import React from 'react';
 import { RnRFormLineFragment } from '../operations.generated';
-import { create, RecordWithId } from '@openmsupply-client/common';
+import {
+  create,
+  RecordWithId,
+  ViewportListRef,
+} from '@openmsupply-client/common';
 import keyBy from 'lodash/keyBy';
 import mapValues from 'lodash/mapValues';
 import { itemMatchesSearch } from '../../utils';
 
 type SetLine = (line: RecordWithId & Partial<RnRFormLineFragment>) => void;
 interface RnRFormContext {
+  listRef?: React.RefObject<ViewportListRef>;
   rnrFormId: string;
-  search: string;
+  foundIds: { [id: string]: boolean };
   baseLines: { [id: string]: RnRFormLineFragment };
+  baseLineIndexes: { [id: string]: number };
   draftLines: Record<
     string,
     RecordWithId & Partial<RnRFormLineFragment> & { isDirty?: boolean }
   >;
   draftLineIteration: Record<string, number>;
   setDraftLine: SetLine;
-  setSearch: (search: string) => void;
   clearAllDirtyLines: () => void;
-  getAllDirtyLines: () => RnRFormLineFragment[];
+  getAllDirtyLines: (ignoreError?: boolean) => RnRFormLineFragment[];
   setInitial: (rnrFormId: string, _: RnRFormLineFragment[]) => void;
-  hasUnconfirmedLines: () => boolean;
-  confirmUnconfirmedLines: () => void;
+  setListRef: (_: React.RefObject<ViewportListRef>) => void;
+  scrollToIndex: (_: number) => void;
+  search: (_: string) => number;
+  resetSearch: () => void;
 }
 
 export const useRnRFormContext = create<RnRFormContext>((set, get) => ({
-  search: '',
+  listRef: undefined,
+  foundIds: {},
   baseLines: {},
+  baseLineIndexes: {},
   draftLines: {},
   draftLineIteration: {},
   rnrFormId: '',
@@ -41,12 +50,6 @@ export const useRnRFormContext = create<RnRFormContext>((set, get) => ({
         ...state.draftLineIteration,
         [line.id]: (state.draftLineIteration[line.id] ?? 0) + 1,
       },
-    }));
-  },
-  setSearch: search => {
-    set(state => ({
-      ...state,
-      search,
     }));
   },
   clearAllDirtyLines: () =>
@@ -65,15 +68,26 @@ export const useRnRFormContext = create<RnRFormContext>((set, get) => ({
     set(state => ({
       ...state,
       baseLines: keyBy(baseLines, 'id'),
+      baseLineIndexes: mapValues(
+        keyBy(
+          baseLines.map(({ id }, index) => ({ id, index })),
+          'id'
+        ),
+        ({ index }) => index
+      ),
       rnrFormId,
       draftLines: {},
       draftLineIteration: {},
     }));
   },
-  getAllDirtyLines: () => {
+  getAllDirtyLines: (ignoreError = true) => {
     const { baseLines, draftLines } = get();
     return Object.values(draftLines).flatMap(draftLine => {
-      if (!draftLine.isDirty) return [];
+      if (
+        !draftLine.isDirty ||
+        (ignoreError && (draftLine?.finalBalance || 0) < 0)
+      )
+        return [];
       const baseLine = baseLines[draftLine.id];
       if (!baseLine) return [];
 
@@ -91,29 +105,30 @@ export const useRnRFormContext = create<RnRFormContext>((set, get) => ({
       return baseLine.confirmed;
     });
   },
-  confirmUnconfirmedLines: () => {
-    const { baseLines, draftLines } = get();
-    const toBeConfirmed = Object.values(baseLines).flatMap(baseLine => {
-      const draftLine = draftLines[baseLine.id] || { id: baseLine.id };
-      const line = { ...baseLine, ...draftLine };
-      if (!line.confirmed)
-        return [{ ...draftLine, confirmed: true, isDirty: true }];
+  setListRef: listRef => set(state => ({ ...state, listRef })),
+  scrollToIndex: index =>
+    get().listRef?.current?.scrollToIndex({
+      alignToTop: false,
+      // load 2 lines below the found line
+      index: index + 2,
+    }),
+  resetSearch: () => set(state => ({ ...state, foundIds: {} })),
+  search: term => {
+    let found = Object.values(get().baseLines).filter(l =>
+      itemMatchesSearch(term, l.item)
+    );
+    let first = found[0];
+    if (!first) {
+      set(state => ({ ...state, foundIds: {} }));
+      return -1;
+    }
 
-      return [];
-    });
-
-    const toBeConfirmedById = keyBy(toBeConfirmed, 'id');
     set(state => ({
       ...state,
-      draftLines: { ...state.draftLines, ...toBeConfirmedById },
-      draftLineIteration: {
-        ...state.draftLineIteration,
-        ...mapValues(
-          toBeConfirmedById,
-          ({ id }) => (state.draftLineIteration[id] || 0) + 1
-        ),
-      },
+      foundIds: mapValues(keyBy(found, 'id'), () => true),
     }));
+
+    return get().baseLineIndexes[first.id] || -1;
   },
 }));
 
@@ -135,15 +150,22 @@ export const useRnRDraft = (id: string) => {
   };
 };
 
-// export function useShallow<S, U>(selector: (state: S) => U): (state: S) => U {
-//   const prev = React.useRef<U | undefined>(undefined);
-//   return state => {
-//     const next = selector(state);
-//     return shallow(prev.current, next)
-//       ? (prev.current as U)
-//       : (prev.current = next);
-//   };
-// }
+export function oneTime<S, U>(selector: (state: S) => U): (state: S) => U {
+  const once = React.useRef<U | undefined>(undefined);
+  return state => {
+    const next = selector(state);
+    return !!once.current ? (once.current as U) : (once.current = next);
+  };
+}
+
+export const useErrorLineIndex = (state: RnRFormContext) => {
+  const firstErrorLine = Object.values(state.draftLines).find(
+    draftLine => (draftLine?.finalBalance || 0) < 0
+  );
+
+  if (!firstErrorLine) return -1;
+  return state.baseLineIndexes[firstErrorLine.id] || -1;
+};
 
 export const useCachedRnRDraftLine = (id: string) => {
   const prevIteration = React.useRef(-1);
@@ -165,8 +187,7 @@ export const useCachedRnRDraftLine = (id: string) => {
 
     const line = { ...baseLine, ...(state.draftLines[id] || {}) };
 
-    const highlight =
-      !!state.search && itemMatchesSearch(state.search, line.item);
+    const highlight = state.foundIds[id] || false;
 
     const shouldUpdate =
       previousIteration !== (state.draftLineIteration[id] ?? 0) ||
