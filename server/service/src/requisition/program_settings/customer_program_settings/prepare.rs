@@ -68,6 +68,14 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
     let settings =
         ProgramRequisitionSettingsRepository::new(&ctx.connection).query(Some(filter))?;
 
+    // Shouldn't try query everything else (early return)
+    if settings.is_empty() {
+        return Ok(CustomerProgramRequisitionSetting {
+            customer_name_id: customer_name_id.to_owned(),
+            master_lists: vec![],
+        });
+    }
+
     // Order Types (matching settings program_settings_ids)
     let program_requisition_settings_ids: Vec<String> = settings
         .iter()
