@@ -106,12 +106,12 @@ fn validate(
     let program_settings =
         get_program_requisition_settings_by_customer(ctx, &input.other_party_id)?;
 
-    if !program_settings.master_lists.len() == 0 {
+    if !program_settings.program_settings.len() == 0 {
         return Err(OutError::NoProgramsExistForCustomer);
     }
 
     let (master_list, order_type) = program_settings
-        .master_lists
+        .program_settings
         .iter()
         .find_map(|master_list| {
             master_list
@@ -145,7 +145,7 @@ fn validate(
         ProgramRow {
             id: master_list.program_id.clone(),
             name: master_list.program_name.clone(),
-            master_list_id: Some(master_list.id.clone()),
+            master_list_id: Some(master_list.master_list_id.clone()),
             // Add other fields as required based on ProgramRow definition
             ..Default::default()
         },

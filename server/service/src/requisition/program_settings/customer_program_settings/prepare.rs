@@ -26,18 +26,17 @@ pub struct ProgramRequisitionOrderType {
     pub available_periods: Vec<PeriodRow>,
 }
 
-// TODO automatically spread MasterList values rather than manual mapping
 #[derive(Debug, PartialEq)]
-pub struct MasterListWithOrderTypes {
-    pub id: String,
-    pub name: String,
-    pub code: String,
-    pub description: String,
-    pub is_active: bool,
-    pub is_default_price_list: bool,
-    pub discount_percentage: Option<f64>,
-    pub name_tag_id: String,
-    pub name_tag: String,
+pub struct ProgramSetting {
+    pub master_list_id: String,
+    pub master_list_name: String,
+    pub master_list_code: String,
+    pub master_list_description: String,
+    pub master_list_is_active: bool,
+    pub master_list_is_default_price_list: bool,
+    pub master_list_discount_percentage: Option<f64>,
+    pub master_list_name_tag_id: String,
+    pub master_list_name_tag: String,
     pub program_requisition_settings_id: String,
     pub program_id: String,
     pub program_name: String,
@@ -47,7 +46,7 @@ pub struct MasterListWithOrderTypes {
 #[derive(Debug, PartialEq)]
 pub struct CustomerProgramRequisitionSetting {
     pub customer_name_id: String,
-    pub master_lists: Vec<MasterListWithOrderTypes>,
+    pub program_settings: Vec<ProgramSetting>,
 }
 
 /// Get program_settings, order_types, periods and requisitions_in_periods for a store.
@@ -70,7 +69,7 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
     if settings.is_empty() {
         return Ok(CustomerProgramRequisitionSetting {
             customer_name_id: customer_name_id.to_owned(),
-            master_lists: vec![],
+            program_settings: vec![],
         });
     }
 
@@ -108,7 +107,7 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
 
     Ok(CustomerProgramRequisitionSetting {
         customer_name_id: customer_name_id.to_owned(),
-        master_lists: settings
+        program_settings: settings
             .iter()
             .map(|setting| {
                 let order_types_mapped = order_types
@@ -134,16 +133,16 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
                     })
                     .collect();
 
-                MasterListWithOrderTypes {
-                    id: setting.master_list.id.clone(),
-                    name: setting.master_list.name.clone(),
-                    code: setting.master_list.code.clone(),
-                    description: setting.master_list.description.clone(),
-                    is_active: setting.master_list.is_active,
-                    is_default_price_list: setting.master_list.is_default_price_list,
-                    discount_percentage: setting.master_list.discount_percentage,
-                    name_tag_id: setting.name_tag_row.id.clone(),
-                    name_tag: setting.name_tag_row.name.clone(),
+                ProgramSetting {
+                    master_list_id: setting.master_list.id.clone(),
+                    master_list_name: setting.master_list.name.clone(),
+                    master_list_code: setting.master_list.code.clone(),
+                    master_list_description: setting.master_list.description.clone(),
+                    master_list_is_active: setting.master_list.is_active,
+                    master_list_is_default_price_list: setting.master_list.is_default_price_list,
+                    master_list_discount_percentage: setting.master_list.discount_percentage,
+                    master_list_name_tag_id: setting.name_tag_row.id.clone(),
+                    master_list_name_tag: setting.name_tag_row.name.clone(),
                     program_requisition_settings_id: setting.program_settings_row.id.clone(),
                     order_types: order_types_mapped,
                     program_id: setting.program_row.id.clone(),
@@ -197,8 +196,7 @@ mod test {
 
     use crate::{
         requisition::program_settings::customer_program_settings::prepare::{
-            CustomerProgramRequisitionSetting, MasterListWithOrderTypes,
-            ProgramRequisitionOrderType,
+            CustomerProgramRequisitionSetting, ProgramRequisitionOrderType, ProgramSetting,
         },
         test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
     };
@@ -479,23 +477,25 @@ mod test {
             .requisition_service
             .get_program_requisition_settings_by_customer(&service_context, &mock_name_store_b().id)
             .unwrap();
-        result.master_lists.sort_by(|a, b| a.id.cmp(&b.id));
+        result
+            .program_settings
+            .sort_by(|a, b| a.master_list_id.cmp(&b.master_list_id));
 
         assert_eq!(
             result,
             CustomerProgramRequisitionSetting {
                 customer_name_id: mock_name_store_b().id.clone(),
-                master_lists: vec![
-                    MasterListWithOrderTypes {
-                        id: master_list1.id.clone(),
-                        name: master_list1.name.clone(),
-                        code: master_list1.code.clone(),
-                        description: master_list1.description.clone(),
-                        is_active: master_list1.is_active,
-                        is_default_price_list: master_list1.is_default_price_list,
-                        discount_percentage: None,
-                        name_tag_id: name_tag1.id.clone(),
-                        name_tag: name_tag1.name.clone(),
+                program_settings: vec![
+                    ProgramSetting {
+                        master_list_id: master_list1.id.clone(),
+                        master_list_name: master_list1.name.clone(),
+                        master_list_code: master_list1.code.clone(),
+                        master_list_description: master_list1.description.clone(),
+                        master_list_is_active: master_list1.is_active,
+                        master_list_is_default_price_list: master_list1.is_default_price_list,
+                        master_list_discount_percentage: None,
+                        master_list_name_tag_id: name_tag1.id.clone(),
+                        master_list_name_tag: name_tag1.name.clone(),
                         program_requisition_settings_id: program_requisition_setting1.id.clone(),
                         order_types: vec![ProgramRequisitionOrderType {
                             name: order_type1.name.clone(),
@@ -514,16 +514,16 @@ mod test {
                         program_id: program1.id.clone(),
                         program_name: program1.name.clone()
                     },
-                    MasterListWithOrderTypes {
-                        id: master_list1.id.clone(),
-                        name: master_list1.name.clone(),
-                        code: master_list1.code.clone(),
-                        description: master_list1.description.clone(),
-                        is_active: master_list1.is_active,
-                        is_default_price_list: master_list1.is_default_price_list,
-                        discount_percentage: None,
-                        name_tag_id: name_tag1.id.clone(),
-                        name_tag: name_tag1.name.clone(),
+                    ProgramSetting {
+                        master_list_id: master_list1.id.clone(),
+                        master_list_name: master_list1.name.clone(),
+                        master_list_code: master_list1.code.clone(),
+                        master_list_description: master_list1.description.clone(),
+                        master_list_is_active: master_list1.is_active,
+                        master_list_is_default_price_list: master_list1.is_default_price_list,
+                        master_list_discount_percentage: None,
+                        master_list_name_tag_id: name_tag1.id.clone(),
+                        master_list_name_tag: name_tag1.name.clone(),
                         program_requisition_settings_id: program_requisition_setting3.id.clone(),
                         // no order types because no order types corresponding to requisition settings 3 that have available periods
                         // order types without available periods filtered out
@@ -531,16 +531,16 @@ mod test {
                         program_id: program1.id.clone(),
                         program_name: program1.name.clone()
                     },
-                    MasterListWithOrderTypes {
-                        id: master_list2.id.clone(),
-                        name: master_list2.name.clone(),
-                        code: master_list2.code.clone(),
-                        description: master_list2.description.clone(),
-                        is_active: master_list2.is_active,
-                        is_default_price_list: master_list2.is_default_price_list,
-                        discount_percentage: None,
-                        name_tag_id: name_tag2.id.clone(),
-                        name_tag: name_tag2.name.clone(),
+                    ProgramSetting {
+                        master_list_id: master_list2.id.clone(),
+                        master_list_name: master_list2.name.clone(),
+                        master_list_code: master_list2.code.clone(),
+                        master_list_description: master_list2.description.clone(),
+                        master_list_is_active: master_list2.is_active,
+                        master_list_is_default_price_list: master_list2.is_default_price_list,
+                        master_list_discount_percentage: None,
+                        master_list_name_tag_id: name_tag2.id.clone(),
+                        master_list_name_tag: name_tag2.name.clone(),
                         program_requisition_settings_id: program_requisition_setting2.id.clone(),
                         order_types: vec![ProgramRequisitionOrderType {
                             name: order_type2.name.clone(),
@@ -559,16 +559,16 @@ mod test {
                         program_id: program2.id.clone(),
                         program_name: program2.name.clone()
                     },
-                    MasterListWithOrderTypes {
-                        id: master_list2.id.clone(),
-                        name: master_list2.name.clone(),
-                        code: master_list2.code.clone(),
-                        description: master_list2.description.clone(),
-                        is_active: master_list2.is_active,
-                        is_default_price_list: master_list2.is_default_price_list,
-                        discount_percentage: None,
-                        name_tag_id: name_tag2.id.clone(),
-                        name_tag: name_tag2.name.clone(),
+                    ProgramSetting {
+                        master_list_id: master_list2.id.clone(),
+                        master_list_name: master_list2.name.clone(),
+                        master_list_code: master_list2.code.clone(),
+                        master_list_description: master_list2.description.clone(),
+                        master_list_is_active: master_list2.is_active,
+                        master_list_is_default_price_list: master_list2.is_default_price_list,
+                        master_list_discount_percentage: None,
+                        master_list_name_tag_id: name_tag2.id.clone(),
+                        master_list_name_tag: name_tag2.name.clone(),
                         program_requisition_settings_id: program_requisition_setting4.id.clone(),
                         // no order types because no order types corresponding to requisition settings 4
                         order_types: vec![],
