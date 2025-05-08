@@ -12,6 +12,7 @@ import {
   allocateQuantities,
   getAllocatedQuantity,
   getAllocationAlerts,
+  issueStock,
   StockOutAlert,
 } from 'packages/invoices/src/StockOut';
 import { DraftStockOutLine } from 'packages/invoices/src/types';
@@ -26,12 +27,16 @@ export enum AllocateIn {
 }
 
 interface AllocationContext {
-  allocateIn: AllocateIn;
-  alerts: StockOutAlert[];
-  setAllocateIn: (allocateIn: AllocateIn) => void;
-  // TODO - is it performant? could do by id, then return array if needed?
   draftStockOutLines: DraftStockOutLine[];
+  allocatedQuantity: number;
+  alerts: StockOutAlert[];
+  allocateIn: AllocateIn;
+  isAutoAllocated: boolean;
+
+  // TODO - is it performant? could do by id, then return array if needed?
   setDraftStockOutLines: (lines: DraftStockOutLine[]) => void;
+  setAllocateIn: (allocateIn: AllocateIn) => void;
+  manualAllocate: (lineId: string, quantity: number) => void;
   /**
    * Returns:
    * - Undefined if no allocation was made
@@ -50,8 +55,9 @@ export const useAllocationContext = create<AllocationContext>((set, get) => {
   return {
     draftStockOutLines: [],
     alerts: [],
-    // allocatedQuantity: 0, // todo- getter only?
+    allocatedQuantity: 0,
     allocateIn: AllocateIn.Packs, // TODO: from user pref? from store pref... also based on item?
+    isAutoAllocated: false,
     setAllocateIn: (allocateIn: AllocateIn) =>
       set(state => ({
         ...state,
@@ -62,6 +68,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => {
       set(state => ({
         ...state,
         draftStockOutLines: lines,
+        allocatedQuantity: getAllocatedQuantity(lines),
       })),
     autoAllocate: (
       quantity: number,
@@ -108,6 +115,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => {
 
         set(state => ({
           ...state,
+          isAutoAllocated: true,
           alerts,
         }));
 
@@ -117,6 +125,19 @@ export const useAllocationContext = create<AllocationContext>((set, get) => {
       // TODO -
       // set is auto allocated
       // show zero quan conf?
+    },
+    manualAllocate: (lineId: string, quantity: number) => {
+      const { draftStockOutLines, setDraftStockOutLines } = get();
+
+      const updatedLines = issueStock(draftStockOutLines, lineId, quantity);
+
+      setDraftStockOutLines(updatedLines);
+
+      set(state => ({
+        ...state,
+        isAutoAllocated: false,
+        alerts: [],
+      }));
     },
   };
 });
