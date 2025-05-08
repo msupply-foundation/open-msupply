@@ -2,7 +2,7 @@ import React from 'react';
 
 import { CellProps } from '../../../columns';
 import { RecordWithId } from '@common/types';
-import { StatusChip } from 'packages/common/src/ui/components/panels/StatusChip';
+import { StatusChip } from '@openmsupply-client/common/src/ui/components/panels/StatusChip';
 
 interface StatusProps {
   statusMap: Record<
