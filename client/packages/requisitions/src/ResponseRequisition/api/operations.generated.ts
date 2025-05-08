@@ -791,13 +791,13 @@ export type ProgramRequisitionOrderTypeFragment = {
   }>;
 };
 
-export type MasterListWithOrderTypesFragment = {
-  __typename: 'MasterListWithOrderTypesNode';
-  id: string;
-  code: string;
-  name: string;
-  nameTagId: string;
-  nameTagName: string;
+export type ProgramSettingFragment = {
+  __typename: 'ProgramSettingNode';
+  masterListId: string;
+  masterListCode: string;
+  masterListName: string;
+  masterListNameTagId: string;
+  masterListNameTagName: string;
   orderTypes: Array<{
     __typename: 'ProgramRequisitionOrderTypeNode';
     id: string;
@@ -816,13 +816,13 @@ export type MasterListWithOrderTypesFragment = {
 export type ProgramSettingsByCustomerFragment = {
   __typename: 'CustomerProgramRequisitionSettingNode';
   customerNameId: string;
-  masterLists: Array<{
-    __typename: 'MasterListWithOrderTypesNode';
-    id: string;
-    code: string;
-    name: string;
-    nameTagId: string;
-    nameTagName: string;
+  programSettings: Array<{
+    __typename: 'ProgramSettingNode';
+    masterListId: string;
+    masterListCode: string;
+    masterListName: string;
+    masterListNameTagId: string;
+    masterListNameTagName: string;
     orderTypes: Array<{
       __typename: 'ProgramRequisitionOrderTypeNode';
       id: string;
@@ -849,13 +849,13 @@ export type ProgramRequisitionSettingsByCustomerQuery = {
   programRequisitionSettingsByCustomer: {
     __typename: 'CustomerProgramRequisitionSettingNode';
     customerNameId: string;
-    masterLists: Array<{
-      __typename: 'MasterListWithOrderTypesNode';
-      id: string;
-      code: string;
-      name: string;
-      nameTagId: string;
-      nameTagName: string;
+    programSettings: Array<{
+      __typename: 'ProgramSettingNode';
+      masterListId: string;
+      masterListCode: string;
+      masterListName: string;
+      masterListNameTagId: string;
+      masterListNameTagName: string;
       orderTypes: Array<{
         __typename: 'ProgramRequisitionOrderTypeNode';
         id: string;
@@ -1127,14 +1127,14 @@ export const ProgramRequisitionOrderTypeFragmentDoc = gql`
   }
   ${AvailablePeriodFragmentDoc}
 `;
-export const MasterListWithOrderTypesFragmentDoc = gql`
-  fragment MasterListWithOrderTypes on MasterListWithOrderTypesNode {
+export const ProgramSettingFragmentDoc = gql`
+  fragment ProgramSetting on ProgramSettingNode {
     __typename
-    id
-    code
-    name
-    nameTagId
-    nameTagName
+    masterListId
+    masterListCode
+    masterListName
+    masterListNameTagId
+    masterListNameTagName
     orderTypes {
       ...ProgramRequisitionOrderType
     }
@@ -1145,11 +1145,11 @@ export const ProgramSettingsByCustomerFragmentDoc = gql`
   fragment ProgramSettingsByCustomer on CustomerProgramRequisitionSettingNode {
     __typename
     customerNameId
-    masterLists {
-      ...MasterListWithOrderTypes
+    programSettings {
+      ...ProgramSetting
     }
   }
-  ${MasterListWithOrderTypesFragmentDoc}
+  ${ProgramSettingFragmentDoc}
 `;
 export const UpdateResponseDocument = gql`
   mutation updateResponse(

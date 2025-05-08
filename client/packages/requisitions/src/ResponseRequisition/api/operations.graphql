@@ -519,13 +519,13 @@ fragment ProgramRequisitionOrderType on ProgramRequisitionOrderTypeNode {
   isEmergency
 }
 
-fragment MasterListWithOrderTypes on MasterListWithOrderTypesNode {
+fragment ProgramSetting on ProgramSettingNode {
   __typename
-  id
-  code
-  name
-  nameTagId
-  nameTagName
+  masterListId
+  masterListCode
+  masterListName
+  masterListNameTagId
+  masterListNameTagName
   orderTypes {
     ...ProgramRequisitionOrderType
   }
@@ -534,8 +534,8 @@ fragment MasterListWithOrderTypes on MasterListWithOrderTypesNode {
 fragment ProgramSettingsByCustomer on CustomerProgramRequisitionSettingNode {
   __typename
   customerNameId
-  masterLists {
-    ...MasterListWithOrderTypes
+  programSettings {
+    ...ProgramSetting
   }
 }
 

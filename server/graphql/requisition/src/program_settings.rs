@@ -28,23 +28,23 @@ pub struct ProgramRequisitionOrderTypeNode {
 }
 
 #[derive(SimpleObject)]
-pub struct MasterListWithOrderTypesNode {
-    pub id: String,
-    pub name: String,
-    pub code: String,
-    pub description: String,
-    pub is_active: bool,
-    pub is_default_price_list: bool,
-    pub discount_percentage: Option<f64>,
-    pub name_tag_id: String,
-    pub name_tag_name: String,
+pub struct ProgramSettingNode {
+    pub master_list_id: String,
+    pub master_list_name: String,
+    pub master_list_code: String,
+    pub master_list_description: String,
+    pub master_list_is_active: bool,
+    pub master_list_is_default_price_list: bool,
+    pub master_list_discount_percentage: Option<f64>,
+    pub master_list_name_tag_id: String,
+    pub master_list_name_tag_name: String,
     pub order_types: Vec<ProgramRequisitionOrderTypeNode>,
 }
 
 #[derive(SimpleObject)]
 pub struct CustomerProgramRequisitionSettingNode {
     pub customer_name_id: String,
-    pub master_lists: Vec<MasterListWithOrderTypesNode>,
+    pub program_settings: Vec<ProgramSettingNode>,
 }
 
 #[derive(SimpleObject)]
@@ -136,20 +136,20 @@ pub fn get_program_requisition_settings_by_customer(
 
     let response = CustomerProgramRequisitionSettingNode {
         customer_name_id: settings.customer_name_id,
-        master_lists: settings
+        program_settings: settings
             .master_lists
             .into_iter()
-            .map(|master_list_and_orders| MasterListWithOrderTypesNode {
+            .map(|master_list_and_orders| ProgramSettingNode {
                 // master_list: MasterListNode::from_domain(master_list_and_orders.master_list),
-                id: master_list_and_orders.id,
-                name: master_list_and_orders.name,
-                code: master_list_and_orders.code,
-                description: master_list_and_orders.description,
-                is_active: master_list_and_orders.is_active,
-                is_default_price_list: master_list_and_orders.is_default_price_list,
-                discount_percentage: master_list_and_orders.discount_percentage,
-                name_tag_id: master_list_and_orders.name_tag_id,
-                name_tag_name: master_list_and_orders.name_tag,
+                master_list_id: master_list_and_orders.id,
+                master_list_name: master_list_and_orders.name,
+                master_list_code: master_list_and_orders.code,
+                master_list_description: master_list_and_orders.description,
+                master_list_is_active: master_list_and_orders.is_active,
+                master_list_is_default_price_list: master_list_and_orders.is_default_price_list,
+                master_list_discount_percentage: master_list_and_orders.discount_percentage,
+                master_list_name_tag_id: master_list_and_orders.name_tag_id,
+                master_list_name_tag_name: master_list_and_orders.name_tag,
                 order_types: master_list_and_orders
                     .order_types
                     .into_iter()

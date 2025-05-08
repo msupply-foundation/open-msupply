@@ -16,7 +16,7 @@ import {
 import { getNameOptionRenderer } from '@openmsupply-client/system';
 import {
   AvailablePeriodFragment,
-  MasterListWithOrderTypesFragment,
+  ProgramSettingFragment,
   ProgramRequisitionOrderTypeFragment,
   ProgramSettingsByCustomerFragment,
 } from '../api/operations.generated';
@@ -50,17 +50,17 @@ const useProgramRequisitionOptions = (
   customer: NameRowFragment | null
 ) => {
   const t = useTranslation();
-  type Program = MasterListWithOrderTypesFragment;
+  type Program = ProgramSettingFragment;
   type OrderType = ProgramRequisitionOrderTypeFragment;
   type Period = AvailablePeriodFragment;
   type Customer = NameRowFragment;
 
-  const [program, setProgram] =
-    useState<MasterListWithOrderTypesFragment | null>();
+  const [programSetting, setProgram] =
+    useState<ProgramSettingFragment | null>();
   const [orderType, setOrderType] = useState<OrderType | null>(null);
   const [period, setPeriod] = useState<Period | null>(null);
 
-  const handleSetProgram = (value: MasterListWithOrderTypesFragment | null) => {
+  const handleSetProgram = (value: ProgramSettingFragment | null) => {
     setProgram(value);
     setOrderType(null);
     setPeriod(null);
@@ -77,24 +77,24 @@ const useProgramRequisitionOptions = (
   };
 
   const allOptions: {
-    programs: Common<Program>;
+    programSettings: Common<Program>;
     orderTypes: Common<OrderType>;
     customers: Common<Customer>;
     periods: Common<Period>;
   } = {
-    programs: {
-      options: data?.masterLists ?? [],
-      value: program,
+    programSettings: {
+      options: data?.programSettings ?? [],
+      value: programSetting,
       disabled: customer === null,
       set: handleSetProgram,
       label: t('label.program'),
       labelNoOptions: t('label.no-program-options'),
     },
     orderTypes: {
-      options: program?.orderTypes ?? [],
+      options: programSetting?.orderTypes ?? [],
       value: orderType,
       set: handleSetOrderType,
-      disabled: program === null || program === undefined,
+      disabled: programSetting === null || programSetting === undefined,
       labelNoOptions: t('label.no-order-options'),
       label: t('label.order-type'),
       renderOption: getOrderTypeRenderer(),
@@ -121,7 +121,7 @@ const useProgramRequisitionOptions = (
   return {
     ...allOptions,
     createOptions:
-      !!program && !!orderType && !!customer && !!period
+      !!programSetting && !!orderType && !!customer && !!period
         ? {
             programOrderTypeId: orderType.id,
             otherPartyId: customer.id,
@@ -189,13 +189,18 @@ export const ProgramRequisitionOptions = ({
   const { data, isLoading } =
     useResponse.utils.programRequisitionSettingsByCustomer(customer?.id ?? '');
 
-  const { programs, orderTypes, periods, customers, createOptions } =
-    useProgramRequisitionOptions(
-      data,
-      customerOptions,
-      onChangeCustomer,
-      customer
-    );
+  const {
+    programSettings: programs,
+    orderTypes,
+    periods,
+    customers,
+    createOptions,
+  } = useProgramRequisitionOptions(
+    data,
+    customerOptions,
+    onChangeCustomer,
+    customer
+  );
 
   const t = useTranslation();
   const ProgramOptionRenderer = getProgramOptionRenderer();
@@ -207,7 +212,7 @@ export const ProgramRequisitionOptions = ({
       <LabelAndOptions
         {...programs}
         renderOption={ProgramOptionRenderer}
-        optionKey="name"
+        optionKey="masterListName"
         autoFocus={true}
       />
       <LabelAndOptions {...orderTypes} optionKey="name" />
@@ -244,11 +249,10 @@ export const ProgramRequisitionOptions = ({
 };
 
 const getProgramOptionRenderer =
-  (): AutocompleteOptionRenderer<MasterListWithOrderTypesFragment> =>
-  (props, item) => {
+  (): AutocompleteOptionRenderer<ProgramSettingFragment> => (props, item) => {
     const color = item.orderTypes.length === 0 ? 'red' : 'black';
     return (
-      <DefaultAutocompleteItemOption {...props} key={item.id}>
+      <DefaultAutocompleteItemOption {...props} key={item.masterListId}>
         <Box display="flex" flexDirection="row" gap={1} alignItems="center">
           <Typography
             overflow="hidden"
@@ -258,7 +262,7 @@ const getProgramOptionRenderer =
               color: color,
             }}
           >
-            {item.name} ({item.nameTagName})
+            {item.masterListName} ({item.masterListNameTagName})
           </Typography>
         </Box>
       </DefaultAutocompleteItemOption>

@@ -1465,7 +1465,7 @@ export type CustomerIndicatorInformationNodeCustomerArgs = {
 export type CustomerProgramRequisitionSettingNode = {
   __typename: 'CustomerProgramRequisitionSettingNode';
   customerNameId: Scalars['String']['output'];
-  masterLists: Array<MasterListWithOrderTypesNode>;
+  programSettings: Array<ProgramSettingNode>;
 };
 
 export type CustomerReturnInput = {
@@ -4615,20 +4615,6 @@ export type MasterListSortInput = {
   key: MasterListSortFieldInput;
 };
 
-export type MasterListWithOrderTypesNode = {
-  __typename: 'MasterListWithOrderTypesNode';
-  code: Scalars['String']['output'];
-  description: Scalars['String']['output'];
-  discountPercentage?: Maybe<Scalars['Float']['output']>;
-  id: Scalars['String']['output'];
-  isActive: Scalars['Boolean']['output'];
-  isDefaultPriceList: Scalars['Boolean']['output'];
-  name: Scalars['String']['output'];
-  nameTagId: Scalars['String']['output'];
-  nameTagName: Scalars['String']['output'];
-  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
-};
-
 export type MasterListsResponse = MasterListConnector;
 
 export type MaxOrdersReachedForPeriod =
@@ -6182,6 +6168,20 @@ export type ProgramRequisitionOrderTypeNode = {
   id: Scalars['String']['output'];
   isEmergency: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
+};
+
+export type ProgramSettingNode = {
+  __typename: 'ProgramSettingNode';
+  masterListCode: Scalars['String']['output'];
+  masterListDescription: Scalars['String']['output'];
+  masterListDiscountPercentage?: Maybe<Scalars['Float']['output']>;
+  masterListId: Scalars['String']['output'];
+  masterListIsActive: Scalars['Boolean']['output'];
+  masterListIsDefaultPriceList: Scalars['Boolean']['output'];
+  masterListName: Scalars['String']['output'];
+  masterListNameTagId: Scalars['String']['output'];
+  masterListNameTagName: Scalars['String']['output'];
+  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
 };
 
 export enum ProgramSortFieldInput {
