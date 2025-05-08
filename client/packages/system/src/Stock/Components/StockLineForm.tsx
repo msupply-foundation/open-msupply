@@ -108,27 +108,33 @@ export const StockLineForm: FC<StockLineFormProps> = ({
                 autoFocus
                 disabled={!packEditable}
                 width={160}
-                value={parseFloat(draft.totalNumberOfPacks.toFixed(2))}
+                value={
+                  draft.totalNumberOfPacks
+                    ? parseFloat(draft.totalNumberOfPacks.toFixed(2))
+                    : 0
+                }
                 onChange={totalNumberOfPacks =>
                   onUpdate({ totalNumberOfPacks })
                 }
               />
             }
           />
-          <StyledInputRow
-            label={t('label.available-packs')}
-            Input={
-              <NumericTextInput
-                autoFocus
-                disabled={!packEditable}
-                width={160}
-                value={parseFloat(draft.availableNumberOfPacks.toFixed(2))}
-                onChange={availableNumberOfPacks =>
-                  onUpdate({ availableNumberOfPacks })
-                }
-              />
-            }
-          />
+          {!packEditable && (
+            <StyledInputRow
+              label={t('label.available-packs')}
+              Input={
+                <NumericTextInput
+                  autoFocus
+                  disabled={!packEditable}
+                  width={160}
+                  value={parseFloat(draft.availableNumberOfPacks.toFixed(2))}
+                  onChange={availableNumberOfPacks =>
+                    onUpdate({ availableNumberOfPacks })
+                  }
+                />
+              }
+            />
+          )}
           <StyledInputRow
             label={t('label.cost-price')}
             Input={
