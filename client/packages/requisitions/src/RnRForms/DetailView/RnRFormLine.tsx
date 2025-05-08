@@ -109,6 +109,7 @@ export const RnRFormLine = ({
 
   const readOnlyBackgroundColor = theme.palette.background.drawer;
   const highlightColour = theme.palette.chart.cold.light;
+  const errorColour = theme.palette.chart.hot.light;
 
   const readOnlyColumn = {
     backgroundColor: readOnlyBackgroundColor,
@@ -117,7 +118,12 @@ export const RnRFormLine = ({
   };
   const itemDetailStyle = {
     ...readOnlyColumn,
-    backgroundColor: highlight ? highlightColour : readOnlyBackgroundColor,
+    backgroundColor:
+      line.finalBalance < 0
+        ? errorColour
+        : highlight
+          ? highlightColour
+          : readOnlyBackgroundColor,
   };
 
   return (
@@ -188,9 +194,10 @@ export const RnRFormLine = ({
 
       {/* Readonly calculated values */}
       <RnRNumberCell
-        backgroundColor={readOnlyBackgroundColor}
+        backgroundColor={
+          line.finalBalance < 0 ? errorColour : readOnlyBackgroundColor
+        }
         value={line.finalBalance}
-        error={line.finalBalance < 0}
         textColor={textColor}
       />
       <RnRNumberCell
