@@ -1,10 +1,18 @@
 import {
   create,
-  RecordWithId,
-  keyBy,
-  mapValues,
+  // RecordWithId,
+  // keyBy,
+  // mapValues,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
+import {
+  allocateQuantities,
+  getAllocatedQuantity,
+} from 'packages/invoices/src/StockOut';
 import { DraftStockOutLine } from 'packages/invoices/src/types';
+import { useDraftOutboundLines } from '..';
+
+// TODO Fix imports
 
 export enum AllocateIn {
   Packs = 'Packs',
@@ -18,68 +26,51 @@ interface AllocationContext {
   // TODO - is it performant? could do by id, then return array if needed?
   draftStockOutLines: DraftStockOutLine[];
   setDraftStockOutLines: (lines: DraftStockOutLine[]) => void;
+  /**
+   * Returns:
+   * - Undefined if no allocation was made
+   * - Otherwise, the actual quantity allocated (may differ from input quantity)
+   *  */
+  autoAllocate: (quantity: number) => number | void;
 }
 
-export const useAllocationContext = create<AllocationContext>((set, get) => ({
-  draftStockOutLines: [],
-  allocatedQuantity: 0, // todo- getter only?
-  allocateIn: AllocateIn.Packs, // TODO: from user pref? from store pref... also based on item?
-  setAllocateIn: (allocateIn: AllocateIn) =>
-    set(state => ({
-      ...state,
-      allocateIn,
-      // Update allocated quan by in type
-    })),
-  setDraftStockOutLines: (lines: DraftStockOutLine[]) =>
-    set(state => ({
-      ...state,
-      draftStockOutLines: lines,
-    })),
+export const useAllocationContext = create<AllocationContext>((set, get) => {
+  // todo her better
 
-  // confirmUnconfirmedLines: () => {
-  //   const { baseLines, draftLines } = get();
-  //   const toBeConfirmed = Object.values(baseLines).flatMap(baseLine => {
-  //     const draftLine = draftLines[baseLine.id] || { id: baseLine.id };
-  //     const line = { ...baseLine, ...draftLine };
-  //     if (!line.confirmed)
-  //       return [{ ...draftLine, confirmed: true, isDirty: true }];
-  //     return [];
-  //   });
-  //   const toBeConfirmedById = keyBy(toBeConfirmed, 'id');
-  //   set(state => ({
-  //     ...state,
-  //     draftLines: { ...state.draftLines, ...toBeConfirmedById },
-  //     draftLineIteration: {
-  //       ...state.draftLineIteration,
-  //       ...mapValues(
-  //         toBeConfirmedById,
-  //         ({ id }) => (state.draftLineIteration[id] || 0) + 1
-  //       ),
-  //     },
-  //   }));
-  // },
-}));
+  return {
+    draftStockOutLines: [],
+    // allocatedQuantity: 0, // todo- getter only?
+    allocateIn: AllocateIn.Packs, // TODO: from user pref? from store pref... also based on item?
+    setAllocateIn: (allocateIn: AllocateIn) =>
+      set(state => ({
+        ...state,
+        allocateIn,
+        // Update allocated quan by in type
+      })),
+    setDraftStockOutLines: (lines: DraftStockOutLine[]) =>
+      set(state => ({
+        ...state,
+        draftStockOutLines: lines,
+      })),
+    autoAllocate: (quantity: number, allowPlaceholder = false) => {
+      const { draftStockOutLines, setDraftStockOutLines } = get();
+      // TODO - update allocate to accept allowPlaceholder
+      const applyAllocation = allocateQuantities(
+        allowPlaceholder ? InvoiceNodeStatus.New : InvoiceNodeStatus.Allocated,
+        draftStockOutLines
+      );
 
-// SELECTOR HELPERS
-// export const useCachedRnRDraftLine = (id: string) => {
-//   const prevIteration = React.useRef(-1);
-//   const prev = React.useRef<
-//     | { line: RnRFormLineFragment & { isDirty?: boolean }; setLine: SetLine }
-//     | undefined
-//   >(undefined);
+      // TODO: this guy accepts issuePackSize, and also partial packs - null = pack 1
+      const updatedLines = applyAllocation(quantity, null);
 
-//   return (state: RnRFormContext) => {
-//     const previousIteration = prevIteration.current;
-//     prevIteration.current = state.draftLineIteration[id] ?? 0;
+      if (updatedLines) {
+        setDraftStockOutLines(updatedLines);
+        return getAllocatedQuantity(updatedLines);
+      }
 
-//     const baseLine = state.baseLines[id];
-//     if (!baseLine) return undefined;
-
-//     return previousIteration == (state.draftLineIteration[id] ?? 0)
-//       ? prev.current
-//       : (prev.current = {
-//           line: { ...baseLine, ...(state.draftLines[id] || {}) },
-//           setLine: state.setDraftLine,
-//         });
-//   };
-// };
+      // TODO -
+      // set is auto allocated
+      // show zero quan conf?
+    },
+  };
+});
