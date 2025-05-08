@@ -9,6 +9,7 @@ export { useInbound, InboundFragment } from './InboundShipment/api';
 
 export type DraftItem = Pick<ItemRowFragment, 'id' | 'unitName' | 'isVaccine'>;
 
+// TODO, remove
 export type Draft = {
   item?: DraftItem;
   barcode?: { id?: string; gtin: string; batch?: string };

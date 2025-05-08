@@ -24,19 +24,18 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { useOutbound } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
-import { Draft } from '../..';
 import { StockOutLineFragment } from '../../StockOut';
 import { OutboundLineEdit as OutboundLineEditOld } from './OutboundLineEdit';
 import { CustomerReturnEditModal } from '../../Returns';
 import { canReturnOutboundLines } from '../../utils';
-import { OutboundLineEdit } from './OutboundLineEditModal';
+import { OutboundLineEdit, OutboundOpenedWith } from './OutboundLineEditModal';
 
 const DetailViewInner = () => {
   const t = useTranslation();
   const { info } = useNotification();
   const isDisabled = useOutbound.utils.isDisabled();
   const { entity, mode, onOpen, onClose, isOpen, setMode } =
-    useEditModal<Draft>();
+    useEditModal<OutboundOpenedWith>();
   const {
     onOpen: onOpenReturns,
     onClose: onCloseReturns,
@@ -51,12 +50,12 @@ const DetailViewInner = () => {
   const navigate = useNavigate();
   const onRowClick = useCallback(
     (item: StockOutLineFragment | StockOutItem) => {
-      onOpen({ item: toItemRow(item) });
+      onOpen({ itemId: item.id });
     },
     [toItemRow, onOpen]
   );
-  const onAddItem = (draft?: Draft) => {
-    onOpen(draft);
+  const onAddItem = (openWith?: OutboundOpenedWith) => {
+    onOpen(openWith);
     setMode(ModalMode.Create);
   };
   const { clearSelected } = useTableStore();
@@ -107,7 +106,7 @@ const DetailViewInner = () => {
           <AppBarButtons onAddItem={onAddItem} />
           {false && (
             <OutboundLineEditOld
-              draft={entity}
+              draft={entity?.itemId ? { item: { id: entity!.itemId! } } : null}
               mode={mode}
               isOpen={isOpen}
               onClose={onClose}
@@ -115,10 +114,11 @@ const DetailViewInner = () => {
           )}
           {isOpen && (
             <OutboundLineEdit
-              draft={entity}
+              openedWith={entity}
               mode={mode}
               isOpen={isOpen}
               onClose={onClose}
+              status={data.status}
             />
           )}
 

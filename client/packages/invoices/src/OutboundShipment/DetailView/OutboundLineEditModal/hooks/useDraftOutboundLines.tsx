@@ -7,7 +7,6 @@ import {
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
 import { useOutbound } from '../../../api';
-import { DraftItem } from '../../../..';
 import { DraftStockOutLine } from '../../../../types';
 import {
   UseDraftStockOutLinesControl,
@@ -20,7 +19,7 @@ import uniqBy from 'lodash/uniqBy';
 import { useGetItemPricing } from '../../../api/hooks/utils';
 
 export const useDraftOutboundLines = (
-  item: DraftItem | null
+  itemId: string
 ): UseDraftStockOutLinesControl => {
   const {
     id: invoiceId,
@@ -28,8 +27,8 @@ export const useDraftOutboundLines = (
     otherPartyId,
   } = useOutbound.document.fields(['id', 'status', 'otherPartyId']);
   const { data: lines, isLoading: outboundLinesLoading } =
-    useOutbound.line.stockLines(item?.id ?? '');
-  const { data, isLoading } = useStockLines(item?.id);
+    useOutbound.line.stockLines(itemId);
+  const { data, isLoading } = useStockLines(itemId);
   const [draftStockOutLines, setDraftStockOutLines] = useState<
     DraftStockOutLine[]
   >([]);
@@ -37,7 +36,7 @@ export const useDraftOutboundLines = (
   // Get default pricing for the item
   const { itemPrice, isFetched: priceFetched } = useGetItemPricing({
     nameId: otherPartyId,
-    itemId: item?.id || '',
+    itemId,
   });
 
   const { setIsDirty } = useConfirmOnLeaving('outbound-shipment-line-edit');
@@ -45,7 +44,7 @@ export const useDraftOutboundLines = (
   useEffect(() => {
     // Check placed in since last else in the map is needed to show placeholder row,
     // but also causes a placeholder row to be created when there is no stock lines.
-    if (!item) {
+    if (!itemId) {
       return setDraftStockOutLines([]);
     }
 
@@ -94,7 +93,7 @@ export const useDraftOutboundLines = (
         );
 
         if (placeholder) {
-          const placeHolderItem = lines?.find(l => l.item.id === item.id)?.item;
+          const placeHolderItem = lines?.find(l => l.item.id === itemId)?.item;
           if (!!placeHolderItem) placeholder.item = placeHolderItem;
           rows.push(
             createDraftStockOutLine({
@@ -104,13 +103,13 @@ export const useDraftOutboundLines = (
             })
           );
         } else {
-          rows.push(createStockOutPlaceholderRow(invoiceId, item.id));
+          rows.push(createStockOutPlaceholderRow(invoiceId, itemId));
         }
       }
 
       return rows;
     });
-  }, [data, lines, item, invoiceId, itemPrice, priceFetched]);
+  }, [data, lines, itemId, invoiceId, itemPrice, priceFetched]);
 
   const onChangeRowQuantity = useCallback(
     (batchId: string, value: number) => {
