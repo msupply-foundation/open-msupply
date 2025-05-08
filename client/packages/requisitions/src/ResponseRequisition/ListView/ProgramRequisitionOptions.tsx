@@ -95,7 +95,7 @@ const useProgramRequisitionOptions = (
       value: orderType,
       set: handleSetOrderType,
       disabled: programSetting === null || programSetting === undefined,
-      labelNoOptions: t('label.no-order-options'),
+      labelNoOptions: t('label.no-order-types'),
       label: t('label.order-type'),
       renderOption: getOrderTypeRenderer(),
     },
@@ -250,7 +250,6 @@ export const ProgramRequisitionOptions = ({
 
 const getProgramOptionRenderer =
   (): AutocompleteOptionRenderer<ProgramSettingFragment> => (props, item) => {
-    const color = item.orderTypes.length === 0 ? 'red' : 'black';
     return (
       <DefaultAutocompleteItemOption {...props} key={item.masterListId}>
         <Box display="flex" flexDirection="row" gap={1} alignItems="center">
@@ -259,7 +258,6 @@ const getProgramOptionRenderer =
             textOverflow="ellipsis"
             sx={{
               whiteSpace: 'nowrap',
-              color: color,
             }}
           >
             {item.masterListName} ({item.masterListNameTagName})

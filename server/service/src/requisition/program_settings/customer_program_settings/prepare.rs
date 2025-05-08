@@ -127,10 +127,6 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
                             requisitions_in_periods.clone(),
                         )
                     })
-                    // filter out order types which do not have available periods
-                    .filter(|order_type_with_periods| {
-                        order_type_with_periods.available_periods.len() > 0
-                    })
                     .collect();
 
                 ProgramSetting {
