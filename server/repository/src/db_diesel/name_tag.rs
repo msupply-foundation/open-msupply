@@ -42,25 +42,23 @@ impl<'a> NameTagRepository<'a> {
     pub fn create_filtered_query(filter: Option<NameTagFilter>) -> BoxedNameTagQuery {
         let mut query = name_tag::table.into_boxed();
 
-        if filter.is_some() {
-            let Some(NameTagFilter { store_id, name_id }) = filter else {
-                return query;
-            };
+        let Some(NameTagFilter { store_id, name_id }) = filter else {
+            return query;
+        };
 
-            let mut name_tag_query = name_tag_join::table
-                .left_join(
-                    name_link::table
-                        .left_join(name::table)
-                        .left_join(store::table),
-                )
-                .into_boxed();
+        let mut name_tag_query = name_tag_join::table
+            .left_join(
+                name_link::table
+                    .left_join(name::table)
+                    .left_join(store::table),
+            )
+            .into_boxed();
 
-            apply_equal_filter!(name_tag_query, store_id, store::id);
-            apply_equal_filter!(name_tag_query, name_id, name::id);
+        apply_equal_filter!(name_tag_query, store_id, store::id);
+        apply_equal_filter!(name_tag_query, name_id, name::id);
 
-            query = query
-                .filter(name_tag::id.eq_any(name_tag_query.select(name_tag_join::name_tag_id)));
-        }
+        query =
+            query.filter(name_tag::id.eq_any(name_tag_query.select(name_tag_join::name_tag_id)));
 
         query
     }
