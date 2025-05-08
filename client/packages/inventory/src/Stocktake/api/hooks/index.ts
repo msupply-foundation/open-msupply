@@ -2,7 +2,7 @@ import { Document } from './document';
 import { Lines } from './line';
 import { Utils } from './utils';
 
-export const useStocktake = {
+export const useStocktakeOld = {
   document: {
     get: Document.useStocktake,
     list: Document.useStocktakes,

@@ -3560,11 +3560,9 @@ export type InsertStocktakeInput = {
   expiresBefore?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   isInitialStocktake: Scalars['Boolean']['input'];
-  isLocked?: InputMaybe<Scalars['Boolean']['input']>;
   itemsHaveStock?: InputMaybe<Scalars['Boolean']['input']>;
-  location?: InputMaybe<NullableStringUpdate>;
+  locationId?: InputMaybe<Scalars['String']['input']>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
-  stocktakeDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type InsertStocktakeLineError = {
@@ -9590,11 +9588,13 @@ export type UpsertItemVariantErrorInterface = {
 
 export type UpsertItemVariantInput = {
   coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
+  dosesPerUnit?: InputMaybe<Scalars['Int']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   manufacturerId?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   packagingVariants: Array<PackagingVariantInput>;
+  vvmType?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpsertLogLevelInput = {

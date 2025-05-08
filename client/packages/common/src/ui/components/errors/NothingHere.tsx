@@ -39,14 +39,20 @@ export const NothingHere: React.FC<NothingHereProps> = ({
   ) : undefined;
 
   return (
-    <Stack flex={1} justifyContent="center" alignItems="center" height="100%">
+    <Stack
+      flex={1}
+      justifyContent="center"
+      alignItems="center"
+      height="100%"
+      padding={1}
+    >
       <NothingHereIcon sx={{ fontSize: 120 }} />
       <Box justifyContent="center">
         <Typography fontSize={24} fontWeight={700} sx={{ color: 'gray.light' }}>
           {heading}
         </Typography>
       </Box>
-      <Box display="inline" padding={2}>
+      <Box display="inline">
         {Body}
         {CreateButton}
       </Box>

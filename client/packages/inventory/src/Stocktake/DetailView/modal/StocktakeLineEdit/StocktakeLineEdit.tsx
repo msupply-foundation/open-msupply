@@ -28,7 +28,7 @@ import {
   StyledTabPanel,
   Tabs,
 } from './StocktakeLineEditTabs';
-import { useStocktake } from '../../../api';
+import { useStocktakeOld } from '../../../api';
 import {
   LocationTable,
   BatchTable,
@@ -53,7 +53,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const theme = useAppTheme();
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const [currentItem, setCurrentItem] = useState(item);
-  const { isDisabled, items, totalLineCount } = useStocktake.line.rows();
+  const { isDisabled, items, totalLineCount } = useStocktakeOld.line.rows();
   const { draftLines, update, addLine, isSaving, save, nextItem } =
     useStocktakeLineEdit(currentItem);
   const { highlightRows } = useRowHighlight();

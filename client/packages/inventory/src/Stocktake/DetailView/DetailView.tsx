@@ -21,7 +21,11 @@ import { StocktakeSummaryItem } from '../../types';
 import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
-import { StocktakeFragment, StocktakeLineFragment, useStocktake } from '../api';
+import {
+  StocktakeFragment,
+  StocktakeLineFragment,
+  useStocktakeOld,
+} from '../api';
 import { StocktakeLineErrorProvider } from '../context';
 import { isStocktakeDisabled } from '../../utils';
 
@@ -90,7 +94,7 @@ const DetailViewComponent = ({
 };
 
 export const DetailView = () => {
-  const { data: stocktake, isLoading } = useStocktake.document.get();
+  const { data: stocktake, isLoading } = useStocktakeOld.document.get();
   const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
@@ -121,8 +125,6 @@ export const DetailView = () => {
       />
     );
 
-  const isInitialStocktake = stocktake.isInitialStocktake;
-
   return (
     <StocktakeLineErrorProvider>
       <TableProvider createStore={createTableStore}>
@@ -137,7 +139,7 @@ export const DetailView = () => {
             onClose={onClose}
             mode={mode}
             item={entity}
-            isInitialStocktake={isInitialStocktake}
+            isInitialStocktake={stocktake.isInitialStocktake}
           />
         )}
       </TableProvider>
