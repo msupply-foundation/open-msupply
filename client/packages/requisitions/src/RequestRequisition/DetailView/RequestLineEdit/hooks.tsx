@@ -14,6 +14,7 @@ export type DraftRequestLine = Omit<
   isCreated: boolean;
   requisitionId: string;
   defaultPackSize: number;
+  unitName?: string | null;
 };
 
 const createDraftFromItem = (
@@ -46,6 +47,7 @@ const createDraftFromItem = (
     daysOutOfStock: 0,
     expiringUnits: 0,
     defaultPackSize: item.defaultPackSize,
+    unitName: item.unitName,
   };
 };
 
@@ -61,6 +63,7 @@ const createDraftFromRequestLine = (
   isCreated: false,
   itemStats: line.itemStats,
   defaultPackSize: line.item.defaultPackSize,
+  unitName: line.item.unitName,
 });
 
 export const useDraftRequisitionLine = (

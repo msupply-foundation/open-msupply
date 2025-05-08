@@ -3,7 +3,6 @@ import React, { FC } from 'react';
 import {
   ListView as RequestRequisitionListView,
   DetailView as RequestRequisitionDetailView,
-  RequestLineEditPage,
   IndicatorEditPage as RequestRequisitionIndicatorEditPage,
 } from './RequestRequisition';
 import {
@@ -51,11 +50,6 @@ const internalOrderRoute = RouteBuilder.create(AppRoute.InternalOrder)
   .addPart(':requisitionId')
   .build();
 
-const internalOrderLineRoute = RouteBuilder.create(AppRoute.InternalOrder)
-  .addPart(':requisitionId')
-  .addPart(':itemId')
-  .build();
-
 const rnrFormsRoute = RouteBuilder.create(AppRoute.RnRForms).build();
 
 const rnrFormRoute = RouteBuilder.create(AppRoute.RnRForms)
@@ -89,7 +83,6 @@ export const RequisitionService: FC = () => {
         path={internalOrderRoute}
         element={<RequestRequisitionDetailView />}
       />
-      <Route path={internalOrderLineRoute} element={<RequestLineEditPage />} />
       <Route
         path={requestIndicatorLineRoute}
         element={<RequestRequisitionIndicatorEditPage />}
