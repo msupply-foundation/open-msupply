@@ -117,7 +117,7 @@ pub fn get_supplier_program_requisition_settings(
 pub fn get_program_requisition_settings_by_customer(
     ctx: &Context<'_>,
     store_id: &str,
-    customer_store_id: &str,
+    customer_name_id: &str,
 ) -> Result<CustomerProgramRequisitionSettingNode> {
     let user = validate_auth(
         ctx,
@@ -132,7 +132,7 @@ pub fn get_program_requisition_settings_by_customer(
 
     let settings = service_provider
         .requisition_service
-        .get_program_requisition_settings_by_customer(&service_context, customer_store_id)?;
+        .get_program_requisition_settings_by_customer(&service_context, customer_name_id)?;
 
     let response = CustomerProgramRequisitionSettingNode {
         customer_name_id: settings.customer_name_id,

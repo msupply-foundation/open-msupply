@@ -210,9 +210,9 @@ pub trait RequisitionServiceTrait: Sync + Send {
     fn get_program_requisition_settings_by_customer(
         &self,
         ctx: &ServiceContext,
-        customer_store_id: &str,
+        customer_name_id: &str,
     ) -> Result<CustomerProgramRequisitionSetting, RepositoryError> {
-        get_program_requisition_settings_by_customer(ctx, customer_store_id)
+        get_program_requisition_settings_by_customer(ctx, customer_name_id)
     }
 
     fn get_indicator_information(

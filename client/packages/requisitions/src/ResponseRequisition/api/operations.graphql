@@ -540,11 +540,11 @@ fragment ProgramSettingsByCustomer on CustomerProgramRequisitionSettingNode {
 }
 
 query programRequisitionSettingsByCustomer(
-  $customerStoreId: String!
+  $customerNameId: String!
   $storeId: String!
 ) {
   programRequisitionSettingsByCustomer(
-    customerStoreId: $customerStoreId
+    customerNameId: $customerNameId
     storeId: $storeId
   ) {
     ...ProgramSettingsByCustomer

@@ -66,9 +66,9 @@ impl RequisitionQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        customer_store_id: String,
+        customer_name_id: String,
     ) -> Result<CustomerProgramRequisitionSettingNode> {
-        get_program_requisition_settings_by_customer(ctx, &store_id, &customer_store_id)
+        get_program_requisition_settings_by_customer(ctx, &store_id, &customer_name_id)
     }
 
     pub async fn program_indicators(

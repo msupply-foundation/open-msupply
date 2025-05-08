@@ -840,7 +840,7 @@ export type ProgramSettingsByCustomerFragment = {
 };
 
 export type ProgramRequisitionSettingsByCustomerQueryVariables = Types.Exact<{
-  customerStoreId: Types.Scalars['String']['input'];
+  customerNameId: Types.Scalars['String']['input'];
   storeId: Types.Scalars['String']['input'];
 }>;
 
@@ -1516,11 +1516,11 @@ export const ResponseRequisitionStatsDocument = gql`
 `;
 export const ProgramRequisitionSettingsByCustomerDocument = gql`
   query programRequisitionSettingsByCustomer(
-    $customerStoreId: String!
+    $customerNameId: String!
     $storeId: String!
   ) {
     programRequisitionSettingsByCustomer(
-      customerStoreId: $customerStoreId
+      customerNameId: $customerNameId
       storeId: $storeId
     ) {
       ...ProgramSettingsByCustomer

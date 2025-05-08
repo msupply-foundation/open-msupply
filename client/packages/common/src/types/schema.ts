@@ -6831,7 +6831,7 @@ export type QueriesProgramIndicatorsArgs = {
 };
 
 export type QueriesProgramRequisitionSettingsByCustomerArgs = {
-  customerStoreId: Scalars['String']['input'];
+  customerNameId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 

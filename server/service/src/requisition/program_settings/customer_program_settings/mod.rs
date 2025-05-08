@@ -17,8 +17,8 @@ pub struct CustomerProgramSettings {
 }
 pub fn get_program_requisition_settings_by_customer(
     ctx: &ServiceContext,
-    customer_store_id: &str,
+    customer_name_id: &str,
 ) -> Result<CustomerProgramRequisitionSetting, RepositoryError> {
-    let prepared = prepare_program_requisition_settings_by_customer(ctx, customer_store_id)?;
+    let prepared = prepare_program_requisition_settings_by_customer(ctx, customer_name_id)?;
     Ok(prepared)
 }
