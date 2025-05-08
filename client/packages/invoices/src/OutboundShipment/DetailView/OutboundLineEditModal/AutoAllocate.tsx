@@ -7,12 +7,9 @@ import {
   Box,
   NumericTextInput,
   useDebouncedValueCallback,
+  useFormatNumber,
 } from '@openmsupply-client/common';
-import {
-  PackSizeController,
-  StockOutAlert,
-  StockOutAlerts,
-} from '../../../StockOut';
+import { PackSizeController, StockOutAlerts } from '../../../StockOut';
 import { useAllocationContext } from './allocation/useAllocationContext';
 
 interface AutoAllocateProps {
@@ -28,8 +25,14 @@ export const AutoAllocate = ({
   // hasExpired,
 }: AutoAllocateProps) => {
   const t = useTranslation();
-  const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
-  const autoAllocate = useAllocationContext(({ autoAllocate }) => autoAllocate);
+  const { format } = useFormatNumber();
+
+  const { autoAllocate, alerts } = useAllocationContext(
+    ({ autoAllocate, alerts }) => ({
+      autoAllocate,
+      alerts,
+    })
+  );
 
   // TODO = prepopulate with existing (once we have initialisation)
   const [issueQuantity, setIssueQuantity] = useState<number>();
@@ -84,7 +87,7 @@ export const AutoAllocate = ({
   // See https://github.com/msupply-foundation/open-msupply/issues/2727
   const debouncedAllocate = useDebouncedValueCallback(
     (quantity, packSize) => {
-      const allocatedQuantity = autoAllocate(quantity);
+      const allocatedQuantity = autoAllocate(quantity, format, t);
       if (allocatedQuantity !== undefined) {
         updateIssueQuantity(allocatedQuantity);
       }
@@ -133,7 +136,7 @@ export const AutoAllocate = ({
             {/* TODO: allocate in X dropdown - see packsizecontroller */}
           </Grid>
           <StockOutAlerts
-            allocationAlerts={allocationAlerts}
+            allocationAlerts={alerts}
             showZeroQuantityConfirmation={false}
             isAutoAllocated={true}
           />

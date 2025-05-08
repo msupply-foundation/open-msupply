@@ -1,16 +1,21 @@
 import {
   create,
+  DateUtils,
   // RecordWithId,
   // keyBy,
   // mapValues,
   InvoiceNodeStatus,
+  LocaleKey,
+  TypedTFunction,
 } from '@openmsupply-client/common';
 import {
   allocateQuantities,
   getAllocatedQuantity,
+  getAllocationAlerts,
+  StockOutAlert,
 } from 'packages/invoices/src/StockOut';
 import { DraftStockOutLine } from 'packages/invoices/src/types';
-import { useDraftOutboundLines } from '..';
+import { isA } from 'packages/invoices/src/utils';
 
 // TODO Fix imports
 
@@ -22,6 +27,7 @@ export enum AllocateIn {
 
 interface AllocationContext {
   allocateIn: AllocateIn;
+  alerts: StockOutAlert[];
   setAllocateIn: (allocateIn: AllocateIn) => void;
   // TODO - is it performant? could do by id, then return array if needed?
   draftStockOutLines: DraftStockOutLine[];
@@ -31,7 +37,11 @@ interface AllocationContext {
    * - Undefined if no allocation was made
    * - Otherwise, the actual quantity allocated (may differ from input quantity)
    *  */
-  autoAllocate: (quantity: number) => number | void;
+  autoAllocate: (
+    quantity: number,
+    format: (value: number, options?: Intl.NumberFormatOptions) => string,
+    t: TypedTFunction<LocaleKey>
+  ) => number | void;
 }
 
 export const useAllocationContext = create<AllocationContext>((set, get) => {
@@ -39,6 +49,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => {
 
   return {
     draftStockOutLines: [],
+    alerts: [],
     // allocatedQuantity: 0, // todo- getter only?
     allocateIn: AllocateIn.Packs, // TODO: from user pref? from store pref... also based on item?
     setAllocateIn: (allocateIn: AllocateIn) =>
@@ -52,7 +63,12 @@ export const useAllocationContext = create<AllocationContext>((set, get) => {
         ...state,
         draftStockOutLines: lines,
       })),
-    autoAllocate: (quantity: number, allowPlaceholder = false) => {
+    autoAllocate: (
+      quantity: number,
+      format: (value: number, options?: Intl.NumberFormatOptions) => string,
+      t: TypedTFunction<LocaleKey>,
+      allowPlaceholder = false
+    ) => {
       const { draftStockOutLines, setDraftStockOutLines } = get();
       // TODO - update allocate to accept allowPlaceholder
       const applyAllocation = allocateQuantities(
@@ -65,7 +81,37 @@ export const useAllocationContext = create<AllocationContext>((set, get) => {
 
       if (updatedLines) {
         setDraftStockOutLines(updatedLines);
-        return getAllocatedQuantity(updatedLines);
+
+        const placeholderLine = updatedLines?.find(isA.placeholderLine);
+        const allocatedQuantity = getAllocatedQuantity(updatedLines);
+
+        // TODO
+        const hasOnHold = draftStockOutLines.some(
+          ({ stockLine }) =>
+            (stockLine?.availableNumberOfPacks ?? 0) > 0 && !!stockLine?.onHold
+        );
+        const hasExpired = draftStockOutLines.some(
+          ({ stockLine }) =>
+            (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
+            !!stockLine?.expiryDate &&
+            DateUtils.isExpired(new Date(stockLine?.expiryDate))
+        );
+        const alerts = getAllocationAlerts(
+          quantity, // * (packSize === -1 ? 1 : packSize),
+          allocatedQuantity,
+          placeholderLine?.numberOfPacks ?? 0,
+          hasOnHold,
+          hasExpired,
+          format,
+          t
+        );
+
+        set(state => ({
+          ...state,
+          alerts,
+        }));
+
+        return allocatedQuantity;
       }
 
       // TODO -
