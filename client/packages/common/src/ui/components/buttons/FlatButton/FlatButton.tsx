@@ -2,7 +2,7 @@ import React from 'react';
 import { Button as MuiButton, styled, SxProps, Theme } from '@mui/material';
 import { Property } from 'csstype';
 import { useIntlUtils } from '@common/intl';
-import { useIsScreen } from '@common/hooks';
+import { useAppTheme, useMediaQuery } from '@common/styles';
 interface ButtonProps {
   color?: 'inherit' | 'primary' | 'secondary';
   endIcon?: React.ReactNode;
@@ -52,7 +52,10 @@ export const FlatButton: React.FC<ButtonProps> = ({
   shrinkThreshold = 'md',
 }) => {
   const { isRtl } = useIntlUtils();
-  const isShrinkThreshold: boolean = useIsScreen(shrinkThreshold);
+  const theme = useAppTheme();
+  const isShrinkThreshold = useMediaQuery(
+    theme.breakpoints.down(shrinkThreshold)
+  );
 
   // On small screens, if the button shouldShrink, then
   // only display a centred icon, with no text.

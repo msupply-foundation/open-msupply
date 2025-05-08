@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   BasicSpinner,
   ButtonWithIcon,
@@ -6,7 +6,6 @@ import {
   DateTimePickerInput,
   DialogButton,
   InputWithLabelRow,
-  Select,
   Typography,
 } from '@common/components';
 import { PlusCircleIcon } from '@common/icons';
@@ -14,9 +13,13 @@ import { useFormatDateTime, useTranslation } from '@common/intl';
 import { ToggleState, useDialog } from '@common/hooks';
 import { useStocktake } from '../api';
 import {
-  useMasterList,
-  useLocation,
   useStockList,
+  useLocationList,
+  useMasterLists,
+  LocationSearchInput,
+  LocationRowFragment,
+  MasterListSearchInput,
+  MasterListRowFragment,
 } from '@openmsupply-client/system';
 import {
   Box,
@@ -27,7 +30,6 @@ import {
 } from '@openmsupply-client/common';
 
 const LABEL_FLEX = '0 0 150px';
-
 interface CreateStocktakeArgs {
   masterListId: string;
   locationId: string;
@@ -47,23 +49,18 @@ export const CreateStocktakeButton: React.FC<{
 }> = ({ modalController }) => {
   const t = useTranslation();
   const { mutateAsync, isLoading: isSaving } = useStocktake.document.insert();
-  const { user, storeId } = useAuthContext();
+  const { user, store } = useAuthContext();
+  const { data: masterListData, isLoading: isLoadingMasterLists } =
+    useMasterLists({
+      queryParams: {
+        filterBy: {
+          existsForStoreId: { equalTo: store?.id },
+        },
+      },
+    });
   const {
-    data: masterListData,
-    isLoading: isLoadingMasterLists,
-    mutate: fetchMasterLists,
-  } = useMasterList.document.listAll(
-    {
-      key: 'name',
-      direction: 'asc',
-    },
-    { existsForStoreId: { equalTo: storeId } }
-  );
-  const {
-    data: locationData,
-    isLoading: isLoadingLocations,
-    mutate: fetchLocations,
-  } = useLocation.document.listAll({ key: 'name', direction: 'asc' });
+    query: { data: locationData, isLoading: isLoadingLocations },
+  } = useLocationList({ sortBy: { key: 'name', direction: 'asc' } });
   const { data: stockData, isLoading: isLoadingStock } = useStockList({
     sortBy: {
       key: 'expiryDate',
@@ -73,6 +70,12 @@ export const CreateStocktakeButton: React.FC<{
   const { localisedDate } = useFormatDateTime();
   const [createStocktakeArgs, setCreateStocktakeArgs] =
     useState<CreateStocktakeArgs>(DEFAULT_ARGS);
+
+  const [selectedLocation, setSelectedLocation] =
+    useState<LocationRowFragment | null>(null);
+
+  const [selectedMasterList, setSelectedMasterList] =
+    useState<MasterListRowFragment | null>(null);
 
   const generateComment = () => {
     const { locationId, masterListId, itemsHaveStock } = createStocktakeArgs;
@@ -151,11 +154,6 @@ export const CreateStocktakeButton: React.FC<{
   const isLoading =
     isLoadingMasterLists || isLoadingLocations || isLoadingStock;
 
-  useEffect(() => {
-    fetchMasterLists();
-    fetchLocations();
-  }, []);
-
   return (
     <>
       {modalController.isOn && (
@@ -202,16 +200,17 @@ export const CreateStocktakeButton: React.FC<{
                         {t('messages.no-master-lists')}
                       </Typography>
                     ) : (
-                      <Select
-                        fullWidth
-                        onChange={event =>
+                      <MasterListSearchInput
+                        onChange={masterList => {
+                          setSelectedMasterList(masterList);
                           setCreateStocktakeArgs({
                             ...DEFAULT_ARGS,
-                            masterListId: event.target.value?.toString(),
-                          })
-                        }
-                        options={masterLists}
-                        value={createStocktakeArgs.masterListId}
+                            masterListId: masterList?.id ?? '',
+                          });
+                        }}
+                        disabled={false}
+                        selectedMasterList={selectedMasterList}
+                        width={380}
                       />
                     )
                   }
@@ -225,16 +224,17 @@ export const CreateStocktakeButton: React.FC<{
                         {t('messages.no-locations')}
                       </Typography>
                     ) : (
-                      <Select
-                        fullWidth
-                        onChange={event =>
+                      <LocationSearchInput
+                        onChange={location => {
+                          setSelectedLocation(location);
                           setCreateStocktakeArgs({
                             ...DEFAULT_ARGS,
-                            locationId: event.target.value?.toString(),
-                          })
-                        }
-                        options={locations}
-                        value={createStocktakeArgs.locationId}
+                            locationId: location?.id ?? '',
+                          });
+                        }}
+                        width={380}
+                        disabled={false}
+                        selectedLocation={selectedLocation}
                       />
                     )
                   }

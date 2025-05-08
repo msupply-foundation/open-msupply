@@ -1,67 +1,118 @@
 use async_graphql::*;
-use repository::PreferenceRow;
-use service::preference::preferences::{Preference, Preferences};
+use repository::StorageConnection;
+use service::preference::{
+    preferences::PreferenceProvider, PrefKey, Preference, PreferenceDescription, PreferenceType,
+    PreferenceValueType,
+};
 
-/// Defines the preferences object for a store
 pub struct PreferencesNode {
-    pub preferences: Preferences,
+    pub connection: StorageConnection,
+    pub store_id: Option<String>,
+    pub preferences: PreferenceProvider,
 }
 
 #[Object]
 impl PreferencesNode {
-    pub async fn show_contact_tracing(&self) -> &bool {
-        &self.preferences.show_contact_tracing
+    pub async fn show_contact_tracing(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.show_contact_tracing)
+    }
+
+    pub async fn display_population_based_forecasting(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.display_population_based_forecasting)
+    }
+
+    pub async fn display_vaccine_in_doses(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.display_vaccine_in_doses)
     }
 }
 
 impl PreferencesNode {
-    pub fn from_domain(prefs: Preferences) -> PreferencesNode {
-        PreferencesNode { preferences: prefs }
+    pub fn from_domain(
+        connection: StorageConnection,
+        store_id: Option<String>,
+        prefs: PreferenceProvider,
+    ) -> PreferencesNode {
+        PreferencesNode {
+            connection,
+            store_id,
+            preferences: prefs,
+        }
+    }
+
+    pub fn load_preference<T>(&self, pref: &impl Preference<Value = T>) -> Result<T> {
+        let result = pref.load(&self.connection, self.store_id.clone())?;
+        Ok(result)
     }
 }
 
-// Central only node types:
-
-/// Describes a preference, how it is configured
 pub struct PreferenceDescriptionNode {
-    pub pref: Box<dyn Preference<Value = bool>>,
+    pub pref: PreferenceDescription,
 }
 
 #[Object]
 impl PreferenceDescriptionNode {
-    pub async fn key(&self) -> &str {
-        self.pref.key()
+    pub async fn key(&self) -> PreferenceKey {
+        PreferenceKey::from_domain(&self.pref.key)
     }
 
-    pub async fn json_schema(&self) -> serde_json::Value {
-        self.pref.json_schema()
+    pub async fn value_type(&self) -> PreferenceValueNodeType {
+        PreferenceValueNodeType::from_domain(&self.pref.value_type)
     }
 
-    pub async fn ui_schema(&self) -> serde_json::Value {
-        self.pref.ui_schema()
+    /// WARNING: Type loss - holds any kind of pref value (for edit UI).
+    /// Use the PreferencesNode to load the strictly typed value.
+    pub async fn value(&self) -> &serde_json::Value {
+        &self.pref.value
     }
 }
 
-pub struct PreferenceNode {
-    pub preference: PreferenceRow,
+#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
+#[graphql(rename_items = "camelCase")]
+pub enum PreferenceKey {
+    // These keys (once camelCased) should match fields of PreferencesNode
+    ShowContactTracing,
+    DisplayVaccineInDoses,
+    DisplayPopulationBasedForecasting,
 }
 
-#[Object]
-impl PreferenceNode {
-    pub async fn id(&self) -> &String {
-        &self.preference.id
+impl PreferenceKey {
+    pub fn from_domain(pref_key: &PrefKey) -> Self {
+        match pref_key {
+            PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
+            PrefKey::DisplayPopulationBasedForecasting => {
+                PreferenceKey::DisplayPopulationBasedForecasting
+            }
+            PrefKey::DisplayVaccineInDoses => PreferenceKey::DisplayVaccineInDoses,
+        }
     }
+}
 
-    pub async fn key(&self) -> &String {
-        &self.preference.key
+#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
+pub enum PreferenceNodeType {
+    Global,
+    Store,
+}
+
+impl PreferenceNodeType {
+    pub fn to_domain(self) -> PreferenceType {
+        match self {
+            PreferenceNodeType::Global => PreferenceType::Global,
+            PreferenceNodeType::Store => PreferenceType::Store,
+        }
     }
+}
 
-    /// JSON serialized value
-    pub async fn value(&self) -> &String {
-        &self.preference.value
-    }
+#[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
+pub enum PreferenceValueNodeType {
+    Boolean,
+    Integer,
+}
 
-    pub async fn store_id(&self) -> Option<String> {
-        self.preference.store_id.clone()
+impl PreferenceValueNodeType {
+    pub fn from_domain(domain_type: &PreferenceValueType) -> Self {
+        match domain_type {
+            PreferenceValueType::Boolean => PreferenceValueNodeType::Boolean,
+            PreferenceValueType::Integer => PreferenceValueNodeType::Integer,
+        }
     }
 }

@@ -52,6 +52,7 @@ use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
 
 use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
+use graphql_vvm::VVMQueries;
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::plugin::validation::ValidatedPluginBucket;
@@ -165,6 +166,7 @@ pub struct Queries(
     pub ItemVariantQueries,
     pub PreferenceQueries,
     pub CentralServerQueries,
+    pub VVMQueries,
 );
 
 impl Queries {
@@ -196,6 +198,7 @@ impl Queries {
             ItemVariantQueries,
             PreferenceQueries,
             CentralServerQueries,
+            VVMQueries,
         )
     }
 }

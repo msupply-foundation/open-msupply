@@ -89,6 +89,8 @@ fragment FullSyncStatus on FullSyncStatusNode {
   lastSuccessfulSync {
     ...SyncStatus
   }
+  errorThreshold
+  warningThreshold
 }
 
 query syncInfo {

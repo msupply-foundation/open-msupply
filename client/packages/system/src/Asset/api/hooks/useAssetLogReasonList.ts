@@ -1,6 +1,6 @@
 import {
   FilterByWithBoolean,
-  LIST,
+  LIST_KEY,
   useQuery,
 } from '@openmsupply-client/common';
 import { useAssetGraphQL } from '../useAssetGraphQL';
@@ -10,7 +10,7 @@ export const useAssetLogReasonList = (
   filterBy?: FilterByWithBoolean | null
 ) => {
   const { assetApi, storeId } = useAssetGraphQL();
-  const queryKey = [ASSET, storeId, LIST, LOG_REASONS, filterBy];
+  const queryKey = [ASSET, storeId, LIST_KEY, LOG_REASONS, filterBy];
 
   const queryFn = async () => {
     const query = await assetApi.assetLogReasons({

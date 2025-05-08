@@ -3,20 +3,19 @@ import { LoadingButton, useConfirmationModal } from '@common/components';
 import { UploadIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 import { AppRoute, Environment } from '@openmsupply-client/config';
-import {
-  useConfirmOnLeaving,
-  useIsExtraSmallScreen,
-  useNotification,
-} from '@common/hooks';
+import { useConfirmOnLeaving, useNotification } from '@common/hooks';
 
 import {
+  Breakpoints,
   RouteBuilder,
+  useAppTheme,
   useAuthContext,
+  useMediaQuery,
   useNavigate,
   useQueryClient,
 } from '@openmsupply-client/common';
 import { useTemperatureLog, useTemperatureBreach } from '../Monitoring/api';
-import { useSensor } from '../Sensor/api';
+import { SENSOR } from '../Sensor/api';
 
 // Types are based on berlinger file returned values
 interface FridgeTag {
@@ -38,13 +37,15 @@ export const ImportFridgeTag = ({
   const t = useTranslation();
   const navigate = useNavigate();
   const { success, error } = useNotification();
-  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const theme = useAppTheme();
+  const isExtraSmallScreen = useMediaQuery(
+    theme.breakpoints.down(Breakpoints.sm)
+  );
 
   const hiddenFileInput = useRef<HTMLInputElement>(null);
   const { storeId } = useAuthContext();
   const queryClient = useQueryClient();
 
-  const sensorApi = useSensor.utils.api();
   const logApi = useTemperatureLog.utils.api();
   const breachApi = useTemperatureBreach.utils.api();
 
@@ -87,7 +88,7 @@ export const ImportFridgeTag = ({
       // forces a refetch of logs, breach, chart data and sensors
       queryClient.invalidateQueries(breachApi.keys.base());
       queryClient.invalidateQueries(logApi.keys.base());
-      queryClient.invalidateQueries(sensorApi.keys.base());
+      queryClient.invalidateQueries([SENSOR]);
 
       // if the user is on mobile - redirect to monitoring page
       if (isExtraSmallScreen) {

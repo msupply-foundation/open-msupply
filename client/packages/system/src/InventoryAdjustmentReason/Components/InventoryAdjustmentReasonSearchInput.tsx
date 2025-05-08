@@ -9,8 +9,8 @@ import {
   InventoryAdjustmentReasonNodeType,
 } from '@openmsupply-client/common';
 import {
-  useInventoryAdjustmentReason,
   InventoryAdjustmentReasonRowFragment,
+  useInventoryAdjustmentReasonList,
 } from '../api';
 
 interface InventoryAdjustmentReasonSearchInputProps {
@@ -36,8 +36,7 @@ export const InventoryAdjustmentReasonSearchInput: FC<
   isError,
   isDisabled,
 }) => {
-  const { data, isLoading } =
-    useInventoryAdjustmentReason.document.listAllActive();
+  const { data, isLoading } = useInventoryAdjustmentReasonList();
   const reasonFilter = (reason: InventoryAdjustmentReasonRowFragment) => {
     if (adjustmentType === AdjustmentTypeInput.Addition)
       return reason.type === InventoryAdjustmentReasonNodeType.Positive;

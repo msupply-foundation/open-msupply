@@ -934,6 +934,11 @@ export type BatchStocktakeResponse = {
   updateStocktakes?: Maybe<Array<UpdateStocktakeResponseWithId>>;
 };
 
+export type BoolStorePrefInput = {
+  storeId: Scalars['String']['input'];
+  value: Scalars['Boolean']['input'];
+};
+
 export type BundledItemMutations = {
   __typename: 'BundledItemMutations';
   deleteBundledItem: DeleteBundledItemResponse;
@@ -2633,6 +2638,7 @@ export type FrontendPluginMetadataNode = {
 export type FullSyncStatusNode = {
   __typename: 'FullSyncStatusNode';
   error?: Maybe<SyncErrorNode>;
+  errorThreshold: Scalars['Int']['output'];
   integration?: Maybe<SyncStatusWithProgressNode>;
   isSyncing: Scalars['Boolean']['output'];
   lastSuccessfulSync?: Maybe<SyncStatusNode>;
@@ -2643,6 +2649,7 @@ export type FullSyncStatusNode = {
   push?: Maybe<SyncStatusWithProgressNode>;
   pushV6?: Maybe<SyncStatusWithProgressNode>;
   summary: SyncStatusNode;
+  warningThreshold: Scalars['Int']['output'];
 };
 
 export enum GenderType {
@@ -4140,10 +4147,12 @@ export type ItemFilterInput = {
   categoryName?: InputMaybe<Scalars['String']['input']>;
   code?: InputMaybe<StringFilterInput>;
   codeOrName?: InputMaybe<StringFilterInput>;
+  /** Items with available stock on hand, regardless of item visibility. This filter is ignored if `is_visible_or_on_hand` is true */
+  hasStockOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isVaccine?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Items that are part of a masterlist which is visible in this store. This filter is void if `is_visible_or_on_hand` is true */
+  /** Items that are part of a masterlist which is visible in this store. This filter is ignored if `is_visible_or_on_hand` is true */
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   /** Items that are part of a masterlist which is visible in this store OR there is available stock of that item in this store */
   isVisibleOrOnHand?: InputMaybe<Scalars['Boolean']['input']>;
@@ -5593,6 +5602,11 @@ export type NumberNode = {
   number: Scalars['Int']['output'];
 };
 
+export type OkResponse = {
+  __typename: 'OkResponse';
+  ok: Scalars['Boolean']['output'];
+};
+
 export type OrderingTooManyItems = UpdateRequestRequisitionErrorInterface &
   UpdateResponseRequisitionErrorInterface & {
     __typename: 'OrderingTooManyItems';
@@ -5887,34 +5901,52 @@ export type PluginInfoNode = {
   pluginInfo: Scalars['JSON']['output'];
 };
 
+/** The context we are editing pref within (e.g. prefs for given store, user, etc.) */
+export type PreferenceDescriptionContext = {
+  storeId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
-  jsonSchema: Scalars['JSON']['output'];
-  key: Scalars['String']['output'];
-  uiSchema: Scalars['JSON']['output'];
+  key: PreferenceKey;
+  /**
+   * WARNING: Type loss - holds any kind of pref value (for edit UI).
+   * Use the PreferencesNode to load the strictly typed value.
+   */
+  value: Scalars['JSON']['output'];
+  valueType: PreferenceValueNodeType;
 };
+
+export enum PreferenceKey {
+  DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
+  DisplayVaccineInDoses = 'displayVaccineInDoses',
+  ShowContactTracing = 'showContactTracing',
+}
 
 export type PreferenceMutations = {
   __typename: 'PreferenceMutations';
-  upsertPreference: PreferenceNode;
+  upsertPreferences: OkResponse;
 };
 
-export type PreferenceMutationsUpsertPreferenceArgs = {
-  input: UpsertPreferenceInput;
+export type PreferenceMutationsUpsertPreferencesArgs = {
+  input: UpsertPreferencesInput;
   storeId: Scalars['String']['input'];
 };
 
-export type PreferenceNode = {
-  __typename: 'PreferenceNode';
-  id: Scalars['String']['output'];
-  key: Scalars['String']['output'];
-  storeId?: Maybe<Scalars['String']['output']>;
-  /** JSON serialized value */
-  value: Scalars['String']['output'];
-};
+export enum PreferenceNodeType {
+  Global = 'GLOBAL',
+  Store = 'STORE',
+}
+
+export enum PreferenceValueNodeType {
+  Boolean = 'BOOLEAN',
+  Integer = 'INTEGER',
+}
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
+  displayPopulationBasedForecasting: Scalars['Boolean']['output'];
+  displayVaccineInDoses: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
 };
 
@@ -6226,6 +6258,7 @@ export type Queries = {
    * `active_start_datetime <= at && active_end_datetime + 1 >= at`
    */
   activeProgramEvents: ProgramEventResponse;
+  activeVvmStatuses: VvmstatusesResponse;
   activityLogs: ActivityLogResponse;
   apiVersion: Scalars['String']['output'];
   assetCatalogueItem: AssetCatalogueItemResponse;
@@ -6247,7 +6280,6 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
-  availablePreferences: Array<PreferenceDescriptionNode>;
   barcodeByGtin: BarcodeResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
@@ -6342,6 +6374,9 @@ export type Queries = {
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
   pluginGraphqlQuery: Scalars['JSON']['output'];
+  /** The list of preferences and their current values (used for the admin/edit page) */
+  preferenceDescriptions: Array<PreferenceDescriptionNode>;
+  /** Returns the relevant set of preferences based on context (e.g. current store) */
   preferences: PreferencesNode;
   printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
@@ -6405,6 +6440,10 @@ export type QueriesActiveProgramEventsArgs = {
   filter?: InputMaybe<ProgramEventFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ProgramEventSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesActiveVvmStatusesArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -6487,10 +6526,6 @@ export type QueriesAssetsArgs = {
 export type QueriesAuthTokenArgs = {
   password: Scalars['String']['input'];
   username: Scalars['String']['input'];
-};
-
-export type QueriesAvailablePreferencesArgs = {
-  storeId: Scalars['String']['input'];
 };
 
 export type QueriesBarcodeByGtinArgs = {
@@ -6799,6 +6834,12 @@ export type QueriesPluginDataArgs = {
 export type QueriesPluginGraphqlQueryArgs = {
   input: Scalars['JSON']['input'];
   pluginCode: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPreferenceDescriptionsArgs = {
+  prefContext: PreferenceDescriptionContext;
+  prefType: PreferenceNodeType;
   storeId: Scalars['String']['input'];
 };
 
@@ -9567,11 +9608,10 @@ export type UpsertPackVariantResponse =
   | ItemVariantNode
   | UpsertItemVariantError;
 
-export type UpsertPreferenceInput = {
-  id: Scalars['String']['input'];
-  key: Scalars['String']['input'];
-  storeId?: InputMaybe<Scalars['String']['input']>;
-  value: Scalars['String']['input'];
+export type UpsertPreferencesInput = {
+  displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
+  displayVaccineInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
+  showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type UpsertVaccineCourseDoseInput = {
@@ -9861,6 +9901,24 @@ export enum VenCategoryType {
   NotAssigned = 'NOT_ASSIGNED',
   V = 'V',
 }
+
+export type VvmstatusConnector = {
+  __typename: 'VvmstatusConnector';
+  nodes: Array<VvmstatusNode>;
+};
+
+export type VvmstatusNode = {
+  __typename: 'VvmstatusNode';
+  code: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  level: Scalars['Int']['output'];
+  reasonId?: Maybe<Scalars['String']['output']>;
+  unusable: Scalars['Boolean']['output'];
+};
+
+export type VvmstatusesResponse = VvmstatusConnector;
 
 export type WarningNode = {
   __typename: 'WarningNode';

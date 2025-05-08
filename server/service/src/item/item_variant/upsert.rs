@@ -38,6 +38,8 @@ pub struct UpsertItemVariantWithPackaging {
     pub name: String,
     pub manufacturer_id: Option<String>,
     pub packaging_variants: Vec<UpsertPackagingVariant>,
+    pub doses_per_unit: Option<i32>,
+    pub vvm_type: Option<String>,
 }
 
 pub fn upsert_item_variant(
@@ -81,7 +83,7 @@ pub fn upsert_item_variant(
             // Upsert the new packaging variants
             for packaging_variant in input.packaging_variants {
                 upsert_packaging_variant(ctx, packaging_variant)
-                    .map_err(|e| UpsertItemVariantError::PackagingVariantError(e))?;
+                    .map_err(UpsertItemVariantError::PackagingVariantError)?;
             }
 
             ItemVariantRepository::new(connection)
@@ -109,6 +111,8 @@ pub fn generate(
         cold_storage_type_id,
         manufacturer_id,
         packaging_variants: _, // Mapped separately
+        doses_per_unit,
+        vvm_type,
     }: UpsertItemVariantWithPackaging,
 ) -> ItemVariantRow {
     ItemVariantRow {
@@ -118,6 +122,8 @@ pub fn generate(
         cold_storage_type_id,
         manufacturer_link_id: manufacturer_id,
         deleted_datetime: None,
+        doses_per_unit: doses_per_unit.unwrap_or(0),
+        vvm_type,
     }
 }
 
@@ -158,14 +164,13 @@ fn validate(
     let item_variants_with_duplicate_name = ItemVariantRepository::new(connection)
         .query_by_filter(
             ItemVariantFilter::new()
-                .name(StringFilter::equal_to(&input.name.trim()))
+                .name(StringFilter::equal_to(input.name.trim()))
                 .item_id(EqualFilter::equal_to(&input.item_id)),
         )?;
 
     if item_variants_with_duplicate_name
         .iter()
-        .find(|v| v.item_variant_row.id != input.id)
-        .is_some()
+        .any(|v| v.item_variant_row.id != input.id)
     {
         return Err(UpsertItemVariantError::DuplicateName);
     }

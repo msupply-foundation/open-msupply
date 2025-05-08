@@ -7,7 +7,8 @@ import {
   useAuthContext,
   ContactTraceSortFieldInput,
   TabDefinition,
-  usePreferences,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -47,7 +48,7 @@ export const PatientView = () => {
   const { data: currentPatient } = usePatient.document.get(patientId);
   const [isDirtyPatient, setIsDirtyPatient] = useState(false);
   const { store, storeId } = useAuthContext();
-  const { data: prefs } = usePreferences();
+  const { data: prefs } = usePreference(PreferenceKey.ShowContactTracing);
 
   const {
     query: { data: insuranceProvidersData },
