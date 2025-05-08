@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarButtonsPortal,
   ButtonWithIcon,
@@ -24,9 +24,7 @@ interface AppBarButtonProps {
   onAddItem: (draft?: Draft) => void;
 }
 
-export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
-  onAddItem,
-}) => {
+export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
   const isDisabled = useOutbound.utils.isDisabled();
   const { data } = useOutbound.document.get();
   const { OpenButton } = useDetailPanel();

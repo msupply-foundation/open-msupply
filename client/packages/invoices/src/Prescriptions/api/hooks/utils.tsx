@@ -588,3 +588,24 @@ export const PackQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
     min={0}
   />
 );
+
+export const DosesQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
+  <NumberInputCell
+    {...props}
+    max={
+      (props.rowData.stockLine?.availableNumberOfPacks ?? 0) *
+      (props.rowData.stockLine?.packSize ?? 1) *
+      (props.rowData.item?.doses ?? 1)
+    }
+    id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
+    min={0}
+    decimalLimit={2}
+    slotProps={{
+      htmlInput: {
+        sx: {
+          backgroundColor: 'background.white',
+        },
+      },
+    }}
+  />
+);

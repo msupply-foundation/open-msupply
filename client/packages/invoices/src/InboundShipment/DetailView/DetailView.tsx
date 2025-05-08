@@ -14,6 +14,8 @@ import {
   ModalMode,
   useTableStore,
   useBreadcrumbs,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -52,6 +54,9 @@ const DetailViewInner = () => {
   } = useEditModal<string[]>();
   const { info, error } = useNotification();
   const { clearSelected } = useTableStore();
+  const { data: preference } = usePreference(
+    PreferenceKey.DisplayVaccineInDoses
+  );
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
@@ -100,6 +105,7 @@ const DetailViewInner = () => {
         <ContentArea
           onRowClick={!isDisabled ? onRowClick : null}
           onAddItem={() => onOpen()}
+          displayInDoses={preference?.displayVaccineInDoses}
         />
       ),
       value: 'Details',

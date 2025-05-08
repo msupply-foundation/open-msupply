@@ -19,6 +19,7 @@ import {
   getCommentPopoverColumn,
   usePreference,
   PreferenceKey,
+  getDosesPerUnitColumn,
 } from '@openmsupply-client/common';
 import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
@@ -160,29 +161,7 @@ export const useStocktakeColumns = ({
   ];
 
   if (preferences?.displayVaccineInDoses) {
-    columns.push({
-      key: 'doses',
-      label: 'label.doses-per-unit',
-      sortable: false,
-      accessor: ({ rowData }) => {
-        if ('lines' in rowData) {
-          const { lines } = rowData;
-          if (lines[0]?.item.isVaccine) {
-            const doses = lines?.map(
-              ({ item }) => item?.doses ?? UNDEFINED_STRING_VALUE
-            );
-            const dosesTheSame = doses?.every(dose => dose === doses?.[0]);
-            return dosesTheSame ? doses?.[0] : t('multiple');
-          } else {
-            return UNDEFINED_STRING_VALUE;
-          }
-        } else {
-          return rowData?.item?.isVaccine
-            ? (rowData?.item?.doses ?? UNDEFINED_STRING_VALUE)
-            : UNDEFINED_STRING_VALUE;
-        }
-      },
-    });
+    columns.push(getDosesPerUnitColumn(t));
   }
 
   columns.push(
