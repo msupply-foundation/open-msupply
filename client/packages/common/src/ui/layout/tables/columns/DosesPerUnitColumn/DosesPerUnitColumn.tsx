@@ -10,10 +10,16 @@ import { ColumnDefinition } from '../types';
 export const getDosesPerUnitColumn = <
   T extends RecordWithId & { item?: ItemRowFragment | null },
 >(
-  t: TypedTFunction<LocaleKey>
+  t: TypedTFunction<LocaleKey>,
+  unitName?: string
 ): ColumnDefinition<T> => ({
-  label: 'label.doses-per-unit',
+  label: unitName
+    ? t('label.doses-per-unit-name', {
+        unit: unitName,
+      })
+    : 'label.doses-per-unit',
   key: 'dosesPerUnit',
+  width: 100,
   accessor: ({ rowData }) => {
     if ('lines' in rowData) {
       const { lines } = rowData;

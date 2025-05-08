@@ -17,6 +17,8 @@ import {
   PreferenceKey,
   Formatter,
   useIntlUtils,
+  NumberInputCell,
+  getDosesPerUnitColumn,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -29,13 +31,10 @@ import {
 } from '@openmsupply-client/system';
 import {
   getBatchExpiryColumns,
+  getInboundDosesColumns,
   itemVariantColumn,
   NumberOfPacksCell,
-} from './columns/utils';
-import {
-  getDosesPerPackColumn,
-  getInboundDosesColumns,
-} from './columns/dosesColumns';
+} from './utils';
 
 interface TableProps {
   lines: DraftInboundLine[];
@@ -74,7 +73,7 @@ export const QuantityTableComponent = ({
   }
 
   if (displayInDoses) {
-    columnDefinitions.push(getDosesPerPackColumn(t, unitName));
+    columnDefinitions.push(getDosesPerUnitColumn(t, unitName));
   }
 
   columnDefinitions.push(
@@ -105,23 +104,34 @@ export const QuantityTableComponent = ({
     ]
   );
 
+  columnDefinitions.push({
+    key: 'unitsPerPack',
+    label: t('label.units-received', {
+      unit: unitName,
+    }),
+    width: 100,
+    Cell: NumberInputCell,
+    align: ColumnAlign.Right,
+    setter: patch => {
+      const { unitsPerPack, packSize } = patch;
+
+      if (packSize !== undefined && unitsPerPack !== undefined) {
+        const unitToPacks = unitsPerPack / packSize;
+
+        updateDraftLine({
+          ...patch,
+          unitsPerPack,
+          numberOfPacks: unitToPacks,
+        });
+      }
+    },
+    accessor: ({ rowData }) => {
+      return rowData.numberOfPacks * rowData.packSize;
+    },
+  });
+
   if (displayInDoses) {
-    columnDefinitions.push(
-      ...getInboundDosesColumns(t, updateDraftLine, unitName)
-    );
-  } else {
-    columnDefinitions.push([
-      'unitQuantity',
-      {
-        label: t('label.units-received', {
-          unit: unitName,
-        }),
-        width: 100,
-        accessor: ({ rowData }) => {
-          return rowData.numberOfPacks * rowData.packSize;
-        },
-      },
-    ]);
+    columnDefinitions.push(...getInboundDosesColumns());
   }
 
   const columns = useColumns<DraftInboundLine>(columnDefinitions, {}, [

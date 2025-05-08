@@ -1,26 +1,10 @@
 import {
   ColumnAlign,
   ColumnDescription,
-  LocaleKey,
   NumberCell,
-  TypedTFunction,
 } from '@openmsupply-client/common';
 import { DraftPrescriptionLine } from '../../types';
 import { DosesQuantityCell } from '../api/hooks/utils';
-
-export const getDosesPerPackColumn = (
-  t: TypedTFunction<LocaleKey>,
-  unitName: string
-): ColumnDescription<DraftPrescriptionLine> => ({
-  key: 'dosesPerPack',
-  label: t('label.doses-per-unit-name', {
-    unit: unitName,
-  }),
-  width: 100,
-  align: ColumnAlign.Right,
-  Cell: NumberCell,
-  accessor: ({ rowData }) => rowData.item?.doses,
-});
 
 export const getPrescriptionLineDosesColumns = (
   onChange: (key: string, numPacks: number) => void

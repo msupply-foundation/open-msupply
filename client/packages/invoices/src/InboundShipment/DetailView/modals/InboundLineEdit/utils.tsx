@@ -2,13 +2,14 @@ import React from 'react';
 import {
   alpha,
   CellProps,
+  ColumnAlign,
   ColumnDescription,
   getExpiryDateInputColumn,
   NumberInputCell,
   TextInputCell,
   Theme,
 } from '@openmsupply-client/common';
-import { DraftInboundLine } from '../../../../../types';
+import { DraftInboundLine } from '../../../../types';
 import { ItemVariantInputCell } from '@openmsupply-client/system';
 
 const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
@@ -72,3 +73,17 @@ export const itemVariantColumn = (
   ),
   setter: updateDraftLine,
 });
+
+export const getInboundDosesColumns =
+  (): ColumnDescription<DraftInboundLine>[] => [
+    {
+      key: 'doseQuantity',
+      label: 'label.doses-received',
+      align: ColumnAlign.Right,
+      width: 100,
+      accessor: ({ rowData }) => {
+        const total = rowData.numberOfPacks * rowData.packSize;
+        return total * rowData.item.doses;
+      },
+    },
+  ];

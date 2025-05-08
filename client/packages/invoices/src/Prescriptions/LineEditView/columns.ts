@@ -3,6 +3,7 @@ import {
   ColumnDescription,
   ExpiryDateCell,
   Formatter,
+  getDosesPerUnitColumn,
   NumberCell,
   NumUtils,
   PreferenceKey,
@@ -12,10 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftPrescriptionLine } from '../../types';
 import { UnitQuantityCell } from '../api/hooks/utils';
-import {
-  getDosesPerPackColumn,
-  getPrescriptionLineDosesColumns,
-} from './dosesColumns';
+import { getPrescriptionLineDosesColumns } from './dosesColumns';
 
 export const usePrescriptionLineEditColumns = ({
   onChange,
@@ -52,7 +50,7 @@ export const usePrescriptionLineEditColumns = ({
   ];
 
   if (displayInDoses) {
-    columns.push(getDosesPerPackColumn(t, unitName));
+    columns.push(getDosesPerUnitColumn(t, unitName));
   } else {
     columns.push(['packSize', { width: 90 }]);
   }
