@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -12,14 +12,16 @@ import {
   ColumnFormat,
   GenericColumnKey,
   getCommentPopoverColumn,
+  useFormatDateTime,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { getStocktakeTranslator, isStocktakeDisabled } from '../../utils';
 import { StocktakeRowFragment } from '../api/operations.generated';
-import { useStocktake } from '../api';
+import { useStocktakeOld } from '../api';
 import { Footer } from './Footer';
-import { useCreateStocktake } from './createStocktake';
+import { useStocktake } from '../api/hooks/useStocktake';
 
 const useDisableStocktakeRows = (rows?: StocktakeRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -29,22 +31,29 @@ const useDisableStocktakeRows = (rows?: StocktakeRowFragment[]) => {
   }, [rows]);
 };
 
-export const StocktakeListView: FC = () => {
-  const navigate = useNavigate();
+export const StocktakeListView = () => {
   const t = useTranslation();
-  const { createStocktake } = useCreateStocktake();
-
+  const navigate = useNavigate();
+  const { localisedDate } = useFormatDateTime();
+  const { user } = useAuthContext();
   const {
     updateSortQuery,
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams();
-  const { data, isError, isLoading } = useStocktake.document.list();
   const pagination = { page, first, offset };
+  const { data, isError, isLoading } = useStocktakeOld.document.list();
+  const {
+    create: { create, isCreating },
+  } = useStocktake();
   useDisableStocktakeRows(data?.nodes);
 
   const statusTranslator = getStocktakeTranslator(t);
+  const description = t('stocktake.description-template', {
+    username: user ? user.name : 'unknown user',
+    date: localisedDate(new Date()),
+  });
 
   const columns = useColumns<StocktakeRowFragment>(
     [
@@ -70,17 +79,26 @@ export const StocktakeListView: FC = () => {
 
   const createInitialStocktake = () => {
     const comment = t('stocktake.comment-initial-stocktake-template');
-    const input = {
+    create({
       comment,
+      description,
       isInitialStocktake: true,
-    };
-    createStocktake(input);
+    }).then(id => {
+      if (id) {
+        navigate(String(id));
+      }
+    });
   };
 
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons />
+      <AppBarButtons
+        description={description}
+        onCreate={create}
+        isCreating={isCreating}
+        navigate={navigate}
+      />
       <DataTable
         id="stocktake-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
@@ -105,7 +123,7 @@ export const StocktakeListView: FC = () => {
   );
 };
 
-export const ListView: FC = () => (
+export const ListView = () => (
   <TableProvider createStore={createTableStore}>
     <StocktakeListView />
   </TableProvider>

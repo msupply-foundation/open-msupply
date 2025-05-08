@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   BasicSpinner,
   Checkbox,
@@ -18,40 +18,34 @@ import {
   MasterListSearchInput,
   MasterListRowFragment,
 } from '@openmsupply-client/system';
-import { Box, useAuthContext } from '@openmsupply-client/common';
-import { useCreateStocktake } from './createStocktake';
+import { Box, Formatter, useAuthContext } from '@openmsupply-client/common';
+import {
+  CreateStocktakeInput,
+  defaultCreateStocktakeInput,
+} from '../api/hooks/useStocktake';
 
 const LABEL_FLEX = '0 0 150px';
-interface CreateStocktakeArgs {
-  masterListId?: string;
-  locationId?: string;
-  itemsHaveStock?: boolean;
-  expiresBefore?: Date | null;
-  isInitialStocktake: boolean;
-  comment: string | undefined;
-}
-
-const DEFAULT_ARGS: CreateStocktakeArgs = {
-  masterListId: '',
-  locationId: '',
-  itemsHaveStock: false,
-  expiresBefore: null,
-  isInitialStocktake: false,
-  comment: undefined,
-};
 
 interface NewStocktakeModalProps {
   open: boolean;
   onClose: () => void;
+  create: (args: CreateStocktakeInput) => Promise<string | undefined>;
+  isCreating?: boolean;
+  navigate: (id: string) => void;
+  description?: string;
 }
 
-export const CreateStocktakeModal: FC<NewStocktakeModalProps> = ({
+export const CreateStocktakeModal = ({
   open,
   onClose,
-}) => {
+  create,
+  isCreating,
+  navigate,
+  description,
+}: NewStocktakeModalProps) => {
   const t = useTranslation();
   const [createStocktakeArgs, setCreateStocktakeArgs] =
-    useState<CreateStocktakeArgs>(DEFAULT_ARGS);
+    useState<CreateStocktakeInput>(defaultCreateStocktakeInput);
 
   const [selectedLocation, setSelectedLocation] =
     useState<LocationRowFragment | null>(null);
@@ -59,7 +53,6 @@ export const CreateStocktakeModal: FC<NewStocktakeModalProps> = ({
   const [selectedMasterList, setSelectedMasterList] =
     useState<MasterListRowFragment | null>(null);
 
-  const { isLoading: isSaving, createStocktake } = useCreateStocktake();
   const { store } = useAuthContext();
   const { data: masterListData, isLoading: isLoadingMasterLists } =
     useMasterLists({
@@ -109,7 +102,7 @@ export const CreateStocktakeModal: FC<NewStocktakeModalProps> = ({
   const onSave = () => {
     const { locationId, masterListId, itemsHaveStock, expiresBefore } =
       createStocktakeArgs;
-    const args: CreateStocktakeArgs = {
+    const args: CreateStocktakeInput = {
       masterListId: masterListId ? masterListId : undefined,
       locationId: locationId ? locationId : undefined,
       itemsHaveStock: itemsHaveStock ? itemsHaveStock : undefined,
@@ -117,8 +110,13 @@ export const CreateStocktakeModal: FC<NewStocktakeModalProps> = ({
       // max of one of the above args should be defined per stocktake
       isInitialStocktake: false,
       comment: generateComment(),
+      description,
     };
-    createStocktake(args);
+    create(args).then(id => {
+      if (id) {
+        navigate(id);
+      }
+    });
   };
 
   const masterLists =
@@ -152,17 +150,17 @@ export const CreateStocktakeModal: FC<NewStocktakeModalProps> = ({
         }
         okButton={
           <DialogButton
-            disabled={isSaving}
+            disabled={isCreating}
             variant="ok"
             onClick={async () => {
-              await onSave();
+              onSave();
               onClose();
             }}
           />
         }
       >
         <Box flex={1} display="flex" justifyContent="center">
-          {!isSaving ? (
+          {!isCreating ? (
             <Box paddingLeft={2} display="flex" flexDirection="column" gap={2}>
               <Typography padding={1}>
                 {t('messages.create-stocktake-1')}
@@ -182,7 +180,7 @@ export const CreateStocktakeModal: FC<NewStocktakeModalProps> = ({
                       onChange={masterList => {
                         setSelectedMasterList(masterList);
                         setCreateStocktakeArgs({
-                          ...DEFAULT_ARGS,
+                          ...defaultCreateStocktakeInput,
                           masterListId: masterList?.id ?? '',
                         });
                       }}
@@ -206,7 +204,7 @@ export const CreateStocktakeModal: FC<NewStocktakeModalProps> = ({
                       onChange={location => {
                         setSelectedLocation(location);
                         setCreateStocktakeArgs({
-                          ...DEFAULT_ARGS,
+                          ...defaultCreateStocktakeInput,
                           locationId: location?.id ?? '',
                         });
                       }}
@@ -228,10 +226,10 @@ export const CreateStocktakeModal: FC<NewStocktakeModalProps> = ({
                   ) : (
                     <Checkbox
                       style={{ paddingLeft: 0 }}
-                      checked={createStocktakeArgs.itemsHaveStock}
+                      checked={!!createStocktakeArgs.itemsHaveStock}
                       onChange={event => {
                         setCreateStocktakeArgs({
-                          ...DEFAULT_ARGS,
+                          ...defaultCreateStocktakeInput,
                           itemsHaveStock: event.target.checked,
                         });
                       }}
@@ -244,11 +242,15 @@ export const CreateStocktakeModal: FC<NewStocktakeModalProps> = ({
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
                   <DateTimePickerInput
-                    value={createStocktakeArgs.expiresBefore}
+                    value={
+                      createStocktakeArgs.expiresBefore
+                        ? new Date(createStocktakeArgs.expiresBefore)
+                        : null
+                    }
                     onChange={event => {
                       setCreateStocktakeArgs({
-                        ...DEFAULT_ARGS,
-                        expiresBefore: event,
+                        ...defaultCreateStocktakeInput,
+                        expiresBefore: Formatter.toIsoString(event) ?? null,
                       });
                     }}
                   />
