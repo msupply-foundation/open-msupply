@@ -3,13 +3,13 @@ import {
   AppBarContentPortal,
   Box,
   InputWithLabelRow,
-  BufferedTextInput,
   Grid,
   useTranslation,
   Switch,
   InvoiceNodeStatus,
   Alert,
   Tooltip,
+  BufferedTextArea,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInbound } from '../api';
@@ -80,13 +80,25 @@ export const Toolbar: FC = () => {
               label={t('label.supplier-ref')}
               Input={
                 <Tooltip title={theirReference} placement="bottom-start">
-                  <BufferedTextInput
+                  <BufferedTextArea
                     disabled={isDisabled}
                     size="small"
                     sx={{ width: 250 }}
                     value={theirReference ?? ''}
                     onChange={event => {
                       update({ theirReference: event.target.value });
+                    }}
+                    maxRows={2}
+                    minRows={1}
+                    slotProps={{
+                      input: {
+                        sx: {
+                          backgroundColor: theme =>
+                            isDisabled
+                              ? theme.palette.background.toolbar
+                              : theme.palette.background.menu,
+                        },
+                      },
                     }}
                   />
                 </Tooltip>

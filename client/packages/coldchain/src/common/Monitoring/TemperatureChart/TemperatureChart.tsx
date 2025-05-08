@@ -1,6 +1,8 @@
 import React from 'react';
 import {
-  useIsExtraSmallScreen,
+  Breakpoints,
+  useAppTheme,
+  useMediaQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { Toolbar } from '../../../Monitoring/ListView/TemperatureLog/Toolbar';
@@ -28,7 +30,10 @@ const temperatureLogFilterAndSort = {
 };
 
 export const TemperatureChart = () => {
-  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const theme = useAppTheme();
+  const isExtraSmallScreen = useMediaQuery(
+    theme.breakpoints.down(Breakpoints.sm)
+  );
 
   const {
     filter,

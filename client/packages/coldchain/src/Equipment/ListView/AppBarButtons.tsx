@@ -20,7 +20,7 @@ import {
 import { useAssets } from '../api';
 import { assetsToCsv } from '../utils';
 import { AddFromScannerButton } from './AddFromScannerButton';
-import { useAssetData } from '@openmsupply-client/system';
+import { useAssetProperties } from '@openmsupply-client/system';
 
 interface AppBarButtonsComponentProps {
   importModalController: ToggleState;
@@ -35,7 +35,7 @@ export const AppBarButtonsComponent = ({
   const isCentralServer = useIsCentralServerApi();
   const { success, error } = useNotification();
   const { fetchAsync, isLoading } = useAssets.document.listAll();
-  const { data: properties } = useAssetData.utils.properties();
+  const { data: properties } = useAssetProperties();
 
   const handleUploadAssetClick = useCallbackWithPermission(
     UserPermission.AssetMutate,
