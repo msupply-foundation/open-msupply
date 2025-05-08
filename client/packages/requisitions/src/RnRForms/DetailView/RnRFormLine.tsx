@@ -9,6 +9,7 @@ import {
   LowStockStatus,
   NumericTextInput,
   NumUtils,
+  sendTabKeyPress,
   Tooltip,
   useAuthContext,
   useBufferState,
@@ -178,6 +179,7 @@ export const RnRFormLine = ({
         textColor={textColor}
         disabled={disabled}
       />
+
       <RnRNumberCell
         value={line.adjustments}
         onChange={val => updateDraft({ adjustments: val })}
@@ -264,6 +266,12 @@ export const RnRFormLine = ({
               },
             },
           }}
+          onKeyDown={e => {
+            if (e.key !== 'Enter') return;
+
+            e.preventDefault();
+            sendTabKeyPress();
+          }}
           value={line.comment ?? ''}
           onChange={e => updateDraft({ comment: e.target.value })}
           disabled={disabled}
@@ -275,6 +283,7 @@ export const RnRFormLine = ({
         {
           <>
             <Checkbox
+              tabIndex={-1}
               checked={!!line.confirmed}
               size="medium"
               onClick={async () => {
@@ -375,6 +384,13 @@ const RnRNumberCell = ({
             // NOTE: setting input mode to text, because on Samsung tablets,
             // the numeric keyboard doesn't allow entering negative numbers!
             inputMode={allowNegative ? 'text' : 'numeric'}
+            onKeyDown={e => {
+              if (e.key !== 'Enter') return;
+
+              e.preventDefault();
+              sendTabKeyPress();
+            }}
+            onFocus={e => e.target.select()}
           />
         )}
       </Tooltip>
