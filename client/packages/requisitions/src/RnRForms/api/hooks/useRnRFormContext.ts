@@ -125,7 +125,7 @@ export const useRnRFormContext = create<RnRFormContext>((set, get) => ({
         return false;
       }
     });
-    let first = found[0];
+    const first = found[0];
     if (!first) {
       set(state => ({ ...state, foundIds: {} }));
       return -1;
