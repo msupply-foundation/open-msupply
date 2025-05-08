@@ -10,7 +10,6 @@ export const useStocktakeOld = {
 
     delete: Document.useStocktakeDelete,
     deleteSelected: Document.useStocktakeDeleteSelected,
-    insert: Document.useInsertStocktake,
     update: Document.useUpdateStocktake,
 
     fields: Document.useStocktakeFields,
