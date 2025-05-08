@@ -77,7 +77,7 @@ pub struct InsertInput {
     pub status_id: String,
     pub stock_line_id: String,
     pub comment: Option<String>,
-    pub invoice_line_id: String,
+    pub invoice_line_id: Option<String>,
 }
 
 impl InsertInput {
@@ -95,7 +95,7 @@ impl InsertInput {
             status_id,
             stock_line_id,
             comment,
-            invoice_line_id: Some(invoice_line_id),
+            invoice_line_id,
         }
     }
 }
