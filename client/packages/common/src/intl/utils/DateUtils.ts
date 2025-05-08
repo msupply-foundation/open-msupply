@@ -267,7 +267,7 @@ export const useFormatDateTime = () => {
     const { months, days } = DateUtils.ageInMonthsAndDays(dob ?? '');
 
     if (patientAge >= 1) {
-      return String(patientAge);
+      return `${t('label.age-years', {count: patientAge})}`;
     } else
       return `${months > 0 ? t('label.age-months-and', { count: months }) : ''}${t('label.age-days', { count: days })}`;
   };
