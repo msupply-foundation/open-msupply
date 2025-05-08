@@ -14,7 +14,6 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq)]
-
 pub struct ProgramRequisitionOrderType {
     pub name: String,
     pub program_requisition_settings_id: String,
@@ -29,7 +28,6 @@ pub struct ProgramRequisitionOrderType {
 
 // TODO automatically spread MasterList values rather than manual mapping
 #[derive(Debug, PartialEq)]
-
 pub struct MasterListWithOrderTypes {
     pub id: String,
     pub name: String,
@@ -68,7 +66,7 @@ pub(super) fn prepare_program_requisition_settings_by_customer(
     let settings =
         ProgramRequisitionSettingsRepository::new(&ctx.connection).query(Some(filter))?;
 
-    // Shouldn't try query everything else (early return)
+    // If there's no program settings at all, don't try query everything else (early return)
     if settings.is_empty() {
         return Ok(CustomerProgramRequisitionSetting {
             customer_name_id: customer_name_id.to_owned(),
