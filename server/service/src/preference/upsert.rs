@@ -5,9 +5,16 @@ use crate::service_provider::ServiceContext;
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
 
 #[derive(Debug, PartialEq, Clone)]
+pub struct StorePrefUpdate<T> {
+    pub store_id: String,
+    pub value: T,
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct UpsertPreferences {
     pub show_contact_tracing: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
+    pub display_vaccine_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub allow_tracking_of_received_stock_by_donor: Option<bool>,
 }
 
@@ -16,12 +23,14 @@ pub fn upsert_preferences(
     UpsertPreferences {
         show_contact_tracing: show_contact_tracing_input,
         display_population_based_forecasting: display_population_based_forecasting_input,
+        display_vaccine_in_doses: display_vaccine_in_doses_input,
         allow_tracking_of_received_stock_by_donor: allow_tracking_of_received_stock_by_donor_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
         show_contact_tracing,
         display_population_based_forecasting,
+        display_vaccine_in_doses,
         allow_tracking_of_received_stock_by_donor,
     } = get_preference_provider();
 
@@ -42,6 +51,15 @@ pub fn upsert_preferences(
             }
 
             // For a store pref, input could be array of store IDs and values - iterate and insert...
+            if let Some(input) = display_vaccine_in_doses_input {
+                for update in input.into_iter() {
+                    display_vaccine_in_doses.upsert(
+                        connection,
+                        update.value,
+                        Some(update.store_id),
+                    )?;
+                }
+            }
 
             Ok(())
         })

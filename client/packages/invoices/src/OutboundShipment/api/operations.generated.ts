@@ -64,6 +64,8 @@ export type OutboundFragment = {
         name: string;
         code: string;
         unitName?: string | null;
+        isVaccine: boolean;
+        doses: number;
       };
       location?: {
         __typename: 'LocationNode';
@@ -84,7 +86,13 @@ export type OutboundFragment = {
         costPricePerPack: number;
         packSize: number;
         expiryDate?: string | null;
-        item: { __typename: 'ItemNode'; name: string; code: string };
+        item: {
+          __typename: 'ItemNode';
+          name: string;
+          code: string;
+          isVaccine: boolean;
+          doses: number;
+        };
       } | null;
     }>;
   };
@@ -282,6 +290,8 @@ export type InvoiceQuery = {
               name: string;
               code: string;
               unitName?: string | null;
+              isVaccine: boolean;
+              doses: number;
             };
             location?: {
               __typename: 'LocationNode';
@@ -302,7 +312,13 @@ export type InvoiceQuery = {
               costPricePerPack: number;
               packSize: number;
               expiryDate?: string | null;
-              item: { __typename: 'ItemNode'; name: string; code: string };
+              item: {
+                __typename: 'ItemNode';
+                name: string;
+                code: string;
+                isVaccine: boolean;
+                doses: number;
+              };
             } | null;
           }>;
         };
@@ -415,6 +431,8 @@ export type OutboundByNumberQuery = {
               name: string;
               code: string;
               unitName?: string | null;
+              isVaccine: boolean;
+              doses: number;
             };
             location?: {
               __typename: 'LocationNode';
@@ -435,7 +453,13 @@ export type OutboundByNumberQuery = {
               costPricePerPack: number;
               packSize: number;
               expiryDate?: string | null;
-              item: { __typename: 'ItemNode'; name: string; code: string };
+              item: {
+                __typename: 'ItemNode';
+                name: string;
+                code: string;
+                isVaccine: boolean;
+                doses: number;
+              };
             } | null;
           }>;
         };

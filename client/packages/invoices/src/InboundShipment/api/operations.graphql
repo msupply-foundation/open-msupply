@@ -25,6 +25,8 @@ fragment InboundLine on InvoiceLineNode {
     code
     unitName
     defaultPackSize
+    isVaccine
+    doses
   }
 
   location {

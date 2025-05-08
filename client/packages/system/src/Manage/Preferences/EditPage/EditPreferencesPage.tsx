@@ -24,7 +24,12 @@ export const EditPreferencesPage = () => {
           <InputWithLabelRow
             key={pref.key}
             label={t(`preference.${pref.key}` as LocaleKey)}
-            Input={<EditPreference preference={pref} update={update} />}
+            Input={
+              <EditPreference
+                preference={pref}
+                update={value => update({ [pref.key]: value })}
+              />
+            }
             labelWidth="200px"
             sx={{
               justifyContent: 'center',

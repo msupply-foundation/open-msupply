@@ -206,7 +206,7 @@ export type PreferencesQuery = {
   preferences: {
     __typename: 'PreferencesNode';
     showContactTracing: boolean;
-    allowTrackingOfReceivedStockByDonor: boolean;
+    displayVaccineInDoses: boolean;
   };
 };
 
@@ -407,7 +407,7 @@ export const PreferencesDocument = gql`
   query preferences($storeId: String!) {
     preferences(storeId: $storeId) {
       showContactTracing
-      allowTrackingOfReceivedStockByDonor
+      displayVaccineInDoses
     }
   }
 `;
