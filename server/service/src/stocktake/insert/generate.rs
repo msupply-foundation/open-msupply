@@ -77,17 +77,14 @@ fn generate_stocktake_lines(
         }
         None => Vec::new(),
     };
-
     let location_lines = match location_id {
         Some(location_id) => generate_lines_from_location(connection, store_id, id, &location_id)?,
         None => Vec::new(),
     };
-
     let items_have_stock_lines = match items_have_stock {
         Some(true) => generate_lines_with_stock(connection, store_id, id)?,
         Some(false) | None => Vec::new(),
     };
-
     let expiring_items_lines = match expires_before {
         Some(expires_before) => {
             generate_lines_expiring_before(connection, store_id, id, &expires_before)?
