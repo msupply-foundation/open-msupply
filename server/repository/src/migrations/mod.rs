@@ -226,7 +226,10 @@ pub fn migrate(
     let final_database_version = get_database_version(connection);
 
     // Recreate views
-    if final_database_version >= min_version_for_dropping_views {
+    // if final_database_version >= min_version_for_dropping_views {
+    //     rebuild_views(connection).map_err(MigrationError::DatabaseViewsError)?;
+    // }
+    if final_database_version >= v2_08_00::V2_08_00.version() {
         rebuild_views(connection).map_err(MigrationError::DatabaseViewsError)?;
     }
 

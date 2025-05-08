@@ -16,13 +16,13 @@ impl MigrationFragment for Migrate {
             SELECT 
                 id,
                 CASE
-                    WHEN type = 'POSITIVE' THEN 'POSITIVE_INVENTORY_ADJUSTMENT'
-                    WHEN type = 'NEGATIVE' THEN 'NEGATIVE_INVENTORY_ADJUSTMENT'
+                    WHEN type = 'POSITIVE' THEN 'POSITIVE_INVENTORY_ADJUSTMENT'::reason_option_type
+                    WHEN type = 'NEGATIVE' THEN 'NEGATIVE_INVENTORY_ADJUSTMENT'::reason_option_type
                 END as type
             FROM inventory_adjustment_reason
             WHERE type IN ('POSITIVE', 'NEGATIVE')
             UNION ALL
-            SELECT id, 'RETURN_REASON' as type
+            SELECT id, 'RETURN_REASON'::reason_option_type as type
             FROM return_reason;         
 
             ALTER TABLE stocktake_line ADD COLUMN reason_option_id TEXT REFERENCES reason_option(id);
@@ -41,14 +41,14 @@ impl MigrationFragment for Migrate {
             WHERE inventory_adjustment_reason_id IS NOT NULL;
 
             ALTER TABLE invoice_line 
-            DROP COLUMN inventory_adjustment_id,
+            DROP COLUMN inventory_adjustment_reason_id,
             DROP COLUMN return_reason_id;
 
             ALTER TABLE stocktake_line DROP COLUMN inventory_adjustment_reason_id;
 
             UPDATE sync_buffer
             SET integration_datetime = NULL
-            WHERE table_name = reason_option;   
+            WHERE table_name = 'reason_option';   
             "#
         )?;
 
