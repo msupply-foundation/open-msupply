@@ -14,11 +14,12 @@ impl MigrationFragment for Migrate {
                 CREATE TABLE vvm_status_log (
                     id TEXT NOT NULL PRIMARY KEY,
                     status_id TEXT NOT NULL,
-                    datetime {DATETIME},
+                    created_datetime {DATETIME} NOT NULL,
                     stock_line_id TEXT NOT NULL REFERENCES stock_line(id),
                     comment TEXT, 
-                    user_id TEXT NOT NULL, 
-                    invoice_line_id TEXT NOT NULL REFERENCES invoice_line(id)
+                    created_by TEXT NOT NULL, 
+                    invoice_line_id TEXT REFERENCES invoice_line(id),
+                    store_id TEXT NOT NULL REFERENCES store(id)
                 );
             "#
         )?;

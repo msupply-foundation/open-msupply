@@ -18,23 +18,23 @@ impl VVMStatusLogNode {
         &self.row().status_id
     }
 
-    pub async fn datetime(&self) -> Option<NaiveDateTime> {
-        self.row().datetime
+    pub async fn created_datetime(&self) -> NaiveDateTime {
+        self.row().created_datetime
     }
 
     pub async fn stock_line_id(&self) -> &str {
         &self.row().stock_line_id
     }
 
-    pub async fn comment(&self) -> Option<&str> {
-        self.row().comment.as_deref()
+    pub async fn comment(&self) -> &Option<String> {
+        &self.row().comment
     }
 
-    pub async fn user_id(&self) -> &str {
-        &self.row().user_id
+    pub async fn created_by(&self) -> &str {
+        &self.row().created_by
     }
 
-    pub async fn invoice_line_id(&self) -> &str {
+    pub async fn invoice_line_id(&self) -> &Option<String> {
         &self.row().invoice_line_id
     }
 }
@@ -95,7 +95,7 @@ impl InsertInput {
             status_id,
             stock_line_id,
             comment,
-            invoice_line_id,
+            invoice_line_id: Some(invoice_line_id),
         }
     }
 }

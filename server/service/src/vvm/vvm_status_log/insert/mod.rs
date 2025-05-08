@@ -6,7 +6,7 @@ use repository::{
 use crate::service_provider::ServiceContext;
 
 mod generate;
-use generate::generate;
+use generate::{generate, GenerateInput};
 mod validate;
 use validate::validate;
 mod test;
@@ -16,7 +16,6 @@ pub enum InsertVVMStatusLogError {
     VVMStatusLogAlreadyExists,
     VVMStatusDoesNotExist,
     StockLineDoesNotExist,
-    InvoiceLineDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
@@ -26,22 +25,25 @@ pub struct InsertVVMStatusLogInput {
     pub status_id: String,
     pub stock_line_id: String,
     pub comment: Option<String>,
-    pub invoice_line_id: String,
+    pub invoice_line_id: Option<String>,
 }
 
 pub fn insert_vvm_status_log(
     ctx: &ServiceContext,
+    store_id: &str,
     input: InsertVVMStatusLogInput,
 ) -> Result<VVMStatusLogRow, InsertVVMStatusLogError> {
     let vvm_status_log = ctx
         .connection
         .transaction_sync(|connection| {
             validate(&input, connection)?;
-            let vvm_status_log = generate(ctx, input);
+            let vvm_status_log = generate(GenerateInput {
+                user_id: ctx.user_id.clone(),
+                store_id: store_id.to_string(),
+                insert_input: input,
+            });
 
-            let repository = VVMStatusLogRowRepository::new(connection);
-
-            repository.upsert_one(&vvm_status_log)?;
+            VVMStatusLogRowRepository::new(connection).upsert_one(&vvm_status_log)?;
 
             Ok(vvm_status_log)
         })

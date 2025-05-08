@@ -21,11 +21,11 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user?.user_id)?;
 
-    map_response(
-        service_provider
-            .vvm_service
-            .insert_vvm_status_log(&service_context, input.to_domain()),
-    )
+    map_response(service_provider.vvm_service.insert_vvm_status_log(
+        &service_context,
+        store_id,
+        input.to_domain(),
+    ))
 }
 
 fn map_response(from: Result<VVMStatusLogRow, ServiceError>) -> Result<InsertResponse> {
@@ -43,8 +43,7 @@ fn map_error(error: ServiceError) -> Result<InsertResponse> {
     let graphql_error = match error {
         ServiceError::VVMStatusLogAlreadyExists
         | ServiceError::VVMStatusDoesNotExist
-        | ServiceError::StockLineDoesNotExist
-        | ServiceError::InvoiceLineDoesNotExist => BadUserInput(formatted_error),
+        | ServiceError::StockLineDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

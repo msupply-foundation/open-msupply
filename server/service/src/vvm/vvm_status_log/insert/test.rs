@@ -26,16 +26,19 @@ mod insert {
             .unwrap();
         let service = service_provider.vvm_service;
 
+        let store_id = &mock_store_a().id;
+
         // VVMStatusDoesNotExist
         assert_eq!(
             service.insert_vvm_status_log(
                 &context,
+                store_id,
                 InsertVVMStatusLogInput {
                     id: "test_id".to_string(),
                     stock_line_id: "stock_line_id".to_string(),
                     status_id: "vvm_status_id".to_string(),
                     comment: Some("comment".to_string()),
-                    invoice_line_id: "invoice_line_id".to_string(),
+                    invoice_line_id: Some("invoice_line_id".to_string()),
                 },
             ),
             Err(InsertVVMStatusLogError::VVMStatusDoesNotExist)
@@ -60,53 +63,39 @@ mod insert {
         assert_eq!(
             service.insert_vvm_status_log(
                 &context,
+                store_id,
                 InsertVVMStatusLogInput {
                     id: "test_id".to_string(),
                     stock_line_id: "stock_line_id".to_string(),
                     status_id: "vvm_status_id".to_string(),
                     comment: Some("comment".to_string()),
-                    invoice_line_id: "invoice_line_id".to_string(),
+                    invoice_line_id: Some("invoice_line_id".to_string()),
                 },
             ),
             Err(InsertVVMStatusLogError::StockLineDoesNotExist)
         );
 
-        // InvoiceLineDoesNotExist
-        assert_eq!(
-            service.insert_vvm_status_log(
-                &context,
-                InsertVVMStatusLogInput {
-                    id: "test_id".to_string(),
-                    stock_line_id: mock_stock_line_a().id.clone(),
-                    status_id: "vvm_status_id".to_string(),
-                    comment: Some("comment".to_string()),
-                    invoice_line_id: "invoice_line_id".to_string(),
-                },
-            ),
-            Err(InsertVVMStatusLogError::InvoiceLineDoesNotExist)
-        );
-
-        // After verifying InvoiceLineDoesNotExist error,
-        // insert a mock invoice line record and start using mock_stock_line_a as the stock line id
         let invoice_line = mock_outbound_shipment_a_invoice_lines()[0].clone();
         InvoiceLineRowRepository::new(&context.connection)
             .upsert_one(&invoice_line)
             .unwrap();
 
+        // After verifying StockLineDoesNotExist error,
+        // Use the mock_stock_line_a() to continue testing the other error cases
         let input: InsertVVMStatusLogInput = InsertVVMStatusLogInput {
             id: "test_id".to_string(),
             stock_line_id: mock_stock_line_a().id.clone(),
             status_id: "vvm_status_id".to_string(),
             comment: Some("comment".to_string()),
-            invoice_line_id: invoice_line.id.clone(),
+            invoice_line_id: Some(invoice_line.id.to_string()),
         };
 
         // VVMStatusLogAlreadyExists
         service
-            .insert_vvm_status_log(&context, input.clone())
+            .insert_vvm_status_log(&context, store_id, input.clone())
             .unwrap();
         assert_eq!(
-            service.insert_vvm_status_log(&context, input.clone()),
+            service.insert_vvm_status_log(&context, store_id, input.clone()),
             Err(InsertVVMStatusLogError::VVMStatusLogAlreadyExists)
         );
     }
@@ -121,7 +110,8 @@ mod insert {
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
 
-        // Insert a mock invoice line record and using mock_stock_line_a as the stock line id
+        let store_id = &mock_store_a().id;
+
         let invoice_line = mock_outbound_shipment_a_invoice_lines()[0].clone();
         InvoiceLineRowRepository::new(&context.connection)
             .upsert_one(&invoice_line)
@@ -132,7 +122,7 @@ mod insert {
             stock_line_id: mock_stock_line_a().id.clone(),
             status_id: "vvm_status_id".to_string(),
             comment: Some("comment".to_string()),
-            invoice_line_id: invoice_line.id.clone(),
+            invoice_line_id: Some(invoice_line.id.to_string()),
         };
 
         // Insert a mock VVM Status record
@@ -150,7 +140,7 @@ mod insert {
 
         let result = service_provider
             .vvm_service
-            .insert_vvm_status_log(&context, input.clone())
+            .insert_vvm_status_log(&context, store_id, input.clone())
             .unwrap();
 
         assert_eq!(result.id, "vvm_status_log_id");

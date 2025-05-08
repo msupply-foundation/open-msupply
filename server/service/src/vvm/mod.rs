@@ -35,9 +35,10 @@ pub trait VVMServiceTrait: Sync + Send {
     fn insert_vvm_status_log(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         input: InsertVVMStatusLogInput,
     ) -> Result<VVMStatusLogRow, InsertVVMStatusLogError> {
-        insert_vvm_status_log(ctx, input)
+        insert_vvm_status_log(ctx, store_id, input)
     }
 }
 

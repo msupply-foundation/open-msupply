@@ -1,7 +1,7 @@
 use super::vvm_status_log_row::vvm_status_log::dsl::*;
 use crate::Upsert;
 use crate::{
-    db_diesel::{invoice_line_row::invoice_line, stock_line_row::stock_line},
+    db_diesel::{invoice_line_row::invoice_line, stock_line_row::stock_line, store_row::store},
     RepositoryError, StorageConnection,
 };
 
@@ -13,16 +13,18 @@ table! {
     vvm_status_log (id) {
         id -> Text,
         status_id -> Text,
-        datetime -> Nullable<Timestamp>,
+        created_datetime -> Timestamp,
         stock_line_id -> Text,
         comment -> Nullable<Text>,
-        user_id -> Text,
-        invoice_line_id -> Text,
+        created_by -> Text,
+        invoice_line_id -> Nullable<Text>,
+        store_id -> Text
     }
 }
 
 joinable!(vvm_status_log -> stock_line (stock_line_id));
 joinable!(vvm_status_log -> invoice_line (invoice_line_id));
+joinable!(vvm_status_log -> store (store_id));
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
@@ -31,11 +33,12 @@ joinable!(vvm_status_log -> invoice_line (invoice_line_id));
 pub struct VVMStatusLogRow {
     pub id: String,
     pub status_id: String,
-    pub datetime: Option<NaiveDateTime>,
+    pub created_datetime: NaiveDateTime,
     pub stock_line_id: String,
     pub comment: Option<String>,
-    pub user_id: String,
-    pub invoice_line_id: String,
+    pub created_by: String,
+    pub invoice_line_id: Option<String>,
+    pub store_id: String,
 }
 
 pub struct VVMStatusLogRowRepository<'a> {
@@ -79,8 +82,6 @@ impl<'a> VVMStatusLogRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
-
-    // pub insert_changelog() {}
 }
 
 impl Upsert for VVMStatusLogRow {
