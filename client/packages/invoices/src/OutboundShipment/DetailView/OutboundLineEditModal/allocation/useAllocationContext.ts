@@ -4,6 +4,7 @@ import {
   keyBy,
   mapValues,
 } from '@openmsupply-client/common';
+import { DraftStockOutLine } from 'packages/invoices/src/types';
 
 export enum AllocateIn {
   Packs = 'Packs',
@@ -14,16 +15,25 @@ export enum AllocateIn {
 interface AllocationContext {
   allocateIn: AllocateIn;
   setAllocateIn: (allocateIn: AllocateIn) => void;
+  // TODO - is it performant? could do by id, then return array if needed?
+  draftStockOutLines: DraftStockOutLine[];
+  setDraftStockOutLines: (lines: DraftStockOutLine[]) => void;
 }
 
 export const useAllocationContext = create<AllocationContext>((set, get) => ({
-  allocatedQuantity: 0,
+  draftStockOutLines: [],
+  allocatedQuantity: 0, // todo- getter only?
   allocateIn: AllocateIn.Packs, // TODO: from user pref? from store pref... also based on item?
   setAllocateIn: (allocateIn: AllocateIn) =>
     set(state => ({
       ...state,
       allocateIn,
       // Update allocated quan by in type
+    })),
+  setDraftStockOutLines: (lines: DraftStockOutLine[]) =>
+    set(state => ({
+      ...state,
+      draftStockOutLines: lines,
     })),
 
   // confirmUnconfirmedLines: () => {

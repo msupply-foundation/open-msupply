@@ -1,14 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Grid,
-  BasicTextInput,
   ModalLabel,
-  ModalRow,
   Select,
   useTranslation,
   Divider,
   Box,
-  Typography,
   useFormatNumber,
   useDebounceCallback,
   NumericTextInput,
@@ -26,7 +23,6 @@ import { DraftStockOutLine } from '../../../types';
 import { isA } from '../../../utils';
 
 interface AutoAllocateProps {
-  availableQuantity: number;
   allocatedQuantity: number;
   item: DraftItem;
   onChangeQuantity: (
@@ -43,7 +39,6 @@ interface AutoAllocateProps {
 }
 
 export const AutoAllocate = ({
-  availableQuantity,
   allocatedQuantity,
   onChangeQuantity,
   item,
@@ -146,28 +141,6 @@ export const AutoAllocate = ({
 
   return (
     <Grid container gap="4px" width="100%">
-      <ModalRow>
-        <ModalLabel label="" />
-        <Grid display="flex">
-          <Typography
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-            }}
-          >
-            {t('label.available-quantity', {
-              number: availableQuantity.toFixed(0),
-            })}
-          </Typography>
-        </Grid>
-
-        <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
-          <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
-          <BasicTextInput disabled sx={{ width: 150 }} value={item?.unitName} />
-        </Grid>
-      </ModalRow>
-      {/* {item && canAutoAllocate ? ( */}
       <>
         <Divider margin={10} />
         <Box display="flex" alignItems="flex-start" gap={2}>
@@ -217,10 +190,6 @@ export const AutoAllocate = ({
           />
         </Box>
       </>
-      {/* // TODO: need?
-      // ) : (
-      //   <Box height={100} />
-      // )} */}
     </Grid>
   );
 };
