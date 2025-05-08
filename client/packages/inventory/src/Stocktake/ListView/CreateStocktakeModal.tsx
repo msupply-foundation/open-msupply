@@ -11,25 +11,22 @@ import { useTranslation } from '@common/intl';
 import { useDialog } from '@common/hooks';
 import {
   useStockList,
-  useLocationList,
-  useMasterLists,
   LocationSearchInput,
   LocationRowFragment,
   MasterListSearchInput,
   MasterListRowFragment,
 } from '@openmsupply-client/system';
-import { Box, Formatter, useAuthContext } from '@openmsupply-client/common';
+import { Box, Formatter } from '@openmsupply-client/common';
 import {
   CreateStocktakeInput,
   defaultCreateStocktakeInput,
 } from '../api/hooks/useStocktake';
 
 const LABEL_FLEX = '0 0 150px';
-
 interface NewStocktakeModalProps {
   open: boolean;
   onClose: () => void;
-  create: (args: CreateStocktakeInput) => Promise<string | undefined>;
+  onCreate: (input: CreateStocktakeInput) => Promise<string | undefined>;
   isCreating?: boolean;
   navigate: (id: string) => void;
   description?: string;
@@ -38,60 +35,42 @@ interface NewStocktakeModalProps {
 export const CreateStocktakeModal = ({
   open,
   onClose,
-  create,
+  onCreate,
   isCreating,
   navigate,
   description,
 }: NewStocktakeModalProps) => {
   const t = useTranslation();
-  const [createStocktakeArgs, setCreateStocktakeArgs] =
-    useState<CreateStocktakeInput>(defaultCreateStocktakeInput);
-
-  const [selectedLocation, setSelectedLocation] =
-    useState<LocationRowFragment | null>(null);
-
-  const [selectedMasterList, setSelectedMasterList] =
-    useState<MasterListRowFragment | null>(null);
-
-  const { store } = useAuthContext();
-  const { data: masterListData, isLoading: isLoadingMasterLists } =
-    useMasterLists({
-      queryParams: {
-        filterBy: {
-          existsForStoreId: { equalTo: store?.id },
-        },
-      },
-    });
-  const {
-    query: { data: locationData, isLoading: isLoadingLocations },
-  } = useLocationList({ sortBy: { key: 'name', direction: 'asc' } });
-  const { data: stockData, isLoading: isLoadingStock } = useStockList({
+  const { Modal } = useDialog({
+    isOpen: open,
+    onClose,
+    disableBackdrop: true,
+  });
+  const { data: stockData, isLoading: stockIsLoading } = useStockList({
     sortBy: {
       key: 'expiryDate',
       direction: 'asc',
     },
   });
-
-  const { Modal } = useDialog({ isOpen: open, onClose, disableBackdrop: true });
+  const [createStocktakeArgs, setCreateStocktakeArgs] =
+    useState<CreateStocktakeInput>(defaultCreateStocktakeInput);
+  const [selectedLocation, setSelectedLocation] =
+    useState<LocationRowFragment | null>(null);
+  const [selectedMasterList, setSelectedMasterList] =
+    useState<MasterListRowFragment | null>(null);
 
   const generateComment = () => {
     const { locationId, masterListId, itemsHaveStock } = createStocktakeArgs;
-    if (masterListId) {
-      const masterList = masterListData?.nodes?.find(
-        list => list.id === masterListId
-      );
-      if (masterList)
-        return t('stocktake.comment-list-template', { list: masterList.name });
+    if (masterListId && selectedMasterList) {
+      return t('stocktake.comment-list-template', {
+        list: selectedMasterList.name,
+      });
     }
 
-    if (locationId) {
-      const location = locations.find(
-        location => location.value === locationId
-      );
-      if (location)
-        return t('stocktake.comment-location-template', {
-          location: location.label,
-        });
+    if (locationId && selectedLocation) {
+      return t('stocktake.comment-location-template', {
+        location: selectedLocation.code,
+      });
     }
 
     if (itemsHaveStock) {
@@ -109,41 +88,25 @@ export const CreateStocktakeModal = ({
       expiresBefore: expiresBefore ? expiresBefore : undefined,
       // max of one of the above args should be defined per stocktake
       isInitialStocktake: false,
-      comment: generateComment(),
       description,
+      comment: generateComment(),
     };
-    create(args).then(id => {
+    onCreate(args).then(id => {
       if (id) {
         navigate(id);
       }
     });
   };
 
-  const masterLists =
-    masterListData?.nodes?.map(list => ({
-      label: `${list.name} (${list?.linesCount} ${t('label.item', {
-        count: list.linesCount ?? undefined,
-      })})`,
-      value: list.id,
-    })) || [];
-
-  const locations =
-    locationData?.nodes.map(location => ({
-      label: location.code,
-      value: location.id,
-    })) || [];
-
-  const isLoading =
-    isLoadingMasterLists || isLoadingLocations || isLoadingStock;
-
   return (
     <>
       <Modal
         slideAnimation={false}
         title={t('label.new-stocktake')}
+        width={650}
         cancelButton={
           <DialogButton
-            disabled={isLoading}
+            disabled={stockIsLoading}
             variant="cancel"
             onClick={onClose}
           />
@@ -171,48 +134,36 @@ export const CreateStocktakeModal = ({
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
-                  masterLists.length === 0 ? (
-                    <Typography sx={{ color: 'gray.main' }}>
-                      {t('messages.no-master-lists')}
-                    </Typography>
-                  ) : (
-                    <MasterListSearchInput
-                      onChange={masterList => {
-                        setSelectedMasterList(masterList);
-                        setCreateStocktakeArgs({
-                          ...defaultCreateStocktakeInput,
-                          masterListId: masterList?.id ?? '',
-                        });
-                      }}
-                      disabled={false}
-                      selectedMasterList={selectedMasterList}
-                      width={380}
-                    />
-                  )
+                  <MasterListSearchInput
+                    onChange={masterList => {
+                      setSelectedMasterList(masterList);
+                      setCreateStocktakeArgs({
+                        ...defaultCreateStocktakeInput,
+                        masterListId: masterList?.id ?? '',
+                      });
+                    }}
+                    disabled={false}
+                    selectedMasterList={selectedMasterList}
+                    width={380}
+                  />
                 }
                 label={t('label.master-list')}
               />
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
-                  locations.length === 0 ? (
-                    <Typography sx={{ color: 'gray.main' }}>
-                      {t('messages.no-locations')}
-                    </Typography>
-                  ) : (
-                    <LocationSearchInput
-                      onChange={location => {
-                        setSelectedLocation(location);
-                        setCreateStocktakeArgs({
-                          ...defaultCreateStocktakeInput,
-                          locationId: location?.id ?? '',
-                        });
-                      }}
-                      width={380}
-                      disabled={false}
-                      selectedLocation={selectedLocation}
-                    />
-                  )
+                  <LocationSearchInput
+                    onChange={location => {
+                      setSelectedLocation(location);
+                      setCreateStocktakeArgs({
+                        ...defaultCreateStocktakeInput,
+                        locationId: location?.id ?? '',
+                      });
+                    }}
+                    width={380}
+                    disabled={false}
+                    selectedLocation={selectedLocation}
+                  />
                 }
                 label={t('label.location')}
               />
@@ -247,10 +198,10 @@ export const CreateStocktakeModal = ({
                         ? new Date(createStocktakeArgs.expiresBefore)
                         : null
                     }
-                    onChange={event => {
+                    onChange={date => {
                       setCreateStocktakeArgs({
                         ...defaultCreateStocktakeInput,
-                        expiresBefore: Formatter.toIsoString(event) ?? null,
+                        expiresBefore: Formatter.toIsoString(date) ?? null,
                       });
                     }}
                   />
