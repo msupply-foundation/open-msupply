@@ -146,28 +146,32 @@ const ItemVariant = ({
               />
             }
           />
-          <InputWithLabelRow
-            label={t('label.doses-per-unit')}
-            labelWidth="200"
-            Input={
-              <NumericTextInput
-                value={variant.dosesPerUnit}
-                disabled
-                fullWidth
+          {variant.item?.isVaccine && (
+            <>
+              <InputWithLabelRow
+                label={t('label.doses-per-unit')}
+                labelWidth="200"
+                Input={
+                  <NumericTextInput
+                    value={variant.dosesPerUnit}
+                    disabled
+                    fullWidth
+                  />
+                }
               />
-            }
-          />
-          <InputWithLabelRow
-            label={t('label.vvm-type')}
-            labelWidth="200"
-            Input={
-              <BasicTextInput
-                value={variant.vvmType ?? ''}
-                disabled
-                fullWidth
+              <InputWithLabelRow
+                label={t('label.vvm-type')}
+                labelWidth="200"
+                Input={
+                  <BasicTextInput
+                    value={variant.vvmType ?? ''}
+                    disabled
+                    fullWidth
+                  />
+                }
               />
-            }
-          />
+            </>
+          )}
         </Box>
         <Box flex={1}>
           <Typography fontWeight="bold">{t('title.packaging')}</Typography>

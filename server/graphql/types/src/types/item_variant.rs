@@ -30,11 +30,9 @@ impl ItemVariantNode {
         &self.item_variant.name
     }
 
-    #[graphql(deprecation = "From 2.8.0. Use item instead")]
     pub async fn item_id(&self) -> &String {
         &self.item.id
     }
-    #[graphql(deprecation = "From 2.8.0. Use item instead")]
     pub async fn item_name(&self) -> &String {
         &self.item.name
     }
