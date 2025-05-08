@@ -1035,6 +1035,23 @@ export type InsertBarcodeMutation = {
   };
 };
 
+export type GetItemInfoQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  itemId: Types.Scalars['String']['input'];
+}>;
+
+export type GetItemInfoQuery = {
+  __typename: 'Queries';
+  items: {
+    __typename: 'ItemConnector';
+    nodes: Array<{
+      __typename: 'ItemNode';
+      id: string;
+      unitName?: string | null;
+    }>;
+  };
+};
+
 export const OutboundFragmentDoc = gql`
   fragment Outbound on InvoiceNode {
     __typename
@@ -1881,6 +1898,23 @@ export const InsertBarcodeDocument = gql`
   }
   ${BarcodeFragmentDoc}
 `;
+export const GetItemInfoDocument = gql`
+  query getItemInfo($storeId: String!, $itemId: String!) {
+    items(
+      storeId: $storeId
+      filter: { id: { equalTo: $itemId }, isActive: true }
+    ) {
+      ... on ItemConnector {
+        __typename
+        nodes {
+          __typename
+          id
+          unitName
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -2118,6 +2152,21 @@ export function getSdk(
           ),
         'insertBarcode',
         'mutation',
+        variables
+      );
+    },
+    getItemInfo(
+      variables: GetItemInfoQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<GetItemInfoQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<GetItemInfoQuery>(GetItemInfoDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'getItemInfo',
+        'query',
         variables
       );
     },

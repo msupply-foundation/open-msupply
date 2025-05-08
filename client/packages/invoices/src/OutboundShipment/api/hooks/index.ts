@@ -40,3 +40,5 @@ export const useOutbound = {
     allocateSelected: Lines.useOutboundAllocateSelectedLines,
   },
 };
+
+export * from './useItemInfo';
