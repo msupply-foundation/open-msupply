@@ -47,7 +47,7 @@ export const Footer = ({ data }: { data: RnRFormQuery }) => {
     },
     message:
       errorLineIndex != -1
-        ? `You will be taken to first error line`
+        ? t('error.rnr-has-errors')
         : t('messages.confirm-finalise-rnr'),
     title: t('heading.are-you-sure'),
   });
