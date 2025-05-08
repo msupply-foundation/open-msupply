@@ -8,6 +8,10 @@ import {
   createTableStore,
   createQueryParamsStore,
   DateUtils,
+  ModalRow,
+  ModalLabel,
+  Grid,
+  BasicTextInput,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { AutoAllocate } from './AutoAllocate';
@@ -35,7 +39,10 @@ export const Allocation = ({ itemId }: AllocationProps) => {
 };
 
 const AllocationInner = ({ item }: { item: DraftItem }) => {
+  const t = useTranslation();
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
+  const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
+    useState(false);
 
   const { status, currency, otherParty } = useOutbound.document.fields([
     'status',
@@ -49,8 +56,6 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
     isLoading,
   } = useDraftOutboundLines(item.id);
   const packSizeController = usePackSizeController(draftStockOutLines);
-  const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
-    useState(false);
 
   const onUpdateQuantity = (batchId: string, quantity: number) => {
     updateQuantity(batchId, quantity);
@@ -89,11 +94,32 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
 
   return (
     <>
+      <ModalRow>
+        <ModalLabel label="" />
+        <Grid display="flex">
+          <Typography
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
+            {t('label.available-quantity', {
+              number: sumAvailableQuantity(draftStockOutLines).toFixed(0),
+            })}
+          </Typography>
+        </Grid>
+
+        <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
+          <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
+          <BasicTextInput disabled sx={{ width: 150 }} value={item?.unitName} />
+        </Grid>
+      </ModalRow>
+
       <AutoAllocate
         packSizeController={packSizeController}
         item={item}
         allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
-        availableQuantity={sumAvailableQuantity(draftStockOutLines)}
         onChangeQuantity={onAllocate}
         isAutoAllocated={isAutoAllocated}
         showZeroQuantityConfirmation={showZeroQuantityConfirmation}
