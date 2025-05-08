@@ -49,10 +49,10 @@ const DetailViewInner = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const onRowClick = useCallback(
-    (item: StockOutLineFragment | StockOutItem) => {
-      onOpen({ itemId: item.id });
+    (line: StockOutLineFragment | StockOutItem) => {
+      onOpen({ itemId: toItemRow(line).id });
     },
-    [toItemRow, onOpen]
+    [onOpen]
   );
   const onAddItem = (openWith?: OutboundOpenedWith) => {
     onOpen(openWith);

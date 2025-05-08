@@ -34,15 +34,6 @@ export const AutoAllocate = ({ packSizeController }: AutoAllocateProps) => {
   // TODO = prepopulate with existing (once we have initialisation)
   const [issueQuantity, setIssueQuantity] = useState<number>();
 
-  // const onChangePackSize = (newPackSize: number) => {
-  //   const packSize = newPackSize === -1 ? 1 : newPackSize;
-  //   const newAllocatedQuantity =
-  //     newPackSize === 0 ? 0 : Math.round(allocatedQuantity / packSize);
-
-  //   packSizeController.setPackSize(newPackSize);
-  //   allocate(newAllocatedQuantity, newPackSize);
-  // };
-
   const updateIssueQuantity = useCallback(
     (quantity: number) => {
       setIssueQuantity(
@@ -53,29 +44,6 @@ export const AutoAllocate = ({ packSizeController }: AutoAllocateProps) => {
     },
     [packSizeController.selected?.value]
   );
-
-  // const debouncedSetAllocationAlerts = useDebounceCallback(
-  //   warning => setAllocationAlerts(warning),
-  //   []
-  // );
-
-  // TODO: in allocation..
-  // const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
-  // const allocatedQuantity =
-  //   newAllocateQuantities?.reduce(
-  //     (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
-  //     0
-  //   ) ?? 0;
-  // const alerts = getAllocationAlerts(
-  //   quantity * (packSize === -1 ? 1 : packSize),
-  //   allocatedQuantity,
-  //   placeholderLine?.numberOfPacks ?? 0,
-  //   hasOnHold,
-  //   hasExpired,
-  //   format,
-  //   t
-  // );
-  // debouncedSetAllocationAlerts(alerts);
 
   // using a debounced value for the allocation. In the scenario where
   // you have only pack sizes > 1 available, and try to type a quantity which starts with 1
@@ -91,7 +59,6 @@ export const AutoAllocate = ({ packSizeController }: AutoAllocateProps) => {
     },
     [],
     500,
-    // [draftStockOutLines] // this is needed to prevent a captured enclosure of onChangeQuantity
     []
   );
 
