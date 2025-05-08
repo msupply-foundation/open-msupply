@@ -8,6 +8,8 @@ pub fn mock_item_a_variant_1() -> ItemVariantRow {
         cold_storage_type_id: None,
         manufacturer_link_id: None,
         deleted_datetime: None,
+        doses_per_unit: 0,
+        vvm_type: None,
     }
 }
 
@@ -19,6 +21,8 @@ pub fn mock_item_a_variant_2() -> ItemVariantRow {
         cold_storage_type_id: None,
         manufacturer_link_id: None,
         deleted_datetime: None,
+        doses_per_unit: 0,
+        vvm_type: None,
     }
 }
 
@@ -30,6 +34,8 @@ pub fn mock_item_b_variant_1() -> ItemVariantRow {
         cold_storage_type_id: None,
         manufacturer_link_id: None,
         deleted_datetime: None,
+        doses_per_unit: 0,
+        vvm_type: None,
     }
 }
 
@@ -41,6 +47,8 @@ pub fn mock_item_b_variant_2() -> ItemVariantRow {
         cold_storage_type_id: None,
         manufacturer_link_id: None,
         deleted_datetime: None,
+        doses_per_unit: 0,
+        vvm_type: None,
     }
 }
 
@@ -52,6 +60,8 @@ pub fn mock_item_c_variant_1() -> ItemVariantRow {
         cold_storage_type_id: None,
         manufacturer_link_id: None,
         deleted_datetime: None,
+        doses_per_unit: 0,
+        vvm_type: None,
     }
 }
 
