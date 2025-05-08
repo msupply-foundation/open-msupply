@@ -521,9 +521,23 @@ mod test {
                         master_list_name_tag_id: name_tag1.id.clone(),
                         master_list_name_tag: name_tag1.name.clone(),
                         program_requisition_settings_id: program_requisition_setting3.id.clone(),
-                        // no order types because no order types corresponding to requisition settings 3 that have available periods
-                        // order types without available periods filtered out
-                        order_types: vec![],
+                        // Show order types even if no available periods exist for this order type*
+                        order_types: vec![ProgramRequisitionOrderType {
+                            name: order_type3.name.clone(),
+                            program_requisition_settings_id: order_type3
+                                .program_requisition_settings_id
+                                .clone(),
+                            max_mos: order_type3.max_mos.clone(),
+                            max_items_in_emergency_order: order_type3
+                                .max_items_in_emergency_order
+                                .clone(),
+                            id: order_type3.id.clone(),
+                            is_emergency: order_type3.is_emergency.clone(),
+                            max_order_per_period: order_type3.max_order_per_period.clone(),
+                            threshold_mos: order_type3.threshold_mos.clone(),
+                            // renders empty vec for available periods
+                            available_periods: vec![]
+                        }],
                         program_id: program1.id.clone(),
                         program_name: program1.name.clone()
                     },
