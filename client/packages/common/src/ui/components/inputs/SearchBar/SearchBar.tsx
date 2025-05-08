@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BasicTextInput } from '../TextInput';
 import { CloseIcon, SearchIcon } from '@common/icons';
 import { useDebouncedValueCallback } from '@common/hooks';
@@ -10,17 +10,24 @@ import { useTranslation } from '@common/intl';
 interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
+  onClear?: () => void;
+  alwaysShowClear?: boolean;
   placeholder: string;
   isLoading?: boolean;
   debounceTime?: number;
   expandOnFocus?: boolean;
+  autoFocus?: boolean;
 }
 
-const EndAdornment: FC<{
+const EndAdornment = ({
+  hasValue,
+  isLoading,
+  onClear,
+}: {
   isLoading: boolean;
   hasValue: boolean;
   onClear: () => void;
-}> = ({ hasValue, isLoading, onClear }) => {
+}) => {
   const t = useTranslation();
   if (isLoading) return <InlineSpinner />;
 
@@ -38,14 +45,17 @@ const EndAdornment: FC<{
   );
 };
 
-export const SearchBar: FC<SearchBarProps> = ({
+export const SearchBar = ({
   value,
   onChange,
+  onClear,
   placeholder,
   isLoading = false,
   debounceTime = 500,
   expandOnFocus = false,
-}) => {
+  alwaysShowClear = false,
+  autoFocus = false,
+}: SearchBarProps) => {
   const [buffer, setBuffer] = useState(value);
   const [loading, setLoading] = useState(false);
 
@@ -80,13 +90,17 @@ export const SearchBar: FC<SearchBarProps> = ({
         fontSize="small"
       />
       <BasicTextInput
+        autoFocus={autoFocus}
         slotProps={{
           input: {
             endAdornment: (
               <EndAdornment
                 isLoading={isLoading || loading}
-                hasValue={!!buffer}
-                onClear={() => handleChange('')}
+                hasValue={!!buffer || alwaysShowClear}
+                onClear={() => {
+                  handleChange('');
+                  if (onClear) onClear();
+                }}
               />
             ),
             sx: {
