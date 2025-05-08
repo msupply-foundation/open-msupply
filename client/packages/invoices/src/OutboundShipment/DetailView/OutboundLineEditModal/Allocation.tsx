@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   Typography,
   InlineSpinner,
@@ -20,13 +20,13 @@ import { useItemInfo, useOutbound } from '../../api';
 import { DraftItem } from '../../..';
 import {
   PackSizeController,
-  allocateQuantities,
   getAllocatedQuantity,
   sumAvailableQuantity,
   usePackSizeController,
 } from '../../../StockOut';
 import { DraftStockOutLine } from '../../../types';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
+import { useAllocationContext } from './allocation/useAllocationContext';
 
 interface AllocationProps {
   itemId?: string;
@@ -34,50 +34,37 @@ interface AllocationProps {
 
 export const Allocation = ({ itemId }: AllocationProps) => {
   const { data: item } = useItemInfo(itemId);
+  // TODO... this better but uh
+  const { draftStockOutLines } = useDraftOutboundLines(itemId ?? '');
+
+  const setDraftStockOutLines = useAllocationContext(
+    ({ setDraftStockOutLines }) => setDraftStockOutLines
+  );
+
+  useEffect(() => {
+    setDraftStockOutLines(draftStockOutLines);
+  }, [itemId, draftStockOutLines.length]);
 
   return item ? <AllocationInner item={item} /> : null;
 };
 
 const AllocationInner = ({ item }: { item: DraftItem }) => {
   const t = useTranslation();
-  const [isAutoAllocated, setIsAutoAllocated] = useState(false);
-  const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
-    useState(false);
 
-  const { status, currency, otherParty } = useOutbound.document.fields([
-    'status',
+  const { currency, otherParty } = useOutbound.document.fields([
     'currency',
     'otherParty',
   ]);
-  const {
-    draftStockOutLines,
-    updateQuantity,
-    setDraftStockOutLines,
-    isLoading,
-  } = useDraftOutboundLines(item.id);
+  //   useDraftOutboundLines(item.id);
+  const { draftStockOutLines } = useAllocationContext(
+    ({ draftStockOutLines }) => ({ draftStockOutLines })
+  );
   const packSizeController = usePackSizeController(draftStockOutLines);
 
-  const onUpdateQuantity = (batchId: string, quantity: number) => {
-    updateQuantity(batchId, quantity);
-    setIsAutoAllocated(false);
-  };
-
-  const onAllocate = (
-    newVal: number,
-    packSize: number | null,
-    autoAllocated = false
-  ) => {
-    const newAllocateQuantities = allocateQuantities(
-      status,
-      draftStockOutLines
-    )(newVal, packSize, undefined);
-    setDraftStockOutLines(newAllocateQuantities ?? draftStockOutLines);
-    setIsAutoAllocated(autoAllocated);
-    if (showZeroQuantityConfirmation && newVal !== 0)
-      setShowZeroQuantityConfirmation(false);
-
-    return newAllocateQuantities;
-  };
+  // const onUpdateQuantity = (batchId: string, quantity: number) => {
+  //   updateQuantity(batchId, quantity);
+  //   setIsAutoAllocated(false);
+  // };
 
   const hasLines = !!draftStockOutLines.length;
 
@@ -118,22 +105,16 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
 
       <AutoAllocate
         packSizeController={packSizeController}
-        item={item}
-        allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
-        onChangeQuantity={onAllocate}
-        isAutoAllocated={isAutoAllocated}
-        showZeroQuantityConfirmation={showZeroQuantityConfirmation}
         hasOnHold={hasOnHold}
         hasExpired={hasExpired}
-        draftStockOutLines={draftStockOutLines}
       />
 
       <TableWrapper
         hasLines={hasLines}
         currentItem={item}
-        isLoading={isLoading}
+        isLoading={false}
         packSizeController={packSizeController}
-        updateQuantity={onUpdateQuantity}
+        updateQuantity={() => {}} // todo
         draftOutboundLines={draftStockOutLines}
         allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
         // batch={openedWith?.batch}

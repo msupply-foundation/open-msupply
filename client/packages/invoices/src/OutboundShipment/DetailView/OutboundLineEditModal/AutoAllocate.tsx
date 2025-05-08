@@ -1,67 +1,47 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Grid,
   ModalLabel,
-  Select,
   useTranslation,
   Divider,
   Box,
-  useFormatNumber,
-  useDebounceCallback,
   NumericTextInput,
   useDebouncedValueCallback,
-  InputLabel,
 } from '@openmsupply-client/common';
-import { DraftItem } from '../../..';
 import {
   PackSizeController,
   StockOutAlert,
   StockOutAlerts,
-  getAllocationAlerts,
 } from '../../../StockOut';
-import { DraftStockOutLine } from '../../../types';
-import { isA } from '../../../utils';
+import { useAllocationContext } from './allocation/useAllocationContext';
 
 interface AutoAllocateProps {
-  allocatedQuantity: number;
-  item: DraftItem;
-  onChangeQuantity: (
-    quantity: number,
-    packSize: number | null,
-    isAutoAllocated: boolean
-  ) => DraftStockOutLine[] | undefined;
   packSizeController: PackSizeController;
-  isAutoAllocated: boolean;
-  showZeroQuantityConfirmation: boolean;
   hasOnHold: boolean;
   hasExpired: boolean;
-  draftStockOutLines: DraftStockOutLine[];
 }
 
+// AGNOSTIC OF WHAT WE ARE ISSUING IN (Packs of X, units, doses...)
 export const AutoAllocate = ({
-  allocatedQuantity,
-  onChangeQuantity,
-  item,
   packSizeController,
-  isAutoAllocated,
-  showZeroQuantityConfirmation,
-  hasOnHold,
-  hasExpired,
-  draftStockOutLines,
+  // hasOnHold,
+  // hasExpired,
 }: AutoAllocateProps) => {
   const t = useTranslation();
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
+  const autoAllocate = useAllocationContext(({ autoAllocate }) => autoAllocate);
+
+  // TODO = prepopulate with existing (once we have initialisation)
   const [issueQuantity, setIssueQuantity] = useState<number>();
-  const { format } = useFormatNumber();
 
-  const onChangePackSize = (newPackSize: number) => {
-    const packSize = newPackSize === -1 ? 1 : newPackSize;
-    const newAllocatedQuantity =
-      newPackSize === 0 ? 0 : Math.round(allocatedQuantity / packSize);
+  // const onChangePackSize = (newPackSize: number) => {
+  //   const packSize = newPackSize === -1 ? 1 : newPackSize;
+  //   const newAllocatedQuantity =
+  //     newPackSize === 0 ? 0 : Math.round(allocatedQuantity / packSize);
 
-    packSizeController.setPackSize(newPackSize);
-    allocate(newAllocatedQuantity, newPackSize);
-  };
+  //   packSizeController.setPackSize(newPackSize);
+  //   allocate(newAllocatedQuantity, newPackSize);
+  // };
 
   const updateIssueQuantity = useCallback(
     (quantity: number) => {
@@ -74,35 +54,28 @@ export const AutoAllocate = ({
     [packSizeController.selected?.value]
   );
 
-  const debouncedSetAllocationAlerts = useDebounceCallback(
-    warning => setAllocationAlerts(warning),
-    []
-  );
+  // const debouncedSetAllocationAlerts = useDebounceCallback(
+  //   warning => setAllocationAlerts(warning),
+  //   []
+  // );
 
-  const allocate = (quantity: number, packSize: number) => {
-    const newAllocateQuantities = onChangeQuantity(
-      quantity,
-      packSize === -1 ? null : packSize,
-      true
-    );
-    const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
-    const allocatedQuantity =
-      newAllocateQuantities?.reduce(
-        (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
-        0
-      ) ?? 0;
-    const alerts = getAllocationAlerts(
-      quantity * (packSize === -1 ? 1 : packSize),
-      allocatedQuantity,
-      placeholderLine?.numberOfPacks ?? 0,
-      hasOnHold,
-      hasExpired,
-      format,
-      t
-    );
-    debouncedSetAllocationAlerts(alerts);
-    updateIssueQuantity(allocatedQuantity);
-  };
+  // TODO: in allocation..
+  // const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
+  // const allocatedQuantity =
+  //   newAllocateQuantities?.reduce(
+  //     (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
+  //     0
+  //   ) ?? 0;
+  // const alerts = getAllocationAlerts(
+  //   quantity * (packSize === -1 ? 1 : packSize),
+  //   allocatedQuantity,
+  //   placeholderLine?.numberOfPacks ?? 0,
+  //   hasOnHold,
+  //   hasExpired,
+  //   format,
+  //   t
+  // );
+  // debouncedSetAllocationAlerts(alerts);
 
   // using a debounced value for the allocation. In the scenario where
   // you have only pack sizes > 1 available, and try to type a quantity which starts with 1
@@ -111,11 +84,15 @@ export const AutoAllocate = ({
   // See https://github.com/msupply-foundation/open-msupply/issues/2727
   const debouncedAllocate = useDebouncedValueCallback(
     (quantity, packSize) => {
-      allocate(quantity, packSize);
+      const allocatedQuantity = autoAllocate(quantity);
+      if (allocatedQuantity !== undefined) {
+        updateIssueQuantity(allocatedQuantity);
+      }
     },
     [],
     500,
-    [draftStockOutLines] // this is needed to prevent a captured enclosure of onChangeQuantity
+    // [draftStockOutLines] // this is needed to prevent a captured enclosure of onChangeQuantity
+    []
   );
 
   const handleIssueQuantityChange = (quantity: number | undefined) => {
@@ -130,14 +107,14 @@ export const AutoAllocate = ({
     );
   };
 
-  useEffect(() => {
-    if (!isAutoAllocated) updateIssueQuantity(allocatedQuantity);
-  }, [
-    packSizeController.selected?.value,
-    allocatedQuantity,
-    isAutoAllocated,
-    updateIssueQuantity,
-  ]);
+  // useEffect(() => {
+  //   if (!isAutoAllocated) updateIssueQuantity(allocatedQuantity);
+  // }, [
+  //   packSizeController.selected?.value,
+  //   allocatedQuantity,
+  //   isAutoAllocated,
+  //   updateIssueQuantity,
+  // ]);
 
   return (
     <Grid container gap="4px" width="100%">
@@ -153,40 +130,12 @@ export const AutoAllocate = ({
             />
             <Box marginLeft={1} />
 
-            {packSizeController.options.length ? (
-              <>
-                <Box marginLeft={1} />
-                <Select
-                  sx={{ width: 110 }}
-                  options={packSizeController.options}
-                  value={packSizeController.selected?.value ?? ''}
-                  onChange={e => {
-                    const { value } = e.target;
-                    onChangePackSize(Number(value));
-                  }}
-                />
-                {packSizeController.selected?.value !== -1 && (
-                  <Grid
-                    alignItems="center"
-                    display="flex"
-                    justifyContent="flex-start"
-                  >
-                    <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
-                      {t('label.unit-plural', {
-                        count: packSizeController.selected?.value,
-                        unit: item?.unitName,
-                      })}
-                    </InputLabel>
-                  </Grid>
-                )}
-                <Box marginLeft="auto" />
-              </>
-            ) : null}
+            {/* TODO: allocate in X dropdown - see packsizecontroller */}
           </Grid>
           <StockOutAlerts
             allocationAlerts={allocationAlerts}
-            showZeroQuantityConfirmation={showZeroQuantityConfirmation}
-            isAutoAllocated={isAutoAllocated}
+            showZeroQuantityConfirmation={false}
+            isAutoAllocated={true}
           />
         </Box>
       </>
