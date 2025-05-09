@@ -1,16 +1,14 @@
-query StocktakeDetailQuery(
-  $storeId: String!
-  $dataId: String!
-  $sort: PrintReportSortInput
-) {
+query StocktakeQuery($storeId: String!, $dataId: String!, $sort: PrintReportSortInput) {
   stocktake(storeId: $storeId, id: $dataId) {
     ... on StocktakeNode {
       id
+      storeId
       stocktakeDate
       stocktakeNumber
       status
       createdDatetime
       description
+      comment
     }
     ... on NodeError {
       __typename
@@ -28,20 +26,18 @@ query StocktakeDetailQuery(
           ... on ItemNode {
             code
             name
-            unitName
           }
         }
         packSize
-        location {
-          code
-        }
         expiryDate
         countedNumberOfPacks
         batch
         snapshotNumberOfPacks
         costPricePerPack
-        reasonOption {
-          ... on ReasonOptionNode {
+        comment
+        inventoryAdjustmentReasonId
+        inventoryAdjustmentReason {
+          ... on InventoryAdjustmentReasonNode {
             reason
           }
         }
@@ -53,13 +49,15 @@ query StocktakeDetailQuery(
       code
       storeName
       logo
-      id
       name(storeId: $storeId) {
-        address1
-        address2
-        code
-        email
-        phone
+        ... on NameNode {
+          address1
+          address2
+          code
+          email
+          name
+          phone
+        }
       }
     }
   }
