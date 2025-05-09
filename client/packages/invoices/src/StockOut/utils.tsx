@@ -198,132 +198,115 @@ export const issueStock = (
   return newDraftStockOutLines;
 };
 
-export const allocateQuantities =
-  (status: InvoiceNodeStatus, draftStockOutLines: DraftStockOutLine[]) =>
-  (
-    newValue: number,
-    issuePackSize: number | null,
-    // todo - remove? well, reuse for prescription
-    allowPartialPacks: boolean = false
-  ) => {
-    // if invalid quantity entered, don't allocate
-    if (newValue < 0 || Number.isNaN(newValue)) {
-      return;
-    }
+export const allocateQuantities = (
+  draftStockOutLines: DraftStockOutLine[],
+  newValue: number,
+  allowPlaceholder: boolean
+) => {
+  // if invalid quantity entered, don't allocate
+  if (newValue < 0 || Number.isNaN(newValue)) {
+    return;
+  }
 
-    // If there is only one batch row, then it is the placeholder.
-    // Assign all of the new value and short circuit.
-    const placeholder = draftStockOutLines.find(
-      ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-    );
-    if (
-      placeholder &&
-      draftStockOutLines.length === 1 &&
-      status === InvoiceNodeStatus.New
-    ) {
-      return issueStock(
-        draftStockOutLines,
-        placeholder?.id ?? '',
-        newValue * (issuePackSize || 1)
-      );
-    }
+  // If there is only one batch row, then it is the placeholder.
+  // Assign all of the new value and short circuit.
+  const placeholder = draftStockOutLines.find(
+    ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+  );
+  if (placeholder && draftStockOutLines.length === 1 && allowPlaceholder) {
+    return issueStock(draftStockOutLines, placeholder?.id ?? '', newValue);
+  }
 
-    // calculations are normalised to units
-    const totalToAllocate = newValue * (issuePackSize || 1);
-    let toAllocate = totalToAllocate;
-    const newDraftStockOutLines = draftStockOutLines.map(batch => ({
-      ...batch,
-      numberOfPacks: 0,
-      isUpdated: batch.numberOfPacks > 0,
-    }));
+  // calculations are normalised to units
+  let toAllocate = newValue;
+  const newDraftStockOutLines = draftStockOutLines.map(batch => ({
+    ...batch,
+    numberOfPacks: 0,
+    isUpdated: batch.numberOfPacks > 0,
+  }));
 
-    const validBatches = newDraftStockOutLines
-      .filter(
-        ({ expiryDate, packSize, stockLine, location }) =>
-          (issuePackSize ? packSize === issuePackSize : true) &&
-          (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
-          !stockLine?.onHold &&
-          !location?.onHold &&
-          !(!!expiryDate && DateUtils.isExpired(new Date(expiryDate)))
-      )
-      .sort(SortUtils.byExpiryAsc);
+  const validBatches = newDraftStockOutLines
+    .filter(
+      ({ expiryDate, stockLine, location }) =>
+        (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
+        !stockLine?.onHold &&
+        !location?.onHold &&
+        !(!!expiryDate && DateUtils.isExpired(new Date(expiryDate)))
+    )
+    .sort(SortUtils.byExpiryAsc);
 
+  toAllocate = allocateToBatches({
+    validBatches,
+    newDraftStockOutLines,
+    toAllocate,
+  });
+
+  // if there is still a quantity to allocate, run through all stock lines again
+  // and round up if necessary to meet or exceed the requested quantity
+  if (toAllocate > 0) {
     toAllocate = allocateToBatches({
       validBatches,
       newDraftStockOutLines,
       toAllocate,
-      allowPartialPacks,
+      roundUp: true,
     });
+  }
 
-    // if there is still a quantity to allocate, run through all stock lines again
-    // and round up if necessary to meet or exceed the requested quantity
+  // when the last batch to be allocated results in over allocation
+  // reduce the quantity allocated to previous batches as required
+  // if toAllocate is negative then we have over allocated
+  if (toAllocate < 0) {
+    toAllocate = reduceBatchAllocation({
+      toAllocate: toAllocate * -1,
+      validBatches,
+      newDraftStockOutLines,
+    });
+  }
+
+  if (allowPlaceholder) {
+    const placeholderIdx = newDraftStockOutLines.findIndex(
+      ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+    );
+    const placeholder = newDraftStockOutLines[placeholderIdx];
+    const oldPlaceholder = draftStockOutLines[placeholderIdx];
+    // remove if the oldPlaceholder.numberOfPacks is non-zero and the new placeholder.numberOfPacks is zero
+    const placeholderRemoved =
+      oldPlaceholder?.numberOfPacks && placeholder?.numberOfPacks === 0;
+
+    // the isUpdated flag must be set in order to delete the placeholder row
+    if (placeholderRemoved) {
+      placeholder.isUpdated = true;
+    }
+
     if (toAllocate > 0) {
-      toAllocate = allocateToBatches({
-        validBatches,
-        newDraftStockOutLines,
-        toAllocate,
-        roundUp: true,
-        allowPartialPacks,
-      });
-    }
+      if (!placeholder) {
+        // throw new Error('No placeholder within item editing');
+      } else {
+        // stock has been allocated, and the auto generated placeholder is no longer required
+        if (shouldUpdatePlaceholder(newValue, placeholder))
+          placeholder.isUpdated = true;
 
-    // when the last batch to be allocated results in over allocation
-    // reduce the quantity allocated to previous batches as required
-    // if toAllocate is negative then we have over allocated
-    if (toAllocate < 0) {
-      toAllocate = reduceBatchAllocation({
-        toAllocate: toAllocate * -1,
-        validBatches,
-        newDraftStockOutLines,
-      });
-    }
-
-    if (status === InvoiceNodeStatus.New) {
-      const placeholderIdx = newDraftStockOutLines.findIndex(
-        ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-      );
-      const placeholder = newDraftStockOutLines[placeholderIdx];
-      const oldPlaceholder = draftStockOutLines[placeholderIdx];
-      // remove if the oldPlaceholder.numberOfPacks is non-zero and the new placeholder.numberOfPacks is zero
-      const placeholderRemoved =
-        oldPlaceholder?.numberOfPacks && placeholder?.numberOfPacks === 0;
-
-      // the isUpdated flag must be set in order to delete the placeholder row
-      if (placeholderRemoved) {
-        placeholder.isUpdated = true;
-      }
-
-      if (toAllocate > 0) {
-        if (!placeholder) {
-          // throw new Error('No placeholder within item editing');
-        } else {
-          // stock has been allocated, and the auto generated placeholder is no longer required
-          if (shouldUpdatePlaceholder(newValue, placeholder))
-            placeholder.isUpdated = true;
-
-          newDraftStockOutLines[placeholderIdx] = {
-            ...placeholder,
-            numberOfPacks: placeholder.numberOfPacks + toAllocate,
-          };
-        }
+        newDraftStockOutLines[placeholderIdx] = {
+          ...placeholder,
+          numberOfPacks: placeholder.numberOfPacks + toAllocate,
+        };
       }
     }
+  }
 
-    return newDraftStockOutLines;
-  };
+  return newDraftStockOutLines;
+};
 
 const allocateToBatches = ({
   validBatches,
   newDraftStockOutLines,
   toAllocate,
   roundUp = false,
-  allowPartialPacks,
 }: {
   validBatches: DraftStockOutLine[];
   newDraftStockOutLines: DraftStockOutLine[];
   toAllocate: number;
   roundUp?: boolean;
-  allowPartialPacks: boolean;
 }) => {
   validBatches.forEach(batch => {
     const draftStockOutLineIdx = newDraftStockOutLines.findIndex(
@@ -344,11 +327,9 @@ const allocateToBatches = ({
     const unitsToAllocate = Math.min(toAllocate, availableUnits);
     const numberOfPacksToAllocate =
       unitsToAllocate / draftStockOutLine.packSize;
-    const allocatedNumberOfPacks = allowPartialPacks
-      ? numberOfPacksToAllocate
-      : roundUp
-        ? Math.ceil(numberOfPacksToAllocate)
-        : Math.floor(numberOfPacksToAllocate);
+    const allocatedNumberOfPacks = roundUp
+      ? Math.ceil(numberOfPacksToAllocate)
+      : Math.floor(numberOfPacksToAllocate);
 
     toAllocate -= allocatedNumberOfPacks * draftStockOutLine.packSize;
 
