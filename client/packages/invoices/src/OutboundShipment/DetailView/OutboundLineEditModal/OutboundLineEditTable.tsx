@@ -14,15 +14,14 @@ import { DraftStockOutLine } from '../../../types';
 import { useOutboundLineEditRows } from './hooks';
 import { useOutboundLineEditColumns } from './columns';
 import { DraftItem } from '../../..';
-import { PackSizeController, shouldUpdatePlaceholder } from '../../../StockOut';
+import { shouldUpdatePlaceholder } from '../../../StockOut';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
+import { useAllocationContext } from './allocation/useAllocationContext';
 
 export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
-  packSizeController: PackSizeController;
   rows: DraftStockOutLine[];
   item: DraftItem | null;
-  allocatedQuantity: number;
   batch?: string;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
@@ -98,20 +97,26 @@ const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
   );
 };
 
-export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
+export const OutboundLineEditTable = ({
   onChange,
-  packSizeController,
   rows,
   item,
-  allocatedQuantity,
   batch,
   currency,
   isExternalSupplier,
-}) => {
+}: OutboundLineEditTableProps) => {
   const t = useTranslation();
+
+  const { allocateIn, allocatedQuantity } = useAllocationContext(
+    ({ allocateIn, allocatedUnits: allocatedQuantity }) => ({
+      allocateIn,
+      allocatedQuantity, // todo - need units here! or is?
+    })
+  );
+
   const { orderedRows, placeholderRow } = useOutboundLineEditRows(
     rows,
-    packSizeController,
+    allocateIn,
     batch
   );
   const onEditStockLine = (key: string, value: number, packSize: number) => {

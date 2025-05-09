@@ -1,9 +1,6 @@
 import {
   create,
   DateUtils,
-  // RecordWithId,
-  // keyBy,
-  // mapValues,
   InvoiceNodeStatus,
   LocaleKey,
   TypedTFunction,
@@ -20,77 +17,93 @@ import { isA } from 'packages/invoices/src/utils';
 
 // TODO Fix imports
 
-export enum AllocateIn {
-  Packs = 'Packs',
-  Units = 'Units',
-  Doses = 'Doses',
-}
+export const ALLOCATE_IN_UNITS = -1;
+export const ALLOCATE_IN_DOSES = -2;
 
 interface AllocationContext {
   draftStockOutLines: DraftStockOutLine[];
-  allocatedQuantity: number;
+  allocatedUnits: number;
   alerts: StockOutAlert[];
-  allocateIn: AllocateIn;
+  allocateIn: number;
   isAutoAllocated: boolean;
 
   // TODO - is it performant? could do by id, then return array if needed?
   setDraftStockOutLines: (lines: DraftStockOutLine[]) => void;
-  setAllocateIn: (allocateIn: AllocateIn) => void;
+  // Pack size for allocation. -1 for units, -2 for doses
+  setAllocateIn: (allocateIn: number) => void;
   manualAllocate: (lineId: string, quantity: number) => void;
-  /**
-   * Returns:
-   * - Undefined if no allocation was made
-   * - Otherwise, the actual quantity allocated (may differ from input quantity)
-   *  */
   autoAllocate: (
     quantity: number,
     format: (value: number, options?: Intl.NumberFormatOptions) => string,
     t: TypedTFunction<LocaleKey>
-  ) => number | void;
+  ) => void;
+  initialise: (lines: DraftStockOutLine[]) => void;
 }
 
+// TODO - possibly should scope to the modal?
 export const useAllocationContext = create<AllocationContext>((set, get) => {
-  // todo her better
-
   return {
     draftStockOutLines: [],
     alerts: [],
-    allocatedQuantity: 0,
-    allocateIn: AllocateIn.Packs, // TODO: from user pref? from store pref... also based on item?
+    allocatedUnits: 0,
+    allocateIn: ALLOCATE_IN_UNITS,
     isAutoAllocated: false,
-    setAllocateIn: (allocateIn: AllocateIn) =>
+    initialise: lines =>
+      set({
+        draftStockOutLines: lines,
+        allocatedUnits: getAllocatedQuantity(lines),
+        alerts: [],
+        allocateIn: ALLOCATE_IN_UNITS, // todo... should be based on selected stuff.
+        isAutoAllocated: false,
+      }),
+    setAllocateIn: allocateIn => {
       set(state => ({
         ...state,
         allocateIn,
         // Update allocated quan by in type
-      })),
-    setDraftStockOutLines: (lines: DraftStockOutLine[]) =>
+      }));
+      const { draftStockOutLines, setDraftStockOutLines } = get();
+      // TODO - update allocate to accept allowPlaceholder
+      const applyAllocation = allocateQuantities(
+        InvoiceNodeStatus.Allocated, // should be false
+        draftStockOutLines
+      );
+
+      // todo make nice lol
+      if (
+        allocateIn !== ALLOCATE_IN_UNITS &&
+        draftStockOutLines
+          .filter(l => l.numberOfPacks > 0)
+          .some(l => l.packSize !== allocateIn)
+      ) {
+        const updatedLines = applyAllocation(0, null);
+        if (updatedLines) setDraftStockOutLines(updatedLines);
+      }
+    },
+    setDraftStockOutLines: lines =>
       set(state => ({
         ...state,
         draftStockOutLines: lines,
-        allocatedQuantity: getAllocatedQuantity(lines),
+        allocatedUnits: getAllocatedQuantity(lines),
       })),
-    autoAllocate: (
-      quantity: number,
-      format: (value: number, options?: Intl.NumberFormatOptions) => string,
-      t: TypedTFunction<LocaleKey>,
-      allowPlaceholder = false
-    ) => {
-      const { draftStockOutLines, setDraftStockOutLines } = get();
+    autoAllocate: (quantity, format, t, allowPlaceholder = false) => {
+      const { draftStockOutLines, setDraftStockOutLines, allocateIn } = get();
       // TODO - update allocate to accept allowPlaceholder
       const applyAllocation = allocateQuantities(
         allowPlaceholder ? InvoiceNodeStatus.New : InvoiceNodeStatus.Allocated,
         draftStockOutLines
       );
 
-      // TODO: this guy accepts issuePackSize, and also partial packs - null = pack 1
-      const updatedLines = applyAllocation(quantity, null);
+      const allocatePackSize =
+        allocateIn === ALLOCATE_IN_UNITS ? null : allocateIn;
+
+      const updatedLines = applyAllocation(quantity, allocatePackSize);
 
       if (updatedLines) {
         setDraftStockOutLines(updatedLines);
 
         const placeholderLine = updatedLines?.find(isA.placeholderLine);
-        const allocatedQuantity = getAllocatedQuantity(updatedLines);
+        const allocatedUnits = getAllocatedQuantity(updatedLines);
 
         // TODO
         const hasOnHold = draftStockOutLines.some(
@@ -104,8 +117,8 @@ export const useAllocationContext = create<AllocationContext>((set, get) => {
             DateUtils.isExpired(new Date(stockLine?.expiryDate))
         );
         const alerts = getAllocationAlerts(
-          quantity, // * (packSize === -1 ? 1 : packSize),
-          allocatedQuantity,
+          quantity * (allocateIn === ALLOCATE_IN_UNITS ? 1 : allocateIn),
+          allocatedUnits,
           placeholderLine?.numberOfPacks ?? 0,
           hasOnHold,
           hasExpired,
@@ -118,15 +131,9 @@ export const useAllocationContext = create<AllocationContext>((set, get) => {
           isAutoAllocated: true,
           alerts,
         }));
-
-        return allocatedQuantity;
       }
-
-      // TODO -
-      // set is auto allocated
-      // show zero quan conf?
     },
-    manualAllocate: (lineId: string, quantity: number) => {
+    manualAllocate: (lineId, quantity) => {
       const { draftStockOutLines, setDraftStockOutLines } = get();
 
       const updatedLines = issueStock(draftStockOutLines, lineId, quantity);

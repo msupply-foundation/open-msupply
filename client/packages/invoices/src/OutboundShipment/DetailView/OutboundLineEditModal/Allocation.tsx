@@ -17,12 +17,7 @@ import { AutoAllocate } from './AutoAllocate';
 import { useDraftOutboundLines } from './hooks';
 import { useItemInfo, useOutbound } from '../../api';
 import { DraftItem } from '../../..';
-import {
-  PackSizeController,
-  getAllocatedQuantity,
-  sumAvailableQuantity,
-  usePackSizeController,
-} from '../../../StockOut';
+import { sumAvailableQuantity } from '../../../StockOut';
 import { DraftStockOutLine } from '../../../types';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { useAllocationContext } from './allocation/useAllocationContext';
@@ -36,12 +31,10 @@ export const Allocation = ({ itemId }: AllocationProps) => {
   // TODO... this better but uh
   const { draftStockOutLines } = useDraftOutboundLines(itemId ?? '');
 
-  const setDraftStockOutLines = useAllocationContext(
-    ({ setDraftStockOutLines }) => setDraftStockOutLines
-  );
+  const initialise = useAllocationContext(({ initialise }) => initialise);
 
   useEffect(() => {
-    setDraftStockOutLines(draftStockOutLines);
+    initialise(draftStockOutLines);
   }, [itemId, draftStockOutLines.length]);
 
   return item ? <AllocationInner item={item} /> : null;
@@ -60,7 +53,6 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
       manualAllocate,
     })
   );
-  const packSizeController = usePackSizeController(draftStockOutLines);
 
   const hasLines = !!draftStockOutLines.length;
 
@@ -88,16 +80,14 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
         </Grid>
       </ModalRow>
 
-      <AutoAllocate packSizeController={packSizeController} />
+      <AutoAllocate />
 
       <TableWrapper
         hasLines={hasLines}
         currentItem={item}
         isLoading={false}
-        packSizeController={packSizeController}
         updateQuantity={manualAllocate}
         draftOutboundLines={draftStockOutLines}
-        allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
         // batch={openedWith?.batch}
         batch={undefined} // Scanned batch - context?
         currency={currency}
@@ -111,10 +101,8 @@ interface TableProps {
   hasLines: boolean;
   currentItem: DraftItem;
   isLoading: boolean;
-  packSizeController: PackSizeController;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
   draftOutboundLines: DraftStockOutLine[];
-  allocatedQuantity: number;
   batch?: string;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
@@ -124,10 +112,8 @@ const TableWrapper: React.FC<TableProps> = ({
   hasLines,
   currentItem,
   isLoading,
-  packSizeController,
   updateQuantity,
   draftOutboundLines,
-  allocatedQuantity,
   batch,
   currency,
   isExternalSupplier,
@@ -162,12 +148,10 @@ const TableWrapper: React.FC<TableProps> = ({
       })}
     >
       <OutboundLineEditTable
-        packSizeController={packSizeController}
         onChange={updateQuantity}
         rows={draftOutboundLines}
         item={currentItem}
         batch={batch}
-        allocatedQuantity={allocatedQuantity}
         currency={currency}
         isExternalSupplier={isExternalSupplier}
       />
