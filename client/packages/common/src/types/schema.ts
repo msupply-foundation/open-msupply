@@ -9590,11 +9590,13 @@ export type UpsertItemVariantErrorInterface = {
 
 export type UpsertItemVariantInput = {
   coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
+  dosesPerUnit?: InputMaybe<Scalars['Int']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   manufacturerId?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   packagingVariants: Array<PackagingVariantInput>;
+  vvmType?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpsertLogLevelInput = {
