@@ -1,8 +1,8 @@
 use super::vvm_status_log_row::vvm_status_log::dsl::*;
-use crate::Upsert;
 use crate::{
     db_diesel::{invoice_line_row::invoice_line, stock_line_row::stock_line, store_row::store},
-    RepositoryError, StorageConnection,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
+    StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -67,14 +67,14 @@ impl<'a> VVMStatusLogRowRepository<'a> {
         &self,
         line_id: &str,
     ) -> Result<Vec<VVMStatusLogRow>, RepositoryError> {
-        let result = vvm_status_log::table
+        let result = vvm_status_log
             .filter(vvm_status_log::stock_line_id.eq(line_id))
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
-    pub fn upsert_one(&self, row: &VVMStatusLogRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(vvm_status_log::table)
+    pub fn _upsert_one(&self, row: &VVMStatusLogRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(vvm_status_log)
             .values(row)
             .on_conflict(id)
             .do_update()
@@ -82,12 +82,33 @@ impl<'a> VVMStatusLogRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn upsert_one(&self, row: &VVMStatusLogRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(row)?;
+        self.insert_changelog(row, RowActionType::Upsert)
+    }
+
+    fn insert_changelog(
+        &self,
+        row: &VVMStatusLogRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::VVMStatusLog,
+            record_id: row.id.to_string(),
+            row_action: action,
+            store_id: Some(row.store_id.clone()),
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
+    }
 }
 
 impl Upsert for VVMStatusLogRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        VVMStatusLogRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog yet
+        let change_log = VVMStatusLogRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log))
     }
 
     // Test Only
