@@ -203,6 +203,7 @@ export const allocateQuantities =
   (
     newValue: number,
     issuePackSize: number | null,
+    // todo - remove? well, reuse for prescription
     allowPartialPacks: boolean = false
   ) => {
     // if invalid quantity entered, don't allocate
