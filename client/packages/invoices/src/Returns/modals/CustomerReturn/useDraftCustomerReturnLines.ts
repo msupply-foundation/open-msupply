@@ -89,7 +89,7 @@ export const useDraftCustomerReturnLines = ({
     const customerReturnLines: CustomerReturnLineInput[] = draftLines.map(
       ({
         id,
-        reasonId,
+        reasonOption,
         item: { id: itemId },
         numberOfPacksReturned,
         note,
@@ -104,7 +104,7 @@ export const useDraftCustomerReturnLines = ({
           batch,
           expiryDate,
           itemId,
-          reasonId,
+          reasonId: reasonOption?.id,
           note,
           numberOfPacksReturned,
           itemVariantId,

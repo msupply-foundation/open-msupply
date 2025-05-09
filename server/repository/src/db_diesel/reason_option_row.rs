@@ -1,6 +1,6 @@
 use super::StorageConnection;
 
-use crate::{repository_error::RepositoryError, Upsert};
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -71,6 +71,31 @@ impl<'a> ReasonOptionRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn delete(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(reason_option::table)
+            .filter(reason_option::id.eq(reason_option_id))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ReasonOptionRowDelete(pub String);
+
+impl Delete for ReasonOptionRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ReasonOptionRowRepository::new(con).delete(&self.0)?;
+        Ok(None)
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ReasonOptionRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
     }
 }
 

@@ -56,6 +56,7 @@ fn stocktake_line_pull_record() -> TestSyncIncomingRecord {
             note: None,
             inventory_adjustment_reason_id: None,
             item_variant_id: None,
+            reason_option_id: None,
         },
     )
 }
@@ -80,7 +81,7 @@ fn stocktake_line_push_record() -> TestSyncOutgoingRecord {
             cost_price: 12.0,
             sell_price: 15.0,
             note: None,
-            inventory_adjustment_reason_id: None,
+            reason_option_id: None,
             item_variant_id: None,
         }),
     }
@@ -135,6 +136,7 @@ fn stocktake_line_om_field_pull_record() -> TestSyncIncomingRecord {
             note: Some("om note".to_string()),
             inventory_adjustment_reason_id: None,
             item_variant_id: None,
+            reason_option_id: None,
         },
     )
 }
@@ -159,7 +161,7 @@ fn stocktake_line_om_field_push_record() -> TestSyncOutgoingRecord {
             cost_price: 12.0,
             sell_price: 15.0,
             note: Some("om note".to_string()),
-            inventory_adjustment_reason_id: None,
+            reason_option_id: None,
             item_variant_id: None,
         }),
     }

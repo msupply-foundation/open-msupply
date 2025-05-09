@@ -6,13 +6,16 @@ use service::usize_to_u32;
 
 use graphql_core::{
     loader::{
-        InventoryAdjustmentReasonByIdLoader, ItemLoader, LocationByIdLoader, StockLineByIdLoader,
+        InventoryAdjustmentReasonByIdLoader, ItemLoader, LocationByIdLoader, ReasonOptionLoader,
+        StockLineByIdLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 
-use super::{InventoryAdjustmentReasonNode, ItemNode, LocationNode, StockLineNode};
+use super::{
+    InventoryAdjustmentReasonNode, ItemNode, LocationNode, ReasonOptionNode, StockLineNode,
+};
 
 pub struct StocktakeLineNode {
     pub line: StocktakeLine,
@@ -133,6 +136,17 @@ impl StocktakeLineNode {
             .await?;
 
         Ok(result.map(InventoryAdjustmentReasonNode::from_domain))
+    }
+
+    pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
+        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
+        let reason_option_id = match &self.line.line.reason_option_id {
+            None => return Ok(None),
+            Some(reason_option_id) => reason_option_id,
+        };
+
+        let result = loader.load_one(reason_option_id.clone()).await?;
+        Ok(result.map(ReasonOptionNode::from_domain))
     }
 }
 
