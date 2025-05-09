@@ -1776,6 +1776,8 @@
   "preference.displayPopulationBasedForecasting": "Display Population Based Forecasting",
   "preference.displayVaccineInDoses": "Display Vaccine in Doses",
   "preference.showContactTracing": "Show Contact Tracing",
+  "preference.manageVvmStatus": "Manage VVM Status",
+  "preference.sortByVvmStatus": "Sort available batches by VVM status then expiry",
   "prescription": "Prescriptions",
   "prescriptions": "Prescriptions",
   "programs": "Programs",
