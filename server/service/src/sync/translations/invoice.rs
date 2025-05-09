@@ -115,6 +115,7 @@ pub struct LegacyTransactRow {
     #[serde(rename = "nameInsuranceJoinID")]
     pub name_insurance_join_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "donor_default_id")]
     pub default_donor_id: Option<String>,
     #[serde(deserialize_with = "zero_f64_as_none")]
     #[serde(rename = "insuranceDiscountAmount")]
@@ -467,7 +468,7 @@ impl SyncTranslation for InvoiceTranslation {
                     insurance_discount_percentage,
                     is_cancellation,
                     expected_delivery_date,
-                    default_donor_id: donor_default_id,
+                    default_donor_id,
                 },
             name_row,
             clinician_row,
@@ -544,7 +545,7 @@ impl SyncTranslation for InvoiceTranslation {
             insurance_discount_percentage,
             is_cancellation,
             expected_delivery_date,
-            default_donor_id: donor_default_id,
+            default_donor_id,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
@@ -866,6 +867,7 @@ mod tests {
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            println!("sync buffer row {:?}", record.sync_buffer_row);
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();

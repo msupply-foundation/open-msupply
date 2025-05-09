@@ -52,7 +52,7 @@ table! {
         insurance_discount_percentage -> Nullable<Double>,
         is_cancellation -> Bool,
         expected_delivery_date -> Nullable<Date>,
-        donor_default_id -> Nullable<Text>,
+        default_donor_id -> Nullable<Text>,
     }
 }
 

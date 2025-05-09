@@ -38,7 +38,7 @@ pub fn generate(
         foreign_currency_price_before_tax: None,
         item_variant_id: None,
         linked_invoice_id: None,
-        donor_default_id: None,
+        donor_id: None,
     };
 
     Ok(invoice_line)
