@@ -165,7 +165,7 @@ pub fn migrate(
     let min_version_for_dropping_views = v2_03_00::V2_03_00.version();
     let mut drop_view_has_run = false;
 
-    for migration in migrations {
+    for migration in &migrations {
         let migration_version = migration.version();
 
         if migration_version > to_version {
@@ -226,10 +226,9 @@ pub fn migrate(
     let final_database_version = get_database_version(connection);
 
     // Recreate views
-    // if final_database_version >= min_version_for_dropping_views {
-    //     rebuild_views(connection).map_err(MigrationError::DatabaseViewsError)?;
-    // }
-    if final_database_version >= v2_08_00::V2_08_00.version() {
+    let last_version_in_migration_vec = migrations.last().unwrap().version();
+
+    if final_database_version >= last_version_in_migration_vec {
         rebuild_views(connection).map_err(MigrationError::DatabaseViewsError)?;
     }
 
