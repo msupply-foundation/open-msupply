@@ -2,11 +2,10 @@ import { useEffect, useMemo } from 'react';
 import { useTableStore, SortUtils } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../../types';
 import { isA } from '../../../../utils';
-import { PackSizeController } from '../../../../StockOut';
 
 export const useOutboundLineEditRows = (
   rows: DraftStockOutLine[],
-  packSizeController: PackSizeController,
+  allocateIn: number,
   scannedBatch?: string
 ) => {
   const tableStore = useTableStore();
@@ -26,8 +25,7 @@ export const useOutboundLineEditRows = (
   } = useMemo(() => {
     const placeholderRow = rows.find(isA.placeholderLine);
     const isRequestedPackSize = (packSize: number) =>
-      packSizeController.selected?.value === -1 ||
-      packSize === packSizeController.selected?.value;
+      allocateIn === -1 || packSize === allocateIn;
 
     const rowsIncludeScannedBatch =
       !!scannedBatch &&
@@ -81,7 +79,7 @@ export const useOutboundLineEditRows = (
       scannedBatchMismatchRows,
       placeholderRow,
     };
-  }, [rows, packSizeController.selected?.value]);
+  }, [rows, allocateIn]);
 
   const orderedRows = useMemo(() => {
     return [
