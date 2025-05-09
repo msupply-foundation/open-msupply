@@ -2,16 +2,18 @@ import React, { FC } from 'react';
 import {
   BasicSpinner,
   Box,
+  createQueryParamsStore,
   ModalTabs,
+  QueryParamsProvider,
   useDialog,
   useTranslation,
 } from '@openmsupply-client/common';
 import {
   CustomerSearchModal,
   NameRowFragment,
+  useName,
 } from '@openmsupply-client/system';
 
-import { useResponse } from '../api';
 import { NewRequisitionType } from '../../types';
 import {
   NewProgramRequisition,
@@ -30,28 +32,35 @@ interface CreateRequisitionModalProps {
     newRequisition: NewGeneralRequisition | NewProgramRequisition
   ) => void;
 }
-export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
-  isOpen,
-  onClose,
-  onCreate,
-}) => {
+export const CreateRequisitionModalComponent: FC<
+  CreateRequisitionModalProps
+> = ({ isOpen, onClose, onCreate }) => {
   const t = useTranslation();
-  const { data: programSettings, isLoading } =
-    useResponse.utils.programSettings();
+
+  const { data, isLoading } = useName.document.customers();
+
+  const [customer, setCustomer] = React.useState<NameRowFragment | null>(null);
+
+  const handleCustomerChange = (customer: NameRowFragment | null) => {
+    setCustomer(customer);
+  };
+
+  // console.log('CreateRequisitionModal', data, isLoading);
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
 
   const InnerComponent = () => {
     if (isLoading) return <BasicSpinner />;
-
-    if (programSettings && programSettings.length > 0)
+    if (data && data.totalCount > 0)
       return (
         <ModalTabs
           tabs={[
             {
               Component: (
                 <ProgramRequisitionOptions
+                  customerOptions={data.nodes ?? []}
                   onCreate={onCreate}
-                  programSettings={programSettings}
+                  onChangeCustomer={handleCustomerChange}
+                  customer={customer}
                 />
               ),
               value: t('label.requisition-program'),
@@ -69,7 +78,6 @@ export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
           ]}
         />
       );
-
     return (
       <GeneralRequisition onCreate={onCreate} open={isOpen} onClose={onClose} />
     );
@@ -104,4 +112,16 @@ const GeneralRequisition = ({
       isList={true}
     />
   </Box>
+);
+
+export const CreateRequisitionModal: FC<
+  CreateRequisitionModalProps
+> = props => (
+  <QueryParamsProvider
+    createStore={createQueryParamsStore<NameRowFragment>({
+      initialSortBy: { key: 'name' },
+    })}
+  >
+    <CreateRequisitionModalComponent {...props} />
+  </QueryParamsProvider>
 );

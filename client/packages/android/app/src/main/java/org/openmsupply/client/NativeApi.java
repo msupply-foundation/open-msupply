@@ -6,7 +6,9 @@ import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.webkit.WebView;
 
 import androidx.annotation.MainThread;
@@ -327,6 +329,34 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         }
         call.resolve(response);
     }
+
+    @PluginMethod()
+    public void sendTabKeyPress(PluginCall call) {
+        long downTime = SystemClock.uptimeMillis();
+        long eventTime = SystemClock.uptimeMillis();
+        WebView webView = this.getBridge().getWebView();
+
+        KeyEvent tabDownEvent = new KeyEvent(
+                downTime,
+                eventTime,
+                KeyEvent.ACTION_DOWN,
+                KeyEvent.KEYCODE_TAB,
+                0
+        );
+
+        KeyEvent tabUpEvent = new KeyEvent(
+                downTime,
+                eventTime + 50,
+                KeyEvent.ACTION_UP,
+                KeyEvent.KEYCODE_TAB,
+                0
+        );
+
+        // Dispatch the events
+        webView.post(() -> webView.dispatchKeyEvent(tabDownEvent));
+        webView.post(() -> webView.dispatchKeyEvent(tabUpEvent));
+    }
+
 
     // NsdManager.DiscoveryListener
     @Override

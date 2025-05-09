@@ -62,6 +62,12 @@ const NotifyOnLogin = () => {
   return <></>;
 };
 
+// Component to avoid re-calculation when blocking state changes (when isDirty is used for the first time in component)
+const Blocker = () => {
+  useBlockNavigation();
+  return null;
+};
+
 export const Site: FC = () => {
   const location = useLocation();
   const getPageTitle = useGetPageTitle();
@@ -73,10 +79,9 @@ export const Site: FC = () => {
     setPageTitle(pageTitle);
   }, [location, pageTitle, setPageTitle]);
 
-  useBlockNavigation();
-
   return (
     <RequireAuthentication>
+      <Blocker />
       <EasterEggModalProvider>
         <SyncModalProvider>
           <CommandK>

@@ -22,7 +22,13 @@ describe('getDisplayAge', () => {
   it('returns age in years when patient is over 1 year or 1 year old', () => {
     const dob = new Date('2016-02-01');
     const result = getDisplayAge(dob);
-    expect(result).toBe('9');
+    expect(result).toBe('9 years');
+  });
+
+  it('returns age in years when patient is over 1 year or 1 year old', () => {
+    const dob = new Date('2024-02-01');
+    const result = getDisplayAge(dob);
+    expect(result).toBe('1 year');
   });
 
   it('returns age in months and days when patient is less than 1 year old', () => {

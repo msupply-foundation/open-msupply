@@ -92,9 +92,9 @@ pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::RequisitionAlreadyExists => BadUserInput(formatted_error),
         ServiceError::CustomerNotValid => BadUserInput(formatted_error),
         ServiceError::ProgramOrderTypeDoesNotExist => BadUserInput(formatted_error),
-
         ServiceError::NewlyCreatedRequisitionDoesNotExist => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::NoProgramsExistForCustomer => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

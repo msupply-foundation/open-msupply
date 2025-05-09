@@ -36,6 +36,7 @@ export interface NativeAPI {
   connectedServer: () => Promise<FrontEndHost | null>;
   goBackToDiscovery: () => void;
   advertiseService?: () => void;
+  sendTabKeyPress: () => void;
   startBarcodeScan: () => Promise<void>;
   stopBarcodeScan: () => Promise<void>;
   // Callback for barcode scan result
