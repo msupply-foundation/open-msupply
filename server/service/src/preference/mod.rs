@@ -27,6 +27,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             show_contact_tracing,
             display_population_based_forecasting,
             display_vaccine_in_doses,
+            allow_tracking_of_received_stock_by_donor,
         } = self.get_preference_provider();
 
         let input = AppendIfTypeInputs {
@@ -39,6 +40,11 @@ pub trait PreferenceServiceTrait: Sync + Send {
 
         // Add each pref here
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
+        append_if_type(
+            allow_tracking_of_received_stock_by_donor,
+            &mut prefs,
+            &input,
+        )?;
         append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
         append_if_type(display_vaccine_in_doses, &mut prefs, &input)?;
 

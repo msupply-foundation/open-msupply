@@ -5918,6 +5918,7 @@ export type PreferenceDescriptionNode = {
 };
 
 export enum PreferenceKey {
+  AllowTrackingOfReceivedStockByDonor = 'allowTrackingOfReceivedStockByDonor',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   DisplayVaccineInDoses = 'displayVaccineInDoses',
   ShowContactTracing = 'showContactTracing',
@@ -5945,6 +5946,7 @@ export enum PreferenceValueNodeType {
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
+  allowTrackingOfReceivedStockByDonor: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   displayVaccineInDoses: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
@@ -9588,11 +9590,13 @@ export type UpsertItemVariantErrorInterface = {
 
 export type UpsertItemVariantInput = {
   coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
+  dosesPerUnit?: InputMaybe<Scalars['Int']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   manufacturerId?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   packagingVariants: Array<PackagingVariantInput>;
+  vvmType?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpsertLogLevelInput = {
@@ -9609,6 +9613,7 @@ export type UpsertPackVariantResponse =
   | UpsertItemVariantError;
 
 export type UpsertPreferencesInput = {
+  allowTrackingOfReceivedStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   displayVaccineInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
