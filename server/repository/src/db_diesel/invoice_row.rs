@@ -138,7 +138,7 @@ pub struct InvoiceRow {
     pub insurance_discount_percentage: Option<f64>,
     pub is_cancellation: bool,
     pub expected_delivery_date: Option<NaiveDate>,
-    pub donor_default_id: Option<String>,
+    pub default_donor_id: Option<String>,
 }
 
 pub struct InvoiceRowRepository<'a> {

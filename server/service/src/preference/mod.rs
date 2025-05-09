@@ -40,8 +40,11 @@ pub trait PreferenceServiceTrait: Sync + Send {
 
         // Add each pref here
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
-            allow_tracking_of_received_stock_by_donor
-                .as_description(connection, store_id.clone())?,
+        append_if_type(
+            allow_tracking_of_received_stock_by_donor,
+            &mut prefs,
+            &input,
+        )?;
         append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
         append_if_type(display_vaccine_in_doses, &mut prefs, &input)?;
 

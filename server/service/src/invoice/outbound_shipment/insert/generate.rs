@@ -59,7 +59,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        donor_default_id: None,
+        default_donor_id: None,
     };
 
     Ok(result)
