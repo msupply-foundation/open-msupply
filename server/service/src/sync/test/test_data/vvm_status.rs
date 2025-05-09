@@ -1,4 +1,4 @@
-use repository::vvm_status_row::{VVMStatusRow, VVMStatusRowDelete};
+use repository::vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowDelete};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
