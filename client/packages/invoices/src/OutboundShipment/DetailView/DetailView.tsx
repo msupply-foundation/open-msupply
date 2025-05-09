@@ -25,10 +25,9 @@ import { SidePanel } from './SidePanel';
 import { useOutbound } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { StockOutLineFragment } from '../../StockOut';
-import { OutboundLineEdit as OutboundLineEditOld } from './OutboundLineEdit';
 import { CustomerReturnEditModal } from '../../Returns';
 import { canReturnOutboundLines } from '../../utils';
-import { OutboundLineEdit, OutboundOpenedWith } from './OutboundLineEditModal';
+import { OutboundLineEdit, OutboundOpenedWith } from './OutboundLineEdit';
 
 const DetailViewInner = () => {
   const t = useTranslation();
@@ -104,14 +103,6 @@ const DetailViewInner = () => {
       {data ? (
         <>
           <AppBarButtons onAddItem={onAddItem} />
-          {false && (
-            <OutboundLineEditOld
-              draft={entity?.itemId ? { item: { id: entity!.itemId! } } : null}
-              mode={mode}
-              isOpen={isOpen}
-              onClose={onClose}
-            />
-          )}
           {isOpen && (
             <OutboundLineEdit
               openedWith={entity}
