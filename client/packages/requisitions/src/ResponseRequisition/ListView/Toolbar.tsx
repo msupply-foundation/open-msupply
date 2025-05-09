@@ -48,6 +48,11 @@ export const Toolbar: FC<{
               name: t('label.shipment-created'),
               urlParameter: 'aShipmentHasBeenCreated',
             },
+            {
+              type: 'boolean',
+              name: t('label.emergency'),
+              urlParameter: 'isEmergency',
+            },
           ]}
         />
       </Box>

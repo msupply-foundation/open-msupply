@@ -60,6 +60,10 @@ export const ResponseRequisitionListView: FC = () => {
         key: 'aShipmentHasBeenCreated',
         condition: '=',
       },
+      {
+        key: 'isEmergency',
+        condition: '=',
+      },
     ],
   });
   const pagination = { page, first, offset };
@@ -166,7 +170,6 @@ export const ResponseRequisitionListView: FC = () => {
           />
         }
       />
-
       <Footer />
     </>
   );

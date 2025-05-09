@@ -17,6 +17,10 @@ pub struct RequestRequisitionCounts {
     store_id: String,
 }
 
+pub struct EmergencyResponseRequisitionCounts {
+    store_id: String,
+}
+
 #[Object]
 impl ResponseRequisitionCounts {
     async fn new(&self, ctx: &Context<'_>) -> Result<i64> {
@@ -46,6 +50,20 @@ impl RequestRequisitionCounts {
 }
 
 #[Object]
+impl EmergencyResponseRequisitionCounts {
+    async fn new(&self, ctx: &Context<'_>) -> Result<i64> {
+        let service_provider = ctx.service_provider();
+        let service_ctx = service_provider.context(self.store_id.clone(), "".to_string())?;
+        let service = &service_provider.requisition_count_service;
+        let count = service
+            .new_emergency_response_requisition_count(&service_ctx, &self.store_id)
+            .map_err(StandardGraphqlError::from)?;
+
+        Ok(count)
+    }
+}
+
+#[Object]
 impl RequisitionCounts {
     async fn response(&self) -> ResponseRequisitionCounts {
         ResponseRequisitionCounts {
@@ -55,6 +73,12 @@ impl RequisitionCounts {
 
     async fn request(&self) -> RequestRequisitionCounts {
         RequestRequisitionCounts {
+            store_id: self.store_id.clone(),
+        }
+    }
+
+    async fn emergency(&self) -> EmergencyResponseRequisitionCounts {
+        EmergencyResponseRequisitionCounts {
             store_id: self.store_id.clone(),
         }
     }
