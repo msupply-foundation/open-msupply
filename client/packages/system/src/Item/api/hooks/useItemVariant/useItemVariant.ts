@@ -2,10 +2,12 @@ import { useState } from 'react';
 import {
   FnUtils,
   isEmpty,
+  setNullableInput,
   useMutation,
   useTranslation,
 } from '@openmsupply-client/common';
 import {
+  ItemRowFragment,
   ItemVariantFragment,
   PackagingVariantFragment,
 } from '../../operations.generated';
@@ -13,15 +15,15 @@ import { useItemApi, useItemGraphQL } from '../useItemApi';
 import { ITEM_VARIANTS } from '../../keys';
 
 export function useItemVariant({
-  itemId,
+  item,
   variant,
 }: {
-  itemId: string;
+  item: ItemRowFragment;
   variant: ItemVariantFragment | null;
 }) {
   const t = useTranslation();
   const { mutateAsync } = useUpsert({
-    itemId,
+    itemId: item.id,
   });
 
   const [draft, setDraft] = useState<ItemVariantFragment>(
@@ -29,7 +31,7 @@ export function useItemVariant({
       __typename: 'ItemVariantNode',
       id: FnUtils.generateUUID(),
       name: '',
-      itemId,
+      itemId: item.id,
       manufacturerId: null,
       coldStorageTypeId: null,
       packagingVariants: [
@@ -52,8 +54,16 @@ export function useItemVariant({
           name: t('label.tertiary'),
         },
       ],
+      item: {
+        __typename: 'ItemNode',
+        id: item.id,
+        name: item.name,
+        isVaccine: item.isVaccine,
+      },
       bundledItemVariants: [],
       bundlesWith: [],
+      dosesPerUnit: 0,
+      vvmType: null,
     }
   );
 
@@ -87,8 +97,8 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
         id: input.id,
         itemId,
         name: input.name,
-        manufacturerId: input.manufacturerId,
-        coldStorageTypeId: input.coldStorageTypeId,
+        manufacturerId: setNullableInput('manufacturerId', input),
+        coldStorageTypeId: setNullableInput('coldStorageTypeId', input),
         packagingVariants: input.packagingVariants.map(pv => ({
           id: pv.id,
           name: pv.name,
@@ -96,6 +106,8 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
           packSize: pv.packSize,
           volumePerUnit: pv.volumePerUnit,
         })),
+        dosesPerUnit: input.dosesPerUnit,
+        vvmType: setNullableInput('vvmType', input),
       },
     });
     // will be empty if there's a generic error, such as permission denied
@@ -107,6 +119,9 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
       if (result.__typename === 'UpsertItemVariantError') {
         if (result.error.__typename === 'UniqueValueViolation') {
           throw new Error(t('error.duplicate-item-variant-name'));
+        }
+        if (result.error.__typename === 'DoseConfigurationNotAllowed') {
+          throw new Error(t('error.dose-configuration-not-allowed'));
         }
       }
     }
