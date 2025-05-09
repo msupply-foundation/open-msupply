@@ -7,7 +7,7 @@ import {
   InputWithLabelRow,
   Typography,
 } from '@common/components';
-import { useTranslation } from '@common/intl';
+import { useFormatDateTime, useTranslation } from '@common/intl';
 import { useDialog } from '@common/hooks';
 import {
   useStockList,
@@ -59,8 +59,11 @@ export const CreateStocktakeModal = ({
   const [selectedMasterList, setSelectedMasterList] =
     useState<MasterListRowFragment | null>(null);
 
+  const { localisedDate } = useFormatDateTime();
+
   const generateComment = () => {
-    const { locationId, masterListId, itemsHaveStock } = createStocktakeArgs;
+    const { locationId, masterListId, itemsHaveStock, expiresBefore } =
+      createStocktakeArgs;
     if (masterListId && selectedMasterList) {
       return t('stocktake.comment-list-template', {
         list: selectedMasterList.name,
@@ -75,6 +78,11 @@ export const CreateStocktakeModal = ({
 
     if (itemsHaveStock) {
       return t('stocktake-comment-items-have-stock-template');
+    }
+    if (expiresBefore) {
+      return t('stocktake.comment-expires-before-template', {
+        date: localisedDate(expiresBefore),
+      });
     }
   };
 

@@ -1952,6 +1952,7 @@
   "stocktake.comment-initial-stocktake-template": "Initial stocktake created using all items",
   "stocktake.comment-location-template": "Created using items in location '{{location}}'",
   "stocktake.description-template": "Created by {{username}} on {{date}}",
+  "stocktake.comment-expires-before-template": "Created using items that expire before {{date}}",
   "stocktakes": "Stocktakes",
   "store-details": "Store code: {{code}}",
   "success": "Success!",
