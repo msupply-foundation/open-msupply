@@ -147,7 +147,7 @@ const ItemVariantForm = ({
                 onChange={manufacturer =>
                   updateVariant({
                     manufacturer,
-                    manufacturerId: manufacturer?.id ?? '',
+                    manufacturerId: manufacturer?.id ?? null,
                   })
                 }
               />
