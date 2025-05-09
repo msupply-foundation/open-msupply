@@ -5,6 +5,8 @@ import {
   ColumnFormat,
   useTranslation,
   Formatter,
+  TableProvider,
+  createTableStore,
 } from '@openmsupply-client/common';
 import { useFormatDateTime } from '@common/intl';
 
@@ -55,14 +57,16 @@ export const ActivityLogList: FC<{ recordId: string }> = ({ recordId }) => {
   ]);
 
   return (
-    <DataTable
-      id="name-list"
-      columns={columns}
-      data={data?.nodes}
-      isLoading={isLoading}
-      isError={isError}
-      noDataMessage={t('messages.no-log-entries')}
-      overflowX="auto"
-    />
+    <TableProvider createStore={createTableStore}>
+      <DataTable
+        id="name-list"
+        columns={columns}
+        data={data?.nodes}
+        isLoading={isLoading}
+        isError={isError}
+        noDataMessage={t('messages.no-log-entries')}
+        overflowX="auto"
+      />
+    </TableProvider>
   );
 };
