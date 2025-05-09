@@ -8,7 +8,7 @@ import {
   ReasonOptionNode,
   ReasonOptionNodeType,
 } from '@openmsupply-client/common';
-import { reasonOptions } from '../api';
+import { useReasonOptions } from '../api';
 
 interface ReasonOptionsSearchInputProps {
   value?: ReasonOptionNode | null;
@@ -31,7 +31,7 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
   isDisabled,
   onBlur,
 }) => {
-  const { data, isLoading } = reasonOptions.document.listAllActive();
+  const { data, isLoading } = useReasonOptions();
 
   const reasonFilter = (reason: ReasonOptionNode) => {
     switch (type) {

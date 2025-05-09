@@ -127,7 +127,7 @@ const useCreate = () => {
         onHold,
         numberOfPacks: totalNumberOfPacks,
         location: setNullableInput('id', location),
-        inventoryAdjustmentReasonId: reasonOption?.id,
+        reasonOptionId: reasonOption?.id,
         itemVariantId,
       },
     });

@@ -5,17 +5,12 @@ use repository::StocktakeLine;
 use service::usize_to_u32;
 
 use graphql_core::{
-    loader::{
-        InventoryAdjustmentReasonByIdLoader, ItemLoader, LocationByIdLoader, ReasonOptionLoader,
-        StockLineByIdLoader,
-    },
+    loader::{ItemLoader, LocationByIdLoader, ReasonOptionLoader, StockLineByIdLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 
-use super::{
-    InventoryAdjustmentReasonNode, ItemNode, LocationNode, ReasonOptionNode, StockLineNode,
-};
+use super::{ItemNode, LocationNode, ReasonOptionNode, StockLineNode};
 
 pub struct StocktakeLineNode {
     pub line: StocktakeLine,
@@ -118,15 +113,15 @@ impl StocktakeLineNode {
     }
 
     pub async fn inventory_adjustment_reason_id(&self) -> &Option<String> {
-        &self.line.line.inventory_adjustment_reason_id
+        &self.line.line.reason_option_id
     }
 
     pub async fn inventory_adjustment_reason(
         &self,
         ctx: &Context<'_>,
-    ) -> Result<Option<InventoryAdjustmentReasonNode>> {
-        let loader = ctx.get_loader::<DataLoader<InventoryAdjustmentReasonByIdLoader>>();
-        let inventory_adjustment_reason_id = match &self.line.line.inventory_adjustment_reason_id {
+    ) -> Result<Option<ReasonOptionNode>> {
+        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
+        let inventory_adjustment_reason_id = match &self.line.line.reason_option_id {
             None => return Ok(None),
             Some(inventory_adjustment_reason_id) => inventory_adjustment_reason_id,
         };
@@ -135,7 +130,7 @@ impl StocktakeLineNode {
             .load_one(inventory_adjustment_reason_id.clone())
             .await?;
 
-        Ok(result.map(InventoryAdjustmentReasonNode::from_domain))
+        Ok(result.map(ReasonOptionNode::from_domain))
     }
 
     pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {

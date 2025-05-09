@@ -31,17 +31,13 @@ pub fn validate(
     };
 
     if check_active_adjustment_reasons(connection, reduction_amount)?.is_some()
-        && input.inventory_adjustment_reason_id.is_none()
+        && input.reason_option_id.is_none()
     {
         return Err(AdjustmentReasonNotProvided);
     }
 
-    if input.inventory_adjustment_reason_id.is_some()
-        && !check_reason_is_valid(
-            connection,
-            input.inventory_adjustment_reason_id.clone(),
-            reduction_amount,
-        )?
+    if input.reason_option_id.is_some()
+        && !check_reason_is_valid(connection, input.reason_option_id.clone(), reduction_amount)?
     {
         return Err(AdjustmentReasonNotValid);
     }

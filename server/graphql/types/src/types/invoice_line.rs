@@ -1,15 +1,9 @@
-use super::{
-    InventoryAdjustmentReasonNode, ItemNode, LocationNode, PricingNode, ReasonOptionNode,
-    ReturnReasonNode, StockLineNode,
-};
+use super::{ItemNode, LocationNode, PricingNode, ReasonOptionNode, StockLineNode};
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
-    loader::{
-        InventoryAdjustmentReasonByIdLoader, ItemLoader, LocationByIdLoader, ReasonOptionLoader,
-        ReturnReasonLoader, StockLineByIdLoader,
-    },
+    loader::{ItemLoader, LocationByIdLoader, ReasonOptionLoader, StockLineByIdLoader},
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -173,29 +167,31 @@ impl InvoiceLineNode {
     pub async fn note(&self) -> &Option<String> {
         &self.row().note
     }
+
+    // Deprecated field
     pub async fn return_reason_id(&self) -> &Option<String> {
-        &self.row().return_reason_id
+        &self.row().reason_option_id
     }
 
-    pub async fn return_reason(&self, ctx: &Context<'_>) -> Result<Option<ReturnReasonNode>> {
-        let loader = ctx.get_loader::<DataLoader<ReturnReasonLoader>>();
+    pub async fn return_reason(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
+        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
 
-        let return_reason_id = match &self.row().return_reason_id {
+        let return_reason_id = match &self.row().reason_option_id {
             Some(return_reason_id) => return_reason_id,
             None => return Ok(None),
         };
 
         let result = loader.load_one(return_reason_id.clone()).await?;
 
-        Ok(result.map(ReturnReasonNode::from_domain))
+        Ok(result.map(ReasonOptionNode::from_domain))
     }
 
     pub async fn inventory_adjustment_reason(
         &self,
         ctx: &Context<'_>,
-    ) -> Result<Option<InventoryAdjustmentReasonNode>> {
-        let loader = ctx.get_loader::<DataLoader<InventoryAdjustmentReasonByIdLoader>>();
-        let inventory_adjustment_reason_id = match &self.row().inventory_adjustment_reason_id {
+    ) -> Result<Option<ReasonOptionNode>> {
+        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
+        let inventory_adjustment_reason_id = match &self.row().reason_option_id {
             None => return Ok(None),
             Some(inventory_adjustment_reason_id) => inventory_adjustment_reason_id,
         };
@@ -204,7 +200,7 @@ impl InvoiceLineNode {
             .load_one(inventory_adjustment_reason_id.clone())
             .await?;
 
-        Ok(result.map(InventoryAdjustmentReasonNode::from_domain))
+        Ok(result.map(ReasonOptionNode::from_domain))
     }
 
     pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {

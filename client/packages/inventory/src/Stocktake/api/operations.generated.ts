@@ -48,11 +48,6 @@ export type StocktakeLineFragment = {
     isVaccine: boolean;
     doses: number;
   };
-  inventoryAdjustmentReason?: {
-    __typename: 'InventoryAdjustmentReasonNode';
-    id: string;
-    reason: string;
-  } | null;
   reasonOption?: {
     __typename: 'ReasonOptionNode';
     reason: string;
@@ -115,11 +110,6 @@ export type StocktakeFragment = {
         isVaccine: boolean;
         doses: number;
       };
-      inventoryAdjustmentReason?: {
-        __typename: 'InventoryAdjustmentReasonNode';
-        id: string;
-        reason: string;
-      } | null;
       reasonOption?: {
         __typename: 'ReasonOptionNode';
         reason: string;
@@ -222,11 +212,6 @@ export type StocktakeQuery = {
               isVaccine: boolean;
               doses: number;
             };
-            inventoryAdjustmentReason?: {
-              __typename: 'InventoryAdjustmentReasonNode';
-              id: string;
-              reason: string;
-            } | null;
             reasonOption?: {
               __typename: 'ReasonOptionNode';
               reason: string;
@@ -301,11 +286,6 @@ export type StocktakeByNumberQuery = {
               isVaccine: boolean;
               doses: number;
             };
-            inventoryAdjustmentReason?: {
-              __typename: 'InventoryAdjustmentReasonNode';
-              id: string;
-              reason: string;
-            } | null;
             reasonOption?: {
               __typename: 'ReasonOptionNode';
               reason: string;
@@ -365,11 +345,6 @@ export type StocktakeLinesQuery = {
         isVaccine: boolean;
         doses: number;
       };
-      inventoryAdjustmentReason?: {
-        __typename: 'InventoryAdjustmentReasonNode';
-        id: string;
-        reason: string;
-      } | null;
       reasonOption?: {
         __typename: 'ReasonOptionNode';
         reason: string;
@@ -644,11 +619,6 @@ export const StocktakeLineFragmentDoc = gql`
       doses
     }
     itemVariantId
-    inventoryAdjustmentReason {
-      __typename
-      id
-      reason
-    }
     reasonOption {
       reason
       type

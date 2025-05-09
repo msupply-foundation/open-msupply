@@ -46,8 +46,6 @@ pub fn generate(
         sell_price_per_pack: 0.0,
         number_of_packs: 0.0,
         prescribed_quantity: None,
-        inventory_adjustment_reason_id: None,
-        return_reason_id: None,
         item_variant_id: None,
         linked_invoice_id: None,
         reason_option_id: None,
