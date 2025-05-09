@@ -43,6 +43,7 @@ export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
 
   const [bufferedState, setBufferedState] = useState(query.data);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setBufferedState(query.data), [query.isFetched]);
 
   const updateRnRForm = (patch: {
@@ -132,7 +133,7 @@ export const useUpdateLines = (rnrFormId: string) => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => /*queryClient.invalidateQueries([RNR_FORM])*/ {},
+    // onSuccess: () => queryClient.invalidateQueries([RNR_FORM])
     // Prevents duplication of error messages
     onError: () => {},
   });
