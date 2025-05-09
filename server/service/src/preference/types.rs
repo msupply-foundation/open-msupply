@@ -15,6 +15,8 @@ pub enum PrefKey {
     ShowContactTracing,
     DisplayVaccineInDoses,
     DisplayPopulationBasedForecasting,
+    ManageVvmStatus,
+    SortByVvmStatus,
 }
 
 #[derive(Clone, Debug, PartialEq)]
