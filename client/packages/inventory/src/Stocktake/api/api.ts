@@ -237,6 +237,7 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
       (await sdk.insertStocktake({
         input: {
           id: FnUtils.generateUUID(),
+          isInitialStocktake: false,
         },
         storeId,
       })) || {};

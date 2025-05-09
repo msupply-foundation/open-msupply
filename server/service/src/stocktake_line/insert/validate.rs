@@ -89,6 +89,7 @@ pub fn validate(
     if check_active_adjustment_reasons(connection, stocktake_reduction_amount)?.is_some()
         && input.inventory_adjustment_reason_id.is_none()
         && stocktake_reduction_amount != 0.0
+        && stocktake.is_initial_stocktake == false
     {
         return Err(AdjustmentReasonNotProvided);
     }

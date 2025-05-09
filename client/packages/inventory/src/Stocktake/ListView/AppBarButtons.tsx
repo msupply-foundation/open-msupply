@@ -6,18 +6,19 @@ import {
   Grid,
   FileUtils,
   LoadingButton,
-  ToggleState,
   EnvUtils,
   Platform,
+  ButtonWithIcon,
+  PlusCircleIcon,
+  useToggle,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
-import { CreateStocktakeButton } from './CreateStocktakeButton';
 import { useStocktake } from '../api';
 import { stocktakesToCsv } from '../../utils';
+import { CreateStocktakeModal } from './CreateStocktakeModal';
 
-export const AppBarButtons: FC<{
-  modalController: ToggleState;
-}> = ({ modalController }) => {
+export const AppBarButtons: FC = () => {
+  const modalController = useToggle();
   const { success, error } = useNotification();
   const t = useTranslation();
   const { isLoading, fetchAsync } = useStocktake.document.listAll({
@@ -41,7 +42,15 @@ export const AppBarButtons: FC<{
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <CreateStocktakeButton modalController={modalController} />
+        <ButtonWithIcon
+          Icon={<PlusCircleIcon />}
+          label={t('label.new-stocktake')}
+          onClick={modalController.toggleOn}
+        />
+        <CreateStocktakeModal
+          open={modalController.isOn}
+          onClose={modalController.toggleOff}
+        />
         <LoadingButton
           startIcon={<DownloadIcon />}
           variant="outlined"

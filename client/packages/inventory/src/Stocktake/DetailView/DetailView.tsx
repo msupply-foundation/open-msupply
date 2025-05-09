@@ -121,7 +121,7 @@ export const DetailView = () => {
       />
     );
 
-
+  const isInitialStocktake = stocktake.isInitialStocktake;
 
   return (
     <StocktakeLineErrorProvider>
@@ -137,6 +137,7 @@ export const DetailView = () => {
             onClose={onClose}
             mode={mode}
             item={entity}
+            isInitialStocktake={isInitialStocktake}
           />
         )}
       </TableProvider>

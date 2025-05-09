@@ -40,6 +40,7 @@ interface StocktakeLineEditProps {
   mode: ModalMode | null;
   onClose: () => void;
   isOpen: boolean;
+  isInitialStocktake: boolean;
 }
 
 export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
@@ -47,6 +48,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   mode,
   onClose,
   isOpen,
+  isInitialStocktake,
 }) => {
   const theme = useAppTheme();
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
@@ -178,6 +180,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                           isDisabled={isDisabled}
                           batches={reversedDraftLines}
                           update={update}
+                          isInitialStocktake={isInitialStocktake}
                         />
                       </StyledTabContainer>
                     </StyledTabPanel>

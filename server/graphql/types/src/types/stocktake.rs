@@ -67,6 +67,10 @@ impl StocktakeNode {
         self.stocktake.is_locked
     }
 
+    pub async fn is_initial_stocktake(&self) -> &bool {
+        &self.stocktake.is_initial_stocktake
+    }
+
     pub async fn status(&self) -> StocktakeNodeStatus {
         StocktakeNodeStatus::from_domain(&self.stocktake.status)
     }

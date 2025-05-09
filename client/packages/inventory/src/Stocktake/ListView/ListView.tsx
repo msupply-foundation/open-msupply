@@ -7,7 +7,6 @@ import {
   createTableStore,
   useTranslation,
   useTableStore,
-  useToggle,
   NothingHere,
   useUrlQueryParams,
   ColumnFormat,
@@ -20,6 +19,7 @@ import { getStocktakeTranslator, isStocktakeDisabled } from '../../utils';
 import { StocktakeRowFragment } from '../api/operations.generated';
 import { useStocktake } from '../api';
 import { Footer } from './Footer';
+import { useCreateStocktake } from './createStocktake';
 
 const useDisableStocktakeRows = (rows?: StocktakeRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -32,7 +32,7 @@ const useDisableStocktakeRows = (rows?: StocktakeRowFragment[]) => {
 export const StocktakeListView: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation();
-  const modalController = useToggle();
+  const { createStocktake } = useCreateStocktake();
 
   const {
     updateSortQuery,
@@ -68,11 +68,19 @@ export const StocktakeListView: FC = () => {
     [sortBy]
   );
 
+  const createInitialStocktake = () => {
+    const comment = t('stocktake.comment-initial-stocktake-template');
+    const input = {
+      comment,
+      isInitialStocktake: true,
+    };
+    createStocktake(input);
+  };
+
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons modalController={modalController} />
-
+      <AppBarButtons />
       <DataTable
         id="stocktake-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
@@ -87,7 +95,8 @@ export const StocktakeListView: FC = () => {
         noDataElement={
           <NothingHere
             body={t('error.no-stocktakes')}
-            onCreate={modalController.toggleOn}
+            onCreate={createInitialStocktake}
+            buttonText={t('button.initial-stocktake')}
           />
         }
       />

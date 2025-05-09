@@ -3559,6 +3559,7 @@ export type InsertStocktakeInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   expiresBefore?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  isInitialStocktake: Scalars['Boolean']['input'];
   isLocked?: InputMaybe<Scalars['Boolean']['input']>;
   itemsHaveStock?: InputMaybe<Scalars['Boolean']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
@@ -8101,6 +8102,7 @@ export type StocktakeNode = {
   inventoryAdditionId?: Maybe<Scalars['String']['output']>;
   inventoryReduction?: Maybe<InvoiceNode>;
   inventoryReductionId?: Maybe<Scalars['String']['output']>;
+  isInitialStocktake: Scalars['Boolean']['output'];
   isLocked: Scalars['Boolean']['output'];
   lines: StocktakeLineConnector;
   program?: Maybe<ProgramNode>;
