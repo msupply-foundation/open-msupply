@@ -107,18 +107,11 @@ export const OutboundLineEditTable = ({
 }: OutboundLineEditTableProps) => {
   const t = useTranslation();
 
-  const { allocateIn, allocatedQuantity } = useAllocationContext(
-    ({ allocateIn, allocatedUnits: allocatedQuantity }) => ({
-      allocateIn,
-      allocatedQuantity, // todo - need units here! or is?
-    })
-  );
+  const { allocatedQuantity } = useAllocationContext(({ allocatedUnits }) => ({
+    allocatedQuantity: allocatedUnits,
+  }));
 
-  const { orderedRows, placeholderRow } = useOutboundLineEditRows(
-    rows,
-    allocateIn,
-    batch
-  );
+  const { orderedRows, placeholderRow } = useOutboundLineEditRows(rows, batch);
   const onEditStockLine = (key: string, value: number, packSize: number) => {
     const num = Number.isNaN(value) ? 0 : value;
     onChange(key, num, packSize);

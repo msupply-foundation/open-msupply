@@ -24,9 +24,10 @@ import { useAllocationContext } from './allocation/useAllocationContext';
 
 interface AllocationProps {
   itemId?: string;
+  allowPlaceholder?: boolean;
 }
 
-export const Allocation = ({ itemId }: AllocationProps) => {
+export const Allocation = ({ itemId, allowPlaceholder }: AllocationProps) => {
   const { data: item } = useItemInfo(itemId);
   // TODO... this better but uh
   const { draftStockOutLines } = useDraftOutboundLines(itemId ?? '');
@@ -37,10 +38,18 @@ export const Allocation = ({ itemId }: AllocationProps) => {
     initialise(draftStockOutLines);
   }, [itemId, draftStockOutLines.length]);
 
-  return item ? <AllocationInner item={item} /> : null;
+  return item ? (
+    <AllocationInner item={item} allowPlaceholder={allowPlaceholder} />
+  ) : null;
 };
 
-const AllocationInner = ({ item }: { item: DraftItem }) => {
+const AllocationInner = ({
+  item,
+  allowPlaceholder,
+}: {
+  item: DraftItem;
+  allowPlaceholder?: boolean;
+}) => {
   const t = useTranslation();
 
   const { currency, otherParty } = useOutbound.document.fields([
@@ -80,7 +89,7 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
         </Grid>
       </ModalRow>
 
-      <AutoAllocate />
+      <AutoAllocate allowPlaceholder={allowPlaceholder} />
 
       <TableWrapper
         hasLines={hasLines}

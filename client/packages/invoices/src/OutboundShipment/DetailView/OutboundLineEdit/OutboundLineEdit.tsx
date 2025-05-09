@@ -145,7 +145,10 @@ export const OutboundLineEdit = ({
           onChangeItem={setItemId}
           disabled={mode === ModalMode.Update} // TODO - barcode w no item?
         />
-        <Allocation itemId={itemId} />
+        <Allocation
+          itemId={itemId}
+          allowPlaceholder={status === InvoiceNodeStatus.New}
+        />
       </Grid>
     </Modal>
   );

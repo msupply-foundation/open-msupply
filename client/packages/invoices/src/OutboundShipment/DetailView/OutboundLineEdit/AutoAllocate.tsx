@@ -11,29 +11,36 @@ import {
   useDebounceCallback,
 } from '@openmsupply-client/common';
 import { StockOutAlerts } from '../../../StockOut';
-import { useAllocationContext } from './allocation/useAllocationContext';
-import { AllocateIn } from './AllocateIn';
+import {
+  AllocateIn,
+  useAllocationContext,
+} from './allocation/useAllocationContext';
 
-// AGNOSTIC OF WHAT WE ARE ISSUING IN (Packs of X, units, doses...)
-export const AutoAllocate = () => {
+export const AutoAllocate = ({
+  allowPlaceholder,
+}: {
+  allowPlaceholder?: boolean;
+}) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
 
-  const { autoAllocate, alerts, allocatedQuantity, isAutoAllocated } =
-    useAllocationContext(state => ({
-      autoAllocate: state.autoAllocate,
-      alerts: state.alerts,
-      allocatedQuantity: Math.round(
-        state.allocatedUnits / (state.allocateIn === -1 ? 1 : state.allocateIn)
-      ),
-      isAutoAllocated: state.isAutoAllocated,
-    }));
+  const {
+    autoAllocate,
+    alerts,
+    allocatedQuantity,
+    isAutoAllocated,
+    allocateIn,
+  } = useAllocationContext(state => ({
+    autoAllocate: state.autoAllocate,
+    alerts: state.alerts,
+    allocatedQuantity: state.allocatedUnits, // round?
+    isAutoAllocated: state.isAutoAllocated,
+    allocateIn: state.allocateIn,
+  }));
 
   // Using buffer state with the allocated quantity, so gets pre-populated with existing
   // quantity, and updated when the user edits the individual lines
   const [issueQuantity, setIssueQuantity] = useBufferState(allocatedQuantity);
-
-  // TODO, can we use simpler debounce?
 
   // using a debounced value for the allocation. In the scenario where
   // you have only pack sizes > 1 available, and try to type a quantity which starts with 1
@@ -41,7 +48,7 @@ export const AutoAllocate = () => {
   // pack size which stops you entering the required quantity.
   // See https://github.com/msupply-foundation/open-msupply/issues/2727
   const debouncedAllocate = useDebounceCallback(
-    quantity => autoAllocate(quantity, format, t),
+    quantity => autoAllocate(quantity, format, t, allowPlaceholder),
     [],
     500
   );
@@ -62,13 +69,15 @@ export const AutoAllocate = () => {
         <Box display="flex" alignItems="flex-start" gap={2}>
           <Grid container alignItems="center" pt={1}>
             <ModalLabel label={t('label.issue')} />
-            <AllocateIn />
-            <Box marginLeft={1} />
             <NumericTextInput
               autoFocus
               value={issueQuantity}
               onChange={handleIssueQuantityChange}
             />
+            <Box marginLeft={1} />
+            {allocateIn === AllocateIn.Doses
+              ? t('label.doses')
+              : t('label.units')}
           </Grid>
           <StockOutAlerts
             allocationAlerts={alerts}
