@@ -31,6 +31,7 @@ mod test {
     #[actix_rt::test]
     async fn migration_2_08_00() {
         use v2_07_00::V2_07_00;
+        use v2_08_00::V2_08_00;
 
         use crate::migrations::*;
         use crate::test_db::*;
