@@ -2432,12 +2432,6 @@ export type EqualFilterGenderType = {
   notEqualTo?: InputMaybe<GenderType>;
 };
 
-export type EqualFilterInventoryAdjustmentReasonTypeInput = {
-  equalAny?: InputMaybe<Array<InventoryAdjustmentReasonNodeType>>;
-  equalTo?: InputMaybe<InventoryAdjustmentReasonNodeType>;
-  notEqualTo?: InputMaybe<InventoryAdjustmentReasonNodeType>;
-};
-
 export type EqualFilterInvoiceLineTypeInput = {
   equalAny?: InputMaybe<Array<InvoiceLineNodeType>>;
   equalTo?: InputMaybe<InvoiceLineNodeType>;
@@ -3578,7 +3572,6 @@ export type InsertStocktakeLineInput = {
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemId?: InputMaybe<Scalars['String']['input']>;
   itemVariantId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
@@ -3767,50 +3760,6 @@ export type InvalidToken = RefreshTokenErrorInterface & {
   description: Scalars['String']['output'];
 };
 
-export type InventoryAdjustmentReasonConnector = {
-  __typename: 'InventoryAdjustmentReasonConnector';
-  nodes: Array<InventoryAdjustmentReasonNode>;
-  totalCount: Scalars['Int']['output'];
-};
-
-export type InventoryAdjustmentReasonFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  type?: InputMaybe<EqualFilterInventoryAdjustmentReasonTypeInput>;
-};
-
-export type InventoryAdjustmentReasonNode = {
-  __typename: 'InventoryAdjustmentReasonNode';
-  id: Scalars['String']['output'];
-  isActive: Scalars['Boolean']['output'];
-  reason: Scalars['String']['output'];
-  type: InventoryAdjustmentReasonNodeType;
-};
-
-export enum InventoryAdjustmentReasonNodeType {
-  Negative = 'NEGATIVE',
-  Positive = 'POSITIVE',
-}
-
-export type InventoryAdjustmentReasonResponse =
-  InventoryAdjustmentReasonConnector;
-
-export enum InventoryAdjustmentReasonSortFieldInput {
-  Id = 'id',
-  InventoryAdjustmentReasonType = 'inventoryAdjustmentReasonType',
-  Reason = 'reason',
-}
-
-export type InventoryAdjustmentReasonSortInput = {
-  /**
-   * Sort query result is sorted descending or ascending (if not provided the default is
-   * ascending)
-   */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Sort query result by `key` */
-  key: InventoryAdjustmentReasonSortFieldInput;
-};
-
 export type InvoiceConnector = {
   __typename: 'InvoiceConnector';
   nodes: Array<InvoiceNode>;
@@ -3893,7 +3842,7 @@ export type InvoiceLineNode = {
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   foreignCurrencyPriceBeforeTax?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
-  inventoryAdjustmentReason?: Maybe<InventoryAdjustmentReasonNode>;
+  inventoryAdjustmentReason?: Maybe<ReasonOptionNode>;
   invoiceId: Scalars['String']['output'];
   item: ItemNode;
   itemCode: Scalars['String']['output'];
@@ -3909,7 +3858,7 @@ export type InvoiceLineNode = {
   prescribedQuantity?: Maybe<Scalars['Float']['output']>;
   pricing: PricingNode;
   reasonOption?: Maybe<ReasonOptionNode>;
-  returnReason?: Maybe<ReturnReasonNode>;
+  returnReason?: Maybe<ReasonOptionNode>;
   returnReasonId?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
   stockLine?: Maybe<StockLineNode>;
@@ -6310,7 +6259,6 @@ export type Queries = {
   insurancePolicies: InsurancesResponse;
   insurancePolicy: InsuranceResponse;
   insuranceProviders: InsuranceProvidersResponse;
-  inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;
@@ -6372,7 +6320,6 @@ export type Queries = {
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
-  returnReasons: ReturnReasonResponse;
   schedulesWithPeriodsByProgram: PeriodSchedulesResponse;
   /** Query omSupply "sensor" entries */
   sensors: SensorsResponse;
@@ -6666,12 +6613,6 @@ export type QueriesInsuranceProvidersArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type QueriesInventoryAdjustmentReasonsArgs = {
-  filter?: InputMaybe<InventoryAdjustmentReasonFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<InventoryAdjustmentReasonSortInput>>;
-};
-
 export type QueriesInvoiceArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
@@ -6914,12 +6855,6 @@ export type QueriesRequisitionsArgs = {
 export type QueriesResponseRequisitionStatsArgs = {
   requisitionLineId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
-};
-
-export type QueriesReturnReasonsArgs = {
-  filter?: InputMaybe<ReturnReasonFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<ReturnReasonSortInput>>;
 };
 
 export type QueriesSchedulesWithPeriodsByProgramArgs = {
@@ -7597,41 +7532,6 @@ export type ResponseStoreStatsNode = {
   stockOnOrder: Scalars['Float']['output'];
 };
 
-export type ReturnReasonConnector = {
-  __typename: 'ReturnReasonConnector';
-  nodes: Array<ReturnReasonNode>;
-  totalCount: Scalars['Int']['output'];
-};
-
-export type ReturnReasonFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
-export type ReturnReasonNode = {
-  __typename: 'ReturnReasonNode';
-  id: Scalars['String']['output'];
-  isActive: Scalars['Boolean']['output'];
-  reason: Scalars['String']['output'];
-};
-
-export type ReturnReasonResponse = ReturnReasonConnector;
-
-export enum ReturnReasonSortFieldInput {
-  Id = 'id',
-  Reason = 'reason',
-}
-
-export type ReturnReasonSortInput = {
-  /**
-   * Sort query result is sorted descending or ascending (if not provided the default is
-   * ascending)
-   */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Sort query result by `key` */
-  key: ReturnReasonSortFieldInput;
-};
-
 export type RnRFormConnector = {
   __typename: 'RnRFormConnector';
   nodes: Array<RnRFormNode>;
@@ -8011,7 +7911,7 @@ export type StocktakeLineNode = {
   countedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
-  inventoryAdjustmentReason?: Maybe<InventoryAdjustmentReasonNode>;
+  inventoryAdjustmentReason?: Maybe<ReasonOptionNode>;
   inventoryAdjustmentReasonId?: Maybe<Scalars['String']['output']>;
   item: ItemNode;
   itemId: Scalars['String']['output'];
@@ -9366,7 +9266,6 @@ export type UpdateStocktakeLineInput = {
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
