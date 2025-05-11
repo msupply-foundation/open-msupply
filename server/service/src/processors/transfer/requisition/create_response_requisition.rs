@@ -292,6 +292,10 @@ fn generate_response_requisition_lines(
                          expiring_units,
                          days_out_of_stock,
                          option_id,
+                         forecast_num_people: _,
+                         forecast_num_doses: _,
+                         forecast_coverage_rate: _,
+                         forecast_loss_factor: _,
                      },
                  item_row: ItemRow { id: item_id, .. },
                  requisition_row: _,
@@ -318,6 +322,10 @@ fn generate_response_requisition_lines(
                 expiring_units,
                 days_out_of_stock,
                 option_id,
+                forecast_num_people: None,
+                forecast_num_doses: None,
+                forecast_coverage_rate: None,
+                forecast_loss_factor: None,
             },
         )
         .collect();

@@ -294,6 +294,10 @@ fn generate_lines(
                 expiring_units: 0.0,
                 days_out_of_stock: 0.0,
                 option_id: None,
+                forecast_num_people: None,
+                forecast_num_doses: None,
+                forecast_coverage_rate: None,
+                forecast_loss_factor: None,
             }
         })
         .collect();

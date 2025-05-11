@@ -34,5 +34,9 @@ pub fn generate(
         comment: None,
         approved_quantity: 0.0,
         approval_comment: None,
+        forecast_num_people: None,
+        forecast_num_doses: None,
+        forecast_coverage_rate: None,
+        forecast_loss_factor: None,
     }
 }

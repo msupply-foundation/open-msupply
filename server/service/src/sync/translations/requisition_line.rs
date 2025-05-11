@@ -128,6 +128,11 @@ impl SyncTranslation for RequisitionLineTranslation {
             expiring_units: data.expiring_units,
             days_out_of_stock: data.days_out_of_stock,
             option_id: data.option_id,
+            // TO-DO: Implement these translations
+            forecast_num_people: None,
+            forecast_num_doses: None,
+            forecast_coverage_rate: None,
+            forecast_loss_factor: None,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -171,6 +176,10 @@ impl SyncTranslation for RequisitionLineTranslation {
             expiring_units,
             days_out_of_stock,
             option_id,
+            forecast_num_people,
+            forecast_num_doses,
+            forecast_coverage_rate,
+            forecast_loss_factor,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(

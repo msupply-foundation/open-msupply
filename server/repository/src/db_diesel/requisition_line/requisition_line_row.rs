@@ -33,7 +33,12 @@ table! {
         addition_in_units -> Double,
         expiring_units -> Double,
         days_out_of_stock -> Double,
-        option_id -> Nullable<Text>
+        option_id -> Nullable<Text>,
+        // For quantity forecasting
+        forecast_num_people -> Nullable<Integer>,
+        forecast_num_doses -> Nullable<Integer>,
+        forecast_coverage_rate -> Nullable<Double>,
+        forecast_loss_factor -> Nullable<Double>,
     }
 }
 
@@ -69,6 +74,11 @@ pub struct RequisitionLineRow {
     pub expiring_units: f64,
     pub days_out_of_stock: f64,
     pub option_id: Option<String>,
+    // For quantity forecasting
+    pub forecast_num_people: Option<i32>,
+    pub forecast_num_doses: Option<i32>,
+    pub forecast_coverage_rate: Option<f64>,
+    pub forecast_loss_factor: Option<f64>,
 }
 
 pub struct RequisitionLineRowRepository<'a> {
