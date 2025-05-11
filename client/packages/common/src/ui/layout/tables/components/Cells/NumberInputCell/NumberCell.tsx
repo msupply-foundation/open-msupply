@@ -27,7 +27,13 @@ export const NumberCell = <T extends RecordWithId>({
         padding: '4px 8px',
       }}
     >
-      <Tooltip title={value?.toString()}>
+      <Tooltip
+        title={
+          !!NumUtils.hasMoreThanTwoDp(value ?? 0)
+            ? `${displayValue}...`
+            : displayValue
+        }
+      >
         <Typography
           style={{
             overflow: 'hidden',
