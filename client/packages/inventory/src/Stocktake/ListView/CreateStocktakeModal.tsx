@@ -32,10 +32,6 @@ interface NewStocktakeModalProps {
   description?: string;
 }
 
-// Separated the CreateStocktakeButton from the CreateStocktakeModal.
-// The CreateStocktakeButton is now in AppBarButtons.tsx which also holds the modal state
-
-// Recently changed Masterlist and Location Arguments from Select components to Autocomplete -> have simplified logic in the modal and comment generation which uses these values
 // Intended behaviour is for the stocktake to generate based on one of the available argument selections only - the user cannot select multiple at once.
 
 export const CreateStocktakeModal = ({
