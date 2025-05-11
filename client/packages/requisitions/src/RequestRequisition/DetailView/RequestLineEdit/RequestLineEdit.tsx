@@ -81,7 +81,7 @@ export const RequestLineEdit = ({
       <AccordionPanelSection
         key={`${key}_order`}
         title={t('title.order')}
-        defaultExpanded={!isNew && !disabled}
+        defaultExpanded={!isNew}
       >
         <Order
           disabled={disabled}
@@ -90,7 +90,11 @@ export const RequestLineEdit = ({
           update={update}
         />
       </AccordionPanelSection>
-      <AccordionPanelSection key={`${key}_details`} title={t('label.details')}>
+      <AccordionPanelSection
+        key={`${key}_details`}
+        title={t('label.details')}
+        defaultExpanded={!isNew}
+      >
         <Details
           isProgram={isProgram}
           draft={draft}
