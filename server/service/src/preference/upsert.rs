@@ -15,6 +15,8 @@ pub struct UpsertPreferences {
     pub show_contact_tracing: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
     pub display_vaccine_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
+    pub manage_vvm_status: Option<Vec<StorePrefUpdate<bool>>>,
+    pub sort_by_vvm_status: Option<Vec<StorePrefUpdate<bool>>>,
     pub allow_tracking_of_received_stock_by_donor: Option<bool>,
 }
 
@@ -24,6 +26,8 @@ pub fn upsert_preferences(
         show_contact_tracing: show_contact_tracing_input,
         display_population_based_forecasting: display_population_based_forecasting_input,
         display_vaccine_in_doses: display_vaccine_in_doses_input,
+        manage_vvm_status: manage_vvm_status_input,
+        sort_by_vvm_status: sort_by_vvm_status_input,
         allow_tracking_of_received_stock_by_donor: allow_tracking_of_received_stock_by_donor_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
@@ -31,8 +35,10 @@ pub fn upsert_preferences(
         show_contact_tracing,
         display_population_based_forecasting,
         display_vaccine_in_doses,
+        manage_vvm_status,
+        sort_by_vvm_status,
         allow_tracking_of_received_stock_by_donor,
-    } = get_preference_provider();
+    }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
         .transaction_sync(|connection| {
@@ -58,6 +64,18 @@ pub fn upsert_preferences(
                         update.value,
                         Some(update.store_id),
                     )?;
+                }
+            }
+
+            if let Some(input) = manage_vvm_status_input {
+                for update in input.into_iter() {
+                    manage_vvm_status.upsert(connection, update.value, Some(update.store_id))?;
+                }
+            }
+
+            if let Some(input) = sort_by_vvm_status_input {
+                for update in input.into_iter() {
+                    sort_by_vvm_status.upsert(connection, update.value, Some(update.store_id))?;
                 }
             }
 

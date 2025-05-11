@@ -25,6 +25,14 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.display_vaccine_in_doses)
     }
 
+    pub async fn manage_vvm_status(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.manage_vvm_status)
+    }
+
+    pub async fn sort_by_vvm_status(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.sort_by_vvm_status)
+    }
+
     pub async fn allow_tracking_of_received_stock_by_donor(&self) -> Result<bool> {
         self.load_preference(&self.preferences.allow_tracking_of_received_stock_by_donor)
     }
@@ -77,6 +85,8 @@ pub enum PreferenceKey {
     ShowContactTracing,
     DisplayVaccineInDoses,
     DisplayPopulationBasedForecasting,
+    ManageVvmStatus,
+    SortByVvmStatus,
     AllowTrackingOfReceivedStockByDonor,
 }
 
@@ -88,6 +98,8 @@ impl PreferenceKey {
                 PreferenceKey::DisplayPopulationBasedForecasting
             }
             PrefKey::DisplayVaccineInDoses => PreferenceKey::DisplayVaccineInDoses,
+            PrefKey::ManageVvmStatus => PreferenceKey::ManageVvmStatus,
+            PrefKey::SortByVvmStatus => PreferenceKey::SortByVvmStatus,
             PrefKey::AllowTrackingOfReceivedStockByDonor => {
                 PreferenceKey::AllowTrackingOfReceivedStockByDonor
             }
