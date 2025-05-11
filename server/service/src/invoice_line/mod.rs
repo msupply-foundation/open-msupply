@@ -7,6 +7,7 @@ use repository::PaginationOption;
 use repository::RepositoryError;
 
 use crate::service_provider::ServiceContext;
+use crate::ListError;
 use crate::ListResult;
 
 pub mod query;
@@ -17,6 +18,9 @@ use self::inbound_shipment_service_line::*;
 
 pub mod outbound_shipment_service_line;
 use self::outbound_shipment_service_line::*;
+
+pub mod get_draft_outbound_lines;
+use self::get_draft_outbound_lines::*;
 
 pub mod outbound_shipment_unallocated_line;
 use self::outbound_shipment_unallocated_line::*;
@@ -51,6 +55,16 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         sort: Option<InvoiceLineSort>,
     ) -> Result<ListResult<InvoiceLine>, GetInvoiceLinesError> {
         get_invoice_lines(ctx, store_id, pagination, filter, sort)
+    }
+
+    fn get_draft_outbound_shipment_lines(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        item_id: &str,
+        invoice_id: &str,
+    ) -> Result<Vec<DraftOutboundShipmentLine>, ListError> {
+        get_draft_outbound_shipment_lines(ctx, store_id, item_id, invoice_id)
     }
 
     // Stock out: Outbound Shipment/Supplier Return/Prescription

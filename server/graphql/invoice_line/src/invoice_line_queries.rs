@@ -13,7 +13,8 @@ use graphql_invoice::invoice_queries::{
     EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput,
 };
 use graphql_types::types::{
-    InvoiceLineConnector, InvoiceLineNodeType, InvoiceNodeStatus, InvoiceNodeType,
+    DraftOutboundShipmentLineNode, InvoiceLineConnector, InvoiceLineNodeType, InvoiceNodeStatus,
+    InvoiceNodeType,
 };
 use repository::{
     DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineSort, InvoiceLineSortField,
@@ -204,5 +205,36 @@ pub fn invoice_lines(
             GetInvoiceLinesError::ListError(err) => return Err(list_error_to_gql_err(err)),
         };
         Err(graphql_error.extend())
+    }
+}
+
+pub fn draft_outbound_lines(
+    ctx: &Context<'_>,
+    store_id: &str,
+    item_id: &str,
+    invoice_id: &str,
+) -> Result<Vec<DraftOutboundShipmentLineNode>> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateOutboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service = &service_provider.invoice_line_service;
+
+    let draft_lines =
+        service.get_draft_outbound_shipment_lines(&service_ctx, store_id, item_id, invoice_id);
+
+    if let Ok(draft_lines) = draft_lines {
+        Ok(DraftOutboundShipmentLineNode::from_vec(draft_lines))
+    } else {
+        let err = draft_lines.unwrap_err();
+        let formatted_error = format!("{:#?}", err);
+        log::error!("Draft outbound lines generation error: {}", formatted_error);
+        Err(list_error_to_gql_err(err))
     }
 }

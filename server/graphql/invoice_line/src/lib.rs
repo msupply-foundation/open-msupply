@@ -3,8 +3,10 @@ pub mod mutations;
 use self::mutations::{inbound_shipment_line, outbound_shipment_line, prescription_line};
 use async_graphql::*;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
+use graphql_types::types::DraftOutboundShipmentLineNode;
 use invoice_line_queries::{
-    invoice_lines, InvoiceLineFilterInput, InvoiceLineSortInput, InvoiceLinesResponse,
+    draft_outbound_lines, invoice_lines, InvoiceLineFilterInput, InvoiceLineSortInput,
+    InvoiceLinesResponse,
 };
 
 #[derive(Default, Clone)]
@@ -22,6 +24,16 @@ impl InvoiceLineQueries {
         report_sort: Option<PrintReportSortInput>,
     ) -> Result<InvoiceLinesResponse> {
         invoice_lines(ctx, &store_id, page, filter, sort, report_sort)
+    }
+
+    pub async fn draft_outbound_shipment_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        item_id: String,
+        invoice_id: String,
+    ) -> Result<Vec<DraftOutboundShipmentLineNode>> {
+        draft_outbound_lines(ctx, &store_id, &item_id, &invoice_id)
     }
 }
 
