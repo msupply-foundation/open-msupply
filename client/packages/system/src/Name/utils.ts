@@ -27,6 +27,11 @@ export interface NameSearchInputProps {
   clearable?: boolean;
 }
 
+export interface NullableNameSearchInputProps
+  extends Omit<NameSearchInputProps, 'onChange'> {
+  onChange: (name: NameRowFragment | null) => void;
+}
+
 export const basicFilterOptions = {
   stringify: (name: NameRowFragment) => `${name.code} ${name.name}`,
   limit: 100,
