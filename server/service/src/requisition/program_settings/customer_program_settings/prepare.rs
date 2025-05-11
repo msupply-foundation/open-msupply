@@ -473,9 +473,11 @@ mod test {
             .requisition_service
             .get_program_requisition_settings_by_customer(&service_context, &mock_name_store_b().id)
             .unwrap();
-        result
-            .program_settings
-            .sort_by(|a, b| a.master_list_id.cmp(&b.master_list_id));
+
+        result.program_settings.sort_by(|a, b| {
+            a.program_requisition_settings_id
+                .cmp(&b.program_requisition_settings_id)
+        });
 
         assert_eq!(
             result,
@@ -511,6 +513,34 @@ mod test {
                         program_name: program1.name.clone()
                     },
                     ProgramSetting {
+                        master_list_id: master_list2.id.clone(),
+                        master_list_name: master_list2.name.clone(),
+                        master_list_code: master_list2.code.clone(),
+                        master_list_description: master_list2.description.clone(),
+                        master_list_is_active: master_list2.is_active,
+                        master_list_is_default_price_list: master_list2.is_default_price_list,
+                        master_list_discount_percentage: None,
+                        master_list_name_tag_id: name_tag2.id.clone(),
+                        master_list_name_tag: name_tag2.name.clone(),
+                        program_requisition_settings_id: program_requisition_setting2.id.clone(),
+                        order_types: vec![ProgramRequisitionOrderType {
+                            name: order_type2.name.clone(),
+                            program_requisition_settings_id: program_requisition_setting2
+                                .id
+                                .clone(),
+                            max_mos: order_type2.max_mos,
+                            max_items_in_emergency_order: order_type2.max_items_in_emergency_order,
+                            id: order_type2.id.clone(),
+                            is_emergency: order_type2.is_emergency,
+                            max_order_per_period: order_type2.max_order_per_period,
+                            threshold_mos: order_type2.threshold_mos,
+                            // only one period available because requisition is already in use for period 4
+                            available_periods: vec![period3.clone()]
+                        }],
+                        program_id: program2.id.clone(),
+                        program_name: program2.name.clone()
+                    },
+                    ProgramSetting {
                         master_list_id: master_list1.id.clone(),
                         master_list_name: master_list1.name.clone(),
                         master_list_code: master_list1.code.clone(),
@@ -540,34 +570,6 @@ mod test {
                         }],
                         program_id: program1.id.clone(),
                         program_name: program1.name.clone()
-                    },
-                    ProgramSetting {
-                        master_list_id: master_list2.id.clone(),
-                        master_list_name: master_list2.name.clone(),
-                        master_list_code: master_list2.code.clone(),
-                        master_list_description: master_list2.description.clone(),
-                        master_list_is_active: master_list2.is_active,
-                        master_list_is_default_price_list: master_list2.is_default_price_list,
-                        master_list_discount_percentage: None,
-                        master_list_name_tag_id: name_tag2.id.clone(),
-                        master_list_name_tag: name_tag2.name.clone(),
-                        program_requisition_settings_id: program_requisition_setting2.id.clone(),
-                        order_types: vec![ProgramRequisitionOrderType {
-                            name: order_type2.name.clone(),
-                            program_requisition_settings_id: program_requisition_setting2
-                                .id
-                                .clone(),
-                            max_mos: order_type2.max_mos,
-                            max_items_in_emergency_order: order_type2.max_items_in_emergency_order,
-                            id: order_type2.id.clone(),
-                            is_emergency: order_type2.is_emergency,
-                            max_order_per_period: order_type2.max_order_per_period,
-                            threshold_mos: order_type2.threshold_mos,
-                            // only one period available because requisition is already in use for period 4
-                            available_periods: vec![period3.clone()]
-                        }],
-                        program_id: program2.id.clone(),
-                        program_name: program2.name.clone()
                     },
                     ProgramSetting {
                         master_list_id: master_list2.id.clone(),
