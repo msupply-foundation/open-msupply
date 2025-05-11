@@ -52,9 +52,9 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
           <AppNavLink
             end
             to={RouteBuilder.create(AppRoute.Manage)
-              .addPart(AppRoute.Preferences)
+              .addPart(AppRoute.GlobalPreferences)
               .build()}
-            text={t('preferences')}
+            text={t('global-preferences')}
           />
           <AppNavLink
             visible={isCentralServer && vaccineModuleEnabled}

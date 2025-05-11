@@ -2,15 +2,13 @@ import { FnUtils } from '@openmsupply-client/common';
 import { ItemRowFragment, StockLineFragment } from '@openmsupply-client/system';
 import { StocktakeLineFragment } from './../../../api';
 
-// A DraftLine is just a copy of a stocktake line, with some extra state flags.
-// for:
-// countThisLine - determines whether the user wants to count the line in the stocktake.
-//                 the backend actually determines this by the countedNumberOfPacks field
-//                 being `null` - but.. explicit is better than implicit.
-// isCreated - determines whether the line is a new line, or an existing line and will determine
-//             what mutation the line is sent with when saved.
-// isUpdated - The same as isCreated but is sent with the update mutation.
-//
+// A DraftStocktakeLine represents a stocktake line with additional state flags:
+//   - countThisLine: Indicates whether the user wants to count the line in the stocktake.
+//     The backend determines this by the `countedNumberOfPacks` field being `null`, but this flag
+//     makes it explicit.
+//   - isCreated: Indicates whether the line is a new line. Determines the mutation type when saved.
+//   - isUpdated: Indicates whether the line has been updated. Determines the
+//     mutation type when saved.
 export type DraftStocktakeLine = Omit<StocktakeLineFragment, '__typename'> & {
   countThisLine: boolean;
   isCreated?: boolean;
@@ -43,6 +41,8 @@ export const DraftLine = {
         code: item.code,
         unitName: item.unitName,
         name: item.name,
+        isVaccine: item.isVaccine,
+        doses: item.doses,
       },
     };
   },
@@ -69,6 +69,8 @@ export const DraftLine = {
         code: stockLine.item.code,
         unitName: stockLine.item.unitName,
         name: stockLine.item.name,
+        isVaccine: stockLine.item.isVaccine,
+        doses: stockLine.item.doses,
       },
     };
   },

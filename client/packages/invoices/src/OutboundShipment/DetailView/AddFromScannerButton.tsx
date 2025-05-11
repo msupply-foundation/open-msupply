@@ -40,7 +40,8 @@ export const AddFromScannerButtonComponent = ({
 
         if (!!id) {
           onAddItem({
-            item: { id },
+            // TODO: do call for item to get isVaccine
+            item: { id, isVaccine: false },
             barcode: { ...barcode, batch },
           });
           return;

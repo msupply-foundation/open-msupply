@@ -15,38 +15,43 @@ describe('useFormatDateTime', () => {
 });
 
 describe('getDisplayAge', () => {
+  jest.useFakeTimers().setSystemTime(new Date('2025-10-01'));
   const hookResult = renderHookWithProvider(() => useFormatDateTime());
   const { getDisplayAge } = hookResult.result.current;
-  const today = new Date();
 
   it('returns age in years when patient is over 1 year or 1 year old', () => {
-    const dob = DateUtils.addYears(today, -9);
+    const dob = new Date('2016-02-01');
     const result = getDisplayAge(dob);
     expect(result).toBe('9');
   });
 
   it('returns age in months and days when patient is less than 1 year old', () => {
-    const threeMonthsAgo = DateUtils.addMonths(today, -3);
-    const dob = DateUtils.addDays(threeMonthsAgo, -2);
+    const dob1 = new Date('2025-09-01');
+    expect(getDisplayAge(dob1)).toBe('1 month, 0 days');
 
-    const dayOffset =
-      DateUtils.getDaysInMonth(today) - DateUtils.getDaysInMonth(dob);
+    const dob3 = new Date('2024-10-02');
+    expect(getDisplayAge(dob3)).toBe('11 months, 29 days');
 
-    const result = getDisplayAge(dob);
-    expect(result).toBe(
-      `3 months, ${2 + (dayOffset > 0 ? dayOffset : 0)} days`
-    );
+    const dob4 = new Date('2025-04-01');
+    expect(getDisplayAge(dob4)).toBe('6 months, 0 days');
   });
 
   it('returns age in days when patient is less than 1 month old', () => {
-    const dob = DateUtils.addDays(today, -10);
+    const dob = new Date('2025-09-21');
     const result = getDisplayAge(dob);
     expect(result).toBe('10 days');
+
+    const dob2 = new Date('2025-09-30');
+    expect(getDisplayAge(dob2)).toBe('1 day');
   });
 
   it('returns an empty string if dob is not defined', () => {
     const dob = null;
     const result = getDisplayAge(dob);
     expect(result).toBe('');
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
   });
 });

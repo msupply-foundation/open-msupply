@@ -58,7 +58,7 @@ const getTrackBorderColor = (color?: SwitchColor) => (theme: Theme) => {
   }
 };
 
-export const Switch: React.FC<SwitchProps> = ({
+export const Switch = ({
   checked,
   color,
   defaultChecked,
@@ -70,7 +70,7 @@ export const Switch: React.FC<SwitchProps> = ({
   value,
   switchSx,
   labelSx,
-}) => {
+}: SwitchProps) => {
   const isSmall = size === 'small';
   const switchStyle = {
     width: isSmall ? '40px' : '70px',

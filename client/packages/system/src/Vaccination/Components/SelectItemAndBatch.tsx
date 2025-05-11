@@ -60,11 +60,11 @@ export const SelectItemAndBatch = ({
         <Switch
           label={t(transactionSwitchReason)}
           checked={draft.createTransactions}
-          onChange={() =>
+          onChange={() => {
             updateDraft({
               createTransactions: !draft.createTransactions,
-            })
-          }
+            });
+          }}
           labelPlacement="end"
           size="small"
         />

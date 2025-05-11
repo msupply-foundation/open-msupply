@@ -84,7 +84,7 @@ mod tests {
     use super::*;
     use repository::{mock::MockDataInserts, test_db::setup_all};
     #[actix_rt::test]
-    async fn test_report_translation() {
+    async fn test_preference_translation() {
         use crate::sync::test::test_data::preference as test_data;
         let translator = PreferenceTranslator;
         let (_, connection, _, _) =

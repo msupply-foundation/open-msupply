@@ -14,6 +14,8 @@ table! {
         cold_storage_type_id -> Nullable<Text>,
         manufacturer_link_id -> Nullable<Text>,
         deleted_datetime -> Nullable<Timestamp>,
+        doses_per_unit -> Integer,
+        vvm_type -> Nullable<Text>,
     }
 }
 
@@ -25,6 +27,7 @@ allow_tables_to_appear_in_same_query!(item_variant, item);
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
 )]
 #[diesel(table_name = item_variant)]
+#[diesel(treat_none_as_null = true)]
 pub struct ItemVariantRow {
     pub id: String,
     pub name: String,
@@ -32,6 +35,9 @@ pub struct ItemVariantRow {
     pub cold_storage_type_id: Option<String>,
     pub manufacturer_link_id: Option<String>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
+    #[serde(default)]
+    pub doses_per_unit: i32,
+    pub vvm_type: Option<String>,
 }
 
 pub struct ItemVariantRowRepository<'a> {

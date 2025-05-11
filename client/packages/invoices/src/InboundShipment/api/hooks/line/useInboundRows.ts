@@ -1,14 +1,25 @@
 import { useMemo } from 'react';
-import { useIsGrouped, SortUtils } from '@openmsupply-client/common';
+import {
+  useIsGrouped,
+  SortUtils,
+  useUrlQueryParams,
+} from '@openmsupply-client/common';
 import { useInboundShipmentColumns } from '../../../DetailView/ContentArea';
 import { useInboundItems } from './useInboundItems';
 import { useInboundLines } from './useInboundLines';
 
 export const useInboundRows = () => {
+  const {
+    updateSortQuery: onChangeSortBy,
+    queryParams: { sortBy },
+  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundShipment');
   const { data: lines } = useInboundLines();
   const { data: items } = useInboundItems();
-  const { columns, sortBy } = useInboundShipmentColumns();
+  const columns = useInboundShipmentColumns({
+    sortBy,
+    onChangeSortBy,
+  });
 
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);

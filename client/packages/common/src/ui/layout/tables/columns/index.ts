@@ -7,3 +7,4 @@ export * from './types';
 export * from './RowExpand';
 export * from './LineLabel';
 export * from './ExpiryDateInput';
+export * from './DosesPerUnitColumn';

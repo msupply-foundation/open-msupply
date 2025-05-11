@@ -31,6 +31,7 @@ import { CustomerReturnEditModal } from '../../Returns';
 import { canReturnOutboundLines } from '../../utils';
 
 const DetailViewInner = () => {
+  const t = useTranslation();
   const { info } = useNotification();
   const isDisabled = useOutbound.utils.isDisabled();
   const { entity, mode, onOpen, onClose, isOpen, setMode } =
@@ -45,7 +46,6 @@ const DetailViewInner = () => {
   } = useEditModal<string[]>();
 
   const { data, isLoading } = useOutbound.document.get();
-  const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const onRowClick = useCallback(

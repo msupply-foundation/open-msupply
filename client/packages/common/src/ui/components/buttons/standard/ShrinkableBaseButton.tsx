@@ -3,7 +3,7 @@ import { ButtonProps, Tooltip } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { StyledBaseButton, translateColor } from './BaseButton';
 import { useIntlUtils } from '@common/intl';
-import { useIsScreen } from '@common/hooks';
+import { useAppTheme, useMediaQuery } from '@common/styles';
 
 export const StyledShrinkableBaseButton = styled(StyledBaseButton, {
   shouldForwardProp: prop => prop !== 'shrink' && prop !== 'isRtl',
@@ -52,7 +52,10 @@ export const ShrinkableBaseButton = React.forwardRef<
     ref
   ) => {
     const { isRtl } = useIntlUtils();
-    const isShrinkThreshold = useIsScreen(shrinkThreshold);
+    const theme = useAppTheme();
+    const isShrinkThreshold = useMediaQuery(
+      theme.breakpoints.down(shrinkThreshold)
+    );
 
     // On small screens, if the button shouldShrink, then
     // only display a centred icon, with no text.

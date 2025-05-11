@@ -47,7 +47,6 @@ export interface ModalProps {
   deleteButton?: JSX.Element;
   disableOkKeyBinding?: boolean;
   enableAutocomplete?: boolean;
-  fullscreen?: boolean;
 }
 
 export interface DialogProps {
@@ -160,7 +159,6 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     enableAutocomplete,
     sx = {},
     deleteButton,
-    fullscreen = false,
   }) => {
     // The slide animation is triggered by cloning the next button and wrapping the passed
     // on click with a trigger to slide.
@@ -236,7 +234,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         sx={sx}
         TransitionComponent={Transition}
         disableEscapeKeyDown={false}
-        fullScreen={fullscreen ?? defaultFullscreen}
+        fullScreen={defaultFullscreen}
       >
         {defaultFullscreen && (
           <IconButton

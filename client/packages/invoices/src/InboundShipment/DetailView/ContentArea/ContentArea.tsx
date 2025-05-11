@@ -15,14 +15,37 @@ import { isInboundPlaceholderRow } from '../../../utils';
 interface ContentAreaProps {
   onAddItem: () => void;
   onRowClick?: null | ((rowData: InboundLineFragment | InboundItem) => void);
+  displayInDoses?: boolean;
 }
 
 const Expando = ({
   rowData,
+  displayInDoses,
 }: {
   rowData: InboundLineFragment | InboundItem;
+  displayInDoses?: boolean;
 }) => {
-  const expandoColumns = useExpansionColumns();
+  if ('lines' in rowData && rowData.lines.length > 1) {
+    const isVaccineItem = rowData.lines[0]?.item.isVaccine ?? false;
+    return (
+      <ExpandoInner
+        rowData={rowData}
+        withDoseColumns={displayInDoses && isVaccineItem}
+      />
+    );
+  } else {
+    return null;
+  }
+};
+
+const ExpandoInner = ({
+  rowData,
+  withDoseColumns,
+}: {
+  rowData: InboundLineFragment | InboundItem;
+  withDoseColumns?: boolean;
+}) => {
+  const expandoColumns = useExpansionColumns(withDoseColumns);
   if ('lines' in rowData && rowData.lines.length > 1) {
     return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
   } else {
@@ -72,7 +95,7 @@ const useHighlightPlaceholderRows = (
 };
 
 export const ContentArea: FC<ContentAreaProps> = React.memo(
-  ({ onAddItem, onRowClick }) => {
+  ({ onAddItem, onRowClick, displayInDoses }) => {
     const t = useTranslation();
     const isDisabled = useInbound.utils.isDisabled();
     const { columns, rows } = useInbound.lines.rows();
@@ -81,7 +104,9 @@ export const ContentArea: FC<ContentAreaProps> = React.memo(
       <DataTable
         id="inbound-detail"
         onRowClick={onRowClick}
-        ExpandContent={Expando}
+        ExpandContent={props => (
+          <Expando {...props} displayInDoses={displayInDoses} />
+        )}
         columns={columns}
         data={rows}
         enableColumnSelection

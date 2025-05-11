@@ -1,6 +1,7 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
+  Breakpoints,
   Tab,
   TableContainer,
   PlusCircleIcon,
@@ -9,12 +10,16 @@ import {
   TabKeybindings,
   TabList,
   ButtonWithIcon,
-  useIsMediumScreen,
+  useAppTheme,
+  useMediaQuery,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
 import { QuantityTable, PricingTable, LocationTable } from './TabTables';
-import { CurrencyRowFragment } from '@openmsupply-client/system';
+import {
+  CurrencyRowFragment,
+  ItemRowFragment,
+} from '@openmsupply-client/system';
 
 interface TabLayoutProps {
   addDraftLine: () => void;
@@ -23,6 +28,7 @@ interface TabLayoutProps {
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
+  item: ItemRowFragment | null;
 }
 
 enum Tabs {
@@ -31,17 +37,19 @@ enum Tabs {
   Location = 'Location',
 }
 
-export const TabLayout: FC<TabLayoutProps> = ({
+export const TabLayout = ({
   addDraftLine,
   draftLines,
   isDisabled,
   updateDraftLine,
   currency,
   isExternalSupplier,
-}) => {
-  const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
-  const isMediumScreen = useIsMediumScreen();
+  item,
+}: TabLayoutProps) => {
   const t = useTranslation();
+  const theme = useAppTheme();
+  const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
+  const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
 
   if (draftLines.length === 0)
     return <Box sx={{ height: isMediumScreen ? 400 : 500 }} />;
@@ -106,6 +114,7 @@ export const TabLayout: FC<TabLayoutProps> = ({
             isDisabled={isDisabled}
             lines={draftLines}
             updateDraftLine={updateDraftLine}
+            item={item}
           />
         </InboundLineEditPanel>
 

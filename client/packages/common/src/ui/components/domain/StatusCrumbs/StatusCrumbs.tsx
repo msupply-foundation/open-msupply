@@ -6,8 +6,9 @@ import { ChevronDownIcon } from '@common/icons';
 import { useTranslation, useFormatDateTime } from '@common/intl';
 import { VerticalStepper } from '../../steppers/VerticalStepper';
 import { PaperHoverPopover, PaperPopoverSection } from '../../popover';
-import { useIsSmallScreen } from '@common/hooks';
 import { styled } from '@mui/material/styles';
+import { useMediaQuery } from '@mui/material';
+import { Breakpoints, useAppTheme } from '@common/styles';
 
 interface StatusCrumbsProps<StatusType extends string> {
   statuses: StatusType[];
@@ -37,9 +38,10 @@ const useSteps = <StatusType extends string>({
 export const StatusCrumbs = <StatusType extends string>(
   props: StatusCrumbsProps<StatusType>
 ): JSX.Element | null => {
-  const { statuses, statusLog, statusFormatter } = props;
   const t = useTranslation();
-  const isSmallScreen = useIsSmallScreen();
+  const theme = useAppTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.md));
+  const { statuses, statusLog, statusFormatter } = props;
 
   const steps = useSteps(props);
 

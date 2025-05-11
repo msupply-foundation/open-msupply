@@ -69,19 +69,17 @@ pub fn validate(
     }
 
     if let Some(facility_name_id) = &input.facility_name_id {
-        if !check_name_exists(connection, facility_name_id)?.is_some() {
+        if check_name_exists(connection, facility_name_id)?.is_none() {
             return Err(InsertVaccinationError::FacilityDoesNotExist);
         }
     }
     // If not given, reason is required
-    if !input.given {
-        if input.not_given_reason.is_none() {
-            return Err(InsertVaccinationError::ReasonNotProvided);
-        }
+    if !input.given && input.not_given_reason.is_none() {
+        return Err(InsertVaccinationError::ReasonNotProvided);
     }
 
     let stock_line = if let Some(item_id) = &input.item_id {
-        if !check_item_exists(connection, item_id)?.is_some() {
+        if check_item_exists(connection, item_id)?.is_none() {
             return Err(InsertVaccinationError::ItemDoesNotExist);
         }
 

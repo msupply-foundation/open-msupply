@@ -81,10 +81,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
       first,
       offset,
       sortBy,
-      includeNonVisibleWithStockOnHand,
-    }: ListParams<ItemRowFragment> & {
-      includeNonVisibleWithStockOnHand?: boolean;
-    }) => {
+    }: ListParams<ItemRowFragment>) => {
       const result = await sdk.itemStockOnHand({
         key: itemParsers.toSortField(sortBy),
         first,
@@ -94,10 +91,6 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         filter: {
           ...filterBy,
           type: { equalTo: ItemNodeType.Stock },
-          [includeNonVisibleWithStockOnHand
-            ? 'isVisibleOrOnHand'
-            : 'isVisible']: true,
-          isVisible: true,
           isActive: true,
         },
       });
