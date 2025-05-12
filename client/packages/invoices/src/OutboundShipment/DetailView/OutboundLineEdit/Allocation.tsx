@@ -119,17 +119,12 @@ interface TableProps {
 }
 
 const TableWrapper: React.FC<TableProps> = ({
-  hasLines,
   currentItem,
   isLoading,
   updateQuantity,
-  draftOutboundLines,
-  batch,
   currency,
   isExternalSupplier,
 }) => {
-  const t = useTranslation();
-
   if (isLoading)
     return (
       <Box
@@ -143,13 +138,6 @@ const TableWrapper: React.FC<TableProps> = ({
       </Box>
     );
 
-  if (!hasLines)
-    return (
-      <Box sx={{ margin: 'auto' }}>
-        <Typography>{t('messages.no-stock-available')}</Typography>
-      </Box>
-    );
-
   return (
     <TableProvider
       createStore={createTableStore}
@@ -159,9 +147,8 @@ const TableWrapper: React.FC<TableProps> = ({
     >
       <OutboundLineEditTable
         onChange={updateQuantity}
-        rows={draftOutboundLines}
         item={currentItem}
-        batch={batch}
+        // batch={batch}
         currency={currency}
         isExternalSupplier={isExternalSupplier}
       />
