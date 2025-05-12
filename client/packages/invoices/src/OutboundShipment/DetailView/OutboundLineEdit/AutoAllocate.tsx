@@ -33,7 +33,7 @@ export const AutoAllocate = ({
   } = useAllocationContext(state => ({
     autoAllocate: state.autoAllocate,
     alerts: state.alerts,
-    allocatedQuantity: state.allocatedUnits, // round?
+    allocatedQuantity: state.allocatedUnits,
     isAutoAllocated: state.isAutoAllocated,
     allocateIn: state.allocateIn,
   }));

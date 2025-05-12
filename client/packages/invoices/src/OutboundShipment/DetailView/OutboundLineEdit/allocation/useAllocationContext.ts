@@ -2,17 +2,16 @@ import {
   create,
   DateUtils,
   LocaleKey,
+  SortUtils,
   TypedTFunction,
 } from '@openmsupply-client/common';
 import {
-  allocateQuantities,
-  getAllocatedQuantity,
   getAllocationAlerts,
-  issueStock,
   StockOutAlert,
 } from 'packages/invoices/src/StockOut';
-import { DraftStockOutLine } from 'packages/invoices/src/types';
 import { isA } from 'packages/invoices/src/utils';
+import { DraftOutboundLineFragment } from '../../../api/operations.generated';
+import { allocateQuantities, getAllocatedQuantity, issueStock } from './utils';
 
 // TODO Fix imports
 
@@ -24,14 +23,16 @@ export enum AllocateIn {
 }
 
 interface AllocationContext {
-  draftStockOutLines: DraftStockOutLine[];
+  draftLines: DraftOutboundLineFragment[];
   allocatedUnits: number;
   alerts: StockOutAlert[];
   allocateIn: AllocateIn;
   isAutoAllocated: boolean;
+  initialisedForItemId: string | null;
+  placeholderLine: DraftOutboundLineFragment | null;
 
-  // TODO - is it performant? could do by id, then return array if needed?
-  setDraftStockOutLines: (lines: DraftStockOutLine[]) => void;
+  initialise: (itemId: string, lines: DraftOutboundLineFragment[]) => void;
+  setDraftLines: (lines: DraftOutboundLineFragment[]) => void;
   manualAllocate: (lineId: string, quantity: number) => void;
   autoAllocate: (
     quantity: number,
@@ -39,54 +40,64 @@ interface AllocationContext {
     t: TypedTFunction<LocaleKey>,
     allowPlaceholder?: boolean
   ) => void;
-  initialise: (lines: DraftStockOutLine[]) => void;
 }
 
 // TODO - possibly should scope to the modal?
 export const useAllocationContext = create<AllocationContext>((set, get) => ({
-  draftStockOutLines: [],
+  initialisedForItemId: null,
+  draftLines: [],
+  placeholderLine: null,
   alerts: [],
   allocatedUnits: 0,
   allocateIn: AllocateIn.Units,
   isAutoAllocated: false,
-  initialise: lines => {
+
+  initialise: (itemId, lines) => {
+    const placeholderLine = lines.find(isA.placeholderLine);
+    const nonPlaceholderLines = lines.filter(
+      line => !isA.placeholderLine(line)
+    );
     set({
-      draftStockOutLines: lines,
+      initialisedForItemId: itemId,
+      draftLines: nonPlaceholderLines.sort(SortUtils.byExpiryAsc),
+      placeholderLine,
       allocatedUnits: getAllocatedQuantity(lines),
       alerts: [],
       isAutoAllocated: false,
     });
   },
-  setDraftStockOutLines: lines =>
+
+  setDraftLines: lines =>
     set(state => ({
       ...state,
-      draftStockOutLines: lines,
+      draftLines: lines,
       allocatedUnits: getAllocatedQuantity(lines),
     })),
+
   autoAllocate: (quantity, format, t, allowPlaceholder = false) => {
-    const { draftStockOutLines, setDraftStockOutLines } = get();
+    const { draftLines, setDraftLines } = get();
     const updatedLines = allocateQuantities(
-      draftStockOutLines,
+      draftLines,
       quantity,
       allowPlaceholder
     );
 
     if (updatedLines) {
-      setDraftStockOutLines(updatedLines);
+      setDraftLines(updatedLines);
 
       const placeholderLine = updatedLines?.find(isA.placeholderLine);
       const allocatedUnits = getAllocatedQuantity(updatedLines);
 
-      // TODO
-      const hasOnHold = draftStockOutLines.some(
-        ({ stockLine }) =>
-          (stockLine?.availableNumberOfPacks ?? 0) > 0 && !!stockLine?.onHold
+      // TODO - alerts handled sep
+      const hasOnHold = draftLines.some(
+        ({ availablePacks, stockLineOnHold }) =>
+          availablePacks > 0 && !!stockLineOnHold
       );
-      const hasExpired = draftStockOutLines.some(
-        ({ stockLine }) =>
-          (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
-          !!stockLine?.expiryDate &&
-          DateUtils.isExpired(new Date(stockLine?.expiryDate))
+      const hasExpired = draftLines.some(
+        ({ availablePacks, expiryDate }) =>
+          availablePacks > 0 &&
+          !!expiryDate &&
+          DateUtils.isExpired(new Date(expiryDate))
       );
       const alerts = getAllocationAlerts(
         quantity,
@@ -105,12 +116,15 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       }));
     }
   },
+
   manualAllocate: (lineId, quantity) => {
-    const { draftStockOutLines, setDraftStockOutLines } = get();
+    const { draftLines, setDraftLines } = get();
 
-    const updatedLines = issueStock(draftStockOutLines, lineId, quantity);
+    const updatedLines = issueStock(draftLines, lineId, quantity);
 
-    setDraftStockOutLines(updatedLines);
+    setDraftLines(updatedLines);
+
+    // TODO = update the placeholder
 
     set(state => ({
       ...state,

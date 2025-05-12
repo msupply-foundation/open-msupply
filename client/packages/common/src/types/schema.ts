@@ -2279,6 +2279,22 @@ export type DoseConfigurationNotAllowed = UpsertItemVariantErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type DraftOutboundShipmentLineNode = {
+  __typename: 'DraftOutboundShipmentLineNode';
+  availablePacks: Scalars['Float']['output'];
+  batch?: Maybe<Scalars['String']['output']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  inStorePacks: Scalars['Float']['output'];
+  location?: Maybe<LocationNode>;
+  numberOfPacks: Scalars['Float']['output'];
+  packSize: Scalars['Float']['output'];
+  sellPricePerPack: Scalars['Float']['output'];
+  stockLineId?: Maybe<Scalars['String']['output']>;
+  stockLineOnHold?: Maybe<Scalars['Boolean']['output']>;
+  type: InvoiceLineNodeType;
+};
+
 export type EncounterConnector = {
   __typename: 'EncounterConnector';
   nodes: Array<EncounterNode>;
@@ -6311,6 +6327,7 @@ export type Queries = {
   documentHistory: DocumentHistoryResponse;
   documentRegistries: DocumentRegistryResponse;
   documents: DocumentResponse;
+  draftOutboundShipmentLines: Array<DraftOutboundShipmentLineNode>;
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
@@ -6627,6 +6644,12 @@ export type QueriesDocumentsArgs = {
   filter?: InputMaybe<DocumentFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<DocumentSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesDraftOutboundShipmentLinesArgs = {
+  invoiceId: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 

@@ -1035,12 +1035,35 @@ export type InsertBarcodeMutation = {
   };
 };
 
-export type GetItemInfoQueryVariables = Types.Exact<{
+export type DraftOutboundLineFragment = {
+  __typename: 'DraftOutboundShipmentLineNode';
+  id: string;
+  stockLineId?: string | null;
+  type: Types.InvoiceLineNodeType;
+  numberOfPacks: number;
+  packSize: number;
+  batch?: string | null;
+  expiryDate?: string | null;
+  sellPricePerPack: number;
+  inStorePacks: number;
+  availablePacks: number;
+  stockLineOnHold?: boolean | null;
+  location?: {
+    __typename: 'LocationNode';
+    id: string;
+    name: string;
+    code: string;
+    onHold: boolean;
+  } | null;
+};
+
+export type GetOutboundEditLinesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   itemId: Types.Scalars['String']['input'];
+  invoiceId: Types.Scalars['String']['input'];
 }>;
 
-export type GetItemInfoQuery = {
+export type GetOutboundEditLinesQuery = {
   __typename: 'Queries';
   items: {
     __typename: 'ItemConnector';
@@ -1050,6 +1073,27 @@ export type GetItemInfoQuery = {
       unitName?: string | null;
     }>;
   };
+  draftOutboundShipmentLines: Array<{
+    __typename: 'DraftOutboundShipmentLineNode';
+    id: string;
+    stockLineId?: string | null;
+    type: Types.InvoiceLineNodeType;
+    numberOfPacks: number;
+    packSize: number;
+    batch?: string | null;
+    expiryDate?: string | null;
+    sellPricePerPack: number;
+    inStorePacks: number;
+    availablePacks: number;
+    stockLineOnHold?: boolean | null;
+    location?: {
+      __typename: 'LocationNode';
+      id: string;
+      name: string;
+      code: string;
+      onHold: boolean;
+    } | null;
+  }>;
 };
 
 export const OutboundFragmentDoc = gql`
@@ -1186,6 +1230,29 @@ export const ItemPriceFragmentDoc = gql`
     defaultPricePerUnit
     discountPercentage
     calculatedPricePerUnit
+  }
+`;
+export const DraftOutboundLineFragmentDoc = gql`
+  fragment DraftOutboundLine on DraftOutboundShipmentLineNode {
+    __typename
+    id
+    stockLineId
+    type
+    numberOfPacks
+    packSize
+    batch
+    expiryDate
+    sellPricePerPack
+    inStorePacks
+    availablePacks
+    stockLineOnHold
+    location {
+      __typename
+      id
+      name
+      code
+      onHold
+    }
   }
 `;
 export const InvoicesDocument = gql`
@@ -1898,8 +1965,12 @@ export const InsertBarcodeDocument = gql`
   }
   ${BarcodeFragmentDoc}
 `;
-export const GetItemInfoDocument = gql`
-  query getItemInfo($storeId: String!, $itemId: String!) {
+export const GetOutboundEditLinesDocument = gql`
+  query getOutboundEditLines(
+    $storeId: String!
+    $itemId: String!
+    $invoiceId: String!
+  ) {
     items(
       storeId: $storeId
       filter: { id: { equalTo: $itemId }, isActive: true }
@@ -1913,7 +1984,15 @@ export const GetItemInfoDocument = gql`
         }
       }
     }
+    draftOutboundShipmentLines(
+      storeId: $storeId
+      itemId: $itemId
+      invoiceId: $invoiceId
+    ) {
+      ...DraftOutboundLine
+    }
   }
+  ${DraftOutboundLineFragmentDoc}
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -2155,17 +2234,18 @@ export function getSdk(
         variables
       );
     },
-    getItemInfo(
-      variables: GetItemInfoQueryVariables,
+    getOutboundEditLines(
+      variables: GetOutboundEditLinesQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<GetItemInfoQuery> {
+    ): Promise<GetOutboundEditLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GetItemInfoQuery>(GetItemInfoDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
-          }),
-        'getItemInfo',
+          client.request<GetOutboundEditLinesQuery>(
+            GetOutboundEditLinesDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'getOutboundEditLines',
         'query',
         variables
       );
