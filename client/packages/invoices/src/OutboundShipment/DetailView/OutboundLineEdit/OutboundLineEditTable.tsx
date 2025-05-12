@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   Divider,
   Box,
@@ -10,6 +10,7 @@ import {
   Tooltip,
   NumUtils,
   Typography,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
 import { DraftItem } from '../../..';
@@ -42,8 +43,7 @@ const PlaceholderRow = ({ quantity }: { quantity: number | null }) => {
 
   const formattedValue = useFormatNumber().round(quantity ?? 0, 2);
 
-  // todo - editable??
-  // todo - only display when 0 if its the only line?
+  // TODO - maybe should be editable? Can't clear when manually allocating
   return quantity === null ? null : (
     <tr>
       <PlaceholderCell colSpan={3} sx={{ color: 'secondary.main' }}>
@@ -98,13 +98,21 @@ export const OutboundLineEditTable = ({
   isExternalSupplier,
 }: OutboundLineEditTableProps) => {
   const t = useTranslation();
+  const tableStore = useTableStore();
 
-  const { allocatedUnits, draftLines, placeholderQuantity } =
-    useAllocationContext(({ draftLines, placeholderQuantity }) => ({
-      allocatedUnits: getAllocatedUnits({ draftLines, placeholderQuantity }),
+  const {
+    allocatedUnits,
+    draftLines,
+    placeholderQuantity,
+    nonAllocatableLines,
+  } = useAllocationContext(
+    ({ draftLines, placeholderQuantity, nonAllocatableLines }) => ({
       draftLines,
       placeholderQuantity,
-    }));
+      allocatedUnits: getAllocatedUnits({ draftLines, placeholderQuantity }),
+      nonAllocatableLines,
+    })
+  );
 
   const onEditStockLine = (key: string, value: number, packSize: number) => {
     const num = Number.isNaN(value) ? 0 : value;
@@ -119,8 +127,33 @@ export const OutboundLineEditTable = ({
     isExternalSupplier,
   });
 
+  // Display all stock lines to user, including non-allocatable ones at the bottom
+  const lines = useMemo(
+    () => [...draftLines, ...nonAllocatableLines],
+    [draftLines, nonAllocatableLines]
+  );
+  // But disable the non-allocatable ones
+  useEffect(() => {
+    tableStore.setDisabledRows(nonAllocatableLines.map(({ id }) => id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Null means we aren't using placeholder
+  if (!lines.length && placeholderQuantity === null)
+    return (
+      <Box sx={{ margin: 'auto' }}>
+        <Typography>{t('messages.no-stock-available')}</Typography>
+      </Box>
+    );
+
   const additionalRows = [
-    <PlaceholderRow quantity={placeholderQuantity} key="placeholder-row" />,
+    <PlaceholderRow
+      // If placeholder quantity is 0, and we have lines, don't show placeholder row
+      quantity={
+        placeholderQuantity === 0 && lines.length ? null : placeholderQuantity
+      }
+      key="placeholder-row"
+    />,
     <tr key="divider-row">
       <td colSpan={10}>
         <Divider margin={10} />
@@ -128,13 +161,6 @@ export const OutboundLineEditTable = ({
     </tr>,
     <TotalRow key="total-row" allocatedQuantity={allocatedUnits} />,
   ];
-
-  if (!draftLines.length && placeholderQuantity === null)
-    return (
-      <Box sx={{ margin: 'auto' }}>
-        <Typography>{t('messages.no-stock-available')}</Typography>
-      </Box>
-    );
 
   return (
     <Box style={{ width: '100%' }}>
@@ -151,7 +177,7 @@ export const OutboundLineEditTable = ({
         <DataTable
           id="outbound-line-edit"
           columns={columns}
-          data={draftLines}
+          data={lines}
           dense
           additionalRows={additionalRows}
         />

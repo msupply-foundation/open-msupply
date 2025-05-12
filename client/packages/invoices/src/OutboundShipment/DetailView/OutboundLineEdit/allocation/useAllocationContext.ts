@@ -1,4 +1,5 @@
 import {
+  ArrayUtils,
   create,
   DateUtils,
   LocaleKey,
@@ -6,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { getAllocationAlerts, StockOutAlert } from '../../../../StockOut';
 import { DraftStockOutLineFragment } from '../../../api/operations.generated';
-import { getAllocatedUnits, issueStock } from './utils';
+import { canAllocate, getAllocatedUnits, issueStock } from './utils';
 import { OutboundLineEditData } from '../../../api';
 import { allocateQuantities } from './allocateQuantities';
 
@@ -20,6 +21,8 @@ export enum AllocateIn {
 interface AllocationContext {
   isDirty: boolean;
   draftLines: DraftStockOutLineFragment[];
+  /** Lines which cannot be allocated from, but should be shown to the user */
+  nonAllocatableLines: DraftStockOutLineFragment[];
   allocatedUnits: number;
   alerts: StockOutAlert[];
   allocateIn: AllocateIn;
@@ -43,16 +46,30 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   isDirty: false,
   initialisedForItemId: null,
   draftLines: [],
+  nonAllocatableLines: [],
   placeholderQuantity: null,
   alerts: [],
   allocatedUnits: 0,
   allocateIn: AllocateIn.Units,
 
   initialise: ({ item, draftLines, placeholderQuantity }, allowPlaceholder) => {
+    // Sort by strategy
+    const sortedLines = draftLines.sort(sortByExpiry);
+
+    // Separate lines here, so only dealing with allocatable lines going forward
+    // Note - expired is still considered allocatable, just not via auto-allocation
+    const [allocatableLines, nonAllocatableLines] = ArrayUtils.partition(
+      sortedLines,
+      canAllocate
+    );
+
     set({
       isDirty: false,
       initialisedForItemId: item.id,
-      draftLines: draftLines.sort(sortByExpiry),
+
+      draftLines: allocatableLines,
+      nonAllocatableLines,
+
       placeholderQuantity: allowPlaceholder ? (placeholderQuantity ?? 0) : null,
       alerts: [],
     });

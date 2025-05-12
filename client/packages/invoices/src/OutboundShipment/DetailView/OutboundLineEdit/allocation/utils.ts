@@ -1,5 +1,6 @@
 import { NumUtils } from '@common/utils';
 import { DraftStockOutLineFragment } from '../../../api/operations.generated';
+import { DateUtils } from '@common/intl';
 
 export const sumAvailableQuantity = (
   draftLines: DraftStockOutLineFragment[]
@@ -47,3 +48,11 @@ export const issueStock = (
 
   return newDraftLines;
 };
+
+export const canAllocate = (line: DraftStockOutLineFragment) =>
+  !line.stockLineOnHold && !line.location?.onHold && line.availablePacks > 0;
+
+export const canAutoAllocate = (line: DraftStockOutLineFragment) =>
+  canAllocate(line) &&
+  // shouldn't auto-allocate expired lines
+  !(!!line.expiryDate && DateUtils.isExpired(new Date(line.expiryDate)));
