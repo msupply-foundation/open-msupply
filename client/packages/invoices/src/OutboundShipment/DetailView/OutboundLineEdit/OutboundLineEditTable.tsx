@@ -9,6 +9,7 @@ import {
   useFormatNumber,
   Tooltip,
   NumUtils,
+  Typography,
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
 import { DraftItem } from '../../..';
@@ -18,7 +19,6 @@ import { DraftOutboundLineFragment } from '../../api/operations.generated';
 
 export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
-  rows: DraftOutboundLineFragment[];
   item: DraftItem | null;
   batch?: string;
   currency?: CurrencyRowFragment | null;
@@ -145,6 +145,13 @@ export const OutboundLineEditTable = ({
     <TotalRow key="total-row" allocatedQuantity={allocatedQuantity} />,
   ];
 
+  if (!draftLines.length && !placeholderLine)
+    return (
+      <Box sx={{ margin: 'auto' }}>
+        <Typography>{t('messages.no-stock-available')}</Typography>
+      </Box>
+    );
+
   return (
     <Box style={{ width: '100%' }}>
       <Divider margin={10} />
@@ -157,15 +164,13 @@ export const OutboundLineEditTable = ({
           overflowY: 'auto',
         }}
       >
-        {(!!draftLines.length || placeholderLine) && (
-          <DataTable
-            id="outbound-line-edit"
-            columns={columns}
-            data={draftLines}
-            dense
-            additionalRows={additionalRows}
-          />
-        )}
+        <DataTable
+          id="outbound-line-edit"
+          columns={columns}
+          data={draftLines}
+          dense
+          additionalRows={additionalRows}
+        />
       </Box>
     </Box>
   );
