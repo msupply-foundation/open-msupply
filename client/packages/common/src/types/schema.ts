@@ -2274,6 +2274,11 @@ export type DocumentSortInput = {
   key: DocumentSortFieldInput;
 };
 
+export type DoseConfigurationNotAllowed = UpsertItemVariantErrorInterface & {
+  __typename: 'DoseConfigurationNotAllowed';
+  description: Scalars['String']['output'];
+};
+
 export type EncounterConnector = {
   __typename: 'EncounterConnector';
   nodes: Array<EncounterNode>;
@@ -4311,13 +4316,18 @@ export type ItemVariantNode = {
   bundlesWith: Array<BundledItemNode>;
   coldStorageType?: Maybe<ColdStorageTypeNode>;
   coldStorageTypeId?: Maybe<Scalars['String']['output']>;
+  dosesPerUnit: Scalars['Int']['output'];
   id: Scalars['String']['output'];
+  item?: Maybe<ItemNode>;
+  /** @deprecated From 2.8.0. Use item instead */
   itemId: Scalars['String']['output'];
+  /** @deprecated From 2.8.0. Use item instead */
   itemName: Scalars['String']['output'];
   manufacturer?: Maybe<NameNode>;
   manufacturerId?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   packagingVariants: Array<PackagingVariantNode>;
+  vvmType?: Maybe<Scalars['String']['output']>;
 };
 
 export type ItemVariantNodeManufacturerArgs = {
@@ -9593,14 +9603,14 @@ export type UpsertItemVariantErrorInterface = {
 };
 
 export type UpsertItemVariantInput = {
-  coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
-  dosesPerUnit?: InputMaybe<Scalars['Int']['input']>;
+  coldStorageTypeId?: InputMaybe<NullableStringUpdate>;
+  dosesPerUnit: Scalars['Int']['input'];
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  manufacturerId?: InputMaybe<NullableStringUpdate>;
   name: Scalars['String']['input'];
   packagingVariants: Array<PackagingVariantInput>;
-  vvmType?: InputMaybe<Scalars['String']['input']>;
+  vvmType?: InputMaybe<NullableStringUpdate>;
 };
 
 export type UpsertLogLevelInput = {
