@@ -110,6 +110,7 @@ const DetailViewInner = () => {
               isOpen={isOpen}
               onClose={onClose}
               status={data.status}
+              invoiceId={data.id}
             />
           )}
 

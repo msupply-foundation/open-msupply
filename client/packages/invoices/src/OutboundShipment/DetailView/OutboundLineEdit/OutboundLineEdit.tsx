@@ -10,11 +10,12 @@ import {
   InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { useNextItem } from './hooks';
-import { useOutbound } from '../../api';
-import { DraftStockOutLine, ScannedBarcode } from '../../../types';
+import { useOutboundLineEditData, useOutbound } from '../../api';
+import { ScannedBarcode } from '../../../types';
 import { SelectItem } from './SelectItem';
 import { Allocation } from './Allocation';
 import { useOpenedWithBarcode } from './hooks/useOpenedWithBarcode';
+import { useAllocationContext } from './allocation/useAllocationContext';
 
 export type OutboundOpenedWith = { itemId: string } | ScannedBarcode | null;
 
@@ -24,6 +25,7 @@ interface OutboundLineEditProps {
   openedWith: OutboundOpenedWith;
   mode: ModalMode | null;
   status: InvoiceNodeStatus;
+  invoiceId: string;
 }
 
 export const OutboundLineEdit = ({
@@ -32,6 +34,7 @@ export const OutboundLineEdit = ({
   openedWith,
   mode,
   status,
+  invoiceId,
 }: OutboundLineEditProps) => {
   const t = useTranslation();
   const { info, warning } = useNotification();
@@ -42,19 +45,23 @@ export const OutboundLineEdit = ({
 
   const { next, disabled: nextDisabled } = useNextItem(itemId);
 
+  const { data: itemData, isFetching } = useOutboundLineEditData(
+    invoiceId,
+    itemId
+  );
   const { mutateAsync } = useOutbound.line.save(status);
   const { saveBarcode } = useOpenedWithBarcode(asBarcodeOrNull(openedWith));
 
-  // tODO
-  const draftStockOutLines: DraftStockOutLine[] = [];
+  const draftStockOutLines = useAllocationContext(state => state.draftLines);
 
   const onSave = async () => {
-    if (!isDirty) return;
+    // if (!isDirty) return;
 
     await mutateAsync(draftStockOutLines);
     if (!itemId) return;
 
     // TODO- move out?
+    // wait i don't understand "scanned" at all fr
     // it is possible for the user to select multiple batch lines
     // if the scanned barcode does not contain a batch number
     // however the scanned barcode can only relate to a specific pack size and therefore batch
@@ -143,12 +150,16 @@ export const OutboundLineEdit = ({
         <SelectItem
           itemId={itemId}
           onChangeItem={setItemId}
-          disabled={mode === ModalMode.Update} // TODO - barcode w no item?
+          disabled={mode === ModalMode.Update} // possible to open via barcode of existing batch?
         />
-        <Allocation
-          itemId={itemId}
-          allowPlaceholder={status === InvoiceNodeStatus.New}
-        />
+        {isFetching && <div>LOADING TODO</div>}
+        {itemData && (
+          <Allocation
+            key={itemId}
+            itemData={itemData}
+            allowPlaceholder={status === InvoiceNodeStatus.New}
+          />
+        )}
       </Grid>
     </Modal>
   );

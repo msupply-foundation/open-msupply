@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   useColumns,
   ColumnAlign,
@@ -11,10 +12,13 @@ import {
   useCurrencyCell,
   Currencies,
   CurrencyCell,
+  CellProps,
+  NumberInputCell,
 } from '@openmsupply-client/common';
-import { DraftStockOutLine } from '../../../types';
-import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
+import { StockOutLineFragment } from '../../../StockOut';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
+import { DraftOutboundLineFragment } from '../../api/operations.generated';
+import { getPackQuantityCellId } from 'packages/invoices/src/utils';
 
 export const useOutboundLineEditColumns = ({
   onChange,
@@ -29,14 +33,14 @@ export const useOutboundLineEditColumns = ({
 }) => {
   const { store } = useAuthContext();
 
-  const ForeignCurrencyCell = useCurrencyCell<DraftStockOutLine>(
+  const ForeignCurrencyCell = useCurrencyCell<DraftOutboundLineFragment>(
     currency?.code as Currencies
   );
-  const columnDefinitions: ColumnDescription<DraftStockOutLine>[] = [
+  const columnDefinitions: ColumnDescription<DraftOutboundLineFragment>[] = [
     [
       'batch',
       {
-        accessor: ({ rowData }) => rowData.stockLine?.batch,
+        accessor: ({ rowData }) => rowData.batch,
       },
     ],
     [
@@ -79,6 +83,7 @@ export const useOutboundLineEditColumns = ({
     });
   }
 
+  // todo: these should only show if right?
   columnDefinitions.push(
     ['packSize', { width: 90 }],
     {
@@ -87,7 +92,7 @@ export const useOutboundLineEditColumns = ({
       key: 'totalNumberOfPacks',
       align: ColumnAlign.Right,
       width: 80,
-      accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks,
+      accessor: ({ rowData }) => rowData.inStorePacks,
     },
     {
       Cell: NumberCell,
@@ -96,9 +101,9 @@ export const useOutboundLineEditColumns = ({
       align: ColumnAlign.Right,
       width: 90,
       accessor: ({ rowData }) =>
-        rowData.location?.onHold || rowData.stockLine?.onHold
+        rowData.location?.onHold || rowData.stockLineOnHold
           ? 0
-          : rowData.stockLine?.availableNumberOfPacks,
+          : rowData.availablePacks,
     },
     [
       'numberOfPacks',
@@ -124,13 +129,13 @@ export const useOutboundLineEditColumns = ({
       key: 'onHold',
       Cell: CheckCell,
       accessor: ({ rowData }) =>
-        rowData.stockLine?.onHold || rowData.location?.onHold,
+        rowData.stockLineOnHold || rowData.location?.onHold,
       align: ColumnAlign.Center,
       width: 70,
     }
   );
 
-  const columns = useColumns<DraftStockOutLine>(columnDefinitions, {}, [
+  const columns = useColumns<DraftOutboundLineFragment>(columnDefinitions, {}, [
     onChange,
   ]);
 
@@ -171,3 +176,14 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
 
   return useColumns(columns);
 };
+
+// todo?
+const PackQuantityCell = (props: CellProps<DraftOutboundLineFragment>) => (
+  <NumberInputCell
+    {...props}
+    max={props.rowData.availablePacks}
+    id={getPackQuantityCellId(props.rowData.batch)}
+    decimalLimit={2}
+    min={0}
+  />
+);

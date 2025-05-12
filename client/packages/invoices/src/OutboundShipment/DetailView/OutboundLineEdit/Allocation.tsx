@@ -14,32 +14,32 @@ import {
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { AutoAllocate } from './AutoAllocate';
-import { useDraftOutboundLines } from './hooks';
-import { useItemInfo, useOutbound } from '../../api';
+import { useOutbound, OutboundLineEditData } from '../../api';
 import { DraftItem } from '../../..';
-import { sumAvailableQuantity } from '../../../StockOut';
-import { DraftStockOutLine } from '../../../types';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { useAllocationContext } from './allocation/useAllocationContext';
+import { DraftOutboundLineFragment } from '../../api/operations.generated';
+import { sumAvailableQuantity } from './allocation/utils';
 
 interface AllocationProps {
-  itemId?: string;
+  itemData: OutboundLineEditData;
   allowPlaceholder?: boolean;
 }
 
-export const Allocation = ({ itemId, allowPlaceholder }: AllocationProps) => {
-  const { data: item } = useItemInfo(itemId);
-  // TODO... this better but uh
-  const { draftStockOutLines } = useDraftOutboundLines(itemId ?? '');
-
-  const initialise = useAllocationContext(({ initialise }) => initialise);
+export const Allocation = ({ itemData, allowPlaceholder }: AllocationProps) => {
+  const { initialise, initialisedForItemId } = useAllocationContext(
+    ({ initialise, initialisedForItemId }) => ({
+      initialise,
+      initialisedForItemId,
+    })
+  );
 
   useEffect(() => {
-    initialise(draftStockOutLines);
-  }, [itemId, draftStockOutLines.length]);
+    initialise(itemData.item.id, itemData.draftLines);
+  }, []);
 
-  return item ? (
-    <AllocationInner item={item} allowPlaceholder={allowPlaceholder} />
+  return initialisedForItemId === itemData.item.id ? (
+    <AllocationInner item={itemData.item} allowPlaceholder={allowPlaceholder} />
   ) : null;
 };
 
@@ -51,19 +51,20 @@ const AllocationInner = ({
   allowPlaceholder?: boolean;
 }) => {
   const t = useTranslation();
+  // const { setIsDirty } = useConfirmOnLeaving('outbound-shipment-line-edit');
 
   const { currency, otherParty } = useOutbound.document.fields([
     'currency',
     'otherParty',
   ]);
-  const { draftStockOutLines, manualAllocate } = useAllocationContext(
-    ({ draftStockOutLines, manualAllocate }) => ({
-      draftStockOutLines,
+  const { draftLines, manualAllocate } = useAllocationContext(
+    ({ draftLines, manualAllocate }) => ({
+      draftLines,
       manualAllocate,
     })
   );
 
-  const hasLines = !!draftStockOutLines.length;
+  const hasLines = !!draftLines.length;
 
   return (
     <>
@@ -78,7 +79,7 @@ const AllocationInner = ({
             }}
           >
             {t('label.available-quantity', {
-              number: sumAvailableQuantity(draftStockOutLines).toFixed(0),
+              number: sumAvailableQuantity(draftLines).toFixed(0),
             })}
           </Typography>
         </Grid>
@@ -96,7 +97,7 @@ const AllocationInner = ({
         currentItem={item}
         isLoading={false}
         updateQuantity={manualAllocate}
-        draftOutboundLines={draftStockOutLines}
+        draftOutboundLines={draftLines}
         // batch={openedWith?.batch}
         batch={undefined} // Scanned batch - context?
         currency={currency}
@@ -111,7 +112,7 @@ interface TableProps {
   currentItem: DraftItem;
   isLoading: boolean;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
-  draftOutboundLines: DraftStockOutLine[];
+  draftOutboundLines: DraftOutboundLineFragment[];
   batch?: string;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;

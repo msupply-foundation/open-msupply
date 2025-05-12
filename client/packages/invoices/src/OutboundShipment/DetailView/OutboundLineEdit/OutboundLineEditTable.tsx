@@ -10,17 +10,15 @@ import {
   Tooltip,
   NumUtils,
 } from '@openmsupply-client/common';
-import { DraftStockOutLine } from '../../../types';
-import { useOutboundLineEditRows } from './hooks';
 import { useOutboundLineEditColumns } from './columns';
 import { DraftItem } from '../../..';
-import { shouldUpdatePlaceholder } from '../../../StockOut';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { useAllocationContext } from './allocation/useAllocationContext';
+import { DraftOutboundLineFragment } from '../../api/operations.generated';
 
 export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
-  rows: DraftStockOutLine[];
+  rows: DraftOutboundLineFragment[];
   item: DraftItem | null;
   batch?: string;
   currency?: CurrencyRowFragment | null;
@@ -39,7 +37,11 @@ const TotalCell = styled(TableCell)({
   fontWeight: 'bold',
 });
 
-const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
+const PlaceholderRow = ({
+  line,
+}: {
+  line: DraftOutboundLineFragment | null;
+}) => {
   const t = useTranslation();
   const [placeholderBuffer, setPlaceholderBuffer] = useState(
     line?.numberOfPacks ?? 0
@@ -99,29 +101,30 @@ const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
 
 export const OutboundLineEditTable = ({
   onChange,
-  rows,
   item,
-  batch,
   currency,
   isExternalSupplier,
 }: OutboundLineEditTableProps) => {
   const t = useTranslation();
 
-  const { allocatedQuantity } = useAllocationContext(({ allocatedUnits }) => ({
-    allocatedQuantity: allocatedUnits,
-  }));
+  const { allocatedQuantity, draftLines, placeholderLine } =
+    useAllocationContext(({ allocatedUnits, draftLines, placeholderLine }) => ({
+      allocatedQuantity: allocatedUnits,
+      draftLines,
+      placeholderLine,
+    }));
 
-  const { orderedRows, placeholderRow } = useOutboundLineEditRows(rows, batch);
+  // const { orderedRows, placeholderRow } = useOutboundLineEditRows(rows, batch);
   const onEditStockLine = (key: string, value: number, packSize: number) => {
     const num = Number.isNaN(value) ? 0 : value;
     onChange(key, num, packSize);
-    if (placeholderRow && shouldUpdatePlaceholder(num, placeholderRow)) {
-      // if a stock line has been allocated
-      // and the placeholder row is a generated one,
-      // remove the placeholder row
-      placeholderRow.isUpdated = true;
-      placeholderRow.numberOfPacks = 0;
-    }
+    // if (placeholderLine && shouldUpdatePlaceholder(num, placeholderRow)) {
+    //   // if a stock line has been allocated
+    //   // and the placeholder row is a generated one,
+    //   // remove the placeholder row
+    //   // placeholderRow.isUpdated = true;
+    //   placeholderRow.numberOfPacks = 0;
+    // }
   };
   const unit = item?.unitName ?? t('label.unit');
 
@@ -133,7 +136,7 @@ export const OutboundLineEditTable = ({
   });
 
   const additionalRows = [
-    <PlaceholderRow line={placeholderRow} key="placeholder-row" />,
+    <PlaceholderRow line={placeholderLine} key="placeholder-row" />,
     <tr key="divider-row">
       <td colSpan={10}>
         <Divider margin={10} />
@@ -154,11 +157,11 @@ export const OutboundLineEditTable = ({
           overflowY: 'auto',
         }}
       >
-        {!!orderedRows.length && (
+        {(!!draftLines.length || placeholderLine) && (
           <DataTable
             id="outbound-line-edit"
             columns={columns}
-            data={orderedRows}
+            data={draftLines}
             dense
             additionalRows={additionalRows}
           />

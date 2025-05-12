@@ -41,4 +41,4 @@ export const useOutbound = {
   },
 };
 
-export * from './useItemInfo';
+export * from './useOutboundLineEditData';

@@ -824,7 +824,34 @@ mutation insertBarcode($storeId: String!, $input: InsertBarcodeInput!) {
   }
 }
 
-query getItemInfo($storeId: String!, $itemId: String!) {
+fragment DraftOutboundLine on DraftOutboundShipmentLineNode {
+  __typename
+  id
+  stockLineId
+  type
+  numberOfPacks
+  packSize
+  batch
+  expiryDate
+  sellPricePerPack
+  inStorePacks
+  availablePacks
+  stockLineOnHold
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+  }
+}
+
+query getOutboundEditLines(
+  $storeId: String!
+  $itemId: String!
+  $invoiceId: String!
+) {
+  # Base item info
   items(
     storeId: $storeId
     filter: { id: { equalTo: $itemId }, isActive: true }
@@ -837,5 +864,14 @@ query getItemInfo($storeId: String!, $itemId: String!) {
         unitName
       }
     }
+  }
+
+  # The draft lines
+  draftOutboundShipmentLines(
+    storeId: $storeId
+    itemId: $itemId
+    invoiceId: $invoiceId
+  ) {
+    ...DraftOutboundLine
   }
 }
