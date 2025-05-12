@@ -569,6 +569,38 @@ export type InsertStockLineMutation = {
       };
 };
 
+export type VvmStatusFragment = {
+  __typename: 'VvmstatusNode';
+  code: string;
+  description: string;
+  id: string;
+  isActive: boolean;
+  level: number;
+  reasonId?: string | null;
+  unusable: boolean;
+};
+
+export type ActiveVvmStatusesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type ActiveVvmStatusesQuery = {
+  __typename: 'Queries';
+  activeVvmStatuses: {
+    __typename: 'VvmstatusConnector';
+    nodes: Array<{
+      __typename: 'VvmstatusNode';
+      code: string;
+      description: string;
+      id: string;
+      isActive: boolean;
+      level: number;
+      reasonId?: string | null;
+      unusable: boolean;
+    }>;
+  };
+};
+
 export const StockLineRowFragmentDoc = gql`
   fragment StockLineRow on StockLineNode {
     availableNumberOfPacks
@@ -653,6 +685,18 @@ export const LedgerRowFragmentDoc = gql`
     reason
     stockLineId
     storeId
+  }
+`;
+export const VvmStatusFragmentDoc = gql`
+  fragment VVMStatus on VvmstatusNode {
+    __typename
+    code
+    description
+    id
+    isActive
+    level
+    reasonId
+    unusable
   }
 `;
 export const StockLinesDocument = gql`
@@ -831,6 +875,19 @@ export const InsertStockLineDocument = gql`
   }
   ${StockLineRowFragmentDoc}
 `;
+export const ActiveVvmStatusesDocument = gql`
+  query activeVvmStatuses($storeId: String!) {
+    activeVvmStatuses(storeId: $storeId) {
+      ... on VvmstatusConnector {
+        __typename
+        nodes {
+          ...VVMStatus
+        }
+      }
+    }
+  }
+  ${VvmStatusFragmentDoc}
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -988,6 +1045,22 @@ export function getSdk(
           ),
         'insertStockLine',
         'mutation',
+        variables
+      );
+    },
+    activeVvmStatuses(
+      variables: ActiveVvmStatusesQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<ActiveVvmStatusesQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ActiveVvmStatusesQuery>(
+            ActiveVvmStatusesDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'activeVvmStatuses',
+        'query',
         variables
       );
     },

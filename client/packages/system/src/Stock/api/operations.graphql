@@ -234,3 +234,25 @@ mutation insertStockLine($input: InsertStockLineInput!, $storeId: String!) {
     }
   }
 }
+
+fragment VVMStatus on VvmstatusNode {
+  __typename
+  code
+  description
+  id
+  isActive
+  level
+  reasonId
+  unusable
+}
+
+query activeVvmStatuses($storeId: String!) {
+  activeVvmStatuses(storeId: $storeId) {
+    ... on VvmstatusConnector {
+      __typename
+      nodes {
+        ...VVMStatus
+      }
+    }
+  }
+}

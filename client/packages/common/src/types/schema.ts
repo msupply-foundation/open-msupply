@@ -3051,6 +3051,7 @@ export type InsertInboundShipmentLineInput = {
   sellPricePerPack: Scalars['Float']['input'];
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertInboundShipmentLineResponse =
@@ -3623,6 +3624,15 @@ export type InsertSupplierReturnErrorInterface = {
 export type InsertSupplierReturnResponse =
   | InsertSupplierReturnError
   | InvoiceNode;
+
+export type InsertVvmStatusLogInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  statusId: Scalars['String']['input'];
+  stockLineId: Scalars['String']['input'];
+};
+
+export type InsertVvmStatusLogResponse = VvmstatusLogNode;
 
 export type InsertVaccinationInput = {
   clinicianId?: InputMaybe<Scalars['String']['input']>;
@@ -4739,6 +4749,7 @@ export type Mutations = {
   insertStocktakeLine: InsertStocktakeLineResponse;
   insertSupplierReturn: InsertSupplierReturnResponse;
   insertVaccination: InsertVaccinationResponse;
+  insertVvmStatusLog: InsertVvmStatusLogResponse;
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
@@ -5150,6 +5161,11 @@ export type MutationsInsertSupplierReturnArgs = {
 
 export type MutationsInsertVaccinationArgs = {
   input: InsertVaccinationInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertVvmStatusLogArgs = {
+  input: InsertVvmStatusLogInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6329,6 +6345,7 @@ export type Queries = {
    * Provides an friendly shape to edit these lines before calling the insert/update mutations.
    */
   generateSupplierReturnLines: GenerateSupplierReturnLinesResponse;
+  getVvmStatusLogByStockLine: VvmstatusLogResponse;
   /** Query for "historical_stock_line" entries */
   historicalStockLines: StockLinesResponse;
   /** Available without authorisation in operational and initialisation states */
@@ -6667,6 +6684,11 @@ export type QueriesGenerateReportDefinitionArgs = {
 
 export type QueriesGenerateSupplierReturnLinesArgs = {
   input: GenerateSupplierReturnLinesInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesGetVvmStatusLogByStockLineArgs = {
+  stockLineId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -9588,11 +9610,13 @@ export type UpsertItemVariantErrorInterface = {
 
 export type UpsertItemVariantInput = {
   coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
+  dosesPerUnit?: InputMaybe<Scalars['Int']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   manufacturerId?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   packagingVariants: Array<PackagingVariantInput>;
+  vvmType?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpsertLogLevelInput = {
@@ -9906,6 +9930,24 @@ export type VvmstatusConnector = {
   __typename: 'VvmstatusConnector';
   nodes: Array<VvmstatusNode>;
 };
+
+export type VvmstatusLogConnector = {
+  __typename: 'VvmstatusLogConnector';
+  nodes: Array<VvmstatusLogNode>;
+};
+
+export type VvmstatusLogNode = {
+  __typename: 'VvmstatusLogNode';
+  comment?: Maybe<Scalars['String']['output']>;
+  createdDatetime: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  invoiceLineId?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<VvmstatusNode>;
+  stockLine?: Maybe<StockLineNode>;
+  user?: Maybe<UserNode>;
+};
+
+export type VvmstatusLogResponse = VvmstatusLogConnector;
 
 export type VvmstatusNode = {
   __typename: 'VvmstatusNode';
