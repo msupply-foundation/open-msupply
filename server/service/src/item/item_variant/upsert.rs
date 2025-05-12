@@ -6,8 +6,8 @@ use repository::{
         packaging_variant::{PackagingVariantFilter, PackagingVariantRepository},
         packaging_variant_row::PackagingVariantRowRepository,
     },
-    ColdStorageTypeRowRepository, EqualFilter, ItemLinkRowRepository, RepositoryError,
-    StorageConnection, StringFilter,
+    ColdStorageTypeRow, ColdStorageTypeRowRepository, EqualFilter, ItemLinkRowRepository, NameRow,
+    RepositoryError, StorageConnection, StringFilter,
 };
 
 use crate::{
@@ -16,6 +16,7 @@ use crate::{
         upsert_packaging_variant, UpsertPackagingVariant, UpsertPackagingVariantError,
     },
     service_provider::ServiceContext,
+    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
 
@@ -27,6 +28,9 @@ pub enum UpsertItemVariantError {
     DuplicateName,
     ColdStorageTypeDoesNotExist,
     DoseConfigurationNotAllowed,
+    OtherPartyDoesNotExist,
+    OtherPartyNotVisible,
+    OtherPartyNotAManufacturer,
     PackagingVariantError(UpsertPackagingVariantError),
     DatabaseError(RepositoryError),
 }
@@ -50,7 +54,11 @@ pub fn upsert_item_variant(
     let item_variant = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &input)?;
+            let ValidateResult {
+                variant_exists,
+                cold_storage_type,
+                manufacturer,
+            } = validate(connection, &ctx.store_id, &input)?;
             let new_item_variant = generate(&ctx.user_id, input.clone());
             let repo = ItemVariantRowRepository::new(connection);
             let packaging_variant_repo = PackagingVariantRepository::new(connection);
@@ -133,29 +141,59 @@ pub fn generate(
     }
 }
 
+struct ValidateResult {
+    pub variant_exists: bool,
+    pub cold_storage_type: Option<ColdStorageTypeRow>,
+    pub manufacturer: Option<NameRow>,
+}
+
 fn validate(
     connection: &StorageConnection,
+    store_id: &str,
     input: &UpsertItemVariantWithPackaging,
-) -> Result<(), UpsertItemVariantError> {
-    let item = check_item_exists(connection, &input.item_id)?
-        .ok_or(UpsertItemVariantError::ItemDoesNotExist)?;
+) -> Result<ValidateResult, UpsertItemVariantError> {
+    use UpsertItemVariantError::*;
 
-    let old_item_variant = ItemVariantRowRepository::new(connection).find_one_by_id(&input.id)?;
+    let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemDoesNotExist)?;
 
-    if let Some(old_item_variant) = old_item_variant {
+    let existing_item_variant =
+        ItemVariantRowRepository::new(connection).find_one_by_id(&input.id)?;
+
+    if let Some(existing_item_variant) = existing_item_variant.clone() {
         // Query Item Link to check if the item_id is the same
         // If items have been merged, the item_id could be different, but we still want to update the row so we have the latest id
         let old_item_id = ItemLinkRowRepository::new(connection)
-            .find_one_by_id(&old_item_variant.item_link_id)?
+            .find_one_by_id(&existing_item_variant.item_link_id)?
             .map(|v| v.item_id)
-            .unwrap_or_else(|| old_item_variant.item_link_id.clone());
+            .unwrap_or_else(|| existing_item_variant.item_link_id.clone());
 
         if old_item_id != input.item_id {
-            return Err(UpsertItemVariantError::CantChangeItem);
+            return Err(CantChangeItem);
         }
     }
 
-    if let Some(NullableUpdate {
+    let manufacturer = if let Some(NullableUpdate {
+        value: Some(ref manufacturer_id),
+    }) = &input.manufacturer_id
+    {
+        let other_party = check_other_party(
+            connection,
+            store_id,
+            &manufacturer_id,
+            CheckOtherPartyType::Manufacturer,
+        )
+        .map_err(|e| match e {
+            OtherPartyErrors::OtherPartyDoesNotExist => OtherPartyDoesNotExist {},
+            OtherPartyErrors::OtherPartyNotVisible => OtherPartyNotVisible,
+            OtherPartyErrors::TypeMismatched => OtherPartyNotAManufacturer,
+            OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
+        })?;
+        Some(other_party.name_row)
+    } else {
+        None
+    };
+
+    let cold_storage_type = if let Some(NullableUpdate {
         value: Some(ref cold_storage_type_id),
     }) = &input.cold_storage_type_id
     {
@@ -163,9 +201,12 @@ fn validate(
         let repo = ColdStorageTypeRowRepository::new(connection);
         let cold_storage_type = repo.find_one_by_id(cold_storage_type_id)?;
         if cold_storage_type.is_none() {
-            return Err(UpsertItemVariantError::ColdStorageTypeDoesNotExist);
+            return Err(ColdStorageTypeDoesNotExist);
         }
-    }
+        cold_storage_type
+    } else {
+        None
+    };
 
     // Check for duplicate name under the same item
     let item_variants_with_duplicate_name = ItemVariantRepository::new(connection)
@@ -179,12 +220,16 @@ fn validate(
         .iter()
         .any(|v| v.item_variant_row.id != input.id)
     {
-        return Err(UpsertItemVariantError::DuplicateName);
+        return Err(DuplicateName);
     }
 
     if !item.is_vaccine && input.doses_per_unit > 0 {
-        return Err(UpsertItemVariantError::DoseConfigurationNotAllowed);
+        return Err(DoseConfigurationNotAllowed);
     }
 
-    Ok(())
+    Ok(ValidateResult {
+        variant_exists: existing_item_variant.is_some(),
+        cold_storage_type,
+        manufacturer,
+    })
 }
