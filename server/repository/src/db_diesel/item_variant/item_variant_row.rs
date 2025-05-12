@@ -1,8 +1,9 @@
 use crate::{
-    db_diesel::item_row::item, item_link, ChangeLogInsertRow, ChangelogRepository,
+    db_diesel::item_row::item, item_link, user_account, ChangeLogInsertRow, ChangelogRepository,
     ChangelogTableName, RepositoryError, RowActionType, StorageConnection, Upsert,
 };
 
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -16,12 +17,15 @@ table! {
         deleted_datetime -> Nullable<Timestamp>,
         doses_per_unit -> Integer,
         vvm_type -> Nullable<Text>,
+        created_datetime -> Timestamp,
+        created_by -> Nullable<Text>,
     }
 }
 
 joinable!(item_variant -> item_link (item_link_id));
 allow_tables_to_appear_in_same_query!(item_variant, item_link);
 allow_tables_to_appear_in_same_query!(item_variant, item);
+allow_tables_to_appear_in_same_query!(item_variant, user_account);
 
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
@@ -38,6 +42,9 @@ pub struct ItemVariantRow {
     #[serde(default)]
     pub doses_per_unit: i32,
     pub vvm_type: Option<String>,
+    pub created_datetime: NaiveDateTime,
+    #[serde(default)]
+    pub created_by: Option<String>,
 }
 
 pub struct ItemVariantRowRepository<'a> {
