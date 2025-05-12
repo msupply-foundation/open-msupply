@@ -13,13 +13,17 @@ import {
   Alert,
   useUrlQuery,
 } from '@openmsupply-client/common';
-import { useStocktake } from '../api';
+import { useStocktakeOld } from '../api';
 
 export const Toolbar = () => {
-  const isDisabled = useStocktake.utils.isDisabled();
+  const isDisabled = useStocktakeOld.utils.isDisabled();
   const t = useTranslation();
   const { isLocked, stocktakeDate, description, update } =
-    useStocktake.document.fields(['isLocked', 'description', 'stocktakeDate']);
+    useStocktakeOld.document.fields([
+      'isLocked',
+      'description',
+      'stocktakeDate',
+    ]);
   const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
 
   const infoMessage = isLocked

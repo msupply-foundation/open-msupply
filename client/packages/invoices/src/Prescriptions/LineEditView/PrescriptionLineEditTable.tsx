@@ -28,11 +28,12 @@ export const PrescriptionLineEditTable: React.FC<
     const num = Number.isNaN(value) ? 0 : value;
     onChange(key, num);
   };
-  const unit = item?.unitName ?? t('label.unit');
+  const unitName = item?.unitName ?? t('label.unit');
 
   const columns = usePrescriptionLineEditColumns({
     onChange: onEditStockLine,
-    unit,
+    unitName,
+    isVaccine: item?.isVaccine,
   });
 
   return (
