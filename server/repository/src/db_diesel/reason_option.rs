@@ -127,4 +127,8 @@ impl ReasonOptionType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
+
+    pub fn equal_any(&self, values: Vec<Self>) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_any = Some(values))
+    }
 }
