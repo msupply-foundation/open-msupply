@@ -35,6 +35,8 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
 
   const packUnit = String(stockLine.packSize);
   const saveDisabled = draft.adjustment === 0;
+  const isInventoryReduction =
+    draft.adjustmentType === AdjustmentTypeInput.Reduction;
 
   const save = async () => {
     try {
@@ -52,6 +54,20 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
     } catch {
       error(t('messages.could-not-save'))(); // generic could not save message
     }
+  };
+
+  const getReasonOptionType = (
+    isInventoryReduction: boolean,
+    isVaccine: boolean
+  ): ReasonOptionNodeType | ReasonOptionNodeType[] => {
+    if (isInventoryReduction && isVaccine)
+      return [
+        ReasonOptionNodeType.NegativeInventoryAdjustment,
+        ReasonOptionNodeType.OpenVialWastage,
+      ];
+    if (isInventoryReduction)
+      return ReasonOptionNodeType.NegativeInventoryAdjustment;
+    return ReasonOptionNodeType.PositiveInventoryAdjustment;
   };
 
   return (
@@ -92,19 +108,10 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
                 <ReasonOptionsSearchInput
                   onChange={reason => setDraft(state => ({ ...state, reason }))}
                   value={draft.reason}
-                  // TODO: clean up nested ternary
-                  type={
+                  type={getReasonOptionType(
+                    isInventoryReduction,
                     stockLine.item.isVaccine
-                      ? draft.adjustmentType === AdjustmentTypeInput.Addition
-                        ? ReasonOptionNodeType.PositiveInventoryAdjustment
-                        : [
-                            ReasonOptionNodeType.NegativeInventoryAdjustment,
-                            ReasonOptionNodeType.OpenVialWastage,
-                          ]
-                      : draft.adjustmentType === AdjustmentTypeInput.Addition
-                        ? ReasonOptionNodeType.PositiveInventoryAdjustment
-                        : ReasonOptionNodeType.NegativeInventoryAdjustment
-                  }
+                  )}
                   width={INPUT_WIDTH}
                 />
               </Box>

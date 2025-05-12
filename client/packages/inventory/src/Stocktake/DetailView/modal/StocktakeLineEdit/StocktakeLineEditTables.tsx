@@ -121,6 +121,23 @@ const getInventoryAdjustmentReasonInputColumn = (
         errorType === 'AdjustmentReasonNotProvided' ||
         errorType === 'AdjustmentReasonNotValid';
 
+      const getReasonOptionType = (
+        isInventoryReduction: boolean,
+        isVaccine: boolean
+      ): ReasonOptionNodeType | ReasonOptionNodeType[] => {
+        if (isInventoryReduction && isVaccine)
+          return [
+            ReasonOptionNodeType.NegativeInventoryAdjustment,
+            ReasonOptionNodeType.OpenVialWastage,
+          ];
+        if (isInventoryReduction)
+          return ReasonOptionNodeType.NegativeInventoryAdjustment;
+        return ReasonOptionNodeType.PositiveInventoryAdjustment;
+      };
+
+      const isInventoryReduction =
+        rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0);
+
       // https://github.com/openmsupply/open-msupply/pull/1252#discussion_r1119577142, this would ideally live in inventory package
       // and instead of this method we do all of the logic in InventoryAdjustmentReasonSearchInput and use it in `Cell` field of the column
       return (
@@ -129,21 +146,10 @@ const getInventoryAdjustmentReasonInputColumn = (
           value={value}
           width={Number(column.width) - 12}
           onChange={onChange}
-          // TODO: clean up nested ternary
-          type={
+          type={getReasonOptionType(
+            isInventoryReduction,
             rowData.item.isVaccine
-              ? rowData.snapshotNumberOfPacks >
-                (rowData?.countedNumberOfPacks ?? 0)
-                ? [
-                    ReasonOptionNodeType.NegativeInventoryAdjustment,
-                    ReasonOptionNodeType.OpenVialWastage,
-                  ]
-                : ReasonOptionNodeType.PositiveInventoryAdjustment
-              : rowData.snapshotNumberOfPacks >
-                  (rowData?.countedNumberOfPacks ?? 0)
-                ? ReasonOptionNodeType.NegativeInventoryAdjustment
-                : ReasonOptionNodeType.PositiveInventoryAdjustment
-          }
+          )}
           isError={isAdjustmentReasonError}
           isDisabled={
             typeof rowData.countedNumberOfPacks !== 'number' ||
