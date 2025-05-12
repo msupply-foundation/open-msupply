@@ -32,6 +32,7 @@ pub struct UpdateInput {
     pub tax: Option<TaxInput>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
+    pub default_donor_id: Option<String>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -98,6 +99,7 @@ impl UpdateInput {
             tax,
             currency_id,
             currency_rate,
+            default_donor_id,
         } = self;
 
         ServiceInput {
@@ -113,6 +115,7 @@ impl UpdateInput {
             }),
             currency_id,
             currency_rate,
+            default_donor_id,
         }
     }
 }
@@ -497,7 +500,8 @@ mod test {
                     colour: Some("colour input".to_string()),
                     tax: None,
                     currency_id: None,
-                    currency_rate: None
+                    currency_rate: None,
+                    default_donor_id: None,
                 }
             );
             Ok(Invoice {

@@ -50,6 +50,7 @@ pub(crate) fn generate(
         .tax
         .map(|tax| tax.percentage)
         .unwrap_or(update_invoice.tax_percentage);
+    update_invoice.default_donor_id = patch.default_donor_id.or(update_invoice.default_donor_id);
 
     if let Some(status) = patch.status.clone() {
         update_invoice.status = status.full_status()

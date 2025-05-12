@@ -34,6 +34,7 @@ pub struct UpdateInboundShipment {
     pub tax: Option<ShipmentTaxUpdate>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
+    pub default_donor_id: Option<String>,
 }
 
 type OutError = UpdateInboundShipmentError;
