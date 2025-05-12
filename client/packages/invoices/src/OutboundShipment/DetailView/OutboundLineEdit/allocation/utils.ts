@@ -1,8 +1,8 @@
 import { NumUtils } from '@common/utils';
-import { DraftOutboundLineFragment } from '../../../api/operations.generated';
+import { DraftStockOutLineFragment } from '../../../api/operations.generated';
 
 export const sumAvailableQuantity = (
-  draftLines: DraftOutboundLineFragment[]
+  draftLines: DraftStockOutLineFragment[]
 ) => {
   const sum = draftLines.reduce(
     (acc, { stockLineOnHold, availablePacks, packSize, location }) =>
@@ -19,7 +19,7 @@ export const getAllocatedUnits = ({
   draftLines,
   placeholderQuantity,
 }: {
-  draftLines: DraftOutboundLineFragment[];
+  draftLines: DraftStockOutLineFragment[];
   placeholderQuantity: number | null;
 }) =>
   NumUtils.round(
@@ -31,7 +31,7 @@ export const getAllocatedUnits = ({
   ) + (placeholderQuantity ?? 0);
 
 export const issueStock = (
-  draftLines: DraftOutboundLineFragment[],
+  draftLines: DraftStockOutLineFragment[],
   idToIssue: string,
   packs: number
 ) => {

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@openmsupply-client/common';
 import { useOutboundApi } from './utils/useOutboundApi';
-import { DraftOutboundLineFragment } from '../operations.generated';
+import { DraftStockOutLineFragment } from '../operations.generated';
 
 export const useSaveOutboundLines = (outboundId: string) => {
   const { keys, sdk, storeId } = useOutboundApi();
@@ -13,7 +13,7 @@ export const useSaveOutboundLines = (outboundId: string) => {
       placeholderQuantity,
     }: {
       itemId: string;
-      lines: DraftOutboundLineFragment[];
+      lines: DraftStockOutLineFragment[];
       placeholderQuantity: number | null;
     }) => {
       return await sdk.saveOutboundShipmentItemLines({

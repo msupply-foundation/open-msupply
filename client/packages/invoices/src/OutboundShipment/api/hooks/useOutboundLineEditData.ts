@@ -1,11 +1,11 @@
 import { useQuery } from '@openmsupply-client/common';
 import { useOutboundApi } from './utils/useOutboundApi';
-import { DraftOutboundLineFragment } from '../operations.generated';
+import { DraftStockOutLineFragment } from '../operations.generated';
 import { DraftItem } from 'packages/invoices/src';
 
 export type OutboundLineEditData = {
   item: DraftItem;
-  draftLines: DraftOutboundLineFragment[];
+  draftLines: DraftStockOutLineFragment[];
   placeholderQuantity: number | null;
 };
 

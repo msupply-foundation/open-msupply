@@ -17,7 +17,7 @@ import {
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../../StockOut';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
-import { DraftOutboundLineFragment } from '../../api/operations.generated';
+import { DraftStockOutLineFragment } from '../../api/operations.generated';
 import { getPackQuantityCellId } from 'packages/invoices/src/utils';
 
 export const useOutboundLineEditColumns = ({
@@ -33,10 +33,10 @@ export const useOutboundLineEditColumns = ({
 }) => {
   const { store } = useAuthContext();
 
-  const ForeignCurrencyCell = useCurrencyCell<DraftOutboundLineFragment>(
+  const ForeignCurrencyCell = useCurrencyCell<DraftStockOutLineFragment>(
     currency?.code as Currencies
   );
-  const columnDefinitions: ColumnDescription<DraftOutboundLineFragment>[] = [
+  const columnDefinitions: ColumnDescription<DraftStockOutLineFragment>[] = [
     [
       'batch',
       {
@@ -135,7 +135,7 @@ export const useOutboundLineEditColumns = ({
     }
   );
 
-  const columns = useColumns<DraftOutboundLineFragment>(columnDefinitions, {}, [
+  const columns = useColumns<DraftStockOutLineFragment>(columnDefinitions, {}, [
     onChange,
   ]);
 
@@ -178,7 +178,7 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
 };
 
 // todo?
-const PackQuantityCell = (props: CellProps<DraftOutboundLineFragment>) => (
+const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
     max={props.rowData.availablePacks}

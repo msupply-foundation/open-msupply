@@ -1,5 +1,5 @@
 import { DateUtils } from '@common/intl';
-import { DraftOutboundLineFragment } from '../../../api/operations.generated';
+import { DraftStockOutLineFragment } from '../../../api/operations.generated';
 
 /**
  * Attempts to allocate the requested quantity to the available stock lines.
@@ -48,7 +48,7 @@ import { DraftOutboundLineFragment } from '../../../api/operations.generated';
  */
 
 export const allocateQuantities = (
-  draftLines: DraftOutboundLineFragment[],
+  draftLines: DraftStockOutLineFragment[],
   requestedUnits: number
 ) => {
   // if invalid quantity entered, don't allocate
@@ -118,8 +118,8 @@ const allocateToBatches = ({
   toAllocate,
   roundUp = false,
 }: {
-  validBatches: DraftOutboundLineFragment[];
-  newDraftLines: DraftOutboundLineFragment[];
+  validBatches: DraftStockOutLineFragment[];
+  newDraftLines: DraftStockOutLineFragment[];
   toAllocate: number;
   roundUp?: boolean;
 }) => {
@@ -169,8 +169,8 @@ const reduceBatchAllocation = ({
   newDraftLines,
 }: {
   toAllocate: number;
-  validBatches: DraftOutboundLineFragment[];
-  newDraftLines: DraftOutboundLineFragment[];
+  validBatches: DraftStockOutLineFragment[];
+  newDraftLines: DraftStockOutLineFragment[];
 }) => {
   validBatches
     .slice()

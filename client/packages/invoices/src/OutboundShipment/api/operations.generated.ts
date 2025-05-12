@@ -1045,7 +1045,7 @@ export type InsertBarcodeMutation = {
   };
 };
 
-export type DraftOutboundLineFragment = {
+export type DraftStockOutLineFragment = {
   __typename: 'DraftOutboundShipmentLineNode';
   id: string;
   stockLineId: string;
@@ -1244,8 +1244,8 @@ export const ItemPriceFragmentDoc = gql`
     calculatedPricePerUnit
   }
 `;
-export const DraftOutboundLineFragmentDoc = gql`
-  fragment DraftOutboundLine on DraftOutboundShipmentLineNode {
+export const DraftStockOutLineFragmentDoc = gql`
+  fragment DraftStockOutLine on DraftOutboundShipmentLineNode {
     __typename
     id
     stockLineId
@@ -2016,12 +2016,12 @@ export const GetOutboundEditLinesDocument = gql`
       ... on DraftOutboundShipmentItemData {
         placeholderQuantity
         draftLines {
-          ...DraftOutboundLine
+          ...DraftStockOutLine
         }
       }
     }
   }
-  ${DraftOutboundLineFragmentDoc}
+  ${DraftStockOutLineFragmentDoc}
 `;
 
 export type SdkFunctionWrapper = <T>(

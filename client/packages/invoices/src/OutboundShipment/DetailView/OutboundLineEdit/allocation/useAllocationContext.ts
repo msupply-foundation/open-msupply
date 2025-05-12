@@ -5,7 +5,7 @@ import {
   TypedTFunction,
 } from '@openmsupply-client/common';
 import { getAllocationAlerts, StockOutAlert } from '../../../../StockOut';
-import { DraftOutboundLineFragment } from '../../../api/operations.generated';
+import { DraftStockOutLineFragment } from '../../../api/operations.generated';
 import { getAllocatedUnits, issueStock } from './utils';
 import { OutboundLineEditData } from '../../../api';
 import { allocateQuantities } from './allocateQuantities';
@@ -19,7 +19,7 @@ export enum AllocateIn {
 
 interface AllocationContext {
   isDirty: boolean;
-  draftLines: DraftOutboundLineFragment[];
+  draftLines: DraftStockOutLineFragment[];
   allocatedUnits: number;
   alerts: StockOutAlert[];
   allocateIn: AllocateIn;
@@ -28,7 +28,7 @@ interface AllocationContext {
 
   initialise: (input: OutboundLineEditData, withPlaceholder: boolean) => void;
 
-  setDraftLines: (lines: DraftOutboundLineFragment[]) => void;
+  setDraftLines: (lines: DraftStockOutLineFragment[]) => void;
   setAlerts: (alerts: StockOutAlert[]) => void;
 
   manualAllocate: (lineId: string, quantity: number) => void;
@@ -39,7 +39,6 @@ interface AllocationContext {
   ) => void;
 }
 
-// TODO - possibly should scope to the modal?
 export const useAllocationContext = create<AllocationContext>((set, get) => ({
   isDirty: false,
   initialisedForItemId: null,

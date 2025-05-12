@@ -18,7 +18,7 @@ import { useOutbound, OutboundLineEditData } from '../../api';
 import { DraftItem } from '../../..';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { useAllocationContext } from './allocation/useAllocationContext';
-import { DraftOutboundLineFragment } from '../../api/operations.generated';
+import { DraftStockOutLineFragment } from '../../api/operations.generated';
 import { sumAvailableQuantity } from './allocation/utils';
 
 interface AllocationProps {
@@ -105,7 +105,7 @@ interface TableProps {
   currentItem: DraftItem;
   isLoading: boolean;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
-  draftOutboundLines: DraftOutboundLineFragment[];
+  draftOutboundLines: DraftStockOutLineFragment[];
   batch?: string;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
