@@ -49,8 +49,13 @@ pub fn validate(
     if !check_batch(line_row, connection)? {
         return Err(BatchIsReserved);
     }
-    if !check_location_exists(connection, store_id, &input.location)? {
-        return Err(LocationDoesNotExist);
+    if let Some(NullableUpdate {
+        value: Some(ref location),
+    }) = &input.location
+    {
+        if !check_location_exists(connection, store_id, location)? {
+            return Err(LocationDoesNotExist);
+        }
     }
     if let Some(NullableUpdate {
         value: Some(item_variant_id),

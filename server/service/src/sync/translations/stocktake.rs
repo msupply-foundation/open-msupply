@@ -82,6 +82,9 @@ pub struct LegacyStocktakeRow {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub verified_by: Option<String>,
+    #[serde(rename = "om_is_initial_stocktake")]
+    #[serde(default)]
+    pub is_initial_stocktake: bool,
 }
 
 // Needs to be added to all_translators()
@@ -151,6 +154,7 @@ impl SyncTranslation for StocktakeTranslation {
             program_id: data.program_id,
             counted_by: data.counted_by,
             verified_by: data.verified_by,
+            is_initial_stocktake: data.is_initial_stocktake,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -178,6 +182,7 @@ impl SyncTranslation for StocktakeTranslation {
             program_id,
             counted_by,
             verified_by,
+            is_initial_stocktake,
         } = StocktakeRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg("Stocktake row not found"))?;
@@ -201,6 +206,7 @@ impl SyncTranslation for StocktakeTranslation {
             program_id,
             counted_by,
             verified_by,
+            is_initial_stocktake,
         };
 
         Ok(PushTranslateResult::upsert(

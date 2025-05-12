@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Autocomplete,
   AutocompleteOption,
@@ -54,13 +54,13 @@ const optionRenderer = (
   );
 };
 
-export const LocationSearchInput: FC<LocationSearchInputProps> = ({
+export const LocationSearchInput = ({
   selectedLocation,
   width,
   onChange,
   disabled,
   autoFocus = false,
-}) => {
+}: LocationSearchInputProps) => {
   const t = useTranslation();
   const {
     query: { data, isLoading },

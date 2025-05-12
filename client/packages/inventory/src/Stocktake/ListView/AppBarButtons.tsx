@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   DownloadIcon,
   useNotification,
@@ -6,21 +6,35 @@ import {
   Grid,
   FileUtils,
   LoadingButton,
-  ToggleState,
   EnvUtils,
   Platform,
+  ButtonWithIcon,
+  PlusCircleIcon,
+  useToggle,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
-import { CreateStocktakeButton } from './CreateStocktakeButton';
-import { useStocktake } from '../api';
+import { useStocktakeOld } from '../api';
 import { stocktakesToCsv } from '../../utils';
+import { CreateStocktakeModal } from './CreateStocktakeModal';
+import { CreateStocktakeInput } from '../api/hooks/useStocktake';
 
-export const AppBarButtons: FC<{
-  modalController: ToggleState;
-}> = ({ modalController }) => {
-  const { success, error } = useNotification();
+interface AppBarButtonsProps {
+  description: string;
+  onCreate: (input: CreateStocktakeInput) => Promise<string | undefined>;
+  isCreating: boolean;
+  navigate: (id: string) => void;
+}
+
+export const AppBarButtons = ({
+  onCreate,
+  isCreating,
+  navigate,
+  description,
+}: AppBarButtonsProps) => {
   const t = useTranslation();
-  const { isLoading, fetchAsync } = useStocktake.document.listAll({
+  const modalController = useToggle();
+  const { success, error } = useNotification();
+  const { isLoading, fetchAsync } = useStocktakeOld.document.listAll({
     key: 'createdDatetime',
     direction: 'desc',
     isDesc: true,
@@ -41,7 +55,19 @@ export const AppBarButtons: FC<{
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <CreateStocktakeButton modalController={modalController} />
+        <ButtonWithIcon
+          Icon={<PlusCircleIcon />}
+          label={t('label.new-stocktake')}
+          onClick={modalController.toggleOn}
+        />
+        <CreateStocktakeModal
+          open={modalController.isOn}
+          onClose={modalController.toggleOff}
+          onCreate={onCreate}
+          isCreating={isCreating}
+          navigate={navigate}
+          description={description}
+        />
         <LoadingButton
           startIcon={<DownloadIcon />}
           variant="outlined"

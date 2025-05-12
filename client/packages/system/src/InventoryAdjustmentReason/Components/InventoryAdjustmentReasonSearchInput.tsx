@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AdjustmentTypeInput,
   Autocomplete,
@@ -23,11 +23,10 @@ interface InventoryAdjustmentReasonSearchInputProps {
   adjustmentType: AdjustmentTypeInput;
   isError?: boolean;
   isDisabled?: boolean;
+  initialStocktake?: boolean;
 }
 
-export const InventoryAdjustmentReasonSearchInput: FC<
-  InventoryAdjustmentReasonSearchInputProps
-> = ({
+export const InventoryAdjustmentReasonSearchInput = ({
   value,
   width,
   onChange,
@@ -35,7 +34,8 @@ export const InventoryAdjustmentReasonSearchInput: FC<
   adjustmentType,
   isError,
   isDisabled,
-}) => {
+  initialStocktake,
+}: InventoryAdjustmentReasonSearchInputProps) => {
   const { data, isLoading } = useInventoryAdjustmentReasonList();
   const reasonFilter = (reason: InventoryAdjustmentReasonRowFragment) => {
     if (adjustmentType === AdjustmentTypeInput.Addition)
@@ -44,7 +44,8 @@ export const InventoryAdjustmentReasonSearchInput: FC<
   };
   const reasons = (data?.nodes ?? []).filter(reasonFilter);
 
-  const isRequired = reasons.length !== 0;
+  const reasonsAvailable = reasons.length !== 0;
+  const isRequired = reasonsAvailable && !initialStocktake;
 
   return (
     <Box display="flex" flexDirection="row" width={120}>

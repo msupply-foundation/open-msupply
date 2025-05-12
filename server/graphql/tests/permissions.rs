@@ -842,7 +842,7 @@ mod permission_tests {
             TestData {
                 name: "insertStocktake",
                 query: r#"mutation Mutation {
-                insertStocktake(input: {id: ""}, storeId: "") {
+                insertStocktake(input: {id: "", isInitialStocktake: false}, storeId: "") {
                   ... on StocktakeNode {
                     id
                   }

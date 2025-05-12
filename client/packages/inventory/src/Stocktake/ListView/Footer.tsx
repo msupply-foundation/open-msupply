@@ -6,13 +6,13 @@ import {
   useTranslation,
   AppFooterPortal,
 } from '@openmsupply-client/common';
-import { useStocktake } from '../api';
+import { useStocktakeOld } from '../api';
 
 export const FooterComponent: FC = () => {
   const t = useTranslation();
 
   const { selectedRows, confirmAndDelete } =
-    useStocktake.document.deleteSelected();
+    useStocktakeOld.document.deleteSelected();
 
   const actions: Action[] = [
     {

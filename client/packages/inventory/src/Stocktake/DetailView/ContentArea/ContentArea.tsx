@@ -11,7 +11,7 @@ import {
   BasicSpinner,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns, useExpansionColumns } from './columns';
-import { StocktakeLineFragment, useStocktake } from '../../api';
+import { StocktakeLineFragment, useStocktakeOld } from '../../api';
 import { StocktakeSummaryItem } from '../../../types';
 
 const Expando = ({
@@ -95,7 +95,7 @@ export const ContentArea: FC<ContentAreaProps> = ({
     queryParams: { page, first, offset, sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { isDisabled, isLoading, lines, totalLineCount } =
-    useStocktake.line.rows();
+    useStocktakeOld.line.rows();
   const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
   const pagination = { page, first, offset };
 

@@ -3564,11 +3564,10 @@ export type InsertStocktakeInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   expiresBefore?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  isLocked?: InputMaybe<Scalars['Boolean']['input']>;
+  isInitialStocktake?: InputMaybe<Scalars['Boolean']['input']>;
   itemsHaveStock?: InputMaybe<Scalars['Boolean']['input']>;
-  location?: InputMaybe<NullableStringUpdate>;
+  locationId?: InputMaybe<Scalars['String']['input']>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
-  stocktakeDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type InsertStocktakeLineError = {
@@ -4319,9 +4318,7 @@ export type ItemVariantNode = {
   dosesPerUnit: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   item?: Maybe<ItemNode>;
-  /** @deprecated From 2.8.0. Use item instead */
   itemId: Scalars['String']['output'];
-  /** @deprecated From 2.8.0. Use item instead */
   itemName: Scalars['String']['output'];
   manufacturer?: Maybe<NameNode>;
   manufacturerId?: Maybe<Scalars['String']['output']>;
@@ -8111,6 +8108,7 @@ export type StocktakeNode = {
   inventoryAdditionId?: Maybe<Scalars['String']['output']>;
   inventoryReduction?: Maybe<InvoiceNode>;
   inventoryReductionId?: Maybe<Scalars['String']['output']>;
+  isInitialStocktake: Scalars['Boolean']['output'];
   isLocked: Scalars['Boolean']['output'];
   lines: StocktakeLineConnector;
   program?: Maybe<ProgramNode>;
