@@ -13,7 +13,7 @@ import {
   useDisabledNotificationToast,
 } from '@openmsupply-client/common';
 import { getNextStocktakeStatus, getStatusTranslation } from '../../../utils';
-import { useStocktake } from '../../api';
+import { useStocktakeOld } from '../../api';
 import { useStocktakeLineErrorContext } from '../../context';
 
 const getStatusOptions = (
@@ -56,12 +56,12 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { id, lines, status } = useStocktake.document.fields([
+  const { id, lines, status } = useStocktakeOld.document.fields([
     'id',
     'status',
     'lines',
   ]);
-  const { mutateAsync: save } = useStocktake.document.update();
+  const { mutateAsync: save } = useStocktakeOld.document.update();
   const { success, error } = useNotification();
   const t = useTranslation();
 
@@ -178,7 +178,7 @@ const useStatusChangeButton = () => {
 export const StatusChangeButton = () => {
   const { options, selectedOption, setSelectedOption, getConfirmation, lines } =
     useStatusChangeButton();
-  const isDisabled = useStocktake.utils.isDisabled();
+  const isDisabled = useStocktakeOld.utils.isDisabled();
   const t = useTranslation();
   const noLines =
     lines?.totalCount === 0 ||

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Autocomplete,
   AutocompleteOption,
@@ -54,13 +54,13 @@ const optionRenderer = (
   );
 };
 
-export const MasterListSearchInput: FC<MasterListSearchInputProps> = ({
+export const MasterListSearchInput = ({
   selectedMasterList,
   width,
   onChange,
   disabled,
   autoFocus = false,
-}) => {
+}: MasterListSearchInputProps) => {
   const t = useTranslation();
   const { store } = useAuthContext();
   const { data, isLoading } = useMasterLists({
