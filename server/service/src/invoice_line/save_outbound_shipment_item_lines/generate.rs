@@ -138,7 +138,7 @@ pub fn generate(
                 id: uuid::uuid(),
                 invoice_id,
                 item_id,
-                quantity: quantity as u32, // bit yikes, gets converted back tho?
+                quantity: quantity as u32, // worth cleaning up this input... gets saved as f64?
             })
         }
         _ => ManagePlaceholderLine::NothingToDo,
