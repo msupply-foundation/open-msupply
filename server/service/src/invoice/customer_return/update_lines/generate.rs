@@ -72,6 +72,7 @@ pub fn generate(
                 barcode: None,
                 stock_line_id: None,
                 stock_on_hold: false,
+                donor_id: None,
             },
         )
         .collect();
@@ -110,6 +111,7 @@ pub fn generate(
                 sell_price_per_pack: None,
                 tax_percentage: None,
                 total_before_tax: None,
+                donor_id: None,
             },
         )
         .collect();

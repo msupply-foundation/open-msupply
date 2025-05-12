@@ -135,6 +135,7 @@ pub fn generate(
             barcode: None,
             total_before_tax: None,
             tax_percentage: None,
+            donor_id: None,
         }),
         AdjustmentType::Reduction => InsertStockInOrOutLine::StockOut(InsertStockOutLine {
             r#type: StockOutType::InventoryReduction,

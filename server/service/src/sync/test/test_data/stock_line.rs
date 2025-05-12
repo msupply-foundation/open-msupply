@@ -48,7 +48,8 @@ const ITEM_LINE_1: (&str, &str) = (
       "user_8_ID": "",
       "volume_per_pack": 0,
       "vvm_status": "",
-      "weight_per_pack": 0
+      "weight_per_pack": 0,
+      "donor_id: ""
     }"#,
 );
 fn item_line_1_pull_record() -> TestSyncIncomingRecord {
@@ -72,6 +73,7 @@ fn item_line_1_pull_record() -> TestSyncIncomingRecord {
             supplier_link_id: Some("name_store_b".to_string()),
             barcode_id: None,
             item_variant_id: None,
+            donor_id: None,
         },
     )
 }
@@ -96,6 +98,7 @@ fn item_line_1_push_record() -> TestSyncOutgoingRecord {
             supplier_id: Some("name_store_b".to_string()),
             barcode_id: None,
             item_variant_id: None,
+            donor_id: None,
         }),
     }
 }
@@ -140,7 +143,8 @@ const ITEM_LINE_2: (&str, &str) = (
       "user_8_ID": "",
       "volume_per_pack": 0,
       "vvm_status": "",
-      "weight_per_pack": 0
+      "weight_per_pack": 0,
+      "donor_id: ""
   }"#,
 );
 fn item_line_2_pull_record() -> TestSyncIncomingRecord {
@@ -164,6 +168,7 @@ fn item_line_2_pull_record() -> TestSyncIncomingRecord {
             supplier_link_id: None,
             barcode_id: None,
             item_variant_id: None,
+            donor_id: None,
         },
     )
 }
@@ -188,6 +193,7 @@ fn item_line_2_push_record() -> TestSyncOutgoingRecord {
             supplier_id: None,
             barcode_id: None,
             item_variant_id: None,
+            donor_id: None,
         }),
     }
 }

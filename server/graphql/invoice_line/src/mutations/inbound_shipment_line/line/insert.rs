@@ -30,6 +30,7 @@ pub struct InsertInput {
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<f64>,
     pub item_variant_id: Option<String>,
+    pub donor_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -88,6 +89,7 @@ impl InsertInput {
             total_before_tax,
             tax_percentage,
             item_variant_id,
+            donor_id,
         } = self;
 
         ServiceInput {
@@ -107,6 +109,7 @@ impl InsertInput {
             tax_percentage,
             r#type: StockInType::InboundShipment,
             item_variant_id,
+            donor_id,
             // Default
             note: None,
             stock_line_id: None,

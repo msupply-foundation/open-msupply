@@ -125,6 +125,7 @@ pub fn generate(
                 stock_line_id,
                 barcode: None,
                 stock_on_hold: false,
+                donor_id: None,
             },
         )
         .collect();

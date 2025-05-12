@@ -43,6 +43,7 @@ pub struct InsertStockInLine {
     pub barcode: Option<String>,
     pub stock_on_hold: bool,
     pub item_variant_id: Option<String>,
+    pub donor_id: Option<String>,
 }
 
 type OutError = InsertStockInLineError;
@@ -122,9 +123,9 @@ mod test {
     use repository::{
         barcode::{BarcodeFilter, BarcodeRepository},
         mock::{
-            mock_customer_return_a, mock_customer_return_a_invoice_line_a, mock_item_a,
-            mock_name_store_b, mock_outbound_shipment_e, mock_store_a, mock_store_b,
-            mock_user_account_a, MockData, MockDataInserts,
+            mock_customer_return_a, mock_customer_return_a_invoice_line_a, mock_inbound_shipment_c,
+            mock_inbound_shipment_e, mock_item_a, mock_name_store_b, mock_outbound_shipment_e,
+            mock_store_a, mock_store_b, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
@@ -135,7 +136,7 @@ mod test {
 
     use crate::{
         invoice_line::stock_in_line::{
-            insert::InsertStockInLine, InsertStockInLineError as ServiceError,
+            insert::InsertStockInLine, InsertStockInLineError as ServiceError, StockInType,
         },
         service_provider::ServiceProvider,
         NullableUpdate,
@@ -406,6 +407,83 @@ mod test {
                 u.pack_size = 1.0;
                 u.number_of_packs = 200.0;
                 u.sell_price_per_pack = 10.0;
+                u
+            })
+        );
+
+        // donor_id of line defaults to invoice default_invoice_line_id
+
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        insert_stock_in_line(
+            &context,
+            inline_init(|r: &mut InsertStockInLine| {
+                r.id = "new_invoice_line_id_with_donor".to_string();
+                r.invoice_id = mock_inbound_shipment_c().id;
+                r.item_id = mock_item_a().id;
+                r.pack_size = 1.0;
+                r.number_of_packs = 1.0;
+                r.r#type = StockInType::InboundShipment;
+            }),
+        )
+        .unwrap();
+
+        let InvoiceLine {
+            invoice_line_row: inbound_line,
+            ..
+        } = InvoiceLineRepository::new(&connection)
+            .query_by_filter(
+                InvoiceLineFilter::new()
+                    .id(EqualFilter::equal_to("new_invoice_line_id_with_donor")),
+            )
+            .unwrap()
+            .pop()
+            .unwrap();
+
+        assert_eq!(
+            inbound_line,
+            inline_edit(&inbound_line, |mut u| {
+                u.id = "new_invoice_line_id_with_donor".to_string();
+                u.donor_id = Some("donor_id".to_string());
+
+                u
+            })
+        );
+
+        // defaults to None if no default_donor_id set for invoice
+
+        insert_stock_in_line(
+            &context,
+            inline_init(|r: &mut InsertStockInLine| {
+                r.id = "new_invoice_line_id_with_no_donor".to_string();
+                r.invoice_id = mock_inbound_shipment_e().id;
+                r.item_id = mock_item_a().id;
+                r.pack_size = 1.0;
+                r.number_of_packs = 1.0;
+                r.r#type = StockInType::InboundShipment;
+            }),
+        )
+        .unwrap();
+
+        let InvoiceLine {
+            invoice_line_row: inbound_line,
+            ..
+        } = InvoiceLineRepository::new(&connection)
+            .query_by_filter(
+                InvoiceLineFilter::new()
+                    .id(EqualFilter::equal_to("new_invoice_line_id_with_no_donor")),
+            )
+            .unwrap()
+            .pop()
+            .unwrap();
+
+        assert_eq!(
+            inbound_line,
+            inline_edit(&inbound_line, |mut u| {
+                u.id = "new_invoice_line_id_with_no_donor".to_string();
+                u.donor_id = None;
                 u
             })
         );

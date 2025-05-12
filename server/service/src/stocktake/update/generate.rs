@@ -161,6 +161,7 @@ fn generate_stock_in_out_or_update(
             // Default
             total_before_tax: None,
             tax_percentage: None,
+            donor_id: None,
         })
     } else {
         StockChange::StockOut(InsertStockOutLine {
@@ -333,6 +334,7 @@ fn generate_new_stock_line(
         total_before_tax: None,
         tax_percentage: None,
         item_variant_id: stocktake_line.line.item_variant_id.clone(),
+        donor_id: None,
     });
 
     // If new stock line has a location, create location movement
