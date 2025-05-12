@@ -11,21 +11,21 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                ALTER TABLE invoice_line ADD COLUMN donor_id TEXT;
+                ALTER TABLE invoice_line ADD COLUMN donor_id TEXT REFERENCES name(id);
             "#
         )?;
 
         sql!(
             connection,
             r#"
-                ALTER TABLE stock_line ADD COLUMN donor_id TEXT;
+                ALTER TABLE stock_line ADD COLUMN donor_id TEXT REFERENCES name(id);
             "#
         )?;
 
         sql!(
             connection,
             r#"
-                ALTER TABLE invoice ADD COLUMN default_donor_id TEXT;
+                ALTER TABLE invoice ADD COLUMN default_donor_id TEXT REFERENCES name(id);
             "#
         )?;
 

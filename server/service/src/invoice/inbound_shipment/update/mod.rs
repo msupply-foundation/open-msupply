@@ -1,5 +1,6 @@
 use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
 use crate::invoice_line::ShipmentTaxUpdate;
+use crate::NullableUpdate;
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
 use repository::{Invoice, LocationMovementRowRepository};
 use repository::{
@@ -34,7 +35,7 @@ pub struct UpdateInboundShipment {
     pub tax: Option<ShipmentTaxUpdate>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
-    pub default_donor_id: Option<String>,
+    pub default_donor_id: Option<NullableUpdate<String>>,
 }
 
 type OutError = UpdateInboundShipmentError;

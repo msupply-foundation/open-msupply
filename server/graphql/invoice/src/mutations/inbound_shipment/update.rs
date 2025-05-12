@@ -3,7 +3,7 @@ use crate::mutations::outbound_shipment::error::{
 };
 use async_graphql::*;
 
-use graphql_core::generic_inputs::TaxInput;
+use graphql_core::generic_inputs::{NullableUpdateInput, TaxInput};
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, OtherPartyNotASupplier, OtherPartyNotVisible,
 };
@@ -18,6 +18,7 @@ use service::invoice::inbound_shipment::{
     UpdateInboundShipmentStatus,
 };
 use service::invoice_line::ShipmentTaxUpdate;
+use service::NullableUpdate;
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundShipmentInput")]
@@ -32,7 +33,7 @@ pub struct UpdateInput {
     pub tax: Option<TaxInput>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
-    pub default_donor_id: Option<String>,
+    pub default_donor_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -115,7 +116,9 @@ impl UpdateInput {
             }),
             currency_id,
             currency_rate,
-            default_donor_id,
+            default_donor_id: default_donor_id.map(|default_donor_id| NullableUpdate {
+                value: default_donor_id.value,
+            }),
         }
     }
 }
