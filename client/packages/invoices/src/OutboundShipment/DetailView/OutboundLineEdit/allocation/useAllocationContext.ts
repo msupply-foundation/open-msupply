@@ -9,8 +9,9 @@ import {
   StockOutAlert,
 } from 'packages/invoices/src/StockOut';
 import { DraftOutboundLineFragment } from '../../../api/operations.generated';
-import { allocateQuantities, getAllocatedUnits, issueStock } from './utils';
+import { getAllocatedUnits, issueStock } from './utils';
 import { OutboundLineEditData } from '../../../api';
+import { allocateQuantities } from './allocateQuantities';
 
 // TODO Fix imports
 
