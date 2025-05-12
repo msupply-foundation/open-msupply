@@ -1,4 +1,4 @@
-import { NumUtils, SortUtils } from '@common/utils';
+import { FnUtils, NumUtils, SortUtils } from '@common/utils';
 import { InvoiceLineNodeType } from '@common/types';
 import { DateUtils } from '@common/intl';
 import { DraftOutboundLineFragment } from '../../../api/operations.generated';
@@ -50,22 +50,28 @@ export const issueStock = (
 
 export const allocateQuantities = (
   draftLines: DraftOutboundLineFragment[],
-  newValue: number,
-  allowPlaceholder: boolean
+  newValue: number
 ) => {
   // if invalid quantity entered, don't allocate
   if (newValue < 0 || Number.isNaN(newValue)) {
     return;
   }
 
+  // todo
+  if (draftLines.length === 0) {
+    return {
+      allocatedLines: [],
+      remainingQuantity: newValue,
+    };
+  }
   // If there is only one batch row, then it is the placeholder.
   // Assign all of the new value and short circuit.
-  const placeholder = draftLines.find(
-    ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-  );
-  if (placeholder && draftLines.length === 1 && allowPlaceholder) {
-    return issueStock(draftLines, placeholder?.id ?? '', newValue);
-  }
+  // const placeholder = draftLines.find(
+  //   ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
+  // );
+  // if (placeholder && draftLines.length === 1 && allowPlaceholder) {
+  //   return issueStock(draftLines, placeholder?.id ?? '', newValue);
+  // }
 
   // calculations are normalised to units
   let toAllocate = newValue;
@@ -146,7 +152,10 @@ export const allocateQuantities = (
   //   }
   // }
 
-  return newDraftLines;
+  return {
+    allocatedLines: newDraftLines,
+    remainingQuantity: toAllocate,
+  };
 };
 
 const allocateToBatches = ({
@@ -238,82 +247,13 @@ const reduceBatchAllocation = ({
   return -toAllocate;
 };
 
-// export const shouldUpdatePlaceholder = (
-//   quantity: number,
-//   placeholder: DraftOutboundLineFragment
-// ) => quantity > 0 && !placeholder.isCreated;
-
-// export const PackQuantityCell = (
-//   props: CellProps<DraftOutboundLineFragment>
-// ) => (
-//   <NumberInputCell
-//     {...props}
-//     max={props.rowData.stockLine?.availableNumberOfPacks}
-//     id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
-//     decimalLimit={2}
-//     min={0}
-//   />
-// );
-
-// export const UnitQuantityCell = (
-//   props: CellProps<DraftOutboundLineFragment>
-// ) => (
-//   <NumberInputCell
-//     {...props}
-//     max={
-//       (props.rowData.stockLine?.availableNumberOfPacks ?? 0) *
-//       (props.rowData.stockLine?.packSize ?? 1)
-//     }
-//     id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
-//     min={0}
-//     decimalLimit={2}
-//     slotProps={{
-//       htmlInput: {
-//         sx: {
-//           backgroundColor: props.isDisabled ? undefined : 'background.white',
-//         },
-//       },
-//     }}
-//   />
-// );
-
-// export const getAllocationAlerts = (
-//   requestedQuantity: number,
-//   allocatedQuantity: number,
-//   placeholderQuantity: number,
-//   hasOnHold: boolean,
-//   hasExpired: boolean,
-//   format: (value: number, options?: Intl.NumberFormatOptions) => string,
-//   t: TypedTFunction<LocaleKey>
-// ) => {
-//   const alerts: StockOutAlert[] = [];
-
-//   const unavailableStockWarning = `${
-//     hasOnHold ? t('messages.stock-on-hold') : ''
-//   } ${hasExpired ? t('messages.stock-expired') : ''}`.trim();
-
-//   if (unavailableStockWarning && requestedQuantity > 0) {
-//     alerts.push({
-//       message: unavailableStockWarning,
-//       severity: 'info',
-//     });
-//   }
-
-//   if (allocatedQuantity !== requestedQuantity && allocatedQuantity > 0) {
-//     alerts.push({
-//       message: t('messages.over-allocated', {
-//         quantity: format(allocatedQuantity),
-//         issueQuantity: format(requestedQuantity),
-//       }),
-//       severity: 'warning',
-//     });
-//     return alerts;
-//   }
-//   if (placeholderQuantity > 0) {
-//     alerts.push({
-//       message: t('messages.placeholder-allocated', { placeholderQuantity }),
-//       severity: 'info',
-//     });
-//   }
-//   return alerts;
-// };
+export const createPlaceholderLine = (): DraftOutboundLineFragment => ({
+  id: FnUtils.generateUUID(),
+  type: InvoiceLineNodeType.UnallocatedStock,
+  packSize: 1,
+  __typename: 'DraftOutboundShipmentLineNode',
+  numberOfPacks: 0,
+  sellPricePerPack: 0,
+  inStorePacks: 0,
+  availablePacks: 0,
+});

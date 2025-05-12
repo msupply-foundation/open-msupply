@@ -23,7 +23,7 @@ import { sumAvailableQuantity } from './allocation/utils';
 
 interface AllocationProps {
   itemData: OutboundLineEditData;
-  allowPlaceholder?: boolean;
+  allowPlaceholder: boolean;
 }
 
 export const Allocation = ({ itemData, allowPlaceholder }: AllocationProps) => {
@@ -35,21 +35,15 @@ export const Allocation = ({ itemData, allowPlaceholder }: AllocationProps) => {
   );
 
   useEffect(() => {
-    initialise(itemData.item.id, itemData.draftLines);
+    initialise(itemData.item.id, itemData.draftLines, allowPlaceholder);
   }, []);
 
   return initialisedForItemId === itemData.item.id ? (
-    <AllocationInner item={itemData.item} allowPlaceholder={allowPlaceholder} />
+    <AllocationInner item={itemData.item} />
   ) : null;
 };
 
-const AllocationInner = ({
-  item,
-  allowPlaceholder,
-}: {
-  item: DraftItem;
-  allowPlaceholder?: boolean;
-}) => {
+const AllocationInner = ({ item }: { item: DraftItem }) => {
   const t = useTranslation();
   // const { setIsDirty } = useConfirmOnLeaving('outbound-shipment-line-edit');
 
@@ -90,7 +84,7 @@ const AllocationInner = ({
         </Grid>
       </ModalRow>
 
-      <AutoAllocate allowPlaceholder={allowPlaceholder} />
+      <AutoAllocate />
 
       <TableWrapper
         hasLines={hasLines}
@@ -118,13 +112,13 @@ interface TableProps {
   isExternalSupplier: boolean;
 }
 
-const TableWrapper: React.FC<TableProps> = ({
+const TableWrapper = ({
   currentItem,
   isLoading,
   updateQuantity,
   currency,
   isExternalSupplier,
-}) => {
+}: TableProps) => {
   if (isLoading)
     return (
       <Box

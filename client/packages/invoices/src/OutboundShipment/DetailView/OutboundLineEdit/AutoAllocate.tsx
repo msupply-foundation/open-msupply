@@ -16,11 +16,7 @@ import {
   useAllocationContext,
 } from './allocation/useAllocationContext';
 
-export const AutoAllocate = ({
-  allowPlaceholder,
-}: {
-  allowPlaceholder?: boolean;
-}) => {
+export const AutoAllocate = () => {
   const t = useTranslation();
   const { format } = useFormatNumber();
 
@@ -48,7 +44,7 @@ export const AutoAllocate = ({
   // pack size which stops you entering the required quantity.
   // See https://github.com/msupply-foundation/open-msupply/issues/2727
   const debouncedAllocate = useDebounceCallback(
-    quantity => autoAllocate(quantity, format, t, allowPlaceholder),
+    quantity => autoAllocate(quantity, format, t),
     [],
     500
   );
