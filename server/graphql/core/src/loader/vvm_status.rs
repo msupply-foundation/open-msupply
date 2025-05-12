@@ -18,7 +18,7 @@ impl Loader<String> for VVMStatusByIdLoader {
         let connection = self.connection_manager.connection()?;
         let repo = VVMStatusRowRepository::new(&connection);
 
-        let result = repo.find_all_active()?;
+        let result = repo.find_all()?;
 
         let mut map: HashMap<String, Vec<VVMStatusRow>> = HashMap::new();
         for status in result {
