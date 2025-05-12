@@ -1,9 +1,9 @@
 use crate::{Delete, Upsert};
 
 use super::{
-    clinician_link_row::clinician_link, item_link_row::item_link, item_row::item::dsl::*,
-    name_link_row::name_link, unit_row::unit, ItemLinkRow, ItemLinkRowRepository, RepositoryError,
-    StorageConnection,
+    clinician_link_row::clinician_link, cold_storage_type_row::cold_storage_type,
+    item_link_row::item_link, item_row::item::dsl::*, name_link_row::name_link, unit_row::unit,
+    ItemLinkRow, ItemLinkRowRepository, RepositoryError, StorageConnection,
 };
 
 use diesel::prelude::*;
@@ -39,6 +39,7 @@ joinable!(item_is_visible -> item (id));
 allow_tables_to_appear_in_same_query!(item, item_link);
 allow_tables_to_appear_in_same_query!(item, name_link);
 allow_tables_to_appear_in_same_query!(item, clinician_link);
+allow_tables_to_appear_in_same_query!(item, cold_storage_type);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]

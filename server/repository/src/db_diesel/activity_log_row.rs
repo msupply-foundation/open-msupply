@@ -93,7 +93,7 @@ pub enum ActivityLogType {
     ItemVariantUpdateColdStorageType,
     ItemVariantUpdateManufacturer,
     ItemVariantUpdateDosePerUnit,
-    ItemVariantUpdateVvmType,
+    ItemVariantUpdateVVMType,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
