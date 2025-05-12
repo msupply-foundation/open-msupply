@@ -997,6 +997,16 @@ export type AddToOutboundShipmentFromMasterListMutation = {
     | { __typename: 'InvoiceLineConnector'; totalCount: number };
 };
 
+export type SaveOutboundShipmentItemLinesMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.SaveOutboundShipmentLinesInput;
+}>;
+
+export type SaveOutboundShipmentItemLinesMutation = {
+  __typename: 'Mutations';
+  saveOutboundShipmentItemLines: { __typename: 'InvoiceNode'; id: string };
+};
+
 export type ItemPriceFragment = {
   __typename: 'ItemPriceNode';
   defaultPricePerUnit?: number | null;
@@ -1038,8 +1048,7 @@ export type InsertBarcodeMutation = {
 export type DraftOutboundLineFragment = {
   __typename: 'DraftOutboundShipmentLineNode';
   id: string;
-  stockLineId?: string | null;
-  type: Types.InvoiceLineNodeType;
+  stockLineId: string;
   numberOfPacks: number;
   packSize: number;
   batch?: string | null;
@@ -1047,7 +1056,7 @@ export type DraftOutboundLineFragment = {
   sellPricePerPack: number;
   inStorePacks: number;
   availablePacks: number;
-  stockLineOnHold?: boolean | null;
+  stockLineOnHold: boolean;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -1073,27 +1082,30 @@ export type GetOutboundEditLinesQuery = {
       unitName?: string | null;
     }>;
   };
-  draftOutboundShipmentLines: Array<{
-    __typename: 'DraftOutboundShipmentLineNode';
-    id: string;
-    stockLineId?: string | null;
-    type: Types.InvoiceLineNodeType;
-    numberOfPacks: number;
-    packSize: number;
-    batch?: string | null;
-    expiryDate?: string | null;
-    sellPricePerPack: number;
-    inStorePacks: number;
-    availablePacks: number;
-    stockLineOnHold?: boolean | null;
-    location?: {
-      __typename: 'LocationNode';
+  draftOutboundShipmentLines: {
+    __typename: 'DraftOutboundShipmentItemData';
+    placeholderQuantity?: number | null;
+    draftLines: Array<{
+      __typename: 'DraftOutboundShipmentLineNode';
       id: string;
-      name: string;
-      code: string;
-      onHold: boolean;
-    } | null;
-  }>;
+      stockLineId: string;
+      numberOfPacks: number;
+      packSize: number;
+      batch?: string | null;
+      expiryDate?: string | null;
+      sellPricePerPack: number;
+      inStorePacks: number;
+      availablePacks: number;
+      stockLineOnHold: boolean;
+      location?: {
+        __typename: 'LocationNode';
+        id: string;
+        name: string;
+        code: string;
+        onHold: boolean;
+      } | null;
+    }>;
+  };
 };
 
 export const OutboundFragmentDoc = gql`
@@ -1237,7 +1249,6 @@ export const DraftOutboundLineFragmentDoc = gql`
     __typename
     id
     stockLineId
-    type
     numberOfPacks
     packSize
     batch
@@ -1945,6 +1956,19 @@ export const AddToOutboundShipmentFromMasterListDocument = gql`
     }
   }
 `;
+export const SaveOutboundShipmentItemLinesDocument = gql`
+  mutation saveOutboundShipmentItemLines(
+    $storeId: String!
+    $input: SaveOutboundShipmentLinesInput!
+  ) {
+    saveOutboundShipmentItemLines(input: $input, storeId: $storeId) {
+      ... on InvoiceNode {
+        __typename
+        id
+      }
+    }
+  }
+`;
 export const GetItemPricingDocument = gql`
   query getItemPricing($storeId: String!, $input: ItemPriceInput!) {
     itemPrice(storeId: $storeId, input: $input) {
@@ -1989,7 +2013,12 @@ export const GetOutboundEditLinesDocument = gql`
       itemId: $itemId
       invoiceId: $invoiceId
     ) {
-      ...DraftOutboundLine
+      ... on DraftOutboundShipmentItemData {
+        placeholderQuantity
+        draftLines {
+          ...DraftOutboundLine
+        }
+      }
     }
   }
   ${DraftOutboundLineFragmentDoc}
@@ -2198,6 +2227,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'addToOutboundShipmentFromMasterList',
+        'mutation',
+        variables
+      );
+    },
+    saveOutboundShipmentItemLines(
+      variables: SaveOutboundShipmentItemLinesMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<SaveOutboundShipmentItemLinesMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SaveOutboundShipmentItemLinesMutation>(
+            SaveOutboundShipmentItemLinesDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'saveOutboundShipmentItemLines',
         'mutation',
         variables
       );

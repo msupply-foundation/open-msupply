@@ -2,17 +2,13 @@ import { useEffect, useMemo } from 'react';
 import { useTableStore, SortUtils } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../../types';
 import { isA } from '../../../../utils';
+import { DraftOutboundLineFragment } from '../../../api/operations.generated';
 
 export const useOutboundLineEditRows = (
-  rows: DraftStockOutLine[],
+  rows: DraftOutboundLineFragment[],
   scannedBatch?: string
 ) => {
   const tableStore = useTableStore();
-
-  const isOnHold = (row: DraftStockOutLine) =>
-    !!row.stockLine?.onHold || !!row.location?.onHold;
-  const hasNoStock = (row: DraftStockOutLine) =>
-    row.stockLine?.availableNumberOfPacks === 0;
 
   const {
     allocatableRows,
@@ -26,10 +22,7 @@ export const useOutboundLineEditRows = (
     const rowsIncludeScannedBatch =
       !!scannedBatch &&
       rows.some(
-        row =>
-          row.stockLine?.batch === scannedBatch &&
-          !isOnHold(row) &&
-          !hasNoStock(row)
+        row => row.batch === scannedBatch && !isOnHold(row) && !hasNoStock(row)
       );
 
     const rowsWithoutPlaceholder = rows
@@ -96,3 +89,8 @@ export const useOutboundLineEditRows = (
     scannedBatchMismatchRows,
   };
 };
+
+const isOnHold = (row: DraftOutboundLineFragment) =>
+  !!row.stockLineOnHold || !!row.location?.onHold;
+
+const hasNoStock = (row: DraftOutboundLineFragment) => row.availablePacks === 0;

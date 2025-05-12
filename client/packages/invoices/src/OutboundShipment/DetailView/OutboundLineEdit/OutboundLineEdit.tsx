@@ -7,15 +7,15 @@ import {
   ModalMode,
   useNotification,
   InvoiceNodeStatus,
-  InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { useNextItem } from './hooks';
-import { useOutboundLineEditData, useOutbound } from '../../api';
+import { useOutboundLineEditData } from '../../api';
 import { ScannedBarcode } from '../../../types';
 import { SelectItem } from './SelectItem';
 import { Allocation } from './Allocation';
 import { useOpenedWithBarcode } from './hooks/useOpenedWithBarcode';
 import { useAllocationContext } from './allocation/useAllocationContext';
+import { useSaveOutboundLines } from '../../api/hooks/useSaveOutboundLines';
 
 export type OutboundOpenedWith = { itemId: string } | ScannedBarcode | null;
 
@@ -49,25 +49,31 @@ export const OutboundLineEdit = ({
     invoiceId,
     itemId
   );
-  const { mutateAsync } = useOutbound.line.save(status);
+  const { mutateAsync } = useSaveOutboundLines(invoiceId);
   const { saveBarcode } = useOpenedWithBarcode(asBarcodeOrNull(openedWith));
 
-  const draftStockOutLines = useAllocationContext(state => state.draftLines);
+  const { draftLines, placeholderQuantity } = useAllocationContext(state => ({
+    draftLines: state.draftLines,
+    placeholderQuantity: state.placeholderQuantity,
+  }));
 
   const onSave = async () => {
     // if (!isDirty) return;
 
-    await mutateAsync(draftStockOutLines);
     if (!itemId) return;
+
+    await mutateAsync({
+      lines: draftLines,
+      itemId,
+      placeholderQuantity,
+    });
 
     // TODO- move out?
     // wait i don't understand "scanned" at all fr
     // it is possible for the user to select multiple batch lines
     // if the scanned barcode does not contain a batch number
     // however the scanned barcode can only relate to a specific pack size and therefore batch
-    const packSize = draftStockOutLines.find(
-      line => line.numberOfPacks > 0
-    )?.packSize;
+    const packSize = draftLines.find(line => line.numberOfPacks > 0)?.packSize;
 
     try {
       await saveBarcode(itemId, packSize);
@@ -79,6 +85,7 @@ export const OutboundLineEdit = ({
   const okNextDisabled = (mode === ModalMode.Update && nextDisabled) || !itemId;
 
   const handleSave = async (onSaved: () => boolean | void) => {
+    // ohhh push to alerts here!
     // if (
     //   getAllocatedQuantity(draftStockOutLines) === 0 &&
     //   !showZeroQuantityConfirmation
@@ -90,11 +97,7 @@ export const OutboundLineEdit = ({
     try {
       await onSave();
       setIsDirty(false);
-      const placeholder = draftStockOutLines?.find(
-        ({ type, numberOfPacks }) =>
-          type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks !== 0
-      );
-      if (!!placeholder) {
+      if (!!placeholderQuantity) {
         const infoSnack = info(t('message.placeholder-line'));
         infoSnack();
       }

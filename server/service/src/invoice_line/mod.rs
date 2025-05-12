@@ -1,5 +1,6 @@
 pub mod validate;
 
+use repository::Invoice;
 use repository::InvoiceLine;
 use repository::InvoiceLineFilter;
 use repository::InvoiceLineSort;
@@ -37,6 +38,9 @@ use self::update_return_reason_id::*;
 pub mod inbound_shipment_from_internal_order_lines;
 use self::inbound_shipment_from_internal_order_lines::*;
 
+pub mod save_outbound_shipment_item_lines;
+use self::save_outbound_shipment_item_lines::*;
+
 pub trait InvoiceLineServiceTrait: Sync + Send {
     fn get_invoice_line(
         &self,
@@ -63,7 +67,13 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         store_id: &str,
         item_id: &str,
         invoice_id: &str,
-    ) -> Result<Vec<DraftOutboundShipmentLine>, ListError> {
+    ) -> Result<
+        (
+            Vec<DraftOutboundShipmentLine>,
+            Option<f64>, /* placeholder quantity */
+        ),
+        ListError,
+    > {
         get_draft_outbound_shipment_lines(ctx, store_id, item_id, invoice_id)
     }
 
@@ -205,6 +215,14 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         line_id: String,
     ) -> Result<AllocateLineResult, AllocateOutboundShipmentUnallocatedLineError> {
         allocate_outbound_shipment_unallocated_line(ctx, line_id)
+    }
+
+    fn save_outbound_shipment_item_lines(
+        &self,
+        ctx: &ServiceContext,
+        input: SaveOutboundShipmentItemLines,
+    ) -> Result<Invoice, SaveOutboundShipmentLinesError> {
+        save_outbound_shipment_item_lines(ctx, input)
     }
 
     fn update_return_reason_id(

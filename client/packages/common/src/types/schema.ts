@@ -2279,6 +2279,12 @@ export type DoseConfigurationNotAllowed = UpsertItemVariantErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type DraftOutboundShipmentItemData = {
+  __typename: 'DraftOutboundShipmentItemData';
+  draftLines: Array<DraftOutboundShipmentLineNode>;
+  placeholderQuantity?: Maybe<Scalars['Float']['output']>;
+};
+
 export type DraftOutboundShipmentLineNode = {
   __typename: 'DraftOutboundShipmentLineNode';
   availablePacks: Scalars['Float']['output'];
@@ -2290,9 +2296,8 @@ export type DraftOutboundShipmentLineNode = {
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
   sellPricePerPack: Scalars['Float']['output'];
-  stockLineId?: Maybe<Scalars['String']['output']>;
-  stockLineOnHold?: Maybe<Scalars['Boolean']['output']>;
-  type: InvoiceLineNodeType;
+  stockLineId: Scalars['String']['output'];
+  stockLineOnHold: Scalars['Boolean']['output'];
 };
 
 export type EncounterConnector = {
@@ -4765,6 +4770,7 @@ export type Mutations = {
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
+  saveOutboundShipmentItemLines: InvoiceNode;
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
   updateAsset: UpdateAssetResponse;
@@ -5183,6 +5189,11 @@ export type MutationsLinkPatientToStoreArgs = {
 
 export type MutationsManualSyncArgs = {
   fetchPatientId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type MutationsSaveOutboundShipmentItemLinesArgs = {
+  input: SaveOutboundShipmentLinesInput;
+  storeId: Scalars['String']['input'];
 };
 
 export type MutationsSupplyRequestedQuantityArgs = {
@@ -5676,6 +5687,12 @@ export type OutboundInvoiceCounts = {
   created: InvoiceCountsSummary;
   /** Number of outbound shipments not shipped yet */
   notShipped: Scalars['Int']['output'];
+};
+
+export type OutboundShipmentLineInput = {
+  id: Scalars['String']['input'];
+  numberOfPacks: Scalars['Float']['input'];
+  stockLineId: Scalars['String']['input'];
 };
 
 export type PackagingVariantInput = {
@@ -6327,7 +6344,7 @@ export type Queries = {
   documentHistory: DocumentHistoryResponse;
   documentRegistries: DocumentRegistryResponse;
   documents: DocumentResponse;
-  draftOutboundShipmentLines: Array<DraftOutboundShipmentLineNode>;
+  draftOutboundShipmentLines: DraftOutboundShipmentItemData;
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
@@ -7785,6 +7802,13 @@ export type RnRFormSortInput = {
 };
 
 export type RnRFormsResponse = RnRFormConnector;
+
+export type SaveOutboundShipmentLinesInput = {
+  invoiceId: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  lines: Array<OutboundShipmentLineInput>;
+  placeholderQuantity?: InputMaybe<Scalars['Float']['input']>;
+};
 
 export type ScannedDataParseError = {
   __typename: 'ScannedDataParseError';

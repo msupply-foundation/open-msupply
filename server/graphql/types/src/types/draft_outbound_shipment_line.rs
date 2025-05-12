@@ -3,7 +3,23 @@ use chrono::NaiveDate;
 use graphql_core::{loader::LocationByIdLoader, ContextExt};
 use service::invoice_line::get_draft_outbound_lines::DraftOutboundShipmentLine;
 
-use super::{InvoiceLineNodeType, LocationNode};
+use super::LocationNode;
+
+pub struct DraftOutboundShipmentItemData {
+    pub lines: Vec<DraftOutboundShipmentLine>,
+    pub placeholder_quantity: Option<f64>,
+}
+
+#[Object]
+impl DraftOutboundShipmentItemData {
+    pub async fn draft_lines(&self) -> Vec<DraftOutboundShipmentLineNode> {
+        DraftOutboundShipmentLineNode::from_vec(self.lines.clone())
+    }
+
+    pub async fn placeholder_quantity(&self) -> Option<f64> {
+        self.placeholder_quantity
+    }
+}
 
 pub struct DraftOutboundShipmentLineNode {
     pub shipment_line: DraftOutboundShipmentLine,
@@ -26,15 +42,11 @@ impl DraftOutboundShipmentLineNode {
         &self.shipment_line.id
     }
 
-    pub async fn r#type(&self) -> InvoiceLineNodeType {
-        InvoiceLineNodeType::from_domain(&self.shipment_line.r#type)
-    }
-
     pub async fn number_of_packs(&self) -> &f64 {
         &self.shipment_line.number_of_packs
     }
 
-    pub async fn stock_line_id(&self) -> &Option<String> {
+    pub async fn stock_line_id(&self) -> &str {
         &self.shipment_line.stock_line_id
     }
 
@@ -62,7 +74,7 @@ impl DraftOutboundShipmentLineNode {
         self.shipment_line.available_packs
     }
 
-    pub async fn stock_line_on_hold(&self) -> &Option<bool> {
+    pub async fn stock_line_on_hold(&self) -> &bool {
         &self.shipment_line.stock_line_on_hold
     }
 
