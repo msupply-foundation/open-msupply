@@ -12,7 +12,10 @@ use util::uuid::uuid;
 
 use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
 
-use super::{UpdateInboundShipment, UpdateInboundShipmentError, UpdateInboundShipmentStatus};
+use super::{
+    UpdateDonorMethod, UpdateInboundShipment, UpdateInboundShipmentError,
+    UpdateInboundShipmentStatus,
+};
 
 pub struct LineAndStockLine {
     pub stock_line: StockLineRow,
@@ -70,12 +73,16 @@ pub(crate) fn generate(
     let batches_to_update = if should_create_batches {
         Some(generate_lines_and_stock_lines(
             connection,
-            &update_invoice.store_id,
-            &update_invoice.id,
-            update_invoice.tax_percentage,
-            &update_invoice.name_link_id,
-            update_invoice.currency_id.clone(),
-            &update_invoice.currency_rate,
+            GenerateLinesInput {
+                store_id: &update_invoice.store_id,
+                id: &update_invoice.id,
+                tax_percentage: update_invoice.tax_percentage,
+                supplier_id: &update_invoice.name_link_id,
+                currency_id: update_invoice.currency_id.clone(),
+                currency_rate: &update_invoice.currency_rate,
+                default_donor_id: update_invoice.default_donor_id.clone(),
+                donor_update_method: patch.update_donor_method,
+            },
         )?)
     } else {
         None
@@ -131,6 +138,11 @@ pub(crate) fn generate(
 
 pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment) -> bool {
     let existing_status = &invoice.status;
+
+    if is_updating_donor(patch.update_donor_method.clone()) {
+        return true;
+    };
+
     let new_status = match changed_status(patch.status.to_owned(), existing_status) {
         Some(status) => status,
         None => return false, // Status has not been updated
@@ -283,15 +295,28 @@ fn changed_status(
     Some(new_status)
 }
 
+pub struct GenerateLinesInput<'a> {
+    store_id: &'a str,
+    id: &'a str,
+    tax_percentage: Option<f64>,
+    supplier_id: &'a str,
+    currency_id: Option<String>,
+    currency_rate: &'a f64,
+    default_donor_id: Option<String>,
+    donor_update_method: Option<UpdateDonorMethod>,
+}
+
 pub fn generate_lines_and_stock_lines(
     connection: &StorageConnection,
-    store_id: &str,
-    id: &str,
-    tax_percentage: Option<f64>,
-    supplier_id: &str,
-    currency_id: Option<String>,
-    currency_rate: &f64,
+    input: GenerateLinesInput,
 ) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
+    let store_id = input.store_id;
+    let id = input.id;
+    let tax_percentage = input.tax_percentage;
+    let supplier_id = input.supplier_id;
+    let currency_id = input.currency_id.clone();
+    let currency_rate = input.currency_rate;
+
     let lines = InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(id)?;
     let mut result = Vec::new();
 
@@ -309,6 +334,21 @@ pub fn generate_lines_and_stock_lines(
             currency_id.clone(),
             currency_rate,
         )?;
+
+        line.donor_id = match input.donor_update_method.clone() {
+            Some(UpdateDonorMethod::NoChanges) | None => line.donor_id,
+            Some(UpdateDonorMethod::All) => input.default_donor_id.clone(),
+            Some(UpdateDonorMethod::Existing) => {
+                if line.donor_id.is_none() {
+                    input.default_donor_id.clone()
+                } else {
+                    line.donor_id
+                }
+            }
+            Some(UpdateDonorMethod::Unspecified) => {
+                line.donor_id.or(input.default_donor_id.clone())
+            }
+        };
 
         let InvoiceLineRow {
             id: _,
@@ -376,4 +416,16 @@ pub fn generate_location_movements(
         enter_datetime: Some(Utc::now().naive_utc()),
         exit_datetime: None,
     }
+}
+
+fn is_updating_donor(update_donor_method: Option<UpdateDonorMethod>) -> bool {
+    // should update batches if donor_id for invoice changes and change line donor_ids also selected
+    if let Some(donor_update_method) = update_donor_method {
+        // only update lines if a method of updating is selected.
+        // note allowing update if no donor_id is supplied for update to be conducted on existing donor_id
+        if donor_update_method != UpdateDonorMethod::NoChanges {
+            return true;
+        }
+    }
+    return false;
 }

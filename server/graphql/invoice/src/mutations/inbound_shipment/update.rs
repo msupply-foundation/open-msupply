@@ -14,11 +14,20 @@ use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::inbound_shipment::{
-    UpdateInboundShipment as ServiceInput, UpdateInboundShipmentError as ServiceError,
-    UpdateInboundShipmentStatus,
+    UpdateDonorMethod, UpdateInboundShipment as ServiceInput,
+    UpdateInboundShipmentError as ServiceError, UpdateInboundShipmentStatus,
 };
 use service::invoice_line::ShipmentTaxUpdate;
 use service::NullableUpdate;
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+
+pub enum UpdateDonorMethodInput {
+    None,
+    Existing,
+    Unspecified,
+    All,
+}
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundShipmentInput")]
@@ -34,6 +43,7 @@ pub struct UpdateInput {
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
     pub default_donor_id: Option<NullableUpdateInput<String>>,
+    pub update_donor_method: Option<UpdateDonorMethodInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -101,6 +111,7 @@ impl UpdateInput {
             currency_id,
             currency_rate,
             default_donor_id,
+            update_donor_method,
         } = self;
 
         ServiceInput {
@@ -119,6 +130,8 @@ impl UpdateInput {
             default_donor_id: default_donor_id.map(|default_donor_id| NullableUpdate {
                 value: default_donor_id.value,
             }),
+            update_donor_method: update_donor_method
+                .map(|update_donor_method| update_donor_method.to_domain()),
         }
     }
 }
@@ -191,6 +204,17 @@ impl UpdateInboundShipmentStatusInput {
         match self {
             UpdateInboundShipmentStatusInput::Delivered => Delivered,
             UpdateInboundShipmentStatusInput::Verified => Verified,
+        }
+    }
+}
+
+impl UpdateDonorMethodInput {
+    pub fn to_domain(&self) -> UpdateDonorMethod {
+        match self {
+            UpdateDonorMethodInput::None => UpdateDonorMethod::NoChanges,
+            UpdateDonorMethodInput::Existing => UpdateDonorMethod::Existing,
+            UpdateDonorMethodInput::Unspecified => UpdateDonorMethod::Unspecified,
+            UpdateDonorMethodInput::All => UpdateDonorMethod::All,
         }
     }
 }
@@ -505,6 +529,7 @@ mod test {
                     currency_id: None,
                     currency_rate: None,
                     default_donor_id: None,
+                    update_donor_method: None,
                 }
             );
             Ok(Invoice {

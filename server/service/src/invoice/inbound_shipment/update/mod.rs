@@ -23,6 +23,14 @@ pub enum UpdateInboundShipmentStatus {
     Verified,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum UpdateDonorMethod {
+    NoChanges,
+    Existing,
+    Unspecified,
+    All,
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct UpdateInboundShipment {
     pub id: String,
@@ -36,6 +44,7 @@ pub struct UpdateInboundShipment {
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
     pub default_donor_id: Option<NullableUpdate<String>>,
+    pub update_donor_method: Option<UpdateDonorMethod>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -894,5 +903,16 @@ mod test {
         );
         assert_eq!(log.r#type, ActivityLogType::InvoiceStatusVerified);
         assert_eq!(Some(invoice.name_link_id), stock_line.supplier_link_id);
+
+        // first add 2 lines, one with a donor_id (and 2 donor options)
+
+        // test setting add NoChanges method with new donor if doesn't change
+
+        // test setting add Existing method with no donor_id changes the existing
+
+        // test setting unspecified method with new donor_id changes the line without current donor_id
+
+        // test setting ALL method with no donor_id makes both to the new donor
+        assert_eq!(1, 0);
     }
 }
