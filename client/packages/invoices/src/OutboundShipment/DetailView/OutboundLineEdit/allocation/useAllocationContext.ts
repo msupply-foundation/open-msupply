@@ -3,6 +3,7 @@ import {
   create,
   DateUtils,
   LocaleKey,
+  SortUtils,
   TypedTFunction,
 } from '@openmsupply-client/common';
 import { getAllocationAlerts, StockOutAlert } from '../../../../StockOut';
@@ -18,6 +19,15 @@ export enum AllocateIn {
   // Not allocating in packs, at least for now, many use cases to cover
 }
 
+export enum AllocationStrategy {
+  FEFO = 'FEFO',
+  // VVMStatus = 'VVMStatus',
+}
+
+const SorterByStrategy = {
+  [AllocationStrategy.FEFO]: SortUtils.byExpiryAscNonExpiringLast,
+};
+
 interface AllocationContext {
   isDirty: boolean;
   draftLines: DraftStockOutLineFragment[];
@@ -29,7 +39,11 @@ interface AllocationContext {
   initialisedForItemId: string | null;
   placeholderQuantity: number | null;
 
-  initialise: (input: OutboundLineEditData, withPlaceholder: boolean) => void;
+  initialise: (
+    input: OutboundLineEditData,
+    strategy: AllocationStrategy,
+    withPlaceholder: boolean
+  ) => void;
 
   setDraftLines: (lines: DraftStockOutLineFragment[]) => void;
   setAlerts: (alerts: StockOutAlert[]) => void;
@@ -52,9 +66,13 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   allocatedUnits: 0,
   allocateIn: AllocateIn.Units,
 
-  initialise: ({ item, draftLines, placeholderQuantity }, allowPlaceholder) => {
+  initialise: (
+    { item, draftLines, placeholderQuantity },
+    strategy,
+    allowPlaceholder
+  ) => {
     // Sort by strategy
-    const sortedLines = draftLines.sort(sortByExpiry);
+    const sortedLines = draftLines.sort(SorterByStrategy[strategy]);
 
     // Separate lines here, so only dealing with allocatable lines going forward
     // Note - expired is still considered allocatable, just not via auto-allocation
@@ -144,24 +162,3 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     }));
   },
 }));
-
-// todo - should be in sort utils
-const sortByExpiry = (
-  a: { expiryDate?: string | null },
-  b: { expiryDate?: string | null }
-) => {
-  if (!a.expiryDate) return 1;
-  if (!b.expiryDate) return -1;
-
-  const expiryA = new Date(a.expiryDate);
-  const expiryB = new Date(b.expiryDate);
-
-  if (expiryA < expiryB) {
-    return -1;
-  }
-  if (expiryA > expiryB) {
-    return 1;
-  }
-
-  return 0;
-};

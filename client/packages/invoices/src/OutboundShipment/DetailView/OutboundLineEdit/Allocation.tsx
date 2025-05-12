@@ -17,8 +17,11 @@ import { AutoAllocate } from './AutoAllocate';
 import { useOutbound, OutboundLineEditData } from '../../api';
 import { DraftItem } from '../../..';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
-import { useAllocationContext } from './allocation/useAllocationContext';
 import { DraftStockOutLineFragment } from '../../api/operations.generated';
+import {
+  useAllocationContext,
+  AllocationStrategy,
+} from './allocation/useAllocationContext';
 import { sumAvailableQuantity } from './allocation/utils';
 
 interface AllocationProps {
@@ -35,7 +38,7 @@ export const Allocation = ({ itemData, allowPlaceholder }: AllocationProps) => {
   );
 
   useEffect(() => {
-    initialise(itemData, allowPlaceholder);
+    initialise(itemData, AllocationStrategy.FEFO, allowPlaceholder);
   }, []);
 
   return initialisedForItemId === itemData.item.id ? (
