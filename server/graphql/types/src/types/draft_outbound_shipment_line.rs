@@ -1,13 +1,9 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
-use graphql_core::{
-    loader::{ItemLoader, LocationByIdLoader},
-    standard_graphql_error::StandardGraphqlError,
-    ContextExt,
-};
+use graphql_core::{loader::LocationByIdLoader, ContextExt};
 use service::invoice_line::get_draft_outbound_lines::DraftOutboundShipmentLine;
 
-use super::{ItemNode, LocationNode};
+use super::{InvoiceLineNodeType, LocationNode};
 
 pub struct DraftOutboundShipmentLineNode {
     pub shipment_line: DraftOutboundShipmentLine,
@@ -28,6 +24,10 @@ impl DraftOutboundShipmentLineNode {
 impl DraftOutboundShipmentLineNode {
     pub async fn id(&self) -> &str {
         &self.shipment_line.id
+    }
+
+    pub async fn r#type(&self) -> InvoiceLineNodeType {
+        InvoiceLineNodeType::from_domain(&self.shipment_line.r#type)
     }
 
     pub async fn number_of_packs(&self) -> &f64 {
@@ -62,6 +62,10 @@ impl DraftOutboundShipmentLineNode {
         self.shipment_line.available_packs
     }
 
+    pub async fn stock_line_on_hold(&self) -> &Option<bool> {
+        &self.shipment_line.stock_line_on_hold
+    }
+
     pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
         let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
 
@@ -74,19 +78,4 @@ impl DraftOutboundShipmentLineNode {
 
         Ok(result.map(LocationNode::from_domain))
     }
-
-    // pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
-    //     let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-    //     let item_option = loader.load_one(self.shipment_line.item_id.clone()).await?;
-
-    //     let item = item_option.ok_or(
-    //         StandardGraphqlError::InternalError(format!(
-    //             "Cannot find item {} for invoice line {}",
-    //             self.shipment_line.item_id, self.shipment_line.id
-    //         ))
-    //         .extend(),
-    //     )?;
-
-    //     Ok(ItemNode::from_domain(item))
-    // }
 }

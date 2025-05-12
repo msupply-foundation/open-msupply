@@ -7,7 +7,8 @@ use crate::{
 use chrono::NaiveDate;
 use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceType, RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineRow,
+    InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, RepositoryError, StockLine,
+    StockLineFilter, StockLineRepository, StockLineRow,
 };
 use util::uuid::uuid;
 
@@ -16,6 +17,7 @@ pub struct DraftOutboundShipmentLine {
     pub id: String,
     pub item_id: String,
     pub stock_line_id: Option<String>,
+    pub r#type: InvoiceLineType,
     pub number_of_packs: f64,
     pub pack_size: f64,
     pub batch: Option<String>,
@@ -24,6 +26,7 @@ pub struct DraftOutboundShipmentLine {
     pub sell_price_per_pack: f64,
     pub in_store_packs: f64,
     pub available_packs: f64,
+    pub stock_line_on_hold: Option<bool>,
 }
 
 pub fn get_draft_outbound_shipment_lines(
@@ -32,7 +35,14 @@ pub fn get_draft_outbound_shipment_lines(
     item_id: &str,
     invoice_id: &str,
 ) -> Result<Vec<DraftOutboundShipmentLine>, ListError> {
-    let existing_lines = get_existing_shipment_lines(ctx, &item_id, &invoice_id)?;
+    let outbound = get_invoice(ctx, Some(&store_id), invoice_id)?.ok_or(
+        ListError::DatabaseError(RepositoryError::DBError {
+            msg: "Invoice not found".to_string(),
+            extra: invoice_id.to_string(),
+        }),
+    )?;
+
+    let existing_lines = get_existing_shipment_lines(ctx, &item_id, &outbound.invoice_row)?;
 
     let existing_stock_line_ids: Vec<String> = existing_lines
         .iter()
@@ -43,7 +53,7 @@ pub fn get_draft_outbound_shipment_lines(
         ctx,
         store_id.to_string(),
         &item_id,
-        invoice_id,
+        outbound.name_row.id,
         existing_stock_line_ids,
     )?;
 
@@ -57,20 +67,20 @@ pub fn get_draft_outbound_shipment_lines(
 fn get_existing_shipment_lines(
     ctx: &ServiceContext,
     item_id: &str,
-    invoice_id: &str,
+    outbound: &InvoiceRow,
 ) -> Result<Vec<DraftOutboundShipmentLine>, ListError> {
     let invoice_line_repo = InvoiceLineRepository::new(&ctx.connection);
 
     let existing_invoice_lines = invoice_line_repo.query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(invoice_id))
+            .invoice_id(EqualFilter::equal_to(&outbound.id))
             .invoice_type(InvoiceType::OutboundShipment.equal_to())
             .item_id(EqualFilter::equal_to(item_id)),
     )?;
 
     let as_draft_lines = existing_invoice_lines
         .into_iter()
-        .map(DraftOutboundShipmentLine::from_invoice_line)
+        .map(|l| DraftOutboundShipmentLine::from_invoice_line(l, &outbound.status))
         .collect::<Vec<DraftOutboundShipmentLine>>();
 
     Ok(as_draft_lines)
@@ -80,7 +90,7 @@ fn generate_new_draft_lines(
     ctx: &ServiceContext,
     store_id: String,
     item_id: &str,
-    invoice_id: &str,
+    other_party_id: String,
     existing_stock_line_ids: Vec<String>,
 ) -> Result<Vec<DraftOutboundShipmentLine>, ListError> {
     let stock_line_repo = StockLineRepository::new(&ctx.connection);
@@ -97,18 +107,11 @@ fn generate_new_draft_lines(
         Some(store_id.clone()),
     )?;
 
-    let outbound = get_invoice(ctx, Some(&store_id), invoice_id)?.ok_or(
-        ListError::DatabaseError(RepositoryError::DBError {
-            msg: "Invoice not found".to_string(),
-            extra: invoice_id.to_string(),
-        }),
-    )?;
-
     let item_pricing = get_pricing_for_item(
         ctx,
         ItemPriceLookup {
             item_id: item_id.to_string(),
-            customer_name_id: Some(outbound.name_row.id),
+            customer_name_id: Some(other_party_id),
         },
     )
     .map_err(ListError::DatabaseError)?;
@@ -133,6 +136,7 @@ impl DraftOutboundShipmentLine {
             location_id,
             available_number_of_packs,
             total_number_of_packs,
+            on_hold,
             ..
         } = line.stock_line_row;
 
@@ -140,6 +144,7 @@ impl DraftOutboundShipmentLine {
             id: uuid(),
             item_id: line.item_row.id,
             stock_line_id: Some(id),
+            r#type: InvoiceLineType::StockOut,
             batch,
             pack_size,
             expiry_date,
@@ -147,11 +152,12 @@ impl DraftOutboundShipmentLine {
             sell_price_per_pack,
             in_store_packs: total_number_of_packs,
             available_packs: available_number_of_packs,
+            stock_line_on_hold: Some(on_hold),
             number_of_packs: 0.0,
         }
     }
 
-    fn from_invoice_line(line: InvoiceLine) -> Self {
+    fn from_invoice_line(line: InvoiceLine, status: &InvoiceStatus) -> Self {
         let InvoiceLineRow {
             id,
             number_of_packs,
@@ -161,18 +167,21 @@ impl DraftOutboundShipmentLine {
             expiry_date,
             location_id,
             sell_price_per_pack,
+            r#type,
             ..
         } = line.invoice_line_row;
 
         let StockLineRow {
             total_number_of_packs,
             available_number_of_packs,
+            on_hold,
             ..
         } = line.stock_line_option.unwrap_or_default();
 
         Self {
             id,
             item_id: line.item_row.id,
+            r#type,
             number_of_packs,
             stock_line_id,
             pack_size,
@@ -180,8 +189,16 @@ impl DraftOutboundShipmentLine {
             expiry_date,
             location_id,
             sell_price_per_pack,
-            in_store_packs: total_number_of_packs,
-            available_packs: available_number_of_packs,
+            // Stock already included in the invoice wouldn't be on the stock line available packs,
+            // but should be considered available in the context of this invoice
+            available_packs: available_number_of_packs + number_of_packs,
+            // Stock already included in the invoice will be removed from total packs after Picked status
+            // but should be considered part of the total in the context of this invoice
+            in_store_packs: match status {
+                InvoiceStatus::New | InvoiceStatus::Allocated => total_number_of_packs,
+                _ => total_number_of_packs + number_of_packs,
+            },
+            stock_line_on_hold: Some(on_hold),
         }
     }
 }
