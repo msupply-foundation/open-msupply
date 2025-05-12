@@ -1,3 +1,4 @@
+use chrono::Utc;
 use repository::{
     item_variant::{
         item_variant::{ItemVariant, ItemVariantFilter, ItemVariantRepository},
@@ -50,7 +51,7 @@ pub fn upsert_item_variant(
         .connection
         .transaction_sync(|connection| {
             validate(connection, &input)?;
-            let new_item_variant = generate(input.clone());
+            let new_item_variant = generate(&ctx.user_id, input.clone());
             let repo = ItemVariantRowRepository::new(connection);
             let packaging_variant_repo = PackagingVariantRepository::new(connection);
             let packaging_variant_row_repo = PackagingVariantRowRepository::new(connection);
@@ -104,6 +105,7 @@ impl From<RepositoryError> for UpsertItemVariantError {
 }
 
 pub fn generate(
+    user_id: &str,
     UpsertItemVariantWithPackaging {
         id,
         name,
@@ -126,6 +128,8 @@ pub fn generate(
         deleted_datetime: None,
         doses_per_unit,
         vvm_type: vvm_type.map(|vvm_type| vvm_type.value).unwrap_or_default(),
+        created_datetime: Utc::now().naive_utc(),
+        created_by: Some(user_id.to_string()),
     }
 }
 

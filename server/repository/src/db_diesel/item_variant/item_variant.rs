@@ -150,6 +150,8 @@ fn create_filtered_query(filter: Option<ItemVariantFilter>) -> BoxedItemVariantQ
 
 #[cfg(test)]
 mod tests {
+    use chrono::NaiveDate;
+
     use crate::{
         item_variant::{
             item_variant::ItemVariantRepository,
@@ -184,6 +186,11 @@ mod tests {
                 deleted_datetime: None,
                 doses_per_unit: 0,
                 vvm_type: None,
+                created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                created_by: None,
             })
             .unwrap();
 
