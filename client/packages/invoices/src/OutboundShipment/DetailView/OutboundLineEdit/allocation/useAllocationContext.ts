@@ -4,16 +4,11 @@ import {
   LocaleKey,
   TypedTFunction,
 } from '@openmsupply-client/common';
-import {
-  getAllocationAlerts,
-  StockOutAlert,
-} from 'packages/invoices/src/StockOut';
+import { getAllocationAlerts, StockOutAlert } from '../../../../StockOut';
 import { DraftOutboundLineFragment } from '../../../api/operations.generated';
 import { getAllocatedUnits, issueStock } from './utils';
 import { OutboundLineEditData } from '../../../api';
 import { allocateQuantities } from './allocateQuantities';
-
-// TODO Fix imports
 
 export enum AllocateIn {
   Units = 'Units',
