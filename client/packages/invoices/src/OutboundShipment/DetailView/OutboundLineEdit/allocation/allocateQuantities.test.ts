@@ -1,6 +1,6 @@
 import { FnUtils } from '@openmsupply-client/common';
 import { allocateQuantities } from './allocateQuantities';
-import { DraftOutboundLineFragment } from '../../../api/operations.generated';
+import { DraftStockOutLineFragment } from '../../../api/operations.generated';
 
 describe('allocateQuantities - standard behaviour.', () => {
   it('allocates quantity to a row', () => {
@@ -170,7 +170,7 @@ function createTestLine({
   numberOfPacks = 0,
   onHold = false,
   expiryDate,
-}: TestLineParams): DraftOutboundLineFragment {
+}: TestLineParams): DraftStockOutLineFragment {
   return {
     __typename: 'DraftOutboundShipmentLineNode',
     id,
