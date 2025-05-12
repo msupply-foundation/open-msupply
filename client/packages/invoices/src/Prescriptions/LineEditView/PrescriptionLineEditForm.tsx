@@ -24,6 +24,8 @@ import {
   TextArea,
   InputWithLabelRow,
   useIntlUtils,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -95,6 +97,7 @@ export const PrescriptionLineEditForm: React.FC<
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
   const { store: { preferences } = {} } = useAuthContext();
+  const { data: OMSPrefs } = usePreference(PreferenceKey.DisplayVaccineInDoses);
 
   const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
   const [prescribedQuantity, setPrescribedQuantity] = useState<number | null>(
@@ -109,6 +112,9 @@ export const PrescriptionLineEditForm: React.FC<
     []
   );
   const isDirectionsDisabled = !issueUnitQuantity;
+  const displayInDoses = !!OMSPrefs?.displayVaccineInDoses && !!item?.isVaccine;
+  const unitName = item?.unitName ?? t('label.unit');
+  const unit = displayInDoses ? t('label.doses') : unitName;
 
   const allocate = (
     numPacks: number,
@@ -287,7 +293,7 @@ export const PrescriptionLineEditForm: React.FC<
             disabled={!isNew || disabled}
             currentItemId={item?.id}
             onChange={onChangeItem}
-            includeNonVisibleWithStockOnHand
+            filter={{ isVisibleOrOnHand: true }}
             extraFilter={
               disabled
                 ? undefined
@@ -308,7 +314,11 @@ export const PrescriptionLineEditForm: React.FC<
           )}
           <AccordionPanelSection
             title={t('label.quantity')}
-            closedSummary={summarise(draftPrescriptionLines, t, getPlural)}
+            closedSummary={
+              displayInDoses
+                ? dosesSummary(t, draftPrescriptionLines, item?.doses)
+                : summarise(t, draftPrescriptionLines, getPlural)
+            }
             defaultExpanded={isNew && !disabled}
             key={key + '_quantity'}
           >
@@ -330,8 +340,19 @@ export const PrescriptionLineEditForm: React.FC<
                       preferences?.editPrescribedQuantityOnPrescription
                     }
                     disabled={disabled}
-                    value={prescribedQuantity ?? undefined}
-                    onChange={handlePrescribedQuantityChange}
+                    value={
+                      displayInDoses
+                        ? NumUtils.round(prescribedQuantity ?? 0 * item?.doses)
+                        : (prescribedQuantity ?? undefined)
+                    }
+                    onChange={(qty?: number) => {
+                      if (qty) {
+                        const dosesToUnit = qty / (item?.doses ?? 1);
+                        handlePrescribedQuantityChange(
+                          displayInDoses ? dosesToUnit : qty
+                        );
+                      }
+                    }}
                     min={0}
                     decimalLimit={2}
                     onBlur={() => {}}
@@ -352,8 +373,19 @@ export const PrescriptionLineEditForm: React.FC<
                 <NumericTextInput
                   autoFocus={!preferences?.editPrescribedQuantityOnPrescription}
                   disabled={disabled}
-                  value={issueUnitQuantity}
-                  onChange={handleIssueQuantityChange}
+                  value={
+                    displayInDoses
+                      ? NumUtils.round(issueUnitQuantity * item?.doses)
+                      : issueUnitQuantity
+                  }
+                  onChange={(qty?: number) => {
+                    if (qty) {
+                      const dosesToUnit = qty / (item?.doses ?? 1);
+                      handleIssueQuantityChange(
+                        displayInDoses ? dosesToUnit : qty
+                      );
+                    }
+                  }}
                   min={0}
                   decimalLimit={2}
                   slotProps={{
@@ -371,7 +403,12 @@ export const PrescriptionLineEditForm: React.FC<
                   }}
                 />
                 <InputLabel sx={{ fontSize: 12 }}>
-                  {item.unitName && getPlural(item.unitName, issueUnitQuantity)}
+                  {getPlural(
+                    unit,
+                    displayInDoses
+                      ? issueUnitQuantity * item?.doses
+                      : issueUnitQuantity
+                  )}
                 </InputLabel>
               </Grid>
             </Grid>
@@ -552,8 +589,8 @@ const TableWrapper: React.FC<TableProps> = ({
 };
 
 const summarise = (
-  lines: DraftPrescriptionLine[],
   t: TypedTFunction<LocaleKey>,
+  lines: DraftPrescriptionLine[],
   getPlural: (word: string, count: number) => string
 ) => {
   // Count how many of each pack size
@@ -596,4 +633,18 @@ const summarise = (
   });
 
   return summary.join('\n');
+};
+
+const dosesSummary = (
+  t: TypedTFunction<LocaleKey>,
+  lines: DraftPrescriptionLine[],
+  doses: number | undefined
+) => {
+  const totalUnits = lines.reduce(
+    (sum, { packSize, numberOfPacks }) => sum + packSize * numberOfPacks,
+    0
+  );
+  const totalDoses = NumUtils.round(totalUnits * (doses ?? 1));
+  const unitWord = t('label.doses-plural', { count: totalDoses });
+  return `${totalDoses} ${unitWord}`;
 };

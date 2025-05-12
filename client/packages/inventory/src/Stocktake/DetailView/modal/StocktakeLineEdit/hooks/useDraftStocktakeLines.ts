@@ -8,7 +8,7 @@ export const useDraftStocktakeLines = (
 ): [DraftStocktakeLine[], Dispatch<SetStateAction<DraftStocktakeLine[]>>] => {
   const { id } = useStocktake.document.fields('id');
   const { data: stockLines } = useStockLines(item?.id || '');
-  const { lines } = useStocktake.line.rows();
+  const { lines } = useStocktake.line.rows(item?.id);
   const [draftLines, setDraftLines] = useState<DraftStocktakeLine[]>([]);
 
   useEffect(() => {
@@ -24,6 +24,7 @@ export const useDraftStocktakeLines = (
         id,
         stocktakeLines ?? []
       );
+
       setDraftLines(fromStockLines.concat(fromStocktakeLines));
     }
   }, [stockLines, lines, item, id]);

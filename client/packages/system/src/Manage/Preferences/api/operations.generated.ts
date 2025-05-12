@@ -6,6 +6,7 @@ type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type AdminPreferenceListQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   prefType: Types.PreferenceNodeType;
+  prefContext: Types.PreferenceDescriptionContext;
 }>;
 
 export type AdminPreferenceListQuery = {
@@ -24,7 +25,11 @@ export type PreferencesQueryVariables = Types.Exact<{
 
 export type PreferencesQuery = {
   __typename: 'Queries';
-  preferences: { __typename: 'PreferencesNode'; showContactTracing: boolean };
+  preferences: {
+    __typename: 'PreferencesNode';
+    showContactTracing: boolean;
+    displayVaccineInDoses: boolean;
+  };
 };
 
 export type UpsertPreferencesMutationVariables = Types.Exact<{
@@ -44,8 +49,16 @@ export type UpsertPreferencesMutation = {
 };
 
 export const AdminPreferenceListDocument = gql`
-  query adminPreferenceList($storeId: String!, $prefType: PreferenceNodeType!) {
-    preferenceDescriptions(storeId: $storeId, prefType: $prefType) {
+  query adminPreferenceList(
+    $storeId: String!
+    $prefType: PreferenceNodeType!
+    $prefContext: PreferenceDescriptionContext!
+  ) {
+    preferenceDescriptions(
+      storeId: $storeId
+      prefType: $prefType
+      prefContext: $prefContext
+    ) {
       key
       valueType
       value
@@ -56,6 +69,7 @@ export const PreferencesDocument = gql`
   query preferences($storeId: String!) {
     preferences(storeId: $storeId) {
       showContactTracing
+      displayVaccineInDoses
     }
   }
 `;

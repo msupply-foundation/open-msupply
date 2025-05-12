@@ -48,6 +48,7 @@ impl PreferenceQueries {
         ctx: &Context<'_>,
         store_id: String,
         pref_type: PreferenceNodeType,
+        pref_context: PreferenceDescriptionContext,
     ) -> Result<Vec<PreferenceDescriptionNode>> {
         let user = validate_auth(
             ctx,
@@ -62,8 +63,8 @@ impl PreferenceQueries {
         let service = &service_provider.preference_service;
 
         let prefs = service.get_preference_descriptions(
-            &service_context.connection,
-            Some(store_id),
+            service_context.connection,
+            pref_context.store_id,
             pref_type.to_domain(),
         )?;
 
@@ -95,4 +96,10 @@ impl PreferenceMutations {
 
         Ok(OkResponse)
     }
+}
+
+#[derive(InputObject)]
+/// The context we are editing pref within (e.g. prefs for given store, user, etc.)
+pub struct PreferenceDescriptionContext {
+    pub store_id: Option<String>,
 }
