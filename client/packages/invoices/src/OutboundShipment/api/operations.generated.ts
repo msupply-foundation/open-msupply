@@ -1007,28 +1007,6 @@ export type SaveOutboundShipmentItemLinesMutation = {
   saveOutboundShipmentItemLines: { __typename: 'InvoiceNode'; id: string };
 };
 
-export type ItemPriceFragment = {
-  __typename: 'ItemPriceNode';
-  defaultPricePerUnit?: number | null;
-  discountPercentage?: number | null;
-  calculatedPricePerUnit?: number | null;
-};
-
-export type GetItemPricingQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  input: Types.ItemPriceInput;
-}>;
-
-export type GetItemPricingQuery = {
-  __typename: 'Queries';
-  itemPrice: {
-    __typename: 'ItemPriceNode';
-    defaultPricePerUnit?: number | null;
-    discountPercentage?: number | null;
-    calculatedPricePerUnit?: number | null;
-  };
-};
-
 export type InsertBarcodeMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.InsertBarcodeInput;
@@ -1235,13 +1213,6 @@ export const CannotHaveEstimatedDeliveryDateBeforeShippedDateErrorFragmentDoc = 
   fragment CannotHaveEstimatedDeliveryDateBeforeShippedDateError on CannotHaveEstimatedDeliveryDateBeforeShippedDate {
     __typename
     description
-  }
-`;
-export const ItemPriceFragmentDoc = gql`
-  fragment itemPrice on ItemPriceNode {
-    defaultPricePerUnit
-    discountPercentage
-    calculatedPricePerUnit
   }
 `;
 export const DraftStockOutLineFragmentDoc = gql`
@@ -1969,16 +1940,6 @@ export const SaveOutboundShipmentItemLinesDocument = gql`
     }
   }
 `;
-export const GetItemPricingDocument = gql`
-  query getItemPricing($storeId: String!, $input: ItemPriceInput!) {
-    itemPrice(storeId: $storeId, input: $input) {
-      ... on ItemPriceNode {
-        ...itemPrice
-      }
-    }
-  }
-  ${ItemPriceFragmentDoc}
-`;
 export const InsertBarcodeDocument = gql`
   mutation insertBarcode($storeId: String!, $input: InsertBarcodeInput!) {
     insertBarcode(input: $input, storeId: $storeId) {
@@ -2244,22 +2205,6 @@ export function getSdk(
           ),
         'saveOutboundShipmentItemLines',
         'mutation',
-        variables
-      );
-    },
-    getItemPricing(
-      variables: GetItemPricingQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<GetItemPricingQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<GetItemPricingQuery>(
-            GetItemPricingDocument,
-            variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
-        'getItemPricing',
-        'query',
         variables
       );
     },
