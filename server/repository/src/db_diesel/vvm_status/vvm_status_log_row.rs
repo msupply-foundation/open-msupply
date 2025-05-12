@@ -69,18 +69,13 @@ impl<'a> VVMStatusLogRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn _upsert_one(&self, row: &VVMStatusLogRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &VVMStatusLogRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(vvm_status_log)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    pub fn upsert_one(&self, row: &VVMStatusLogRow) -> Result<i64, RepositoryError> {
-        self._upsert_one(row)?;
         self.insert_changelog(row, RowActionType::Upsert)
     }
 

@@ -1,12 +1,12 @@
 use crate::sync::{
-    sync_serde::empty_str_as_option_string,
+    sync_serde::{date_to_isostring, empty_str_as_option_string, naive_time},
     translations::{
         invoice_line::InvoiceLineTranslation, stock_line::StockLineTranslation,
         store::StoreTranslation, user::UserTranslation, vvm_status::VVMStatusTranslation,
     },
 };
 use anyhow::Error;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     vvm_status::vvm_status_log_row::{VVMStatusLogRow, VVMStatusLogRowRepository},
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
@@ -22,10 +22,13 @@ pub struct LegacyVVMStatusLogRow {
     pub id: String,
     #[serde(rename = "status_ID")]
     pub status_id: String,
-    #[serde(rename = "date")]
-    pub created_datetime: NaiveDateTime,
+    #[serde(serialize_with = "date_to_isostring")]
+    pub date: NaiveDate,
+    #[serde(deserialize_with = "naive_time")]
+    pub time: NaiveTime,
     #[serde(rename = "item_line_ID")]
     pub stock_line_id: String,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub comment: Option<String>,
     #[serde(rename = "user_ID")]
     pub created_by: String,
@@ -65,17 +68,19 @@ impl SyncTranslation for VVMStatusLogTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, Error> {
-        println!("VVMStatusLogTranslation::try_translate_from_upsert_sync_record");
         let LegacyVVMStatusLogRow {
             id,
             status_id,
-            created_datetime,
+            date,
+            time,
             stock_line_id,
             comment,
             created_by,
             invoice_line_id,
             store_id,
         } = serde_json::from_str::<LegacyVVMStatusLogRow>(&sync_record.data)?;
+
+        let created_datetime = NaiveDateTime::new(date, time);
 
         let result = VVMStatusLogRow {
             id,
@@ -115,7 +120,8 @@ impl SyncTranslation for VVMStatusLogTranslation {
         let legacy_row = LegacyVVMStatusLogRow {
             id,
             status_id,
-            created_datetime,
+            date: created_datetime.date(),
+            time: created_datetime.time(),
             stock_line_id,
             comment,
             created_by,
