@@ -6,11 +6,12 @@ use repository::{
         packaging_variant::{PackagingVariantFilter, PackagingVariantRepository},
         packaging_variant_row::PackagingVariantRowRepository,
     },
-    ColdStorageTypeRow, ColdStorageTypeRowRepository, EqualFilter, ItemLinkRowRepository, NameRow,
-    RepositoryError, StorageConnection, StringFilter,
+    ActivityLogType, ColdStorageTypeRow, ColdStorageTypeRowRepository, EqualFilter,
+    ItemLinkRowRepository, NameRow, RepositoryError, StorageConnection, StringFilter,
 };
 
 use crate::{
+    activity_log::activity_log_entry,
     invoice_line::validate::check_item_exists,
     item::packaging_variant::{
         upsert_packaging_variant, UpsertPackagingVariant, UpsertPackagingVariantError,
@@ -90,10 +91,19 @@ pub fn upsert_item_variant(
             }
 
             // Upsert the new packaging variants
-            for packaging_variant in input.packaging_variants {
+            for packaging_variant in input.packaging_variants.clone() {
                 upsert_packaging_variant(ctx, packaging_variant)
                     .map_err(UpsertItemVariantError::PackagingVariantError)?;
             }
+
+            generate_logs(
+                ctx,
+                existing_item_variant,
+                new_item_variant.clone(),
+                cold_storage_type,
+                manufacturer,
+                input,
+            )?;
 
             ItemVariantRepository::new(connection)
                 .query_one(
@@ -232,4 +242,103 @@ fn validate(
         cold_storage_type,
         manufacturer,
     })
+}
+
+fn generate_logs(
+    ctx: &ServiceContext,
+    existing_item_variant: Option<ItemVariant>,
+    new_item_variant: ItemVariantRow,
+    cold_storage_type: Option<ColdStorageTypeRow>,
+    manufacturer: Option<NameRow>,
+    UpsertItemVariantWithPackaging {
+        name,
+        doses_per_unit,
+        vvm_type,
+        id: _,
+        item_id: _,
+        cold_storage_type_id: _,
+        manufacturer_id: _,
+        packaging_variants: _, // Mapped separately
+    }: UpsertItemVariantWithPackaging,
+) -> Result<(), RepositoryError> {
+    if let Some(existing_variant) = existing_item_variant {
+        let item_variant = existing_variant.item_variant_row;
+
+        if item_variant.name != name {
+            activity_log_entry(
+                ctx,
+                ActivityLogType::ItemVariantUpdatedName,
+                Some(item_variant.id.clone()),
+                Some(item_variant.name.clone()),
+                Some(name.clone()),
+            )?;
+        }
+
+        if let (Some(input_storage_type), Some(existing_storage_type_id)) =
+            (cold_storage_type, item_variant.cold_storage_type_id)
+        {
+            if input_storage_type.id != existing_storage_type_id {
+                let existing_storage_type_name = ColdStorageTypeRowRepository::new(&ctx.connection)
+                    .find_one_by_id(&existing_storage_type_id)?
+                    .map(|v| v.name)
+                    .unwrap_or_default();
+
+                activity_log_entry(
+                    ctx,
+                    ActivityLogType::ItemVariantUpdateColdStorageType,
+                    Some(item_variant.id.clone()),
+                    Some(existing_storage_type_name),
+                    Some(input_storage_type.name),
+                )?;
+            }
+        }
+
+        if let (Some(input_manufacturer), Some(existing_manufacturer)) =
+            (manufacturer, existing_variant.manufacturer_row)
+        {
+            if input_manufacturer.id != existing_manufacturer.id {
+                activity_log_entry(
+                    ctx,
+                    ActivityLogType::ItemVariantUpdateManufacturer,
+                    Some(item_variant.id.clone()),
+                    Some(existing_manufacturer.name.clone()),
+                    Some(input_manufacturer.name.clone()),
+                )?;
+            }
+        }
+
+        if item_variant.doses_per_unit != doses_per_unit {
+            activity_log_entry(
+                ctx,
+                ActivityLogType::ItemVariantUpdateDosePerUnit,
+                Some(item_variant.id.clone()),
+                Some(item_variant.doses_per_unit.to_string()),
+                Some(doses_per_unit.to_string()),
+            )?;
+        }
+
+        if let Some(NullableUpdate {
+            value: Some(vvm_type),
+        }) = &vvm_type
+        {
+            if item_variant.vvm_type.as_ref() != Some(vvm_type) {
+                activity_log_entry(
+                    ctx,
+                    ActivityLogType::ItemVariantUpdateVVMType,
+                    Some(item_variant.id.clone()),
+                    Some(item_variant.vvm_type.clone().unwrap_or_default()),
+                    Some(vvm_type.clone()),
+                )?;
+            }
+        }
+    } else {
+        activity_log_entry(
+            ctx,
+            ActivityLogType::ItemVariantCreated,
+            Some(new_item_variant.id.clone()),
+            None,
+            None,
+        )?;
+    }
+    Ok(())
 }
