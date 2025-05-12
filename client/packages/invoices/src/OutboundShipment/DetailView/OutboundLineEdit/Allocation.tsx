@@ -35,7 +35,7 @@ export const Allocation = ({ itemData, allowPlaceholder }: AllocationProps) => {
   );
 
   useEffect(() => {
-    initialise(itemData.item.id, itemData.draftLines, allowPlaceholder);
+    initialise(itemData, allowPlaceholder);
   }, []);
 
   return initialisedForItemId === itemData.item.id ? (

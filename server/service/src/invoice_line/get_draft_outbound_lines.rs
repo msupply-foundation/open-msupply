@@ -16,8 +16,7 @@ use util::uuid::uuid;
 pub struct DraftOutboundShipmentLine {
     pub id: String,
     pub item_id: String,
-    pub stock_line_id: Option<String>,
-    pub r#type: InvoiceLineType,
+    pub stock_line_id: String,
     pub number_of_packs: f64,
     pub pack_size: f64,
     pub batch: Option<String>,
@@ -26,7 +25,7 @@ pub struct DraftOutboundShipmentLine {
     pub sell_price_per_pack: f64,
     pub in_store_packs: f64,
     pub available_packs: f64,
-    pub stock_line_on_hold: Option<bool>,
+    pub stock_line_on_hold: bool,
 }
 
 pub fn get_draft_outbound_shipment_lines(
@@ -34,7 +33,13 @@ pub fn get_draft_outbound_shipment_lines(
     store_id: &str,
     item_id: &str,
     invoice_id: &str,
-) -> Result<Vec<DraftOutboundShipmentLine>, ListError> {
+) -> Result<
+    (
+        Vec<DraftOutboundShipmentLine>,
+        Option<f64>, /* placeholder_quantity */
+    ),
+    ListError,
+> {
     let outbound = get_invoice(ctx, Some(&store_id), invoice_id)?.ok_or(
         ListError::DatabaseError(RepositoryError::DBError {
             msg: "Invoice not found".to_string(),
@@ -46,7 +51,7 @@ pub fn get_draft_outbound_shipment_lines(
 
     let existing_stock_line_ids: Vec<String> = existing_lines
         .iter()
-        .filter_map(|line| line.stock_line_id.clone())
+        .map(|line| line.stock_line_id.clone())
         .collect();
 
     let new_lines = generate_new_draft_lines(
@@ -61,7 +66,16 @@ pub fn get_draft_outbound_shipment_lines(
     let all_lines: Vec<DraftOutboundShipmentLine> =
         existing_lines.into_iter().chain(new_lines).collect();
 
-    Ok(all_lines)
+    let placeholder_quantity = InvoiceLineRepository::new(&ctx.connection)
+        .query_one(
+            InvoiceLineFilter::new()
+                .invoice_id(EqualFilter::equal_to(&outbound.invoice_row.id))
+                .r#type(InvoiceLineType::UnallocatedStock.equal_to())
+                .item_id(EqualFilter::equal_to(item_id)),
+        )?
+        .map(|l| l.invoice_line_row.number_of_packs);
+
+    Ok((all_lines, placeholder_quantity))
 }
 
 fn get_existing_shipment_lines(
@@ -75,13 +89,15 @@ fn get_existing_shipment_lines(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&outbound.id))
             .invoice_type(InvoiceType::OutboundShipment.equal_to())
+            .r#type(InvoiceLineType::StockOut.equal_to())
             .item_id(EqualFilter::equal_to(item_id)),
     )?;
 
     let as_draft_lines = existing_invoice_lines
         .into_iter()
         .map(|l| DraftOutboundShipmentLine::from_invoice_line(l, &outbound.status))
-        .collect::<Vec<DraftOutboundShipmentLine>>();
+        .collect::<Result<Vec<DraftOutboundShipmentLine>, RepositoryError>>()
+        .map_err(ListError::DatabaseError)?;
 
     Ok(as_draft_lines)
 }
@@ -143,8 +159,7 @@ impl DraftOutboundShipmentLine {
         Self {
             id: uuid(),
             item_id: line.item_row.id,
-            stock_line_id: Some(id),
-            r#type: InvoiceLineType::StockOut,
+            stock_line_id: id,
             batch,
             pack_size,
             expiry_date,
@@ -152,36 +167,40 @@ impl DraftOutboundShipmentLine {
             sell_price_per_pack,
             in_store_packs: total_number_of_packs,
             available_packs: available_number_of_packs,
-            stock_line_on_hold: Some(on_hold),
+            stock_line_on_hold: on_hold,
             number_of_packs: 0.0,
         }
     }
 
-    fn from_invoice_line(line: InvoiceLine, status: &InvoiceStatus) -> Self {
+    fn from_invoice_line(
+        line: InvoiceLine,
+        status: &InvoiceStatus,
+    ) -> Result<Self, RepositoryError> {
         let InvoiceLineRow {
             id,
             number_of_packs,
-            stock_line_id,
             pack_size,
             batch,
             expiry_date,
             location_id,
             sell_price_per_pack,
-            r#type,
             ..
         } = line.invoice_line_row;
 
         let StockLineRow {
+            id: stock_line_id,
             total_number_of_packs,
             available_number_of_packs,
             on_hold,
             ..
-        } = line.stock_line_option.unwrap_or_default();
+        } = line.stock_line_option.ok_or(RepositoryError::DBError {
+            msg: "No related stock line".to_string(),
+            extra: id.clone(),
+        })?;
 
-        Self {
+        Ok(Self {
             id,
             item_id: line.item_row.id,
-            r#type,
             number_of_packs,
             stock_line_id,
             pack_size,
@@ -198,8 +217,8 @@ impl DraftOutboundShipmentLine {
                 InvoiceStatus::New | InvoiceStatus::Allocated => total_number_of_packs,
                 _ => total_number_of_packs + number_of_packs,
             },
-            stock_line_on_hold: Some(on_hold),
-        }
+            stock_line_on_hold: on_hold,
+        })
     }
 }
 
@@ -276,7 +295,8 @@ mod test {
 
         let store_id = mock_store_a().id;
 
-        let result = service
+        // todo test placeholder quantity
+        let (result, _) = service
             .get_draft_outbound_shipment_lines(
                 &context,
                 &store_id,

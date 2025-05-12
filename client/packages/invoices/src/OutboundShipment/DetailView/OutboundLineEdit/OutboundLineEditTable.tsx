@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Divider,
   Box,
@@ -15,7 +15,6 @@ import { useOutboundLineEditColumns } from './columns';
 import { DraftItem } from '../../..';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { useAllocationContext } from './allocation/useAllocationContext';
-import { DraftOutboundLineFragment } from '../../api/operations.generated';
 
 export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
@@ -37,22 +36,13 @@ const TotalCell = styled(TableCell)({
   fontWeight: 'bold',
 });
 
-const PlaceholderRow = ({
-  line,
-}: {
-  line: DraftOutboundLineFragment | null;
-}) => {
+const PlaceholderRow = ({ quantity }: { quantity: number | null }) => {
   const t = useTranslation();
-  const [placeholderBuffer, setPlaceholderBuffer] = useState(
-    line?.numberOfPacks ?? 0
-  );
 
-  useEffect(() => {
-    setPlaceholderBuffer(line?.numberOfPacks ?? 0);
-  }, [line?.numberOfPacks]);
-  const formattedValue = useFormatNumber().round(placeholderBuffer, 2);
+  const formattedValue = useFormatNumber().round(quantity ?? 0, 2);
 
-  return !line ? null : (
+  // todo - only display when 0 if its the only line?
+  return quantity === null ? null : (
     <tr>
       <PlaceholderCell colSpan={3} sx={{ color: 'secondary.main' }}>
         {t('label.placeholder')}
@@ -64,9 +54,9 @@ const PlaceholderRow = ({
         1
       </PlaceholderCell>
       <PlaceholderCell colSpan={3}></PlaceholderCell>
-      <Tooltip title={line?.numberOfPacks.toString()}>
+      <Tooltip title={quantity.toString()}>
         <PlaceholderCell style={{ textAlign: 'right' }}>
-          {!!NumUtils.hasMoreThanTwoDp(placeholderBuffer)
+          {!!NumUtils.hasMoreThanTwoDp(quantity)
             ? `${formattedValue}...`
             : formattedValue}
         </PlaceholderCell>
@@ -107,12 +97,14 @@ export const OutboundLineEditTable = ({
 }: OutboundLineEditTableProps) => {
   const t = useTranslation();
 
-  const { allocatedQuantity, draftLines, placeholderLine } =
-    useAllocationContext(({ allocatedUnits, draftLines, placeholderLine }) => ({
-      allocatedQuantity: allocatedUnits,
-      draftLines,
-      placeholderLine,
-    }));
+  const { allocatedQuantity, draftLines, placeholderQuantity } =
+    useAllocationContext(
+      ({ allocatedUnits, draftLines, placeholderQuantity }) => ({
+        allocatedQuantity: allocatedUnits,
+        draftLines,
+        placeholderQuantity,
+      })
+    );
 
   // const { orderedRows, placeholderRow } = useOutboundLineEditRows(rows, batch);
   const onEditStockLine = (key: string, value: number, packSize: number) => {
@@ -136,7 +128,7 @@ export const OutboundLineEditTable = ({
   });
 
   const additionalRows = [
-    <PlaceholderRow line={placeholderLine} key="placeholder-row" />,
+    <PlaceholderRow quantity={placeholderQuantity} key="placeholder-row" />,
     <tr key="divider-row">
       <td colSpan={10}>
         <Divider margin={10} />
@@ -145,7 +137,7 @@ export const OutboundLineEditTable = ({
     <TotalRow key="total-row" allocatedQuantity={allocatedQuantity} />,
   ];
 
-  if (!draftLines.length && !placeholderLine)
+  if (!draftLines.length && placeholderQuantity === null)
     return (
       <Box sx={{ margin: 'auto' }}>
         <Typography>{t('messages.no-stock-available')}</Typography>

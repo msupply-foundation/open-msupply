@@ -6,6 +6,7 @@ import { DraftItem } from 'packages/invoices/src';
 export type OutboundLineEditData = {
   item: DraftItem;
   draftLines: DraftOutboundLineFragment[];
+  placeholderQuantity: number | null;
 };
 
 export const useOutboundLineEditData = (invoiceId: string, itemId?: string) => {
@@ -26,9 +27,13 @@ export const useOutboundLineEditData = (invoiceId: string, itemId?: string) => {
 
       if (!item) return;
 
+      const { draftLines, placeholderQuantity = null } =
+        result.draftOutboundShipmentLines;
+
       return {
         item,
-        draftLines: result.draftOutboundShipmentLines,
+        draftLines,
+        placeholderQuantity,
       };
     },
     enabled: !!itemId,

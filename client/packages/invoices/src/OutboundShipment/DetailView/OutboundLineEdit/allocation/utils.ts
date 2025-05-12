@@ -1,5 +1,4 @@
-import { FnUtils, NumUtils, SortUtils } from '@common/utils';
-import { InvoiceLineNodeType } from '@common/types';
+import { NumUtils, SortUtils } from '@common/utils';
 import { DateUtils } from '@common/intl';
 import { DraftOutboundLineFragment } from '../../../api/operations.generated';
 
@@ -246,14 +245,3 @@ const reduceBatchAllocation = ({
     });
   return -toAllocate;
 };
-
-export const createPlaceholderLine = (): DraftOutboundLineFragment => ({
-  id: FnUtils.generateUUID(),
-  type: InvoiceLineNodeType.UnallocatedStock,
-  packSize: 1,
-  __typename: 'DraftOutboundShipmentLineNode',
-  numberOfPacks: 0,
-  sellPricePerPack: 0,
-  inStorePacks: 0,
-  availablePacks: 0,
-});

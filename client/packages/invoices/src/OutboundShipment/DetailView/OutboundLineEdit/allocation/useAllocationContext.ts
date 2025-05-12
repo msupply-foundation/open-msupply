@@ -8,14 +8,9 @@ import {
   getAllocationAlerts,
   StockOutAlert,
 } from 'packages/invoices/src/StockOut';
-import { isA } from 'packages/invoices/src/utils';
 import { DraftOutboundLineFragment } from '../../../api/operations.generated';
-import {
-  allocateQuantities,
-  createPlaceholderLine,
-  getAllocatedQuantity,
-  issueStock,
-} from './utils';
+import { allocateQuantities, getAllocatedQuantity, issueStock } from './utils';
+import { OutboundLineEditData } from '../../../api';
 
 // TODO Fix imports
 
@@ -33,13 +28,9 @@ interface AllocationContext {
   allocateIn: AllocateIn;
   isAutoAllocated: boolean;
   initialisedForItemId: string | null;
-  placeholderLine: DraftOutboundLineFragment | null;
+  placeholderQuantity: number | null;
 
-  initialise: (
-    itemId: string,
-    lines: DraftOutboundLineFragment[],
-    withPlaceholder: boolean
-  ) => void;
+  initialise: (input: OutboundLineEditData, withPlaceholder: boolean) => void;
 
   setDraftLines: (lines: DraftOutboundLineFragment[]) => void;
   manualAllocate: (lineId: string, quantity: number) => void;
@@ -54,23 +45,18 @@ interface AllocationContext {
 export const useAllocationContext = create<AllocationContext>((set, get) => ({
   initialisedForItemId: null,
   draftLines: [],
-  placeholderLine: null,
+  placeholderQuantity: null,
   alerts: [],
   allocatedUnits: 0,
   allocateIn: AllocateIn.Units,
   isAutoAllocated: false,
 
-  initialise: (itemId, lines, withPlaceholder) => {
-    const placeholderLine = lines.find(isA.placeholderLine);
-    const restOfLines = lines.filter(line => !isA.placeholderLine(line));
-
+  initialise: ({ item, draftLines, placeholderQuantity }, allowPlaceholder) => {
     set({
-      initialisedForItemId: itemId,
-      draftLines: restOfLines.sort(sortByExpiry),
-      placeholderLine: withPlaceholder
-        ? (placeholderLine ?? createPlaceholderLine())
-        : null,
-      allocatedUnits: getAllocatedQuantity(lines),
+      initialisedForItemId: item.id,
+      draftLines: draftLines.sort(sortByExpiry),
+      placeholderQuantity: allowPlaceholder ? (placeholderQuantity ?? 0) : null,
+      allocatedUnits: getAllocatedQuantity(draftLines),
       alerts: [],
       isAutoAllocated: false,
     });
@@ -84,7 +70,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     })),
 
   autoAllocate: (quantity, format, t) => {
-    const { draftLines, placeholderLine, setDraftLines } = get();
+    const { draftLines, placeholderQuantity, setDraftLines } = get();
     const result = allocateQuantities(draftLines, quantity);
 
     if (result) {
@@ -117,12 +103,8 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
         ...state,
         isAutoAllocated: true,
         alerts,
-        placeholderLine: placeholderLine
-          ? {
-              ...placeholderLine,
-              numberOfPacks: result.remainingQuantity,
-            }
-          : null,
+        placeholderQuantity:
+          placeholderQuantity === null ? null : result.remainingQuantity,
       }));
     }
   },
