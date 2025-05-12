@@ -1,5 +1,6 @@
 use crate::{
-    db_diesel::item_row::item, item_link, user_account, ChangeLogInsertRow, ChangelogRepository,
+    db_diesel::{item_row::item, name_row::name},
+    item_link, name_link, user_account, ChangeLogInsertRow, ChangelogRepository,
     ChangelogTableName, RepositoryError, RowActionType, StorageConnection, Upsert,
 };
 
@@ -23,9 +24,12 @@ table! {
 }
 
 joinable!(item_variant -> item_link (item_link_id));
+joinable!(item_variant -> name_link (manufacturer_link_id));
 allow_tables_to_appear_in_same_query!(item_variant, item_link);
 allow_tables_to_appear_in_same_query!(item_variant, item);
 allow_tables_to_appear_in_same_query!(item_variant, user_account);
+allow_tables_to_appear_in_same_query!(item_variant, name_link);
+allow_tables_to_appear_in_same_query!(item_variant, name);
 
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,

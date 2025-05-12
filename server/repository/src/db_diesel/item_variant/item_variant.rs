@@ -1,19 +1,21 @@
 use super::item_variant_row::{item_variant, ItemVariantRow};
 use crate::{
-    db_diesel::item_row::item,
+    db_diesel::{item_row::item, name_row::name},
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
-    item_link,
+    item_link, name_link,
     repository_error::RepositoryError,
-    DBType, EqualFilter, ItemLinkRow, ItemRow, Pagination, Sort, StorageConnection, StringFilter,
+    DBType, EqualFilter, ItemLinkRow, ItemRow, NameLinkRow, NameRow, Pagination, Sort,
+    StorageConnection, StringFilter,
 };
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
+    dsl::{InnerJoin, IntoBoxed, LeftJoin},
     prelude::*,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct ItemVariant {
     pub item_variant_row: ItemVariantRow,
+    pub manufacturer_row: Option<NameRow>,
     pub item_row: ItemRow,
 }
 
@@ -23,7 +25,11 @@ pub enum ItemVariantSortField {
 
 pub type ItemVariantSort = Sort<ItemVariantSortField>;
 
-type ItemVariantJoin = (ItemVariantRow, (ItemLinkRow, ItemRow));
+type ItemVariantJoin = (
+    ItemVariantRow,
+    Option<(NameLinkRow, NameRow)>,
+    (ItemLinkRow, ItemRow),
+);
 
 #[derive(Clone, Default)]
 pub struct ItemVariantFilter {
@@ -118,21 +124,26 @@ impl<'a> ItemVariantRepository<'a> {
     }
 }
 
-fn to_domain((item_variant_row, (_, item_row)): ItemVariantJoin) -> ItemVariant {
+fn to_domain((item_variant_row, name_link, (_, item_row)): ItemVariantJoin) -> ItemVariant {
     ItemVariant {
         item_variant_row,
+        manufacturer_row: name_link.map(|(_, name)| name),
         item_row,
     }
 }
 
 type BoxedItemVariantQuery = IntoBoxed<
     'static,
-    InnerJoin<item_variant::table, InnerJoin<item_link::table, item::table>>,
+    InnerJoin<
+        LeftJoin<item_variant::table, InnerJoin<name_link::table, name::table>>,
+        InnerJoin<item_link::table, item::table>,
+    >,
     DBType,
 >;
 
 fn create_filtered_query(filter: Option<ItemVariantFilter>) -> BoxedItemVariantQuery {
     let mut query = item_variant::table
+        .left_join(name_link::table.inner_join(name::table))
         .inner_join(item_link::table.inner_join(item::table))
         .into_boxed();
     // Exclude any deleted items
