@@ -21,6 +21,32 @@ pub struct DatabaseSettings {
     pub database_path: Option<String>,
     /// SQL run once at startup. For example, to run pragma statements
     pub init_sql: Option<String>,
+    #[serde(default)]
+    pub sqlite_vacuum: SqliteVacuum,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct SqliteVacuum {
+    #[serde(default = "default_as_true")]
+    pub on_startup: bool,
+    #[serde(default = "default_as_true")]
+    pub after_migration: bool,
+    #[serde(default = "default_as_true")]
+    pub on_shutdown: bool,
+}
+
+fn default_as_true() -> bool {
+    true
+}
+
+impl Default for SqliteVacuum {
+    fn default() -> Self {
+        Self {
+            on_startup: true,
+            after_migration: true,
+            on_shutdown: false,
+        }
+    }
 }
 
 // feature postgres
@@ -203,6 +229,7 @@ mod database_setting_test {
             database_name: "".to_string(),
             init_sql,
             database_path: None,
+            sqlite_vacuum: Default::default(),
         }
     }
 

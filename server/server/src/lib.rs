@@ -17,7 +17,7 @@ use graphql::{
     attach_discovery_graphql_schema, attach_graphql_schema, GraphSchemaData, GraphqlSchema,
 };
 use log::info;
-use repository::{get_storage_connection_manager, migrations::migrate};
+use repository::{get_storage_connection_manager, migrations::migrate, SqliteVacuumAction};
 
 use scheduled_tasks::spawn_scheduled_task_runner;
 use service::{
@@ -89,14 +89,23 @@ pub async fn start_server(
     if let Some(init_sql) = &settings.database.full_init_sql() {
         connection_manager.execute(init_sql).unwrap();
     }
+
+    // ON STARTUP VACUUM]
+    let sqlite_vacuum = &settings.database.sqlite_vacuum;
+    connection_manager.sqlite_vacuum(SqliteVacuumAction::OnStartup, sqlite_vacuum);
+
+    // MIGRATION
     info!("Run DB migrations...");
-    let version = migrate(&connection_manager.connection().unwrap(), None)
+    let (version, migration_has_ran) = migrate(&connection_manager.connection().unwrap(), None)
         .context("Failed to run DB migrations")
         .unwrap();
     info!("Run DB migrations...done");
 
-    // Upsert standard reports
+    // UPSERT STANDARD REPORTS
     StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
+
+    // AFTER MIGRATION VACUUM
+    connection_manager.sqlite_vacuum(SqliteVacuumAction::AfterMigration, sqlite_vacuum);
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");
@@ -246,7 +255,7 @@ pub async fn start_server(
 
     let graphql_schema = Data::new(GraphqlSchema::new(
         GraphSchemaData {
-            connection_manager: Data::new(connection_manager),
+            connection_manager: Data::new(connection_manager.clone()),
             loader_registry: Data::new(LoaderRegistry { loaders }),
             service_provider: service_provider.clone(),
             settings: Data::new(settings.clone()),
@@ -375,6 +384,11 @@ pub async fn start_server(
     };
 
     server_handle.stop(true).await;
+
+    // ON SHUTDOWN VACUUM
+    connection_manager.sqlite_vacuum(SqliteVacuumAction::OnShutdown, sqlite_vacuum);
+
+    info!("Shutting down...");
 
     Ok(())
 }

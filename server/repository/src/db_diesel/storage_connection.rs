@@ -2,13 +2,13 @@ use std::sync::{Mutex, MutexGuard};
 
 use super::{get_connection, DBBackendConnection, DBConnection};
 
-use crate::repository_error::RepositoryError;
+use crate::{database_settings::SqliteVacuum, repository_error::RepositoryError};
 
 use diesel::{
     connection::{AnsiTransactionManager, SimpleConnection, TransactionManager},
     r2d2::{ConnectionManager, Pool},
 };
-use log::error;
+use log::{error, info};
 
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
@@ -218,6 +218,30 @@ impl StorageConnectionManager {
         con.batch_execute(sql)?;
         Ok(())
     }
+
+    pub fn sqlite_vacuum(&self, action: SqliteVacuumAction, setting: &SqliteVacuum) {
+        if cfg!(feature = "postgres") {
+            return;
+        }
+
+        let (should_vacuum, message) = match action {
+            SqliteVacuumAction::OnStartup => (setting.on_startup, "On Startup"),
+            SqliteVacuumAction::OnShutdown => (setting.on_shutdown, "On Shutdown"),
+            SqliteVacuumAction::AfterMigration => (setting.after_migration, "After Migration"),
+        };
+        if !should_vacuum {
+            return;
+        }
+
+        info!("{message} vacuum...");
+        self.execute("VACUUM").expect("Failed to vacuum");
+    }
+}
+
+pub enum SqliteVacuumAction {
+    OnStartup,
+    OnShutdown,
+    AfterMigration,
 }
 
 #[cfg(test)]

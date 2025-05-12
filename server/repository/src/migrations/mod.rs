@@ -102,7 +102,7 @@ pub enum MigrationError {
 pub fn migrate(
     connection: &StorageConnection,
     to_version: Option<Version>,
-) -> Result<Version, MigrationError> {
+) -> Result<(Version, /* migration ran */ bool), MigrationError> {
     let migrations: Vec<Box<dyn Migration>> = vec![
         Box::new(V1_00_04),
         Box::new(V1_01_01),
@@ -162,6 +162,7 @@ pub fn migrate(
     // From v2.3 we drop all views and re-create them
     let min_version_for_dropping_views = v2_03_00::V2_03_00.version();
     let mut drop_view_has_run = false;
+    let mut migration_has_ran = false;
 
     for migration in migrations {
         let migration_version = migration.version();
@@ -199,6 +200,7 @@ pub fn migrate(
                     version: migration_version.clone(),
                 })?;
             set_database_version(connection, &migration_version)?;
+            migration_has_ran = true;
         }
 
         // Run fragment migrations (can run on current version)
@@ -218,6 +220,7 @@ pub fn migrate(
 
                 migration_fragment_log_repo.insert(&migration, &fragment)?;
             }
+            migration_has_ran = true;
         }
     }
 
@@ -229,7 +232,7 @@ pub fn migrate(
     }
 
     set_database_version(connection, &to_version)?;
-    Ok(to_version)
+    Ok((to_version, migration_has_ran))
 }
 
 fn get_database_version(connection: &StorageConnection) -> Version {

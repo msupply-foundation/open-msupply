@@ -29,6 +29,10 @@
 #   username: "postgres"
 #   password: "password"
 #   database_name: "omsupply-database"
+#   sqlite_vacuum:
+#     # on_startup: true
+#     # after_migration: true
+#     # on_shutdown: false
 # logging:
 ##   one of: All | Console | File
 #   mode: Console
