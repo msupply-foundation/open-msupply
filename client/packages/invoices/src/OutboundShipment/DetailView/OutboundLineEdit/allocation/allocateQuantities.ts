@@ -1,5 +1,5 @@
-import { DateUtils } from '@common/intl';
 import { DraftStockOutLineFragment } from '../../../api/operations.generated';
+import { canAutoAllocate } from './utils';
 
 /**
  * Attempts to allocate the requested quantity to the available stock lines.
@@ -69,13 +69,7 @@ export const allocateQuantities = (
     numberOfPacks: 0,
   }));
 
-  const validBatches = newDraftLines.filter(
-    ({ expiryDate, availablePacks, stockLineOnHold, location }) =>
-      availablePacks > 0 &&
-      !stockLineOnHold &&
-      !location?.onHold &&
-      !(!!expiryDate && DateUtils.isExpired(new Date(expiryDate)))
-  );
+  const validBatches = newDraftLines.filter(canAutoAllocate);
 
   let toAllocate = requestedUnits;
 
