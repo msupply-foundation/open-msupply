@@ -31,6 +31,7 @@ allow_tables_to_appear_in_same_query!(reason_option, stock_line);
 pub enum ReasonOptionType {
     PositiveInventoryAdjustment,
     NegativeInventoryAdjustment,
+    OpenVialWastage,
     ReturnReason,
     RequisitionLineVariance,
 }

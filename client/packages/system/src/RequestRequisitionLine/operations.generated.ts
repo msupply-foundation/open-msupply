@@ -12,6 +12,7 @@ export type ItemWithStatsFragment = {
   unitName?: string | null;
   defaultPackSize: number;
   availableStockOnHand: number;
+  isVaccine: boolean;
   stats: {
     __typename: 'ItemStatsNode';
     averageMonthlyConsumption: number;
@@ -58,6 +59,7 @@ export type RequestLineFragment = {
     unitName?: string | null;
     defaultPackSize: number;
     availableStockOnHand: number;
+    isVaccine: boolean;
     stats: {
       __typename: 'ItemStatsNode';
       averageMonthlyConsumption: number;
@@ -140,6 +142,7 @@ export type RequestFragment = {
         unitName?: string | null;
         defaultPackSize: number;
         availableStockOnHand: number;
+        isVaccine: boolean;
         stats: {
           __typename: 'ItemStatsNode';
           averageMonthlyConsumption: number;
@@ -219,6 +222,7 @@ export const ItemWithStatsFragmentDoc = gql`
       stockOnHand
       monthsOfStockOnHand
     }
+    isVaccine
   }
 `;
 export const RequestLineFragmentDoc = gql`

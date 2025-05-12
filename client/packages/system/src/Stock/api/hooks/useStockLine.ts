@@ -28,6 +28,7 @@ const defaultDraftStockLine: DraftStockLine = {
     __typename: 'ItemNode',
     code: '',
     name: '',
+    isVaccine: false,
   },
   reasonOption: null,
 };

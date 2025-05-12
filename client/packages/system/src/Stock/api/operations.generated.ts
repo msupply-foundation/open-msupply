@@ -41,6 +41,7 @@ export type StockLineRowFragment = {
     code: string;
     name: string;
     unitName?: string | null;
+    isVaccine: boolean;
     masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
   };
 };
@@ -191,6 +192,7 @@ export type StockLinesQuery = {
         code: string;
         name: string;
         unitName?: string | null;
+        isVaccine: boolean;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
@@ -247,6 +249,7 @@ export type StockLineQuery = {
         code: string;
         name: string;
         unitName?: string | null;
+        isVaccine: boolean;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
@@ -329,6 +332,7 @@ export type UpdateStockLineMutation = {
           code: string;
           name: string;
           unitName?: string | null;
+          isVaccine: boolean;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
@@ -561,6 +565,7 @@ export type InsertStockLineMutation = {
           code: string;
           name: string;
           unitName?: string | null;
+          isVaccine: boolean;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
@@ -596,6 +601,7 @@ export const StockLineRowFragmentDoc = gql`
       masterLists(storeId: $storeId) {
         name
       }
+      isVaccine
     }
     barcode
   }

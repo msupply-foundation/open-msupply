@@ -10,6 +10,7 @@ export type ServiceItemRowFragment = {
   code: string;
   name: string;
   unitName?: string | null;
+  isVaccine: boolean;
 };
 
 export type StockLineFragment = {
@@ -40,6 +41,7 @@ export type StockLineFragment = {
     code: string;
     unitName?: string | null;
     doses: number;
+    isVaccine: boolean;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -64,6 +66,7 @@ export type ItemRowFragment = {
   code: string;
   name: string;
   unitName?: string | null;
+  isVaccine: boolean;
 };
 
 export type ItemRowWithDirectionsFragment = {
@@ -72,6 +75,7 @@ export type ItemRowWithDirectionsFragment = {
   code: string;
   name: string;
   unitName?: string | null;
+  isVaccine: boolean;
   itemDirections: Array<{
     __typename: 'ItemDirectionNode';
     directions: string;
@@ -95,6 +99,7 @@ export type ItemRowWithWarningsFragment = {
   code: string;
   name: string;
   unitName?: string | null;
+  isVaccine: boolean;
   warnings: Array<{
     __typename: 'WarningNode';
     warningText: string;
@@ -121,6 +126,7 @@ export type ItemWithPackSizeFragment = {
   code: string;
   name: string;
   unitName?: string | null;
+  isVaccine: boolean;
 };
 
 export type ItemStockOnHandFragment = {
@@ -131,6 +137,7 @@ export type ItemStockOnHandFragment = {
   code: string;
   name: string;
   unitName?: string | null;
+  isVaccine: boolean;
   itemDirections: Array<{
     __typename: 'ItemDirectionNode';
     directions: string;
@@ -148,6 +155,7 @@ export type ItemRowWithStatsFragment = {
   code: string;
   name: string;
   unitName?: string | null;
+  isVaccine: boolean;
   stats: {
     __typename: 'ItemStatsNode';
     averageMonthlyConsumption: number;
@@ -335,6 +343,7 @@ export type ItemFragment = {
         code: string;
         unitName?: string | null;
         doses: number;
+        isVaccine: boolean;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -508,6 +517,7 @@ export type ItemsWithStockLinesQuery = {
             code: string;
             unitName?: string | null;
             doses: number;
+            isVaccine: boolean;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -637,6 +647,7 @@ export type ItemsQuery = {
       code: string;
       name: string;
       unitName?: string | null;
+      isVaccine: boolean;
     }>;
   };
 };
@@ -663,6 +674,7 @@ export type ItemStockOnHandQuery = {
       code: string;
       name: string;
       unitName?: string | null;
+      isVaccine: boolean;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
         directions: string;
@@ -799,6 +811,7 @@ export type ItemByIdQuery = {
             code: string;
             unitName?: string | null;
             doses: number;
+            isVaccine: boolean;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -977,6 +990,7 @@ export type GetHistoricalStockLinesQuery = {
         code: string;
         unitName?: string | null;
         doses: number;
+        isVaccine: boolean;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -1250,6 +1264,7 @@ export const ServiceItemRowFragmentDoc = gql`
     code
     name
     unitName
+    isVaccine
   }
 `;
 export const ItemRowFragmentDoc = gql`
@@ -1259,6 +1274,7 @@ export const ItemRowFragmentDoc = gql`
     code
     name
     unitName
+    isVaccine
   }
 `;
 export const WarningFragmentDoc = gql`
@@ -1355,6 +1371,7 @@ export const StockLineFragmentDoc = gql`
       warnings {
         ...Warning
       }
+      isVaccine
     }
     note
     onHold

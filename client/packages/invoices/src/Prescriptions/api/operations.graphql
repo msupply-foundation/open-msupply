@@ -124,6 +124,7 @@ fragment PrescriptionLine on InvoiceLineNode {
     warnings {
       ...Warning
     }
+    isVaccine
   }
 
   location {
@@ -155,6 +156,7 @@ fragment PrescriptionLine on InvoiceLineNode {
       warnings {
         ...Warning
       }
+      isVaccine
     }
   }
 }
@@ -195,6 +197,7 @@ fragment PartialPrescriptionLine on StockLineNode {
     warnings {
       ...Warning
     }
+    isVaccine
   }
   location {
     __typename

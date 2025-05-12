@@ -45,6 +45,7 @@ export type StocktakeLineFragment = {
     code: string;
     name: string;
     unitName?: string | null;
+    isVaccine: boolean;
   };
   reasonOption?: {
     __typename: 'ReasonOptionNode';
@@ -105,6 +106,7 @@ export type StocktakeFragment = {
         code: string;
         name: string;
         unitName?: string | null;
+        isVaccine: boolean;
       };
       reasonOption?: {
         __typename: 'ReasonOptionNode';
@@ -205,6 +207,7 @@ export type StocktakeQuery = {
               code: string;
               name: string;
               unitName?: string | null;
+              isVaccine: boolean;
             };
             reasonOption?: {
               __typename: 'ReasonOptionNode';
@@ -277,6 +280,7 @@ export type StocktakeByNumberQuery = {
               code: string;
               name: string;
               unitName?: string | null;
+              isVaccine: boolean;
             };
             reasonOption?: {
               __typename: 'ReasonOptionNode';
@@ -334,6 +338,7 @@ export type StocktakeLinesQuery = {
         code: string;
         name: string;
         unitName?: string | null;
+        isVaccine: boolean;
       };
       reasonOption?: {
         __typename: 'ReasonOptionNode';
@@ -605,6 +610,7 @@ export const StocktakeLineFragmentDoc = gql`
       code
       name
       unitName
+      isVaccine
     }
     itemVariantId
     reasonOption {
