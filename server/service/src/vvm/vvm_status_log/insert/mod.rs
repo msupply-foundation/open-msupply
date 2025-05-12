@@ -17,6 +17,7 @@ pub enum InsertVVMStatusLogError {
     VVMStatusLogAlreadyExists,
     VVMStatusDoesNotExist,
     StockLineDoesNotExist,
+    UserDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
@@ -39,7 +40,7 @@ pub fn insert_vvm_status_log(
     let vvm_status_log = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&input, connection)?;
+            validate(&ctx.user_id, &input, connection)?;
             let vvm_status_log = generate(store_id, &ctx.user_id, input);
 
             VVMStatusLogRowRepository::new(connection).upsert_one(&vvm_status_log)?;
