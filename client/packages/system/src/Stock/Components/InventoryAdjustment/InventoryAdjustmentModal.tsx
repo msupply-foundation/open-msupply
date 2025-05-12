@@ -92,10 +92,18 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
                 <ReasonOptionsSearchInput
                   onChange={reason => setDraft(state => ({ ...state, reason }))}
                   value={draft.reason}
+                  // TODO: clean up nested ternary
                   type={
-                    draft.adjustmentType === AdjustmentTypeInput.Addition
-                      ? ReasonOptionNodeType.PositiveInventoryAdjustment
-                      : ReasonOptionNodeType.NegativeInventoryAdjustment
+                    stockLine.item.isVaccine
+                      ? draft.adjustmentType === AdjustmentTypeInput.Addition
+                        ? ReasonOptionNodeType.PositiveInventoryAdjustment
+                        : [
+                            ReasonOptionNodeType.NegativeInventoryAdjustment,
+                            ReasonOptionNodeType.OpenVialWastage,
+                          ]
+                      : draft.adjustmentType === AdjustmentTypeInput.Addition
+                        ? ReasonOptionNodeType.PositiveInventoryAdjustment
+                        : ReasonOptionNodeType.NegativeInventoryAdjustment
                   }
                   width={INPUT_WIDTH}
                 />

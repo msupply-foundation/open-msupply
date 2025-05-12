@@ -129,10 +129,20 @@ const getInventoryAdjustmentReasonInputColumn = (
           value={value}
           width={Number(column.width) - 12}
           onChange={onChange}
+          // TODO: clean up nested ternary
           type={
-            rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0)
-              ? ReasonOptionNodeType.NegativeInventoryAdjustment
-              : ReasonOptionNodeType.PositiveInventoryAdjustment
+            rowData.item.isVaccine
+              ? rowData.snapshotNumberOfPacks >
+                (rowData?.countedNumberOfPacks ?? 0)
+                ? [
+                    ReasonOptionNodeType.NegativeInventoryAdjustment,
+                    ReasonOptionNodeType.OpenVialWastage,
+                  ]
+                : ReasonOptionNodeType.PositiveInventoryAdjustment
+              : rowData.snapshotNumberOfPacks >
+                  (rowData?.countedNumberOfPacks ?? 0)
+                ? ReasonOptionNodeType.NegativeInventoryAdjustment
+                : ReasonOptionNodeType.PositiveInventoryAdjustment
           }
           isError={isAdjustmentReasonError}
           isDisabled={

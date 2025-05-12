@@ -29,6 +29,7 @@ fragment StockLine on StockLineNode {
     warnings {
       ...Warning
     }
+    isVaccine
   }
   note
   onHold
@@ -46,6 +47,7 @@ fragment ItemRow on ItemNode {
   code
   name
   unitName
+  isVaccine
 }
 
 fragment ItemRowWithDirections on ItemNode {

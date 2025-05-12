@@ -15,7 +15,7 @@ interface ReasonOptionsSearchInputProps {
   width?: number | string;
   onChange: (reasonOption: ReasonOptionNode | null) => void;
   autoFocus?: boolean;
-  type: ReasonOptionNodeType;
+  type: ReasonOptionNodeType | ReasonOptionNodeType[];
   isError?: boolean;
   isDisabled?: boolean;
   onBlur?: () => void;
@@ -33,21 +33,11 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
 }) => {
   const { data, isLoading } = useReasonOptions();
 
-  const reasonFilter = (reason: ReasonOptionNode) => {
-    switch (type) {
-      case ReasonOptionNodeType.PositiveInventoryAdjustment:
-        return reason.type === ReasonOptionNodeType.PositiveInventoryAdjustment;
-      case ReasonOptionNodeType.NegativeInventoryAdjustment:
-        return reason.type === ReasonOptionNodeType.NegativeInventoryAdjustment;
-      case ReasonOptionNodeType.OpenVialWastage:
-        return reason.type === ReasonOptionNodeType.OpenVialWastage;
-      case ReasonOptionNodeType.RequisitionLineVariance:
-        return reason.type === ReasonOptionNodeType.RequisitionLineVariance;
-      case ReasonOptionNodeType.ReturnReason:
-        return reason.type === ReasonOptionNodeType.ReturnReason;
-      default:
-        return false;
+  const reasonFilter = (reasonOption: ReasonOptionNode) => {
+    if (Array.isArray(type)) {
+      return type.includes(reasonOption.type);
     }
+    return reasonOption.type === type;
   };
   const reasons = (data?.nodes ?? []).filter(reasonFilter);
 
