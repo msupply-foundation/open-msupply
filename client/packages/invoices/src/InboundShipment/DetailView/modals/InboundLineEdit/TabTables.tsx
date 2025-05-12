@@ -24,6 +24,7 @@ import {
   CurrencyRowFragment,
   getLocationInputColumn,
   ItemVariantInputCell,
+  VVMStatusInputCell,
   LocationRowFragment,
   PackSizeEntryCell,
   useIsItemVariantsEnabled,
@@ -86,6 +87,8 @@ export const QuantityTableComponent: FC<TableProps> = ({
 }) => {
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
+  // const VVMStatusEnabled = useIsVVMStatusEnabled();
+  const VVMStatusEnabled = true;
 
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     getBatchColumn(updateDraftLine, theme),
@@ -100,6 +103,15 @@ export const QuantityTableComponent: FC<TableProps> = ({
       Cell: props => (
         <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
       ),
+      setter: updateDraftLine,
+    });
+  }
+  if (VVMStatusEnabled) {
+    columnDefinitions.push({
+      key: 'VVMStatusId',
+      label: 'label.vvm-status',
+      width: 170,
+      Cell: props => <VVMStatusInputCell {...props} />,
       setter: updateDraftLine,
     });
   }

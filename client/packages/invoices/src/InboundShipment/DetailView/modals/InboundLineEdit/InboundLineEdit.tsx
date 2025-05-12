@@ -180,8 +180,8 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
             }}
           />
         }
-        height={600}
-        width={1024}
+        height={700}
+        width={1200}
         enableAutocomplete /* Required for previously entered batches to be remembered and suggested in future shipments */
       >
         {isLoading ? (
