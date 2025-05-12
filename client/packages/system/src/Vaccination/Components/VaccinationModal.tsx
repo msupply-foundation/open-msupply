@@ -16,7 +16,6 @@ import {
   Switch,
   useDialog,
   useFormatDateTime,
-  useKeyboardHeightAdjustment,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -69,7 +68,6 @@ export const VaccinationModal = ({
   });
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(700);
 
   const save = useConfirmNoStockLineSelected(
     draft,
@@ -122,7 +120,7 @@ export const VaccinationModal = ({
           onClick={save}
         />
       }
-      height={height}
+      height={700}
       width={550}
       slideAnimation={false}
       contentProps={{ sx: { paddingTop: !!InfoBox ? 0 : undefined } }}

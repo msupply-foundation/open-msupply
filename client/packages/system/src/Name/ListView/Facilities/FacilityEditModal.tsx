@@ -7,7 +7,6 @@ import {
   BasicSpinner,
   useDialog,
   DialogButton,
-  useKeyboardHeightAdjustment,
   Typography,
   PropertyInput,
   InputWithLabelRow,
@@ -58,8 +57,6 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const height = useKeyboardHeightAdjustment(600);
-
   const { draftProperties, setDraftProperties } = useDraftFacilityProperties(
     data?.properties
   );
@@ -102,7 +99,7 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
           />
         )
       }
-      height={height}
+      height={600}
       width={700}
     >
       <DetailContainer>

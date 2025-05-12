@@ -107,7 +107,8 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       width={width ? `${width}px` : '100%'}
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
-      open={selectControl.isOn}
+      // open={selectControl.isOn}
+      open={true}
       onInputChange={(_, value) => debounceOnFilter(value)}
       pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
       paginationDebounce={DEBOUNCE_TIMEOUT}

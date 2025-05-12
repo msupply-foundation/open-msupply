@@ -17,6 +17,7 @@ import { BasicTextInput } from '../TextInput';
 import { useDebounceCallback } from '@common/hooks';
 import type { AutocompleteProps } from './Autocomplete';
 import { StyledPopper } from './components';
+import { useOpenStateWithKeyboard } from '@common/components';
 
 const LOADER_HIDE_TIMEOUT = 500;
 
@@ -63,6 +64,7 @@ export function AutocompleteWithPagination<T>({
 }: PropsWithChildren<AutocompleteWithPaginationProps<T>>) {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const [isLoading, setIsLoading] = useState(true);
+  const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
@@ -143,6 +145,7 @@ export function AutocompleteWithPagination<T>({
   return (
     <MuiAutocomplete
       {...restOfAutocompleteProps}
+      {...openOverrides}
       inputValue={inputValue}
       onInputChange={onInputChange}
       disabled={disabled}

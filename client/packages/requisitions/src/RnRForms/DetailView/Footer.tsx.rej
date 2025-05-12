@@ -1,0 +1,10 @@
+diff a/client/packages/requisitions/src/RnRForms/DetailView/Footer.tsx b/client/packages/requisitions/src/RnRForms/DetailView/Footer.tsx	(rejected hunks)
+@@ -22,7 +21,7 @@ export const Footer = ({
+   linesUnconfirmed: boolean;
+   unsavedChanges: boolean;
+ }) => {
+-  const [showFooter, setShowFooter] = useState(true);
++  const { keyboardIsOpen } = useKeyboard();
+   const t = useTranslation();
+   const { navigateUpOne } = useBreadcrumbs();
+   const { error, info, success } = useNotification();

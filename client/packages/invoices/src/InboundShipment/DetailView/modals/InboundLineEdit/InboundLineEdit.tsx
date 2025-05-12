@@ -12,7 +12,6 @@ import {
   TableProvider,
   createTableStore,
   createQueryParamsStore,
-  useKeyboardHeightAdjustment,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import { InboundLineFragment, useInbound } from '../../../api';
@@ -131,7 +130,6 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
     currentItem?.id ?? ''
   );
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(600);
   const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
     useDraftInboundLines(currentItem);
   const okNextDisabled =
@@ -185,7 +183,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
             }}
           />
         }
-        height={height}
+        height={600}
         width={1024}
         enableAutocomplete /* Required for previously entered batches to be remembered and suggested in future shipments */
       >
