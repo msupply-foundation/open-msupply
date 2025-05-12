@@ -2,12 +2,48 @@ use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
+
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    vvm::vvm_status_log::insert::InsertVVMStatusLogError as ServiceError,
+    vvm::vvm_status_log::insert::{
+        InsertVVMStatusLogError as ServiceError, InsertVVMStatusLogInput as ServiceInput,
+    },
 };
 
-use crate::types::vvm_status_log::{InsertInput, InsertResponse, VVMStatusLogNode};
+use crate::types::vvm_status_log::VVMStatusLogNode;
+
+#[derive(InputObject)]
+#[graphql(name = "InsertVVMStatusLogInput")]
+pub struct InsertInput {
+    pub id: String,
+    pub status_id: String,
+    pub stock_line_id: String,
+    pub comment: Option<String>,
+}
+
+impl InsertInput {
+    pub fn to_domain(self) -> ServiceInput {
+        let InsertInput {
+            id,
+            status_id,
+            stock_line_id,
+            comment,
+        } = self;
+
+        ServiceInput {
+            id,
+            status_id,
+            stock_line_id,
+            comment,
+        }
+    }
+}
+
+#[derive(Union)]
+#[graphql(name = "InsertVVMStatusLogResponse")]
+pub enum InsertResponse {
+    Response(VVMStatusLogNode),
+}
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
     let user = validate_auth(

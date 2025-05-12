@@ -1,7 +1,13 @@
-use async_graphql::*;
-use chrono::NaiveDateTime;
+use async_graphql::{dataloader::DataLoader, *};
+use chrono::{DateTime, Utc};
+use graphql_core::{
+    loader::{StockLineByIdLoader, UserLoader, VVMStatusByIdLoader},
+    ContextExt,
+};
+use graphql_types::types::{StockLineNode, UserNode};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
-use service::vvm::vvm_status_log::insert::InsertVVMStatusLogInput as ServiceInput;
+
+use super::vvm_status::VVMStatusNode;
 
 #[derive(PartialEq, Debug)]
 pub struct VVMStatusLogNode {
@@ -14,24 +20,42 @@ impl VVMStatusLogNode {
         &self.row().id
     }
 
-    pub async fn status_id(&self) -> &str {
-        &self.row().status_id
+    pub async fn status(&self, ctx: &Context<'_>) -> Result<Option<VVMStatusNode>> {
+        let vvm_status_id = &self.row().status_id;
+        let loader = ctx.get_loader::<DataLoader<VVMStatusByIdLoader>>();
+        let vvm_status = loader
+            .load_one(vvm_status_id.clone())
+            .await?
+            .map(VVMStatusNode::from_domain);
+        Ok(vvm_status)
     }
 
-    pub async fn created_datetime(&self) -> NaiveDateTime {
-        self.row().created_datetime
+    pub async fn created_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
 
-    pub async fn stock_line_id(&self) -> &str {
-        &self.row().stock_line_id
+    pub async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {
+        let stock_line_id = &self.row().stock_line_id;
+        let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();
+        let stock_line = loader
+            .load_one(stock_line_id.clone())
+            .await?
+            .map(StockLineNode::from_domain);
+        Ok(stock_line)
     }
 
     pub async fn comment(&self) -> &Option<String> {
         &self.row().comment
     }
 
-    pub async fn created_by(&self) -> &str {
-        &self.row().created_by
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
+        let user_id = &self.row().created_by;
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
+        let user = loader
+            .load_one(user_id.clone())
+            .await?
+            .map(UserNode::from_domain);
+        Ok(user)
     }
 
     pub async fn invoice_line_id(&self) -> &Option<String> {
@@ -68,40 +92,4 @@ impl VVMStatusLogConnector {
 #[derive(Union)]
 pub enum VVMStatusLogResponse {
     Response(VVMStatusLogConnector),
-}
-
-#[derive(InputObject)]
-#[graphql(name = "InsertVVMStatusLogInput")]
-pub struct InsertInput {
-    pub id: String,
-    pub status_id: String,
-    pub stock_line_id: String,
-    pub comment: Option<String>,
-    pub invoice_line_id: Option<String>,
-}
-
-impl InsertInput {
-    pub fn to_domain(self) -> ServiceInput {
-        let InsertInput {
-            id,
-            status_id,
-            stock_line_id,
-            comment,
-            invoice_line_id,
-        } = self;
-
-        ServiceInput {
-            id,
-            status_id,
-            stock_line_id,
-            comment,
-            invoice_line_id,
-        }
-    }
-}
-
-#[derive(Union)]
-#[graphql(name = "InsertVVMStatusLogResponse")]
-pub enum InsertResponse {
-    Response(VVMStatusLogNode),
 }

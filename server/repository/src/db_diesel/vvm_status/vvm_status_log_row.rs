@@ -58,17 +58,13 @@ impl<'a> VVMStatusLogRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_all(&self) -> Result<Vec<VVMStatusLogRow>, RepositoryError> {
-        let result = vvm_status_log.load(self.connection.lock().connection())?;
-        Ok(result)
-    }
-
     pub fn find_many_by_stock_line_id(
         &self,
         line_id: &str,
     ) -> Result<Vec<VVMStatusLogRow>, RepositoryError> {
         let result = vvm_status_log::table
             .filter(vvm_status_log::stock_line_id.eq(line_id))
+            .order(vvm_status_log::created_datetime.desc())
             .load(self.connection.lock().connection())?;
         Ok(result)
     }

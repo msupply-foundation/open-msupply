@@ -3,27 +3,16 @@ use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 
 use super::InsertVVMStatusLogInput;
 
-pub struct GenerateInput {
-    pub user_id: String,
-    pub store_id: String,
-    pub insert_input: InsertVVMStatusLogInput,
-}
-
 pub fn generate(
-    GenerateInput {
-        user_id,
-        store_id,
-        insert_input,
-    }: GenerateInput,
-) -> VVMStatusLogRow {
-    let InsertVVMStatusLogInput {
+    store_id: &str,
+    user_id: &str,
+    InsertVVMStatusLogInput {
         id,
         status_id,
         stock_line_id,
         comment,
-        invoice_line_id,
-    } = insert_input;
-
+    }: InsertVVMStatusLogInput,
+) -> VVMStatusLogRow {
     let now = Utc::now().naive_utc();
 
     VVMStatusLogRow {
@@ -32,8 +21,8 @@ pub fn generate(
         created_datetime: now,
         stock_line_id,
         comment,
-        created_by: user_id,
-        invoice_line_id,
-        store_id,
+        created_by: user_id.to_string(),
+        invoice_line_id: None,
+        store_id: store_id.to_string(),
     }
 }
