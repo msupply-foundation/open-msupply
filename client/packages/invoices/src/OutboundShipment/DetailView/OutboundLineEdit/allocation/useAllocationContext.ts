@@ -2,7 +2,6 @@ import {
   create,
   DateUtils,
   LocaleKey,
-  SortUtils,
   TypedTFunction,
 } from '@openmsupply-client/common';
 import {
@@ -11,7 +10,12 @@ import {
 } from 'packages/invoices/src/StockOut';
 import { isA } from 'packages/invoices/src/utils';
 import { DraftOutboundLineFragment } from '../../../api/operations.generated';
-import { allocateQuantities, getAllocatedQuantity, issueStock } from './utils';
+import {
+  allocateQuantities,
+  createPlaceholderLine,
+  getAllocatedQuantity,
+  issueStock,
+} from './utils';
 
 // TODO Fix imports
 
@@ -31,14 +35,18 @@ interface AllocationContext {
   initialisedForItemId: string | null;
   placeholderLine: DraftOutboundLineFragment | null;
 
-  initialise: (itemId: string, lines: DraftOutboundLineFragment[]) => void;
+  initialise: (
+    itemId: string,
+    lines: DraftOutboundLineFragment[],
+    withPlaceholder: boolean
+  ) => void;
+
   setDraftLines: (lines: DraftOutboundLineFragment[]) => void;
   manualAllocate: (lineId: string, quantity: number) => void;
   autoAllocate: (
     quantity: number,
     format: (value: number, options?: Intl.NumberFormatOptions) => string,
-    t: TypedTFunction<LocaleKey>,
-    allowPlaceholder?: boolean
+    t: TypedTFunction<LocaleKey>
   ) => void;
 }
 
@@ -52,15 +60,16 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   allocateIn: AllocateIn.Units,
   isAutoAllocated: false,
 
-  initialise: (itemId, lines) => {
+  initialise: (itemId, lines, withPlaceholder) => {
     const placeholderLine = lines.find(isA.placeholderLine);
-    const nonPlaceholderLines = lines.filter(
-      line => !isA.placeholderLine(line)
-    );
+    const restOfLines = lines.filter(line => !isA.placeholderLine(line));
+
     set({
       initialisedForItemId: itemId,
-      draftLines: nonPlaceholderLines.sort(SortUtils.byExpiryAsc),
-      placeholderLine,
+      draftLines: restOfLines.sort(sortByExpiry),
+      placeholderLine: withPlaceholder
+        ? (placeholderLine ?? createPlaceholderLine())
+        : null,
       allocatedUnits: getAllocatedQuantity(lines),
       alerts: [],
       isAutoAllocated: false,
@@ -74,19 +83,14 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       allocatedUnits: getAllocatedQuantity(lines),
     })),
 
-  autoAllocate: (quantity, format, t, allowPlaceholder = false) => {
-    const { draftLines, setDraftLines } = get();
-    const updatedLines = allocateQuantities(
-      draftLines,
-      quantity,
-      allowPlaceholder
-    );
+  autoAllocate: (quantity, format, t) => {
+    const { draftLines, placeholderLine, setDraftLines } = get();
+    const result = allocateQuantities(draftLines, quantity);
 
-    if (updatedLines) {
-      setDraftLines(updatedLines);
+    if (result) {
+      setDraftLines(result.allocatedLines);
 
-      const placeholderLine = updatedLines?.find(isA.placeholderLine);
-      const allocatedUnits = getAllocatedQuantity(updatedLines);
+      const allocatedUnits = getAllocatedQuantity(result.allocatedLines);
 
       // TODO - alerts handled sep
       const hasOnHold = draftLines.some(
@@ -102,7 +106,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       const alerts = getAllocationAlerts(
         quantity,
         allocatedUnits,
-        placeholderLine?.numberOfPacks ?? 0,
+        result.remainingQuantity,
         hasOnHold,
         hasExpired,
         format,
@@ -113,6 +117,12 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
         ...state,
         isAutoAllocated: true,
         alerts,
+        placeholderLine: placeholderLine
+          ? {
+              ...placeholderLine,
+              numberOfPacks: result.remainingQuantity,
+            }
+          : null,
       }));
     }
   },
@@ -133,3 +143,24 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     }));
   },
 }));
+
+// todo - should be in sort utils
+const sortByExpiry = (
+  a: { expiryDate?: string | null },
+  b: { expiryDate?: string | null }
+) => {
+  if (!a.expiryDate) return 1;
+  if (!b.expiryDate) return -1;
+
+  const expiryA = new Date(a.expiryDate);
+  const expiryB = new Date(b.expiryDate);
+
+  if (expiryA < expiryB) {
+    return -1;
+  }
+  if (expiryA > expiryB) {
+    return 1;
+  }
+
+  return 0;
+};
