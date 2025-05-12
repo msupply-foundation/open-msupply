@@ -45,7 +45,6 @@ export const Allocation = ({ itemData, allowPlaceholder }: AllocationProps) => {
 
 const AllocationInner = ({ item }: { item: DraftItem }) => {
   const t = useTranslation();
-  // const { setIsDirty } = useConfirmOnLeaving('outbound-shipment-line-edit');
 
   const { currency, otherParty } = useOutbound.document.fields([
     'currency',
