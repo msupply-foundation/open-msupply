@@ -11,7 +11,7 @@ pub struct VVMStatusByIdLoader {
 }
 
 impl Loader<String> for VVMStatusByIdLoader {
-    type Value = VVMStatusRow;
+    type Value = Vec<VVMStatusRow>;
     type Error = RepositoryError;
 
     async fn load(&self, _: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
@@ -20,9 +20,11 @@ impl Loader<String> for VVMStatusByIdLoader {
 
         let result = repo.find_all_active()?;
 
-        Ok(result
-            .into_iter()
-            .map(|vvm_status| (vvm_status.id.clone(), vvm_status))
-            .collect())
+        let mut map: HashMap<String, Vec<VVMStatusRow>> = HashMap::new();
+        for status in result {
+            let list = map.entry(status.clone().id).or_default();
+            list.push(status);
+        }
+        Ok(map)
     }
 }
