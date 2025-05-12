@@ -5,7 +5,7 @@ import { TransitionProps } from '@mui/material/transitions';
 import { Slide } from '../../ui/animations';
 import { BasicModal, IconButton, ModalTitle } from '@common/components';
 import { useIntlUtils, useTranslation } from '@common/intl';
-import { SxProps, Theme, useMediaQuery } from '@mui/material';
+import { Fade, SxProps, Theme, useMediaQuery } from '@mui/material';
 import { CloseIcon } from '@common/icons';
 import { useKeyboard } from '../useKeyboard';
 
@@ -160,7 +160,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     enableAutocomplete,
     sx = {},
     deleteButton,
-    fullscreen = false,
+    fullscreen,
   }) => {
     // The slide animation is triggered by cloning the next button and wrapping the passed
     // on click with a trigger to slide.
@@ -271,7 +271,9 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
                 <div>{slideConfig.in && children}</div>
               </Slide>
             ) : (
-              <div>{children}</div>
+              <Fade in={true} timeout={animationTimeout}>
+                <div>{children}</div>
+              </Fade>
             )}
           </DialogContent>
           <DialogActions

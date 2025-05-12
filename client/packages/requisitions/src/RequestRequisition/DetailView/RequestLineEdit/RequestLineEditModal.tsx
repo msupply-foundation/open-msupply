@@ -69,6 +69,7 @@ export const ModalContent = ({
           onClick={handleNextClick}
         />
       }
+      slideAnimation={false}
     >
       <RequestLineEdit
         item={currentItem}
