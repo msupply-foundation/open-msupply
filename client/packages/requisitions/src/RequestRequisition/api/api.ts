@@ -223,14 +223,22 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
     let result;
     if (draftLine.isCreated) {
       const input = requestParser.toInsertLine(draftLine);
-      result = await sdk.insertRequestLine({
+      const insertResult = await sdk.insertRequestLine({
         storeId,
         input,
       });
 
-      const { insertRequestRequisitionLine } = result || {};
-      if (insertRequestRequisitionLine?.__typename === 'RequisitionLineNode') {
-        return insertRequestRequisitionLine;
+      const { insertRequestRequisitionLine } = insertResult || {};
+      if (insertRequestRequisitionLine?.__typename !== 'RequisitionLineNode') {
+        throw new Error('Failed to create initial requisition line');
+      }
+
+      const updateInput = requestParser.toUpdateLine(draftLine);
+      result = await sdk.updateRequestLine({ storeId, input: updateInput });
+
+      const { updateRequestRequisitionLine } = result || {};
+      if (updateRequestRequisitionLine?.__typename === 'RequisitionLineNode') {
+        return updateRequestRequisitionLine;
       }
     } else {
       const input = requestParser.toUpdateLine(draftLine);
