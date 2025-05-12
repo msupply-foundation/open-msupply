@@ -1,5 +1,5 @@
 use chrono::Utc;
-use repository::{RequisitionLineRow, RequisitionRow};
+use repository::{EqualFilter, RequisitionLineRow, RequisitionRow, StoreFilter, StoreRepository};
 use util::uuid::uuid;
 
 use crate::item_stats::get_item_stats;
@@ -39,6 +39,34 @@ pub fn generate_suggested_quantity(
     (max_months_of_stock - months_of_stock) * average_monthly_consumption
 }
 
+pub fn get_population_served(ctx: &ServiceContext, store_id: &str) -> Option<i32> {
+    let connection = &ctx.connection;
+
+    let repository = StoreRepository::new(&connection);
+
+    let store = repository.query_one(StoreFilter::new().id(EqualFilter::equal_to(store_id)));
+
+    match store {
+        Ok(Some(store)) => {
+            match store.name_row.properties {
+                Some(properties_json) => {
+                    serde_json::from_str::<serde_json::Value>(&properties_json)
+                        .ok()
+                        .and_then(|json_value| {
+                            json_value
+                                .get("population_served")
+                                .and_then(|v| v.as_i64())
+                                .map(|v| v as i32)
+                        })
+                }
+                None => None, // No properties field
+            }
+        }
+        Ok(None) => None,
+        Err(_) => None,
+    }
+}
+
 pub fn generate_requisition_lines(
     ctx: &ServiceContext,
     store_id: &str,
@@ -58,6 +86,25 @@ pub fn generate_requisition_lines(
                 min_months_of_stock: requisition_row.min_months_of_stock,
                 max_months_of_stock: requisition_row.max_months_of_stock,
             });
+
+            // TO-DO: Check pref for real
+            let forecasting_pref = true;
+
+            let (
+                forecast_num_people,
+                forecast_num_doses,
+                forecast_coverage_rate,
+                forecast_loss_factor,
+            ) = if forecasting_pref {
+                (
+                    get_population_served(ctx, store_id),
+                    Some(66),
+                    Some(6.6),
+                    Some(6.6),
+                )
+            } else {
+                (None, None, None, None)
+            };
 
             RequisitionLineRow {
                 id: uuid(),
@@ -82,10 +129,10 @@ pub fn generate_requisition_lines(
                 expiring_units: 0.0,
                 days_out_of_stock: 0.0,
                 option_id: None,
-                forecast_num_people: None,
-                forecast_num_doses: None,
-                forecast_coverage_rate: None,
-                forecast_loss_factor: None,
+                forecast_num_people,
+                forecast_num_doses,
+                forecast_coverage_rate,
+                forecast_loss_factor,
             }
         })
         .collect();

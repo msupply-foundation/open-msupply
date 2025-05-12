@@ -154,6 +154,7 @@ pub(crate) fn patient_to_name_row(
         national_health_number: code_2,
         custom_data_string: None,
         deleted_datetime: existing_name.and_then(|name| name.deleted_datetime),
+        properties: None,
     })
 }
 

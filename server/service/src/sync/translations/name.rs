@@ -264,6 +264,7 @@ impl SyncTranslation for NameTranslation {
             date_of_death,
             custom_data_string,
             deleted_datetime: None,
+            properties: None,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -316,6 +317,7 @@ impl SyncTranslation for NameTranslation {
             // See comment in pull translation
             custom_data_string: _,
             deleted_datetime,
+            properties: _,
         } = NameRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(

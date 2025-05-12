@@ -51,6 +51,8 @@ table! {
         custom_data -> Nullable<Text>,
 
         deleted_datetime -> Nullable<Timestamp>,
+
+        properties -> Nullable<Text>,
     }
 }
 
@@ -180,6 +182,8 @@ pub struct NameRow {
 
     // Acts as a flag for soft deletion
     pub deleted_datetime: Option<NaiveDateTime>,
+
+    pub properties: Option<String>,
 }
 
 #[derive(
