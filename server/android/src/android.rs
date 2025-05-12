@@ -57,6 +57,7 @@ pub mod android {
                 database_path: None,
                 // See https://github.com/openmsupply/remote-server/issues/1076
                 init_sql: Some(format!("PRAGMA temp_store_directory = '{}';", cache_dir)),
+                sqlite_vacuum: Default::default(),
             },
             // sync settings need to be configured at runtime
             sync: None,

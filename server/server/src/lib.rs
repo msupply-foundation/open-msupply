@@ -90,7 +90,7 @@ pub async fn start_server(
         connection_manager.execute(init_sql).unwrap();
     }
 
-    // ON STARTUP VACUUM]
+    // ON STARTUP VACUUM
     let sqlite_vacuum = &settings.database.sqlite_vacuum;
     connection_manager.sqlite_vacuum(SqliteVacuumAction::OnStartup, sqlite_vacuum);
 
@@ -105,7 +105,9 @@ pub async fn start_server(
     StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
 
     // AFTER MIGRATION VACUUM
-    connection_manager.sqlite_vacuum(SqliteVacuumAction::AfterMigration, sqlite_vacuum);
+    if (migration_has_ran) {
+        connection_manager.sqlite_vacuum(SqliteVacuumAction::AfterMigration, sqlite_vacuum);
+    }
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");
