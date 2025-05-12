@@ -10,29 +10,24 @@ import {
   useBufferState,
   useDebounceCallback,
 } from '@openmsupply-client/common';
-import { StockOutAlerts } from '../../../StockOut';
+import { AllocationAlerts } from '../../../StockOut';
 import {
   AllocateIn,
   useAllocationContext,
 } from './allocation/useAllocationContext';
+import { getAllocatedUnits } from './allocation/utils';
 
 export const AutoAllocate = () => {
   const t = useTranslation();
   const { format } = useFormatNumber();
 
-  const {
-    autoAllocate,
-    alerts,
-    allocatedQuantity,
-    isAutoAllocated,
-    allocateIn,
-  } = useAllocationContext(state => ({
-    autoAllocate: state.autoAllocate,
-    alerts: state.alerts,
-    allocatedQuantity: state.allocatedUnits,
-    isAutoAllocated: state.isAutoAllocated,
-    allocateIn: state.allocateIn,
-  }));
+  const { autoAllocate, alerts, allocatedQuantity, allocateIn } =
+    useAllocationContext(state => ({
+      autoAllocate: state.autoAllocate,
+      alerts: state.alerts,
+      allocatedQuantity: getAllocatedUnits(state),
+      allocateIn: state.allocateIn,
+    }));
 
   // Using buffer state with the allocated quantity, so gets pre-populated with existing
   // quantity, and updated when the user edits the individual lines
@@ -75,11 +70,7 @@ export const AutoAllocate = () => {
               ? t('label.doses')
               : t('label.units')}
           </Grid>
-          <StockOutAlerts
-            allocationAlerts={alerts}
-            showZeroQuantityConfirmation={false} // TODO - only on first save... easier?
-            isAutoAllocated={isAutoAllocated}
-          />
+          <AllocationAlerts allocationAlerts={alerts} />
         </Box>
       </>
     </Grid>

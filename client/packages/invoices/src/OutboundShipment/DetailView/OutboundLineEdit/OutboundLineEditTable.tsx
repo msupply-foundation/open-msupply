@@ -15,6 +15,7 @@ import { useOutboundLineEditColumns } from './columns';
 import { DraftItem } from '../../..';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { useAllocationContext } from './allocation/useAllocationContext';
+import { getAllocatedUnits } from './allocation/utils';
 
 export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
@@ -41,6 +42,7 @@ const PlaceholderRow = ({ quantity }: { quantity: number | null }) => {
 
   const formattedValue = useFormatNumber().round(quantity ?? 0, 2);
 
+  // todo - editable??
   // todo - only display when 0 if its the only line?
   return quantity === null ? null : (
     <tr>
@@ -97,26 +99,16 @@ export const OutboundLineEditTable = ({
 }: OutboundLineEditTableProps) => {
   const t = useTranslation();
 
-  const { allocatedQuantity, draftLines, placeholderQuantity } =
-    useAllocationContext(
-      ({ allocatedUnits, draftLines, placeholderQuantity }) => ({
-        allocatedQuantity: allocatedUnits,
-        draftLines,
-        placeholderQuantity,
-      })
-    );
+  const { allocatedUnits, draftLines, placeholderQuantity } =
+    useAllocationContext(({ draftLines, placeholderQuantity }) => ({
+      allocatedUnits: getAllocatedUnits({ draftLines, placeholderQuantity }),
+      draftLines,
+      placeholderQuantity,
+    }));
 
-  // const { orderedRows, placeholderRow } = useOutboundLineEditRows(rows, batch);
   const onEditStockLine = (key: string, value: number, packSize: number) => {
     const num = Number.isNaN(value) ? 0 : value;
     onChange(key, num, packSize);
-    // if (placeholderLine && shouldUpdatePlaceholder(num, placeholderRow)) {
-    //   // if a stock line has been allocated
-    //   // and the placeholder row is a generated one,
-    //   // remove the placeholder row
-    //   // placeholderRow.isUpdated = true;
-    //   placeholderRow.numberOfPacks = 0;
-    // }
   };
   const unit = item?.unitName ?? t('label.unit');
 
@@ -134,7 +126,7 @@ export const OutboundLineEditTable = ({
         <Divider margin={10} />
       </td>
     </tr>,
-    <TotalRow key="total-row" allocatedQuantity={allocatedQuantity} />,
+    <TotalRow key="total-row" allocatedQuantity={allocatedUnits} />,
   ];
 
   if (!draftLines.length && placeholderQuantity === null)

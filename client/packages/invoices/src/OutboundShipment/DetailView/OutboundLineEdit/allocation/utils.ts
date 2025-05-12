@@ -16,16 +16,20 @@ export const sumAvailableQuantity = (
   return sum;
 };
 
-export const getAllocatedQuantity = (
-  draftLines: DraftOutboundLineFragment[] | DraftOutboundLineFragment[]
-) =>
+export const getAllocatedUnits = ({
+  draftLines,
+  placeholderQuantity,
+}: {
+  draftLines: DraftOutboundLineFragment[];
+  placeholderQuantity: number | null;
+}) =>
   NumUtils.round(
     draftLines.reduce(
       (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
       0
     ),
     3
-  );
+  ) + (placeholderQuantity ?? 0);
 
 export const issueStock = (
   draftLines: DraftOutboundLineFragment[],

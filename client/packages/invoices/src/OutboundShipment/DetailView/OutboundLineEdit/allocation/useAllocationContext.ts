@@ -9,7 +9,7 @@ import {
   StockOutAlert,
 } from 'packages/invoices/src/StockOut';
 import { DraftOutboundLineFragment } from '../../../api/operations.generated';
-import { allocateQuantities, getAllocatedQuantity, issueStock } from './utils';
+import { allocateQuantities, getAllocatedUnits, issueStock } from './utils';
 import { OutboundLineEditData } from '../../../api';
 
 // TODO Fix imports
@@ -22,17 +22,19 @@ export enum AllocateIn {
 }
 
 interface AllocationContext {
+  isDirty: boolean;
   draftLines: DraftOutboundLineFragment[];
   allocatedUnits: number;
   alerts: StockOutAlert[];
   allocateIn: AllocateIn;
-  isAutoAllocated: boolean;
   initialisedForItemId: string | null;
   placeholderQuantity: number | null;
 
   initialise: (input: OutboundLineEditData, withPlaceholder: boolean) => void;
 
   setDraftLines: (lines: DraftOutboundLineFragment[]) => void;
+  setAlerts: (alerts: StockOutAlert[]) => void;
+
   manualAllocate: (lineId: string, quantity: number) => void;
   autoAllocate: (
     quantity: number,
@@ -43,30 +45,35 @@ interface AllocationContext {
 
 // TODO - possibly should scope to the modal?
 export const useAllocationContext = create<AllocationContext>((set, get) => ({
+  isDirty: false,
   initialisedForItemId: null,
   draftLines: [],
   placeholderQuantity: null,
   alerts: [],
   allocatedUnits: 0,
   allocateIn: AllocateIn.Units,
-  isAutoAllocated: false,
 
   initialise: ({ item, draftLines, placeholderQuantity }, allowPlaceholder) => {
     set({
+      isDirty: false,
       initialisedForItemId: item.id,
       draftLines: draftLines.sort(sortByExpiry),
       placeholderQuantity: allowPlaceholder ? (placeholderQuantity ?? 0) : null,
-      allocatedUnits: getAllocatedQuantity(draftLines),
       alerts: [],
-      isAutoAllocated: false,
     });
   },
 
   setDraftLines: lines =>
     set(state => ({
       ...state,
+      isDirty: true,
       draftLines: lines,
-      allocatedUnits: getAllocatedQuantity(lines),
+    })),
+
+  setAlerts: alerts =>
+    set(state => ({
+      ...state,
+      alerts,
     })),
 
   autoAllocate: (quantity, format, t) => {
@@ -76,7 +83,10 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     if (result) {
       setDraftLines(result.allocatedLines);
 
-      const allocatedUnits = getAllocatedQuantity(result.allocatedLines);
+      const allocatedUnits = getAllocatedUnits({
+        draftLines: result.allocatedLines,
+        placeholderQuantity: 0,
+      });
 
       // TODO - alerts handled sep
       const hasOnHold = draftLines.some(
@@ -101,7 +111,6 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
       set(state => ({
         ...state,
-        isAutoAllocated: true,
         alerts,
         placeholderQuantity:
           placeholderQuantity === null ? null : result.remainingQuantity,
@@ -116,11 +125,8 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
     setDraftLines(updatedLines);
 
-    // TODO = update the placeholder
-
     set(state => ({
       ...state,
-      isAutoAllocated: false,
       alerts: [],
     }));
   },

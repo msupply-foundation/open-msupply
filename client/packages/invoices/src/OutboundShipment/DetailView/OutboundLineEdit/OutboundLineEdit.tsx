@@ -16,6 +16,7 @@ import { Allocation } from './Allocation';
 import { useOpenedWithBarcode } from './hooks/useOpenedWithBarcode';
 import { useAllocationContext } from './allocation/useAllocationContext';
 import { useSaveOutboundLines } from '../../api/hooks/useSaveOutboundLines';
+import { getAllocatedUnits } from './allocation/utils';
 
 export type OutboundOpenedWith = { itemId: string } | ScannedBarcode | null;
 
@@ -41,7 +42,6 @@ export const OutboundLineEdit = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const [itemId, setItemId] = useState(openedWith?.itemId);
-  const [isDirty, setIsDirty] = useState(false);
 
   const { next, disabled: nextDisabled } = useNextItem(itemId);
 
@@ -52,14 +52,24 @@ export const OutboundLineEdit = ({
   const { mutateAsync } = useSaveOutboundLines(invoiceId);
   const { saveBarcode } = useOpenedWithBarcode(asBarcodeOrNull(openedWith));
 
-  const { draftLines, placeholderQuantity } = useAllocationContext(state => ({
+  const {
+    draftLines,
+    allocatedUnits,
+    placeholderQuantity,
+    alerts,
+    isDirty,
+    setAlerts,
+  } = useAllocationContext(state => ({
     draftLines: state.draftLines,
     placeholderQuantity: state.placeholderQuantity,
+    allocatedUnits: getAllocatedUnits(state),
+    alerts: state.alerts,
+    isDirty: state.isDirty,
+    setAlerts: state.setAlerts,
   }));
 
   const onSave = async () => {
-    // if (!isDirty) return;
-
+    if (!isDirty) return;
     if (!itemId) return;
 
     await mutateAsync({
@@ -85,23 +95,26 @@ export const OutboundLineEdit = ({
   const okNextDisabled = (mode === ModalMode.Update && nextDisabled) || !itemId;
 
   const handleSave = async (onSaved: () => boolean | void) => {
-    // ohhh push to alerts here!
-    // if (
-    //   getAllocatedQuantity(draftStockOutLines) === 0 &&
-    //   !showZeroQuantityConfirmation
-    // ) {
-    //   setShowZeroQuantityConfirmation(true);
-    //   return;
-    // }
+    const confirmZeroQuantityMessage = t('messages.confirm-zero-quantity');
+    if (
+      allocatedUnits === 0 &&
+      !alerts.some(alert => alert.message === confirmZeroQuantityMessage)
+    ) {
+      setAlerts([
+        {
+          message: confirmZeroQuantityMessage,
+          severity: 'warning',
+        },
+      ]);
+      return;
+    }
 
     try {
       await onSave();
-      setIsDirty(false);
       if (!!placeholderQuantity) {
         const infoSnack = info(t('message.placeholder-line'));
         infoSnack();
       }
-      // setShowZeroQuantityConfirmation(false);
 
       return onSaved();
     } catch (e) {
