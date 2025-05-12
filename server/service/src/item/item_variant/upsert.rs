@@ -55,7 +55,7 @@ pub fn upsert_item_variant(
         .connection
         .transaction_sync(|connection| {
             let ValidateResult {
-                variant_exists,
+                existing_item_variant,
                 cold_storage_type,
                 manufacturer,
             } = validate(connection, &ctx.store_id, &input)?;
@@ -142,7 +142,7 @@ pub fn generate(
 }
 
 struct ValidateResult {
-    pub variant_exists: bool,
+    pub existing_item_variant: Option<ItemVariant>,
     pub cold_storage_type: Option<ColdStorageTypeRow>,
     pub manufacturer: Option<NameRow>,
 }
@@ -156,16 +156,16 @@ fn validate(
 
     let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemDoesNotExist)?;
 
-    let existing_item_variant =
-        ItemVariantRowRepository::new(connection).find_one_by_id(&input.id)?;
+    let existing_item_variant = ItemVariantRepository::new(connection)
+        .query_one(ItemVariantFilter::new().id(EqualFilter::equal_to(&input.id)))?;
 
     if let Some(existing_item_variant) = existing_item_variant.clone() {
         // Query Item Link to check if the item_id is the same
         // If items have been merged, the item_id could be different, but we still want to update the row so we have the latest id
         let old_item_id = ItemLinkRowRepository::new(connection)
-            .find_one_by_id(&existing_item_variant.item_link_id)?
+            .find_one_by_id(&existing_item_variant.item_variant_row.item_link_id)?
             .map(|v| v.item_id)
-            .unwrap_or_else(|| existing_item_variant.item_link_id.clone());
+            .unwrap_or_else(|| existing_item_variant.item_variant_row.item_link_id.clone());
 
         if old_item_id != input.item_id {
             return Err(CantChangeItem);
@@ -179,7 +179,7 @@ fn validate(
         let other_party = check_other_party(
             connection,
             store_id,
-            &manufacturer_id,
+            manufacturer_id,
             CheckOtherPartyType::Manufacturer,
         )
         .map_err(|e| match e {
@@ -228,7 +228,7 @@ fn validate(
     }
 
     Ok(ValidateResult {
-        variant_exists: existing_item_variant.is_some(),
+        existing_item_variant,
         cold_storage_type,
         manufacturer,
     })
