@@ -60,28 +60,18 @@ export const allocateQuantities = (
     return;
   }
 
-  // todo
   if (draftLines.length === 0) {
     return {
       allocatedLines: [],
       remainingQuantity: newValue,
     };
   }
-  // If there is only one batch row, then it is the placeholder.
-  // Assign all of the new value and short circuit.
-  // const placeholder = draftLines.find(
-  //   ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-  // );
-  // if (placeholder && draftLines.length === 1 && allowPlaceholder) {
-  //   return issueStock(draftLines, placeholder?.id ?? '', newValue);
-  // }
 
   // calculations are normalised to units
   let toAllocate = newValue;
   const newDraftLines = draftLines.map(batch => ({
     ...batch,
     numberOfPacks: 0,
-    isUpdated: batch.numberOfPacks > 0,
   }));
 
   // todo - make this so easy to change..
@@ -122,38 +112,6 @@ export const allocateQuantities = (
       newDraftLines,
     });
   }
-
-  // DO from ctx
-  // if (allowPlaceholder) {
-  //   const placeholderIdx = newDraftLines.findIndex(
-  //     ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-  //   );
-  //   const placeholder = newDraftLines[placeholderIdx];
-  //   const oldPlaceholder = draftLines[placeholderIdx];
-  //   // remove if the oldPlaceholder.numberOfPacks is non-zero and the new placeholder.numberOfPacks is zero
-  //   const placeholderRemoved =
-  //     oldPlaceholder?.numberOfPacks && placeholder?.numberOfPacks === 0;
-
-  //   // the isUpdated flag must be set in order to delete the placeholder row
-  //   if (placeholderRemoved) {
-  //     placeholder.isUpdated = true;
-  //   }
-
-  //   if (toAllocate > 0) {
-  //     if (!placeholder) {
-  //       // throw new Error('No placeholder within item editing');
-  //     } else {
-  //       // stock has been allocated, and the auto generated placeholder is no longer required
-  //       if (shouldUpdatePlaceholder(newValue, placeholder))
-  //         placeholder.isUpdated = true;
-
-  //       newDraftLines[placeholderIdx] = {
-  //         ...placeholder,
-  //         numberOfPacks: placeholder.numberOfPacks + toAllocate,
-  //       };
-  //     }
-  //   }
-  // }
 
   return {
     allocatedLines: newDraftLines,

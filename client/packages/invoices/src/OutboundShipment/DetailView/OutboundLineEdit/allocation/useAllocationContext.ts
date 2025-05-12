@@ -78,6 +78,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
   autoAllocate: (quantity, format, t) => {
     const { draftLines, placeholderQuantity, setDraftLines } = get();
+
     const result = allocateQuantities(draftLines, quantity);
 
     if (result) {
