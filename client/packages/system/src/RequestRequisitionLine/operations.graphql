@@ -13,6 +13,7 @@ fragment ItemWithStats on ItemNode {
     stockOnHand
     monthsOfStockOnHand
   }
+  isVaccine
 }
 
 fragment RequestLine on RequisitionLineNode {

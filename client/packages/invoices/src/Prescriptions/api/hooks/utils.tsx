@@ -101,6 +101,7 @@ export const createPrescriptionPlaceholderRow = (
     __typename: 'ItemNode',
     itemDirections: [],
     warnings: [],
+    isVaccine: false,
   },
   itemName: '',
   stockLine: {
@@ -138,6 +139,7 @@ export const createPrescriptionPlaceholderRow = (
           priority: false,
         },
       ],
+      isVaccine: false,
     },
   },
 });
@@ -197,6 +199,7 @@ export const createDraftPrescriptionLineFromStockLine = ({
       __typename: 'ItemNode',
       itemDirections: [],
       warnings: [],
+      isVaccine: stockLine?.item?.isVaccine,
     },
 
     stockLine,

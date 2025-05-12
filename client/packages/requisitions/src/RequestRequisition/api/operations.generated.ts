@@ -127,6 +127,7 @@ export type RequestByNumberQuery = {
               unitName?: string | null;
               defaultPackSize: number;
               availableStockOnHand: number;
+              isVaccine: boolean;
               stats: {
                 __typename: 'ItemStatsNode';
                 averageMonthlyConsumption: number;
@@ -254,6 +255,7 @@ export type RequestByIdQuery = {
               unitName?: string | null;
               defaultPackSize: number;
               availableStockOnHand: number;
+              isVaccine: boolean;
               stats: {
                 __typename: 'ItemStatsNode';
                 averageMonthlyConsumption: number;
