@@ -1,3 +1,4 @@
+use chrono::{NaiveDate, NaiveTime};
 use repository::{
     vvm_status::vvm_status_log_row::{VVMStatusLogRow, VVMStatusLogRowRepository},
     RepositoryError, TransactionError,
@@ -25,6 +26,9 @@ pub struct InsertVVMStatusLogInput {
     pub status_id: String,
     pub stock_line_id: String,
     pub comment: Option<String>,
+    pub user_id: Option<String>,
+    pub date: NaiveDate,
+    pub time: NaiveTime,
 }
 
 pub fn insert_vvm_status_log(

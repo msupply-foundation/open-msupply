@@ -14,11 +14,11 @@ impl Loader<String> for VVMStatusByIdLoader {
     type Value = VVMStatusRow;
     type Error = RepositoryError;
 
-    async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
+    async fn load(&self, _: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
         let repo = VVMStatusRowRepository::new(&connection);
 
-        let result = repo.find_one_by_id(&ids[0])?;
+        let result = repo.find_all_active()?;
 
         Ok(result
             .into_iter()
