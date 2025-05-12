@@ -583,22 +583,16 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_initial_stocktake() {
-        // Mock data creates stocktakes for store_a and store_b
-        // Testing initial stocktake on program_master_list_store which has one master list joined with one item
-        // On success of this test, it also confirms that existing stocktakes on store_a and
-        // store_b do not prevent an initial stocktake being created on program_master_list_store
+        // Mock data creates stocktakes for store_a and store_b -> test creation of initial
+        // stocktake on Program_master_list_store, which has one master list joined with one item
 
-        // Join some more master lists to the store
-
-        // this master list contains the same item as the already joined master list
-        // -> checks that one item will not be added to the stocktake twice
+        // Join same item as first masterlist -> check that one item will not be added to the stocktake twice
         let master_list_name_join = MasterListNameJoinRow {
             id: "A_program_b_Join".to_string(),
             name_link_id: mock_program_master_list_test().id.clone(),
             master_list_id: mock_master_list_program_b().master_list.id.clone(),
         };
-        // this master list contains two new items
-        // -> checks that the stocktake contains items from all master lists linked to the store
+        // Join master list with two new items -> check the stocktake contains items from multiple master lists
         let filter_master_list_name_join = MasterListNameJoinRow {
             id: "Filter_program_b_Join".to_string(),
             name_link_id: mock_program_master_list_test().id.clone(),
