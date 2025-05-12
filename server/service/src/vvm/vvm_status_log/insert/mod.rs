@@ -6,7 +6,7 @@ use repository::{
 use crate::service_provider::ServiceContext;
 
 mod generate;
-use generate::{generate, GenerateInput};
+use generate::generate;
 mod validate;
 use validate::validate;
 mod test;
@@ -25,7 +25,6 @@ pub struct InsertVVMStatusLogInput {
     pub status_id: String,
     pub stock_line_id: String,
     pub comment: Option<String>,
-    pub invoice_line_id: Option<String>,
 }
 
 pub fn insert_vvm_status_log(
@@ -37,11 +36,7 @@ pub fn insert_vvm_status_log(
         .connection
         .transaction_sync(|connection| {
             validate(&input, connection)?;
-            let vvm_status_log = generate(GenerateInput {
-                user_id: ctx.user_id.clone(),
-                store_id: store_id.to_string(),
-                insert_input: input,
-            });
+            let vvm_status_log = generate(store_id, &ctx.user_id, input);
 
             VVMStatusLogRowRepository::new(connection).upsert_one(&vvm_status_log)?;
 

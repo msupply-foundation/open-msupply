@@ -3,7 +3,7 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
-pub fn get_vvm_status_logs_by_stock_line_id(
+pub fn get_vvm_status_logs_by_stock_line(
     connection: &StorageConnection,
     stock_line_id: &str,
 ) -> Result<Vec<VVMStatusLogRow>, RepositoryError> {

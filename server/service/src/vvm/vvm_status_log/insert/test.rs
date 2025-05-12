@@ -38,7 +38,6 @@ mod insert {
                     stock_line_id: "stock_line_id".to_string(),
                     status_id: "vvm_status_id".to_string(),
                     comment: Some("comment".to_string()),
-                    invoice_line_id: Some("invoice_line_id".to_string()),
                 },
             ),
             Err(InsertVVMStatusLogError::VVMStatusDoesNotExist)
@@ -69,7 +68,6 @@ mod insert {
                     stock_line_id: "stock_line_id".to_string(),
                     status_id: "vvm_status_id".to_string(),
                     comment: Some("comment".to_string()),
-                    invoice_line_id: Some("invoice_line_id".to_string()),
                 },
             ),
             Err(InsertVVMStatusLogError::StockLineDoesNotExist)
@@ -87,7 +85,6 @@ mod insert {
             stock_line_id: mock_stock_line_a().id.clone(),
             status_id: "vvm_status_id".to_string(),
             comment: Some("comment".to_string()),
-            invoice_line_id: Some(invoice_line.id.to_string()),
         };
 
         // VVMStatusLogAlreadyExists
@@ -112,17 +109,11 @@ mod insert {
 
         let store_id = &mock_store_a().id;
 
-        let invoice_line = mock_outbound_shipment_a_invoice_lines()[0].clone();
-        InvoiceLineRowRepository::new(&context.connection)
-            .upsert_one(&invoice_line)
-            .unwrap();
-
         let input = InsertVVMStatusLogInput {
             id: "vvm_status_log_id".to_string(),
             stock_line_id: mock_stock_line_a().id.clone(),
             status_id: "vvm_status_id".to_string(),
             comment: Some("comment".to_string()),
-            invoice_line_id: Some(invoice_line.id.to_string()),
         };
 
         // Insert a mock VVM Status record

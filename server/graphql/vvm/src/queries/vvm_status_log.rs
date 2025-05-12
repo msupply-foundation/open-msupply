@@ -7,11 +7,13 @@ use service::auth::{Resource, ResourceAccessRequest};
 
 use crate::types::vvm_status_log::{VVMStatusLogConnector, VVMStatusLogResponse};
 
-pub fn get_vvm_status_log_by_stock_line_id(
+pub fn get_vvm_status_log_by_stock_line(
     ctx: &Context<'_>,
     store_id: String,
     stock_line_id: &str,
 ) -> Result<VVMStatusLogResponse> {
+    // TODO: Change this to proper VVM-specific permission
+    // Add "View and edit vaccine vial monitor status" user permission from OG
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -25,7 +27,7 @@ pub fn get_vvm_status_log_by_stock_line_id(
 
     let result = service_provider
         .vvm_service
-        .get_vvm_status_logs_by_stock_line_id(&service_context.connection, stock_line_id)
+        .get_vvm_status_logs_by_stock_line(&service_context.connection, stock_line_id)
         .map_err(StandardGraphqlError::from_repository_error)?;
 
     Ok(VVMStatusLogResponse::Response(
