@@ -169,16 +169,9 @@ export const useOutboundColumns = ({
     [
       'packSize',
       {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'packSize'] },
-            { path: ['packSize'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'packSize'] },
-            { path: ['packSize'], default: '' },
-          ]),
+        getSortValue: row => String(getPackSizeValue(row, getColumnProperty)),
+
+        accessor: ({ rowData }) => getPackSizeValue(rowData, getColumnProperty),
       },
     ],
     ...(displayDoseColumns ? [getDosesPerUnitColumn(t)] : []),
@@ -341,3 +334,22 @@ const getDoseQuantityColumn = (): ColumnDescription<
     }
   },
 });
+
+const getPackSizeValue = (
+  row: StockOutLineFragment | StockOutItem,
+  getColumnProperty: ReturnType<typeof useColumnUtils>['getColumnProperty']
+) => {
+  const lineType = getColumnProperty(row, [
+    { path: ['lines', 'type'] },
+    { path: ['type'], default: '' },
+  ]);
+
+  if (lineType === InvoiceLineNodeType.UnallocatedStock) {
+    return UNDEFINED_STRING_VALUE;
+  } else {
+    return getColumnProperty(row, [
+      { path: ['lines', 'packSize'] },
+      { path: ['packSize'], default: '' },
+    ]);
+  }
+};

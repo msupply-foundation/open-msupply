@@ -12,7 +12,7 @@ import {
   InventoryAdjustmentReasonSearchInput,
   useInventoryAdjustmentReasonList,
 } from '@openmsupply-client/system';
-import { useStocktake } from '../api';
+import { useStocktakeOld } from '../api';
 
 interface ReduceLinesToZeroConfirmationModalProps {
   isOpen: boolean;
@@ -30,7 +30,7 @@ export const ReduceLinesToZeroConfirmationModal = ({
   const [reason, setReason] =
     useState<InventoryAdjustmentReasonRowFragment | null>(null);
 
-  const onZeroQuantities = useStocktake.line.zeroQuantities();
+  const onZeroQuantities = useStocktakeOld.line.zeroQuantities();
 
   const { data } = useInventoryAdjustmentReasonList();
   const reasonIsRequired = data?.totalCount !== 0;

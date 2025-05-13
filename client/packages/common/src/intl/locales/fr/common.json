@@ -950,6 +950,8 @@
   "label.new-stocktake": "Nouvel Inventaire",
   "label.next-of-kin": "Proche parent",
   "label.no-options": "Aucune option",
+  "label.no-order-types": "Aucun type de commande disponible",
+  "label.no-program-options": "Aucun programme disponible pour ce client",
   "label.no-reason": "Aucune raison",
   "label.no-unallocated-rows-selected": "Tous les lignes sélectionnées sont déjà allouées",
   "label.non-catalogue": "Hors catalogue",

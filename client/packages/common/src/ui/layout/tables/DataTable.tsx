@@ -198,7 +198,7 @@ const DataTableComponent = <T extends RecordWithId>({
     );
   }
 
-  if (data.length === 0) {
+  if (data.length === 0 && !additionalRows?.length) {
     return (
       noDataElement || (
         <Box sx={{ padding: 2 }}>

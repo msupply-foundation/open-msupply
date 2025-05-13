@@ -24,6 +24,14 @@ impl PreferencesNode {
     pub async fn display_vaccine_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.display_vaccine_in_doses)
     }
+
+    pub async fn manage_vvm_status(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.manage_vvm_status)
+    }
+
+    pub async fn sort_by_vvm_status(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.sort_by_vvm_status)
+    }
 }
 
 impl PreferencesNode {
@@ -73,6 +81,8 @@ pub enum PreferenceKey {
     ShowContactTracing,
     DisplayVaccineInDoses,
     DisplayPopulationBasedForecasting,
+    ManageVvmStatus,
+    SortByVvmStatus,
 }
 
 impl PreferenceKey {
@@ -83,6 +93,8 @@ impl PreferenceKey {
                 PreferenceKey::DisplayPopulationBasedForecasting
             }
             PrefKey::DisplayVaccineInDoses => PreferenceKey::DisplayVaccineInDoses,
+            PrefKey::ManageVvmStatus => PreferenceKey::ManageVvmStatus,
+            PrefKey::SortByVvmStatus => PreferenceKey::SortByVvmStatus,
         }
     }
 }

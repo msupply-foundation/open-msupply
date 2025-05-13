@@ -10,7 +10,7 @@ import {
   LocationRowFragment,
   LocationSearchInput,
 } from '@openmsupply-client/system';
-import { useStocktake } from '../api';
+import { useStocktakeOld } from '../api';
 
 interface ChangeLocationConfirmationModalProps {
   isOpen: boolean;
@@ -27,7 +27,7 @@ export const ChangeLocationConfirmationModal = ({
 
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
 
-  const onChangeLocation = useStocktake.line.changeLocation();
+  const onChangeLocation = useStocktakeOld.line.changeLocation();
 
   return (
     <ConfirmationModalLayout

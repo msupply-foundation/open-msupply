@@ -292,9 +292,10 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
       (await sdk.supplyRequestedQuantity({ storeId, responseId })) || {};
     return result;
   },
-  programSettings: async () => {
-    const result = await sdk.customerProgramSettings({ storeId });
-    return result.customerProgramRequisitionSettings;
+
+  programRequisitionSettingsByCustomer: async (customerNameId: string) => {
+    const result = await sdk.programRequisitionSettingsByCustomer({ storeId, customerNameId });
+    return result.programRequisitionSettingsByCustomer;
   },
   getIndicators: async (
     customerNameId: string,

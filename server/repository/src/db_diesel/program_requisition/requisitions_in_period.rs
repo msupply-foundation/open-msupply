@@ -26,6 +26,7 @@ pub struct RequisitionsInPeriodFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub order_type: Option<StringFilter>,
     pub r#type: Option<EqualFilter<RequisitionType>>,
+    pub other_party_id: Option<EqualFilter<String>>,
 }
 
 #[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq)]
@@ -75,6 +76,7 @@ impl<'a> RequisitionsInPeriodRepository<'a> {
             store_id,
             order_type,
             r#type,
+            other_party_id,
         }: RequisitionsInPeriodFilter,
     ) -> Result<Vec<RequisitionsInPeriod>, RepositoryError> {
         let mut query = requisitions_in_period::table.into_boxed();
@@ -84,6 +86,11 @@ impl<'a> RequisitionsInPeriodRepository<'a> {
         apply_equal_filter!(query, store_id, requisitions_in_period::store_id);
         apply_equal_filter!(query, r#type, requisitions_in_period::type_);
         apply_string_filter!(query, order_type, requisitions_in_period::order_type);
+        apply_equal_filter!(
+            query,
+            other_party_id,
+            requisitions_in_period::other_party_id
+        );
 
         //  Debug diesel query
         // println!(
@@ -124,6 +131,11 @@ impl RequisitionsInPeriodFilter {
 
     pub fn r#type(mut self, filter: EqualFilter<RequisitionType>) -> Self {
         self.r#type = Some(filter);
+        self
+    }
+
+    pub fn other_party_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.other_party_id = Some(filter);
         self
     }
 }

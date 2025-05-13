@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   DetailViewSkeleton,
   useNavigate,
@@ -8,34 +8,45 @@ import {
   DetailTabs,
   useBreadcrumbs,
   useParams,
-  TableProvider,
-  createTableStore,
   RnRFormNodeStatus,
-  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { ContentArea } from './ContentArea';
-import { RnRFormQuery, useRnRForm, useRnRFormContext } from '../api';
-import { RnRFormLineFragment } from '../api/operations.generated';
+import {
+  useOneTime,
+  RnRFormQuery,
+  useRnRForm,
+  useRnRFormContext,
+} from '../api';
 import { SidePanel } from './SidePanel';
+import { AutoSave } from './AutoSave';
 
 export const RnRFormDetailView = () => {
   const { id = '' } = useParams();
+  const [isInitialising, setIsInitialising] = useState(true);
+
+  const setInitial = useRnRFormContext(useOneTime(state => state.setInitial));
 
   const {
     query: { data, isLoading },
-    updateLine: { updateLine },
   } = useRnRForm({ rnrFormId: id });
   const navigate = useNavigate();
   const t = useTranslation();
 
-  if (isLoading) return <DetailViewSkeleton />;
+  useEffect(() => {
+    if (!!data && isInitialising) {
+      setInitial(data.id, data.lines);
+      setIsInitialising(false);
+    }
+  }, [isInitialising, data]);
+
+  if (isLoading || isInitialising) return <DetailViewSkeleton />;
 
   return !!data ? (
-    <RnRFormDetailViewComponent data={data} updateLine={updateLine} />
+    <RnRFormDetailViewComponent data={data} />
   ) : (
     <AlertModal
       open={true}
@@ -52,32 +63,9 @@ export const RnRFormDetailView = () => {
   );
 };
 
-const RnRFormDetailViewComponent = ({
-  data,
-  updateLine,
-}: {
-  data: RnRFormQuery;
-  updateLine: (line: RnRFormLineFragment) => Promise<void>;
-}) => {
+const RnRFormDetailViewComponent = ({ data }: { data: RnRFormQuery }) => {
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
-
-  const { rnrFormIsDirty, clearAllDraftLines } = useRnRFormContext(state => ({
-    rnrFormIsDirty: !!Object.values(state.draftLines).length,
-    clearAllDraftLines: state.clearAllDraftLines,
-  }));
-
-  const { setIsDirty } = useConfirmOnLeaving('rnr-form');
-
-  useEffect(() => {
-    // Usually we track isDirty state from `useConfirmOnLeaving` hook
-    // In this case we derive from the draft line context, so we need to update it manually
-    setIsDirty(rnrFormIsDirty);
-  }, [rnrFormIsDirty]);
-
-  useEffect(() => {
-    return () => clearAllDraftLines();
-  }, []);
 
   const tabs = [
     {
@@ -85,7 +73,6 @@ const RnRFormDetailViewComponent = ({
         <ContentArea
           periodLength={data.periodLength}
           data={data.lines}
-          saveLine={updateLine}
           disabled={data.status === RnRFormNodeStatus.Finalised}
         />
       ),
@@ -101,21 +88,14 @@ const RnRFormDetailViewComponent = ({
     setCustomBreadcrumbs({ 1: data.periodName });
   }, [setCustomBreadcrumbs, data.periodName]);
 
-  const linesUnconfirmed = data.lines.some(line => !line.confirmed);
-
   return (
     <>
       <AppBarButtons />
-      <TableProvider createStore={createTableStore}>
-        <DetailTabs tabs={tabs} />
-      </TableProvider>
+      <AutoSave />
+      <DetailTabs tabs={tabs} />
 
       <SidePanel rnrFormId={data.id} />
-      <Footer
-        rnrFormId={data.id}
-        unsavedChanges={rnrFormIsDirty}
-        linesUnconfirmed={linesUnconfirmed}
-      />
+      <Footer data={data} />
     </>
   );
 };

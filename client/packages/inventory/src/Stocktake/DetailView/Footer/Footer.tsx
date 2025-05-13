@@ -15,7 +15,7 @@ import {
   useNotification,
 } from '@openmsupply-client/common';
 import { stocktakeStatuses, getStocktakeTranslator } from '../../../utils';
-import { StocktakeFragment, useStocktake } from '../../api';
+import { StocktakeFragment, useStocktakeOld } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { StocktakeLockButton } from './StocktakeLockButton';
 import { ReduceLinesToZeroConfirmationModal } from '../ReduceLinesToZeroModal';
@@ -30,15 +30,15 @@ const createStatusLog = (stocktake: StocktakeFragment) => {
 
 export const Footer = () => {
   const t = useTranslation();
-  const { data: stocktake } = useStocktake.document.get();
-  const isDisabled = useStocktake.utils.isDisabled();
-  const onDelete = useStocktake.line.deleteSelected();
+  const { data: stocktake } = useStocktakeOld.document.get();
+  const isDisabled = useStocktakeOld.utils.isDisabled();
+  const onDelete = useStocktakeOld.line.deleteSelected();
   const { info } = useNotification();
 
   const reduceModal = useEditModal();
   const changeLocationModal = useEditModal();
 
-  const selectedRows = useStocktake.utils.selectedRows();
+  const selectedRows = useStocktakeOld.utils.selectedRows();
   const { clearSelected } = useTableStore();
 
   const handleChangeLocationClick = () => {

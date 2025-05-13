@@ -11,6 +11,7 @@ use crate::{
         check_active_adjustment_reasons, check_reason_is_valid, check_stock_line_reduced_below_zero,
     },
     validate::check_store_id_matches,
+    NullableUpdate,
 };
 
 use super::{InsertStocktakeLine, InsertStocktakeLineError};
@@ -80,8 +81,13 @@ pub fn validate(
         stock_line.as_ref().unwrap().item_row.name.clone()
     };
 
-    if !check_location_exists(connection, store_id, &input.location)? {
-        return Err(LocationDoesNotExist);
+    if let Some(NullableUpdate {
+        value: Some(ref location),
+    }) = &input.location
+    {
+        if !check_location_exists(connection, store_id, location)? {
+            return Err(LocationDoesNotExist);
+        }
     }
 
     let stocktake_reduction_amount =
@@ -89,6 +95,7 @@ pub fn validate(
     if check_active_adjustment_reasons(connection, stocktake_reduction_amount)?.is_some()
         && input.inventory_adjustment_reason_id.is_none()
         && stocktake_reduction_amount != 0.0
+        && !stocktake.is_initial_stocktake
     {
         return Err(AdjustmentReasonNotProvided);
     }

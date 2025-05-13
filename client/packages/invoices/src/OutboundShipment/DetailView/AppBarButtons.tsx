@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarButtonsPortal,
   ButtonWithIcon,
@@ -18,15 +18,13 @@ import {
 import { AddFromMasterListButton } from './AddFromMasterListButton';
 import { JsonData } from '@openmsupply-client/programs';
 import { AddFromScannerButton } from './AddFromScannerButton';
-import { Draft } from '../..';
+import { ScannedBarcode } from '../../types';
 
 interface AppBarButtonProps {
-  onAddItem: (draft?: Draft) => void;
+  onAddItem: (scanned?: ScannedBarcode) => void;
 }
 
-export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
-  onAddItem,
-}) => {
+export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
   const isDisabled = useOutbound.utils.isDisabled();
   const { data } = useOutbound.document.get();
   const { OpenButton } = useDetailPanel();
