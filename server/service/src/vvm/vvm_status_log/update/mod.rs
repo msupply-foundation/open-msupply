@@ -5,10 +5,11 @@ use repository::{
 
 use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 
-pub mod generate;
+mod generate;
 use generate::generate;
-pub mod validate;
+mod validate;
 use validate::validate;
+mod test;
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateVVMStatusLogError {
