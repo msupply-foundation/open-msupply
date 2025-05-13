@@ -1,14 +1,9 @@
 #[cfg(test)]
 mod insert {
-    use chrono::{NaiveDate, NaiveTime};
     use repository::{
-        mock::{
-            mock_outbound_shipment_a_invoice_lines, mock_stock_line_a, mock_store_a,
-            mock_user_account_a, MockDataInserts,
-        },
+        mock::{mock_stock_line_a, mock_store_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
         vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository},
-        InvoiceLineRowRepository,
     };
 
     use crate::{
@@ -38,10 +33,6 @@ mod insert {
                     id: "test_id".to_string(),
                     stock_line_id: "stock_line_id".to_string(),
                     status_id: "vvm_status_id".to_string(),
-                    comment: Some("comment".to_string()),
-                    user_id: None,
-                    date: NaiveDate::from_ymd_opt(25, 01, 01).unwrap(),
-                    time: NaiveTime::from_hms_opt(12, 0, 0).unwrap(),
                 },
             ),
             Err(InsertVVMStatusLogError::VVMStatusDoesNotExist)
@@ -71,19 +62,10 @@ mod insert {
                     id: "test_id".to_string(),
                     stock_line_id: "stock_line_id".to_string(),
                     status_id: "vvm_status_id".to_string(),
-                    comment: Some("comment".to_string()),
-                    user_id: None,
-                    date: NaiveDate::from_ymd_opt(25, 01, 01).unwrap(),
-                    time: NaiveTime::from_hms_opt(12, 0, 0).unwrap(),
                 },
             ),
             Err(InsertVVMStatusLogError::StockLineDoesNotExist)
         );
-
-        let invoice_line = mock_outbound_shipment_a_invoice_lines()[0].clone();
-        InvoiceLineRowRepository::new(&context.connection)
-            .upsert_one(&invoice_line)
-            .unwrap();
 
         // After verifying StockLineDoesNotExist error,
         // Use the mock_stock_line_a() to continue testing the other error cases
@@ -91,10 +73,6 @@ mod insert {
             id: "test_id".to_string(),
             stock_line_id: mock_stock_line_a().id.clone(),
             status_id: "vvm_status_id".to_string(),
-            comment: Some("comment".to_string()),
-            user_id: None,
-            date: NaiveDate::from_ymd_opt(25, 01, 01).unwrap(),
-            time: NaiveTime::from_hms_opt(12, 0, 0).unwrap(),
         };
 
         // VVMStatusLogAlreadyExists
@@ -123,10 +101,6 @@ mod insert {
             id: "vvm_status_log_id".to_string(),
             stock_line_id: mock_stock_line_a().id.clone(),
             status_id: "vvm_status_id".to_string(),
-            comment: Some("comment".to_string()),
-            user_id: None,
-            date: NaiveDate::from_ymd_opt(25, 01, 01).unwrap(),
-            time: NaiveTime::from_hms_opt(12, 0, 0).unwrap(),
         };
 
         // Insert a mock VVM Status record

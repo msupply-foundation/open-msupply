@@ -1,5 +1,4 @@
 use async_graphql::*;
-use chrono::{NaiveDate, NaiveTime};
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
@@ -19,10 +18,6 @@ pub struct InsertInput {
     pub id: String,
     pub status_id: String,
     pub stock_line_id: String,
-    pub comment: Option<String>,
-    pub user_id: String,
-    pub date: NaiveDate,
-    pub time: NaiveTime,
 }
 
 impl InsertInput {
@@ -31,20 +26,12 @@ impl InsertInput {
             id,
             status_id,
             stock_line_id,
-            comment,
-            user_id,
-            date,
-            time,
         } = self;
 
         ServiceInput {
             id,
             status_id,
             stock_line_id,
-            comment,
-            user_id: Some(user_id),
-            date,
-            time,
         }
     }
 }

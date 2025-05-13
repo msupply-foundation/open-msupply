@@ -1,4 +1,3 @@
-use chrono::{NaiveDate, NaiveTime};
 use repository::{
     vvm_status::vvm_status_log_row::{VVMStatusLogRow, VVMStatusLogRowRepository},
     RepositoryError, TransactionError,
@@ -17,7 +16,6 @@ pub enum InsertVVMStatusLogError {
     VVMStatusLogAlreadyExists,
     VVMStatusDoesNotExist,
     StockLineDoesNotExist,
-    UserDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
@@ -26,10 +24,6 @@ pub struct InsertVVMStatusLogInput {
     pub id: String,
     pub status_id: String,
     pub stock_line_id: String,
-    pub comment: Option<String>,
-    pub user_id: Option<String>,
-    pub date: NaiveDate,
-    pub time: NaiveTime,
 }
 
 pub fn insert_vvm_status_log(
@@ -40,7 +34,7 @@ pub fn insert_vvm_status_log(
     let vvm_status_log = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&ctx.user_id, &input, connection)?;
+            validate(&input, connection)?;
             let vvm_status_log = generate(store_id, &ctx.user_id, input);
 
             VVMStatusLogRowRepository::new(connection).upsert_one(&vvm_status_log)?;
