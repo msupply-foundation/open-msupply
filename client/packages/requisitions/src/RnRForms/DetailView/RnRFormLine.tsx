@@ -1,52 +1,39 @@
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import {
   AlertIcon,
   BasicTextInput,
-  Checkbox,
-  CircleIcon,
-  CircularProgress,
   DatePicker,
   Formatter,
   LowStockStatus,
   NumericTextInput,
   NumUtils,
+  sendTabKeyPress,
   Tooltip,
   useAuthContext,
   useBufferState,
-  useNotification,
   useTheme,
   VenCategoryType,
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { getLowStockStatus, getAmc } from './helpers';
-import { useRnRFormContext } from '../api';
+import { useCachedRnRDraftLine, useRnRFormContext } from '../api';
 
 export const RnRFormLine = ({
-  line: baseLine,
-  saveLine,
   periodLength,
   disabled,
+  lineId,
 }: {
-  line: RnRFormLineFragment;
+  lineId: string;
   periodLength: number;
-  saveLine: (line: RnRFormLineFragment) => Promise<void>;
   disabled: boolean;
 }) => {
   const theme = useTheme();
   const { store } = useAuthContext();
+  const lineState = useRnRFormContext(useCachedRnRDraftLine(lineId));
 
-  const { error } = useNotification();
-  const [isLoading, setIsLoading] = useState(false);
-  const { draftLine, setLine } = useRnRFormContext(state => ({
-    draftLine: state.draftLines[baseLine.id],
-    setLine: state.setDraftLine,
-  }));
+  if (!lineState) return null;
 
-  const line = useMemo(() => {
-    return draftLine ?? baseLine;
-  }, [draftLine, baseLine]);
-
-  if (!line) return null;
+  const { line, setLine, highlight } = lineState;
 
   const updateDraft = (update: Partial<RnRFormLineFragment>) => {
     const newPatch = {
@@ -120,10 +107,23 @@ export const RnRFormLine = ({
       ? theme.palette.text.disabled
       : theme.palette.text.primary;
 
+  const readOnlyBackgroundColor = theme.palette.background.drawer;
+  const highlightColour = theme.palette.chart.cold.light;
+  const errorColour = theme.palette.chart.hot.light;
+
   const readOnlyColumn = {
-    backgroundColor: theme.palette.background.drawer,
+    backgroundColor: readOnlyBackgroundColor,
     padding: '5px',
     color: textColor,
+  };
+  const itemDetailStyle = {
+    ...readOnlyColumn,
+    backgroundColor:
+      line.finalBalance < 0
+        ? errorColour
+        : highlight
+          ? highlightColour
+          : readOnlyBackgroundColor,
   };
 
   return (
@@ -132,14 +132,13 @@ export const RnRFormLine = ({
       {/* Add the tooltip here, as we hide overflow in the code column
           to fix the code column width for side scroll */}
       <Tooltip title={line.item.code}>
-        <td className="sticky-column first-column" style={readOnlyColumn}>
+        <td className="sticky-column first-column" style={itemDetailStyle}>
           {line.item.code}
         </td>
       </Tooltip>
-      <td style={readOnlyColumn} className="sticky-column second-column">
+      <td className="sticky-column second-column" style={itemDetailStyle}>
         {line.item.name}
       </td>
-      <td style={readOnlyColumn}>{line.item.strength}</td>
       <td style={readOnlyColumn}>{line.item.unitName}</td>
       <td style={{ ...readOnlyColumn, textAlign: 'center' }}>{venCategory}</td>
 
@@ -165,10 +164,9 @@ export const RnRFormLine = ({
 
       {/* Readonly calculated value */}
       <RnRNumberCell
-        readOnly
+        backgroundColor={readOnlyBackgroundColor}
         textColor={textColor}
         value={line.adjustedQuantityConsumed}
-        onChange={() => {}}
       />
 
       {/* Losses/adjustments and stock out */}
@@ -176,14 +174,14 @@ export const RnRFormLine = ({
         value={line.losses}
         onChange={val => updateDraft({ losses: val })}
         textColor={textColor}
-        allowNegative
         disabled={disabled}
       />
+
       <RnRNumberCell
         value={line.adjustments}
         onChange={val => updateDraft({ adjustments: val })}
         textColor={textColor}
-        allowNegative
+        // allowNegative
         disabled={disabled}
       />
       <RnRNumberCell
@@ -196,27 +194,25 @@ export const RnRFormLine = ({
 
       {/* Readonly calculated values */}
       <RnRNumberCell
-        readOnly
+        backgroundColor={
+          line.finalBalance < 0 ? errorColour : readOnlyBackgroundColor
+        }
         value={line.finalBalance}
         textColor={textColor}
-        onChange={() => {}}
       />
       <RnRNumberCell
-        readOnly
+        backgroundColor={readOnlyBackgroundColor}
         value={line.averageMonthlyConsumption}
-        onChange={() => {}}
         textColor={textColor}
       />
       <RnRNumberCell
-        readOnly
+        backgroundColor={readOnlyBackgroundColor}
         value={line.minimumQuantity}
-        onChange={() => {}}
         textColor={textColor}
       />
       <RnRNumberCell
-        readOnly
+        backgroundColor={readOnlyBackgroundColor}
         value={line.maximumQuantity}
-        onChange={() => {}}
         textColor={textColor}
       />
 
@@ -262,11 +258,21 @@ export const RnRFormLine = ({
           sx={{ width: '200px', color: textColor }}
           slotProps={{
             input: {
+              tabIndex: -1,
               sx: {
                 backgroundColor: theme.palette.background.default,
                 '& .MuiInput-input': { color: textColor },
               },
             },
+            htmlInput: {
+              tabIndex: -1,
+            },
+          }}
+          onKeyDown={e => {
+            if (e.key !== 'Enter') return;
+
+            e.preventDefault();
+            sendTabKeyPress();
           }}
           value={line.comment ?? ''}
           onChange={e => updateDraft({ comment: e.target.value })}
@@ -274,44 +280,11 @@ export const RnRFormLine = ({
         />
       </td>
 
-      {/* Confirm the line */}
-      <td style={{ textAlign: 'center' }}>
-        {isLoading ? (
-          <CircularProgress size={20} />
-        ) : (
-          <>
-            <Checkbox
-              checked={!!line.confirmed}
-              size="medium"
-              onClick={async () => {
-                try {
-                  setIsLoading(true);
-                  await saveLine({ ...line, confirmed: !line.confirmed });
-                  setIsLoading(false);
-                } catch (e) {
-                  error((e as Error).message)();
-                  setIsLoading(false);
-                }
-              }}
-              disabled={disabled}
-              sx={{ marginLeft: '10px' }}
-            />
-            <CircleIcon
-              sx={{
-                width: '10px',
-                visibility: draftLine ? 'visible' : 'hidden',
-                color: 'secondary.main',
-              }}
-            />
-          </>
-        )}
-      </td>
       {/* Readonly - populated from Response Requisition */}
       <RnRNumberCell
-        readOnly
+        backgroundColor={readOnlyBackgroundColor}
         value={line.approvedQuantity ?? 0}
         textColor={textColor}
-        onChange={() => {}}
       />
     </tr>
   );
@@ -320,54 +293,80 @@ export const RnRFormLine = ({
 const RnRNumberCell = ({
   value,
   disabled,
-  readOnly,
   onChange,
   textColor,
+  backgroundColor: inputBackgroundColor,
   max,
+  error,
   allowNegative,
 }: {
   value: number;
+  error?: boolean;
   disabled?: boolean;
-  readOnly?: boolean;
-  onChange: (val: number) => void;
+  onChange?: (val: number) => void;
   textColor?: string;
+  backgroundColor?: string;
   max?: number;
   allowNegative?: boolean;
 }) => {
-  const theme = useTheme();
-  const backgroundColor = readOnly ? theme.palette.background.drawer : 'white';
-
   const [buffer, setBuffer] = useBufferState<number | undefined>(
     NumUtils.round(value)
   );
 
+  const backgroundColor = inputBackgroundColor ?? 'white';
+
   return (
     <td style={{ backgroundColor }}>
       <Tooltip title={value === buffer ? '' : value}>
-        <NumericTextInput
-          InputProps={{
-            sx: {
-              backgroundColor,
-              '& .MuiInput-input': {
-                WebkitTextFillColor: textColor,
+        {disabled || !onChange ? (
+          <p
+            style={{
+              padding: '8px',
+              textAlign: 'right',
+              color: textColor,
+            }}
+          >
+            {buffer}
+          </p>
+        ) : (
+          <NumericTextInput
+            slotProps={{
+              input: {
+                sx: {
+                  backgroundColor,
+                  '& .MuiInput-input': {
+                    WebkitTextFillColor: textColor,
+                  },
+                },
               },
-            },
-          }}
-          value={buffer}
-          disabled={readOnly ?? disabled}
-          onChange={newValue => {
-            setBuffer(newValue);
-            if (newValue !== undefined) onChange(newValue);
-          }}
-          max={max}
-          allowNegative={allowNegative}
-          defaultValue={0}
-          // NOTE: not setting input mode to text, because on Samsung tablets,
-          // the numeric keyboard doesn't allow entering negative numbers!
-          // Only needed for the negative columns, but better feel to have a consistent
-          // keyboard as you click through the whole R&R form
-          inputMode="text"
-        />
+              htmlInput: {
+                sx: {
+                  backgroundColor,
+                },
+              },
+            }}
+            error={error}
+            value={buffer}
+            disabled={disabled}
+            onChange={newValue => {
+              setBuffer(newValue);
+              if (newValue !== undefined) onChange(newValue);
+            }}
+            max={max}
+            allowNegative={allowNegative}
+            defaultValue={0}
+            // NOTE: setting input mode to text, because on Samsung tablets,
+            // the numeric keyboard doesn't allow entering negative numbers!
+            inputMode={allowNegative ? 'text' : 'numeric'}
+            onKeyDown={e => {
+              if (e.key !== 'Enter') return;
+
+              e.preventDefault();
+              sendTabKeyPress();
+            }}
+            onFocus={e => e.target.select()}
+          />
+        )}
       </Tooltip>
     </td>
   );

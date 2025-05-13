@@ -62,7 +62,7 @@ impl<'a> VVMStatusLogRowRepository<'a> {
         &self,
         line_id: &str,
     ) -> Result<Vec<VVMStatusLogRow>, RepositoryError> {
-        let result = vvm_status_log
+        let result = vvm_status_log::table
             .filter(vvm_status_log::stock_line_id.eq(line_id))
             .order(vvm_status_log::created_datetime.desc())
             .load(self.connection.lock().connection())?;
@@ -70,7 +70,7 @@ impl<'a> VVMStatusLogRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &VVMStatusLogRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(vvm_status_log)
+        diesel::insert_into(vvm_status_log::table)
             .values(row)
             .on_conflict(id)
             .do_update()

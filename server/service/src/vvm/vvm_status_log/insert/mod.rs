@@ -37,7 +37,6 @@ pub fn insert_vvm_status_log(
         .transaction_sync(|connection| {
             validate(&input, connection)?;
             let vvm_status_log = generate(store_id, &ctx.user_id, input);
-
             VVMStatusLogRowRepository::new(connection).upsert_one(&vvm_status_log)?;
 
             Ok(vvm_status_log)

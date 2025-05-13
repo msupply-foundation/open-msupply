@@ -11,20 +11,18 @@ pub struct VVMStatusByIdLoader {
 }
 
 impl Loader<String> for VVMStatusByIdLoader {
-    type Value = Vec<VVMStatusRow>;
+    type Value = VVMStatusRow;
     type Error = RepositoryError;
 
-    async fn load(&self, _: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
+    async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
         let repo = VVMStatusRowRepository::new(&connection);
 
-        let result = repo.find_all()?;
+        let result = repo.find_many_by_ids(ids)?;
 
-        let mut map: HashMap<String, Vec<VVMStatusRow>> = HashMap::new();
-        for status in result {
-            let list = map.entry(status.clone().id).or_default();
-            list.push(status);
-        }
-        Ok(map)
+        Ok(result
+            .into_iter()
+            .map(|vvm_status| (vvm_status.id.clone(), vvm_status))
+            .collect())
     }
 }
