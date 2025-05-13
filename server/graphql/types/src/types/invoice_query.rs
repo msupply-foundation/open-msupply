@@ -10,8 +10,8 @@ use dataloader::DataLoader;
 
 use graphql_core::loader::{
     ClinicianLoader, ClinicianLoaderInput, DiagnosisLoader, InvoiceByIdLoader,
-    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameInsuranceJoinLoader, PatientLoader,
-    ProgramByIdLoader, StoreByIdLoader, UserLoader,
+    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameInsuranceJoinLoader, NameRowLoader,
+    PatientLoader, ProgramByIdLoader, StoreByIdLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -454,6 +454,28 @@ impl InvoiceNode {
 
     pub async fn expected_delivery_date(&self) -> &Option<NaiveDate> {
         &self.row().expected_delivery_date
+    }
+
+    pub async fn default_donor_id(&self) -> &Option<String> {
+        &self.row().default_donor_id
+    }
+
+    pub async fn default_donor(&self, ctx: &Context<'_>) -> Result<Option<String>> {
+        let Some(default_donor_id) = &self.row().default_donor_id else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<NameRowLoader>>();
+
+        let name_row = loader.load_one(default_donor_id.to_string()).await?.ok_or(
+            StandardGraphqlError::InternalError(format!(
+                "Cannot find donor name for donor_id ({})",
+                default_donor_id
+            ))
+            .extend(),
+        )?;
+
+        Ok(Some(name_row.name))
     }
 }
 
