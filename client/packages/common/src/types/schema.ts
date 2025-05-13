@@ -2270,6 +2270,11 @@ export type DoseConfigurationNotAllowed = UpsertItemVariantErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type EmergencyResponseRequisitionCounts = {
+  __typename: 'EmergencyResponseRequisitionCounts';
+  new: Scalars['Int']['output'];
+};
+
 export type EncounterConnector = {
   __typename: 'EncounterConnector';
   nodes: Array<EncounterNode>;
@@ -7364,12 +7369,14 @@ export type RequisitionConnector = {
 
 export type RequisitionCounts = {
   __typename: 'RequisitionCounts';
+  emergency: EmergencyResponseRequisitionCounts;
   request: RequestRequisitionCounts;
   response: ResponseRequisitionCounts;
 };
 
 export type RequisitionFilterInput = {
   aShipmentHasBeenCreated?: InputMaybe<Scalars['Boolean']['input']>;
+  automaticallyCreated?: InputMaybe<Scalars['Boolean']['input']>;
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -7377,6 +7384,7 @@ export type RequisitionFilterInput = {
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isEmergency?: InputMaybe<Scalars['Boolean']['input']>;
   orderType?: InputMaybe<EqualFilterStringInput>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<StringFilterInput>;
