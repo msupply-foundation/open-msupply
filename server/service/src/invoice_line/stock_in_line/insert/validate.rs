@@ -1,5 +1,5 @@
 use crate::{
-    check_item_variant_exists, check_location_exists,
+    check_item_variant_exists, check_location_exists, check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         stock_in_line::check_pack_size,
@@ -34,6 +34,12 @@ pub fn validate(
     if let Some(item_variant_id) = &input.item_variant_id {
         if check_item_variant_exists(connection, item_variant_id)?.is_none() {
             return Err(ItemVariantDoesNotExist);
+        }
+    }
+
+    if let Some(vvm_status_id) = &input.vvm_status_id {
+        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
+            return Err(VVMStatusDoesNotExist);
         }
     }
 

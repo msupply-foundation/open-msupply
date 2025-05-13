@@ -33,6 +33,7 @@ pub struct UpdateInput {
     pub total_before_tax: Option<f64>,
     pub tax: Option<TaxInput>,
     pub item_variant_id: Option<NullableUpdateInput<String>>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -99,6 +100,7 @@ impl UpdateInput {
             total_before_tax,
             tax,
             item_variant_id,
+            vvm_status_id,
         } = self;
 
         ServiceInput {
@@ -121,6 +123,7 @@ impl UpdateInput {
                 percentage: tax.percentage,
             }),
             r#type: StockInType::InboundShipment,
+            vvm_status_id,
             // Default
             note: None,
         }
@@ -168,6 +171,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::PackSizeBelowOne
         | ServiceError::LocationDoesNotExist
         | ServiceError::ItemVariantDoesNotExist
+        | ServiceError::VVMStatusDoesNotExist
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),

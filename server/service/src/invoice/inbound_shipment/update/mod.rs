@@ -1,6 +1,7 @@
 use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
 use crate::invoice_line::ShipmentTaxUpdate;
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
+use repository::vvm_status::vvm_status_log_row::VVMStatusLogRowRepository;
 use repository::{Invoice, LocationMovementRowRepository};
 use repository::{
     InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, RepositoryError,
@@ -54,6 +55,7 @@ pub fn update_inbound_shipment(
                 location_movements,
                 update_tax_for_lines,
                 update_currency_for_lines,
+                vvm_status_logs,
             } = generate(
                 connection,
                 &ctx.store_id,
@@ -86,6 +88,11 @@ pub fn update_inbound_shipment(
                 if let Some(movements) = location_movements {
                     for movement in movements {
                         LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
+                    }
+                }
+                if let Some(vvm_status_log_rows) = vvm_status_logs {
+                    for row in vvm_status_log_rows {
+                        VVMStatusLogRowRepository::new(connection).upsert_one(&row)?;
                     }
                 }
             }

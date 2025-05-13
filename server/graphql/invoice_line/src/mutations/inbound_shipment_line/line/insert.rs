@@ -14,7 +14,7 @@ use service::invoice_line::stock_in_line::{
 };
 use service::NullableUpdate;
 
-#[derive(InputObject)]
+#[derive(InputObject, Debug)]
 #[graphql(name = "InsertInboundShipmentLineInput")]
 pub struct InsertInput {
     pub id: String,
@@ -30,6 +30,7 @@ pub struct InsertInput {
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<f64>,
     pub item_variant_id: Option<String>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -53,6 +54,8 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
             store_id: Some(store_id.to_string()),
         },
     )?;
+
+    println!("input line {:?}", input);
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
@@ -88,6 +91,7 @@ impl InsertInput {
             total_before_tax,
             tax_percentage,
             item_variant_id,
+            vvm_status_id,
         } = self;
 
         ServiceInput {
@@ -107,6 +111,7 @@ impl InsertInput {
             tax_percentage,
             r#type: StockInType::InboundShipment,
             item_variant_id,
+            vvm_status_id,
             // Default
             note: None,
             stock_line_id: None,
@@ -153,6 +158,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::PackSizeBelowOne
         | ServiceError::LocationDoesNotExist
         | ServiceError::ItemVariantDoesNotExist
+        | ServiceError::VVMStatusDoesNotExist
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
             InternalError(formatted_error)

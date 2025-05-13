@@ -3,6 +3,7 @@
 use backend_plugin::plugin_provider::PluginError;
 use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository};
 use repository::location::{LocationFilter, LocationRepository};
+use repository::vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository};
 use repository::{EqualFilter, Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
 use repository::{RepositoryError, StorageConnection};
 use serde::de::DeserializeOwned;
@@ -94,8 +95,8 @@ pub mod token_bucket;
 pub mod user_account;
 pub mod vaccination;
 pub mod vaccine_course;
-pub mod vvm;
 pub mod validate;
+pub mod vvm;
 pub mod warning;
 
 #[cfg(test)]
@@ -349,6 +350,15 @@ fn check_item_variant_exists(
     let variant = ItemVariantRowRepository::new(connection).find_one_by_id(item_variant_id)?;
 
     return Ok(variant);
+}
+
+fn check_vvm_status_exists(
+    connection: &StorageConnection,
+    vvm_status_id: &str,
+) -> Result<Option<VVMStatusRow>, RepositoryError> {
+    let vvm_status = VVMStatusRowRepository::new(connection).find_one_by_id(vvm_status_id)?;
+
+    return Ok(vvm_status);
 }
 
 #[derive(Serialize, Deserialize)]

@@ -6,10 +6,12 @@ use crate::{
     },
     store_preference::get_store_preferences,
 };
+use chrono::Utc;
 use repository::{
-    BarcodeRow, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, ItemRow,
-    RepositoryError, StockLineRow, StorageConnection,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow, BarcodeRow, InvoiceLineRow, InvoiceLineType,
+    InvoiceRow, InvoiceStatus, ItemRow, RepositoryError, StockLineRow, StorageConnection,
 };
+use util::uuid::uuid;
 
 use super::InsertStockInLine;
 
@@ -18,6 +20,7 @@ pub struct GenerateResult {
     pub invoice_line: InvoiceLineRow,
     pub stock_line: Option<StockLineRow>,
     pub barcode: Option<BarcodeRow>,
+    pub vvm_status_log: Option<VVMStatusLogRow>,
 }
 
 pub fn generate(
@@ -29,44 +32,62 @@ pub fn generate(
 ) -> Result<GenerateResult, RepositoryError> {
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
 
-    let mut new_line = generate_line(input.clone(), item_row, existing_invoice_row.clone());
+    let mut new_line = generate_line(input.clone(), item_row, existing_invoice_row.clone()); // include vvm status here
 
+    println!("new line {:?}", new_line);
     if StockInType::InventoryAddition != input.r#type && store_preferences.pack_to_one {
         new_line = convert_invoice_line_to_single_pack(new_line);
     }
 
     let barcode_option = generate_barcode(&input, connection)?;
 
-    let batch_option = if should_upsert_batch(&input.r#type, &existing_invoice_row) {
-        let batch = generate_batch(
-            connection,
-            new_line.clone(),
-            StockLineInput {
-                stock_line_id: input.stock_line_id.clone(),
-                store_id: existing_invoice_row.store_id.clone(),
-                supplier_link_id: existing_invoice_row.name_link_id.clone(),
-                on_hold: input.stock_on_hold,
-                barcode_id: barcode_option.clone().map(|b| b.id.clone()),
-                overwrite_stock_levels: match &input.r#type {
-                    // adjusting existing stock, we want to add to existing stock levels
-                    StockInType::InventoryAddition => false,
-                    _ => true,
+    let (batch_option, vvm_status_log) =
+        if should_upsert_batch(&input.r#type, &existing_invoice_row) {
+            let batch = generate_batch(
+                // include vvm status here
+                connection,
+                new_line.clone(),
+                StockLineInput {
+                    stock_line_id: input.stock_line_id.clone(),
+                    store_id: existing_invoice_row.store_id.clone(),
+                    supplier_link_id: existing_invoice_row.name_link_id.clone(),
+                    on_hold: input.stock_on_hold,
+                    barcode_id: barcode_option.clone().map(|b| b.id.clone()),
+                    overwrite_stock_levels: match &input.r#type {
+                        // adjusting existing stock, we want to add to existing stock levels
+                        StockInType::InventoryAddition => false,
+                        _ => true,
+                    },
                 },
-            },
-        )?;
-        // If a new stock line has been created, update the stock_line_id on the invoice line
-        new_line.stock_line_id = Some(batch.id.clone());
+            )?;
 
-        Some(batch)
-    } else {
-        None
-    };
+            println!("insert line {:?}", batch);
+            // If a new stock line has been created, update the stock_line_id on the invoice line
+            new_line.stock_line_id = Some(batch.id.clone());
+
+            let vvm_status_log = if let Some(vvm_status_id) = input.vvm_status_id {
+                generate_vvm_status_log(VVMStatusInput {
+                    store_id: existing_invoice_row.store_id.clone(),
+                    vvm_status_id,
+                    stock_line_id: batch.id.clone(),
+                    invoice_line_id: new_line.id.clone(),
+                    created_by: user_id.to_string(),
+                })
+            } else {
+                None
+            };
+
+            (Some(batch), vvm_status_log)
+        } else {
+            (None, None)
+        };
 
     Ok(GenerateResult {
         invoice: generate_invoice_user_id_update(user_id, existing_invoice_row),
         invoice_line: new_line,
         stock_line: batch_option,
         barcode: barcode_option,
+        vvm_status_log,
     })
 }
 
@@ -90,6 +111,7 @@ fn generate_line(
         stock_on_hold: _,
         tax_percentage: _,
         r#type: _,
+        vvm_status_id,
     }: InsertStockInLine,
     ItemRow {
         name: item_name,
@@ -112,7 +134,6 @@ fn generate_line(
         cost_price_per_pack,
         r#type: InvoiceLineType::StockIn,
         number_of_packs,
-        prescribed_quantity: None,
         item_name,
         item_code,
         stock_line_id,
@@ -121,10 +142,12 @@ fn generate_line(
         tax_percentage,
         note,
         item_variant_id,
+        vvm_status_id,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
         foreign_currency_price_before_tax: None,
         linked_invoice_id: None,
+        prescribed_quantity: None,
     }
 }
 
@@ -165,4 +188,34 @@ fn generate_barcode(
     };
 
     Ok(barcode)
+}
+
+struct VVMStatusInput {
+    store_id: String,
+    vvm_status_id: String,
+    stock_line_id: String,
+    invoice_line_id: String,
+    created_by: String,
+}
+
+fn generate_vvm_status_log(
+    VVMStatusInput {
+        store_id,
+        vvm_status_id,
+        stock_line_id,
+        invoice_line_id,
+        created_by,
+    }: VVMStatusInput,
+) -> Option<VVMStatusLogRow> {
+    let log_status = VVMStatusLogRow {
+        id: uuid(),
+        status_id: vvm_status_id,
+        created_datetime: Utc::now().naive_utc(),
+        stock_line_id,
+        comment: None,
+        created_by,
+        invoice_line_id: Some(invoice_line_id),
+        store_id,
+    };
+    return Some(log_status);
 }

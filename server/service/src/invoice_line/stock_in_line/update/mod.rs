@@ -5,8 +5,8 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
-    InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
-    StockLineRowRepository,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLine,
+    InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError, StockLineRowRepository,
 };
 
 mod generate;
@@ -33,6 +33,7 @@ pub struct UpdateStockInLine {
     pub tax_percentage: Option<ShipmentTaxUpdate>,
     pub r#type: StockInType,
     pub item_variant_id: Option<NullableUpdate<String>>,
+    pub vvm_status_id: Option<String>,
 }
 
 type OutError = UpdateStockInLineError;
@@ -51,6 +52,7 @@ pub fn update_stock_in_line(
                 updated_line,
                 upsert_batch_option,
                 batch_to_delete_id,
+                vvm_status_log,
             } = generate(connection, &ctx.user_id, input, line, item, invoice)?;
 
             let stock_line_repository = StockLineRowRepository::new(connection);
@@ -67,6 +69,10 @@ pub fn update_stock_in_line(
 
             if let Some(invoice_row) = invoice_row_option {
                 InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
+            }
+
+            if let Some(vvm_status_log_row) = vvm_status_log {
+                VVMStatusLogRowRepository::new(connection).upsert_one(&vvm_status_log_row)?;
             }
 
             get_invoice_line(ctx, &updated_line.id)
@@ -94,6 +100,7 @@ pub enum UpdateStockInLineError {
     BatchIsReserved,
     UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
+    VVMStatusDoesNotExist,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {

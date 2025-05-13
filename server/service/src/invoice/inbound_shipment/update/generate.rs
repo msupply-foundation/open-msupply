@@ -1,5 +1,6 @@
 use chrono::Utc;
 
+use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, LocationMovementRow,
     Name, RepositoryError,
@@ -26,6 +27,11 @@ pub(crate) struct GenerateResult {
     pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
     pub(crate) update_tax_for_lines: Option<Vec<InvoiceLineRow>>,
     pub(crate) update_currency_for_lines: Option<Vec<InvoiceLineRow>>,
+    pub(crate) vvm_status_logs: Option<Vec<VVMStatusLogRow>>,
+    // vvm status log Vec
+    // create fn to see which lines have vvm id -> need log created -> create logs
+    // log here on verified if table done, otherwise new issue
+    // send in generate
 }
 
 pub(crate) fn generate(
@@ -77,6 +83,27 @@ pub(crate) fn generate(
         None
     };
 
+    let vvm_status_logs = if let Some(batches) = &batches_to_update {
+        let vvm_status_logs = batches
+            .iter()
+            .filter_map(|batch| {
+                batch.line.vvm_status_id.clone().map(|vvm_status_id| {
+                    generate_vvm_status_log(VVMStatusInput {
+                        store_id: store_id.to_owned(),
+                        vvm_status_id,
+                        stock_line_id: batch.line.stock_line_id.clone().unwrap_or_default(),
+                        invoice_line_id: batch.line.id.clone(),
+                        created_by: user_id.to_string(),
+                    })
+                })
+            })
+            .collect();
+
+        Some(vvm_status_logs)
+    } else {
+        None
+    };
+
     let location_movements = if let Some(batches) = &batches_to_update {
         let generate_movement = batches
             .iter()
@@ -122,6 +149,7 @@ pub(crate) fn generate(
         location_movements,
         update_tax_for_lines,
         update_currency_for_lines,
+        vvm_status_logs,
     })
 }
 
@@ -331,6 +359,7 @@ pub fn generate_lines_and_stock_lines(
             foreign_currency_price_before_tax: _,
             item_variant_id,
             linked_invoice_id: _,
+            vvm_status_id,
         }: InvoiceLineRow = invoice_lines;
 
         if number_of_packs > 0.0 {
@@ -351,6 +380,7 @@ pub fn generate_lines_and_stock_lines(
                 supplier_link_id: Some(supplier_id.to_string()),
                 barcode_id: None,
                 item_variant_id,
+                vvm_status_id,
             };
             result.push(LineAndStockLine { line, stock_line });
         }
@@ -369,5 +399,35 @@ pub fn generate_location_movements(
         location_id: batch.line.location_id.clone(),
         enter_datetime: Some(Utc::now().naive_utc()),
         exit_datetime: None,
+    }
+}
+
+struct VVMStatusInput {
+    store_id: String,
+    vvm_status_id: String,
+    stock_line_id: String,
+    invoice_line_id: String,
+    created_by: String,
+}
+
+fn generate_vvm_status_log(
+    // store_id: String,
+    VVMStatusInput {
+        store_id,
+        vvm_status_id,
+        stock_line_id,
+        invoice_line_id,
+        created_by,
+    }: VVMStatusInput,
+) -> VVMStatusLogRow {
+    VVMStatusLogRow {
+        id: uuid(),
+        status_id: vvm_status_id,
+        created_datetime: Utc::now().naive_utc(),
+        stock_line_id,
+        comment: None,
+        created_by,
+        invoice_line_id: Some(invoice_line_id),
+        store_id,
     }
 }
