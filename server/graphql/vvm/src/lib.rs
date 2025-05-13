@@ -1,9 +1,8 @@
-pub mod types;
 pub mod queries;
 
 use async_graphql::*;
+use graphql_types::types::VVMStatusesResponse;
 use queries::vvm_status::active_vvm_statuses;
-use types::vvm_status::VVMStatusesResponse;
 
 #[derive(Default, Clone)]
 pub struct VVMQueries;

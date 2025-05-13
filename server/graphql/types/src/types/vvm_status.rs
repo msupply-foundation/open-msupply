@@ -53,9 +53,7 @@ pub struct VVMStatusConnector {
 }
 
 impl VVMStatusConnector {
-    pub fn from_domain(
-        vvm_statuses: Vec<VVMStatusRow>,
-    ) -> VVMStatusConnector {
+    pub fn from_domain(vvm_statuses: Vec<VVMStatusRow>) -> VVMStatusConnector {
         VVMStatusConnector {
             nodes: vvm_statuses
                 .into_iter()

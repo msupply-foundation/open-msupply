@@ -167,6 +167,7 @@ pub fn generate_lines_from_master_list(
                     available_number_of_packs: _,
                     barcode_id: _,
                     item_variant_id,
+                    vvm_status_id: _,
                 } = line.stock_line_row;
 
                 result.push(StocktakeLineRow {
@@ -229,6 +230,7 @@ pub fn generate_lines_from_location(
                 available_number_of_packs: _,
                 barcode_id: _,
                 item_variant_id,
+                vvm_status_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {
@@ -287,6 +289,7 @@ pub fn generate_lines_with_stock(
                 available_number_of_packs: _,
                 barcode_id: _,
                 item_variant_id,
+                vvm_status_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {
@@ -346,6 +349,7 @@ pub fn generate_lines_expiring_before(
                 available_number_of_packs: _,
                 barcode_id: _,
                 item_variant_id,
+                vvm_status_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {

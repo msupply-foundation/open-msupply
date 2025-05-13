@@ -351,6 +351,7 @@ pub fn generate_lines_and_stock_lines(
                 supplier_link_id: Some(supplier_id.to_string()),
                 barcode_id: None,
                 item_variant_id,
+                vvm_status_id: None,
             };
             result.push(LineAndStockLine { line, stock_line });
         }

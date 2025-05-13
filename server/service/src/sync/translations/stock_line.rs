@@ -46,6 +46,8 @@ pub struct LegacyStockLineRow {
     #[serde(rename = "om_item_variant_id")]
     #[serde(default)]
     pub item_variant_id: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub vvm_status: Option<String>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -96,6 +98,7 @@ impl SyncTranslation for StockLineTranslation {
             supplier_id,
             barcode_id,
             item_variant_id,
+            vvm_status,
         } = serde_json::from_str::<LegacyStockLineRow>(&sync_record.data)?;
 
         let barcode_id = clear_invalid_barcode_id(connection, barcode_id)?;
@@ -117,6 +120,7 @@ impl SyncTranslation for StockLineTranslation {
             supplier_link_id: supplier_id,
             barcode_id,
             item_variant_id,
+            vvm_status_id: vvm_status,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -156,6 +160,7 @@ impl SyncTranslation for StockLineTranslation {
                     supplier_link_id: _,
                     barcode_id,
                     item_variant_id,
+                    vvm_status_id,
                 },
             item_row,
             supplier_name_row,
@@ -179,6 +184,7 @@ impl SyncTranslation for StockLineTranslation {
             supplier_id: supplier_name_row.map(|supplier| supplier.id),
             barcode_id,
             item_variant_id,
+            vvm_status: vvm_status_id,
         };
 
         Ok(PushTranslateResult::upsert(
