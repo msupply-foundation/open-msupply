@@ -340,9 +340,9 @@ pub fn generate_lines_and_stock_lines(
             Some(UpdateDonorMethod::All) => input.default_donor_id.clone(),
             Some(UpdateDonorMethod::Existing) => {
                 if line.donor_id.is_none() {
-                    input.default_donor_id.clone()
+                    None
                 } else {
-                    line.donor_id
+                    input.default_donor_id.clone()
                 }
             }
             Some(UpdateDonorMethod::Unspecified) => {

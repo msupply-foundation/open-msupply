@@ -195,9 +195,10 @@ mod test {
     use chrono::{Duration, NaiveDate, Utc};
     use repository::{
         mock::{
-            mock_inbound_shipment_a, mock_inbound_shipment_a_invoice_lines,
-            mock_inbound_shipment_b, mock_inbound_shipment_c, mock_inbound_shipment_e, mock_name_a,
-            mock_name_linked_to_store_join, mock_name_not_linked_to_store_join,
+            mock_donor_a, mock_donor_b, mock_inbound_shipment_a,
+            mock_inbound_shipment_a_invoice_lines, mock_inbound_shipment_b,
+            mock_inbound_shipment_c, mock_inbound_shipment_e, mock_inbound_shipment_f, mock_item_a,
+            mock_name_a, mock_name_linked_to_store_join, mock_name_not_linked_to_store_join,
             mock_outbound_shipment_e, mock_stock_line_a, mock_store_a, mock_store_b,
             mock_store_linked_to_name, mock_user_account_a, MockData, MockDataInserts,
         },
@@ -210,11 +211,16 @@ mod test {
 
     use crate::{
         invoice::inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus},
-        invoice_line::{query::get_invoice_lines, ShipmentTaxUpdate},
+        invoice_line::{
+            query::get_invoice_lines,
+            stock_in_line::{InsertStockInLine, StockInType},
+            ShipmentTaxUpdate,
+        },
         service_provider::ServiceProvider,
+        NullableUpdate,
     };
 
-    use super::UpdateInboundShipmentError;
+    use super::{UpdateDonorMethod, UpdateInboundShipmentError};
 
     type ServiceError = UpdateInboundShipmentError;
 
@@ -903,16 +909,153 @@ mod test {
         );
         assert_eq!(log.r#type, ActivityLogType::InvoiceStatusVerified);
         assert_eq!(Some(invoice.name_link_id), stock_line.supplier_link_id);
+    }
 
+    #[actix_rt::test]
+    async fn update_inbound_shipment_donor_changes() {
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_shipment_success",
+            MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![mock_inbound_shipment_f()];
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context: crate::service_provider::ServiceContext = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let invoice_line_service = service_provider.invoice_line_service;
+        let invoice_service = service_provider.invoice_service;
         // first add 2 lines, one with a donor_id (and 2 donor options)
+        invoice_line_service
+            .insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new_invoice_line_id_a".to_string();
+                    r.invoice_id = mock_inbound_shipment_f().id;
+                    r.item_id = mock_item_a().id;
+                    r.pack_size = 1.0;
+                    r.number_of_packs = 1.0;
+                    r.donor_id = Some(mock_donor_a().id);
+                    r.r#type = StockInType::InboundShipment;
+                }),
+            )
+            .unwrap();
+        invoice_line_service
+            .insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new_invoice_line_id_b".to_string();
+                    r.invoice_id = mock_inbound_shipment_f().id;
+                    r.item_id = mock_item_a().id;
+                    r.pack_size = 1.0;
+                    r.number_of_packs = 1.0;
+                    r.donor_id = None;
+                    r.r#type = StockInType::InboundShipment;
+                }),
+            )
+            .unwrap();
 
         // test setting add NoChanges method with new donor if doesn't change
+        invoice_service
+            .update_inbound_shipment(
+                &context,
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = mock_inbound_shipment_f().id;
+                    r.default_donor_id = Some(NullableUpdate {
+                        value: Some(mock_donor_b().id),
+                    });
+                    r.update_donor_method = Some(UpdateDonorMethod::NoChanges);
+                }),
+            )
+            .unwrap();
 
-        // test setting add Existing method with no donor_id changes the existing
+        let mut result = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id(&mock_inbound_shipment_f().id)
+            .unwrap();
+        result.sort_by(|a, b| a.id.cmp(&b.id));
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].id, "new_invoice_line_id_a".to_string());
+        assert_eq!(result[0].donor_id, Some(mock_donor_a().id));
+        assert_eq!(result[1].donor_id, None);
+
+        // test setting add Existing method with no donor_id changes existing to the current default_donor_id
+        invoice_service
+            .update_inbound_shipment(
+                &context,
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = mock_inbound_shipment_f().id;
+                    r.update_donor_method = Some(UpdateDonorMethod::Existing);
+                }),
+            )
+            .unwrap();
+
+        let mut result = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id(&mock_inbound_shipment_f().id)
+            .unwrap();
+        result.sort_by(|a, b| a.id.cmp(&b.id));
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&mock_inbound_shipment_f().id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(invoice.default_donor_id, Some(mock_donor_b().id));
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].id, "new_invoice_line_id_a".to_string());
+
+        assert_eq!(result[0].donor_id, Some(mock_donor_b().id));
+        assert_eq!(result[1].donor_id, None);
 
         // test setting unspecified method with new donor_id changes the line without current donor_id
+        invoice_service
+            .update_inbound_shipment(
+                &context,
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = mock_inbound_shipment_f().id;
+                    r.default_donor_id = Some(NullableUpdate {
+                        value: Some(mock_donor_a().id),
+                    });
+                    r.update_donor_method = Some(UpdateDonorMethod::Unspecified);
+                }),
+            )
+            .unwrap();
+
+        let mut result = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id(&mock_inbound_shipment_f().id)
+            .unwrap();
+        result.sort_by(|a, b| a.id.cmp(&b.id));
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].id, "new_invoice_line_id_a".to_string());
+        assert_eq!(result[0].donor_id, Some(mock_donor_b().id));
+        assert_eq!(result[1].donor_id, Some(mock_donor_a().id));
 
         // test setting ALL method with no donor_id makes both to the new donor
-        assert_eq!(1, 0);
+        invoice_service
+            .update_inbound_shipment(
+                &context,
+                inline_init(|r: &mut UpdateInboundShipment| {
+                    r.id = mock_inbound_shipment_f().id;
+                    r.default_donor_id = Some(NullableUpdate { value: None });
+                    r.update_donor_method = Some(UpdateDonorMethod::All);
+                }),
+            )
+            .unwrap();
+
+        let mut result = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id(&mock_inbound_shipment_f().id)
+            .unwrap();
+        result.sort_by(|a, b| a.id.cmp(&b.id));
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].id, "new_invoice_line_id_a".to_string());
+        assert_eq!(result[0].donor_id, None);
+        assert_eq!(result[1].donor_id, None);
+
+        assert_eq!(1, 1);
     }
 }
