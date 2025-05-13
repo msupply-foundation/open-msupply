@@ -9,6 +9,9 @@ pub use manage_vvm_status::*;
 pub mod sort_by_vvm_status;
 pub use sort_by_vvm_status::*;
 
+use super::{Preference, PreferenceError};
+use repository::StorageConnection;
+
 pub struct PreferenceProvider {
     // Add each preference here
     pub show_contact_tracing: ShowContactTracing,
@@ -26,4 +29,15 @@ pub fn get_preference_provider() -> PreferenceProvider {
         manage_vvm_status: ManageVvmStatus,
         sort_by_vvm_status: SortByVvmStatus,
     }
+}
+
+/// Gets the preference passed into it, use it like this...
+/// get_preference(ctx, store_id, DisplayPopulationBasedForecasting);
+/// Note: this doesn't resolve global vs store preferences yet...
+pub fn get_preference<T: Preference>(
+    connection: &StorageConnection,
+    store_id: Option<String>,
+    pref: T,
+) -> Result<T::Value, PreferenceError> {
+    pref.load(connection, store_id)
 }
