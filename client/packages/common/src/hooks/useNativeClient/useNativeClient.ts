@@ -240,3 +240,6 @@ export const useNativeClient = ({
     setServerMode,
   };
 };
+
+export const sendTabKeyPress = () =>
+  (getNativeAPI()?.sendTabKeyPress ?? (() => {}))();

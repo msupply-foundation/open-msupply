@@ -4,7 +4,9 @@ use crate::StorageConnection;
 mod add_activity_log_enums;
 mod add_created_fields_to_item_variant;
 mod add_doses_columns_to_item_variant;
+mod add_initial_stocktake_field;
 mod add_vvm_status_table;
+
 pub(crate) struct V2_08_00;
 
 impl Migration for V2_08_00 {
@@ -22,6 +24,7 @@ impl Migration for V2_08_00 {
             Box::new(add_doses_columns_to_item_variant::Migrate),
             Box::new(add_created_fields_to_item_variant::Migrate),
             Box::new(add_activity_log_enums::Migrate),
+            Box::new(add_initial_stocktake_field::Migrate),
         ]
     }
 }
