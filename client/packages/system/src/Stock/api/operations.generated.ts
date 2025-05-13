@@ -601,6 +601,15 @@ export type ActiveVvmStatusesQuery = {
   };
 };
 
+export type VvmStatusesConfiguredQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type VvmStatusesConfiguredQuery = {
+  __typename: 'Queries';
+  vvmStatusesConfigured: boolean;
+};
+
 export const StockLineRowFragmentDoc = gql`
   fragment StockLineRow on StockLineNode {
     availableNumberOfPacks
@@ -888,6 +897,11 @@ export const ActiveVvmStatusesDocument = gql`
   }
   ${VvmStatusFragmentDoc}
 `;
+export const VvmStatusesConfiguredDocument = gql`
+  query vvmStatusesConfigured($storeId: String!) {
+    vvmStatusesConfigured(storeId: $storeId)
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -1060,6 +1074,22 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'activeVvmStatuses',
+        'query',
+        variables
+      );
+    },
+    vvmStatusesConfigured(
+      variables: VvmStatusesConfiguredQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<VvmStatusesConfiguredQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<VvmStatusesConfiguredQuery>(
+            VvmStatusesConfiguredDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'vvmStatusesConfigured',
         'query',
         variables
       );

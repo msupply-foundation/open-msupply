@@ -1,27 +1,14 @@
-import {
-  useAuthContext,
-  useGql,
-  useQuery,
-  VvmstatusNode,
-} from '@openmsupply-client/common';
-import { getSdk } from '../../api/operations.generated';
+import { useQuery, VvmstatusNode } from '@openmsupply-client/common';
 import { VVMSTATUS } from './keys';
-
-export const useVVMStatusGraphQl = () => {
-  const { client } = useGql();
-  const api = getSdk(client);
-  const { storeId } = useAuthContext();
-
-  return { api, storeId };
-};
+import { useStockGraphQL } from '../useStockGraphQL';
 
 export const useVVMStatus = () => {
-  const { api, storeId } = useVVMStatusGraphQl();
+  const { stockApi, storeId } = useStockGraphQL();
 
   const queryKey = [VVMSTATUS];
 
   const queryFn = async (): Promise<VvmstatusNode[]> => {
-    const result = await api.activeVvmStatuses({ storeId });
+    const result = await stockApi.activeVvmStatuses({ storeId });
     return result.activeVvmStatuses.nodes;
   };
 

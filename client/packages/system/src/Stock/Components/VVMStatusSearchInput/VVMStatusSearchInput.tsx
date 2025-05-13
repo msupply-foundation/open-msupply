@@ -1,6 +1,6 @@
 import React from 'react';
 import { Autocomplete, useTranslation } from '@openmsupply-client/common';
-import { useVVMStatus } from '../../api/hooks/useVVMStatus';
+import { useVVMStatus } from '../../api';
 
 interface VVMStatusSearchInputProps {
   selectedId: string | null;

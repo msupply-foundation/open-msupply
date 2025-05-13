@@ -6446,6 +6446,7 @@ export type Queries = {
   vaccineCourse: VaccineCourseResponse;
   vaccineCourseDose: VaccineCourseDoseResponse;
   vaccineCourses: VaccineCoursesResponse;
+  vvmStatusesConfigured: Scalars['Boolean']['output'];
 };
 
 export type QueriesAbbreviationsArgs = {
@@ -7090,6 +7091,10 @@ export type QueriesVaccineCoursesArgs = {
   filter?: InputMaybe<VaccineCourseFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<VaccineCourseSortInput>>;
+};
+
+export type QueriesVvmStatusesConfiguredArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type QueryReportError = {

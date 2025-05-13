@@ -29,6 +29,7 @@ import {
   PackSizeEntryCell,
   useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
+import { useIsVVMStatusEnabled } from 'packages/system/src/Stock/api';
 
 interface TableProps {
   lines: DraftInboundLine[];
@@ -87,8 +88,9 @@ export const QuantityTableComponent: FC<TableProps> = ({
 }) => {
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
-  // const VVMStatusEnabled = useIsVVMStatusEnabled();
-  const VVMStatusEnabled = true;
+  const VVMStatusEnabled = useIsVVMStatusEnabled();
+
+  // console.log('table', VVMStatusEnabled);
 
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     getBatchColumn(updateDraftLine, theme),
