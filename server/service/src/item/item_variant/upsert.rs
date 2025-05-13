@@ -10,13 +10,12 @@ use repository::{
 };
 
 use crate::{
-    item::{
-        check_item_exists,
-        packaging_variant::{
-            upsert_packaging_variant, UpsertPackagingVariant, UpsertPackagingVariantError,
-        },
+    invoice_line::validate::check_item_exists,
+    item::packaging_variant::{
+        upsert_packaging_variant, UpsertPackagingVariant, UpsertPackagingVariantError,
     },
     service_provider::ServiceContext,
+    NullableUpdate,
 };
 
 #[derive(PartialEq, Debug)]
@@ -26,6 +25,7 @@ pub enum UpsertItemVariantError {
     CantChangeItem,
     DuplicateName,
     ColdStorageTypeDoesNotExist,
+    DoseConfigurationNotAllowed,
     PackagingVariantError(UpsertPackagingVariantError),
     DatabaseError(RepositoryError),
 }
@@ -34,10 +34,12 @@ pub enum UpsertItemVariantError {
 pub struct UpsertItemVariantWithPackaging {
     pub id: String,
     pub item_id: String,
-    pub cold_storage_type_id: Option<String>,
+    pub cold_storage_type_id: Option<NullableUpdate<String>>,
     pub name: String,
-    pub manufacturer_id: Option<String>,
+    pub manufacturer_id: Option<NullableUpdate<String>>,
     pub packaging_variants: Vec<UpsertPackagingVariant>,
+    pub doses_per_unit: i32,
+    pub vvm_type: Option<NullableUpdate<String>>,
 }
 
 pub fn upsert_item_variant(
@@ -47,7 +49,7 @@ pub fn upsert_item_variant(
     let item_variant = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &input, &ctx.store_id)?;
+            validate(connection, &input)?;
             let new_item_variant = generate(input.clone());
             let repo = ItemVariantRowRepository::new(connection);
             let packaging_variant_repo = PackagingVariantRepository::new(connection);
@@ -81,7 +83,7 @@ pub fn upsert_item_variant(
             // Upsert the new packaging variants
             for packaging_variant in input.packaging_variants {
                 upsert_packaging_variant(ctx, packaging_variant)
-                    .map_err(|e| UpsertItemVariantError::PackagingVariantError(e))?;
+                    .map_err(UpsertItemVariantError::PackagingVariantError)?;
             }
 
             ItemVariantRepository::new(connection)
@@ -109,26 +111,30 @@ pub fn generate(
         cold_storage_type_id,
         manufacturer_id,
         packaging_variants: _, // Mapped separately
+        doses_per_unit,
+        vvm_type,
     }: UpsertItemVariantWithPackaging,
 ) -> ItemVariantRow {
     ItemVariantRow {
         id,
         name,
         item_link_id: item_id,
-        cold_storage_type_id,
-        manufacturer_link_id: manufacturer_id,
+        cold_storage_type_id: cold_storage_type_id.map(|l| l.value).unwrap_or_default(),
+        manufacturer_link_id: manufacturer_id
+            .map(|manufacturer_id| manufacturer_id.value)
+            .unwrap_or_default(),
         deleted_datetime: None,
+        doses_per_unit,
+        vvm_type: vvm_type.map(|vvm_type| vvm_type.value).unwrap_or_default(),
     }
 }
 
 fn validate(
     connection: &StorageConnection,
     input: &UpsertItemVariantWithPackaging,
-    store_id: &str,
 ) -> Result<(), UpsertItemVariantError> {
-    if !check_item_exists(connection, store_id.to_string(), &input.item_id)? {
-        return Err(UpsertItemVariantError::ItemDoesNotExist);
-    }
+    let item = check_item_exists(connection, &input.item_id)?
+        .ok_or(UpsertItemVariantError::ItemDoesNotExist)?;
 
     let old_item_variant = ItemVariantRowRepository::new(connection).find_one_by_id(&input.id)?;
 
@@ -145,7 +151,10 @@ fn validate(
         }
     }
 
-    if let Some(cold_storage_type_id) = &input.cold_storage_type_id {
+    if let Some(NullableUpdate {
+        value: Some(ref cold_storage_type_id),
+    }) = &input.cold_storage_type_id
+    {
         // Check if the cold storage type exists
         let repo = ColdStorageTypeRowRepository::new(connection);
         let cold_storage_type = repo.find_one_by_id(cold_storage_type_id)?;
@@ -158,16 +167,19 @@ fn validate(
     let item_variants_with_duplicate_name = ItemVariantRepository::new(connection)
         .query_by_filter(
             ItemVariantFilter::new()
-                .name(StringFilter::equal_to(&input.name.trim()))
+                .name(StringFilter::equal_to(input.name.trim()))
                 .item_id(EqualFilter::equal_to(&input.item_id)),
         )?;
 
     if item_variants_with_duplicate_name
         .iter()
-        .find(|v| v.item_variant_row.id != input.id)
-        .is_some()
+        .any(|v| v.item_variant_row.id != input.id)
     {
         return Err(UpsertItemVariantError::DuplicateName);
+    }
+
+    if !item.is_vaccine && input.doses_per_unit > 0 {
+        return Err(UpsertItemVariantError::DoseConfigurationNotAllowed);
     }
 
     Ok(())

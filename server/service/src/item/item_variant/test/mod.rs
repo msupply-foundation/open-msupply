@@ -12,6 +12,7 @@ mod query {
         DeleteItemVariant, UpsertItemVariantError, UpsertItemVariantWithPackaging,
     };
     use crate::service_provider::ServiceProvider;
+    use crate::NullableUpdate;
 
     #[actix_rt::test]
     async fn create_edit_delete_item_variant() {
@@ -241,7 +242,9 @@ mod query {
                 id: test_item_a_variant_id.to_string(),
                 item_id: mock_item_a().id,
                 name: "Variant 1".to_string(),
-                cold_storage_type_id: Some(uuid()),
+                cold_storage_type_id: Some(NullableUpdate {
+                    value: Some(uuid()),
+                }),
                 ..Default::default()
             },
         );

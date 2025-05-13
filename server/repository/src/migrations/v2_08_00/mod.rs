@@ -1,6 +1,9 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_doses_columns_to_item_variant;
+mod add_initial_stocktake_field;
+mod add_vvm_status_log_table;
 mod add_vvm_status_table;
 mod migrate_reason_option_ids;
 
@@ -17,8 +20,11 @@ impl Migration for V2_08_00 {
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
-            Box::new(migrate_reason_option_ids::Migrate),
             Box::new(add_vvm_status_table::Migrate),
+            Box::new(add_vvm_status_log_table::Migrate),
+            Box::new(add_doses_columns_to_item_variant::Migrate),
+            Box::new(add_initial_stocktake_field::Migrate),
+            Box::new(migrate_reason_option_ids::Migrate),
         ]
     }
 }

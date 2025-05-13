@@ -12,7 +12,8 @@ import {
   reasonOptions,
   ReasonOptionsSearchInput,
 } from '@openmsupply-client/system';
-import { useStocktake } from '../api';
+import { useStocktakeOld } from '../api';
+
 interface ReduceLinesToZeroConfirmationModalProps {
   isOpen: boolean;
   onCancel: () => void;
@@ -28,7 +29,7 @@ export const ReduceLinesToZeroConfirmationModal = ({
 
   const [reason, setReason] = useState<ReasonOptionRowFragment | null>(null);
 
-  const onZeroQuantities = useStocktake.line.zeroQuantities();
+  const onZeroQuantities = useStocktakeOld.line.zeroQuantities();
 
   const { data } = reasonOptions.document.listAllActive();
   const reasonIsRequired = data?.totalCount !== 0;

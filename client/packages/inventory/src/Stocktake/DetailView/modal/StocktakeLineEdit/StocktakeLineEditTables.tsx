@@ -38,6 +38,7 @@ interface StocktakeLineEditTableProps {
   isDisabled?: boolean;
   batches: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
+  isInitialStocktake?: boolean;
 }
 
 const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
@@ -97,7 +98,8 @@ const getCountThisLineColumn = (
 
 const getInventoryAdjustmentReasonInputColumn = (
   setter: DraftLineSetter,
-  { getError }: UseStocktakeLineErrors
+  { getError }: UseStocktakeLineErrors,
+  initialStocktake?: boolean
 ): ColumnDescription<DraftStocktakeLine> => {
   return {
     key: 'inventoryAdjustmentReasonInput',
@@ -140,6 +142,7 @@ const getInventoryAdjustmentReasonInputColumn = (
             !rowData.countThisLine ||
             rowData.snapshotNumberOfPacks == rowData.countedNumberOfPacks
           }
+          initialStocktake={initialStocktake}
         />
       );
     },
@@ -150,6 +153,7 @@ export const BatchTable = ({
   batches,
   update,
   isDisabled = false,
+  isInitialStocktake,
 }: StocktakeLineEditTableProps) => {
   const t = useTranslation();
   const theme = useTheme();
@@ -224,7 +228,11 @@ export const BatchTable = ({
         },
         accessor: ({ rowData }) => rowData.countedNumberOfPacks,
       },
-      getInventoryAdjustmentReasonInputColumn(update, errorsContext)
+      getInventoryAdjustmentReasonInputColumn(
+        update,
+        errorsContext,
+        isInitialStocktake
+      )
     );
 
     return columnDefinitions;
