@@ -859,6 +859,7 @@ query getOutboundEditLines(
         __typename
         id
         unitName
+        isVaccine
       }
     }
   }
