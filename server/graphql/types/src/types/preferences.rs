@@ -21,8 +21,8 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.display_population_based_forecasting)
     }
 
-    pub async fn display_vaccine_in_doses(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.display_vaccine_in_doses)
+    pub async fn display_vaccines_in_doses(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.display_vaccines_in_doses)
     }
 
     pub async fn manage_vvm_status_for_stock(&self) -> Result<bool> {
@@ -79,7 +79,7 @@ impl PreferenceDescriptionNode {
 pub enum PreferenceKey {
     // These keys (once camelCased) should match fields of PreferencesNode
     ShowContactTracing,
-    DisplayVaccineInDoses,
+    DisplayVaccinesInDoses,
     DisplayPopulationBasedForecasting,
     ManageVvmStatusForStock,
     SortByVvmStatusThenExpiry,
@@ -92,7 +92,7 @@ impl PreferenceKey {
             PrefKey::DisplayPopulationBasedForecasting => {
                 PreferenceKey::DisplayPopulationBasedForecasting
             }
-            PrefKey::DisplayVaccineInDoses => PreferenceKey::DisplayVaccineInDoses,
+            PrefKey::DisplayVaccinesInDoses => PreferenceKey::DisplayVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
             PrefKey::SortByVvmStatusThenExpiry => PreferenceKey::SortByVvmStatusThenExpiry,
         }

@@ -13,7 +13,7 @@ use super::{
 #[strum(serialize_all = "snake_case")]
 pub enum PrefKey {
     ShowContactTracing,
-    DisplayVaccineInDoses,
+    DisplayVaccinesInDoses,
     DisplayPopulationBasedForecasting,
     ManageVvmStatusForStock,
     SortByVvmStatusThenExpiry,

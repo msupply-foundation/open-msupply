@@ -5917,7 +5917,7 @@ export type PreferenceDescriptionNode = {
 
 export enum PreferenceKey {
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
-  DisplayVaccineInDoses = 'displayVaccineInDoses',
+  DisplayVaccinesInDoses = 'displayVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   ShowContactTracing = 'showContactTracing',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
@@ -5946,7 +5946,7 @@ export enum PreferenceValueNodeType {
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
-  displayVaccineInDoses: Scalars['Boolean']['output'];
+  displayVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
@@ -9630,7 +9630,7 @@ export type UpsertPackVariantResponse =
 
 export type UpsertPreferencesInput = {
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
-  displayVaccineInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
+  displayVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
