@@ -5,7 +5,7 @@ import {
   UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { ItemRowFragment } from '@openmsupply-client/system';
-import { ColumnDefinition } from '../types';
+import { ColumnAlign, ColumnDefinition } from '../types';
 
 export const getDosesPerUnitColumn = <
   T extends RecordWithId & { item?: ItemRowFragment | null },
@@ -20,6 +20,8 @@ export const getDosesPerUnitColumn = <
     : 'label.doses-per-unit',
   key: 'dosesPerUnit',
   width: 100,
+  sortable: false,
+  align: ColumnAlign.Right,
   accessor: ({ rowData }) => {
     if ('lines' in rowData) {
       const { lines } = rowData;

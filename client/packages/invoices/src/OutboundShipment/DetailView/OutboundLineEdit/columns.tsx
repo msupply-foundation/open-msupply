@@ -14,7 +14,6 @@ import {
   CellProps,
   NumberInputCell,
 } from '@openmsupply-client/common';
-import { StockOutLineFragment } from '../../../StockOut';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { DraftStockOutLineFragment } from '../../api/operations.generated';
 import { getPackQuantityCellId } from 'packages/invoices/src/utils';
@@ -138,42 +137,6 @@ export const useOutboundLineEditColumns = ({
   ]);
 
   return columns;
-};
-
-// todo - got removed?
-export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
-  const columns: ColumnDescription<StockOutLineFragment>[] = [
-    'batch',
-    'expiryDate',
-    [
-      'location',
-      {
-        accessor: ({ rowData }) => rowData.location?.code,
-      },
-    ],
-    [
-      'itemUnit',
-      {
-        accessor: ({ rowData }) => rowData.item.unitName,
-      },
-    ],
-    ['packSize', { Cell: NumberCell }],
-    'numberOfPacks',
-    [
-      'unitQuantity',
-      {
-        accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
-      },
-    ],
-    [
-      'sellPricePerUnit',
-      {
-        accessor: ({ rowData }) => rowData.sellPricePerPack / rowData.packSize,
-      },
-    ],
-  ];
-
-  return useColumns(columns);
 };
 
 const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
