@@ -52,9 +52,11 @@ impl<'a> VVMStatusRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_all(&self) -> Result<Vec<VVMStatusRow>, RepositoryError> {
-        let result = vvm_status.load(self.connection.lock().connection())?;
-        Ok(result)
+    pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<VVMStatusRow>, RepositoryError> {
+        vvm_status::table
+            .filter(id.eq_any(ids))
+            .load(self.connection.lock().connection())
+            .map_err(RepositoryError::from)
     }
 
     pub fn find_all_active(&self) -> Result<Vec<VVMStatusRow>, RepositoryError> {
