@@ -83,7 +83,6 @@ export const useOutboundLineEditColumns = ({
     });
   }
 
-  // todo: these should only show if right?
   columnDefinitions.push(
     ['packSize', { width: 90 }],
     {
@@ -177,7 +176,6 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
   return useColumns(columns);
 };
 
-// todo?
 const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}

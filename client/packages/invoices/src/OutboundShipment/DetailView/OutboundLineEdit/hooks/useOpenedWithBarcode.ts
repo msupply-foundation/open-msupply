@@ -2,15 +2,26 @@ import { useEffect } from 'react';
 import { getPackQuantityCellId } from '../../../../utils';
 import { ScannedBarcode } from '../../../../types';
 import { useOutbound } from '../../../api';
+import { useAllocationContext } from '../allocation/useAllocationContext';
 
 export const useOpenedWithBarcode = (barcode: ScannedBarcode | null) => {
   const { mutateAsync: insertBarcode } = useOutbound.utils.barcodeInsert();
 
-  useFocusNumberOfPacksInput(barcode?.batch);
+  const { itemId, draftLines } = useAllocationContext(state => ({
+    draftLines: state.draftLines,
+    itemId: state.initialisedForItemId,
+  }));
 
-  const saveBarcode = async (itemId: string, packSize?: number) => {
+  useFocusNumberOfPacksInput(barcode?.batch, itemId);
+
+  const saveBarcode = async (itemId: string) => {
     // ID means barcode has already been saved
     if (!barcode || barcode.id) return;
+
+    // Find pack size of first allocated line to associate with barcode
+    // Usually, scanned barcode would match only one batch, so only one line would
+    // match here - but if many matched, we will just take the first
+    const packSize = draftLines.find(line => line.numberOfPacks > 0)?.packSize;
 
     return insertBarcode({
       input: {
@@ -24,14 +35,17 @@ export const useOpenedWithBarcode = (barcode: ScannedBarcode | null) => {
   return { saveBarcode };
 };
 
-const useFocusNumberOfPacksInput = (batch: string | undefined) => {
+const useFocusNumberOfPacksInput = (
+  batch: string | undefined,
+  itemId: string | null
+) => {
   useEffect(() => {
+    if (!batch || !itemId) return;
     setTimeout(() => {
-      if (!batch) return;
       const input = document.getElementById(getPackQuantityCellId(batch));
       if (input) {
         input.focus();
       }
     }, 500);
-  }, [batch]);
+  }, [batch, itemId]);
 };
