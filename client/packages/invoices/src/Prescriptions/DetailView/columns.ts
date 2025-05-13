@@ -16,6 +16,8 @@ import {
   usePreference,
   PreferenceKey,
   getDosesPerUnitColumn,
+  NumberCell,
+  BasicCell,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -274,22 +276,46 @@ export const usePrescriptionColumn = ({
   }
 
   columns.push(
-    {
-      label: 'label.pack-quantity',
-      description: 'description.pack-quantity',
-      key: 'numberOfPacks',
-      align: ColumnAlign.Right,
-      getSortValue: row =>
-        getColumnPropertyAsString(row, [
-          { path: ['lines', 'numberOfPacks'] },
-          { path: ['numberOfPacks'], default: '' },
-        ]),
-      accessor: ({ rowData }) =>
-        getColumnProperty(rowData, [
-          { path: ['lines', 'numberOfPacks'] },
-          { path: ['numberOfPacks'] },
-        ]),
-    },
+    [
+      'numberOfPacks',
+      {
+        Cell: BasicCell,
+        getSortValue: row => {
+          if ('lines' in row) {
+            const { lines } = row;
+            const packSize = ArrayUtils.ifTheSameElseDefault(
+              lines,
+              'packSize',
+              ''
+            );
+            if (packSize) {
+              return lines.reduce((acc, value) => acc + value.numberOfPacks, 0);
+            } else {
+              return '';
+            }
+          } else {
+            return row.numberOfPacks;
+          }
+        },
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            const packSize = ArrayUtils.ifTheSameElseDefault(
+              lines,
+              'packSize',
+              ''
+            );
+            if (packSize) {
+              return lines.reduce((acc, value) => acc + value.numberOfPacks, 0);
+            } else {
+              return t('multiple');
+            }
+          } else {
+            return rowData.numberOfPacks;
+          }
+        },
+      },
+    ],
     {
       label: 'label.unit-price',
       key: 'sellPricePerUnit',
