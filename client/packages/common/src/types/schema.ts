@@ -1454,12 +1454,6 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
-export type CustomerAndOrderTypeNode = {
-  __typename: 'CustomerAndOrderTypeNode';
-  customer: NameNode;
-  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
-};
-
 export type CustomerIndicatorInformationNode = {
   __typename: 'CustomerIndicatorInformationNode';
   customer: NameNode;
@@ -1475,11 +1469,8 @@ export type CustomerIndicatorInformationNodeCustomerArgs = {
 
 export type CustomerProgramRequisitionSettingNode = {
   __typename: 'CustomerProgramRequisitionSettingNode';
-  customerAndOrderTypes: Array<CustomerAndOrderTypeNode>;
-  masterList: MasterListNode;
-  programId: Scalars['String']['output'];
-  programName: Scalars['String']['output'];
-  tagName: Scalars['String']['output'];
+  customerNameId: Scalars['String']['output'];
+  programSettings: Array<ProgramSettingNode>;
 };
 
 export type CustomerReturnInput = {
@@ -2277,6 +2268,11 @@ export type DocumentSortInput = {
 export type DoseConfigurationNotAllowed = UpsertItemVariantErrorInterface & {
   __typename: 'DoseConfigurationNotAllowed';
   description: Scalars['String']['output'];
+};
+
+export type EmergencyResponseRequisitionCounts = {
+  __typename: 'EmergencyResponseRequisitionCounts';
+  new: Scalars['Int']['output'];
 };
 
 export type EncounterConnector = {
@@ -3564,11 +3560,10 @@ export type InsertStocktakeInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   expiresBefore?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  isLocked?: InputMaybe<Scalars['Boolean']['input']>;
+  isInitialStocktake?: InputMaybe<Scalars['Boolean']['input']>;
   itemsHaveStock?: InputMaybe<Scalars['Boolean']['input']>;
-  location?: InputMaybe<NullableStringUpdate>;
+  locationId?: InputMaybe<Scalars['String']['input']>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
-  stocktakeDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type InsertStocktakeLineError = {
@@ -4319,9 +4314,7 @@ export type ItemVariantNode = {
   dosesPerUnit: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   item?: Maybe<ItemNode>;
-  /** @deprecated From 2.8.0. Use item instead */
   itemId: Scalars['String']['output'];
-  /** @deprecated From 2.8.0. Use item instead */
   itemName: Scalars['String']['output'];
   manufacturer?: Maybe<NameNode>;
   manufacturerId?: Maybe<Scalars['String']['output']>;
@@ -6227,6 +6220,20 @@ export type ProgramRequisitionOrderTypeNode = {
   name: Scalars['String']['output'];
 };
 
+export type ProgramSettingNode = {
+  __typename: 'ProgramSettingNode';
+  masterListCode: Scalars['String']['output'];
+  masterListDescription: Scalars['String']['output'];
+  masterListDiscountPercentage?: Maybe<Scalars['Float']['output']>;
+  masterListId: Scalars['String']['output'];
+  masterListIsActive: Scalars['Boolean']['output'];
+  masterListIsDefaultPriceList: Scalars['Boolean']['output'];
+  masterListName: Scalars['String']['output'];
+  masterListNameTagId: Scalars['String']['output'];
+  masterListNameTagName: Scalars['String']['output'];
+  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
+};
+
 export enum ProgramSortFieldInput {
   Name = 'name',
 }
@@ -6304,7 +6311,6 @@ export type Queries = {
   coldStorageTypes: ColdStorageTypesResponse;
   contactTraces: ContactTraceResponse;
   currencies: CurrenciesResponse;
-  customerProgramRequisitionSettings: Array<CustomerProgramRequisitionSettingNode>;
   databaseSettings: DatabaseSettingsNode;
   demographicIndicators: DemographicIndicatorsResponse;
   demographicProjectionByBaseYear: DemographicProjectionResponse;
@@ -6398,6 +6404,7 @@ export type Queries = {
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
   programIndicators: ProgramIndicatorResponse;
+  programRequisitionSettingsByCustomer: CustomerProgramRequisitionSettingNode;
   programs: ProgramsResponse;
   rAndRForm: RnRFormResponse;
   rAndRForms: RnRFormsResponse;
@@ -6578,10 +6585,6 @@ export type QueriesContactTracesArgs = {
 export type QueriesCurrenciesArgs = {
   filter?: InputMaybe<CurrencyFilterInput>;
   sort?: InputMaybe<Array<CurrencySortInput>>;
-};
-
-export type QueriesCustomerProgramRequisitionSettingsArgs = {
-  storeId: Scalars['String']['input'];
 };
 
 export type QueriesDemographicIndicatorsArgs = {
@@ -6883,6 +6886,11 @@ export type QueriesProgramEventsArgs = {
 export type QueriesProgramIndicatorsArgs = {
   filter?: InputMaybe<ProgramIndicatorFilterInput>;
   sort?: InputMaybe<ProgramIndicatorSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesProgramRequisitionSettingsByCustomerArgs = {
+  customerNameId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -7363,12 +7371,14 @@ export type RequisitionConnector = {
 
 export type RequisitionCounts = {
   __typename: 'RequisitionCounts';
+  emergency: EmergencyResponseRequisitionCounts;
   request: RequestRequisitionCounts;
   response: ResponseRequisitionCounts;
 };
 
 export type RequisitionFilterInput = {
   aShipmentHasBeenCreated?: InputMaybe<Scalars['Boolean']['input']>;
+  automaticallyCreated?: InputMaybe<Scalars['Boolean']['input']>;
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -7376,6 +7386,7 @@ export type RequisitionFilterInput = {
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isEmergency?: InputMaybe<Scalars['Boolean']['input']>;
   orderType?: InputMaybe<EqualFilterStringInput>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<StringFilterInput>;
@@ -8113,6 +8124,7 @@ export type StocktakeNode = {
   inventoryAdditionId?: Maybe<Scalars['String']['output']>;
   inventoryReduction?: Maybe<InvoiceNode>;
   inventoryReductionId?: Maybe<Scalars['String']['output']>;
+  isInitialStocktake: Scalars['Boolean']['output'];
   isLocked: Scalars['Boolean']['output'];
   lines: StocktakeLineConnector;
   program?: Maybe<ProgramNode>;
