@@ -21,7 +21,6 @@ import { getAllocatedUnits } from './allocation/utils';
 export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
   item: DraftItem | null;
-  batch?: string;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
 }
@@ -43,7 +42,7 @@ const PlaceholderRow = ({ quantity }: { quantity: number | null }) => {
 
   const formattedValue = useFormatNumber().round(quantity ?? 0, 2);
 
-  // TODO - maybe should be editable? Can't clear when manually allocating
+  // TODO - maybe should be editable? Can't clear when manually allocating..
   return quantity === null ? null : (
     <tr>
       <PlaceholderCell colSpan={3} sx={{ color: 'secondary.main' }}>

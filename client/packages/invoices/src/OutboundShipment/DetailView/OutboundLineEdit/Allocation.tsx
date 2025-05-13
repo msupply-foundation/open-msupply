@@ -17,7 +17,6 @@ import { AutoAllocate } from './AutoAllocate';
 import { useOutbound, OutboundLineEditData } from '../../api';
 import { DraftItem } from '../../..';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
-import { DraftStockOutLineFragment } from '../../api/operations.generated';
 import {
   useAllocationContext,
   AllocationStrategy,
@@ -27,9 +26,14 @@ import { sumAvailableQuantity } from './allocation/utils';
 interface AllocationProps {
   itemData: OutboundLineEditData;
   allowPlaceholder: boolean;
+  scannedBatch?: string;
 }
 
-export const Allocation = ({ itemData, allowPlaceholder }: AllocationProps) => {
+export const Allocation = ({
+  itemData,
+  allowPlaceholder,
+  scannedBatch,
+}: AllocationProps) => {
   const { initialise, initialisedForItemId } = useAllocationContext(
     ({ initialise, initialisedForItemId }) => ({
       initialise,
@@ -38,7 +42,12 @@ export const Allocation = ({ itemData, allowPlaceholder }: AllocationProps) => {
   );
 
   useEffect(() => {
-    initialise(itemData, AllocationStrategy.FEFO, allowPlaceholder);
+    initialise(
+      itemData,
+      AllocationStrategy.FEFO,
+      allowPlaceholder,
+      scannedBatch
+    );
   }, []);
 
   return initialisedForItemId === itemData.item.id ? (
@@ -59,8 +68,6 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
       manualAllocate,
     })
   );
-
-  const hasLines = !!draftLines.length;
 
   return (
     <>
@@ -89,13 +96,9 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
       <AutoAllocate />
 
       <TableWrapper
-        hasLines={hasLines}
         currentItem={item}
         isLoading={false}
         updateQuantity={manualAllocate}
-        draftOutboundLines={draftLines}
-        // batch={openedWith?.batch}
-        batch={undefined} // Scanned batch - context?
         currency={currency}
         isExternalSupplier={!otherParty?.store}
       />
@@ -104,12 +107,9 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
 };
 
 interface TableProps {
-  hasLines: boolean;
   currentItem: DraftItem;
   isLoading: boolean;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
-  draftOutboundLines: DraftStockOutLineFragment[];
-  batch?: string;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
 }
@@ -144,7 +144,6 @@ const TableWrapper = ({
       <OutboundLineEditTable
         onChange={updateQuantity}
         item={currentItem}
-        // batch={batch}
         currency={currency}
         isExternalSupplier={isExternalSupplier}
       />

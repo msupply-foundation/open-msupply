@@ -31,7 +31,7 @@ interface OutboundLineEditProps {
 
 export const OutboundLineEdit = ({
   isOpen,
-  onClose,
+  onClose: closeModal,
   openedWith,
   mode,
   status,
@@ -39,9 +39,13 @@ export const OutboundLineEdit = ({
 }: OutboundLineEditProps) => {
   const t = useTranslation();
   const { info, warning } = useNotification();
-  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-
   const [itemId, setItemId] = useState(openedWith?.itemId);
+
+  const onClose = () => {
+    clear();
+    closeModal();
+  };
+  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const { next, disabled: nextDisabled } = useNextItem(itemId);
 
@@ -59,6 +63,7 @@ export const OutboundLineEdit = ({
     alerts,
     isDirty,
     setAlerts,
+    clear,
   } = useAllocationContext(state => ({
     draftLines: state.draftLines,
     placeholderQuantity: state.placeholderQuantity,
@@ -66,6 +71,7 @@ export const OutboundLineEdit = ({
     alerts: state.alerts,
     isDirty: state.isDirty,
     setAlerts: state.setAlerts,
+    clear: state.clear,
   }));
 
   const onSave = async () => {
@@ -78,15 +84,8 @@ export const OutboundLineEdit = ({
       placeholderQuantity,
     });
 
-    // TODO- move out?
-    // wait i don't understand "scanned" at all fr
-    // it is possible for the user to select multiple batch lines
-    // if the scanned barcode does not contain a batch number
-    // however the scanned barcode can only relate to a specific pack size and therefore batch
-    const packSize = draftLines.find(line => line.numberOfPacks > 0)?.packSize;
-
     try {
-      await saveBarcode(itemId, packSize);
+      await saveBarcode(itemId);
     } catch (error) {
       warning(t('error.unable-to-save-barcode', { error }))();
     }
@@ -100,12 +99,7 @@ export const OutboundLineEdit = ({
       allocatedUnits === 0 &&
       !alerts.some(alert => alert.message === confirmZeroQuantityMessage)
     ) {
-      setAlerts([
-        {
-          message: confirmZeroQuantityMessage,
-          severity: 'warning',
-        },
-      ]);
+      setAlerts([{ message: confirmZeroQuantityMessage, severity: 'warning' }]);
       return;
     }
 
@@ -174,6 +168,7 @@ export const OutboundLineEdit = ({
             key={itemId}
             itemData={itemData}
             allowPlaceholder={status === InvoiceNodeStatus.New}
+            scannedBatch={asBarcodeOrNull(openedWith)?.batch}
           />
         )}
       </Grid>

@@ -56,3 +56,18 @@ export const canAutoAllocate = (line: DraftStockOutLineFragment) =>
   canAllocate(line) &&
   // shouldn't auto-allocate expired lines
   !(!!line.expiryDate && DateUtils.isExpired(new Date(line.expiryDate)));
+
+export const scannedBatchFilter = (
+  allLines: DraftStockOutLineFragment[],
+  selectedLine: DraftStockOutLineFragment,
+  scannedBatch: string
+) => {
+  if (!canAllocate(selectedLine)) return false;
+
+  const linesIncludeScannedBatch = allLines.some(l => l.batch === scannedBatch);
+
+  // If the requested batch is not in the list, we can allocate any line
+  if (!linesIncludeScannedBatch) return true;
+
+  return selectedLine.batch === scannedBatch;
+};

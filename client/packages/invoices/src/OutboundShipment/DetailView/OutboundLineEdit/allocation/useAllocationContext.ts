@@ -8,7 +8,12 @@ import {
 } from '@openmsupply-client/common';
 import { getAllocationAlerts, StockOutAlert } from '../../../../StockOut';
 import { DraftStockOutLineFragment } from '../../../api/operations.generated';
-import { canAllocate, getAllocatedUnits, issueStock } from './utils';
+import {
+  canAllocate,
+  getAllocatedUnits,
+  issueStock,
+  scannedBatchFilter,
+} from './utils';
 import { OutboundLineEditData } from '../../../api';
 import { allocateQuantities } from './allocateQuantities';
 
@@ -33,7 +38,6 @@ interface AllocationContext {
   draftLines: DraftStockOutLineFragment[];
   /** Lines which cannot be allocated from, but should be shown to the user */
   nonAllocatableLines: DraftStockOutLineFragment[];
-  allocatedUnits: number;
   alerts: StockOutAlert[];
   allocateIn: AllocateIn;
   initialisedForItemId: string | null;
@@ -42,11 +46,13 @@ interface AllocationContext {
   initialise: (
     input: OutboundLineEditData,
     strategy: AllocationStrategy,
-    withPlaceholder: boolean
+    withPlaceholder: boolean,
+    scannedBatch?: string
   ) => void;
 
   setDraftLines: (lines: DraftStockOutLineFragment[]) => void;
   setAlerts: (alerts: StockOutAlert[]) => void;
+  clear: () => void;
 
   manualAllocate: (lineId: string, quantity: number) => void;
   autoAllocate: (
@@ -63,22 +69,24 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   nonAllocatableLines: [],
   placeholderQuantity: null,
   alerts: [],
-  allocatedUnits: 0,
   allocateIn: AllocateIn.Units,
 
   initialise: (
     { item, draftLines, placeholderQuantity },
     strategy,
-    allowPlaceholder
+    allowPlaceholder,
+    scannedBatch?: string
   ) => {
-    // Sort by strategy
     const sortedLines = draftLines.sort(SorterByStrategy[strategy]);
 
     // Separate lines here, so only dealing with allocatable lines going forward
     // Note - expired is still considered allocatable, just not via auto-allocation
     const [allocatableLines, nonAllocatableLines] = ArrayUtils.partition(
       sortedLines,
-      canAllocate
+      line =>
+        scannedBatch
+          ? scannedBatchFilter(sortedLines, line, scannedBatch)
+          : canAllocate(line)
     );
 
     set({
@@ -92,6 +100,18 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       alerts: [],
     });
   },
+
+  clear: () =>
+    set(state => ({
+      ...state,
+      isDirty: false,
+      draftLines: [],
+      nonAllocatableLines: [],
+      placeholderQuantity: null,
+      initialisedForItemId: null,
+      allocateIn: AllocateIn.Units,
+      alerts: [],
+    })),
 
   setDraftLines: lines =>
     set(state => ({
@@ -116,7 +136,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
       const allocatedUnits = getAllocatedUnits({
         draftLines: result.allocatedLines,
-        placeholderQuantity: 0,
+        placeholderQuantity: 0, // don't want to include any placeholder in this calc
       });
 
       // TODO - alerts handled sep
@@ -130,10 +150,14 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
           !!expiryDate &&
           DateUtils.isExpired(new Date(expiryDate))
       );
+
+      const stillToAllocate =
+        result.remainingQuantity > 0 ? result.remainingQuantity : 0;
+
       const alerts = getAllocationAlerts(
         quantity,
         allocatedUnits,
-        result.remainingQuantity,
+        stillToAllocate,
         hasOnHold,
         hasExpired,
         format,
@@ -144,7 +168,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
         ...state,
         alerts,
         placeholderQuantity:
-          placeholderQuantity === null ? null : result.remainingQuantity,
+          placeholderQuantity === null ? null : stillToAllocate,
       }));
     }
   },
