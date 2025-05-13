@@ -7,6 +7,7 @@ import {
   ModalMode,
   useNotification,
   InvoiceNodeStatus,
+  BasicSpinner,
 } from '@openmsupply-client/common';
 import { useNextItem } from './hooks';
 import { useOutboundLineEditData } from '../../api';
@@ -112,7 +113,7 @@ export const OutboundLineEdit = ({
 
       return onSaved();
     } catch (e) {
-      // console.error(e);
+      // Errors handled by main GraphQL handler
     }
   };
 
@@ -148,7 +149,7 @@ export const OutboundLineEdit = ({
       }
       okButton={
         <DialogButton
-          disabled={!itemId} // todo - disable while handling issue quan change?
+          disabled={!itemId || !isDirty}
           variant="ok"
           onClick={() => handleSave(onClose)}
         />
@@ -160,9 +161,9 @@ export const OutboundLineEdit = ({
         <SelectItem
           itemId={itemId}
           onChangeItem={setItemId}
-          disabled={mode === ModalMode.Update} // possible to open via barcode of existing batch?
+          disabled={mode === ModalMode.Update}
         />
-        {isFetching && <div>LOADING TODO</div>}
+        {isFetching && <BasicSpinner />}
         {itemData && (
           <Allocation
             key={itemId}
