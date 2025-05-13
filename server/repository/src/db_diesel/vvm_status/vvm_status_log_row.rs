@@ -1,8 +1,8 @@
 use super::vvm_status_log_row::vvm_status_log::dsl::*;
-use crate::Upsert;
 use crate::{
     db_diesel::{invoice_line_row::invoice_line, stock_line_row::stock_line, store_row::store},
-    RepositoryError, StorageConnection,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
+    StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -69,21 +69,37 @@ impl<'a> VVMStatusLogRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn upsert_one(&self, row: &VVMStatusLogRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &VVMStatusLogRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(vvm_status_log::table)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
+    }
+
+    fn insert_changelog(
+        &self,
+        row: &VVMStatusLogRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::VVMStatusLog,
+            record_id: row.id.to_string(),
+            row_action: action,
+            store_id: Some(row.store_id.clone()),
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 }
 
 impl Upsert for VVMStatusLogRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        VVMStatusLogRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog yet
+        let change_log = VVMStatusLogRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log))
     }
 
     // Test Only
