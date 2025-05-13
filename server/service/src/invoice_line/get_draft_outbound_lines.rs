@@ -245,10 +245,10 @@ mod test {
     use repository::{
         mock::{
             mock_item_b, mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines,
-            mock_store_a, MockDataInserts,
+            mock_store_b, MockData, MockDataInserts,
         },
-        test_db::setup_all,
-        StockLineRow,
+        test_db::setup_all_with_data,
+        InvoiceLineRow, InvoiceLineType, StockLineRow,
     };
 
     #[test]
@@ -286,17 +286,31 @@ mod test {
 
     #[actix_rt::test]
     async fn generate_outbound_shipment_lines() {
-        let (_, _, connection_manager, _) =
-            setup_all("generate_outbound_shipment_lines", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "generate_outbound_shipment_lines",
+            MockDataInserts::all(),
+            MockData {
+                invoice_lines: vec![InvoiceLineRow {
+                    id: "placeholder".to_string(),
+                    item_link_id: mock_item_b().id,
+                    invoice_id: mock_outbound_shipment_a().id,
+                    number_of_packs: 7.0,
+                    pack_size: 1.0,
+                    r#type: InvoiceLineType::UnallocatedStock,
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.invoice_line_service;
 
-        let store_id = mock_store_a().id;
+        let store_id = mock_store_b().id;
 
-        // todo test placeholder quantity
-        let (result, _) = service
+        let (result, placeholder_quantity) = service
             .get_draft_outbound_shipment_lines(
                 &context,
                 &store_id,
@@ -305,8 +319,8 @@ mod test {
             )
             .unwrap();
 
-        // 1 from invoice, 4 from stock lines (there are 4 available stock lines in mock data, first is already in invoice)
-        assert_eq!(result.len(), 5);
+        // 1 from invoice, 1 from stock lines (there are 2 available stock lines in mock data, first is already in invoice)
+        assert_eq!(result.len(), 2);
 
         assert!(result.iter().all(|l| l.item_id == mock_item_b().id)); // all lines should be item_b
 
@@ -316,5 +330,7 @@ mod test {
             result[0].number_of_packs,
             outbound_item_b_line.number_of_packs // first line returned should be the one already in the invoice
         );
+
+        assert_eq!(placeholder_quantity, Some(7.0));
     }
 }
