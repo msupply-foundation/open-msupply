@@ -60,7 +60,10 @@ export const QuantityTableComponent = ({
   const itemVariantsEnabled = useIsItemVariantsEnabled();
   const displayInDoses =
     !!preferences?.displayVaccineInDoses && !!item?.isVaccine;
-  const unitName = getPlural(
+  const unitName = Formatter.sentenceCase(
+    item?.unitName ? item.unitName : t('label.unit')
+  );
+  const pluralisedUnitName = getPlural(
     Formatter.sentenceCase(item?.unitName ? item.unitName : t('label.unit')),
     2
   );
@@ -107,7 +110,7 @@ export const QuantityTableComponent = ({
   columnDefinitions.push({
     key: 'unitsPerPack',
     label: t('label.units-received', {
-      unit: unitName,
+      unit: pluralisedUnitName,
     }),
     width: 100,
     Cell: NumberInputCell,
