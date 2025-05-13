@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod query {
+    use repository::activity_log::ActivityLogFilter;
     use repository::item_variant::bundled_item::BundledItemFilter;
     use repository::item_variant::item_variant::ItemVariantFilter;
     use repository::mock::{
@@ -7,9 +8,10 @@ mod query {
         mock_user_account_a, MockDataInserts,
     };
     use repository::test_db::setup_all;
-    use repository::{EqualFilter, StringFilter};
+    use repository::{ActivityLogType, EqualFilter, StringFilter};
     use util::uuid::uuid;
 
+    use crate::activity_log::get_activity_logs;
     use crate::item::bundled_item::UpsertBundledItem;
     use crate::item::item_variant::{
         DeleteItemVariant, UpsertItemVariantError, UpsertItemVariantWithPackaging,
@@ -50,6 +52,15 @@ mod query {
                 },
             )
             .unwrap();
+
+        // Log created
+        assert_eq!(
+            get_activity_logs(&connection_manager, None, None, None)
+                .unwrap()
+                .rows
+                .len(),
+            1
+        );
 
         // Create another item variant for item_a
         let _item_a_variant_b = service
@@ -123,6 +134,28 @@ mod query {
                 },
             )
             .unwrap();
+
+        // Name update log
+        let name_update_log = get_activity_logs(
+            &connection_manager,
+            None,
+            Some(
+                ActivityLogFilter::new()
+                    .r#type(ActivityLogType::ItemVariantUpdatedName.equal_to())
+                    .record_id(EqualFilter::equal_to(test_item_a_variant_id)),
+            ),
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(
+            name_update_log.rows[0].activity_log_row.changed_from,
+            Some("item_a_variant_a".to_string())
+        );
+        assert_eq!(
+            name_update_log.rows[0].activity_log_row.changed_to,
+            Some("updated_name".to_string())
+        );
 
         // Query the item variant by name
         let item_variant = service
