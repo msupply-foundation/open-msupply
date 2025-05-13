@@ -14,12 +14,12 @@ import {
   CurrencyCell,
   ColumnDescription,
   UNDEFINED_STRING_VALUE,
-  TypedTFunction,
-  LocaleKey,
   useTranslation,
+  getDosesPerUnitColumn,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
+import { getDosesQuantityColumn } from '../../DoseQtyColumn';
 
 interface UseOutboundColumnOptions {
   sortBy: SortBy<StockOutLineFragment | StockOutItem>;
@@ -174,7 +174,13 @@ export const useOutboundColumns = ({
         accessor: ({ rowData }) => getPackSizeValue(rowData, getColumnProperty),
       },
     ],
-    ...(displayDoseColumns ? [getDosesPerUnitColumn(t)] : []),
+  ];
+
+  if (displayDoseColumns) {
+    columns.push(getDosesPerUnitColumn(t));
+  }
+
+  columns.push(
     [
       'numberOfPacks',
       {
@@ -217,8 +223,14 @@ export const useOutboundColumns = ({
           }
         },
       },
-    ],
-    ...(displayDoseColumns ? [getDoseQuantityColumn()] : []),
+    ]
+  );
+
+  if (displayDoseColumns) {
+    columns.push(getDosesQuantityColumn());
+  }
+
+  columns.push(
     {
       label: 'label.unit-sell-price',
       key: 'sellPricePerUnit',
@@ -275,65 +287,11 @@ export const useOutboundColumns = ({
         }
       },
     },
-    expansionColumn,
-  ];
+    expansionColumn
+  );
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
 };
-
-// TODO: use common column when merged - and align riiiiight
-const getDosesPerUnitColumn = (
-  t: TypedTFunction<LocaleKey>
-): ColumnDescription<StockOutLineFragment | StockOutItem> => ({
-  key: 'dosesPerUnit', // todo?
-  label: 'label.doses-per-unit',
-  accessor: ({ rowData }) => {
-    // This will get more complex once doses per unit is configured by item variant!
-    // return rowData?.doses,
-    if ('lines' in rowData) {
-      const { lines } = rowData;
-      if (Array.isArray(lines) && lines[0]?.item?.isVaccine) {
-        const doses = lines.map(
-          ({ item }) => item?.doses ?? UNDEFINED_STRING_VALUE
-        );
-        const dosesTheSame = doses.every(dose => dose === doses[0]);
-        return dosesTheSame ? doses[0] : t('multiple');
-      } else {
-        return UNDEFINED_STRING_VALUE;
-      }
-    } else {
-      return rowData?.item?.isVaccine
-        ? (rowData?.item?.doses ?? UNDEFINED_STRING_VALUE)
-        : UNDEFINED_STRING_VALUE;
-    }
-  },
-});
-
-// TODO: share with common when exists
-const getDoseQuantityColumn = (): ColumnDescription<
-  StockOutLineFragment | StockOutItem
-> => ({
-  key: 'doseQuantity',
-  label: 'label.doses',
-  width: 100,
-  align: ColumnAlign.Right,
-  accessor: ({ rowData }) => {
-    // This will get more complex once doses per unit is configured by item variant!
-    if ('lines' in rowData) {
-      const { lines } = rowData;
-      const isVaccine = lines[0]?.item?.isVaccine ?? false;
-      const unitQuantity = ArrayUtils.getUnitQuantity(lines);
-
-      return isVaccine
-        ? unitQuantity * (lines[0]?.item.doses ?? 1)
-        : UNDEFINED_STRING_VALUE;
-    } else {
-      return rowData.item.isVaccine
-        ? rowData.packSize * rowData.numberOfPacks * rowData.item.doses
-        : UNDEFINED_STRING_VALUE;
-    }
-  },
-});
 
 const getPackSizeValue = (
   row: StockOutLineFragment | StockOutItem,
@@ -345,11 +303,13 @@ const getPackSizeValue = (
   ]);
 
   if (lineType === InvoiceLineNodeType.UnallocatedStock) {
-    return UNDEFINED_STRING_VALUE;
-  } else {
-    return getColumnProperty(row, [
-      { path: ['lines', 'packSize'] },
-      { path: ['packSize'], default: '' },
-    ]);
+    const unitQuantity =
+      'lines' in row ? ArrayUtils.getUnitQuantity(row.lines) : row.packSize;
+
+    if (unitQuantity === 0) return UNDEFINED_STRING_VALUE;
   }
+  return getColumnProperty(row, [
+    { path: ['lines', 'packSize'] },
+    { path: ['packSize'], default: '' },
+  ]);
 };

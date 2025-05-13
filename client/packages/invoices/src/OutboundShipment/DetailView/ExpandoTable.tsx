@@ -5,10 +5,14 @@ import {
   ColumnDescription,
   NumberCell,
   useColumns,
-  UNDEFINED_STRING_VALUE,
+  getDosesPerUnitColumn,
+  TypedTFunction,
+  LocaleKey,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
+import { getDosesQuantityColumn } from '../../DoseQtyColumn';
 
 export const Expand = ({
   rowData,
@@ -22,8 +26,14 @@ export const Expand = ({
     const withDoseColumns =
       (displayDoseColumns && rowData.lines[0]?.item.isVaccine) ?? false;
 
+    const unitName = rowData.lines[0]?.item.unitName ?? undefined;
+
     return (
-      <ExpandInner rows={rowData.lines} withDoseColumns={withDoseColumns} />
+      <ExpandInner
+        rows={rowData.lines}
+        withDoseColumns={withDoseColumns}
+        unitName={unitName}
+      />
     );
   } else {
     return null;
@@ -33,17 +43,22 @@ export const Expand = ({
 const ExpandInner = ({
   rows,
   withDoseColumns,
+  unitName,
 }: {
   rows: StockOutLineFragment[];
   withDoseColumns: boolean;
+  unitName?: string;
 }) => {
-  const expandoColumns = useExpansionColumns(withDoseColumns);
+  const t = useTranslation();
+  const expandoColumns = useExpansionColumns(withDoseColumns, t, unitName);
 
   return <MiniTable rows={rows} columns={expandoColumns} />;
 };
 
 const useExpansionColumns = (
-  withDoseColumns: boolean
+  withDoseColumns: boolean,
+  t: TypedTFunction<LocaleKey>,
+  unitName?: string
 ): Column<StockOutLineFragment>[] => {
   const columns: ColumnDescription<StockOutLineFragment>[] = [
     'batch',
@@ -61,44 +76,28 @@ const useExpansionColumns = (
       },
     ],
     ['packSize', { Cell: NumberCell }],
-    ...(withDoseColumns ? [getDosesPerUnitColumn()] : []),
-    'numberOfPacks',
-    [
-      'unitQuantity',
-      {
-        accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
-      },
-    ],
-    ...(withDoseColumns ? [getDoseQuantityColumn()] : []),
-    [
-      'sellPricePerUnit',
-      {
-        accessor: ({ rowData }) => rowData.sellPricePerPack / rowData.packSize,
-      },
-    ],
   ];
+
+  if (withDoseColumns) {
+    columns.push(getDosesPerUnitColumn(t, unitName));
+  }
+  columns.push('numberOfPacks', [
+    'unitQuantity',
+    {
+      accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
+    },
+  ]);
+
+  if (withDoseColumns) {
+    columns.push(getDosesQuantityColumn());
+  }
+
+  columns.push([
+    'sellPricePerUnit',
+    {
+      accessor: ({ rowData }) => rowData.sellPricePerPack / rowData.packSize,
+    },
+  ]);
 
   return useColumns(columns);
 };
-
-// TODO dupes again!!
-const getDosesPerUnitColumn = (): ColumnDescription<StockOutLineFragment> => ({
-  key: 'dosesPerUnit', // todo?
-  label: 'label.doses-per-unit',
-  accessor: ({ rowData }) => {
-    // This will get more complex once doses per unit is configured by item variant!
-    // return rowData?.doses,
-    return rowData?.item?.doses ?? UNDEFINED_STRING_VALUE;
-  },
-});
-
-// TODO: share with common when exists
-const getDoseQuantityColumn = (): ColumnDescription<StockOutLineFragment> => ({
-  key: 'doseQuantity',
-  label: 'label.doses',
-  width: 100,
-  accessor: ({ rowData }) => {
-    // This will get more complex once doses per unit is configured by item variant!
-    return rowData.packSize * rowData.numberOfPacks * rowData.item.doses;
-  },
-});
