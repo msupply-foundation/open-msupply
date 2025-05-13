@@ -13,3 +13,6 @@ pub fn get_store_preferences(
         StorePreferenceRowRepository::new(connection).find_one_by_id_or_default(store_id)?;
     Ok(store_preferences)
 }
+
+// Note: If you want to get a new OMS preference, you can access it from the preference directly like this
+// let can_manage = ManageVvmStatus.load(connection, store_id);
