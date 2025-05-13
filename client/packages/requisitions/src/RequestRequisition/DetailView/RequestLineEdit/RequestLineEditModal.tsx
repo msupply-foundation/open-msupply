@@ -70,6 +70,7 @@ export const ModalContent = ({
         />
       }
       slideAnimation={false}
+      fullscreen={false}
     >
       <RequestLineEdit
         item={currentItem}
