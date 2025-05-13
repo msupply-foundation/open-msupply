@@ -21,6 +21,7 @@ export type InboundLineFragment = {
   foreignCurrencyPriceBeforeTax?: number | null;
   itemName: string;
   itemVariantId?: string | null;
+  vvmStatusId?: string | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -111,6 +112,7 @@ export type InboundFragment = {
       foreignCurrencyPriceBeforeTax?: number | null;
       itemName: string;
       itemVariantId?: string | null;
+      vvmStatusId?: string | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -315,6 +317,7 @@ export type InvoiceQuery = {
             foreignCurrencyPriceBeforeTax?: number | null;
             itemName: string;
             itemVariantId?: string | null;
+            vvmStatusId?: string | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -454,6 +457,7 @@ export type InboundByNumberQuery = {
             foreignCurrencyPriceBeforeTax?: number | null;
             itemName: string;
             itemVariantId?: string | null;
+            vvmStatusId?: string | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -973,6 +977,7 @@ export const InboundLineFragmentDoc = gql`
     foreignCurrencyPriceBeforeTax
     itemName
     itemVariantId
+    vvmStatusId
     item {
       __typename
       id

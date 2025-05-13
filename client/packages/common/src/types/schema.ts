@@ -3929,6 +3929,7 @@ export type InvoiceLineNode = {
   totalAfterTax: Scalars['Float']['output'];
   totalBeforeTax: Scalars['Float']['output'];
   type: InvoiceLineNodeType;
+  vvmStatusId?: Maybe<Scalars['String']['output']>;
 };
 
 export enum InvoiceLineNodeType {

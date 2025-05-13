@@ -27,9 +27,7 @@ import {
   VVMStatusInputCell,
   LocationRowFragment,
   PackSizeEntryCell,
-  useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
-import { useIsVVMStatusEnabled } from 'packages/system/src/Stock/api';
 
 interface TableProps {
   lines: DraftInboundLine[];
@@ -37,6 +35,8 @@ interface TableProps {
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
+  hasItemVariantsEnabled?: boolean;
+  hasVVMStatusesEnabled?: boolean;
 }
 
 const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
@@ -85,19 +85,19 @@ export const QuantityTableComponent: FC<TableProps> = ({
   lines,
   updateDraftLine,
   isDisabled = false,
+  hasItemVariantsEnabled,
+  hasVVMStatusesEnabled,
 }) => {
   const theme = useTheme();
-  const itemVariantsEnabled = useIsItemVariantsEnabled();
-  const VVMStatusEnabled = useIsVVMStatusEnabled();
 
-  // console.log('table', VVMStatusEnabled);
+  // console.log('table', hasVVMStatusEnabled);/
 
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     getBatchColumn(updateDraftLine, theme),
     getExpiryColumn(updateDraftLine, theme),
   ];
 
-  if (itemVariantsEnabled) {
+  if (hasItemVariantsEnabled) {
     columnDefinitions.push({
       key: 'itemVariantId',
       label: 'label.item-variant',
@@ -108,7 +108,7 @@ export const QuantityTableComponent: FC<TableProps> = ({
       setter: updateDraftLine,
     });
   }
-  if (VVMStatusEnabled) {
+  if (hasVVMStatusesEnabled) {
     columnDefinitions.push({
       key: 'VVMStatusId',
       label: 'label.vvm-status',

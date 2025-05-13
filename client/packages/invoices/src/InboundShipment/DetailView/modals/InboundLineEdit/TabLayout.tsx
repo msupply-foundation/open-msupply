@@ -25,6 +25,8 @@ interface TabLayoutProps {
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
+  hasItemVariantsEnabled?: boolean;
+  hasVVMStatusesEnabled?: boolean;
 }
 
 enum Tabs {
@@ -40,6 +42,8 @@ export const TabLayout: FC<TabLayoutProps> = ({
   updateDraftLine,
   currency,
   isExternalSupplier,
+  hasItemVariantsEnabled,
+  hasVVMStatusesEnabled,
 }) => {
   const t = useTranslation();
   const theme = useAppTheme();
@@ -109,6 +113,8 @@ export const TabLayout: FC<TabLayoutProps> = ({
             isDisabled={isDisabled}
             lines={draftLines}
             updateDraftLine={updateDraftLine}
+            hasItemVariantsEnabled={hasItemVariantsEnabled}
+            hasVVMStatusesEnabled={hasVVMStatusesEnabled}
           />
         </InboundLineEditPanel>
 

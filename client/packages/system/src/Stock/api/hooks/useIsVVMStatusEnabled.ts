@@ -17,13 +17,8 @@ export const useIsVVMStatusEnabled = () => {
         storeId,
       });
 
-      // console.log('api', result);
-
       return result.vvmStatusesConfigured;
     },
-
-    // Only call on page load
-    // refetchOnMount: false,
   });
   return !!prefs && !!vvmStatuses;
 };

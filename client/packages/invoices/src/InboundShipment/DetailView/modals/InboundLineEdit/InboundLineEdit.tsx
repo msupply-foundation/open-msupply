@@ -28,6 +28,8 @@ interface InboundLineEditProps {
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
+  hasItemVariantsEnabled: boolean;
+  hasVVMStatusesEnabled: boolean;
 }
 
 const useDraftInboundLines = (item: InboundLineItem | null) => {
@@ -119,6 +121,8 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   isDisabled = false,
   currency,
   isExternalSupplier,
+  hasItemVariantsEnabled,
+  hasVVMStatusesEnabled,
 }) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -201,6 +205,8 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
               isDisabled={isDisabled}
               currency={currency}
               isExternalSupplier={isExternalSupplier}
+              hasItemVariantsEnabled={hasItemVariantsEnabled}
+              hasVVMStatusesEnabled={hasVVMStatusesEnabled}
             />
           </>
         )}
