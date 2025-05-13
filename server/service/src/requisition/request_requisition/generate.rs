@@ -1,5 +1,10 @@
 use chrono::Utc;
-use repository::{EqualFilter, RequisitionLineRow, RequisitionRow, StoreFilter, StoreRepository};
+use repository::vaccination_course::VaccinationCourseRepository;
+use repository::vaccine_course::vaccine_course_item_row::VaccineCourseItemRowRepository;
+use repository::{
+    EqualFilter, ItemLinkRowRepository, RequisitionLineRow, RequisitionRow, StoreFilter,
+    StoreRepository,
+};
 use util::uuid::uuid;
 
 use crate::item_stats::get_item_stats;
@@ -67,6 +72,26 @@ pub fn get_population_served(ctx: &ServiceContext, store_id: &str) -> Option<i32
     }
 }
 
+pub fn get_num_doses(ctx: &ServiceContext, item_id: &str) -> Option<i32> {
+    dbg!(item_id);
+    let connection = &ctx.connection;
+    let repository = VaccinationCourseRepository::new(&connection);
+    let rows = repository.query_by_item_id(item_id.to_string());
+
+    dbg!(&rows);
+
+    match rows {
+        Ok(rows) => {
+            if rows.is_empty() {
+                return None;
+            }
+            let num_doses = rows.len() as i32;
+            return Some(num_doses);
+        }
+        Err(_) => return None,
+    }
+}
+
 pub fn generate_requisition_lines(
     ctx: &ServiceContext,
     store_id: &str,
@@ -98,7 +123,8 @@ pub fn generate_requisition_lines(
             ) = if forecasting_pref {
                 (
                     get_population_served(ctx, store_id),
-                    Some(66),
+                    get_num_doses(ctx, &item_stats.item_id),
+                    // get_num_doses(ctx, store_id, item_stats.item_id),
                     Some(6.6),
                     Some(6.6),
                 )

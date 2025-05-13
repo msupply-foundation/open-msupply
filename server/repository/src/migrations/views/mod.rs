@@ -28,6 +28,7 @@ pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
       DROP VIEW IF EXISTS requisitions_in_period;
       DROP VIEW IF EXISTS store_items;
       DROP VIEW IF EXISTS vaccination_card;
+      DROP VIEW IF EXISTS vaccination_course;
     "#
     )?;
 
@@ -462,13 +463,13 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         item.id AS item_id,
         item.name AS item_name,
         item.code AS item_code,
-        item.type AS TYPE,
+        item.type AS item_type,
         item.default_pack_size,
         item.is_vaccine AS is_vaccine_item,
         item.vaccine_doses,
         item.unit_id AS unit_id,
         unit.name AS unit,
-        unit.index AS unit_index,
+        unit."index" AS unit_index,
         d.id AS demographic_id,
         d.name AS demographic_name,
         p.id AS program_id,
@@ -480,8 +481,8 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         JOIN item_link il ON vci.item_link_id = il.id
         JOIN item ON item.id = il.item_id
         LEFT JOIN unit ON item.unit_id = unit.id
-        JOIN demographic d ON d.id = vc.demographic_id
-        JOIN PROGRAM p ON p.id = vc.program_id;
+        LEFT JOIN demographic d ON d.id = vc.demographic_id
+        LEFT JOIN PROGRAM p ON p.id = vc.program_id;
     "#,
     )?;
 
