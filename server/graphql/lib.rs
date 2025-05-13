@@ -54,7 +54,7 @@ use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
 
 use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
-use graphql_vvm::VVMQueries;
+use graphql_vvm::{VVMMutations, VVMQueries};
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::plugin::validation::ValidatedPluginBucket;
@@ -228,6 +228,7 @@ pub struct Mutations(
     pub AssetLogMutations,
     pub InventoryAdjustmentMutations,
     pub ContactFormMutations,
+    pub VVMMutations,
 );
 
 impl Mutations {
@@ -254,6 +255,7 @@ impl Mutations {
             AssetLogMutations,
             InventoryAdjustmentMutations,
             ContactFormMutations,
+            VVMMutations,
         )
     }
 }

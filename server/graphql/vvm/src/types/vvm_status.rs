@@ -1,5 +1,5 @@
 use async_graphql::{Object, SimpleObject, Union};
-use repository::vvm_status_row::VVMStatusRow;
+use repository::vvm_status::vvm_status_row::VVMStatusRow;
 
 #[derive(PartialEq, Debug)]
 pub struct VVMStatusNode {
@@ -53,9 +53,7 @@ pub struct VVMStatusConnector {
 }
 
 impl VVMStatusConnector {
-    pub fn from_domain(
-        vvm_statuses: Vec<VVMStatusRow>,
-    ) -> VVMStatusConnector {
+    pub fn from_domain(vvm_statuses: Vec<VVMStatusRow>) -> VVMStatusConnector {
         VVMStatusConnector {
             nodes: vvm_statuses
                 .into_iter()
