@@ -90,8 +90,8 @@ mod stocktake_line_test {
             program_master_list_store, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentType, StockLineFilter,
-        StockLineRepository, StockLineRow, StocktakeLineRow, StocktakeRow,
+        EqualFilter, ReasonOptionRow, ReasonOptionType, StockLineFilter, StockLineRepository,
+        StockLineRow, StocktakeLineRow, StocktakeRow,
     };
     use util::uuid::uuid;
 
@@ -299,20 +299,20 @@ mod stocktake_line_test {
     async fn insert_stocktake_line_with_reasons() {
         // test cases that require reasons configured
 
-        fn positive_reason() -> InventoryAdjustmentReasonRow {
-            InventoryAdjustmentReasonRow {
+        fn positive_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
                 id: "positive_reason".to_string(),
                 is_active: true,
-                r#type: InventoryAdjustmentType::Positive,
+                r#type: ReasonOptionType::PositiveInventoryAdjustment,
                 reason: "Found".to_string(),
             }
         }
 
-        fn negative_reason() -> InventoryAdjustmentReasonRow {
-            InventoryAdjustmentReasonRow {
+        fn negative_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
                 id: "negative_reason".to_string(),
                 is_active: true,
-                r#type: InventoryAdjustmentType::Negative,
+                r#type: ReasonOptionType::NegativeInventoryAdjustment,
                 reason: "Lost".to_string(),
             }
         }
@@ -366,7 +366,7 @@ mod stocktake_line_test {
             "insert_stocktake_line_with_reasons",
             MockDataInserts::all(),
             MockData {
-                inventory_adjustment_reasons: vec![positive_reason(), negative_reason()],
+                options: vec![positive_reason(), negative_reason()],
                 stock_lines: vec![mock_stock_line_c(), mock_stock_line_d()],
                 stocktakes: vec![mock_initial_stocktake(&store_id)],
                 ..Default::default()
@@ -408,7 +408,7 @@ mod stocktake_line_test {
                     stocktake_id: stocktake.id,
                     stock_line_id: Some(stock_line.id),
                     counted_number_of_packs: Some(17.0),
-                    inventory_adjustment_reason_id: Some(negative_reason().id),
+                    reason_option_id: Some(negative_reason().id),
                     ..Default::default()
                 },
             )
@@ -425,7 +425,7 @@ mod stocktake_line_test {
                     stocktake_id: stocktake_a.id.clone(),
                     counted_number_of_packs: Some(50.0),
                     stock_line_id: Some(stock_line.id.clone()),
-                    inventory_adjustment_reason_id: Some(positive_reason().id),
+                    reason_option_id: Some(positive_reason().id),
                     ..Default::default()
                 },
             )
@@ -440,7 +440,7 @@ mod stocktake_line_test {
                 snapshot_number_of_packs: 30.0,
                 item_link_id: stock_line.item_link_id,
                 item_name: "Item A".to_string(),
-                inventory_adjustment_reason_id: Some(positive_reason().id),
+                reason_option_id: Some(positive_reason().id),
                 ..Default::default()
             },
         );
@@ -457,7 +457,7 @@ mod stocktake_line_test {
                     stocktake_id: stocktake_a.id,
                     counted_number_of_packs: Some(20.0),
                     item_id: Some(item_a.id),
-                    inventory_adjustment_reason_id: Some(positive_reason().id),
+                    reason_option_id: Some(positive_reason().id),
                     ..Default::default()
                 },
             )
@@ -474,7 +474,7 @@ mod stocktake_line_test {
                     stocktake_id: stocktake_a.id,
                     counted_number_of_packs: Some(20.0),
                     stock_line_id: Some(mock_stock_line_c().id),
-                    inventory_adjustment_reason_id: Some(negative_reason().id),
+                    reason_option_id: Some(negative_reason().id),
                     ..Default::default()
                 },
             )
@@ -521,11 +521,11 @@ mod stocktake_line_test {
                     stocktake_id: "initial_stocktake".to_string(),
                     counted_number_of_packs: Some(20.0),
                     item_id: Some(item_a.id),
-                    inventory_adjustment_reason_id: None,
+                    reason_option_id: None,
                     ..Default::default()
                 },
             )
             .unwrap();
-        assert_eq!(result.line.inventory_adjustment_reason_id, None);
+        assert_eq!(result.line.reason_option_id, None);
     }
 }

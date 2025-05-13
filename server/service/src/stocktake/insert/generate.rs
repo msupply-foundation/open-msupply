@@ -304,6 +304,7 @@ pub fn generate_lines_initial_stocktake(
             counted_number_of_packs: None,
             inventory_adjustment_reason_id: None,
             item_variant_id: None,
+            reason_option_id: None,
         })
         .collect();
 
