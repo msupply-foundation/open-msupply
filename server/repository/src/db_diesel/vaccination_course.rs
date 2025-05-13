@@ -1,4 +1,4 @@
-use super::StorageConnection;
+use super::{ItemType, StorageConnection};
 
 use crate::RepositoryError;
 use diesel::prelude::*;
@@ -47,7 +47,7 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Selectable, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Selectable, Debug, PartialEq)]
 #[diesel(table_name = vaccination_course)]
 pub struct VaccinationCourseRow {
     pub id: String,
@@ -69,7 +69,7 @@ pub struct VaccinationCourseRow {
     pub item_id: String,
     pub item_name: String,
     pub item_code: String,
-    // pub item_type: ItemType,
+    pub item_type: ItemType,
     pub default_pack_size: f64,
     pub is_vaccine_item: bool,
     pub vaccine_doses: i32,
