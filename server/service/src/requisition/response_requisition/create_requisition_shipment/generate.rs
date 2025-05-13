@@ -110,6 +110,7 @@ pub fn generate_invoice_lines(
             item_variant_id: None,
             prescribed_quantity: None,
             linked_invoice_id: None,
+            vvm_status_id: None,
         });
     }
 
