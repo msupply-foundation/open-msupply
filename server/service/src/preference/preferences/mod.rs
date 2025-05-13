@@ -9,9 +9,6 @@ pub use manage_vvm_status::*;
 pub mod sort_by_vvm_status;
 pub use sort_by_vvm_status::*;
 
-use super::{Preference, PreferenceError};
-use repository::StorageConnection;
-
 pub struct PreferenceProvider {
     // Add each preference here
     pub show_contact_tracing: ShowContactTracing,
