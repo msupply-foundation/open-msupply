@@ -42,7 +42,7 @@ pub fn generate_logs(
     existing_variant: Option<ItemVariant>,
     updated_variant: ItemVariant,
 ) -> Result<(), RepositoryError> {
-    if let Some(existing_variant) = (existing_variant) {
+    if let Some(existing_variant) = existing_variant {
         let existing_item_variant = existing_variant.item_variant_row;
         let updated_item_variant = updated_variant.item_variant_row;
 

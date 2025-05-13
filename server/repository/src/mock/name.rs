@@ -19,6 +19,7 @@ pub fn mock_name_store_b() -> NameRow {
         r.id = String::from("name_store_b");
         r.name = String::from("Store B");
         r.code = String::from("code");
+        r.is_manufacturer = true;
     })
 }
 
