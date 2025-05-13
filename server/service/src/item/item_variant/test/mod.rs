@@ -2,7 +2,7 @@
 mod query {
     use repository::item_variant::bundled_item::BundledItemFilter;
     use repository::item_variant::item_variant::ItemVariantFilter;
-    use repository::mock::{mock_item_a, mock_item_b, MockDataInserts};
+    use repository::mock::{mock_item_a, mock_item_b, mock_user_account_a, MockDataInserts};
     use repository::test_db::setup_all;
     use repository::{EqualFilter, StringFilter};
     use util::uuid::uuid;
@@ -18,12 +18,14 @@ mod query {
     async fn create_edit_delete_item_variant() {
         let (_, _, connection_manager, _) = setup_all(
             "create_edit_delete_item_variant",
-            MockDataInserts::none().items(),
+            MockDataInserts::none().items().user_accounts(),
         )
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider.basic_context().unwrap();
+        let context = service_provider
+            .context("".to_string(), mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.item_service;
 
         let test_item_a_variant_id = "test_item_variant_id";
@@ -173,7 +175,7 @@ mod query {
                 None,
                 Some(
                     BundledItemFilter::new()
-                        .principal_item_variant_id(EqualFilter::equal_to(&test_item_b_variant_id)),
+                        .principal_item_variant_id(EqualFilter::equal_to(test_item_b_variant_id)),
                 ),
             )
             .unwrap();
@@ -182,11 +184,16 @@ mod query {
 
     #[actix_rt::test]
     async fn validate_item_variant() {
-        let (_, _, connection_manager, _) =
-            setup_all("validate_item_variant", MockDataInserts::none().items()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "validate_item_variant",
+            MockDataInserts::none().items().user_accounts(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider.basic_context().unwrap();
+        let context = service_provider
+            .context("".to_string(), mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.item_service;
 
         let test_item_a_variant_id = "test_item_variant_id";
