@@ -30,14 +30,3 @@ pub fn get_preference_provider() -> PreferenceProvider {
         sort_by_vvm_status: SortByVvmStatus,
     }
 }
-
-/// Gets the preference passed into it, use it like this...
-/// get_preference(ctx, store_id, DisplayPopulationBasedForecasting);
-/// Note: this doesn't resolve global vs store preferences yet...
-pub fn get_preference<T: Preference>(
-    connection: &StorageConnection,
-    store_id: Option<String>,
-    pref: T,
-) -> Result<T::Value, PreferenceError> {
-    pref.load(connection, store_id)
-}
