@@ -23,6 +23,8 @@ export const EditStorePreferences = ({ storeId }: { storeId: string }) => {
   if (!preferences.length) return <NothingHere />;
 
   return preferences.map(pref => {
+    const isLast = preferences[preferences?.length - 1]?.key === pref.key;
+
     return (
       <InputWithLabelRow
         key={pref.key}
@@ -32,13 +34,17 @@ export const EditStorePreferences = ({ storeId }: { storeId: string }) => {
             disabled={!isCentralServer}
             preference={pref}
             update={value => {
-              // For store prefs, send an array with storeId and value
               update({
                 [pref.key]: [{ storeId, value }],
               });
             }}
           />
         }
+        sx={{
+          borderBottom: isLast ? 'none' : '1px dashed',
+          borderColor: 'gray.main',
+          padding: 1,
+        }}
       />
     );
   });
