@@ -9,8 +9,9 @@ use repository::{
     vvm_status::{vvm_status_log_row::VVMStatusLogRow, vvm_status_row::VVMStatusRow},
     RepositoryError, StorageConnection,
 };
-use vvm_status_log::insert::{
-    insert_vvm_status_log, InsertVVMStatusLogError, InsertVVMStatusLogInput,
+use vvm_status_log::{
+    insert::{insert_vvm_status_log, InsertVVMStatusLogError, InsertVVMStatusLogInput},
+    update::{update_vvm_status_log, UpdateVVMStatusLogError, UpdateVVMStatusLogInput},
 };
 
 pub mod vvm_status;
@@ -39,6 +40,15 @@ pub trait VVMServiceTrait: Sync + Send {
         input: InsertVVMStatusLogInput,
     ) -> Result<VVMStatusLogRow, InsertVVMStatusLogError> {
         insert_vvm_status_log(ctx, store_id, input)
+    }
+
+    fn update_vvm_status_log(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: UpdateVVMStatusLogInput,
+    ) -> Result<VVMStatusLogRow, UpdateVVMStatusLogError> {
+        update_vvm_status_log(ctx, &store_id, input)
     }
 }
 
