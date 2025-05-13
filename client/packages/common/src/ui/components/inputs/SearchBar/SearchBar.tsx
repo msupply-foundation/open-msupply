@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BasicTextInput } from '../TextInput';
 import { CloseIcon, SearchIcon } from '@common/icons';
 import { useDebouncedValueCallback } from '@common/hooks';
@@ -10,17 +10,25 @@ import { useTranslation } from '@common/intl';
 interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
+  onClear?: () => void;
+  onSearchIconClick?: () => void;
+  searchIconButtonLabel?: string;
   placeholder: string;
   isLoading?: boolean;
   debounceTime?: number;
   expandOnFocus?: boolean;
+  autoFocus?: boolean;
 }
 
-const EndAdornment: FC<{
+const EndAdornment = ({
+  hasValue,
+  isLoading,
+  onClear,
+}: {
   isLoading: boolean;
   hasValue: boolean;
   onClear: () => void;
-}> = ({ hasValue, isLoading, onClear }) => {
+}) => {
   const t = useTranslation();
   if (isLoading) return <InlineSpinner />;
 
@@ -38,14 +46,18 @@ const EndAdornment: FC<{
   );
 };
 
-export const SearchBar: FC<SearchBarProps> = ({
+export const SearchBar = ({
   value,
   onChange,
+  onSearchIconClick,
+  onClear,
   placeholder,
   isLoading = false,
   debounceTime = 500,
   expandOnFocus = false,
-}) => {
+  searchIconButtonLabel = '',
+  autoFocus = false,
+}: SearchBarProps) => {
   const [buffer, setBuffer] = useState(value);
   const [loading, setLoading] = useState(false);
 
@@ -68,6 +80,10 @@ export const SearchBar: FC<SearchBarProps> = ({
     setLoading(true);
   };
 
+  const searchIcon = (
+    <SearchIcon sx={{ color: 'gray.main', marginBottom: 1 }} fontSize="small" />
+  );
+
   return (
     <Box
       sx={{
@@ -75,18 +91,28 @@ export const SearchBar: FC<SearchBarProps> = ({
         alignItems: 'flex-end',
       }}
     >
-      <SearchIcon
-        sx={{ color: 'gray.main', marginBottom: 1 }}
-        fontSize="small"
-      />
+      {onSearchIconClick ? (
+        <IconButton
+          icon={searchIcon}
+          onClick={onSearchIconClick}
+          label={searchIconButtonLabel}
+        />
+      ) : (
+        searchIcon
+      )}
+
       <BasicTextInput
+        autoFocus={autoFocus}
         slotProps={{
           input: {
             endAdornment: (
               <EndAdornment
                 isLoading={isLoading || loading}
                 hasValue={!!buffer}
-                onClear={() => handleChange('')}
+                onClear={() => {
+                  handleChange('');
+                  if (onClear) onClear();
+                }}
               />
             ),
             sx: {

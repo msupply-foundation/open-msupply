@@ -1,20 +1,24 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Box,
+  // Fade,
   GlobalStyles,
-  InfoTooltipIcon,
+  InfoIcon,
   LocaleKey,
   NothingHere,
   Table,
+  Tooltip,
   useTranslation,
   ViewportList,
+  ViewportListRef,
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { RnRFormLine } from './RnRFormLine';
+import { Search } from './Search';
+import { useOneTime, useRnRFormContext } from '../api';
 
 interface ContentAreaProps {
   data: RnRFormLineFragment[];
-  saveLine: (line: RnRFormLineFragment) => Promise<void>;
   periodLength: number;
   disabled: boolean;
 }
@@ -29,24 +33,40 @@ interface HeaderCellProps {
 const HeaderCell = ({ className, label, tooltip, width }: HeaderCellProps) => {
   const t = useTranslation();
 
+  const Header = (
+    <Box display="flex" style={{ fontSize: 14 }}>
+      {t(label)}
+      {tooltip && (
+        <div style={{ transform: 'scale(0.7)', cursor: 'help' }}>
+          <InfoIcon fontSize="small" />
+        </div>
+      )}
+    </Box>
+  );
   return (
     <th className={className} style={{ minWidth: width }}>
-      <Box display="flex" style={{ fontSize: 14 }}>
-        {t(label)}
-        {tooltip && <InfoTooltipIcon title={t(tooltip)} />}
-      </Box>
+      {tooltip ? <Tooltip title={t(tooltip)}>{Header}</Tooltip> : Header}
     </th>
   );
 };
-
 export const ContentArea = ({
   data,
-  saveLine,
   periodLength,
   disabled,
 }: ContentAreaProps) => {
   const t = useTranslation();
-  const ref = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<ViewportListRef>(null);
+  const { setListRef } = useRnRFormContext(
+    useOneTime(({ setListRef }) => ({
+      setListRef,
+    }))
+  );
+
+  useEffect(() => {
+    // Store the ref in Zustand state
+    setListRef(listRef);
+  }, [setListRef]);
 
   return data.length === 0 ? (
     <NothingHere body={t('error.no-items')} />
@@ -61,7 +81,7 @@ export const ContentArea = ({
         width: '100%',
         scrollSnapType: 'x mandatory',
       }}
-      ref={ref}
+      ref={containerRef}
     >
       <GlobalStyles
         styles={{
@@ -114,91 +134,24 @@ export const ContentArea = ({
           },
         }}
       >
-        <thead>
-          <tr>
-            <HeaderCell
-              className="sticky-column first-column"
-              label="label.code"
-            />
-            <HeaderCell
-              className="sticky-column second-column"
-              label="label.name"
-            />
-            <HeaderCell label="label.strength" width={85} />
-            <HeaderCell label="label.unit" width={80} />
-            <HeaderCell label="label.ven" width={55} />
-            <HeaderCell
-              label="label.rnr-initial-balance"
-              tooltip="description.rnr-initial-balance"
-            />
-            <HeaderCell
-              label="label.rnr-received"
-              tooltip="description.rnr-received"
-            />
-            <HeaderCell
-              label="label.rnr-consumed"
-              tooltip="description.rnr-consumed"
-            />
-            <HeaderCell
-              label="label.adjusted"
-              tooltip="description.rnr-consumed-adjusted"
-            />
-            <HeaderCell
-              label="label.losses"
-              tooltip="description.rnr-adjustments"
-            />
-            <HeaderCell
-              label="label.rnr-adjustments"
-              tooltip="description.rnr-adjustments"
-            />
-            <HeaderCell label="label.rnr-stock-out-duration" />
-            <HeaderCell
-              label="label.rnr-final-balance"
-              tooltip="description.rnr-final-balance"
-            />
-            <HeaderCell label="label.amc" tooltip="description.rnr-amc" />
-            <HeaderCell
-              label="label.rnr-minimum-quantity"
-              tooltip="description.rnr-minimum-quantity"
-            />
-            <HeaderCell
-              label="label.rnr-maximum-quantity"
-              tooltip="description.rnr-maximum-quantity"
-            />
-            <HeaderCell label="label.expiry" tooltip="description.expiry" />
-            <HeaderCell
-              label="label.requested"
-              tooltip="description.rnr-requested-quantity"
-            />
-            <HeaderCell
-              label="label.low-stock"
-              tooltip="description.rnr-low-stock"
-            />
-            <HeaderCell label="label.comment" />
-            <HeaderCell label="label.confirmed" />
-            <HeaderCell
-              label="label.approved-quantity"
-              tooltip="description.rnr-approved-quantity"
-            />
-          </tr>
-        </thead>
+        <Headers />
 
         <tbody>
           <ViewportList
-            viewportRef={ref}
+            viewportRef={containerRef}
             items={data}
+            ref={listRef}
             axis="y"
             renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
             initialDelay={1}
-            itemSize={60}
+            itemSize={70}
             overscan={5} // Gives a buffer for when android keyboard opens
           >
             {line => (
               <RnRFormLine
                 key={line.id}
-                line={line}
+                lineId={line.id}
                 periodLength={periodLength}
-                saveLine={saveLine}
                 disabled={disabled}
               />
             )}
@@ -206,5 +159,82 @@ export const ContentArea = ({
         </tbody>
       </Table>
     </Box>
+  );
+};
+
+const Headers = () => {
+  const t = useTranslation();
+  return (
+    <thead>
+      <tr>
+        <HeaderCell className="sticky-column first-column" label="label.code" />
+
+        {/* Not the usual HeaderCell here, to add the search input */}
+        <th className="sticky-column second-column">
+          <Box
+            sx={{
+              fontSize: 14,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            {t('label.name')}
+            <Search />
+          </Box>
+        </th>
+        <HeaderCell label="label.unit" width={80} />
+        <HeaderCell label="label.ven" width={55} />
+        <HeaderCell
+          label="label.rnr-initial-balance"
+          tooltip="description.rnr-initial-balance"
+        />
+        <HeaderCell
+          label="label.rnr-received"
+          tooltip="description.rnr-received"
+        />
+        <HeaderCell
+          label="label.rnr-consumed"
+          tooltip="description.rnr-consumed"
+        />
+        <HeaderCell
+          label="label.adjusted"
+          tooltip="description.rnr-consumed-adjusted"
+        />
+        <HeaderCell label="label.losses" tooltip="description.rnr-losses" />
+        <HeaderCell
+          label="label.rnr-adjustments"
+          tooltip="description.rnr-adjustments"
+        />
+        <HeaderCell label="label.rnr-stock-out-duration" />
+        <HeaderCell
+          label="label.rnr-final-balance"
+          tooltip="description.rnr-final-balance"
+        />
+        <HeaderCell label="label.amc" tooltip="description.rnr-amc" />
+        <HeaderCell
+          label="label.rnr-minimum-quantity"
+          tooltip="description.rnr-minimum-quantity"
+        />
+        <HeaderCell
+          label="label.rnr-maximum-quantity"
+          tooltip="description.rnr-maximum-quantity"
+        />
+        <HeaderCell label="label.expiry" tooltip="description.expiry" />
+        <HeaderCell
+          label="label.requested"
+          tooltip="description.rnr-requested-quantity"
+        />
+        <HeaderCell
+          label="label.low-stock"
+          tooltip="description.rnr-low-stock"
+        />
+        <HeaderCell label="label.comment" />
+        <HeaderCell
+          label="label.approved-quantity"
+          tooltip="description.rnr-approved-quantity"
+        />
+      </tr>
+    </thead>
   );
 };
