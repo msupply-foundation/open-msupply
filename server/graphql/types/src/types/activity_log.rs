@@ -81,6 +81,13 @@ pub enum ActivityLogNodeType {
     DemographicProjectionCreated,
     DemographicProjectionUpdated,
     InvoiceStatusCancelled,
+    ItemVariantCreated,
+    ItemVariantDeleted,
+    ItemVariantUpdatedName,
+    ItemVariantUpdateColdStorageType,
+    ItemVariantUpdateManufacturer,
+    ItemVariantUpdateDosePerUnit,
+    ItemVariantUpdateVVMType,
 }
 
 #[Object]
@@ -217,6 +224,13 @@ impl ActivityLogNodeType {
             from::DemographicProjectionUpdated => to::DemographicProjectionUpdated,
             from::InvoiceStatusCancelled => to::InvoiceStatusCancelled,
             from::PrescriptionStatusCancelled => to::PrescriptionStatusCancelled,
+            from::ItemVariantCreated => to::ItemVariantCreated,
+            from::ItemVariantDeleted => to::ItemVariantDeleted,
+            from::ItemVariantUpdatedName => to::ItemVariantUpdatedName,
+            from::ItemVariantUpdateColdStorageType => to::ItemVariantUpdateColdStorageType,
+            from::ItemVariantUpdateManufacturer => to::ItemVariantUpdateManufacturer,
+            from::ItemVariantUpdateDosePerUnit => to::ItemVariantUpdateDosePerUnit,
+            from::ItemVariantUpdateVVMType => to::ItemVariantUpdateVVMType,
         }
     }
 
@@ -283,6 +297,13 @@ impl ActivityLogNodeType {
             from::DemographicProjectionUpdated => to::DemographicProjectionUpdated,
             from::PrescriptionStatusCancelled => to::PrescriptionStatusCancelled,
             from::InvoiceStatusCancelled => to::InvoiceStatusCancelled,
+            from::ItemVariantCreated => to::ItemVariantCreated,
+            from::ItemVariantDeleted => to::ItemVariantDeleted,
+            from::ItemVariantUpdatedName => to::ItemVariantUpdatedName,
+            from::ItemVariantUpdateColdStorageType => to::ItemVariantUpdateColdStorageType,
+            from::ItemVariantUpdateManufacturer => to::ItemVariantUpdateManufacturer,
+            from::ItemVariantUpdateDosePerUnit => to::ItemVariantUpdateDosePerUnit,
+            from::ItemVariantUpdateVVMType => to::ItemVariantUpdateVVMType,
         }
     }
 }

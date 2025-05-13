@@ -167,8 +167,14 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
             )
         }
         // Generic errors
-        ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
-        ServiceError::ItemDoesNotExist => InternalError(formatted_error),
+        ServiceError::CreatedRecordNotFound
+        | ServiceError::ItemDoesNotExist
+        | ServiceError::CantChangeItem
+        | ServiceError::ColdStorageTypeDoesNotExist
+        | ServiceError::OtherPartyDoesNotExist
+        | ServiceError::OtherPartyNotVisible
+        | ServiceError::OtherPartyNotAManufacturer => BadUserInput(formatted_error),
+
         ServiceError::PackagingVariantError(upsert_packaging_variant_error) => {
             match upsert_packaging_variant_error {
                 UpsertPackagingVariantError::ItemVariantDoesNotExist => {
@@ -186,9 +192,6 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
             }
         }
         ServiceError::DatabaseError(_repository_error) => InternalError(formatted_error),
-        ServiceError::CantChangeItem => BadUserInput(formatted_error),
-
-        ServiceError::ColdStorageTypeDoesNotExist => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

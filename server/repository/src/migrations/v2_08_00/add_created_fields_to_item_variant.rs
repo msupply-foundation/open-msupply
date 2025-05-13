@@ -11,9 +11,9 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                    ALTER TABLE item_variant ADD COLUMN created_datetime {DATETIME} NOT NULL DEFAULT {DEFAULT_TIMESTAMP};
-                    ALTER TABLE item_variant ADD COLUMN created_by TEXT REFERENCES user_account(id);
-                "#
+                ALTER TABLE item_variant ADD COLUMN created_datetime {DATETIME} NOT NULL DEFAULT {DEFAULT_TIMESTAMP};
+                ALTER TABLE item_variant ADD COLUMN created_by TEXT REFERENCES user_account(id);
+            "#
         )?;
         Ok(())
     }
