@@ -123,6 +123,7 @@
   "error.provide-reason": "Tenke justifika razaun ba lina sira ne'ebe maka iha diferensia iha kalkulasaun numeru ba pakote nian.",
   "error.provide-valid-reason": "Ajustamentu razaun la han malu ho ajustamentu diresaun",
   "error.reduced-below-zero": "Lina Stock existe iha remessas sasan sai nian. Kuantidade labele reduz kiik liu husi zero.",
+  "error.rnr-has-errors": "Cannot finalise the R&R form while some lines have errors. You will be taken to the first error line",
   "error.server-failed-to-start": "Erru! Servedor falha atu Start",
   "error.server-not-found": "Hasoru problema wainhira atu lokaliza servedor mSupply Lokal nian",
   "error.shipment-not-found": "Remessa la hetan",

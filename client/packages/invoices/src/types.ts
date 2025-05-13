@@ -10,6 +10,7 @@ export interface DraftInboundLine extends InboundLineFragment {
   isCreated?: boolean;
   isDeleted?: boolean;
   isUpdated?: boolean;
+  unitsPerPack?: number;
 }
 
 export interface DraftStockOutLine extends StockOutLineFragment {
@@ -46,4 +47,11 @@ export type SupplierReturnItem = {
   id: string;
   itemId: string;
   lines: SupplierReturnLineFragment[];
+};
+
+export type ScannedBarcode = {
+  id?: string;
+  itemId?: string;
+  gtin: string;
+  batch?: string;
 };

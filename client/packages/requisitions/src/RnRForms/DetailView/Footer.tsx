@@ -10,52 +10,47 @@ import {
   useConfirmationModal,
   useKeyboard,
 } from '@openmsupply-client/common';
-import { useRnRForm } from '../api';
+import {
+  RnRFormQuery,
+  useErrorLineIndex,
+  useRnRForm,
+  useRnRFormContext,
+} from '../api';
+import { useSaveAllLines } from './AutoSave';
 
-export const Footer = ({
-  rnrFormId,
-  linesUnconfirmed,
-  unsavedChanges,
-}: {
-  rnrFormId: string;
-  linesUnconfirmed: boolean;
-  unsavedChanges: boolean;
-}) => {
+export const Footer = ({ data }: { data: RnRFormQuery }) => {
+  const saveAllLines = useSaveAllLines();
   const { keyboardIsOpen } = useKeyboard();
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
-  const { error, info, success } = useNotification();
+  const { error, success } = useNotification();
   const {
-    query: { data },
     finalise: { finalise, isFinalising },
-    confirmRemainingLines,
-  } = useRnRForm({ rnrFormId });
+  } = useRnRForm({ rnrFormId: data.id });
+
+  const errorLineIndex = useRnRFormContext(useErrorLineIndex);
+  const scrollToIndex = useRnRFormContext(state => state.scrollToIndex);
 
   const showFinaliseConfirmation = useConfirmationModal({
     onConfirm: async () => {
       try {
-        if (linesUnconfirmed) {
-          await confirmRemainingLines();
+        if (errorLineIndex != -1) {
+          scrollToIndex(errorLineIndex);
+        } else {
+          await saveAllLines();
+          await finalise();
+          success(t('label.finalised'))();
         }
-        await finalise();
-        success(t('label.finalised'))();
       } catch (e) {
         error((e as Error).message)();
       }
     },
-    message: linesUnconfirmed
-      ? `${t('messages.rnr-not-all-lines-confirmed')}\n${t('messages.confirm-finalise-rnr')}`
-      : t('messages.confirm-finalise-rnr'),
+    message:
+      errorLineIndex != -1
+        ? t('error.rnr-has-errors')
+        : t('messages.confirm-finalise-rnr'),
     title: t('heading.are-you-sure'),
   });
-
-  const onFinalise = async () => {
-    if (unsavedChanges) {
-      info(t('messages.all-changes-must-be-confirmed'))();
-      return;
-    }
-    showFinaliseConfirmation();
-  };
 
   const showFooter = !keyboardIsOpen;
 
@@ -77,7 +72,7 @@ export const Footer = ({
                 disabled={
                   isFinalising || data.status === RnRFormNodeStatus.Finalised
                 }
-                onClick={onFinalise}
+                onClick={() => showFinaliseConfirmation()}
                 variant={'ok'}
                 customLabel={
                   data.status === RnRFormNodeStatus.Finalised

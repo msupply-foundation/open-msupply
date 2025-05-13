@@ -1,14 +1,14 @@
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { useStockLines, ItemRowFragment } from '@openmsupply-client/system';
-import { useStocktake } from './../../../../api';
+import { useStocktakeOld } from './../../../../api';
 import { DraftStocktakeLine, get } from '../utils';
 
 export const useDraftStocktakeLines = (
   item: ItemRowFragment | null
 ): [DraftStocktakeLine[], Dispatch<SetStateAction<DraftStocktakeLine[]>>] => {
-  const { id } = useStocktake.document.fields('id');
+  const { id } = useStocktakeOld.document.fields('id');
   const { data: stockLines } = useStockLines(item?.id || '');
-  const { lines } = useStocktake.line.rows(item?.id);
+  const { lines } = useStocktakeOld.line.rows(item?.id);
   const [draftLines, setDraftLines] = useState<DraftStocktakeLine[]>([]);
 
   useEffect(() => {

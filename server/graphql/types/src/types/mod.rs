@@ -139,6 +139,9 @@ pub use self::insurance_provider::*;
 pub mod warning;
 pub use self::warning::*;
 
+pub mod draft_outbound_shipment_line;
+pub use self::draft_outbound_shipment_line::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

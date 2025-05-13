@@ -13,12 +13,12 @@ import {
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
 import { isOutboundDisabled } from '../../utils';
-import { Draft } from '../..';
+import { ScannedBarcode } from '../../types';
 
 export const AddFromScannerButtonComponent = ({
   onAddItem,
 }: {
-  onAddItem: (draft?: Draft) => void;
+  onAddItem: (scannedBarcode?: ScannedBarcode) => void;
 }) => {
   const t = useTranslation();
   const { data: outbound } = useOutbound.document.get();
@@ -35,21 +35,14 @@ export const AddFromScannerButtonComponent = ({
       const value = gtin ?? content;
       const barcode = await getBarcode(value);
 
+      // Barcode exists
       if (barcode?.__typename === 'BarcodeNode') {
-        const id = barcode?.itemId;
+        onAddItem({ ...barcode, batch });
+      } else {
+        warning(t('error.no-matching-item'))();
 
-        if (!!id) {
-          onAddItem({
-            item: { id },
-            barcode: { ...barcode, batch },
-          });
-          return;
-        }
+        onAddItem({ gtin: value, batch });
       }
-
-      warning(t('error.no-matching-item'))();
-
-      onAddItem({ barcode: { gtin: value, batch } });
     }
   };
 
