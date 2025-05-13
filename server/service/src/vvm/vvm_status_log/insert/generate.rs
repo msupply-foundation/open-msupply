@@ -10,6 +10,7 @@ pub fn generate(
         id,
         status_id,
         stock_line_id,
+        comment,
     }: InsertVVMStatusLogInput,
 ) -> VVMStatusLogRow {
     let created_datetime = Utc::now().naive_utc();
@@ -19,7 +20,7 @@ pub fn generate(
         status_id,
         created_datetime,
         stock_line_id,
-        comment: None,
+        comment,
         created_by: user_id.to_string(),
         invoice_line_id: None,
         store_id: store_id.to_string(),

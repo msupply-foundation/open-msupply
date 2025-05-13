@@ -18,6 +18,7 @@ pub struct InsertInput {
     pub id: String,
     pub status_id: String,
     pub stock_line_id: String,
+    pub comment: Option<String>,
 }
 
 impl InsertInput {
@@ -26,12 +27,14 @@ impl InsertInput {
             id,
             status_id,
             stock_line_id,
+            comment,
         } = self;
 
         ServiceInput {
             id,
             status_id,
             stock_line_id,
+            comment,
         }
     }
 }

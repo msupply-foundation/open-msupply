@@ -24,6 +24,7 @@ pub struct InsertVVMStatusLogInput {
     pub id: String,
     pub status_id: String,
     pub stock_line_id: String,
+    pub comment: Option<String>,
 }
 
 pub fn insert_vvm_status_log(

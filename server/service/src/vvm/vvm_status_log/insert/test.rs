@@ -33,6 +33,7 @@ mod insert {
                     id: "test_id".to_string(),
                     stock_line_id: "stock_line_id".to_string(),
                     status_id: "vvm_status_id".to_string(),
+                    comment: Some("comment".to_string()),
                 },
             ),
             Err(InsertVVMStatusLogError::VVMStatusDoesNotExist)
@@ -62,6 +63,7 @@ mod insert {
                     id: "test_id".to_string(),
                     stock_line_id: "stock_line_id".to_string(),
                     status_id: "vvm_status_id".to_string(),
+                    comment: Some("comment".to_string())
                 },
             ),
             Err(InsertVVMStatusLogError::StockLineDoesNotExist)
@@ -73,6 +75,7 @@ mod insert {
             id: "test_id".to_string(),
             stock_line_id: mock_stock_line_a().id.clone(),
             status_id: "vvm_status_id".to_string(),
+            comment: Some("comment".to_string()),
         };
 
         // VVMStatusLogAlreadyExists
@@ -101,6 +104,7 @@ mod insert {
             id: "vvm_status_log_id".to_string(),
             stock_line_id: mock_stock_line_a().id.clone(),
             status_id: "vvm_status_id".to_string(),
+            comment: Some("comment".to_string()),
         };
 
         // Insert a mock VVM Status record
