@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_doses_columns_to_item_variant;
+mod add_initial_stocktake_field;
 mod add_vvm_status_log_change_log_table_name;
 mod add_vvm_status_log_table;
 mod add_vvm_status_table;
@@ -23,6 +24,7 @@ impl Migration for V2_08_00 {
             Box::new(add_vvm_status_log_table::Migrate),
             Box::new(add_doses_columns_to_item_variant::Migrate),
             Box::new(add_vvm_status_log_change_log_table_name::Migrate),
+            Box::new(add_initial_stocktake_field::Migrate),
         ]
     }
 }

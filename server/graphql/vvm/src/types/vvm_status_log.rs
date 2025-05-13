@@ -20,14 +20,14 @@ impl VVMStatusLogNode {
         &self.row().id
     }
 
-    pub async fn status(&self, ctx: &Context<'_>) -> Result<Option<VVMStatusNode>> {
-        let vvm_status_id = &self.row().status_id;
+    pub async fn status(&self, ctx: &Context<'_>) -> Result<Vec<VVMStatusNode>> {
         let loader = ctx.get_loader::<DataLoader<VVMStatusByIdLoader>>();
-        let vvm_status = loader
-            .load_one(vvm_status_id.clone())
+
+        let result = loader
+            .load_one(self.row().status_id.clone())
             .await?
-            .map(VVMStatusNode::from_domain);
-        Ok(vvm_status)
+            .unwrap_or_default();
+        Ok(VVMStatusNode::from_vec(result))
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {

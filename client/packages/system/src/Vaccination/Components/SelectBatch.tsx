@@ -35,7 +35,7 @@ export const SelectBatch = ({
     if (data?.nodes?.length === 1 && !stockLine && isNewlyGiven) {
       setStockLine(data.nodes[0]!);
     }
-  }, [data]);
+  }, [data, isNewlyGiven, stockLine]);
 
   const columns = useColumns<StockLineFragment>(
     [
@@ -98,7 +98,7 @@ const BatchTable = ({
   data: StockLineFragment[];
   setStockLine: (stockLine: VaccinationStockLine) => void;
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { setRowStyles } = useRowStyle();
   const { setDisabledRows } = useTableStore();
 

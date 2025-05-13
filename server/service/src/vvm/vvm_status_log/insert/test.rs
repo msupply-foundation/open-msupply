@@ -1,13 +1,9 @@
 #[cfg(test)]
 mod insert {
     use repository::{
-        mock::{
-            mock_outbound_shipment_a_invoice_lines, mock_stock_line_a, mock_store_a,
-            mock_user_account_a, MockDataInserts,
-        },
+        mock::{mock_stock_line_a, mock_store_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
         vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository},
-        InvoiceLineRowRepository,
     };
 
     use crate::{
@@ -67,16 +63,11 @@ mod insert {
                     id: "test_id".to_string(),
                     stock_line_id: "stock_line_id".to_string(),
                     status_id: "vvm_status_id".to_string(),
-                    comment: Some("comment".to_string()),
+                    comment: Some("comment".to_string())
                 },
             ),
             Err(InsertVVMStatusLogError::StockLineDoesNotExist)
         );
-
-        let invoice_line = mock_outbound_shipment_a_invoice_lines()[0].clone();
-        InvoiceLineRowRepository::new(&context.connection)
-            .upsert_one(&invoice_line)
-            .unwrap();
 
         // After verifying StockLineDoesNotExist error,
         // Use the mock_stock_line_a() to continue testing the other error cases
