@@ -81,3 +81,6 @@ fn append_if_type(
     }
     Ok(())
 }
+
+// Note, we don't have a get_preference() function here as preferences can be accessed like this:
+// `let can_manage = ManageVvmStatus.load(connection, store_id);`
