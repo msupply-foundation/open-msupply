@@ -127,7 +127,12 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     })),
 
   autoAllocate: (quantity, format, t) => {
-    const { draftLines, placeholderQuantity, setDraftLines } = get();
+    const {
+      draftLines,
+      nonAllocatableLines,
+      placeholderQuantity,
+      setDraftLines,
+    } = get();
 
     const result = allocateQuantities(draftLines, quantity);
 
@@ -139,16 +144,13 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
         placeholderQuantity: 0, // don't want to include any placeholder in this calc
       });
 
-      // TODO - alerts handled sep
-      const hasOnHold = draftLines.some(
+      const hasOnHold = nonAllocatableLines.some(
         ({ availablePacks, stockLineOnHold }) =>
           availablePacks > 0 && !!stockLineOnHold
       );
       const hasExpired = draftLines.some(
-        ({ availablePacks, expiryDate }) =>
-          availablePacks > 0 &&
-          !!expiryDate &&
-          DateUtils.isExpired(new Date(expiryDate))
+        ({ expiryDate }) =>
+          !!expiryDate && DateUtils.isExpired(new Date(expiryDate))
       );
 
       const stillToAllocate =
