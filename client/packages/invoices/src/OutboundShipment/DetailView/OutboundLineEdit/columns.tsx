@@ -22,7 +22,7 @@ import { DraftStockOutLineFragment } from '../../api/operations.generated';
 import { getPackQuantityCellId } from 'packages/invoices/src/utils';
 import { AllocateIn } from './allocation/useAllocationContext';
 import { DraftItem } from '../../..';
-import { getDoseQuantity } from './allocation/utils';
+import { getDoseQuantity, packsToDoses } from './allocation/utils';
 
 export const useOutboundLineEditColumns = ({
   allocate,
@@ -91,7 +91,7 @@ export const useOutboundLineEditColumns = ({
     });
   }
 
-  columnDefinitions.push(['packSize', { width: 90, label: 'Vials per pack' }]);
+  columnDefinitions.push(['packSize', { width: 90 }]);
 
   if (allocateIn === AllocateIn.Doses) {
     columnDefinitions.push(...getAllocateInDosesColumns(t, allocate, unit));
@@ -202,41 +202,24 @@ const getAllocateInDosesColumns = (
         );
       },
     },
-    // {
-    //   Cell: NumberCell,
-    //   label: 'label.in-store',
-    //   key: 'totalNumberOfPacks',
-    //   align: ColumnAlign.Right,
-    //   width: 80,
-    //   accessor: ({ rowData }) => rowData.inStorePacks,
-    // },
-    // {
-    //   Cell: NumberCell,
-    //   label: 'label.available-packs',
-    //   key: 'availablePacks',
-    //   align: ColumnAlign.Right,
-    //   width: 90,
-    //   accessor: ({ rowData }) =>
-    //     rowData.location?.onHold || rowData.stockLineOnHold
-    //       ? 0
-    //       : rowData.availablePacks,
-    // },
-
-    // Designs had only in stock/available packs columns, but aren't I thinking in doses?
     {
-      key: 'availableDoses',
+      label: 'label.in-store-doses',
       Cell: NumberCell,
-      label: 'label.doses-available',
+      key: 'inStorePacks',
+      align: ColumnAlign.Right,
+      width: 80,
+      accessor: ({ rowData }) => packsToDoses(rowData.inStorePacks, rowData),
+    },
+    {
+      label: 'label.available-doses',
+      Cell: NumberCell,
+      key: 'availablePacks',
       align: ColumnAlign.Right,
       width: 90,
       accessor: ({ rowData }) =>
         rowData.location?.onHold || rowData.stockLineOnHold
           ? 0
-          : rowData.availablePacks *
-            rowData.packSize *
-            ((rowData.itemVariant?.dosesPerUnit ??
-              rowData.defaultDosesPerUnit) ||
-              1),
+          : packsToDoses(rowData.availablePacks, rowData),
     },
     {
       key: 'dosesIssued',
