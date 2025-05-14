@@ -446,7 +446,7 @@ mod test {
             inbound_line,
             inline_edit(&inbound_line, |mut u| {
                 u.id = "new_invoice_line_id_with_donor".to_string();
-                u.donor_id = Some("donor_id".to_string());
+                u.donor_id = Some("donor_a".to_string());
 
                 u
             })
