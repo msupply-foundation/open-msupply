@@ -10,6 +10,7 @@ import {
   ModalRow,
   ModalLabel,
   Grid,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { AutoAllocate } from './AutoAllocate';
@@ -19,8 +20,9 @@ import { CurrencyRowFragment } from '@openmsupply-client/system';
 import {
   useAllocationContext,
   AllocationStrategy,
+  AllocateIn,
 } from './allocation/useAllocationContext';
-import { sumAvailableQuantity } from './allocation/utils';
+import { sumAvailableDoses, sumAvailableUnits } from './allocation/utils';
 
 interface AllocationProps {
   itemData: OutboundLineEditData;
@@ -59,24 +61,36 @@ export const Allocation = ({
 
 const AllocationInner = ({ item }: { item: DraftItem }) => {
   const t = useTranslation();
-  // const { getPlural } = useIntlUtils();
-  // const { data: prefs } = usePreference(PreferenceKey.DisplayVaccineInDoses);
-  // const dispensingInDoses =
-  //   (item?.isVaccine && prefs?.displayVaccineInDoses) ?? false;
+  const { getPlural } = useIntlUtils();
 
   const { currency, otherParty } = useOutbound.document.fields([
     'currency',
     'otherParty',
   ]);
-  const { draftLines } = useAllocationContext(({ draftLines }) => ({
-    draftLines,
-  }));
-  // const getDisplayQuantity = (quantity: number, unit: string) => {
-  //   const rounded = Math.round(quantity);
-  //   return `${rounded} ${getPlural(unit, rounded)}`;
-  // };
+  const { draftLines, allocateIn } = useAllocationContext(
+    ({ allocateIn, draftLines }) => ({
+      draftLines,
+      allocateIn,
+    })
+  );
 
-  // const unitName = item?.unitName ?? t('label.unit');
+  const getAvailableQuantity = () => {
+    const unitCount = Math.round(sumAvailableUnits(draftLines));
+
+    const unitName = item?.unitName ?? t('label.unit');
+    const pluralisedUnitName = getPlural(unitName, unitCount);
+
+    return allocateIn === AllocateIn.Doses
+      ? t('label.available-quantity-doses', {
+          doseCount: sumAvailableDoses(draftLines).toFixed(0),
+          unitCount: unitCount,
+          unitName: pluralisedUnitName,
+        })
+      : t('label.available-quantity', {
+          number: unitCount,
+          unitName: pluralisedUnitName,
+        });
+  };
 
   return (
     <>
@@ -90,21 +104,9 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
               justifyContent: 'center',
             }}
           >
-            {/* TODO: RTL! should be in a translation string */}
-            {/* {t('label.available')}:{' '}
-            {dispensingInDoses
-              ? `${getDisplayQuantity(availableQuantity * item.doses, t('label.dose'))} (${getDisplayQuantity(availableQuantity, unitName)})`
-              : getDisplayQuantity(availableQuantity, unitName)} */}
-            {t('label.available', {
-              number: sumAvailableQuantity(draftLines).toFixed(0),
-            })}
+            {getAvailableQuantity()}
           </Typography>
         </Grid>
-
-        {/* <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
-          <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
-          <BasicTextInput disabled sx={{ width: 150 }} value={item?.unitName} />
-        </Grid> */}
       </ModalRow>
 
       <AutoAllocate />

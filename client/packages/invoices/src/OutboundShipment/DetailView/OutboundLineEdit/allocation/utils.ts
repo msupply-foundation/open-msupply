@@ -3,14 +3,23 @@ import { DraftStockOutLineFragment } from '../../../api/operations.generated';
 import { DateUtils } from '@common/intl';
 import { AllocateIn } from './useAllocationContext';
 
-// TODO: this is units
-export const sumAvailableQuantity = (
-  draftLines: DraftStockOutLineFragment[]
-) => {
+export const sumAvailableUnits = (draftLines: DraftStockOutLineFragment[]) => {
   const sum = draftLines.reduce(
     (acc, { stockLineOnHold, availablePacks, packSize, location }) =>
       !location?.onHold && !stockLineOnHold
         ? acc + availablePacks * packSize
+        : acc,
+    0
+  );
+
+  return sum;
+};
+
+export const sumAvailableDoses = (draftLines: DraftStockOutLineFragment[]) => {
+  const sum = draftLines.reduce(
+    (acc, line) =>
+      !line.location?.onHold && !line.stockLineOnHold
+        ? acc + packsToDoses(line.availablePacks, line)
         : acc,
     0
   );

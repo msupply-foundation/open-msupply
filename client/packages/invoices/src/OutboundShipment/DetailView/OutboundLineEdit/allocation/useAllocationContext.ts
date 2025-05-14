@@ -226,6 +226,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
           updatedLine.numberOfPacks
       : 0;
 
+    // Todo: once prescriptions refactored, see if we can streamline alerts?
     const alerts: StockOutAlert[] =
       allocatedQuantity > quantity
         ? [
