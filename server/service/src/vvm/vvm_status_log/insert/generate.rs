@@ -13,12 +13,12 @@ pub fn generate(
         comment,
     }: InsertVVMStatusLogInput,
 ) -> VVMStatusLogRow {
-    let now = Utc::now().naive_utc();
+    let created_datetime = Utc::now().naive_utc();
 
     VVMStatusLogRow {
         id,
         status_id,
-        created_datetime: now,
+        created_datetime,
         stock_line_id,
         comment,
         created_by: user_id.to_string(),

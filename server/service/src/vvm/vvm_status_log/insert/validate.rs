@@ -33,7 +33,6 @@ pub fn check_vvm_status_log_exists(
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
     let vvm_status_log = VVMStatusLogRowRepository::new(connection).find_one_by_id(id)?;
-    println!("vvm_status_log: {:?}", vvm_status_log);
     Ok(vvm_status_log.is_some())
 }
 

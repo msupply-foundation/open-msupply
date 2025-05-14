@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import {
   Divider,
   useTranslation,
@@ -115,7 +115,7 @@ const useDraftInboundLines = (item: InboundLineItem | null) => {
   };
 };
 
-export const InboundLineEdit: FC<InboundLineEditProps> = ({
+export const InboundLineEdit = ({
   item,
   mode,
   isOpen,
@@ -123,7 +123,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   isDisabled = false,
   currency,
   isExternalSupplier,
-}) => {
+}: InboundLineEditProps) => {
   const t = useTranslation();
   const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState<InboundLineItem | null>(item);
@@ -209,6 +209,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
               isDisabled={isDisabled}
               currency={currency}
               isExternalSupplier={isExternalSupplier}
+              item={currentItem}
               hasItemVariantsEnabled={hasItemVariantsEnabled}
               hasVVMStatusesEnabled={hasVVMStatusesEnabled}
             />

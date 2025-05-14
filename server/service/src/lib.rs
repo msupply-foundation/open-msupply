@@ -324,17 +324,12 @@ pub struct InputWithResult<I, R> {
 pub struct NullableUpdate<T> {
     pub value: Option<T>,
 }
+
 fn check_location_exists(
     connection: &StorageConnection,
     store_id: &str,
-    location_input: &Option<NullableUpdate<String>>,
+    location_id: &str,
 ) -> Result<bool, RepositoryError> {
-    let Some(NullableUpdate {
-        value: Some(location_id),
-    }) = location_input
-    else {
-        return Ok(true);
-    };
     let count = LocationRepository::new(connection).count(Some(
         LocationFilter::new()
             .id(EqualFilter::equal_to(location_id))
@@ -349,7 +344,7 @@ fn check_item_variant_exists(
 ) -> Result<Option<ItemVariantRow>, RepositoryError> {
     let variant = ItemVariantRowRepository::new(connection).find_one_by_id(item_variant_id)?;
 
-    return Ok(variant);
+    Ok(variant)
 }
 
 fn check_vvm_status_exists(

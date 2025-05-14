@@ -18,7 +18,7 @@ impl Loader<String> for VVMStatusByIdLoader {
         let connection = self.connection_manager.connection()?;
         let repo = VVMStatusRowRepository::new(&connection);
 
-        let result = repo.find_one_by_id(&ids[0])?;
+        let result = repo.find_many_by_ids(ids)?;
 
         Ok(result
             .into_iter()
