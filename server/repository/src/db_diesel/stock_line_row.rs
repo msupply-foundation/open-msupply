@@ -1,9 +1,12 @@
 use super::{
     item_link_row::item_link, location_row::location, name_link_row::name_link, store_row::store,
-    vvm_status_row::vvm_status, StorageConnection,
+    StorageConnection,
 };
 
-use crate::{db_diesel::barcode_row::barcode, repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    db_diesel::barcode_row::barcode, db_diesel::vvm_status::vvm_status_row::vvm_status,
+    repository_error::RepositoryError, Delete, Upsert,
+};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;

@@ -77,13 +77,6 @@ impl<'a> VVMStatusRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<VVMStatusRow>, RepositoryError> {
-        vvm_status::table
-            .filter(vvm_status::id.eq_any(ids))
-            .load::<VVMStatusRow>(self.connection.lock().connection())
-            .map_err(RepositoryError::from)
-    }
-
     pub fn delete(&self, vvm_status_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(vvm_status.filter(id.eq(vvm_status_id)))
             .execute(self.connection.lock().connection())?;

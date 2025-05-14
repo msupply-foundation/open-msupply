@@ -3,7 +3,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    loader::{ItemLoader, LocationByIdLoader, VVMStatusLoader},
+    loader::{ItemLoader, LocationByIdLoader, VVMStatusByIdLoader},
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -108,7 +108,7 @@ impl StockLineNode {
     }
 
     pub async fn vvm_status(&self, ctx: &Context<'_>) -> Result<Option<VVMStatusNode>> {
-        let loader = ctx.get_loader::<DataLoader<VVMStatusLoader>>();
+        let loader = ctx.get_loader::<DataLoader<VVMStatusByIdLoader>>();
         let type_id = match self.row().vvm_status_id.clone() {
             Some(type_id) => type_id,
             None => return Ok(None),
