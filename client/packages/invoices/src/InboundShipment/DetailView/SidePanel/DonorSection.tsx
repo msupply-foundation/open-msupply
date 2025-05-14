@@ -16,10 +16,10 @@ import { DonorEditModal } from '../modals/Donor/DonorEditModal';
 export const DonorSectionComponent: FC = () => {
   const t = useTranslation();
   const { isOn, toggleOff, toggleOn } = useToggle();
-  const { id, defaultDonorId, defaultDonor } = useInbound.document.fields([
+  const { id, defaultDonorId, defaultDonorName } = useInbound.document.fields([
     'id',
     'defaultDonorId',
-    'defaultDonor',
+    'defaultDonorName',
   ]);
 
   return (
@@ -46,7 +46,7 @@ export const DonorSectionComponent: FC = () => {
               />
             </PanelField>
             <PanelField>
-              {defaultDonor ?? t('label.no-donor-selected')}
+              {defaultDonorName ?? t('label.no-donor-selected')}
             </PanelField>
           </PanelRow>
         </Grid>

@@ -460,7 +460,7 @@ impl InvoiceNode {
         &self.row().default_donor_id
     }
 
-    pub async fn default_donor(&self, ctx: &Context<'_>) -> Result<Option<String>> {
+    pub async fn default_donor_name(&self, ctx: &Context<'_>) -> Result<Option<String>> {
         let Some(default_donor_id) = &self.row().default_donor_id else {
             return Ok(None);
         };

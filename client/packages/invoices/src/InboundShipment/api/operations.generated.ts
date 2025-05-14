@@ -77,7 +77,7 @@ export type InboundFragment = {
   taxPercentage?: number | null;
   expectedDeliveryDate?: string | null;
   defaultDonorId?: string | null;
-  defaultDonor?: string | null;
+  defaultDonorName?: string | null;
   currencyRate: number;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
   user?: {
@@ -283,7 +283,7 @@ export type InvoiceQuery = {
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
         defaultDonorId?: string | null;
-        defaultDonor?: string | null;
+        defaultDonorName?: string | null;
         currencyRate: number;
         linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
         user?: {
@@ -424,7 +424,7 @@ export type InboundByNumberQuery = {
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
         defaultDonorId?: string | null;
-        defaultDonor?: string | null;
+        defaultDonorName?: string | null;
         currencyRate: number;
         linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
         user?: {
@@ -1036,7 +1036,7 @@ export const InboundFragmentDoc = gql`
     taxPercentage
     expectedDeliveryDate
     defaultDonorId
-    defaultDonor
+    defaultDonorName
     linkedShipment {
       __typename
       id
