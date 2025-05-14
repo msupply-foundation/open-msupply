@@ -11,7 +11,8 @@ import { DraftStockOutLineFragment } from '../../../api/operations.generated';
 import {
   canAllocate,
   getAllocatedUnits,
-  issueStock,
+  issueDoses,
+  issuePacks,
   scannedBatchFilter,
 } from './utils';
 import { OutboundLineEditData } from '../../../api';
@@ -183,11 +184,19 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   },
 
   manualAllocate: (lineId, quantity) => {
-    const { draftLines, setDraftLines } = get();
+    const { allocateIn, draftLines, setDraftLines } = get();
 
-    const updatedLines = issueStock(draftLines, lineId, quantity);
+    // TODO: pass in when using for prescriptions
+    const allowPartialPacks = false;
+
+    const updatedLines =
+      allocateIn === AllocateIn.Doses
+        ? issueDoses(draftLines, lineId, quantity, allowPartialPacks)
+        : issuePacks(draftLines, lineId, quantity);
 
     setDraftLines(updatedLines);
+
+    // tODO; alert if rounded up!
 
     set(state => ({
       ...state,

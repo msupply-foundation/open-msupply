@@ -21,7 +21,7 @@ export const getAllocatedUnits = ({
   placeholderQuantity,
 }: {
   draftLines: DraftStockOutLineFragment[];
-  placeholderQuantity: number | null;
+  placeholderQuantity?: number | null;
 }) =>
   NumUtils.round(
     draftLines.reduce(
@@ -31,7 +31,29 @@ export const getAllocatedUnits = ({
     3
   ) + (placeholderQuantity ?? 0);
 
-export const issueStock = (
+export const getAllocatedDoses = ({
+  draftLines,
+  placeholderQuantity,
+}: {
+  draftLines: DraftStockOutLineFragment[];
+  placeholderQuantity?: number | null;
+}) => {
+  const doses = NumUtils.round(
+    draftLines.reduce((acc, line) => acc + getDoseQuantity(line), 0)
+  );
+
+  return doses + (placeholderQuantity ?? 0);
+};
+
+export const getDoseQuantity = (line: DraftStockOutLineFragment) => {
+  return NumUtils.round(
+    line.numberOfPacks *
+      line.packSize *
+      ((line.itemVariant?.dosesPerUnit ?? line.defaultDosesPerUnit) || 1)
+  );
+};
+
+export const issuePacks = (
   draftLines: DraftStockOutLineFragment[],
   idToIssue: string,
   packs: number
@@ -44,6 +66,31 @@ export const issueStock = (
   newDraftLines[foundRowIdx] = {
     ...foundRow,
     numberOfPacks: packs,
+  };
+
+  return newDraftLines;
+};
+
+export const issueDoses = (
+  draftLines: DraftStockOutLineFragment[],
+  idToIssue: string,
+  doses: number,
+  allowPartialPacks: boolean = false
+) => {
+  const foundRowIdx = draftLines.findIndex(({ id }) => id === idToIssue);
+  const foundRow = draftLines[foundRowIdx];
+  if (!foundRow) return draftLines;
+
+  const newDraftLines = [...draftLines];
+
+  const numberOfPacks =
+    doses /
+    foundRow.packSize /
+    ((foundRow.itemVariant?.dosesPerUnit ?? foundRow.defaultDosesPerUnit) || 1);
+
+  newDraftLines[foundRowIdx] = {
+    ...foundRow,
+    numberOfPacks: allowPartialPacks ? numberOfPacks : Math.ceil(numberOfPacks),
   };
 
   return newDraftLines;

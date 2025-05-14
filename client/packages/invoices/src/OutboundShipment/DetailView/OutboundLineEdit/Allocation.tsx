@@ -10,7 +10,6 @@ import {
   ModalRow,
   ModalLabel,
   Grid,
-  BasicTextInput,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { AutoAllocate } from './AutoAllocate';
@@ -60,6 +59,10 @@ export const Allocation = ({
 
 const AllocationInner = ({ item }: { item: DraftItem }) => {
   const t = useTranslation();
+  // const { getPlural } = useIntlUtils();
+  // const { data: prefs } = usePreference(PreferenceKey.DisplayVaccineInDoses);
+  // const dispensingInDoses =
+  //   (item?.isVaccine && prefs?.displayVaccineInDoses) ?? false;
 
   const { currency, otherParty } = useOutbound.document.fields([
     'currency',
@@ -68,6 +71,12 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
   const { draftLines } = useAllocationContext(({ draftLines }) => ({
     draftLines,
   }));
+  // const getDisplayQuantity = (quantity: number, unit: string) => {
+  //   const rounded = Math.round(quantity);
+  //   return `${rounded} ${getPlural(unit, rounded)}`;
+  // };
+
+  // const unitName = item?.unitName ?? t('label.unit');
 
   return (
     <>
@@ -81,16 +90,21 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
               justifyContent: 'center',
             }}
           >
-            {t('label.available-quantity', {
+            {/* TODO: RTL! should be in a translation string */}
+            {/* {t('label.available')}:{' '}
+            {dispensingInDoses
+              ? `${getDisplayQuantity(availableQuantity * item.doses, t('label.dose'))} (${getDisplayQuantity(availableQuantity, unitName)})`
+              : getDisplayQuantity(availableQuantity, unitName)} */}
+            {t('label.available', {
               number: sumAvailableQuantity(draftLines).toFixed(0),
             })}
           </Typography>
         </Grid>
 
-        <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
+        {/* <Grid style={{ display: 'flex' }} justifyContent="flex-end" flex={1}>
           <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
           <BasicTextInput disabled sx={{ width: 150 }} value={item?.unitName} />
-        </Grid>
+        </Grid> */}
       </ModalRow>
 
       <AutoAllocate />

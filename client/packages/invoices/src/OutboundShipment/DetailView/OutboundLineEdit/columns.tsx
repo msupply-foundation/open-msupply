@@ -22,15 +22,16 @@ import { DraftStockOutLineFragment } from '../../api/operations.generated';
 import { getPackQuantityCellId } from 'packages/invoices/src/utils';
 import { AllocateIn } from './allocation/useAllocationContext';
 import { DraftItem } from '../../..';
+import { getDoseQuantity } from './allocation/utils';
 
 export const useOutboundLineEditColumns = ({
-  onChange,
+  allocate,
   item,
   currency,
   isExternalSupplier,
   allocateIn,
 }: {
-  onChange: (key: string, value: number) => void;
+  allocate: (key: string, value: number) => void;
   item: DraftItem;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
@@ -93,9 +94,9 @@ export const useOutboundLineEditColumns = ({
   columnDefinitions.push(['packSize', { width: 90 }]);
 
   if (allocateIn === AllocateIn.Doses) {
-    columnDefinitions.push(...getAllocateInDosesColumns(t, onChange, unit));
+    columnDefinitions.push(...getAllocateInDosesColumns(t, allocate, unit));
   } else {
-    columnDefinitions.push(...getAllocateInUnitsColumns(onChange, unit));
+    columnDefinitions.push(...getAllocateInUnitsColumns(allocate, unit));
   }
 
   columnDefinitions.push({
@@ -109,7 +110,7 @@ export const useOutboundLineEditColumns = ({
   });
 
   const columns = useColumns<DraftStockOutLineFragment>(columnDefinitions, {}, [
-    onChange,
+    allocate,
   ]);
 
   return columns;
@@ -119,14 +120,14 @@ const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
     max={props.rowData.availablePacks}
-    id={getPackQuantityCellId(props.rowData.batch)}
+    id={getPackQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
     decimalLimit={2}
     min={0}
   />
 );
 
 const getAllocateInUnitsColumns = (
-  onChange: (key: string, numPacks: number) => void,
+  allocatePacks: (key: string, numPacks: number) => void,
   unit: string
 ): ColumnDescription<DraftStockOutLineFragment>[] => [
   {
@@ -154,7 +155,7 @@ const getAllocateInUnitsColumns = (
       Cell: PackQuantityCell,
       width: 100,
       label: 'label.pack-quantity-issued',
-      setter: ({ id, numberOfPacks }) => onChange(id, numberOfPacks ?? 0),
+      setter: ({ id, numberOfPacks }) => allocatePacks(id, numberOfPacks ?? 0),
     },
   ],
   [
@@ -168,19 +169,23 @@ const getAllocateInUnitsColumns = (
   ],
 ];
 
+const DoseQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
+  <NumberInputCell
+    {...props}
+    max={props.rowData.availablePacks}
+    id={getPackQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
+    decimalLimit={0}
+    min={0}
+    // bit longer debounce, as we might overwrite value to whole number of packs
+    debounce={750}
+  />
+);
+
 const getAllocateInDosesColumns = (
   t: TypedTFunction<LocaleKey>,
-  onChange: (key: string, numPacks: number) => void,
+  allocateDoses: (key: string, numPacks: number) => void,
   unit: string
 ): ColumnDescription<DraftStockOutLineFragment>[] => {
-  const packsToDoses = (packs: number, line: DraftStockOutLineFragment) => {
-    return (
-      packs *
-      line.packSize *
-      ((line.itemVariant?.dosesPerUnit ?? line.defaultDosesPerUnit) || 1)
-    );
-  };
-
   return [
     {
       key: 'dosesPerUnit',
@@ -227,11 +232,15 @@ const getAllocateInDosesColumns = (
     //   accessor: ({ rowData }) =>
     //     rowData.location?.onHold || rowData.stockLineOnHold
     //       ? 0
-    //       : packsToDoses(rowData.availablePacks, rowData),
+    //       : rowData.availablePacks *
+    //         rowData.packSize *
+    //         ((rowData.itemVariant?.dosesPerUnit ??
+    //           rowData.defaultDosesPerUnit) ||
+    //           1),
     // },
     {
       key: 'dosesIssued',
-      Cell: PackQuantityCell,
+      Cell: DoseQuantityCell,
       width: 100,
       label: 'label.doses-issued',
       setter: (
@@ -241,9 +250,9 @@ const getAllocateInDosesColumns = (
           dosesIssued?: number;
         }
       ) => {
-        onChange(row.id, row.dosesIssued ?? 0);
+        allocateDoses(row.id, row.dosesIssued ?? 0);
       },
-      accessor: ({ rowData }) => packsToDoses(rowData.numberOfPacks, rowData),
+      accessor: ({ rowData }) => getDoseQuantity(rowData),
     },
     // Can only issue in whole packs in Outbound Shipment, so we'll show the user
     [

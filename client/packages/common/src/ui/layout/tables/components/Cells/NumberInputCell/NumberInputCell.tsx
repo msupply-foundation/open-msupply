@@ -30,17 +30,18 @@ export const NumberInputCell = <T extends RecordWithId>({
   endAdornment,
   error,
   slotProps,
+  debounce = 250,
 }: CellProps<T> &
   NumericInputProps & {
     id?: string;
     TextInputProps?: StandardTextFieldProps;
     endAdornment?: string;
     error?: boolean;
-  } & Pick<StandardTextFieldProps, 'slotProps'>): React.ReactElement<
-  CellProps<T>
-> => {
+  } & Pick<StandardTextFieldProps, 'slotProps'> & {
+    debounce?: number;
+  }): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
-  const updater = useDebounceCallback(column.setter, [column.setter], 250);
+  const updater = useDebounceCallback(column.setter, [column.setter], debounce);
 
   const autoFocus = rowIndex === 0 && columnIndex === 0;
 
