@@ -34,6 +34,7 @@ mod common_stock;
 pub mod contact_form;
 pub mod currency;
 pub mod cursor_controller;
+pub mod dynamic_cursor_controller;
 pub mod dashboard;
 pub mod demographic;
 pub mod diagnosis;
@@ -404,3 +405,7 @@ impl UploadedFile {
         Ok(json)
     }
 }
+
+// Re-export
+pub use cursor_controller::CursorController;
+pub use dynamic_cursor_controller::DynamicCursorController;
