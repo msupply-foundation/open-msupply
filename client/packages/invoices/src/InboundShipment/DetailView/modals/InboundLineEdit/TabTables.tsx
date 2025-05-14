@@ -60,13 +60,12 @@ export const QuantityTableComponent = ({
   const itemVariantsEnabled = useIsItemVariantsEnabled();
   const displayInDoses =
     !!preferences?.displayVaccineInDoses && !!item?.isVaccine;
+
   const unitName = Formatter.sentenceCase(
     item?.unitName ? item.unitName : t('label.unit')
   );
-  const pluralisedUnitName = getPlural(
-    Formatter.sentenceCase(item?.unitName ? item.unitName : t('label.unit')),
-    2
-  );
+  const pluralisedUnitName = getPlural(unitName, 2);
+
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     ...getBatchExpiryColumns(updateDraftLine, theme),
   ];
