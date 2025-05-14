@@ -25,7 +25,6 @@ import {
   CurrencyRowFragment,
   getLocationInputColumn,
   ItemRowFragment,
-  VVMStatusInputCell,
   LocationRowFragment,
   PackSizeEntryCell,
 } from '@openmsupply-client/system';
@@ -34,6 +33,7 @@ import {
   getInboundDosesColumns,
   itemVariantColumn,
   NumberOfPacksCell,
+  vvmStatusesColumn,
 } from './utils';
 
 interface TableProps {
@@ -51,8 +51,8 @@ export const QuantityTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled = false,
-  hasItemVariantsEnabled,
   hasVVMStatusesEnabled,
+  hasItemVariantsEnabled,
   item,
 }: TableProps) => {
   const t = useTranslation();
@@ -79,15 +79,11 @@ export const QuantityTableComponent = ({
   if (displayInDoses) {
     columnDefinitions.push(getDosesPerUnitColumn(t, unitName));
   }
-  if (hasVVMStatusesEnabled) {
-    columnDefinitions.push({
-      key: 'vvmStatusId',
-      label: 'label.vvm-status',
-      width: 170,
-      Cell: props => <VVMStatusInputCell {...props} />,
-      setter: updateDraftLine,
-    });
+
+  if (hasVVMStatusesEnabled && item?.isVaccine) {
+    columnDefinitions.push(vvmStatusesColumn(updateDraftLine));
   }
+
   columnDefinitions.push(
     getColumnLookupWithOverrides('packSize', {
       Cell: PackSizeEntryCell<DraftInboundLine>,

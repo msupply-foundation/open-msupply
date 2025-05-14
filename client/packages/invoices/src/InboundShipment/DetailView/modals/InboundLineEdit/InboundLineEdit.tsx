@@ -130,10 +130,8 @@ export const InboundLineEdit = ({
   const { next: nextItem, disabled: nextDisabled } = useInbound.document.next(
     currentItem?.id ?? ''
   );
-
-  const hasVVMStatusesEnabled = useIsVVMStatusEnabled(currentItem?.id);
-  const hasItemVariantsEnabled = useIsItemVariantsEnabled(currentItem?.id);
-
+  const hasItemVariantsEnabled = useIsItemVariantsEnabled();
+  const hasVVMStatusesEnabled = useIsVVMStatusEnabled();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
     useDraftInboundLines(currentItem);
