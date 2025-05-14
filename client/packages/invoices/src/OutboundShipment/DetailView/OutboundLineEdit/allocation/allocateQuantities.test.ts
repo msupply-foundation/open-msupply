@@ -158,18 +158,20 @@ describe('Allocated quantities - coping with over-allocation', () => {
     expect(remainingQuantity === 0).toBe(true);
   });
 
-  it('reduces the right amount', () => {
+  it('reduces correct quantities based on pack size', () => {
     const lineOne = createTestLine({ availablePacks: 10, packSize: 1 }); // 10
     const lineTwo = createTestLine({ availablePacks: 10, packSize: 2 }); // 20
     const lineThree = createTestLine({ availablePacks: 10, packSize: 6 }); // 50
     const draftLines = [lineOne, lineTwo, lineThree];
 
-    // should first allocate the 10 and 20 from line 1 and 2
-    // then 18 from line 3 (as need to round to whole pack)
-    // 10 + 20 + 18 = 48 = over by 5
+    // first pass:
+    // allocate 10 from line 1, 20 from line 2, and 12 from line 3 (total 42)
+    // so try second pass:
+    // round up line 3 to 18 (total 48)
+    // third pass required to remove 5:
     // Can't remove from line 3 without under-allocating, so need to remove from line 2, then 1
-    // Remove 2 * 2 from line 2 (4 units) -- now at 44
-    // Remove 1 * 1 from line 1 -- now at 43!
+    // Remove 2 * 2 from line 2 (4 units) -- (total 44)
+    // Remove 1 * 1 from line 1 (1 unit) -- (total 43)
 
     const { allocatedLines, remainingQuantity } = allocateQuantities(
       draftLines,
