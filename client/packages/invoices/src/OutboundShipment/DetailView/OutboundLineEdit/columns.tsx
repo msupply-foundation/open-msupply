@@ -91,7 +91,7 @@ export const useOutboundLineEditColumns = ({
     });
   }
 
-  columnDefinitions.push(['packSize', { width: 90 }]);
+  columnDefinitions.push(['packSize', { width: 90, label: 'Vials per pack' }]);
 
   if (allocateIn === AllocateIn.Doses) {
     columnDefinitions.push(...getAllocateInDosesColumns(t, allocate, unit));
@@ -127,7 +127,7 @@ const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
 );
 
 const getAllocateInUnitsColumns = (
-  allocatePacks: (key: string, numPacks: number) => void,
+  allocate: (key: string, numPacks: number) => void,
   unit: string
 ): ColumnDescription<DraftStockOutLineFragment>[] => [
   {
@@ -155,7 +155,7 @@ const getAllocateInUnitsColumns = (
       Cell: PackQuantityCell,
       width: 100,
       label: 'label.pack-quantity-issued',
-      setter: ({ id, numberOfPacks }) => allocatePacks(id, numberOfPacks ?? 0),
+      setter: ({ id, numberOfPacks }) => allocate(id, numberOfPacks ?? 0),
     },
   ],
   [
@@ -183,7 +183,7 @@ const DoseQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
 
 const getAllocateInDosesColumns = (
   t: TypedTFunction<LocaleKey>,
-  allocateDoses: (key: string, numPacks: number) => void,
+  allocate: (key: string, numPacks: number) => void,
   unit: string
 ): ColumnDescription<DraftStockOutLineFragment>[] => {
   return [
@@ -202,42 +202,42 @@ const getAllocateInDosesColumns = (
         );
       },
     },
-    {
-      Cell: NumberCell,
-      label: 'label.in-store',
-      key: 'totalNumberOfPacks',
-      align: ColumnAlign.Right,
-      width: 80,
-      accessor: ({ rowData }) => rowData.inStorePacks,
-    },
-    {
-      Cell: NumberCell,
-      label: 'label.available-packs',
-      key: 'availablePacks',
-      align: ColumnAlign.Right,
-      width: 90,
-      accessor: ({ rowData }) =>
-        rowData.location?.onHold || rowData.stockLineOnHold
-          ? 0
-          : rowData.availablePacks,
-    },
-
-    // // Designs had only in stock/available packs columns, but aren't I thinking in doses?
     // {
-    //   key: 'availableDoses',
     //   Cell: NumberCell,
-    //   label: 'label.doses-available',
+    //   label: 'label.in-store',
+    //   key: 'totalNumberOfPacks',
+    //   align: ColumnAlign.Right,
+    //   width: 80,
+    //   accessor: ({ rowData }) => rowData.inStorePacks,
+    // },
+    // {
+    //   Cell: NumberCell,
+    //   label: 'label.available-packs',
+    //   key: 'availablePacks',
     //   align: ColumnAlign.Right,
     //   width: 90,
     //   accessor: ({ rowData }) =>
     //     rowData.location?.onHold || rowData.stockLineOnHold
     //       ? 0
-    //       : rowData.availablePacks *
-    //         rowData.packSize *
-    //         ((rowData.itemVariant?.dosesPerUnit ??
-    //           rowData.defaultDosesPerUnit) ||
-    //           1),
+    //       : rowData.availablePacks,
     // },
+
+    // Designs had only in stock/available packs columns, but aren't I thinking in doses?
+    {
+      key: 'availableDoses',
+      Cell: NumberCell,
+      label: 'label.doses-available',
+      align: ColumnAlign.Right,
+      width: 90,
+      accessor: ({ rowData }) =>
+        rowData.location?.onHold || rowData.stockLineOnHold
+          ? 0
+          : rowData.availablePacks *
+            rowData.packSize *
+            ((rowData.itemVariant?.dosesPerUnit ??
+              rowData.defaultDosesPerUnit) ||
+              1),
+    },
     {
       key: 'dosesIssued',
       Cell: DoseQuantityCell,
@@ -250,7 +250,7 @@ const getAllocateInDosesColumns = (
           dosesIssued?: number;
         }
       ) => {
-        allocateDoses(row.id, row.dosesIssued ?? 0);
+        allocate(row.id, row.dosesIssued ?? 0);
       },
       accessor: ({ rowData }) => getDoseQuantity(rowData),
     },

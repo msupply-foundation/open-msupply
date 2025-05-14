@@ -1,6 +1,7 @@
 import { DraftStockOutLineFragment } from '../../../api/operations.generated';
+import { AllocateIn } from './useAllocationContext';
 import {
-  getAllocatedDoses,
+  getAllocatedQuantity,
   getDoseQuantity,
   issueDoses,
   issuePacks,
@@ -44,47 +45,41 @@ describe('getDoseQuantity', () => {
   });
 });
 
-describe('getAllocatedDoses', () => {
-  it('adds lines correctly, mix of item variant and default', () => {
-    const line1 = {
-      numberOfPacks: 2,
-      packSize: 3,
-      defaultDosesPerUnit: 2,
-    } as DraftStockOutLineFragment;
-
-    const line2 = {
+describe('getAllocatedQuantity', () => {
+  const draftLines = [
+    { numberOfPacks: 2, packSize: 3, defaultDosesPerUnit: 2 },
+    {
       numberOfPacks: 5,
       packSize: 10,
       defaultDosesPerUnit: 2,
-      itemVariant: {
-        dosesPerUnit: 3,
-      },
-    } as DraftStockOutLineFragment;
+      itemVariant: { dosesPerUnit: 3 },
+    },
+  ] as DraftStockOutLineFragment[];
 
-    const result = getAllocatedDoses({
-      draftLines: [line1, line2], // line1: 2*3*2 = 12, line2: 5*10*3 = 150
+  it('returns dose quantity when allocating in doses', () => {
+    const result = getAllocatedQuantity({
+      // line 1 uses default doses per unit, line 2 uses item variant doses per unit
+      draftLines, // line1: 2*3*2=12, line2: 5*10*3=150 == 162
+      allocateIn: AllocateIn.Doses,
     });
     expect(result).toBe(162);
   });
 
+  it('returns unit quantity when allocating in units', () => {
+    const result = getAllocatedQuantity({
+      draftLines, // line1: 2*3=6, line2: 5*10=50 == 56
+      allocateIn: AllocateIn.Units,
+    });
+    expect(result).toBe(56);
+  });
+
   it('includes placeholder quantity when provided', () => {
-    const line1 = {
-      numberOfPacks: 20,
-      packSize: 1,
-      defaultDosesPerUnit: 2,
-    } as DraftStockOutLineFragment;
-
-    const line2 = {
-      numberOfPacks: 5,
-      packSize: 10,
-      defaultDosesPerUnit: 2,
-    } as DraftStockOutLineFragment;
-
-    const result = getAllocatedDoses({
-      draftLines: [line1, line2], // line1: 20*1*2 = 40, line2: 5*10*2 = 100
+    const result = getAllocatedQuantity({
+      draftLines, // line1: 2*3=6, line2: 5*10=50 == 56
+      allocateIn: AllocateIn.Units,
       placeholderQuantity: 100,
     });
-    expect(result).toBe(240);
+    expect(result).toBe(156);
   });
 });
 

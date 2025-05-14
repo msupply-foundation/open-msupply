@@ -1,7 +1,9 @@
-import { NumUtils } from '@common/utils';
+import { noOtherVariants, NumUtils } from '@common/utils';
 import { DraftStockOutLineFragment } from '../../../api/operations.generated';
 import { DateUtils } from '@common/intl';
+import { AllocateIn } from './useAllocationContext';
 
+// TODO: this is units
 export const sumAvailableQuantity = (
   draftLines: DraftStockOutLineFragment[]
 ) => {
@@ -16,41 +18,100 @@ export const sumAvailableQuantity = (
   return sum;
 };
 
-export const getAllocatedUnits = ({
-  draftLines,
-  placeholderQuantity,
-}: {
-  draftLines: DraftStockOutLineFragment[];
-  placeholderQuantity?: number | null;
-}) =>
+const getAllocatedUnits = (draftLines: DraftStockOutLineFragment[]) =>
   NumUtils.round(
     draftLines.reduce(
       (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
       0
     ),
     3
-  ) + (placeholderQuantity ?? 0);
-
-export const getAllocatedDoses = ({
-  draftLines,
-  placeholderQuantity,
-}: {
-  draftLines: DraftStockOutLineFragment[];
-  placeholderQuantity?: number | null;
-}) => {
-  const doses = NumUtils.round(
-    draftLines.reduce((acc, line) => acc + getDoseQuantity(line), 0)
   );
 
-  return doses + (placeholderQuantity ?? 0);
+const getAllocatedDoses = (draftLines: DraftStockOutLineFragment[]) => {
+  return draftLines.reduce((acc, line) => acc + getDoseQuantity(line), 0);
 };
 
+export const getAllocatedQuantity = ({
+  draftLines,
+  placeholderQuantity,
+  allocateIn,
+}: {
+  draftLines: DraftStockOutLineFragment[];
+  allocateIn: AllocateIn;
+  placeholderQuantity?: number | null;
+}) => {
+  const quantity =
+    allocateIn === AllocateIn.Doses
+      ? getAllocatedDoses(draftLines)
+      : getAllocatedUnits(draftLines);
+
+  return quantity + (placeholderQuantity ?? 0);
+};
+
+/** Converts the value of the `numberOfPacks` field to dose quantity */
 export const getDoseQuantity = (line: DraftStockOutLineFragment) => {
+  return packsToDoses(line.numberOfPacks, line);
+};
+
+/** Converts a number of packs to dose quantity */
+export const packsToDoses = (
+  numPacks: number,
+  line: DraftStockOutLineFragment
+) => {
   return NumUtils.round(
-    line.numberOfPacks *
+    numPacks *
       line.packSize *
       ((line.itemVariant?.dosesPerUnit ?? line.defaultDosesPerUnit) || 1)
   );
+};
+
+/** Converts a dose quantity to number of packs */
+export const dosesToPacks = (
+  doses: number,
+  line: DraftStockOutLineFragment
+) => {
+  return (
+    doses /
+    line.packSize /
+    ((line.itemVariant?.dosesPerUnit ?? line.defaultDosesPerUnit) || 1)
+  );
+};
+
+/** Converts a number of packs to quantity based on allocation unit of measure */
+export const packsToQuantity = (
+  allocateIn: AllocateIn,
+  numPacks: number,
+  line: DraftStockOutLineFragment
+): number => {
+  switch (allocateIn) {
+    case AllocateIn.Doses:
+      return packsToDoses(numPacks, line);
+
+    case AllocateIn.Units:
+      return numPacks * line.packSize;
+
+    default:
+      noOtherVariants(allocateIn);
+      throw new Error('Unhandled allocation unit of measure');
+  }
+};
+
+/** Converts a quantity to number of packs based on allocation unit of measure */
+export const quantityToPacks = (
+  allocateIn: AllocateIn,
+  quantity: number,
+  line: DraftStockOutLineFragment
+): number => {
+  switch (allocateIn) {
+    case AllocateIn.Doses:
+      return dosesToPacks(quantity, line);
+
+    case AllocateIn.Units:
+      return quantity / line.packSize;
+    default:
+      noOtherVariants(allocateIn);
+      throw new Error('Unhandled allocation unit of measure');
+  }
 };
 
 export const issuePacks = (
@@ -83,10 +144,7 @@ export const issueDoses = (
 
   const newDraftLines = [...draftLines];
 
-  const numberOfPacks =
-    doses /
-    foundRow.packSize /
-    ((foundRow.itemVariant?.dosesPerUnit ?? foundRow.defaultDosesPerUnit) || 1);
+  const numberOfPacks = dosesToPacks(doses, foundRow);
 
   newDraftLines[foundRowIdx] = {
     ...foundRow,

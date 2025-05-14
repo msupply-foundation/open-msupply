@@ -16,7 +16,7 @@ import { useOutboundLineEditColumns } from './columns';
 import { DraftItem } from '../../..';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { useAllocationContext } from './allocation/useAllocationContext';
-import { getAllocatedUnits } from './allocation/utils';
+import { getAllocatedQuantity } from './allocation/utils';
 
 export interface OutboundLineEditTableProps {
   item: DraftItem;
@@ -98,28 +98,20 @@ export const OutboundLineEditTable = ({
   const tableStore = useTableStore();
 
   const {
-    allocatedUnits,
     draftLines,
     placeholderQuantity,
     nonAllocatableLines,
     allocateIn,
+    allocatedQuantity,
     manualAllocate,
-  } = useAllocationContext(
-    ({
-      draftLines,
-      placeholderQuantity,
-      nonAllocatableLines,
-      allocateIn,
-      manualAllocate,
-    }) => ({
-      draftLines,
-      placeholderQuantity,
-      allocatedUnits: getAllocatedUnits({ draftLines, placeholderQuantity }),
-      nonAllocatableLines,
-      allocateIn,
-      manualAllocate,
-    })
-  );
+  } = useAllocationContext(state => ({
+    draftLines: state.draftLines,
+    placeholderQuantity: state.placeholderQuantity,
+    nonAllocatableLines: state.nonAllocatableLines,
+    allocateIn: state.allocateIn,
+    allocatedQuantity: getAllocatedQuantity(state),
+    manualAllocate: state.manualAllocate,
+  }));
 
   const allocate = (key: string, value: number) => {
     const num = Number.isNaN(value) ? 0 : value;
@@ -166,7 +158,7 @@ export const OutboundLineEditTable = ({
         <Divider margin={10} />
       </td>
     </tr>,
-    <TotalRow key="total-row" allocatedQuantity={allocatedUnits} />,
+    <TotalRow key="total-row" allocatedQuantity={allocatedQuantity} />,
   ];
 
   return (

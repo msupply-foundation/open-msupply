@@ -10,7 +10,7 @@ import { getAllocationAlerts, StockOutAlert } from '../../../../StockOut';
 import { DraftStockOutLineFragment } from '../../../api/operations.generated';
 import {
   canAllocate,
-  getAllocatedUnits,
+  getAllocatedQuantity,
   issueDoses,
   issuePacks,
   scannedBatchFilter,
@@ -18,9 +18,16 @@ import {
 import { OutboundLineEditData } from '../../../api';
 import { allocateQuantities } from './allocateQuantities';
 
+/**
+ * Allocation can be in units, or doses. In future, could allocate in packs too!
+ *
+ * Throughout allocation code & components, we use `quantity` where possible,
+ * this means that piece of logic is agnostic to whether it's in units or doses.
+ *
+ * Where behaviour differs, we use `allocateIn` to determine use of units or doses.
+ */
 export enum AllocateIn {
   Units = 'Units',
-  // Actually handling doses in upcoming PR
   Doses = 'Doses',
   // Not allocating in packs, at least for now, many use cases to cover
 }
@@ -136,20 +143,21 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
   autoAllocate: (quantity, format, t) => {
     const {
+      allocateIn,
       draftLines,
       nonAllocatableLines,
       placeholderQuantity,
       setDraftLines,
     } = get();
 
-    const result = allocateQuantities(draftLines, quantity);
+    const result = allocateQuantities(draftLines, quantity, { allocateIn });
 
     if (result) {
       setDraftLines(result.allocatedLines);
 
-      const allocatedUnits = getAllocatedUnits({
+      const allocatedQuantity = getAllocatedQuantity({
+        allocateIn,
         draftLines: result.allocatedLines,
-        placeholderQuantity: 0, // don't want to include any placeholder in this calc
       });
 
       const hasOnHold = nonAllocatableLines.some(
@@ -166,7 +174,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
       const alerts = getAllocationAlerts(
         quantity,
-        allocatedUnits,
+        allocatedQuantity,
         stillToAllocate,
         hasOnHold,
         hasExpired,
