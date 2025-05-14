@@ -112,10 +112,12 @@ impl StocktakeLineNode {
         &self.line.line.note
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn inventory_adjustment_reason_id(&self) -> &Option<String> {
         &self.line.line.reason_option_id
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn inventory_adjustment_reason(
         &self,
         ctx: &Context<'_>,

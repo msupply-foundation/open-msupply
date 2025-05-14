@@ -168,11 +168,12 @@ impl InvoiceLineNode {
         &self.row().note
     }
 
-    // Deprecated field
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn return_reason_id(&self) -> &Option<String> {
         &self.row().reason_option_id
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn return_reason(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
         let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
 
@@ -186,6 +187,7 @@ impl InvoiceLineNode {
         Ok(result.map(ReasonOptionNode::from_domain))
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn inventory_adjustment_reason(
         &self,
         ctx: &Context<'_>,
