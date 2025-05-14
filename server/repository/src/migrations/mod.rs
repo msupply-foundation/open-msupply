@@ -162,7 +162,7 @@ pub fn migrate(
     // From v2.3 we drop all views and re-create them
     let min_version_for_dropping_views = v2_03_00::V2_03_00.version();
     let mut drop_view_has_run = false;
-    let mut migration_has_ran = false;
+    let mut migration_has_run = false;
 
     for migration in migrations {
         let migration_version = migration.version();
@@ -200,7 +200,7 @@ pub fn migrate(
                     version: migration_version.clone(),
                 })?;
             set_database_version(connection, &migration_version)?;
-            migration_has_ran = true;
+            migration_has_run = true;
         }
 
         // Run fragment migrations (can run on current version)
@@ -220,7 +220,7 @@ pub fn migrate(
 
                 migration_fragment_log_repo.insert(&migration, &fragment)?;
             }
-            migration_has_ran = true;
+            migration_has_run = true;
         }
     }
 
@@ -232,7 +232,7 @@ pub fn migrate(
     }
 
     set_database_version(connection, &to_version)?;
-    Ok((to_version, migration_has_ran))
+    Ok((to_version, migration_has_run))
 }
 
 fn get_database_version(connection: &StorageConnection) -> Version {
