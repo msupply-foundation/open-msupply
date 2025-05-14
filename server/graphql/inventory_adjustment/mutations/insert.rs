@@ -15,7 +15,7 @@ pub struct CreateInventoryAdjustmentInput {
     pub stock_line_id: String,
     pub adjustment: f64,
     pub adjustment_type: AdjustmentTypeInput,
-    pub reason_option_id: Option<String>,
+    pub inventory_adjustment_reason_id: Option<String>, // deprecated since 2.8.0, front end uses reason_option_id
 }
 
 #[derive(SimpleObject)]
@@ -74,7 +74,7 @@ impl CreateInventoryAdjustmentInput {
             stock_line_id,
             adjustment,
             adjustment_type,
-            reason_option_id,
+            inventory_adjustment_reason_id: reason_option_id,
         }: CreateInventoryAdjustmentInput = self;
 
         InsertInventoryAdjustment {
