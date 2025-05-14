@@ -96,7 +96,7 @@ pub async fn start_server(
 
     // MIGRATION
     info!("Run DB migrations...");
-    let (version, migration_has_ran) = migrate(&connection_manager.connection().unwrap(), None)
+    let (version, migration_has_run) = migrate(&connection_manager.connection().unwrap(), None)
         .context("Failed to run DB migrations")
         .unwrap();
     info!("Run DB migrations...done");
@@ -105,7 +105,7 @@ pub async fn start_server(
     StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
 
     // AFTER MIGRATION VACUUM
-    if (migration_has_ran) {
+    if migration_has_run {
         connection_manager.sqlite_vacuum(SqliteVacuumAction::AfterMigration, sqlite_vacuum);
     }
 

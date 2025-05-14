@@ -234,7 +234,14 @@ impl StorageConnectionManager {
         }
 
         info!("{message} vacuum...");
-        self.execute("VACUUM").expect("Failed to vacuum");
+        match self.execute("VACUUM") {
+            Ok(_) => {
+                info!("VACUUM completed");
+            }
+            Err(e) => {
+                error!("VACUUM failed: {e}");
+            }
+        }
     }
 }
 

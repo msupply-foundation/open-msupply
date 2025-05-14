@@ -24,6 +24,7 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
         database_name: db_name.to_string(),
         init_sql: None,
         database_path: None,
+        sqlite_vacuum: Default::default(),
     }
 }
 
