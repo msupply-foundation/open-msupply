@@ -914,7 +914,7 @@ mod test {
     #[actix_rt::test]
     async fn update_inbound_shipment_donor_changes() {
         let (_, connection, connection_manager, _) = setup_all_with_data(
-            "update_inbound_shipment_success",
+            "update_inbound_shipment_donor_changes",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![mock_inbound_shipment_f()];
