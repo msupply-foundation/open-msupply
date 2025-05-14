@@ -8,6 +8,8 @@ import {
   useNotification,
   InvoiceNodeStatus,
   BasicSpinner,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { useNextItem } from './hooks';
 import { useOutboundLineEditData } from '../../api';
@@ -41,6 +43,8 @@ export const OutboundLineEdit = ({
   const t = useTranslation();
   const { info, warning } = useNotification();
   const [itemId, setItemId] = useState(openedWith?.itemId);
+  const { data: pref } = usePreference(PreferenceKey.DisplayVaccineInDoses);
+  const allocateVaccineItemsInDoses = pref?.displayVaccineInDoses ?? false;
 
   const onClose = () => {
     clear();
@@ -170,6 +174,7 @@ export const OutboundLineEdit = ({
             <Allocation
               key={itemId}
               itemData={itemData}
+              allocateVaccineItemsInDoses={allocateVaccineItemsInDoses}
               allowPlaceholder={status === InvoiceNodeStatus.New}
               scannedBatch={asBarcodeOrNull(openedWith)?.batch}
             />

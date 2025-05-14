@@ -43,12 +43,13 @@ interface AllocationContext {
   initialisedForItemId: string | null;
   placeholderQuantity: number | null;
 
-  initialise: (
-    input: OutboundLineEditData,
-    strategy: AllocationStrategy,
-    withPlaceholder: boolean,
-    scannedBatch?: string
-  ) => void;
+  initialise: (params: {
+    input: OutboundLineEditData;
+    strategy: AllocationStrategy;
+    allowPlaceholder: boolean;
+    allocateVaccineItemsInDoses?: boolean;
+    scannedBatch?: string;
+  }) => void;
 
   setDraftLines: (lines: DraftStockOutLineFragment[]) => void;
   setAlerts: (alerts: StockOutAlert[]) => void;
@@ -71,12 +72,13 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   alerts: [],
   allocateIn: AllocateIn.Units,
 
-  initialise: (
-    { item, draftLines, placeholderQuantity },
+  initialise: ({
+    input: { item, draftLines, placeholderQuantity },
     strategy,
+    allocateVaccineItemsInDoses,
     allowPlaceholder,
-    scannedBatch?: string
-  ) => {
+    scannedBatch,
+  }) => {
     const sortedLines = draftLines.sort(SorterByStrategy[strategy]);
 
     // Separate lines here, so only dealing with allocatable lines going forward
@@ -92,6 +94,11 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     set({
       isDirty: false,
       initialisedForItemId: item.id,
+
+      allocateIn:
+        item.isVaccine && allocateVaccineItemsInDoses
+          ? AllocateIn.Doses
+          : AllocateIn.Units,
 
       draftLines: allocatableLines,
       nonAllocatableLines,

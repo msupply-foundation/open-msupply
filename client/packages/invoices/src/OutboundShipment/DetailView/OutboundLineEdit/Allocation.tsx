@@ -26,12 +26,14 @@ import { sumAvailableQuantity } from './allocation/utils';
 interface AllocationProps {
   itemData: OutboundLineEditData;
   allowPlaceholder: boolean;
+  allocateVaccineItemsInDoses: boolean;
   scannedBatch?: string;
 }
 
 export const Allocation = ({
   itemData,
   allowPlaceholder,
+  allocateVaccineItemsInDoses,
   scannedBatch,
 }: AllocationProps) => {
   const { initialise, initialisedForItemId } = useAllocationContext(
@@ -42,12 +44,13 @@ export const Allocation = ({
   );
 
   useEffect(() => {
-    initialise(
-      itemData,
-      AllocationStrategy.FEFO,
+    initialise({
+      input: itemData,
+      strategy: AllocationStrategy.FEFO,
       allowPlaceholder,
-      scannedBatch
-    );
+      allocateVaccineItemsInDoses,
+      scannedBatch,
+    });
   }, []);
 
   return initialisedForItemId === itemData.item.id ? (

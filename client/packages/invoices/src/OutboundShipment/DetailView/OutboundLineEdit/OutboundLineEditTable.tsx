@@ -19,7 +19,7 @@ import { useAllocationContext } from './allocation/useAllocationContext';
 import { getAllocatedUnits } from './allocation/utils';
 
 export interface OutboundLineEditTableProps {
-  item: DraftItem | null;
+  item: DraftItem;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
 }
@@ -102,18 +102,21 @@ export const OutboundLineEditTable = ({
     draftLines,
     placeholderQuantity,
     nonAllocatableLines,
+    allocateIn,
     manualAllocate,
   } = useAllocationContext(
     ({
       draftLines,
       placeholderQuantity,
       nonAllocatableLines,
+      allocateIn,
       manualAllocate,
     }) => ({
       draftLines,
       placeholderQuantity,
       allocatedUnits: getAllocatedUnits({ draftLines, placeholderQuantity }),
       nonAllocatableLines,
+      allocateIn,
       manualAllocate,
     })
   );
@@ -122,13 +125,13 @@ export const OutboundLineEditTable = ({
     const num = Number.isNaN(value) ? 0 : value;
     manualAllocate(key, num);
   };
-  const unit = item?.unitName ?? t('label.unit');
 
   const columns = useOutboundLineEditColumns({
     onChange: onEditStockLine,
-    unit,
+    item,
     currency,
     isExternalSupplier,
+    allocateIn,
   });
 
   // Display all stock lines to user, including non-allocatable ones at the bottom
