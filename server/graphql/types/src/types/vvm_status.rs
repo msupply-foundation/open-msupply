@@ -1,5 +1,5 @@
 use async_graphql::{Object, SimpleObject, Union};
-use repository::vvm_status_row::VVMStatusRow;
+use repository::vvm_status::vvm_status_row::VVMStatusRow;
 
 #[derive(PartialEq, Debug)]
 pub struct VVMStatusNode {

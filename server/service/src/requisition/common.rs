@@ -98,6 +98,7 @@ pub fn check_emergency_order_within_max_items_limit(
     ))
 }
 
+#[derive(Debug)]
 pub struct CheckExceededOrdersForPeriod<'a> {
     pub program_id: &'a str,
     pub period_id: &'a str,

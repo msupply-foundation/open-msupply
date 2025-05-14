@@ -1,15 +1,16 @@
-use repository::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository};
-use repository::{RepositoryError, StorageConnectionManager};
+use repository::vvm_status::vvm_status_row::VVMStatusRow;
+use repository::StorageConnectionManager;
+use repository::{vvm_status::vvm_status_row::VVMStatusRowRepository, RepositoryError};
 
 use async_graphql::dataloader::*;
 use async_graphql::*;
 use std::collections::HashMap;
 
-pub struct VVMStatusLoader {
+pub struct VVMStatusByIdLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-impl Loader<String> for VVMStatusLoader {
+impl Loader<String> for VVMStatusByIdLoader {
     type Value = VVMStatusRow;
     type Error = RepositoryError;
 

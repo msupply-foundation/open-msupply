@@ -1,5 +1,5 @@
 use repository::{
-    vvm_status_row::{VVMStatusRow, VVMStatusRowRepository},
+    vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository},
     RepositoryError, StorageConnection,
 };
 
