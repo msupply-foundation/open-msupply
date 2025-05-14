@@ -18,17 +18,21 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                INSERT INTO reason_option(id, type) 
+                INSERT INTO reason_option(id, type, reason) 
                 SELECT 
                     id,
                     CASE
                         WHEN type = 'POSITIVE' THEN 'POSITIVE_INVENTORY_ADJUSTMENT'::reason_option_type
                         WHEN type = 'NEGATIVE' THEN 'NEGATIVE_INVENTORY_ADJUSTMENT'::reason_option_type
-                    END as type
+                    END as type,
+                    reason
                 FROM inventory_adjustment_reason
                 WHERE type IN ('POSITIVE', 'NEGATIVE')
                 UNION ALL
-                SELECT id, 'RETURN_REASON'::reason_option_type as type
+                SELECT 
+                    id,
+                    'RETURN_REASON'::reason_option_type as type,
+                    reason
                 FROM return_reason; 
                 "#,
             )?;
@@ -36,17 +40,21 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                INSERT INTO reason_option(id, type) 
+                INSERT INTO reason_option(id, type, reason) 
                 SELECT 
                     id,
                     CASE
                         WHEN type = 'POSITIVE' THEN 'POSITIVE_INVENTORY_ADJUSTMENT'
                         WHEN type = 'NEGATIVE' THEN 'NEGATIVE_INVENTORY_ADJUSTMENT'
-                    END as type
+                    END as type,
+                    reason
                 FROM inventory_adjustment_reason
                 WHERE type IN ('POSITIVE', 'NEGATIVE')
                 UNION ALL
-                SELECT id, 'RETURN_REASON' as type
+                SELECT 
+                    id, 
+                    'RETURN_REASON' as type,
+                    reason
                 FROM return_reason;                
                 "#
             )?
