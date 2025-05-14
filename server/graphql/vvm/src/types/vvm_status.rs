@@ -42,13 +42,6 @@ impl VVMStatusNode {
         VVMStatusNode { vvm_status }
     }
 
-    pub fn from_vec(vvm_status: Vec<VVMStatusRow>) -> Vec<VVMStatusNode> {
-        vvm_status
-            .into_iter()
-            .map(VVMStatusNode::from_domain)
-            .collect()
-    }
-
     pub fn row(&self) -> &VVMStatusRow {
         &self.vvm_status
     }
