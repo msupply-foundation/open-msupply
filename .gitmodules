@@ -1,0 +1,6 @@
+[submodule "client/packages/plugins/civ-plugins"]
+	path = client/packages/plugins/civ-plugins
+	url = https://github.com/msupply-foundation/civ-plugins.git
+[submodule "client/packages/plugins/example-plugins"]
+	path = client/packages/plugins/example-plugins
+	url = https://github.com/msupply-foundation/open-msupply-plugins.git
