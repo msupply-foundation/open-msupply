@@ -14,6 +14,7 @@ use super::{
 pub enum PrefKey {
     ShowContactTracing,
     DisplayVaccinesInDoses,
+    AllowTrackingOfReceivedStockByDonor,
     DisplayPopulationBasedForecasting,
     ManageVvmStatusForStock,
     SortByVvmStatusThenExpiry,

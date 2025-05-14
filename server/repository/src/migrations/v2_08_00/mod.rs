@@ -1,8 +1,12 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_donor_id_to_invoice_and_invoice_lines;
 mod add_doses_columns_to_item_variant;
 mod add_initial_stocktake_field;
+mod add_view_and_edit_vvm_status_permission;
+mod add_vvm_status_log_change_log_table_name;
+mod add_vvm_status_log_table;
 mod add_vvm_status_table;
 
 pub(crate) struct V2_08_00;
@@ -19,8 +23,12 @@ impl Migration for V2_08_00 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(add_vvm_status_table::Migrate),
+            Box::new(add_vvm_status_log_table::Migrate),
             Box::new(add_doses_columns_to_item_variant::Migrate),
+            Box::new(add_vvm_status_log_change_log_table_name::Migrate),
             Box::new(add_initial_stocktake_field::Migrate),
+            Box::new(add_view_and_edit_vvm_status_permission::Migrate),
+            Box::new(add_donor_id_to_invoice_and_invoice_lines::Migrate),
         ]
     }
 }

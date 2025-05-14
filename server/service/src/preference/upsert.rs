@@ -17,6 +17,7 @@ pub struct UpsertPreferences {
     pub display_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,
     pub sort_by_vvm_status_then_expiry: Option<Vec<StorePrefUpdate<bool>>>,
+    pub allow_tracking_of_received_stock_by_donor: Option<bool>,
 }
 
 pub fn upsert_preferences(
@@ -27,6 +28,7 @@ pub fn upsert_preferences(
         display_vaccines_in_doses: display_vaccines_in_doses_input,
         manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
         sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry_input,
+        allow_tracking_of_received_stock_by_donor: allow_tracking_of_received_stock_by_donor_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -35,6 +37,7 @@ pub fn upsert_preferences(
         display_vaccines_in_doses,
         manage_vvm_status_for_stock,
         sort_by_vvm_status_then_expiry,
+        allow_tracking_of_received_stock_by_donor,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -47,6 +50,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = display_population_based_forecasting_input {
                 display_population_based_forecasting.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = allow_tracking_of_received_stock_by_donor_input {
+                allow_tracking_of_received_stock_by_donor.upsert(connection, input, None)?;
             }
 
             // For a store pref, input could be array of store IDs and values - iterate and insert...

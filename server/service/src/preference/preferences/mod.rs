@@ -8,6 +8,8 @@ pub mod sort_by_vvm_status_then_expiry;
 pub use sort_by_vvm_status_then_expiry::*;
 pub mod manage_vvm_status_for_stock;
 pub use manage_vvm_status_for_stock::*;
+pub mod allow_tracking_of_received_stock_by_donor;
+pub use allow_tracking_of_received_stock_by_donor::*;
 
 pub struct PreferenceProvider {
     // Add each preference here
@@ -16,6 +18,7 @@ pub struct PreferenceProvider {
     pub display_vaccines_in_doses: DisplayVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
     pub sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
+    pub allow_tracking_of_received_stock_by_donor: AllowTrackingOfReceivedStockByDonor,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -25,5 +28,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         display_vaccines_in_doses: DisplayVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
         sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
+        allow_tracking_of_received_stock_by_donor: AllowTrackingOfReceivedStockByDonor,
     }
 }

@@ -29,6 +29,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             display_vaccines_in_doses,
             manage_vvm_status_for_stock,
             sort_by_vvm_status_then_expiry,
+            allow_tracking_of_received_stock_by_donor,
         } = self.get_preference_provider();
 
         let input = AppendIfTypeInputs {
@@ -41,6 +42,11 @@ pub trait PreferenceServiceTrait: Sync + Send {
 
         // Add each pref here
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
+        append_if_type(
+            allow_tracking_of_received_stock_by_donor,
+            &mut prefs,
+            &input,
+        )?;
         append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
         append_if_type(display_vaccines_in_doses, &mut prefs, &input)?;
         append_if_type(manage_vvm_status_for_stock, &mut prefs, &input)?;
@@ -81,3 +87,6 @@ fn append_if_type(
     }
     Ok(())
 }
+
+// Note, we don't have a get_preference() function here as preferences can be accessed like this:
+// `let can_manage = ManageVvmStatus.load(connection, store_id);`

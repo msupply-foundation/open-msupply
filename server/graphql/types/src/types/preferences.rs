@@ -32,6 +32,10 @@ impl PreferencesNode {
     pub async fn sort_by_vvm_status_then_expiry(&self) -> Result<bool> {
         self.load_preference(&self.preferences.sort_by_vvm_status_then_expiry)
     }
+
+    pub async fn allow_tracking_of_received_stock_by_donor(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.allow_tracking_of_received_stock_by_donor)
+    }
 }
 
 impl PreferencesNode {
@@ -83,6 +87,7 @@ pub enum PreferenceKey {
     DisplayPopulationBasedForecasting,
     ManageVvmStatusForStock,
     SortByVvmStatusThenExpiry,
+    AllowTrackingOfReceivedStockByDonor,
 }
 
 impl PreferenceKey {
@@ -95,6 +100,9 @@ impl PreferenceKey {
             PrefKey::DisplayVaccinesInDoses => PreferenceKey::DisplayVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
             PrefKey::SortByVvmStatusThenExpiry => PreferenceKey::SortByVvmStatusThenExpiry,
+            PrefKey::AllowTrackingOfReceivedStockByDonor => {
+                PreferenceKey::AllowTrackingOfReceivedStockByDonor
+            }
         }
     }
 }
