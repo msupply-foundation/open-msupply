@@ -11,7 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                ALTER TABLE stock_line ADD COLUMN donor_id TEXT REFERENCES name(id);
+                ALTER TABLE stock_line ADD COLUMN donor_id TEXT;
             "#
         )?;
 
