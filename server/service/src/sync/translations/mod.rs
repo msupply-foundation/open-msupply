@@ -78,6 +78,7 @@ pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
 pub(crate) mod vaccine_course_item;
 pub(crate) mod vvm_status;
+pub(crate) mod vvm_status_log;
 pub(crate) mod warning;
 
 use repository::*;
@@ -173,6 +174,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Vaccination
         vaccination::boxed(),
         vvm_status::boxed(),
+        vvm_status_log::boxed(),
         // Item Variant
         item_variant::boxed(),
         packaging_variant::boxed(),
