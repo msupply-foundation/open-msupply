@@ -16,7 +16,6 @@ import {
   usePreference,
   PreferenceKey,
   getDosesPerUnitColumn,
-  NumberCell,
   BasicCell,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
