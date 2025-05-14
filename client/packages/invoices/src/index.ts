@@ -7,7 +7,7 @@ export { default as InvoiceService } from './InvoiceService';
 export { useOutbound } from './OutboundShipment/api';
 export { useInbound, InboundFragment } from './InboundShipment/api';
 
-export type DraftItem = Pick<ItemRowFragment, 'id' | 'unitName'>;
+export type DraftItem = Pick<ItemRowFragment, 'id' | 'unitName' | 'isVaccine'>;
 
 export type Draft = {
   item?: DraftItem;

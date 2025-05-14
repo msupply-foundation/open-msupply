@@ -10,6 +10,8 @@ export type ServiceItemRowFragment = {
   code: string;
   name: string;
   unitName?: string | null;
+  isVaccine: boolean;
+  doses: number;
 };
 
 export type StockLineFragment = {
@@ -40,6 +42,7 @@ export type StockLineFragment = {
     code: string;
     unitName?: string | null;
     doses: number;
+    isVaccine: boolean;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -64,6 +67,8 @@ export type ItemRowFragment = {
   code: string;
   name: string;
   unitName?: string | null;
+  isVaccine: boolean;
+  doses: number;
 };
 
 export type ItemRowWithDirectionsFragment = {
@@ -72,6 +77,8 @@ export type ItemRowWithDirectionsFragment = {
   code: string;
   name: string;
   unitName?: string | null;
+  isVaccine: boolean;
+  doses: number;
   itemDirections: Array<{
     __typename: 'ItemDirectionNode';
     directions: string;
@@ -95,6 +102,8 @@ export type ItemRowWithWarningsFragment = {
   code: string;
   name: string;
   unitName?: string | null;
+  isVaccine: boolean;
+  doses: number;
   warnings: Array<{
     __typename: 'WarningNode';
     warningText: string;
@@ -121,6 +130,8 @@ export type ItemWithPackSizeFragment = {
   code: string;
   name: string;
   unitName?: string | null;
+  isVaccine: boolean;
+  doses: number;
 };
 
 export type ItemStockOnHandFragment = {
@@ -131,6 +142,8 @@ export type ItemStockOnHandFragment = {
   code: string;
   name: string;
   unitName?: string | null;
+  isVaccine: boolean;
+  doses: number;
   itemDirections: Array<{
     __typename: 'ItemDirectionNode';
     directions: string;
@@ -148,6 +161,8 @@ export type ItemRowWithStatsFragment = {
   code: string;
   name: string;
   unitName?: string | null;
+  isVaccine: boolean;
+  doses: number;
   stats: {
     __typename: 'ItemStatsNode';
     averageMonthlyConsumption: number;
@@ -218,6 +233,14 @@ export type ItemVariantFragment = {
   itemId: string;
   manufacturerId?: string | null;
   coldStorageTypeId?: string | null;
+  dosesPerUnit: number;
+  vvmType?: string | null;
+  item?: {
+    __typename: 'ItemNode';
+    id: string;
+    name: string;
+    isVaccine: boolean;
+  } | null;
   manufacturer?: {
     __typename: 'NameNode';
     code: string;
@@ -335,6 +358,7 @@ export type ItemFragment = {
         code: string;
         unitName?: string | null;
         doses: number;
+        isVaccine: boolean;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -369,6 +393,14 @@ export type ItemFragment = {
     itemId: string;
     manufacturerId?: string | null;
     coldStorageTypeId?: string | null;
+    dosesPerUnit: number;
+    vvmType?: string | null;
+    item?: {
+      __typename: 'ItemNode';
+      id: string;
+      name: string;
+      isVaccine: boolean;
+    } | null;
     manufacturer?: {
       __typename: 'NameNode';
       code: string;
@@ -508,6 +540,7 @@ export type ItemsWithStockLinesQuery = {
             code: string;
             unitName?: string | null;
             doses: number;
+            isVaccine: boolean;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -542,6 +575,14 @@ export type ItemsWithStockLinesQuery = {
         itemId: string;
         manufacturerId?: string | null;
         coldStorageTypeId?: string | null;
+        dosesPerUnit: number;
+        vvmType?: string | null;
+        item?: {
+          __typename: 'ItemNode';
+          id: string;
+          name: string;
+          isVaccine: boolean;
+        } | null;
         manufacturer?: {
           __typename: 'NameNode';
           code: string;
@@ -637,6 +678,8 @@ export type ItemsQuery = {
       code: string;
       name: string;
       unitName?: string | null;
+      isVaccine: boolean;
+      doses: number;
     }>;
   };
 };
@@ -663,6 +706,8 @@ export type ItemStockOnHandQuery = {
       code: string;
       name: string;
       unitName?: string | null;
+      isVaccine: boolean;
+      doses: number;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
         directions: string;
@@ -799,6 +844,7 @@ export type ItemByIdQuery = {
             code: string;
             unitName?: string | null;
             doses: number;
+            isVaccine: boolean;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -824,6 +870,14 @@ export type ItemByIdQuery = {
         itemId: string;
         manufacturerId?: string | null;
         coldStorageTypeId?: string | null;
+        dosesPerUnit: number;
+        vvmType?: string | null;
+        item?: {
+          __typename: 'ItemNode';
+          id: string;
+          name: string;
+          isVaccine: boolean;
+        } | null;
         manufacturer?: {
           __typename: 'NameNode';
           code: string;
@@ -977,6 +1031,7 @@ export type GetHistoricalStockLinesQuery = {
         code: string;
         unitName?: string | null;
         doses: number;
+        isVaccine: boolean;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -1016,6 +1071,14 @@ export type UpsertItemVariantMutation = {
             itemId: string;
             manufacturerId?: string | null;
             coldStorageTypeId?: string | null;
+            dosesPerUnit: number;
+            vvmType?: string | null;
+            item?: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              isVaccine: boolean;
+            } | null;
             manufacturer?: {
               __typename: 'NameNode';
               code: string;
@@ -1088,6 +1151,10 @@ export type UpsertItemVariantMutation = {
             __typename: 'UpsertItemVariantError';
             error:
               | { __typename: 'DatabaseError'; description: string }
+              | {
+                  __typename: 'DoseConfigurationNotAllowed';
+                  description: string;
+                }
               | { __typename: 'InternalError'; description: string }
               | {
                   __typename: 'UniqueValueViolation';
@@ -1250,6 +1317,8 @@ export const ServiceItemRowFragmentDoc = gql`
     code
     name
     unitName
+    isVaccine
+    doses
   }
 `;
 export const ItemRowFragmentDoc = gql`
@@ -1259,6 +1328,8 @@ export const ItemRowFragmentDoc = gql`
     code
     name
     unitName
+    isVaccine
+    doses
   }
 `;
 export const WarningFragmentDoc = gql`
@@ -1349,6 +1420,7 @@ export const StockLineFragmentDoc = gql`
       code
       unitName
       doses
+      isVaccine
       itemDirections {
         ...ItemDirection
       }
@@ -1415,6 +1487,11 @@ export const ItemVariantFragmentDoc = gql`
     id
     name
     itemId
+    item {
+      id
+      name
+      isVaccine
+    }
     manufacturerId
     manufacturer(storeId: $storeId) {
       ...NameRow
@@ -1432,6 +1509,8 @@ export const ItemVariantFragmentDoc = gql`
     bundlesWith {
       ...BundledItem
     }
+    dosesPerUnit
+    vvmType
   }
   ${NameRowFragmentDoc}
   ${ColdStorageTypeFragmentDoc}
@@ -1738,6 +1817,9 @@ export const UpsertItemVariantDocument = gql`
               ... on UniqueValueViolation {
                 description
                 field
+              }
+              ... on DoseConfigurationNotAllowed {
+                description
               }
             }
           }

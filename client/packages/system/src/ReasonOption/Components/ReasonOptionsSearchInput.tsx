@@ -19,6 +19,7 @@ interface ReasonOptionsSearchInputProps {
   isError?: boolean;
   isDisabled?: boolean;
   onBlur?: () => void;
+  initialStocktake?: boolean;
 }
 
 export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
@@ -30,6 +31,7 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
   isError,
   isDisabled,
   onBlur,
+  initialStocktake,
 }) => {
   const { data, isLoading } = useReasonOptions();
 
@@ -49,7 +51,7 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
   };
   const reasons = (data?.nodes ?? []).filter(reasonFilter);
 
-  const isRequired = reasons.length !== 0;
+  const isRequired = reasons.length !== 0 && !initialStocktake;
 
   return (
     <Box display="flex" flexDirection="row" width={120}>

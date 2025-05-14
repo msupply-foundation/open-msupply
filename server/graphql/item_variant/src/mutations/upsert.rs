@@ -1,6 +1,10 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, InternalError, UniqueValueKey, UniqueValueViolation},
+    generic_inputs::NullableUpdateInput,
+    simple_generic_errors::{
+        DatabaseError, DoseConfigurationNotAllowed, InternalError, UniqueValueKey,
+        UniqueValueViolation,
+    },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -12,6 +16,7 @@ use service::{
         item_variant::{UpsertItemVariantError as ServiceError, UpsertItemVariantWithPackaging},
         packaging_variant::{UpsertPackagingVariant, UpsertPackagingVariantError},
     },
+    NullableUpdate,
 };
 
 #[derive(InputObject)]
@@ -19,9 +24,11 @@ pub struct UpsertItemVariantInput {
     pub id: String,
     pub item_id: String,
     pub name: String,
-    pub cold_storage_type_id: Option<String>,
-    pub manufacturer_id: Option<String>,
+    pub cold_storage_type_id: Option<NullableUpdateInput<String>>,
+    pub manufacturer_id: Option<NullableUpdateInput<String>>,
     pub packaging_variants: Vec<PackagingVariantInput>,
+    pub doses_per_unit: i32,
+    pub vvm_type: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(InputObject)]
@@ -47,8 +54,9 @@ pub enum UpsertItemVariantResponse {
 #[derive(Interface)]
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpsertItemVariantErrorInterface {
-    InternalError(InternalError),
     DuplicateName(UniqueValueViolation),
+    DoseConfigurationNotAllowed(DoseConfigurationNotAllowed),
+    InternalError(InternalError),
     DatabaseError(DatabaseError),
 }
 
@@ -83,18 +91,28 @@ impl UpsertItemVariantInput {
             cold_storage_type_id,
             manufacturer_id,
             packaging_variants,
+            doses_per_unit,
+            vvm_type,
         } = self;
 
         UpsertItemVariantWithPackaging {
             id: id.clone(),
             item_id,
             name,
-            cold_storage_type_id,
-            manufacturer_id,
+            cold_storage_type_id: cold_storage_type_id.map(|cold_storage_type_id| NullableUpdate {
+                value: cold_storage_type_id.value,
+            }),
+            manufacturer_id: manufacturer_id.map(|manufacturer_id| NullableUpdate {
+                value: manufacturer_id.value,
+            }),
             packaging_variants: packaging_variants
                 .into_iter()
                 .map(|v| PackagingVariantInput::to_domain(v, id.clone()))
                 .collect(),
+            doses_per_unit,
+            vvm_type: vvm_type.map(|vvm_type| NullableUpdate {
+                value: vvm_type.value,
+            }),
         }
     }
 }
@@ -140,6 +158,13 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
             return Ok(UpsertItemVariantErrorInterface::DuplicateName(
                 UniqueValueViolation(UniqueValueKey::Name),
             ))
+        }
+        ServiceError::DoseConfigurationNotAllowed => {
+            return Ok(
+                UpsertItemVariantErrorInterface::DoseConfigurationNotAllowed(
+                    DoseConfigurationNotAllowed,
+                ),
+            )
         }
         // Generic errors
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),

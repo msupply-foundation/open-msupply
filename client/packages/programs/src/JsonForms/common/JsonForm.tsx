@@ -19,6 +19,8 @@ import { materialRenderers } from '@jsonforms/material-renderers';
 import {
   BooleanField,
   booleanTester,
+  SortToggle,
+  SortToggleTester,
   stringTester,
   TextField,
   selectTester,
@@ -204,6 +206,7 @@ const FormComponent = ({
 
 const renderers = [
   { tester: booleanTester, renderer: BooleanField },
+  { tester: SortToggleTester, renderer: SortToggle },
   { tester: stringTester, renderer: TextField },
   { tester: numberTester, renderer: NumberField },
   { tester: selectTester, renderer: Selector },

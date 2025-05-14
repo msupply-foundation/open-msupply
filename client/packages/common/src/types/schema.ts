@@ -934,6 +934,11 @@ export type BatchStocktakeResponse = {
   updateStocktakes?: Maybe<Array<UpdateStocktakeResponseWithId>>;
 };
 
+export type BoolStorePrefInput = {
+  storeId: Scalars['String']['input'];
+  value: Scalars['Boolean']['input'];
+};
+
 export type BundledItemMutations = {
   __typename: 'BundledItemMutations';
   deleteBundledItem: DeleteBundledItemResponse;
@@ -1449,12 +1454,6 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
-export type CustomerAndOrderTypeNode = {
-  __typename: 'CustomerAndOrderTypeNode';
-  customer: NameNode;
-  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
-};
-
 export type CustomerIndicatorInformationNode = {
   __typename: 'CustomerIndicatorInformationNode';
   customer: NameNode;
@@ -1470,11 +1469,8 @@ export type CustomerIndicatorInformationNodeCustomerArgs = {
 
 export type CustomerProgramRequisitionSettingNode = {
   __typename: 'CustomerProgramRequisitionSettingNode';
-  customerAndOrderTypes: Array<CustomerAndOrderTypeNode>;
-  masterList: MasterListNode;
-  programId: Scalars['String']['output'];
-  programName: Scalars['String']['output'];
-  tagName: Scalars['String']['output'];
+  customerNameId: Scalars['String']['output'];
+  programSettings: Array<ProgramSettingNode>;
 };
 
 export type CustomerReturnInput = {
@@ -2268,6 +2264,16 @@ export type DocumentSortInput = {
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: DocumentSortFieldInput;
+};
+
+export type DoseConfigurationNotAllowed = UpsertItemVariantErrorInterface & {
+  __typename: 'DoseConfigurationNotAllowed';
+  description: Scalars['String']['output'];
+};
+
+export type EmergencyResponseRequisitionCounts = {
+  __typename: 'EmergencyResponseRequisitionCounts';
+  new: Scalars['Int']['output'];
 };
 
 export type EncounterConnector = {
@@ -3549,11 +3555,10 @@ export type InsertStocktakeInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   expiresBefore?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  isLocked?: InputMaybe<Scalars['Boolean']['input']>;
+  isInitialStocktake?: InputMaybe<Scalars['Boolean']['input']>;
   itemsHaveStock?: InputMaybe<Scalars['Boolean']['input']>;
-  location?: InputMaybe<NullableStringUpdate>;
+  locationId?: InputMaybe<Scalars['String']['input']>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
-  stocktakeDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type InsertStocktakeLineError = {
@@ -4094,10 +4099,12 @@ export type ItemFilterInput = {
   categoryName?: InputMaybe<Scalars['String']['input']>;
   code?: InputMaybe<StringFilterInput>;
   codeOrName?: InputMaybe<StringFilterInput>;
+  /** Items with available stock on hand, regardless of item visibility. This filter is ignored if `is_visible_or_on_hand` is true */
+  hasStockOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isVaccine?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Items that are part of a masterlist which is visible in this store. This filter is void if `is_visible_or_on_hand` is true */
+  /** Items that are part of a masterlist which is visible in this store. This filter is ignored if `is_visible_or_on_hand` is true */
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   /** Items that are part of a masterlist which is visible in this store OR there is available stock of that item in this store */
   isVisibleOrOnHand?: InputMaybe<Scalars['Boolean']['input']>;
@@ -4256,13 +4263,16 @@ export type ItemVariantNode = {
   bundlesWith: Array<BundledItemNode>;
   coldStorageType?: Maybe<ColdStorageTypeNode>;
   coldStorageTypeId?: Maybe<Scalars['String']['output']>;
+  dosesPerUnit: Scalars['Int']['output'];
   id: Scalars['String']['output'];
+  item?: Maybe<ItemNode>;
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   manufacturer?: Maybe<NameNode>;
   manufacturerId?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   packagingVariants: Array<PackagingVariantNode>;
+  vvmType?: Maybe<Scalars['String']['output']>;
 };
 
 export type ItemVariantNodeManufacturerArgs = {
@@ -5547,6 +5557,11 @@ export type NumberNode = {
   number: Scalars['Int']['output'];
 };
 
+export type OkResponse = {
+  __typename: 'OkResponse';
+  ok: Scalars['Boolean']['output'];
+};
+
 export type OrderingTooManyItems = UpdateRequestRequisitionErrorInterface &
   UpdateResponseRequisitionErrorInterface & {
     __typename: 'OrderingTooManyItems';
@@ -5841,35 +5856,57 @@ export type PluginInfoNode = {
   pluginInfo: Scalars['JSON']['output'];
 };
 
+/** The context we are editing pref within (e.g. prefs for given store, user, etc.) */
+export type PreferenceDescriptionContext = {
+  storeId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type PreferenceDescriptionNode = {
   __typename: 'PreferenceDescriptionNode';
-  jsonSchema: Scalars['JSON']['output'];
-  key: Scalars['String']['output'];
-  uiSchema: Scalars['JSON']['output'];
+  key: PreferenceKey;
+  /**
+   * WARNING: Type loss - holds any kind of pref value (for edit UI).
+   * Use the PreferencesNode to load the strictly typed value.
+   */
+  value: Scalars['JSON']['output'];
+  valueType: PreferenceValueNodeType;
 };
+
+export enum PreferenceKey {
+  DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
+  DisplayVaccineInDoses = 'displayVaccineInDoses',
+  ManageVvmStatus = 'manageVvmStatus',
+  ShowContactTracing = 'showContactTracing',
+  SortByVvmStatus = 'sortByVvmStatus',
+}
 
 export type PreferenceMutations = {
   __typename: 'PreferenceMutations';
-  upsertPreference: PreferenceNode;
+  upsertPreferences: OkResponse;
 };
 
-export type PreferenceMutationsUpsertPreferenceArgs = {
-  input: UpsertPreferenceInput;
+export type PreferenceMutationsUpsertPreferencesArgs = {
+  input: UpsertPreferencesInput;
   storeId: Scalars['String']['input'];
 };
 
-export type PreferenceNode = {
-  __typename: 'PreferenceNode';
-  id: Scalars['String']['output'];
-  key: Scalars['String']['output'];
-  storeId?: Maybe<Scalars['String']['output']>;
-  /** JSON serialized value */
-  value: Scalars['String']['output'];
-};
+export enum PreferenceNodeType {
+  Global = 'GLOBAL',
+  Store = 'STORE',
+}
+
+export enum PreferenceValueNodeType {
+  Boolean = 'BOOLEAN',
+  Integer = 'INTEGER',
+}
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
+  displayPopulationBasedForecasting: Scalars['Boolean']['output'];
+  displayVaccineInDoses: Scalars['Boolean']['output'];
+  manageVvmStatus: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
+  sortByVvmStatus: Scalars['Boolean']['output'];
 };
 
 export type PricingNode = {
@@ -6133,6 +6170,20 @@ export type ProgramRequisitionOrderTypeNode = {
   name: Scalars['String']['output'];
 };
 
+export type ProgramSettingNode = {
+  __typename: 'ProgramSettingNode';
+  masterListCode: Scalars['String']['output'];
+  masterListDescription: Scalars['String']['output'];
+  masterListDiscountPercentage?: Maybe<Scalars['Float']['output']>;
+  masterListId: Scalars['String']['output'];
+  masterListIsActive: Scalars['Boolean']['output'];
+  masterListIsDefaultPriceList: Scalars['Boolean']['output'];
+  masterListName: Scalars['String']['output'];
+  masterListNameTagId: Scalars['String']['output'];
+  masterListNameTagName: Scalars['String']['output'];
+  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
+};
+
 export enum ProgramSortFieldInput {
   Name = 'name',
 }
@@ -6180,6 +6231,7 @@ export type Queries = {
    * `active_start_datetime <= at && active_end_datetime + 1 >= at`
    */
   activeProgramEvents: ProgramEventResponse;
+  activeVvmStatuses: VvmstatusesResponse;
   activityLogs: ActivityLogResponse;
   apiVersion: Scalars['String']['output'];
   assetCatalogueItem: AssetCatalogueItemResponse;
@@ -6201,7 +6253,6 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
-  availablePreferences: Array<PreferenceDescriptionNode>;
   barcodeByGtin: BarcodeResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
@@ -6210,7 +6261,6 @@ export type Queries = {
   coldStorageTypes: ColdStorageTypesResponse;
   contactTraces: ContactTraceResponse;
   currencies: CurrenciesResponse;
-  customerProgramRequisitionSettings: Array<CustomerProgramRequisitionSettingNode>;
   databaseSettings: DatabaseSettingsNode;
   demographicIndicators: DemographicIndicatorsResponse;
   demographicProjectionByBaseYear: DemographicProjectionResponse;
@@ -6295,11 +6345,15 @@ export type Queries = {
   periods: PeriodsResponse;
   pluginData: PluginDataResponse;
   pluginGraphqlQuery: Scalars['JSON']['output'];
+  /** The list of preferences and their current values (used for the admin/edit page) */
+  preferenceDescriptions: Array<PreferenceDescriptionNode>;
+  /** Returns the relevant set of preferences based on context (e.g. current store) */
   preferences: PreferencesNode;
   printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
   programIndicators: ProgramIndicatorResponse;
+  programRequisitionSettingsByCustomer: CustomerProgramRequisitionSettingNode;
   programs: ProgramsResponse;
   rAndRForm: RnRFormResponse;
   rAndRForms: RnRFormsResponse;
@@ -6357,6 +6411,10 @@ export type QueriesActiveProgramEventsArgs = {
   filter?: InputMaybe<ProgramEventFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ProgramEventSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesActiveVvmStatusesArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -6441,10 +6499,6 @@ export type QueriesAuthTokenArgs = {
   username: Scalars['String']['input'];
 };
 
-export type QueriesAvailablePreferencesArgs = {
-  storeId: Scalars['String']['input'];
-};
-
 export type QueriesBarcodeByGtinArgs = {
   gtin: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
@@ -6479,10 +6533,6 @@ export type QueriesContactTracesArgs = {
 export type QueriesCurrenciesArgs = {
   filter?: InputMaybe<CurrencyFilterInput>;
   sort?: InputMaybe<Array<CurrencySortInput>>;
-};
-
-export type QueriesCustomerProgramRequisitionSettingsArgs = {
-  storeId: Scalars['String']['input'];
 };
 
 export type QueriesDemographicIndicatorsArgs = {
@@ -6748,6 +6798,12 @@ export type QueriesPluginGraphqlQueryArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesPreferenceDescriptionsArgs = {
+  prefContext: PreferenceDescriptionContext;
+  prefType: PreferenceNodeType;
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesPreferencesArgs = {
   storeId: Scalars['String']['input'];
 };
@@ -6772,6 +6828,11 @@ export type QueriesProgramEventsArgs = {
 export type QueriesProgramIndicatorsArgs = {
   filter?: InputMaybe<ProgramIndicatorFilterInput>;
   sort?: InputMaybe<ProgramIndicatorSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesProgramRequisitionSettingsByCustomerArgs = {
+  customerNameId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -7246,12 +7307,14 @@ export type RequisitionConnector = {
 
 export type RequisitionCounts = {
   __typename: 'RequisitionCounts';
+  emergency: EmergencyResponseRequisitionCounts;
   request: RequestRequisitionCounts;
   response: ResponseRequisitionCounts;
 };
 
 export type RequisitionFilterInput = {
   aShipmentHasBeenCreated?: InputMaybe<Scalars['Boolean']['input']>;
+  automaticallyCreated?: InputMaybe<Scalars['Boolean']['input']>;
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -7259,6 +7322,7 @@ export type RequisitionFilterInput = {
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isEmergency?: InputMaybe<Scalars['Boolean']['input']>;
   orderType?: InputMaybe<EqualFilterStringInput>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<StringFilterInput>;
@@ -7898,6 +7962,7 @@ export type StocktakeLineConnector = {
 export type StocktakeLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   stocktakeId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -7961,6 +8026,7 @@ export type StocktakeNode = {
   inventoryAdditionId?: Maybe<Scalars['String']['output']>;
   inventoryReduction?: Maybe<InvoiceNode>;
   inventoryReductionId?: Maybe<Scalars['String']['output']>;
+  isInitialStocktake: Scalars['Boolean']['output'];
   isLocked: Scalars['Boolean']['output'];
   lines: StocktakeLineConnector;
   program?: Maybe<ProgramNode>;
@@ -9452,12 +9518,14 @@ export type UpsertItemVariantErrorInterface = {
 };
 
 export type UpsertItemVariantInput = {
-  coldStorageTypeId?: InputMaybe<Scalars['String']['input']>;
+  coldStorageTypeId?: InputMaybe<NullableStringUpdate>;
+  dosesPerUnit: Scalars['Int']['input'];
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  manufacturerId?: InputMaybe<Scalars['String']['input']>;
+  manufacturerId?: InputMaybe<NullableStringUpdate>;
   name: Scalars['String']['input'];
   packagingVariants: Array<PackagingVariantInput>;
+  vvmType?: InputMaybe<NullableStringUpdate>;
 };
 
 export type UpsertLogLevelInput = {
@@ -9473,11 +9541,12 @@ export type UpsertPackVariantResponse =
   | ItemVariantNode
   | UpsertItemVariantError;
 
-export type UpsertPreferenceInput = {
-  id: Scalars['String']['input'];
-  key: Scalars['String']['input'];
-  storeId?: InputMaybe<Scalars['String']['input']>;
-  value: Scalars['String']['input'];
+export type UpsertPreferencesInput = {
+  displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
+  displayVaccineInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
+  manageVvmStatus?: InputMaybe<Array<BoolStorePrefInput>>;
+  showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
+  sortByVvmStatus?: InputMaybe<Array<BoolStorePrefInput>>;
 };
 
 export type UpsertVaccineCourseDoseInput = {
@@ -9767,6 +9836,24 @@ export enum VenCategoryType {
   NotAssigned = 'NOT_ASSIGNED',
   V = 'V',
 }
+
+export type VvmstatusConnector = {
+  __typename: 'VvmstatusConnector';
+  nodes: Array<VvmstatusNode>;
+};
+
+export type VvmstatusNode = {
+  __typename: 'VvmstatusNode';
+  code: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  level: Scalars['Int']['output'];
+  reasonId?: Maybe<Scalars['String']['output']>;
+  unusable: Scalars['Boolean']['output'];
+};
+
+export type VvmstatusesResponse = VvmstatusConnector;
 
 export type WarningNode = {
   __typename: 'WarningNode';
