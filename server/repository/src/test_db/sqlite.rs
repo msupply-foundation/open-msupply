@@ -35,6 +35,7 @@ fn get_test_db_settings_etc(db_name: &str, is_template: bool) -> DatabaseSetting
         },
         init_sql: None,
         database_path: None,
+        // These vacuums should only happen in server lib.rs, does not effect tests
         sqlite_vacuum: Default::default(),
     }
 }

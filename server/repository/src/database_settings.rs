@@ -229,6 +229,7 @@ mod database_setting_test {
             database_name: "".to_string(),
             init_sql,
             database_path: None,
+            // These vacuums should only happen in server lib.rs, does not effect tests
             sqlite_vacuum: Default::default(),
         }
     }
