@@ -31,7 +31,7 @@ export const useOutboundLineEditColumns = ({
   isExternalSupplier,
   allocateIn,
 }: {
-  allocate: (key: string, value: number) => void;
+  allocate: (key: string, value: number) => number;
   item: DraftItem;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
@@ -172,7 +172,7 @@ const getAllocateInUnitsColumns = (
 const DoseQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
-    max={props.rowData.availablePacks}
+    max={packsToDoses(props.rowData.availablePacks, props.rowData)}
     id={getPackQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
     decimalLimit={0}
     min={0}
@@ -233,7 +233,8 @@ const getAllocateInDosesColumns = (
           dosesIssued?: number;
         }
       ) => {
-        allocate(row.id, row.dosesIssued ?? 0);
+        const allocatedQuantity = allocate(row.id, row.dosesIssued ?? 0);
+        return allocatedQuantity; // return to NumberInputCell to ensure value is correct
       },
       accessor: ({ rowData }) => getDoseQuantity(rowData),
     },
