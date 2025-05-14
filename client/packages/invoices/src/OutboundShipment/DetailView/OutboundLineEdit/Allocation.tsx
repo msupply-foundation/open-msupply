@@ -62,12 +62,9 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
     'currency',
     'otherParty',
   ]);
-  const { draftLines, manualAllocate } = useAllocationContext(
-    ({ draftLines, manualAllocate }) => ({
-      draftLines,
-      manualAllocate,
-    })
-  );
+  const { draftLines } = useAllocationContext(({ draftLines }) => ({
+    draftLines,
+  }));
 
   return (
     <>
@@ -98,7 +95,6 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
       <TableWrapper
         currentItem={item}
         isLoading={false}
-        updateQuantity={manualAllocate}
         currency={currency}
         isExternalSupplier={!otherParty?.store}
       />
@@ -109,7 +105,6 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
 interface TableProps {
   currentItem: DraftItem;
   isLoading: boolean;
-  updateQuantity: (batchId: string, updateQuantity: number) => void;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
 }
@@ -117,7 +112,6 @@ interface TableProps {
 const TableWrapper = ({
   currentItem,
   isLoading,
-  updateQuantity,
   currency,
   isExternalSupplier,
 }: TableProps) => {
@@ -142,7 +136,6 @@ const TableWrapper = ({
       })}
     >
       <OutboundLineEditTable
-        onChange={updateQuantity}
         item={currentItem}
         currency={currency}
         isExternalSupplier={isExternalSupplier}
