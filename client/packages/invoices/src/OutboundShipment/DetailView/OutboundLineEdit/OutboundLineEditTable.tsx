@@ -95,6 +95,7 @@ export const OutboundLineEditTable = ({
   isExternalSupplier,
 }: OutboundLineEditTableProps) => {
   const t = useTranslation();
+  const { format } = useFormatNumber();
   const tableStore = useTableStore();
 
   const {
@@ -115,7 +116,7 @@ export const OutboundLineEditTable = ({
 
   const allocate = (key: string, value: number) => {
     const num = Number.isNaN(value) ? 0 : value;
-    manualAllocate(key, num);
+    return manualAllocate(key, num, format, t);
   };
 
   const columns = useOutboundLineEditColumns({

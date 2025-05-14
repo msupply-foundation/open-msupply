@@ -13,6 +13,7 @@ import {
   getAllocatedQuantity,
   issueDoses,
   issuePacks,
+  packsToQuantity,
   scannedBatchFilter,
 } from './utils';
 import { OutboundLineEditData } from '../../../api';
@@ -63,12 +64,17 @@ interface AllocationContext {
   setAlerts: (alerts: StockOutAlert[]) => void;
   clear: () => void;
 
-  manualAllocate: (lineId: string, quantity: number) => void;
+  manualAllocate: (
+    lineId: string,
+    quantity: number,
+    format: (value: number, options?: Intl.NumberFormatOptions) => string,
+    t: TypedTFunction<LocaleKey>
+  ) => number;
   autoAllocate: (
     quantity: number,
     format: (value: number, options?: Intl.NumberFormatOptions) => string,
     t: TypedTFunction<LocaleKey>
-  ) => void;
+  ) => number;
 }
 
 export const useAllocationContext = create<AllocationContext>((set, get) => ({
@@ -152,46 +158,51 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
     const result = allocateQuantities(draftLines, quantity, { allocateIn });
 
-    if (result) {
-      setDraftLines(result.allocatedLines);
-
-      const allocatedQuantity = getAllocatedQuantity({
-        allocateIn,
-        draftLines: result.allocatedLines,
-      });
-
-      const hasOnHold = nonAllocatableLines.some(
-        ({ availablePacks, stockLineOnHold }) =>
-          availablePacks > 0 && !!stockLineOnHold
-      );
-      const hasExpired = draftLines.some(
-        ({ expiryDate }) =>
-          !!expiryDate && DateUtils.isExpired(new Date(expiryDate))
-      );
-
-      const stillToAllocate =
-        result.remainingQuantity > 0 ? result.remainingQuantity : 0;
-
-      const alerts = getAllocationAlerts(
-        quantity,
-        allocatedQuantity,
-        stillToAllocate,
-        hasOnHold,
-        hasExpired,
-        format,
-        t
-      );
-
-      set(state => ({
-        ...state,
-        alerts,
-        placeholderQuantity:
-          placeholderQuantity === null ? null : stillToAllocate,
-      }));
+    // Early return if no allocation was possible
+    if (!result) {
+      return getAllocatedQuantity({ allocateIn, draftLines });
     }
+
+    setDraftLines(result.allocatedLines);
+
+    const allocatedQuantity = getAllocatedQuantity({
+      allocateIn,
+      draftLines: result.allocatedLines,
+    });
+
+    const hasOnHold = nonAllocatableLines.some(
+      ({ availablePacks, stockLineOnHold }) =>
+        availablePacks > 0 && !!stockLineOnHold
+    );
+    const hasExpired = draftLines.some(
+      ({ expiryDate }) =>
+        !!expiryDate && DateUtils.isExpired(new Date(expiryDate))
+    );
+
+    const stillToAllocate =
+      result.remainingQuantity > 0 ? result.remainingQuantity : 0;
+
+    const alerts = getAllocationAlerts(
+      quantity,
+      allocatedQuantity,
+      stillToAllocate,
+      hasOnHold,
+      hasExpired,
+      format,
+      t
+    );
+
+    set(state => ({
+      ...state,
+      alerts,
+      placeholderQuantity:
+        placeholderQuantity === null ? null : stillToAllocate,
+    }));
+
+    return allocatedQuantity;
   },
 
-  manualAllocate: (lineId, quantity) => {
+  manualAllocate: (lineId, quantity, format, t) => {
     const { allocateIn, draftLines, setDraftLines } = get();
 
     // TODO: pass in when using for prescriptions
@@ -204,11 +215,30 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
     setDraftLines(updatedLines);
 
-    // tODO; alert if rounded up!
+    const updatedLine = updatedLines.find(line => line.id === lineId);
+
+    const allocatedQuantity = updatedLine
+      ? packsToQuantity(allocateIn, updatedLine.numberOfPacks, updatedLine)
+      : 0;
+
+    const alerts: StockOutAlert[] =
+      allocatedQuantity > quantity
+        ? [
+            {
+              message: t('messages.over-allocated-line', {
+                quantity: format(allocatedQuantity),
+                issueQuantity: format(quantity),
+              }),
+              severity: 'warning',
+            },
+          ]
+        : [];
 
     set(state => ({
       ...state,
-      alerts: [],
+      alerts,
     }));
+
+    return allocatedQuantity;
   },
 }));
