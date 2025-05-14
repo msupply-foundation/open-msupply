@@ -286,8 +286,6 @@ pub struct MockDataInserts {
     pub key_value_store_rows: bool,
     pub activity_logs: bool,
     pub sync_logs: bool,
-    pub inventory_adjustment_reasons: bool,
-    pub return_reasons: bool,
     pub barcodes: bool,
     pub programs: bool,
     pub program_requisition_settings: bool,
@@ -363,8 +361,6 @@ impl MockDataInserts {
             key_value_store_rows: true,
             activity_logs: true,
             sync_logs: true,
-            inventory_adjustment_reasons: true,
-            return_reasons: true,
             barcodes: true,
             programs: true,
             program_requisition_settings: true,
@@ -566,15 +562,6 @@ impl MockDataInserts {
 
     pub fn sync_logs(mut self) -> Self {
         self.sync_logs = true;
-        self
-    }
-
-    pub fn inventory_adjustment_reasons(mut self) -> Self {
-        self.inventory_adjustment_reasons = true;
-        self
-    }
-    pub fn return_reasons(mut self) -> Self {
-        self.return_reasons = true;
         self
     }
 
