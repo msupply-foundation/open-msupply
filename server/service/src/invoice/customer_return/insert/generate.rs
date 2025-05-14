@@ -104,6 +104,7 @@ pub fn generate(
                  reason_id: _,
                  note,
                  item_variant_id,
+                 vvm_status_id,
              }| InsertStockInLine {
                 id,
                 expiry_date,
@@ -115,6 +116,7 @@ pub fn generate(
                 note,
                 r#type: StockInType::CustomerReturn,
                 item_variant_id,
+                vvm_status_id,
                 // Default
                 location: None,
                 cost_price_per_pack: 0.0,
