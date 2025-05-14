@@ -1,6 +1,7 @@
 import { FnUtils } from '@openmsupply-client/common';
 import { allocateQuantities } from './allocateQuantities';
 import { DraftStockOutLineFragment } from '../../../api/operations.generated';
+import { AllocateIn } from './useAllocationContext';
 
 describe('allocateQuantities - standard behaviour.', () => {
   it('allocates quantity to a row', () => {
@@ -12,7 +13,9 @@ describe('allocateQuantities - standard behaviour.', () => {
       remainingQuantity: 0,
     };
 
-    expect(allocateQuantities(draftLines, 3)).toEqual(expected);
+    expect(
+      allocateQuantities(draftLines, 3, { allocateIn: AllocateIn.Units })
+    ).toEqual(expected);
   });
 
   it('allocates quantity spread over multiple lines, first line first', () => {
@@ -24,7 +27,9 @@ describe('allocateQuantities - standard behaviour.', () => {
       { ...one, numberOfPacks: 10 },
       { ...two, numberOfPacks: 5 },
     ];
-    const allocated = allocateQuantities(draftLines, 15);
+    const allocated = allocateQuantities(draftLines, 15, {
+      allocateIn: AllocateIn.Units,
+    });
 
     expect(allocated?.allocatedLines).toEqual(expected);
     expect(allocated?.remainingQuantity).toEqual(0);
@@ -38,7 +43,9 @@ describe('allocateQuantities - standard behaviour.', () => {
     const draftLines = [lineOne];
 
     const expected = [{ ...lineOne, numberOfPacks: 1 }];
-    const allocated = allocateQuantities(draftLines, 5);
+    const allocated = allocateQuantities(draftLines, 5, {
+      allocateIn: AllocateIn.Units,
+    });
 
     expect(allocated?.allocatedLines).toEqual(expected);
     expect(allocated?.remainingQuantity).toEqual(-5); // over-allocated
@@ -49,7 +56,9 @@ describe('allocateQuantities - standard behaviour.', () => {
     const draftLines = [lineOne];
 
     const expected = [{ ...lineOne, numberOfPacks: 1 }];
-    const allocated = allocateQuantities(draftLines, 5);
+    const allocated = allocateQuantities(draftLines, 5, {
+      allocateIn: AllocateIn.Units,
+    });
 
     expect(allocated?.allocatedLines).toEqual(expected);
     expect(allocated?.remainingQuantity).toEqual(4);
@@ -72,7 +81,9 @@ describe('Allocate quantities - with differing pack sizes', () => {
       { ...one, numberOfPacks: 1 },
       { ...two, numberOfPacks: 1 },
     ];
-    const allocated = allocateQuantities(draftLines, 3);
+    const allocated = allocateQuantities(draftLines, 3, {
+      allocateIn: AllocateIn.Units,
+    });
 
     expect(allocated?.allocatedLines).toEqual(expected);
   });
@@ -95,7 +106,10 @@ describe('Allocated quantities - skips invalid lines', () => {
       allocatableLine,
     ];
 
-    expect(allocateQuantities(draftLines, 2)?.allocatedLines).toEqual([
+    expect(
+      allocateQuantities(draftLines, 2, { allocateIn: AllocateIn.Units })
+        ?.allocatedLines
+    ).toEqual([
       expiredLine,
       onHoldLine,
       unavailableLine,
@@ -116,7 +130,9 @@ describe('Allocated quantities - coping with over-allocation', () => {
   it('skips large pack size to prevent over allocating', () => {
     const draftLines = [{ ...line1 }, { ...line2PackSize10 }, { ...line3 }];
 
-    expect(allocateQuantities(draftLines, 7)).toEqual({
+    expect(
+      allocateQuantities(draftLines, 7, { allocateIn: AllocateIn.Units })
+    ).toEqual({
       allocatedLines: [
         { ...line1, numberOfPacks: 5 },
         { ...line2PackSize10, numberOfPacks: 0 },
@@ -131,7 +147,8 @@ describe('Allocated quantities - coping with over-allocation', () => {
 
     const { allocatedLines, remainingQuantity } = allocateQuantities(
       draftLines,
-      20
+      20,
+      { allocateIn: AllocateIn.Units }
     )!;
 
     expect(allocatedLines).toEqual([
@@ -141,16 +158,99 @@ describe('Allocated quantities - coping with over-allocation', () => {
     expect(remainingQuantity === 0).toBe(true);
   });
 
+  it('reduces the right amount', () => {
+    const lineOne = createTestLine({ availablePacks: 10, packSize: 1 }); // 10
+    const lineTwo = createTestLine({ availablePacks: 10, packSize: 2 }); // 20
+    const lineThree = createTestLine({ availablePacks: 10, packSize: 6 }); // 50
+    const draftLines = [lineOne, lineTwo, lineThree];
+
+    // should first allocate the 10 and 20 from line 1 and 2
+    // then 18 from line 3 (as need to round to whole pack)
+    // 10 + 20 + 18 = 48 = over by 5
+    // Can't remove from line 3 without under-allocating, so need to remove from line 2, then 1
+    // Remove 2 * 2 from line 2 (4 units) -- now at 44
+    // Remove 1 * 1 from line 1 -- now at 43!
+
+    const { allocatedLines, remainingQuantity } = allocateQuantities(
+      draftLines,
+      43,
+      { allocateIn: AllocateIn.Units }
+    )!;
+
+    expect(allocatedLines).toEqual([
+      { ...lineOne, numberOfPacks: 9 },
+      { ...lineTwo, numberOfPacks: 8 },
+      { ...lineThree, numberOfPacks: 3 },
+    ]);
+    expect(remainingQuantity === 0).toBe(true);
+  });
+
   it('over-allocates if required to meet requested quantity', () => {
     const draftLines = [{ ...line1 }, { ...line2PackSize10 }];
 
-    expect(allocateQuantities(draftLines, 47)).toEqual({
+    expect(
+      allocateQuantities(draftLines, 47, { allocateIn: AllocateIn.Units })
+    ).toEqual({
       allocatedLines: [
         { ...line1, numberOfPacks: 0 },
         { ...line2PackSize10, numberOfPacks: 5 }, // i.e. 50 packs
       ],
       remainingQuantity: -3, // over-allocated by 3
     });
+  });
+});
+
+describe('Allocating in doses', () => {
+  it('allocates quantity to a row', () => {
+    const lineOne = createTestLine({
+      availablePacks: 10,
+      packSize: 5,
+      dosesPerUnit: 2,
+    });
+    const draftLines = [lineOne];
+
+    const doseQuantity = 20; // 5 units per pack * 2 doses per unit == 2 packs
+
+    const result = allocateQuantities(draftLines, doseQuantity, {
+      allocateIn: AllocateIn.Doses,
+    });
+
+    expect(result).toEqual({
+      allocatedLines: [{ ...lineOne, numberOfPacks: 2 }],
+      remainingQuantity: 0,
+    });
+  });
+
+  it('correctly reduces earlier lines to prevent over allocating', () => {
+    const lineOne = createTestLine({
+      availablePacks: 3,
+      packSize: 1,
+      dosesPerUnit: 2,
+    }); // 6 doses available
+    const lineTwo = createTestLine({
+      availablePacks: 10,
+      packSize: 5,
+      dosesPerUnit: 2,
+    }); // 100 doses available
+    const draftLines = [lineOne, lineTwo];
+
+    const doseQuantity = 22;
+
+    // should first allocate the 6 doses from line 1
+    // then 20 doses (2 packs) from line 2 (as need to round to whole pack)
+    // 26 is more than the requested 22, so should reduce line1 to 1 pack (2 doses)
+
+    const { allocatedLines, remainingQuantity } = allocateQuantities(
+      draftLines,
+      doseQuantity,
+      { allocateIn: AllocateIn.Doses }
+    )!;
+
+    expect(allocatedLines).toEqual([
+      { ...lineOne, numberOfPacks: 1 },
+      { ...lineTwo, numberOfPacks: 2 },
+    ]);
+    expect(remainingQuantity === 0).toBe(true);
   });
 });
 
@@ -161,6 +261,7 @@ type TestLineParams = {
   numberOfPacks?: number;
   onHold?: boolean;
   expiryDate?: string;
+  dosesPerUnit?: number;
 };
 
 function createTestLine({
@@ -170,6 +271,7 @@ function createTestLine({
   numberOfPacks = 0,
   onHold = false,
   expiryDate,
+  dosesPerUnit = 1,
 }: TestLineParams): DraftStockOutLineFragment {
   return {
     __typename: 'DraftOutboundShipmentLineNode',
@@ -182,5 +284,6 @@ function createTestLine({
     availablePacks,
     expiryDate,
     stockLineOnHold: onHold,
+    defaultDosesPerUnit: dosesPerUnit,
   };
 }

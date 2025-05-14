@@ -15,7 +15,7 @@ import {
   AllocateIn,
   useAllocationContext,
 } from './allocation/useAllocationContext';
-import { getAllocatedUnits } from './allocation/utils';
+import { getAllocatedQuantity } from './allocation/utils';
 
 export const AutoAllocate = () => {
   const t = useTranslation();
@@ -25,7 +25,7 @@ export const AutoAllocate = () => {
     useAllocationContext(state => ({
       autoAllocate: state.autoAllocate,
       alerts: state.alerts,
-      allocatedQuantity: getAllocatedUnits(state),
+      allocatedQuantity: getAllocatedQuantity(state),
       allocateIn: state.allocateIn,
     }));
 

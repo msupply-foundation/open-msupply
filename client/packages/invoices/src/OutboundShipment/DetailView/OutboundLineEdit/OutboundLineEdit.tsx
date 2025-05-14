@@ -19,7 +19,7 @@ import { Allocation } from './Allocation';
 import { useOpenedWithBarcode } from './hooks/useOpenedWithBarcode';
 import { useAllocationContext } from './allocation/useAllocationContext';
 import { useSaveOutboundLines } from '../../api/hooks/useSaveOutboundLines';
-import { getAllocatedUnits } from './allocation/utils';
+import { getAllocatedQuantity } from './allocation/utils';
 
 export type OutboundOpenedWith = { itemId: string } | ScannedBarcode | null;
 
@@ -63,7 +63,7 @@ export const OutboundLineEdit = ({
 
   const {
     draftLines,
-    allocatedUnits,
+    allocatedQuantity,
     placeholderQuantity,
     alerts,
     isDirty,
@@ -72,7 +72,7 @@ export const OutboundLineEdit = ({
   } = useAllocationContext(state => ({
     draftLines: state.draftLines,
     placeholderQuantity: state.placeholderQuantity,
-    allocatedUnits: getAllocatedUnits(state),
+    allocatedQuantity: getAllocatedQuantity(state),
     alerts: state.alerts,
     isDirty: state.isDirty,
     setAlerts: state.setAlerts,
@@ -101,7 +101,7 @@ export const OutboundLineEdit = ({
   const handleSave = async (onSaved: () => boolean | void) => {
     const confirmZeroQuantityMessage = t('messages.confirm-zero-quantity');
     if (
-      allocatedUnits === 0 &&
+      allocatedQuantity === 0 &&
       !alerts.some(alert => alert.message === confirmZeroQuantityMessage)
     ) {
       setAlerts([{ message: confirmZeroQuantityMessage, severity: 'warning' }]);
