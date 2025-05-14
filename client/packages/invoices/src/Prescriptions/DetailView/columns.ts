@@ -9,7 +9,6 @@ import {
   ArrayUtils,
   useTranslation,
   useColumnUtils,
-  NumberCell,
   CurrencyCell,
   ColumnDescription,
   NumUtils,
@@ -17,6 +16,7 @@ import {
   usePreference,
   PreferenceKey,
   getDosesPerUnitColumn,
+  BasicCell,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -280,7 +280,7 @@ export const usePrescriptionColumn = ({
     [
       'numberOfPacks',
       {
-        Cell: NumberCell,
+        Cell: BasicCell,
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;
@@ -309,7 +309,7 @@ export const usePrescriptionColumn = ({
             if (packSize) {
               return lines.reduce((acc, value) => acc + value.numberOfPacks, 0);
             } else {
-              return '';
+              return t('multiple');
             }
           } else {
             return rowData.numberOfPacks;
