@@ -160,6 +160,7 @@ mod user_store_join_row;
 pub mod vaccination;
 pub mod vaccination_card;
 pub mod vaccination_row;
+pub mod vaccine_course;
 pub mod warning;
 pub mod warning_row;
 
@@ -189,7 +190,7 @@ pub use document::*;
 pub use document_registry::*;
 pub use document_registry_config::*;
 pub use document_registry_row::*;
-pub use dynamic_cursor::DynamicCursorRepository;
+pub use dynamic_cursor::*;
 pub use encounter::*;
 pub use encounter_row::*;
 pub use filter_sort_pagination::*;
