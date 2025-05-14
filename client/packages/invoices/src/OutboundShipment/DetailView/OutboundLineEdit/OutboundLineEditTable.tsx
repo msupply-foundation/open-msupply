@@ -16,10 +16,10 @@ import { useOutboundLineEditColumns } from './columns';
 import { DraftItem } from '../../..';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { useAllocationContext } from './allocation/useAllocationContext';
-import { getAllocatedUnits } from './allocation/utils';
+import { getAllocatedQuantity } from './allocation/utils';
 
 export interface OutboundLineEditTableProps {
-  item: DraftItem | null;
+  item: DraftItem;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
 }
@@ -95,40 +95,36 @@ export const OutboundLineEditTable = ({
   isExternalSupplier,
 }: OutboundLineEditTableProps) => {
   const t = useTranslation();
+  const { format } = useFormatNumber();
   const tableStore = useTableStore();
 
   const {
-    allocatedUnits,
     draftLines,
     placeholderQuantity,
     nonAllocatableLines,
+    allocateIn,
+    allocatedQuantity,
     manualAllocate,
-  } = useAllocationContext(
-    ({
-      draftLines,
-      placeholderQuantity,
-      nonAllocatableLines,
-      manualAllocate,
-    }) => ({
-      draftLines,
-      placeholderQuantity,
-      allocatedUnits: getAllocatedUnits({ draftLines, placeholderQuantity }),
-      nonAllocatableLines,
-      manualAllocate,
-    })
-  );
+  } = useAllocationContext(state => ({
+    draftLines: state.draftLines,
+    placeholderQuantity: state.placeholderQuantity,
+    nonAllocatableLines: state.nonAllocatableLines,
+    allocateIn: state.allocateIn,
+    allocatedQuantity: getAllocatedQuantity(state),
+    manualAllocate: state.manualAllocate,
+  }));
 
-  const onEditStockLine = (key: string, value: number) => {
+  const allocate = (key: string, value: number) => {
     const num = Number.isNaN(value) ? 0 : value;
-    manualAllocate(key, num);
+    return manualAllocate(key, num, format, t);
   };
-  const unit = item?.unitName ?? t('label.unit');
 
   const columns = useOutboundLineEditColumns({
-    onChange: onEditStockLine,
-    unit,
+    allocate,
+    item,
     currency,
     isExternalSupplier,
+    allocateIn,
   });
 
   // Display all stock lines to user, including non-allocatable ones at the bottom
@@ -159,11 +155,11 @@ export const OutboundLineEditTable = ({
       key="placeholder-row"
     />,
     <tr key="divider-row">
-      <td colSpan={10}>
+      <td colSpan={11}>
         <Divider margin={10} />
       </td>
     </tr>,
-    <TotalRow key="total-row" allocatedQuantity={allocatedUnits} />,
+    <TotalRow key="total-row" allocatedQuantity={allocatedQuantity} />,
   ];
 
   return (
