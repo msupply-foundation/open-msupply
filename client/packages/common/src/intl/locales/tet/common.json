@@ -218,6 +218,7 @@
   "label.atc-category": "Kategoria ATC",
   "label.available": "Disponivel",
   "label.available-packs": "Disponivel (pakotes)",
+  "label.available-quantity": "Kuantidade Disponivel: {{number}} Unidades",
   "label.barcode": "Barcode",
   "label.batch": "Lote",
   "label.cant-delete-disabled": "Bele deit hamos linas wainhira nia estatus foun",
