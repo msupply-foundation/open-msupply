@@ -108,6 +108,10 @@ impl StockLineNode {
     }
 
     pub async fn vvm_status(&self, ctx: &Context<'_>) -> Result<Option<VVMStatusNode>> {
+        if self.row().vvm_status_id.is_none() {
+            return Ok(None);
+        }
+
         let loader = ctx.get_loader::<DataLoader<VVMStatusByIdLoader>>();
         let type_id = match self.row().vvm_status_id.clone() {
             Some(type_id) => type_id,

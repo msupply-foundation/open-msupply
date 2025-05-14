@@ -46,6 +46,7 @@ pub struct LegacyStockLineRow {
     #[serde(rename = "om_item_variant_id")]
     #[serde(default)]
     pub item_variant_id: Option<String>,
+    #[serde(rename = "vvm_type")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub vvm_status: Option<String>,
 }
