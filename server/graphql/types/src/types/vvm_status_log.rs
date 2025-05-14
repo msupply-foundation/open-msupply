@@ -4,10 +4,9 @@ use graphql_core::{
     loader::{StockLineByIdLoader, UserLoader, VVMStatusByIdLoader},
     ContextExt,
 };
-use graphql_types::types::{StockLineNode, UserNode};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 
-use super::vvm_status::VVMStatusNode;
+use super::{StockLineNode, UserNode, VVMStatusNode};
 
 #[derive(PartialEq, Debug)]
 pub struct VVMStatusLogNode {
@@ -65,6 +64,13 @@ impl VVMStatusLogNode {
 impl VVMStatusLogNode {
     pub fn from_domain(vvm_status_log: VVMStatusLogRow) -> VVMStatusLogNode {
         VVMStatusLogNode { vvm_status_log }
+    }
+
+    pub fn from_vec(vvm_status_log: Vec<VVMStatusLogRow>) -> Vec<VVMStatusLogNode> {
+        vvm_status_log
+            .into_iter()
+            .map(VVMStatusLogNode::from_domain)
+            .collect()
     }
 
     pub fn row(&self) -> &VVMStatusLogRow {

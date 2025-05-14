@@ -105,6 +105,8 @@ impl StockLineNode {
     pub async fn barcode(&self) -> Option<&str> {
         self.stock_line.barcode()
     }
+
+    // pub async fn vvm_status_log(&self) -> Result<Vec<VVMStatusLogNode>> {}
 }
 
 #[derive(Union)]
