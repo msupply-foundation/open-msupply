@@ -11,8 +11,8 @@ export const VVMStatusInputCell = <T extends RecordWithId>({
     rowData,
   }) as string | null;
 
-  const onChange = (VVMStatusId: string | null) => {
-    column.setter({ ...rowData, VVMStatusId });
+  const onChange = (vvmStatusId: string | null) => {
+    column.setter({ ...rowData, vvmStatusId });
   };
 
   return (

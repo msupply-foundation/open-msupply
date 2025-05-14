@@ -110,7 +110,7 @@ export const QuantityTableComponent: FC<TableProps> = ({
   }
   if (hasVVMStatusesEnabled) {
     columnDefinitions.push({
-      key: 'VVMStatusId',
+      key: 'vvmStatusId',
       label: 'label.vvm-status',
       width: 170,
       Cell: props => <VVMStatusInputCell {...props} />,
