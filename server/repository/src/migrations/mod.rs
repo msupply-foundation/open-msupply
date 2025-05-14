@@ -226,9 +226,11 @@ pub fn migrate(
     let final_database_version = get_database_version(connection);
 
     // Recreate views
-    let last_version_in_migration_vec = migrations.last().unwrap().version();
+    // .unwrap() is safe here, as we know the migrations vec is populated
+    let last_version_in_migrations_vec = migrations.last().unwrap().version();
 
-    if final_database_version >= last_version_in_migration_vec {
+    // only want to apply views against the latest database schema
+    if final_database_version >= last_version_in_migrations_vec {
         rebuild_views(connection).map_err(MigrationError::DatabaseViewsError)?;
     }
 
