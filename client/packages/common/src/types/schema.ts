@@ -3045,6 +3045,7 @@ export type InsertInboundShipmentLineFromInternalOrderLineResponseWithId = {
 export type InsertInboundShipmentLineInput = {
   batch?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack: Scalars['Float']['input'];
+  donorId?: InputMaybe<Scalars['String']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   invoiceId: Scalars['String']['input'];
@@ -3970,6 +3971,8 @@ export type InvoiceNode = {
   createdDatetime: Scalars['DateTime']['output'];
   currency?: Maybe<CurrencyNode>;
   currencyRate: Scalars['Float']['output'];
+  defaultDonor?: Maybe<Scalars['String']['output']>;
+  defaultDonorId?: Maybe<Scalars['String']['output']>;
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   diagnosis?: Maybe<DiagnosisNode>;
   diagnosisId?: Maybe<Scalars['String']['output']>;
@@ -4319,9 +4322,7 @@ export type ItemVariantNode = {
   dosesPerUnit: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   item?: Maybe<ItemNode>;
-  /** @deprecated From 2.8.0. Use item instead */
   itemId: Scalars['String']['output'];
-  /** @deprecated From 2.8.0. Use item instead */
   itemName: Scalars['String']['output'];
   manufacturer?: Maybe<NameNode>;
   manufacturerId?: Maybe<Scalars['String']['output']>;
@@ -8718,6 +8719,13 @@ export type UpdateDisplaySettingsResponse =
   | UpdateDisplaySettingsError
   | UpdateResult;
 
+export enum UpdateDonorMethodInput {
+  All = 'ALL',
+  Existing = 'EXISTING',
+  None = 'NONE',
+  Unspecified = 'UNSPECIFIED',
+}
+
 export type UpdateEncounterInput = {
   /** Encounter document data */
   data: Scalars['JSON']['input'];
@@ -8749,12 +8757,14 @@ export type UpdateInboundShipmentInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
   currencyRate?: InputMaybe<Scalars['Float']['input']>;
+  defaultDonorId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<UpdateInboundShipmentStatusInput>;
   tax?: InputMaybe<TaxInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
+  updateDonorMethod?: InputMaybe<UpdateDonorMethodInput>;
 };
 
 export type UpdateInboundShipmentLineError = {
@@ -8769,6 +8779,7 @@ export type UpdateInboundShipmentLineErrorInterface = {
 export type UpdateInboundShipmentLineInput = {
   batch?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
+  donorId?: InputMaybe<NullableStringUpdate>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
