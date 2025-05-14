@@ -229,7 +229,8 @@ pub fn migrate(
     let last_version_in_migration_vec = migrations.last().unwrap().version();
 
     // Recreate views only if we've migrated to the latest version
-    // If we do migrations to a early version for a test case, views won't be available
+    // Creating Views on an earlier version migration test might fail due to more recent views referencing schema elements that didn't previously exist
+    // Note: When Migration tests run, views won't be available
     if final_database_version >= last_version_in_migration_vec && drop_view_has_run {
         rebuild_views(connection).map_err(MigrationError::DatabaseViewsError)?;
     } else {
