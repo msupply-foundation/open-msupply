@@ -299,7 +299,6 @@ pub fn generate_lines_initial_stocktake(
             sell_price_per_pack: None,
             comment: None,
             counted_number_of_packs: None,
-            inventory_adjustment_reason_id: None,
             item_variant_id: None,
             reason_option_id: None,
         })

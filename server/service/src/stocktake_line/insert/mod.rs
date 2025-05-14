@@ -365,7 +365,7 @@ mod stocktake_line_test {
             "insert_stocktake_line_with_reasons",
             MockDataInserts::all(),
             MockData {
-                options: vec![positive_reason(), negative_reason()],
+                reason_options: vec![positive_reason(), negative_reason()],
                 stock_lines: vec![mock_stock_line_c(), mock_stock_line_d()],
                 stocktakes: vec![mock_initial_stocktake(&store_id)],
                 ..Default::default()
