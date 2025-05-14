@@ -105,7 +105,7 @@ export const DonorEditModal = ({
 
   const handleSave = () => {
     // only prompt confirm if we are making updates to children lines
-    method
+    method.value != UpdateDonorMethodInput.None
       ? getConfirmation({
           onConfirm: () => {
             confirm();
