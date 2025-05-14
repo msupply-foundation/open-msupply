@@ -44,7 +44,7 @@ pub struct InvoiceLineFilterInput {
     pub invoice_type: Option<EqualFilterInvoiceTypeInput>,
     pub invoice_status: Option<EqualFilterInvoiceStatusInput>,
     pub stock_line_id: Option<EqualFilterStringInput>,
-    pub inventory_adjustment_reason: Option<EqualFilterStringInput>,
+    pub reason_option: Option<EqualFilterStringInput>,
     pub verified_datetime: Option<DatetimeFilterInput>,
 }
 
@@ -68,7 +68,7 @@ impl InvoiceLineFilterInput {
                 .invoice_status
                 .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
             stock_line_id: self.stock_line_id.map(EqualFilter::from),
-            inventory_adjustment_reason: self.inventory_adjustment_reason.map(EqualFilter::from),
+            reason_option: self.reason_option.map(EqualFilter::from),
             verified_datetime: self.verified_datetime.map(DatetimeFilter::from),
             picked_datetime: None,
             delivered_datetime: None,
@@ -97,7 +97,7 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
                 .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
             stock_line_id: f.stock_line_id.map(EqualFilter::from),
             verified_datetime: f.verified_datetime.map(DatetimeFilter::from),
-            inventory_adjustment_reason: f.inventory_adjustment_reason.map(EqualFilter::from),
+            reason_option: f.reason_option.map(EqualFilter::from),
             picked_datetime: None,
             delivered_datetime: None,
         }

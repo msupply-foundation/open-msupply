@@ -88,7 +88,7 @@ pub struct InvoiceLineFilter {
     pub picked_datetime: Option<DatetimeFilter>,
     pub delivered_datetime: Option<DatetimeFilter>,
     pub verified_datetime: Option<DatetimeFilter>,
-    pub inventory_adjustment_reason: Option<EqualFilter<String>>,
+    pub reason_option: Option<EqualFilter<String>>,
 }
 
 impl InvoiceLineFilter {
@@ -166,8 +166,8 @@ impl InvoiceLineFilter {
         self
     }
 
-    pub fn inventory_adjustment_reason(mut self, filter: EqualFilter<String>) -> Self {
-        self.inventory_adjustment_reason = Some(filter);
+    pub fn reason_option(mut self, filter: EqualFilter<String>) -> Self {
+        self.reason_option = Some(filter);
         self
     }
 }
@@ -306,7 +306,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
             picked_datetime,
             delivered_datetime,
             verified_datetime,
-            inventory_adjustment_reason,
+            reason_option,
         } = f;
 
         apply_equal_filter!(query, id, invoice_line::id);
@@ -320,7 +320,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         apply_equal_filter!(query, invoice_type, invoice::type_);
         apply_equal_filter!(query, invoice_status, invoice::status);
         apply_equal_filter!(query, stock_line_id, stock_line::id);
-        apply_equal_filter!(query, inventory_adjustment_reason, reason_option::reason);
+        apply_equal_filter!(query, reason_option, reason_option::reason);
         apply_date_time_filter!(query, picked_datetime, invoice::picked_datetime);
         apply_date_time_filter!(query, delivered_datetime, invoice::delivered_datetime);
         apply_date_time_filter!(query, verified_datetime, invoice::verified_datetime);
