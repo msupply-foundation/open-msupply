@@ -1,4 +1,3 @@
-use crate::types::vvm_status::{VVMStatusConnector, VVMStatusesResponse};
 use async_graphql::{Context, Result};
 use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
