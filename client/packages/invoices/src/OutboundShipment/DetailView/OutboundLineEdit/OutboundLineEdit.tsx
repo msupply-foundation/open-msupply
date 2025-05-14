@@ -163,14 +163,17 @@ export const OutboundLineEdit = ({
           onChangeItem={setItemId}
           disabled={mode === ModalMode.Update}
         />
-        {isFetching && <BasicSpinner />}
-        {itemData && (
-          <Allocation
-            key={itemId}
-            itemData={itemData}
-            allowPlaceholder={status === InvoiceNodeStatus.New}
-            scannedBatch={asBarcodeOrNull(openedWith)?.batch}
-          />
+        {isFetching ? (
+          <BasicSpinner />
+        ) : (
+          itemData && (
+            <Allocation
+              key={itemId}
+              itemData={itemData}
+              allowPlaceholder={status === InvoiceNodeStatus.New}
+              scannedBatch={asBarcodeOrNull(openedWith)?.batch}
+            />
+          )
         )}
       </Grid>
     </Modal>
