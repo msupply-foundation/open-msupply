@@ -121,13 +121,13 @@ export const OutboundLineEditTable = ({
     })
   );
 
-  const onEditStockLine = (key: string, value: number) => {
+  const allocate = (key: string, value: number) => {
     const num = Number.isNaN(value) ? 0 : value;
     manualAllocate(key, num);
   };
 
   const columns = useOutboundLineEditColumns({
-    onChange: onEditStockLine,
+    allocate,
     item,
     currency,
     isExternalSupplier,
@@ -162,7 +162,7 @@ export const OutboundLineEditTable = ({
       key="placeholder-row"
     />,
     <tr key="divider-row">
-      <td colSpan={10}>
+      <td colSpan={11}>
         <Divider margin={10} />
       </td>
     </tr>,
