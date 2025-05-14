@@ -13,14 +13,20 @@ pub struct PreferencesNode {
 
 #[Object]
 impl PreferencesNode {
-    pub async fn show_contact_tracing(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.show_contact_tracing)
+    // Global preferences
+    pub async fn allow_tracking_of_received_stock_by_donor(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.allow_tracking_of_received_stock_by_donor)
     }
 
     pub async fn display_population_based_forecasting(&self) -> Result<bool> {
         self.load_preference(&self.preferences.display_population_based_forecasting)
     }
 
+    pub async fn show_contact_tracing(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.show_contact_tracing)
+    }
+
+    // Store preferences
     pub async fn display_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.display_vaccines_in_doses)
     }
@@ -31,10 +37,6 @@ impl PreferencesNode {
 
     pub async fn sort_by_vvm_status_then_expiry(&self) -> Result<bool> {
         self.load_preference(&self.preferences.sort_by_vvm_status_then_expiry)
-    }
-
-    pub async fn allow_tracking_of_received_stock_by_donor(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.allow_tracking_of_received_stock_by_donor)
     }
 }
 
@@ -80,29 +82,33 @@ impl PreferenceDescriptionNode {
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
 #[graphql(rename_items = "camelCase")]
+// These keys (once camelCased) should match fields of PreferencesNode
 pub enum PreferenceKey {
-    // These keys (once camelCased) should match fields of PreferencesNode
-    ShowContactTracing,
-    DisplayVaccinesInDoses,
+    // Global preferences
+    AllowTrackingOfReceivedStockByDonor,
     DisplayPopulationBasedForecasting,
+    ShowContactTracing,
+    // Store preferences
+    DisplayVaccinesInDoses,
     ManageVvmStatusForStock,
     SortByVvmStatusThenExpiry,
-    AllowTrackingOfReceivedStockByDonor,
 }
 
 impl PreferenceKey {
     pub fn from_domain(pref_key: &PrefKey) -> Self {
         match pref_key {
+            // Global preferences
+            PrefKey::AllowTrackingOfReceivedStockByDonor => {
+                PreferenceKey::AllowTrackingOfReceivedStockByDonor
+            }
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
             PrefKey::DisplayPopulationBasedForecasting => {
                 PreferenceKey::DisplayPopulationBasedForecasting
             }
+            // Store preferences
             PrefKey::DisplayVaccinesInDoses => PreferenceKey::DisplayVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
             PrefKey::SortByVvmStatusThenExpiry => PreferenceKey::SortByVvmStatusThenExpiry,
-            PrefKey::AllowTrackingOfReceivedStockByDonor => {
-                PreferenceKey::AllowTrackingOfReceivedStockByDonor
-            }
         }
     }
 }

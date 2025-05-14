@@ -12,22 +12,25 @@ pub mod allow_tracking_of_received_stock_by_donor;
 pub use allow_tracking_of_received_stock_by_donor::*;
 
 pub struct PreferenceProvider {
-    // Add each preference here
-    pub show_contact_tracing: ShowContactTracing,
+    // Global preferences
+    pub allow_tracking_of_received_stock_by_donor: AllowTrackingOfReceivedStockByDonor,
     pub display_population_based_forecasting: DisplayPopulationBasedForecasting,
+    pub show_contact_tracing: ShowContactTracing,
+    // Store preferences
     pub display_vaccines_in_doses: DisplayVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
     pub sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
-    pub allow_tracking_of_received_stock_by_donor: AllowTrackingOfReceivedStockByDonor,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
     PreferenceProvider {
-        show_contact_tracing: ShowContactTracing,
+        // Global preferences
+        allow_tracking_of_received_stock_by_donor: AllowTrackingOfReceivedStockByDonor,
         display_population_based_forecasting: DisplayPopulationBasedForecasting,
+        show_contact_tracing: ShowContactTracing,
+        // Store preferences
         display_vaccines_in_doses: DisplayVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
         sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
-        allow_tracking_of_received_stock_by_donor: AllowTrackingOfReceivedStockByDonor,
     }
 }

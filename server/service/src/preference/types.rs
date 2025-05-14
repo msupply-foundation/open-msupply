@@ -12,9 +12,11 @@ use super::{
 #[derive(Display, EnumString)]
 #[strum(serialize_all = "snake_case")]
 pub enum PrefKey {
-    ShowContactTracing,
-    DisplayVaccinesInDoses,
+    // Global preferences
     AllowTrackingOfReceivedStockByDonor,
+    DisplayVaccinesInDoses,
+    ShowContactTracing,
+    // Store preferences
     DisplayPopulationBasedForecasting,
     ManageVvmStatusForStock,
     SortByVvmStatusThenExpiry,
