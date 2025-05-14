@@ -31,7 +31,7 @@ pub struct SqliteVacuum {
     pub on_startup: bool,
     #[serde(default = "default_as_true")]
     pub after_migration: bool,
-    #[serde(default = "default_as_true")]
+    #[serde(default)]
     pub on_shutdown: bool,
 }
 
