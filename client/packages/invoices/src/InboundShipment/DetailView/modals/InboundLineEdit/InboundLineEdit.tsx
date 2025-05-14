@@ -17,7 +17,11 @@ import { InboundLineFragment, useInbound } from '../../../api';
 import { DraftInboundLine } from '../../../../types';
 import { CreateDraft } from '../utils';
 import { TabLayout } from './TabLayout';
-import { CurrencyRowFragment } from '@openmsupply-client/system';
+import {
+  CurrencyRowFragment,
+  useIsItemVariantsEnabled,
+} from '@openmsupply-client/system';
+import { useIsVVMStatusEnabled } from 'packages/system/src/Stock/api';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
@@ -28,8 +32,6 @@ interface InboundLineEditProps {
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
-  hasItemVariantsEnabled: boolean;
-  hasVVMStatusesEnabled: boolean;
 }
 
 const useDraftInboundLines = (item: InboundLineItem | null) => {
@@ -121,8 +123,6 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   isDisabled = false,
   currency,
   isExternalSupplier,
-  hasItemVariantsEnabled,
-  hasVVMStatusesEnabled,
 }) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -130,6 +130,10 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   const { next: nextItem, disabled: nextDisabled } = useInbound.document.next(
     currentItem?.id ?? ''
   );
+
+  const hasVVMStatusesEnabled = useIsVVMStatusEnabled(currentItem?.id);
+  const hasItemVariantsEnabled = useIsItemVariantsEnabled(currentItem?.id);
+
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
     useDraftInboundLines(currentItem);

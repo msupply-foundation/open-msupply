@@ -3,7 +3,7 @@ import { useQuery } from 'react-query';
 import { useStockGraphQL } from '../useStockGraphQL';
 
 // VVM Status inputs (e.g. in Inbound Shipment) should not be available if no vvm statuses are configured
-export const useIsVVMStatusEnabled = () => {
+export const useIsVVMStatusEnabled = (itemId?: string) => {
   const { stockApi, storeId } = useStockGraphQL();
 
   // check prefs
@@ -12,6 +12,7 @@ export const useIsVVMStatusEnabled = () => {
 
   // check statuses exist
   const { data: vvmStatuses } = useQuery({
+    queryKey: ['vvm-status-enabled', storeId, itemId],
     queryFn: async () => {
       const result = await stockApi.vvmStatusesConfigured({
         storeId,

@@ -19,7 +19,6 @@ import { AppRoute } from '@openmsupply-client/config';
 import {
   ActivityLogList,
   toItemWithPackSize,
-  useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -32,7 +31,6 @@ import { useInbound, InboundLineFragment } from '../api';
 import { SupplierReturnEditModal } from '../../Returns';
 import { canReturnInboundLines } from '../../utils';
 import { InboundShipmentLineErrorProvider } from '../context/inboundShipmentLineError';
-import { useIsVVMStatusEnabled } from 'packages/system/src/Stock/api';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -54,9 +52,6 @@ const DetailViewInner = () => {
   } = useEditModal<string[]>();
   const { info, error } = useNotification();
   const { clearSelected } = useTableStore();
-
-  const itemVariantsEnabled = useIsItemVariantsEnabled();
-  const VVMStatusEnabled = useIsVVMStatusEnabled();
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
@@ -140,8 +135,6 @@ const DetailViewInner = () => {
                 item={entity}
                 currency={data.currency}
                 isExternalSupplier={!data.otherParty.store}
-                hasItemVariantsEnabled={itemVariantsEnabled}
-                hasVVMStatusesEnabled={VVMStatusEnabled}
               />
             )}
             {returnsIsOpen && (
