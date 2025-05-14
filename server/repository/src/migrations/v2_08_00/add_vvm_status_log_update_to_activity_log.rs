@@ -13,8 +13,7 @@ impl MigrationFragment for Migrate {
                 connection,
                 r#"
                     ALTER TYPE activity_log_type
-                    ADD VALUE IF NOT EXISTS
-                        'VVM_STATUS_LOG_UPDATED' AFTER 'VACCINATION_DELETED';
+                    ADD VALUE IF NOT EXISTS 'VVM_STATUS_LOG_UPDATED';
                 "#
             )?;
         }
