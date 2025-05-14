@@ -1,3 +1,4 @@
+use crate::types::vvm_status::{VVMStatusConnector, VVMStatusesResponse};
 use async_graphql::{Context, Result};
 use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -10,7 +11,7 @@ pub fn active_vvm_statuses(ctx: &Context<'_>, store_id: String) -> Result<VVMSta
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryPatient,
+            resource: Resource::QueryAndMutateVvmStatus,
             store_id: Some(store_id.clone()),
         },
     )?;

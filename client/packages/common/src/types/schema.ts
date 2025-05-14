@@ -3626,6 +3626,15 @@ export type InsertSupplierReturnResponse =
   | InsertSupplierReturnError
   | InvoiceNode;
 
+export type InsertVvmStatusLogInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  statusId: Scalars['String']['input'];
+  stockLineId: Scalars['String']['input'];
+};
+
+export type InsertVvmStatusLogResponse = VvmstatusLogNode;
+
 export type InsertVaccinationInput = {
   clinicianId?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -4744,6 +4753,7 @@ export type Mutations = {
   insertStocktakeLine: InsertStocktakeLineResponse;
   insertSupplierReturn: InsertSupplierReturnResponse;
   insertVaccination: InsertVaccinationResponse;
+  insertVvmStatusLog: InsertVvmStatusLogResponse;
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
@@ -5155,6 +5165,11 @@ export type MutationsInsertSupplierReturnArgs = {
 
 export type MutationsInsertVaccinationArgs = {
   input: InsertVaccinationInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertVvmStatusLogArgs = {
+  input: InsertVvmStatusLogInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5923,6 +5938,7 @@ export type PreferenceDescriptionNode = {
 };
 
 export enum PreferenceKey {
+  AllowTrackingOfReceivedStockByDonor = 'allowTrackingOfReceivedStockByDonor',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   DisplayVaccineInDoses = 'displayVaccineInDoses',
   ManageVvmStatus = 'manageVvmStatus',
@@ -5952,6 +5968,7 @@ export enum PreferenceValueNodeType {
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
+  allowTrackingOfReceivedStockByDonor: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   displayVaccineInDoses: Scalars['Boolean']['output'];
   manageVvmStatus: Scalars['Boolean']['output'];
@@ -6351,6 +6368,7 @@ export type Queries = {
    * Provides an friendly shape to edit these lines before calling the insert/update mutations.
    */
   generateSupplierReturnLines: GenerateSupplierReturnLinesResponse;
+  getVvmStatusLogByStockLine: VvmstatusLogResponse;
   /** Query for "historical_stock_line" entries */
   historicalStockLines: StockLinesResponse;
   /** Available without authorisation in operational and initialisation states */
@@ -6686,6 +6704,11 @@ export type QueriesGenerateReportDefinitionArgs = {
 
 export type QueriesGenerateSupplierReturnLinesArgs = {
   input: GenerateSupplierReturnLinesInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesGetVvmStatusLogByStockLineArgs = {
+  stockLineId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -9641,6 +9664,7 @@ export type UpsertPackVariantResponse =
   | UpsertItemVariantError;
 
 export type UpsertPreferencesInput = {
+  allowTrackingOfReceivedStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   displayVaccineInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatus?: InputMaybe<Array<BoolStorePrefInput>>;
@@ -9940,6 +9964,24 @@ export type VvmstatusConnector = {
   __typename: 'VvmstatusConnector';
   nodes: Array<VvmstatusNode>;
 };
+
+export type VvmstatusLogConnector = {
+  __typename: 'VvmstatusLogConnector';
+  nodes: Array<VvmstatusLogNode>;
+};
+
+export type VvmstatusLogNode = {
+  __typename: 'VvmstatusLogNode';
+  comment?: Maybe<Scalars['String']['output']>;
+  createdDatetime: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  invoiceLineId?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<VvmstatusNode>;
+  stockLine?: Maybe<StockLineNode>;
+  user?: Maybe<UserNode>;
+};
+
+export type VvmstatusLogResponse = VvmstatusLogConnector;
 
 export type VvmstatusNode = {
   __typename: 'VvmstatusNode';
