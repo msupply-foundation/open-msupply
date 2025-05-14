@@ -1390,7 +1390,7 @@ export type CreateInventoryAdjustmentError = {
 export type CreateInventoryAdjustmentInput = {
   adjustment: Scalars['Float']['input'];
   adjustmentType: AdjustmentTypeInput;
-  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
+  inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   stockLineId: Scalars['String']['input'];
 };
 
@@ -3619,6 +3619,15 @@ export type InsertSupplierReturnResponse =
   | InsertSupplierReturnError
   | InvoiceNode;
 
+export type InsertVvmStatusLogInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  statusId: Scalars['String']['input'];
+  stockLineId: Scalars['String']['input'];
+};
+
+export type InsertVvmStatusLogResponse = VvmstatusLogNode;
+
 export type InsertVaccinationInput = {
   clinicianId?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -3826,13 +3835,13 @@ export type InvoiceLineConnector = {
 
 export type InvoiceLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
-  inventoryAdjustmentReason?: InputMaybe<EqualFilterStringInput>;
   invoiceId?: InputMaybe<EqualFilterStringInput>;
   invoiceStatus?: InputMaybe<EqualFilterInvoiceStatusInput>;
   invoiceType?: InputMaybe<EqualFilterInvoiceTypeInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   numberOfPacks?: InputMaybe<EqualFilterBigFloatingNumberInput>;
+  reasonOption?: InputMaybe<EqualFilterStringInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
@@ -3847,6 +3856,7 @@ export type InvoiceLineNode = {
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   foreignCurrencyPriceBeforeTax?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
+  /** @deprecated Since 2.8.0. Use reason_option instead */
   inventoryAdjustmentReason?: Maybe<ReasonOptionNode>;
   invoiceId: Scalars['String']['output'];
   item: ItemNode;
@@ -3863,7 +3873,9 @@ export type InvoiceLineNode = {
   prescribedQuantity?: Maybe<Scalars['Float']['output']>;
   pricing: PricingNode;
   reasonOption?: Maybe<ReasonOptionNode>;
+  /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReason?: Maybe<ReasonOptionNode>;
+  /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReasonId?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
   stockLine?: Maybe<StockLineNode>;
@@ -4694,6 +4706,7 @@ export type Mutations = {
   insertStocktakeLine: InsertStocktakeLineResponse;
   insertSupplierReturn: InsertSupplierReturnResponse;
   insertVaccination: InsertVaccinationResponse;
+  insertVvmStatusLog: InsertVvmStatusLogResponse;
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
@@ -5105,6 +5118,11 @@ export type MutationsInsertSupplierReturnArgs = {
 
 export type MutationsInsertVaccinationArgs = {
   input: InsertVaccinationInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertVvmStatusLogArgs = {
+  input: InsertVvmStatusLogInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6301,6 +6319,7 @@ export type Queries = {
    * Provides an friendly shape to edit these lines before calling the insert/update mutations.
    */
   generateSupplierReturnLines: GenerateSupplierReturnLinesResponse;
+  getVvmStatusLogByStockLine: VvmstatusLogResponse;
   /** Query for "historical_stock_line" entries */
   historicalStockLines: StockLinesResponse;
   /** Available without authorisation in operational and initialisation states */
@@ -6309,6 +6328,8 @@ export type Queries = {
   insurancePolicies: InsurancesResponse;
   insurancePolicy: InsuranceResponse;
   insuranceProviders: InsuranceProvidersResponse;
+  /** @deprecated Since 2.8.0. Use reason_options instead */
+  inventoryAdjustmentReasons: ReasonOptionResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;
@@ -6374,6 +6395,8 @@ export type Queries = {
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
+  /** @deprecated Since 2.8.0. Use reason_options instead */
+  returnReasons: ReasonOptionResponse;
   schedulesWithPeriodsByProgram: PeriodSchedulesResponse;
   /** Query omSupply "sensor" entries */
   sensors: SensorsResponse;
@@ -6637,6 +6660,11 @@ export type QueriesGenerateSupplierReturnLinesArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesGetVvmStatusLogByStockLineArgs = {
+  stockLineId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesHistoricalStockLinesArgs = {
   datetime?: InputMaybe<Scalars['DateTime']['input']>;
   itemId: Scalars['String']['input'];
@@ -6661,6 +6689,12 @@ export type QueriesInsurancePolicyArgs = {
 
 export type QueriesInsuranceProvidersArgs = {
   storeId: Scalars['String']['input'];
+};
+
+export type QueriesInventoryAdjustmentReasonsArgs = {
+  filter?: InputMaybe<ReasonOptionFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ReasonOptionSortInput>>;
 };
 
 export type QueriesInvoiceArgs = {
@@ -6916,6 +6950,12 @@ export type QueriesRequisitionsArgs = {
 export type QueriesResponseRequisitionStatsArgs = {
   requisitionLineId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
+};
+
+export type QueriesReturnReasonsArgs = {
+  filter?: InputMaybe<ReasonOptionFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ReasonOptionSortInput>>;
 };
 
 export type QueriesSchedulesWithPeriodsByProgramArgs = {
@@ -7975,7 +8015,9 @@ export type StocktakeLineNode = {
   countedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  /** @deprecated Since 2.8.0. Use reason_option instead */
   inventoryAdjustmentReason?: Maybe<ReasonOptionNode>;
+  /** @deprecated Since 2.8.0. Use reason_option instead */
   inventoryAdjustmentReasonId?: Maybe<Scalars['String']['output']>;
   item: ItemNode;
   itemId: Scalars['String']['output'];
@@ -9841,6 +9883,24 @@ export type VvmstatusConnector = {
   __typename: 'VvmstatusConnector';
   nodes: Array<VvmstatusNode>;
 };
+
+export type VvmstatusLogConnector = {
+  __typename: 'VvmstatusLogConnector';
+  nodes: Array<VvmstatusLogNode>;
+};
+
+export type VvmstatusLogNode = {
+  __typename: 'VvmstatusLogNode';
+  comment?: Maybe<Scalars['String']['output']>;
+  createdDatetime: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  invoiceLineId?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<VvmstatusNode>;
+  stockLine?: Maybe<StockLineNode>;
+  user?: Maybe<UserNode>;
+};
+
+export type VvmstatusLogResponse = VvmstatusLogConnector;
 
 export type VvmstatusNode = {
   __typename: 'VvmstatusNode';
