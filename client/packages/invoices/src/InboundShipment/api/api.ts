@@ -20,6 +20,7 @@ import {
   RequisitionNodeType,
   InsertInboundShipmentLineFromInternalOrderLineInput,
   RequisitionNodeStatus,
+  UpdateDonorMethodInput,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA } from '../../utils';
@@ -75,12 +76,12 @@ const inboundParsers = {
     }
   },
   toUpdate: (
-    patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
+    patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment> | RecordPatch<{id: string, defaultDonorId: string, updateDonorMethod: UpdateDonorMethodInput}>
   ): UpdateInboundShipmentInput => {
     return {
       id: patch.id,
-      colour: patch.colour,
-      comment: patch.comment,
+      colour: 'colour' in patch ? patch.colour : undefined,
+      comment: 'comment' in patch ? patch.comment : undefined,
       status: inboundParsers.toStatus(patch),
       onHold: 'onHold' in patch ? patch.onHold : undefined,
       otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
@@ -92,6 +93,8 @@ const inboundParsers = {
           : undefined,
       currencyId: 'currency' in patch ? patch.currency?.id : undefined,
       currencyRate: 'currencyRate' in patch ? patch.currencyRate : undefined,
+      defaultDonorId: 'defaultDonorId' in patch ? setNullableInput('defaultDonorId', patch) : undefined,
+      updateDonorMethod: 'updateDonorMethod' in patch ? patch.updateDonorMethod : undefined,
     };
   },
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {
@@ -282,7 +285,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error(insertInboundShipment.error.description);
   },
   update: async (
-    patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
+    patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment> | RecordPatch<{id: string, defaultDonorId: string, updateDonorMethod: UpdateDonorMethodInput}>
   ) =>
     sdk.updateInboundShipment({
       input: inboundParsers.toUpdate(patch),

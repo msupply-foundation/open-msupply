@@ -153,17 +153,17 @@ export const getInvoiceLocalisationKey = (type: InvoiceNodeType): LocaleKey => {
   }
 };
 
-const getDonorUpdateKey = (type: UpdateDonorMethodInput): LocaleKey => {
+export const getDonorUpdateKeys = (type: UpdateDonorMethodInput): {label: LocaleKey, message: LocaleKey} => {
   switch (type) {
     case UpdateDonorMethodInput.All:
-      return 'all';
-        case UpdateDonorMethodInput.All:
-      return 'all';
-        case UpdateDonorMethodInput.All:
-      return 'all';
-          case UpdateDonorMethodInput.All:
-      return 'all';
-  }
+      return {label: 'label.invoice-all', message: 'messages.invoice-all'};
+        case UpdateDonorMethodInput.Existing:
+      return {label: 'label.invoice-existing', message: 'messages.invoice-existing'};
+        case UpdateDonorMethodInput.None:
+      return {label: 'label.invoice-none', message: 'messages.invoice-none'};
+      case UpdateDonorMethodInput.Unspecified:
+      return {label: 'label.invoice-unspecified', message: 'messages.invoice-unspecified'};
+    }
 }
 
 export const getNameValue = (t: TypedTFunction<LocaleKey>, name: string) => {
