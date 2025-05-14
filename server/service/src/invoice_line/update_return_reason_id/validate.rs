@@ -1,4 +1,7 @@
-use repository::{ReasonOptionRow, ReasonOptionRowRepository, RepositoryError, StorageConnection};
+use repository::{
+    ReasonOptionRow, ReasonOptionRowRepository, ReasonOptionType, RepositoryError,
+    StorageConnection,
+};
 
 use crate::invoice_line::validate::check_line_exists;
 
@@ -17,6 +20,10 @@ pub fn validate(
 
         if !check_reason_is_active(&reason) {
             return Err(UpdateLineReturnReasonError::ReasonIsNotActive);
+        }
+
+        if reason.r#type != ReasonOptionType::ReturnReason {
+            return Err(UpdateLineReturnReasonError::InvalidReasonType);
         }
     }
 
