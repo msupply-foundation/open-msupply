@@ -4,28 +4,14 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "add_donor_id_to_invoice_and_invoice_lines_and_stock_lines"
+        "add_donor_id_to_stock_lines"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-                ALTER TABLE invoice_line ADD COLUMN donor_id TEXT REFERENCES name(id);
-            "#
-        )?;
-
-        sql!(
-            connection,
-            r#"
                 ALTER TABLE stock_line ADD COLUMN donor_id TEXT REFERENCES name(id);
-            "#
-        )?;
-
-        sql!(
-            connection,
-            r#"
-                ALTER TABLE invoice ADD COLUMN default_donor_id TEXT REFERENCES name(id);
             "#
         )?;
 
