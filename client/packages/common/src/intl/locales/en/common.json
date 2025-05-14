@@ -1787,6 +1787,7 @@
   "preference.manageVvmStatus": "Manage VVM Status",
   "preference.showContactTracing": "Show Contact Tracing",
   "preference.sortByVvmStatus": "Sort available batches by VVM status then expiry",
+  "preference.allowTrackingOfReceivedStockByDonor": "Allow tracking of received stock by donor",
   "prescription": "Prescriptions",
   "prescriptions": "Prescriptions",
   "programs": "Programs",
