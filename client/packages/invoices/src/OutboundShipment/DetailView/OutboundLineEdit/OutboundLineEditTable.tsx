@@ -19,7 +19,6 @@ import { useAllocationContext } from './allocation/useAllocationContext';
 import { getAllocatedUnits } from './allocation/utils';
 
 export interface OutboundLineEditTableProps {
-  onChange: (key: string, value: number, packSize: number) => void;
   item: DraftItem | null;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
@@ -91,7 +90,6 @@ const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
 };
 
 export const OutboundLineEditTable = ({
-  onChange,
   item,
   currency,
   isExternalSupplier,
@@ -104,18 +102,25 @@ export const OutboundLineEditTable = ({
     draftLines,
     placeholderQuantity,
     nonAllocatableLines,
+    manualAllocate,
   } = useAllocationContext(
-    ({ draftLines, placeholderQuantity, nonAllocatableLines }) => ({
+    ({
+      draftLines,
+      placeholderQuantity,
+      nonAllocatableLines,
+      manualAllocate,
+    }) => ({
       draftLines,
       placeholderQuantity,
       allocatedUnits: getAllocatedUnits({ draftLines, placeholderQuantity }),
       nonAllocatableLines,
+      manualAllocate,
     })
   );
 
-  const onEditStockLine = (key: string, value: number, packSize: number) => {
+  const onEditStockLine = (key: string, value: number) => {
     const num = Number.isNaN(value) ? 0 : value;
-    onChange(key, num, packSize);
+    manualAllocate(key, num);
   };
   const unit = item?.unitName ?? t('label.unit');
 

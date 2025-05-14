@@ -26,7 +26,7 @@ export const useOutboundLineEditColumns = ({
   currency,
   isExternalSupplier,
 }: {
-  onChange: (key: string, value: number, packSize: number) => void;
+  onChange: (key: string, value: number) => void;
   unit: string;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
@@ -110,8 +110,7 @@ export const useOutboundLineEditColumns = ({
         Cell: PackQuantityCell,
         width: 100,
         label: 'label.pack-quantity-issued',
-        setter: ({ packSize, id, numberOfPacks }) =>
-          onChange(id, numberOfPacks ?? 0, packSize ?? 1),
+        setter: ({ id, numberOfPacks }) => onChange(id, numberOfPacks ?? 0),
       },
     ],
     [
