@@ -618,6 +618,7 @@
   "label.available": "Disponible",
   "label.available-batches": "Lot(s) disponible(s)",
   "label.available-packs": "Stock Disponible",
+  "label.available-quantity": "Quantité disponible : {{number}} unités",
   "label.available-quantity-for-return": "Quantité disponible pour le retour",
   "label.available-units": "Disponible (unités)",
   "label.balance": "Équilibre",
