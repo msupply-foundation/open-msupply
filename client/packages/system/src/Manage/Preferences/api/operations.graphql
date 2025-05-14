@@ -17,7 +17,7 @@ query adminPreferenceList(
 query preferences($storeId: String!) {
   preferences(storeId: $storeId) {
     showContactTracing
-    displayVaccineInDoses
+    displayVaccinesInDoses
     allowTrackingOfReceivedStockByDonor
   }
 }

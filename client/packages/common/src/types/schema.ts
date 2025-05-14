@@ -9765,6 +9765,7 @@ export enum UserPermission {
   SupplierReturnQuery = 'SUPPLIER_RETURN_QUERY',
   TemperatureBreachQuery = 'TEMPERATURE_BREACH_QUERY',
   TemperatureLogQuery = 'TEMPERATURE_LOG_QUERY',
+  ViewAndEditVvmStatus = 'VIEW_AND_EDIT_VVM_STATUS',
 }
 
 export type UserResponse = UserNode;
