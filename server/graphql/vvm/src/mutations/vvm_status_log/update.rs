@@ -19,23 +19,14 @@ use service::{
 #[derive(InputObject)]
 pub struct UpdateVVMStatusLogInput {
     pub id: String,
-    pub status_id: Option<String>,
     pub comment: Option<String>,
 }
 
 impl UpdateVVMStatusLogInput {
     pub fn to_domain(self) -> ServiceInput {
-        let UpdateVVMStatusLogInput {
-            id,
-            status_id,
-            comment,
-        } = self;
+        let UpdateVVMStatusLogInput { id, comment } = self;
 
-        ServiceInput {
-            id,
-            status_id,
-            comment,
-        }
+        ServiceInput { id, comment }
     }
 }
 
@@ -60,11 +51,11 @@ pub fn update_vvm_status_log(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(service_provider.vvm_service.update_vvm_status_log(
-        &service_context,
-        store_id,
-        input.to_domain(),
-    ))
+    map_response(
+        service_provider
+            .vvm_service
+            .update_vvm_status_log(&service_context, input.to_domain()),
+    )
 }
 
 pub fn map_response(
@@ -82,9 +73,9 @@ fn map_error(error: ServiceError) -> Result<UpdateVVMStatusResponse> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        ServiceError::VVMStatusLogDoesNotExist
-        | ServiceError::VVMStatusDoesNotExist
-        | ServiceError::UpdatedRecordNotFound => BadUserInput(formatted_error),
+        ServiceError::VVMStatusLogDoesNotExist | ServiceError::UpdatedRecordNotFound => {
+            BadUserInput(formatted_error)
+        }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
