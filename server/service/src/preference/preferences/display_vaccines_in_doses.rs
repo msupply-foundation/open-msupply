@@ -1,12 +1,12 @@
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
-pub struct ManageVvmStatus;
+pub struct DisplayVaccinesInDoses;
 
-impl Preference for ManageVvmStatus {
+impl Preference for DisplayVaccinesInDoses {
     type Value = bool;
 
     fn key(&self) -> PrefKey {
-        PrefKey::ManageVvmStatus
+        PrefKey::DisplayVaccinesInDoses
     }
 
     fn preference_type(&self) -> PreferenceType {
