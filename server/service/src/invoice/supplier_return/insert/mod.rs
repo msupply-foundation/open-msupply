@@ -155,7 +155,7 @@ mod test {
         },
         test_db::setup_all_with_data,
         InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, NameRow, NameStoreJoinRow,
-        ReasonOptionRow,
+        ReasonOptionRow, ReasonOptionType,
     };
     use util::{inline_edit, inline_init};
 
@@ -375,6 +375,7 @@ mod test {
             inline_init(|r: &mut ReasonOptionRow| {
                 r.id = "return_reason".to_string();
                 r.is_active = true;
+                r.r#type = ReasonOptionType::ReturnReason
             })
         }
 

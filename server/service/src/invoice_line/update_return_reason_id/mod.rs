@@ -174,6 +174,7 @@ mod test {
             ReasonOptionRow {
                 id: "reason_id".to_string(),
                 is_active: true,
+                r#type: ReasonOptionType::ReturnReason,
                 ..Default::default()
             }
         }
