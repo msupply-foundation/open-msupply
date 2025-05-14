@@ -143,6 +143,7 @@ pub enum Resource {
     PluginGraphql,
     // Preferences
     MutatePreferences,
+    QueryAndMutateVvmStatus,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -640,6 +641,16 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::PluginGraphql,
         PermissionDSL::Any(vec![PermissionDSL::HasStoreAccess]),
     );
+
+    // vvm status
+    map.insert(
+        Resource::QueryAndMutateVvmStatus,
+        PermissionDSL::Any(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::ViewAndEditVvmStatus),
+        ]),
+    );
+
     map
 }
 
