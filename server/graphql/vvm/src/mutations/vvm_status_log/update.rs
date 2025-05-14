@@ -49,12 +49,10 @@ pub fn update_vvm_status_log(
     store_id: &str,
     input: UpdateVVMStatusLogInput,
 ) -> Result<UpdateVVMStatusResponse> {
-    // TODO: Change this to proper VVM-specific permission
-    // Add "View and edit vaccine vial monitor status" user permission from OG
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutatePatient,
+            resource: Resource::QueryAndMutateVvmStatus,
             store_id: Some(store_id.to_string()),
         },
     )?;
