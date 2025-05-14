@@ -55,7 +55,7 @@ const DetailViewInner = () => {
   const { info, error } = useNotification();
   const { clearSelected } = useTableStore();
   const { data: preference } = usePreference(
-    PreferenceKey.DisplayVaccineInDoses
+    PreferenceKey.DisplayVaccinesInDoses
   );
 
   const onRowClick = React.useCallback(
@@ -105,7 +105,7 @@ const DetailViewInner = () => {
         <ContentArea
           onRowClick={!isDisabled ? onRowClick : null}
           onAddItem={() => onOpen()}
-          displayInDoses={preference?.displayVaccineInDoses}
+          displayInDoses={preference?.displayVaccinesInDoses}
         />
       ),
       value: 'Details',

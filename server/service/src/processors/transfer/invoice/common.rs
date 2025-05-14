@@ -46,6 +46,7 @@ pub(crate) fn generate_inbound_lines(
                  foreign_currency_price_before_tax,
                  item_variant_id,
                  linked_invoice_id: _,
+                 donor_id,
                  vvm_status_id,
              }| {
                 let cost_price_per_pack = sell_price_per_pack;
@@ -86,6 +87,7 @@ pub(crate) fn generate_inbound_lines(
                     stock_line_id: None,
                     location_id: None,
                     inventory_adjustment_reason_id: None,
+                    donor_id,
                 }
             },
         )

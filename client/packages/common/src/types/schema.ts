@@ -5938,11 +5938,12 @@ export type PreferenceDescriptionNode = {
 };
 
 export enum PreferenceKey {
+  AllowTrackingOfReceivedStockByDonor = 'allowTrackingOfReceivedStockByDonor',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
-  DisplayVaccineInDoses = 'displayVaccineInDoses',
-  ManageVvmStatus = 'manageVvmStatus',
+  DisplayVaccinesInDoses = 'displayVaccinesInDoses',
+  ManageVvmStatusForStock = 'manageVvmStatusForStock',
   ShowContactTracing = 'showContactTracing',
-  SortByVvmStatus = 'sortByVvmStatus',
+  SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
 }
 
 export type PreferenceMutations = {
@@ -5967,11 +5968,12 @@ export enum PreferenceValueNodeType {
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
+  allowTrackingOfReceivedStockByDonor: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
-  displayVaccineInDoses: Scalars['Boolean']['output'];
-  manageVvmStatus: Scalars['Boolean']['output'];
+  displayVaccinesInDoses: Scalars['Boolean']['output'];
+  manageVvmStatusForStock: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
-  sortByVvmStatus: Scalars['Boolean']['output'];
+  sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
 };
 
 export type PricingNode = {
@@ -9665,11 +9667,12 @@ export type UpsertPackVariantResponse =
   | UpsertItemVariantError;
 
 export type UpsertPreferencesInput = {
+  allowTrackingOfReceivedStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
-  displayVaccineInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
-  manageVvmStatus?: InputMaybe<Array<BoolStorePrefInput>>;
+  displayVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
+  manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
-  sortByVvmStatus?: InputMaybe<Array<BoolStorePrefInput>>;
+  sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
 };
 
 export type UpsertVaccineCourseDoseInput = {
@@ -9769,6 +9772,7 @@ export enum UserPermission {
   SupplierReturnQuery = 'SUPPLIER_RETURN_QUERY',
   TemperatureBreachQuery = 'TEMPERATURE_BREACH_QUERY',
   TemperatureLogQuery = 'TEMPERATURE_LOG_QUERY',
+  ViewAndEditVvmStatus = 'VIEW_AND_EDIT_VVM_STATUS',
 }
 
 export type UserResponse = UserNode;
