@@ -13,7 +13,7 @@ import {
   getAllocatedQuantity,
   issueDoses,
   issuePacks,
-  packsToQuantity,
+  packsToDoses,
   scannedBatchFilter,
 } from './utils';
 import { OutboundLineEditData } from '../../../api';
@@ -215,10 +215,15 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
     setDraftLines(updatedLines);
 
+    // Line updated, now check if we need to show any alerts
+
     const updatedLine = updatedLines.find(line => line.id === lineId);
 
     const allocatedQuantity = updatedLine
-      ? packsToQuantity(allocateIn, updatedLine.numberOfPacks, updatedLine)
+      ? allocateIn === AllocateIn.Doses
+        ? packsToDoses(updatedLine.numberOfPacks, updatedLine)
+        : // when not in doses, manual allocation is in packs
+          updatedLine.numberOfPacks
       : 0;
 
     const alerts: StockOutAlert[] =
