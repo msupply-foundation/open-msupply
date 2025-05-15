@@ -1,6 +1,5 @@
 use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
 use crate::invoice_line::ShipmentTaxUpdate;
-use crate::NullableUpdate;
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
 use repository::{Invoice, LocationMovementRowRepository};
 use repository::{
@@ -232,7 +231,6 @@ mod test {
             ShipmentTaxUpdate,
         },
         service_provider::ServiceProvider,
-        NullableUpdate,
     };
 
     use super::{ApplyDonorToInvoiceLines, UpdateInboundShipmentError};

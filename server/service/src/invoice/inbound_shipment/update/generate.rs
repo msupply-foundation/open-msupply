@@ -318,13 +318,6 @@ pub fn generate_lines_and_stock_lines(
         currency_rate,
     }: GenerateLinesInput<'_>,
 ) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
-    let store_id = input.store_id;
-    let id = input.id;
-    let tax_percentage = input.tax_percentage;
-    let supplier_id = input.supplier_id;
-    let currency_id = input.currency_id.clone();
-    let currency_rate = input.currency_rate;
-
     let lines = InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(id)?;
     let mut result = Vec::new();
 
@@ -343,21 +336,6 @@ pub fn generate_lines_and_stock_lines(
             currency_id.clone(),
             currency_rate,
         )?;
-
-        line.donor_id = match input.donor_update_method.clone() {
-            Some(UpdateDonorMethod::NoChanges) | None => line.donor_id,
-            Some(UpdateDonorMethod::All) => input.default_donor_id.clone(),
-            Some(UpdateDonorMethod::Existing) => {
-                if line.donor_id.is_none() {
-                    None
-                } else {
-                    input.default_donor_id.clone()
-                }
-            }
-            Some(UpdateDonorMethod::Unspecified) => {
-                line.donor_id.or(input.default_donor_id.clone())
-            }
-        };
 
         let InvoiceLineRow {
             item_link_id,
@@ -464,16 +442,4 @@ fn update_donor_on_lines_and_stock(
     }
 
     Ok(result)
-}
-
-fn is_updating_donor(update_donor_method: Option<UpdateDonorMethod>) -> bool {
-    // should update batches if donor_id for invoice changes and change line donor_ids also selected
-    if let Some(donor_update_method) = update_donor_method {
-        // only update lines if a method of updating is selected.
-        // note allowing update if no donor_id is supplied for update to be conducted on existing donor_id
-        if donor_update_method != UpdateDonorMethod::NoChanges {
-            return true;
-        }
-    }
-    return false;
 }

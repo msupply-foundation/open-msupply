@@ -3,7 +3,7 @@ use crate::mutations::outbound_shipment::error::{
 };
 use async_graphql::*;
 
-use graphql_core::generic_inputs::{NullableUpdateInput, TaxInput};
+use graphql_core::generic_inputs::TaxInput;
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, OtherPartyNotASupplier, OtherPartyNotVisible,
 };
@@ -18,19 +18,8 @@ use service::invoice::inbound_shipment::{
     UpdateInboundShipmentError as ServiceError, UpdateInboundShipmentStatus,
 };
 use service::invoice_line::ShipmentTaxUpdate;
-use service::NullableUpdate;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-
-pub enum UpdateDonorMethodInput {
-    None,
-    Existing,
-    Unspecified,
-    All,
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-
 pub enum ApplyToLinesInput {
     None,
     UpdateExistingDonor,
