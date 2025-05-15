@@ -17,7 +17,7 @@ const ITEM_LINE_1: (&str, &str) = (
       "batch": "stocktake_1",
       "cost_price": 5,
       "expiry_date": "2022-02-17",
-      "donor_id": "",
+      "donor_id": "test_donor_id",
       "extraData": null,
       "hold": false,
       "initial_quan": 0,
@@ -72,6 +72,7 @@ fn item_line_1_pull_record() -> TestSyncIncomingRecord {
             supplier_link_id: Some("name_store_b".to_string()),
             barcode_id: None,
             item_variant_id: None,
+            donor_id: Some("test_donor_id".to_string()),
             vvm_status_id: None,
         },
     )
@@ -97,6 +98,7 @@ fn item_line_1_push_record() -> TestSyncOutgoingRecord {
             supplier_id: Some("name_store_b".to_string()),
             barcode_id: None,
             item_variant_id: None,
+            donor_id: Some("test_donor_id".to_string()),
             vvm_status_id: None,
         }),
     }
@@ -166,6 +168,7 @@ fn item_line_2_pull_record() -> TestSyncIncomingRecord {
             supplier_link_id: None,
             barcode_id: None,
             item_variant_id: None,
+            donor_id: None,
             vvm_status_id: None,
         },
     )
@@ -191,6 +194,7 @@ fn item_line_2_push_record() -> TestSyncOutgoingRecord {
             supplier_id: None,
             barcode_id: None,
             item_variant_id: None,
+            donor_id: None,
             vvm_status_id: None,
         }),
     }

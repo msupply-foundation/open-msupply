@@ -110,6 +110,7 @@ pub fn generate(
         tax_percentage: None,
         barcode,
         item_variant_id,
+        donor_id: None,
         vvm_status_id,
     };
 

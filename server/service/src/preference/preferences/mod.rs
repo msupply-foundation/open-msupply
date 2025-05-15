@@ -8,12 +8,12 @@ pub mod sort_by_vvm_status_then_expiry;
 pub use sort_by_vvm_status_then_expiry::*;
 pub mod manage_vvm_status_for_stock;
 pub use manage_vvm_status_for_stock::*;
-pub mod allow_tracking_of_received_stock_by_donor;
-pub use allow_tracking_of_received_stock_by_donor::*;
+pub mod allow_tracking_of_stock_by_donor;
+pub use allow_tracking_of_stock_by_donor::*;
 
 pub struct PreferenceProvider {
     // Global preferences
-    pub allow_tracking_of_received_stock_by_donor: AllowTrackingOfReceivedStockByDonor,
+    pub allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
     pub display_population_based_forecasting: DisplayPopulationBasedForecasting,
     pub show_contact_tracing: ShowContactTracing,
     // Store preferences
@@ -25,7 +25,7 @@ pub struct PreferenceProvider {
 pub fn get_preference_provider() -> PreferenceProvider {
     PreferenceProvider {
         // Global preferences
-        allow_tracking_of_received_stock_by_donor: AllowTrackingOfReceivedStockByDonor,
+        allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
         display_population_based_forecasting: DisplayPopulationBasedForecasting,
         show_contact_tracing: ShowContactTracing,
         // Store preferences
