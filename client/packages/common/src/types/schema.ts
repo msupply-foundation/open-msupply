@@ -1390,7 +1390,7 @@ export type CreateInventoryAdjustmentError = {
 export type CreateInventoryAdjustmentInput = {
   adjustment: Scalars['Float']['input'];
   adjustmentType: AdjustmentTypeInput;
-  /** @deprecated since 2.8.0. Use reason_option */
+  /** @deprecated Since 2.8.0. Use reason_option_id */
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   stockLineId: Scalars['String']['input'];
@@ -3540,6 +3540,8 @@ export type InsertStockLineInput = {
   costPricePerPack: Scalars['Float']['input'];
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  /** @deprecated Since 2.8.0. Use reason_option_id */
+  inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemId: Scalars['String']['input'];
   itemVariantId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
@@ -3579,6 +3581,8 @@ export type InsertStocktakeLineInput = {
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  /** @deprecated Since 2.8.0. Use reason_option_id */
+  inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemId?: InputMaybe<Scalars['String']['input']>;
   itemVariantId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
@@ -3837,6 +3841,8 @@ export type InvoiceLineConnector = {
 
 export type InvoiceLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
+  /** @deprecated Since 2.8.0. Use reason_option */
+  inventoryAdjustmentReason?: InputMaybe<EqualFilterStringInput>;
   invoiceId?: InputMaybe<EqualFilterStringInput>;
   invoiceStatus?: InputMaybe<EqualFilterInvoiceStatusInput>;
   invoiceType?: InputMaybe<EqualFilterInvoiceTypeInput>;
@@ -9375,6 +9381,8 @@ export type UpdateStocktakeLineInput = {
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  /** @deprecated Since 2.8.0. Use reason_option_id */
+  inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;

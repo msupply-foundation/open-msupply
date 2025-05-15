@@ -45,6 +45,8 @@ pub struct InvoiceLineFilterInput {
     pub invoice_status: Option<EqualFilterInvoiceStatusInput>,
     pub stock_line_id: Option<EqualFilterStringInput>,
     pub reason_option: Option<EqualFilterStringInput>,
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option")]
+    pub inventory_adjustment_reason: Option<EqualFilterStringInput>,
     pub verified_datetime: Option<DatetimeFilterInput>,
 }
 

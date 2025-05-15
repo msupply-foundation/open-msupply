@@ -34,6 +34,8 @@ pub struct UpdateInput {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option_id")]
+    pub inventory_adjustment_reason_id: Option<String>,
     pub item_variant_id: Option<NullableUpdateInput<String>>,
     pub reason_option_id: Option<String>,
 }
@@ -105,6 +107,7 @@ impl UpdateInput {
             cost_price_per_pack,
             sell_price_per_pack,
             note,
+            inventory_adjustment_reason_id,
             item_variant_id,
             reason_option_id,
         } = self;

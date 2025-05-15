@@ -15,7 +15,7 @@ pub struct CreateInventoryAdjustmentInput {
     pub stock_line_id: String,
     pub adjustment: f64,
     pub adjustment_type: AdjustmentTypeInput,
-    #[graphql(deprecation = "since 2.8.0. Use reason_option")]
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option_id")]
     pub inventory_adjustment_reason_id: Option<String>, // deprecated since 2.8.0, front end uses reason_option_id
     pub reason_option_id: Option<String>,
 }
