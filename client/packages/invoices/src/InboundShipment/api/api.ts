@@ -20,7 +20,7 @@ import {
   RequisitionNodeType,
   InsertInboundShipmentLineFromInternalOrderLineInput,
   RequisitionNodeStatus,
-  UpdateDonorMethodInput,
+  UpdateDonorInput,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA } from '../../utils';
@@ -76,7 +76,13 @@ const inboundParsers = {
     }
   },
   toUpdate: (
-    patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment> | RecordPatch<{id: string, defaultDonorId: string, updateDonorMethod: UpdateDonorMethodInput}>
+    patch:
+      | RecordPatch<InboundFragment>
+      | RecordPatch<InboundRowFragment>
+      | {
+          id: string;
+          defaultDonor: UpdateDonorInput;
+        }
   ): UpdateInboundShipmentInput => {
     return {
       id: patch.id,
@@ -93,8 +99,7 @@ const inboundParsers = {
           : undefined,
       currencyId: 'currency' in patch ? patch.currency?.id : undefined,
       currencyRate: 'currencyRate' in patch ? patch.currencyRate : undefined,
-      defaultDonorId: 'defaultDonorId' in patch ? setNullableInput('defaultDonorId', patch) : undefined,
-      updateDonorMethod: 'updateDonorMethod' in patch ? patch.updateDonorMethod : undefined,
+      defaultDonor: 'defaultDonor' in patch ? patch.defaultDonor : undefined,
     };
   },
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {
@@ -285,7 +290,10 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error(insertInboundShipment.error.description);
   },
   update: async (
-    patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment> | RecordPatch<{id: string, defaultDonorId: string, updateDonorMethod: UpdateDonorMethodInput}>
+    patch:
+      | RecordPatch<InboundFragment>
+      | RecordPatch<InboundRowFragment>
+      | { id: string; defaultDonor: UpdateDonorInput }
   ) =>
     sdk.updateInboundShipment({
       input: inboundParsers.toUpdate(patch),

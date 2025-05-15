@@ -6,8 +6,8 @@ import {
   DialogButton,
   useNotification,
   useTranslation,
-  UpdateDonorMethodInput,
   Select,
+  ApplyToLinesInput,
 } from '@openmsupply-client/common';
 import { useName } from 'packages/system/src';
 import { useInbound } from '../../../api';
@@ -42,7 +42,7 @@ export const DonorEditModal = ({
 
   const [donor, setDonor] = useState<DonorOption | null>(null);
   const [isDirty, setIsDirty] = useState(false);
-  const [method, setMethod] = useState<UpdateDonorMethodInput>();
+  const [method, setMethod] = useState<ApplyToLinesInput>();
 
   const width = '350px';
 
@@ -69,8 +69,10 @@ export const DonorEditModal = ({
   const confirm = () =>
     mutateAsync({
       id: invoiceId,
-      defaultDonorId: donor?.id,
-      updateDonorMethod: method,
+      defaultDonor: {
+        donorId: donor?.id ?? null,
+        applyToLines: method ?? ApplyToLinesInput.None,
+      },
     });
 
   return (
@@ -116,28 +118,28 @@ export const DonorEditModal = ({
             options={[
               {
                 label: t('label.all-lines'),
-                value: UpdateDonorMethodInput.All,
+                value: ApplyToLinesInput.AssignToAll,
               },
               {
                 label: t('label.apply-donor-existing'),
-                value: UpdateDonorMethodInput.Existing,
+                value: ApplyToLinesInput.UpdateExistingDonor,
               },
               {
                 label: t('label.apply-donor-unassigned'),
-                value: UpdateDonorMethodInput.Unspecified,
+                value: ApplyToLinesInput.AssignIfNone,
               },
               {
                 label: t('label.none'),
-                value: UpdateDonorMethodInput.None,
+                value: ApplyToLinesInput.None,
               },
             ]}
             onChange={e => {
-              const newMethod = e.target.value as UpdateDonorMethodInput;
+              const newMethod = e.target.value as ApplyToLinesInput;
               setMethod(newMethod);
 
               // If not applying change to any lines, is dirty should only
               // get set if the shipment donor changes
-              if (newMethod !== UpdateDonorMethodInput.None) {
+              if (newMethod !== ApplyToLinesInput.None) {
                 setIsDirty(true);
               }
             }}

@@ -3,7 +3,7 @@ import { Formatter } from '@common/utils';
 import { AssetPropertyFragment, MasterListRowFragment } from '.';
 import { LocationRowFragment } from './Location/api';
 import { StockLineRowFragment } from './Stock/api';
-import { InvoiceNodeType, PropertyNode, UpdateDonorMethodInput } from '@common/types';
+import { InvoiceNodeType, PropertyNode } from '@common/types';
 
 export const locationsToCsv = (
   invoices: LocationRowFragment[],
@@ -152,19 +152,6 @@ export const getInvoiceLocalisationKey = (type: InvoiceNodeType): LocaleKey => {
       return 'label.repack';
   }
 };
-
-export const getDonorUpdateKeys = (type: UpdateDonorMethodInput): {label: LocaleKey, message: LocaleKey} => {
-  switch (type) {
-    case UpdateDonorMethodInput.All:
-      return {label: 'label.invoice-all', message: 'messages.invoice-all'};
-        case UpdateDonorMethodInput.Existing:
-      return {label: 'label.invoice-existing', message: 'messages.invoice-existing'};
-        case UpdateDonorMethodInput.None:
-      return {label: 'label.invoice-none', message: 'messages.invoice-none'};
-      case UpdateDonorMethodInput.Unspecified:
-      return {label: 'label.invoice-unspecified', message: 'messages.invoice-unspecified'};
-    }
-}
 
 export const getNameValue = (t: TypedTFunction<LocaleKey>, name: string) => {
   if (name == 'repack') return t('label.repack');
