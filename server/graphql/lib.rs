@@ -102,6 +102,10 @@ impl CentralServerMutationNode {
     async fn preferences(&self) -> PreferenceMutations {
         PreferenceMutations
     }
+
+    async fn campaign(&self) -> CampaignMutations {
+        CampaignMutations
+    }
 }
 
 #[derive(Default, Clone)]
@@ -110,6 +114,10 @@ pub struct CentralServerQueryNode;
 impl CentralServerQueryNode {
     async fn plugin(&self) -> CentralPluginQueries {
         CentralPluginQueries
+    }
+    
+    async fn campaign(&self) -> CampaignQueries {
+        CampaignQueries
     }
 }
 

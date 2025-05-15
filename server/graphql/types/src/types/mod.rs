@@ -142,6 +142,8 @@ pub use self::warning::*;
 pub mod vvm_status;
 pub use self::vvm_status::*;
 
+mod campaign;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]
@@ -166,3 +168,5 @@ impl OkResponse {
         true
     }
 }
+
+pub use campaign::*;
