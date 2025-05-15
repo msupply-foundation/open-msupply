@@ -1,4 +1,4 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["./src", "../invoices/src/InboundShipment/DetailView/SidePanel/DonorEdit.tsx"]
+  "include": ["./src"]
 }

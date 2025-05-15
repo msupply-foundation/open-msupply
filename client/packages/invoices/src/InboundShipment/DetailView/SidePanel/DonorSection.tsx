@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Grid,
   PanelLabel,
@@ -13,7 +13,7 @@ import {
 import { useInbound } from '../../api';
 import { DonorEditModal } from '../modals/Donor/DonorEditModal';
 
-export const DonorSectionComponent: FC = () => {
+export const DonorSectionComponent = () => {
   const t = useTranslation();
   const { isOn, toggleOff, toggleOn } = useToggle();
   const { id, defaultDonorId, defaultDonorName } = useInbound.document.fields([
@@ -35,7 +35,6 @@ export const DonorSectionComponent: FC = () => {
       <DetailPanelSection title={t('heading.invoice-donor')}>
         <Grid container gap={0.5} key="donor-details">
           <PanelRow>
-            {/* <PanelLabel display="flex" alignItems="center"> */}
             <PanelLabel>{t('heading.donor-name')}</PanelLabel>
             <PanelField>
               <IconButton
