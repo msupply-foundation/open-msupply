@@ -18,7 +18,7 @@ export const TextInputCell = <T extends RecordWithId>({
   CellProps<T>
 > => {
   const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
-  const updater = useDebounceCallback(column.setter, [column.setter], 500);
+  const updater = useDebounceCallback(column.setter, [column.setter], 200);
   const { maxLength } = column;
   const autoFocus = isAutoFocus || (rowIndex === 0 && columnIndex === 0);
   // This enables browser autocomplete for suggesting previously entered input
