@@ -1,3 +1,17 @@
+fragment VVMStatusLogRow on VvmstatusLogNode {
+  id
+  createdDatetime
+  user {
+    firstName
+    lastName
+  }
+  status {
+    description
+  }
+  createdDatetime
+  comment
+}
+
 fragment StockLineRow on StockLineNode {
   availableNumberOfPacks
   batch
@@ -26,6 +40,11 @@ fragment StockLineRow on StockLineNode {
     }
   }
   barcode
+  vvmStatusLogs {
+    nodes {
+      ...VVMStatusLogRow
+    }
+  }
 }
 
 fragment RepackStockLine on RepackStockLineNode {

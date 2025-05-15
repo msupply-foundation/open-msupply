@@ -4,6 +4,19 @@ import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { LocationRowFragmentDoc } from '../../Location/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
+export type VvmStatusLogRowFragment = {
+  __typename: 'VvmstatusLogNode';
+  id: string;
+  createdDatetime: string;
+  comment?: string | null;
+  user?: {
+    __typename: 'UserNode';
+    firstName?: string | null;
+    lastName?: string | null;
+  } | null;
+  status?: { __typename: 'VvmstatusNode'; description: string } | null;
+};
+
 export type StockLineRowFragment = {
   __typename: 'StockLineNode';
   availableNumberOfPacks: number;
@@ -42,6 +55,21 @@ export type StockLineRowFragment = {
     name: string;
     unitName?: string | null;
     masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
+  };
+  vvmStatusLogs: {
+    __typename: 'VvmstatusLogConnector';
+    nodes: Array<{
+      __typename: 'VvmstatusLogNode';
+      id: string;
+      createdDatetime: string;
+      comment?: string | null;
+      user?: {
+        __typename: 'UserNode';
+        firstName?: string | null;
+        lastName?: string | null;
+      } | null;
+      status?: { __typename: 'VvmstatusNode'; description: string } | null;
+    }>;
   };
 };
 
@@ -196,6 +224,21 @@ export type StockLinesQuery = {
           name: string;
         }> | null;
       };
+      vvmStatusLogs: {
+        __typename: 'VvmstatusLogConnector';
+        nodes: Array<{
+          __typename: 'VvmstatusLogNode';
+          id: string;
+          createdDatetime: string;
+          comment?: string | null;
+          user?: {
+            __typename: 'UserNode';
+            firstName?: string | null;
+            lastName?: string | null;
+          } | null;
+          status?: { __typename: 'VvmstatusNode'; description: string } | null;
+        }>;
+      };
     }>;
   };
 };
@@ -251,6 +294,21 @@ export type StockLineQuery = {
           __typename: 'MasterListNode';
           name: string;
         }> | null;
+      };
+      vvmStatusLogs: {
+        __typename: 'VvmstatusLogConnector';
+        nodes: Array<{
+          __typename: 'VvmstatusLogNode';
+          id: string;
+          createdDatetime: string;
+          comment?: string | null;
+          user?: {
+            __typename: 'UserNode';
+            firstName?: string | null;
+            lastName?: string | null;
+          } | null;
+          status?: { __typename: 'VvmstatusNode'; description: string } | null;
+        }>;
       };
     }>;
   };
@@ -333,6 +391,24 @@ export type UpdateStockLineMutation = {
             __typename: 'MasterListNode';
             name: string;
           }> | null;
+        };
+        vvmStatusLogs: {
+          __typename: 'VvmstatusLogConnector';
+          nodes: Array<{
+            __typename: 'VvmstatusLogNode';
+            id: string;
+            createdDatetime: string;
+            comment?: string | null;
+            user?: {
+              __typename: 'UserNode';
+              firstName?: string | null;
+              lastName?: string | null;
+            } | null;
+            status?: {
+              __typename: 'VvmstatusNode';
+              description: string;
+            } | null;
+          }>;
         };
       }
     | { __typename: 'UpdateStockLineError' };
@@ -566,9 +642,42 @@ export type InsertStockLineMutation = {
             name: string;
           }> | null;
         };
+        vvmStatusLogs: {
+          __typename: 'VvmstatusLogConnector';
+          nodes: Array<{
+            __typename: 'VvmstatusLogNode';
+            id: string;
+            createdDatetime: string;
+            comment?: string | null;
+            user?: {
+              __typename: 'UserNode';
+              firstName?: string | null;
+              lastName?: string | null;
+            } | null;
+            status?: {
+              __typename: 'VvmstatusNode';
+              description: string;
+            } | null;
+          }>;
+        };
       };
 };
 
+export const VvmStatusLogRowFragmentDoc = gql`
+  fragment VVMStatusLogRow on VvmstatusLogNode {
+    id
+    createdDatetime
+    user {
+      firstName
+      lastName
+    }
+    status {
+      description
+    }
+    createdDatetime
+    comment
+  }
+`;
 export const StockLineRowFragmentDoc = gql`
   fragment StockLineRow on StockLineNode {
     availableNumberOfPacks
@@ -598,8 +707,14 @@ export const StockLineRowFragmentDoc = gql`
       }
     }
     barcode
+    vvmStatusLogs {
+      nodes {
+        ...VVMStatusLogRow
+      }
+    }
   }
   ${LocationRowFragmentDoc}
+  ${VvmStatusLogRowFragmentDoc}
 `;
 export const RepackStockLineFragmentDoc = gql`
   fragment RepackStockLine on RepackStockLineNode {
