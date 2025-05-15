@@ -5,8 +5,8 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
-    InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
-    StockLineRowRepository,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLine,
+    InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError, StockLineRowRepository,
 };
 
 mod generate;
@@ -33,6 +33,7 @@ pub struct UpdateStockInLine {
     pub tax_percentage: Option<ShipmentTaxUpdate>,
     pub r#type: StockInType,
     pub item_variant_id: Option<NullableUpdate<String>>,
+    pub vvm_status_id: Option<String>,
 }
 
 type OutError = UpdateStockInLineError;
@@ -51,9 +52,12 @@ pub fn update_stock_in_line(
                 updated_line,
                 upsert_batch_option,
                 batch_to_delete_id,
+                vvm_status_log,
+                vvm_status_log_to_delete,
             } = generate(connection, &ctx.user_id, input, line, item, invoice)?;
 
             let stock_line_repository = StockLineRowRepository::new(connection);
+            let vvm_status_log_repository = VVMStatusLogRowRepository::new(connection);
 
             if let Some(upsert_batch) = upsert_batch_option {
                 stock_line_repository.upsert_one(&upsert_batch)?;
@@ -65,8 +69,16 @@ pub fn update_stock_in_line(
                 stock_line_repository.delete(&id)?;
             }
 
+            if let Some(id) = vvm_status_log_to_delete {
+                vvm_status_log_repository.delete(&id)?;
+            }
+
             if let Some(invoice_row) = invoice_row_option {
                 InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
+            }
+
+            if let Some(vvm_status_log_row) = vvm_status_log {
+                VVMStatusLogRowRepository::new(connection).upsert_one(&vvm_status_log_row)?;
             }
 
             get_invoice_line(ctx, &updated_line.id)
@@ -94,6 +106,7 @@ pub enum UpdateStockInLineError {
     BatchIsReserved,
     UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
+    VVMStatusDoesNotExist,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {

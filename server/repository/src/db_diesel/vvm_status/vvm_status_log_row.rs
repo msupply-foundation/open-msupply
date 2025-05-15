@@ -79,6 +79,12 @@ impl<'a> VVMStatusLogRowRepository<'a> {
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
+    pub fn delete(&self, log_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(vvm_status_log.filter(id.eq(log_id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     fn insert_changelog(
         &self,
         row: &VVMStatusLogRow,

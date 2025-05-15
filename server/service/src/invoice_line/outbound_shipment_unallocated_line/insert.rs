@@ -128,6 +128,7 @@ fn generate(
         prescribed_quantity: None,
         linked_invoice_id: None,
         donor_id: None,
+        vvm_status_id: None,
     };
 
     Ok(new_line)

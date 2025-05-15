@@ -105,6 +105,7 @@ pub fn generate(
                  reason_id: _,
                  note,
                  item_variant_id,
+                 vvm_status_id,
              }| InsertStockInLine {
                 id,
                 expiry_date,
@@ -116,6 +117,7 @@ pub fn generate(
                 note,
                 r#type: StockInType::CustomerReturn,
                 item_variant_id,
+                vvm_status_id,
                 // Default
                 location: None,
                 cost_price_per_pack: 0.0,
@@ -125,7 +127,6 @@ pub fn generate(
                 stock_line_id,
                 barcode: None,
                 stock_on_hold: false,
-                vvm_status_id: None, // Setting to none until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
             },
         )
         .collect();

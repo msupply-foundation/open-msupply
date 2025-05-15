@@ -27,13 +27,13 @@ import {
   ItemRowFragment,
   LocationRowFragment,
   PackSizeEntryCell,
-  useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
 import {
   getBatchExpiryColumns,
   getInboundDosesColumns,
   itemVariantColumn,
   NumberOfPacksCell,
+  vvmStatusesColumn,
 } from './utils';
 
 interface TableProps {
@@ -42,6 +42,8 @@ interface TableProps {
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
+  hasItemVariantsEnabled?: boolean;
+  hasVVMStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
 }
 
@@ -49,6 +51,8 @@ export const QuantityTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled = false,
+  hasVVMStatusesEnabled,
+  hasItemVariantsEnabled,
   item,
 }: TableProps) => {
   const t = useTranslation();
@@ -57,7 +61,7 @@ export const QuantityTableComponent = ({
   const { data: preferences } = usePreference(
     PreferenceKey.DisplayVaccinesInDoses
   );
-  const itemVariantsEnabled = useIsItemVariantsEnabled();
+
   const displayInDoses =
     !!preferences?.displayVaccinesInDoses && !!item?.isVaccine;
   const unitName = getPlural(
@@ -68,12 +72,16 @@ export const QuantityTableComponent = ({
     ...getBatchExpiryColumns(updateDraftLine, theme),
   ];
 
-  if (itemVariantsEnabled) {
+  if (hasItemVariantsEnabled) {
     columnDefinitions.push(itemVariantColumn(updateDraftLine));
   }
 
   if (displayInDoses) {
     columnDefinitions.push(getDosesPerUnitColumn(t, unitName));
+  }
+
+  if (hasVVMStatusesEnabled && item?.isVaccine) {
+    columnDefinitions.push(vvmStatusesColumn(updateDraftLine));
   }
 
   columnDefinitions.push(

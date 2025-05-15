@@ -29,6 +29,8 @@ interface TabLayoutProps {
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
   item: ItemRowFragment | null;
+  hasItemVariantsEnabled?: boolean;
+  hasVVMStatusesEnabled?: boolean;
 }
 
 enum Tabs {
@@ -44,6 +46,8 @@ export const TabLayout = ({
   updateDraftLine,
   currency,
   isExternalSupplier,
+  hasItemVariantsEnabled,
+  hasVVMStatusesEnabled,
   item,
 }: TabLayoutProps) => {
   const t = useTranslation();
@@ -115,6 +119,8 @@ export const TabLayout = ({
             lines={draftLines}
             updateDraftLine={updateDraftLine}
             item={item}
+            hasItemVariantsEnabled={hasItemVariantsEnabled}
+            hasVVMStatusesEnabled={hasVVMStatusesEnabled}
           />
         </InboundLineEditPanel>
 

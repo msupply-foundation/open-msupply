@@ -1,13 +1,15 @@
 use async_graphql::*;
 
 use graphql_types::types::VVMStatusesResponse;
-use types::vvm_status_log::VVMStatusLogResponse;
 use mutations::vvm_status_log::{
     insert::{insert, InsertInput, InsertResponse},
     update::{update_vvm_status_log, UpdateVVMStatusResponse},
 };
-use queries::{vvm_status::active_vvm_statuses, vvm_status_log::get_vvm_status_log_by_stock_line};
-
+use queries::{
+    vvm_status::active_vvm_statuses, vvm_status_configured::vvm_statuses_configured,
+    vvm_status_log::get_vvm_status_log_by_stock_line,
+};
+use types::vvm_status_log::VVMStatusLogResponse;
 
 pub mod mutations;
 pub mod queries;
@@ -24,6 +26,14 @@ impl VVMQueries {
         store_id: String,
     ) -> Result<VVMStatusesResponse> {
         active_vvm_statuses(ctx, store_id)
+    }
+
+    pub async fn vvm_statuses_configured(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<bool> {
+        vvm_statuses_configured(ctx, store_id)
     }
 
     pub async fn get_vvm_status_log_by_stock_line(

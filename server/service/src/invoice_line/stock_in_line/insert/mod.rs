@@ -4,8 +4,8 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
-    BarcodeRowRepository, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository,
-    RepositoryError, StockLineRowRepository,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, BarcodeRowRepository, InvoiceLine,
+    InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError, StockLineRowRepository,
 };
 
 mod generate;
@@ -61,7 +61,8 @@ pub fn insert_stock_in_line(
                 invoice_line,
                 stock_line,
                 barcode,
-            } = generate(connection, &ctx.user_id, input, item, invoice)?;
+                vvm_status_log,
+            } = generate(connection, &ctx.user_id, input.clone(), item, invoice)?;
 
             if let Some(barcode_row) = barcode {
                 BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
@@ -74,6 +75,9 @@ pub fn insert_stock_in_line(
 
             if let Some(invoice_row) = invoice_user_update {
                 InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
+            }
+            if let Some(vvm_status_log_row) = vvm_status_log {
+                VVMStatusLogRowRepository::new(connection).upsert_one(&vvm_status_log_row)?;
             }
 
             get_invoice_line(ctx, &invoice_line.id)
@@ -98,6 +102,7 @@ pub enum InsertStockInLineError {
     PackSizeBelowOne,
     NumberOfPacksBelowZero,
     NewlyCreatedLineDoesNotExist,
+    VVMStatusDoesNotExist,
 }
 
 impl From<RepositoryError> for InsertStockInLineError {
