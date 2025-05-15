@@ -55,7 +55,7 @@ pub fn upsert_item_variant(
         .connection
         .transaction_sync(|connection| {
             let existing_variant = validate(connection, &ctx.store_id, &input)?;
-            let new_item_variant = generate(&ctx.user_id, input.clone());
+            let new_item_variant = generate(&ctx.user_id, existing_variant.clone(), input.clone());
             let repo = ItemVariantRowRepository::new(connection);
             let packaging_variant_repo = PackagingVariantRepository::new(connection);
             let packaging_variant_row_repo = PackagingVariantRowRepository::new(connection);

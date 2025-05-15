@@ -10,6 +10,7 @@ use super::UpsertItemVariantWithPackaging;
 
 pub fn generate(
     user_id: &str,
+    existing_variant: Option<ItemVariant>,
     UpsertItemVariantWithPackaging {
         id,
         name,
@@ -21,6 +22,14 @@ pub fn generate(
         vvm_type,
     }: UpsertItemVariantWithPackaging,
 ) -> ItemVariantRow {
+    let (created_datetime, created_by) = match existing_variant {
+        Some(ref variant) => (
+            variant.item_variant_row.created_datetime,
+            variant.item_variant_row.created_by.clone(),
+        ),
+        None => (Utc::now().naive_utc(), Some(user_id.to_string())),
+    };
+
     ItemVariantRow {
         id,
         name,
@@ -29,11 +38,11 @@ pub fn generate(
         manufacturer_link_id: manufacturer_id
             .map(|manufacturer_id| manufacturer_id.value)
             .unwrap_or_default(),
-        deleted_datetime: None,
         doses_per_unit,
         vvm_type: vvm_type.map(|vvm_type| vvm_type.value).unwrap_or_default(),
-        created_datetime: Utc::now().naive_utc(),
-        created_by: Some(user_id.to_string()),
+        created_datetime,
+        created_by,
+        deleted_datetime: None,
     }
 }
 
