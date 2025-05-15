@@ -35,6 +35,7 @@ table! {
         note -> Nullable<Text>,
         inventory_adjustment_reason_id -> Nullable<Text>,
         item_variant_id -> Nullable<Text>,
+        donor_id -> Nullable<Text>,
     }
 }
 
@@ -70,6 +71,7 @@ pub struct StocktakeLineRow {
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
     pub item_variant_id: Option<String>,
+    pub donor_id: Option<String>,
 }
 
 pub struct StocktakeLineRowRepository<'a> {

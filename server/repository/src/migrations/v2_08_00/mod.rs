@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_donor_id_to_invoice_and_invoice_lines;
 mod add_donor_id_to_stock_lines;
+mod add_donor_id_to_stocktake_line;
 mod add_doses_columns_to_item_variant;
 mod add_initial_stocktake_field;
 mod add_view_and_edit_vvm_status_permission;
@@ -35,6 +36,7 @@ impl Migration for V2_08_00 {
             Box::new(add_vvm_status_log_update_to_activity_log::Migrate),
             Box::new(add_vvm_status_id_to_stock_line::Migrate),
             Box::new(add_donor_id_to_stock_lines::Migrate),
+            Box::new(add_donor_id_to_stocktake_line::Migrate),
         ]
     }
 }

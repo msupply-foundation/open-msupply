@@ -21,6 +21,7 @@ pub fn mock_stocktake_line_a() -> StocktakeLineRow {
         note: None,
         inventory_adjustment_reason_id: None,
         item_variant_id: None,
+        donor_id: None,
     }
 }
 
@@ -43,6 +44,7 @@ pub fn mock_stocktake_line_b() -> StocktakeLineRow {
         note: None,
         inventory_adjustment_reason_id: None,
         item_variant_id: None,
+        donor_id: None,
     }
 }
 
