@@ -3052,6 +3052,7 @@ export type InsertInboundShipmentLineInput = {
   sellPricePerPack: Scalars['Float']['input'];
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertInboundShipmentLineResponse =
@@ -3551,6 +3552,7 @@ export type InsertStockLineInput = {
   onHold: Scalars['Boolean']['input'];
   packSize: Scalars['Float']['input'];
   sellPricePerPack: Scalars['Float']['input'];
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertStockLineLineResponse = InsertStockLineError | StockLineNode;
@@ -8005,6 +8007,7 @@ export type StockLineNode = {
   storeId: Scalars['String']['output'];
   supplierName?: Maybe<Scalars['String']['output']>;
   totalNumberOfPacks: Scalars['Float']['output'];
+  vvmStatus?: Maybe<VvmstatusNode>;
 };
 
 export type StockLineReducedBelowZero =
@@ -9409,6 +9412,7 @@ export type UpdateStockLineInput = {
   location?: InputMaybe<NullableStringUpdate>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateStockLineLineResponse = StockLineNode | UpdateStockLineError;
