@@ -168,6 +168,7 @@ export enum ActivityLogNodeType {
   VaccinationUpdated = 'VACCINATION_UPDATED',
   VaccineCourseCreated = 'VACCINE_COURSE_CREATED',
   VaccineCourseUpdated = 'VACCINE_COURSE_UPDATED',
+  VvmStatusLogUpdated = 'VVM_STATUS_LOG_UPDATED',
 }
 
 export type ActivityLogResponse = ActivityLogConnector;
@@ -292,6 +293,13 @@ export type AllocateProgramNumberInput = {
 };
 
 export type AllocateProgramNumberResponse = NumberNode;
+
+export enum ApplyToLinesInput {
+  AssignIfNone = 'ASSIGN_IF_NONE',
+  AssignToAll = 'ASSIGN_TO_ALL',
+  None = 'NONE',
+  UpdateExistingDonor = 'UPDATE_EXISTING_DONOR',
+}
 
 export type AssetCatalogueItemConnector = {
   __typename: 'AssetCatalogueItemConnector';
@@ -3041,6 +3049,7 @@ export type InsertInboundShipmentLineFromInternalOrderLineResponseWithId = {
 export type InsertInboundShipmentLineInput = {
   batch?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack: Scalars['Float']['input'];
+  donorId?: InputMaybe<Scalars['String']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   invoiceId: Scalars['String']['input'];
@@ -4808,6 +4817,7 @@ export type Mutations = {
   updateTemperatureBreach: UpdateTemperatureBreachResponse;
   updateUser: UpdateUserResponse;
   updateVaccination: UpdateVaccinationResponse;
+  updateVvmStatusLog: UpdateVvmStatusResponse;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
 };
@@ -5393,6 +5403,11 @@ export type MutationsUpdateVaccinationArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsUpdateVvmStatusLogArgs = {
+  input: UpdateVvmStatusLogInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsUseSuggestedQuantityArgs = {
   input: UseSuggestedQuantityInput;
   storeId: Scalars['String']['input'];
@@ -5938,7 +5953,7 @@ export type PreferenceDescriptionNode = {
 };
 
 export enum PreferenceKey {
-  AllowTrackingOfReceivedStockByDonor = 'allowTrackingOfReceivedStockByDonor',
+  AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   DisplayVaccinesInDoses = 'displayVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
@@ -5968,7 +5983,7 @@ export enum PreferenceValueNodeType {
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
-  allowTrackingOfReceivedStockByDonor: Scalars['Boolean']['output'];
+  allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   displayVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
@@ -8754,6 +8769,11 @@ export type UpdateDisplaySettingsResponse =
   | UpdateDisplaySettingsError
   | UpdateResult;
 
+export type UpdateDonorInput = {
+  applyToLines: ApplyToLinesInput;
+  donorId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateEncounterInput = {
   /** Encounter document data */
   data: Scalars['JSON']['input'];
@@ -8785,6 +8805,7 @@ export type UpdateInboundShipmentInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
   currencyRate?: InputMaybe<Scalars['Float']['input']>;
+  defaultDonor?: InputMaybe<UpdateDonorInput>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
@@ -8805,6 +8826,7 @@ export type UpdateInboundShipmentLineErrorInterface = {
 export type UpdateInboundShipmentLineInput = {
   batch?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
+  donorId?: InputMaybe<NullableStringUpdate>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
@@ -9548,6 +9570,13 @@ export type UpdateUserNode = {
 
 export type UpdateUserResponse = UpdateUserError | UpdateUserNode;
 
+export type UpdateVvmStatusLogInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+};
+
+export type UpdateVvmStatusResponse = IdResponse;
+
 export type UpdateVaccinationError = {
   __typename: 'UpdateVaccinationError';
   error: UpdateVaccinationErrorInterface;
@@ -9664,7 +9693,7 @@ export type UpsertPackVariantResponse =
   | UpsertItemVariantError;
 
 export type UpsertPreferencesInput = {
-  allowTrackingOfReceivedStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
+  allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   displayVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;

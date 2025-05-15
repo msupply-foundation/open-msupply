@@ -114,6 +114,7 @@ fn generate_line(
         tax_percentage,
         r#type: _,
         item_variant_id,
+        donor_id,
     }: UpdateStockInLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -144,6 +145,8 @@ fn generate_line(
     update_line.item_variant_id = item_variant_id
         .map(|v| v.value)
         .unwrap_or(update_line.item_variant_id);
+
+    update_line.donor_id = donor_id.map(|d| d.value).unwrap_or(update_line.donor_id);
 
     if let Some(item) = new_item_option {
         update_line.item_link_id = item.id;
