@@ -3,12 +3,14 @@ use serde::{Deserialize, Serialize};
 use tokio::time::{sleep, Duration};
 
 use crate::{
-    apis::api_on_central::validate_site_auth,
     programs::patient::{
         add_patient_to_oms_central, patient_updated::create_patient_name_store_join,
     },
     service_provider::{ServiceContext, ServiceProvider},
-    sync::{api::SyncApiSettings, CentralServerConfig},
+    sync::{
+        api::{validate_site_auth, SyncApiSettings},
+        CentralServerConfig,
+    },
     validate::check_patient_exists,
 };
 
@@ -38,7 +40,7 @@ pub async fn add_patient_name_store_join(
     }
 
     let ctx = service_provider.basic_context()?;
-    validate_site_auth(sync_v5_settings).await?;
+    validate_site_auth(&ctx, &sync_v5_settings).await?;
 
     // Check patient exists (see README in service/programs/patient)
     if check_patient_exists(&ctx.connection, &name_id)?.is_none() {
