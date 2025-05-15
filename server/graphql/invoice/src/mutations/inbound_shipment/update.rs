@@ -14,7 +14,7 @@ use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::inbound_shipment::{
-    UpdateDonorMethod, UpdateInboundShipment as ServiceInput,
+    ApplyDonorToInvoiceLines, UpdateDefaultDonor, UpdateInboundShipment as ServiceInput,
     UpdateInboundShipmentError as ServiceError, UpdateInboundShipmentStatus,
 };
 use service::invoice_line::ShipmentTaxUpdate;
@@ -27,6 +27,21 @@ pub enum UpdateDonorMethodInput {
     Existing,
     Unspecified,
     All,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+
+pub enum ApplyToLinesInput {
+    None,
+    UpdateExistingDonor,
+    AssignIfNone,
+    AssignToAll,
+}
+
+#[derive(InputObject)]
+pub struct UpdateDonorInput {
+    pub donor_id: Option<String>,
+    pub apply_to_lines: ApplyToLinesInput,
 }
 
 #[derive(InputObject)]
@@ -42,8 +57,7 @@ pub struct UpdateInput {
     pub tax: Option<TaxInput>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
-    pub default_donor_id: Option<NullableUpdateInput<String>>,
-    pub update_donor_method: Option<UpdateDonorMethodInput>,
+    pub default_donor: Option<UpdateDonorInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -110,8 +124,7 @@ impl UpdateInput {
             tax,
             currency_id,
             currency_rate,
-            default_donor_id,
-            update_donor_method,
+            default_donor,
         } = self;
 
         ServiceInput {
@@ -127,11 +140,10 @@ impl UpdateInput {
             }),
             currency_id,
             currency_rate,
-            default_donor_id: default_donor_id.map(|default_donor_id| NullableUpdate {
-                value: default_donor_id.value,
+            default_donor: default_donor.map(|donor| UpdateDefaultDonor {
+                donor_id: donor.donor_id,
+                apply_to_lines: donor.apply_to_lines.to_domain(),
             }),
-            update_donor_method: update_donor_method
-                .map(|update_donor_method| update_donor_method.to_domain()),
         }
     }
 }
@@ -150,6 +162,7 @@ pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateRespons
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
+    log::error!("Error updating inbound shipment: {}", formatted_error);
 
     let graphql_error = match error {
         // Structured Errors
@@ -188,9 +201,10 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             )
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
-        ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
-        ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::CannotUpdateStatusAndDonorAtTheSameTime
+        | ServiceError::NotThisStoreInvoice
+        | ServiceError::NotAnInboundShipment
+        | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
@@ -208,13 +222,13 @@ impl UpdateInboundShipmentStatusInput {
     }
 }
 
-impl UpdateDonorMethodInput {
-    pub fn to_domain(&self) -> UpdateDonorMethod {
+impl ApplyToLinesInput {
+    pub fn to_domain(&self) -> ApplyDonorToInvoiceLines {
         match self {
-            UpdateDonorMethodInput::None => UpdateDonorMethod::NoChanges,
-            UpdateDonorMethodInput::Existing => UpdateDonorMethod::Existing,
-            UpdateDonorMethodInput::Unspecified => UpdateDonorMethod::Unspecified,
-            UpdateDonorMethodInput::All => UpdateDonorMethod::All,
+            ApplyToLinesInput::None => ApplyDonorToInvoiceLines::None,
+            ApplyToLinesInput::UpdateExistingDonor => ApplyDonorToInvoiceLines::UpdateExistingDonor,
+            ApplyToLinesInput::AssignIfNone => ApplyDonorToInvoiceLines::AssignIfNone,
+            ApplyToLinesInput::AssignToAll => ApplyDonorToInvoiceLines::AssignToAll,
         }
     }
 }
@@ -528,8 +542,7 @@ mod test {
                     tax: None,
                     currency_id: None,
                     currency_rate: None,
-                    default_donor_id: None,
-                    update_donor_method: None,
+                    default_donor: None,
                 }
             );
             Ok(Invoice {
