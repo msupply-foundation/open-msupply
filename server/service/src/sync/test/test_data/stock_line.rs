@@ -47,7 +47,7 @@ const ITEM_LINE_1: (&str, &str) = (
       "user_7_ID": "",
       "user_8_ID": "",
       "volume_per_pack": 0,
-      "vvm_status": "",
+      "vvm_status_id": "",
       "weight_per_pack": 0
     }"#,
 );
@@ -97,7 +97,7 @@ fn item_line_1_push_record() -> TestSyncOutgoingRecord {
             supplier_id: Some("name_store_b".to_string()),
             barcode_id: None,
             item_variant_id: None,
-            vvm_status: None,
+            vvm_status_id: None,
         }),
     }
 }
@@ -141,7 +141,7 @@ const ITEM_LINE_2: (&str, &str) = (
       "user_7_ID": "",
       "user_8_ID": "",
       "volume_per_pack": 0,
-      "vvm_status": "",
+      "vvm_status_id": "",
       "weight_per_pack": 0
   }"#,
 );
@@ -191,7 +191,7 @@ fn item_line_2_push_record() -> TestSyncOutgoingRecord {
             supplier_id: None,
             barcode_id: None,
             item_variant_id: None,
-            vvm_status: None,
+            vvm_status_id: None,
         }),
     }
 }
