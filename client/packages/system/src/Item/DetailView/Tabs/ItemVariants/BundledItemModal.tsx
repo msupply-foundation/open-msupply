@@ -110,7 +110,9 @@ const BundledItemForm = ({
               Input={
                 <Box width="100%">
                   <ItemVariantSearchInput
-                    onChange={variantId => updateDraft({ variantId })}
+                    onChange={variant =>
+                      updateDraft({ variantId: variant?.id })
+                    }
                     itemId={draft.itemId}
                     selectedId={draft.variantId}
                     getOptionDisabled={variant =>

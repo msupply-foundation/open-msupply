@@ -127,6 +127,10 @@ fragment PrescriptionLine on InvoiceLineNode {
       ...Warning
     }
   }
+  itemVariant {
+    id
+    dosesPerUnit
+  }
 
   location {
     __typename
@@ -201,6 +205,10 @@ fragment PartialPrescriptionLine on StockLineNode {
     warnings {
       ...Warning
     }
+  }
+  itemVariant {
+    id
+    dosesPerUnit
   }
   location {
     __typename

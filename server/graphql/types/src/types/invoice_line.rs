@@ -1,14 +1,14 @@
 use super::{
-    InventoryAdjustmentReasonNode, ItemNode, LocationNode, PricingNode, ReturnReasonNode,
-    StockLineNode,
+    InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, PricingNode,
+    ReturnReasonNode, StockLineNode,
 };
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
     loader::{
-        InventoryAdjustmentReasonByIdLoader, ItemLoader, LocationByIdLoader, ReturnReasonLoader,
-        StockLineByIdLoader,
+        InventoryAdjustmentReasonByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader,
+        LocationByIdLoader, ReturnReasonLoader, StockLineByIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
@@ -205,6 +205,19 @@ impl InvoiceLineNode {
             .await?;
 
         Ok(result.map(InventoryAdjustmentReasonNode::from_domain))
+    }
+
+    pub async fn item_variant(&self, ctx: &Context<'_>) -> Result<Option<ItemVariantNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemVariantByItemVariantIdLoader>>();
+
+        let item_variant_id = match &self.row().item_variant_id {
+            None => return Ok(None),
+            Some(item_variant_id) => item_variant_id,
+        };
+
+        let result = loader.load_one(item_variant_id.clone()).await?;
+
+        Ok(result.map(|item_variant| ItemVariantNode::from_domain(item_variant)))
     }
 }
 
