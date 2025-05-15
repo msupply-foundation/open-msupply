@@ -30,6 +30,7 @@ pub struct InsertInput {
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<f64>,
     pub item_variant_id: Option<String>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -88,6 +89,7 @@ impl InsertInput {
             total_before_tax,
             tax_percentage,
             item_variant_id,
+            vvm_status_id: _, // Ignoring until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
         } = self;
 
         ServiceInput {
@@ -112,6 +114,7 @@ impl InsertInput {
             stock_line_id: None,
             barcode: None,
             stock_on_hold: false,
+            vvm_status_id: None, // Setting to none until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
         }
     }
 }

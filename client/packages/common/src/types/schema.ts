@@ -3073,6 +3073,7 @@ export type InsertInboundShipmentLineInput = {
   sellPricePerPack: Scalars['Float']['input'];
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertInboundShipmentLineResponse =
@@ -3572,6 +3573,7 @@ export type InsertStockLineInput = {
   onHold: Scalars['Boolean']['input'];
   packSize: Scalars['Float']['input'];
   sellPricePerPack: Scalars['Float']['input'];
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertStockLineLineResponse = InsertStockLineError | StockLineNode;
@@ -5971,10 +5973,10 @@ export type PreferenceDescriptionNode = {
 export enum PreferenceKey {
   AllowTrackingOfReceivedStockByDonor = 'allowTrackingOfReceivedStockByDonor',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
-  DisplayVaccineInDoses = 'displayVaccineInDoses',
-  ManageVvmStatus = 'manageVvmStatus',
+  DisplayVaccinesInDoses = 'displayVaccinesInDoses',
+  ManageVvmStatusForStock = 'manageVvmStatusForStock',
   ShowContactTracing = 'showContactTracing',
-  SortByVvmStatus = 'sortByVvmStatus',
+  SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
 }
 
 export type PreferenceMutations = {
@@ -6001,10 +6003,10 @@ export type PreferencesNode = {
   __typename: 'PreferencesNode';
   allowTrackingOfReceivedStockByDonor: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
-  displayVaccineInDoses: Scalars['Boolean']['output'];
-  manageVvmStatus: Scalars['Boolean']['output'];
+  displayVaccinesInDoses: Scalars['Boolean']['output'];
+  manageVvmStatusForStock: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
-  sortByVvmStatus: Scalars['Boolean']['output'];
+  sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
 };
 
 export type PricingNode = {
@@ -8052,6 +8054,7 @@ export type StockLineNode = {
   storeId: Scalars['String']['output'];
   supplierName?: Maybe<Scalars['String']['output']>;
   totalNumberOfPacks: Scalars['Float']['output'];
+  vvmStatus?: Maybe<VvmstatusNode>;
 };
 
 export type StockLineReducedBelowZero =
@@ -9456,6 +9459,7 @@ export type UpdateStockLineInput = {
   location?: InputMaybe<NullableStringUpdate>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateStockLineLineResponse = StockLineNode | UpdateStockLineError;
@@ -9709,10 +9713,10 @@ export type UpsertPackVariantResponse =
 export type UpsertPreferencesInput = {
   allowTrackingOfReceivedStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
-  displayVaccineInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
-  manageVvmStatus?: InputMaybe<Array<BoolStorePrefInput>>;
+  displayVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
+  manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
-  sortByVvmStatus?: InputMaybe<Array<BoolStorePrefInput>>;
+  sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
 };
 
 export type UpsertVaccineCourseDoseInput = {
