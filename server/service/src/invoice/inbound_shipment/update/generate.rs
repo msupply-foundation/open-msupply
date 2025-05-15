@@ -139,7 +139,7 @@ pub(crate) fn generate(
 pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment) -> bool {
     let existing_status = &invoice.status;
 
-    if is_updating_donor(patch.update_donor_method.clone()) {
+    if should_update_donor(patch.update_donor_method.clone()) {
         return true;
     };
 
@@ -230,7 +230,6 @@ fn empty_lines_to_trim(
 
     // If new invoice status is not new and previous invoice status is new
     // add all empty lines to be deleted
-
     let lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&invoice.id))
@@ -308,20 +307,22 @@ pub struct GenerateLinesInput<'a> {
 
 pub fn generate_lines_and_stock_lines(
     connection: &StorageConnection,
-    input: GenerateLinesInput,
+    GenerateLinesInput {
+        store_id,
+        id,
+        tax_percentage,
+        supplier_id,
+        currency_id,
+        currency_rate,
+        default_donor_id,
+        donor_update_method,
+    }: GenerateLinesInput<'_>,
 ) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
-    let store_id = input.store_id;
-    let id = input.id;
-    let tax_percentage = input.tax_percentage;
-    let supplier_id = input.supplier_id;
-    let currency_id = input.currency_id.clone();
-    let currency_rate = input.currency_rate;
-
     let lines = InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(id)?;
     let mut result = Vec::new();
 
-    for invoice_lines in lines.into_iter() {
-        let mut line = invoice_lines.clone();
+    for invoice_line in lines.into_iter() {
+        let mut line = invoice_line.clone();
         let stock_line_id = line.stock_line_id.unwrap_or(uuid());
         line.stock_line_id = Some(stock_line_id.clone());
         if tax_percentage.is_some() {
@@ -335,19 +336,14 @@ pub fn generate_lines_and_stock_lines(
             currency_rate,
         )?;
 
-        line.donor_id = match input.donor_update_method.clone() {
+        line.donor_id = match donor_update_method.clone() {
             Some(UpdateDonorLineMethod::NoChanges) | None => line.donor_id,
-            Some(UpdateDonorLineMethod::AssignToAll) => input.default_donor_id.clone(),
-            Some(UpdateDonorLineMethod::UpdateExistingDonor) => {
-                if line.donor_id.is_none() {
-                    None
-                } else {
-                    input.default_donor_id.clone()
-                }
-            }
-            Some(UpdateDonorLineMethod::AssignIfNone) => {
-                line.donor_id.or(input.default_donor_id.clone())
-            }
+            Some(UpdateDonorLineMethod::UpdateExistingDonor) => match line.donor_id {
+                Some(_) => default_donor_id.clone(),
+                None => None,
+            },
+            Some(UpdateDonorLineMethod::AssignIfNone) => line.donor_id.or(default_donor_id.clone()),
+            Some(UpdateDonorLineMethod::AssignToAll) => default_donor_id.clone(),
         };
 
         let InvoiceLineRow {
@@ -376,7 +372,7 @@ pub fn generate_lines_and_stock_lines(
             item_variant_id,
             linked_invoice_id: _,
             donor_id,
-        }: InvoiceLineRow = invoice_lines;
+        }: InvoiceLineRow = invoice_line;
 
         if number_of_packs > 0.0 {
             let stock_line = StockLineRow {
@@ -418,14 +414,11 @@ pub fn generate_location_movements(
     }
 }
 
-fn is_updating_donor(update_donor_method: Option<UpdateDonorLineMethod>) -> bool {
-    // should update batches if donor_id for invoice changes and change line donor_ids also selected
-    if let Some(donor_update_method) = update_donor_method {
-        // only update lines if a method of updating is selected.
-        // note allowing update if no donor_id is supplied for update to be conducted on existing donor_id
-        if donor_update_method != UpdateDonorLineMethod::NoChanges {
-            return true;
-        }
-    }
-    return false;
+fn should_update_donor(update_donor_method: Option<UpdateDonorLineMethod>) -> bool {
+    matches!(
+        update_donor_method,
+        Some(UpdateDonorLineMethod::UpdateExistingDonor)
+            | Some(UpdateDonorLineMethod::AssignIfNone)
+            | Some(UpdateDonorLineMethod::AssignToAll)
+    )
 }
