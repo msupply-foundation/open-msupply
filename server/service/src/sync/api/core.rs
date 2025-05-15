@@ -251,7 +251,11 @@ pub async fn validate_site_auth(
 ) -> Result<SiteInfoV5, CentralApiError> {
     // We need to ignore the OG server URL provided by the remote and ensure we use the one that the OMS central server is expecting
     let kv_repo = KeyValueStoreRepository::new(&ctx.connection);
-    let kv_url = kv_repo.get_string(KeyType::SettingsSyncUrl)?.unwrap();
+    let kv_url = kv_repo
+        .get_string(KeyType::SettingsSyncUrl)?
+        .ok_or_else(|| {
+            CentralApiError::InternalError("Key Value Store missing sync URL".to_string())
+        })?;
     let sync_v5_settings = sync_v5_settings.clone();
     let sync_v5_settings = SyncApiSettings {
         server_url: kv_url,
