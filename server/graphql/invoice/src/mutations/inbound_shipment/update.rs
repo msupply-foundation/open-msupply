@@ -20,7 +20,6 @@ use service::invoice::inbound_shipment::{
 use service::invoice_line::ShipmentTaxUpdate;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-
 pub enum ApplyToLinesInput {
     None,
     UpdateExistingDonor,

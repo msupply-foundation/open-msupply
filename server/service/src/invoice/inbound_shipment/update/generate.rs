@@ -147,7 +147,6 @@ pub(crate) fn generate(
 
 pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment) -> bool {
     let existing_status = &invoice.status;
-
     let new_status = match changed_status(patch.status.to_owned(), existing_status) {
         Some(status) => status,
         None => return false, // Status has not been updated
