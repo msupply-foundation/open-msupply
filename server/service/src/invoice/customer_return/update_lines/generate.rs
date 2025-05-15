@@ -73,6 +73,7 @@ pub fn generate(
                 stock_line_id: None,
                 stock_on_hold: false,
                 donor_id: None,
+                vvm_status_id: None, // Setting to none until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
             },
         )
         .collect();

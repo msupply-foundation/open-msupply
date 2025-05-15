@@ -371,6 +371,7 @@ pub fn generate_lines_and_stock_lines(
                 barcode_id: None,
                 item_variant_id,
                 donor_id,
+                vvm_status_id: None,
             };
             result.push(LineAndStockLine {
                 line,

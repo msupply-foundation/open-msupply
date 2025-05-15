@@ -91,6 +91,7 @@ fn generate_line(
         tax_percentage: _,
         donor_id,
         r#type: _,
+        vvm_status_id: _, // Ignoring until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
     }: InsertStockInLine,
     ItemRow {
         name: item_name,
