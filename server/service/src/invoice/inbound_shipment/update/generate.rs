@@ -27,11 +27,7 @@ pub(crate) struct GenerateResult {
     pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
     pub(crate) update_tax_for_lines: Option<Vec<InvoiceLineRow>>,
     pub(crate) update_currency_for_lines: Option<Vec<InvoiceLineRow>>,
-    pub(crate) vvm_status_logs: Option<Vec<VVMStatusLogRow>>,
-    // vvm status log Vec
-    // create fn to see which lines have vvm id -> need log created -> create logs
-    // log here on verified if table done, otherwise new issue
-    // send in generate
+    pub(crate) vvm_status_logs_to_update: Option<Vec<VVMStatusLogRow>>,
 }
 
 pub(crate) fn generate(
@@ -83,8 +79,8 @@ pub(crate) fn generate(
         None
     };
 
-    let vvm_status_logs = if let Some(batches) = &batches_to_update {
-        let vvm_status_logs = batches
+    let vvm_status_logs_to_update = if let Some(batches) = &batches_to_update {
+        let vvm_status_logs: Vec<VVMStatusLogRow> = batches
             .iter()
             .filter_map(|batch| {
                 batch.line.vvm_status_id.clone().map(|vvm_status_id| {
@@ -149,7 +145,7 @@ pub(crate) fn generate(
         location_movements,
         update_tax_for_lines,
         update_currency_for_lines,
-        vvm_status_logs,
+        vvm_status_logs_to_update,
     })
 }
 
@@ -412,7 +408,6 @@ struct VVMStatusInput {
 }
 
 fn generate_vvm_status_log(
-    // store_id: String,
     VVMStatusInput {
         store_id,
         vvm_status_id,

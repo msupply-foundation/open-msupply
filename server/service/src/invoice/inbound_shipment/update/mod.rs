@@ -55,7 +55,7 @@ pub fn update_inbound_shipment(
                 location_movements,
                 update_tax_for_lines,
                 update_currency_for_lines,
-                vvm_status_logs,
+                vvm_status_logs_to_update,
             } = generate(
                 connection,
                 &ctx.store_id,
@@ -77,6 +77,12 @@ pub fn update_inbound_shipment(
                 }
             }
 
+            if let Some(vvm_status_log_rows) = vvm_status_logs_to_update {
+                for row in vvm_status_log_rows {
+                    VVMStatusLogRowRepository::new(connection).upsert_one(&row)?;
+                }
+            }
+
             if let Some(lines) = empty_lines_to_trim {
                 let repository = InvoiceLineRowRepository::new(connection);
                 for line in lines {
@@ -88,11 +94,6 @@ pub fn update_inbound_shipment(
                 if let Some(movements) = location_movements {
                     for movement in movements {
                         LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
-                    }
-                }
-                if let Some(vvm_status_log_rows) = vvm_status_logs {
-                    for row in vvm_status_log_rows {
-                        VVMStatusLogRowRepository::new(connection).upsert_one(&row)?;
                     }
                 }
             }

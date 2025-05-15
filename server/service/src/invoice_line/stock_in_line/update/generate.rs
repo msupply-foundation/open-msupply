@@ -11,8 +11,12 @@ use crate::{
 };
 use chrono::Utc;
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLine, InvoiceLineRow, InvoiceRow,
-    InvoiceStatus, ItemRow, RepositoryError, StockLineRow, StorageConnection,
+    vvm_status::{
+        vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
+        vvm_status_log_row::VVMStatusLogRow,
+    },
+    EqualFilter, InvoiceLine, InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, RepositoryError,
+    StockLineRow, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -24,6 +28,7 @@ pub struct GenerateResult {
     pub upsert_batch_option: Option<StockLineRow>,
     pub batch_to_delete_id: Option<String>,
     pub vvm_status_log: Option<VVMStatusLogRow>,
+    pub vvm_status_log_to_delete: Option<String>,
 }
 
 pub fn generate(
@@ -37,6 +42,8 @@ pub fn generate(
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
 
     let batch_to_delete_id = get_batch_to_delete_id(&current_line, &new_item_option);
+    let vvm_status_log_to_delete =
+        get_vvm_status_log_to_delete(&connection, &current_line, &input)?;
 
     let mut update_line = generate_line(
         connection,
@@ -75,17 +82,27 @@ pub fn generate(
         update_line.stock_line_id = Some(new_batch.id.clone());
 
         let vvm_status_log = if let Some(vvm_status_id) = input.vvm_status_id {
+            let mut filter = VVMStatusLogFilter::new();
+
+            if let Some(stock_line_id) = &update_line.stock_line_id {
+                filter = filter.stock_line_id(EqualFilter::equal_to(stock_line_id))
+            }
+            filter = filter.invoice_line_id(EqualFilter::equal_to(&update_line.id));
+
+            let vvm_status_log_line =
+                VVMStatusLogRepository::new(connection).query_by_filter(filter)?;
+
             generate_vvm_status_log(VVMStatusInput {
                 store_id: existing_invoice_row.store_id.clone(),
                 vvm_status_id,
                 stock_line_id: new_batch.id.clone(),
                 invoice_line_id: update_line.id.clone(),
                 created_by: user_id.to_string(),
+                id: vvm_status_log_line.first().map(|log| log.id.clone()),
             })
         } else {
             None
         };
-
         (Some(new_batch), vvm_status_log)
     } else {
         (None, None)
@@ -97,6 +114,7 @@ pub fn generate(
         upsert_batch_option,
         batch_to_delete_id,
         vvm_status_log,
+        vvm_status_log_to_delete,
     })
 }
 
@@ -113,6 +131,30 @@ fn get_batch_to_delete_id(
         }
     }
     None
+}
+
+fn get_vvm_status_log_to_delete(
+    connection: &StorageConnection,
+    current_line: &InvoiceLine,
+    input: &UpdateStockInLine,
+) -> Result<Option<String>, RepositoryError> {
+    // if the input line has no status, find the log of the current line and set the id to delete
+    if current_line.invoice_line_row.vvm_status_id.is_some() && input.vvm_status_id.is_none() {
+        let mut filter = VVMStatusLogFilter::new();
+        if let Some(stock_line_id) = &current_line.invoice_line_row.stock_line_id {
+            filter = filter.stock_line_id(EqualFilter::equal_to(stock_line_id))
+        }
+        filter = filter.invoice_line_id(EqualFilter::equal_to(&current_line.invoice_line_row.id));
+
+        let vvm_status_log_line = VVMStatusLogRepository::new(connection)
+            .query_by_filter(filter)?
+            .first()
+            .map(|log| log.id.clone());
+
+        Ok(vvm_status_log_line)
+    } else {
+        Ok(None)
+    }
 }
 
 fn generate_line(
@@ -140,8 +182,6 @@ fn generate_line(
     currency_rate: &f64,
 ) -> Result<InvoiceLineRow, RepositoryError> {
     let mut update_line = current_line;
-
-    println!("update line {:?}", update_line);
 
     update_line.pack_size = pack_size.unwrap_or(update_line.pack_size);
     update_line.batch = batch.or(update_line.batch);
@@ -187,6 +227,7 @@ fn generate_line(
     Ok(update_line)
 }
 struct VVMStatusInput {
+    id: Option<String>,
     store_id: String,
     vvm_status_id: String,
     stock_line_id: String,
@@ -196,6 +237,7 @@ struct VVMStatusInput {
 
 fn generate_vvm_status_log(
     VVMStatusInput {
+        id,
         store_id,
         vvm_status_id,
         stock_line_id,
@@ -204,7 +246,7 @@ fn generate_vvm_status_log(
     }: VVMStatusInput,
 ) -> Option<VVMStatusLogRow> {
     let log_status = VVMStatusLogRow {
-        id: uuid(),
+        id: id.unwrap_or(uuid()),
         status_id: vvm_status_id,
         created_datetime: Utc::now().naive_utc(),
         stock_line_id,
