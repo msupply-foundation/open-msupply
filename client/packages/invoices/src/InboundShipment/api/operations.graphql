@@ -16,7 +16,11 @@ fragment InboundLine on InvoiceLineNode {
   taxPercentage
   foreignCurrencyPriceBeforeTax
   itemName
-  itemVariantId
+
+  itemVariant {
+    id
+    dosesPerUnit
+  }
 
   item {
     __typename

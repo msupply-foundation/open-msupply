@@ -1,9 +1,9 @@
-use super::{ItemNode, LocationNode};
+use super::{ItemNode, ItemVariantNode, LocationNode};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    loader::{ItemLoader, LocationByIdLoader},
+    loader::{ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader},
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -104,6 +104,19 @@ impl StockLineNode {
 
     pub async fn barcode(&self) -> Option<&str> {
         self.stock_line.barcode()
+    }
+
+    pub async fn item_variant(&self, ctx: &Context<'_>) -> Result<Option<ItemVariantNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemVariantByItemVariantIdLoader>>();
+
+        let item_variant_id = match &self.row().item_variant_id {
+            None => return Ok(None),
+            Some(item_variant_id) => item_variant_id,
+        };
+
+        let result = loader.load_one(item_variant_id.clone()).await?;
+
+        Ok(result.map(|item_variant| ItemVariantNode::from_domain(item_variant)))
     }
 }
 

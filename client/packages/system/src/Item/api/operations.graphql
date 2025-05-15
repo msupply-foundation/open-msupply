@@ -40,7 +40,11 @@ fragment StockLine on StockLineNode {
   costPricePerPack
   storeId
   totalNumberOfPacks
-  itemVariantId
+
+  itemVariant {
+    id
+    dosesPerUnit
+  }
 }
 
 fragment ItemRow on ItemNode {

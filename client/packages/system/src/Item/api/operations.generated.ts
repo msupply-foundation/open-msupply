@@ -28,7 +28,6 @@ export type StockLineFragment = {
   costPricePerPack: number;
   storeId: string;
   totalNumberOfPacks: number;
-  itemVariantId?: string | null;
   location?: {
     __typename: 'LocationNode';
     code: string;
@@ -59,6 +58,11 @@ export type StockLineFragment = {
       code: string;
     }>;
   };
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    dosesPerUnit: number;
+  } | null;
 };
 
 export type ItemRowFragment = {
@@ -344,7 +348,6 @@ export type ItemFragment = {
       costPricePerPack: number;
       storeId: string;
       totalNumberOfPacks: number;
-      itemVariantId?: string | null;
       location?: {
         __typename: 'LocationNode';
         code: string;
@@ -375,6 +378,11 @@ export type ItemFragment = {
           code: string;
         }>;
       };
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        dosesPerUnit: number;
+      } | null;
     }>;
   };
   stats: {
@@ -526,7 +534,6 @@ export type ItemsWithStockLinesQuery = {
           costPricePerPack: number;
           storeId: string;
           totalNumberOfPacks: number;
-          itemVariantId?: string | null;
           location?: {
             __typename: 'LocationNode';
             code: string;
@@ -557,6 +564,11 @@ export type ItemsWithStockLinesQuery = {
               code: string;
             }>;
           };
+          itemVariant?: {
+            __typename: 'ItemVariantNode';
+            id: string;
+            dosesPerUnit: number;
+          } | null;
         }>;
       };
       stats: {
@@ -830,7 +842,6 @@ export type ItemByIdQuery = {
           costPricePerPack: number;
           storeId: string;
           totalNumberOfPacks: number;
-          itemVariantId?: string | null;
           location?: {
             __typename: 'LocationNode';
             code: string;
@@ -861,6 +872,11 @@ export type ItemByIdQuery = {
               code: string;
             }>;
           };
+          itemVariant?: {
+            __typename: 'ItemVariantNode';
+            id: string;
+            dosesPerUnit: number;
+          } | null;
         }>;
       };
       variants: Array<{
@@ -1017,7 +1033,6 @@ export type GetHistoricalStockLinesQuery = {
       costPricePerPack: number;
       storeId: string;
       totalNumberOfPacks: number;
-      itemVariantId?: string | null;
       location?: {
         __typename: 'LocationNode';
         code: string;
@@ -1048,6 +1063,11 @@ export type GetHistoricalStockLinesQuery = {
           code: string;
         }>;
       };
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        dosesPerUnit: number;
+      } | null;
     }>;
   };
 };
@@ -1435,7 +1455,10 @@ export const StockLineFragmentDoc = gql`
     costPricePerPack
     storeId
     totalNumberOfPacks
-    itemVariantId
+    itemVariant {
+      id
+      dosesPerUnit
+    }
   }
   ${ItemDirectionFragmentDoc}
   ${WarningFragmentDoc}

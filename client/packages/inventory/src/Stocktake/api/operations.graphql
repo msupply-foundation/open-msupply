@@ -50,7 +50,10 @@ fragment StocktakeLine on StocktakeLineNode {
     doses
   }
 
-  itemVariantId
+  itemVariant {
+    id
+    dosesPerUnit
+  }
 
   inventoryAdjustmentReason {
     __typename
