@@ -20,7 +20,11 @@ export type InboundLineFragment = {
   taxPercentage?: number | null;
   foreignCurrencyPriceBeforeTax?: number | null;
   itemName: string;
-  itemVariantId?: string | null;
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    dosesPerUnit: number;
+  } | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -110,7 +114,11 @@ export type InboundFragment = {
       taxPercentage?: number | null;
       foreignCurrencyPriceBeforeTax?: number | null;
       itemName: string;
-      itemVariantId?: string | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        dosesPerUnit: number;
+      } | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -314,7 +322,11 @@ export type InvoiceQuery = {
             taxPercentage?: number | null;
             foreignCurrencyPriceBeforeTax?: number | null;
             itemName: string;
-            itemVariantId?: string | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              dosesPerUnit: number;
+            } | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -453,7 +465,11 @@ export type InboundByNumberQuery = {
             taxPercentage?: number | null;
             foreignCurrencyPriceBeforeTax?: number | null;
             itemName: string;
-            itemVariantId?: string | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              dosesPerUnit: number;
+            } | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -972,7 +988,10 @@ export const InboundLineFragmentDoc = gql`
     taxPercentage
     foreignCurrencyPriceBeforeTax
     itemName
-    itemVariantId
+    itemVariant {
+      id
+      dosesPerUnit
+    }
     item {
       __typename
       id
