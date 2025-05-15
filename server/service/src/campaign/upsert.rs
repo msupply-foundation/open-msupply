@@ -5,7 +5,7 @@ use repository::{
     EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
 
-use crate::{service_provider::ServiceContext, NullableUpdate};
+use crate::service_provider::ServiceContext;
 
 #[derive(PartialEq, Debug)]
 pub enum UpsertCampaignError {
@@ -76,10 +76,7 @@ fn validate(
     let campaigns_with_duplicate_name = CampaignRepository::new(connection)
         .query_by_filter(CampaignFilter::new().name(StringFilter::equal_to(input.name.trim())))?;
 
-    if campaigns_with_duplicate_name
-        .iter()
-        .any(|c| c.id != input.id)
-    {
+    if !campaigns_with_duplicate_name.is_empty() {
         return Err(UpsertCampaignError::DuplicateName);
     }
 

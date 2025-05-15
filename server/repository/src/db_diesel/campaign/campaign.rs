@@ -4,10 +4,7 @@ use crate::{
     repository_error::RepositoryError,
     DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
-use diesel::{
-    dsl::IntoBoxed,
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 pub type Campaign = CampaignRow;
 
@@ -56,10 +53,7 @@ impl<'a> CampaignRepository<'a> {
             .get_result(self.connection.lock().connection())?)
     }
 
-    pub fn query_one(
-        &self,
-        filter: CampaignFilter,
-    ) -> Result<Option<Campaign>, RepositoryError> {
+    pub fn query_one(&self, filter: CampaignFilter) -> Result<Option<Campaign>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
@@ -104,11 +98,7 @@ impl<'a> CampaignRepository<'a> {
     }
 }
 
-type BoxedCampaignQuery = IntoBoxed<
-    'static,
-    campaign::table,
-    DBType,
->;
+type BoxedCampaignQuery = IntoBoxed<'static, campaign::table, DBType>;
 
 fn create_filtered_query(filter: Option<CampaignFilter>) -> BoxedCampaignQuery {
     let mut query = campaign::table.into_boxed();
@@ -138,11 +128,8 @@ mod tests {
     #[actix_rt::test]
     async fn test_campaign_query_repository() {
         // Prepare
-        let (_, storage_connection, _, _) = test_db::setup_all(
-            "test_campaign_query_repository",
-            MockDataInserts::none(),
-        )
-        .await;
+        let (_, storage_connection, _, _) =
+            test_db::setup_all("test_campaign_query_repository", MockDataInserts::none()).await;
 
         let id = "test_id".to_string();
         let name = "test_name".to_string();

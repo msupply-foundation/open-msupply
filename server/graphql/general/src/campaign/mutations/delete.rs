@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, NodeError as GenericNodeError},
+    simple_generic_errors::{DatabaseError, RecordNotFound},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -18,7 +18,7 @@ pub struct DeleteCampaignInput {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum DeleteCampaignErrorInterface {
     DatabaseError(DatabaseError),
-    NodeError(GenericNodeError),
+    CampaignNotFound(RecordNotFound),
 }
 
 #[derive(SimpleObject)]
@@ -76,8 +76,8 @@ fn map_error(error: ServiceError) -> Result<DeleteCampaignErrorInterface> {
 
     let graphql_error = match error {
         ServiceError::CampaignDoesNotExist => {
-            return Ok(DeleteCampaignErrorInterface::NodeError(
-                GenericNodeError("Campaign does not exist".to_string()),
+            return Ok(DeleteCampaignErrorInterface::CampaignNotFound(
+                RecordNotFound,
             ))
         }
         ServiceError::DatabaseError(_) => BadUserInput(formatted_error),

@@ -1,16 +1,20 @@
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_core::simple_generic_errors::NodeError;
-use graphql_core::ContextExt;
-use repository::campaign::campaign::{Campaign, CampaignFilter, CampaignSort, CampaignSortField};
-use repository::{EqualFilter, StringFilter};
+use graphql_core::{
+    generic_filters::{EqualFilterStringInput, StringFilterInput},
+    simple_generic_errors::NodeError,
+};
+use repository::{
+    campaign::campaign::{Campaign, CampaignFilter, CampaignSort, CampaignSortField},
+    EqualFilter, StringFilter,
+};
+
 use service::{usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum CampaignSortFieldInput {
     Name,
-    StartDate,
 }
 
 #[derive(InputObject)]
@@ -25,43 +29,6 @@ pub struct CampaignSortInput {
 pub struct CampaignFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name: Option<StringFilterInput>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct EqualFilterStringInput {
-    pub equal_to: Option<String>,
-    pub equal_any: Option<Vec<String>>,
-    pub not_equal_to: Option<String>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct StringFilterInput {
-    pub equal_to: Option<String>,
-    pub like: Option<String>,
-}
-
-impl From<EqualFilterStringInput> for EqualFilter<String> {
-    fn from(f: EqualFilterStringInput) -> Self {
-        EqualFilter {
-            equal_to: f.equal_to,
-            equal_any: f.equal_any,
-            not_equal_to: f.not_equal_to,
-            not_equal_any: None, // Not exposed in GraphQL
-        }
-    }
-}
-
-impl From<StringFilterInput> for StringFilter {
-    fn from(f: StringFilterInput) -> Self {
-        StringFilter {
-            equal_to: f.equal_to,
-            like: f.like,
-            not_equal_to: None, // Not exposed in GraphQL
-            starts_with: None,   // Not exposed in GraphQL
-            ends_with: None,     // Not exposed in GraphQL
-            equal_any: None,     // Not exposed in GraphQL
-        }
-    }
 }
 
 impl From<CampaignFilterInput> for CampaignFilter {
@@ -149,7 +116,6 @@ impl CampaignSortInput {
         use CampaignSortFieldInput as from;
         let key = match self.key {
             from::Name => to::Name,
-            from::StartDate => to::StartDate,
         };
 
         CampaignSort {

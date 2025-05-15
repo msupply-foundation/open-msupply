@@ -18,6 +18,7 @@ use graphql_core::loader::LoaderRegistry;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
+use graphql_general::campaign::{CampaignMutations, CampaignQueries};
 use graphql_general::{
     CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
     InitialisationMutations, InitialisationQueries,
@@ -115,7 +116,7 @@ impl CentralServerQueryNode {
     async fn plugin(&self) -> CentralPluginQueries {
         CentralPluginQueries
     }
-    
+
     async fn campaign(&self) -> CampaignQueries {
         CampaignQueries
     }

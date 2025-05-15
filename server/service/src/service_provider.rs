@@ -3,6 +3,7 @@ use crate::{
     asset::AssetServiceTrait,
     auth::{AuthService, AuthServiceTrait},
     barcode::{BarcodeService, BarcodeServiceTrait},
+    campaign::{CampaignService, CampaignServiceTrait},
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
     cold_chain::{ColdChainService, ColdChainServiceTrait},
@@ -75,7 +76,6 @@ use crate::{
     vaccine_course::VaccineCourseServiceTrait,
     vvm::{VVMService, VVMServiceTrait},
     ListError, ListResult,
-    campaign,
 };
 use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
@@ -184,7 +184,7 @@ pub struct ServiceProvider {
     // VVM
     pub vvm_service: Box<dyn VVMServiceTrait>,
     // Campaign
-    pub campaign_service: CampaignService,
+    pub campaign_service: Box<dyn CampaignServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -218,13 +218,6 @@ impl ServiceProvider {
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
         mail_settings: Option<MailSettings>,
     ) -> Self {
-        // Campaign
-        let campaign_service = CampaignService {
-            get_campaigns: campaign::get_campaigns,
-            upsert_campaign: campaign::upsert_campaign,
-            delete_campaign: campaign::delete_campaign,
-        };
-
         ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
@@ -295,7 +288,7 @@ impl ServiceProvider {
             frontend_plugins_cache: FrontendPluginCache::new(),
             preference_service: Box::new(PreferenceService {}),
             vvm_service: Box::new(VVMService {}),
-            campaign_service,
+            campaign_service: Box::new(CampaignService),
         }
     }
 
@@ -366,14 +359,3 @@ pub trait GeneralServiceTrait: Sync + Send {
 pub struct GeneralService;
 
 impl GeneralServiceTrait for GeneralService {}
-
-pub struct CampaignService {
-    pub get_campaigns: fn(
-        &ServiceContext,
-        Option<PaginationOption>,
-        Option<CampaignFilter>,
-        Option<CampaignSort>,
-    ) -> Result<ListResult<Campaign>, ListError>,
-    pub upsert_campaign: fn(&ServiceContext, UpsertCampaign) -> Result<Campaign, UpsertCampaignError>,
-    pub delete_campaign: fn(&ServiceContext, DeleteCampaign) -> Result<String, DeleteCampaignError>,
-}

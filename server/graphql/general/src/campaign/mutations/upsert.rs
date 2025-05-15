@@ -1,10 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    simple_generic_errors::{
-        DatabaseError, InternalError, UniqueValueKey,
-        UniqueValueViolation, InvalidDateRangeError
-    },
+    simple_generic_errors::{DatabaseError, InternalError, UniqueValueKey, UniqueValueViolation},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -38,7 +35,6 @@ pub enum UpsertCampaignResponse {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpsertCampaignErrorInterface {
     DuplicateName(UniqueValueViolation),
-    InvalidDateRange(InvalidDateRangeError),
     InternalError(InternalError),
     DatabaseError(DatabaseError),
 }
@@ -54,7 +50,7 @@ pub fn upsert_campaign(
             store_id: None,
         },
     )?;
-    
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
@@ -78,14 +74,10 @@ impl UpsertCampaignInput {
 
 fn map_response(from: Result<Campaign, ServiceError>) -> Result<UpsertCampaignResponse> {
     let result = match from {
-        Ok(campaign) => {
-            UpsertCampaignResponse::Response(CampaignNode::from_domain(campaign))
-        }
-        Err(error) => {
-            UpsertCampaignResponse::Error(UpsertCampaignError {
-                error: map_error(error)?,
-            })
-        }
+        Ok(campaign) => UpsertCampaignResponse::Response(CampaignNode::from_domain(campaign)),
+        Err(error) => UpsertCampaignResponse::Error(UpsertCampaignError {
+            error: map_error(error)?,
+        }),
     };
 
     Ok(result)
@@ -102,15 +94,12 @@ fn map_error(error: ServiceError) -> Result<UpsertCampaignErrorInterface> {
                 UniqueValueViolation(UniqueValueKey::Name),
             ))
         }
-        ServiceError::InvalidDates => {
-            return Ok(UpsertCampaignErrorInterface::InvalidDateRange(
-                InvalidDateRangeError {},
-            ))
-        }
         // Generic errors
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_repository_error) => InternalError(formatted_error),
-        ServiceError::CampaignDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::CampaignDoesNotExist | ServiceError::InvalidDates => {
+            BadUserInput(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())

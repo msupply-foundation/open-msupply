@@ -1,6 +1,4 @@
-use repository::{
-    campaign::campaign_row::CampaignRowRepository, RepositoryError, StorageConnection,
-};
+use repository::{campaign::campaign_row::CampaignRowRepository, RepositoryError};
 
 use crate::service_provider::ServiceContext;
 

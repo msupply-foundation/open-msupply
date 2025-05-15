@@ -1,9 +1,6 @@
 use async_graphql::*;
-use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
-};
-use service::auth::{Resource, ResourceAccessRequest};
+use graphql_core::pagination::PaginationInput;
+use graphql_types::types::{CampaignFilterInput, CampaignSortInput, CampaignsResponse};
 
 mod mutations;
 mod query;
@@ -18,20 +15,11 @@ impl CampaignQueries {
     pub async fn campaigns(
         &self,
         ctx: &Context<'_>,
-        page: Option<i32>,
-        page_size: Option<i32>,
+        page: Option<PaginationInput>,
         filter: Option<CampaignFilterInput>,
         sort: Option<Vec<CampaignSortInput>>,
     ) -> Result<CampaignsResponse> {
-        get_campaigns(ctx, page, page_size, filter, sort).await
-    }
-
-    pub async fn campaign(
-        &self, 
-        ctx: &Context<'_>, 
-        id: String
-    ) -> Result<CampaignResponse> {
-        get_campaign(ctx, id).await
+        get_campaigns(ctx, page, filter, sort).await
     }
 }
 
