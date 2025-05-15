@@ -58,7 +58,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         key: NameSortFieldInput.Name,
         desc: false,
         storeId,
-        filter: { isDonor: true },
+        filter: { isDonor: true, isVisible: true },
         first: 1000,
       });
 
