@@ -65,23 +65,26 @@ pub fn update_inbound_shipment(
                 location_movements,
                 update_tax_for_lines,
                 update_currency_for_lines,
-            } = generate(
-                connection,
-                &ctx.store_id,
-                &ctx.user_id,
-                invoice,
-                other_party,
-                patch.clone(),
-            )?;
+                update_donor,
+            } = generate(ctx, invoice, other_party, patch.clone())?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
             let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 
-            if let Some(lines_and_invoice_lines) = batches_to_update {
+            let line_and_stock_lines = match (batches_to_update, update_donor) {
+                (Some(batches), None) => Some(batches),
+                (None, Some(donors)) => Some(donors),
+                (Some(_), Some(_)) => None,
+                (None, None) => None,
+            };
+
+            if let Some(updates) = line_and_stock_lines {
                 let stock_line_repository = StockLineRowRepository::new(connection);
 
-                for LineAndStockLine { line, stock_line } in lines_and_invoice_lines.into_iter() {
-                    stock_line_repository.upsert_one(&stock_line)?;
+                for LineAndStockLine { line, stock_line } in updates.into_iter() {
+                    if let Some(ref stock_line) = stock_line {
+                        stock_line_repository.upsert_one(stock_line)?;
+                    }
                     invoice_line_repository.upsert_one(&line)?;
                 }
             }
@@ -932,29 +935,31 @@ mod test {
         invoice_line_service
             .insert_stock_in_line(
                 &context,
-                inline_init(|r: &mut InsertStockInLine| {
-                    r.id = "new_invoice_line_id_a".to_string();
-                    r.invoice_id = mock_inbound_shipment_f().id;
-                    r.item_id = mock_item_a().id;
-                    r.pack_size = 1.0;
-                    r.number_of_packs = 1.0;
-                    r.donor_id = Some(mock_donor_a().id);
-                    r.r#type = StockInType::InboundShipment;
-                }),
+                InsertStockInLine {
+                    id: "new_invoice_line_id_a".to_string(),
+                    invoice_id: mock_inbound_shipment_f().id,
+                    item_id: mock_item_a().id,
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    donor_id: Some(mock_donor_a().id),
+                    r#type: StockInType::InboundShipment,
+                    ..Default::default()
+                },
             )
             .unwrap();
         invoice_line_service
             .insert_stock_in_line(
                 &context,
-                inline_init(|r: &mut InsertStockInLine| {
-                    r.id = "new_invoice_line_id_b".to_string();
-                    r.invoice_id = mock_inbound_shipment_f().id;
-                    r.item_id = mock_item_a().id;
-                    r.pack_size = 1.0;
-                    r.number_of_packs = 1.0;
-                    r.donor_id = None;
-                    r.r#type = StockInType::InboundShipment;
-                }),
+                InsertStockInLine {
+                    id: "new_invoice_line_id_b".to_string(),
+                    invoice_id: mock_inbound_shipment_f().id,
+                    item_id: mock_item_a().id,
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    donor_id: None,
+                    r#type: StockInType::InboundShipment,
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -962,13 +967,14 @@ mod test {
         let invoice = invoice_service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_f().id;
-                    r.default_donor_id = Some(NullableUpdate {
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_f().id,
+                    default_donor_id: Some(NullableUpdate {
                         value: Some(mock_donor_b().id),
-                    });
-                    r.update_donor_method = Some(UpdateDonorLineMethod::NoChanges);
-                }),
+                    }),
+                    update_donor_method: Some(UpdateDonorLineMethod::NoChanges),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -991,10 +997,14 @@ mod test {
         let invoice = invoice_service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_f().id;
-                    r.update_donor_method = Some(UpdateDonorLineMethod::UpdateExistingDonor);
-                }),
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_f().id,
+                    default_donor_id: Some(NullableUpdate {
+                        value: Some(mock_donor_b().id),
+                    }),
+                    update_donor_method: Some(UpdateDonorLineMethod::UpdateExistingDonor),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -1014,13 +1024,14 @@ mod test {
         invoice_service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_f().id;
-                    r.default_donor_id = Some(NullableUpdate {
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_f().id,
+                    default_donor_id: Some(NullableUpdate {
                         value: Some(mock_donor_a().id),
-                    });
-                    r.update_donor_method = Some(UpdateDonorLineMethod::AssignIfNone);
-                }),
+                    }),
+                    update_donor_method: Some(UpdateDonorLineMethod::AssignIfNone),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -1036,11 +1047,14 @@ mod test {
         invoice_service
             .update_inbound_shipment(
                 &context,
-                inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_f().id;
-                    r.default_donor_id = Some(NullableUpdate { value: None });
-                    r.update_donor_method = Some(UpdateDonorLineMethod::AssignToAll);
-                }),
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_f().id,
+                    default_donor_id: Some(NullableUpdate {
+                        value: Some(mock_donor_b().id),
+                    }),
+                    update_donor_method: Some(UpdateDonorLineMethod::AssignToAll),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -1048,6 +1062,9 @@ mod test {
             .find_many_by_invoice_id(&mock_inbound_shipment_f().id)
             .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
-        assert!(result.iter().all(|line| line.donor_id.is_none()));
+
+        assert!(result
+            .iter()
+            .all(|line| line.donor_id == Some(mock_donor_b().id)));
     }
 }

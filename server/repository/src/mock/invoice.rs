@@ -343,7 +343,7 @@ pub fn mock_inbound_shipment_f() -> InvoiceRow {
         r.store_id = String::from("store_a");
         r.invoice_number = 8;
         r.r#type = InvoiceType::InboundShipment;
-        r.status = InvoiceStatus::New;
+        r.status = InvoiceStatus::Delivered;
         r.on_hold = true;
         r.comment = Some("Sort comment test".to_owned());
         r.their_reference = Some(String::from(""));
