@@ -312,6 +312,16 @@ export const LocationTable = ({
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
+    {
+      key: 'donorName',
+      label: 'label.donor',
+      width: 200,
+      Cell: TextInputCell,
+      cellProps: {
+        fullWidth: true,
+        isDisabled: true, // TODO
+      },
+    },
     [
       'comment',
       {
