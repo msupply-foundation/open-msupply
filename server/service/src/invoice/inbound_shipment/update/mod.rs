@@ -928,7 +928,7 @@ mod test {
             .unwrap();
         let invoice_line_service = service_provider.invoice_line_service;
         let invoice_service = service_provider.invoice_service;
-        // first add 2 lines, one with a donor_id (and 2 donor options)
+        // First add 2 lines: one with donor id and one without
         invoice_line_service
             .insert_stock_in_line(
                 &context,
@@ -958,8 +958,8 @@ mod test {
             )
             .unwrap();
 
-        // test setting add NoChanges method with new donor if doesn't change
-        invoice_service
+        // NoChanges: leaves donor_id on all invoice lines unchanged
+        let invoice = invoice_service
             .update_inbound_shipment(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
@@ -977,13 +977,18 @@ mod test {
             .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
+        assert_eq!(
+            invoice.invoice_row.default_donor_id,
+            Some(mock_donor_b().id)
+        );
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].id, "new_invoice_line_id_a".to_string());
         assert_eq!(result[0].donor_id, Some(mock_donor_a().id));
         assert_eq!(result[1].donor_id, None);
 
-        // test setting add Existing method with no donor_id changes existing to the current default_donor_id
-        invoice_service
+        // UpdateExistingDonor: updates donor_id on invoice lines that already have a donor,
+        // and leaves invoice lines without a donor_id unchanged
+        let invoice = invoice_service
             .update_inbound_shipment(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
@@ -998,19 +1003,14 @@ mod test {
             .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
-        let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&mock_inbound_shipment_f().id)
-            .unwrap()
-            .unwrap();
-
-        assert_eq!(invoice.default_donor_id, Some(mock_donor_b().id));
-        assert_eq!(result.len(), 2);
-        assert_eq!(result[0].id, "new_invoice_line_id_a".to_string());
-
+        assert_eq!(
+            invoice.invoice_row.default_donor_id,
+            Some(mock_donor_b().id)
+        );
         assert_eq!(result[0].donor_id, Some(mock_donor_b().id));
         assert_eq!(result[1].donor_id, None);
 
-        // test setting unspecified method with new donor_id changes the line without current donor_id
+        // AssignIfNone: assigns the default_donor_id to invoice lines that don't have a donor_id
         invoice_service
             .update_inbound_shipment(
                 &context,
@@ -1029,12 +1029,10 @@ mod test {
             .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
-        assert_eq!(result.len(), 2);
-        assert_eq!(result[0].id, "new_invoice_line_id_a".to_string());
         assert_eq!(result[0].donor_id, Some(mock_donor_b().id));
         assert_eq!(result[1].donor_id, Some(mock_donor_a().id));
 
-        // test setting ALL method with no donor_id makes both to the new donor
+        // AssignToAll: assigns the default_donor_id to all invoice lines
         invoice_service
             .update_inbound_shipment(
                 &context,
@@ -1050,12 +1048,6 @@ mod test {
             .find_many_by_invoice_id(&mock_inbound_shipment_f().id)
             .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
-
-        assert_eq!(result.len(), 2);
-        assert_eq!(result[0].id, "new_invoice_line_id_a".to_string());
-        assert_eq!(result[0].donor_id, None);
-        assert_eq!(result[1].donor_id, None);
-
-        assert_eq!(1, 1);
+        assert!(result.iter().all(|line| line.donor_id.is_none()));
     }
 }
