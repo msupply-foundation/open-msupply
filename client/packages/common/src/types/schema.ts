@@ -5936,7 +5936,7 @@ export type PreferenceDescriptionNode = {
 };
 
 export enum PreferenceKey {
-  AllowTrackingOfReceivedStockByDonor = 'allowTrackingOfReceivedStockByDonor',
+  AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   DisplayVaccinesInDoses = 'displayVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
@@ -5966,7 +5966,7 @@ export enum PreferenceValueNodeType {
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
-  allowTrackingOfReceivedStockByDonor: Scalars['Boolean']['output'];
+  allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   displayVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
@@ -9660,7 +9660,7 @@ export type UpsertPackVariantResponse =
   | UpsertItemVariantError;
 
 export type UpsertPreferencesInput = {
-  allowTrackingOfReceivedStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
+  allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   displayVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;

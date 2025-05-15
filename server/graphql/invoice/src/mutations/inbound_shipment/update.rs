@@ -14,7 +14,7 @@ use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::inbound_shipment::{
-    UpdateDonorMethod, UpdateInboundShipment as ServiceInput,
+    UpdateDonorLineMethod, UpdateInboundShipment as ServiceInput,
     UpdateInboundShipmentError as ServiceError, UpdateInboundShipmentStatus,
 };
 use service::invoice_line::ShipmentTaxUpdate;
@@ -22,11 +22,11 @@ use service::NullableUpdate;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 
-pub enum UpdateDonorMethodInput {
-    None,
-    Existing,
-    Unspecified,
-    All,
+pub enum UpdateDonorLineMethodInput {
+    NoChanges,
+    UpdateExistingDonor,
+    AssignIfNone,
+    AssignToAll,
 }
 
 #[derive(InputObject)]
@@ -43,7 +43,7 @@ pub struct UpdateInput {
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
     pub default_donor_id: Option<NullableUpdateInput<String>>,
-    pub update_donor_method: Option<UpdateDonorMethodInput>,
+    pub update_donor_method: Option<UpdateDonorLineMethodInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -208,13 +208,15 @@ impl UpdateInboundShipmentStatusInput {
     }
 }
 
-impl UpdateDonorMethodInput {
-    pub fn to_domain(&self) -> UpdateDonorMethod {
+impl UpdateDonorLineMethodInput {
+    pub fn to_domain(&self) -> UpdateDonorLineMethod {
         match self {
-            UpdateDonorMethodInput::None => UpdateDonorMethod::NoChanges,
-            UpdateDonorMethodInput::Existing => UpdateDonorMethod::Existing,
-            UpdateDonorMethodInput::Unspecified => UpdateDonorMethod::Unspecified,
-            UpdateDonorMethodInput::All => UpdateDonorMethod::All,
+            UpdateDonorLineMethodInput::NoChanges => UpdateDonorLineMethod::NoChanges,
+            UpdateDonorLineMethodInput::UpdateExistingDonor => {
+                UpdateDonorLineMethod::UpdateExistingDonor
+            }
+            UpdateDonorLineMethodInput::AssignIfNone => UpdateDonorLineMethod::AssignIfNone,
+            UpdateDonorLineMethodInput::AssignToAll => UpdateDonorLineMethod::AssignToAll,
         }
     }
 }
