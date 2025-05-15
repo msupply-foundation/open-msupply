@@ -64,8 +64,6 @@ pub fn insert_stock_in_line(
                 vvm_status_log,
             } = generate(connection, &ctx.user_id, input.clone(), item, invoice)?;
 
-            println!("input {:?}", input);
-
             if let Some(barcode_row) = barcode {
                 BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
             }

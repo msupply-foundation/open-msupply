@@ -14,7 +14,7 @@ use service::invoice_line::stock_in_line::{
 };
 use service::NullableUpdate;
 
-#[derive(InputObject, Debug)]
+#[derive(InputObject)]
 #[graphql(name = "InsertInboundShipmentLineInput")]
 pub struct InsertInput {
     pub id: String,
@@ -54,8 +54,6 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
             store_id: Some(store_id.to_string()),
         },
     )?;
-
-    println!("input line {:?}", input);
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;

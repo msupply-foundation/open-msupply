@@ -34,7 +34,6 @@ pub fn generate(
 
     let mut new_line = generate_line(input.clone(), item_row, existing_invoice_row.clone()); // include vvm status here
 
-    println!("new line {:?}", new_line);
     if StockInType::InventoryAddition != input.r#type && store_preferences.pack_to_one {
         new_line = convert_invoice_line_to_single_pack(new_line);
     }
@@ -61,7 +60,6 @@ pub fn generate(
                 },
             )?;
 
-            println!("insert line {:?}", batch);
             // If a new stock line has been created, update the stock_line_id on the invoice line
             new_line.stock_line_id = Some(batch.id.clone());
 
@@ -76,7 +74,6 @@ pub fn generate(
             } else {
                 None
             };
-
             (Some(batch), vvm_status_log)
         } else {
             (None, None)

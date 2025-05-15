@@ -6,8 +6,7 @@ import { useStockGraphQL } from '../useStockGraphQL';
 export const useIsVVMStatusEnabled = () => {
   const { stockApi, storeId } = useStockGraphQL();
 
-  // check prefs
-  const { data: prefs } = usePreference(PreferenceKey.ManageVvmStatus);
+  const { data: prefs } = usePreference(PreferenceKey.ManageVvmStatusForStock);
 
   // check statuses exist
   const { data: vvmStatuses } = useQuery({
@@ -23,5 +22,5 @@ export const useIsVVMStatusEnabled = () => {
     refetchOnMount: false,
   });
 
-  return !!prefs?.manageVvmStatus && !!vvmStatuses;
+  return !!prefs?.manageVvmStatusForStock && !!vvmStatuses;
 };
