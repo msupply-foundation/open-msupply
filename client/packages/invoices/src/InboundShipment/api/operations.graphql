@@ -51,6 +51,7 @@ fragment InboundLine on InvoiceLineNode {
     totalNumberOfPacks
     onHold
     note
+    vvmStatusId
   }
 }
 

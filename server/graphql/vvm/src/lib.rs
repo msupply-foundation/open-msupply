@@ -10,7 +10,6 @@ use queries::{
     vvm_status_log::get_vvm_status_log_by_stock_line,
 };
 use types::vvm_status_log::VVMStatusLogResponse;
-use types::{vvm_status::VVMStatusesResponse, vvm_status_log::VVMStatusLogResponse};
 
 pub mod mutations;
 pub mod queries;

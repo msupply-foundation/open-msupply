@@ -14,6 +14,7 @@ export type StockLineRowFragment = {
   itemId: string;
   locationId?: string | null;
   itemVariantId?: string | null;
+  vvmStatusId?: string | null;
   locationName?: string | null;
   onHold: boolean;
   packSize: number;
@@ -164,6 +165,7 @@ export type StockLinesQuery = {
       itemId: string;
       locationId?: string | null;
       itemVariantId?: string | null;
+      vvmStatusId?: string | null;
       locationName?: string | null;
       onHold: boolean;
       packSize: number;
@@ -220,6 +222,7 @@ export type StockLineQuery = {
       itemId: string;
       locationId?: string | null;
       itemVariantId?: string | null;
+      vvmStatusId?: string | null;
       locationName?: string | null;
       onHold: boolean;
       packSize: number;
@@ -302,6 +305,7 @@ export type UpdateStockLineMutation = {
         itemId: string;
         locationId?: string | null;
         itemVariantId?: string | null;
+        vvmStatusId?: string | null;
         locationName?: string | null;
         onHold: boolean;
         packSize: number;
@@ -534,6 +538,7 @@ export type InsertStockLineMutation = {
         itemId: string;
         locationId?: string | null;
         itemVariantId?: string | null;
+        vvmStatusId?: string | null;
         locationName?: string | null;
         onHold: boolean;
         packSize: number;
@@ -620,6 +625,7 @@ export const StockLineRowFragmentDoc = gql`
     itemId
     locationId
     itemVariantId
+    vvmStatusId
     locationName
     onHold
     packSize

@@ -53,6 +53,7 @@ export type InboundLineFragment = {
     totalNumberOfPacks: number;
     onHold: boolean;
     note?: string | null;
+    vvmStatusId?: string | null;
   } | null;
 };
 
@@ -144,6 +145,7 @@ export type InboundFragment = {
         totalNumberOfPacks: number;
         onHold: boolean;
         note?: string | null;
+        vvmStatusId?: string | null;
       } | null;
     }>;
   };
@@ -349,6 +351,7 @@ export type InvoiceQuery = {
               totalNumberOfPacks: number;
               onHold: boolean;
               note?: string | null;
+              vvmStatusId?: string | null;
             } | null;
           }>;
         };
@@ -489,6 +492,7 @@ export type InboundByNumberQuery = {
               totalNumberOfPacks: number;
               onHold: boolean;
               note?: string | null;
+              vvmStatusId?: string | null;
             } | null;
           }>;
         };
@@ -1009,6 +1013,7 @@ export const InboundLineFragmentDoc = gql`
       totalNumberOfPacks
       onHold
       note
+      vvmStatusId
     }
   }
 `;

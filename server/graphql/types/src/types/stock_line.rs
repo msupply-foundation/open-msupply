@@ -47,6 +47,9 @@ impl StockLineNode {
     pub async fn item_variant_id(&self) -> &Option<String> {
         &self.row().item_variant_id
     }
+    pub async fn vvm_status_id(&self) -> &Option<String> {
+        &self.row().vvm_status_id
+    }
     pub async fn cost_price_per_pack(&self) -> f64 {
         self.row().cost_price_per_pack
     }
