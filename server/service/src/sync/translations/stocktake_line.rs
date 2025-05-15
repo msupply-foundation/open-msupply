@@ -56,6 +56,7 @@ pub struct LegacyStocktakeLineRow {
 
     #[serde(rename = "donor_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
     pub donor_id: Option<String>,
 }
 // Needs to be added to all_translators()
