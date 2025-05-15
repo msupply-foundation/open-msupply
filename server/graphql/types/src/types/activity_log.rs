@@ -88,6 +88,7 @@ pub enum ActivityLogNodeType {
     ItemVariantUpdateManufacturer,
     ItemVariantUpdateDosePerUnit,
     ItemVariantUpdateVVMType,
+    VVMStatusLogUpdated,
 }
 
 #[Object]
@@ -231,6 +232,7 @@ impl ActivityLogNodeType {
             from::ItemVariantUpdateManufacturer => to::ItemVariantUpdateManufacturer,
             from::ItemVariantUpdateDosePerUnit => to::ItemVariantUpdateDosePerUnit,
             from::ItemVariantUpdateVVMType => to::ItemVariantUpdateVVMType,
+            from::VVMStatusLogUpdated => to::VVMStatusLogUpdated,
         }
     }
 
@@ -304,6 +306,7 @@ impl ActivityLogNodeType {
             from::ItemVariantUpdateManufacturer => to::ItemVariantUpdateManufacturer,
             from::ItemVariantUpdateDosePerUnit => to::ItemVariantUpdateDosePerUnit,
             from::ItemVariantUpdateVVMType => to::ItemVariantUpdateVVMType,
+            from::VVMStatusLogUpdated => to::VVMStatusLogUpdated,
         }
     }
 }
