@@ -1,5 +1,4 @@
 import {
-  ArrayUtils,
   ColumnAlign,
   ColumnDefinition,
   RecordWithId,
@@ -8,7 +7,7 @@ import {
 import { ItemRowFragment } from '@openmsupply-client/system';
 
 type VaccineItemRow = {
-  item?: ItemRowFragment | null;
+  item: ItemRowFragment;
   numberOfPacks: number;
   packSize: number;
   itemVariant?: { dosesPerUnit: number } | null;
@@ -26,11 +25,14 @@ export const getDosesQuantityColumn = <
       const { lines } = rowData;
 
       const isVaccine = lines[0]?.item?.isVaccine ?? false;
-      const unitQuantity = ArrayUtils.getUnitQuantity(lines); // TODO: should use get dose quantity here, from outbound PR
+      const totalDoses = lines.reduce(
+        (sum, { packSize, numberOfPacks, item, itemVariant }) =>
+          sum +
+          packSize * numberOfPacks * (itemVariant?.dosesPerUnit ?? item.doses),
+        0
+      );
 
-      return isVaccine
-        ? unitQuantity * (lines[0]?.item?.doses ?? 1)
-        : UNDEFINED_STRING_VALUE;
+      return isVaccine ? totalDoses : UNDEFINED_STRING_VALUE;
     } else {
       const unitQty = rowData.numberOfPacks * rowData.packSize;
       return rowData.item && rowData.item.isVaccine
@@ -43,9 +45,14 @@ export const getDosesQuantityColumn = <
       const { lines } = rowData;
 
       const isVaccine = lines[0]?.item?.isVaccine ?? false;
-      const unitQuantity = ArrayUtils.getUnitQuantity(lines); // TODO: should use get dose quantity here, from outbound PR
+      const totalDoses = lines.reduce(
+        (sum, { packSize, numberOfPacks, item, itemVariant }) =>
+          sum +
+          packSize * numberOfPacks * (itemVariant?.dosesPerUnit ?? item.doses),
+        0
+      );
 
-      return isVaccine ? unitQuantity * (lines[0]?.item?.doses ?? 1) : 0;
+      return isVaccine ? totalDoses : 0;
     } else {
       const unitQty = rowData.numberOfPacks * rowData.packSize;
       return rowData.item && rowData.item.isVaccine
