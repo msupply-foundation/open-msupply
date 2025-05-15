@@ -294,6 +294,13 @@ export type AllocateProgramNumberInput = {
 
 export type AllocateProgramNumberResponse = NumberNode;
 
+export enum ApplyToLinesInput {
+  AssignIfNone = 'ASSIGN_IF_NONE',
+  AssignToAll = 'ASSIGN_TO_ALL',
+  None = 'NONE',
+  UpdateExistingDonor = 'UPDATE_EXISTING_DONOR',
+}
+
 export type AssetCatalogueItemConnector = {
   __typename: 'AssetCatalogueItemConnector';
   nodes: Array<AssetCatalogueItemNode>;
@@ -8762,12 +8769,10 @@ export type UpdateDisplaySettingsResponse =
   | UpdateDisplaySettingsError
   | UpdateResult;
 
-export enum UpdateDonorLineMethodInput {
-  AssignIfNone = 'ASSIGN_IF_NONE',
-  AssignToAll = 'ASSIGN_TO_ALL',
-  NoChanges = 'NO_CHANGES',
-  UpdateExistingDonor = 'UPDATE_EXISTING_DONOR',
-}
+export type UpdateDonorInput = {
+  applyToLines: ApplyToLinesInput;
+  donorId?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type UpdateEncounterInput = {
   /** Encounter document data */
@@ -8800,14 +8805,13 @@ export type UpdateInboundShipmentInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
   currencyRate?: InputMaybe<Scalars['Float']['input']>;
-  defaultDonorId?: InputMaybe<NullableStringUpdate>;
+  defaultDonor?: InputMaybe<UpdateDonorInput>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<UpdateInboundShipmentStatusInput>;
   tax?: InputMaybe<TaxInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
-  updateDonorMethod?: InputMaybe<UpdateDonorLineMethodInput>;
 };
 
 export type UpdateInboundShipmentLineError = {

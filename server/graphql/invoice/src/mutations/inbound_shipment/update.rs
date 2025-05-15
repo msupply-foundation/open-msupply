@@ -3,7 +3,7 @@ use crate::mutations::outbound_shipment::error::{
 };
 use async_graphql::*;
 
-use graphql_core::generic_inputs::{NullableUpdateInput, TaxInput};
+use graphql_core::generic_inputs::TaxInput;
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, OtherPartyNotASupplier, OtherPartyNotVisible,
 };
@@ -14,19 +14,24 @@ use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::inbound_shipment::{
-    UpdateDonorLineMethod, UpdateInboundShipment as ServiceInput,
+    ApplyDonorToInvoiceLines, UpdateDefaultDonor, UpdateInboundShipment as ServiceInput,
     UpdateInboundShipmentError as ServiceError, UpdateInboundShipmentStatus,
 };
 use service::invoice_line::ShipmentTaxUpdate;
-use service::NullableUpdate;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 
-pub enum UpdateDonorLineMethodInput {
-    NoChanges,
+pub enum ApplyToLinesInput {
+    None,
     UpdateExistingDonor,
     AssignIfNone,
     AssignToAll,
+}
+
+#[derive(InputObject)]
+pub struct UpdateDonorInput {
+    pub donor_id: Option<String>,
+    pub apply_to_lines: ApplyToLinesInput,
 }
 
 #[derive(InputObject)]
@@ -42,8 +47,7 @@ pub struct UpdateInput {
     pub tax: Option<TaxInput>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
-    pub default_donor_id: Option<NullableUpdateInput<String>>,
-    pub update_donor_method: Option<UpdateDonorLineMethodInput>,
+    pub default_donor: Option<UpdateDonorInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -110,8 +114,7 @@ impl UpdateInput {
             tax,
             currency_id,
             currency_rate,
-            default_donor_id,
-            update_donor_method,
+            default_donor,
         } = self;
 
         ServiceInput {
@@ -127,11 +130,10 @@ impl UpdateInput {
             }),
             currency_id,
             currency_rate,
-            default_donor_id: default_donor_id.map(|default_donor_id| NullableUpdate {
-                value: default_donor_id.value,
+            default_donor: default_donor.map(|donor| UpdateDefaultDonor {
+                donor_id: donor.donor_id,
+                apply_to_lines: donor.apply_to_lines.to_domain(),
             }),
-            update_donor_method: update_donor_method
-                .map(|update_donor_method| update_donor_method.to_domain()),
         }
     }
 }
@@ -208,15 +210,13 @@ impl UpdateInboundShipmentStatusInput {
     }
 }
 
-impl UpdateDonorLineMethodInput {
-    pub fn to_domain(&self) -> UpdateDonorLineMethod {
+impl ApplyToLinesInput {
+    pub fn to_domain(&self) -> ApplyDonorToInvoiceLines {
         match self {
-            UpdateDonorLineMethodInput::NoChanges => UpdateDonorLineMethod::NoChanges,
-            UpdateDonorLineMethodInput::UpdateExistingDonor => {
-                UpdateDonorLineMethod::UpdateExistingDonor
-            }
-            UpdateDonorLineMethodInput::AssignIfNone => UpdateDonorLineMethod::AssignIfNone,
-            UpdateDonorLineMethodInput::AssignToAll => UpdateDonorLineMethod::AssignToAll,
+            ApplyToLinesInput::None => ApplyDonorToInvoiceLines::None,
+            ApplyToLinesInput::UpdateExistingDonor => ApplyDonorToInvoiceLines::UpdateExistingDonor,
+            ApplyToLinesInput::AssignIfNone => ApplyDonorToInvoiceLines::AssignIfNone,
+            ApplyToLinesInput::AssignToAll => ApplyDonorToInvoiceLines::AssignToAll,
         }
     }
 }
@@ -530,8 +530,7 @@ mod test {
                     tax: None,
                     currency_id: None,
                     currency_rate: None,
-                    default_donor_id: None,
-                    update_donor_method: None,
+                    default_donor: None,
                 }
             );
             Ok(Invoice {

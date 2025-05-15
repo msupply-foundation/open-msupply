@@ -1,6 +1,5 @@
 use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
 use crate::invoice_line::ShipmentTaxUpdate;
-use crate::NullableUpdate;
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
 use repository::{Invoice, LocationMovementRowRepository};
 use repository::{
@@ -24,11 +23,17 @@ pub enum UpdateInboundShipmentStatus {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum UpdateDonorLineMethod {
-    NoChanges,
+pub enum ApplyDonorToInvoiceLines {
+    None,
     UpdateExistingDonor,
     AssignIfNone,
     AssignToAll,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct UpdateDefaultDonor {
+    pub donor_id: Option<String>,
+    pub apply_to_lines: ApplyDonorToInvoiceLines,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -43,8 +48,7 @@ pub struct UpdateInboundShipment {
     pub tax: Option<ShipmentTaxUpdate>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
-    pub default_donor_id: Option<NullableUpdate<String>>,
-    pub update_donor_method: Option<UpdateDonorLineMethod>,
+    pub default_donor: Option<UpdateDefaultDonor>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -213,17 +217,18 @@ mod test {
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice::inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus},
+        invoice::inbound_shipment::{
+            UpdateDefaultDonor, UpdateInboundShipment, UpdateInboundShipmentStatus,
+        },
         invoice_line::{
             query::get_invoice_lines,
             stock_in_line::{InsertStockInLine, StockInType},
             ShipmentTaxUpdate,
         },
         service_provider::ServiceProvider,
-        NullableUpdate,
     };
 
-    use super::{UpdateDonorLineMethod, UpdateInboundShipmentError};
+    use super::{ApplyDonorToInvoiceLines, UpdateInboundShipmentError};
 
     type ServiceError = UpdateInboundShipmentError;
 
@@ -963,16 +968,16 @@ mod test {
             )
             .unwrap();
 
-        // NoChanges: leaves donor_id on all invoice lines unchanged
+        // None: leaves donor_id on all invoice lines unchanged
         let invoice = invoice_service
             .update_inbound_shipment(
                 &context,
                 UpdateInboundShipment {
                     id: mock_inbound_shipment_f().id,
-                    default_donor_id: Some(NullableUpdate {
-                        value: Some(mock_donor_b().id),
+                    default_donor: Some(UpdateDefaultDonor {
+                        donor_id: Some(mock_donor_b().id),
+                        apply_to_lines: ApplyDonorToInvoiceLines::None,
                     }),
-                    update_donor_method: Some(UpdateDonorLineMethod::NoChanges),
                     ..Default::default()
                 },
             )
@@ -999,10 +1004,10 @@ mod test {
                 &context,
                 UpdateInboundShipment {
                     id: mock_inbound_shipment_f().id,
-                    default_donor_id: Some(NullableUpdate {
-                        value: Some(mock_donor_b().id),
+                    default_donor: Some(UpdateDefaultDonor {
+                        donor_id: Some(mock_donor_b().id),
+                        apply_to_lines: ApplyDonorToInvoiceLines::UpdateExistingDonor,
                     }),
-                    update_donor_method: Some(UpdateDonorLineMethod::UpdateExistingDonor),
                     ..Default::default()
                 },
             )
@@ -1026,10 +1031,10 @@ mod test {
                 &context,
                 UpdateInboundShipment {
                     id: mock_inbound_shipment_f().id,
-                    default_donor_id: Some(NullableUpdate {
-                        value: Some(mock_donor_a().id),
+                    default_donor: Some(UpdateDefaultDonor {
+                        donor_id: Some(mock_donor_a().id),
+                        apply_to_lines: ApplyDonorToInvoiceLines::AssignIfNone,
                     }),
-                    update_donor_method: Some(UpdateDonorLineMethod::AssignIfNone),
                     ..Default::default()
                 },
             )
@@ -1049,10 +1054,10 @@ mod test {
                 &context,
                 UpdateInboundShipment {
                     id: mock_inbound_shipment_f().id,
-                    default_donor_id: Some(NullableUpdate {
-                        value: Some(mock_donor_b().id),
+                    default_donor: Some(UpdateDefaultDonor {
+                        donor_id: None,
+                        apply_to_lines: ApplyDonorToInvoiceLines::AssignToAll,
                     }),
-                    update_donor_method: Some(UpdateDonorLineMethod::AssignToAll),
                     ..Default::default()
                 },
             )
@@ -1063,8 +1068,6 @@ mod test {
             .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
-        assert!(result
-            .iter()
-            .all(|line| line.donor_id == Some(mock_donor_b().id)));
+        assert!(result.iter().all(|line| line.donor_id == None));
     }
 }

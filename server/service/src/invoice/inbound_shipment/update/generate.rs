@@ -14,7 +14,7 @@ use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_a
 use crate::service_provider::ServiceContext;
 
 use super::{
-    UpdateDonorLineMethod, UpdateInboundShipment, UpdateInboundShipmentError,
+    ApplyDonorToInvoiceLines, UpdateInboundShipment, UpdateInboundShipmentError,
     UpdateInboundShipmentStatus,
 };
 
@@ -45,8 +45,8 @@ pub(crate) fn generate(
 
     set_new_status_datetime(&mut update_invoice, &patch);
 
-    let input_donor_id = match patch.default_donor_id {
-        Some(donor) => donor.value,
+    let input_donor_id = match patch.default_donor.clone() {
+        Some(update) => update.donor_id,
         None => update_invoice.default_donor_id.clone(),
     };
 
@@ -120,15 +120,16 @@ pub(crate) fn generate(
         None
     };
 
-    let update_donor = if should_update_donor(input_donor_id, &patch.update_donor_method)
-        && update_invoice.status.index() >= InvoiceStatus::Delivered.index()
-    {
-        Some(update_donor_on_lines_and_stock(
-            connection,
-            &update_invoice.id,
-            update_invoice.default_donor_id.clone(),
-            patch.update_donor_method,
-        )?)
+    let update_donor = if update_invoice.status.index() >= InvoiceStatus::Delivered.index() {
+        match patch.default_donor {
+            Some(update) => Some(update_donor_on_lines_and_stock(
+                connection,
+                &update_invoice.id,
+                update.donor_id,
+                update.apply_to_lines,
+            )?),
+            None => None,
+        }
     } else {
         None
     };
@@ -408,7 +409,7 @@ fn update_donor_on_lines_and_stock(
     connection: &StorageConnection,
     invoice_id: &str,
     updated_default_donor_id: Option<String>,
-    donor_update_method: Option<UpdateDonorLineMethod>,
+    donor_update_method: ApplyDonorToInvoiceLines,
 ) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
@@ -422,15 +423,15 @@ fn update_donor_on_lines_and_stock(
         let mut stock_line = invoice_line.stock_line_option;
 
         let new_donor_id = match donor_update_method.clone() {
-            Some(UpdateDonorLineMethod::NoChanges) | None => line.donor_id.clone(),
-            Some(UpdateDonorLineMethod::UpdateExistingDonor) => match line.donor_id {
+            ApplyDonorToInvoiceLines::None => line.donor_id.clone(),
+            ApplyDonorToInvoiceLines::UpdateExistingDonor => match line.donor_id {
                 Some(_) => updated_default_donor_id.clone(),
                 None => None,
             },
-            Some(UpdateDonorLineMethod::AssignIfNone) => {
+            ApplyDonorToInvoiceLines::AssignIfNone => {
                 line.donor_id.clone().or(updated_default_donor_id.clone())
             }
-            Some(UpdateDonorLineMethod::AssignToAll) => updated_default_donor_id.clone(),
+            ApplyDonorToInvoiceLines::AssignToAll => updated_default_donor_id.clone(),
         };
 
         line.donor_id = new_donor_id.clone();
@@ -442,20 +443,4 @@ fn update_donor_on_lines_and_stock(
     }
 
     Ok(result)
-}
-
-fn should_update_donor(
-    donor_id: Option<String>,
-    update_donor_method: &Option<UpdateDonorLineMethod>,
-) -> bool {
-    if donor_id.is_none() {
-        return false;
-    }
-
-    matches!(
-        update_donor_method,
-        Some(UpdateDonorLineMethod::UpdateExistingDonor)
-            | Some(UpdateDonorLineMethod::AssignIfNone)
-            | Some(UpdateDonorLineMethod::AssignToAll)
-    )
 }
