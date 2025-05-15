@@ -88,6 +88,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         desc: !!sortBy?.isDesc,
         storeId,
         filter: {
+          isVisible: true,
           isManufacturer: true,
         },
         first: 1000,
