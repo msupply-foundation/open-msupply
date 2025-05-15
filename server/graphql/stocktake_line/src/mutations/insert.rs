@@ -296,6 +296,7 @@ mod test {
                     note: Some("note".to_string()),
                     inventory_adjustment_reason_id: None,
                     item_variant_id: None,
+                    donor_id: None,
                 },
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),
