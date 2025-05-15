@@ -4,7 +4,7 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "add_activity_log_enums"
+        "add_item_variant_enums_to_activity_log"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
