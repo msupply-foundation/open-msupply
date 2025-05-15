@@ -13,7 +13,7 @@ use util::uuid::uuid;
 use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
 
 use super::{
-    UpdateDonorMethod, UpdateInboundShipment, UpdateInboundShipmentError,
+    UpdateDonorLineMethod, UpdateInboundShipment, UpdateInboundShipmentError,
     UpdateInboundShipmentStatus,
 };
 
@@ -303,7 +303,7 @@ pub struct GenerateLinesInput<'a> {
     currency_id: Option<String>,
     currency_rate: &'a f64,
     default_donor_id: Option<String>,
-    donor_update_method: Option<UpdateDonorMethod>,
+    donor_update_method: Option<UpdateDonorLineMethod>,
 }
 
 pub fn generate_lines_and_stock_lines(
@@ -336,16 +336,16 @@ pub fn generate_lines_and_stock_lines(
         )?;
 
         line.donor_id = match input.donor_update_method.clone() {
-            Some(UpdateDonorMethod::NoChanges) | None => line.donor_id,
-            Some(UpdateDonorMethod::All) => input.default_donor_id.clone(),
-            Some(UpdateDonorMethod::Existing) => {
+            Some(UpdateDonorLineMethod::NoChanges) | None => line.donor_id,
+            Some(UpdateDonorLineMethod::AssignToAll) => input.default_donor_id.clone(),
+            Some(UpdateDonorLineMethod::UpdateExistingDonor) => {
                 if line.donor_id.is_none() {
                     None
                 } else {
                     input.default_donor_id.clone()
                 }
             }
-            Some(UpdateDonorMethod::Unspecified) => {
+            Some(UpdateDonorLineMethod::AssignIfNone) => {
                 line.donor_id.or(input.default_donor_id.clone())
             }
         };
@@ -418,12 +418,12 @@ pub fn generate_location_movements(
     }
 }
 
-fn is_updating_donor(update_donor_method: Option<UpdateDonorMethod>) -> bool {
+fn is_updating_donor(update_donor_method: Option<UpdateDonorLineMethod>) -> bool {
     // should update batches if donor_id for invoice changes and change line donor_ids also selected
     if let Some(donor_update_method) = update_donor_method {
         // only update lines if a method of updating is selected.
         // note allowing update if no donor_id is supplied for update to be conducted on existing donor_id
-        if donor_update_method != UpdateDonorMethod::NoChanges {
+        if donor_update_method != UpdateDonorLineMethod::NoChanges {
             return true;
         }
     }

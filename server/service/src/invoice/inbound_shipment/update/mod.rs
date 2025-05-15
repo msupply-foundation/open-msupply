@@ -24,11 +24,11 @@ pub enum UpdateInboundShipmentStatus {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum UpdateDonorMethod {
+pub enum UpdateDonorLineMethod {
     NoChanges,
-    Existing,
-    Unspecified,
-    All,
+    UpdateExistingDonor,
+    AssignIfNone,
+    AssignToAll,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -44,7 +44,7 @@ pub struct UpdateInboundShipment {
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
     pub default_donor_id: Option<NullableUpdate<String>>,
-    pub update_donor_method: Option<UpdateDonorMethod>,
+    pub update_donor_method: Option<UpdateDonorLineMethod>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -220,7 +220,7 @@ mod test {
         NullableUpdate,
     };
 
-    use super::{UpdateDonorMethod, UpdateInboundShipmentError};
+    use super::{UpdateDonorLineMethod, UpdateInboundShipmentError};
 
     type ServiceError = UpdateInboundShipmentError;
 
@@ -967,7 +967,7 @@ mod test {
                     r.default_donor_id = Some(NullableUpdate {
                         value: Some(mock_donor_b().id),
                     });
-                    r.update_donor_method = Some(UpdateDonorMethod::NoChanges);
+                    r.update_donor_method = Some(UpdateDonorLineMethod::NoChanges);
                 }),
             )
             .unwrap();
@@ -988,7 +988,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_f().id;
-                    r.update_donor_method = Some(UpdateDonorMethod::Existing);
+                    r.update_donor_method = Some(UpdateDonorLineMethod::UpdateExistingDonor);
                 }),
             )
             .unwrap();
@@ -1019,7 +1019,7 @@ mod test {
                     r.default_donor_id = Some(NullableUpdate {
                         value: Some(mock_donor_a().id),
                     });
-                    r.update_donor_method = Some(UpdateDonorMethod::Unspecified);
+                    r.update_donor_method = Some(UpdateDonorLineMethod::AssignIfNone);
                 }),
             )
             .unwrap();
@@ -1041,7 +1041,7 @@ mod test {
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_f().id;
                     r.default_donor_id = Some(NullableUpdate { value: None });
-                    r.update_donor_method = Some(UpdateDonorMethod::All);
+                    r.update_donor_method = Some(UpdateDonorLineMethod::AssignToAll);
                 }),
             )
             .unwrap();
