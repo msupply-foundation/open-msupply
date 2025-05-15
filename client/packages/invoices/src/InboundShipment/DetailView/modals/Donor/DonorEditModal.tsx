@@ -51,7 +51,7 @@ export const DonorEditModal = ({
     message: getDonorUpdateKeys(UpdateDonorMethodInput.None).message,
   };
 
-  const [val, setVal] = useState<DonorOption | undefined>();
+  const [donor, setDonor] = useState<DonorOption | undefined>();
   const [method, setMethod] = useState<MethodOption>(defaultMethod);
 
   const width = '350px';
@@ -91,14 +91,14 @@ export const DonorEditModal = ({
   });
 
   useEffect(() => {
-    const donor = donorOptions?.find(donor => (donor.id = donorId));
-    donor ? setVal(donor) : setVal(nullOption);
+    const donorFound = donorOptions?.find(donor => (donor.id = donorId));
+    donorFound ? setDonor(donorFound) : setDonor(nullOption);
   }, [donorId, data]);
 
   const confirm = () => {
     mutateAsync({
       id: invoiceId,
-      defaultDonorId: val?.id,
+      defaultDonorId: donor?.id,
       updateDonorMethod: method.value,
     });
   };
@@ -128,7 +128,7 @@ export const DonorEditModal = ({
               await handleSave();
               onClose();
             } catch {
-              error(t('error.failed-to-save-service-charges'))();
+              error(t('error.failed-to-save-donor-charges'))();
             }
           }}
         />
@@ -148,11 +148,11 @@ export const DonorEditModal = ({
             }}
             Input={
               <Autocomplete
-                value={val}
+                value={donor}
                 options={donorOptions ?? []}
                 fullWidth={true}
                 onChange={(_e, value) => {
-                  value && setVal(value);
+                  value && setDonor(value);
                 }}
                 clearable={false}
                 width={width}
@@ -193,7 +193,7 @@ export const DonorEditModal = ({
               fontWeight: 'bold',
             }}
           >
-            {t(method.message, { donor: val?.label })}
+            {t(method.message, { donor: donor?.label })}
           </Typography>
         </Box>
       </Box>
