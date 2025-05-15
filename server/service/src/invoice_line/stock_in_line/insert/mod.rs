@@ -411,35 +411,28 @@ mod test {
             })
         );
 
-        // donor_id of line defaults to invoice default_invoice_line_id
-
+        // default donor_id to invoice's default_donor_id
         let context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
 
         insert_stock_in_line(
             &context,
-            inline_init(|r: &mut InsertStockInLine| {
-                r.id = "new_invoice_line_id_with_donor".to_string();
-                r.invoice_id = mock_inbound_shipment_c().id;
-                r.item_id = mock_item_a().id;
-                r.pack_size = 1.0;
-                r.number_of_packs = 1.0;
-                r.r#type = StockInType::InboundShipment;
-            }),
+            InsertStockInLine {
+                id: "new_invoice_line_id_with_donor".to_string(),
+                invoice_id: mock_inbound_shipment_c().id,
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                r#type: StockInType::InboundShipment,
+                ..Default::default()
+            },
         )
         .unwrap();
 
-        let InvoiceLine {
-            invoice_line_row: inbound_line,
-            ..
-        } = InvoiceLineRepository::new(&connection)
-            .query_by_filter(
-                InvoiceLineFilter::new()
-                    .id(EqualFilter::equal_to("new_invoice_line_id_with_donor")),
-            )
+        let inbound_line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("new_invoice_line_id_with_donor")
             .unwrap()
-            .pop()
             .unwrap();
 
         assert_eq!(
@@ -452,31 +445,24 @@ mod test {
             })
         );
 
-        // defaults to None if no default_donor_id set for invoice
-
+        // Default donor_id to None if invoice has no default donor
         insert_stock_in_line(
             &context,
-            inline_init(|r: &mut InsertStockInLine| {
-                r.id = "new_invoice_line_id_with_no_donor".to_string();
-                r.invoice_id = mock_inbound_shipment_e().id;
-                r.item_id = mock_item_a().id;
-                r.pack_size = 1.0;
-                r.number_of_packs = 1.0;
-                r.r#type = StockInType::InboundShipment;
-            }),
+            InsertStockInLine {
+                id: "new_invoice_line_id_with_no_donor".to_string(),
+                invoice_id: mock_inbound_shipment_e().id,
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                r#type: StockInType::InboundShipment,
+                ..Default::default()
+            },
         )
         .unwrap();
 
-        let InvoiceLine {
-            invoice_line_row: inbound_line,
-            ..
-        } = InvoiceLineRepository::new(&connection)
-            .query_by_filter(
-                InvoiceLineFilter::new()
-                    .id(EqualFilter::equal_to("new_invoice_line_id_with_no_donor")),
-            )
+        let inbound_line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("new_invoice_line_id_with_no_donor")
             .unwrap()
-            .pop()
             .unwrap();
 
         assert_eq!(
