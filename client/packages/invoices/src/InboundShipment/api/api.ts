@@ -108,7 +108,7 @@ const inboundParsers = {
       numberOfPacks: line.numberOfPacks,
       invoiceId: line.invoiceId,
       location: setNullableInput('id', line.location),
-      itemVariantId: line.itemVariantId,
+      itemVariantId: line.itemVariant?.id,
     };
   },
   toInsertLineFromInternalOrder: (line: {
@@ -132,9 +132,7 @@ const inboundParsers = {
     packSize: line.packSize,
     numberOfPacks: line.numberOfPacks,
     location: setNullableInput('id', line.location),
-    itemVariantId: setNullableInput('itemVariantId', {
-      itemVariantId: line.itemVariantId,
-    }),
+    itemVariantId: setNullableInput('id', line.itemVariant),
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
