@@ -78,7 +78,11 @@ pub fn update_inbound_shipment(
             let line_and_stock_lines = match (batches_to_update, update_donor) {
                 (Some(batches), None) => Some(batches),
                 (None, Some(donors)) => Some(donors),
-                (Some(_), Some(_)) => None,
+                (Some(_), Some(_)) => {
+                    // Both do full line updates, so would conflict. Frontend only updates
+                    // separately, but should protect if API called directly
+                    return Err(OutError::CannotUpdateStatusAndDonorAtTheSameTime);
+                }
                 (None, None) => None,
             };
 
@@ -155,6 +159,7 @@ pub enum UpdateInboundShipmentError {
     CannotEditFinalised,
     CannotChangeStatusOfInvoiceOnHold,
     CannotIssueForeignCurrencyForInternalSuppliers,
+    CannotUpdateStatusAndDonorAtTheSameTime,
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
