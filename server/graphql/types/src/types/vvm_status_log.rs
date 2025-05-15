@@ -1,3 +1,4 @@
+use super::{StockLineNode, UserNode, VVMStatusNode};
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
@@ -5,8 +6,6 @@ use graphql_core::{
     ContextExt,
 };
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
-
-use super::{StockLineNode, UserNode, VVMStatusNode};
 
 #[derive(PartialEq, Debug)]
 pub struct VVMStatusLogNode {
