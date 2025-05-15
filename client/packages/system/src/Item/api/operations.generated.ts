@@ -28,6 +28,7 @@ export type StockLineFragment = {
   costPricePerPack: number;
   storeId: string;
   totalNumberOfPacks: number;
+  itemVariantId?: string | null;
   location?: {
     __typename: 'LocationNode';
     code: string;
@@ -348,6 +349,7 @@ export type ItemFragment = {
       costPricePerPack: number;
       storeId: string;
       totalNumberOfPacks: number;
+      itemVariantId?: string | null;
       location?: {
         __typename: 'LocationNode';
         code: string;
@@ -534,6 +536,7 @@ export type ItemsWithStockLinesQuery = {
           costPricePerPack: number;
           storeId: string;
           totalNumberOfPacks: number;
+          itemVariantId?: string | null;
           location?: {
             __typename: 'LocationNode';
             code: string;
@@ -842,6 +845,7 @@ export type ItemByIdQuery = {
           costPricePerPack: number;
           storeId: string;
           totalNumberOfPacks: number;
+          itemVariantId?: string | null;
           location?: {
             __typename: 'LocationNode';
             code: string;
@@ -972,6 +976,7 @@ export type ItemByIdQuery = {
 export type ItemVariantOptionFragment = {
   __typename: 'ItemVariantNode';
   id: string;
+  dosesPerUnit: number;
   label: string;
   bundledItemVariants: Array<{ __typename: 'BundledItemNode'; id: string }>;
 };
@@ -999,6 +1004,7 @@ export type ItemVariantsQuery = {
       variants: Array<{
         __typename: 'ItemVariantNode';
         id: string;
+        dosesPerUnit: number;
         label: string;
         bundledItemVariants: Array<{
           __typename: 'BundledItemNode';
@@ -1033,6 +1039,7 @@ export type GetHistoricalStockLinesQuery = {
       costPricePerPack: number;
       storeId: string;
       totalNumberOfPacks: number;
+      itemVariantId?: string | null;
       location?: {
         __typename: 'LocationNode';
         code: string;
@@ -1455,6 +1462,7 @@ export const StockLineFragmentDoc = gql`
     costPricePerPack
     storeId
     totalNumberOfPacks
+    itemVariantId
     itemVariant {
       id
       dosesPerUnit
@@ -1618,6 +1626,7 @@ export const ItemVariantOptionFragmentDoc = gql`
     bundledItemVariants {
       id
     }
+    dosesPerUnit
   }
 `;
 export const ItemLedgerFragmentDoc = gql`

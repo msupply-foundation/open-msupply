@@ -62,6 +62,7 @@ export const DraftLine = {
       expiryDate: stockLine.expiryDate ? stockLine.expiryDate : null,
       id: FnUtils.generateUUID(),
       itemName: stockLine.item.name,
+      itemVariantId: stockLine.itemVariantId,
       itemVariant: stockLine.itemVariant,
       item: {
         __typename: 'ItemNode',
