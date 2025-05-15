@@ -81,6 +81,7 @@ pub enum ActivityLogNodeType {
     DemographicProjectionCreated,
     DemographicProjectionUpdated,
     InvoiceStatusCancelled,
+    VVMStatusLogUpdated,
 }
 
 #[Object]
@@ -217,6 +218,7 @@ impl ActivityLogNodeType {
             from::DemographicProjectionUpdated => to::DemographicProjectionUpdated,
             from::InvoiceStatusCancelled => to::InvoiceStatusCancelled,
             from::PrescriptionStatusCancelled => to::PrescriptionStatusCancelled,
+            from::VVMStatusLogUpdated => to::VVMStatusLogUpdated,
         }
     }
 
@@ -283,6 +285,7 @@ impl ActivityLogNodeType {
             from::DemographicProjectionUpdated => to::DemographicProjectionUpdated,
             from::PrescriptionStatusCancelled => to::PrescriptionStatusCancelled,
             from::InvoiceStatusCancelled => to::InvoiceStatusCancelled,
+            from::VVMStatusLogUpdated => to::VVMStatusLogUpdated,
         }
     }
 }
