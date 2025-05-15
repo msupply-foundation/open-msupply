@@ -1,9 +1,9 @@
-use super::{ItemNode, LocationNode};
+use super::{ItemNode, LocationNode, VVMStatusLogNode};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    loader::{ItemLoader, LocationByIdLoader},
+    loader::{ItemLoader, LocationByIdLoader, VVMStatusLogLoader},
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -101,12 +101,15 @@ impl StockLineNode {
     pub async fn supplier_name(&self) -> Option<&str> {
         self.stock_line.supplier_name()
     }
-
     pub async fn barcode(&self) -> Option<&str> {
         self.stock_line.barcode()
     }
+    pub async fn vvm_status_log(&self, ctx: &Context<'_>) -> Result<Option<Vec<VVMStatusLogNode>>> {
+        let loader = ctx.get_loader::<DataLoader<VVMStatusLogLoader>>();
+        let result = loader.load_one(self.row().id.clone()).await?;
 
-    // pub async fn vvm_status_log(&self) -> Result<Vec<VVMStatusLogNode>> {}
+        Ok(result.map(VVMStatusLogNode::from_vec))
+    }
 }
 
 #[derive(Union)]
