@@ -1,13 +1,17 @@
 use std::{collections::HashMap, convert::TryInto};
 
-use crate::{service_provider::ServiceProvider, sync::settings::SyncSettings};
-use repository::migrations::Version;
+use crate::{
+    apis::api_on_central::CentralApiError,
+    service_provider::{ServiceContext, ServiceProvider},
+    sync::settings::SyncSettings,
+};
+use repository::{migrations::Version, KeyType, KeyValueStoreRepository};
 use reqwest::{header::HeaderMap, Response, Url};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
 use url::ParseError;
-use util::{with_retries, RetrySeconds};
+use util::{format_error, with_retries, RetrySeconds};
 
 use super::*;
 
@@ -236,6 +240,30 @@ async fn response_or_err(
     }
 
     Err(SyncApiErrorVariantV5::from_response_and_status(response.status(), response).await)
+}
+
+// OMS Central does not yet do auth validation for site credentials
+// So we call Legacy central server for this
+// (Use sync API for simplest auth)
+pub async fn validate_site_auth(
+    ctx: &ServiceContext,
+    sync_v5_settings: &SyncApiSettings,
+) -> Result<SiteInfoV5, CentralApiError> {
+    // We need to ignore the OG server URL provided by the remote and ensure we use the one that the OMS central server is expecting
+    let kv_repo = KeyValueStoreRepository::new(&ctx.connection);
+    let kv_url = kv_repo.get_string(KeyType::SettingsSyncUrl)?.unwrap();
+    let sync_v5_settings = sync_v5_settings.clone();
+    let sync_v5_settings = SyncApiSettings {
+        server_url: kv_url,
+        ..sync_v5_settings
+    };
+    let response = SyncApiV5::new(sync_v5_settings)
+        .map_err(|e| CentralApiError::ConnectionError(format_error(&e)))?
+        .get_site_info()
+        .await
+        .map_err(|e| CentralApiError::LegacyServerError(format_error(&e)))?;
+
+    Ok(response)
 }
 
 #[cfg(test)]

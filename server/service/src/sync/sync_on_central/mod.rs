@@ -5,8 +5,8 @@ use std::{
 
 use actix_multipart::form::tempfile::TempFile;
 use repository::{
-    ChangelogRepository, SyncBufferRowRepository, SyncFileReferenceRow,
-    SyncFileReferenceRowRepository,
+    ChangelogRepository, KeyType, KeyValueStoreRepository, SyncBufferRowRepository,
+    SyncFileReferenceRow, SyncFileReferenceRowRepository,
 };
 use util::format_error;
 
@@ -16,7 +16,7 @@ use crate::{
     settings::Settings,
     static_files::{StaticFile, StaticFileCategory, StaticFileService},
     sync::{
-        api::{CommonSyncRecord, SyncApiV5},
+        api::{validate_site_auth, CommonSyncRecord, SyncApiSettings, SyncApiV5},
         api_v6::SiteStatusV6,
         synchroniser::integrate_and_translate_sync_buffer,
         translations::ToSyncRecordTranslationType,
@@ -62,12 +62,10 @@ pub async fn pull(
         ));
     }
 
-    // Check credentials again mSupply central server
-    let response = SyncApiV5::new(sync_v5_settings)
-        .map_err(|e| Error::OtherServerError(format_error(&e)))?
-        .get_site_info()
+    let ctx = service_provider.basic_context()?;
+    let response = validate_site_auth(&ctx, &sync_v5_settings)
         .await
-        .map_err(Error::from)?;
+        .map_err(|e| Error::OtherServerError(format_error(&e)))?;
 
     // Site should retry if we are currently integrating records for this site
     if is_integrating(response.site_id) {
@@ -146,12 +144,10 @@ pub async fn push(
         ));
     }
 
-    // Check credentials again mSupply central server
-    let response = SyncApiV5::new(sync_v5_settings)
-        .map_err(|e| Error::OtherServerError(format_error(&e)))?
-        .get_site_info()
+    let ctx = service_provider.basic_context()?;
+    let response = validate_site_auth(&ctx, &sync_v5_settings)
         .await
-        .map_err(Error::from)?;
+        .map_err(|e| Error::OtherServerError(format_error(&e)))?;
 
     // Site should retry if we are currently integrating records for this site
     if is_integrating(response.site_id) {
@@ -171,8 +167,6 @@ pub async fn push(
         is_last_batch,
         ..
     } = batch;
-
-    let ctx = service_provider.basic_context()?;
 
     let records_in_this_batch = records.len() as u64;
 
@@ -221,12 +215,10 @@ pub async fn patient_pull(
         ));
     }
 
-    // Check credentials again mSupply central server
-    let response = SyncApiV5::new(sync_v5_settings)
-        .map_err(|e| Error::OtherServerError(format_error(&e)))?
-        .get_site_info()
+    let ctx = service_provider.basic_context()?;
+    let response = validate_site_auth(&ctx, &sync_v5_settings)
         .await
-        .map_err(Error::from)?;
+        .map_err(|e| Error::OtherServerError(format_error(&e)))?;
 
     // Site should retry if we are currently integrating records for this site
     if is_integrating(response.site_id) {
@@ -283,6 +275,7 @@ pub async fn patient_pull(
 }
 
 pub async fn get_site_status(
+    service_provider: &ServiceProvider,
     SiteStatusRequestV6 {
         sync_v5_settings,
         sync_v6_version,
@@ -302,11 +295,10 @@ pub async fn get_site_status(
         ));
     }
 
-    let response = SyncApiV5::new(sync_v5_settings)
-        .map_err(|e| Error::OtherServerError(format_error(&e)))?
-        .get_site_info()
+    let ctx = service_provider.basic_context()?;
+    let response = validate_site_auth(&ctx, &sync_v5_settings)
         .await
-        .map_err(Error::from)?;
+        .map_err(|e| Error::OtherServerError(format_error(&e)))?;
 
     let is_integrating = is_integrating(response.site_id);
 
@@ -352,6 +344,7 @@ pub async fn download_file(
         sync_v5_settings,
         sync_v6_version,
     }: SyncDownloadFileRequestV6,
+    service_provider: &ServiceProvider,
 ) -> Result<(actix_files::NamedFile, StaticFile), SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
@@ -374,12 +367,10 @@ pub async fn download_file(
         ));
     }
 
-    // Check credentials again mSupply central server
-    let _ = SyncApiV5::new(sync_v5_settings)
-        .map_err(|e| Error::OtherServerError(format_error(&e)))?
-        .get_site_info()
+    let ctx = service_provider.basic_context()?;
+    validate_site_auth(&ctx, &sync_v5_settings)
         .await
-        .map_err(Error::from)?;
+        .map_err(|e| Error::OtherServerError(format_error(&e)))?;
 
     let service = StaticFileService::new(&settings.server.base_dir)?;
     let static_file_category = StaticFileCategory::SyncFile(table_name, record_id);
@@ -422,12 +413,10 @@ pub async fn upload_file(
         ));
     }
 
-    // Check credentials again mSupply central server
-    let _ = SyncApiV5::new(sync_v5_settings)
-        .map_err(|e| Error::OtherServerError(format_error(&e)))?
-        .get_site_info()
+    let ctx = service_provider.basic_context()?;
+    validate_site_auth(&ctx, &sync_v5_settings)
         .await
-        .map_err(Error::from)?;
+        .map_err(|e| Error::OtherServerError(format_error(&e)))?;
 
     let file_service = StaticFileService::new(&settings.server.base_dir)?;
     let ctx = service_provider.basic_context()?;
