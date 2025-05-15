@@ -27,6 +27,9 @@ fragment StocktakeLine on StocktakeLineNode {
   costPricePerPack
   comment
 
+  donorId
+  donorName
+
   location {
     __typename
     id

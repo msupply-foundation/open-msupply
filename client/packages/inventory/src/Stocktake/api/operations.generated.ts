@@ -31,6 +31,8 @@ export type StocktakeLineFragment = {
   sellPricePerPack?: number | null;
   costPricePerPack?: number | null;
   comment?: string | null;
+  donorId?: string | null;
+  donorName?: string | null;
   itemVariantId?: string | null;
   location?: {
     __typename: 'LocationNode';
@@ -92,6 +94,8 @@ export type StocktakeFragment = {
       sellPricePerPack?: number | null;
       costPricePerPack?: number | null;
       comment?: string | null;
+      donorId?: string | null;
+      donorName?: string | null;
       itemVariantId?: string | null;
       location?: {
         __typename: 'LocationNode';
@@ -194,6 +198,8 @@ export type StocktakeQuery = {
             sellPricePerPack?: number | null;
             costPricePerPack?: number | null;
             comment?: string | null;
+            donorId?: string | null;
+            donorName?: string | null;
             itemVariantId?: string | null;
             location?: {
               __typename: 'LocationNode';
@@ -267,6 +273,8 @@ export type StocktakeByNumberQuery = {
             sellPricePerPack?: number | null;
             costPricePerPack?: number | null;
             comment?: string | null;
+            donorId?: string | null;
+            donorName?: string | null;
             itemVariantId?: string | null;
             location?: {
               __typename: 'LocationNode';
@@ -324,6 +332,8 @@ export type StocktakeLinesQuery = {
       sellPricePerPack?: number | null;
       costPricePerPack?: number | null;
       comment?: string | null;
+      donorId?: string | null;
+      donorName?: string | null;
       itemVariantId?: string | null;
       location?: {
         __typename: 'LocationNode';
@@ -594,6 +604,8 @@ export const StocktakeLineFragmentDoc = gql`
     sellPricePerPack
     costPricePerPack
     comment
+    donorId
+    donorName
     location {
       __typename
       id

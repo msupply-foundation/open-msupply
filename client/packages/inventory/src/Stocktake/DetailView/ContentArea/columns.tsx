@@ -60,6 +60,22 @@ const getStocktakeReasons = (
   }
 };
 
+const getStocktakeDonor = (
+  rowData: StocktakeLineFragment | StocktakeSummaryItem,
+  t: TypedTFunction<LocaleKey>
+) => {
+  if ('lines' in rowData) {
+    const { lines } = rowData;
+
+    return (
+      ArrayUtils.ifTheSameElseDefault(lines, 'donorName', t('multiple')) ??
+      UNDEFINED_STRING_VALUE
+    );
+  } else {
+    return rowData.donorName ?? UNDEFINED_STRING_VALUE;
+  }
+};
+
 export const useStocktakeColumns = ({
   sortBy,
   onChangeSortBy,
@@ -291,6 +307,12 @@ export const useStocktakeColumns = ({
       key: 'inventoryAdjustmentReason',
       label: 'label.reason',
       accessor: ({ rowData }) => getStocktakeReasons(rowData, t),
+      sortable: false,
+    },
+    {
+      key: 'donorId',
+      label: 'label.donor',
+      accessor: ({ rowData }) => getStocktakeDonor(rowData, t),
       sortable: false,
     },
 
