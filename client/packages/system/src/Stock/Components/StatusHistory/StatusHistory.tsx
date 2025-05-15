@@ -21,7 +21,7 @@ export const StatusHistory = ({
   const t = useTranslation();
   const { columns } = useStatusHistoryColumns();
 
-  const vvmStatusLogs = draft?.vvmStatusLogs.nodes ?? [];
+  const vvmStatusLogs = draft?.vvmStatusLogs?.nodes ?? [];
 
   return (
     <TableProvider createStore={createTableStore}>

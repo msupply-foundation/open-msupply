@@ -8014,8 +8014,8 @@ export type StockLineNode = {
   storeId: Scalars['String']['output'];
   supplierName?: Maybe<Scalars['String']['output']>;
   totalNumberOfPacks: Scalars['Float']['output'];
-  vvmStatusLogs: VvmstatusLogConnector;
   vvmStatus?: Maybe<VvmstatusNode>;
+  vvmStatusLogs?: Maybe<VvmstatusLogConnector>;
 };
 
 export type StockLineReducedBelowZero =

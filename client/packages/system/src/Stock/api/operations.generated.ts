@@ -56,7 +56,7 @@ export type StockLineRowFragment = {
     unitName?: string | null;
     masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
   };
-  vvmStatusLogs: {
+  vvmStatusLogs?: {
     __typename: 'VvmstatusLogConnector';
     nodes: Array<{
       __typename: 'VvmstatusLogNode';
@@ -70,7 +70,7 @@ export type StockLineRowFragment = {
       } | null;
       status?: { __typename: 'VvmstatusNode'; description: string } | null;
     }>;
-  };
+  } | null;
 };
 
 export type RepackStockLineFragment = {
@@ -224,7 +224,7 @@ export type StockLinesQuery = {
           name: string;
         }> | null;
       };
-      vvmStatusLogs: {
+      vvmStatusLogs?: {
         __typename: 'VvmstatusLogConnector';
         nodes: Array<{
           __typename: 'VvmstatusLogNode';
@@ -238,7 +238,7 @@ export type StockLinesQuery = {
           } | null;
           status?: { __typename: 'VvmstatusNode'; description: string } | null;
         }>;
-      };
+      } | null;
     }>;
   };
 };
@@ -295,7 +295,7 @@ export type StockLineQuery = {
           name: string;
         }> | null;
       };
-      vvmStatusLogs: {
+      vvmStatusLogs?: {
         __typename: 'VvmstatusLogConnector';
         nodes: Array<{
           __typename: 'VvmstatusLogNode';
@@ -309,7 +309,7 @@ export type StockLineQuery = {
           } | null;
           status?: { __typename: 'VvmstatusNode'; description: string } | null;
         }>;
-      };
+      } | null;
     }>;
   };
 };
@@ -392,7 +392,7 @@ export type UpdateStockLineMutation = {
             name: string;
           }> | null;
         };
-        vvmStatusLogs: {
+        vvmStatusLogs?: {
           __typename: 'VvmstatusLogConnector';
           nodes: Array<{
             __typename: 'VvmstatusLogNode';
@@ -409,7 +409,7 @@ export type UpdateStockLineMutation = {
               description: string;
             } | null;
           }>;
-        };
+        } | null;
       }
     | { __typename: 'UpdateStockLineError' };
 };
@@ -642,7 +642,7 @@ export type InsertStockLineMutation = {
             name: string;
           }> | null;
         };
-        vvmStatusLogs: {
+        vvmStatusLogs?: {
           __typename: 'VvmstatusLogConnector';
           nodes: Array<{
             __typename: 'VvmstatusLogNode';
@@ -659,7 +659,7 @@ export type InsertStockLineMutation = {
               description: string;
             } | null;
           }>;
-        };
+        } | null;
       };
 };
 

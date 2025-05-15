@@ -121,11 +121,14 @@ impl StockLineNode {
             .await?
             .map(VVMStatusNode::from_domain))
     }
-    pub async fn vvm_status_logs(&self, ctx: &Context<'_>) -> Result<VVMStatusLogConnector> {
+    pub async fn vvm_status_logs(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<VVMStatusLogConnector>> {
         let loader = ctx.get_loader::<DataLoader<VVMStatusLogLoader>>();
         let result = loader.load_one(self.row().id.clone()).await?;
 
-        Ok(VVMStatusLogConnector::from_vec(result.unwrap_or(vec![])))
+        Ok(result.map(VVMStatusLogConnector::from_domain))
     }
 }
 
