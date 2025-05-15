@@ -5,6 +5,7 @@ mod add_donor_id_to_invoice_and_invoice_lines;
 mod add_doses_columns_to_item_variant;
 mod add_initial_stocktake_field;
 mod add_view_and_edit_vvm_status_permission;
+mod add_vvm_status_id_to_stock_line;
 mod add_vvm_status_log_change_log_table_name;
 mod add_vvm_status_log_table;
 mod add_vvm_status_log_update_to_activity_log;
@@ -31,6 +32,7 @@ impl Migration for V2_08_00 {
             Box::new(add_view_and_edit_vvm_status_permission::Migrate),
             Box::new(add_donor_id_to_invoice_and_invoice_lines::Migrate),
             Box::new(add_vvm_status_log_update_to_activity_log::Migrate),
+            Box::new(add_vvm_status_id_to_stock_line::Migrate),
         ]
     }
 }
@@ -40,11 +42,10 @@ mod test {
 
     #[actix_rt::test]
     async fn migration_2_08_00() {
-        use v2_07_00::V2_07_00;
-        use v2_08_00::V2_08_00;
-
         use crate::migrations::*;
         use crate::test_db::*;
+        use v2_07_00::V2_07_00;
+        use v2_08_00::V2_08_00;
 
         let previous_version = V2_07_00.version();
         let version = V2_08_00.version();

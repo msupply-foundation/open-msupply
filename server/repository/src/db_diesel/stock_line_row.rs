@@ -3,7 +3,10 @@ use super::{
     StorageConnection,
 };
 
-use crate::{db_diesel::barcode_row::barcode, repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    db_diesel::barcode_row::barcode, db_diesel::vvm_status::vvm_status_row::vvm_status,
+    repository_error::RepositoryError, Delete, Upsert,
+};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
@@ -28,6 +31,7 @@ table! {
         supplier_link_id -> Nullable<Text>,
         barcode_id -> Nullable<Text>,
         item_variant_id -> Nullable<Text>,
+        vvm_status_id -> Nullable<Text>,
     }
 }
 
@@ -36,6 +40,7 @@ joinable!(stock_line -> store (store_id));
 joinable!(stock_line -> location (location_id));
 joinable!(stock_line -> name_link (supplier_link_id));
 joinable!(stock_line -> barcode (barcode_id));
+joinable!(stock_line -> vvm_status (vvm_status_id));
 allow_tables_to_appear_in_same_query!(stock_line, item_link);
 allow_tables_to_appear_in_same_query!(stock_line, name_link);
 
@@ -59,6 +64,7 @@ pub struct StockLineRow {
     pub supplier_link_id: Option<String>,
     pub barcode_id: Option<String>,
     pub item_variant_id: Option<String>,
+    pub vvm_status_id: Option<String>,
 }
 
 pub struct StockLineRowRepository<'a> {

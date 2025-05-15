@@ -90,6 +90,7 @@ fn generate_line(
         stock_on_hold: _,
         tax_percentage: _,
         r#type: _,
+        vvm_status_id: _, // Ignoring until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
     }: InsertStockInLine,
     ItemRow {
         name: item_name,
