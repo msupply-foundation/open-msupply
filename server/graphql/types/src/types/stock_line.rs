@@ -1,4 +1,4 @@
-use super::{ItemNode, LocationNode, VVMStatusLogNode};
+use super::{ItemNode, LocationNode, VVMStatusLogConnector};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
@@ -104,11 +104,11 @@ impl StockLineNode {
     pub async fn barcode(&self) -> Option<&str> {
         self.stock_line.barcode()
     }
-    pub async fn vvm_status_log(&self, ctx: &Context<'_>) -> Result<Option<Vec<VVMStatusLogNode>>> {
+    pub async fn vvm_status_logs(&self, ctx: &Context<'_>) -> Result<VVMStatusLogConnector> {
         let loader = ctx.get_loader::<DataLoader<VVMStatusLogLoader>>();
         let result = loader.load_one(self.row().id.clone()).await?;
 
-        Ok(result.map(VVMStatusLogNode::from_vec))
+        Ok(VVMStatusLogConnector::from_vec(result.unwrap_or(vec![])))
     }
 }
 

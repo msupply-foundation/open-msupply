@@ -66,13 +66,6 @@ impl VVMStatusLogNode {
         VVMStatusLogNode { vvm_status_log }
     }
 
-    pub fn from_vec(vvm_status_log: Vec<VVMStatusLogRow>) -> Vec<VVMStatusLogNode> {
-        vvm_status_log
-            .into_iter()
-            .map(VVMStatusLogNode::from_domain)
-            .collect()
-    }
-
     pub fn row(&self) -> &VVMStatusLogRow {
         &self.vvm_status_log
     }
@@ -85,6 +78,15 @@ pub struct VVMStatusLogConnector {
 
 impl VVMStatusLogConnector {
     pub fn from_domain(vvm_status_logs: Vec<VVMStatusLogRow>) -> VVMStatusLogConnector {
+        VVMStatusLogConnector {
+            nodes: vvm_status_logs
+                .into_iter()
+                .map(VVMStatusLogNode::from_domain)
+                .collect(),
+        }
+    }
+
+    pub fn from_vec(vvm_status_logs: Vec<VVMStatusLogRow>) -> VVMStatusLogConnector {
         VVMStatusLogConnector {
             nodes: vvm_status_logs
                 .into_iter()

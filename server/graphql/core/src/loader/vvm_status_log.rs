@@ -16,15 +16,16 @@ impl Loader<String> for VVMStatusLogLoader {
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
-        let repo = VVMStatusLogRowRepository::new(&connection);
 
-        let result = repo.find_many_by_stock_line_id(&ids[0])?;
+        let result =
+            VVMStatusLogRowRepository::new(&connection).find_many_by_stock_line_id(&ids[0])?;
 
         let mut map: HashMap<String, Vec<VVMStatusLogRow>> = HashMap::new();
         for vvm_status_log in result {
-            let list = map.entry(vvm_status_log.id.clone()).or_default();
+            let list = map.entry(vvm_status_log.stock_line_id.clone()).or_default();
             list.push(vvm_status_log);
         }
+
         Ok(map)
     }
 }
