@@ -5,7 +5,7 @@ import { ItemVariantOptionFragment, useItemVariants } from '../../api';
 interface ItemVariantSearchInputProps {
   itemId: string;
   selectedId: string | null;
-  onChange: (variantId: string | null) => void;
+  onChange: (variant: ItemVariantOptionFragment | null) => void;
   disabled?: boolean;
   width?: number | string;
   getOptionDisabled?: (variant: ItemVariantOptionFragment) => boolean;
@@ -33,7 +33,7 @@ export const ItemVariantSearchInput = ({
       popperMinWidth={Math.min(Number(width), 200)}
       value={selected ?? null}
       loading={isLoading}
-      onChange={(_, option) => onChange(option?.id ?? null)}
+      onChange={(_, option) => onChange(option)}
       options={data}
       noOptionsText={t('messages.no-item-variants')}
       isOptionEqualToValue={(option, value) => option.id === value?.id}

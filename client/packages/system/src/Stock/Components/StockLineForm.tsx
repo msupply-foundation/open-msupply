@@ -186,7 +186,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
                   itemId={draft.itemId}
                   selectedId={draft.itemVariantId ?? null}
                   width={160}
-                  onChange={id => onUpdate({ itemVariantId: id })}
+                  onChange={variant => onUpdate({ itemVariantId: variant?.id })}
                 />
               }
             />

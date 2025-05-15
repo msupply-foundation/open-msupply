@@ -1,6 +1,7 @@
 import React from 'react';
 import { RecordWithId, CellProps } from '@openmsupply-client/common';
 import { ItemVariantSearchInput } from '.';
+import { ItemVariantOptionFragment } from '../../api';
 
 export const ItemVariantInputCell = <T extends RecordWithId>({
   rowData,
@@ -12,8 +13,12 @@ export const ItemVariantInputCell = <T extends RecordWithId>({
     rowData,
   }) as string | null;
 
-  const onChange = (itemVariantId: string | null) => {
-    column.setter({ ...rowData, itemVariantId });
+  const onChange = (variant: ItemVariantOptionFragment | null) => {
+    column.setter({
+      ...rowData,
+      itemVariantId: variant?.id ?? null,
+      itemVariant: variant,
+    });
   };
 
   return (
