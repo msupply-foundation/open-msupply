@@ -13,7 +13,7 @@ pub struct StorePrefUpdate<T> {
 #[derive(Debug, PartialEq, Clone)]
 pub struct UpsertPreferences {
     // Global preferences
-    pub allow_tracking_of_received_stock_by_donor: Option<bool>,
+    pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub show_contact_tracing: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
     // Store preferences
@@ -26,7 +26,7 @@ pub fn upsert_preferences(
     ctx: &ServiceContext,
     UpsertPreferences {
         // Global preferences
-        allow_tracking_of_received_stock_by_donor: allow_tracking_of_received_stock_by_donor_input,
+        allow_tracking_of_stock_by_donor: allow_tracking_of_stock_by_donor_input,
         display_population_based_forecasting: display_population_based_forecasting_input,
         show_contact_tracing: show_contact_tracing_input,
         // Store preferences
@@ -37,7 +37,7 @@ pub fn upsert_preferences(
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
         // Global preferences
-        allow_tracking_of_received_stock_by_donor,
+        allow_tracking_of_stock_by_donor,
         display_population_based_forecasting,
         show_contact_tracing,
         // Store preferences
@@ -49,8 +49,8 @@ pub fn upsert_preferences(
     ctx.connection
         .transaction_sync(|connection| {
             // Global preferences
-            if let Some(input) = allow_tracking_of_received_stock_by_donor_input {
-                allow_tracking_of_received_stock_by_donor.upsert(connection, input, None)?;
+            if let Some(input) = allow_tracking_of_stock_by_donor_input {
+                allow_tracking_of_stock_by_donor.upsert(connection, input, None)?;
             }
 
             if let Some(input) = display_population_based_forecasting_input {
