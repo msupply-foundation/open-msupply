@@ -46,12 +46,10 @@ pub enum InsertResponse {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
-    // TODO: Change this to proper VVM-specific permission
-    // Add "View and edit vaccine vial monitor status" user permission from OG
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutatePatient,
+            resource: Resource::QueryAndMutateVvmStatus,
             store_id: Some(store_id.to_string()),
         },
     );

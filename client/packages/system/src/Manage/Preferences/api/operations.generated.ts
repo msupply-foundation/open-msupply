@@ -29,6 +29,7 @@ export type PreferencesQuery = {
     __typename: 'PreferencesNode';
     showContactTracing: boolean;
     displayVaccineInDoses: boolean;
+    allowTrackingOfReceivedStockByDonor: boolean;
   };
 };
 
@@ -70,6 +71,7 @@ export const PreferencesDocument = gql`
     preferences(storeId: $storeId) {
       showContactTracing
       displayVaccineInDoses
+      allowTrackingOfReceivedStockByDonor
     }
   }
 `;
