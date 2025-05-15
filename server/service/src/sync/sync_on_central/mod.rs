@@ -5,8 +5,8 @@ use std::{
 
 use actix_multipart::form::tempfile::TempFile;
 use repository::{
-    ChangelogRepository, KeyType, KeyValueStoreRepository, SyncBufferRowRepository,
-    SyncFileReferenceRow, SyncFileReferenceRowRepository,
+    ChangelogRepository, SyncBufferRowRepository, SyncFileReferenceRow,
+    SyncFileReferenceRowRepository,
 };
 use util::format_error;
 
@@ -16,7 +16,7 @@ use crate::{
     settings::Settings,
     static_files::{StaticFile, StaticFileCategory, StaticFileService},
     sync::{
-        api::{validate_site_auth, CommonSyncRecord, SyncApiSettings, SyncApiV5},
+        api::{validate_site_auth, CommonSyncRecord},
         api_v6::SiteStatusV6,
         synchroniser::integrate_and_translate_sync_buffer,
         translations::ToSyncRecordTranslationType,

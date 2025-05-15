@@ -1,12 +1,9 @@
-use repository::{KeyType, KeyValueStoreRepository, RepositoryError};
+use repository::RepositoryError;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use util::format_error;
 
-use crate::{
-    service_provider::{ServiceContext, ServiceProvider},
-    sync::api::{SyncApiSettings, SyncApiV5},
-};
+use crate::service_provider::ServiceProvider;
 
 mod patient_name_store_join;
 
