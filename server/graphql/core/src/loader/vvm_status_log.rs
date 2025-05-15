@@ -6,11 +6,11 @@ use repository::{
     RepositoryError, StorageConnectionManager,
 };
 
-pub struct VVMStatusLogLoader {
+pub struct VVMStatusLogByStockLineIdLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-impl Loader<String> for VVMStatusLogLoader {
+impl Loader<String> for VVMStatusLogByStockLineIdLoader {
     type Value = Vec<VVMStatusLogRow>;
     type Error = RepositoryError;
 

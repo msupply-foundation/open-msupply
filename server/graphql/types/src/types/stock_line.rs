@@ -3,7 +3,9 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    loader::{ItemLoader, LocationByIdLoader, VVMStatusByIdLoader, VVMStatusLogLoader},
+    loader::{
+        ItemLoader, LocationByIdLoader, VVMStatusByIdLoader, VVMStatusLogByStockLineIdLoader,
+    },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -125,7 +127,7 @@ impl StockLineNode {
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<VVMStatusLogConnector>> {
-        let loader = ctx.get_loader::<DataLoader<VVMStatusLogLoader>>();
+        let loader = ctx.get_loader::<DataLoader<VVMStatusLogByStockLineIdLoader>>();
         let result = loader.load_one(self.row().id.clone()).await?;
 
         Ok(result.map(VVMStatusLogConnector::from_domain))
