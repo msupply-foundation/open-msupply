@@ -2,7 +2,7 @@ import {
   ColumnFormat,
   useColumns,
   useFormatDateTime,
-} from 'packages/common/src';
+} from '@openmsupply-client/common';
 import { VvmStatusLogRowFragment } from '../../api';
 
 export const useStatusHistoryColumns = () => {
