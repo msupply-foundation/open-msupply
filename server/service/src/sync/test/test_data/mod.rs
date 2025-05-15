@@ -14,6 +14,7 @@ pub(crate) mod asset_property;
 pub(crate) mod asset_type;
 pub(crate) mod backend_plugin;
 pub(crate) mod barcode;
+pub(crate) mod campaign;
 pub(crate) mod cold_storage_type;
 pub(crate) mod contact_form;
 pub(crate) mod currency;
