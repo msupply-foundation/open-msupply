@@ -65,7 +65,7 @@ pub fn upsert_item_variant(
     store_id: String,
     input: UpsertItemVariantInput,
 ) -> Result<UpsertItemVariantResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateItemNamesCodesAndUnits,
@@ -73,7 +73,7 @@ pub fn upsert_item_variant(
         },
     )?;
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id, "".to_string())?;
+    let service_context = service_provider.context(store_id, user.user_id)?;
 
     let result = service_provider
         .item_service
