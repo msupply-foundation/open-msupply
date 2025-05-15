@@ -17,6 +17,7 @@ pub struct UpsertPreferencesInput {
     pub display_vaccine_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status: Option<Vec<BoolStorePrefInput>>,
     pub sort_by_vvm_status: Option<Vec<BoolStorePrefInput>>,
+    pub allow_tracking_of_received_stock_by_donor: Option<bool>,
 }
 
 pub fn upsert_preferences(
@@ -49,11 +50,13 @@ impl UpsertPreferencesInput {
             display_vaccine_in_doses,
             manage_vvm_status,
             sort_by_vvm_status,
+            allow_tracking_of_received_stock_by_donor,
         } = self;
 
         UpsertPreferences {
             show_contact_tracing,
             display_population_based_forecasting,
+            allow_tracking_of_received_stock_by_donor,
             display_vaccine_in_doses: display_vaccine_in_doses
                 .map(|i| i.into_iter().map(|i| i.to_domain()).collect()),
             manage_vvm_status: manage_vvm_status
