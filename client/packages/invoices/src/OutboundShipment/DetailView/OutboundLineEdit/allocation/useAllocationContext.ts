@@ -26,11 +26,12 @@ export enum AllocateIn {
 
 export enum AllocationStrategy {
   FEFO = 'FEFO',
-  // VVMStatus = 'VVMStatus',
+  VVMStatus = 'VVMStatus',
 }
 
 const SorterByStrategy = {
   [AllocationStrategy.FEFO]: SortUtils.byExpiryAscNonExpiringLast,
+  [AllocationStrategy.VVMStatus]: SortUtils.byVVMStatusAsc,
 };
 
 interface AllocationContext {
