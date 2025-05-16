@@ -10,7 +10,7 @@ import {
   Theme,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
-import { ItemVariantInputCellOld } from '@openmsupply-client/system';
+import { ItemVariantInputCell } from '@openmsupply-client/system';
 
 const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
 const getBatchColumn = (
@@ -62,15 +62,34 @@ export const getBatchExpiryColumns = (
   getExpiryColumn(updateDraftLine, theme),
 ];
 
+const InboundLineItemVariantInputCell = ({
+  rowData,
+  displayInDoses,
+  ...props
+}: CellProps<DraftInboundLine> & {
+  displayInDoses?: boolean;
+}) => {
+  return (
+    <ItemVariantInputCell
+      {...props}
+      rowData={rowData}
+      itemId={rowData.item.id}
+      displayInDoses={displayInDoses ?? false}
+    />
+  );
+};
+
 export const itemVariantColumn = (
-  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void
+  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void,
+  displayInDoses: boolean
 ): ColumnDescription<DraftInboundLine> => ({
   key: 'itemVariantId',
   label: 'label.item-variant',
   width: 170,
-  Cell: props => (
-    <ItemVariantInputCellOld {...props} itemId={props.rowData.item.id} />
-  ),
+  Cell: InboundLineItemVariantInputCell,
+  cellProps: {
+    displayInDoses,
+  },
   setter: updateDraftLine,
 });
 
