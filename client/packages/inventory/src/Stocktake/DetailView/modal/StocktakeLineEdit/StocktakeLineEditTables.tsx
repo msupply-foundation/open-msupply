@@ -25,7 +25,7 @@ import {
   getLocationInputColumn,
   InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
-  ItemVariantInputCell,
+  ItemVariantInputCellOld,
   PackSizeEntryCell,
   useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
@@ -182,7 +182,7 @@ export const BatchTable = ({
         label: 'label.item-variant',
         width: 170,
         Cell: props => (
-          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+          <ItemVariantInputCellOld {...props} itemId={props.rowData.item.id} />
         ),
         setter: patch => update({ ...patch }),
       });

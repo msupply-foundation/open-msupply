@@ -2,7 +2,7 @@ import React from 'react';
 import { RecordWithId, CellProps } from '@openmsupply-client/common';
 import { ItemVariantSearchInput } from '.';
 
-export const ItemVariantInputCell = <T extends RecordWithId>({
+export const ItemVariantInputCellOld = <T extends RecordWithId>({
   rowData,
   column,
   isDisabled,

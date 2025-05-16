@@ -10,7 +10,7 @@ import {
   Theme,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
-import { ItemVariantInputCell } from '@openmsupply-client/system';
+import { ItemVariantInputCellOld } from '@openmsupply-client/system';
 
 const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
 const getBatchColumn = (
@@ -69,7 +69,7 @@ export const itemVariantColumn = (
   label: 'label.item-variant',
   width: 170,
   Cell: props => (
-    <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+    <ItemVariantInputCellOld {...props} itemId={props.rowData.item.id} />
   ),
   setter: updateDraftLine,
 });
