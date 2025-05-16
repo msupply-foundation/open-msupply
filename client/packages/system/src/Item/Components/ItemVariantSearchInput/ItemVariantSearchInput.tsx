@@ -1,6 +1,6 @@
 import React from 'react';
 import { Autocomplete, useTranslation } from '@openmsupply-client/common';
-import { ItemVariantOptionFragment, useItemVariants } from '../../api';
+import { ItemVariantFragment, useItemVariants } from '../../api';
 
 interface ItemVariantSearchInputProps {
   itemId: string;
@@ -8,7 +8,7 @@ interface ItemVariantSearchInputProps {
   onChange: (variantId: string | null) => void;
   disabled?: boolean;
   width?: number | string;
-  getOptionDisabled?: (variant: ItemVariantOptionFragment) => boolean;
+  getOptionDisabled?: (variant: ItemVariantFragment) => boolean;
 }
 
 export const ItemVariantSearchInput = ({
