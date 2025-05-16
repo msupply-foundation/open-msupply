@@ -1,9 +1,11 @@
-use super::{ItemNode, LocationNode, VVMStatusNode};
+use super::{ItemNode, LocationNode, VVMStatusLogConnector, VVMStatusNode};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    loader::{ItemLoader, LocationByIdLoader, VVMStatusByIdLoader},
+    loader::{
+        ItemLoader, LocationByIdLoader, VVMStatusByIdLoader, VVMStatusLogByStockLineIdLoader,
+    },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -102,11 +104,9 @@ impl StockLineNode {
     pub async fn supplier_name(&self) -> Option<&str> {
         self.stock_line.supplier_name()
     }
-
     pub async fn barcode(&self) -> Option<&str> {
         self.stock_line.barcode()
     }
-
     pub async fn vvm_status(&self, ctx: &Context<'_>) -> Result<Option<VVMStatusNode>> {
         if self.row().vvm_status_id.is_none() {
             return Ok(None);
@@ -122,6 +122,15 @@ impl StockLineNode {
             .load_one(type_id)
             .await?
             .map(VVMStatusNode::from_domain))
+    }
+    pub async fn vvm_status_logs(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<VVMStatusLogConnector>> {
+        let loader = ctx.get_loader::<DataLoader<VVMStatusLogByStockLineIdLoader>>();
+        let result = loader.load_one(self.row().id.clone()).await?;
+
+        Ok(result.map(VVMStatusLogConnector::from_domain))
     }
 }
 

@@ -33,6 +33,10 @@ const defaultDraftStockLine: DraftStockLine = {
     name: '',
   },
   inventoryAdjustmentReason: null,
+  vvmStatusLogs: {
+    __typename: 'VvmstatusLogConnector',
+    nodes: [],
+  },
 };
 
 export function useStockLine(id?: string) {

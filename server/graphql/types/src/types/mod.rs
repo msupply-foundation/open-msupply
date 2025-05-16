@@ -142,6 +142,9 @@ pub use self::warning::*;
 pub mod vvm_status;
 pub use self::vvm_status::*;
 
+pub mod vvm_status_log;
+pub use self::vvm_status_log::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]
