@@ -55,7 +55,9 @@ export const canAllocate = (line: DraftStockOutLineFragment) =>
 export const canAutoAllocate = (line: DraftStockOutLineFragment) =>
   canAllocate(line) &&
   // shouldn't auto-allocate expired lines
-  !(!!line.expiryDate && DateUtils.isExpired(new Date(line.expiryDate)));
+  !(!!line.expiryDate && DateUtils.isExpired(new Date(line.expiryDate))) &&
+  // should auto-allocate lines with unusable VVM status
+  !line.vvmStatus?.unusable;
 
 export const scannedBatchFilter = (
   allLines: DraftStockOutLineFragment[],
