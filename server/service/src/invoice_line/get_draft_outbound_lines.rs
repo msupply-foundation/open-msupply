@@ -26,6 +26,7 @@ pub struct DraftOutboundShipmentLine {
     pub in_store_packs: f64,
     pub available_packs: f64,
     pub stock_line_on_hold: bool,
+    pub vvm_status_id: Option<String>,
 }
 
 pub fn get_draft_outbound_shipment_lines(
@@ -169,6 +170,7 @@ impl DraftOutboundShipmentLine {
             available_packs: available_number_of_packs,
             stock_line_on_hold: on_hold,
             number_of_packs: 0.0,
+            vvm_status_id: line.stock_line_row.vvm_status_id,
         }
     }
 
@@ -192,6 +194,7 @@ impl DraftOutboundShipmentLine {
             total_number_of_packs,
             available_number_of_packs,
             on_hold,
+            vvm_status_id,
             ..
         } = line.stock_line_option.ok_or(RepositoryError::DBError {
             msg: "No related stock line".to_string(),
@@ -218,6 +221,7 @@ impl DraftOutboundShipmentLine {
                 _ => total_number_of_packs + number_of_packs,
             },
             stock_line_on_hold: on_hold,
+            vvm_status_id,
         })
     }
 }

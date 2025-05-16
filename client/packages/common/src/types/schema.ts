@@ -168,6 +168,7 @@ export enum ActivityLogNodeType {
   VaccinationUpdated = 'VACCINATION_UPDATED',
   VaccineCourseCreated = 'VACCINE_COURSE_CREATED',
   VaccineCourseUpdated = 'VACCINE_COURSE_UPDATED',
+  VvmStatusLogUpdated = 'VVM_STATUS_LOG_UPDATED',
 }
 
 export type ActivityLogResponse = ActivityLogConnector;
@@ -2289,6 +2290,7 @@ export type DraftOutboundShipmentLineNode = {
   sellPricePerPack: Scalars['Float']['output'];
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
+  vvmStatus?: Maybe<VvmstatusNode>;
 };
 
 export type EmergencyResponseRequisitionCounts = {
@@ -4830,6 +4832,7 @@ export type Mutations = {
   updateTemperatureBreach: UpdateTemperatureBreachResponse;
   updateUser: UpdateUserResponse;
   updateVaccination: UpdateVaccinationResponse;
+  updateVvmStatusLog: UpdateVvmStatusResponse;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
 };
@@ -5417,6 +5420,11 @@ export type MutationsUpdateTemperatureBreachArgs = {
 
 export type MutationsUpdateVaccinationArgs = {
   input: UpdateVaccinationInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdateVvmStatusLogArgs = {
+  input: UpdateVvmStatusLogInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -9594,6 +9602,13 @@ export type UpdateUserNode = {
 };
 
 export type UpdateUserResponse = UpdateUserError | UpdateUserNode;
+
+export type UpdateVvmStatusLogInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+};
+
+export type UpdateVvmStatusResponse = IdResponse;
 
 export type UpdateVaccinationError = {
   __typename: 'UpdateVaccinationError';

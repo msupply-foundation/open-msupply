@@ -841,6 +841,13 @@ fragment DraftStockOutLine on DraftOutboundShipmentLineNode {
     code
     onHold
   }
+  vvmStatus {
+    __typename
+    id
+    level
+    unusable
+    description
+  }
 }
 
 query getOutboundEditLines(
