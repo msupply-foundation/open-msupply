@@ -7,6 +7,7 @@ use repository::{
 use util::format_error;
 
 use crate::{
+    cursor_controller::CursorType,
     processors::general_processor::{Processor, ProcessorError},
     programs::patient::{add_patient_to_oms_central, AddPatientToCentralError},
     service_provider::{ServiceContext, ServiceProvider},
@@ -144,7 +145,7 @@ impl Processor for AddPatientVisibilityForCentral {
         Ok(filter)
     }
 
-    fn cursor_type(&self) -> KeyType {
-        KeyType::AddCentralPatientVisibilityProcessorCursor
+    fn cursor_type(&self) -> CursorType {
+        CursorType::Standard(KeyType::AddCentralPatientVisibilityProcessorCursor)
     }
 }
