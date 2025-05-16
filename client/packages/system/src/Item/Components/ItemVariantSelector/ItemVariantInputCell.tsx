@@ -1,0 +1,48 @@
+import React from 'react';
+import {
+  RecordWithId,
+  CellProps,
+  Typography,
+  Box,
+  textStyles,
+} from '@openmsupply-client/common';
+import { useItemVariants } from '../../api';
+import { ItemVariantSelector } from './ItemVariantSelector';
+
+interface ItemVariantInputCellProps {
+  itemId: string;
+  displayInDoses: boolean;
+}
+
+export const ItemVariantInputCell = <T extends RecordWithId>({
+  rowData,
+  column,
+  itemId,
+  displayInDoses,
+  dense = false,
+}: CellProps<T> & ItemVariantInputCellProps) => {
+  const selectedId = column.accessor({
+    rowData,
+  }) as string | null;
+  const { data, isLoading } = useItemVariants(itemId);
+  const selected = data?.find(variant => variant.id === selectedId);
+
+  const onVariantSelected = (itemVariantId: string | null) => {
+    column.setter({ ...rowData, itemVariantId });
+  };
+
+  return (
+    <Box display="flex" gap={1}>
+      <Typography sx={dense ? textStyles.dense : textStyles.default}>
+        {selected?.name}
+      </Typography>
+      <ItemVariantSelector
+        selectedId={selectedId}
+        variants={data}
+        isLoading={isLoading}
+        onVariantSelected={onVariantSelected}
+        displayInDoses={displayInDoses}
+      />
+    </Box>
+  );
+};
