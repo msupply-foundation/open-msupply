@@ -49,15 +49,18 @@ const getSortByExpiry =
 const getSortByVVMStatus =
   () =>
   (
-    a: { vvmStatusLevel?: number; expiryDate?: string | null },
-    b: { vvmStatusLevel?: number; expiryDate?: string | null }
+    a: { vvmStatus?: { level?: number }; expiryDate?: string | null },
+    b: { vvmStatus?: { level?: number }; expiryDate?: string | null }
   ) => {
-    if (a.vvmStatusLevel && b.vvmStatusLevel) {
-      if (a.vvmStatusLevel < b.vvmStatusLevel) return -1;
-      if (a.vvmStatusLevel > b.vvmStatusLevel) return 1;
-    } else if (a.vvmStatusLevel) {
+    const aLevel = a.vvmStatus?.level;
+    const bLevel = b.vvmStatus?.level;
+
+    if (aLevel !== undefined && bLevel !== undefined) {
+      if (aLevel < bLevel) return -1;
+      if (aLevel > bLevel) return 1;
+    } else if (aLevel !== undefined) {
       return -1;
-    } else if (b.vvmStatusLevel) {
+    } else if (bLevel !== undefined) {
       return 1;
     }
 

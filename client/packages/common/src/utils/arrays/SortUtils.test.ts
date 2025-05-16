@@ -40,17 +40,29 @@ describe('SortUtils', () => {
 
   describe('byVVMStatusAsc', () => {
     const entities = [
-      { id: 'vvm2_2023_05_01', vvmStatusLevel: 2, expiryDate: '2023/05/01' },
-      { id: 'vvm1_2023_06_01', vvmStatusLevel: 1, expiryDate: '2023/06/01' },
-      { id: 'vvm_none_2023_04_01', expiryDate: '2023/04/01' }, // no vvmStatusLevel
-      { id: 'vvm1_2024_03_01', vvmStatusLevel: 1, expiryDate: '2023/03/01' },
-      { id: 'vvm_none_2023_07_01', expiryDate: '2023/07/01' }, // no vvmStatusLevel
-      { id: 'vvm_none_none' }, // no vvmStatusLevel & no expiryDate
+      {
+        id: 'vvm2_2023_05_01',
+        vvmStatus: { level: 2 },
+        expiryDate: '2023/05/01',
+      },
+      {
+        id: 'vvm1_2023_06_01',
+        vvmStatus: { level: 1 },
+        expiryDate: '2023/06/01',
+      },
+      { id: 'vvm_none_2023_04_01', expiryDate: '2023/04/01' }, // no vvmStatus
+      {
+        id: 'vvm1_2024_03_01',
+        vvmStatus: { level: 1 },
+        expiryDate: '2023/03/01',
+      },
+      { id: 'vvm_none_2023_07_01', expiryDate: '2023/07/01' }, // no vvmStatus
+      { id: 'vvm_none_none' }, // no vvmStatus & no expiryDate
     ];
 
-    it('sorts by vvmStatusLevel ascending, then expiryDate', () => {
+    it('sorts by vvmStatus.level ascending, then expiryDate', () => {
       const sorted = entities.sort(SortUtils.byVVMStatusAsc);
-      // vvmStatusLevel 1, then 2, then none
+      // vvmStatus.level 1, then 2, then none
       // then sort by expiryDate
       // No expiryDate goes to the end
       expect(sorted.map(e => e.id)).toEqual([
@@ -63,16 +75,16 @@ describe('SortUtils', () => {
       ]);
     });
 
-    it('puts items with vvmStatusLevel before those without', () => {
+    it('puts items with vvmStatus before those without', () => {
       const testEntities = [
         { id: 'a', expiryDate: '2023/01/01' },
-        { id: 'b', vvmStatusLevel: 3, expiryDate: '2023/01/01' },
+        { id: 'b', vvmStatus: { level: 3 }, expiryDate: '2023/01/01' },
       ];
       const sorted = testEntities.sort(SortUtils.byVVMStatusAsc);
       expect(sorted.map(e => e.id)).toEqual(['b', 'a']);
     });
 
-    it('sorts by expiryDate if neither has vvmStatusLevel', () => {
+    it('sorts by expiryDate if neither has vvmStatus', () => {
       const testEntities = [
         { id: 'a', expiryDate: '2023/01/01' },
         { id: 'b', expiryDate: '2022/01/01' },
@@ -81,10 +93,10 @@ describe('SortUtils', () => {
       expect(sorted.map(e => e.id)).toEqual(['b', 'a']);
     });
 
-    it('sorts by expiryDate if vvmStatusLevel is equal', () => {
+    it('sorts by expiryDate if vvmStatus.level is equal', () => {
       const testEntities = [
-        { id: 'a', vvmStatusLevel: 2, expiryDate: '2023/01/01' },
-        { id: 'b', vvmStatusLevel: 2, expiryDate: '2022/01/01' },
+        { id: 'a', vvmStatus: { level: 2 }, expiryDate: '2023/01/01' },
+        { id: 'b', vvmStatus: { level: 2 }, expiryDate: '2022/01/01' },
       ];
       const sorted = testEntities.sort(SortUtils.byVVMStatusAsc);
       expect(sorted.map(e => e.id)).toEqual(['b', 'a']);
