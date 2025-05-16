@@ -49,8 +49,8 @@ const getSortByExpiry =
 const getSortByVVMStatus =
   () =>
   (
-    a: { vvmStatus?: { level?: number }; expiryDate?: string | null },
-    b: { vvmStatus?: { level?: number }; expiryDate?: string | null }
+    a: { vvmStatus?: { level?: number } | null; expiryDate?: string | null },
+    b: { vvmStatus?: { level?: number } | null; expiryDate?: string | null }
   ) => {
     const aLevel = a.vvmStatus?.level;
     const bLevel = b.vvmStatus?.level;

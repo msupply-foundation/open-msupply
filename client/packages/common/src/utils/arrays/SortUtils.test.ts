@@ -57,7 +57,7 @@ describe('SortUtils', () => {
         expiryDate: '2023/03/01',
       },
       { id: 'vvm_none_2023_07_01', expiryDate: '2023/07/01' }, // no vvmStatus
-      { id: 'vvm_none_none' }, // no vvmStatus & no expiryDate
+      { id: 'vvm_none_none', vvmStatus: null }, // no vvmStatus & no expiryDate
     ];
 
     it('sorts by vvmStatus.level ascending, then expiryDate', () => {
