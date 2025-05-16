@@ -85,7 +85,8 @@ export const useStocktakeColumns = ({
   const t = useTranslation();
   const { getError } = useStocktakeLineErrorContext();
   const { data: preferences } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses
+    PreferenceKey.DisplayVaccinesInDoses,
+    PreferenceKey.AllowTrackingOfStockByDonor
   );
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
@@ -308,17 +309,18 @@ export const useStocktakeColumns = ({
       label: 'label.reason',
       accessor: ({ rowData }) => getStocktakeReasons(rowData, t),
       sortable: false,
-    },
-    {
+    }
+  );
+  if (preferences?.allowTrackingOfStockByDonor) {
+    columns.push({
       key: 'donorId',
       label: 'label.donor',
       accessor: ({ rowData }) => getStocktakeDonor(rowData, t),
       sortable: false,
-    },
+    });
+  }
 
-    getCommentPopoverColumn(),
-    expandColumn
-  );
+  columns.push(getCommentPopoverColumn(), expandColumn);
 
   return useColumns(columns, { sortBy, onChangeSortBy }, [
     sortBy,

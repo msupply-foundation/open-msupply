@@ -19,6 +19,8 @@ import {
   ColumnAlign,
   AdjustmentTypeInput,
   NumberCell,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -297,6 +299,18 @@ export const PricingTable = ({
   );
 };
 
+const getDonorColumn = (
+  setter: DraftLineSetter
+): ColumnDescription<DraftStocktakeLine> => {
+  return {
+    key: 'donorId',
+    label: 'label.donor',
+    width: 200,
+    Cell: DonorCell,
+    setter: patch => setter({ ...patch, countThisLine: true }),
+  };
+};
+
 export const LocationTable = ({
   batches,
   update,
@@ -304,6 +318,10 @@ export const LocationTable = ({
 }: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
+  const { data: preferences } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor
+  );
+
   const columns = useColumns<DraftStocktakeLine>([
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
@@ -314,13 +332,9 @@ export const LocationTable = ({
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
-    {
-      key: 'donorName',
-      label: 'label.donor',
-      width: 200,
-      Cell: DonorCell,
-      setter: patch => update({ ...patch, countThisLine: true }),
-    },
+    ...(preferences?.allowTrackingOfStockByDonor
+      ? [getDonorColumn(update)]
+      : []),
     [
       'comment',
       {
