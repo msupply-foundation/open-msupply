@@ -41,8 +41,7 @@ pub mod response_requisition_line_stats;
 pub mod sync_settings;
 pub mod sync_status;
 pub use self::response_requisition_line_stats::*;
-pub mod inventory_adjustment_reason;
-pub use self::inventory_adjustment_reason::*;
+
 pub mod item_counts;
 pub use self::item_counts::*;
 pub mod barcode;
@@ -62,13 +61,15 @@ pub mod pricing;
 pub use self::pricing::*;
 pub mod reason_option;
 pub use self::reason_option::*;
+pub mod return_reason;
+pub use self::return_reason::*;
+pub mod inventory_adjustment_reason;
+pub use self::inventory_adjustment_reason::*;
 
 pub mod generate_customer_return_lines;
 pub use self::generate_customer_return_lines::*;
 pub mod generate_supplier_return_lines;
 pub use self::generate_supplier_return_lines::*;
-pub mod return_reason;
-pub use self::return_reason::*;
 
 pub mod abbreviation;
 pub mod diagnosis;

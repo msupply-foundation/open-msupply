@@ -6,6 +6,11 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
+use crate::db_diesel::{
+    invoice_row::invoice, item_link_row::item_link, item_row::item, location_row::location,
+    stock_line_row::stock_line,
+};
+
 table! {
     reason_option (id) {
         id -> Text,
@@ -14,6 +19,12 @@ table! {
         reason -> Text,
     }
 }
+
+allow_tables_to_appear_in_same_query!(reason_option, item_link);
+allow_tables_to_appear_in_same_query!(reason_option, item);
+allow_tables_to_appear_in_same_query!(reason_option, location);
+allow_tables_to_appear_in_same_query!(reason_option, invoice);
+allow_tables_to_appear_in_same_query!(reason_option, stock_line);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -73,9 +84,10 @@ impl<'a> ReasonOptionRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(reason_option::table)
+    pub fn soft_delete(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
+        diesel::update(reason_option::table)
             .filter(reason_option::id.eq(reason_option_id))
+            .set(reason_option::is_active.eq(false))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -86,7 +98,7 @@ pub struct ReasonOptionRowDelete(pub String);
 
 impl Delete for ReasonOptionRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ReasonOptionRowRepository::new(con).delete(&self.0)?;
+        ReasonOptionRowRepository::new(con).soft_delete(&self.0)?;
         Ok(None)
     }
 

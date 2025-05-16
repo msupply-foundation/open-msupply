@@ -1,13 +1,12 @@
 use async_graphql::*;
-use repository::{
-    inventory_adjustment_reason::InventoryAdjustmentReason, InventoryAdjustmentReasonRow,
-    InventoryAdjustmentType,
-};
+use repository::{InventoryAdjustmentType, ReasonOption, ReasonOptionRow};
 use service::ListResult;
+
+use super::ReasonOptionNodeType;
 
 #[derive(PartialEq, Debug)]
 pub struct InventoryAdjustmentReasonNode {
-    inventory_adjustment_reason: InventoryAdjustmentReason,
+    inventory_adjustment_reason: ReasonOption,
 }
 
 #[derive(SimpleObject)]
@@ -28,8 +27,8 @@ impl InventoryAdjustmentReasonNode {
         &self.row().id
     }
 
-    pub async fn r#type(&self) -> InventoryAdjustmentReasonNodeType {
-        InventoryAdjustmentReasonNodeType::from_domain(&self.row().r#type)
+    pub async fn r#type(&self) -> ReasonOptionNodeType {
+        ReasonOptionNodeType::from_domain(&self.row().r#type)
     }
 
     pub async fn is_active(&self) -> &bool {
@@ -42,16 +41,14 @@ impl InventoryAdjustmentReasonNode {
 }
 
 impl InventoryAdjustmentReasonNode {
-    pub fn from_domain(inventory_adjustment_reason: InventoryAdjustmentReason) -> Self {
+    pub fn from_domain(inventory_adjustment_reason: ReasonOption) -> Self {
         InventoryAdjustmentReasonNode {
             inventory_adjustment_reason,
         }
     }
 
-    pub fn row(&self) -> &InventoryAdjustmentReasonRow {
-        &self
-            .inventory_adjustment_reason
-            .inventory_adjustment_reason_row
+    pub fn row(&self) -> &ReasonOptionRow {
+        &self.inventory_adjustment_reason.reason_option_row
     }
 }
 
@@ -79,7 +76,7 @@ impl InventoryAdjustmentReasonNodeType {
 
 impl InventoryAdjustmentReasonConnector {
     pub fn from_domain(
-        inventory_adjustment_reasons: ListResult<InventoryAdjustmentReason>,
+        inventory_adjustment_reasons: ListResult<ReasonOption>,
     ) -> InventoryAdjustmentReasonConnector {
         InventoryAdjustmentReasonConnector {
             total_count: inventory_adjustment_reasons.count,

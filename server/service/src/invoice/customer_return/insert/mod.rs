@@ -156,7 +156,7 @@ mod test {
         },
         test_db::setup_all_with_data,
         InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
-        NameRow, NameStoreJoinRow, ReturnReasonRow,
+        NameRow, NameStoreJoinRow, ReasonOptionRow, ReasonOptionType,
     };
     use util::{inline_edit, inline_init};
 
@@ -358,10 +358,11 @@ mod test {
 
     #[actix_rt::test]
     async fn test_insert_customer_return_success() {
-        fn return_reason() -> ReturnReasonRow {
-            inline_init(|r: &mut ReturnReasonRow| {
+        fn return_reason() -> ReasonOptionRow {
+            inline_init(|r: &mut ReasonOptionRow| {
                 r.id = "return_reason".to_string();
                 r.is_active = true;
+                r.r#type = ReasonOptionType::ReturnReason;
             })
         }
 
@@ -381,7 +382,7 @@ mod test {
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![returnable_outbound_shipment()];
-                r.return_reasons = vec![return_reason()];
+                r.reason_options = vec![return_reason()];
             }),
         )
         .await;

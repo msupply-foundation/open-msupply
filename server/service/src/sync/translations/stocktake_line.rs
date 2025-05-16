@@ -150,7 +150,6 @@ impl SyncTranslation for StocktakeLineTranslation {
             cost_price_per_pack: Some(cost_price),
             sell_price_per_pack: Some(sell_price),
             note,
-            inventory_adjustment_reason_id: reason_option_id.clone(),
             item_variant_id,
             reason_option_id,
         };
@@ -191,7 +190,6 @@ impl SyncTranslation for StocktakeLineTranslation {
                     cost_price_per_pack,
                     sell_price_per_pack,
                     note,
-                    inventory_adjustment_reason_id,
                     item_variant_id,
                     reason_option_id,
                 },

@@ -1,4 +1,8 @@
-query StocktakeQuery($storeId: String!, $dataId: String!, $sort: PrintReportSortInput) {
+query StocktakeQuery(
+  $storeId: String!
+  $dataId: String!
+  $sort: PrintReportSortInput
+) {
   stocktake(storeId: $storeId, id: $dataId) {
     ... on StocktakeNode {
       id
@@ -35,10 +39,10 @@ query StocktakeQuery($storeId: String!, $dataId: String!, $sort: PrintReportSort
         snapshotNumberOfPacks
         costPricePerPack
         comment
-        inventoryAdjustmentReasonId
-        inventoryAdjustmentReason {
-          ... on InventoryAdjustmentReasonNode {
+        reasonOption {
+          ... on ReasonOptionNode {
             reason
+            id
           }
         }
       }

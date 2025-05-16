@@ -40,8 +40,8 @@ query StocktakeDetailQuery(
         batch
         snapshotNumberOfPacks
         costPricePerPack
-        inventoryAdjustmentReason {
-          ... on InventoryAdjustmentReasonNode {
+        reasonOption {
+          ... on ReasonOptionNode {
             reason
           }
         }

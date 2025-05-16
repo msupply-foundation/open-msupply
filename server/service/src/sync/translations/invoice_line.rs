@@ -279,16 +279,6 @@ impl SyncTranslation for InvoiceLineTranslation {
             number_of_packs,
             prescribed_quantity,
             note,
-            inventory_adjustment_reason_id: match invoice.r#type {
-                InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => {
-                    option_id.clone()
-                }
-                _ => None,
-            },
-            return_reason_id: match invoice.r#type {
-                InvoiceType::CustomerReturn | InvoiceType::SupplierReturn => option_id.clone(),
-                _ => None,
-            },
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
@@ -345,8 +335,6 @@ impl SyncTranslation for InvoiceLineTranslation {
                     number_of_packs,
                     prescribed_quantity,
                     note,
-                    inventory_adjustment_reason_id,
-                    return_reason_id,
                     foreign_currency_price_before_tax,
                     item_variant_id,
                     linked_invoice_id,
@@ -354,7 +342,6 @@ impl SyncTranslation for InvoiceLineTranslation {
                     reason_option_id,
                 },
             item_row,
-            invoice_row,
             ..
         } = invoice_line;
 
