@@ -125,6 +125,7 @@ pub enum ChangelogTableName {
     FormSchema,
     PluginData,
     Preference,
+    VVMStatusLog,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -202,6 +203,7 @@ impl ChangelogTableName {
             ChangelogTableName::FormSchema => ChangeLogSyncStyle::Central,
             ChangelogTableName::PluginData => ChangeLogSyncStyle::RemoteAndCentral,
             ChangelogTableName::Preference => ChangeLogSyncStyle::RemoteAndCentral,
+            ChangelogTableName::VVMStatusLog => ChangeLogSyncStyle::Legacy,
         }
     }
 }

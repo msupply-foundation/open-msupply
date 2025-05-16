@@ -175,6 +175,7 @@ fn generate_line(
         foreign_currency_price_before_tax,
         item_variant_id,
         linked_invoice_id: None,
+        donor_id: None,
         reason_option_id: None,
     })
 }

@@ -1,11 +1,9 @@
-use repository::{
-    vvm_status::{
-        vvm_status_log_row::VVMStatusLogRowRepository, vvm_status_row::VVMStatusRowRepository,
-    },
-    RepositoryError, StorageConnection,
-};
+use repository::StorageConnection;
 
-use crate::common_stock::check_stock_line_does_not_exist;
+use crate::{
+    common_stock::check_stock_line_does_not_exist,
+    vvm::vvm_status_log::validate::{check_vvm_status_exists, get_vvm_status_log},
+};
 
 use super::{InsertVVMStatusLogError, InsertVVMStatusLogInput};
 
@@ -13,7 +11,8 @@ pub fn validate(
     input: &InsertVVMStatusLogInput,
     connection: &StorageConnection,
 ) -> Result<(), InsertVVMStatusLogError> {
-    if check_vvm_status_log_exists(&input.id, connection)? {
+    let vvm_status_log = get_vvm_status_log(&input.id, connection)?;
+    if vvm_status_log.is_some() {
         return Err(InsertVVMStatusLogError::VVMStatusLogAlreadyExists);
     }
 
@@ -26,20 +25,4 @@ pub fn validate(
     }
 
     Ok(())
-}
-
-pub fn check_vvm_status_log_exists(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<bool, RepositoryError> {
-    let vvm_status_log = VVMStatusLogRowRepository::new(connection).find_one_by_id(id)?;
-    Ok(vvm_status_log.is_some())
-}
-
-pub fn check_vvm_status_exists(
-    status_id: &str,
-    connection: &StorageConnection,
-) -> Result<bool, RepositoryError> {
-    let vvm_status = VVMStatusRowRepository::new(connection).find_one_by_id(status_id)?;
-    Ok(vvm_status.is_some())
 }

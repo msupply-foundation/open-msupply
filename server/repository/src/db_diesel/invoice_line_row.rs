@@ -43,6 +43,7 @@ table! {
         foreign_currency_price_before_tax -> Nullable<Double>,
         item_variant_id -> Nullable<Text>,
         linked_invoice_id -> Nullable<Text>,
+        donor_id -> Nullable<Text>,
         reason_option_id -> Nullable<Text>,
     }
 }
@@ -100,6 +101,7 @@ pub struct InvoiceLineRow {
     pub foreign_currency_price_before_tax: Option<f64>,
     pub item_variant_id: Option<String>,
     pub linked_invoice_id: Option<String>,
+    pub donor_id: Option<String>,
     pub reason_option_id: Option<String>,
 }
 

@@ -161,6 +161,8 @@ fn generate_stock_in_out_or_update(
             // Default
             total_before_tax: None,
             tax_percentage: None,
+            donor_id: None,
+            vvm_status_id: None, // Setting to none until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
         })
     } else {
         StockChange::StockOut(InsertStockOutLine {
@@ -333,6 +335,8 @@ fn generate_new_stock_line(
         total_before_tax: None,
         tax_percentage: None,
         item_variant_id: stocktake_line.line.item_variant_id.clone(),
+        donor_id: None,
+        vvm_status_id: None, // Setting to none until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
     });
 
     // If new stock line has a location, create location movement
@@ -579,6 +583,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
+        default_donor_id: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {

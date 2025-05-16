@@ -139,6 +139,9 @@ pub use self::insurance_provider::*;
 pub mod warning;
 pub use self::warning::*;
 
+pub mod vvm_status;
+pub use self::vvm_status::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

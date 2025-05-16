@@ -89,17 +89,26 @@ fn generate_line(
         barcode: _,
         stock_on_hold: _,
         tax_percentage: _,
+        donor_id,
         r#type: _,
+        vvm_status_id: _, // Ignoring until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
     }: InsertStockInLine,
     ItemRow {
         name: item_name,
         code: item_code,
         ..
     }: ItemRow,
-    InvoiceRow { tax_percentage, .. }: InvoiceRow,
+    InvoiceRow {
+        tax_percentage,
+        default_donor_id,
+        ..
+    }: InvoiceRow,
 ) -> InvoiceLineRow {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax_percentage);
+    // default to invoice_row donor_id if none supplied on insert
+    let donor_id = donor_id.or(default_donor_id);
+
     InvoiceLineRow {
         id,
         invoice_id,
@@ -125,6 +134,7 @@ fn generate_line(
         return_reason_id: None,
         foreign_currency_price_before_tax: None,
         linked_invoice_id: None,
+        donor_id,
         reason_option_id: None,
     }
 }
