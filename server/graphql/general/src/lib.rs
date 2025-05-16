@@ -14,7 +14,7 @@ use service::sync::CentralServerConfig;
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
     AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, DiagnosisNode,
-    MasterListFilterInput, ReasonOptionNodeType, StorePreferenceNode,
+    MasterListFilterInput, StorePreferenceNode,
 };
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
@@ -281,24 +281,11 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<ReasonOptionFilterInput>,
+        #[graphql(desc = "Filter option")] filter: Option<InventoryAdjustmentReasonFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<ReasonOptionSortInput>>,
-    ) -> Result<ReasonOptionResponse> {
-        let mut filtered_reasons = filter.unwrap_or(ReasonOptionFilterInput {
-            r#type: None,
-            id: None,
-            is_active: None,
-        });
-        filtered_reasons.r#type = Some(EqualFilterReasonOptionTypeInput {
-            equal_any: Some(vec![
-                ReasonOptionNodeType::PositiveInventoryAdjustment,
-                ReasonOptionNodeType::NegativeInventoryAdjustment,
-            ]),
-            equal_to: None,
-            not_equal_to: None,
-        });
-        reason_options(ctx, page, Some(filtered_reasons), sort)
+        sort: Option<Vec<InventoryAdjustmentReasonSortInput>>,
+    ) -> Result<InventoryAdjustmentReasonResponse> {
+        inventory_adjustment_reasons(ctx, page, filter, sort)
     }
 
     pub async fn item_counts(

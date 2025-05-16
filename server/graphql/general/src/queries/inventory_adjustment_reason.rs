@@ -1,22 +1,18 @@
 use async_graphql::*;
 use graphql_core::{
     generic_filters::EqualFilterStringInput,
-    map_filter,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::{InventoryAdjustmentReasonConnector, InventoryAdjustmentReasonNodeType};
 use repository::{
-    inventory_adjustment_reason::{
-        InventoryAdjustmentReasonFilter, InventoryAdjustmentReasonSort,
-        InventoryAdjustmentReasonSortField,
-    },
-    EqualFilter, PaginationOption,
+    EqualFilter, PaginationOption, ReasonOptionFilter, ReasonOptionSort, ReasonOptionSortField,
+    ReasonOptionType,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    inventory_adjustment_reason::get_inventory_adjustment_reasons,
+    reason_option::get_reason_options,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -71,10 +67,10 @@ pub fn inventory_adjustment_reasons(
     )?;
 
     let connection_manager = ctx.get_connection_manager();
-    let items = get_inventory_adjustment_reasons(
+    let items = get_reason_options(
         connection_manager,
         page.map(PaginationOption::from),
-        filter.map(|filter| filter.to_domain()),
+        Some(map_inventory_adjustment_reason_filter(filter)),
         // Currently only one sort option is supported, use the first from the list.
         sort.and_then(|mut sort_list| sort_list.pop())
             .map(|sort| sort.to_domain()),
@@ -86,33 +82,47 @@ pub fn inventory_adjustment_reasons(
     ))
 }
 
-impl InventoryAdjustmentReasonFilterInput {
-    pub fn to_domain(self) -> InventoryAdjustmentReasonFilter {
-        let InventoryAdjustmentReasonFilterInput {
-            id,
-            r#type,
-            is_active,
-        } = self;
+// Map from InventoryAdjustmentReasonFilter => ReasonOptionFilter
+fn map_inventory_adjustment_reason_filter(
+    filter: Option<InventoryAdjustmentReasonFilterInput>,
+) -> ReasonOptionFilter {
+    let base_filter = ReasonOptionFilter {
+        id: None,
+        r#type: Some(EqualFilter {
+            equal_to: None,
+            not_equal_to: None,
+            equal_any: Some(vec![
+                ReasonOptionType::PositiveInventoryAdjustment,
+                ReasonOptionType::NegativeInventoryAdjustment,
+            ]),
+            equal_any_or_null: None,
+            not_equal_all: None,
+            is_null: None,
+        }),
+        is_active: None,
+    };
 
-        InventoryAdjustmentReasonFilter {
-            id: id.map(EqualFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, InventoryAdjustmentReasonNodeType::to_domain)),
-            is_active,
-        }
+    match filter {
+        Some(filter) => ReasonOptionFilter {
+            id: filter.id.map(EqualFilter::from),
+            is_active: filter.is_active,
+            ..base_filter
+        },
+        None => base_filter,
     }
 }
 
 impl InventoryAdjustmentReasonSortInput {
-    pub fn to_domain(self) -> InventoryAdjustmentReasonSort {
-        use InventoryAdjustmentReasonSortField as to;
+    pub fn to_domain(self) -> ReasonOptionSort {
         use InventoryAdjustmentReasonSortFieldInput as from;
+        use ReasonOptionSortField as to;
         let key = match self.key {
-            from::Id => to::Id,
-            from::InventoryAdjustmentReasonType => to::InventoryAdjustmentReasonType,
+            from::Id => to::Reason, // TODO: Implement sort by ID for ReasonOptionSortField or remove from InventoryAdjustmentReasonSortField
+            from::InventoryAdjustmentReasonType => to::ReasonOptionType,
             from::Reason => to::Reason,
         };
 
-        InventoryAdjustmentReasonSort {
+        ReasonOptionSort {
             key,
             desc: self.desc,
         }

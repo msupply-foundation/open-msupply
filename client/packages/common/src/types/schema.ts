@@ -2440,6 +2440,12 @@ export type EqualFilterGenderType = {
   notEqualTo?: InputMaybe<GenderType>;
 };
 
+export type EqualFilterInventoryAdjustmentReasonTypeInput = {
+  equalAny?: InputMaybe<Array<InventoryAdjustmentReasonNodeType>>;
+  equalTo?: InputMaybe<InventoryAdjustmentReasonNodeType>;
+  notEqualTo?: InputMaybe<InventoryAdjustmentReasonNodeType>;
+};
+
 export type EqualFilterInvoiceLineTypeInput = {
   equalAny?: InputMaybe<Array<InvoiceLineNodeType>>;
   equalTo?: InputMaybe<InvoiceLineNodeType>;
@@ -3780,6 +3786,50 @@ export type InvalidToken = RefreshTokenErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type InventoryAdjustmentReasonConnector = {
+  __typename: 'InventoryAdjustmentReasonConnector';
+  nodes: Array<InventoryAdjustmentReasonNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type InventoryAdjustmentReasonFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  type?: InputMaybe<EqualFilterInventoryAdjustmentReasonTypeInput>;
+};
+
+export type InventoryAdjustmentReasonNode = {
+  __typename: 'InventoryAdjustmentReasonNode';
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  reason: Scalars['String']['output'];
+  type: ReasonOptionNodeType;
+};
+
+export enum InventoryAdjustmentReasonNodeType {
+  Negative = 'NEGATIVE',
+  Positive = 'POSITIVE',
+}
+
+export type InventoryAdjustmentReasonResponse =
+  InventoryAdjustmentReasonConnector;
+
+export enum InventoryAdjustmentReasonSortFieldInput {
+  Id = 'id',
+  InventoryAdjustmentReasonType = 'inventoryAdjustmentReasonType',
+  Reason = 'reason',
+}
+
+export type InventoryAdjustmentReasonSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: InventoryAdjustmentReasonSortFieldInput;
+};
+
 export type InvoiceConnector = {
   __typename: 'InvoiceConnector';
   nodes: Array<InvoiceNode>;
@@ -3865,7 +3915,7 @@ export type InvoiceLineNode = {
   foreignCurrencyPriceBeforeTax?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
   /** @deprecated Since 2.8.0. Use reason_option instead */
-  inventoryAdjustmentReason?: Maybe<ReasonOptionNode>;
+  inventoryAdjustmentReason?: Maybe<InventoryAdjustmentReasonNode>;
   invoiceId: Scalars['String']['output'];
   item: ItemNode;
   itemCode: Scalars['String']['output'];
@@ -6337,7 +6387,7 @@ export type Queries = {
   insurancePolicy: InsuranceResponse;
   insuranceProviders: InsuranceProvidersResponse;
   /** @deprecated Since 2.8.0. Use reason_options instead */
-  inventoryAdjustmentReasons: ReasonOptionResponse;
+  inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;
@@ -6700,9 +6750,9 @@ export type QueriesInsuranceProvidersArgs = {
 };
 
 export type QueriesInventoryAdjustmentReasonsArgs = {
-  filter?: InputMaybe<ReasonOptionFilterInput>;
+  filter?: InputMaybe<InventoryAdjustmentReasonFilterInput>;
   page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<ReasonOptionSortInput>>;
+  sort?: InputMaybe<Array<InventoryAdjustmentReasonSortInput>>;
 };
 
 export type QueriesInvoiceArgs = {
@@ -8059,7 +8109,7 @@ export type StocktakeLineNode = {
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   /** @deprecated Since 2.8.0. Use reason_option instead */
-  inventoryAdjustmentReason?: Maybe<ReasonOptionNode>;
+  inventoryAdjustmentReason?: Maybe<InventoryAdjustmentReasonNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
   inventoryAdjustmentReasonId?: Maybe<Scalars['String']['output']>;
   item: ItemNode;

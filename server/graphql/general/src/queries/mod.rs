@@ -63,6 +63,8 @@ pub mod reason_option;
 pub use self::reason_option::*;
 pub mod return_reason;
 pub use self::return_reason::*;
+pub mod inventory_adjustment_reason;
+pub use self::inventory_adjustment_reason::*;
 
 pub mod generate_customer_return_lines;
 pub use self::generate_customer_return_lines::*;

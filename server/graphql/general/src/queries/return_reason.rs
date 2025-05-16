@@ -98,24 +98,13 @@ pub enum ReturnReasonResponse {
     Response(ReturnReasonConnector),
 }
 
-// impl ReturnReasonFilterInput {
-//     pub fn to_domain(self) -> ReturnReasonFilter {
-//         let ReturnReasonFilterInput { id, is_active } = self;
-
-//         ReturnReasonFilter {
-//             id: id.map(EqualFilter::from),
-//             is_active,
-//         }
-//     }
-// }
-
 impl ReturnReasonSortInput {
     pub fn to_domain(self) -> ReasonOptionSort {
         use ReasonOptionSortField as to;
         use ReturnReasonSortFieldInput as from;
 
         let key = match self.key {
-            from::Id => to::Reason, // TODO: Implement sort by ID or remove
+            from::Id => to::Reason, // // TODO: Implement sort by ID for ReasonOptionSortField or remove from ReturnReasonSortField
             from::Reason => to::Reason,
         };
 

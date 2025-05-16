@@ -42,7 +42,7 @@ pub mod document;
 pub mod email;
 pub mod insurance;
 pub mod insurance_provider;
-pub mod inventory_adjustment_reason;
+// pub mod inventory_adjustment_reason;
 pub mod invoice;
 pub mod invoice_line;
 pub mod item;
