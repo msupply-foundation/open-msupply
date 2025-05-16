@@ -1042,6 +1042,12 @@ export type DraftStockOutLineFragment = {
     code: string;
     onHold: boolean;
   } | null;
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    level: number;
+    unusable: boolean;
+  } | null;
 };
 
 export type GetOutboundEditLinesQueryVariables = Types.Exact<{
@@ -1082,6 +1088,12 @@ export type GetOutboundEditLinesQuery = {
         name: string;
         code: string;
         onHold: boolean;
+      } | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        level: number;
+        unusable: boolean;
       } | null;
     }>;
   };
@@ -1235,6 +1247,12 @@ export const DraftStockOutLineFragmentDoc = gql`
       name
       code
       onHold
+    }
+    vvmStatus {
+      __typename
+      id
+      level
+      unusable
     }
   }
 `;

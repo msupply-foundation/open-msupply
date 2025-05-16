@@ -1,9 +1,12 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
-use graphql_core::{loader::LocationByIdLoader, ContextExt};
+use graphql_core::{
+    loader::{LocationByIdLoader, VVMStatusByIdLoader},
+    ContextExt,
+};
 use service::invoice_line::get_draft_outbound_lines::DraftOutboundShipmentLine;
 
-use super::LocationNode;
+use super::{LocationNode, VVMStatusNode};
 
 pub struct DraftOutboundShipmentItemData {
     pub lines: Vec<DraftOutboundShipmentLine>,
@@ -89,5 +92,22 @@ impl DraftOutboundShipmentLineNode {
         let result = loader.load_one(location_id.clone()).await?;
 
         Ok(result.map(LocationNode::from_domain))
+    }
+
+    pub async fn vvm_status(&self, ctx: &Context<'_>) -> Result<Option<VVMStatusNode>> {
+        if self.shipment_line.vvm_status_id.is_none() {
+            return Ok(None);
+        }
+
+        let loader = ctx.get_loader::<DataLoader<VVMStatusByIdLoader>>();
+        let status_id = match self.shipment_line.vvm_status_id.clone() {
+            Some(status_id) => status_id,
+            None => return Ok(None),
+        };
+
+        Ok(loader
+            .load_one(status_id)
+            .await?
+            .map(VVMStatusNode::from_domain))
     }
 }
