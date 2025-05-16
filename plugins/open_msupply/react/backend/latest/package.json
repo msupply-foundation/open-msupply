@@ -7,7 +7,8 @@
         "types": [
             "average_monthly_consumption",
             "transform_request_requisition_lines",
-            "graphql_query"
+            "graphql_query",
+            "processor"
         ],
         "variant_type": "BOA_JS"
     },
