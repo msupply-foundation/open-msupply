@@ -13,6 +13,8 @@ pub enum PluginType {
     AverageMonthlyConsumption,
     TransformRequestRequisitionLines,
     GraphqlQuery,
+    // TODO backwards compatibility ? When integrating this one via sync
+    Processor,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]

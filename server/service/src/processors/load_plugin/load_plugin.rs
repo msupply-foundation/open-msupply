@@ -6,6 +6,7 @@ use repository::{
 
 use crate::{
     backend_plugin::plugin_provider::PluginInstance,
+    cursor_controller::CursorType,
     processors::general_processor::{Processor, ProcessorError},
     service_provider::{ServiceContext, ServiceProvider},
 };
@@ -62,7 +63,7 @@ impl Processor for LoadPlugin {
         ]
     }
 
-    fn cursor_type(&self) -> KeyType {
-        KeyType::LoadPluginProcessorCursor
+    fn cursor_type(&self) -> CursorType {
+        CursorType::Standard(KeyType::LoadPluginProcessorCursor)
     }
 }
