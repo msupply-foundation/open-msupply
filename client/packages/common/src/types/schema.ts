@@ -3780,19 +3780,6 @@ export type InvalidToken = RefreshTokenErrorInterface & {
   description: Scalars['String']['output'];
 };
 
-export type InventoryAdjustmentReasonNode = {
-  __typename: 'InventoryAdjustmentReasonNode';
-  id: Scalars['String']['output'];
-  isActive: Scalars['Boolean']['output'];
-  reason: Scalars['String']['output'];
-  type: InventoryAdjustmentReasonNodeType;
-};
-
-export enum InventoryAdjustmentReasonNodeType {
-  Negative = 'NEGATIVE',
-  Positive = 'POSITIVE',
-}
-
 export type InvoiceConnector = {
   __typename: 'InvoiceConnector';
   nodes: Array<InvoiceNode>;
@@ -3878,7 +3865,7 @@ export type InvoiceLineNode = {
   foreignCurrencyPriceBeforeTax?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
   /** @deprecated Since 2.8.0. Use reason_option instead */
-  inventoryAdjustmentReason?: Maybe<InventoryAdjustmentReasonNode>;
+  inventoryAdjustmentReason?: Maybe<ReasonOptionNode>;
   invoiceId: Scalars['String']['output'];
   item: ItemNode;
   itemCode: Scalars['String']['output'];
@@ -3895,7 +3882,7 @@ export type InvoiceLineNode = {
   pricing: PricingNode;
   reasonOption?: Maybe<ReasonOptionNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
-  returnReason?: Maybe<ReturnReasonNode>;
+  returnReason?: Maybe<ReasonOptionNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReasonId?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
@@ -7656,13 +7643,6 @@ export type ResponseStoreStatsNode = {
   stockOnOrder: Scalars['Float']['output'];
 };
 
-export type ReturnReasonNode = {
-  __typename: 'ReturnReasonNode';
-  id: Scalars['String']['output'];
-  isActive: Scalars['Boolean']['output'];
-  reason: Scalars['String']['output'];
-};
-
 export type RnRFormConnector = {
   __typename: 'RnRFormConnector';
   nodes: Array<RnRFormNode>;
@@ -8044,7 +8024,7 @@ export type StocktakeLineNode = {
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   /** @deprecated Since 2.8.0. Use reason_option instead */
-  inventoryAdjustmentReason?: Maybe<InventoryAdjustmentReasonNode>;
+  inventoryAdjustmentReason?: Maybe<ReasonOptionNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
   inventoryAdjustmentReasonId?: Maybe<Scalars['String']['output']>;
   item: ItemNode;
