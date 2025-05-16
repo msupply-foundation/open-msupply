@@ -66,33 +66,36 @@ pub fn generate_logs(
         }
 
         if existing_item_variant.cold_storage_type_id != updated_item_variant.cold_storage_type_id {
-            if let (Some(existing_storage_type), Some(updated_storage_type)) = (
-                existing_variant.cold_storage_type_row,
-                updated_variant.cold_storage_type_row,
-            ) {
-                activity_log_entry(
-                    ctx,
-                    ActivityLogType::ItemVariantUpdateColdStorageType,
-                    Some(existing_item_variant.id.clone()),
-                    Some(existing_storage_type.name.clone()),
-                    Some(updated_storage_type.name.clone()),
-                )?;
-            }
+            let existing_variant_name: Option<String> = existing_variant
+                .cold_storage_type_row
+                .map(|row| row.name.clone());
+            let updated_variant_name = updated_variant
+                .cold_storage_type_row
+                .map(|row| row.name.clone());
+
+            activity_log_entry(
+                ctx,
+                ActivityLogType::ItemVariantUpdateColdStorageType,
+                Some(existing_item_variant.id.clone()),
+                existing_variant_name,
+                updated_variant_name,
+            )?;
         }
 
         if existing_item_variant.manufacturer_link_id != updated_item_variant.manufacturer_link_id {
-            if let (Some(existing_manufacturer), Some(updated_manufacturer)) = (
-                existing_variant.manufacturer_row,
-                updated_variant.manufacturer_row,
-            ) {
-                activity_log_entry(
-                    ctx,
-                    ActivityLogType::ItemVariantUpdateManufacturer,
-                    Some(existing_item_variant.id.clone()),
-                    Some(existing_manufacturer.name.clone()),
-                    Some(updated_manufacturer.name.clone()),
-                )?;
-            }
+            let existing_manufacturer_name = existing_variant
+                .manufacturer_row
+                .map(|row| row.name.clone());
+            let updated_manufacturer_name =
+                updated_variant.manufacturer_row.map(|row| row.name.clone());
+
+            activity_log_entry(
+                ctx,
+                ActivityLogType::ItemVariantUpdateManufacturer,
+                Some(existing_item_variant.id.clone()),
+                existing_manufacturer_name,
+                updated_manufacturer_name,
+            )?;
         }
 
         if existing_item_variant.doses_per_unit != updated_item_variant.doses_per_unit {
@@ -110,8 +113,8 @@ pub fn generate_logs(
                 ctx,
                 ActivityLogType::ItemVariantUpdateVVMType,
                 Some(existing_item_variant.id.clone()),
-                Some(existing_item_variant.vvm_type.clone().unwrap_or_default()),
-                Some(updated_item_variant.vvm_type.clone().unwrap_or_default()),
+                existing_item_variant.vvm_type.clone(),
+                updated_item_variant.vvm_type.clone(),
             )?;
         }
     } else {
