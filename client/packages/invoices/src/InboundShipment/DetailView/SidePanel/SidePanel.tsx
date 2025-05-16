@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   CopyIcon,
   DeleteIcon,
@@ -10,6 +10,8 @@ import {
   useTranslation,
   RouteBuilder,
   useNavigate,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
@@ -19,12 +21,17 @@ import { TransportSection } from './TransportSection';
 import { AppRoute } from '@openmsupply-client/config';
 import { DonorSection } from './DonorSection';
 
-export const SidePanel: FC = () => {
+export const SidePanel = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { success } = useNotification();
+
   const { data } = useInbound.document.get();
   const { mutateAsync } = useInbound.document.delete();
+  const { data: prefs } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor
+  );
+
   const isTransfer = !!data?.linkedShipment?.id;
   const canDelete = data?.status === InvoiceNodeStatus.New;
 
@@ -79,7 +86,7 @@ export const SidePanel: FC = () => {
       <RelatedDocumentsSection />
       <PricingSection />
       {isTransfer && <TransportSection />}
-      <DonorSection />
+      {prefs?.allowTrackingOfStockByDonor && <DonorSection />}
     </DetailPanelPortal>
   );
 };
