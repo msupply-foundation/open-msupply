@@ -6,8 +6,7 @@ use service::usize_to_u32;
 
 use graphql_core::{
     loader::{
-        InventoryAdjustmentReasonByIdLoader, ItemLoader, LocationByIdLoader, NameRowLoader,
-        StockLineByIdLoader,
+        InventoryAdjustmentReasonByIdLoader, ItemLoader, LocationByIdLoader, StockLineByIdLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -136,28 +135,12 @@ impl StocktakeLineNode {
         Ok(result.map(InventoryAdjustmentReasonNode::from_domain))
     }
 
-    // todo - join to name row - name by name link loader?
-    pub async fn donor_id(&self) -> &Option<String> {
-        &self.line.line.donor_link_id
+    pub async fn donor_id(&self) -> Option<String> {
+        self.line.donor.clone().map(|d| d.id)
     }
 
-    // probs need the whole donor for editing..
-    pub async fn donor_name(&self, ctx: &Context<'_>) -> Result<Option<String>> {
-        let Some(donor_id) = &self.line.line.donor_link_id else {
-            return Ok(None);
-        };
-
-        let loader = ctx.get_loader::<DataLoader<NameRowLoader>>();
-
-        let name_row = loader.load_one(donor_id.to_string()).await?.ok_or(
-            StandardGraphqlError::InternalError(format!(
-                "Cannot find donor name for donor_id ({})",
-                donor_id
-            ))
-            .extend(),
-        )?;
-
-        Ok(Some(name_row.name))
+    pub async fn donor_name(&self) -> Option<String> {
+        self.line.donor.clone().map(|d| d.name)
     }
 }
 
