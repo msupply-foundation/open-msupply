@@ -25,6 +25,7 @@ pub struct UpdateStocktakeLine {
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
     pub item_variant_id: Option<NullableUpdate<String>>,
+    pub donor_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]

@@ -3591,6 +3591,7 @@ export type InsertStocktakeLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  donorId?: InputMaybe<Scalars['String']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
@@ -9477,6 +9478,7 @@ export type UpdateStocktakeLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  donorId?: InputMaybe<NullableStringUpdate>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;

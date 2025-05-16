@@ -36,6 +36,7 @@ pub struct UpdateInput {
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
     pub item_variant_id: Option<NullableUpdateInput<String>>,
+    pub donor_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Union)]
@@ -107,6 +108,7 @@ impl UpdateInput {
             note,
             inventory_adjustment_reason_id,
             item_variant_id,
+            donor_id,
         } = self;
 
         ServiceInput {
@@ -126,6 +128,9 @@ impl UpdateInput {
             inventory_adjustment_reason_id,
             item_variant_id: item_variant_id.map(|item_variant_id| NullableUpdate {
                 value: item_variant_id.value,
+            }),
+            donor_id: donor_id.map(|donor_id| NullableUpdate {
+                value: donor_id.value,
             }),
         }
     }
@@ -295,6 +300,7 @@ mod test {
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),
                 item: mock_item_a(),
+                donor: None,
             })
         }));
 
