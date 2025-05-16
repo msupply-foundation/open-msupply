@@ -87,6 +87,7 @@ fn generate_line(
         location_id: None,
         foreign_currency_price_before_tax: None,
         linked_invoice_id: None,
+        donor_id: None,
         reason_option_id: None,
     }
 }

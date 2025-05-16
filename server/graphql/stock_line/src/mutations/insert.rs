@@ -32,6 +32,7 @@ pub struct InsertInput {
     /// Empty barcode will unlink barcode from StockLine
     pub barcode: Option<String>,
     pub item_variant_id: Option<String>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -100,6 +101,7 @@ impl InsertInput {
             inventory_adjustment_reason_id,
             reason_option_id,
             item_variant_id,
+            vvm_status_id,
         } = self;
 
         AddNewStockLine {
@@ -118,6 +120,7 @@ impl InsertInput {
             pack_size,
             reason_option_id,
             item_variant_id,
+            vvm_status_id,
         }
     }
 }

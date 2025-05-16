@@ -26,9 +26,9 @@ export const usePrescriptionLineEditColumns = ({
 }) => {
   const t = useTranslation();
   const { data: preferences } = usePreference(
-    PreferenceKey.DisplayVaccineInDoses
+    PreferenceKey.DisplayVaccinesInDoses
   );
-  const displayInDoses = !!preferences?.displayVaccineInDoses && !!isVaccine;
+  const displayInDoses = !!preferences?.displayVaccinesInDoses && !!isVaccine;
   const unit = Formatter.sentenceCase(unitName);
 
   const columns: ColumnDescription<
@@ -38,7 +38,7 @@ export const usePrescriptionLineEditColumns = ({
       'expiryDate',
       {
         Cell: ExpiryDateCell,
-        width: 80,
+        width: 100,
       },
     ],
     [

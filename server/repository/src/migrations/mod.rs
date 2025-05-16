@@ -191,7 +191,7 @@ pub fn migrate(
 
         // TODO transaction ?
 
-        // Run one time migrations
+        // Run one time migrations only if we're on the last version, if we're in a test case checking an old creating migrations might fail
         if migration_version > database_version {
             log::info!("Running one time database migration {}", migration_version);
             migration
@@ -225,13 +225,20 @@ pub fn migrate(
 
     let final_database_version = get_database_version(connection);
 
-    // Recreate views
-    // .unwrap() is safe here, as we know the migrations vec is populated
-    let last_version_in_migrations_vec = migrations.last().unwrap().version();
+    // Unwrap is safe here, because we know that the migration vec is not empty
+    let last_version_in_migration_vec = migrations.last().unwrap().version();
 
-    // only want to apply views against the latest database schema
-    if final_database_version >= last_version_in_migrations_vec {
+    // Recreate views only if we've migrated to the latest version
+    // Creating Views on an earlier version migration test might fail due to more recent views referencing schema elements that didn't previously exist
+    // Note: When Migration tests run, views won't be available
+    if final_database_version >= last_version_in_migration_vec && drop_view_has_run {
         rebuild_views(connection).map_err(MigrationError::DatabaseViewsError)?;
+    } else {
+        log::warn!(
+            "Not recreating views, database version is {}, last version in migration vec is {}",
+            final_database_version,
+            last_version_in_migration_vec
+        );
     }
 
     set_database_version(connection, &to_version)?;

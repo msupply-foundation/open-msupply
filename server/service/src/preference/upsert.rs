@@ -12,47 +12,59 @@ pub struct StorePrefUpdate<T> {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct UpsertPreferences {
+    // Global preferences
+    pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub show_contact_tracing: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
-    pub display_vaccine_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
-    pub manage_vvm_status: Option<Vec<StorePrefUpdate<bool>>>,
-    pub sort_by_vvm_status: Option<Vec<StorePrefUpdate<bool>>>,
+    // Store preferences
+    pub display_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
+    pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,
+    pub sort_by_vvm_status_then_expiry: Option<Vec<StorePrefUpdate<bool>>>,
 }
 
 pub fn upsert_preferences(
     ctx: &ServiceContext,
     UpsertPreferences {
-        show_contact_tracing: show_contact_tracing_input,
+        // Global preferences
+        allow_tracking_of_stock_by_donor: allow_tracking_of_stock_by_donor_input,
         display_population_based_forecasting: display_population_based_forecasting_input,
-        display_vaccine_in_doses: display_vaccine_in_doses_input,
-        manage_vvm_status: manage_vvm_status_input,
-        sort_by_vvm_status: sort_by_vvm_status_input,
+        show_contact_tracing: show_contact_tracing_input,
+        // Store preferences
+        display_vaccines_in_doses: display_vaccines_in_doses_input,
+        manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
+        sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
-        show_contact_tracing,
+        // Global preferences
+        allow_tracking_of_stock_by_donor,
         display_population_based_forecasting,
-        display_vaccine_in_doses,
-        manage_vvm_status,
-        sort_by_vvm_status,
+        show_contact_tracing,
+        // Store preferences
+        display_vaccines_in_doses,
+        manage_vvm_status_for_stock,
+        sort_by_vvm_status_then_expiry,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
         .transaction_sync(|connection| {
-            // Call upsert for each preference, if input is Some
-
-            if let Some(input) = show_contact_tracing_input {
-                show_contact_tracing.upsert(connection, input, None)?;
+            // Global preferences
+            if let Some(input) = allow_tracking_of_stock_by_donor_input {
+                allow_tracking_of_stock_by_donor.upsert(connection, input, None)?;
             }
 
             if let Some(input) = display_population_based_forecasting_input {
                 display_population_based_forecasting.upsert(connection, input, None)?;
             }
 
-            // For a store pref, input could be array of store IDs and values - iterate and insert...
-            if let Some(input) = display_vaccine_in_doses_input {
+            if let Some(input) = show_contact_tracing_input {
+                show_contact_tracing.upsert(connection, input, None)?;
+            }
+
+            // Store peferences, input could be array of store IDs and values - iterate and insert...
+            if let Some(input) = display_vaccines_in_doses_input {
                 for update in input.into_iter() {
-                    display_vaccine_in_doses.upsert(
+                    display_vaccines_in_doses.upsert(
                         connection,
                         update.value,
                         Some(update.store_id),
@@ -60,15 +72,23 @@ pub fn upsert_preferences(
                 }
             }
 
-            if let Some(input) = manage_vvm_status_input {
+            if let Some(input) = manage_vvm_status_for_stock_input {
                 for update in input.into_iter() {
-                    manage_vvm_status.upsert(connection, update.value, Some(update.store_id))?;
+                    manage_vvm_status_for_stock.upsert(
+                        connection,
+                        update.value,
+                        Some(update.store_id),
+                    )?;
                 }
             }
 
-            if let Some(input) = sort_by_vvm_status_input {
+            if let Some(input) = sort_by_vvm_status_then_expiry_input {
                 for update in input.into_iter() {
-                    sort_by_vvm_status.upsert(connection, update.value, Some(update.store_id))?;
+                    sort_by_vvm_status_then_expiry.upsert(
+                        connection,
+                        update.value,
+                        Some(update.store_id),
+                    )?;
                 }
             }
 

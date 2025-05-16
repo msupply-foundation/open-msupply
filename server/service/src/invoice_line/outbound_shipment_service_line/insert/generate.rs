@@ -48,6 +48,7 @@ pub fn generate(
         prescribed_quantity: None,
         item_variant_id: None,
         linked_invoice_id: None,
+        donor_id: None,
         reason_option_id: None,
     })
 }
