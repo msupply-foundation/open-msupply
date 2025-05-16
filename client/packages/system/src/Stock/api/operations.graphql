@@ -1,17 +1,3 @@
-fragment VVMStatusLogRow on VvmstatusLogNode {
-  id
-  createdDatetime
-  user {
-    firstName
-    lastName
-  }
-  status {
-    code
-  }
-  createdDatetime
-  comment
-}
-
 fragment StockLineRow on StockLineNode {
   availableNumberOfPacks
   batch
@@ -93,6 +79,28 @@ fragment LedgerRow on LedgerNode {
   reason
   stockLineId
   storeId
+}
+
+fragment VVMStatus on VvmstatusNode {
+  id
+  description
+  code
+  isActive
+}
+
+fragment VVMStatusLogRow on VvmstatusLogNode {
+  id
+  createdDatetime
+  user {
+    firstName
+    lastName
+  }
+  status {
+    id
+    description
+  }
+  createdDatetime
+  comment
 }
 
 query stockLines(
@@ -185,6 +193,18 @@ query repacksByStockLine($stockLineId: String!, $storeId: String!) {
   }
 }
 
+query vvmStatus($storeId: String!) {
+  activeVvmStatuses(storeId: $storeId) {
+    ... on VvmstatusConnector {
+      __typename
+      nodes {
+        __typename
+        ...VVMStatus
+      }
+    }
+  }
+}
+
 mutation insertRepack($input: InsertRepackInput!, $storeId: String!) {
   insertRepack(input: $input, storeId: $storeId) {
     ... on InvoiceNode {
@@ -250,6 +270,32 @@ mutation insertStockLine($input: InsertStockLineInput!, $storeId: String!) {
           __typename
         }
       }
+    }
+  }
+}
+
+mutation insertVvmStatusLog(
+  $input: InsertVVMStatusLogInput!
+  $storeId: String!
+) {
+  insertVvmStatusLog(input: $input, storeId: $storeId) {
+    ... on VvmstatusLogNode {
+      id
+      status {
+        id
+        code
+      }
+    }
+  }
+}
+
+mutation updateVvmStatusLog(
+  $input: UpdateVVMStatusLogInput!
+  $storeId: String!
+) {
+  updateVvmStatusLog(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
     }
   }
 }
