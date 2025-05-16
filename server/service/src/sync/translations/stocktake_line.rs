@@ -158,7 +158,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             note,
             inventory_adjustment_reason_id,
             item_variant_id,
-            donor_id,
+            donor_link_id: donor_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -199,7 +199,7 @@ impl SyncTranslation for StocktakeLineTranslation {
                     note,
                     inventory_adjustment_reason_id,
                     item_variant_id,
-                    donor_id,
+                    donor_link_id: donor_id,
                 },
             item,
             stock_line,

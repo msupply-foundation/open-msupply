@@ -58,6 +58,6 @@ pub fn generate(
         note,
         inventory_adjustment_reason_id,
         item_variant_id,
-        donor_id: None, // todo
+        donor_link_id: None, // todo
     }
 }

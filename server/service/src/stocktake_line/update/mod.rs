@@ -354,7 +354,7 @@ mod stocktake_line_test {
                 note: None,
                 inventory_adjustment_reason_id: None,
                 item_variant_id: None,
-                donor_id: None,
+                donor_link_id: None,
             }
         );
 

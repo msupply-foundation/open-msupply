@@ -136,13 +136,14 @@ impl StocktakeLineNode {
         Ok(result.map(InventoryAdjustmentReasonNode::from_domain))
     }
 
+    // todo - join to name row - name by name link loader?
     pub async fn donor_id(&self) -> &Option<String> {
-        &self.line.line.donor_id
+        &self.line.line.donor_link_id
     }
 
     // probs need the whole donor for editing..
     pub async fn donor_name(&self, ctx: &Context<'_>) -> Result<Option<String>> {
-        let Some(donor_id) = &self.line.line.donor_id else {
+        let Some(donor_id) = &self.line.line.donor_link_id else {
             return Ok(None);
         };
 

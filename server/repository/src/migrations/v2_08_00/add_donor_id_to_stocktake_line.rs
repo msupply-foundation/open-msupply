@@ -11,7 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                ALTER TABLE stocktake_line ADD COLUMN donor_id TEXT;
+                ALTER TABLE stocktake_line ADD COLUMN donor_link_id TEXT;
             "#
         )?;
 
