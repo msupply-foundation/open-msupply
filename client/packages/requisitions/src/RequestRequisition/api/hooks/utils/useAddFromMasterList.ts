@@ -20,6 +20,9 @@ export const useAddFromMasterList = () => {
   const mutationState = useMutation(api.addFromMasterList, {
     onSettled: () =>
       queryClient.invalidateQueries(api.keys.detail(String(requisitionNumber))),
+    onSuccess: () => {
+      queryClient.invalidateQueries(api.keys.detail(requestId));
+    },
   });
 
   const t = useTranslation();
