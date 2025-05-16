@@ -11,6 +11,8 @@ import {
   ModalLabel,
   Grid,
   BasicTextInput,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { AutoAllocate } from './AutoAllocate';
@@ -41,10 +43,14 @@ export const Allocation = ({
     })
   );
 
+  const { data: sortByVvmStatus } = usePreference(
+    PreferenceKey.SortByVvmStatusThenExpiry
+  );
+
   useEffect(() => {
     initialise(
       itemData,
-      AllocationStrategy.FEFO,
+      sortByVvmStatus ? AllocationStrategy.VVMStatus : AllocationStrategy.FEFO,
       allowPlaceholder,
       scannedBatch
     );
