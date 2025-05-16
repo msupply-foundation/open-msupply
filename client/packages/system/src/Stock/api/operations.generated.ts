@@ -14,7 +14,7 @@ export type VvmStatusLogRowFragment = {
     firstName?: string | null;
     lastName?: string | null;
   } | null;
-  status?: { __typename: 'VvmstatusNode'; description: string } | null;
+  status?: { __typename: 'VvmstatusNode'; code: string } | null;
 };
 
 export type StockLineRowFragment = {
@@ -68,7 +68,7 @@ export type StockLineRowFragment = {
         firstName?: string | null;
         lastName?: string | null;
       } | null;
-      status?: { __typename: 'VvmstatusNode'; description: string } | null;
+      status?: { __typename: 'VvmstatusNode'; code: string } | null;
     }>;
   } | null;
 };
@@ -236,7 +236,7 @@ export type StockLinesQuery = {
             firstName?: string | null;
             lastName?: string | null;
           } | null;
-          status?: { __typename: 'VvmstatusNode'; description: string } | null;
+          status?: { __typename: 'VvmstatusNode'; code: string } | null;
         }>;
       } | null;
     }>;
@@ -307,7 +307,7 @@ export type StockLineQuery = {
             firstName?: string | null;
             lastName?: string | null;
           } | null;
-          status?: { __typename: 'VvmstatusNode'; description: string } | null;
+          status?: { __typename: 'VvmstatusNode'; code: string } | null;
         }>;
       } | null;
     }>;
@@ -404,10 +404,7 @@ export type UpdateStockLineMutation = {
               firstName?: string | null;
               lastName?: string | null;
             } | null;
-            status?: {
-              __typename: 'VvmstatusNode';
-              description: string;
-            } | null;
+            status?: { __typename: 'VvmstatusNode'; code: string } | null;
           }>;
         } | null;
       }
@@ -654,10 +651,7 @@ export type InsertStockLineMutation = {
               firstName?: string | null;
               lastName?: string | null;
             } | null;
-            status?: {
-              __typename: 'VvmstatusNode';
-              description: string;
-            } | null;
+            status?: { __typename: 'VvmstatusNode'; code: string } | null;
           }>;
         } | null;
       };
@@ -672,7 +666,7 @@ export const VvmStatusLogRowFragmentDoc = gql`
       lastName
     }
     status {
-      description
+      code
     }
     createdDatetime
     comment
