@@ -9,15 +9,19 @@ fn plugin_type() -> PluginType {
 }
 
 #[derive(TS, Clone, Deserialize, Debug, Serialize)]
+#[serde(tag = "t", content = "v")]
 #[ts(rename = "ProcessorInput")]
 pub enum Input {
     Filter,
+    SkipOnError,
     Process(ChangelogRow),
 }
 
 #[derive(TS, Clone, Deserialize, Serialize)]
+#[serde(tag = "t", content = "v")]
 #[ts(rename = "ProcessorOutput")]
 pub enum Output {
+    SkipOnError(bool),
     Filter(ChangelogFilter),
     Process(Option<String>),
 }

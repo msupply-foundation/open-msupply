@@ -35,6 +35,7 @@ mod generate_typescript_types {
 
     #[test]
     fn export_plugin_typescript() {
-        PluginTypes::export_all_to("../../client/packages/plugins/backendTypes/generated").unwrap();
+        PluginTypes::export_all_to("../../client/packages/plugins/backendCommon/generated")
+            .unwrap();
     }
 }

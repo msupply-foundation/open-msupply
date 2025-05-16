@@ -1,10 +1,8 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use repository::{
-    BackendPluginRowRepository, ChangelogFilter, ChangelogRow, ChangelogTableName,
-    FrontendPluginRowRepository, KeyType,
-};
+use repository::{ChangelogFilter, ChangelogRow};
+use util::format_error;
 
 use crate::{
     backend_plugin::{
@@ -16,11 +14,24 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
 };
 
-pub(crate) struct PluginProcessor(Arc<PluginInstance>);
+pub(crate) struct PluginProcessor(pub(crate) Arc<PluginInstance>);
 
 impl PluginProcessor {
     pub fn call(&self, input: processor::Input) -> PluginResult<processor::Output> {
         processor::Trait::call(&(*self.0), input)
+    }
+
+    fn skip_on_error_inner(&self) -> Result<bool, ProcessorError> {
+        let input = processor::Input::SkipOnError;
+        let result = self
+            .call(input.clone())
+            .map_err(|e| ProcessorError::PluginError(input.clone(), e))?;
+
+        let processor::Output::SkipOnError(skip_on_error) = result else {
+            return Err(ProcessorError::PluginOutputMismatch(input));
+        };
+
+        Ok(skip_on_error)
     }
 }
 
@@ -35,8 +46,19 @@ impl Processor for PluginProcessor {
         CursorType::Dynamic(self.0.code.clone())
     }
 
+    fn skip_on_error(&self) -> bool {
+        match self.skip_on_error_inner() {
+            Ok(skip_on_error) => skip_on_error,
+            Err(e) => {
+                // Log to console and skip log by default
+                log::error!("Error in plugin processor: {}", format_error(&e));
+                true
+            }
+        }
+    }
+
     /// Default to using change_log_table_names
-    fn changelogs_filter(&self, _ctx: &ServiceContext) -> Result<ChangelogFilter, ProcessorError> {
+    fn changelogs_filter(&self, _: &ServiceContext) -> Result<ChangelogFilter, ProcessorError> {
         let input = processor::Input::Filter;
         let result = self
             .call(input.clone())
@@ -51,8 +73,8 @@ impl Processor for PluginProcessor {
 
     async fn try_process_record(
         &self,
-        ctx: &ServiceContext,
-        service_provider: &ServiceProvider,
+        _: &ServiceContext,
+        _: &ServiceProvider,
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
         let input = processor::Input::Process(changelog.clone());

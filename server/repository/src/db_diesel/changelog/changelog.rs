@@ -231,7 +231,7 @@ pub struct ChangelogRow {
     pub source_site_id: Option<i32>,
 }
 
-#[derive(Default, Clone, Serialize, Deserialize, TS)]
+#[derive(Default, Clone, Serialize, Deserialize, Debug, TS)]
 pub struct ChangelogFilter {
     #[ts(optional)]
     pub table_name: Option<EqualFilter<ChangelogTableName>>,

@@ -1,13 +1,17 @@
 use async_trait::async_trait;
+use log::info;
 use repository::{
     ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter,
-    RepositoryError, TransactionError,
+    PluginType, RepositoryError, TransactionError,
 };
 use strum::Display;
 use thiserror::Error;
 
 use crate::{
-    backend_plugin::{plugin_provider::PluginError, types::processor},
+    backend_plugin::{
+        plugin_provider::{PluginError, PluginInstance},
+        types::processor,
+    },
     cursor_controller::{CursorController, CursorType},
     email::EmailServiceError,
     processors::log_system_error,
@@ -18,7 +22,7 @@ use crate::{
 use super::{
     add_central_patient_visibility::AddPatientVisibilityForCentral,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
-    load_plugin::LoadPlugin,
+    load_plugin::LoadPlugin, plugin_processor::PluginProcessor,
 };
 
 #[derive(Error, Debug)]
@@ -78,7 +82,10 @@ impl ProcessorType {
 }
 
 fn get_plugin_processors() -> Vec<Box<dyn Processor>> {
-    todo!()
+    PluginInstance::get_all(PluginType::Processor)
+        .into_iter()
+        .map(|p| Box::new(PluginProcessor(p)) as Box<dyn Processor>)
+        .collect()
 }
 
 pub(crate) async fn process_records(
@@ -109,6 +116,7 @@ pub(crate) async fn process_records(
                 .get(&ctx.connection)
                 .map_err(Error::DatabaseError)?;
 
+            info!("Filter: {:?}", cursor);
             let logs = changelog_repo
                 .changelogs(cursor, CHANGELOG_BATCH_SIZE, Some(filter.clone()))
                 .map_err(Error::DatabaseError)?;
@@ -124,7 +132,12 @@ pub(crate) async fn process_records(
                     .await;
                 if let Err(e) = result {
                     log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
+
+                    if !processor.skip_on_error() {
+                        break;
+                    }
                 }
+
                 cursor_controller
                     .update(&ctx.connection, (log.cursor + 1) as u64)
                     .map_err(Error::DatabaseError)?;
@@ -153,6 +166,14 @@ pub(super) trait Processor: Sync + Send {
 
     /// Extra check to see if processor should trigger, like if it's central for contact form email
     fn should_run(&self) -> bool {
+        true
+    }
+
+    /// If there is a processor error, we skip the record and log in system log, for some processors
+    /// this is not desired behavior. When skip_on_error is false, the processor driver will not
+    /// skip the error and will log to system log, this may create a lot of system logs, one every time
+    /// the processors are triggered, we are ok with that for now.
+    fn skip_on_error(&self) -> bool {
         true
     }
 

@@ -310,6 +310,9 @@ impl Synchroniser {
         ctx.processors_trigger
             .trigger_processor(ProcessorType::AssignRequisitionNumber);
 
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::Plugins);
+
         Ok(())
     }
 }
