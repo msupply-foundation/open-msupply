@@ -61,6 +61,8 @@ pub mod pricing;
 pub use self::pricing::*;
 pub mod reason_option;
 pub use self::reason_option::*;
+pub mod return_reason;
+pub use self::return_reason::*;
 
 pub mod generate_customer_return_lines;
 pub use self::generate_customer_return_lines::*;

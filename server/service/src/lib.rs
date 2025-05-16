@@ -74,7 +74,7 @@ pub mod repack;
 pub mod report;
 pub mod requisition;
 pub mod requisition_line;
-pub mod return_reason;
+// pub mod return_reason;
 pub mod rnr_form;
 pub mod sensor;
 pub mod service_provider;

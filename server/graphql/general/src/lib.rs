@@ -396,21 +396,11 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<ReasonOptionFilterInput>,
+        #[graphql(desc = "Filter option")] filter: Option<ReturnReasonFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<ReasonOptionSortInput>>,
-    ) -> Result<ReasonOptionResponse> {
-        let mut filtered_reasons = filter.unwrap_or(ReasonOptionFilterInput {
-            r#type: None,
-            id: None,
-            is_active: None,
-        });
-        filtered_reasons.r#type = Some(EqualFilterReasonOptionTypeInput {
-            equal_to: Some(ReasonOptionNodeType::ReturnReason),
-            equal_any: None,
-            not_equal_to: None,
-        });
-        reason_options(ctx, page, Some(filtered_reasons), sort)
+        sort: Option<Vec<ReturnReasonSortInput>>,
+    ) -> Result<ReturnReasonResponse> {
+        return_reasons(ctx, page, filter, sort)
     }
 
     /// Generates new customer_return lines in memory, based on supplier return line ids.

@@ -3882,7 +3882,7 @@ export type InvoiceLineNode = {
   pricing: PricingNode;
   reasonOption?: Maybe<ReasonOptionNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
-  returnReason?: Maybe<ReasonOptionNode>;
+  returnReason?: Maybe<ReturnReasonNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReasonId?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
@@ -6404,7 +6404,7 @@ export type Queries = {
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
   /** @deprecated Since 2.8.0. Use reason_options instead */
-  returnReasons: ReasonOptionResponse;
+  returnReasons: ReturnReasonResponse;
   schedulesWithPeriodsByProgram: PeriodSchedulesResponse;
   /** Query omSupply "sensor" entries */
   sensors: SensorsResponse;
@@ -6961,9 +6961,9 @@ export type QueriesResponseRequisitionStatsArgs = {
 };
 
 export type QueriesReturnReasonsArgs = {
-  filter?: InputMaybe<ReasonOptionFilterInput>;
+  filter?: InputMaybe<ReturnReasonFilterInput>;
   page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<ReasonOptionSortInput>>;
+  sort?: InputMaybe<Array<ReturnReasonSortInput>>;
 };
 
 export type QueriesSchedulesWithPeriodsByProgramArgs = {
@@ -7641,6 +7641,41 @@ export type ResponseStoreStatsNode = {
   requestedQuantity: Scalars['Float']['output'];
   stockOnHand: Scalars['Float']['output'];
   stockOnOrder: Scalars['Float']['output'];
+};
+
+export type ReturnReasonConnector = {
+  __typename: 'ReturnReasonConnector';
+  nodes: Array<ReturnReasonNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ReturnReasonFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type ReturnReasonNode = {
+  __typename: 'ReturnReasonNode';
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  reason: Scalars['String']['output'];
+};
+
+export type ReturnReasonResponse = ReturnReasonConnector;
+
+export enum ReturnReasonSortFieldInput {
+  Id = 'id',
+  Reason = 'reason',
+}
+
+export type ReturnReasonSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: ReturnReasonSortFieldInput;
 };
 
 export type RnRFormConnector = {

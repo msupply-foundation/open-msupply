@@ -1,4 +1,6 @@
-use super::{ItemNode, LocationNode, PricingNode, ReasonOptionNode, StockLineNode};
+use super::{
+    ItemNode, LocationNode, PricingNode, ReasonOptionNode, ReturnReasonNode, StockLineNode,
+};
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
@@ -174,7 +176,7 @@ impl InvoiceLineNode {
     }
 
     #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
-    pub async fn return_reason(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
+    pub async fn return_reason(&self, ctx: &Context<'_>) -> Result<Option<ReturnReasonNode>> {
         let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
 
         let return_reason_id = match &self.row().reason_option_id {
@@ -184,7 +186,7 @@ impl InvoiceLineNode {
 
         let result = loader.load_one(return_reason_id.clone()).await?;
 
-        Ok(result.map(ReasonOptionNode::from_domain))
+        Ok(result.map(ReturnReasonNode::from_domain))
     }
 
     #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]

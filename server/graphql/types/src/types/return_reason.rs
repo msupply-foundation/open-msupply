@@ -1,10 +1,10 @@
 use async_graphql::*;
-use repository::{return_reason::ReturnReason, ReturnReasonRow};
+use repository::{ReasonOption, ReasonOptionRow};
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]
 pub struct ReturnReasonNode {
-    return_reason: ReturnReason,
+    return_reason: ReasonOption,
 }
 
 #[derive(SimpleObject)]
@@ -29,17 +29,17 @@ impl ReturnReasonNode {
 }
 
 impl ReturnReasonNode {
-    pub fn from_domain(return_reason: ReturnReason) -> Self {
+    pub fn from_domain(return_reason: ReasonOption) -> Self {
         ReturnReasonNode { return_reason }
     }
 
-    pub fn row(&self) -> &ReturnReasonRow {
-        &self.return_reason.return_reason_row
+    pub fn row(&self) -> &ReasonOptionRow {
+        &self.return_reason.reason_option_row
     }
 }
 
 impl ReturnReasonConnector {
-    pub fn from_domain(return_reasons: ListResult<ReturnReason>) -> ReturnReasonConnector {
+    pub fn from_domain(return_reasons: ListResult<ReasonOption>) -> ReturnReasonConnector {
         ReturnReasonConnector {
             total_count: return_reasons.count,
             nodes: return_reasons
