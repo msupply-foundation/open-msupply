@@ -1,5 +1,5 @@
 use async_graphql::*;
-use repository::{return_reason::ReturnReason, ReasonOption, ReturnReasonRow};
+use repository::{return_reason::ReturnReason, ReturnReasonRow};
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]
@@ -29,16 +29,8 @@ impl ReturnReasonNode {
 }
 
 impl ReturnReasonNode {
-    pub fn from_domain(reason_option: ReasonOption) -> Self {
-        ReturnReasonNode {
-            return_reason: ReturnReason {
-                return_reason_row: ReturnReasonRow {
-                    id: reason_option.reason_option_row.id,
-                    is_active: reason_option.reason_option_row.is_active,
-                    reason: reason_option.reason_option_row.reason,
-                },
-            },
-        }
+    pub fn from_domain(return_reason: ReturnReason) -> Self {
+        ReturnReasonNode { return_reason }
     }
 
     pub fn row(&self) -> &ReturnReasonRow {
@@ -47,10 +39,10 @@ impl ReturnReasonNode {
 }
 
 impl ReturnReasonConnector {
-    pub fn from_domain(reason_options: ListResult<ReasonOption>) -> ReturnReasonConnector {
+    pub fn from_domain(return_reasons: ListResult<ReturnReason>) -> ReturnReasonConnector {
         ReturnReasonConnector {
-            total_count: reason_options.count,
-            nodes: reason_options
+            total_count: return_reasons.count,
+            nodes: return_reasons
                 .rows
                 .into_iter()
                 .map(ReturnReasonNode::from_domain)

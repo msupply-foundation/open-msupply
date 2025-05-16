@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
-use repository::{inventory_adjustment_reason::InventoryAdjustmentReason, StocktakeLine};
+use repository::StocktakeLine;
 use service::usize_to_u32;
 
 use graphql_core::{
@@ -10,9 +10,7 @@ use graphql_core::{
     ContextExt,
 };
 
-use super::{
-    InventoryAdjustmentReasonNode, ItemNode, LocationNode, ReasonOptionNode, StockLineNode,
-};
+use super::{ItemNode, LocationNode, ReasonOptionNode, StockLineNode};
 
 pub struct StocktakeLineNode {
     pub line: StocktakeLine,
@@ -123,7 +121,7 @@ impl StocktakeLineNode {
     pub async fn inventory_adjustment_reason(
         &self,
         ctx: &Context<'_>,
-    ) -> Result<Option<InventoryAdjustmentReasonNode>> {
+    ) -> Result<Option<ReasonOptionNode>> {
         let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
         let inventory_adjustment_reason_id = match &self.line.line.reason_option_id {
             None => return Ok(None),
@@ -134,7 +132,7 @@ impl StocktakeLineNode {
             .load_one(inventory_adjustment_reason_id.clone())
             .await?;
 
-        Ok(result.map(InventoryAdjustmentReasonNode::from_domain))
+        Ok(result.map(ReasonOptionNode::from_domain))
     }
 
     pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {

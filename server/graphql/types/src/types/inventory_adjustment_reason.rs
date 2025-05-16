@@ -1,8 +1,7 @@
 use async_graphql::*;
 use repository::{
-    asset_log_reason_row::asset_log_reason::reason,
     inventory_adjustment_reason::InventoryAdjustmentReason, InventoryAdjustmentReasonRow,
-    InventoryAdjustmentType, ReasonOption, ReasonOptionType,
+    InventoryAdjustmentType,
 };
 use service::ListResult;
 
@@ -43,24 +42,9 @@ impl InventoryAdjustmentReasonNode {
 }
 
 impl InventoryAdjustmentReasonNode {
-    pub fn from_domain(reason_option: ReasonOption) -> Self {
+    pub fn from_domain(inventory_adjustment_reason: InventoryAdjustmentReason) -> Self {
         InventoryAdjustmentReasonNode {
-            inventory_adjustment_reason: InventoryAdjustmentReason {
-                inventory_adjustment_reason_row: InventoryAdjustmentReasonRow {
-                    id: reason_option.reason_option_row.id,
-                    is_active: reason_option.reason_option_row.is_active,
-                    reason: reason_option.reason_option_row.reason,
-                    r#type: match reason_option.reason_option_row.r#type {
-                        ReasonOptionType::PositiveInventoryAdjustment => {
-                            InventoryAdjustmentType::Positive
-                        }
-                        ReasonOptionType::NegativeInventoryAdjustment => {
-                            InventoryAdjustmentType::Negative
-                        }
-                        _ => panic!("Unexpected ReasonOptionType"),
-                    },
-                },
-            },
+            inventory_adjustment_reason,
         }
     }
 
@@ -95,11 +79,11 @@ impl InventoryAdjustmentReasonNodeType {
 
 impl InventoryAdjustmentReasonConnector {
     pub fn from_domain(
-        reason_options: ListResult<ReasonOption>,
+        inventory_adjustment_reasons: ListResult<InventoryAdjustmentReason>,
     ) -> InventoryAdjustmentReasonConnector {
         InventoryAdjustmentReasonConnector {
-            total_count: reason_options.count,
-            nodes: reason_options
+            total_count: inventory_adjustment_reasons.count,
+            nodes: inventory_adjustment_reasons
                 .rows
                 .into_iter()
                 .map(|inventory_adjustment_reason| {
