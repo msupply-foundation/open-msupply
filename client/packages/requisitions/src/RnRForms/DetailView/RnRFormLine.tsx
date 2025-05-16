@@ -11,6 +11,7 @@ import {
   Tooltip,
   useAuthContext,
   useBufferState,
+  useFormatNumber,
   useTheme,
   VenCategoryType,
 } from '@openmsupply-client/common';
@@ -309,6 +310,7 @@ const RnRNumberCell = ({
   max?: number;
   allowNegative?: boolean;
 }) => {
+  const { format } = useFormatNumber();
   const [buffer, setBuffer] = useBufferState<number | undefined>(
     NumUtils.round(value)
   );
@@ -317,7 +319,7 @@ const RnRNumberCell = ({
 
   return (
     <td style={{ backgroundColor }}>
-      <Tooltip title={value === buffer ? '' : value}>
+      <Tooltip title={value === buffer ? '' : format(value)}>
         {disabled || !onChange ? (
           <p
             style={{
@@ -326,7 +328,7 @@ const RnRNumberCell = ({
               color: textColor,
             }}
           >
-            {buffer}
+            {format(buffer)}
           </p>
         ) : (
           <NumericTextInput

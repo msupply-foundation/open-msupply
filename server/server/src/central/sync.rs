@@ -75,11 +75,15 @@ async fn push(
 }
 
 #[post("/site_status")]
-async fn site_status(request: Json<SiteStatusRequestV6>) -> actix_web::Result<impl Responder> {
-    let response = match sync_on_central::get_site_status(request.into_inner()).await {
-        Ok(result) => SiteStatusResponseV6::Data(result),
-        Err(error) => SiteStatusResponseV6::Error(error),
-    };
+async fn site_status(
+    request: Json<SiteStatusRequestV6>,
+    service_provider: Data<ServiceProvider>,
+) -> actix_web::Result<impl Responder> {
+    let response =
+        match sync_on_central::get_site_status(&service_provider, request.into_inner()).await {
+            Ok(result) => SiteStatusResponseV6::Data(result),
+            Err(error) => SiteStatusResponseV6::Error(error),
+        };
 
     Ok(web::Json(response))
 }
@@ -105,11 +109,13 @@ async fn download_file(
     req: HttpRequest,
     request: Json<SyncDownloadFileRequestV6>,
     settings: Data<Settings>,
+    service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
     log::info!("Sending a file via sync");
-    let (file, file_description) = sync_on_central::download_file(&settings, request.into_inner())
-        .await
-        .map_err(ToResponseError)?;
+    let (file, file_description) =
+        sync_on_central::download_file(&settings, request.into_inner(), &service_provider)
+            .await
+            .map_err(ToResponseError)?;
 
     let response = file
         .set_content_disposition(ContentDisposition {

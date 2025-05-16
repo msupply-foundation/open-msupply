@@ -1957,5 +1957,7 @@
   "warning.caps-lock": "Avertissement: Verrouillage majuscule activé",
   "warning.check-before-vaccinating": "La carte de vaccination éléctronique provenant d'autres sites de vaccination peuvent ne pas être à jour ! Assurez-vous d'avoir effectué une synchronisation récente et vérifiez toujours la validité de la carte de vaccination papier du patient.",
   "warning.field-not-parsed": "{{field}} non analysé",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
+  "label.no-order-types": "Aucun type de commande disponible",
+  "label.no-program-options": "Aucun programme disponible pour ce client"
 }
