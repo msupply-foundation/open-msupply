@@ -53,6 +53,11 @@ pub struct LegacyStocktakeLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
     pub item_variant_id: Option<String>,
+
+    #[serde(rename = "donor_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
+    pub donor_id: Option<String>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -104,6 +109,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             note,
             inventory_adjustment_reason_id,
             item_variant_id,
+            donor_id,
         } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
 
         // TODO is this correct?
@@ -152,6 +158,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             note,
             inventory_adjustment_reason_id,
             item_variant_id,
+            donor_link_id: donor_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -192,6 +199,7 @@ impl SyncTranslation for StocktakeLineTranslation {
                     note,
                     inventory_adjustment_reason_id,
                     item_variant_id,
+                    donor_link_id: donor_id,
                 },
             item,
             stock_line,
@@ -218,6 +226,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             note,
             inventory_adjustment_reason_id,
             item_variant_id,
+            donor_id,
         };
 
         Ok(PushTranslateResult::upsert(

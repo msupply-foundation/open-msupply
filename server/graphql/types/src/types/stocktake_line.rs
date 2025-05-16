@@ -134,6 +134,14 @@ impl StocktakeLineNode {
 
         Ok(result.map(InventoryAdjustmentReasonNode::from_domain))
     }
+
+    pub async fn donor_id(&self) -> Option<String> {
+        self.line.donor.clone().map(|d| d.id)
+    }
+
+    pub async fn donor_name(&self) -> Option<String> {
+        self.line.donor.clone().map(|d| d.name)
+    }
 }
 
 #[derive(SimpleObject)]
