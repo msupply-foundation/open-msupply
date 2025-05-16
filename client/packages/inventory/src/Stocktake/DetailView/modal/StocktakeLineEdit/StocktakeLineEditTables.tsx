@@ -29,7 +29,6 @@ import {
   InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
   ItemVariantInputCell,
-  NameRowFragment,
   PackSizeEntryCell,
   useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
@@ -367,27 +366,8 @@ const DonorCell = ({
   column,
 }: CellProps<DraftStocktakeLine>): JSX.Element => (
   <DonorSearchInput
-    value={
-      rowData.donorId && rowData.donorName
-        ? // NameSearchProps require whole NameRowFragment, even though only id and name
-          // are used. Per below should refactor
-          ({ id: rowData.donorId, name: rowData.donorName } as NameRowFragment)
-        : null
-    }
-    onChange={donor =>
-      column.setter({ ...rowData, donorName: donor.name, donorId: donor.id })
-    }
-    // NameSearchProps only handle onChange to another name, have to handle clear
-    // separately. Ideally, onChange would just be called with null,
-    // but slightly bigger refactor needed for other name search inputs
-    onInputChange={(
-      _event: React.SyntheticEvent<Element, Event>,
-      _value: string,
-      reason: string
-    ) => {
-      if (reason === 'clear')
-        column.setter({ ...rowData, donorName: null, donorId: null });
-    }}
+    donorId={rowData.donorId ?? null}
+    onChange={donor => column.setter({ ...rowData, donorId: donor?.id })}
     width={200}
     clearable
   />
