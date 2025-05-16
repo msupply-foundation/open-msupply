@@ -55,17 +55,18 @@ mod test {
         use v2_07_00::V2_07_00;
         use v2_08_00::V2_08_00;
 
-    let previous_version = V2_07_00.version();
-    let version = V2_08_00.version();
+        let previous_version = V2_07_00.version();
+        let version = V2_08_00.version();
 
-    let SetupResult { connection, .. } = setup_test(SetupOption {
-        db_name: &format!("migration_{version}"),
-        version: Some(previous_version.clone()),
-        ..Default::default()
-    })
-    .await;
+        let SetupResult { connection, .. } = setup_test(SetupOption {
+            db_name: &format!("migration_{version}"),
+            version: Some(previous_version.clone()),
+            ..Default::default()
+        })
+        .await;
 
-    // Run this migration
-    migrate(&connection, Some(version.clone())).unwrap();
-    assert_eq!(get_database_version(&connection), version);
+        // Run this migration
+        migrate(&connection, Some(version.clone())).unwrap();
+        assert_eq!(get_database_version(&connection), version);
+    }
 }
