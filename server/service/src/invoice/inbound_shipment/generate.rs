@@ -46,6 +46,7 @@ pub fn generate_empty_invoice_lines(
                     item_variant_id: None,
                     linked_invoice_id: None,
                     donor_id: None,
+                    reason_option_id: None,
                 });
             }
             Ok(None) => {}

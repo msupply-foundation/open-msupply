@@ -69,8 +69,8 @@ const stocktakeParser = {
         ? Formatter.naiveDate(new Date(line.expiryDate))
         : undefined,
       comment: line.comment ?? '',
-      inventoryAdjustmentReasonId: line.inventoryAdjustmentReason?.id,
       itemVariantId: setNullableInput('itemVariantId', line),
+      reasonOptionId: line.reasonOption?.id,
     }),
     toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => ({
       location: setNullableInput('id', line.location),
@@ -87,8 +87,8 @@ const stocktakeParser = {
         ? Formatter.naiveDate(new Date(line.expiryDate))
         : undefined,
       comment: line.comment ?? '',
-      inventoryAdjustmentReasonId: line.inventoryAdjustmentReason?.id,
       itemVariantId: line.itemVariantId,
+      reasonOptionId: line.reasonOption?.id,
     }),
   },
 };

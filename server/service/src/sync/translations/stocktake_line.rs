@@ -47,7 +47,7 @@ pub struct LegacyStocktakeLineRow {
     pub note: Option<String>,
     #[serde(rename = "optionID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub inventory_adjustment_reason_id: Option<String>,
+    pub reason_option_id: Option<String>,
 
     #[serde(rename = "om_item_variant_id")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -102,7 +102,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             cost_price,
             sell_price,
             note,
-            inventory_adjustment_reason_id,
+            reason_option_id,
             item_variant_id,
         } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
 
@@ -150,8 +150,9 @@ impl SyncTranslation for StocktakeLineTranslation {
             cost_price_per_pack: Some(cost_price),
             sell_price_per_pack: Some(sell_price),
             note,
-            inventory_adjustment_reason_id,
+            inventory_adjustment_reason_id: reason_option_id.clone(),
             item_variant_id,
+            reason_option_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -192,6 +193,7 @@ impl SyncTranslation for StocktakeLineTranslation {
                     note,
                     inventory_adjustment_reason_id,
                     item_variant_id,
+                    reason_option_id,
                 },
             item,
             stock_line,
@@ -216,7 +218,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             cost_price: cost_price_per_pack.unwrap_or(0.0),
             sell_price: sell_price_per_pack.unwrap_or(0.0),
             note,
-            inventory_adjustment_reason_id,
+            reason_option_id,
             item_variant_id,
         };
 

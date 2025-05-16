@@ -99,6 +99,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: Some("test_donor_id".to_string()),
+            reason_option_id: None,
         },
     )
 }
@@ -223,6 +224,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,
+            reason_option_id: None,
         },
     )
 }
@@ -350,6 +352,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             item_variant_id: Some("5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string()),
             linked_invoice_id: None,
             donor_id: None,
+            reason_option_id: None,
         },
     )
 }
@@ -477,6 +480,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,
+            reason_option_id: None,
         },
     )
 }
@@ -604,6 +608,7 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,
+            reason_option_id: None,
         },
     )
 }
@@ -732,6 +737,7 @@ fn trans_line_prescribed_quantity_pull_record() -> TestSyncIncomingRecord {
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,
+            reason_option_id: None,
         },
     )
 }
@@ -860,6 +866,7 @@ fn trans_line_invalid_stockline_pull_record() -> TestSyncIncomingRecord {
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,
+            reason_option_id: None,
         },
     )
 }
@@ -987,6 +994,7 @@ fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,
+            reason_option_id: None,
         },
     )
 }

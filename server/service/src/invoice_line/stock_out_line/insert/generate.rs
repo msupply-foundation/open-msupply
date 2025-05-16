@@ -176,6 +176,7 @@ fn generate_line(
         item_variant_id,
         linked_invoice_id: None,
         donor_id: None,
+        reason_option_id: None,
     })
 }
 

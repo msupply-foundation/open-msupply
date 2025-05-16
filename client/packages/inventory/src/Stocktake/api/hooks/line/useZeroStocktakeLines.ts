@@ -1,6 +1,6 @@
 import { useNotification, useTranslation } from '@openmsupply-client/common';
 import { useSaveStocktakeLines } from './useStocktakeSaveLines';
-import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
+import { ReasonOptionRowFragment } from '@openmsupply-client/system';
 import { useSelectedRows } from '../utils/useSelectedRows';
 
 export const useZeroStocktakeLines = () => {
@@ -11,7 +11,7 @@ export const useZeroStocktakeLines = () => {
   const selectedRows = useSelectedRows();
 
   const onZeroQuantities = async (
-    inventoryAdjustmentReason: InventoryAdjustmentReasonRowFragment | null
+    reasonOption: ReasonOptionRowFragment | null
   ) => {
     try {
       const { errorMessages } = await saveAndMapStructuredErrors(
@@ -20,7 +20,7 @@ export const useZeroStocktakeLines = () => {
           countedNumberOfPacks: 0,
           isUpdated: true,
           countThisLine: true,
-          inventoryAdjustmentReason,
+          reasonOption,
         }))
       );
 

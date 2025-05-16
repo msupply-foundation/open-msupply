@@ -47,6 +47,7 @@ pub(crate) fn generate_inbound_lines(
                  item_variant_id,
                  linked_invoice_id: _,
                  donor_id,
+                 reason_option_id: _,
              }| {
                 let cost_price_per_pack = sell_price_per_pack;
 
@@ -86,6 +87,7 @@ pub(crate) fn generate_inbound_lines(
                     location_id: None,
                     inventory_adjustment_reason_id: None,
                     donor_id,
+                    reason_option_id: None,
                 }
             },
         )

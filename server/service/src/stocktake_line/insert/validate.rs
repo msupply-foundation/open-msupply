@@ -93,17 +93,17 @@ pub fn validate(
     let stocktake_reduction_amount =
         stocktake_reduction_amount(&input.counted_number_of_packs, &stock_line);
     if check_active_adjustment_reasons(connection, stocktake_reduction_amount)?.is_some()
-        && input.inventory_adjustment_reason_id.is_none()
+        && input.reason_option_id.is_none()
         && stocktake_reduction_amount != 0.0
         && !stocktake.is_initial_stocktake
     {
         return Err(AdjustmentReasonNotProvided);
     }
 
-    if input.inventory_adjustment_reason_id.is_some()
+    if input.reason_option_id.is_some()
         && !check_reason_is_valid(
             connection,
-            input.inventory_adjustment_reason_id.clone(),
+            input.reason_option_id.clone(),
             stocktake_reduction_amount,
         )?
     {

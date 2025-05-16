@@ -54,6 +54,13 @@ export type StocktakeLineFragment = {
     id: string;
     reason: string;
   } | null;
+  reasonOption?: {
+    __typename: 'ReasonOptionNode';
+    reason: string;
+    type: Types.ReasonOptionNodeType;
+    isActive: boolean;
+    id: string;
+  } | null;
 };
 
 export type StocktakeFragment = {
@@ -114,6 +121,13 @@ export type StocktakeFragment = {
         __typename: 'InventoryAdjustmentReasonNode';
         id: string;
         reason: string;
+      } | null;
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
+        reason: string;
+        type: Types.ReasonOptionNodeType;
+        isActive: boolean;
+        id: string;
       } | null;
     }>;
   };
@@ -217,6 +231,13 @@ export type StocktakeQuery = {
               id: string;
               reason: string;
             } | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+              id: string;
+            } | null;
           }>;
         };
       };
@@ -290,6 +311,13 @@ export type StocktakeByNumberQuery = {
               id: string;
               reason: string;
             } | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+              id: string;
+            } | null;
           }>;
         };
       };
@@ -346,6 +374,13 @@ export type StocktakeLinesQuery = {
         __typename: 'InventoryAdjustmentReasonNode';
         id: string;
         reason: string;
+      } | null;
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
+        reason: string;
+        type: Types.ReasonOptionNodeType;
+        isActive: boolean;
+        id: string;
       } | null;
     }>;
   };
@@ -619,6 +654,12 @@ export const StocktakeLineFragmentDoc = gql`
       __typename
       id
       reason
+    }
+    reasonOption {
+      reason
+      type
+      isActive
+      id
     }
   }
 `;

@@ -9,18 +9,15 @@ import {
   Divider,
   Box,
   useNotification,
-  AdjustmentTypeInput,
   useNavigate,
   RouteBuilder,
   usePluginEvents,
   noOtherVariants,
+  ReasonOptionNodeType,
 } from '@openmsupply-client/common';
 import { useStockLine } from '../api';
 import { StockLineForm } from './StockLineForm';
-import {
-  InventoryAdjustmentReasonSearchInput,
-  StockItemSearchInput,
-} from '../..';
+import { ReasonOptionsSearchInput, StockItemSearchInput } from '../..';
 import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -151,13 +148,11 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
                 label={t('label.reason')}
                 Input={
                   <Box display="flex" width={INPUT_WIDTH}>
-                    <InventoryAdjustmentReasonSearchInput
+                    <ReasonOptionsSearchInput
                       width={INPUT_WIDTH}
-                      adjustmentType={AdjustmentTypeInput.Addition}
-                      value={draft.inventoryAdjustmentReason}
-                      onChange={reason =>
-                        updatePatch({ inventoryAdjustmentReason: reason })
-                      }
+                      type={ReasonOptionNodeType.PositiveInventoryAdjustment}
+                      value={draft.reasonOption}
+                      onChange={reason => updatePatch({ reasonOption: reason })}
                     />
                   </Box>
                 }
