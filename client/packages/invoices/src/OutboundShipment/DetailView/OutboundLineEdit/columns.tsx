@@ -14,6 +14,8 @@ import {
   CurrencyCell,
   CellProps,
   NumberInputCell,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../../StockOut';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
@@ -33,9 +35,17 @@ export const useOutboundLineEditColumns = ({
 }) => {
   const { store } = useAuthContext();
 
+  const { data: sortByVvmStatus } = usePreference(
+    PreferenceKey.SortByVvmStatusThenExpiry
+  );
+  const { data: manageVVMStatus } = usePreference(
+    PreferenceKey.ManageVvmStatusForStock
+  );
+
   const ForeignCurrencyCell = useCurrencyCell<DraftStockOutLineFragment>(
     currency?.code as Currencies
   );
+
   const columnDefinitions: ColumnDescription<DraftStockOutLineFragment>[] = [
     [
       'batch',
@@ -43,6 +53,23 @@ export const useOutboundLineEditColumns = ({
         accessor: ({ rowData }) => rowData.batch,
       },
     ],
+  ];
+
+  // If we have use VVM status, we need to show the VVM status column
+  if (sortByVvmStatus || manageVVMStatus) {
+    columnDefinitions.push({
+      key: 'vvmStatus',
+      label: 'label.vvm-status',
+      accessor: ({ rowData }) => {
+        if (!rowData.vvmStatus) return '';
+        // TODO: Show unusable VVM status somehow?
+        return `${rowData.vvmStatus?.description} (${rowData.vvmStatus?.level})`;
+      },
+      width: 85,
+    });
+  }
+
+  columnDefinitions.push(
     [
       'expiryDate',
       {
@@ -64,8 +91,8 @@ export const useOutboundLineEditColumns = ({
         Cell: CurrencyCell,
         width: 85,
       },
-    ],
-  ];
+    ]
+  );
 
   if (isExternalSupplier && !!store?.preferences.issueInForeignCurrency) {
     columnDefinitions.push({

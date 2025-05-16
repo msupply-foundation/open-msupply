@@ -1047,6 +1047,7 @@ export type DraftStockOutLineFragment = {
     id: string;
     level: number;
     unusable: boolean;
+    description: string;
   } | null;
 };
 
@@ -1094,6 +1095,7 @@ export type GetOutboundEditLinesQuery = {
         id: string;
         level: number;
         unusable: boolean;
+        description: string;
       } | null;
     }>;
   };
@@ -1253,6 +1255,7 @@ export const DraftStockOutLineFragmentDoc = gql`
       id
       level
       unusable
+      description
     }
   }
 `;

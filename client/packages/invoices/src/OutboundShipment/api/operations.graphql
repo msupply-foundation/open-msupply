@@ -846,6 +846,7 @@ fragment DraftStockOutLine on DraftOutboundShipmentLineNode {
     id
     level
     unusable
+    description
   }
 }
 

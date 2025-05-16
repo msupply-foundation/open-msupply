@@ -54,7 +54,7 @@ export const Allocation = ({
       allowPlaceholder,
       scannedBatch
     );
-  }, []);
+  }, [sortByVvmStatus]);
 
   return initialisedForItemId === itemData.item.id ? (
     <AllocationInner item={itemData.item} />
