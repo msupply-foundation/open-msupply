@@ -25,7 +25,7 @@ export const useStatusHistoryColumns = () => {
     {
       key: 'vvm-status',
       label: 'label.vvm-status',
-      accessor: ({ rowData }) => rowData?.status?.code,
+      accessor: ({ rowData }) => rowData?.status?.description,
       sortable: false,
     },
     {

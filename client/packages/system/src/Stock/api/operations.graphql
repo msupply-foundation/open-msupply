@@ -6,7 +6,7 @@ fragment VVMStatusLogRow on VvmstatusLogNode {
     lastName
   }
   status {
-    code
+    description
   }
   createdDatetime
   comment
