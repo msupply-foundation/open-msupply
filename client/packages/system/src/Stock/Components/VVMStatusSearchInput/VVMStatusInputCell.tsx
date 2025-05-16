@@ -1,18 +1,20 @@
 import React from 'react';
 import { RecordWithId, CellProps } from '@openmsupply-client/common';
 import { VVMStatusSearchInput } from './VVMStatusSearchInput';
+import { VvmStatusFragment } from '../../api';
 
 export const VVMStatusInputCell = <T extends RecordWithId>({
   rowData,
   column,
   isDisabled,
-}: CellProps<T>) => {
+  vvmStatuses,
+}: CellProps<T> & { vvmStatuses: VvmStatusFragment[] }) => {
   const selectedId = column.accessor({
     rowData,
   }) as string | null;
 
-  const onChange = (vvmStatusId: string | null) => {
-    column.setter({ ...rowData, vvmStatusId });
+  const onChange = (vvmStatus: string | null) => {
+    column.setter({ ...rowData, vvmStatus });
   };
 
   return (
@@ -20,6 +22,7 @@ export const VVMStatusInputCell = <T extends RecordWithId>({
       disabled={!!isDisabled}
       selectedId={selectedId}
       onChange={onChange}
+      vvmStatuses={vvmStatuses}
     />
   );
 };

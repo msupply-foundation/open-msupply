@@ -1,26 +1,24 @@
 import { useQuery } from 'react-query';
-import { usePreference, PreferenceKey } from '@openmsupply-client/common';
 import { useStockGraphQL } from '../useStockGraphQL';
+import { PreferenceKey, usePreference } from 'packages/common/src';
 
-// VVM Status inputs (e.g. in Inbound Shipment) should not be available if no vvm statuses are configured
-export const useIsVVMStatusEnabled = () => {
+export function useActiveVVMStatuses() {
   const { stockApi, storeId } = useStockGraphQL();
 
   const { data: prefs } = usePreference(PreferenceKey.ManageVvmStatusForStock);
 
-  // check statuses exist
-  const { data: vvmStatuses } = useQuery({
-    queryFn: async () => {
-      const result = await stockApi.vvmStatusesConfigured({
-        storeId,
-      });
+  const queryKey = 'VVM_STATUSES_CONFIGURED';
+  const queryFn = async () => {
+    const query = await stockApi.activeVvmStatuses({
+      storeId,
+    });
+    return query?.activeVvmStatuses;
+  };
 
-      return result.vvmStatusesConfigured;
-    },
+  const query = useQuery({ queryKey, queryFn });
+  const result = !!prefs?.manageVvmStatusForStock
+    ? query.data?.nodes
+    : undefined;
 
-    // Only call on page load
-    refetchOnMount: false,
-  });
-
-  return !!prefs?.manageVvmStatusForStock && !!vvmStatuses;
-};
+  return result;
+}

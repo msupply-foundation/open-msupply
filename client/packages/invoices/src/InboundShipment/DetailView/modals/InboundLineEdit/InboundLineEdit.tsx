@@ -21,7 +21,7 @@ import {
   CurrencyRowFragment,
   useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
-import { useIsVVMStatusEnabled } from 'packages/system/src/Stock/api';
+import { useActiveVVMStatuses } from 'packages/system/src/Stock/api';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
@@ -131,7 +131,8 @@ export const InboundLineEdit = ({
     currentItem?.id ?? ''
   );
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();
-  const hasVVMStatusesEnabled = useIsVVMStatusEnabled();
+  const vvmStatuses = useActiveVVMStatuses();
+
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
     useDraftInboundLines(currentItem);
@@ -209,7 +210,8 @@ export const InboundLineEdit = ({
               isExternalSupplier={isExternalSupplier}
               item={currentItem}
               hasItemVariantsEnabled={hasItemVariantsEnabled}
-              hasVVMStatusesEnabled={hasVVMStatusesEnabled}
+              hasVVMStatusesEnabled={!!vvmStatuses}
+              vvmStatuses={vvmStatuses ?? undefined}
             />
           </>
         )}

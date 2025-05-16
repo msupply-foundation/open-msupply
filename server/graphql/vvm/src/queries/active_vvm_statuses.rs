@@ -3,13 +3,14 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::{VVMStatusConnector, VVMStatusesResponse};
 use service::auth::{Resource, ResourceAccessRequest};
 
-pub fn vvm_statuses_configured(ctx: &Context<'_>, store_id: String) -> Result<bool> {
+pub fn active_vvm_statuses(ctx: &Context<'_>, store_id: String) -> Result<VVMStatusesResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryStockLine,
+            resource: Resource::QueryAndMutateVvmStatus,
             store_id: Some(store_id.clone()),
         },
     )?;
@@ -22,5 +23,7 @@ pub fn vvm_statuses_configured(ctx: &Context<'_>, store_id: String) -> Result<bo
         .active_vvm_statuses(&service_context.connection)
         .map_err(StandardGraphqlError::from_repository_error)?;
 
-    Ok(!result.is_empty())
+    Ok(VVMStatusesResponse::Response(
+        VVMStatusConnector::from_domain(result),
+    ))
 }

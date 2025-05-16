@@ -1,13 +1,13 @@
 import React from 'react';
 import { Autocomplete, useTranslation } from '@openmsupply-client/common';
-import { useVVMStatus } from '../../api';
+import { VvmStatusFragment } from '../../api';
 
 interface VVMStatusSearchInputProps {
   selectedId: string | null;
   onChange: (variantId: string | null) => void;
   disabled?: boolean;
   width?: number | string;
-  //   getOptionDisabled?:
+  vvmStatuses: VvmStatusFragment[];
 }
 
 export const VVMStatusSearchInput = ({
@@ -15,15 +15,17 @@ export const VVMStatusSearchInput = ({
   width,
   onChange,
   disabled,
-  //   getOptionDisabled,
+  vvmStatuses,
 }: VVMStatusSearchInputProps) => {
   const t = useTranslation();
 
-  const { data } = useVVMStatus();
+  const options = vvmStatuses.map(v => ({
+    id: v?.id,
+    code: v?.code,
+    description: v?.description,
+  }));
 
-  if (!data) return null;
-
-  const selected = data.find(vvmStatus => vvmStatus.id === selectedId);
+  const selected = options.find(option => option.id === selectedId) ?? null;
 
   return (
     <Autocomplete
@@ -31,14 +33,13 @@ export const VVMStatusSearchInput = ({
       width={`${width}px`}
       popperMinWidth={Math.min(Number(width), 200)}
       value={selected ?? null}
-      //   loading={isLoading}
+      // loading={isLoading}
       onChange={(_, option) => onChange(option?.id ?? null)}
-      options={data}
+      options={options}
       getOptionLabel={option => option.description ?? ''}
-      noOptionsText={t('messages.no-item-variants')}
+      noOptionsText={t('messages.no-vvm-statuses')}
       isOptionEqualToValue={(option, value) => option.id === value?.id}
       clearable
-      //   getOptionDisabled={getOptionDisabled} do we need to include this?
     />
   );
 };
