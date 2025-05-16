@@ -4,10 +4,8 @@ use graphql_core::{
     loader::{StockLineByIdLoader, UserLoader, VVMStatusByIdLoader},
     ContextExt,
 };
-use graphql_types::types::{StockLineNode, UserNode};
+use graphql_types::types::{StockLineNode, UserNode, VVMStatusNode};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
-
-use super::vvm_status::VVMStatusNode;
 
 #[derive(PartialEq, Debug)]
 pub struct VVMStatusLogNode {

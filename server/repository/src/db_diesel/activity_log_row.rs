@@ -83,6 +83,7 @@ pub enum ActivityLogType {
     VaccinationCreated,
     VaccinationUpdated,
     VaccinationDeleted,
+    VVMStatusLogUpdated,
     DemographicIndicatorCreated,
     DemographicIndicatorUpdated,
     DemographicProjectionCreated,

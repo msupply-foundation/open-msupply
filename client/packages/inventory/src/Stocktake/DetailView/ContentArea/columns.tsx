@@ -69,7 +69,7 @@ export const useStocktakeColumns = ({
   const t = useTranslation();
   const { getError } = useStocktakeLineErrorContext();
   const { data: preferences } = usePreference(
-    PreferenceKey.DisplayVaccineInDoses
+    PreferenceKey.DisplayVaccinesInDoses
   );
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
@@ -160,7 +160,7 @@ export const useStocktakeColumns = ({
     ],
   ];
 
-  if (preferences?.displayVaccineInDoses) {
+  if (preferences?.displayVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));
   }
 
@@ -228,7 +228,7 @@ export const useStocktakeColumns = ({
         if ('lines' in rowData) {
           const { lines } = rowData;
           const displayDoses =
-            preferences?.displayVaccineInDoses && lines[0]?.item.isVaccine;
+            preferences?.displayVaccinesInDoses && lines[0]?.item.isVaccine;
 
           const total =
             lines.reduce(
@@ -265,7 +265,7 @@ export const useStocktakeColumns = ({
           return UNDEFINED_STRING_VALUE;
         } else {
           const displayDoses =
-            preferences?.displayVaccineInDoses && rowData?.item.isVaccine;
+            preferences?.displayVaccinesInDoses && rowData?.item.isVaccine;
 
           const total =
             (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
