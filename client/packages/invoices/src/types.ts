@@ -48,3 +48,10 @@ export type SupplierReturnItem = {
   itemId: string;
   lines: SupplierReturnLineFragment[];
 };
+
+export type ScannedBarcode = {
+  id?: string;
+  itemId?: string;
+  gtin: string;
+  batch?: string;
+};

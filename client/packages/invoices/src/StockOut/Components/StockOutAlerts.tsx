@@ -24,7 +24,15 @@ export const StockOutAlerts = ({
       ? allocationAlerts
       : [];
 
-  if (alerts.length === 0) return null;
+  return <AllocationAlerts allocationAlerts={alerts} />;
+};
+
+export const AllocationAlerts = ({
+  allocationAlerts,
+}: {
+  allocationAlerts: StockOutAlert[];
+}) => {
+  if (allocationAlerts.length === 0) return null;
 
   return (
     <Grid
@@ -36,7 +44,7 @@ export const StockOutAlerts = ({
       flexDirection="column"
       gap={0.5}
     >
-      {alerts.map(({ message, severity }) => (
+      {allocationAlerts.map(({ message, severity }) => (
         <Alert severity={severity} key={message}>
           {message}
         </Alert>
