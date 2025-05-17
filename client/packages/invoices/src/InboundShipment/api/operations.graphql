@@ -18,6 +18,7 @@ fragment InboundLine on InvoiceLineNode {
   itemName
   itemVariantId
   donorId
+  donorName
 
   item {
     __typename
