@@ -24,7 +24,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
-  DonorSearchInput,
+  getDonorColumn,
   getLocationInputColumn,
   InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
@@ -298,18 +298,6 @@ export const PricingTable = ({
   );
 };
 
-const getDonorColumn = (
-  setter: DraftLineSetter
-): ColumnDescription<DraftStocktakeLine> => {
-  return {
-    key: 'donorId',
-    label: 'label.donor',
-    width: 200,
-    Cell: DonorCell,
-    setter: patch => setter({ ...patch, countThisLine: true }),
-  };
-};
-
 export const LocationTable = ({
   batches,
   update,
@@ -321,7 +309,7 @@ export const LocationTable = ({
     PreferenceKey.AllowTrackingOfStockByDonor
   );
 
-  const columns = useColumns<DraftStocktakeLine>([
+  const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
     [
@@ -331,23 +319,27 @@ export const LocationTable = ({
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
-    ...(preferences?.allowTrackingOfStockByDonor
-      ? [getDonorColumn(update)]
-      : []),
-    [
-      'comment',
-      {
-        label: 'label.stocktake-comment',
-        Cell: TextInputCell,
-        cellProps: {
-          fullWidth: true,
-        },
-        width: 200,
-        setter: patch => update({ ...patch, countThisLine: true }),
-        accessor: ({ rowData }) => rowData.comment || '',
+  ];
+  if (preferences?.allowTrackingOfStockByDonor) {
+    columnDefinitions.push(
+      getDonorColumn(patch => update({ ...patch, countThisLine: true }))
+    );
+  }
+  columnDefinitions.push([
+    'comment',
+    {
+      label: 'label.stocktake-comment',
+      Cell: TextInputCell,
+      cellProps: {
+        fullWidth: true,
       },
-    ],
+      width: 200,
+      setter: patch => update({ ...patch, countThisLine: true }),
+      accessor: ({ rowData }) => rowData.comment || '',
+    },
   ]);
+
+  const columns = useColumns(columnDefinitions);
 
   return (
     <DataTable
@@ -360,15 +352,3 @@ export const LocationTable = ({
     />
   );
 };
-
-const DonorCell = ({
-  rowData,
-  column,
-}: CellProps<DraftStocktakeLine>): JSX.Element => (
-  <DonorSearchInput
-    donorId={rowData.donorId ?? null}
-    onChange={donor => column.setter({ ...rowData, donorId: donor?.id })}
-    width={200}
-    clearable
-  />
-);
