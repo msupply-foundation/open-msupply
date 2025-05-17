@@ -17,6 +17,7 @@ fragment InboundLine on InvoiceLineNode {
   foreignCurrencyPriceBeforeTax
   itemName
   itemVariantId
+  donorId
 
   item {
     __typename

@@ -206,6 +206,11 @@ impl InvoiceLineNode {
 
         Ok(result.map(InventoryAdjustmentReasonNode::from_domain))
     }
+
+    // todo - from donor_link
+    pub async fn donor_id(&self) -> &Option<String> {
+        &self.row().donor_id
+    }
 }
 
 #[derive(Union)]
