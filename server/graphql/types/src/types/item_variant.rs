@@ -131,6 +131,8 @@ impl ItemVariantNode {
         ItemVariant {
             item_variant_row,
             item_row,
+            manufacturer_row: _,
+            cold_storage_type_row: _,
         }: ItemVariant,
     ) -> ItemVariantNode {
         ItemVariantNode {

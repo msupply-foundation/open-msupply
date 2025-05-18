@@ -80,6 +80,8 @@ fragment Inbound on InvoiceNode {
   type
   taxPercentage
   expectedDeliveryDate
+  defaultDonorId
+  defaultDonorName
 
   linkedShipment {
     __typename

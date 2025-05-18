@@ -106,6 +106,7 @@ pub fn generate(
         note,
         on_hold,
         item_variant_id,
+        donor_id,
         ..
     } = stock_line.stock_line_row.clone();
 
@@ -131,10 +132,12 @@ pub fn generate(
             stock_on_hold: on_hold,
             note,
             item_variant_id,
+            donor_id,
             // Default
             barcode: None,
             total_before_tax: None,
             tax_percentage: None,
+            vvm_status_id: None,
         }),
         AdjustmentType::Reduction => InsertStockInOrOutLine::StockOut(InsertStockOutLine {
             r#type: StockOutType::InventoryReduction,

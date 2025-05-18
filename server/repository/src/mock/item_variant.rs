@@ -1,3 +1,5 @@
+use chrono::NaiveDate;
+
 use crate::{item_variant::item_variant_row::ItemVariantRow, mock::item::*};
 
 pub fn mock_item_a_variant_1() -> ItemVariantRow {
@@ -10,6 +12,11 @@ pub fn mock_item_a_variant_1() -> ItemVariantRow {
         deleted_datetime: None,
         doses_per_unit: 0,
         vvm_type: None,
+        created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
+        created_by: None,
     }
 }
 
@@ -23,6 +30,11 @@ pub fn mock_item_a_variant_2() -> ItemVariantRow {
         deleted_datetime: None,
         doses_per_unit: 0,
         vvm_type: None,
+        created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
+        created_by: None,
     }
 }
 
@@ -36,6 +48,11 @@ pub fn mock_item_b_variant_1() -> ItemVariantRow {
         deleted_datetime: None,
         doses_per_unit: 0,
         vvm_type: None,
+        created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
+        created_by: None,
     }
 }
 
@@ -49,6 +66,11 @@ pub fn mock_item_b_variant_2() -> ItemVariantRow {
         deleted_datetime: None,
         doses_per_unit: 0,
         vvm_type: None,
+        created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
+        created_by: None,
     }
 }
 
@@ -62,6 +84,11 @@ pub fn mock_item_c_variant_1() -> ItemVariantRow {
         deleted_datetime: None,
         doses_per_unit: 0,
         vvm_type: None,
+        created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
+        created_by: None,
     }
 }
 

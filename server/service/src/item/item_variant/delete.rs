@@ -4,10 +4,10 @@ use repository::{
         bundled_item_row::BundledItemRowRepository,
         item_variant_row::ItemVariantRowRepository,
     },
-    RepositoryError,
+    ActivityLogType, RepositoryError,
 };
 
-use crate::service_provider::ServiceContext;
+use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 
 #[derive(PartialEq, Debug)]
 pub enum DeleteItemVariantError {
@@ -43,6 +43,14 @@ pub fn delete_item_variant(
                     Ok(())
                 })
                 .collect::<Result<Vec<_>, RepositoryError>>()?;
+
+            activity_log_entry(
+                ctx,
+                ActivityLogType::ItemVariantDeleted,
+                Some(input.id.clone()),
+                None,
+                None,
+            )?;
 
             repo.mark_deleted(&input.id)
         })

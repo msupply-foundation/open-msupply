@@ -13,7 +13,7 @@ pub struct BoolStorePrefInput {
 #[derive(InputObject)]
 pub struct UpsertPreferencesInput {
     // Global preferences
-    pub allow_tracking_of_received_stock_by_donor: Option<bool>,
+    pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
     pub show_contact_tracing: Option<bool>,
     // Store preferences
@@ -48,7 +48,7 @@ impl UpsertPreferencesInput {
     pub fn to_domain(&self) -> UpsertPreferences {
         let UpsertPreferencesInput {
             // Global preferences
-            allow_tracking_of_received_stock_by_donor,
+            allow_tracking_of_stock_by_donor,
             show_contact_tracing,
             display_population_based_forecasting,
             // Store preferences
@@ -59,7 +59,7 @@ impl UpsertPreferencesInput {
 
         UpsertPreferences {
             // Global preferences
-            allow_tracking_of_received_stock_by_donor: *allow_tracking_of_received_stock_by_donor,
+            allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
             display_population_based_forecasting: *display_population_based_forecasting,
             show_contact_tracing: *show_contact_tracing,
             // Global preferences*show_contact_tracing

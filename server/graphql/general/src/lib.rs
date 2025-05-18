@@ -609,7 +609,11 @@ impl InitialisationMutations {
         initialise_site(ctx, input).await
     }
 
-    pub async fn manual_sync(&self, ctx: &Context<'_>) -> Result<String> {
+    pub async fn manual_sync(
+        &self,
+        ctx: &Context<'_>,
+        _fetch_patient_id: Option<String>,
+    ) -> Result<String> {
         manual_sync(ctx, false, None)
     }
 }

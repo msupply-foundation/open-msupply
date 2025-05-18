@@ -72,6 +72,8 @@ pub fn generate(
                 barcode: None,
                 stock_line_id: None,
                 stock_on_hold: false,
+                donor_id: None,
+                vvm_status_id: None, // Setting to none until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
             },
         )
         .collect();
@@ -110,6 +112,7 @@ pub fn generate(
                 sell_price_per_pack: None,
                 tax_percentage: None,
                 total_before_tax: None,
+                donor_id: None,
             },
         )
         .collect();

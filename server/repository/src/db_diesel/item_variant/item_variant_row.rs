@@ -1,8 +1,10 @@
 use crate::{
-    db_diesel::item_row::item, item_link, ChangeLogInsertRow, ChangelogRepository,
+    db_diesel::{cold_storage_type_row::cold_storage_type, item_row::item, name_row::name},
+    item_link, name_link, user_account, ChangeLogInsertRow, ChangelogRepository,
     ChangelogTableName, RepositoryError, RowActionType, StorageConnection, Upsert,
 };
 
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -16,12 +18,20 @@ table! {
         deleted_datetime -> Nullable<Timestamp>,
         doses_per_unit -> Integer,
         vvm_type -> Nullable<Text>,
+        created_datetime -> Timestamp,
+        created_by -> Nullable<Text>,
     }
 }
 
 joinable!(item_variant -> item_link (item_link_id));
+joinable!(item_variant -> name_link (manufacturer_link_id));
+joinable!(item_variant -> cold_storage_type (cold_storage_type_id));
 allow_tables_to_appear_in_same_query!(item_variant, item_link);
 allow_tables_to_appear_in_same_query!(item_variant, item);
+allow_tables_to_appear_in_same_query!(item_variant, user_account);
+allow_tables_to_appear_in_same_query!(item_variant, name_link);
+allow_tables_to_appear_in_same_query!(item_variant, name);
+allow_tables_to_appear_in_same_query!(item_variant, cold_storage_type);
 
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
@@ -38,6 +48,9 @@ pub struct ItemVariantRow {
     #[serde(default)]
     pub doses_per_unit: i32,
     pub vvm_type: Option<String>,
+    pub created_datetime: NaiveDateTime,
+    #[serde(default)]
+    pub created_by: Option<String>,
 }
 
 pub struct ItemVariantRowRepository<'a> {

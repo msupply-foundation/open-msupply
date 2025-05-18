@@ -25,7 +25,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
     ) -> Result<Vec<PreferenceDescription>, PreferenceError> {
         let PreferenceProvider {
             // Global preferences
-            allow_tracking_of_received_stock_by_donor,
+            allow_tracking_of_stock_by_donor,
             show_contact_tracing,
             display_population_based_forecasting,
 
@@ -44,11 +44,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         let mut prefs: Vec<PreferenceDescription> = Vec::new();
 
         // Global preferences
-        append_if_type(
-            allow_tracking_of_received_stock_by_donor,
-            &mut prefs,
-            &input,
-        )?;
+        append_if_type(allow_tracking_of_stock_by_donor, &mut prefs, &input)?;
         append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
         // Store preferences

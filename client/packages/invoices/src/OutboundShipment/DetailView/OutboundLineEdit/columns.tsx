@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   useColumns,
   ColumnAlign,
@@ -11,10 +12,13 @@ import {
   useCurrencyCell,
   Currencies,
   CurrencyCell,
+  CellProps,
+  NumberInputCell,
 } from '@openmsupply-client/common';
-import { DraftStockOutLine } from '../../../types';
-import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
+import { StockOutLineFragment } from '../../../StockOut';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
+import { DraftStockOutLineFragment } from '../../api/operations.generated';
+import { getPackQuantityCellId } from 'packages/invoices/src/utils';
 
 export const useOutboundLineEditColumns = ({
   onChange,
@@ -22,21 +26,21 @@ export const useOutboundLineEditColumns = ({
   currency,
   isExternalSupplier,
 }: {
-  onChange: (key: string, value: number, packSize: number) => void;
+  onChange: (key: string, value: number) => void;
   unit: string;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
 }) => {
   const { store } = useAuthContext();
 
-  const ForeignCurrencyCell = useCurrencyCell<DraftStockOutLine>(
+  const ForeignCurrencyCell = useCurrencyCell<DraftStockOutLineFragment>(
     currency?.code as Currencies
   );
-  const columnDefinitions: ColumnDescription<DraftStockOutLine>[] = [
+  const columnDefinitions: ColumnDescription<DraftStockOutLineFragment>[] = [
     [
       'batch',
       {
-        accessor: ({ rowData }) => rowData.stockLine?.batch,
+        accessor: ({ rowData }) => rowData.batch,
       },
     ],
     [
@@ -87,7 +91,7 @@ export const useOutboundLineEditColumns = ({
       key: 'totalNumberOfPacks',
       align: ColumnAlign.Right,
       width: 80,
-      accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks,
+      accessor: ({ rowData }) => rowData.inStorePacks,
     },
     {
       Cell: NumberCell,
@@ -96,9 +100,9 @@ export const useOutboundLineEditColumns = ({
       align: ColumnAlign.Right,
       width: 90,
       accessor: ({ rowData }) =>
-        rowData.location?.onHold || rowData.stockLine?.onHold
+        rowData.location?.onHold || rowData.stockLineOnHold
           ? 0
-          : rowData.stockLine?.availableNumberOfPacks,
+          : rowData.availablePacks,
     },
     [
       'numberOfPacks',
@@ -106,8 +110,7 @@ export const useOutboundLineEditColumns = ({
         Cell: PackQuantityCell,
         width: 100,
         label: 'label.pack-quantity-issued',
-        setter: ({ packSize, id, numberOfPacks }) =>
-          onChange(id, numberOfPacks ?? 0, packSize ?? 1),
+        setter: ({ id, numberOfPacks }) => onChange(id, numberOfPacks ?? 0),
       },
     ],
     [
@@ -124,13 +127,13 @@ export const useOutboundLineEditColumns = ({
       key: 'onHold',
       Cell: CheckCell,
       accessor: ({ rowData }) =>
-        rowData.stockLine?.onHold || rowData.location?.onHold,
+        rowData.stockLineOnHold || rowData.location?.onHold,
       align: ColumnAlign.Center,
       width: 70,
     }
   );
 
-  const columns = useColumns<DraftStockOutLine>(columnDefinitions, {}, [
+  const columns = useColumns<DraftStockOutLineFragment>(columnDefinitions, {}, [
     onChange,
   ]);
 
@@ -171,3 +174,13 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
 
   return useColumns(columns);
 };
+
+const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
+  <NumberInputCell
+    {...props}
+    max={props.rowData.availablePacks}
+    id={getPackQuantityCellId(props.rowData.batch)}
+    decimalLimit={2}
+    min={0}
+  />
+);

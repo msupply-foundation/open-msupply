@@ -1,12 +1,12 @@
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
-pub struct AllowTrackingOfReceivedStockByDonor;
+pub struct AllowTrackingOfStockByDonor;
 
-impl Preference for AllowTrackingOfReceivedStockByDonor {
+impl Preference for AllowTrackingOfStockByDonor {
     type Value = bool;
 
     fn key(&self) -> PrefKey {
-        PrefKey::AllowTrackingOfReceivedStockByDonor
+        PrefKey::AllowTrackingOfStockByDonor
     }
 
     fn preference_type(&self) -> PreferenceType {

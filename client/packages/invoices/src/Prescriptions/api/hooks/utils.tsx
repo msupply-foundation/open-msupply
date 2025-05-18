@@ -19,7 +19,6 @@ import React from 'react';
 
 import { getPackQuantityCellId } from '../../../utils';
 import { DraftPrescriptionLine } from '../../../types';
-import { ItemPriceFragment } from '../../../OutboundShipment/api/operations.generated';
 
 export const sortFieldMap: Record<string, InvoiceSortFieldInput> = {
   createdDateTime: InvoiceSortFieldInput.CreatedDatetime,
@@ -157,25 +156,10 @@ export interface DraftPrescriptionLineSeeds {
 export const createDraftPrescriptionLineFromStockLine = ({
   invoiceId,
   stockLine,
-  defaultPricing,
 }: {
   invoiceId: string;
   stockLine: PartialPrescriptionLineFragment;
-  defaultPricing?: ItemPriceFragment;
 }): DraftPrescriptionLine => {
-  let sellPricePerPack = stockLine?.sellPricePerPack ?? 0;
-
-  // if there's a default price, it overrides the stock line price
-  if (defaultPricing?.defaultPricePerUnit) {
-    sellPricePerPack =
-      defaultPricing?.defaultPricePerUnit ?? 0 * (stockLine?.packSize ?? 1);
-  }
-
-  if (defaultPricing?.discountPercentage) {
-    sellPricePerPack =
-      sellPricePerPack * (1 - defaultPricing.discountPercentage / 100);
-  }
-
   return {
     isCreated: true,
     isUpdated: false,
@@ -184,7 +168,7 @@ export const createDraftPrescriptionLineFromStockLine = ({
     prescribedQuantity: 0,
     location: stockLine?.location,
     expiryDate: stockLine?.expiryDate,
-    sellPricePerPack,
+    sellPricePerPack: stockLine?.sellPricePerPack ?? 0,
     costPricePerPack: 0,
     packSize: stockLine?.packSize ?? 0,
     id: FnUtils.generateUUID(),
