@@ -37,6 +37,7 @@ pub fn generate_unallocated_invoice_lines(
                     foreign_currency_price_before_tax: None,
                     item_variant_id: None,
                     linked_invoice_id: None,
+                    donor_id: None,
                     reason_option_id: None,
                 });
             }

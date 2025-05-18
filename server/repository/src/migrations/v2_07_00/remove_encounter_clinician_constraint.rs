@@ -4,7 +4,7 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "remove_encounter_clinician_link_constraint"
+        "remove_encounter_clinician_link_constraint2"
     }
 
     // Patient encounters can be synced to many sites, and one of those sites may not
@@ -16,7 +16,7 @@ impl MigrationFragment for Migrate {
             let result = sql!(
                 connection,
                 r#"
-                    ALTER TABLE encounter CONSTRAINT encounter_clinician_link_id_fkey;
+                    ALTER TABLE encounter DROP CONSTRAINT IF EXISTS encounter_clinician_link_id_fkey;
                 "#
             );
             if result.is_err() {

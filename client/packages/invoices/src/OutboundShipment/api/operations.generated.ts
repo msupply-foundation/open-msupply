@@ -65,6 +65,7 @@ export type OutboundFragment = {
         code: string;
         unitName?: string | null;
         isVaccine: boolean;
+        doses: number;
       };
       location?: {
         __typename: 'LocationNode';
@@ -90,6 +91,7 @@ export type OutboundFragment = {
           name: string;
           code: string;
           isVaccine: boolean;
+          doses: number;
         };
       } | null;
     }>;
@@ -289,6 +291,7 @@ export type InvoiceQuery = {
               code: string;
               unitName?: string | null;
               isVaccine: boolean;
+              doses: number;
             };
             location?: {
               __typename: 'LocationNode';
@@ -314,6 +317,7 @@ export type InvoiceQuery = {
                 name: string;
                 code: string;
                 isVaccine: boolean;
+                doses: number;
               };
             } | null;
           }>;
@@ -428,6 +432,7 @@ export type OutboundByNumberQuery = {
               code: string;
               unitName?: string | null;
               isVaccine: boolean;
+              doses: number;
             };
             location?: {
               __typename: 'LocationNode';
@@ -453,6 +458,7 @@ export type OutboundByNumberQuery = {
                 name: string;
                 code: string;
                 isVaccine: boolean;
+                doses: number;
               };
             } | null;
           }>;

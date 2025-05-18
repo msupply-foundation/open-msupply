@@ -67,16 +67,14 @@ pub fn validate(
     }
 
     if let Some(facility_name_id) = input.facility_name_id.clone().and_then(|u| u.value) {
-        if !check_name_exists(connection, &facility_name_id)?.is_some() {
+        if check_name_exists(connection, &facility_name_id)?.is_none() {
             return Err(UpdateVaccinationError::FacilityNameDoesNotExist);
         }
     }
 
     // If not given, reason is required
-    if input.given == Some(false) {
-        if input.not_given_reason.is_none() {
-            return Err(UpdateVaccinationError::ReasonNotProvided);
-        };
+    if input.given == Some(false) && input.not_given_reason.is_none() {
+        return Err(UpdateVaccinationError::ReasonNotProvided);
     };
 
     // If selected item is changing - validate it

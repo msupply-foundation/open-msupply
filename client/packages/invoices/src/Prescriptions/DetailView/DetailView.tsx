@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -12,6 +12,8 @@ import {
   ModalMode,
   useEditModal,
   useBreadcrumbs,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
@@ -26,7 +28,17 @@ import { StockOutItem } from '../../types';
 import { HistoryModal } from './History/HistoryModal';
 import { Draft } from '../..';
 
-export const PrescriptionDetailView: FC = () => {
+export const PrescriptionDetailView = () => {
+  const t = useTranslation();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const navigate = useNavigate();
+  const { data: preference } = usePreference(
+    PreferenceKey.DisplayVaccinesInDoses
+  );
+  const {
+    query: { data, loading },
+  } = usePrescription();
+
   const {
     entity: historyEntity,
     mode: historyMode,
@@ -35,12 +47,7 @@ export const PrescriptionDetailView: FC = () => {
     isOpen: isHistoryOpen,
     setMode: setHistoryMode,
   } = useEditModal<Draft>();
-  const {
-    query: { data, loading },
-  } = usePrescription();
-  const t = useTranslation();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const navigate = useNavigate();
+
   const onRowClick = useCallback(
     (item: StockOutLineFragment | StockOutItem) => {
       navigate(
@@ -75,7 +82,13 @@ export const PrescriptionDetailView: FC = () => {
 
   const tabs = [
     {
-      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
+      Component: (
+        <ContentArea
+          onRowClick={onRowClick}
+          onAddItem={onAddItem}
+          displayInDoses={preference?.displayVaccinesInDoses}
+        />
+      ),
       value: 'Details',
     },
     {

@@ -29,6 +29,7 @@ export type InboundLineFragment = {
     unitName?: string | null;
     defaultPackSize: number;
     isVaccine: boolean;
+    doses: number;
   };
   location?: {
     __typename: 'LocationNode';
@@ -75,6 +76,8 @@ export type InboundFragment = {
   type: Types.InvoiceNodeType;
   taxPercentage?: number | null;
   expectedDeliveryDate?: string | null;
+  defaultDonorId?: string | null;
+  defaultDonorName?: string | null;
   currencyRate: number;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
   user?: {
@@ -118,6 +121,7 @@ export type InboundFragment = {
         unitName?: string | null;
         defaultPackSize: number;
         isVaccine: boolean;
+        doses: number;
       };
       location?: {
         __typename: 'LocationNode';
@@ -278,6 +282,8 @@ export type InvoiceQuery = {
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
+        defaultDonorId?: string | null;
+        defaultDonorName?: string | null;
         currencyRate: number;
         linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
         user?: {
@@ -321,6 +327,7 @@ export type InvoiceQuery = {
               unitName?: string | null;
               defaultPackSize: number;
               isVaccine: boolean;
+              doses: number;
             };
             location?: {
               __typename: 'LocationNode';
@@ -416,6 +423,8 @@ export type InboundByNumberQuery = {
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
+        defaultDonorId?: string | null;
+        defaultDonorName?: string | null;
         currencyRate: number;
         linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
         user?: {
@@ -459,6 +468,7 @@ export type InboundByNumberQuery = {
               unitName?: string | null;
               defaultPackSize: number;
               isVaccine: boolean;
+              doses: number;
             };
             location?: {
               __typename: 'LocationNode';
@@ -977,6 +987,7 @@ export const InboundLineFragmentDoc = gql`
       unitName
       defaultPackSize
       isVaccine
+      doses
     }
     location {
       __typename
@@ -1024,6 +1035,8 @@ export const InboundFragmentDoc = gql`
     type
     taxPercentage
     expectedDeliveryDate
+    defaultDonorId
+    defaultDonorName
     linkedShipment {
       __typename
       id

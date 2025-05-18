@@ -90,7 +90,7 @@ const StockListComponent: FC = () => {
       label: 'label.expiry',
       accessor: ({ rowData }) => DateUtils.getNaiveDate(rowData.expiryDate),
       Cell: ExpiryDateCell,
-      width: 110,
+      width: 120,
     },
     {
       key: 'location',

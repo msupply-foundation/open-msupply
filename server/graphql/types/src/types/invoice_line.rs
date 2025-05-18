@@ -1,4 +1,7 @@
-use super::{ItemNode, LocationNode, PricingNode, ReasonOptionNode, StockLineNode};
+use super::{
+    InventoryAdjustmentReasonNode, ItemNode, LocationNode, PricingNode, ReasonOptionNode,
+    ReturnReasonNode, StockLineNode,
+};
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
@@ -168,12 +171,13 @@ impl InvoiceLineNode {
         &self.row().note
     }
 
-    // Deprecated field
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn return_reason_id(&self) -> &Option<String> {
         &self.row().reason_option_id
     }
 
-    pub async fn return_reason(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
+    pub async fn return_reason(&self, ctx: &Context<'_>) -> Result<Option<ReturnReasonNode>> {
         let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
 
         let return_reason_id = match &self.row().reason_option_id {
@@ -183,13 +187,14 @@ impl InvoiceLineNode {
 
         let result = loader.load_one(return_reason_id.clone()).await?;
 
-        Ok(result.map(ReasonOptionNode::from_domain))
+        Ok(result.map(ReturnReasonNode::from_domain))
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn inventory_adjustment_reason(
         &self,
         ctx: &Context<'_>,
-    ) -> Result<Option<ReasonOptionNode>> {
+    ) -> Result<Option<InventoryAdjustmentReasonNode>> {
         let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
         let inventory_adjustment_reason_id = match &self.row().reason_option_id {
             None => return Ok(None),
@@ -200,7 +205,7 @@ impl InvoiceLineNode {
             .load_one(inventory_adjustment_reason_id.clone())
             .await?;
 
-        Ok(result.map(ReasonOptionNode::from_domain))
+        Ok(result.map(InventoryAdjustmentReasonNode::from_domain))
     }
 
     pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {

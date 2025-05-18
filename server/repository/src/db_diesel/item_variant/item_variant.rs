@@ -1,20 +1,23 @@
 use super::item_variant_row::{item_variant, ItemVariantRow};
 use crate::{
-    db_diesel::item_row::item,
+    db_diesel::{cold_storage_type_row::cold_storage_type, item_row::item, name_row::name},
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
-    item_link,
+    item_link, name_link,
     repository_error::RepositoryError,
-    DBType, EqualFilter, ItemLinkRow, ItemRow, Pagination, Sort, StorageConnection, StringFilter,
+    ColdStorageTypeRow, DBType, EqualFilter, ItemLinkRow, ItemRow, NameLinkRow, NameRow,
+    Pagination, Sort, StorageConnection, StringFilter,
 };
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
+    dsl::{InnerJoin, IntoBoxed, LeftJoin},
     prelude::*,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct ItemVariant {
     pub item_variant_row: ItemVariantRow,
+    pub manufacturer_row: Option<NameRow>,
     pub item_row: ItemRow,
+    pub cold_storage_type_row: Option<ColdStorageTypeRow>,
 }
 
 pub enum ItemVariantSortField {
@@ -23,7 +26,12 @@ pub enum ItemVariantSortField {
 
 pub type ItemVariantSort = Sort<ItemVariantSortField>;
 
-type ItemVariantJoin = (ItemVariantRow, (ItemLinkRow, ItemRow));
+type ItemVariantJoin = (
+    ItemVariantRow,
+    Option<(NameLinkRow, NameRow)>,
+    (ItemLinkRow, ItemRow),
+    Option<ColdStorageTypeRow>,
+);
 
 #[derive(Clone, Default)]
 pub struct ItemVariantFilter {
@@ -118,22 +126,34 @@ impl<'a> ItemVariantRepository<'a> {
     }
 }
 
-fn to_domain((item_variant_row, (_, item_row)): ItemVariantJoin) -> ItemVariant {
+fn to_domain(
+    (item_variant_row, name_link, (_, item_row), cold_storage_type_row): ItemVariantJoin,
+) -> ItemVariant {
     ItemVariant {
         item_variant_row,
+        manufacturer_row: name_link.map(|(_, name)| name),
         item_row,
+        cold_storage_type_row,
     }
 }
 
 type BoxedItemVariantQuery = IntoBoxed<
     'static,
-    InnerJoin<item_variant::table, InnerJoin<item_link::table, item::table>>,
+    LeftJoin<
+        InnerJoin<
+            LeftJoin<item_variant::table, InnerJoin<name_link::table, name::table>>,
+            InnerJoin<item_link::table, item::table>,
+        >,
+        cold_storage_type::table,
+    >,
     DBType,
 >;
 
 fn create_filtered_query(filter: Option<ItemVariantFilter>) -> BoxedItemVariantQuery {
     let mut query = item_variant::table
+        .left_join(name_link::table.inner_join(name::table))
         .inner_join(item_link::table.inner_join(item::table))
+        .left_join(cold_storage_type::table)
         .into_boxed();
     // Exclude any deleted items
     query = query.filter(item_variant::deleted_datetime.is_null());
@@ -150,6 +170,8 @@ fn create_filtered_query(filter: Option<ItemVariantFilter>) -> BoxedItemVariantQ
 
 #[cfg(test)]
 mod tests {
+    use chrono::NaiveDate;
+
     use crate::{
         item_variant::{
             item_variant::ItemVariantRepository,
@@ -182,6 +204,13 @@ mod tests {
                 cold_storage_type_id: None,
                 manufacturer_link_id: None,
                 deleted_datetime: None,
+                doses_per_unit: 0,
+                vvm_type: None,
+                created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                created_by: None,
             })
             .unwrap();
 

@@ -18,6 +18,7 @@ pub enum UpdateLineReturnReasonError {
     ReasonDoesNotExist,
     ReasonIsNotActive,
     UpdatedLineDoesNotExist,
+    InvalidReasonType,
     DatabaseError(RepositoryError),
 }
 
@@ -67,7 +68,7 @@ mod test {
     use repository::{
         mock::{mock_store_b, mock_supplier_return_a_invoice_line_a, MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        ReasonOptionRow,
+        ReasonOptionRow, ReasonOptionType,
     };
 
     use crate::{
@@ -85,11 +86,20 @@ mod test {
             }
         }
 
+        fn invalid_reason_type() -> ReasonOptionRow {
+            ReasonOptionRow {
+                id: "invalid_reason".to_string(),
+                is_active: true,
+                r#type: ReasonOptionType::NegativeInventoryAdjustment,
+                ..Default::default()
+            }
+        }
+
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_return_reason_id_errors",
             MockDataInserts::all(),
             MockData {
-                reason_options: vec![non_active_return_reason()],
+                reason_options: vec![non_active_return_reason(), invalid_reason_type()],
                 ..Default::default()
             },
         )
@@ -142,6 +152,20 @@ mod test {
                 .unwrap_err(),
             UpdateLineReturnReasonError::ReasonIsNotActive
         );
+
+        //InvalidReasonType
+        assert_eq!(
+            service
+                .update_return_reason_id(
+                    &context,
+                    UpdateLineReturnReason {
+                        line_id: mock_supplier_return_a_invoice_line_a().id,
+                        reason_id: Some(invalid_reason_type().id.clone())
+                    }
+                )
+                .unwrap_err(),
+            UpdateLineReturnReasonError::InvalidReasonType
+        );
     }
 
     #[actix_rt::test]
@@ -150,6 +174,7 @@ mod test {
             ReasonOptionRow {
                 id: "reason_id".to_string(),
                 is_active: true,
+                r#type: ReasonOptionType::ReturnReason,
                 ..Default::default()
             }
         }

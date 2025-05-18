@@ -10,7 +10,9 @@ use graphql_core::{
     ContextExt,
 };
 
-use super::{ItemNode, LocationNode, ReasonOptionNode, StockLineNode};
+use super::{
+    InventoryAdjustmentReasonNode, ItemNode, LocationNode, ReasonOptionNode, StockLineNode,
+};
 
 pub struct StocktakeLineNode {
     pub line: StocktakeLine,
@@ -112,14 +114,16 @@ impl StocktakeLineNode {
         &self.line.line.note
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn inventory_adjustment_reason_id(&self) -> &Option<String> {
         &self.line.line.reason_option_id
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn inventory_adjustment_reason(
         &self,
         ctx: &Context<'_>,
-    ) -> Result<Option<ReasonOptionNode>> {
+    ) -> Result<Option<InventoryAdjustmentReasonNode>> {
         let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
         let inventory_adjustment_reason_id = match &self.line.line.reason_option_id {
             None => return Ok(None),
@@ -130,7 +134,7 @@ impl StocktakeLineNode {
             .load_one(inventory_adjustment_reason_id.clone())
             .await?;
 
-        Ok(result.map(ReasonOptionNode::from_domain))
+        Ok(result.map(InventoryAdjustmentReasonNode::from_domain))
     }
 
     pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {

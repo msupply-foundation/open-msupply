@@ -19,6 +19,7 @@ export type PartialStockLineFragment = {
     name: string;
     code: string;
     isVaccine: boolean;
+    doses: number;
   };
   location?: {
     __typename: 'LocationNode';
@@ -53,6 +54,7 @@ export type StockOutLineFragment = {
     code: string;
     unitName?: string | null;
     isVaccine: boolean;
+    doses: number;
   };
   location?: {
     __typename: 'LocationNode';
@@ -78,6 +80,7 @@ export type StockOutLineFragment = {
       name: string;
       code: string;
       isVaccine: boolean;
+      doses: number;
     };
   } | null;
 };
@@ -104,6 +107,7 @@ export const PartialStockLineFragmentDoc = gql`
       name
       code
       isVaccine
+      doses
     }
     location {
       __typename
@@ -140,6 +144,7 @@ export const StockOutLineFragmentDoc = gql`
       code
       unitName
       isVaccine
+      doses
     }
     location {
       __typename
@@ -164,6 +169,7 @@ export const StockOutLineFragmentDoc = gql`
         name
         code
         isVaccine
+        doses
       }
     }
   }

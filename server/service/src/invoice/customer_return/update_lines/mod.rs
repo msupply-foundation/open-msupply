@@ -143,7 +143,7 @@ mod test {
         },
         test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType,
-        ReasonOptionRow,
+        ReasonOptionRow, ReasonOptionType,
     };
 
     #[actix_rt::test]
@@ -329,6 +329,7 @@ mod test {
             ReasonOptionRow {
                 id: "return_reason".to_string(),
                 is_active: true,
+                r#type: ReasonOptionType::ReturnReason,
                 ..Default::default()
             }
         }

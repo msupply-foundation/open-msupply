@@ -98,6 +98,8 @@ export const createPrescriptionPlaceholderRow = (
     id: itemId,
     code: '',
     name: '',
+    isVaccine: false,
+    doses: 0,
     __typename: 'ItemNode',
     itemDirections: [],
     warnings: [],
@@ -120,6 +122,8 @@ export const createPrescriptionPlaceholderRow = (
       __typename: 'ItemNode',
       code: '',
       name: '',
+      isVaccine: false,
+      doses: 0,
       itemDirections: [
         {
           id: '',
@@ -196,6 +200,8 @@ export const createDraftPrescriptionLineFromStockLine = ({
       id: stockLine?.itemId ?? '',
       name: stockLine?.item?.name,
       code: stockLine?.item?.code,
+      isVaccine: stockLine?.item?.isVaccine ?? false,
+      doses: stockLine?.item?.doses ?? 0,
       __typename: 'ItemNode',
       itemDirections: [],
       warnings: [],
@@ -583,5 +589,26 @@ export const PackQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
     id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
     decimalLimit={2}
     min={0}
+  />
+);
+
+export const DosesQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
+  <NumberInputCell
+    {...props}
+    max={
+      (props.rowData.stockLine?.availableNumberOfPacks ?? 0) *
+      (props.rowData.stockLine?.packSize ?? 1) *
+      (props.rowData.item?.doses ?? 1)
+    }
+    id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
+    min={0}
+    decimalLimit={2}
+    slotProps={{
+      htmlInput: {
+        sx: {
+          backgroundColor: 'background.white',
+        },
+      },
+    }}
   />
 );

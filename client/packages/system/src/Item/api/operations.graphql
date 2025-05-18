@@ -5,6 +5,7 @@ fragment ServiceItemRow on ItemNode {
   name
   unitName
   isVaccine
+  doses
 }
 
 fragment StockLine on StockLineNode {
@@ -24,6 +25,7 @@ fragment StockLine on StockLineNode {
     code
     unitName
     doses
+    isVaccine
     itemDirections {
       ...ItemDirection
     }
@@ -49,6 +51,7 @@ fragment ItemRow on ItemNode {
   name
   unitName
   isVaccine
+  doses
 }
 
 fragment ItemRowWithDirections on ItemNode {
@@ -145,6 +148,11 @@ fragment ItemVariant on ItemVariantNode {
   id
   name
   itemId
+  item {
+    id
+    name
+    isVaccine
+  }
   manufacturerId
   manufacturer(storeId: $storeId) {
     ...NameRow
@@ -162,6 +170,8 @@ fragment ItemVariant on ItemVariantNode {
   bundlesWith {
     ...BundledItem
   }
+  dosesPerUnit
+  vvmType
 }
 
 fragment Item on ItemNode {
@@ -418,6 +428,9 @@ mutation upsertItemVariant($storeId: String!, $input: UpsertItemVariantInput!) {
             ... on UniqueValueViolation {
               description
               field
+            }
+            ... on DoseConfigurationNotAllowed {
+              description
             }
           }
         }

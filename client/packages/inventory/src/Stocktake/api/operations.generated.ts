@@ -14,6 +14,7 @@ export type StocktakeRowFragment = {
   stocktakeNumber: number;
   status: Types.StocktakeNodeStatus;
   isLocked: boolean;
+  isInitialStocktake: boolean;
 };
 
 export type StocktakeLineFragment = {
@@ -46,6 +47,7 @@ export type StocktakeLineFragment = {
     name: string;
     unitName?: string | null;
     isVaccine: boolean;
+    doses: number;
   };
   reasonOption?: {
     __typename: 'ReasonOptionNode';
@@ -69,6 +71,7 @@ export type StocktakeFragment = {
   isLocked: boolean;
   countedBy?: string | null;
   verifiedBy?: string | null;
+  isInitialStocktake: boolean;
   user?: {
     __typename: 'UserNode';
     username: string;
@@ -107,6 +110,7 @@ export type StocktakeFragment = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        doses: number;
       };
       reasonOption?: {
         __typename: 'ReasonOptionNode';
@@ -144,6 +148,7 @@ export type StocktakesQuery = {
       stocktakeNumber: number;
       status: Types.StocktakeNodeStatus;
       isLocked: boolean;
+      isInitialStocktake: boolean;
     }>;
   };
 };
@@ -170,6 +175,7 @@ export type StocktakeQuery = {
         isLocked: boolean;
         countedBy?: string | null;
         verifiedBy?: string | null;
+        isInitialStocktake: boolean;
         user?: {
           __typename: 'UserNode';
           username: string;
@@ -208,6 +214,7 @@ export type StocktakeQuery = {
               name: string;
               unitName?: string | null;
               isVaccine: boolean;
+              doses: number;
             };
             reasonOption?: {
               __typename: 'ReasonOptionNode';
@@ -243,6 +250,7 @@ export type StocktakeByNumberQuery = {
         isLocked: boolean;
         countedBy?: string | null;
         verifiedBy?: string | null;
+        isInitialStocktake: boolean;
         user?: {
           __typename: 'UserNode';
           username: string;
@@ -281,6 +289,7 @@ export type StocktakeByNumberQuery = {
               name: string;
               unitName?: string | null;
               isVaccine: boolean;
+              doses: number;
             };
             reasonOption?: {
               __typename: 'ReasonOptionNode';
@@ -339,6 +348,7 @@ export type StocktakeLinesQuery = {
         name: string;
         unitName?: string | null;
         isVaccine: boolean;
+        doses: number;
       };
       reasonOption?: {
         __typename: 'ReasonOptionNode';
@@ -576,6 +586,7 @@ export const StocktakeRowFragmentDoc = gql`
     stocktakeNumber
     status
     isLocked
+    isInitialStocktake
   }
 `;
 export const StocktakeLineFragmentDoc = gql`
@@ -611,6 +622,7 @@ export const StocktakeLineFragmentDoc = gql`
       name
       unitName
       isVaccine
+      doses
     }
     itemVariantId
     reasonOption {
@@ -635,6 +647,7 @@ export const StocktakeFragmentDoc = gql`
     isLocked
     countedBy
     verifiedBy
+    isInitialStocktake
     user {
       __typename
       username

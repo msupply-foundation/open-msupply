@@ -3706,6 +3706,7 @@ dependencies = [
  "graphql_stocktake_line",
  "graphql_types",
  "graphql_vaccine_course",
+ "graphql_vvm",
  "repository",
  "serde",
  "serde_json",
@@ -3958,6 +3959,7 @@ dependencies = [
  "chrono",
  "graphql_core",
  "graphql_types",
+ "log",
  "repository",
  "serde",
  "serde_json",
@@ -4072,6 +4074,7 @@ dependencies = [
  "async-graphql",
  "graphql_core",
  "graphql_types",
+ "log",
  "repository",
  "service",
  "util",
@@ -4282,6 +4285,26 @@ dependencies = [
 
 [[package]]
 name = "graphql_vaccine_course"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_vvm"
 version = "0.1.0"
 dependencies = [
  "actix-rt",
@@ -7727,6 +7750,7 @@ dependencies = [
  "serde_yaml",
  "sha2",
  "simple-log",
+ "strum",
  "telnet",
  "temperature-sensor",
  "tempfile",

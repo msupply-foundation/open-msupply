@@ -29,6 +29,7 @@ pub struct UpdateStockLine {
     pub batch: Option<String>,
     pub barcode: Option<String>,
     pub item_variant_id: Option<NullableUpdate<String>>,
+    pub vvm_status_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -95,19 +96,22 @@ fn validate(
             CommonStockLineError::DatabaseError(error) => DatabaseError(error),
         })?;
 
-    if !check_location_exists(connection, store_id, &input.location)? {
-        return Err(LocationDoesNotExist);
+    if let Some(NullableUpdate {
+        value: Some(ref location),
+    }) = &input.location
+    {
+        if !check_location_exists(connection, store_id, location)? {
+            return Err(LocationDoesNotExist);
+        }
     }
 
-    match &input.item_variant_id {
-        Some(NullableUpdate {
-            value: Some(item_variant_id),
-        }) => {
-            if check_item_variant_exists(connection, item_variant_id)?.is_none() {
-                return Err(ItemVariantDoesNotExist);
-            }
+    if let Some(NullableUpdate {
+        value: Some(item_variant_id),
+    }) = &input.item_variant_id
+    {
+        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
+            return Err(ItemVariantDoesNotExist);
         }
-        _ => {}
     }
 
     Ok(stock_line)
@@ -133,6 +137,7 @@ fn generate(
         on_hold,
         barcode,
         item_variant_id,
+        vvm_status_id,
     }: UpdateStockLine,
 ) -> Result<GenerateResult, UpdateStockLineError> {
     let mut existing = existing_line.stock_line_row;
@@ -183,6 +188,7 @@ fn generate(
     existing.item_variant_id = item_variant_id
         .map(|v| v.value)
         .unwrap_or(existing.item_variant_id);
+    existing.vvm_status_id = vvm_status_id.or(existing.vvm_status_id);
 
     Ok(GenerateResult {
         new_stock_line: existing,

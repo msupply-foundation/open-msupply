@@ -19,6 +19,7 @@ pub fn mock_name_store_b() -> NameRow {
         r.id = String::from("name_store_b");
         r.name = String::from("Store B");
         r.code = String::from("code");
+        r.is_manufacturer = true;
     })
 }
 
@@ -114,6 +115,24 @@ pub fn mock_name_repack() -> NameRow {
     })
 }
 
+pub fn mock_donor_a() -> NameRow {
+    inline_init(|r: &mut NameRow| {
+        r.id = String::from("donor_a");
+        r.name = String::from("donor_a");
+        r.code = String::from("donor_a");
+        r.is_donor = true;
+    })
+}
+
+pub fn mock_donor_b() -> NameRow {
+    inline_init(|r: &mut NameRow| {
+        r.id = String::from("donor_b");
+        r.name = String::from("donor_b");
+        r.code = String::from("donor_b");
+        r.is_donor = true;
+    })
+}
+
 pub fn mock_patient() -> NameRow {
     inline_init(|r: &mut NameRow| {
         r.id = String::from("testId");
@@ -168,6 +187,8 @@ pub fn mock_names() -> Vec<NameRow> {
         mock_patient_b(),
         mock_program_master_list_test(),
         mock_merged_patient(),
+        mock_donor_a(),
+        mock_donor_b(),
     ]
 }
 

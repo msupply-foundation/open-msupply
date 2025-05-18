@@ -17,6 +17,9 @@ import {
   ColumnDescription,
   UNDEFINED_STRING_VALUE,
   getCommentPopoverColumn,
+  usePreference,
+  PreferenceKey,
+  getDosesPerUnitColumn,
 } from '@openmsupply-client/common';
 import { ReasonOptionRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
@@ -63,8 +66,11 @@ export const useStocktakeColumns = ({
 }: UseStocktakeColumnOptions): Column<
   StocktakeLineFragment | StocktakeSummaryItem
 >[] => {
-  const { getError } = useStocktakeLineErrorContext();
   const t = useTranslation();
+  const { getError } = useStocktakeLineErrorContext();
+  const { data: preferences } = usePreference(
+    PreferenceKey.DisplayVaccinesInDoses
+  );
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const columns: ColumnDescription<
@@ -152,6 +158,13 @@ export const useStocktakeColumns = ({
           ]),
       },
     ],
+  ];
+
+  if (preferences?.displayVaccinesInDoses) {
+    columns.push(getDosesPerUnitColumn(t));
+  }
+
+  columns.push(
     {
       key: 'snapshotNumPacks',
       label: 'label.snapshot-num-of-packs',
@@ -209,14 +222,14 @@ export const useStocktakeColumns = ({
     {
       key: 'difference',
       label: 'label.difference',
-      Cell: props => (
-        <NumberCell {...props} defaultValue={UNDEFINED_STRING_VALUE} />
-      ),
       align: ColumnAlign.Right,
       sortable: false,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           const { lines } = rowData;
+          const displayDoses =
+            preferences?.displayVaccinesInDoses && lines[0]?.item.isVaccine;
+
           const total =
             lines.reduce(
               (total, line) =>
@@ -225,14 +238,52 @@ export const useStocktakeColumns = ({
                   (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks)),
               0
             ) ?? 0;
-          return (total < 0 ? Math.abs(total) : -total).toString();
+          const totalInDoses = displayDoses
+            ? (lines.reduce(
+                (total, line) =>
+                  total +
+                  (line.item?.doses ?? 0) *
+                    (line?.packSize ?? 1) *
+                    (line.snapshotNumberOfPacks -
+                      (line.countedNumberOfPacks ??
+                        line.snapshotNumberOfPacks)),
+                0
+              ) ?? 0)
+            : null;
+
+          const totalRounded = Math.round(total * 100) / 100;
+          const totalInDosesRounded = totalInDoses
+            ? Math.round(totalInDoses * 100) / 100
+            : null;
+
+          return `${totalRounded} ${
+            totalInDosesRounded
+              ? `(${totalInDosesRounded} ${t('label.doses')})`
+              : ''
+          }`;
         } else if (rowData.countedNumberOfPacks === null) {
-          return null;
+          return UNDEFINED_STRING_VALUE;
         } else {
-          return (
+          const displayDoses =
+            preferences?.displayVaccinesInDoses && rowData?.item.isVaccine;
+
+          const total =
             (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
-            rowData.snapshotNumberOfPacks
-          );
+            rowData.snapshotNumberOfPacks;
+          const totalRounded = Math.round(total * 100) / 100;
+
+          const totalInDoses =
+            displayDoses && rowData?.item?.doses
+              ? total * (rowData?.packSize ?? 1) * rowData?.item?.doses
+              : null;
+          const totalInDosesRounded = totalInDoses
+            ? Math.round(totalInDoses * 100) / 100
+            : null;
+          const displayDosesTotal = totalInDosesRounded
+            ? `(${totalInDosesRounded} ${t('label.doses')})`
+            : '';
+
+          return `${totalRounded} ${displayDosesTotal}`;
         }
       },
     },
@@ -244,8 +295,8 @@ export const useStocktakeColumns = ({
     },
 
     getCommentPopoverColumn(),
-    expandColumn,
-  ];
+    expandColumn
+  );
 
   return useColumns(columns, { sortBy, onChangeSortBy }, [
     sortBy,
