@@ -63,6 +63,7 @@ export const DraftLine = {
       id: FnUtils.generateUUID(),
       itemName: stockLine.item.name,
       itemVariantId: stockLine.itemVariantId,
+      itemVariant: stockLine.itemVariant,
       item: {
         __typename: 'ItemNode',
         id: stockLine.itemId,
