@@ -1,13 +1,13 @@
 import React from 'react';
 import {
   PaperPopoverSection,
-  usePaperClickPopover,
   useTranslation,
   TableProvider,
   createTableStore,
   DataTable,
   NothingHere,
   EditIcon,
+  PersistentPaperPopover,
 } from '@openmsupply-client/common';
 import { useItemVariantSelectorColumns } from './columns';
 import { ItemVariantFragment } from '../../api';
@@ -28,7 +28,6 @@ export const ItemVariantSelector = ({
   displayInDoses,
 }: ItemVariantSelectorProps) => {
   const t = useTranslation();
-  const { PaperClickPopover } = usePaperClickPopover();
   const columns = useItemVariantSelectorColumns({
     selectedId,
     onVariantSelected,
@@ -39,7 +38,7 @@ export const ItemVariantSelector = ({
 
   return (
     <TableProvider createStore={createTableStore}>
-      <PaperClickPopover
+      <PersistentPaperPopover
         placement="bottom"
         width={850}
         Content={
@@ -57,7 +56,7 @@ export const ItemVariantSelector = ({
         }
       >
         <EditIcon style={{ fontSize: 16, fill: 'none' }} />
-      </PaperClickPopover>
+      </PersistentPaperPopover>
     </TableProvider>
   );
 };
