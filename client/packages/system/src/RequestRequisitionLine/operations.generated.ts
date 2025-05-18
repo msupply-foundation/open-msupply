@@ -14,7 +14,6 @@ export type ItemWithStatsFragment = {
   isVaccine: boolean;
   doses: number;
   availableStockOnHand: number;
-  isVaccine: boolean;
   stats: {
     __typename: 'ItemStatsNode';
     averageMonthlyConsumption: number;
@@ -63,7 +62,6 @@ export type RequestLineFragment = {
     isVaccine: boolean;
     doses: number;
     availableStockOnHand: number;
-    isVaccine: boolean;
     stats: {
       __typename: 'ItemStatsNode';
       averageMonthlyConsumption: number;
@@ -148,7 +146,6 @@ export type RequestFragment = {
         isVaccine: boolean;
         doses: number;
         availableStockOnHand: number;
-        isVaccine: boolean;
         stats: {
           __typename: 'ItemStatsNode';
           averageMonthlyConsumption: number;

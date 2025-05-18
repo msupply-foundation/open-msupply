@@ -97,7 +97,6 @@ export const createDraftStockOutLineFromStockLine = ({
       isVaccine: stockLine?.item?.isVaccine ?? false,
       doses: stockLine?.item?.doses ?? 0,
       __typename: 'ItemNode',
-      isVaccine: stockLine?.item?.isVaccine,
     },
 
     stockLine,

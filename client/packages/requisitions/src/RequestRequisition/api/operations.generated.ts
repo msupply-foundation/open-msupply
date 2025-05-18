@@ -129,7 +129,6 @@ export type RequestByNumberQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              isVaccine: boolean;
               stats: {
                 __typename: 'ItemStatsNode';
                 averageMonthlyConsumption: number;
@@ -259,7 +258,6 @@ export type RequestByIdQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              isVaccine: boolean;
               stats: {
                 __typename: 'ItemStatsNode';
                 averageMonthlyConsumption: number;
