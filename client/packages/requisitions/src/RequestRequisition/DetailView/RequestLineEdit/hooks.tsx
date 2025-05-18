@@ -96,35 +96,24 @@ export const useDraftRequisitionLine = (
   return { draft, isLoading, save: () => draft && save(draft), update };
 };
 
-export const usePreviousNextRequestLine = (
-  lines?: RequestLineFragment[],
+export const useNextRequestLine = (
   currentItem?: ItemWithStatsFragment | null
 ) => {
-  if (!lines || !currentItem) {
-    return { hasNext: false, next: null, hasPrevious: false, previous: null };
-  }
+  const { lines } = useRequest.line.list();
 
-  const state: {
-    hasPrevious: boolean;
-    previous: null | ItemWithStatsFragment;
+  const nextState: {
     hasNext: boolean;
     next: null | ItemWithStatsFragment;
-  } = { hasNext: true, next: null, hasPrevious: true, previous: null };
+  } = { hasNext: true, next: null };
   const idx = lines.findIndex(l => l.item.id === currentItem?.id);
-  const previous = lines[idx - 1];
   const next = lines[idx + 1];
 
-  if (!previous) {
-    state.hasPrevious = false;
-  } else {
-    state.previous = previous.item;
-  }
-
   if (!next) {
-    state.hasNext = false;
-  } else {
-    state.next = next.item;
+    nextState.hasNext = false;
+    return nextState;
   }
 
-  return state;
+  nextState.next = next.item;
+
+  return nextState;
 };
