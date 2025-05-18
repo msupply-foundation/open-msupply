@@ -16,6 +16,8 @@ import {
   useTranslation,
   TypedTFunction,
   LocaleKey,
+  useIntlUtils,
+  Formatter,
 } from '@openmsupply-client/common';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { DraftStockOutLineFragment } from '../../api/operations.generated';
@@ -39,8 +41,10 @@ export const useOutboundLineEditColumns = ({
 }) => {
   const { store } = useAuthContext();
   const t = useTranslation();
+  const { getPlural } = useIntlUtils();
 
-  const unit = item?.unitName ?? t('label.unit');
+  const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
+  const pluralisedUnitName = getPlural(unit, 2);
 
   const ForeignCurrencyCell = useCurrencyCell<DraftStockOutLineFragment>(
     currency?.code as Currencies
@@ -96,7 +100,9 @@ export const useOutboundLineEditColumns = ({
   if (allocateIn === AllocateIn.Doses) {
     columnDefinitions.push(...getAllocateInDosesColumns(t, allocate, unit));
   } else {
-    columnDefinitions.push(...getAllocateInUnitsColumns(allocate, unit));
+    columnDefinitions.push(
+      ...getAllocateInUnitsColumns(allocate, pluralisedUnitName)
+    );
   }
 
   columnDefinitions.push({
@@ -128,7 +134,7 @@ const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
 
 const getAllocateInUnitsColumns = (
   allocate: (key: string, numPacks: number) => void,
-  unit: string
+  pluralisedUnitName: string
 ): ColumnDescription<DraftStockOutLineFragment>[] => [
   {
     Cell: NumberCell,
@@ -161,8 +167,8 @@ const getAllocateInUnitsColumns = (
   [
     'unitQuantity',
     {
-      label: 'label.unit-quantity-issued',
-      labelProps: { unit },
+      label: 'label.units-issued',
+      labelProps: { unit: pluralisedUnitName },
       accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
       width: 90,
     },
