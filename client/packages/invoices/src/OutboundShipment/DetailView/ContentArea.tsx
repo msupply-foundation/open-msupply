@@ -73,8 +73,8 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   onRowClick,
 }) => {
   const t = useTranslation();
-  const { data: prefs } = usePreference(PreferenceKey.DisplayVaccineInDoses);
-  const displayDoseColumns = prefs?.displayVaccineInDoses ?? false;
+  const { data: prefs } = usePreference(PreferenceKey.DisplayVaccinesInDoses);
+  const displayDoseColumns = prefs?.displayVaccinesInDoses ?? false;
 
   const {
     updateSortQuery,
