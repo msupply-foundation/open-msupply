@@ -137,6 +137,7 @@ export const RequestLineEditModal = ({
   isOpen,
   onClose,
   mode,
+  store,
 }: RequestLineEditModalProps) => {
   return (
     <RequestLineEditModalInner
@@ -145,6 +146,7 @@ export const RequestLineEditModal = ({
       isOpen={isOpen}
       onClose={onClose}
       mode={mode}
+      store={store}
     />
   );
 };
