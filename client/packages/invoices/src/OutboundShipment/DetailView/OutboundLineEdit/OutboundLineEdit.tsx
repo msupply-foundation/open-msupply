@@ -7,12 +7,10 @@ import {
   ModalMode,
   useNotification,
   InvoiceNodeStatus,
-  BasicSpinner,
   usePreference,
   PreferenceKey,
 } from '@openmsupply-client/common';
 import { useNextItem } from './hooks';
-import { useOutboundLineEditData } from '../../api';
 import { ScannedBarcode } from '../../../types';
 import { SelectItem } from './SelectItem';
 import { Allocation } from './Allocation';
@@ -43,8 +41,8 @@ export const OutboundLineEdit = ({
   const t = useTranslation();
   const { info, warning } = useNotification();
   const [itemId, setItemId] = useState(openedWith?.itemId);
-  const { data: pref } = usePreference(PreferenceKey.DisplayVaccineInDoses);
-  const allocateVaccineItemsInDoses = pref?.displayVaccineInDoses ?? false;
+  const { data: pref } = usePreference(PreferenceKey.DisplayVaccinesInDoses);
+  const allocateVaccineItemsInDoses = pref?.displayVaccinesInDoses ?? false;
 
   const onClose = () => {
     clear();
@@ -54,10 +52,6 @@ export const OutboundLineEdit = ({
 
   const { next, disabled: nextDisabled } = useNextItem(itemId);
 
-  const { data: itemData, isFetching } = useOutboundLineEditData(
-    invoiceId,
-    itemId
-  );
   const { mutateAsync } = useSaveOutboundLines(invoiceId);
   const { saveBarcode } = useOpenedWithBarcode(asBarcodeOrNull(openedWith));
 
@@ -70,13 +64,8 @@ export const OutboundLineEdit = ({
     setAlerts,
     clear,
   } = useAllocationContext(state => ({
-    draftLines: state.draftLines,
-    placeholderQuantity: state.placeholderQuantity,
+    ...state,
     allocatedQuantity: getAllocatedQuantity(state),
-    alerts: state.alerts,
-    isDirty: state.isDirty,
-    setAlerts: state.setAlerts,
-    clear: state.clear,
   }));
 
   const onSave = async () => {
@@ -167,18 +156,16 @@ export const OutboundLineEdit = ({
           onChangeItem={setItemId}
           disabled={mode === ModalMode.Update}
         />
-        {isFetching ? (
-          <BasicSpinner />
-        ) : (
-          itemData && (
-            <Allocation
-              key={itemId}
-              itemData={itemData}
-              allocateVaccineItemsInDoses={allocateVaccineItemsInDoses}
-              allowPlaceholder={status === InvoiceNodeStatus.New}
-              scannedBatch={asBarcodeOrNull(openedWith)?.batch}
-            />
-          )
+
+        {itemId && (
+          <Allocation
+            key={itemId}
+            itemId={itemId}
+            invoiceId={invoiceId}
+            allowPlaceholder={status === InvoiceNodeStatus.New}
+            scannedBatch={asBarcodeOrNull(openedWith)?.batch}
+            allocateVaccineItemsInDoses={allocateVaccineItemsInDoses}
+          />
         )}
       </Grid>
     </Modal>

@@ -65,7 +65,7 @@ pub fn upsert_item_variant(
     store_id: String,
     input: UpsertItemVariantInput,
 ) -> Result<UpsertItemVariantResponse> {
-    validate_auth(
+    let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateItemNamesCodesAndUnits,
@@ -73,7 +73,7 @@ pub fn upsert_item_variant(
         },
     )?;
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_context = service_provider.context(store_id, user.user_id)?;
 
     let result = service_provider
         .item_service
@@ -167,8 +167,13 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
             )
         }
         // Generic errors
-        ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
-        ServiceError::ItemDoesNotExist => InternalError(formatted_error),
+        ServiceError::ItemDoesNotExist
+        | ServiceError::CantChangeItem
+        | ServiceError::ColdStorageTypeDoesNotExist
+        | ServiceError::OtherPartyDoesNotExist
+        | ServiceError::OtherPartyNotVisible
+        | ServiceError::OtherPartyNotAManufacturer => BadUserInput(formatted_error),
+
         ServiceError::PackagingVariantError(upsert_packaging_variant_error) => {
             match upsert_packaging_variant_error {
                 UpsertPackagingVariantError::ItemVariantDoesNotExist => {
@@ -185,10 +190,9 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
                 }
             }
         }
-        ServiceError::DatabaseError(_repository_error) => InternalError(formatted_error),
-        ServiceError::CantChangeItem => BadUserInput(formatted_error),
-
-        ServiceError::ColdStorageTypeDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::CreatedRecordNotFound | ServiceError::DatabaseError(_) => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())

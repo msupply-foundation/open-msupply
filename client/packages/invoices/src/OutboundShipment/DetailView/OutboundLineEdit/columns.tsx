@@ -32,7 +32,7 @@ export const useOutboundLineEditColumns = ({
   allocateIn,
 }: {
   allocate: (key: string, value: number) => number;
-  item: DraftItem;
+  item: DraftItem | null;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
   allocateIn: AllocateIn;
@@ -40,7 +40,7 @@ export const useOutboundLineEditColumns = ({
   const { store } = useAuthContext();
   const t = useTranslation();
 
-  const unit = item.unitName ?? t('label.unit');
+  const unit = item?.unitName ?? t('label.unit');
 
   const ForeignCurrencyCell = useCurrencyCell<DraftStockOutLineFragment>(
     currency?.code as Currencies

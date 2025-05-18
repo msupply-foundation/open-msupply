@@ -18,6 +18,7 @@ import {
 } from './utils';
 import { OutboundLineEditData } from '../../../api';
 import { allocateQuantities } from './allocateQuantities';
+import { DraftItem } from '../../../..';
 
 /**
  * Allocation can be in units, or doses. In future, could allocate in packs too!
@@ -49,18 +50,17 @@ interface AllocationContext {
   nonAllocatableLines: DraftStockOutLineFragment[];
   alerts: StockOutAlert[];
   allocateIn: AllocateIn;
-  initialisedForItemId: string | null;
+  item: DraftItem | null;
   placeholderQuantity: number | null;
 
   initialise: (params: {
-    input: OutboundLineEditData;
+    itemData: OutboundLineEditData;
     strategy: AllocationStrategy;
     allowPlaceholder: boolean;
     allocateVaccineItemsInDoses?: boolean;
     scannedBatch?: string;
   }) => void;
 
-  setDraftLines: (lines: DraftStockOutLineFragment[]) => void;
   setAlerts: (alerts: StockOutAlert[]) => void;
   clear: () => void;
 
@@ -79,7 +79,7 @@ interface AllocationContext {
 
 export const useAllocationContext = create<AllocationContext>((set, get) => ({
   isDirty: false,
-  initialisedForItemId: null,
+  item: null,
   draftLines: [],
   nonAllocatableLines: [],
   placeholderQuantity: null,
@@ -87,7 +87,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   allocateIn: AllocateIn.Units,
 
   initialise: ({
-    input: { item, draftLines, placeholderQuantity },
+    itemData: { item, draftLines, placeholderQuantity },
     strategy,
     allocateVaccineItemsInDoses,
     allowPlaceholder,
@@ -99,15 +99,17 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     // Note - expired is still considered allocatable, just not via auto-allocation
     const [allocatableLines, nonAllocatableLines] = ArrayUtils.partition(
       sortedLines,
-      line =>
-        scannedBatch
-          ? scannedBatchFilter(sortedLines, line, scannedBatch)
-          : canAllocate(line)
+      line => {
+        return (
+          canAllocate(line) &&
+          (!scannedBatch || scannedBatchFilter(sortedLines, line, scannedBatch))
+        );
+      }
     );
 
     set({
       isDirty: false,
-      initialisedForItemId: item.id,
+      item,
 
       allocateIn:
         item.isVaccine && allocateVaccineItemsInDoses
@@ -129,16 +131,9 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       draftLines: [],
       nonAllocatableLines: [],
       placeholderQuantity: null,
-      initialisedForItemId: null,
+      item: null,
       allocateIn: AllocateIn.Units,
       alerts: [],
-    })),
-
-  setDraftLines: lines =>
-    set(state => ({
-      ...state,
-      isDirty: true,
-      draftLines: lines,
     })),
 
   setAlerts: alerts =>
@@ -148,13 +143,8 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     })),
 
   autoAllocate: (quantity, format, t) => {
-    const {
-      allocateIn,
-      draftLines,
-      nonAllocatableLines,
-      placeholderQuantity,
-      setDraftLines,
-    } = get();
+    const { draftLines, nonAllocatableLines, placeholderQuantity, allocateIn } =
+      get();
 
     const result = allocateQuantities(draftLines, quantity, { allocateIn });
 
@@ -162,8 +152,6 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     if (!result) {
       return getAllocatedQuantity({ allocateIn, draftLines });
     }
-
-    setDraftLines(result.allocatedLines);
 
     const allocatedQuantity = getAllocatedQuantity({
       allocateIn,
@@ -197,13 +185,15 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       alerts,
       placeholderQuantity:
         placeholderQuantity === null ? null : stillToAllocate,
+      isDirty: true,
+      draftLines: result.allocatedLines,
     }));
 
     return allocatedQuantity;
   },
 
   manualAllocate: (lineId, quantity, format, t) => {
-    const { allocateIn, draftLines, setDraftLines } = get();
+    const { allocateIn, draftLines } = get();
 
     // TODO: pass in when using for prescriptions
     const allowPartialPacks = false;
@@ -213,10 +203,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
         ? issueDoses(draftLines, lineId, quantity, allowPartialPacks)
         : issuePacks(draftLines, lineId, quantity);
 
-    setDraftLines(updatedLines);
-
-    // Line updated, now check if we need to show any alerts
-
+    // Now check if we need to show any alerts
     const updatedLine = updatedLines.find(line => line.id === lineId);
 
     const allocatedQuantity = updatedLine
@@ -242,6 +229,8 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
     set(state => ({
       ...state,
+      isDirty: true,
+      draftLines: updatedLines,
       alerts,
     }));
 
