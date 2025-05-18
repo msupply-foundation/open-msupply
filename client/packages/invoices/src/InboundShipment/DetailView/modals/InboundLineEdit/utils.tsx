@@ -85,7 +85,7 @@ export const itemVariantColumn = (
 ): ColumnDescription<DraftInboundLine> => ({
   key: 'itemVariantId',
   label: 'label.item-variant',
-  width: 170,
+  width: 150,
   Cell: InboundLineItemVariantInputCell,
   cellProps: {
     displayInDoses,
