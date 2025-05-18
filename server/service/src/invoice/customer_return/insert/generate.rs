@@ -75,6 +75,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
+        default_donor_id: None,
     };
 
     let lines_with_packs: Vec<CustomerReturnLineInput> = customer_return_lines
@@ -124,6 +125,8 @@ pub fn generate(
                 stock_line_id,
                 barcode: None,
                 stock_on_hold: false,
+                donor_id: None,
+                vvm_status_id: None, // Setting to none until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
             },
         )
         .collect();

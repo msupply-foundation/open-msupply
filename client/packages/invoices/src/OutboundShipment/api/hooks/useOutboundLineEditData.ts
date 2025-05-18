@@ -36,6 +36,7 @@ export const useOutboundLineEditData = (invoiceId: string, itemId?: string) => {
         placeholderQuantity,
       };
     },
-    enabled: !!itemId,
+    // We'll call this manually
+    enabled: false,
   });
 };

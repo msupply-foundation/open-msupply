@@ -13,13 +13,11 @@ import {
   useTableStore,
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
-import { DraftItem } from '../../..';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { useAllocationContext } from './allocation/useAllocationContext';
 import { getAllocatedQuantity } from './allocation/utils';
 
 export interface OutboundLineEditTableProps {
-  item: DraftItem;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
 }
@@ -90,7 +88,6 @@ const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
 };
 
 export const OutboundLineEditTable = ({
-  item,
   currency,
   isExternalSupplier,
 }: OutboundLineEditTableProps) => {
@@ -104,14 +101,11 @@ export const OutboundLineEditTable = ({
     nonAllocatableLines,
     allocateIn,
     allocatedQuantity,
+    item,
     manualAllocate,
   } = useAllocationContext(state => ({
-    draftLines: state.draftLines,
-    placeholderQuantity: state.placeholderQuantity,
-    nonAllocatableLines: state.nonAllocatableLines,
-    allocateIn: state.allocateIn,
+    ...state,
     allocatedQuantity: getAllocatedQuantity(state),
-    manualAllocate: state.manualAllocate,
   }));
 
   const allocate = (key: string, value: number) => {

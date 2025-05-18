@@ -22,6 +22,20 @@ pub enum UpdateInboundShipmentStatus {
     Verified,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum ApplyDonorToInvoiceLines {
+    None,
+    UpdateExistingDonor,
+    AssignIfNone,
+    AssignToAll,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct UpdateDefaultDonor {
+    pub donor_id: Option<String>,
+    pub apply_to_lines: ApplyDonorToInvoiceLines,
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct UpdateInboundShipment {
     pub id: String,
@@ -34,6 +48,7 @@ pub struct UpdateInboundShipment {
     pub tax: Option<ShipmentTaxUpdate>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
+    pub default_donor: Option<UpdateDefaultDonor>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -54,23 +69,30 @@ pub fn update_inbound_shipment(
                 location_movements,
                 update_tax_for_lines,
                 update_currency_for_lines,
-            } = generate(
-                connection,
-                &ctx.store_id,
-                &ctx.user_id,
-                invoice,
-                other_party,
-                patch.clone(),
-            )?;
+                update_donor,
+            } = generate(ctx, invoice, other_party, patch.clone())?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
             let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 
-            if let Some(lines_and_invoice_lines) = batches_to_update {
+            let line_and_stock_lines = match (batches_to_update, update_donor) {
+                (Some(batches), None) => Some(batches),
+                (None, Some(donors)) => Some(donors),
+                (Some(_), Some(_)) => {
+                    // Both do full line updates, so would conflict. Frontend only updates
+                    // separately, but should protect if API called directly
+                    return Err(OutError::CannotUpdateStatusAndDonorAtTheSameTime);
+                }
+                (None, None) => None,
+            };
+
+            if let Some(updates) = line_and_stock_lines {
                 let stock_line_repository = StockLineRowRepository::new(connection);
 
-                for LineAndStockLine { line, stock_line } in lines_and_invoice_lines.into_iter() {
-                    stock_line_repository.upsert_one(&stock_line)?;
+                for LineAndStockLine { line, stock_line } in updates.into_iter() {
+                    if let Some(ref stock_line) = stock_line {
+                        stock_line_repository.upsert_one(stock_line)?;
+                    }
                     invoice_line_repository.upsert_one(&line)?;
                 }
             }
@@ -137,6 +159,7 @@ pub enum UpdateInboundShipmentError {
     CannotEditFinalised,
     CannotChangeStatusOfInvoiceOnHold,
     CannotIssueForeignCurrencyForInternalSuppliers,
+    CannotUpdateStatusAndDonorAtTheSameTime,
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
@@ -184,9 +207,10 @@ mod test {
     use chrono::{Duration, NaiveDate, Utc};
     use repository::{
         mock::{
-            mock_inbound_shipment_a, mock_inbound_shipment_a_invoice_lines,
-            mock_inbound_shipment_b, mock_inbound_shipment_c, mock_inbound_shipment_e, mock_name_a,
-            mock_name_linked_to_store_join, mock_name_not_linked_to_store_join,
+            mock_donor_a, mock_donor_b, mock_inbound_shipment_a,
+            mock_inbound_shipment_a_invoice_lines, mock_inbound_shipment_b,
+            mock_inbound_shipment_c, mock_inbound_shipment_e, mock_inbound_shipment_f, mock_item_a,
+            mock_name_a, mock_name_linked_to_store_join, mock_name_not_linked_to_store_join,
             mock_outbound_shipment_e, mock_stock_line_a, mock_store_a, mock_store_b,
             mock_store_linked_to_name, mock_user_account_a, MockData, MockDataInserts,
         },
@@ -198,12 +222,18 @@ mod test {
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice::inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus},
-        invoice_line::{query::get_invoice_lines, ShipmentTaxUpdate},
+        invoice::inbound_shipment::{
+            UpdateDefaultDonor, UpdateInboundShipment, UpdateInboundShipmentStatus,
+        },
+        invoice_line::{
+            query::get_invoice_lines,
+            stock_in_line::{InsertStockInLine, StockInType},
+            ShipmentTaxUpdate,
+        },
         service_provider::ServiceProvider,
     };
 
-    use super::UpdateInboundShipmentError;
+    use super::{ApplyDonorToInvoiceLines, UpdateInboundShipmentError};
 
     type ServiceError = UpdateInboundShipmentError;
 
@@ -892,5 +922,157 @@ mod test {
         );
         assert_eq!(log.r#type, ActivityLogType::InvoiceStatusVerified);
         assert_eq!(Some(invoice.name_link_id), stock_line.supplier_link_id);
+    }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_donor_changes() {
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_shipment_donor_changes",
+            MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![mock_inbound_shipment_f()];
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context: crate::service_provider::ServiceContext = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let invoice_line_service = service_provider.invoice_line_service;
+        let invoice_service = service_provider.invoice_service;
+        // First add 2 lines: one with donor id and one without
+        invoice_line_service
+            .insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new_invoice_line_id_a".to_string(),
+                    invoice_id: mock_inbound_shipment_f().id,
+                    item_id: mock_item_a().id,
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    donor_id: Some(mock_donor_a().id),
+                    r#type: StockInType::InboundShipment,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        invoice_line_service
+            .insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new_invoice_line_id_b".to_string(),
+                    invoice_id: mock_inbound_shipment_f().id,
+                    item_id: mock_item_a().id,
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    donor_id: None,
+                    r#type: StockInType::InboundShipment,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // None: leaves donor_id on all invoice lines unchanged
+        let invoice = invoice_service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_f().id,
+                    default_donor: Some(UpdateDefaultDonor {
+                        donor_id: Some(mock_donor_b().id),
+                        apply_to_lines: ApplyDonorToInvoiceLines::None,
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let mut result = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id(&mock_inbound_shipment_f().id)
+            .unwrap();
+        result.sort_by(|a, b| a.id.cmp(&b.id));
+
+        assert_eq!(
+            invoice.invoice_row.default_donor_id,
+            Some(mock_donor_b().id)
+        );
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].id, "new_invoice_line_id_a".to_string());
+        assert_eq!(result[0].donor_id, Some(mock_donor_a().id));
+        assert_eq!(result[1].donor_id, None);
+
+        // UpdateExistingDonor: updates donor_id on invoice lines that already have a donor,
+        // and leaves invoice lines without a donor_id unchanged
+        let invoice = invoice_service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_f().id,
+                    default_donor: Some(UpdateDefaultDonor {
+                        donor_id: Some(mock_donor_b().id),
+                        apply_to_lines: ApplyDonorToInvoiceLines::UpdateExistingDonor,
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let mut result = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id(&mock_inbound_shipment_f().id)
+            .unwrap();
+        result.sort_by(|a, b| a.id.cmp(&b.id));
+
+        assert_eq!(
+            invoice.invoice_row.default_donor_id,
+            Some(mock_donor_b().id)
+        );
+        assert_eq!(result[0].donor_id, Some(mock_donor_b().id));
+        assert_eq!(result[1].donor_id, None);
+
+        // AssignIfNone: assigns the default_donor_id to invoice lines that don't have a donor_id
+        invoice_service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_f().id,
+                    default_donor: Some(UpdateDefaultDonor {
+                        donor_id: Some(mock_donor_a().id),
+                        apply_to_lines: ApplyDonorToInvoiceLines::AssignIfNone,
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let mut result = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id(&mock_inbound_shipment_f().id)
+            .unwrap();
+        result.sort_by(|a, b| a.id.cmp(&b.id));
+
+        assert_eq!(result[0].donor_id, Some(mock_donor_b().id));
+        assert_eq!(result[1].donor_id, Some(mock_donor_a().id));
+
+        // AssignToAll: assigns the default_donor_id to all invoice lines
+        invoice_service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: mock_inbound_shipment_f().id,
+                    default_donor: Some(UpdateDefaultDonor {
+                        donor_id: None,
+                        apply_to_lines: ApplyDonorToInvoiceLines::AssignToAll,
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let mut result = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id(&mock_inbound_shipment_f().id)
+            .unwrap();
+        result.sort_by(|a, b| a.id.cmp(&b.id));
+
+        assert!(result.iter().all(|line| line.donor_id == None));
     }
 }

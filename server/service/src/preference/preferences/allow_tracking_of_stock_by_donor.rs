@@ -1,16 +1,16 @@
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
-pub struct DisplayVaccineInDoses;
+pub struct AllowTrackingOfStockByDonor;
 
-impl Preference for DisplayVaccineInDoses {
+impl Preference for AllowTrackingOfStockByDonor {
     type Value = bool;
 
     fn key(&self) -> PrefKey {
-        PrefKey::DisplayVaccineInDoses
+        PrefKey::AllowTrackingOfStockByDonor
     }
 
     fn preference_type(&self) -> PreferenceType {
-        PreferenceType::Store
+        PreferenceType::Global
     }
 
     fn value_type(&self) -> PreferenceValueType {

@@ -11,11 +11,11 @@ import {
   ModalLabel,
   Grid,
   useIntlUtils,
+  BasicSpinner,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { AutoAllocate } from './AutoAllocate';
-import { useOutbound, OutboundLineEditData } from '../../api';
-import { DraftItem } from '../../..';
+import { useOutbound, useOutboundLineEditData } from '../../api';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import {
   useAllocationContext,
@@ -25,41 +25,50 @@ import {
 import { sumAvailableDoses, sumAvailableUnits } from './allocation/utils';
 
 interface AllocationProps {
-  itemData: OutboundLineEditData;
+  itemId: string;
+  invoiceId: string;
   allowPlaceholder: boolean;
   allocateVaccineItemsInDoses: boolean;
   scannedBatch?: string;
 }
 
 export const Allocation = ({
-  itemData,
+  itemId,
+  invoiceId,
   allowPlaceholder,
   allocateVaccineItemsInDoses,
   scannedBatch,
 }: AllocationProps) => {
-  const { initialise, initialisedForItemId } = useAllocationContext(
-    ({ initialise, initialisedForItemId }) => ({
-      initialise,
-      initialisedForItemId,
-    })
+  const { initialise, item } = useAllocationContext(({ initialise, item }) => ({
+    initialise,
+    item,
+  }));
+
+  const { refetch: queryData, isFetching } = useOutboundLineEditData(
+    invoiceId,
+    itemId
   );
 
   useEffect(() => {
-    initialise({
-      input: itemData,
-      strategy: AllocationStrategy.FEFO,
-      allowPlaceholder,
-      allocateVaccineItemsInDoses,
-      scannedBatch,
+    queryData().then(({ data }) => {
+      if (!data) return;
+
+      initialise({
+        itemData: data,
+        strategy: AllocationStrategy.FEFO,
+        allowPlaceholder,
+        scannedBatch,
+        allocateVaccineItemsInDoses,
+      });
     });
+    // Expect dependencies to be stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return initialisedForItemId === itemData.item.id ? (
-    <AllocationInner item={itemData.item} />
-  ) : null;
+  return isFetching ? <BasicSpinner /> : item ? <AllocationInner /> : null;
 };
 
-const AllocationInner = ({ item }: { item: DraftItem }) => {
+const AllocationInner = () => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
 
@@ -67,10 +76,11 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
     'currency',
     'otherParty',
   ]);
-  const { draftLines, allocateIn } = useAllocationContext(
-    ({ allocateIn, draftLines }) => ({
+  const { draftLines, item, allocateIn } = useAllocationContext(
+    ({ allocateIn, item, draftLines }) => ({
       draftLines,
       allocateIn,
+      item,
     })
   );
 
@@ -112,7 +122,6 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
       <AutoAllocate />
 
       <TableWrapper
-        currentItem={item}
         isLoading={false}
         currency={currency}
         isExternalSupplier={!otherParty?.store}
@@ -122,14 +131,12 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
 };
 
 interface TableProps {
-  currentItem: DraftItem;
   isLoading: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
 }
 
 const TableWrapper = ({
-  currentItem,
   isLoading,
   currency,
   isExternalSupplier,
@@ -155,7 +162,6 @@ const TableWrapper = ({
       })}
     >
       <OutboundLineEditTable
-        item={currentItem}
         currency={currency}
         isExternalSupplier={isExternalSupplier}
       />

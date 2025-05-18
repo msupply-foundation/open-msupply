@@ -57,6 +57,10 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
               padding: '4px 8px',
             },
           },
+          inputLabel: {
+            color: 'secondary',
+            ...slotProps?.inputLabel,
+          },
         }}
         {...props}
       >

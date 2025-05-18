@@ -17,6 +17,7 @@ import { PricingSection } from './PricingSection';
 import { RelatedDocumentsSection } from './RelatedDocumentsSection';
 import { TransportSection } from './TransportSection';
 import { AppRoute } from '@openmsupply-client/config';
+import { DonorSection } from './DonorSection';
 
 export const SidePanel: FC = () => {
   const t = useTranslation();
@@ -78,6 +79,7 @@ export const SidePanel: FC = () => {
       <RelatedDocumentsSection />
       <PricingSection />
       {isTransfer && <TransportSection />}
+      <DonorSection />
     </DetailPanelPortal>
   );
 };

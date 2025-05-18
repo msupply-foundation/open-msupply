@@ -33,6 +33,7 @@ pub struct UpdateStockInLine {
     pub tax_percentage: Option<ShipmentTaxUpdate>,
     pub r#type: StockInType,
     pub item_variant_id: Option<NullableUpdate<String>>,
+    pub donor_id: Option<NullableUpdate<String>>,
 }
 
 type OutError = UpdateStockInLineError;

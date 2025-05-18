@@ -1,12 +1,12 @@
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
-pub struct ManageVvmStatus;
+pub struct SortByVvmStatusThenExpiry;
 
-impl Preference for ManageVvmStatus {
+impl Preference for SortByVvmStatusThenExpiry {
     type Value = bool;
 
     fn key(&self) -> PrefKey {
-        PrefKey::ManageVvmStatus
+        PrefKey::SortByVvmStatusThenExpiry
     }
 
     fn preference_type(&self) -> PreferenceType {

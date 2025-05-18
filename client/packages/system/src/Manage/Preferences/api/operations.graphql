@@ -14,13 +14,6 @@ query adminPreferenceList(
   }
 }
 
-query preferences($storeId: String!) {
-  preferences(storeId: $storeId) {
-    showContactTracing
-    displayVaccineInDoses
-  }
-}
-
 mutation upsertPreferences($storeId: String!, $input: UpsertPreferencesInput!) {
   centralServer {
     preferences {

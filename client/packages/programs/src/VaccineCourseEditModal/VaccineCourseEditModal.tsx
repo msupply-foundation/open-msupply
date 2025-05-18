@@ -334,6 +334,7 @@ const VaccineCourseDoseTable = ({
         Cell: LabelCell,
         label: 'label.custom-age-label',
         accessor: ({ rowData }) => rowData.customAgeLabel ?? '',
+        cellProps: { debounceTime: 0 },
         setter: updateDose,
       },
       {
