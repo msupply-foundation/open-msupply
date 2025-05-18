@@ -11,11 +11,11 @@ import {
   ModalLabel,
   Grid,
   BasicTextInput,
+  BasicSpinner,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { AutoAllocate } from './AutoAllocate';
-import { useOutbound, OutboundLineEditData } from '../../api';
-import { DraftItem } from '../../..';
+import { useOutbound, useOutboundLineEditData } from '../../api';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import {
   useAllocationContext,
@@ -24,46 +24,51 @@ import {
 import { sumAvailableQuantity } from './allocation/utils';
 
 interface AllocationProps {
-  itemData: OutboundLineEditData;
+  itemId: string;
+  invoiceId: string;
   allowPlaceholder: boolean;
   scannedBatch?: string;
 }
 
 export const Allocation = ({
-  itemData,
+  itemId,
+  invoiceId,
   allowPlaceholder,
   scannedBatch,
 }: AllocationProps) => {
-  const { initialise, initialisedForItemId } = useAllocationContext(
-    ({ initialise, initialisedForItemId }) => ({
-      initialise,
-      initialisedForItemId,
-    })
+  const { initialise, item } = useAllocationContext(({ initialise, item }) => ({
+    initialise,
+    item,
+  }));
+
+  const { refetch: queryData, isFetching } = useOutboundLineEditData(
+    invoiceId,
+    itemId
   );
 
   useEffect(() => {
-    initialise(
-      itemData,
-      AllocationStrategy.FEFO,
-      allowPlaceholder,
-      scannedBatch
-    );
+    queryData().then(({ data }) => {
+      if (!data) return;
+
+      initialise(data, AllocationStrategy.FEFO, allowPlaceholder, scannedBatch);
+    });
+    // Expect dependencies to be stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return initialisedForItemId === itemData.item.id ? (
-    <AllocationInner item={itemData.item} />
-  ) : null;
+  return isFetching ? <BasicSpinner /> : item ? <AllocationInner /> : null;
 };
 
-const AllocationInner = ({ item }: { item: DraftItem }) => {
+const AllocationInner = () => {
   const t = useTranslation();
 
   const { currency, otherParty } = useOutbound.document.fields([
     'currency',
     'otherParty',
   ]);
-  const { draftLines } = useAllocationContext(({ draftLines }) => ({
+  const { draftLines, item } = useAllocationContext(({ draftLines, item }) => ({
     draftLines,
+    item,
   }));
 
   return (
@@ -93,7 +98,6 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
       <AutoAllocate />
 
       <TableWrapper
-        currentItem={item}
         isLoading={false}
         currency={currency}
         isExternalSupplier={!otherParty?.store}
@@ -103,14 +107,12 @@ const AllocationInner = ({ item }: { item: DraftItem }) => {
 };
 
 interface TableProps {
-  currentItem: DraftItem;
   isLoading: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
 }
 
 const TableWrapper = ({
-  currentItem,
   isLoading,
   currency,
   isExternalSupplier,
@@ -136,7 +138,6 @@ const TableWrapper = ({
       })}
     >
       <OutboundLineEditTable
-        item={currentItem}
         currency={currency}
         isExternalSupplier={isExternalSupplier}
       />

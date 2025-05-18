@@ -7,10 +7,8 @@ import {
   ModalMode,
   useNotification,
   InvoiceNodeStatus,
-  BasicSpinner,
 } from '@openmsupply-client/common';
 import { useNextItem } from './hooks';
-import { useOutboundLineEditData } from '../../api';
 import { ScannedBarcode } from '../../../types';
 import { SelectItem } from './SelectItem';
 import { Allocation } from './Allocation';
@@ -50,10 +48,6 @@ export const OutboundLineEdit = ({
 
   const { next, disabled: nextDisabled } = useNextItem(itemId);
 
-  const { data: itemData, isFetching } = useOutboundLineEditData(
-    invoiceId,
-    itemId
-  );
   const { mutateAsync } = useSaveOutboundLines(invoiceId);
   const { saveBarcode } = useOpenedWithBarcode(asBarcodeOrNull(openedWith));
 
@@ -158,17 +152,15 @@ export const OutboundLineEdit = ({
           onChangeItem={setItemId}
           disabled={mode === ModalMode.Update}
         />
-        {isFetching ? (
-          <BasicSpinner />
-        ) : (
-          itemData && (
-            <Allocation
-              key={itemId}
-              itemData={itemData}
-              allowPlaceholder={status === InvoiceNodeStatus.New}
-              scannedBatch={asBarcodeOrNull(openedWith)?.batch}
-            />
-          )
+
+        {itemId && (
+          <Allocation
+            key={itemId}
+            itemId={itemId}
+            invoiceId={invoiceId}
+            allowPlaceholder={status === InvoiceNodeStatus.New}
+            scannedBatch={asBarcodeOrNull(openedWith)?.batch}
+          />
         )}
       </Grid>
     </Modal>

@@ -16,6 +16,7 @@ import {
 } from './utils';
 import { OutboundLineEditData } from '../../../api';
 import { allocateQuantities } from './allocateQuantities';
+import { DraftItem } from '../../../..';
 
 export enum AllocateIn {
   Units = 'Units',
@@ -40,7 +41,7 @@ interface AllocationContext {
   nonAllocatableLines: DraftStockOutLineFragment[];
   alerts: StockOutAlert[];
   allocateIn: AllocateIn;
-  initialisedForItemId: string | null;
+  item: DraftItem | null;
   placeholderQuantity: number | null;
 
   initialise: (
@@ -63,7 +64,7 @@ interface AllocationContext {
 
 export const useAllocationContext = create<AllocationContext>((set, get) => ({
   isDirty: false,
-  initialisedForItemId: null,
+  item: null,
   draftLines: [],
   nonAllocatableLines: [],
   placeholderQuantity: null,
@@ -90,7 +91,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
     set({
       isDirty: false,
-      initialisedForItemId: item.id,
+      item,
 
       draftLines: allocatableLines,
       nonAllocatableLines,
@@ -107,7 +108,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       draftLines: [],
       nonAllocatableLines: [],
       placeholderQuantity: null,
-      initialisedForItemId: null,
+      item: null,
       allocateIn: AllocateIn.Units,
       alerts: [],
     })),
