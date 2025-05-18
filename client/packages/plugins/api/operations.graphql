@@ -3,14 +3,7 @@ query pluginData(
   $storeId: String!
   $filter: PluginDataFilterInput
 ) {
-  pluginData(
-    pluginCode: $pluginCode
-    storeId: $storeId
-    filter: {
-      dataIdentifier: { equalTo: $dataIdentifier }
-      relatedRecordId: { equalAny: $stockLineIds }
-    }
-  ) {
+  pluginData(pluginCode: $pluginCode, storeId: $storeId, filter: $filter) {
     __typename
     ... on PluginDataConnector {
       nodes {

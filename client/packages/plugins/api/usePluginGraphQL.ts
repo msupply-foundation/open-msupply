@@ -6,11 +6,11 @@ import {
 import { getSdk } from './operations.generated';
 
 // TODO: generic useGraphql
-export const useStockGraphQL = () => {
+export const usePluginDataGraphQL = () => {
   const { client } = useGql();
   const queryClient = useQueryClient();
   const { storeId } = useAuthContext();
-  const stockApi = getSdk(client);
+  const pluginDataApi = getSdk(client);
 
-  return { stockApi, queryClient, storeId };
+  return { pluginDataApi, queryClient, storeId };
 };
