@@ -50,7 +50,6 @@ interface AllocationContext {
     scannedBatch?: string
   ) => void;
 
-  setDraftLines: (lines: DraftStockOutLineFragment[]) => void;
   setAlerts: (alerts: StockOutAlert[]) => void;
   clear: () => void;
 
@@ -113,13 +112,6 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       alerts: [],
     })),
 
-  setDraftLines: lines =>
-    set(state => ({
-      ...state,
-      isDirty: true,
-      draftLines: lines,
-    })),
-
   setAlerts: alerts =>
     set(state => ({
       ...state,
@@ -127,18 +119,11 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     })),
 
   autoAllocate: (quantity, format, t) => {
-    const {
-      draftLines,
-      nonAllocatableLines,
-      placeholderQuantity,
-      setDraftLines,
-    } = get();
+    const { draftLines, nonAllocatableLines, placeholderQuantity } = get();
 
     const result = allocateQuantities(draftLines, quantity);
 
     if (result) {
-      setDraftLines(result.allocatedLines);
-
       const allocatedUnits = getAllocatedUnits({
         draftLines: result.allocatedLines,
         placeholderQuantity: 0, // don't want to include any placeholder in this calc
@@ -168,6 +153,8 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
       set(state => ({
         ...state,
+        isDirty: true,
+        draftLines: result.allocatedLines,
         alerts,
         placeholderQuantity:
           placeholderQuantity === null ? null : stillToAllocate,
@@ -176,14 +163,14 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   },
 
   manualAllocate: (lineId, quantity) => {
-    const { draftLines, setDraftLines } = get();
+    const { draftLines } = get();
 
     const updatedLines = issueStock(draftLines, lineId, quantity);
 
-    setDraftLines(updatedLines);
-
     set(state => ({
       ...state,
+      isDirty: true,
+      draftLines: updatedLines,
       alerts: [],
     }));
   },
