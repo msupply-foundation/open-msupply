@@ -66,13 +66,8 @@ export const OutboundLineEdit = ({
     setAlerts,
     clear,
   } = useAllocationContext(state => ({
-    draftLines: state.draftLines,
-    placeholderQuantity: state.placeholderQuantity,
+    ...state,
     allocatedUnits: getAllocatedUnits(state),
-    alerts: state.alerts,
-    isDirty: state.isDirty,
-    setAlerts: state.setAlerts,
-    clear: state.clear,
   }));
 
   const onSave = async () => {
