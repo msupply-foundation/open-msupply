@@ -10,8 +10,6 @@ import {
   useTranslation,
   RouteBuilder,
   useNavigate,
-  usePreference,
-  PreferenceKey,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
@@ -19,7 +17,6 @@ import { PricingSection } from './PricingSection';
 import { RelatedDocumentsSection } from './RelatedDocumentsSection';
 import { TransportSection } from './TransportSection';
 import { AppRoute } from '@openmsupply-client/config';
-import { DonorSection } from './DonorSection';
 
 export const SidePanel = () => {
   const t = useTranslation();
@@ -28,9 +25,6 @@ export const SidePanel = () => {
 
   const { data } = useInbound.document.get();
   const { mutateAsync } = useInbound.document.delete();
-  const { data: prefs } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor
-  );
 
   const isTransfer = !!data?.linkedShipment?.id;
   const canDelete = data?.status === InvoiceNodeStatus.New;
@@ -86,7 +80,6 @@ export const SidePanel = () => {
       <RelatedDocumentsSection />
       <PricingSection />
       {isTransfer && <TransportSection />}
-      {prefs?.allowTrackingOfStockByDonor && <DonorSection />}
     </DetailPanelPortal>
   );
 };
