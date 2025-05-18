@@ -83,10 +83,12 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     // Note - expired is still considered allocatable, just not via auto-allocation
     const [allocatableLines, nonAllocatableLines] = ArrayUtils.partition(
       sortedLines,
-      line =>
-        scannedBatch
-          ? scannedBatchFilter(sortedLines, line, scannedBatch)
-          : canAllocate(line)
+      line => {
+        return (
+          canAllocate(line) &&
+          (!scannedBatch || scannedBatchFilter(sortedLines, line, scannedBatch))
+        );
+      }
     );
 
     set({
