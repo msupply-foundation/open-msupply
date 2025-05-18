@@ -59,6 +59,11 @@ export type StockLineFragment = {
       code: string;
     }>;
   };
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    dosesPerUnit: number;
+  } | null;
 };
 
 export type ItemRowFragment = {
@@ -375,6 +380,11 @@ export type ItemFragment = {
           code: string;
         }>;
       };
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        dosesPerUnit: number;
+      } | null;
     }>;
   };
   stats: {
@@ -557,6 +567,11 @@ export type ItemsWithStockLinesQuery = {
               code: string;
             }>;
           };
+          itemVariant?: {
+            __typename: 'ItemVariantNode';
+            id: string;
+            dosesPerUnit: number;
+          } | null;
         }>;
       };
       stats: {
@@ -861,6 +876,11 @@ export type ItemByIdQuery = {
               code: string;
             }>;
           };
+          itemVariant?: {
+            __typename: 'ItemVariantNode';
+            id: string;
+            dosesPerUnit: number;
+          } | null;
         }>;
       };
       variants: Array<{
@@ -953,6 +973,14 @@ export type ItemByIdQuery = {
   };
 };
 
+export type ItemVariantOptionFragment = {
+  __typename: 'ItemVariantNode';
+  id: string;
+  dosesPerUnit: number;
+  label: string;
+  bundledItemVariants: Array<{ __typename: 'BundledItemNode'; id: string }>;
+};
+
 export type ItemVariantsConfiguredQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
@@ -976,80 +1004,11 @@ export type ItemVariantsQuery = {
       variants: Array<{
         __typename: 'ItemVariantNode';
         id: string;
-        name: string;
-        itemId: string;
-        manufacturerId?: string | null;
-        coldStorageTypeId?: string | null;
         dosesPerUnit: number;
-        vvmType?: string | null;
-        item?: {
-          __typename: 'ItemNode';
-          id: string;
-          name: string;
-          isVaccine: boolean;
-        } | null;
-        manufacturer?: {
-          __typename: 'NameNode';
-          code: string;
-          id: string;
-          isCustomer: boolean;
-          isSupplier: boolean;
-          isOnHold: boolean;
-          name: string;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
-        } | null;
-        coldStorageType?: {
-          __typename: 'ColdStorageTypeNode';
-          id: string;
-          name: string;
-          minTemperature: number;
-          maxTemperature: number;
-        } | null;
-        packagingVariants: Array<{
-          __typename: 'PackagingVariantNode';
-          id: string;
-          name: string;
-          packagingLevel: number;
-          packSize?: number | null;
-          volumePerUnit?: number | null;
-        }>;
+        label: string;
         bundledItemVariants: Array<{
           __typename: 'BundledItemNode';
           id: string;
-          ratio: number;
-          principalItemVariant?: {
-            __typename: 'ItemVariantNode';
-            id: string;
-            name: string;
-            itemId: string;
-            itemName: string;
-          } | null;
-          bundledItemVariant?: {
-            __typename: 'ItemVariantNode';
-            id: string;
-            name: string;
-            itemId: string;
-            itemName: string;
-          } | null;
-        }>;
-        bundlesWith: Array<{
-          __typename: 'BundledItemNode';
-          id: string;
-          ratio: number;
-          principalItemVariant?: {
-            __typename: 'ItemVariantNode';
-            id: string;
-            name: string;
-            itemId: string;
-            itemName: string;
-          } | null;
-          bundledItemVariant?: {
-            __typename: 'ItemVariantNode';
-            id: string;
-            name: string;
-            itemId: string;
-            itemName: string;
-          } | null;
         }>;
       }>;
     }>;
@@ -1111,6 +1070,11 @@ export type GetHistoricalStockLinesQuery = {
           code: string;
         }>;
       };
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        dosesPerUnit: number;
+      } | null;
     }>;
   };
 };
@@ -1499,6 +1463,10 @@ export const StockLineFragmentDoc = gql`
     storeId
     totalNumberOfPacks
     itemVariantId
+    itemVariant {
+      id
+      dosesPerUnit
+    }
   }
   ${ItemDirectionFragmentDoc}
   ${WarningFragmentDoc}
@@ -1648,6 +1616,17 @@ export const ItemsWithStatsFragmentDoc = gql`
       totalConsumption
       stockOnHand
     }
+  }
+`;
+export const ItemVariantOptionFragmentDoc = gql`
+  fragment ItemVariantOption on ItemVariantNode {
+    __typename
+    id
+    label: name
+    bundledItemVariants {
+      id
+    }
+    dosesPerUnit
   }
 `;
 export const ItemLedgerFragmentDoc = gql`
@@ -1822,13 +1801,13 @@ export const ItemVariantsDocument = gql`
         nodes {
           __typename
           variants {
-            ...ItemVariant
+            ...ItemVariantOption
           }
         }
       }
     }
   }
-  ${ItemVariantFragmentDoc}
+  ${ItemVariantOptionFragmentDoc}
 `;
 export const GetHistoricalStockLinesDocument = gql`
   query getHistoricalStockLines(
