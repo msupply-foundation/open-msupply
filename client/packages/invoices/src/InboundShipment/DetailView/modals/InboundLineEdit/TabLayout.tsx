@@ -20,7 +20,6 @@ import {
   CurrencyRowFragment,
   ItemRowFragment,
 } from '@openmsupply-client/system';
-import { VvmStatusFragment } from 'packages/system/src/Stock/api';
 
 interface TabLayoutProps {
   addDraftLine: () => void;
@@ -32,7 +31,6 @@ interface TabLayoutProps {
   item: ItemRowFragment | null;
   hasItemVariantsEnabled?: boolean;
   hasVVMStatusesEnabled?: boolean;
-  vvmStatuses?: VvmStatusFragment[];
 }
 
 enum Tabs {
@@ -50,7 +48,6 @@ export const TabLayout = ({
   isExternalSupplier,
   hasItemVariantsEnabled,
   hasVVMStatusesEnabled,
-  vvmStatuses,
   item,
 }: TabLayoutProps) => {
   const t = useTranslation();
@@ -124,7 +121,6 @@ export const TabLayout = ({
             item={item}
             hasItemVariantsEnabled={hasItemVariantsEnabled}
             hasVVMStatusesEnabled={hasVVMStatusesEnabled}
-            vvmStatuses={vvmStatuses}
           />
         </InboundLineEditPanel>
 

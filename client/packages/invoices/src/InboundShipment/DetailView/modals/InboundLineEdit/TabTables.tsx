@@ -35,7 +35,6 @@ import {
   NumberOfPacksCell,
   vvmStatusesColumn,
 } from './utils';
-import { VvmStatusFragment } from 'packages/system/src/Stock/api/operations.generated';
 
 interface TableProps {
   lines: DraftInboundLine[];
@@ -45,7 +44,6 @@ interface TableProps {
   isExternalSupplier?: boolean;
   hasItemVariantsEnabled?: boolean;
   hasVVMStatusesEnabled?: boolean;
-  vvmStatuses?: VvmStatusFragment[];
   item?: ItemRowFragment | null;
 }
 
@@ -55,7 +53,6 @@ export const QuantityTableComponent = ({
   isDisabled = false,
   hasItemVariantsEnabled,
   hasVVMStatusesEnabled,
-  vvmStatuses,
   item,
 }: TableProps) => {
   const t = useTranslation();
@@ -83,8 +80,8 @@ export const QuantityTableComponent = ({
     columnDefinitions.push(getDosesPerUnitColumn(t, unitName));
   }
 
-  if (hasVVMStatusesEnabled && item?.isVaccine && vvmStatuses) {
-    columnDefinitions.push(vvmStatusesColumn(updateDraftLine, vvmStatuses));
+  if (hasVVMStatusesEnabled && item?.isVaccine) {
+    columnDefinitions.push(vvmStatusesColumn(updateDraftLine));
   }
 
   columnDefinitions.push(

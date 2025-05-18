@@ -1,13 +1,12 @@
 import React from 'react';
 import { Autocomplete, useTranslation } from '@openmsupply-client/common';
-import { VvmStatusFragment } from '../../api';
+import { useActiveVVMStatuses, VvmStatusFragment } from '../../api';
 
 interface VVMStatusSearchInputProps {
   selectedId: string | null;
   onChange: (variantId: string | null) => void;
   disabled?: boolean;
   width?: number | string;
-  vvmStatuses: VvmStatusFragment[];
 }
 
 export const VVMStatusSearchInput = ({
@@ -15,14 +14,16 @@ export const VVMStatusSearchInput = ({
   width,
   onChange,
   disabled,
-  vvmStatuses,
 }: VVMStatusSearchInputProps) => {
   const t = useTranslation();
+  const { data, isLoading } = useActiveVVMStatuses();
 
-  const options = vvmStatuses.map(v => ({
-    id: v?.id,
-    code: v?.code,
-    description: v?.description,
+  if (!data) return null;
+
+  const options = data.map((status: VvmStatusFragment) => ({
+    id: status?.id,
+    code: status?.code,
+    description: status?.description,
   }));
 
   const selected = options.find(option => option.id === selectedId) ?? null;
@@ -33,7 +34,7 @@ export const VVMStatusSearchInput = ({
       width={`${width}px`}
       popperMinWidth={Math.min(Number(width), 200)}
       value={selected ?? null}
-      // loading={isLoading}
+      loading={isLoading}
       onChange={(_, option) => onChange(option?.id ?? null)}
       options={options}
       getOptionLabel={option => option.description ?? ''}

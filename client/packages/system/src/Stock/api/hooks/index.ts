@@ -4,4 +4,4 @@ export * from './useRepack';
 export * from './useStockLedger';
 export * from './useStockLine';
 export * from './useStockList';
-export * from './useIsVVMStatusEnabled';
+export * from './useActiveVVMStatuses';

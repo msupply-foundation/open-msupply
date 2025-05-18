@@ -84,6 +84,7 @@ export const vvmStatusesColumn = (
   label: 'label.vvm-status',
   width: 170,
   Cell: props => <VVMStatusInputCell {...props} />,
+  accessor: ({ rowData }) => rowData.vvmStatusId,
   setter: updateDraftLine,
 });
 

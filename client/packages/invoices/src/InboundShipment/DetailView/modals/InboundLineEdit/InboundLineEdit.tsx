@@ -211,7 +211,6 @@ export const InboundLineEdit = ({
               item={currentItem}
               hasItemVariantsEnabled={hasItemVariantsEnabled}
               hasVVMStatusesEnabled={!!vvmStatuses}
-              vvmStatuses={vvmStatuses ?? undefined}
             />
           </>
         )}

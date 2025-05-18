@@ -257,7 +257,3 @@ query activeVvmStatuses($storeId: String!) {
     }
   }
 }
-
-query vvmStatusesConfigured($storeId: String!) {
-  vvmStatusesConfigured(storeId: $storeId)
-}

@@ -12,13 +12,10 @@ export function useActiveVVMStatuses() {
     const query = await stockApi.activeVvmStatuses({
       storeId,
     });
-    return query?.activeVvmStatuses;
+    return query?.activeVvmStatuses.nodes;
   };
 
-  const query = useQuery({ queryKey, queryFn });
-  const result = !!prefs?.manageVvmStatusForStock
-    ? query.data?.nodes
-    : undefined;
-
-  return result;
+  const { data, isLoading } = useQuery({ queryKey, queryFn });
+  const result = !!prefs?.manageVvmStatusForStock ? data : undefined;
+  return { data: result, isLoading };
 }
