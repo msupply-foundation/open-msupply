@@ -33,6 +33,7 @@ pub struct UpdateInput {
     pub total_before_tax: Option<f64>,
     pub tax: Option<TaxInput>,
     pub item_variant_id: Option<NullableUpdateInput<String>>,
+    pub donor_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(SimpleObject)]
@@ -99,6 +100,7 @@ impl UpdateInput {
             total_before_tax,
             tax,
             item_variant_id,
+            donor_id,
         } = self;
 
         ServiceInput {
@@ -123,6 +125,9 @@ impl UpdateInput {
             r#type: StockInType::InboundShipment,
             // Default
             note: None,
+            donor_id: donor_id.map(|donor_id| NullableUpdate {
+                value: donor_id.value,
+            }),
         }
     }
 }
