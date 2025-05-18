@@ -726,6 +726,8 @@ export type ItemsWithStatsFragment = {
   name: string;
   unitName?: string | null;
   defaultPackSize: number;
+  isVaccine: boolean;
+  doses: number;
   availableStockOnHand: number;
   stats: {
     __typename: 'ItemStatsNode';
@@ -759,6 +761,8 @@ export type ItemsWithStatsQuery = {
       name: string;
       unitName?: string | null;
       defaultPackSize: number;
+      isVaccine: boolean;
+      doses: number;
       availableStockOnHand: number;
       stats: {
         __typename: 'ItemStatsNode';
@@ -1575,6 +1579,8 @@ export const ItemsWithStatsFragmentDoc = gql`
     name
     unitName
     defaultPackSize
+    isVaccine
+    doses
     availableStockOnHand(storeId: $storeId)
     stats(storeId: $storeId) {
       __typename
