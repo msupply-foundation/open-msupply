@@ -1,10 +1,11 @@
-use super::{ItemNode, LocationNode, VVMStatusLogConnector, VVMStatusNode};
+use super::{ItemNode, ItemVariantNode, LocationNode, VVMStatusLogConnector, VVMStatusNode};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
-        ItemLoader, LocationByIdLoader, VVMStatusByIdLoader, VVMStatusLogByStockLineIdLoader,
+        ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader, VVMStatusByIdLoader,
+        VVMStatusLogByStockLineIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
@@ -107,6 +108,20 @@ impl StockLineNode {
     pub async fn barcode(&self) -> Option<&str> {
         self.stock_line.barcode()
     }
+
+    pub async fn item_variant(&self, ctx: &Context<'_>) -> Result<Option<ItemVariantNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemVariantByItemVariantIdLoader>>();
+
+        let item_variant_id = match &self.row().item_variant_id {
+            None => return Ok(None),
+            Some(item_variant_id) => item_variant_id,
+        };
+
+        let result = loader.load_one(item_variant_id.clone()).await?;
+
+        Ok(result.map(ItemVariantNode::from_domain))
+    }
+
     pub async fn vvm_status(&self, ctx: &Context<'_>) -> Result<Option<VVMStatusNode>> {
         if self.row().vvm_status_id.is_none() {
             return Ok(None);
