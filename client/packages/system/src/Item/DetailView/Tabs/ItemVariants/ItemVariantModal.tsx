@@ -12,6 +12,8 @@ import {
   createQueryParamsStore,
   useNotification,
   NumericTextInput,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { ItemPackagingVariantsTable } from './ItemPackagingVariantsTable';
 import {
@@ -35,6 +37,9 @@ export const ItemVariantModal = ({
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen: true, onClose, disableBackdrop: true });
   const { success, error } = useNotification();
+  const { data } = usePreference(PreferenceKey.DisplayVaccinesInDoses);
+  const displayVaccinesInDoses =
+    item?.isVaccine && data?.displayVaccinesInDoses;
 
   const { draft, isComplete, updateDraft, updatePackagingVariant, save } =
     useItemVariant({
@@ -85,6 +90,7 @@ export const ItemVariantModal = ({
           updateVariant={updateDraft}
           updatePackagingVariant={updatePackagingVariant}
           variant={draft}
+          displayVaccinesInDoses={displayVaccinesInDoses}
         />
       </QueryParamsProvider>
     </Modal>
@@ -95,10 +101,12 @@ const ItemVariantForm = ({
   variant,
   updateVariant,
   updatePackagingVariant,
+  displayVaccinesInDoses,
 }: {
   variant: ItemVariantFragment;
   updateVariant: (patch: Partial<ItemVariantFragment>) => void;
   updatePackagingVariant: (patch: Partial<PackagingVariantFragment>) => void;
+  displayVaccinesInDoses?: boolean;
 }) => {
   const t = useTranslation();
 
@@ -154,7 +162,7 @@ const ItemVariantForm = ({
             </Box>
           }
         />
-        {variant.item?.isVaccine && (
+        {displayVaccinesInDoses && (
           <>
             <InputWithLabelRow
               label={t('label.doses-per-unit')}
