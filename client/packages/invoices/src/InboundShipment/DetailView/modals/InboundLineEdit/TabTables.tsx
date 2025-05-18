@@ -80,7 +80,7 @@ export const QuantityTableComponent = ({
     columnDefinitions.push(getDosesPerUnitColumn(t, unitName));
   }
 
-  if (hasVVMStatusesEnabled && item?.isVaccine) {
+  if (!!hasVVMStatusesEnabled && item?.isVaccine) {
     columnDefinitions.push(vvmStatusesColumn(updateDraftLine));
   }
 

@@ -131,7 +131,7 @@ export const InboundLineEdit = ({
     currentItem?.id ?? ''
   );
   const hasItemVariantsEnabled = useIsItemVariantsEnabled();
-  const vvmStatuses = useActiveVVMStatuses();
+  const { data: hasVvmStatusesEnabled } = useActiveVVMStatuses();
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
@@ -210,7 +210,7 @@ export const InboundLineEdit = ({
               isExternalSupplier={isExternalSupplier}
               item={currentItem}
               hasItemVariantsEnabled={hasItemVariantsEnabled}
-              hasVVMStatusesEnabled={!!vvmStatuses}
+              hasVVMStatusesEnabled={!!hasVvmStatusesEnabled}
             />
           </>
         )}
