@@ -5,6 +5,7 @@ import {
   Typography,
   Box,
   textStyles,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { useItemVariants } from '../../api';
 import { ItemVariantSelector } from './ItemVariantSelector';
@@ -32,10 +33,18 @@ export const ItemVariantInputCell = <T extends RecordWithId>({
   };
 
   return (
-    <Box display="flex" gap={1}>
-      <Typography sx={dense ? textStyles.dense : textStyles.default}>
-        {selected?.name}
-      </Typography>
+    <Box display="flex" justifyContent="space-between">
+      <Tooltip title={selected?.name}>
+        <Typography
+          sx={{
+            ...(dense ? textStyles.dense : textStyles.default),
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {selected?.name}
+        </Typography>
+      </Tooltip>
       <ItemVariantSelector
         selectedId={selectedId}
         variants={data}

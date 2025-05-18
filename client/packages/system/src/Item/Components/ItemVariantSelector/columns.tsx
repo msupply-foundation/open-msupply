@@ -2,6 +2,7 @@ import React from 'react';
 import {
   ColumnDescription,
   RadioCell,
+  TooltipTextCell,
   useColumns,
 } from '@openmsupply-client/common';
 import { ItemVariantFragment } from '../../api';
@@ -34,6 +35,7 @@ export const useItemVariantSelectorColumns = ({
     [
       'name',
       {
+        Cell: TooltipTextCell,
         width: 300,
       },
     ],
@@ -51,6 +53,7 @@ export const useItemVariantSelectorColumns = ({
     key: 'manufacturer',
     label: 'label.manufacturer',
     width: 250,
+    Cell: TooltipTextCell,
     accessor: ({ rowData }) => rowData.manufacturer?.name,
   });
 
