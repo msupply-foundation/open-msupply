@@ -62,8 +62,6 @@ export const scannedBatchFilter = (
   selectedLine: DraftStockOutLineFragment,
   scannedBatch: string
 ) => {
-  if (!canAllocate(selectedLine)) return false;
-
   const linesIncludeScannedBatch = allLines.some(l => l.batch === scannedBatch);
 
   // If the requested batch is not in the list, we can allocate any line
