@@ -9,7 +9,7 @@ import {
   AdjustmentTypeInput,
   useDialog,
   useFormatNumber,
-  ReasonOptionNodeType,
+  getReasonOptionType,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
 import { ReasonOptionsSearchInput } from '../../..';
@@ -54,20 +54,6 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
     } catch {
       error(t('messages.could-not-save'))(); // generic could not save message
     }
-  };
-
-  const getReasonOptionType = (
-    isInventoryReduction: boolean,
-    isVaccine: boolean
-  ): ReasonOptionNodeType | ReasonOptionNodeType[] => {
-    if (isInventoryReduction && isVaccine)
-      return [
-        ReasonOptionNodeType.NegativeInventoryAdjustment,
-        ReasonOptionNodeType.OpenVialWastage,
-      ];
-    if (isInventoryReduction)
-      return ReasonOptionNodeType.NegativeInventoryAdjustment;
-    return ReasonOptionNodeType.PositiveInventoryAdjustment;
   };
 
   return (

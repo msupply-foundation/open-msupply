@@ -18,7 +18,7 @@ import {
   NumberInputCell,
   ColumnAlign,
   NumberCell,
-  ReasonOptionNodeType,
+  getReasonOptionType,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -122,20 +122,6 @@ const getInventoryAdjustmentReasonInputColumn = (
       const isAdjustmentReasonError =
         errorType === 'AdjustmentReasonNotProvided' ||
         errorType === 'AdjustmentReasonNotValid';
-
-      const getReasonOptionType = (
-        isInventoryReduction: boolean,
-        isVaccine: boolean
-      ): ReasonOptionNodeType | ReasonOptionNodeType[] => {
-        if (isInventoryReduction && isVaccine)
-          return [
-            ReasonOptionNodeType.NegativeInventoryAdjustment,
-            ReasonOptionNodeType.OpenVialWastage,
-          ];
-        if (isInventoryReduction)
-          return ReasonOptionNodeType.NegativeInventoryAdjustment;
-        return ReasonOptionNodeType.PositiveInventoryAdjustment;
-      };
 
       const isInventoryReduction =
         rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0);
