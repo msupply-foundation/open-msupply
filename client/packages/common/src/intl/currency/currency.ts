@@ -1,6 +1,7 @@
 import currency from 'currency.js';
 import { useAuthContext } from '../../authentication';
 import { MAX_FRACTION_DIGITS, useIntlUtils } from '../utils';
+import { intlNumberFormat } from '@openmsupply-client/common';
 
 const trimCents = (centsString: string) => {
   const number = Number(`.${centsString}`);
@@ -10,7 +11,7 @@ const trimCents = (centsString: string) => {
     return '00';
   }
 
-  const trimmed = new Intl.NumberFormat('en', {
+  const trimmed = intlNumberFormat('en', {
     maximumFractionDigits: MAX_FRACTION_DIGITS,
   }).format(number);
   // Trimmed is some number with just one decimal place.
@@ -78,7 +79,7 @@ export const format: currency.Format = (
 // this should be the source of truth.
 const getSeparatorAndDecimal = (locale: string) => {
   // Some locales (at least `es`) don't include a group separator for 4 digits (1000), only for 5 (10000)
-  const parts = new Intl.NumberFormat(locale).formatToParts(10000.1);
+  const parts = intlNumberFormat(locale).formatToParts(10000.1);
   const separator = parts.find(({ type }) => type === 'group')?.value ?? ',';
   const decimal = parts.find(({ type }) => type === 'decimal')?.value ?? '.';
   return { separator, decimal };

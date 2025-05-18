@@ -142,6 +142,9 @@ pub use self::warning::*;
 pub mod vvm_status;
 pub use self::vvm_status::*;
 
+pub mod draft_outbound_shipment_line;
+pub use self::draft_outbound_shipment_line::*;
+
 pub mod vvm_status_log;
 pub use self::vvm_status_log::*;
 
