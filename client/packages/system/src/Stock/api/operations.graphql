@@ -24,6 +24,7 @@ fragment StockLineRow on StockLineNode {
     masterLists(storeId: $storeId) {
       name
     }
+    isVaccine
   }
   barcode
   vvmStatusLogs {

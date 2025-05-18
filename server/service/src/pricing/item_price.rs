@@ -11,7 +11,7 @@ pub struct ItemPriceLookup {
     pub customer_name_id: Option<String>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct ItemPrice {
     pub item_id: String,
     pub default_price_per_unit: Option<f64>,

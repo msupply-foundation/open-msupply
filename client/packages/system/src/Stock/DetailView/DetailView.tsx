@@ -93,6 +93,8 @@ export const StockLineDetailView: React.FC = () => {
     adjustmentModalController.toggleOn
   );
 
+  const isVaccine = data?.item?.isVaccine ?? false;
+
   const tabs = [
     {
       Component: (
@@ -105,10 +107,14 @@ export const StockLineDetailView: React.FC = () => {
       ),
       value: t('label.details'),
     },
-    {
-      Component: <StatusHistory draft={draft} isLoading={isLoading} />,
-      value: t('label.statushistory'),
-    },
+    ...(isVaccine
+      ? [
+          {
+            Component: <StatusHistory draft={draft} isLoading={isLoading} />,
+            value: t('label.statushistory'),
+          },
+        ]
+      : []),
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: t('label.log'),
