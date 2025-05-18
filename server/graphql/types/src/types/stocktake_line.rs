@@ -148,7 +148,7 @@ impl StocktakeLineNode {
 
         let result = loader.load_one(item_variant_id.clone()).await?;
 
-        Ok(result.map(|item_variant| ItemVariantNode::from_domain(item_variant)))
+        Ok(result.map(ItemVariantNode::from_domain))
     }
 }
 
