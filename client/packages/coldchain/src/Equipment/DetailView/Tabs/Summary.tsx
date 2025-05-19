@@ -21,7 +21,6 @@ import {
 import { Status } from '../../Components';
 import {
   DonorSearchInput,
-  NameRowFragment,
   StoreRowFragment,
   StoreSearchInput,
 } from '@openmsupply-client/system';
@@ -189,14 +188,6 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
     reason: string
   ) => {
     if (reason === 'clear') onChange({ store: null });
-  };
-
-  const onDonorInputChange = (
-    _event: React.SyntheticEvent<Element, Event>,
-    _value: string,
-    reason: string
-  ) => {
-    if (reason === 'clear') onChange({ donor: null, donorNameId: null });
   };
 
   return (
@@ -408,9 +399,8 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
         <Section heading={t('label.donor')}>
           <Row isGaps={isGaps} label={t('label.donor')}>
             <DonorSearchInput
-              value={draft.donor as NameRowFragment} // Using as NameRowFragment is ok, because the comparison function is based on the id
-              onChange={e => onChange({ donor: e, donorNameId: e?.id })}
-              onInputChange={onDonorInputChange}
+              donorId={draft.donor?.id ?? null}
+              onChange={e => onChange({ donor: e, donorNameId: e?.id ?? null })}
               clearable
             />
           </Row>

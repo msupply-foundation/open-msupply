@@ -51,7 +51,8 @@ export const useInboundShipmentColumns = ({
 }: InboundShipmentColumnsProps) => {
   const t = useTranslation();
   const { data: preferences } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses
+    PreferenceKey.DisplayVaccinesInDoses,
+    PreferenceKey.AllowTrackingOfStockByDonor
   );
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
   const { getError } = useInboundShipmentLineErrorContext();
@@ -277,9 +278,23 @@ export const useInboundShipmentColumns = ({
       Cell: CurrencyCell,
       accessor: ({ rowData }) => calculateRowTotalCost(rowData),
       getSortValue: rowData => calculateRowTotalCost(rowData),
-    },
-    getRowExpandColumn()
+    }
   );
+
+  if (preferences?.allowTrackingOfStockByDonor) {
+    columns.push({
+      key: 'donorName',
+      label: 'label.donor',
+      accessor: ({ rowData }) =>
+        getColumnProperty(rowData, [
+          { path: ['lines', 'donorName'] },
+          { path: ['donorName'], default: '' },
+        ]),
+      sortable: false,
+    });
+  }
+
+  columns.push(getRowExpandColumn());
 
   return useColumns(columns, { sortBy, onChangeSortBy }, [
     sortBy,
@@ -290,6 +305,10 @@ export const useInboundShipmentColumns = ({
 export const useExpansionColumns = (
   withDoseColumns?: boolean
 ): Column<InboundLineFragment>[] => {
+  const { data: preferences } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor
+  );
+
   const columns: ColumnDescription<InboundLineFragment>[] = [
     'batch',
     'expiryDate',
@@ -325,6 +344,15 @@ export const useExpansionColumns = (
       },
     ]
   );
+
+  if (preferences?.allowTrackingOfStockByDonor) {
+    columns.push({
+      key: 'donorName',
+      label: 'label.donor',
+      width: 175,
+      accessor: ({ rowData }) => rowData.donorName,
+    });
+  }
 
   return useColumns(columns, {}, []);
 };

@@ -31,6 +31,9 @@ fragment StocktakeLine on StocktakeLineNode {
   donorId
   donorName
 
+  donorId
+  donorName
+
   location {
     __typename
     id
