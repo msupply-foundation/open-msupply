@@ -28,5 +28,10 @@ export const useSimplifiedTabletUI = () => {
   const packToOne = store?.preferences?.packToOne ?? true;
   const useSimplifiedMobileUi = data?.useSimplifiedMobileUi ?? true;
 
+  // Uncomment to debug individual values
+  // console.log('useSimplifiedMobileUi', useSimplifiedMobileUi);
+  // console.log('packToOne', packToOne);
+  // console.log('isMediumScreen', isMediumScreen);
+
   return isMediumScreen && useSimplifiedMobileUi && packToOne;
 };
