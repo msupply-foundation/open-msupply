@@ -1,5 +1,10 @@
 import React from 'react';
-import { CellProps, Radio, RecordWithId } from '@openmsupply-client/common';
+import {
+  CellProps,
+  Radio,
+  RecordWithId,
+  Box,
+} from '@openmsupply-client/common';
 
 export const RadioCell = <T extends RecordWithId>({
   rowData,
@@ -18,12 +23,23 @@ export const RadioCell = <T extends RecordWithId>({
   const checked = id === selectedId;
 
   return (
-    <Radio
-      id={id}
-      name={groupName}
-      value={id}
-      checked={checked}
-      onChange={() => onSelected?.(id)}
-    />
+    <Box display="flex" alignItems="center">
+      <Radio
+        id={id}
+        name={groupName}
+        value={id}
+        checked={checked}
+        onClick={() => {
+          if (checked) {
+            onSelected?.(null);
+          }
+        }}
+        onChange={() => {
+          if (!checked) {
+            onSelected?.(id);
+          }
+        }}
+      />
+    </Box>
   );
 };
