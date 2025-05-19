@@ -1,23 +1,18 @@
 import {
+  FnUtils,
+  InsertPluginDataInput,
   PluginDataFilterInput,
+  UpdatePluginDataInput,
   useMutation,
   useQuery,
 } from '@openmsupply-client/common';
 import { usePluginDataGraphQL } from '../usePluginGraphQL';
-import { useState } from 'react';
-import { RepackDraft } from '../../types';
 import { PLUGIN_DATA } from './keys';
 
-type UseRepackProps = { pluginCode: string; filter?: PluginDataFilterInput };
+type PluginDataProps = { pluginCode: string; filter?: PluginDataFilterInput };
 
-export const usePluginData = ({ pluginCode, filter }: UseRepackProps) => {
+export const usePluginData = ({ pluginCode, filter }: PluginDataProps) => {
   const { pluginDataApi, storeId, queryClient } = usePluginDataGraphQL();
-  // const [draft, setDraft] = useState<RepackDraft>({
-  //   stockLineId: stockLineId ?? '',
-  //   packSize: 0,
-  //   newPackSize: 0,
-  //   numberOfPacks: 0,
-  // });
 
   // Fetch pluginData rows matching filter
   const queryListFn = async () => {
@@ -31,77 +26,70 @@ export const usePluginData = ({ pluginCode, filter }: UseRepackProps) => {
   };
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: [PLUGIN_DATA, storeId, 'stockLineId'],
+    queryKey: [PLUGIN_DATA, storeId, pluginCode],
     queryFn: queryListFn,
-    // enabled: !!'stockLineId',
   });
 
-  // FETCH SINGLE
-  // const queryFn = async () => {
-  //   const result = await stockApi.repack({
-  //     storeId,
-  //     invoiceId: invoiceId ?? '',
-  //   });
+  // INSERT
+  const insertMutation = async (
+    input: Omit<InsertPluginDataInput, 'pluginCode' | 'storeId' | 'id'>
+  ) => {
+    const result = await pluginDataApi.insertPluginData({
+      storeId,
+      input: {
+        storeId,
+        ...input,
+        id: FnUtils.generateUUID(),
+        pluginCode,
+      },
+    });
 
-  //   if (result.repack.__typename === 'RepackNode') {
-  //     return result.repack;
-  //   }
-  // };
+    const { insertPluginData } = result;
 
-  // const { data, isError, isLoading } = useQuery({
-  //   queryKey: [STOCK, invoiceId],
-  //   queryFn,
-  //   enabled: !!invoiceId,
-  // });
+    if (insertPluginData?.__typename === 'PluginDataNode')
+      return result.insertPluginData;
+  };
 
-  // UPDATE DRAFT
-  // const onChange = (patch: Partial<RepackDraft>) => {
-  //   setDraft({ ...draft, ...patch });
-  // };
+  const {
+    mutateAsync: create,
+    isLoading: isCreating,
+    isError: createError,
+  } = useMutation({
+    mutationFn: insertMutation,
+    onSuccess: () => {
+      queryClient.invalidateQueries([PLUGIN_DATA, storeId, pluginCode]);
+    },
+  });
 
-  // INSERT NEW
-  // const mutationFn = async () => {
-  //   const result = await stockApi.insertRepack({
-  //     storeId,
-  //     input: {
-  //       stockLineId: draft.stockLineId,
-  //       newPackSize: draft.newPackSize,
-  //       numberOfPacks: draft.numberOfPacks,
-  //       newLocationId: draft.newLocationId ?? undefined,
-  //     },
-  //   });
+  // UPDATE
+  const updateMutation = async (
+    input: Omit<UpdatePluginDataInput, 'pluginCode' | 'storeId'>
+  ) => {
+    const result = await pluginDataApi.updatePluginData({
+      storeId,
+      input: { storeId, ...input, pluginCode },
+    });
 
-  //   return result.insertRepack;
-  // };
+    const { updatePluginData } = result;
 
-  // const mutation = useMutation({
-  //   mutationFn,
-  //   onSuccess: () => {
-  //     // Need to force the following to be re-fetched:
-  //     // - Repack list
-  //     // - Stockline quantity
-  //     // - Ledger
-  //     queryClient.invalidateQueries([STOCK_LINE]);
-  //     queryClient.invalidateQueries([STOCK, invoiceId]);
-  //     onChange({
-  //       packSize: 0,
-  //       newPackSize: 0,
-  //       numberOfPacks: 0,
-  //     });
-  //   },
-  // });
+    if (updatePluginData?.__typename === 'PluginDataNode')
+      return result.updatePluginData;
+  };
+
+  const {
+    mutateAsync: update,
+    isLoading: isUpdating,
+    isError: updateError,
+  } = useMutation({
+    mutationFn: updateMutation,
+    onSuccess: () => {
+      queryClient.invalidateQueries([PLUGIN_DATA, storeId, pluginCode]);
+    },
+  });
 
   return {
-    // Fetch
-    query: {
-      data: data?.nodes,
-      isError,
-      isLoading,
-    },
-    // Update draft
-    // draft,
-    // onChange,
-    // Create
-    // onInsert: mutation.mutateAsync,
+    query: { data: data?.nodes, isError, isLoading },
+    create: { create, isCreating, createError },
+    update: { update, isUpdating, updateError },
   };
 };
