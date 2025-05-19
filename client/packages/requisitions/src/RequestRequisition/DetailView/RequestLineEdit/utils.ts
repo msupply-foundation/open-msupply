@@ -1,16 +1,24 @@
-export const PackageType = {
+export type ValueInfo = {
+  label: string;
+  value?: number | null;
+};
+
+export const Representation = {
   PACKS: 'packs',
   UNITS: 'units',
 } as const;
 
-export type PackageTypeValue = (typeof PackageType)[keyof typeof PackageType];
+export type RepresentationValue =
+  (typeof Representation)[keyof typeof Representation];
 
 export const getValueInUnitsOrPacks = (
-  packageType: PackageTypeValue,
+  representation: RepresentationValue,
   defaultPackSize: number,
   value?: number | null
 ): number => {
   if (!value) return 0;
 
-  return packageType === PackageType.PACKS ? value / defaultPackSize : value;
+  return representation === Representation.PACKS
+    ? value / defaultPackSize
+    : value;
 };

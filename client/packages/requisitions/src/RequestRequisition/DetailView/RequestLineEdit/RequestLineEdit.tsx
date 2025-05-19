@@ -7,7 +7,6 @@ import {
   StockItemSearchInputWithStats,
 } from '@openmsupply-client/system';
 import {
-  useFormatNumber,
   useTranslation,
   BasicTextInput,
   Box,
@@ -23,9 +22,10 @@ import { RequestLineFragment } from '../../api';
 import {
   InfoRow,
   RequestLineEditFormLayout,
+  ValueInfoRow,
 } from './RequestLineEditFormLayout';
-import { Order } from './Order';
-import { getValueInUnitsOrPacks, PackageTypeValue } from './utils';
+import { RequestedSelection } from './RequestedSelection';
+import { RepresentationValue } from './utils';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;
@@ -35,8 +35,8 @@ interface RequestLineEditProps {
   draft?: DraftRequestLine | null;
   update: (patch: Partial<DraftRequestLine>) => void;
   isPacksEnabled: boolean;
-  packageType: PackageTypeValue;
-  setPackageType: (type: PackageTypeValue) => void;
+  representation: RepresentationValue;
+  setRepresentation: (type: RepresentationValue) => void;
   disabled?: boolean;
   isProgram?: boolean;
   useConsumptionData?: boolean;
@@ -50,14 +50,13 @@ export const RequestLineEdit = ({
   setCurrentItem,
   update,
   isPacksEnabled,
-  packageType,
-  setPackageType,
+  representation,
+  setRepresentation,
   disabled,
   isProgram,
   useConsumptionData,
 }: RequestLineEditProps) => {
   const t = useTranslation();
-  const { round } = useFormatNumber();
   const { plugins } = usePluginProvider();
   const { width } = useWindowDimensions();
   const unitName = currentItem?.unitName || t('label.unit');
@@ -112,51 +111,34 @@ export const RequestLineEdit = ({
                 value={String(currentItem?.defaultPackSize)}
               />
             ) : null}
-            <InfoRow
+            <ValueInfoRow
               label={t('label.our-soh')}
-              value={round(
-                getValueInUnitsOrPacks(
-                  packageType,
-                  defaultPackSize,
-                  draft?.itemStats.availableStockOnHand
-                ),
-                2
-              )}
+              value={draft?.itemStats.availableStockOnHand}
+              defaultPackSize={defaultPackSize}
+              representation={representation}
+              unitName={unitName}
             />
-            {showExtraFields && (
-              <InfoRow
-                label={t('label.months-of-stock')}
-                value={round(
-                  getValueInUnitsOrPacks(
-                    packageType,
-                    defaultPackSize,
-                    draft?.itemStats.availableMonthsOfStockOnHand
-                  ),
-                  2
-                )}
-              />
-            )}
-            <InfoRow
+            <ValueInfoRow
               label={t('label.amc/amd')}
-              value={round(
-                getValueInUnitsOrPacks(
-                  packageType,
-                  defaultPackSize,
-                  draft?.itemStats.averageMonthlyConsumption
-                ),
-                2
-              )}
+              value={draft?.itemStats.averageMonthlyConsumption}
+              defaultPackSize={defaultPackSize}
+              representation={representation}
+              unitName={unitName}
+            />
+            <ValueInfoRow
+              label={t('label.months-of-stock')}
+              value={draft?.itemStats.availableMonthsOfStockOnHand}
+              defaultPackSize={defaultPackSize}
+              representation={representation}
+              unitName={unitName}
             />
             {showExtraFields && (
-              <InfoRow
+              <ValueInfoRow
                 label={t('label.short-expiry')}
-                value={round(
-                  getValueInUnitsOrPacks(
-                    packageType,
-                    defaultPackSize,
-                    draft?.expiringUnits
-                  )
-                )}
+                value={draft?.expiringUnits}
+                defaultPackSize={defaultPackSize}
+                representation={representation}
+                unitName={unitName}
               />
             )}
           </>
@@ -164,74 +146,52 @@ export const RequestLineEdit = ({
         Middle={
           currentItem ? (
             <>
-              <InfoRow
+              <ValueInfoRow
                 label={t('label.suggested')}
-                value={round(
-                  getValueInUnitsOrPacks(
-                    packageType,
-                    defaultPackSize,
-                    draft?.suggestedQuantity
-                  ),
-                  2
-                )}
-                highlight={true}
+                value={draft?.suggestedQuantity}
+                defaultPackSize={defaultPackSize}
+                representation={representation}
+                unitName={unitName}
+                sx={{
+                  background: theme => theme.palette.background.group,
+                }}
               />
               {showExtraFields && (
                 <>
-                  <InfoRow
+                  <ValueInfoRow
                     label={t('label.incoming-stock')}
-                    value={round(
-                      getValueInUnitsOrPacks(
-                        packageType,
-                        defaultPackSize,
-                        draft?.incomingUnits
-                      ),
-                      2
-                    )}
+                    value={draft?.incomingUnits}
+                    representation={representation}
+                    defaultPackSize={defaultPackSize}
+                    unitName={unitName}
                   />
-                  <InfoRow
+                  <ValueInfoRow
                     label={t('label.outgoing')}
-                    value={round(
-                      getValueInUnitsOrPacks(
-                        packageType,
-                        defaultPackSize,
-                        draft?.outgoingUnits
-                      ),
-                      2
-                    )}
+                    value={draft?.outgoingUnits}
+                    representation={representation}
+                    defaultPackSize={defaultPackSize}
+                    unitName={unitName}
                   />
-                  <InfoRow
+                  <ValueInfoRow
                     label={t('label.losses')}
-                    value={round(
-                      getValueInUnitsOrPacks(
-                        packageType,
-                        defaultPackSize,
-                        draft?.lossInUnits
-                      ),
-                      2
-                    )}
+                    value={draft?.lossInUnits}
+                    representation={representation}
+                    defaultPackSize={defaultPackSize}
+                    unitName={unitName}
                   />
-                  <InfoRow
+                  <ValueInfoRow
                     label={t('label.additions')}
-                    value={round(
-                      getValueInUnitsOrPacks(
-                        packageType,
-                        defaultPackSize,
-                        draft?.additionInUnits
-                      ),
-                      2
-                    )}
+                    value={draft?.additionInUnits}
+                    representation={representation}
+                    defaultPackSize={defaultPackSize}
+                    unitName={unitName}
                   />
-                  <InfoRow
+                  <ValueInfoRow
                     label={t('label.days-out-of-stock')}
-                    value={round(
-                      getValueInUnitsOrPacks(
-                        packageType,
-                        defaultPackSize,
-                        draft?.daysOutOfStock
-                      ),
-                      2
-                    )}
+                    value={draft?.daysOutOfStock}
+                    representation={representation}
+                    defaultPackSize={defaultPackSize}
+                    unitName={unitName}
                   />
                 </>
               )}
@@ -240,17 +200,16 @@ export const RequestLineEdit = ({
         }
         Right={
           <>
-            {isPacksEnabled && (
-              <Order
-                disabled={disabled}
-                draft={draft}
-                update={update}
-                isPacksEnabled={isPacksEnabled}
-                packageType={packageType}
-                setPackageType={setPackageType}
-                unitName={unitName}
-              />
-            )}
+            <RequestedSelection
+              disabled={disabled}
+              defaultPackSize={defaultPackSize}
+              isPacksEnabled={isPacksEnabled}
+              draft={draft}
+              update={update}
+              representation={representation}
+              setRepresentation={setRepresentation}
+              unitName={unitName}
+            />
             {showExtraFields && (
               <>
                 <InputWithLabelRow

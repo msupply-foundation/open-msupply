@@ -14,7 +14,7 @@ import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
 import { StockEvolution } from './ItemCharts/StockEvolution';
 import { isRequestDisabled } from '../../../utils';
 import { RequestLineEdit } from './RequestLineEdit';
-import { PackageType, PackageTypeValue } from './utils';
+import { Representation, RepresentationValue } from './utils';
 
 interface RequestLineEditModalProps {
   requisition: RequestFragment;
@@ -42,14 +42,14 @@ export const RequestLineEditModalInner = ({
   const [currentItem, setCurrentItem] = useBufferState(
     lines?.find(line => line.item.id === itemId)?.item
   );
-  const [packageType, setPackageType] = useState<PackageTypeValue>(
-    PackageType.UNITS
+  const [representation, setRepresentation] = useState<RepresentationValue>(
+    Representation.UNITS
   );
 
   const { draft, save, update } = useDraftRequisitionLine(currentItem);
   const { hasNext, next } = useNextRequestLine(currentItem);
 
-  const isPacksEnabled = !!draft?.defaultPackSize;
+  const isPacksEnabled = !!currentItem?.defaultPackSize;
   const useConsumptionData =
     store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
   const isProgram = !!requisition?.program;
@@ -98,8 +98,8 @@ export const RequestLineEditModalInner = ({
           draft={draft}
           update={update}
           isPacksEnabled={isPacksEnabled}
-          packageType={packageType}
-          setPackageType={setPackageType}
+          representation={representation}
+          setRepresentation={setRepresentation}
           disabled={isDisabled}
           isProgram={isProgram}
           useConsumptionData={useConsumptionData}

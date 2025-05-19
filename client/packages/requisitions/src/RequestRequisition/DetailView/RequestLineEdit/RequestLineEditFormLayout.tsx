@@ -1,26 +1,40 @@
-import React from 'react';
-import { Grid, Typography } from '@openmsupply-client/common';
+import React, { useMemo } from 'react';
+import {
+  Grid,
+  SxProps,
+  Theme,
+  Typography,
+  useFormatNumber,
+  useIntlUtils,
+  useTranslation,
+} from '@openmsupply-client/common';
+import {
+  getValueInUnitsOrPacks,
+  Representation,
+  RepresentationValue,
+} from './utils';
+
+interface InfoRowProps {
+  label: string;
+  value?: number | string;
+  packagingDisplay?: string;
+  sx?: SxProps<Theme>;
+}
 
 export const InfoRow = ({
   label,
   value,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) => {
+  packagingDisplay,
+  sx,
+}: InfoRowProps) => {
   return (
     <Grid
       container
       spacing={1}
       marginBottom={1}
+      px={1}
       borderRadius={2}
-      padding={'0px 8px'}
-      sx={{
-        background: theme =>
-          highlight ? theme.palette.background.group : 'inherit',
-      }}
+      sx={sx}
     >
       <Grid size={6}>
         <Typography variant="body1" fontWeight={700}>
@@ -28,16 +42,51 @@ export const InfoRow = ({
         </Typography>
       </Grid>
       <Grid size={6} textAlign="right">
-        <Typography
-          variant="body1"
-          style={{
-            textAlign: 'right',
-          }}
-        >
-          {value}
+        <Typography variant="body1">
+          {value} {packagingDisplay}
         </Typography>
       </Grid>
     </Grid>
+  );
+};
+
+interface ValueInfoRowProps extends Omit<InfoRowProps, 'value'> {
+  value?: number | null;
+  representation: RepresentationValue;
+  defaultPackSize: number;
+  unitName: string;
+}
+
+export const ValueInfoRow = ({
+  label,
+  value,
+  representation,
+  defaultPackSize,
+  unitName,
+  sx,
+}: ValueInfoRowProps) => {
+  const t = useTranslation();
+  const { getPlural } = useIntlUtils();
+  const { round } = useFormatNumber();
+  const valueInUnitsOrPacks = getValueInUnitsOrPacks(
+    representation,
+    defaultPackSize,
+    value
+  );
+  const packagingDisplay = useMemo(() => {
+    if (representation === Representation.PACKS) {
+      return getPlural(t('label.pack').toLowerCase(), valueInUnitsOrPacks);
+    }
+    return getPlural(unitName.toLowerCase(), valueInUnitsOrPacks);
+  }, [representation, unitName]);
+
+  return (
+    <InfoRow
+      label={label}
+      value={round(valueInUnitsOrPacks, 2)}
+      packagingDisplay={packagingDisplay}
+      sx={sx}
+    />
   );
 };
 
