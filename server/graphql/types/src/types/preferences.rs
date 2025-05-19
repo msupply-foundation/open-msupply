@@ -14,8 +14,8 @@ pub struct PreferencesNode {
 #[Object]
 impl PreferencesNode {
     // Global preferences
-    pub async fn allow_tracking_of_received_stock_by_donor(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.allow_tracking_of_received_stock_by_donor)
+    pub async fn allow_tracking_of_stock_by_donor(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.allow_tracking_of_stock_by_donor)
     }
 
     pub async fn display_population_based_forecasting(&self) -> Result<bool> {
@@ -85,7 +85,7 @@ impl PreferenceDescriptionNode {
 // These keys (once camelCased) should match fields of PreferencesNode
 pub enum PreferenceKey {
     // Global preferences
-    AllowTrackingOfReceivedStockByDonor,
+    AllowTrackingOfStockByDonor,
     DisplayPopulationBasedForecasting,
     ShowContactTracing,
     // Store preferences
@@ -98,9 +98,7 @@ impl PreferenceKey {
     pub fn from_domain(pref_key: &PrefKey) -> Self {
         match pref_key {
             // Global preferences
-            PrefKey::AllowTrackingOfReceivedStockByDonor => {
-                PreferenceKey::AllowTrackingOfReceivedStockByDonor
-            }
+            PrefKey::AllowTrackingOfStockByDonor => PreferenceKey::AllowTrackingOfStockByDonor,
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
             PrefKey::DisplayPopulationBasedForecasting => {
                 PreferenceKey::DisplayPopulationBasedForecasting

@@ -1131,7 +1131,6 @@
   "label.unit-plural_other": "{{unit}}",
   "label.unit-price": "Цена единицы",
   "label.unit-quantity": "Кол-во единиц",
-  "label.unit-quantity-issued": "{{unit}} единиц выпущено",
   "label.unit-sell-price": "Цена продажи единицы товара",
   "label.unit-variant-and-pack-size": "Вариант единицы / Размер упаковки",
   "label.units": "Единиц",

@@ -1,6 +1,7 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_types::types::VVMStatusLogNode;
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 
 use service::{
@@ -9,8 +10,6 @@ use service::{
         InsertVVMStatusLogError as ServiceError, InsertVVMStatusLogInput as ServiceInput,
     },
 };
-
-use crate::types::vvm_status_log::VVMStatusLogNode;
 
 #[derive(InputObject)]
 #[graphql(name = "InsertVVMStatusLogInput")]
