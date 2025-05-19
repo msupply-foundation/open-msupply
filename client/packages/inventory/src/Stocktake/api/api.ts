@@ -71,6 +71,7 @@ const stocktakeParser = {
       comment: line.comment ?? '',
       inventoryAdjustmentReasonId: line.inventoryAdjustmentReason?.id,
       itemVariantId: setNullableInput('itemVariantId', line),
+      donorId: setNullableInput('donorId', line),
     }),
     toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => ({
       location: setNullableInput('id', line.location),
@@ -89,6 +90,7 @@ const stocktakeParser = {
       comment: line.comment ?? '',
       inventoryAdjustmentReasonId: line.inventoryAdjustmentReason?.id,
       itemVariantId: line.itemVariantId,
+      donorId: line.donorId,
     }),
   },
 };
