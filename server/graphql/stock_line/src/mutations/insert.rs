@@ -118,7 +118,7 @@ impl InsertInput {
             item_id,
             number_of_packs,
             pack_size,
-            reason_option_id,
+            reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
             item_variant_id,
             vvm_status_id,
         }

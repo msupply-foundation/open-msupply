@@ -177,7 +177,7 @@ impl InsertInput {
             sell_price_per_pack,
             note,
             item_variant_id,
-            reason_option_id,
+            reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
         }
     }
 }

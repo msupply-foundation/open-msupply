@@ -129,7 +129,7 @@ impl UpdateInput {
             item_variant_id: item_variant_id.map(|item_variant_id| NullableUpdate {
                 value: item_variant_id.value,
             }),
-            reason_option_id,
+            reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
         }
     }
 }

@@ -50,34 +50,6 @@ pub struct InvoiceLineFilterInput {
     pub verified_datetime: Option<DatetimeFilterInput>,
 }
 
-impl InvoiceLineFilterInput {
-    pub fn to_domain(self) -> InvoiceLineFilter {
-        InvoiceLineFilter {
-            id: self.id.map(EqualFilter::from),
-            store_id: self.store_id.map(EqualFilter::from),
-            invoice_id: self.invoice_id.map(EqualFilter::from),
-            location_id: self.location_id.map(EqualFilter::from),
-            item_id: self.item_id.map(EqualFilter::from),
-            r#type: self
-                .r#type
-                .map(|t| map_filter!(t, InvoiceLineNodeType::to_domain)),
-            requisition_id: self.requisition_id.map(EqualFilter::from),
-            number_of_packs: self.number_of_packs.map(|t| map_filter!(t, f64::from)),
-            invoice_type: self
-                .invoice_type
-                .map(|t| map_filter!(t, InvoiceNodeType::to_domain)),
-            invoice_status: self
-                .invoice_status
-                .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
-            stock_line_id: self.stock_line_id.map(EqualFilter::from),
-            reason_option: self.reason_option.map(EqualFilter::from),
-            verified_datetime: self.verified_datetime.map(DatetimeFilter::from),
-            picked_datetime: None,
-            delivered_datetime: None,
-        }
-    }
-}
-
 impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
     fn from(f: InvoiceLineFilterInput) -> Self {
         InvoiceLineFilter {
@@ -99,7 +71,10 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
                 .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
             stock_line_id: f.stock_line_id.map(EqualFilter::from),
             verified_datetime: f.verified_datetime.map(DatetimeFilter::from),
-            reason_option: f.reason_option.map(EqualFilter::from),
+            reason_option: f
+                .reason_option
+                .map(EqualFilter::from)
+                .or(f.inventory_adjustment_reason.map(EqualFilter::from)),
             picked_datetime: None,
             delivered_datetime: None,
         }
