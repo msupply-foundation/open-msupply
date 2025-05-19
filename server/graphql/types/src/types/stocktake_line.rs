@@ -14,9 +14,8 @@ use graphql_core::{
 };
 
 use super::{
-    
-    InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, ReasonOptionNode, StockLineNode,
-,
+    InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, ReasonOptionNode,
+    StockLineNode,
 };
 
 pub struct StocktakeLineNode {
