@@ -3846,7 +3846,7 @@ export type InventoryAdjustmentReasonNode = {
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
   reason: Scalars['String']['output'];
-  type: ReasonOptionNodeType;
+  type: InventoryAdjustmentReasonNodeType;
 };
 
 export enum InventoryAdjustmentReasonNodeType {
