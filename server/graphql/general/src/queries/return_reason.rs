@@ -22,7 +22,6 @@ pub struct ReturnReasonFilterInput {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "repository::return_reason::ReturnReasonSortField")]
 #[graphql(rename_items = "camelCase")]
 pub enum ReturnReasonSortFieldInput {
     Id,

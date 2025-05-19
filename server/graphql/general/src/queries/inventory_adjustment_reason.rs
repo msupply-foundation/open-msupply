@@ -16,7 +16,6 @@ use service::{
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "repository::inventory_adjustment_reason::InventoryAdjustmentReasonSortField")]
 #[graphql(rename_items = "camelCase")]
 pub enum InventoryAdjustmentReasonSortFieldInput {
     Id,
@@ -86,19 +85,17 @@ pub fn inventory_adjustment_reasons(
 fn map_inventory_adjustment_reason_filter(
     filter: Option<InventoryAdjustmentReasonFilterInput>,
 ) -> ReasonOptionFilter {
+    let inventory_adjustment_reason_type_filter = EqualFilter {
+        equal_any: Some(vec![
+            ReasonOptionType::PositiveInventoryAdjustment,
+            ReasonOptionType::NegativeInventoryAdjustment,
+        ]),
+        ..Default::default()
+    };
+
     let base_filter = ReasonOptionFilter {
         id: None,
-        r#type: Some(EqualFilter {
-            equal_to: None,
-            not_equal_to: None,
-            equal_any: Some(vec![
-                ReasonOptionType::PositiveInventoryAdjustment,
-                ReasonOptionType::NegativeInventoryAdjustment,
-            ]),
-            equal_any_or_null: None,
-            not_equal_all: None,
-            is_null: None,
-        }),
+        r#type: Some(inventory_adjustment_reason_type_filter.clone()),
         is_active: None,
     };
 
@@ -106,7 +103,28 @@ fn map_inventory_adjustment_reason_filter(
         Some(filter) => ReasonOptionFilter {
             id: filter.id.map(EqualFilter::from),
             is_active: filter.is_active,
-            ..base_filter
+            r#type: Some(
+                filter
+                    .r#type
+                    .map_or(inventory_adjustment_reason_type_filter, |r#type| {
+                        EqualFilter {
+                            equal_to: r#type
+                                .equal_to
+                                .map(InventoryAdjustmentReasonNodeType::to_domain),
+                            not_equal_to: r#type
+                                .not_equal_to
+                                .map(InventoryAdjustmentReasonNodeType::to_domain),
+                            equal_any: r#type.equal_any.map(|v| {
+                                v.into_iter()
+                                    .map(InventoryAdjustmentReasonNodeType::to_domain)
+                                    .collect()
+                            }),
+                            equal_any_or_null: None,
+                            not_equal_all: None,
+                            is_null: None,
+                        }
+                    }),
+            ),
         },
         None => base_filter,
     }
