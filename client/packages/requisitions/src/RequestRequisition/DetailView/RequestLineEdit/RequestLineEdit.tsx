@@ -13,10 +13,10 @@ import {
   Box,
   InputWithLabelRow,
   ReasonOptionNodeType,
-  TextArea,
   usePluginProvider,
   useWindowDimensions,
   Typography,
+  BufferedTextArea,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
@@ -25,6 +25,7 @@ import {
   RequestLineEditFormLayout,
 } from './RequestLineEditFormLayout';
 import { Order } from './Order';
+import { getValueInUnitsOrPacks, PackageTypeValue } from './utils';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;
@@ -34,10 +35,11 @@ interface RequestLineEditProps {
   draft?: DraftRequestLine | null;
   update: (patch: Partial<DraftRequestLine>) => void;
   isPacksEnabled: boolean;
-  isPacks: boolean;
-  setIsPacks: (isPacks: boolean) => void;
+  packageType: PackageTypeValue;
+  setPackageType: (type: PackageTypeValue) => void;
   disabled?: boolean;
-  showExtraFields?: boolean;
+  isProgram?: boolean;
+  useConsumptionData?: boolean;
 }
 
 export const RequestLineEdit = ({
@@ -48,13 +50,19 @@ export const RequestLineEdit = ({
   setCurrentItem,
   update,
   isPacksEnabled,
+  packageType,
+  setPackageType,
   disabled,
-  showExtraFields,
+  isProgram,
+  useConsumptionData,
 }: RequestLineEditProps) => {
   const t = useTranslation();
+  const { round } = useFormatNumber();
   const { plugins } = usePluginProvider();
-  const formatNumber = useFormatNumber();
   const { width } = useWindowDimensions();
+  const unitName = currentItem?.unitName || t('label.unit');
+  const defaultPackSize = currentItem?.defaultPackSize || 1;
+  const showExtraFields = useConsumptionData && isProgram;
 
   const line = useMemo(
     () => lines.find(line => line.id === draft?.id),
@@ -86,11 +94,8 @@ export const RequestLineEdit = ({
                 onChange={(newItem: ItemWithStatsFragment | null) =>
                   newItem && setCurrentItem(newItem)
                 }
-                extraFilter={
-                  disabled
-                    ? undefined
-                    : itemRow =>
-                        !lines?.some(({ item }) => itemRow.id === item.id)
+                extraFilter={item =>
+                  !lines.some(line => line.item.id === item.id)
                 }
               />
             )}
@@ -99,7 +104,7 @@ export const RequestLineEdit = ({
         Left={
           <>
             {currentItem && currentItem?.unitName ? (
-              <InfoRow label={t('label.unit')} value={currentItem?.unitName} />
+              <InfoRow label={t('label.unit')} value={unitName} />
             ) : null}
             {isPacksEnabled ? (
               <InfoRow
@@ -109,31 +114,49 @@ export const RequestLineEdit = ({
             ) : null}
             <InfoRow
               label={t('label.our-soh')}
-              value={formatNumber.round(
-                draft?.itemStats.availableStockOnHand,
+              value={round(
+                getValueInUnitsOrPacks(
+                  packageType,
+                  defaultPackSize,
+                  draft?.itemStats.availableStockOnHand
+                ),
                 2
               )}
             />
             {showExtraFields && (
               <InfoRow
                 label={t('label.months-of-stock')}
-                value={formatNumber.round(
-                  draft?.itemStats.availableMonthsOfStockOnHand ?? 0,
+                value={round(
+                  getValueInUnitsOrPacks(
+                    packageType,
+                    defaultPackSize,
+                    draft?.itemStats.availableMonthsOfStockOnHand
+                  ),
                   2
                 )}
               />
             )}
             <InfoRow
               label={t('label.amc/amd')}
-              value={formatNumber.round(
-                draft?.itemStats.averageMonthlyConsumption,
+              value={round(
+                getValueInUnitsOrPacks(
+                  packageType,
+                  defaultPackSize,
+                  draft?.itemStats.averageMonthlyConsumption
+                ),
                 2
               )}
             />
             {showExtraFields && (
               <InfoRow
                 label={t('label.short-expiry')}
-                value={String(draft?.expiringUnits)}
+                value={round(
+                  getValueInUnitsOrPacks(
+                    packageType,
+                    defaultPackSize,
+                    draft?.expiringUnits
+                  )
+                )}
               />
             )}
           </>
@@ -143,30 +166,72 @@ export const RequestLineEdit = ({
             <>
               <InfoRow
                 label={t('label.suggested')}
-                value={String(draft?.requestedQuantity)}
+                value={round(
+                  getValueInUnitsOrPacks(
+                    packageType,
+                    defaultPackSize,
+                    draft?.suggestedQuantity
+                  ),
+                  2
+                )}
                 highlight={true}
               />
               {showExtraFields && (
                 <>
                   <InfoRow
                     label={t('label.incoming-stock')}
-                    value={String(draft?.incomingUnits)}
+                    value={round(
+                      getValueInUnitsOrPacks(
+                        packageType,
+                        defaultPackSize,
+                        draft?.incomingUnits
+                      ),
+                      2
+                    )}
                   />
                   <InfoRow
                     label={t('label.outgoing')}
-                    value={String(draft?.outgoingUnits)}
+                    value={round(
+                      getValueInUnitsOrPacks(
+                        packageType,
+                        defaultPackSize,
+                        draft?.outgoingUnits
+                      ),
+                      2
+                    )}
                   />
                   <InfoRow
                     label={t('label.losses')}
-                    value={String(draft?.lossInUnits)}
+                    value={round(
+                      getValueInUnitsOrPacks(
+                        packageType,
+                        defaultPackSize,
+                        draft?.lossInUnits
+                      ),
+                      2
+                    )}
                   />
                   <InfoRow
                     label={t('label.additions')}
-                    value={String(draft?.additionInUnits)}
+                    value={round(
+                      getValueInUnitsOrPacks(
+                        packageType,
+                        defaultPackSize,
+                        draft?.additionInUnits
+                      ),
+                      2
+                    )}
                   />
                   <InfoRow
                     label={t('label.days-out-of-stock')}
-                    value={String(draft?.daysOutOfStock)}
+                    value={round(
+                      getValueInUnitsOrPacks(
+                        packageType,
+                        defaultPackSize,
+                        draft?.daysOutOfStock
+                      ),
+                      2
+                    )}
                   />
                 </>
               )}
@@ -181,6 +246,9 @@ export const RequestLineEdit = ({
                 draft={draft}
                 update={update}
                 isPacksEnabled={isPacksEnabled}
+                packageType={packageType}
+                setPackageType={setPackageType}
+                unitName={unitName}
               />
             )}
             {showExtraFields && (
@@ -205,10 +273,10 @@ export const RequestLineEdit = ({
                 />
               </>
             )}
-            <Typography variant="body1" fontWeight="bold">
-              {t('heading.comment')}
+            <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
+              {t('heading.comment')}:
             </Typography>
-            <TextArea
+            <BufferedTextArea
               value={draft?.comment ?? ''}
               onChange={e => update({ comment: e.target.value })}
               slotProps={{

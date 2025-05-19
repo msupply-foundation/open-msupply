@@ -76,6 +76,7 @@ export const RequestLineEditFormLayout = ({
             background: theme => theme.palette.background.group,
             padding: '0px 8px',
             borderRadius: 2,
+            paddingBottom: 1,
           }}
         >
           {Right}

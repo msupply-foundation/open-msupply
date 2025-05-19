@@ -35,12 +35,10 @@ export const StockItemSearchInputWithStats = ({
     : (data?.nodes ?? []);
 
   useEffect(() => {
-    // using the Autocomplete openOnFocus prop, the popper is incorrectly positioned
-    // when used within a Dialog. This is a workaround to fix the popper position.
-    if (openOnFocus) {
+    if (openOnFocus && !disabled) {
       setTimeout(() => selectControl.toggleOn(), 300);
     }
-  }, []);
+  }, [openOnFocus, disabled, selectControl]);
 
   return (
     <Tooltip title={value?.name}>

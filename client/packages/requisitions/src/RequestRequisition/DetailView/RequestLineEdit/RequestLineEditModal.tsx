@@ -14,6 +14,7 @@ import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
 import { StockEvolution } from './ItemCharts/StockEvolution';
 import { isRequestDisabled } from '../../../utils';
 import { RequestLineEdit } from './RequestLineEdit';
+import { PackageType, PackageTypeValue } from './utils';
 
 interface RequestLineEditModalProps {
   requisition: RequestFragment;
@@ -32,6 +33,7 @@ export const RequestLineEditModalInner = ({
   mode,
   store,
 }: RequestLineEditModalProps) => {
+  const isDisabled = isRequestDisabled(requisition);
   const { Modal } = useDialog({ onClose, isOpen });
 
   const lines = requisition?.lines.nodes.sort((a, b) =>
@@ -40,13 +42,14 @@ export const RequestLineEditModalInner = ({
   const [currentItem, setCurrentItem] = useBufferState(
     lines?.find(line => line.item.id === itemId)?.item
   );
+  const [packageType, setPackageType] = useState<PackageTypeValue>(
+    PackageType.UNITS
+  );
 
   const { draft, save, update } = useDraftRequisitionLine(currentItem);
   const { hasNext, next } = useNextRequestLine(currentItem);
-  const isDisabled = isRequestDisabled(requisition);
 
   const isPacksEnabled = !!draft?.defaultPackSize;
-  const [isPacks, setIsPacks] = useState(isPacksEnabled);
   const useConsumptionData =
     store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
   const isProgram = !!requisition?.program;
@@ -67,12 +70,9 @@ export const RequestLineEditModalInner = ({
           variant="next-and-ok"
           onClick={async () => {
             await save();
-            // setPreviousItemLineId(null);
             if (mode === ModalMode.Update && next) setCurrentItem(next);
             else if (mode === ModalMode.Create) setCurrentItem(undefined);
             else onClose();
-            // Returning true here triggers the slide animation
-            return true;
           }}
         />
       }
@@ -87,7 +87,7 @@ export const RequestLineEditModalInner = ({
         />
       }
       height={800}
-      width={1024}
+      width={1050}
     >
       <>
         <RequestLineEdit
@@ -98,10 +98,11 @@ export const RequestLineEditModalInner = ({
           draft={draft}
           update={update}
           isPacksEnabled={isPacksEnabled}
-          isPacks={isPacks}
-          setIsPacks={setIsPacks}
+          packageType={packageType}
+          setPackageType={setPackageType}
           disabled={isDisabled}
-          showExtraFields={useConsumptionData && isProgram}
+          isProgram={isProgram}
+          useConsumptionData={useConsumptionData}
         />
         {!!draft && (
           <StockDistribution
