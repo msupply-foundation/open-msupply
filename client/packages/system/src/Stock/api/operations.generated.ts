@@ -697,24 +697,6 @@ export type InsertStockLineMutation = {
       };
 };
 
-export const VvmStatusLogRowFragmentDoc = gql`
-  fragment VVMStatusLogRow on VvmstatusLogNode {
-    id
-    createdDatetime
-    user {
-      firstName
-      lastName
-      username
-    }
-    status {
-      description
-      level
-    }
-    createdDatetime
-    comment
-  }
-`;
-
 export type VvmStatusFragment = {
   __typename: 'VvmstatusNode';
   code: string;
@@ -747,6 +729,23 @@ export type ActiveVvmStatusesQuery = {
   };
 };
 
+export const VvmStatusLogRowFragmentDoc = gql`
+  fragment VVMStatusLogRow on VvmstatusLogNode {
+    id
+    createdDatetime
+    user {
+      firstName
+      lastName
+      username
+    }
+    status {
+      description
+      level
+    }
+    createdDatetime
+    comment
+  }
+`;
 export const StockLineRowFragmentDoc = gql`
   fragment StockLineRow on StockLineNode {
     availableNumberOfPacks

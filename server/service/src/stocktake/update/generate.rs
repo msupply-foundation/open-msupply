@@ -335,7 +335,6 @@ fn generate_new_stock_line(
         barcode: None,
         total_before_tax: None,
         tax_percentage: None,
-        item_variant_id: stocktake_line.line.item_variant_id.clone(),
         donor_id: None,
         vvm_status_id: None,
     });

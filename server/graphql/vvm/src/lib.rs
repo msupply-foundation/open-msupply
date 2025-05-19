@@ -7,7 +7,6 @@ use mutations::vvm_status_log::{
 use queries::{
     active_vvm_statuses::active_vvm_statuses, vvm_status_log::get_vvm_status_log_by_stock_line,
 };
-use types::vvm_status_log::VVMStatusLogResponse;
 
 pub mod mutations;
 pub mod queries;
