@@ -34,6 +34,7 @@ pub struct UpdateInput {
     pub tax: Option<TaxInput>,
     pub item_variant_id: Option<NullableUpdateInput<String>>,
     pub vvm_status_id: Option<String>,
+    pub donor_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(SimpleObject)]
@@ -101,6 +102,7 @@ impl UpdateInput {
             tax,
             item_variant_id,
             vvm_status_id,
+            donor_id,
         } = self;
 
         ServiceInput {
@@ -126,6 +128,9 @@ impl UpdateInput {
             vvm_status_id,
             // Default
             note: None,
+            donor_id: donor_id.map(|donor_id| NullableUpdate {
+                value: donor_id.value,
+            }),
         }
     }
 }

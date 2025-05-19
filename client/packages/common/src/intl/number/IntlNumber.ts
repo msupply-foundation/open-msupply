@@ -2,6 +2,18 @@ import { RegexUtils } from '../../utils/regex';
 import { useCurrency } from '../currency';
 import { MAX_FRACTION_DIGITS, SupportedLocales, useIntlUtils } from '../utils';
 
+const localeNumberOverrides: { [locale: string]: /* Override */ string } = {
+  tet: 'en-US',
+};
+
+// This method needs to be used instead of Intl.NumberFormat directly
+export const intlNumberFormat = (
+  locale: string,
+  params?: Intl.NumberFormatOptions
+) => {
+  return new Intl.NumberFormat(localeNumberOverrides[locale] ?? locale, params);
+};
+
 export const useFormatNumber = () => {
   const { currentLanguage } = useIntlUtils();
   const {
@@ -15,13 +27,13 @@ export const useFormatNumber = () => {
     ) => {
       if (value === undefined || value === null) return '';
       const locale = options?.locale ?? currentLanguage;
-      return new Intl.NumberFormat(locale, {
+      return intlNumberFormat(locale, {
         maximumFractionDigits: MAX_FRACTION_DIGITS,
         ...options,
       }).format(value);
     },
     round: (value?: number, dp?: number): string => {
-      const intl = new Intl.NumberFormat(currentLanguage, {
+      const intl = intlNumberFormat(currentLanguage, {
         // not strictly necessary perhaps - but if you specify a minimumFractionDigits
         // outside of the range 0,20 then an error is thrown
         maximumFractionDigits: Math.max(

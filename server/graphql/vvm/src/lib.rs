@@ -1,6 +1,5 @@
 use async_graphql::*;
-
-use graphql_types::types::VVMStatusesResponse;
+use graphql_types::types::{VVMStatusLogResponse, VVMStatusesResponse};
 use mutations::vvm_status_log::{
     insert::{insert, InsertInput, InsertResponse},
     update::{update_vvm_status_log, UpdateVVMStatusResponse},
@@ -12,7 +11,6 @@ use types::vvm_status_log::VVMStatusLogResponse;
 
 pub mod mutations;
 pub mod queries;
-pub mod types;
 
 #[derive(Default, Clone)]
 pub struct VVMQueries;

@@ -107,6 +107,7 @@ pub fn generate(
         on_hold,
         item_variant_id,
         vvm_status_id,
+        donor_id,
         ..
     } = stock_line.stock_line_row.clone();
 
@@ -133,6 +134,7 @@ pub fn generate(
             note,
             item_variant_id,
             vvm_status_id,
+            donor_id,
             // Default
             barcode: None,
             total_before_tax: None,

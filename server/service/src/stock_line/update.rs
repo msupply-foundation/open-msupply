@@ -106,15 +106,13 @@ fn validate(
         }
     }
 
-    match &input.item_variant_id {
-        Some(NullableUpdate {
-            value: Some(item_variant_id),
-        }) => {
-            if check_item_variant_exists(connection, item_variant_id)?.is_none() {
-                return Err(ItemVariantDoesNotExist);
-            }
+    if let Some(NullableUpdate {
+        value: Some(item_variant_id),
+    }) = &input.item_variant_id
+    {
+        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
+            return Err(ItemVariantDoesNotExist);
         }
-        _ => {}
     }
 
     Ok(stock_line)

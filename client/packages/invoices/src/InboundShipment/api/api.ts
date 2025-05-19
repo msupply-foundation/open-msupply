@@ -20,6 +20,7 @@ import {
   RequisitionNodeType,
   InsertInboundShipmentLineFromInternalOrderLineInput,
   RequisitionNodeStatus,
+  UpdateDonorInput,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA } from '../../utils';
@@ -75,12 +76,18 @@ const inboundParsers = {
     }
   },
   toUpdate: (
-    patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
+    patch:
+      | RecordPatch<InboundFragment>
+      | RecordPatch<InboundRowFragment>
+      | {
+          id: string;
+          defaultDonor: UpdateDonorInput;
+        }
   ): UpdateInboundShipmentInput => {
     return {
       id: patch.id,
-      colour: patch.colour,
-      comment: patch.comment,
+      colour: 'colour' in patch ? patch.colour : undefined,
+      comment: 'comment' in patch ? patch.comment : undefined,
       status: inboundParsers.toStatus(patch),
       onHold: 'onHold' in patch ? patch.onHold : undefined,
       otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
@@ -92,6 +99,7 @@ const inboundParsers = {
           : undefined,
       currencyId: 'currency' in patch ? patch.currency?.id : undefined,
       currencyRate: 'currencyRate' in patch ? patch.currencyRate : undefined,
+      defaultDonor: 'defaultDonor' in patch ? patch.defaultDonor : undefined,
     };
   },
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {
@@ -110,6 +118,7 @@ const inboundParsers = {
       location: setNullableInput('id', line.location),
       itemVariantId: line.itemVariantId,
       vvmStatusId: 'vvmStatusId' in line ? line.vvmStatusId : undefined,
+      donorId: line.donorId,
     };
   },
   toInsertLineFromInternalOrder: (line: {
@@ -137,6 +146,7 @@ const inboundParsers = {
       itemVariantId: line.itemVariantId,
     }),
     vvmStatusId: 'vvmStatusId' in line ? line.vvmStatusId : undefined,
+    donorId: setNullableInput('donorId', { donorId: line.donorId ?? null }), // set to null if undefined, so value is cleared
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
@@ -284,7 +294,10 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error(insertInboundShipment.error.description);
   },
   update: async (
-    patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
+    patch:
+      | RecordPatch<InboundFragment>
+      | RecordPatch<InboundRowFragment>
+      | { id: string; defaultDonor: UpdateDonorInput }
   ) =>
     sdk.updateInboundShipment({
       input: inboundParsers.toUpdate(patch),

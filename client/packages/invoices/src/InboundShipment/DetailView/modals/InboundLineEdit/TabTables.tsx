@@ -23,6 +23,7 @@ import {
 import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
+  getDonorColumn,
   getLocationInputColumn,
   ItemRowFragment,
   LocationRowFragment,
@@ -64,10 +65,12 @@ export const QuantityTableComponent = ({
 
   const displayInDoses =
     !!preferences?.displayVaccinesInDoses && !!item?.isVaccine;
-  const unitName = getPlural(
-    Formatter.sentenceCase(item?.unitName ? item.unitName : t('label.unit')),
-    2
+
+  const unitName = Formatter.sentenceCase(
+    item?.unitName ? item.unitName : t('label.unit')
   );
+  const pluralisedUnitName = getPlural(unitName, 2);
+
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     ...getBatchExpiryColumns(updateDraftLine, theme),
   ];
@@ -115,7 +118,7 @@ export const QuantityTableComponent = ({
   columnDefinitions.push({
     key: 'unitsPerPack',
     label: t('label.units-received', {
-      unit: unitName,
+      unit: pluralisedUnitName,
     }),
     width: 100,
     Cell: NumberInputCell,
@@ -293,19 +296,25 @@ export const LocationTableComponent = ({
   updateDraftLine,
   isDisabled,
 }: TableProps) => {
-  const columns = useColumns<DraftInboundLine>(
-    [
-      [
-        'batch',
-        {
-          accessor: ({ rowData }) => rowData.batch || '',
-        },
-      ],
-      [getLocationInputColumn(), { setter: updateDraftLine, width: 800 }],
-    ],
-    {},
-    [updateDraftLine, lines]
+  const { data: preferences } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor
   );
+
+  const columnDescriptions: ColumnDescription<DraftInboundLine>[] = [
+    [
+      'batch',
+      {
+        accessor: ({ rowData }) => rowData.batch || '',
+      },
+    ],
+    [getLocationInputColumn(), { setter: updateDraftLine, width: 550 }],
+  ];
+
+  if (preferences?.allowTrackingOfStockByDonor) {
+    columnDescriptions.push(getDonorColumn(patch => updateDraftLine(patch)));
+  }
+
+  const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);
 
   return (
     <QueryParamsProvider

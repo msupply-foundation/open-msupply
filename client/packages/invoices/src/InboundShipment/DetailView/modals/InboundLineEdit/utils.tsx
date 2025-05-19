@@ -97,7 +97,9 @@ export const getInboundDosesColumns =
       width: 100,
       accessor: ({ rowData }) => {
         const total = rowData.numberOfPacks * rowData.packSize;
-        return total * rowData.item.doses;
+        return (
+          total * (rowData.itemVariant?.dosesPerUnit ?? rowData.item.doses)
+        );
       },
     },
   ];

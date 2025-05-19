@@ -88,6 +88,13 @@ pub enum ActivityLogType {
     DemographicIndicatorUpdated,
     DemographicProjectionCreated,
     DemographicProjectionUpdated,
+    ItemVariantCreated,
+    ItemVariantDeleted,
+    ItemVariantUpdatedName,
+    ItemVariantUpdateColdStorageType,
+    ItemVariantUpdateManufacturer,
+    ItemVariantUpdateDosePerUnit,
+    ItemVariantUpdateVVMType,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]

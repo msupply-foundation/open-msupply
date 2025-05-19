@@ -51,6 +51,7 @@ pub fn generate_batch(
         note,
         item_variant_id,
         vvm_status_id,
+        donor_id,
         ..
     }: InvoiceLineRow,
     StockLineInput {
@@ -109,6 +110,7 @@ pub fn generate_batch(
         barcode_id,
         item_variant_id,
         vvm_status_id,
+        donor_id,
     };
 
     Ok(stock_line_row)
