@@ -275,6 +275,15 @@ export const StockLineForm: FC<StockLineFormProps> = ({
             text={String(supplierName)}
             textProps={{ textAlign: 'end' }}
           />
+          <StyledInputRow
+            label={t('label.vvm-status')}
+            Input={
+              <BufferedTextInput
+                disabled
+                value={draft.vvmStatus?.description ?? ''}
+              />
+            }
+          />
         </Grid>
       </Grid>
     </DetailContainer>
