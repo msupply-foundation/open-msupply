@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod query {
     use repository::item_variant::packaging_variant::PackagingVariantFilter;
-    use repository::mock::{mock_item_a, MockDataInserts};
+    use repository::mock::{mock_item_a, mock_user_account_a, MockDataInserts};
     use repository::test_db::setup_all;
     use repository::EqualFilter;
     use util::uuid::uuid;
@@ -16,12 +16,14 @@ mod query {
     async fn create_edit_delete_packaging_variant() {
         let (_, _, connection_manager, _) = setup_all(
             "create_edit_delete_packaging_variant",
-            MockDataInserts::none().items(),
+            MockDataInserts::none().items().user_accounts(),
         )
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider.basic_context().unwrap();
+        let context = service_provider
+            .context("".to_string(), mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.item_service;
 
         let test_item_variant_id = "test_item_variant_id";
@@ -125,7 +127,7 @@ mod query {
                 None,
                 Some(
                     PackagingVariantFilter::new()
-                        .id(EqualFilter::equal_to(&test_packaging_variant_id)),
+                        .id(EqualFilter::equal_to(test_packaging_variant_id)),
                 ),
                 None,
             )
@@ -138,12 +140,14 @@ mod query {
     async fn validate_packaging_variant() {
         let (_, _, connection_manager, _) = setup_all(
             "validate_packaging_variant",
-            MockDataInserts::none().items(),
+            MockDataInserts::none().items().user_accounts(),
         )
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider.basic_context().unwrap();
+        let context = service_provider
+            .context("".to_string(), mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.item_service;
 
         let test_item_variant_id = "test_item_variant_id";

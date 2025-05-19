@@ -259,7 +259,7 @@ export const useStocktakeColumns = ({
             ? (lines.reduce(
                 (total, line) =>
                   total +
-                  (line.item?.doses ?? 0) *
+                  (line.itemVariant?.dosesPerUnit ?? line.item.doses) *
                     (line?.packSize ?? 1) *
                     (line.snapshotNumberOfPacks -
                       (line.countedNumberOfPacks ??
@@ -289,10 +289,11 @@ export const useStocktakeColumns = ({
             rowData.snapshotNumberOfPacks;
           const totalRounded = Math.round(total * 100) / 100;
 
-          const totalInDoses =
-            displayDoses && rowData?.item?.doses
-              ? total * (rowData?.packSize ?? 1) * rowData?.item?.doses
-              : null;
+          const totalInDoses = displayDoses
+            ? total *
+              (rowData.packSize ?? 1) *
+              (rowData.itemVariant?.dosesPerUnit ?? rowData.item.doses)
+            : null;
           const totalInDosesRounded = totalInDoses
             ? Math.round(totalInDoses * 100) / 100
             : null;

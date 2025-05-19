@@ -26,6 +26,7 @@ fragment StocktakeLine on StocktakeLineNode {
   sellPricePerPack
   costPricePerPack
   comment
+  itemVariantId
 
   donorId
   donorName
@@ -53,7 +54,10 @@ fragment StocktakeLine on StocktakeLineNode {
     doses
   }
 
-  itemVariantId
+  itemVariant {
+    id
+    dosesPerUnit
+  }
 
   inventoryAdjustmentReason {
     __typename
