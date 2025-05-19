@@ -1,5 +1,5 @@
 import { FnUtils } from '@common/utils';
-import { DraftStockOutLineFragment } from '../../../api/operations.generated';
+import { DraftStockOutLineFragment } from '../OutboundShipment/api/operations.generated';
 import { AllocateIn } from './useAllocationContext';
 import {
   canAutoAllocate,

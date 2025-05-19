@@ -24,9 +24,9 @@ import {
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { DraftStockOutLineFragment } from '../../api/operations.generated';
 import { getPackQuantityCellId } from 'packages/invoices/src/utils';
-import { AllocateIn } from './allocation/useAllocationContext';
+import { AllocateIn } from '../../../Allocation/useAllocationContext';
 import { DraftItem } from '../../..';
-import { getDoseQuantity, packsToDoses } from './allocation/utils';
+import { getDoseQuantity, packsToDoses } from '../../../Allocation/utils';
 
 export const useOutboundLineEditColumns = ({
   allocate,

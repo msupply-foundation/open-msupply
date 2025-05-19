@@ -1,5 +1,5 @@
 import { noOtherVariants, NumUtils } from '@common/utils';
-import { DraftStockOutLineFragment } from '../../../api/operations.generated';
+import { DraftStockOutLineFragment } from '../OutboundShipment/api/operations.generated';
 import { DateUtils } from '@common/intl';
 import { AllocateIn } from './useAllocationContext';
 

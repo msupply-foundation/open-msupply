@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { getPackQuantityCellId } from '../../../../utils';
 import { ScannedBarcode } from '../../../../types';
 import { useOutbound } from '../../../api';
-import { useAllocationContext } from '../allocation/useAllocationContext';
+import { useAllocationContext } from '../../../../Allocation/useAllocationContext';
 
 export const useOpenedWithBarcode = (barcode: ScannedBarcode | null) => {
   const { mutateAsync: insertBarcode } = useOutbound.utils.barcodeInsert();

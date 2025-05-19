@@ -1,6 +1,6 @@
 import { FnUtils } from '@openmsupply-client/common';
 import { allocateQuantities } from './allocateQuantities';
-import { DraftStockOutLineFragment } from '../../../api/operations.generated';
+import { DraftStockOutLineFragment } from '../OutboundShipment/api/operations.generated';
 import { AllocateIn } from './useAllocationContext';
 
 describe('allocateQuantities - standard behaviour.', () => {

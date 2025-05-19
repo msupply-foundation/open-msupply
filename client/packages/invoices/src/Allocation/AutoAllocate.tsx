@@ -10,12 +10,9 @@ import {
   useBufferState,
   useDebounceCallback,
 } from '@openmsupply-client/common';
-import { AllocationAlerts } from '../../../StockOut';
-import {
-  AllocateIn,
-  useAllocationContext,
-} from './allocation/useAllocationContext';
-import { getAllocatedQuantity } from './allocation/utils';
+import { AllocationAlerts } from '../StockOut';
+import { AllocateIn, useAllocationContext } from './useAllocationContext';
+import { getAllocatedQuantity } from './utils';
 
 export const AutoAllocate = () => {
   const t = useTranslation();

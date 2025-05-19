@@ -13,11 +13,11 @@ import {
 import { useNextItem } from './hooks';
 import { ScannedBarcode } from '../../../types';
 import { SelectItem } from './SelectItem';
-import { Allocation } from './Allocation';
+import { Allocation } from '../../../Allocation/Allocation';
 import { useOpenedWithBarcode } from './hooks/useOpenedWithBarcode';
-import { useAllocationContext } from './allocation/useAllocationContext';
+import { useAllocationContext } from '../../../Allocation/useAllocationContext';
 import { useSaveOutboundLines } from '../../api/hooks/useSaveOutboundLines';
-import { getAllocatedQuantity } from './allocation/utils';
+import { getAllocatedQuantity } from '../../../Allocation/utils';
 
 export type OutboundOpenedWith = { itemId: string } | ScannedBarcode | null;
 

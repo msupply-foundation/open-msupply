@@ -16,8 +16,8 @@ import {
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
-import { useAllocationContext } from './allocation/useAllocationContext';
-import { getAllocatedQuantity } from './allocation/utils';
+import { useAllocationContext } from '../../../Allocation/useAllocationContext';
+import { getAllocatedQuantity } from '../../../Allocation/utils';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
