@@ -18,7 +18,9 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{ClinicianRow, InvoiceRow, InvoiceStatus, InvoiceType, Name, NameRow, PricingRow};
+use repository::{
+    ClinicianRow, InvoiceRow, InvoiceStatus, InvoiceType, Name, NameLinkRow, NameRow, PricingRow,
+};
 
 use repository::Invoice;
 use serde::Serialize;
@@ -282,11 +284,18 @@ impl InvoiceNode {
             None => patient_loader
                 .load_one(self.name_row().id.clone())
                 .await?
-                .map(|name_row| Name {
-                    name_row,
+                .map(|name_row| {
+                    let name_id = name_row.id.clone();
+                    Name {
+                        name_row: name_row,
+                        name_link_row: NameLinkRow {
+                            id: name_id.clone(),
+                            name_id,
+                        },
                     name_store_join_row: None,
                     store_row: None,
                     properties: None,
+                    }
                 }),
         };
 
@@ -457,11 +466,11 @@ impl InvoiceNode {
     }
 
     pub async fn default_donor_id(&self) -> &Option<String> {
-        &self.row().default_donor_id
+        &self.row().default_donor_link_id
     }
 
     pub async fn default_donor_name(&self, ctx: &Context<'_>) -> Result<Option<String>> {
-        let Some(default_donor_id) = &self.row().default_donor_id else {
+        let Some(default_donor_id) = &self.row().default_donor_link_id else {
             return Ok(None);
         };
 

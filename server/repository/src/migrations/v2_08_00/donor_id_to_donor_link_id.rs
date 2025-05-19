@@ -11,6 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
+                ALTER TABLE invoice RENAME COLUMN default_donor_id TO default_donor_link_id;
                 ALTER TABLE invoice_line RENAME COLUMN donor_id TO donor_link_id;
                 ALTER TABLE stock_line RENAME COLUMN donor_id TO donor_link_id;
             "#
