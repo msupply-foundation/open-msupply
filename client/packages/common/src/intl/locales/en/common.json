@@ -1682,7 +1682,6 @@
   "messages.no-repacks": "This stock line has not been repacked. Click New to create a new repack.",
   "messages.no-scanners-found": "No scanners found",
   "messages.no-shipments-yet": "No shipments created yet.",
-  "messages.no-status-history": "No status history available",
   "messages.no-status-logs": "No status logs have been created for this asset. Click the 'Update Status' button to create a new status log.",
   "messages.no-status-history": "No status history available",
   "messages.no-stock-available": "There is no stock available",
