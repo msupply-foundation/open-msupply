@@ -1,10 +1,18 @@
 import { useMemo } from 'react';
-import { SortUtils, useUrlQueryParams } from '@openmsupply-client/common';
+import {
+  PreferenceKey,
+  SortUtils,
+  usePreference,
+  useUrlQueryParams,
+} from '@openmsupply-client/common';
 import { useOutboundItems } from './useOutboundItems';
 import { useOutboundLines } from './useOutboundLines';
 import { useOutboundColumns } from './../../../DetailView/columns';
 
 export const useOutboundRows = (isGrouped = true) => {
+  const {
+    data: { displayVaccinesInDoses } = { displayVaccinesInDoses: false },
+  } = usePreference(PreferenceKey.DisplayVaccinesInDoses);
   const {
     queryParams: { sortBy },
     updateSortQuery: onChangeSortBy,
@@ -14,6 +22,7 @@ export const useOutboundRows = (isGrouped = true) => {
   const columns = useOutboundColumns({
     onChangeSortBy,
     sortBy,
+    displayDoseColumns: displayVaccinesInDoses,
   });
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);

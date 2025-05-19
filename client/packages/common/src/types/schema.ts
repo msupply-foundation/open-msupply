@@ -2288,9 +2288,11 @@ export type DraftOutboundShipmentLineNode = {
   __typename: 'DraftOutboundShipmentLineNode';
   availablePacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
+  defaultDosesPerUnit: Scalars['Int']['output'];
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   inStorePacks: Scalars['Float']['output'];
+  itemVariant?: Maybe<ItemVariantNode>;
   location?: Maybe<LocationNode>;
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
