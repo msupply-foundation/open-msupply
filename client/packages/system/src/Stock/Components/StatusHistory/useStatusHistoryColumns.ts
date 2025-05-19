@@ -29,10 +29,21 @@ export const useStatusHistoryColumns = () => {
       sortable: false,
     },
     {
+      key: 'level',
+      label: 'label.level',
+      accessor: ({ rowData }) => rowData?.status?.level,
+    },
+    {
       key: 'entered-by',
       label: 'label.entered-by',
-      accessor: ({ rowData }) =>
-        `${rowData?.user?.firstName} ${rowData?.user?.lastName}`,
+      accessor: ({ rowData }) => {
+        const { firstName, lastName, username } = rowData?.user
+          ? rowData.user
+          : {};
+        const enteredBy =
+          firstName && lastName ? `${firstName} ${lastName}` : username;
+        return enteredBy;
+      },
       sortable: false,
     },
     {

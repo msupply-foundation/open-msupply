@@ -13,8 +13,13 @@ export type VvmStatusLogRowFragment = {
     __typename: 'UserNode';
     firstName?: string | null;
     lastName?: string | null;
+    username: string;
   } | null;
-  status?: { __typename: 'VvmstatusNode'; description: string } | null;
+  status?: {
+    __typename: 'VvmstatusNode';
+    description: string;
+    level: number;
+  } | null;
 };
 
 export type StockLineRowFragment = {
@@ -68,8 +73,13 @@ export type StockLineRowFragment = {
         __typename: 'UserNode';
         firstName?: string | null;
         lastName?: string | null;
+        username: string;
       } | null;
-      status?: { __typename: 'VvmstatusNode'; description: string } | null;
+      status?: {
+        __typename: 'VvmstatusNode';
+        description: string;
+        level: number;
+      } | null;
     }>;
   } | null;
 };
@@ -237,8 +247,13 @@ export type StockLinesQuery = {
             __typename: 'UserNode';
             firstName?: string | null;
             lastName?: string | null;
+            username: string;
           } | null;
-          status?: { __typename: 'VvmstatusNode'; description: string } | null;
+          status?: {
+            __typename: 'VvmstatusNode';
+            description: string;
+            level: number;
+          } | null;
         }>;
       } | null;
     }>;
@@ -309,8 +324,13 @@ export type StockLineQuery = {
             __typename: 'UserNode';
             firstName?: string | null;
             lastName?: string | null;
+            username: string;
           } | null;
-          status?: { __typename: 'VvmstatusNode'; description: string } | null;
+          status?: {
+            __typename: 'VvmstatusNode';
+            description: string;
+            level: number;
+          } | null;
         }>;
       } | null;
     }>;
@@ -407,10 +427,12 @@ export type UpdateStockLineMutation = {
               __typename: 'UserNode';
               firstName?: string | null;
               lastName?: string | null;
+              username: string;
             } | null;
             status?: {
               __typename: 'VvmstatusNode';
               description: string;
+              level: number;
             } | null;
           }>;
         } | null;
@@ -658,10 +680,12 @@ export type InsertStockLineMutation = {
               __typename: 'UserNode';
               firstName?: string | null;
               lastName?: string | null;
+              username: string;
             } | null;
             status?: {
               __typename: 'VvmstatusNode';
               description: string;
+              level: number;
             } | null;
           }>;
         } | null;
@@ -675,9 +699,11 @@ export const VvmStatusLogRowFragmentDoc = gql`
     user {
       firstName
       lastName
+      username
     }
     status {
       description
+      level
     }
     createdDatetime
     comment
