@@ -69,7 +69,7 @@ export const DonorEditModal = ({
   const confirm = () =>
     mutateAsync({
       id: invoiceId,
-      defaultDonor: {
+      defaultDonorUpdate: {
         donorId: donor?.id ?? null,
         applyToLines: method ?? ApplyToLinesInput.None,
       },

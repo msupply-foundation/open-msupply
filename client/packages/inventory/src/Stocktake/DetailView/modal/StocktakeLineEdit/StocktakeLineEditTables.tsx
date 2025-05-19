@@ -322,7 +322,14 @@ export const LocationTable = ({
   ];
   if (preferences?.allowTrackingOfStockByDonor) {
     columnDefinitions.push(
-      getDonorColumn(patch => update({ ...patch, countThisLine: true }))
+      getDonorColumn((id, donor) =>
+        update({
+          id,
+          donorId: donor?.id ?? null,
+          donorName: donor?.name ?? null,
+          countThisLine: true,
+        })
+      )
     );
   }
   columnDefinitions.push([

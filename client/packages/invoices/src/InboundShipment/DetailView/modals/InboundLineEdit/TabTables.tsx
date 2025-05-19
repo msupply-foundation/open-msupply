@@ -303,7 +303,10 @@ export const LocationTableComponent = ({
   ];
 
   if (preferences?.allowTrackingOfStockByDonor) {
-    columnDescriptions.push(getDonorColumn(patch => updateDraftLine(patch)));
+    columnDescriptions.push([
+      getDonorColumn((id, donor) => updateDraftLine({ id, donor })),
+      { accessor: ({ rowData }) => rowData.donor?.id },
+    ] as ColumnDescription<DraftInboundLine>);
   }
 
   const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);

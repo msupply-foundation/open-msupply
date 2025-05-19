@@ -632,8 +632,6 @@ export const StocktakeLineFragmentDoc = gql`
     itemVariantId
     donorId
     donorName
-    donorId
-    donorName
     location {
       __typename
       id

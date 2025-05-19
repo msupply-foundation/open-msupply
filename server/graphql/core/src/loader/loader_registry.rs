@@ -114,6 +114,12 @@ pub async fn get_loaders(
         },
         async_std::task::spawn,
     );
+    let name_by_name_link_id_loader = DataLoader::new(
+        NameByNameLinkIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
 
     let location_by_id_loader = DataLoader::new(
         LocationByIdLoader {
@@ -257,6 +263,7 @@ pub async fn get_loaders(
 
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
+    loaders.insert(name_by_name_link_id_loader);
     loaders.insert(store_by_id_loader);
     loaders.insert(invoice_by_id_loader);
     loaders.insert(invoice_by_requisition_id_loader);
