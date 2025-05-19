@@ -203,13 +203,20 @@ export const RequestLineEdit = ({
       </Box>
 
       {!!draft && (
-        <StockDistribution
-          availableStockOnHand={draft?.itemStats?.availableStockOnHand}
-          averageMonthlyConsumption={
-            draft?.itemStats?.averageMonthlyConsumption
-          }
-          suggestedQuantity={draft?.suggestedQuantity}
-        />
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifySelf="center"
+          width={900}
+        >
+          <StockDistribution
+            availableStockOnHand={draft?.itemStats?.availableStockOnHand}
+            averageMonthlyConsumption={
+              draft?.itemStats?.averageMonthlyConsumption
+            }
+            suggestedQuantity={draft?.suggestedQuantity}
+          />
+        </Box>
       )}
 
       {line && (

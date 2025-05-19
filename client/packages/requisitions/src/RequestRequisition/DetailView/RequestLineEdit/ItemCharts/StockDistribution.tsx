@@ -239,16 +239,10 @@ export const StockDistribution = ({
   suggestedQuantity = 0,
 }: StockDistributionProps) => {
   return (
-    <Box
-      sx={{
-        padding: 1,
-      }}
-    >
-      <StockDistributionContent
-        availableStockOnHand={availableStockOnHand}
-        averageMonthlyConsumption={averageMonthlyConsumption}
-        suggestedQuantity={suggestedQuantity}
-      />
-    </Box>
+    <StockDistributionContent
+      availableStockOnHand={availableStockOnHand}
+      averageMonthlyConsumption={averageMonthlyConsumption}
+      suggestedQuantity={suggestedQuantity}
+    />
   );
 };
