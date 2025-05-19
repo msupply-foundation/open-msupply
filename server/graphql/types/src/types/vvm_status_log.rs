@@ -1,10 +1,10 @@
+use super::{StockLineNode, UserNode, VVMStatusNode};
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
     loader::{StockLineByIdLoader, UserLoader, VVMStatusByIdLoader},
     ContextExt,
 };
-use graphql_types::types::{StockLineNode, UserNode, VVMStatusNode};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 
 #[derive(PartialEq, Debug)]
@@ -77,6 +77,15 @@ pub struct VVMStatusLogConnector {
 
 impl VVMStatusLogConnector {
     pub fn from_domain(vvm_status_logs: Vec<VVMStatusLogRow>) -> VVMStatusLogConnector {
+        VVMStatusLogConnector {
+            nodes: vvm_status_logs
+                .into_iter()
+                .map(VVMStatusLogNode::from_domain)
+                .collect(),
+        }
+    }
+
+    pub fn from_vec(vvm_status_logs: Vec<VVMStatusLogRow>) -> VVMStatusLogConnector {
         VVMStatusLogConnector {
             nodes: vvm_status_logs
                 .into_iter()

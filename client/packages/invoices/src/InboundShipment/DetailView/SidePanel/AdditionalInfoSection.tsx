@@ -12,25 +12,75 @@ import {
   InfoTooltipIcon,
   useFormatDateTime,
   UNDEFINED_STRING_VALUE,
+  useToggle,
+  IconButton,
+  EditIcon,
+  PreferenceKey,
+  usePreference,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../api';
+import { DonorEditModal } from '../modals';
 
 export const AdditionalInfoSectionComponent = () => {
-  const { user, comment, colour, createdDatetime, update } =
-    useInbound.document.fields([
-      'comment',
-      'colour',
-      'user',
-      'createdDatetime',
-    ]);
-  const isDisabled = useInbound.utils.isDisabled();
   const t = useTranslation();
-  const [bufferedColor, setBufferedColor] = useBufferState(colour);
   const { localisedDate } = useFormatDateTime();
+  const { isOn: donorModalOn, toggleOff, toggleOn } = useToggle();
+
+  const isDisabled = useInbound.utils.isDisabled();
+
+  const { data: prefs } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor
+  );
+
+  const {
+    id,
+    user,
+    comment,
+    colour,
+    createdDatetime,
+    defaultDonorId,
+    defaultDonorName,
+    update,
+  } = useInbound.document.fields([
+    'id',
+    'comment',
+    'colour',
+    'user',
+    'createdDatetime',
+    'defaultDonorId',
+    'defaultDonorName',
+  ]);
+  const [bufferedColor, setBufferedColor] = useBufferState(colour);
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
       <Grid container gap={0.5} key="additional-info">
+        {prefs?.allowTrackingOfStockByDonor && (
+          <>
+            {donorModalOn && (
+              <DonorEditModal
+                invoiceId={id}
+                donorId={defaultDonorId ?? ''}
+                onClose={toggleOff}
+                isOpen
+              />
+            )}
+            <PanelRow>
+              <PanelLabel>{t('heading.donor-name')}</PanelLabel>
+              <PanelField>
+                <IconButton
+                  icon={<EditIcon style={{ fontSize: 16, fill: 'none' }} />}
+                  label={t('label.edit')}
+                  onClick={toggleOn}
+                />
+              </PanelField>
+              <PanelField>
+                {defaultDonorName ?? t('label.no-donor-selected')}
+              </PanelField>
+            </PanelRow>
+          </>
+        )}
+
         <PanelRow>
           <PanelLabel>{t('label.edited-by')}</PanelLabel>
           <PanelField>{user?.username ?? UNDEFINED_STRING_VALUE}</PanelField>

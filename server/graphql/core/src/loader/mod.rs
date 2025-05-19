@@ -53,6 +53,7 @@ mod vaccine_course_by_program;
 mod vaccine_course_dose_by_vaccine_course;
 mod vaccine_course_item_by_vaccine_course;
 mod vvm_status;
+mod vvm_status_log;
 mod warning;
 
 use std::{collections::HashSet, hash::Hasher};
@@ -112,6 +113,7 @@ pub use vaccine_course_by_program::*;
 pub use vaccine_course_dose_by_vaccine_course::*;
 pub use vaccine_course_item_by_vaccine_course::*;
 pub use vvm_status::*;
+pub use vvm_status_log::*;
 pub use warning::*;
 
 #[derive(Debug, Clone)]

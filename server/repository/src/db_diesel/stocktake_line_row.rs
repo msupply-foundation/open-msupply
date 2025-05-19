@@ -33,16 +33,19 @@ table! {
         sell_price_per_pack -> Nullable<Double>,
         note -> Nullable<Text>,
         item_variant_id -> Nullable<Text>,
+        donor_link_id -> Nullable<Text>,
         reason_option_id -> Nullable<Text>,
     }
 }
 
 joinable!(stocktake_line -> item_link (item_link_id));
+joinable!(stocktake_line -> name_link (donor_link_id));
 joinable!(stocktake_line -> location (location_id));
 joinable!(stocktake_line -> stocktake (stocktake_id));
 joinable!(stocktake_line -> stock_line (stock_line_id));
 joinable!(stocktake_line -> reason_option (reason_option_id));
 allow_tables_to_appear_in_same_query!(stocktake_line, item_link);
+allow_tables_to_appear_in_same_query!(stocktake_line, name_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(treat_none_as_null = true)]
@@ -68,6 +71,7 @@ pub struct StocktakeLineRow {
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
     pub item_variant_id: Option<String>,
+    pub donor_link_id: Option<String>,
     pub reason_option_id: Option<String>,
 }
 

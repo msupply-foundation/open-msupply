@@ -28,8 +28,13 @@ const defaultDraftStockLine: DraftStockLine = {
     __typename: 'ItemNode',
     code: '',
     name: '',
+    isVaccine: false,
   },
   reasonOption: null,
+  vvmStatusLogs: {
+    __typename: 'VvmstatusLogConnector',
+    nodes: [],
+  },
 };
 
 export function useStockLine(id?: string) {

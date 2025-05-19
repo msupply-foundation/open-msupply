@@ -155,6 +155,7 @@ pub fn generate_lines_from_master_list(
                 comment: None,
                 counted_number_of_packs: None,
                 item_variant_id: None,
+                donor_link_id: None,
                 reason_option_id: None,
             });
         } else {
@@ -176,7 +177,7 @@ pub fn generate_lines_from_master_list(
                     available_number_of_packs: _,
                     barcode_id: _,
                     item_variant_id,
-                    donor_id: _,
+                    donor_id,
                     vvm_status_id: _,
                 } = line.stock_line_row;
 
@@ -197,6 +198,7 @@ pub fn generate_lines_from_master_list(
                     comment: None,
                     counted_number_of_packs: None,
                     item_variant_id,
+                    donor_link_id: donor_id,
                     reason_option_id: None,
                 });
             });
@@ -240,7 +242,7 @@ pub fn generate_lines_from_location(
                 available_number_of_packs: _,
                 barcode_id: _,
                 item_variant_id,
-                donor_id: _,
+                donor_id,
                 vvm_status_id: _,
             } = line.stock_line_row;
 
@@ -261,6 +263,7 @@ pub fn generate_lines_from_location(
                 comment: None,
                 counted_number_of_packs: None,
                 item_variant_id,
+                donor_link_id: donor_id,
                 reason_option_id: None,
             }
         })
@@ -304,6 +307,7 @@ pub fn generate_lines_initial_stocktake(
             comment: None,
             counted_number_of_packs: None,
             item_variant_id: None,
+            donor_link_id: None,
             reason_option_id: None,
         })
         .collect();
@@ -343,7 +347,7 @@ pub fn generate_lines_with_stock(
                 available_number_of_packs: _,
                 barcode_id: _,
                 item_variant_id,
-                donor_id: _,
+                donor_id,
                 vvm_status_id: _,
             } = line.stock_line_row;
 
@@ -364,6 +368,7 @@ pub fn generate_lines_with_stock(
                 comment: None,
                 counted_number_of_packs: None,
                 item_variant_id,
+                donor_link_id: donor_id,
                 reason_option_id: None,
             }
         })
@@ -404,7 +409,7 @@ pub fn generate_lines_expiring_before(
                 available_number_of_packs: _,
                 barcode_id: _,
                 item_variant_id,
-                donor_id: _,
+                donor_id,
                 vvm_status_id: _,
             } = line.stock_line_row;
 
@@ -425,6 +430,7 @@ pub fn generate_lines_expiring_before(
                 counted_number_of_packs: None,
                 item_name: line.item_row.name,
                 item_variant_id,
+                donor_link_id: donor_id,
                 reason_option_id: None,
             }
         })
