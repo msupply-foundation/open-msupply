@@ -1,8 +1,14 @@
-use std::path::PathBuf;
+use std::{default, path::PathBuf};
 
+use repository::database_settings::DatabaseSettings;
 use reqwest::Client;
 use serde::Deserialize;
 use serde_json::{json, Value};
+use serde_yml;
+use service::{
+    settings::{DiscoveryMode, ServerSettings, Settings},
+    sync::settings::{BatchSize, SyncSettings},
+};
 use util::uuid::uuid;
 const TEST_API: &str = "sync/v5/test";
 
@@ -13,7 +19,7 @@ pub struct LoadTest {
     pub url: String,
 
     /// The output directory for test results
-    #[clap(short, long)]
+    #[clap(short, long, default_value = "./load_test")]
     pub output_dir: PathBuf,
 
     /// The site name of the initial test site that th cli will use to access the API
@@ -25,7 +31,7 @@ pub struct LoadTest {
     pub test_site_pass: Option<String>,
 
     /// Base port to user for the remote sites (increments by 1 for each site)
-    #[clap(short, long)]
+    #[clap(short, long, default_value = "12321")]
     pub base_port: u16,
 
     /// The amount of sites to simulate
@@ -173,6 +179,55 @@ impl LoadTest {
             dbg!(&response);
             dbg!(&response.text().await?);
             return Ok(());
+        }
+
+        // Creating config files for each remote site
+        if !self.output_dir.exists() {
+            std::fs::create_dir_all(&self.output_dir)?;
+        }
+
+        for (i, site_n_store) in site_n_stores.iter().enumerate() {
+            let port = self.base_port + i as u16;
+            let config_file_path = self.output_dir.join(format!("site_{}_config.json", i + 1));
+            let database_path = self.output_dir.to_string_lossy().to_string();
+
+            let config = Settings {
+                server: ServerSettings {
+                    port,
+                    danger_allow_http: true,
+                    debug_no_access_control: true, // Allow us to use GQL on the remote sites without auth
+                    discovery: DiscoveryMode::Disabled,
+                    cors_origins: vec![],
+                    base_dir: None,
+                    machine_uid: Some("1337_test".to_owned()),
+                },
+                database: DatabaseSettings {
+                    username: "postgres".to_owned(),
+                    password: "password".to_owned(),
+                    port: 5432,
+                    host: "localhost".to_owned(),
+                    database_name: format!("site_{}", site_n_store.site.site_id),
+                    database_path: Some(database_path.clone()),
+                    init_sql: None,
+                },
+                sync: Some(SyncSettings {
+                    url: self.url.clone(),
+                    username: site_n_store.site.name.clone(),
+                    password_sha256: site_n_store.site.password_sha256.clone(),
+                    interval_seconds: 600,
+                    batch_size: BatchSize {
+                        remote_pull: 512,
+                        remote_push: 512,
+                        central_pull: 512,
+                    },
+                }),
+                logging: None,
+                backup: None,
+                mail: None,
+            };
+
+            std::fs::write(&config_file_path, serde_yml::to_string(&config)?)?;
+            println!("Created config file {database_path}",);
         }
 
         println!("end");
