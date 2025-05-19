@@ -18,10 +18,13 @@ import {
   NumberInputCell,
   ColumnAlign,
   NumberCell,
+  usePreference,
+  PreferenceKey,
   ReasonOptionNodeType,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
+  getDonorColumn,
   getLocationInputColumn,
   ItemVariantInputCell,
   PackSizeEntryCell,
@@ -300,7 +303,11 @@ export const LocationTable = ({
 }: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
-  const columns = useColumns<DraftStocktakeLine>([
+  const { data: preferences } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor
+  );
+
+  const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
     [
@@ -310,20 +317,27 @@ export const LocationTable = ({
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
-    [
-      'comment',
-      {
-        label: 'label.stocktake-comment',
-        Cell: TextInputCell,
-        cellProps: {
-          fullWidth: true,
-        },
-        width: 200,
-        setter: patch => update({ ...patch, countThisLine: true }),
-        accessor: ({ rowData }) => rowData.comment || '',
+  ];
+  if (preferences?.allowTrackingOfStockByDonor) {
+    columnDefinitions.push(
+      getDonorColumn(patch => update({ ...patch, countThisLine: true }))
+    );
+  }
+  columnDefinitions.push([
+    'comment',
+    {
+      label: 'label.stocktake-comment',
+      Cell: TextInputCell,
+      cellProps: {
+        fullWidth: true,
       },
-    ],
+      width: 200,
+      setter: patch => update({ ...patch, countThisLine: true }),
+      accessor: ({ rowData }) => rowData.comment || '',
+    },
   ]);
+
+  const columns = useColumns(columnDefinitions);
 
   return (
     <DataTable

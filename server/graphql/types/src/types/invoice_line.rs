@@ -1,14 +1,15 @@
 use super::{
-    InventoryAdjustmentReasonNode, ItemNode, LocationNode, PricingNode, ReasonOptionNode,
-    ReturnReasonNode, StockLineNode,
+    InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, PricingNode,
+    ReasonOptionNode, ReturnReasonNode, StockLineNode,
 };
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
     loader::{
-        InventoryAdjustmentReasonByIdLoader, ItemLoader, LocationByIdLoader, ReasonOptionLoader,
-        ReturnReasonLoader, StockLineByIdLoader,
+        InventoryAdjustmentReasonByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader,
+        LocationByIdLoader, NameRowLoader, ReasonOptionLoader, ReturnReasonLoader,
+        StockLineByIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
@@ -205,6 +206,43 @@ impl InvoiceLineNode {
             .await?;
 
         Ok(result.map(InventoryAdjustmentReasonNode::from_domain))
+    }
+
+    // todo - from donor_link
+    pub async fn donor_id(&self) -> &Option<String> {
+        &self.row().donor_id
+    }
+
+    // todo - from donor_link
+    pub async fn donor_name(&self, ctx: &Context<'_>) -> Result<Option<String>> {
+        let Some(donor_id) = &self.row().donor_id else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<NameRowLoader>>();
+
+        let name_row = loader.load_one(donor_id.to_string()).await?.ok_or(
+            StandardGraphqlError::InternalError(format!(
+                "Cannot find donor name for donor_id ({})",
+                donor_id
+            ))
+            .extend(),
+        )?;
+
+        Ok(Some(name_row.name))
+    }
+
+    pub async fn item_variant(&self, ctx: &Context<'_>) -> Result<Option<ItemVariantNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemVariantByItemVariantIdLoader>>();
+
+        let item_variant_id = match &self.row().item_variant_id {
+            None => return Ok(None),
+            Some(item_variant_id) => item_variant_id,
+        };
+
+        let result = loader.load_one(item_variant_id.clone()).await?;
+
+        Ok(result.map(ItemVariantNode::from_domain))
     }
 
     pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {

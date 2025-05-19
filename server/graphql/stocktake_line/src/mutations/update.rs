@@ -36,6 +36,7 @@ pub struct UpdateInput {
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
     pub item_variant_id: Option<NullableUpdateInput<String>>,
+    pub donor_id: Option<NullableUpdateInput<String>>,
     pub reason_option_id: Option<String>,
 }
 
@@ -108,6 +109,7 @@ impl UpdateInput {
             note,
             inventory_adjustment_reason_id,
             item_variant_id,
+            donor_id,
             reason_option_id,
         } = self;
 
@@ -128,6 +130,9 @@ impl UpdateInput {
             inventory_adjustment_reason_id,
             item_variant_id: item_variant_id.map(|item_variant_id| NullableUpdate {
                 value: item_variant_id.value,
+            }),
+            donor_id: donor_id.map(|donor_id| NullableUpdate {
+                value: donor_id.value,
             }),
             reason_option_id,
         }
@@ -293,11 +298,13 @@ mod test {
                     note: Some("note".to_string()),
                     inventory_adjustment_reason_id: None,
                     item_variant_id: None,
+                    donor_link_id: None,
                     reason_option_id: None,
                 },
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),
                 item: mock_item_a(),
+                donor: None,
             })
         }));
 

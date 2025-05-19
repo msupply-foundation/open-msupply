@@ -18,6 +18,7 @@ pub fn generate(
         note,
         inventory_adjustment_reason_id,
         item_variant_id,
+        donor_id,
         reason_option_id,
     }: UpdateStocktakeLine,
 ) -> Result<StocktakeLineRow, UpdateStocktakeLineError> {
@@ -29,6 +30,14 @@ pub fn generate(
             None => None,
         },
         None => existing_line.item_variant_id,
+    };
+
+    let donor_link_id: Option<String> = match donor_id {
+        Some(update) => match update.value {
+            Some(id) => Some(id),
+            None => None,
+        },
+        None => existing_line.donor_link_id,
     };
 
     Ok(StocktakeLineRow {
@@ -55,6 +64,7 @@ pub fn generate(
         inventory_adjustment_reason_id: inventory_adjustment_reason_id
             .or(existing_line.inventory_adjustment_reason_id),
         item_variant_id,
+        donor_link_id,
         reason_option_id: reason_option_id.or(existing_line.reason_option_id),
     })
 }

@@ -22,6 +22,7 @@ pub fn generate(
         note,
         inventory_adjustment_reason_id,
         item_variant_id,
+        donor_id,
         reason_option_id,
     }: InsertStocktakeLine,
 ) -> StocktakeLineRow {
@@ -59,6 +60,7 @@ pub fn generate(
         note,
         inventory_adjustment_reason_id,
         item_variant_id,
+        donor_link_id: donor_id,
         reason_option_id,
     }
 }

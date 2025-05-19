@@ -36,6 +36,7 @@ pub struct InsertInput {
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
     pub item_variant_id: Option<String>,
+    pub donor_id: Option<String>,
     pub reason_option_id: Option<String>,
 }
 
@@ -156,6 +157,7 @@ impl InsertInput {
             note,
             inventory_adjustment_reason_id,
             item_variant_id,
+            donor_id,
             reason_option_id,
         } = self;
 
@@ -177,6 +179,7 @@ impl InsertInput {
             note,
             inventory_adjustment_reason_id,
             item_variant_id,
+            donor_id,
             reason_option_id,
         }
     }
@@ -299,11 +302,13 @@ mod test {
                     note: Some("note".to_string()),
                     inventory_adjustment_reason_id: None,
                     item_variant_id: None,
+                    donor_link_id: None,
                     reason_option_id: None,
                 },
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),
                 item: mock_item_a(),
+                donor: None,
             })
         }));
 
