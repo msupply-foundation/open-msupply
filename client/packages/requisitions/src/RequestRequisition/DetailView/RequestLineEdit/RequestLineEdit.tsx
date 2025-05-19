@@ -65,6 +65,7 @@ export const RequestLineEdit = ({
   const { width } = useWindowDimensions();
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
+  const disableItemSelection = disabled || isUpdateMode;
 
   const line = useMemo(
     () => lines.find(line => line.id === draft?.id),
@@ -98,27 +99,26 @@ export const RequestLineEdit = ({
       <Layout
         Top={
           <>
-            {disabled ||
-              (isUpdateMode && (
-                <BasicTextInput
-                  value={`${currentItem?.code}     ${originalItemName}`}
-                  disabled
-                  fullWidth
-                />
-              )) || (
-                <StockItemSearchInputWithStats
-                  autoFocus={!currentItem}
-                  openOnFocus={!currentItem}
-                  disabled={disabled}
-                  currentItemId={currentItem?.id}
-                  onChange={(newItem: ItemWithStatsFragment | null) =>
-                    newItem && setCurrentItem(newItem)
-                  }
-                  extraFilter={item =>
-                    !lines.some(line => line.item.id === item.id)
-                  }
-                />
-              )}
+            {(disableItemSelection && (
+              <BasicTextInput
+                value={`${currentItem?.code}     ${originalItemName}`}
+                disabled
+                fullWidth
+              />
+            )) || (
+              <StockItemSearchInputWithStats
+                autoFocus={!currentItem}
+                openOnFocus={!currentItem}
+                disabled={disabled}
+                currentItemId={currentItem?.id}
+                onChange={(newItem: ItemWithStatsFragment | null) =>
+                  newItem && setCurrentItem(newItem)
+                }
+                extraFilter={item =>
+                  !lines.some(line => line.item.id === item.id)
+                }
+              />
+            )}
           </>
         }
         Left={
