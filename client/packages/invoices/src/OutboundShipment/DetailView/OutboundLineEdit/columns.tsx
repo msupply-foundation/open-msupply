@@ -13,6 +13,8 @@ import {
   CurrencyCell,
   CellProps,
   NumberInputCell,
+  usePreference,
+  PreferenceKey,
   useTranslation,
   TypedTFunction,
   LocaleKey,
@@ -46,9 +48,15 @@ export const useOutboundLineEditColumns = ({
   const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
   const pluralisedUnitName = getPlural(unit, 2);
 
+  const { data: prefs } = usePreference(
+    PreferenceKey.SortByVvmStatusThenExpiry,
+    PreferenceKey.ManageVvmStatusForStock
+  );
+
   const ForeignCurrencyCell = useCurrencyCell<DraftStockOutLineFragment>(
     currency?.code as Currencies
   );
+
   const columnDefinitions: ColumnDescription<DraftStockOutLineFragment>[] = [
     [
       'batch',
@@ -56,6 +64,23 @@ export const useOutboundLineEditColumns = ({
         accessor: ({ rowData }) => rowData.batch,
       },
     ],
+  ];
+
+  // If we have use VVM status, we need to show the VVM status column
+  if (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) {
+    columnDefinitions.push({
+      key: 'vvmStatus',
+      label: 'label.vvm-status',
+      accessor: ({ rowData }) => {
+        if (!rowData.vvmStatus) return '';
+        // TODO: Show unusable VVM status somehow?
+        return `${rowData.vvmStatus?.description} (${rowData.vvmStatus?.level})`;
+      },
+      width: 85,
+    });
+  }
+
+  columnDefinitions.push(
     [
       'expiryDate',
       {
@@ -77,8 +102,9 @@ export const useOutboundLineEditColumns = ({
         Cell: CurrencyCell,
         width: 85,
       },
-    ],
-  ];
+    ]
+  );
+
   if (isExternalSupplier && !!store?.preferences.issueInForeignCurrency) {
     columnDefinitions.push({
       key: 'foreignCurrencySellPricePerPack',

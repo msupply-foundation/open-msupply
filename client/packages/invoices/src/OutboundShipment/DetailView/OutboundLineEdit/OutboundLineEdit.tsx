@@ -41,8 +41,10 @@ export const OutboundLineEdit = ({
   const t = useTranslation();
   const { info, warning } = useNotification();
   const [itemId, setItemId] = useState(openedWith?.itemId);
-  const { data: pref } = usePreference(PreferenceKey.DisplayVaccinesInDoses);
-  const allocateVaccineItemsInDoses = pref?.displayVaccinesInDoses ?? false;
+  const { data: prefs } = usePreference(
+    PreferenceKey.DisplayVaccinesInDoses,
+    PreferenceKey.SortByVvmStatusThenExpiry
+  );
 
   const onClose = () => {
     clear();
@@ -164,7 +166,11 @@ export const OutboundLineEdit = ({
             invoiceId={invoiceId}
             allowPlaceholder={status === InvoiceNodeStatus.New}
             scannedBatch={asBarcodeOrNull(openedWith)?.batch}
-            allocateVaccineItemsInDoses={allocateVaccineItemsInDoses}
+            prefOptions={{
+              allocateVaccineItemsInDoses:
+                prefs?.displayVaccinesInDoses ?? false,
+              sortByVvmStatus: prefs?.sortByVvmStatusThenExpiry ?? false,
+            }}
           />
         )}
       </Grid>

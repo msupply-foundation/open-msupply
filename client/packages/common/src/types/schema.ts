@@ -2306,6 +2306,7 @@ export type DraftOutboundShipmentLineNode = {
   sellPricePerPack: Scalars['Float']['output'];
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
+  vvmStatus?: Maybe<VvmstatusNode>;
 };
 
 export type EmergencyResponseRequisitionCounts = {

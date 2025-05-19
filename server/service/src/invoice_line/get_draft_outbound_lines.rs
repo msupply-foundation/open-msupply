@@ -26,6 +26,7 @@ pub struct DraftOutboundShipmentLine {
     pub in_store_packs: f64,
     pub available_packs: f64,
     pub stock_line_on_hold: bool,
+    pub vvm_status_id: Option<String>,
     pub default_doses_per_unit: i32,
     pub item_variant_id: Option<String>,
 }
@@ -173,6 +174,7 @@ impl DraftOutboundShipmentLine {
             available_packs: available_number_of_packs,
             stock_line_on_hold: on_hold,
             number_of_packs: 0.0,
+            vvm_status_id: line.stock_line_row.vvm_status_id,
             default_doses_per_unit: line.item_row.vaccine_doses,
         }
     }
@@ -197,6 +199,7 @@ impl DraftOutboundShipmentLine {
             total_number_of_packs,
             available_number_of_packs,
             on_hold,
+            vvm_status_id,
             item_variant_id,
             ..
         } = line.stock_line_option.ok_or(RepositoryError::DBError {
@@ -225,6 +228,7 @@ impl DraftOutboundShipmentLine {
                 _ => total_number_of_packs + number_of_packs,
             },
             stock_line_on_hold: on_hold,
+            vvm_status_id,
             default_doses_per_unit: line.item_row.vaccine_doses,
         })
     }

@@ -28,16 +28,19 @@ interface AllocationProps {
   itemId: string;
   invoiceId: string;
   allowPlaceholder: boolean;
-  allocateVaccineItemsInDoses: boolean;
   scannedBatch?: string;
+  prefOptions: {
+    allocateVaccineItemsInDoses: boolean;
+    sortByVvmStatus: boolean;
+  };
 }
 
 export const Allocation = ({
   itemId,
   invoiceId,
   allowPlaceholder,
-  allocateVaccineItemsInDoses,
   scannedBatch,
+  prefOptions: { allocateVaccineItemsInDoses, sortByVvmStatus },
 }: AllocationProps) => {
   const { initialise, item } = useAllocationContext(({ initialise, item }) => ({
     initialise,
@@ -50,12 +53,15 @@ export const Allocation = ({
   );
 
   useEffect(() => {
+    // Manual query, only initialise when data is available
     queryData().then(({ data }) => {
       if (!data) return;
 
       initialise({
         itemData: data,
-        strategy: AllocationStrategy.FEFO,
+        strategy: sortByVvmStatus
+          ? AllocationStrategy.VVMStatus
+          : AllocationStrategy.FEFO,
         allowPlaceholder,
         scannedBatch,
         allocateVaccineItemsInDoses,
