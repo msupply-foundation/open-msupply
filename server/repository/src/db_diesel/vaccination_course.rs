@@ -63,7 +63,7 @@ pub struct VaccinationCourseRow {
     pub unit_index: Option<i32>,
     pub demographic_id: Option<String>,
     pub demographic_name: Option<String>,
-    population_percentage: Option<f64>,
+    pub population_percentage: Option<f64>,
     pub program_id: Option<String>,
     pub program_name: Option<String>,
 }
