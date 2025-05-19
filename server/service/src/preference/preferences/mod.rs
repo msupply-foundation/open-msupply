@@ -22,7 +22,7 @@ pub struct PreferenceProvider {
     pub display_vaccines_in_doses: DisplayVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
     pub sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
-    pub use_simplified_mobile_ui: UseSimplifiedMobileUI,
+    pub use_simplified_mobile_ui: UseSimplifiedMobileUi,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -35,6 +35,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         display_vaccines_in_doses: DisplayVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
         sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
-        use_simplified_mobile_ui: UseSimplifiedMobileUI,
+        use_simplified_mobile_ui: UseSimplifiedMobileUi,
     }
 }

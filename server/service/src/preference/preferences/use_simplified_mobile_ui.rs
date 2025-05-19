@@ -1,12 +1,12 @@
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
-pub struct UseSimplifiedMobileUI;
+pub struct UseSimplifiedMobileUi;
 
-impl Preference for UseSimplifiedMobileUI {
+impl Preference for UseSimplifiedMobileUi {
     type Value = bool;
 
     fn key(&self) -> PrefKey {
-        PrefKey::UseSimplifiedMobileUI
+        PrefKey::UseSimplifiedMobileUi
     }
 
     fn preference_type(&self) -> PreferenceType {
@@ -15,5 +15,9 @@ impl Preference for UseSimplifiedMobileUI {
 
     fn value_type(&self) -> PreferenceValueType {
         PreferenceValueType::Boolean
+    }
+
+    fn default_value(&self) -> Self::Value {
+        true
     }
 }

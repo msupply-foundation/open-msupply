@@ -96,7 +96,7 @@ pub enum PreferenceKey {
     DisplayVaccinesInDoses,
     ManageVvmStatusForStock,
     SortByVvmStatusThenExpiry,
-    UseSimplifiedMobileUI,
+    UseSimplifiedMobileUi,
 }
 
 impl PreferenceKey {
@@ -112,7 +112,7 @@ impl PreferenceKey {
             PrefKey::DisplayVaccinesInDoses => PreferenceKey::DisplayVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
             PrefKey::SortByVvmStatusThenExpiry => PreferenceKey::SortByVvmStatusThenExpiry,
-            PrefKey::UseSimplifiedMobileUI => PreferenceKey::UseSimplifiedMobileUI,
+            PrefKey::UseSimplifiedMobileUi => PreferenceKey::UseSimplifiedMobileUi,
         }
     }
 }

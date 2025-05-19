@@ -6004,7 +6004,7 @@ export enum PreferenceKey {
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   ShowContactTracing = 'showContactTracing',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
-  UseSimplifiedMobileUi = 'useSimplifiedMobileUI',
+  UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
 }
 
 export type PreferenceMutations = {
