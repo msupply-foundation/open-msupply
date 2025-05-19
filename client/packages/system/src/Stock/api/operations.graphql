@@ -98,6 +98,7 @@ fragment VVMStatusLogRow on VvmstatusLogNode {
     username
   }
   status {
+    id
     description
     level
   }

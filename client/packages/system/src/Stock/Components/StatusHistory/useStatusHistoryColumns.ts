@@ -37,9 +37,8 @@ export const useStatusHistoryColumns = () => {
       key: 'entered-by',
       label: 'label.entered-by',
       accessor: ({ rowData }) => {
-        const { firstName, lastName, username } = rowData?.user
-          ? rowData.user
-          : {};
+        if (!rowData?.user) return '';
+        const { firstName, lastName, username } = rowData.user;
         const enteredBy =
           firstName && lastName ? `${firstName} ${lastName}` : username;
         return enteredBy;

@@ -59,6 +59,7 @@ export type StockLineRowFragment = {
       } | null;
       status?: {
         __typename: 'VvmstatusNode';
+        id: string;
         description: string;
         level: number;
       } | null;
@@ -182,6 +183,7 @@ export type VvmStatusLogRowFragment = {
   } | null;
   status?: {
     __typename: 'VvmstatusNode';
+    id: string;
     description: string;
     level: number;
   } | null;
@@ -259,6 +261,7 @@ export type StockLinesQuery = {
           } | null;
           status?: {
             __typename: 'VvmstatusNode';
+            id: string;
             description: string;
             level: number;
           } | null;
@@ -336,6 +339,7 @@ export type StockLineQuery = {
           } | null;
           status?: {
             __typename: 'VvmstatusNode';
+            id: string;
             description: string;
             level: number;
           } | null;
@@ -439,6 +443,7 @@ export type UpdateStockLineMutation = {
             } | null;
             status?: {
               __typename: 'VvmstatusNode';
+              id: string;
               description: string;
               level: number;
             } | null;
@@ -710,6 +715,7 @@ export type InsertStockLineMutation = {
             } | null;
             status?: {
               __typename: 'VvmstatusNode';
+              id: string;
               description: string;
               level: number;
             } | null;
@@ -752,6 +758,7 @@ export const VvmStatusLogRowFragmentDoc = gql`
       username
     }
     status {
+      id
       description
       level
     }
