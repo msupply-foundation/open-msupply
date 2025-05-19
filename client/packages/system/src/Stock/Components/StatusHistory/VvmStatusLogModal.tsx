@@ -46,8 +46,8 @@ export const VvmStatusLogModal = ({
     query: { data: vvmStatus },
   } = useVvmStatusList();
 
-  const options = vvmStatus.map(({ id, code }) => ({
-    label: code,
+  const options = vvmStatus.map(({ id, description }) => ({
+    label: description,
     value: id,
   }));
 
@@ -75,7 +75,7 @@ export const VvmStatusLogModal = ({
     );
 
     const vvmStatusOption = selectedVvmStatus
-      ? { label: selectedVvmStatus.code, value: selectedVvmStatus.id }
+      ? { label: selectedVvmStatus.description, value: selectedVvmStatus.id }
       : null;
     setSelectedVvmStatusOption(vvmStatusOption);
     setComment(selectedStatusLog?.comment ?? '');
