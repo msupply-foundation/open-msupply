@@ -13,16 +13,19 @@ import {
   useIntlUtils,
   BasicSpinner,
 } from '@openmsupply-client/common';
-import { OutboundLineEditTable } from '../OutboundShipment/DetailView/OutboundLineEdit/OutboundLineEditTable';
-import { AutoAllocate } from './AutoAllocate';
-import { useOutbound, useOutboundLineEditData } from '../OutboundShipment/api';
+import { OutboundLineEditTable } from './OutboundLineEditTable';
+import { AutoAllocate } from '../../../Allocation/AutoAllocate';
+import { useOutbound, useOutboundLineEditData } from '../../api';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import {
   useAllocationContext,
   AllocationStrategy,
   AllocateIn,
-} from './useAllocationContext';
-import { sumAvailableDoses, sumAvailableUnits } from './utils';
+} from '../../../Allocation/useAllocationContext';
+import {
+  sumAvailableDoses,
+  sumAvailableUnits,
+} from '../../../Allocation/utils';
 
 interface AllocationProps {
   itemId: string;
