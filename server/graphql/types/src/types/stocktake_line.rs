@@ -138,6 +138,14 @@ impl StocktakeLineNode {
         Ok(result.map(InventoryAdjustmentReasonNode::from_domain))
     }
 
+    pub async fn donor_id(&self) -> Option<String> {
+        self.line.donor.clone().map(|d| d.id)
+    }
+
+    pub async fn donor_name(&self) -> Option<String> {
+        self.line.donor.clone().map(|d| d.name)
+    }
+
     pub async fn item_variant(&self, ctx: &Context<'_>) -> Result<Option<ItemVariantNode>> {
         let loader = ctx.get_loader::<DataLoader<ItemVariantByItemVariantIdLoader>>();
 
