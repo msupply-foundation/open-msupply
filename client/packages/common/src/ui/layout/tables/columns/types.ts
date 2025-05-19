@@ -18,6 +18,7 @@ export interface CellProps<T extends RecordWithId> {
   autocompleteName?: string;
   localisedText: TypedTFunction<LocaleKey>;
   localisedDate: (date: string | number | Date) => string;
+  debounceTime?: number;
 }
 
 export interface HeaderProps<T extends RecordWithId> {

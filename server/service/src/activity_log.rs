@@ -90,12 +90,12 @@ pub fn system_log_entry(
     message: &str,
 ) -> Result<(), RepositoryError> {
     let sync_site_id =
-        KeyValueStoreRepository::new(&connection).get_i32(KeyType::SettingsSyncSiteId)?;
+        KeyValueStoreRepository::new(connection).get_i32(KeyType::SettingsSyncSiteId)?;
 
     let log = &SystemLogRow {
         id: uuid(),
         r#type: log_type.clone(),
-        sync_site_id: sync_site_id,
+        sync_site_id,
         datetime: Utc::now().naive_utc(),
         message: Some(message.to_string()),
         is_error: log_type.is_error(),

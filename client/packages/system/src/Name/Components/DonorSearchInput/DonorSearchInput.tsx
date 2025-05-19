@@ -1,45 +1,47 @@
-import React, { FC } from 'react';
-import {
-  Autocomplete,
-  useBufferState,
-  useTranslation,
-} from '@openmsupply-client/common';
+import React from 'react';
+import { Autocomplete, useTranslation } from '@openmsupply-client/common';
 import { NameRowFragment, useName } from '../../api';
-import {
-  basicFilterOptions,
-  filterByNameAndCode,
-  NameSearchInputProps,
-} from '../../utils';
+import { basicFilterOptions, filterByNameAndCode } from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
 
-export const DonorSearchInput: FC<NameSearchInputProps> = ({
+export interface DonorSearchInputProps {
+  onChange: (donor: NameRowFragment | null) => void;
+  width?: number;
+  donorId: string | null;
+  disabled?: boolean;
+  clearable?: boolean;
+}
+
+export const DonorSearchInput = ({
   onChange,
-  onInputChange,
   width = 250,
-  value,
+  donorId,
   disabled = false,
   clearable = false,
-}) => {
+}: DonorSearchInputProps) => {
   const { data, isLoading } = useName.document.donors();
-  const [buffer, setBuffer] = useBufferState(value);
   const t = useTranslation();
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
+
+  const options = data?.nodes ?? [];
+
+  const selectedOption = options.find(o => o.id === donorId);
 
   return (
     <Autocomplete
       disabled={disabled}
       clearable={clearable}
-      value={buffer && { ...buffer, label: buffer.name }}
+      value={
+        selectedOption
+          ? { ...selectedOption, label: selectedOption.name }
+          : null
+      }
       filterOptionConfig={basicFilterOptions}
       loading={isLoading}
-      onChange={(_, name) => {
-        setBuffer(name);
-        name && onChange(name);
-      }}
-      onInputChange={onInputChange}
-      options={data?.nodes ?? []}
+      onChange={(_, name) => onChange(name)}
+      options={options}
       renderOption={NameOptionRenderer}
-      getOptionLabel={(option: NameRowFragment) => option.name}
+      getOptionLabel={option => option.name}
       filterOptions={filterByNameAndCode}
       width={`${width}px`}
       popperMinWidth={width}

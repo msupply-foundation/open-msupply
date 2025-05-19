@@ -17,6 +17,13 @@ fragment InboundLine on InvoiceLineNode {
   foreignCurrencyPriceBeforeTax
   itemName
   itemVariantId
+  donorId
+  donorName
+
+  itemVariant {
+    id
+    dosesPerUnit
+  }
 
   item {
     __typename
@@ -75,6 +82,8 @@ fragment Inbound on InvoiceNode {
   type
   taxPercentage
   expectedDeliveryDate
+  defaultDonorId
+  defaultDonorName
 
   linkedShipment {
     __typename
