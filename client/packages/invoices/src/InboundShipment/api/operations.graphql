@@ -20,6 +20,11 @@ fragment InboundLine on InvoiceLineNode {
   donorId
   donorName
 
+  itemVariant {
+    id
+    dosesPerUnit
+  }
+
   item {
     __typename
     id

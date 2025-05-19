@@ -31,9 +31,9 @@ export type StocktakeLineFragment = {
   sellPricePerPack?: number | null;
   costPricePerPack?: number | null;
   comment?: string | null;
+  itemVariantId?: string | null;
   donorId?: string | null;
   donorName?: string | null;
-  itemVariantId?: string | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -51,6 +51,11 @@ export type StocktakeLineFragment = {
     isVaccine: boolean;
     doses: number;
   };
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    dosesPerUnit: number;
+  } | null;
   inventoryAdjustmentReason?: {
     __typename: 'InventoryAdjustmentReasonNode';
     id: string;
@@ -94,9 +99,9 @@ export type StocktakeFragment = {
       sellPricePerPack?: number | null;
       costPricePerPack?: number | null;
       comment?: string | null;
+      itemVariantId?: string | null;
       donorId?: string | null;
       donorName?: string | null;
-      itemVariantId?: string | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -114,6 +119,11 @@ export type StocktakeFragment = {
         isVaccine: boolean;
         doses: number;
       };
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        dosesPerUnit: number;
+      } | null;
       inventoryAdjustmentReason?: {
         __typename: 'InventoryAdjustmentReasonNode';
         id: string;
@@ -198,9 +208,9 @@ export type StocktakeQuery = {
             sellPricePerPack?: number | null;
             costPricePerPack?: number | null;
             comment?: string | null;
+            itemVariantId?: string | null;
             donorId?: string | null;
             donorName?: string | null;
-            itemVariantId?: string | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -218,6 +228,11 @@ export type StocktakeQuery = {
               isVaccine: boolean;
               doses: number;
             };
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              dosesPerUnit: number;
+            } | null;
             inventoryAdjustmentReason?: {
               __typename: 'InventoryAdjustmentReasonNode';
               id: string;
@@ -273,9 +288,9 @@ export type StocktakeByNumberQuery = {
             sellPricePerPack?: number | null;
             costPricePerPack?: number | null;
             comment?: string | null;
+            itemVariantId?: string | null;
             donorId?: string | null;
             donorName?: string | null;
-            itemVariantId?: string | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -293,6 +308,11 @@ export type StocktakeByNumberQuery = {
               isVaccine: boolean;
               doses: number;
             };
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              dosesPerUnit: number;
+            } | null;
             inventoryAdjustmentReason?: {
               __typename: 'InventoryAdjustmentReasonNode';
               id: string;
@@ -332,9 +352,9 @@ export type StocktakeLinesQuery = {
       sellPricePerPack?: number | null;
       costPricePerPack?: number | null;
       comment?: string | null;
+      itemVariantId?: string | null;
       donorId?: string | null;
       donorName?: string | null;
-      itemVariantId?: string | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -352,6 +372,11 @@ export type StocktakeLinesQuery = {
         isVaccine: boolean;
         doses: number;
       };
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        dosesPerUnit: number;
+      } | null;
       inventoryAdjustmentReason?: {
         __typename: 'InventoryAdjustmentReasonNode';
         id: string;
@@ -604,6 +629,9 @@ export const StocktakeLineFragmentDoc = gql`
     sellPricePerPack
     costPricePerPack
     comment
+    itemVariantId
+    donorId
+    donorName
     donorId
     donorName
     location {
@@ -626,7 +654,10 @@ export const StocktakeLineFragmentDoc = gql`
       isVaccine
       doses
     }
-    itemVariantId
+    itemVariant {
+      id
+      dosesPerUnit
+    }
     inventoryAdjustmentReason {
       __typename
       id
