@@ -39,6 +39,7 @@ interface RequestLineEditProps {
   representation: RepresentationValue;
   setRepresentation: (type: RepresentationValue) => void;
   disabled?: boolean;
+  isUpdateMode?: boolean;
   showExtraFields?: boolean;
 }
 
@@ -53,6 +54,7 @@ export const RequestLineEdit = ({
   representation,
   setRepresentation,
   disabled,
+  isUpdateMode,
   showExtraFields,
 }: RequestLineEditProps) => {
   const t = useTranslation();
@@ -94,7 +96,7 @@ export const RequestLineEdit = ({
         Top={
           <>
             {disabled ||
-              (currentItem && (
+              (isUpdateMode && (
                 <BasicTextInput
                   value={`${currentItem?.code}     ${originalItemName}`}
                   disabled
@@ -178,7 +180,7 @@ export const RequestLineEdit = ({
                 slotProps={{
                   input: {
                     sx: {
-                      backgroundColor: theme => theme.palette.background.menu,
+                      backgroundColor: theme => theme.palette.background.white,
                     },
                   },
                 }}

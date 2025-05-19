@@ -94,6 +94,19 @@ export const RequestedSelection = ({
           value={currentValue}
           disabled={disabled}
           onChange={handleValueChange}
+          slotProps={{
+            input: {
+              sx: {
+                background: theme => theme.palette.background.white,
+              },
+            },
+          }}
+          sx={{
+            '& .MuiInputBase-input': {
+              p: '3px 4px',
+              backgroundColor: theme => theme.palette.background.white,
+            },
+          }}
         />
         <Autocomplete
           fullWidth
@@ -104,7 +117,10 @@ export const RequestedSelection = ({
             setRepresentation(option?.value ?? Representation.UNITS);
           }}
           getOptionLabel={option => option.label}
-          textSx={{ borderRadius: 2 }}
+          textSx={{
+            borderRadius: 2,
+            background: theme => theme.palette.background.white,
+          }}
         />
       </Box>
     </Box>

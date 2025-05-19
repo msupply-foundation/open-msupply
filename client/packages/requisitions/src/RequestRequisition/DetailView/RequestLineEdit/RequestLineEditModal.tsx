@@ -101,6 +101,7 @@ export const RequestLineEditModalInner = ({
           representation={representation}
           setRepresentation={setRepresentation}
           disabled={isDisabled}
+          isUpdateMode={mode === ModalMode.Update}
           showExtraFields={useConsumptionData && isProgram}
         />
         {!!draft && (

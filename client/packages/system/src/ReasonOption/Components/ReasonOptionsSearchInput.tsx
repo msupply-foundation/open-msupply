@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Autocomplete,
   BasicTextInput,
@@ -21,7 +21,7 @@ interface ReasonOptionsSearchInputProps {
   onBlur?: () => void;
 }
 
-export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
+export const ReasonOptionsSearchInput = ({
   value,
   width,
   onChange,
@@ -30,7 +30,7 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
   isError,
   isDisabled,
   onBlur,
-}) => {
+}: ReasonOptionsSearchInputProps) => {
   const { data, isLoading } = reasonOptions.document.listAllActive();
 
   const reasonFilter = (reason: ReasonOptionNode) => {
@@ -77,7 +77,12 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
             slotProps={{
               input: {
                 disableUnderline: false,
-                style: props.disabled ? { paddingLeft: 0 } : {},
+                sx: {
+                  background: isDisabled
+                    ? theme => theme.palette.background.drawer
+                    : theme => theme.palette.background.white,
+                  paddingLeft: props.disabled ? 0 : {},
+                },
                 ...props.InputProps,
               },
             }}
