@@ -34,6 +34,7 @@ export const AutoAllocate = () => {
   // e.g. 10, 12, 100.. then the allocation rounds the 1 up immediately to the available
   // pack size which stops you entering the required quantity.
   // See https://github.com/msupply-foundation/open-msupply/issues/2727
+  // and https://github.com/msupply-foundation/open-msupply/issues/3532
   const debouncedAllocate = useDebounceCallback(
     quantity => {
       const allocated = autoAllocate(quantity, format, t);
