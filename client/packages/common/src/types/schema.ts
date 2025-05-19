@@ -2300,6 +2300,7 @@ export type DraftOutboundShipmentLineNode = {
   availablePacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
   defaultDosesPerUnit: Scalars['Int']['output'];
+  donor?: Maybe<NameNode>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   inStorePacks: Scalars['Float']['output'];
@@ -2311,6 +2312,10 @@ export type DraftOutboundShipmentLineNode = {
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
   vvmStatus?: Maybe<VvmstatusNode>;
+};
+
+export type DraftOutboundShipmentLineNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type EmergencyResponseRequisitionCounts = {
