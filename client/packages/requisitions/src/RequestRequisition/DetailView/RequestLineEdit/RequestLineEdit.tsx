@@ -19,13 +19,16 @@ import {
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
-import {
-  InfoRow,
-  RequestLineEditFormLayout,
-  ValueInfoRow,
-} from './RequestLineEditFormLayout';
 import { RequestedSelection } from './RequestedSelection';
 import { RepresentationValue } from './utils';
+import {
+  InfoRow,
+  Layout,
+  ValueInfo,
+  ValueInfoRow,
+  getLeftPanel,
+  getMiddlePanel,
+} from './Layout';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;
@@ -38,8 +41,7 @@ interface RequestLineEditProps {
   representation: RepresentationValue;
   setRepresentation: (type: RepresentationValue) => void;
   disabled?: boolean;
-  isProgram?: boolean;
-  useConsumptionData?: boolean;
+  showExtraFields?: boolean;
 }
 
 export const RequestLineEdit = ({
@@ -53,15 +55,13 @@ export const RequestLineEdit = ({
   representation,
   setRepresentation,
   disabled,
-  isProgram,
-  useConsumptionData,
+  showExtraFields,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
   const { width } = useWindowDimensions();
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
-  const showExtraFields = useConsumptionData && isProgram;
 
   const line = useMemo(
     () => lines.find(line => line.id === draft?.id),
@@ -72,12 +72,30 @@ export const RequestLineEdit = ({
     [lines, currentItem?.id]
   );
 
+  const renderValueInfoRows = useMemo(() => {
+    return (info: ValueInfo[]) => (
+      <>
+        {info.map(({ label, value, sx }) => (
+          <ValueInfoRow
+            key={label}
+            label={label}
+            value={value}
+            defaultPackSize={defaultPackSize}
+            representation={representation}
+            unitName={unitName}
+            sx={sx}
+          />
+        ))}
+      </>
+    );
+  }, [defaultPackSize, representation, unitName]);
+
   return (
     <>
-      <RequestLineEditFormLayout
+      <Layout
         Top={
           <>
-            {disabled ? (
+            {disabled && currentItem ? (
               <BasicTextInput
                 value={`${currentItem?.code}     ${originalItemName}`}
                 disabled
@@ -87,7 +105,6 @@ export const RequestLineEdit = ({
               <StockItemSearchInputWithStats
                 autoFocus={!currentItem}
                 openOnFocus={!currentItem}
-                width={600}
                 disabled={disabled}
                 currentItemId={currentItem?.id}
                 onChange={(newItem: ItemWithStatsFragment | null) =>
@@ -101,155 +118,82 @@ export const RequestLineEdit = ({
           </>
         }
         Left={
-          <>
-            {currentItem && currentItem?.unitName ? (
-              <InfoRow label={t('label.unit')} value={unitName} />
-            ) : null}
-            {isPacksEnabled ? (
-              <InfoRow
-                label={t('label.default-pack-size')}
-                value={String(currentItem?.defaultPackSize)}
-              />
-            ) : null}
-            <ValueInfoRow
-              label={t('label.our-soh')}
-              value={draft?.itemStats.availableStockOnHand}
-              defaultPackSize={defaultPackSize}
-              representation={representation}
-              unitName={unitName}
-            />
-            <ValueInfoRow
-              label={t('label.amc/amd')}
-              value={draft?.itemStats.averageMonthlyConsumption}
-              defaultPackSize={defaultPackSize}
-              representation={representation}
-              unitName={unitName}
-            />
-            <ValueInfoRow
-              label={t('label.months-of-stock')}
-              value={draft?.itemStats.availableMonthsOfStockOnHand}
-              defaultPackSize={defaultPackSize}
-              representation={representation}
-              unitName={unitName}
-            />
-            {showExtraFields && (
-              <ValueInfoRow
-                label={t('label.short-expiry')}
-                value={draft?.expiringUnits}
-                defaultPackSize={defaultPackSize}
-                representation={representation}
-                unitName={unitName}
-              />
-            )}
-          </>
+          currentItem ? (
+            <>
+              {currentItem.unitName && (
+                <InfoRow label={t('label.unit')} value={unitName} />
+              )}
+              {isPacksEnabled && (
+                <InfoRow
+                  label={t('label.default-pack-size')}
+                  value={String(currentItem.defaultPackSize)}
+                />
+              )}
+              {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
+            </>
+          ) : null
         }
         Middle={
           currentItem ? (
             <>
-              <ValueInfoRow
-                label={t('label.suggested')}
-                value={draft?.suggestedQuantity}
-                defaultPackSize={defaultPackSize}
-                representation={representation}
-                unitName={unitName}
-                sx={{
-                  background: theme => theme.palette.background.group,
-                }}
-              />
-              {showExtraFields && (
-                <>
-                  <ValueInfoRow
-                    label={t('label.incoming-stock')}
-                    value={draft?.incomingUnits}
-                    representation={representation}
-                    defaultPackSize={defaultPackSize}
-                    unitName={unitName}
-                  />
-                  <ValueInfoRow
-                    label={t('label.outgoing')}
-                    value={draft?.outgoingUnits}
-                    representation={representation}
-                    defaultPackSize={defaultPackSize}
-                    unitName={unitName}
-                  />
-                  <ValueInfoRow
-                    label={t('label.losses')}
-                    value={draft?.lossInUnits}
-                    representation={representation}
-                    defaultPackSize={defaultPackSize}
-                    unitName={unitName}
-                  />
-                  <ValueInfoRow
-                    label={t('label.additions')}
-                    value={draft?.additionInUnits}
-                    representation={representation}
-                    defaultPackSize={defaultPackSize}
-                    unitName={unitName}
-                  />
-                  <ValueInfoRow
-                    label={t('label.days-out-of-stock')}
-                    value={draft?.daysOutOfStock}
-                    representation={representation}
-                    defaultPackSize={defaultPackSize}
-                    unitName={unitName}
-                  />
-                </>
-              )}
+              {renderValueInfoRows(getMiddlePanel(t, draft, showExtraFields))}
             </>
           ) : null
         }
         Right={
-          <>
-            <RequestedSelection
-              disabled={disabled}
-              defaultPackSize={defaultPackSize}
-              isPacksEnabled={isPacksEnabled}
-              draft={draft}
-              update={update}
-              representation={representation}
-              setRepresentation={setRepresentation}
-              unitName={unitName}
-            />
-            {showExtraFields && (
-              <>
-                <InputWithLabelRow
-                  Input={
-                    <ReasonOptionsSearchInput
-                      value={draft?.reason}
-                      onChange={value => {
-                        update({ reason: value });
-                      }}
-                      width={180}
-                      type={ReasonOptionNodeType.RequisitionLineVariance}
-                      isDisabled={
-                        draft?.requestedQuantity === draft?.suggestedQuantity ||
-                        disabled
-                      }
-                    />
-                  }
-                  sx={{ marginTop: 0 }}
-                  label={t('label.reason')}
-                />
-              </>
-            )}
-            <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
-              {t('heading.comment')}:
-            </Typography>
-            <BufferedTextArea
-              value={draft?.comment ?? ''}
-              onChange={e => update({ comment: e.target.value })}
-              slotProps={{
-                input: {
-                  sx: {
-                    backgroundColor: theme => theme.palette.background.menu,
+          currentItem ? (
+            <>
+              <RequestedSelection
+                disabled={disabled}
+                defaultPackSize={defaultPackSize}
+                isPacksEnabled={isPacksEnabled}
+                draft={draft}
+                update={update}
+                representation={representation}
+                setRepresentation={setRepresentation}
+                unitName={unitName}
+              />
+              {showExtraFields && (
+                <>
+                  <InputWithLabelRow
+                    Input={
+                      <ReasonOptionsSearchInput
+                        value={draft?.reason}
+                        onChange={value => {
+                          update({ reason: value });
+                        }}
+                        width={180}
+                        type={ReasonOptionNodeType.RequisitionLineVariance}
+                        isDisabled={
+                          draft?.requestedQuantity ===
+                            draft?.suggestedQuantity || disabled
+                        }
+                      />
+                    }
+                    sx={{ marginTop: 0 }}
+                    label={t('label.reason')}
+                  />
+                </>
+              )}
+              <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
+                {t('heading.comment')}:
+              </Typography>
+              <BufferedTextArea
+                value={draft?.comment ?? ''}
+                onChange={e => update({ comment: e.target.value })}
+                slotProps={{
+                  input: {
+                    sx: {
+                      backgroundColor: theme => theme.palette.background.menu,
+                    },
                   },
-                },
-              }}
-              disabled={disabled}
-              minRows={2}
-              maxRows={2}
-            />
-          </>
+                }}
+                disabled={disabled}
+                minRows={2}
+                maxRows={2}
+              />
+            </>
+          ) : null
         }
       />
 

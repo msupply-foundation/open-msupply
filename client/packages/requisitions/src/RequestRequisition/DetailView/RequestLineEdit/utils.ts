@@ -1,8 +1,3 @@
-export type ValueInfo = {
-  label: string;
-  value?: number | null;
-};
-
 export const Representation = {
   PACKS: 'packs',
   UNITS: 'units',
