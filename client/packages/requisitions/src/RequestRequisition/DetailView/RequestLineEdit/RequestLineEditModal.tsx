@@ -87,7 +87,7 @@ export const RequestLineEditModalInner = ({
         />
       }
       height={800}
-      width={1050}
+      width={1200}
     >
       <>
         <RequestLineEdit
@@ -101,8 +101,7 @@ export const RequestLineEditModalInner = ({
           representation={representation}
           setRepresentation={setRepresentation}
           disabled={isDisabled}
-          isProgram={isProgram}
-          useConsumptionData={useConsumptionData}
+          showExtraFields={useConsumptionData && isProgram}
         />
         {!!draft && (
           <StockDistribution
@@ -118,7 +117,7 @@ export const RequestLineEditModalInner = ({
           sx={{ paddingLeft: 4, paddingRight: 4 }}
           justifyContent="space-between"
         >
-          {draft?.isCreated ? (
+          {draft?.isCreated && !draft.id ? (
             <Box display="flex" height={289} />
           ) : (
             <>

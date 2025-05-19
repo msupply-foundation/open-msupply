@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import {
-  ItemWithPackSizeFragment,
   ItemWithStatsFragment,
   ReasonOptionsSearchInput,
   RequestFragment,
@@ -10,7 +9,6 @@ import {
   useTranslation,
   BasicTextInput,
   Box,
-  InputWithLabelRow,
   ReasonOptionNodeType,
   usePluginProvider,
   useWindowDimensions,
@@ -33,7 +31,7 @@ import {
 interface RequestLineEditProps {
   requisition: RequestFragment;
   lines: RequestLineFragment[];
-  currentItem?: ItemWithPackSizeFragment | null;
+  currentItem?: ItemWithStatsFragment;
   setCurrentItem: (item: ItemWithStatsFragment) => void;
   draft?: DraftRequestLine | null;
   update: (patch: Partial<DraftRequestLine>) => void;
@@ -95,26 +93,27 @@ export const RequestLineEdit = ({
       <Layout
         Top={
           <>
-            {disabled && currentItem ? (
-              <BasicTextInput
-                value={`${currentItem?.code}     ${originalItemName}`}
-                disabled
-                fullWidth
-              />
-            ) : (
-              <StockItemSearchInputWithStats
-                autoFocus={!currentItem}
-                openOnFocus={!currentItem}
-                disabled={disabled}
-                currentItemId={currentItem?.id}
-                onChange={(newItem: ItemWithStatsFragment | null) =>
-                  newItem && setCurrentItem(newItem)
-                }
-                extraFilter={item =>
-                  !lines.some(line => line.item.id === item.id)
-                }
-              />
-            )}
+            {disabled ||
+              (currentItem && (
+                <BasicTextInput
+                  value={`${currentItem?.code}     ${originalItemName}`}
+                  disabled
+                  fullWidth
+                />
+              )) || (
+                <StockItemSearchInputWithStats
+                  autoFocus={!currentItem}
+                  openOnFocus={!currentItem}
+                  disabled={disabled}
+                  currentItemId={currentItem?.id}
+                  onChange={(newItem: ItemWithStatsFragment | null) =>
+                    newItem && setCurrentItem(newItem)
+                  }
+                  extraFilter={item =>
+                    !lines.some(line => line.item.id === item.id)
+                  }
+                />
+              )}
           </>
         }
         Left={
@@ -154,26 +153,21 @@ export const RequestLineEdit = ({
                 unitName={unitName}
               />
               {showExtraFields && (
-                <>
-                  <InputWithLabelRow
-                    Input={
-                      <ReasonOptionsSearchInput
-                        value={draft?.reason}
-                        onChange={value => {
-                          update({ reason: value });
-                        }}
-                        width={180}
-                        type={ReasonOptionNodeType.RequisitionLineVariance}
-                        isDisabled={
-                          draft?.requestedQuantity ===
-                            draft?.suggestedQuantity || disabled
-                        }
-                      />
+                <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
+                  {t('label.reason')}:
+                  <ReasonOptionsSearchInput
+                    value={draft?.reason}
+                    onChange={value => {
+                      update({ reason: value });
+                    }}
+                    width={360}
+                    type={ReasonOptionNodeType.RequisitionLineVariance}
+                    isDisabled={
+                      draft?.requestedQuantity === draft?.suggestedQuantity ||
+                      disabled
                     }
-                    sx={{ marginTop: 0 }}
-                    label={t('label.reason')}
                   />
-                </>
+                </Typography>
               )}
               <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
                 {t('heading.comment')}:
