@@ -122,6 +122,7 @@ impl MigrationFragment for Migrate {
                     item_variant_id TEXT REFERENCES item_variant(id),
                     prescribed_quantity REAL,
                     linked_invoice_id TEXT,
+                    donor_id TEXT,
                     reason_option_id REFERENCES reason_option(id)
                 );
 
@@ -148,6 +149,7 @@ impl MigrationFragment for Migrate {
                     item_variant_id,
                     prescribed_quantity,
                     linked_invoice_id,
+                    donor_id,
                     reason_option_id                
                 )
                 SELECT 
@@ -173,6 +175,7 @@ impl MigrationFragment for Migrate {
                     item_variant_id,
                     prescribed_quantity,
                     linked_invoice_id,
+                    donor_id,
                     reason_option_id  
                 FROM invoice_line_old;
 
