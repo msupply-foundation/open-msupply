@@ -138,7 +138,7 @@ impl LoadTest {
                 i + 1
             };
             let name_store_join1 = json!({
-                "ID": i.to_string()+&uuid(),
+                "ID": &uuid(),
                 "name_ID": site_n_stores[next].store.name_id,
                 "store_ID": site_n_stores[i].store.id,
                 "om_name_is_customer": true,
@@ -147,7 +147,7 @@ impl LoadTest {
             name_store_joins.push(name_store_join1);
 
             let name_store_join2 = json!({
-                "ID": i.to_string()+&uuid(),
+                "ID": &uuid(),
                 "name_ID": site_n_stores[i].store.name_id,
                 "store_ID": site_n_stores[next].store.id,
                 "om_name_is_customer": true,
