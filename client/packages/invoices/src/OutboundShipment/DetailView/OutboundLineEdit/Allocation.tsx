@@ -10,8 +10,6 @@ import {
   ModalRow,
   ModalLabel,
   Grid,
-  usePreference,
-  PreferenceKey,
   useIntlUtils,
   BasicSpinner,
 } from '@openmsupply-client/common';
@@ -30,16 +28,19 @@ interface AllocationProps {
   itemId: string;
   invoiceId: string;
   allowPlaceholder: boolean;
-  allocateVaccineItemsInDoses: boolean;
   scannedBatch?: string;
+  prefOptions: {
+    allocateVaccineItemsInDoses: boolean;
+    sortByVvmStatus: boolean;
+  };
 }
 
 export const Allocation = ({
   itemId,
   invoiceId,
   allowPlaceholder,
-  allocateVaccineItemsInDoses,
   scannedBatch,
+  prefOptions: { allocateVaccineItemsInDoses, sortByVvmStatus },
 }: AllocationProps) => {
   const { initialise, item } = useAllocationContext(({ initialise, item }) => ({
     initialise,
@@ -51,11 +52,8 @@ export const Allocation = ({
     itemId
   );
 
-  const { data: sortByVvmStatus } = usePreference(
-    PreferenceKey.SortByVvmStatusThenExpiry
-  );
-
   useEffect(() => {
+    // Manual query, only initialise when data is available
     queryData().then(({ data }) => {
       if (!data) return;
 
@@ -71,7 +69,7 @@ export const Allocation = ({
     });
     // Expect dependencies to be stable
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortByVvmStatus]);
+  }, []);
 
   return isFetching ? <BasicSpinner /> : item ? <AllocationInner /> : null;
 };
