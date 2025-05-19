@@ -999,8 +999,8 @@ mod test {
         );
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].id, "new_invoice_line_id_a".to_string());
-        assert_eq!(result[0].donor_id, Some(mock_donor_a().id));
-        assert_eq!(result[1].donor_id, None);
+        assert_eq!(result[0].donor_link_id, Some(mock_donor_a().id));
+        assert_eq!(result[1].donor_link_id, None);
 
         // UpdateExistingDonor: updates donor_id on invoice lines that already have a donor,
         // and leaves invoice lines without a donor_id unchanged
@@ -1027,8 +1027,8 @@ mod test {
             invoice.invoice_row.default_donor_id,
             Some(mock_donor_b().id)
         );
-        assert_eq!(result[0].donor_id, Some(mock_donor_b().id));
-        assert_eq!(result[1].donor_id, None);
+        assert_eq!(result[0].donor_link_id, Some(mock_donor_b().id));
+        assert_eq!(result[1].donor_link_id, None);
 
         // AssignIfNone: assigns the default_donor_id to invoice lines that don't have a donor_id
         invoice_service
@@ -1050,8 +1050,8 @@ mod test {
             .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
-        assert_eq!(result[0].donor_id, Some(mock_donor_b().id));
-        assert_eq!(result[1].donor_id, Some(mock_donor_a().id));
+        assert_eq!(result[0].donor_link_id, Some(mock_donor_b().id));
+        assert_eq!(result[1].donor_link_id, Some(mock_donor_a().id));
 
         // AssignToAll: assigns the default_donor_id to all invoice lines
         invoice_service
@@ -1073,6 +1073,6 @@ mod test {
             .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
-        assert!(result.iter().all(|line| line.donor_id == None));
+        assert!(result.iter().all(|line| line.donor_link_id == None));
     }
 }

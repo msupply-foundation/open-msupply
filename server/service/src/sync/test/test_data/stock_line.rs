@@ -72,7 +72,7 @@ fn item_line_1_pull_record() -> TestSyncIncomingRecord {
             supplier_link_id: Some("name_store_b".to_string()),
             barcode_id: None,
             item_variant_id: None,
-            donor_id: Some("test_donor_id".to_string()),
+            donor_link_id: Some("test_donor_id".to_string()),
             vvm_status_id: None,
         },
     )
@@ -168,7 +168,7 @@ fn item_line_2_pull_record() -> TestSyncIncomingRecord {
             supplier_link_id: None,
             barcode_id: None,
             item_variant_id: None,
-            donor_id: None,
+            donor_link_id: None,
             vvm_status_id: None,
         },
     )

@@ -344,7 +344,7 @@ pub fn generate_lines_and_stock_lines(
             batch,
             expiry_date,
             pack_size,
-            donor_id,
+            donor_link_id,
             note,
             ..
         }: InvoiceLineRow = invoice_line;
@@ -367,7 +367,7 @@ pub fn generate_lines_and_stock_lines(
                 supplier_link_id: Some(supplier_id.to_string()),
                 barcode_id: None,
                 item_variant_id,
-                donor_id,
+                donor_link_id,
                 vvm_status_id: None,
             };
             result.push(LineAndStockLine {
@@ -419,20 +419,21 @@ fn update_donor_on_lines_and_stock(
         let mut stock_line = invoice_line.stock_line_option;
 
         let new_donor_id = match donor_update_method.clone() {
-            ApplyDonorToInvoiceLines::None => line.donor_id.clone(),
-            ApplyDonorToInvoiceLines::UpdateExistingDonor => match line.donor_id {
+            ApplyDonorToInvoiceLines::None => line.donor_link_id.clone(),
+            ApplyDonorToInvoiceLines::UpdateExistingDonor => match line.donor_link_id {
                 Some(_) => updated_default_donor_id.clone(),
                 None => None,
             },
-            ApplyDonorToInvoiceLines::AssignIfNone => {
-                line.donor_id.clone().or(updated_default_donor_id.clone())
-            }
+            ApplyDonorToInvoiceLines::AssignIfNone => line
+                .donor_link_id
+                .clone()
+                .or(updated_default_donor_id.clone()),
             ApplyDonorToInvoiceLines::AssignToAll => updated_default_donor_id.clone(),
         };
 
-        line.donor_id = new_donor_id.clone();
+        line.donor_link_id = new_donor_id.clone();
         if let Some(ref mut stock_line) = stock_line {
-            stock_line.donor_id = new_donor_id;
+            stock_line.donor_link_id = new_donor_id;
         }
 
         result.push(LineAndStockLine { line, stock_line });

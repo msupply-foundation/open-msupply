@@ -134,7 +134,7 @@ fn generate_line(
         return_reason_id: None,
         foreign_currency_price_before_tax: None,
         linked_invoice_id: None,
-        donor_id,
+        donor_link_id: donor_id,
     }
 }
 

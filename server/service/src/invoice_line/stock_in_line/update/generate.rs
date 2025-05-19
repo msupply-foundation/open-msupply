@@ -146,7 +146,9 @@ fn generate_line(
         .map(|v| v.value)
         .unwrap_or(update_line.item_variant_id);
 
-    update_line.donor_id = donor_id.map(|d| d.value).unwrap_or(update_line.donor_id);
+    update_line.donor_link_id = donor_id
+        .map(|d| d.value)
+        .unwrap_or(update_line.donor_link_id);
 
     if let Some(item) = new_item_option {
         update_line.item_link_id = item.id;

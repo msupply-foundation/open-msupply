@@ -111,7 +111,7 @@ pub fn generate_invoice_lines(
             item_variant_id: None,
             prescribed_quantity: None,
             linked_invoice_id: None,
-            donor_id: None,
+            donor_link_id: None,
         });
     }
 

@@ -14,6 +14,7 @@ mod add_vvm_status_log_change_log_table_name;
 mod add_vvm_status_log_table;
 mod add_vvm_status_log_update_to_activity_log;
 mod add_vvm_status_table;
+mod donor_id_to_donor_link_id;
 
 pub(crate) struct V2_08_00;
 
@@ -41,6 +42,7 @@ impl Migration for V2_08_00 {
             Box::new(add_vvm_status_id_to_stock_line::Migrate),
             Box::new(add_donor_id_to_stock_lines::Migrate),
             Box::new(add_donor_id_to_stocktake_line::Migrate),
+            Box::new(donor_id_to_donor_link_id::Migrate),
         ]
     }
 }

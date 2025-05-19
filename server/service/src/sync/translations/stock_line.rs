@@ -126,7 +126,7 @@ impl SyncTranslation for StockLineTranslation {
             supplier_link_id: supplier_id,
             barcode_id,
             item_variant_id,
-            donor_id,
+            donor_link_id: donor_id,
             vvm_status_id,
         };
 
@@ -167,7 +167,7 @@ impl SyncTranslation for StockLineTranslation {
                     supplier_link_id: _,
                     barcode_id,
                     item_variant_id,
-                    donor_id,
+                    donor_link_id,
                     vvm_status_id,
                 },
             item_row,
@@ -192,7 +192,7 @@ impl SyncTranslation for StockLineTranslation {
             supplier_id: supplier_name_row.map(|supplier| supplier.id),
             barcode_id,
             item_variant_id,
-            donor_id,
+            donor_id: donor_link_id,
             vvm_status_id,
         };
 

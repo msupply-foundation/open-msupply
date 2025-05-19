@@ -50,6 +50,6 @@ pub fn generate(
         return_reason_id: None,
         item_variant_id: None,
         linked_invoice_id: None,
-        donor_id: None,
+        donor_link_id: None,
     })
 }
