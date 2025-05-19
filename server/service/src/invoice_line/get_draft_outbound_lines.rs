@@ -26,6 +26,8 @@ pub struct DraftOutboundShipmentLine {
     pub in_store_packs: f64,
     pub available_packs: f64,
     pub stock_line_on_hold: bool,
+    pub default_doses_per_unit: i32,
+    pub item_variant_id: Option<String>,
 }
 
 pub fn get_draft_outbound_shipment_lines(
@@ -153,6 +155,7 @@ impl DraftOutboundShipmentLine {
             available_number_of_packs,
             total_number_of_packs,
             on_hold,
+            item_variant_id,
             ..
         } = line.stock_line_row;
 
@@ -160,6 +163,7 @@ impl DraftOutboundShipmentLine {
             id: uuid(),
             item_id: line.item_row.id,
             stock_line_id: id,
+            item_variant_id,
             batch,
             pack_size,
             expiry_date,
@@ -169,6 +173,7 @@ impl DraftOutboundShipmentLine {
             available_packs: available_number_of_packs,
             stock_line_on_hold: on_hold,
             number_of_packs: 0.0,
+            default_doses_per_unit: line.item_row.vaccine_doses,
         }
     }
 
@@ -192,6 +197,7 @@ impl DraftOutboundShipmentLine {
             total_number_of_packs,
             available_number_of_packs,
             on_hold,
+            item_variant_id,
             ..
         } = line.stock_line_option.ok_or(RepositoryError::DBError {
             msg: "No related stock line".to_string(),
@@ -201,6 +207,7 @@ impl DraftOutboundShipmentLine {
         Ok(Self {
             id,
             item_id: line.item_row.id,
+            item_variant_id,
             number_of_packs,
             stock_line_id,
             pack_size,
@@ -218,6 +225,7 @@ impl DraftOutboundShipmentLine {
                 _ => total_number_of_packs + number_of_packs,
             },
             stock_line_on_hold: on_hold,
+            default_doses_per_unit: line.item_row.vaccine_doses,
         })
     }
 }
