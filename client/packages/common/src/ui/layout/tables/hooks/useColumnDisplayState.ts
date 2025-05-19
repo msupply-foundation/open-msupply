@@ -13,7 +13,7 @@ export const useColumnDisplayState = <T extends RecordWithId>(
   const [hiddenColsStorage, setHiddenColsStorage] =
     useLocalStorage('/columns/hidden');
 
-  const simplifiedMobileView = true;
+  const simplifiedMobileView = useSimplifiedTabletUI();
 
   const hiddenColKeys =
     hiddenColsStorage?.[tableId] ??
@@ -25,10 +25,6 @@ export const useColumnDisplayState = <T extends RecordWithId>(
           .filter(col => col.defaultHideOnMobile)
           .map(col => col.key as string)
       : []);
-
-  // TO-DO Implement for column display...
-  const simplifiedTabletView = useSimplifiedTabletUI();
-  console.log('Mobile UI?', simplifiedTabletView);
 
   const [columnDisplayState, setColumnDisplayState] = useState<
     Record<string, boolean>
