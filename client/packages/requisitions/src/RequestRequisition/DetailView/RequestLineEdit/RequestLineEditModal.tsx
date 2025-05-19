@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Box,
   DialogButton,
   ModalMode,
   useBufferState,
@@ -9,9 +8,6 @@ import {
 } from '@openmsupply-client/common';
 import { RequestFragment } from '../../api';
 import { useDraftRequisitionLine, useNextRequestLine } from './hooks';
-import { StockDistribution } from './ItemCharts/StockDistribution';
-import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
-import { StockEvolution } from './ItemCharts/StockEvolution';
 import { isRequestDisabled } from '../../../utils';
 import { RequestLineEdit } from './RequestLineEdit';
 import { Representation, RepresentationValue } from './utils';
@@ -104,29 +100,6 @@ export const RequestLineEditModalInner = ({
           isUpdateMode={mode === ModalMode.Update}
           showExtraFields={useConsumptionData && isProgram}
         />
-        {!!draft && (
-          <StockDistribution
-            availableStockOnHand={draft?.itemStats?.availableStockOnHand}
-            averageMonthlyConsumption={
-              draft?.itemStats?.averageMonthlyConsumption
-            }
-            suggestedQuantity={draft?.suggestedQuantity}
-          />
-        )}
-        <Box
-          display="flex"
-          sx={{ paddingLeft: 4, paddingRight: 4 }}
-          justifyContent="space-between"
-        >
-          {draft?.isCreated && !draft.id ? (
-            <Box display="flex" height={289} />
-          ) : (
-            <>
-              <ConsumptionHistory id={draft?.id || ''} />
-              <StockEvolution id={draft?.id || ''} />
-            </>
-          )}
-        </Box>
       </>
     </Modal>
   );

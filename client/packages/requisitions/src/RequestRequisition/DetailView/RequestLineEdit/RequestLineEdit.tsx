@@ -27,6 +27,9 @@ import {
   getLeftPanel,
   getMiddlePanel,
 } from './Layout';
+import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
+import { StockEvolution } from './ItemCharts/StockEvolution';
+import { StockDistribution } from './ItemCharts/StockDistribution';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;
@@ -192,17 +195,38 @@ export const RequestLineEdit = ({
           ) : null
         }
       />
-
       <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
-        {line &&
-          plugins.requestRequisitionLine?.editViewInfo?.map((Info, index) => (
-            <Info key={index} line={line} requisition={requisition} />
-          ))}
         {line &&
           plugins.requestRequisitionLine?.editViewField?.map((Field, index) => (
             <Field key={index} line={line} />
           ))}
       </Box>
+
+      {!!draft && (
+        <StockDistribution
+          availableStockOnHand={draft?.itemStats?.availableStockOnHand}
+          averageMonthlyConsumption={
+            draft?.itemStats?.averageMonthlyConsumption
+          }
+          suggestedQuantity={draft?.suggestedQuantity}
+        />
+      )}
+
+      {line && (
+        <Box>
+          <Box padding={'2px 16px 0 16px'}>
+            {plugins.requestRequisitionLine?.editViewInfo?.map(
+              (Info, index) => (
+                <Info key={index} line={line} requisition={requisition} />
+              )
+            )}
+          </Box>
+          <Box display="flex" sx={{ padding: 2 }} justifyContent="center">
+            <ConsumptionHistory id={line.id} />
+            <StockEvolution id={line.id} />
+          </Box>
+        </Box>
+      )}
     </>
   );
 };

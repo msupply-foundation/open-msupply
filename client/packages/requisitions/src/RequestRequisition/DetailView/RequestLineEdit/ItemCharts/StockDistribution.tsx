@@ -241,10 +241,7 @@ export const StockDistribution = ({
   return (
     <Box
       sx={{
-        paddingLeft: 2,
-        paddingRight: 2,
-        paddingTop: 2,
-        paddingBottom: 2,
+        padding: 1,
       }}
     >
       <StockDistributionContent
