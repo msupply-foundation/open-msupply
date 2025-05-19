@@ -40,24 +40,28 @@ describe('SortUtils', () => {
 
   describe('byVVMStatusAsc', () => {
     const entities = [
+      { id: 'vvm_none_none', vvmStatus: null }, // no vvmStatus & no expiryDate
+      { id: 'vvm_none_2023_07_01', expiryDate: '2023/07/01' }, // no vvmStatus
+      { id: 'vvm_none_2023_04_01', expiryDate: '2023/04/01' }, // no vvmStatus
       {
         id: 'vvm2_2023_05_01',
         vvmStatus: { level: 2 },
         expiryDate: '2023/05/01',
       },
       {
+        id: 'vvm1_none',
+        vvmStatus: { level: 1 },
+      },
+      {
         id: 'vvm1_2023_06_01',
         vvmStatus: { level: 1 },
         expiryDate: '2023/06/01',
       },
-      { id: 'vvm_none_2023_04_01', expiryDate: '2023/04/01' }, // no vvmStatus
       {
         id: 'vvm1_2024_03_01',
         vvmStatus: { level: 1 },
         expiryDate: '2023/03/01',
       },
-      { id: 'vvm_none_2023_07_01', expiryDate: '2023/07/01' }, // no vvmStatus
-      { id: 'vvm_none_none', vvmStatus: null }, // no vvmStatus & no expiryDate
     ];
 
     it('sorts by vvmStatus.level ascending, then expiryDate', () => {
@@ -68,6 +72,7 @@ describe('SortUtils', () => {
       expect(sorted.map(e => e.id)).toEqual([
         'vvm1_2024_03_01',
         'vvm1_2023_06_01',
+        'vvm1_none',
         'vvm2_2023_05_01',
         'vvm_none_2023_04_01',
         'vvm_none_2023_07_01',

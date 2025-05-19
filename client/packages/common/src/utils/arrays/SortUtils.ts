@@ -64,7 +64,7 @@ const getSortByVVMStatus =
       return 1;
     }
 
-    const expirySort = getSortByExpiry()(a, b);
+    const expirySort = getSortByExpiry(false, true)(a, b);
 
     return expirySort;
   };
