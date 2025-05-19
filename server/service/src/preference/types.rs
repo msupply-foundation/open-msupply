@@ -20,6 +20,7 @@ pub enum PrefKey {
     DisplayPopulationBasedForecasting,
     ManageVvmStatusForStock,
     SortByVvmStatusThenExpiry,
+    UseSimplifiedMobileUi,
 }
 
 #[derive(Clone, Debug, PartialEq)]

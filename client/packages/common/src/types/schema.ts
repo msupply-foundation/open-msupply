@@ -133,6 +133,13 @@ export enum ActivityLogNodeType {
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
   InvoiceStatusShipped = 'INVOICE_STATUS_SHIPPED',
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
+  ItemVariantCreated = 'ITEM_VARIANT_CREATED',
+  ItemVariantDeleted = 'ITEM_VARIANT_DELETED',
+  ItemVariantUpdatedName = 'ITEM_VARIANT_UPDATED_NAME',
+  ItemVariantUpdateColdStorageType = 'ITEM_VARIANT_UPDATE_COLD_STORAGE_TYPE',
+  ItemVariantUpdateDosePerUnit = 'ITEM_VARIANT_UPDATE_DOSE_PER_UNIT',
+  ItemVariantUpdateManufacturer = 'ITEM_VARIANT_UPDATE_MANUFACTURER',
+  ItemVariantUpdateVvmType = 'ITEM_VARIANT_UPDATE_VVM_TYPE',
   PrescriptionCreated = 'PRESCRIPTION_CREATED',
   PrescriptionDeleted = 'PRESCRIPTION_DELETED',
   PrescriptionStatusCancelled = 'PRESCRIPTION_STATUS_CANCELLED',
@@ -5997,6 +6004,7 @@ export enum PreferenceKey {
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   ShowContactTracing = 'showContactTracing',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
+  UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
 }
 
 export type PreferenceMutations = {
@@ -6027,6 +6035,7 @@ export type PreferencesNode = {
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
+  useSimplifiedMobileUi: Scalars['Boolean']['output'];
 };
 
 export type PricingNode = {
@@ -9753,6 +9762,7 @@ export type UpsertPreferencesInput = {
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
+  useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
 };
 
 export type UpsertVaccineCourseDoseInput = {

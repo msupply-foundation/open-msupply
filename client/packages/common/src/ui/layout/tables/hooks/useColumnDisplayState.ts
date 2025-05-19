@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { useLocalStorage } from '@openmsupply-client/common';
+import {
+  useLocalStorage,
+  useSimplifiedTabletUI,
+} from '@openmsupply-client/common';
 import { Column } from '../columns';
 import { RecordWithId } from '@common/types';
 
@@ -22,6 +25,10 @@ export const useColumnDisplayState = <T extends RecordWithId>(
           .filter(col => col.defaultHideOnMobile)
           .map(col => col.key as string)
       : []);
+
+  // TO-DO Implement for column display...
+  const simplifiedTabletView = useSimplifiedTabletUI();
+  console.log('Mobile UI?', simplifiedTabletView);
 
   const [columnDisplayState, setColumnDisplayState] = useState<
     Record<string, boolean>
