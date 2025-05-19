@@ -20,6 +20,7 @@ pub struct UpsertPreferencesInput {
     pub display_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
     pub sort_by_vvm_status_then_expiry: Option<Vec<BoolStorePrefInput>>,
+    pub use_simplified_mobile_ui: Option<Vec<BoolStorePrefInput>>,
 }
 
 pub fn upsert_preferences(
@@ -55,6 +56,7 @@ impl UpsertPreferencesInput {
             display_vaccines_in_doses,
             manage_vvm_status_for_stock,
             sort_by_vvm_status_then_expiry,
+            use_simplified_mobile_ui,
         } = self;
 
         UpsertPreferences {
@@ -70,6 +72,9 @@ impl UpsertPreferencesInput {
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            use_simplified_mobile_ui: use_simplified_mobile_ui
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }

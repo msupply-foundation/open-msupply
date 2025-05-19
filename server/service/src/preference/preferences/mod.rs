@@ -10,6 +10,8 @@ pub mod manage_vvm_status_for_stock;
 pub use manage_vvm_status_for_stock::*;
 pub mod allow_tracking_of_stock_by_donor;
 pub use allow_tracking_of_stock_by_donor::*;
+pub mod use_simplified_mobile_ui;
+pub use use_simplified_mobile_ui::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -20,6 +22,7 @@ pub struct PreferenceProvider {
     pub display_vaccines_in_doses: DisplayVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
     pub sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
+    pub use_simplified_mobile_ui: UseSimplifiedMobileUI,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -32,5 +35,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         display_vaccines_in_doses: DisplayVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
         sort_by_vvm_status_then_expiry: SortByVvmStatusThenExpiry,
+        use_simplified_mobile_ui: UseSimplifiedMobileUI,
     }
 }
