@@ -48,10 +48,8 @@ export const useOutboundLineEditColumns = ({
   const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
   const pluralisedUnitName = getPlural(unit, 2);
 
-  const { data: sortByVvmStatus } = usePreference(
-    PreferenceKey.SortByVvmStatusThenExpiry
-  );
-  const { data: manageVVMStatus } = usePreference(
+  const { data: prefs } = usePreference(
+    PreferenceKey.SortByVvmStatusThenExpiry,
     PreferenceKey.ManageVvmStatusForStock
   );
 
@@ -69,7 +67,7 @@ export const useOutboundLineEditColumns = ({
   ];
 
   // If we have use VVM status, we need to show the VVM status column
-  if (sortByVvmStatus || manageVVMStatus) {
+  if (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) {
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
