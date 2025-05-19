@@ -28,6 +28,12 @@ fragment StocktakeLine on StocktakeLineNode {
   comment
   itemVariantId
 
+  donorId
+  donorName
+
+  donorId
+  donorName
+
   location {
     __typename
     id

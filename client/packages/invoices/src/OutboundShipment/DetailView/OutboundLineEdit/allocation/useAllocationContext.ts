@@ -10,17 +10,26 @@ import { getAllocationAlerts, StockOutAlert } from '../../../../StockOut';
 import { DraftStockOutLineFragment } from '../../../api/operations.generated';
 import {
   canAllocate,
-  getAllocatedUnits,
-  issueStock,
+  getAllocatedQuantity,
+  issueDoses,
+  issuePacks,
+  packsToDoses,
   scannedBatchFilter,
 } from './utils';
 import { OutboundLineEditData } from '../../../api';
 import { allocateQuantities } from './allocateQuantities';
 import { DraftItem } from '../../../..';
 
+/**
+ * Allocation can be in units, or doses. In future, could allocate in packs too!
+ *
+ * Throughout allocation code & components, we use `quantity` where possible,
+ * this means that piece of logic is agnostic to whether it's in units or doses.
+ *
+ * Where behaviour differs, we use `allocateIn` to determine use of units or doses.
+ */
 export enum AllocateIn {
   Units = 'Units',
-  // Actually handling doses in upcoming PR
   Doses = 'Doses',
   // Not allocating in packs, at least for now, many use cases to cover
 }
@@ -44,22 +53,28 @@ interface AllocationContext {
   item: DraftItem | null;
   placeholderQuantity: number | null;
 
-  initialise: (
-    input: OutboundLineEditData,
-    strategy: AllocationStrategy,
-    withPlaceholder: boolean,
-    scannedBatch?: string
-  ) => void;
+  initialise: (params: {
+    itemData: OutboundLineEditData;
+    strategy: AllocationStrategy;
+    allowPlaceholder: boolean;
+    allocateVaccineItemsInDoses?: boolean;
+    scannedBatch?: string;
+  }) => void;
 
   setAlerts: (alerts: StockOutAlert[]) => void;
   clear: () => void;
 
-  manualAllocate: (lineId: string, quantity: number) => void;
+  manualAllocate: (
+    lineId: string,
+    quantity: number,
+    format: (value: number, options?: Intl.NumberFormatOptions) => string,
+    t: TypedTFunction<LocaleKey>
+  ) => number;
   autoAllocate: (
     quantity: number,
     format: (value: number, options?: Intl.NumberFormatOptions) => string,
     t: TypedTFunction<LocaleKey>
-  ) => void;
+  ) => number;
 }
 
 export const useAllocationContext = create<AllocationContext>((set, get) => ({
@@ -71,12 +86,13 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   alerts: [],
   allocateIn: AllocateIn.Units,
 
-  initialise: (
-    { item, draftLines, placeholderQuantity },
+  initialise: ({
+    itemData: { item, draftLines, placeholderQuantity },
     strategy,
+    allocateVaccineItemsInDoses,
     allowPlaceholder,
-    scannedBatch?: string
-  ) => {
+    scannedBatch,
+  }) => {
     const sortedLines = draftLines.sort(SorterByStrategy[strategy]);
 
     // Separate lines here, so only dealing with allocatable lines going forward
@@ -94,6 +110,11 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     set({
       isDirty: false,
       item,
+
+      allocateIn:
+        item.isVaccine && allocateVaccineItemsInDoses
+          ? AllocateIn.Doses
+          : AllocateIn.Units,
 
       draftLines: allocatableLines,
       nonAllocatableLines,
@@ -122,59 +143,97 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     })),
 
   autoAllocate: (quantity, format, t) => {
-    const { draftLines, nonAllocatableLines, placeholderQuantity } = get();
+    const { draftLines, nonAllocatableLines, placeholderQuantity, allocateIn } =
+      get();
 
-    const result = allocateQuantities(draftLines, quantity);
+    const result = allocateQuantities(draftLines, quantity, { allocateIn });
 
-    if (result) {
-      const allocatedUnits = getAllocatedUnits({
-        draftLines: result.allocatedLines,
-        placeholderQuantity: 0, // don't want to include any placeholder in this calc
-      });
-
-      const hasOnHold = nonAllocatableLines.some(
-        ({ availablePacks, stockLineOnHold }) =>
-          availablePacks > 0 && !!stockLineOnHold
-      );
-      const hasExpired = draftLines.some(
-        ({ expiryDate }) =>
-          !!expiryDate && DateUtils.isExpired(new Date(expiryDate))
-      );
-
-      const stillToAllocate =
-        result.remainingQuantity > 0 ? result.remainingQuantity : 0;
-
-      const alerts = getAllocationAlerts(
-        quantity,
-        allocatedUnits,
-        stillToAllocate,
-        hasOnHold,
-        hasExpired,
-        format,
-        t
-      );
-
-      set(state => ({
-        ...state,
-        isDirty: true,
-        draftLines: result.allocatedLines,
-        alerts,
-        placeholderQuantity:
-          placeholderQuantity === null ? null : stillToAllocate,
-      }));
+    // Early return if no allocation was possible
+    if (!result) {
+      return getAllocatedQuantity({ allocateIn, draftLines });
     }
+
+    const allocatedQuantity = getAllocatedQuantity({
+      allocateIn,
+      draftLines: result.allocatedLines,
+    });
+
+    const hasOnHold = nonAllocatableLines.some(
+      ({ availablePacks, stockLineOnHold }) =>
+        availablePacks > 0 && !!stockLineOnHold
+    );
+    const hasExpired = draftLines.some(
+      ({ expiryDate }) =>
+        !!expiryDate && DateUtils.isExpired(new Date(expiryDate))
+    );
+
+    const stillToAllocate =
+      result.remainingQuantity > 0 ? result.remainingQuantity : 0;
+
+    const alerts = getAllocationAlerts(
+      quantity,
+      allocatedQuantity,
+      stillToAllocate,
+      hasOnHold,
+      hasExpired,
+      format,
+      t
+    );
+
+    set(state => ({
+      ...state,
+      alerts,
+      placeholderQuantity:
+        placeholderQuantity === null ? null : stillToAllocate,
+      isDirty: true,
+      draftLines: result.allocatedLines,
+    }));
+
+    return allocatedQuantity;
   },
 
-  manualAllocate: (lineId, quantity) => {
-    const { draftLines } = get();
+  manualAllocate: (lineId, quantity, format, t) => {
+    const { allocateIn, draftLines } = get();
 
-    const updatedLines = issueStock(draftLines, lineId, quantity);
+    // TODO: pass in when using for prescriptions
+    const allowPartialPacks = false;
+
+    const updatedLines =
+      allocateIn === AllocateIn.Doses
+        ? issueDoses(draftLines, lineId, quantity, allowPartialPacks)
+        : issuePacks(draftLines, lineId, quantity);
+
+    // Now check if we need to show any alerts
+    const updatedLine = updatedLines.find(line => line.id === lineId);
+
+    const allocatedQuantity = updatedLine
+      ? allocateIn === AllocateIn.Doses
+        ? packsToDoses(updatedLine.numberOfPacks, updatedLine)
+        : // when not in doses, manual allocation is in packs
+          updatedLine.numberOfPacks
+      : 0;
+
+    // Todo: once prescriptions refactored, see if we can streamline alerts?
+    const alerts: StockOutAlert[] =
+      allocatedQuantity > quantity
+        ? [
+            {
+              message: t('messages.over-allocated-line', {
+                quantity: format(allocatedQuantity),
+                issueQuantity: format(quantity),
+              }),
+              severity: 'warning',
+            },
+          ]
+        : [];
 
     set(state => ({
       ...state,
       isDirty: true,
       draftLines: updatedLines,
-      alerts: [],
+      alerts,
     }));
+
+    return allocatedQuantity;
   },
 }));
