@@ -1,7 +1,8 @@
 use super::{
     barcode_row::barcode, item_link_row::item_link, item_row::item, location_row::location,
-    name_link_row::name_link, name_row::name, stock_line_row::stock_line, DBType, LocationRow,
-    MasterListFilter, MasterListLineFilter, StockLineRow, StorageConnection,
+    name_link_row::name_link, name_row::name, stock_line_row::stock_line,
+    DBType, LocationRow, MasterListFilter, MasterListLineFilter,
+    StockLineRow, StorageConnection,
 };
 
 use crate::{

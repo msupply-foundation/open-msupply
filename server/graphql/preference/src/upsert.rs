@@ -12,12 +12,14 @@ pub struct BoolStorePrefInput {
 }
 #[derive(InputObject)]
 pub struct UpsertPreferencesInput {
-    pub show_contact_tracing: Option<bool>,
+    // Global preferences
+    pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
-    pub display_vaccine_in_doses: Option<Vec<BoolStorePrefInput>>,
-    pub manage_vvm_status: Option<Vec<BoolStorePrefInput>>,
-    pub sort_by_vvm_status: Option<Vec<BoolStorePrefInput>>,
-    pub allow_tracking_of_received_stock_by_donor: Option<bool>,
+    pub show_contact_tracing: Option<bool>,
+    // Store preferences
+    pub display_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
+    pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
+    pub sort_by_vvm_status_then_expiry: Option<Vec<BoolStorePrefInput>>,
 }
 
 pub fn upsert_preferences(
@@ -43,34 +45,42 @@ pub fn upsert_preferences(
 }
 
 impl UpsertPreferencesInput {
-    pub fn to_domain(self) -> UpsertPreferences {
+    pub fn to_domain(&self) -> UpsertPreferences {
         let UpsertPreferencesInput {
+            // Global preferences
+            allow_tracking_of_stock_by_donor,
             show_contact_tracing,
             display_population_based_forecasting,
-            display_vaccine_in_doses,
-            manage_vvm_status,
-            sort_by_vvm_status,
-            allow_tracking_of_received_stock_by_donor,
+            // Store preferences
+            display_vaccines_in_doses,
+            manage_vvm_status_for_stock,
+            sort_by_vvm_status_then_expiry,
         } = self;
 
         UpsertPreferences {
-            show_contact_tracing,
-            display_population_based_forecasting,
-            allow_tracking_of_received_stock_by_donor,
-            display_vaccine_in_doses: display_vaccine_in_doses
-                .map(|i| i.into_iter().map(|i| i.to_domain()).collect()),
-            manage_vvm_status: manage_vvm_status
-                .map(|i| i.into_iter().map(|i| i.to_domain()).collect()),
-            sort_by_vvm_status: sort_by_vvm_status
-                .map(|i| i.into_iter().map(|i| i.to_domain()).collect()),
+            // Global preferences
+            allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
+            display_population_based_forecasting: *display_population_based_forecasting,
+            show_contact_tracing: *show_contact_tracing,
+            // Global preferences*show_contact_tracing
+            display_vaccines_in_doses: display_vaccines_in_doses
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            manage_vvm_status_for_stock: manage_vvm_status_for_stock
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }
     }
 }
 
 impl BoolStorePrefInput {
-    pub fn to_domain(self) -> StorePrefUpdate<bool> {
-        let BoolStorePrefInput { store_id, value } = self;
-
-        StorePrefUpdate { store_id, value }
+    pub fn to_domain(&self) -> StorePrefUpdate<bool> {
+        StorePrefUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value,
+        }
     }
 }

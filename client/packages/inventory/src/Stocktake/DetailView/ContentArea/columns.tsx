@@ -60,6 +60,22 @@ const getStocktakeReasons = (
   }
 };
 
+const getStocktakeDonor = (
+  rowData: StocktakeLineFragment | StocktakeSummaryItem,
+  t: TypedTFunction<LocaleKey>
+) => {
+  if ('lines' in rowData) {
+    const { lines } = rowData;
+
+    return (
+      ArrayUtils.ifTheSameElseDefault(lines, 'donorName', t('multiple')) ??
+      UNDEFINED_STRING_VALUE
+    );
+  } else {
+    return rowData.donorName ?? UNDEFINED_STRING_VALUE;
+  }
+};
+
 export const useStocktakeColumns = ({
   sortBy,
   onChangeSortBy,
@@ -69,7 +85,8 @@ export const useStocktakeColumns = ({
   const t = useTranslation();
   const { getError } = useStocktakeLineErrorContext();
   const { data: preferences } = usePreference(
-    PreferenceKey.DisplayVaccineInDoses
+    PreferenceKey.DisplayVaccinesInDoses,
+    PreferenceKey.AllowTrackingOfStockByDonor
   );
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
@@ -160,7 +177,7 @@ export const useStocktakeColumns = ({
     ],
   ];
 
-  if (preferences?.displayVaccineInDoses) {
+  if (preferences?.displayVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));
   }
 
@@ -228,7 +245,7 @@ export const useStocktakeColumns = ({
         if ('lines' in rowData) {
           const { lines } = rowData;
           const displayDoses =
-            preferences?.displayVaccineInDoses && lines[0]?.item.isVaccine;
+            preferences?.displayVaccinesInDoses && lines[0]?.item.isVaccine;
 
           const total =
             lines.reduce(
@@ -242,7 +259,7 @@ export const useStocktakeColumns = ({
             ? (lines.reduce(
                 (total, line) =>
                   total +
-                  (line.item?.doses ?? 0) *
+                  (line.itemVariant?.dosesPerUnit ?? line.item.doses) *
                     (line?.packSize ?? 1) *
                     (line.snapshotNumberOfPacks -
                       (line.countedNumberOfPacks ??
@@ -265,17 +282,18 @@ export const useStocktakeColumns = ({
           return UNDEFINED_STRING_VALUE;
         } else {
           const displayDoses =
-            preferences?.displayVaccineInDoses && rowData?.item.isVaccine;
+            preferences?.displayVaccinesInDoses && rowData?.item.isVaccine;
 
           const total =
             (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
             rowData.snapshotNumberOfPacks;
           const totalRounded = Math.round(total * 100) / 100;
 
-          const totalInDoses =
-            displayDoses && rowData?.item?.doses
-              ? total * (rowData?.packSize ?? 1) * rowData?.item?.doses
-              : null;
+          const totalInDoses = displayDoses
+            ? total *
+              (rowData.packSize ?? 1) *
+              (rowData.itemVariant?.dosesPerUnit ?? rowData.item.doses)
+            : null;
           const totalInDosesRounded = totalInDoses
             ? Math.round(totalInDoses * 100) / 100
             : null;
@@ -292,11 +310,18 @@ export const useStocktakeColumns = ({
       label: 'label.reason',
       accessor: ({ rowData }) => getStocktakeReasons(rowData, t),
       sortable: false,
-    },
-
-    getCommentPopoverColumn(),
-    expandColumn
+    }
   );
+  if (preferences?.allowTrackingOfStockByDonor) {
+    columns.push({
+      key: 'donorId',
+      label: 'label.donor',
+      accessor: ({ rowData }) => getStocktakeDonor(rowData, t),
+      sortable: false,
+    });
+  }
+
+  columns.push(getCommentPopoverColumn(), expandColumn);
 
   return useColumns(columns, { sortBy, onChangeSortBy }, [
     sortBy,

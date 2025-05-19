@@ -85,6 +85,7 @@ pub enum PermissionType {
     NamePropertiesMutate,
     // Central Server
     EditCentralData,
+    ViewAndEditVvmStatus,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]

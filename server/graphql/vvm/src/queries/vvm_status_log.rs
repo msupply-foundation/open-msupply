@@ -3,21 +3,18 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::{VVMStatusLogConnector, VVMStatusLogResponse};
 use service::auth::{Resource, ResourceAccessRequest};
-
-use crate::types::vvm_status_log::{VVMStatusLogConnector, VVMStatusLogResponse};
 
 pub fn get_vvm_status_log_by_stock_line(
     ctx: &Context<'_>,
     store_id: String,
     stock_line_id: &str,
 ) -> Result<VVMStatusLogResponse> {
-    // TODO: Change this to proper VVM-specific permission
-    // Add "View and edit vaccine vial monitor status" user permission from OG
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryPatient,
+            resource: Resource::QueryAndMutateVvmStatus,
             store_id: Some(store_id.clone()),
         },
     )?;

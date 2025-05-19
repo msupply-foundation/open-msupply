@@ -1,13 +1,17 @@
-use super::{ItemNode, LocationNode};
+use super::{ItemNode, ItemVariantNode, LocationNode, VVMStatusLogConnector, VVMStatusNode};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    loader::{ItemLoader, LocationByIdLoader},
+    loader::{
+        ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader, VVMStatusByIdLoader,
+        VVMStatusLogByStockLineIdLoader,
+    },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
+
 use repository::{ItemRow, StockLine, StockLineRow};
 use service::{
     service_provider::ServiceContext, stock_line::query::get_stock_line, usize_to_u32, ListResult,
@@ -101,9 +105,47 @@ impl StockLineNode {
     pub async fn supplier_name(&self) -> Option<&str> {
         self.stock_line.supplier_name()
     }
-
     pub async fn barcode(&self) -> Option<&str> {
         self.stock_line.barcode()
+    }
+
+    pub async fn item_variant(&self, ctx: &Context<'_>) -> Result<Option<ItemVariantNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemVariantByItemVariantIdLoader>>();
+
+        let item_variant_id = match &self.row().item_variant_id {
+            None => return Ok(None),
+            Some(item_variant_id) => item_variant_id,
+        };
+
+        let result = loader.load_one(item_variant_id.clone()).await?;
+
+        Ok(result.map(ItemVariantNode::from_domain))
+    }
+
+    pub async fn vvm_status(&self, ctx: &Context<'_>) -> Result<Option<VVMStatusNode>> {
+        if self.row().vvm_status_id.is_none() {
+            return Ok(None);
+        }
+
+        let loader = ctx.get_loader::<DataLoader<VVMStatusByIdLoader>>();
+        let type_id = match self.row().vvm_status_id.clone() {
+            Some(type_id) => type_id,
+            None => return Ok(None),
+        };
+
+        Ok(loader
+            .load_one(type_id)
+            .await?
+            .map(VVMStatusNode::from_domain))
+    }
+    pub async fn vvm_status_logs(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<VVMStatusLogConnector>> {
+        let loader = ctx.get_loader::<DataLoader<VVMStatusLogByStockLineIdLoader>>();
+        let result = loader.load_one(self.row().id.clone()).await?;
+
+        Ok(result.map(VVMStatusLogConnector::from_domain))
     }
 }
 

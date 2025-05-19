@@ -24,12 +24,15 @@ pub trait PreferenceServiceTrait: Sync + Send {
         pref_type: PreferenceType,
     ) -> Result<Vec<PreferenceDescription>, PreferenceError> {
         let PreferenceProvider {
+            // Global preferences
+            allow_tracking_of_stock_by_donor,
             show_contact_tracing,
             display_population_based_forecasting,
-            display_vaccine_in_doses,
-            manage_vvm_status,
-            sort_by_vvm_status,
-            allow_tracking_of_received_stock_by_donor,
+
+            // Store preferences
+            display_vaccines_in_doses,
+            manage_vvm_status_for_stock,
+            sort_by_vvm_status_then_expiry,
         } = self.get_preference_provider();
 
         let input = AppendIfTypeInputs {
@@ -40,17 +43,14 @@ pub trait PreferenceServiceTrait: Sync + Send {
 
         let mut prefs: Vec<PreferenceDescription> = Vec::new();
 
-        // Add each pref here
-        append_if_type(show_contact_tracing, &mut prefs, &input)?;
-        append_if_type(
-            allow_tracking_of_received_stock_by_donor,
-            &mut prefs,
-            &input,
-        )?;
+        // Global preferences
+        append_if_type(allow_tracking_of_stock_by_donor, &mut prefs, &input)?;
         append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
-        append_if_type(display_vaccine_in_doses, &mut prefs, &input)?;
-        append_if_type(manage_vvm_status, &mut prefs, &input)?;
-        append_if_type(sort_by_vvm_status, &mut prefs, &input)?;
+        append_if_type(show_contact_tracing, &mut prefs, &input)?;
+        // Store preferences
+        append_if_type(display_vaccines_in_doses, &mut prefs, &input)?;
+        append_if_type(manage_vvm_status_for_stock, &mut prefs, &input)?;
+        append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
 
         Ok(prefs)
     }

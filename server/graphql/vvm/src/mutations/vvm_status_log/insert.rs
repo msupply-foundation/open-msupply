@@ -1,6 +1,7 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_types::types::VVMStatusLogNode;
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 
 use service::{
@@ -9,8 +10,6 @@ use service::{
         InsertVVMStatusLogError as ServiceError, InsertVVMStatusLogInput as ServiceInput,
     },
 };
-
-use crate::types::vvm_status_log::VVMStatusLogNode;
 
 #[derive(InputObject)]
 #[graphql(name = "InsertVVMStatusLogInput")]
@@ -46,12 +45,10 @@ pub enum InsertResponse {
 }
 
 pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
-    // TODO: Change this to proper VVM-specific permission
-    // Add "View and edit vaccine vial monitor status" user permission from OG
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutatePatient,
+            resource: Resource::QueryAndMutateVvmStatus,
             store_id: Some(store_id.to_string()),
         },
     );

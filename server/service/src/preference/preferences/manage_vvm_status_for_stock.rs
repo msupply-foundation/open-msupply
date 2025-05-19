@@ -1,16 +1,16 @@
 use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType};
 
-pub struct AllowTrackingOfReceivedStockByDonor;
+pub struct ManageVvmStatusForStock;
 
-impl Preference for AllowTrackingOfReceivedStockByDonor {
+impl Preference for ManageVvmStatusForStock {
     type Value = bool;
 
     fn key(&self) -> PrefKey {
-        PrefKey::AllowTrackingOfReceivedStockByDonor
+        PrefKey::ManageVvmStatusForStock
     }
 
     fn preference_type(&self) -> PreferenceType {
-        PreferenceType::Global
+        PreferenceType::Store
     }
 
     fn value_type(&self) -> PreferenceValueType {
