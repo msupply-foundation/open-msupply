@@ -64,6 +64,14 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
               .build()}
             text={t('equipment')}
           />
+          <AppNavLink
+            visible={isCentralServer}
+            end
+            to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.Campaigns)
+              .build()}
+            text={t('campaigns')}
+          />
         </List>
       </Collapse>
     </AppNavSection>
