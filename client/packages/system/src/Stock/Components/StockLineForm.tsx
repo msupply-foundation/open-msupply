@@ -302,6 +302,7 @@ export const StockLineForm = ({
                   donorId={draft.donor?.id ?? null}
                   width={160}
                   onChange={donor => onUpdate({ donor })}
+                  clearable
                 />
               }
             />
