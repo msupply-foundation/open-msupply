@@ -46,6 +46,29 @@ const getSortByExpiry =
     return 0;
   };
 
+const getSortByVVMStatus =
+  () =>
+  (
+    a: { vvmStatus?: { level?: number } | null; expiryDate?: string | null },
+    b: { vvmStatus?: { level?: number } | null; expiryDate?: string | null }
+  ) => {
+    const aLevel = a.vvmStatus?.level;
+    const bLevel = b.vvmStatus?.level;
+
+    if (aLevel !== undefined && bLevel !== undefined) {
+      if (aLevel < bLevel) return -1;
+      if (aLevel > bLevel) return 1;
+    } else if (aLevel !== undefined) {
+      return -1;
+    } else if (bLevel !== undefined) {
+      return 1;
+    }
+
+    const expirySort = getSortByExpiry(false, true)(a, b);
+
+    return expirySort;
+  };
+
 export const SortUtils = {
   getDataSorter:
     <T, K extends keyof T>(sortKey: K, desc: boolean) =>
@@ -66,4 +89,5 @@ export const SortUtils = {
   byExpiryAsc: getSortByExpiry(false),
   byExpiryAscNonExpiringLast: getSortByExpiry(false, true),
   byExpiryDesc: getSortByExpiry(true),
+  byVVMStatusAsc: getSortByVVMStatus(),
 };
