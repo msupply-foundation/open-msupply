@@ -65,18 +65,16 @@ pub fn validate(
     }
 
     if let Some(donor_id) = &input.donor_id {
-        check_other_party(
-            connection,
-            store_id,
-            donor_id,
-            CheckOtherPartyType::Manufacturer,
-        )
-        .map_err(|e| match e {
-            OtherPartyErrors::OtherPartyDoesNotExist => DonorDoesNotExist {},
-            OtherPartyErrors::OtherPartyNotVisible => DonorNotVisible,
-            OtherPartyErrors::TypeMismatched => DonorIsNotADonor,
-            OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
-        })?;
+        check_other_party(connection, store_id, donor_id, CheckOtherPartyType::Donor).map_err(
+            |e| match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => DonorDoesNotExist {},
+                OtherPartyErrors::OtherPartyNotVisible => DonorNotVisible,
+                OtherPartyErrors::TypeMismatched => DonorIsNotADonor,
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    DatabaseError(repository_error)
+                }
+            },
+        )?;
     };
 
     // TODO: LocationDoesNotBelongToCurrentStore
