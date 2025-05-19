@@ -9,10 +9,10 @@ export const useOpenedWithBarcode = (barcode: ScannedBarcode | null) => {
 
   const { itemId, draftLines } = useAllocationContext(state => ({
     draftLines: state.draftLines,
-    itemId: state.initialisedForItemId,
+    itemId: state.item?.id,
   }));
 
-  useFocusNumberOfPacksInput(barcode?.batch, itemId);
+  useFocusNumberOfPacksInput(barcode?.batch, itemId ?? null);
 
   const saveBarcode = async (itemId: string) => {
     // ID means barcode has already been saved

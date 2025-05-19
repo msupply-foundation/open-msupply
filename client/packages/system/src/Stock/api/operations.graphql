@@ -95,10 +95,11 @@ fragment VVMStatusLogRow on VvmstatusLogNode {
   user {
     firstName
     lastName
+    username
   }
   status {
-    id
     description
+    level
   }
   createdDatetime
   comment
