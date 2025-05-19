@@ -5,7 +5,7 @@ import { ItemVariantFragment, useItemVariants } from '../../api';
 interface ItemVariantSearchInputProps {
   itemId: string;
   selectedId: string | null;
-  onChange: (variant: ItemVariantOptionFragment | null) => void;
+  onChange: (variant: ItemVariantFragment | null) => void;
   disabled?: boolean;
   width?: number | string;
   getOptionDisabled?: (variant: ItemVariantFragment) => boolean;
@@ -34,6 +34,7 @@ export const ItemVariantSearchInput = ({
       value={selected ?? null}
       loading={isLoading}
       onChange={(_, option) => onChange(option)}
+      getOptionLabel={getOptionLabel}
       options={data}
       noOptionsText={t('messages.no-item-variants')}
       isOptionEqualToValue={(option, value) => option.id === value?.id}
@@ -41,4 +42,8 @@ export const ItemVariantSearchInput = ({
       getOptionDisabled={getOptionDisabled}
     />
   );
+};
+
+const getOptionLabel = (option: ItemVariantFragment): string => {
+  return `${option.name}`;
 };
