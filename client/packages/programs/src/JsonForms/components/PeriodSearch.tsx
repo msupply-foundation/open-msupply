@@ -83,7 +83,6 @@ const UIComponent = (props: ControlProps) => {
 
   useEffect(() => {
     if (options?.findByProgram) {
-      setPeriod(null);
       onChange(null);
     }
   }, [programId]);
