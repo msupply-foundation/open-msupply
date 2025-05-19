@@ -19,8 +19,6 @@ import {
   ColumnAlign,
   AdjustmentTypeInput,
   NumberCell,
-  usePreference,
-  PreferenceKey,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -42,6 +40,7 @@ interface StocktakeLineEditTableProps {
   batches: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
   isInitialStocktake?: boolean;
+  trackStockDonor?: boolean;
 }
 
 const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
@@ -302,12 +301,10 @@ export const LocationTable = ({
   batches,
   update,
   isDisabled,
+  trackStockDonor,
 }: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
-  const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor
-  );
 
   const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
     getCountThisLineColumn(update, theme),
@@ -320,7 +317,7 @@ export const LocationTable = ({
       },
     ],
   ];
-  if (preferences?.allowTrackingOfStockByDonor) {
+  if (trackStockDonor) {
     columnDefinitions.push(
       getDonorColumn((id, donor) =>
         update({
