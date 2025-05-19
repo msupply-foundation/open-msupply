@@ -10,8 +10,9 @@ use dataloader::DataLoader;
 
 use graphql_core::loader::{
     ClinicianLoader, ClinicianLoaderInput, DiagnosisLoader, InvoiceByIdLoader,
-    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameInsuranceJoinLoader, NameRowLoader,
-    PatientLoader, ProgramByIdLoader, StoreByIdLoader, UserLoader,
+    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameByNameLinkIdLoader,
+    NameByNameLinkIdLoaderInput, NameInsuranceJoinLoader, PatientLoader, ProgramByIdLoader,
+    StoreByIdLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -292,9 +293,9 @@ impl InvoiceNode {
                             id: name_id.clone(),
                             name_id,
                         },
-                    name_store_join_row: None,
-                    store_row: None,
-                    properties: None,
+                        name_store_join_row: None,
+                        store_row: None,
+                        properties: None,
                     }
                 }),
         };
@@ -465,26 +466,21 @@ impl InvoiceNode {
         &self.row().expected_delivery_date
     }
 
-    pub async fn default_donor_id(&self) -> &Option<String> {
-        &self.row().default_donor_link_id
-    }
-
-    pub async fn default_donor_name(&self, ctx: &Context<'_>) -> Result<Option<String>> {
-        let Some(default_donor_id) = &self.row().default_donor_link_id else {
-            return Ok(None);
+    pub async fn default_donor(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<NameNode>> {
+        let donor_link_id = match &self.row().default_donor_link_id {
+            None => return Ok(None),
+            Some(donor_link_id) => donor_link_id,
         };
+        let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
+        let result = loader
+            .load_one(NameByNameLinkIdLoaderInput::new(&store_id, donor_link_id))
+            .await?;
 
-        let loader = ctx.get_loader::<DataLoader<NameRowLoader>>();
-
-        let name_row = loader.load_one(default_donor_id.to_string()).await?.ok_or(
-            StandardGraphqlError::InternalError(format!(
-                "Cannot find donor name for donor_id ({})",
-                default_donor_id
-            ))
-            .extend(),
-        )?;
-
-        Ok(Some(name_row.name))
+        Ok(result.map(NameNode::from_domain))
     }
 }
 
