@@ -11,6 +11,8 @@ import {
   NumUtils,
   Typography,
   useTableStore,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
@@ -66,11 +68,17 @@ const PlaceholderRow = ({ quantity }: { quantity: number | null }) => {
 const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
   const t = useTranslation();
   const formattedValue = useFormatNumber().round(allocatedQuantity, 2);
+  const { data: prefs } = usePreference(
+    PreferenceKey.SortByVvmStatusThenExpiry,
+    PreferenceKey.ManageVvmStatusForStock
+  );
+  const hasExtraVVMColumn =
+    prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry;
 
   return (
     <tr>
       <TotalCell colSpan={3}>{t('label.total-quantity')}</TotalCell>
-      <TotalCell colSpan={5}></TotalCell>
+      <TotalCell colSpan={hasExtraVVMColumn ? 6 : 5}></TotalCell>
       <Tooltip title={allocatedQuantity.toString()}>
         <TotalCell
           style={{
@@ -149,7 +157,7 @@ export const OutboundLineEditTable = ({
       key="placeholder-row"
     />,
     <tr key="divider-row">
-      <td colSpan={11}>
+      <td colSpan={12}>
         <Divider margin={10} />
       </td>
     </tr>,
