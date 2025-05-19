@@ -1,6 +1,6 @@
 import { useQuery } from 'react-query';
 import { useStockGraphQL } from '../useStockGraphQL';
-import { PreferenceKey, usePreference } from 'packages/common/src';
+import { PreferenceKey, usePreference } from '@openmsupply-client/common';
 
 export function useActiveVVMStatuses() {
   const { stockApi, storeId } = useStockGraphQL();

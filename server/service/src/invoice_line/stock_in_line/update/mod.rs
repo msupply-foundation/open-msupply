@@ -58,7 +58,6 @@ pub fn update_stock_in_line(
 
             let stock_line_repository = StockLineRowRepository::new(connection);
             let vvm_status_log_repository = VVMStatusLogRowRepository::new(connection);
-
             if let Some(upsert_batch) = upsert_batch_option {
                 stock_line_repository.upsert_one(&upsert_batch)?;
             }
