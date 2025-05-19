@@ -188,6 +188,7 @@ export const createDraftPrescriptionLineFromStockLine = ({
       itemDirections: [],
       warnings: [],
     },
+    itemVariant: stockLine?.itemVariant,
 
     stockLine,
   };
@@ -579,7 +580,7 @@ export const DosesQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
     max={
       (props.rowData.stockLine?.availableNumberOfPacks ?? 0) *
       (props.rowData.stockLine?.packSize ?? 1) *
-      (props.rowData.item?.doses ?? 1)
+      (props.rowData.itemVariant?.dosesPerUnit ?? props.rowData.item.doses)
     }
     id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
     min={0}

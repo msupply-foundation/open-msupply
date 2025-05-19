@@ -15,7 +15,7 @@ import {
   AllocateIn,
   useAllocationContext,
 } from './allocation/useAllocationContext';
-import { getAllocatedUnits } from './allocation/utils';
+import { getAllocatedQuantity } from './allocation/utils';
 
 export const AutoAllocate = () => {
   const t = useTranslation();
@@ -25,7 +25,7 @@ export const AutoAllocate = () => {
     useAllocationContext(state => ({
       autoAllocate: state.autoAllocate,
       alerts: state.alerts,
-      allocatedQuantity: getAllocatedUnits(state),
+      allocatedQuantity: getAllocatedQuantity(state),
       allocateIn: state.allocateIn,
     }));
 
@@ -39,7 +39,10 @@ export const AutoAllocate = () => {
   // pack size which stops you entering the required quantity.
   // See https://github.com/msupply-foundation/open-msupply/issues/2727
   const debouncedAllocate = useDebounceCallback(
-    quantity => autoAllocate(quantity, format, t),
+    quantity => {
+      const allocated = autoAllocate(quantity, format, t);
+      setIssueQuantity(allocated);
+    },
     [],
     500
   );
@@ -49,6 +52,8 @@ export const AutoAllocate = () => {
     // in quantity (to prevent triggering auto allocation if only focus has moved)
     if (quantity === issueQuantity) return;
 
+    // Set immediate value to the input
+    // may be overwritten with actually allocated value after debounced call
     setIssueQuantity(quantity ?? 0);
     debouncedAllocate(quantity ?? 0);
   };

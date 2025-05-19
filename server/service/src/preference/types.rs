@@ -13,7 +13,7 @@ use super::{
 #[strum(serialize_all = "snake_case")]
 pub enum PrefKey {
     // Global preferences
-    AllowTrackingOfReceivedStockByDonor,
+    AllowTrackingOfStockByDonor,
     DisplayVaccinesInDoses,
     ShowContactTracing,
     // Store preferences

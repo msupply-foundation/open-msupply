@@ -1,12 +1,12 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
 use graphql_core::{
-    loader::{LocationByIdLoader, VVMStatusByIdLoader},
+    loader::{ItemVariantByItemVariantIdLoader, LocationByIdLoader, VVMStatusByIdLoader},
     ContextExt,
 };
 use service::invoice_line::get_draft_outbound_lines::DraftOutboundShipmentLine;
 
-use super::{LocationNode, VVMStatusNode};
+use super::{ItemVariantNode, LocationNode, VVMStatusNode};
 
 pub struct DraftOutboundShipmentItemData {
     pub lines: Vec<DraftOutboundShipmentLine>,
@@ -81,6 +81,10 @@ impl DraftOutboundShipmentLineNode {
         &self.shipment_line.stock_line_on_hold
     }
 
+    pub async fn default_doses_per_unit(&self) -> i32 {
+        self.shipment_line.default_doses_per_unit
+    }
+
     pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
         let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
 
@@ -109,5 +113,17 @@ impl DraftOutboundShipmentLineNode {
             .load_one(status_id)
             .await?
             .map(VVMStatusNode::from_domain))
+    }
+
+    pub async fn item_variant(&self, ctx: &Context<'_>) -> Result<Option<ItemVariantNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemVariantByItemVariantIdLoader>>();
+
+        let item_variant_id = match &self.shipment_line.item_variant_id {
+            None => return Ok(None),
+            Some(item_variant_id) => item_variant_id.clone(),
+        };
+
+        let result = loader.load_one(item_variant_id).await?;
+        Ok(result.map(ItemVariantNode::from_domain))
     }
 }

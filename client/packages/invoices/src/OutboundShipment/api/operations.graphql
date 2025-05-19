@@ -834,6 +834,7 @@ fragment DraftStockOutLine on DraftOutboundShipmentLineNode {
   inStorePacks
   availablePacks
   stockLineOnHold
+  defaultDosesPerUnit
   location {
     __typename
     id
@@ -847,6 +848,9 @@ fragment DraftStockOutLine on DraftOutboundShipmentLineNode {
     level
     unusable
     description
+  }
+  itemVariant {
+    dosesPerUnit
   }
 }
 

@@ -21,6 +21,11 @@ export type InboundLineFragment = {
   foreignCurrencyPriceBeforeTax?: number | null;
   itemName: string;
   itemVariantId?: string | null;
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    dosesPerUnit: number;
+  } | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -76,6 +81,8 @@ export type InboundFragment = {
   type: Types.InvoiceNodeType;
   taxPercentage?: number | null;
   expectedDeliveryDate?: string | null;
+  defaultDonorId?: string | null;
+  defaultDonorName?: string | null;
   currencyRate: number;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
   user?: {
@@ -111,6 +118,11 @@ export type InboundFragment = {
       foreignCurrencyPriceBeforeTax?: number | null;
       itemName: string;
       itemVariantId?: string | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        dosesPerUnit: number;
+      } | null;
       item: {
         __typename: 'ItemNode';
         id: string;
@@ -280,6 +292,8 @@ export type InvoiceQuery = {
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
+        defaultDonorId?: string | null;
+        defaultDonorName?: string | null;
         currencyRate: number;
         linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
         user?: {
@@ -315,6 +329,11 @@ export type InvoiceQuery = {
             foreignCurrencyPriceBeforeTax?: number | null;
             itemName: string;
             itemVariantId?: string | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              dosesPerUnit: number;
+            } | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -419,6 +438,8 @@ export type InboundByNumberQuery = {
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
+        defaultDonorId?: string | null;
+        defaultDonorName?: string | null;
         currencyRate: number;
         linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
         user?: {
@@ -454,6 +475,11 @@ export type InboundByNumberQuery = {
             foreignCurrencyPriceBeforeTax?: number | null;
             itemName: string;
             itemVariantId?: string | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              dosesPerUnit: number;
+            } | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -973,6 +999,10 @@ export const InboundLineFragmentDoc = gql`
     foreignCurrencyPriceBeforeTax
     itemName
     itemVariantId
+    itemVariant {
+      id
+      dosesPerUnit
+    }
     item {
       __typename
       id
@@ -1029,6 +1059,8 @@ export const InboundFragmentDoc = gql`
     type
     taxPercentage
     expectedDeliveryDate
+    defaultDonorId
+    defaultDonorName
     linkedShipment {
       __typename
       id

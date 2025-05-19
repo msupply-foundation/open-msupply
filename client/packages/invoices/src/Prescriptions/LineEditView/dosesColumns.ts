@@ -20,7 +20,7 @@ export const getPrescriptionLineDosesColumns = (
         (rowData.stockLine?.availableNumberOfPacks ?? 0) *
         (rowData.stockLine?.packSize ?? 1);
 
-      return total * (rowData.item?.doses ?? 1);
+      return total * (rowData.itemVariant?.dosesPerUnit ?? rowData.item.doses);
     },
   },
   {
@@ -29,14 +29,17 @@ export const getPrescriptionLineDosesColumns = (
     key: 'unitQuantity',
     align: ColumnAlign.Right,
     width: 120,
-    setter: ({ packSize, id, unitQuantity, item }) => {
-      const doses = item?.doses ?? 1;
-      onChange(id, (unitQuantity ?? 0) / (packSize ?? 1) / doses);
+    setter: ({ packSize, id, unitQuantity, item, itemVariant }) => {
+      const dosesPerUnit = itemVariant?.dosesPerUnit ?? item?.doses ?? 1;
+
+      onChange(id, (unitQuantity ?? 0) / (packSize ?? 1) / dosesPerUnit);
     },
     accessor: ({ rowData }) => {
-      const total = (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1);
+      const totalUnits = (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1);
 
-      return total * (rowData.item?.doses ?? 1);
+      return (
+        totalUnits * (rowData.itemVariant?.dosesPerUnit ?? rowData.item.doses)
+      );
     },
   },
 ];

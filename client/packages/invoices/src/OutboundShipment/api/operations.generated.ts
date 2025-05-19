@@ -1035,6 +1035,7 @@ export type DraftStockOutLineFragment = {
   inStorePacks: number;
   availablePacks: number;
   stockLineOnHold: boolean;
+  defaultDosesPerUnit: number;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -1049,6 +1050,7 @@ export type DraftStockOutLineFragment = {
     unusable: boolean;
     description: string;
   } | null;
+  itemVariant?: { __typename: 'ItemVariantNode'; dosesPerUnit: number } | null;
 };
 
 export type GetOutboundEditLinesQueryVariables = Types.Exact<{
@@ -1083,6 +1085,7 @@ export type GetOutboundEditLinesQuery = {
       inStorePacks: number;
       availablePacks: number;
       stockLineOnHold: boolean;
+      defaultDosesPerUnit: number;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -1096,6 +1099,10 @@ export type GetOutboundEditLinesQuery = {
         level: number;
         unusable: boolean;
         description: string;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        dosesPerUnit: number;
       } | null;
     }>;
   };
@@ -1243,6 +1250,7 @@ export const DraftStockOutLineFragmentDoc = gql`
     inStorePacks
     availablePacks
     stockLineOnHold
+    defaultDosesPerUnit
     location {
       __typename
       id
@@ -1256,6 +1264,9 @@ export const DraftStockOutLineFragmentDoc = gql`
       level
       unusable
       description
+    }
+    itemVariant {
+      dosesPerUnit
     }
   }
 `;

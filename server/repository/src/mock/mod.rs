@@ -510,6 +510,7 @@ impl MockDataInserts {
     }
 
     pub fn invoices(mut self) -> Self {
+        self.names = true;
         self.invoices = true;
         self
     }

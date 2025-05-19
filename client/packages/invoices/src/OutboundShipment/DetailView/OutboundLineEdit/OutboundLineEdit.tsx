@@ -7,17 +7,17 @@ import {
   ModalMode,
   useNotification,
   InvoiceNodeStatus,
-  BasicSpinner,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { useNextItem } from './hooks';
-import { useOutboundLineEditData } from '../../api';
 import { ScannedBarcode } from '../../../types';
 import { SelectItem } from './SelectItem';
 import { Allocation } from './Allocation';
 import { useOpenedWithBarcode } from './hooks/useOpenedWithBarcode';
 import { useAllocationContext } from './allocation/useAllocationContext';
 import { useSaveOutboundLines } from '../../api/hooks/useSaveOutboundLines';
-import { getAllocatedUnits } from './allocation/utils';
+import { getAllocatedQuantity } from './allocation/utils';
 
 export type OutboundOpenedWith = { itemId: string } | ScannedBarcode | null;
 
@@ -41,6 +41,8 @@ export const OutboundLineEdit = ({
   const t = useTranslation();
   const { info, warning } = useNotification();
   const [itemId, setItemId] = useState(openedWith?.itemId);
+  const { data: pref } = usePreference(PreferenceKey.DisplayVaccinesInDoses);
+  const allocateVaccineItemsInDoses = pref?.displayVaccinesInDoses ?? false;
 
   const onClose = () => {
     clear();
@@ -50,29 +52,20 @@ export const OutboundLineEdit = ({
 
   const { next, disabled: nextDisabled } = useNextItem(itemId);
 
-  const { data: itemData, isFetching } = useOutboundLineEditData(
-    invoiceId,
-    itemId
-  );
   const { mutateAsync } = useSaveOutboundLines(invoiceId);
   const { saveBarcode } = useOpenedWithBarcode(asBarcodeOrNull(openedWith));
 
   const {
     draftLines,
-    allocatedUnits,
+    allocatedQuantity,
     placeholderQuantity,
     alerts,
     isDirty,
     setAlerts,
     clear,
   } = useAllocationContext(state => ({
-    draftLines: state.draftLines,
-    placeholderQuantity: state.placeholderQuantity,
-    allocatedUnits: getAllocatedUnits(state),
-    alerts: state.alerts,
-    isDirty: state.isDirty,
-    setAlerts: state.setAlerts,
-    clear: state.clear,
+    ...state,
+    allocatedQuantity: getAllocatedQuantity(state),
   }));
 
   const onSave = async () => {
@@ -97,7 +90,7 @@ export const OutboundLineEdit = ({
   const handleSave = async (onSaved: () => boolean | void) => {
     const confirmZeroQuantityMessage = t('messages.confirm-zero-quantity');
     if (
-      allocatedUnits === 0 &&
+      allocatedQuantity === 0 &&
       !alerts.some(alert => alert.message === confirmZeroQuantityMessage)
     ) {
       setAlerts([{ message: confirmZeroQuantityMessage, severity: 'warning' }]);
@@ -163,17 +156,16 @@ export const OutboundLineEdit = ({
           onChangeItem={setItemId}
           disabled={mode === ModalMode.Update}
         />
-        {isFetching ? (
-          <BasicSpinner />
-        ) : (
-          itemData && (
-            <Allocation
-              key={itemId}
-              itemData={itemData}
-              allowPlaceholder={status === InvoiceNodeStatus.New}
-              scannedBatch={asBarcodeOrNull(openedWith)?.batch}
-            />
-          )
+
+        {itemId && (
+          <Allocation
+            key={itemId}
+            itemId={itemId}
+            invoiceId={invoiceId}
+            allowPlaceholder={status === InvoiceNodeStatus.New}
+            scannedBatch={asBarcodeOrNull(openedWith)?.batch}
+            allocateVaccineItemsInDoses={allocateVaccineItemsInDoses}
+          />
         )}
       </Grid>
     </Modal>
