@@ -5,6 +5,7 @@ use crate::{
         stock_in_line::check_pack_size,
         validate::{check_item_exists, check_line_exists, check_number_of_packs},
     },
+    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
 use repository::{InvoiceRow, ItemRow, StorageConnection};
@@ -62,6 +63,21 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
+
+    if let Some(donor_id) = &input.donor_id {
+        check_other_party(
+            connection,
+            store_id,
+            donor_id,
+            CheckOtherPartyType::Manufacturer,
+        )
+        .map_err(|e| match e {
+            OtherPartyErrors::OtherPartyDoesNotExist => DonorDoesNotExist {},
+            OtherPartyErrors::OtherPartyNotVisible => DonorNotVisible,
+            OtherPartyErrors::TypeMismatched => DonorIsNotADonor,
+            OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
+        })?;
+    };
 
     // TODO: LocationDoesNotBelongToCurrentStore
 
