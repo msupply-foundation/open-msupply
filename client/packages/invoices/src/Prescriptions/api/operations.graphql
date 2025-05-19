@@ -126,6 +126,7 @@ fragment PrescriptionLine on InvoiceLineNode {
     warnings {
       ...Warning
     }
+    defaultPackSize
   }
   itemVariant {
     id
@@ -163,6 +164,7 @@ fragment PrescriptionLine on InvoiceLineNode {
       warnings {
         ...Warning
       }
+      defaultPackSize
     }
   }
 }
@@ -205,6 +207,7 @@ fragment PartialPrescriptionLine on StockLineNode {
     warnings {
       ...Warning
     }
+    defaultPackSize
   }
   itemVariant {
     id

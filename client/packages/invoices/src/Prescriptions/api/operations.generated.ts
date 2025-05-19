@@ -69,6 +69,7 @@ export type PrescriptionRowFragment = {
         unitName?: string | null;
         isVaccine: boolean;
         doses: number;
+        defaultPackSize: number;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -115,6 +116,7 @@ export type PrescriptionRowFragment = {
           code: string;
           isVaccine: boolean;
           doses: number;
+          defaultPackSize: number;
           itemDirections: Array<{
             __typename: 'ItemDirectionNode';
             directions: string;
@@ -198,6 +200,7 @@ export type PrescriptionLineFragment = {
     unitName?: string | null;
     isVaccine: boolean;
     doses: number;
+    defaultPackSize: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -244,6 +247,7 @@ export type PrescriptionLineFragment = {
       code: string;
       isVaccine: boolean;
       doses: number;
+      defaultPackSize: number;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
         directions: string;
@@ -297,6 +301,7 @@ export type PartialPrescriptionLineFragment = {
     code: string;
     isVaccine: boolean;
     doses: number;
+    defaultPackSize: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -407,6 +412,7 @@ export type PrescriptionsQuery = {
             unitName?: string | null;
             isVaccine: boolean;
             doses: number;
+            defaultPackSize: number;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -453,6 +459,7 @@ export type PrescriptionsQuery = {
               code: string;
               isVaccine: boolean;
               doses: number;
+              defaultPackSize: number;
               itemDirections: Array<{
                 __typename: 'ItemDirectionNode';
                 directions: string;
@@ -587,6 +594,7 @@ export type PrescriptionByNumberQuery = {
               unitName?: string | null;
               isVaccine: boolean;
               doses: number;
+              defaultPackSize: number;
               itemDirections: Array<{
                 __typename: 'ItemDirectionNode';
                 directions: string;
@@ -633,6 +641,7 @@ export type PrescriptionByNumberQuery = {
                 code: string;
                 isVaccine: boolean;
                 doses: number;
+                defaultPackSize: number;
                 itemDirections: Array<{
                   __typename: 'ItemDirectionNode';
                   directions: string;
@@ -776,6 +785,7 @@ export type PrescriptionByIdQuery = {
               unitName?: string | null;
               isVaccine: boolean;
               doses: number;
+              defaultPackSize: number;
               itemDirections: Array<{
                 __typename: 'ItemDirectionNode';
                 directions: string;
@@ -822,6 +832,7 @@ export type PrescriptionByIdQuery = {
                 code: string;
                 isVaccine: boolean;
                 doses: number;
+                defaultPackSize: number;
                 itemDirections: Array<{
                   __typename: 'ItemDirectionNode';
                   directions: string;
@@ -1252,6 +1263,7 @@ export const PrescriptionLineFragmentDoc = gql`
       warnings {
         ...Warning
       }
+      defaultPackSize
     }
     itemVariant {
       id
@@ -1287,6 +1299,7 @@ export const PrescriptionLineFragmentDoc = gql`
         warnings {
           ...Warning
         }
+        defaultPackSize
       }
     }
   }
@@ -1401,6 +1414,7 @@ export const PartialPrescriptionLineFragmentDoc = gql`
       warnings {
         ...Warning
       }
+      defaultPackSize
     }
     itemVariant {
       id

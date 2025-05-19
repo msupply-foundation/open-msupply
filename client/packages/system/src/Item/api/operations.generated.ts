@@ -12,6 +12,7 @@ export type ServiceItemRowFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
+  defaultPackSize: number;
 };
 
 export type StockLineFragment = {
@@ -1355,6 +1356,7 @@ export const ServiceItemRowFragmentDoc = gql`
     unitName
     isVaccine
     doses
+    defaultPackSize
   }
 `;
 export const ItemRowFragmentDoc = gql`

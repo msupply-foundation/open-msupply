@@ -36,6 +36,7 @@ export const createStockOutPlaceholderRow = (
     isVaccine: false,
     doses: 0,
     __typename: 'ItemNode',
+    defaultPackSize: 1,
   },
   itemName: '',
 });

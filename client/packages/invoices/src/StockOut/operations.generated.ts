@@ -55,6 +55,7 @@ export type StockOutLineFragment = {
     unitName?: string | null;
     isVaccine: boolean;
     doses: number;
+    defaultPackSize: number;
   };
   location?: {
     __typename: 'LocationNode';
@@ -145,6 +146,7 @@ export const StockOutLineFragmentDoc = gql`
       unitName
       isVaccine
       doses
+      defaultPackSize
     }
     location {
       __typename
