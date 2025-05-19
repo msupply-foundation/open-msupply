@@ -152,8 +152,6 @@ impl<'a> StockLineRepository<'a> {
     }
 }
 
-alias!(name_link as name_link2: NameLink2);
-
 type BoxedStockLineQuery = IntoBoxed<
     'static,
     LeftJoin<
