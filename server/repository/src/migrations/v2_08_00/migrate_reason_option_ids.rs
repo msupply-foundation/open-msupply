@@ -200,6 +200,7 @@ impl MigrationFragment for Migrate {
                     item_link_id TEXT NOT NULL REFERENCES item_link(id),
                     item_name TEXT NOT NULL,
                     item_variant_id TEXT REFERENCES item_variant(id),
+                    donor_id TEXT,
                     reason_option_id TEXT REFERENCES reason_option(id)
                 );
 
@@ -220,6 +221,7 @@ impl MigrationFragment for Migrate {
                     item_link_id,
                     item_name,
                     item_variant_id,
+                    donor_id,
                     reason_option_id          
                 )
                 SELECT 
@@ -239,6 +241,7 @@ impl MigrationFragment for Migrate {
                     item_link_id,
                     item_name,
                     item_variant_id,
+                    donor_id,
                     reason_option_id  
                 FROM stocktake_line_old;
 
