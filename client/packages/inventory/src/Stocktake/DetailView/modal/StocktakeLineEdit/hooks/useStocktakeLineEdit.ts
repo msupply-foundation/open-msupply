@@ -28,8 +28,6 @@ export const useStocktakeLineEdit = (
   const { saveAndMapStructuredErrors: upsertLines, isLoading: isSaving } =
     useStocktakeOld.line.save();
 
-  const defaultPackSize = 1;
-
   const update = (patch: RecordPatch<DraftStocktakeLine>) =>
     setDraftLines(lines =>
       ArrayUtils.immutablePatch(lines, {
@@ -49,7 +47,7 @@ export const useStocktakeLineEdit = (
   const addLine = () => {
     if (item) {
       setDraftLines(lines => [
-        DraftLine.fromItem(id, item, defaultPackSize),
+        DraftLine.fromItem(id, item, item.defaultPackSize),
         ...lines,
       ]);
     }
