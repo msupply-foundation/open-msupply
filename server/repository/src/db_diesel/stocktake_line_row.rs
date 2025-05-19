@@ -1,6 +1,7 @@
 use super::{
-    item_link_row::item_link, location_row::location, reason_option_row::reason_option,
-    stock_line_row::stock_line, stocktake_row::stocktake, StorageConnection,
+    item_link_row::item_link, location_row::location, name_link_row::name_link,
+    reason_option_row::reason_option, stock_line_row::stock_line, stocktake_row::stocktake,
+    StorageConnection,
 };
 
 use crate::{repository_error::RepositoryError, Delete, Upsert};
