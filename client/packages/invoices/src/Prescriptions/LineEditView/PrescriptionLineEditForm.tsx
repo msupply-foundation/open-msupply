@@ -3,7 +3,6 @@ import {
   Grid,
   BasicTextInput,
   useTranslation,
-  NumericTextInput,
   Box,
   Typography,
   useFormatNumber,
@@ -44,6 +43,8 @@ import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 import { getPrescriptionDirections } from './getPrescriptionDirections';
 import { useAbbreviations } from '../api/hooks/useAbbreviations';
+import { Allocation } from './Allocation';
+import { AutoAllocate } from '../../Allocation/AutoAllocate';
 
 interface PrescriptionLineEditFormProps {
   allocatedUnits: number;
@@ -69,6 +70,7 @@ interface PrescriptionLineEditFormProps {
   isLoading: boolean;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
   programId?: string;
+  invoiceId: string;
 }
 
 export const PrescriptionLineEditForm: React.FC<
@@ -91,14 +93,16 @@ export const PrescriptionLineEditForm: React.FC<
   isLoading,
   updateQuantity,
   programId,
+  invoiceId,
 }) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
   const { store: { preferences } = {} } = useAuthContext();
-  const { data: OMSPrefs } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses
+  const { data: prefs } = usePreference(
+    PreferenceKey.DisplayVaccinesInDoses,
+    PreferenceKey.SortByVvmStatusThenExpiry
   );
 
   const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
@@ -109,68 +113,67 @@ export const PrescriptionLineEditForm: React.FC<
   const [defaultDirection, setDefaultDirection] = useState<string>('');
   const [abbreviation, setAbbreviation] = useState<string>('');
 
-  const debouncedSetAllocationAlerts = useDebounceCallback(
-    warning => setAllocationAlerts(warning),
-    []
-  );
+  // const debouncedSetAllocationAlerts = useDebounceCallback(
+  //   warning => setAllocationAlerts(warning),
+  //   []
+  // );
   const isDirectionsDisabled = !issueUnitQuantity;
-  const displayInDoses =
-    !!OMSPrefs?.displayVaccinesInDoses && !!item?.isVaccine;
+  const displayInDoses = !!prefs?.displayVaccinesInDoses && !!item?.isVaccine;
   const unitName = item?.unitName ?? t('label.unit');
   const unit = displayInDoses ? t('label.doses') : unitName;
 
-  const allocate = (
-    numPacks: number,
-    packSize: number,
-    prescribedQuantity: number
-  ) => {
-    const newAllocateQuantities = onChangeQuantity(
-      numPacks,
-      packSize === -1 || packSize === 1 ? null : packSize,
-      true,
-      prescribedQuantity
-    );
-    const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
-    const allocatedQuantity =
-      newAllocateQuantities?.reduce(
-        (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
-        0
-      ) ?? 0;
-    const allocateInUnits = packSize === null;
-    const messageKey = allocateInUnits
-      ? 'warning.cannot-create-placeholder-units'
-      : 'warning.cannot-create-placeholder-packs';
-    const hasRequestedOverAvailable =
-      numPacks > allocatedQuantity && newAllocateQuantities !== undefined;
-    const alerts = getAllocationAlerts(
-      numPacks * (packSize === -1 ? 1 : packSize),
-      // suppress the allocation warning if the user has requested more than the available amount of stock
-      hasRequestedOverAvailable ? 0 : allocatedQuantity,
-      placeholderLine?.numberOfPacks ?? 0,
-      hasOnHold,
-      hasExpired,
-      format,
-      t
-    );
-    if (hasRequestedOverAvailable) {
-      alerts.push({
-        message: t(messageKey, {
-          allocatedQuantity: format(allocatedQuantity),
-          requestedQuantity: format(numPacks),
-        }),
-        severity: 'warning',
-      });
-    }
-    if (NumUtils.round(numPacks) !== numPacks) {
-      const nearestAbove = Math.ceil(numPacks) * packSize;
-      alerts.push({
-        message: t('messages.partial-pack-warning', { nearestAbove }),
-        severity: 'warning',
-      });
-    }
-    debouncedSetAllocationAlerts(alerts);
-    setIssueUnitQuantity(allocatedQuantity);
-  };
+  // const allocate = (
+  //   numPacks: number,
+  //   packSize: number,
+  //   prescribedQuantity: number
+  // ) => {
+  //   const newAllocateQuantities = onChangeQuantity(
+  //     numPacks,
+  //     packSize === -1 || packSize === 1 ? null : packSize,
+  //     true,
+  //     prescribedQuantity
+  //   );
+  //   const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
+  //   const allocatedQuantity =
+  //     newAllocateQuantities?.reduce(
+  //       (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
+  //       0
+  //     ) ?? 0;
+  //   const allocateInUnits = packSize === null;
+  //   const messageKey = allocateInUnits
+  //     ? 'warning.cannot-create-placeholder-units'
+  //     : 'warning.cannot-create-placeholder-packs';
+  //   const hasRequestedOverAvailable =
+  //     numPacks > allocatedQuantity && newAllocateQuantities !== undefined;
+  //   const alerts = getAllocationAlerts(
+  //     numPacks * (packSize === -1 ? 1 : packSize),
+  //     // suppress the allocation warning if the user has requested more than the available amount of stock
+  //     hasRequestedOverAvailable ? 0 : allocatedQuantity,
+  //     placeholderLine?.numberOfPacks ?? 0,
+  //     hasOnHold,
+  //     hasExpired,
+  //     format,
+  //     t
+  //   );
+  //   if (hasRequestedOverAvailable) {
+  //     alerts.push({
+  //       message: t(messageKey, {
+  //         allocatedQuantity: format(allocatedQuantity),
+  //         requestedQuantity: format(numPacks),
+  //       }),
+  //       severity: 'warning',
+  //     });
+  //   }
+  //   if (NumUtils.round(numPacks) !== numPacks) {
+  //     const nearestAbove = Math.ceil(numPacks) * packSize;
+  //     alerts.push({
+  //       message: t('messages.partial-pack-warning', { nearestAbove }),
+  //       severity: 'warning',
+  //     });
+  //   }
+  //   debouncedSetAllocationAlerts(alerts);
+  //   setIssueUnitQuantity(allocatedQuantity);
+  // };
 
   // using a debounced value for the allocation. In the scenario where
   // you have only pack sizes > 1 available, and try to type a quantity which starts with 1
@@ -178,49 +181,49 @@ export const PrescriptionLineEditForm: React.FC<
   // pack size which stops you entering the required quantity.
   // See https://github.com/msupply-foundation/open-msupply/issues/2727
   // and https://github.com/msupply-foundation/open-msupply/issues/3532
-  const debouncedAllocate = useDebouncedValueCallback(
-    (numPacks, packSize, prescribedQuantity) => {
-      allocate(numPacks, packSize, prescribedQuantity);
-    },
-    [],
-    500,
-    [draftPrescriptionLines] // this is needed to prevent a captured enclosure of onChangeQuantity
-  );
+  // const debouncedAllocate = useDebouncedValueCallback(
+  //   (numPacks, packSize, prescribedQuantity) => {
+  //     allocate(numPacks, packSize, prescribedQuantity);
+  //   },
+  //   [],
+  //   500,
+  //   [draftPrescriptionLines] // this is needed to prevent a captured enclosure of onChangeQuantity
+  // );
 
-  const handleIssueQuantityChange = (
-    inputUnitQuantity?: number,
-    quantityType: 'issue' | 'prescribed' = 'issue'
-  ) => {
-    // this method is also called onBlur... check that there actually has been a
-    // change in quantity (to prevent triggering auto allocation if only focus
-    // has moved)
-    if (
-      quantityType === 'issue'
-        ? inputUnitQuantity === issueUnitQuantity
-        : inputUnitQuantity === prescribedQuantity
-    )
-      return;
+  // const handleIssueQuantityChange = (
+  //   inputUnitQuantity?: number,
+  //   quantityType: 'issue' | 'prescribed' = 'issue'
+  // ) => {
+  //   // this method is also called onBlur... check that there actually has been a
+  //   // change in quantity (to prevent triggering auto allocation if only focus
+  //   // has moved)
+  //   if (
+  //     quantityType === 'issue'
+  //       ? inputUnitQuantity === issueUnitQuantity
+  //       : inputUnitQuantity === prescribedQuantity
+  //   )
+  //     return;
 
-    const quantity = inputUnitQuantity === undefined ? 0 : inputUnitQuantity;
-    setIssueUnitQuantity(quantity);
+  //   const quantity = inputUnitQuantity === undefined ? 0 : inputUnitQuantity;
+  //   setIssueUnitQuantity(quantity);
 
-    const packSize =
-      packSizeController.selected?.value !== -1
-        ? (packSizeController.selected?.value ?? 1)
-        : 1;
+  //   const packSize =
+  //     packSizeController.selected?.value !== -1
+  //       ? (packSizeController.selected?.value ?? 1)
+  //       : 1;
 
-    const numPacks = quantity / packSize;
-    debouncedAllocate(
-      numPacks,
-      Number(packSize),
-      quantityType === 'prescribed' ? inputUnitQuantity : prescribedQuantity
-    );
-  };
+  //   const numPacks = quantity / packSize;
+  //   debouncedAllocate(
+  //     numPacks,
+  //     Number(packSize),
+  //     quantityType === 'prescribed' ? inputUnitQuantity : prescribedQuantity
+  //   );
+  // };
 
-  const handlePrescribedQuantityChange = (inputPrescribedQuantity?: number) => {
-    setPrescribedQuantity(inputPrescribedQuantity ?? 0);
-    handleIssueQuantityChange(inputPrescribedQuantity ?? 0, 'prescribed');
-  };
+  // const handlePrescribedQuantityChange = (inputPrescribedQuantity?: number) => {
+  //   setPrescribedQuantity(inputPrescribedQuantity ?? 0);
+  //   handleIssueQuantityChange(inputPrescribedQuantity ?? 0, 'prescribed');
+  // };
 
   const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);
   const note = prescriptionLineWithNote?.note ?? '';
@@ -333,109 +336,19 @@ export const PrescriptionLineEditForm: React.FC<
               gap={5}
               paddingBottom={2}
             >
-              {preferences?.editPrescribedQuantityOnPrescription && (
-                <Grid display="flex" alignItems="center" gap={1}>
-                  <InputLabel sx={{ fontSize: 12 }}>
-                    {t('label.prescribed-quantity')}
-                  </InputLabel>
-                  <NumericTextInput
-                    autoFocus={
-                      preferences?.editPrescribedQuantityOnPrescription
-                    }
-                    disabled={disabled}
-                    value={
-                      displayInDoses
-                        ? NumUtils.round(prescribedQuantity ?? 0 * item.doses)
-                        : (prescribedQuantity ?? undefined)
-                    }
-                    onChange={(qty?: number) => {
-                      if (qty) {
-                        const dosesToUnit = qty / (item.doses || 1);
-                        handlePrescribedQuantityChange(
-                          displayInDoses ? dosesToUnit : qty
-                        );
-                      }
-                    }}
-                    min={0}
-                    decimalLimit={2}
-                    onBlur={() => {}}
-                    slotProps={{
-                      htmlInput: {
-                        sx: {
-                          backgroundColor: 'background.white',
-                        },
-                      },
-                    }}
-                  />
-                </Grid>
-              )}
-              <Grid display="flex" alignItems="center" gap={1}>
-                <InputLabel sx={{ fontSize: 12 }}>
-                  {t('label.issue')}
-                </InputLabel>
-                <NumericTextInput
-                  autoFocus={!preferences?.editPrescribedQuantityOnPrescription}
-                  disabled={disabled}
-                  value={
-                    displayInDoses
-                      ? NumUtils.round(issueUnitQuantity * item.doses)
-                      : issueUnitQuantity
-                  }
-                  onChange={(qty?: number) => {
-                    if (qty) {
-                      // NOTE: this value may be wrong, if issue quantity is set by
-                      // editing individual lines, which might have variants with different
-                      // doses per unit - should be resolved by new allocation context
-                      const dosesToUnit = qty / (item.doses || 1);
-                      handleIssueQuantityChange(
-                        displayInDoses ? dosesToUnit : qty
-                      );
-                    }
-                  }}
-                  min={0}
-                  decimalLimit={2}
-                  slotProps={{
-                    htmlInput: {
-                      sx: {
-                        backgroundColor: 'background.white',
-                      },
-                    },
-                  }}
-                  onKeyDown={e => {
-                    if (e.code === 'Tab') {
-                      e.preventDefault();
-                      abbreviationRef.current?.focus();
-                    }
-                  }}
-                />
-                <InputLabel sx={{ fontSize: 12 }}>
-                  {getPlural(
-                    unit,
-                    displayInDoses
-                      ? issueUnitQuantity * item?.doses
-                      : issueUnitQuantity
-                  )}
-                </InputLabel>
-              </Grid>
-            </Grid>
-            <AccordionPanelSection
-              title={t('label.batches')}
-              defaultExpanded={false}
-              key={key + '_table'}
-              backgroundColor="background.white"
-            >
-              <TableWrapper
-                canAutoAllocate={canAutoAllocate}
-                currentItem={item}
-                isLoading={isLoading}
-                packSizeController={packSizeController}
-                updateQuantity={updateQuantity}
-                draftPrescriptionLines={draftPrescriptionLines}
-                allocatedUnits={allocatedUnits}
-                isDisabled={disabled}
+              <Allocation
+                itemId={item?.id ?? ''}
+                invoiceId={invoiceId}
+                allowPlaceholder={false}
+                disabled={disabled}
+                prefOptions={{
+                  allocateVaccineItemsInDoses:
+                    prefs?.displayVaccinesInDoses ?? false,
+                  sortByVvmStatus: prefs?.sortByVvmStatusThenExpiry ?? false,
+                }}
               />
-            </AccordionPanelSection>
-          </AccordionPanelSection>
+            </Grid>
+          </AccordionPanelSection>{' '}
         </>
       )}
       {item && (

@@ -22,6 +22,7 @@ interface PrescriptionLineEditProps {
   updateLines: (lines: DraftPrescriptionLine[]) => void;
   setIsDirty: (dirty: boolean) => void;
   programId?: string;
+  invoiceId: string;
 }
 
 export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
@@ -30,6 +31,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
   updateLines,
   setIsDirty,
   programId,
+  invoiceId,
 }) => {
   const isNew = item === null;
   const [currentItem, setCurrentItem] = useBufferState(item);
@@ -134,6 +136,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
       isLoading={isLoading}
       updateQuantity={onUpdateQuantity}
       programId={programId}
+      invoiceId={invoiceId}
     />
   );
 };

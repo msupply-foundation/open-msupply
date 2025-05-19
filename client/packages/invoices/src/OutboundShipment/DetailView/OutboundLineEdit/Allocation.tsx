@@ -12,6 +12,7 @@ import {
   Grid,
   useIntlUtils,
   BasicSpinner,
+  Divider,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { AutoAllocate } from '../../../Allocation/AutoAllocate';
@@ -127,9 +128,10 @@ const AllocationInner = () => {
           </Typography>
         </Grid>
       </ModalRow>
-
-      <AutoAllocate />
-
+      <Grid container gap="4px" width="100%">
+        <Divider margin={10} />
+        <AutoAllocate />
+      </Grid>
       <TableWrapper
         isLoading={false}
         currency={currency}

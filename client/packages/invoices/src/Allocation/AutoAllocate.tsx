@@ -3,7 +3,6 @@ import {
   Grid,
   ModalLabel,
   useTranslation,
-  Divider,
   Box,
   NumericTextInput,
   useFormatNumber,
@@ -56,25 +55,22 @@ export const AutoAllocate = () => {
   };
 
   return (
-    <Grid container gap="4px" width="100%">
-      <>
-        <Divider margin={10} />
-        <Box display="flex" alignItems="flex-start" gap={2}>
-          <Grid container alignItems="center" pt={1}>
-            <ModalLabel label={t('label.issue')} />
-            <NumericTextInput
-              autoFocus
-              value={issueQuantity}
-              onChange={handleIssueQuantityChange}
-            />
-            <Box marginLeft={1} />
-            {allocateIn === AllocateIn.Doses
-              ? t('label.doses')
-              : t('label.units')}
-          </Grid>
-          <AllocationAlerts allocationAlerts={alerts} />
-        </Box>
-      </>
-    </Grid>
+    <>
+      <Box display="flex" alignItems="flex-start" gap={2}>
+        <Grid container alignItems="center" pt={1}>
+          <ModalLabel label={t('label.issue')} />
+          <NumericTextInput
+            autoFocus
+            value={issueQuantity}
+            onChange={handleIssueQuantityChange}
+          />
+          <Box marginLeft={1} />
+          {allocateIn === AllocateIn.Doses
+            ? t('label.doses')
+            : t('label.units')}
+        </Grid>
+        <AllocationAlerts allocationAlerts={alerts} />
+      </Box>
+    </>
   );
 };
