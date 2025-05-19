@@ -49,7 +49,7 @@ const UIComponent = (props: ControlProps) => {
       handleChange('elmisCode', undefined);
     } else {
       handleChange(path, program?.id);
-      handleChange('elmisCode', program.elmisCode ?? '');
+      handleChange('elmisCode', program.elmisCode ?? undefined);
     }
   };
 
