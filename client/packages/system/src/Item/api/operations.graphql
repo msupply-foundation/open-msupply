@@ -32,6 +32,7 @@ fragment StockLine on StockLineNode {
     warnings {
       ...Warning
     }
+    defaultPackSize
   }
   note
   onHold
@@ -56,6 +57,7 @@ fragment ItemRow on ItemNode {
   unitName
   isVaccine
   doses
+  defaultPackSize
 }
 
 fragment ItemRowWithDirections on ItemNode {

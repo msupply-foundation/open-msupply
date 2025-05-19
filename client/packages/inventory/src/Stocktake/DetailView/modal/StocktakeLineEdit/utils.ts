@@ -43,6 +43,7 @@ export const DraftLine = {
         name: item.name,
         isVaccine: item.isVaccine,
         doses: item.doses,
+        defaultPackSize: item.defaultPackSize,
       },
     };
   },
@@ -72,6 +73,7 @@ export const DraftLine = {
         name: stockLine.item.name,
         isVaccine: stockLine.item.isVaccine,
         doses: stockLine.item.doses,
+        defaultPackSize: stockLine.item.defaultPackSize,
       },
     };
   },
