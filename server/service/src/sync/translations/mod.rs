@@ -78,6 +78,7 @@ pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
 pub(crate) mod vaccine_course_item;
 pub(crate) mod warning;
+pub mod message;
 
 use repository::*;
 use thiserror::Error;
@@ -185,6 +186,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         name_insurance_join::boxed(),
         report::boxed(),
         preference::boxed(),
+        Box::new(MessageTranslation {}),
     ]
 }
 
