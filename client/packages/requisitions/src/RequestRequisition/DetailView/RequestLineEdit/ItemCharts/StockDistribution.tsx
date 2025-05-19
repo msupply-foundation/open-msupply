@@ -147,11 +147,11 @@ const CalculationError = ({
   );
 };
 
-const StockDistributionContent: React.FC<StockDistributionProps> = ({
+const StockDistributionContent = ({
   availableStockOnHand = 0,
   averageMonthlyConsumption = 0,
   suggestedQuantity = 0,
-}) => {
+}: StockDistributionProps) => {
   const { maxMonthsOfStock, minMonthsOfStock } = useRequest.document.fields([
     'maxMonthsOfStock',
     'minMonthsOfStock',
@@ -233,11 +233,11 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
   );
 };
 
-export const StockDistribution: React.FC<StockDistributionProps> = ({
+export const StockDistribution = ({
   availableStockOnHand = 0,
   averageMonthlyConsumption = 0,
   suggestedQuantity = 0,
-}) => {
+}: StockDistributionProps) => {
   return (
     <Box
       sx={{

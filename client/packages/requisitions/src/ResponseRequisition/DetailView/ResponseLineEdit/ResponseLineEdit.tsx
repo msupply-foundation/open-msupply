@@ -414,7 +414,7 @@ export const ResponseLineEdit = ({
                   />
                 }
                 labelWidth={LABEL_WIDTH}
-                label={t('label.suggested-quantity')}
+                label={t('label.suggested')}
                 sx={{ marginBottom: 1 }}
               />
               <InputWithLabelRow
