@@ -249,6 +249,9 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
+                DROP TABLE inventory_adjustment_reason;
+                DROP TABLE return_reason;
+
                 UPDATE sync_buffer
                 SET integration_datetime = NULL
                 WHERE table_name = 'reason_option';   
