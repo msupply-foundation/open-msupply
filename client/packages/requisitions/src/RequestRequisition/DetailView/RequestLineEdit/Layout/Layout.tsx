@@ -12,7 +12,47 @@ import {
   getValueInUnitsOrPacks,
   Representation,
   RepresentationValue,
-} from './utils';
+} from '../utils';
+
+interface LayoutProps {
+  Top: React.ReactElement;
+  Left: React.ReactElement | null;
+  Middle: React.ReactElement | null;
+  Right: React.ReactElement | null;
+}
+
+export const Layout = ({ Top, Left, Middle, Right }: LayoutProps) => {
+  return (
+    <Grid
+      container
+      spacing={1}
+      direction="row"
+      bgcolor="background.toolbar"
+      padding={2}
+      paddingBottom={1}
+      boxShadow={theme => theme.shadows[2]}
+    >
+      <Grid size={12} sx={{ mb: 2 }}>
+        {Top}
+      </Grid>
+      <Grid size={12} container spacing={2}>
+        <Grid size={4}>{Left}</Grid>
+        <Grid size={4}>{Middle}</Grid>
+        <Grid
+          size={4}
+          sx={{
+            background: theme => theme.palette.background.group,
+            padding: '0px 8px',
+            borderRadius: 2,
+            paddingBottom: 1,
+          }}
+        >
+          {Right}
+        </Grid>
+      </Grid>
+    </Grid>
+  );
+};
 
 interface InfoRowProps {
   label: string;
@@ -87,50 +127,5 @@ export const ValueInfoRow = ({
       packagingDisplay={packagingDisplay}
       sx={sx}
     />
-  );
-};
-
-interface RequestLineEditFormLayoutProps {
-  Top: React.ReactElement;
-  Left: React.ReactElement;
-  Middle: React.ReactElement | null;
-  Right: React.ReactElement;
-}
-
-export const RequestLineEditFormLayout = ({
-  Top,
-  Left,
-  Middle,
-  Right,
-}: RequestLineEditFormLayoutProps) => {
-  return (
-    <Grid
-      container
-      spacing={1}
-      direction="row"
-      bgcolor="background.toolbar"
-      padding={2}
-      paddingBottom={1}
-      boxShadow={theme => theme.shadows[2]}
-    >
-      <Grid size={12} sx={{ mb: 2 }}>
-        {Top}
-      </Grid>
-      <Grid size={12} container spacing={2}>
-        <Grid size={4}>{Left}</Grid>
-        <Grid size={4}>{Middle}</Grid>
-        <Grid
-          size={4}
-          sx={{
-            background: theme => theme.palette.background.group,
-            padding: '0px 8px',
-            borderRadius: 2,
-            paddingBottom: 1,
-          }}
-        >
-          {Right}
-        </Grid>
-      </Grid>
-    </Grid>
   );
 };
