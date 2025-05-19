@@ -4,6 +4,24 @@ import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { LocationRowFragmentDoc } from '../../Location/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
+export type VvmStatusLogRowFragment = {
+  __typename: 'VvmstatusLogNode';
+  id: string;
+  createdDatetime: string;
+  comment?: string | null;
+  user?: {
+    __typename: 'UserNode';
+    firstName?: string | null;
+    lastName?: string | null;
+    username: string;
+  } | null;
+  status?: {
+    __typename: 'VvmstatusNode';
+    description: string;
+    level: number;
+  } | null;
+};
+
 export type StockLineRowFragment = {
   __typename: 'StockLineNode';
   availableNumberOfPacks: number;
@@ -41,8 +59,29 @@ export type StockLineRowFragment = {
     code: string;
     name: string;
     unitName?: string | null;
+    isVaccine: boolean;
     masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
   };
+  vvmStatusLogs?: {
+    __typename: 'VvmstatusLogConnector';
+    nodes: Array<{
+      __typename: 'VvmstatusLogNode';
+      id: string;
+      createdDatetime: string;
+      comment?: string | null;
+      user?: {
+        __typename: 'UserNode';
+        firstName?: string | null;
+        lastName?: string | null;
+        username: string;
+      } | null;
+      status?: {
+        __typename: 'VvmstatusNode';
+        description: string;
+        level: number;
+      } | null;
+    }>;
+  } | null;
 };
 
 export type RepackStockLineFragment = {
@@ -191,11 +230,32 @@ export type StockLinesQuery = {
         code: string;
         name: string;
         unitName?: string | null;
+        isVaccine: boolean;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
         }> | null;
       };
+      vvmStatusLogs?: {
+        __typename: 'VvmstatusLogConnector';
+        nodes: Array<{
+          __typename: 'VvmstatusLogNode';
+          id: string;
+          createdDatetime: string;
+          comment?: string | null;
+          user?: {
+            __typename: 'UserNode';
+            firstName?: string | null;
+            lastName?: string | null;
+            username: string;
+          } | null;
+          status?: {
+            __typename: 'VvmstatusNode';
+            description: string;
+            level: number;
+          } | null;
+        }>;
+      } | null;
     }>;
   };
 };
@@ -247,11 +307,32 @@ export type StockLineQuery = {
         code: string;
         name: string;
         unitName?: string | null;
+        isVaccine: boolean;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
         }> | null;
       };
+      vvmStatusLogs?: {
+        __typename: 'VvmstatusLogConnector';
+        nodes: Array<{
+          __typename: 'VvmstatusLogNode';
+          id: string;
+          createdDatetime: string;
+          comment?: string | null;
+          user?: {
+            __typename: 'UserNode';
+            firstName?: string | null;
+            lastName?: string | null;
+            username: string;
+          } | null;
+          status?: {
+            __typename: 'VvmstatusNode';
+            description: string;
+            level: number;
+          } | null;
+        }>;
+      } | null;
     }>;
   };
 };
@@ -329,11 +410,32 @@ export type UpdateStockLineMutation = {
           code: string;
           name: string;
           unitName?: string | null;
+          isVaccine: boolean;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
           }> | null;
         };
+        vvmStatusLogs?: {
+          __typename: 'VvmstatusLogConnector';
+          nodes: Array<{
+            __typename: 'VvmstatusLogNode';
+            id: string;
+            createdDatetime: string;
+            comment?: string | null;
+            user?: {
+              __typename: 'UserNode';
+              firstName?: string | null;
+              lastName?: string | null;
+              username: string;
+            } | null;
+            status?: {
+              __typename: 'VvmstatusNode';
+              description: string;
+              level: number;
+            } | null;
+          }>;
+        } | null;
       }
     | { __typename: 'UpdateStockLineError' };
 };
@@ -561,14 +663,52 @@ export type InsertStockLineMutation = {
           code: string;
           name: string;
           unitName?: string | null;
+          isVaccine: boolean;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
           }> | null;
         };
+        vvmStatusLogs?: {
+          __typename: 'VvmstatusLogConnector';
+          nodes: Array<{
+            __typename: 'VvmstatusLogNode';
+            id: string;
+            createdDatetime: string;
+            comment?: string | null;
+            user?: {
+              __typename: 'UserNode';
+              firstName?: string | null;
+              lastName?: string | null;
+              username: string;
+            } | null;
+            status?: {
+              __typename: 'VvmstatusNode';
+              description: string;
+              level: number;
+            } | null;
+          }>;
+        } | null;
       };
 };
 
+export const VvmStatusLogRowFragmentDoc = gql`
+  fragment VVMStatusLogRow on VvmstatusLogNode {
+    id
+    createdDatetime
+    user {
+      firstName
+      lastName
+      username
+    }
+    status {
+      description
+      level
+    }
+    createdDatetime
+    comment
+  }
+`;
 export const StockLineRowFragmentDoc = gql`
   fragment StockLineRow on StockLineNode {
     availableNumberOfPacks
@@ -596,10 +736,17 @@ export const StockLineRowFragmentDoc = gql`
       masterLists(storeId: $storeId) {
         name
       }
+      isVaccine
     }
     barcode
+    vvmStatusLogs {
+      nodes {
+        ...VVMStatusLogRow
+      }
+    }
   }
   ${LocationRowFragmentDoc}
+  ${VvmStatusLogRowFragmentDoc}
 `;
 export const RepackStockLineFragmentDoc = gql`
   fragment RepackStockLine on RepackStockLineNode {

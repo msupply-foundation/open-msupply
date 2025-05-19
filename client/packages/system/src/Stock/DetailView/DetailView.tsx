@@ -24,8 +24,10 @@ import { LedgerTable } from '../Components/Ledger';
 import { Footer } from './Footer';
 import { RepackModal } from '../Components';
 import { InventoryAdjustmentModal } from '../Components';
+import { StatusHistory } from '../Components/StatusHistory';
 
 export const StockLineDetailView: React.FC = () => {
+  const t = useTranslation();
   const { id } = useParams();
   const {
     query: { data, isLoading },
@@ -40,7 +42,6 @@ export const StockLineDetailView: React.FC = () => {
     urlQuery: { tab },
   } = useUrlQuery();
   const { success, error } = useNotification();
-  const t = useTranslation();
   const { setCustomBreadcrumbs, navigateUpOne } = useBreadcrumbs();
 
   const repackModalController = useToggle();
@@ -84,12 +85,16 @@ export const StockLineDetailView: React.FC = () => {
     // Getting isDirty from 'draftStockLine' rather than from 'useConfirmOnLeaving' hook
     // so need to update it manually to sync external isDirty state with hook's isDirty state
     setIsDirty(isDirty);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDirty]);
 
   const openInventoryAdjustmentModal = useCallbackWithPermission(
     UserPermission.InventoryAdjustmentMutate,
     adjustmentModalController.toggleOn
   );
+
+  const isVaccine = data?.item?.isVaccine ?? false;
+
   const tabs = [
     {
       Component: (
@@ -102,6 +107,14 @@ export const StockLineDetailView: React.FC = () => {
       ),
       value: t('label.details'),
     },
+    ...(isVaccine
+      ? [
+          {
+            Component: <StatusHistory draft={draft} isLoading={isLoading} />,
+            value: t('label.statushistory'),
+          },
+        ]
+      : []),
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: t('label.log'),
