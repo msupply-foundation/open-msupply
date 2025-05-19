@@ -4,37 +4,55 @@ import {
   Box,
   DataTable,
   useTranslation,
+  useTableStore,
+  useFormatNumber,
 } from '@openmsupply-client/common';
-import { DraftPrescriptionLine } from '../../types';
-import { DraftItem } from '../..';
+
 import { usePrescriptionLineEditRows } from './hooks';
 import { usePrescriptionLineEditColumns } from './columns';
+import { CurrencyRowFragment } from '@openmsupply-client/system';
+import { useOutboundLineEditColumns } from '../../OutboundShipment/DetailView/OutboundLineEdit/columns';
+import { getAllocatedQuantity } from '../../Allocation/utils';
+import { useAllocationContext } from '../../Allocation/useAllocationContext';
 
 export interface PrescriptionLineEditTableProps {
-  onChange: (key: string, value: number) => void;
-  rows: DraftPrescriptionLine[];
-  item: DraftItem | null;
-  allocatedUnits: number;
-  batch?: string;
-  isDisabled: boolean;
+  currency?: CurrencyRowFragment | null;
+  isExternalSupplier: boolean;
+  disabled?: boolean;
 }
 
 export const PrescriptionLineEditTable: React.FC<
   PrescriptionLineEditTableProps
-> = ({ onChange, rows, item, isDisabled }) => {
+> = ({ currency, isExternalSupplier, disabled }) => {
   const t = useTranslation();
-  const { orderedRows } = usePrescriptionLineEditRows(rows, isDisabled);
-  const onEditStockLine = (key: string, value: number) => {
-    const num = Number.isNaN(value) ? 0 : value;
-    onChange(key, num);
-  };
-  const unitName = item?.unitName ?? t('label.unit');
+  const { format } = useFormatNumber();
+  // const tableStore = useTableStore(); Only used for disabling rows?
+  const { draftLines, allocateIn, item, manualAllocate } = useAllocationContext(
+    state => ({
+      ...state,
+      allocatedQuantity: getAllocatedQuantity(state),
+    })
+  );
 
-  const columns = usePrescriptionLineEditColumns({
-    onChange: onEditStockLine,
-    unitName,
-    isVaccine: item?.isVaccine,
+  const allocate = (key: string, value: number) => {
+    const num = Number.isNaN(value) ? 0 : value;
+    return manualAllocate(key, num, format, t);
+  };
+
+  const columns = useOutboundLineEditColumns({
+    allocate,
+    item,
+    currency,
+    isExternalSupplier,
+    allocateIn,
   });
+
+  // TODO: MOVE TO THIS from above
+  // const columns = usePrescriptionLineEditColumns({
+  //   onChange: onEditStockLine,
+  //   unitName,
+  //   isVaccine: item?.isVaccine,
+  // });
 
   return (
     <Box style={{ width: '100%' }}>
@@ -54,11 +72,11 @@ export const PrescriptionLineEditTable: React.FC<
           },
         }}
       >
-        {!!orderedRows.length && (
+        {!!draftLines.length && (
           <DataTable
             id="prescription-line-edit"
             columns={columns}
-            data={orderedRows}
+            data={draftLines}
             dense
           />
         )}

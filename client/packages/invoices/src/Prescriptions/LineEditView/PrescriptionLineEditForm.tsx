@@ -5,10 +5,6 @@ import {
   useTranslation,
   Box,
   Typography,
-  useFormatNumber,
-  useDebounceCallback,
-  InputLabel,
-  useDebouncedValueCallback,
   TableProvider,
   createTableStore,
   createQueryParamsStore,
@@ -17,7 +13,6 @@ import {
   LocaleKey,
   NumUtils,
   ItemNode,
-  useAuthContext,
   DropdownMenu,
   DropdownMenuItem,
   TextArea,
@@ -32,19 +27,13 @@ import {
 } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
 import { PackSizeController } from '../../StockOut';
-import {
-  StockOutAlert,
-  StockOutAlerts,
-  getAllocationAlerts,
-} from '../../StockOut';
+import { StockOutAlert, StockOutAlerts } from '../../StockOut';
 import { DraftPrescriptionLine } from '../../types';
-import { isA } from '../../utils';
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 import { getPrescriptionDirections } from './getPrescriptionDirections';
 import { useAbbreviations } from '../api/hooks/useAbbreviations';
 import { Allocation } from './Allocation';
-import { AutoAllocate } from '../../Allocation/AutoAllocate';
 
 interface PrescriptionLineEditFormProps {
   allocatedUnits: number;
@@ -78,167 +67,48 @@ export const PrescriptionLineEditForm: React.FC<
 > = ({
   allocatedUnits,
   onChangeItem,
-  onChangeQuantity,
   item,
   packSizeController,
   disabled,
   isNew,
-  canAutoAllocate,
   updateNotes,
   draftPrescriptionLines,
   showZeroQuantityConfirmation,
   isAutoAllocated,
-  hasOnHold,
-  hasExpired,
-  isLoading,
-  updateQuantity,
   programId,
   invoiceId,
 }) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
-  const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
-  const { store: { preferences } = {} } = useAuthContext();
   const { data: prefs } = usePreference(
     PreferenceKey.DisplayVaccinesInDoses,
     PreferenceKey.SortByVvmStatusThenExpiry
   );
 
   const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
-  const [prescribedQuantity, setPrescribedQuantity] = useState<number | null>(
-    null
-  );
+
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
   const [defaultDirection, setDefaultDirection] = useState<string>('');
   const [abbreviation, setAbbreviation] = useState<string>('');
 
-  // const debouncedSetAllocationAlerts = useDebounceCallback(
-  //   warning => setAllocationAlerts(warning),
-  //   []
-  // );
   const isDirectionsDisabled = !issueUnitQuantity;
   const displayInDoses = !!prefs?.displayVaccinesInDoses && !!item?.isVaccine;
-  const unitName = item?.unitName ?? t('label.unit');
-  const unit = displayInDoses ? t('label.doses') : unitName;
-
-  // const allocate = (
-  //   numPacks: number,
-  //   packSize: number,
-  //   prescribedQuantity: number
-  // ) => {
-  //   const newAllocateQuantities = onChangeQuantity(
-  //     numPacks,
-  //     packSize === -1 || packSize === 1 ? null : packSize,
-  //     true,
-  //     prescribedQuantity
-  //   );
-  //   const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
-  //   const allocatedQuantity =
-  //     newAllocateQuantities?.reduce(
-  //       (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
-  //       0
-  //     ) ?? 0;
-  //   const allocateInUnits = packSize === null;
-  //   const messageKey = allocateInUnits
-  //     ? 'warning.cannot-create-placeholder-units'
-  //     : 'warning.cannot-create-placeholder-packs';
-  //   const hasRequestedOverAvailable =
-  //     numPacks > allocatedQuantity && newAllocateQuantities !== undefined;
-  //   const alerts = getAllocationAlerts(
-  //     numPacks * (packSize === -1 ? 1 : packSize),
-  //     // suppress the allocation warning if the user has requested more than the available amount of stock
-  //     hasRequestedOverAvailable ? 0 : allocatedQuantity,
-  //     placeholderLine?.numberOfPacks ?? 0,
-  //     hasOnHold,
-  //     hasExpired,
-  //     format,
-  //     t
-  //   );
-  //   if (hasRequestedOverAvailable) {
-  //     alerts.push({
-  //       message: t(messageKey, {
-  //         allocatedQuantity: format(allocatedQuantity),
-  //         requestedQuantity: format(numPacks),
-  //       }),
-  //       severity: 'warning',
-  //     });
-  //   }
-  //   if (NumUtils.round(numPacks) !== numPacks) {
-  //     const nearestAbove = Math.ceil(numPacks) * packSize;
-  //     alerts.push({
-  //       message: t('messages.partial-pack-warning', { nearestAbove }),
-  //       severity: 'warning',
-  //     });
-  //   }
-  //   debouncedSetAllocationAlerts(alerts);
-  //   setIssueUnitQuantity(allocatedQuantity);
-  // };
-
-  // using a debounced value for the allocation. In the scenario where
-  // you have only pack sizes > 1 available, and try to type a quantity which starts with 1
-  // e.g. 10, 12, 100.. then the allocation rounds the 1 up immediately to the available
-  // pack size which stops you entering the required quantity.
-  // See https://github.com/msupply-foundation/open-msupply/issues/2727
-  // and https://github.com/msupply-foundation/open-msupply/issues/3532
-  // const debouncedAllocate = useDebouncedValueCallback(
-  //   (numPacks, packSize, prescribedQuantity) => {
-  //     allocate(numPacks, packSize, prescribedQuantity);
-  //   },
-  //   [],
-  //   500,
-  //   [draftPrescriptionLines] // this is needed to prevent a captured enclosure of onChangeQuantity
-  // );
-
-  // const handleIssueQuantityChange = (
-  //   inputUnitQuantity?: number,
-  //   quantityType: 'issue' | 'prescribed' = 'issue'
-  // ) => {
-  //   // this method is also called onBlur... check that there actually has been a
-  //   // change in quantity (to prevent triggering auto allocation if only focus
-  //   // has moved)
-  //   if (
-  //     quantityType === 'issue'
-  //       ? inputUnitQuantity === issueUnitQuantity
-  //       : inputUnitQuantity === prescribedQuantity
-  //   )
-  //     return;
-
-  //   const quantity = inputUnitQuantity === undefined ? 0 : inputUnitQuantity;
-  //   setIssueUnitQuantity(quantity);
-
-  //   const packSize =
-  //     packSizeController.selected?.value !== -1
-  //       ? (packSizeController.selected?.value ?? 1)
-  //       : 1;
-
-  //   const numPacks = quantity / packSize;
-  //   debouncedAllocate(
-  //     numPacks,
-  //     Number(packSize),
-  //     quantityType === 'prescribed' ? inputUnitQuantity : prescribedQuantity
-  //   );
-  // };
-
-  // const handlePrescribedQuantityChange = (inputPrescribedQuantity?: number) => {
-  //   setPrescribedQuantity(inputPrescribedQuantity ?? 0);
-  //   handleIssueQuantityChange(inputPrescribedQuantity ?? 0, 'prescribed');
-  // };
 
   const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);
   const note = prescriptionLineWithNote?.note ?? '';
 
   useEffect(() => {
-    if (preferences?.editPrescribedQuantityOnPrescription) {
-      const selectedItem = items.find(
-        prescriptionItem => prescriptionItem.id === item?.id
-      );
-      const newPrescribedQuantity =
-        selectedItem?.lines?.find(
-          ({ prescribedQuantity }) => prescribedQuantity != null
-        )?.prescribedQuantity ?? 0;
-      setPrescribedQuantity(newPrescribedQuantity);
-    }
+    // if (preferences?.editPrescribedQuantityOnPrescription) {
+    //   const selectedItem = items.find(
+    //     prescriptionItem => prescriptionItem.id === item?.id
+    //   );
+    //   const newPrescribedQuantity =
+    //     selectedItem?.lines?.find(
+    //       ({ prescribedQuantity }) => prescribedQuantity != null
+    //     )?.prescribedQuantity ?? 0;
+    //   setPrescribedQuantity(newPrescribedQuantity);
+    // }
 
     const newIssueQuantity = NumUtils.round(
       allocatedUnits /

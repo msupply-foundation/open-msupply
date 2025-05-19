@@ -1,20 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Typography,
   InlineSpinner,
   Box,
   useTranslation,
   TableProvider,
   createTableStore,
   createQueryParamsStore,
-  ModalRow,
-  ModalLabel,
   Grid,
   useIntlUtils,
   BasicSpinner,
   InputLabel,
   useAuthContext,
   NumericTextInput,
+  usePreference,
+  PreferenceKey,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from '../../OutboundShipment/DetailView/OutboundLineEdit/OutboundLineEditTable'; // TODO: FIx
 import { AutoAllocate } from '../../Allocation/AutoAllocate';
@@ -28,6 +28,7 @@ import {
   AllocationStrategy,
 } from '../../Allocation/useAllocationContext';
 import { AccordionPanelSection } from './PanelSection';
+import { set } from 'lodash';
 
 interface AllocationProps {
   itemId: string;
@@ -84,7 +85,11 @@ export const Allocation = ({
 const AllocationInner = () => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+
   const { store: { preferences } = {} } = useAuthContext();
+  const { data: OMSPrefs } = usePreference(
+    PreferenceKey.DisplayVaccinesInDoses
+  );
 
   const { currency, otherParty } = useOutbound.document.fields([
     'currency',
@@ -98,6 +103,15 @@ const AllocationInner = () => {
     })
   );
 
+  // Copied over needs review!
+  const [prescribedQuantity, setPrescribedQuantity] = useState<number | null>(
+    null
+  );
+  const displayInDoses =
+    !!OMSPrefs?.displayVaccinesInDoses && !!item?.isVaccine;
+  const unitName = item?.unitName ?? t('label.unit');
+  // End of copied code
+
   return (
     <>
       {preferences?.editPrescribedQuantityOnPrescription && (
@@ -110,12 +124,14 @@ const AllocationInner = () => {
             // disabled={disabled}
             disabled={false} // todo: fix
             value={
-              // displayInDoses
-              //   ? NumUtils.round(prescribedQuantity ?? 0 * item.doses)
-              //   : (prescribedQuantity ?? undefined)
-              0
+              //   displayInDoses
+              //     ? NumUtils.round(prescribedQuantity ?? 0 * item.doses)
+              //     : (prescribedQuantity ?? undefined)
+              // }
+              prescribedQuantity ?? undefined
             }
             onChange={(qty?: number) => {
+              setPrescribedQuantity(qty ?? null);
               // if (qty) {
               //   const dosesToUnit = qty / (item.doses || 1);
               //   handlePrescribedQuantityChange(
@@ -209,6 +225,7 @@ const TableWrapper = ({
   isLoading,
   currency,
   isExternalSupplier,
+  disabled,
 }: TableProps) => {
   if (isLoading)
     return (
@@ -223,6 +240,14 @@ const TableWrapper = ({
       </Box>
     );
 
+  // TODO: re-create/review this logic
+  // if (!canAutoAllocate)
+  //   return (
+  //     <Box sx={{ margin: 'auto' }}>
+  //       <Typography>{t('messages.no-stock-available')}</Typography>
+  //     </Box>
+  //   );
+
   return (
     <TableProvider
       createStore={createTableStore}
@@ -230,6 +255,15 @@ const TableWrapper = ({
         initialSortBy: { key: 'expiryDate' },
       })}
     >
+      {/* <PrescriptionLineEditTable
+          // packSizeController={packSizeController}
+          onChange={updateQuantity}
+          rows={draftPrescriptionLines}
+          item={currentItem}
+          allocatedUnits={allocatedUnits}
+          isDisabled={isDisabled}
+        /> */}
+
       <OutboundLineEditTable
         currency={currency}
         isExternalSupplier={isExternalSupplier}
