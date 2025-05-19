@@ -243,6 +243,7 @@ mod test {
                             r.date_of_birth = Some(NaiveDate::from_ymd_opt(1995, 5, 15).unwrap());
                             r.custom_data_string = Some(r#"{"check": "check"}"#.to_string());
                         }),
+                        name_link_row: NameLinkRow {},
                         name_store_join_row: None,
                         store_row: None,
                         properties: None,
