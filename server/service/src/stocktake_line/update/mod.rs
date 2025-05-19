@@ -23,7 +23,6 @@ pub struct UpdateStocktakeLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
-    pub inventory_adjustment_reason_id: Option<String>,
     pub item_variant_id: Option<NullableUpdate<String>>,
     pub donor_id: Option<NullableUpdate<String>>,
     pub reason_option_id: Option<String>,
@@ -157,7 +156,7 @@ mod stocktake_line_test {
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![outbound_shipment()];
                 r.invoice_lines = vec![outbound_shipment_line()];
-                r.options = vec![positive_reason(), negative_reason()];
+                r.reason_options = vec![positive_reason(), negative_reason()];
                 r.stocktake_lines = vec![mock_stocktake_line(), mock_reduced_stock()];
             }),
         )
@@ -197,10 +196,10 @@ mod stocktake_line_test {
         assert_eq!(error, UpdateStocktakeLineError::AdjustmentReasonNotValid);
 
         ReasonOptionRowRepository::new(&context.connection)
-            .delete(&positive_reason().id)
+            .soft_delete(&positive_reason().id)
             .unwrap();
         ReasonOptionRowRepository::new(&context.connection)
-            .delete(&negative_reason().id)
+            .soft_delete(&negative_reason().id)
             .unwrap();
 
         // error: StocktakeLineDoesNotExist
@@ -354,7 +353,6 @@ mod stocktake_line_test {
                 expiry_date: None,
                 pack_size: None,
                 note: None,
-                inventory_adjustment_reason_id: None,
                 item_variant_id: None,
                 donor_link_id: None,
                 reason_option_id: None,

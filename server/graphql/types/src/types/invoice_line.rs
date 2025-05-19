@@ -7,9 +7,8 @@ use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
     loader::{
-        InventoryAdjustmentReasonByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader,
-        LocationByIdLoader, NameRowLoader, ReasonOptionLoader, ReturnReasonLoader,
-        StockLineByIdLoader,
+        ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader, NameRowLoader,
+        ReasonOptionLoader, StockLineByIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
@@ -174,14 +173,17 @@ impl InvoiceLineNode {
     pub async fn note(&self) -> &Option<String> {
         &self.row().note
     }
+
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn return_reason_id(&self) -> &Option<String> {
-        &self.row().return_reason_id
+        &self.row().reason_option_id
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn return_reason(&self, ctx: &Context<'_>) -> Result<Option<ReturnReasonNode>> {
-        let loader = ctx.get_loader::<DataLoader<ReturnReasonLoader>>();
+        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
 
-        let return_reason_id = match &self.row().return_reason_id {
+        let return_reason_id = match &self.row().reason_option_id {
             Some(return_reason_id) => return_reason_id,
             None => return Ok(None),
         };
@@ -191,12 +193,13 @@ impl InvoiceLineNode {
         Ok(result.map(ReturnReasonNode::from_domain))
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn inventory_adjustment_reason(
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<InventoryAdjustmentReasonNode>> {
-        let loader = ctx.get_loader::<DataLoader<InventoryAdjustmentReasonByIdLoader>>();
-        let inventory_adjustment_reason_id = match &self.row().inventory_adjustment_reason_id {
+        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
+        let inventory_adjustment_reason_id = match &self.row().reason_option_id {
             None => return Ok(None),
             Some(inventory_adjustment_reason_id) => inventory_adjustment_reason_id,
         };

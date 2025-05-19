@@ -56,11 +56,6 @@ export type StocktakeLineFragment = {
     id: string;
     dosesPerUnit: number;
   } | null;
-  inventoryAdjustmentReason?: {
-    __typename: 'InventoryAdjustmentReasonNode';
-    id: string;
-    reason: string;
-  } | null;
   reasonOption?: {
     __typename: 'ReasonOptionNode';
     reason: string;
@@ -130,11 +125,6 @@ export type StocktakeFragment = {
         __typename: 'ItemVariantNode';
         id: string;
         dosesPerUnit: number;
-      } | null;
-      inventoryAdjustmentReason?: {
-        __typename: 'InventoryAdjustmentReasonNode';
-        id: string;
-        reason: string;
       } | null;
       reasonOption?: {
         __typename: 'ReasonOptionNode';
@@ -247,11 +237,6 @@ export type StocktakeQuery = {
               id: string;
               dosesPerUnit: number;
             } | null;
-            inventoryAdjustmentReason?: {
-              __typename: 'InventoryAdjustmentReasonNode';
-              id: string;
-              reason: string;
-            } | null;
             reasonOption?: {
               __typename: 'ReasonOptionNode';
               reason: string;
@@ -334,11 +319,6 @@ export type StocktakeByNumberQuery = {
               id: string;
               dosesPerUnit: number;
             } | null;
-            inventoryAdjustmentReason?: {
-              __typename: 'InventoryAdjustmentReasonNode';
-              id: string;
-              reason: string;
-            } | null;
             reasonOption?: {
               __typename: 'ReasonOptionNode';
               reason: string;
@@ -404,11 +384,6 @@ export type StocktakeLinesQuery = {
         __typename: 'ItemVariantNode';
         id: string;
         dosesPerUnit: number;
-      } | null;
-      inventoryAdjustmentReason?: {
-        __typename: 'InventoryAdjustmentReasonNode';
-        id: string;
-        reason: string;
       } | null;
       reasonOption?: {
         __typename: 'ReasonOptionNode';
@@ -692,11 +667,6 @@ export const StocktakeLineFragmentDoc = gql`
     itemVariant {
       id
       dosesPerUnit
-    }
-    inventoryAdjustmentReason {
-      __typename
-      id
-      reason
     }
     reasonOption {
       reason

@@ -24,7 +24,6 @@ pub struct InsertStocktakeLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
-    pub inventory_adjustment_reason_id: Option<String>,
     pub item_variant_id: Option<String>,
     pub donor_id: Option<String>,
     pub reason_option_id: Option<String>,
@@ -367,7 +366,7 @@ mod stocktake_line_test {
             "insert_stocktake_line_with_reasons",
             MockDataInserts::all(),
             MockData {
-                options: vec![positive_reason(), negative_reason()],
+                reason_options: vec![positive_reason(), negative_reason()],
                 stock_lines: vec![mock_stock_line_c(), mock_stock_line_d()],
                 stocktakes: vec![mock_initial_stocktake(&store_id)],
                 ..Default::default()

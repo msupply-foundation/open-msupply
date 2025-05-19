@@ -6,8 +6,7 @@ use service::usize_to_u32;
 
 use graphql_core::{
     loader::{
-        InventoryAdjustmentReasonByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader,
-        LocationByIdLoader, ReasonOptionLoader,
+        ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader, ReasonOptionLoader,
         StockLineByIdLoader,
     },
     standard_graphql_error::StandardGraphqlError,
@@ -15,9 +14,8 @@ use graphql_core::{
 };
 
 use super::{
-    
-    InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, ReasonOptionNode, StockLineNode,
-,
+    InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, ReasonOptionNode,
+    StockLineNode,
 };
 
 pub struct StocktakeLineNode {
@@ -120,16 +118,18 @@ impl StocktakeLineNode {
         &self.line.line.note
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn inventory_adjustment_reason_id(&self) -> &Option<String> {
-        &self.line.line.inventory_adjustment_reason_id
+        &self.line.line.reason_option_id
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option instead")]
     pub async fn inventory_adjustment_reason(
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<InventoryAdjustmentReasonNode>> {
-        let loader = ctx.get_loader::<DataLoader<InventoryAdjustmentReasonByIdLoader>>();
-        let inventory_adjustment_reason_id = match &self.line.line.inventory_adjustment_reason_id {
+        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
+        let inventory_adjustment_reason_id = match &self.line.line.reason_option_id {
             None => return Ok(None),
             Some(inventory_adjustment_reason_id) => inventory_adjustment_reason_id,
         };

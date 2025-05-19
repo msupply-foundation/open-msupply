@@ -170,8 +170,6 @@ fn generate_line(
         total_after_tax,
         tax_percentage,
         note,
-        inventory_adjustment_reason_id: None,
-        return_reason_id: None,
         foreign_currency_price_before_tax,
         item_variant_id,
         linked_invoice_id: None,

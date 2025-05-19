@@ -9,8 +9,8 @@ import {
 } from '@openmsupply-client/common';
 import {
   ReasonOptionRowFragment,
-  reasonOptions,
   ReasonOptionsSearchInput,
+  useReasonOptions,
 } from '@openmsupply-client/system';
 import { useStocktakeOld } from '../api';
 
@@ -31,7 +31,7 @@ export const ReduceLinesToZeroConfirmationModal = ({
 
   const onZeroQuantities = useStocktakeOld.line.zeroQuantities();
 
-  const { data } = reasonOptions.document.listAllActive();
+  const { data } = useReasonOptions();
   const reasonIsRequired = data?.totalCount !== 0;
 
   return (
