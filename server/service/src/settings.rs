@@ -1,10 +1,11 @@
 use std::fmt::{Display, Formatter, Result};
 
 use repository::database_settings::DatabaseSettings;
+use serde::{Deserialize, Serialize};
 
 use crate::sync::settings::SyncSettings;
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct Settings {
     pub server: ServerSettings,
     pub database: DatabaseSettings,
@@ -14,7 +15,7 @@ pub struct Settings {
     pub mail: Option<MailSettings>,
 }
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct ServerSettings {
     pub port: u16,
     /// Allow to run the server in http mode
@@ -45,7 +46,7 @@ impl ServerSettings {
 }
 
 /// See backup cli for more details
-#[derive(serde::Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct BackupSettings {
     // Root folder for backup
     pub backup_dir: String,
@@ -60,14 +61,14 @@ pub fn is_develop() -> bool {
     cfg!(debug_assertions)
 }
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub enum LogMode {
     All,
     Console,
     File,
 }
 
-#[derive(serde::Deserialize, Clone, Default)]
+#[derive(Deserialize, Serialize, Clone, Default)]
 pub enum DiscoveryMode {
     #[default]
     Auto,
@@ -75,7 +76,7 @@ pub enum DiscoveryMode {
     Disabled,
 }
 
-#[derive(serde::Deserialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum Level {
     Error,
     Warn,
@@ -97,7 +98,7 @@ impl Display for Level {
     }
 }
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct LoggingSettings {
     /// Console (default) | File
     pub mode: LogMode,
@@ -129,25 +130,25 @@ impl LoggingSettings {
     }
 }
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct DisplaySettingNode {
     pub value: String,
     pub hash: String,
 }
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct DisplaySettingsNode {
     pub custom_logo: Option<DisplaySettingNode>,
     pub custom_theme: Option<DisplaySettingNode>,
 }
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct DisplaySettingsInput {
     pub custom_logo: Option<String>,
     pub custom_theme: Option<String>,
 }
 
-#[derive(serde::Deserialize, Clone, serde::Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct LabelPrinterSettingNode {
     pub address: String,
     pub label_height: i32,
@@ -155,7 +156,7 @@ pub struct LabelPrinterSettingNode {
     pub port: u16,
 }
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct MailSettings {
     pub port: u16,
     pub host: String,
