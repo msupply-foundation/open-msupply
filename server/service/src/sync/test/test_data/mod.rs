@@ -76,6 +76,7 @@ pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
 pub(crate) mod vaccine_course_item;
 pub(crate) mod warning;
+pub mod message;
 
 pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncomingRecord> {
     let mut test_records = Vec::new();

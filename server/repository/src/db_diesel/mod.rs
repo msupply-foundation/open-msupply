@@ -162,6 +162,8 @@ pub mod vaccination_row;
 pub mod vaccine_course;
 pub mod warning;
 pub mod warning_row;
+pub mod message;
+pub mod message_row;
 
 pub use abbreviation_row::*;
 pub use activity_log_row::*;
@@ -293,6 +295,10 @@ pub use vaccination_card::*;
 pub use vaccination_row::*;
 pub use warning::*;
 pub use warning_row::*;
+pub use self::{
+    message::{Message, MessageFilter, MessageRepository, MessageSort, MessageSortField},
+    message_row::{MessageRow, MessageRowDelete, MessageRowRepository, MessageStatus, MessageType},
+};
 
 use diesel::{
     prelude::*,
