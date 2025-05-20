@@ -237,7 +237,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     const allocatedQuantity = updatedLine
       ? allocateIn.type === AllocateInType.Doses
         ? packsToDoses(updatedLine.numberOfPacks, updatedLine)
-        : // when not in doses or packs, manual allocation is in packs
+        : // when not in doses, manual allocation is in packs
           updatedLine.numberOfPacks
       : 0;
 
