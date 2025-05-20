@@ -1022,6 +1022,7 @@ export type CampaignQueriesCampaignsArgs = {
   filter?: InputMaybe<CampaignFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<CampaignSortInput>>;
+  storeId: Scalars['String']['input'];
 };
 
 export enum CampaignSortFieldInput {

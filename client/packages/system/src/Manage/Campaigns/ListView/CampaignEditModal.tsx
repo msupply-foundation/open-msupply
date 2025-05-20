@@ -31,7 +31,7 @@ interface FacilityEditModalProps {
   setNextFacility?: (nameId: string) => void;
 }
 
-export const FacilityEditModal: FC<FacilityEditModalProps> = ({
+export const CampaignEditModal: FC<FacilityEditModalProps> = ({
   nameId,
   isOpen,
   onClose,

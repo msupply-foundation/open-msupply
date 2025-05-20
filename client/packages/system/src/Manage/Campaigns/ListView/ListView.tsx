@@ -12,12 +12,14 @@ import {
   useToggle,
   TooltipTextCell,
   useTranslation,
+  ColumnFormat,
 } from '@openmsupply-client/common';
 // import { useName } from '../../api';
 import { Toolbar } from './Toolbar';
-import { FacilityEditModal } from './FacilityEditModal';
+import { CampaignEditModal } from './CampaignEditModal';
 import { AppBarButtons } from './AppBarButtons';
 import { PropertiesImportModal } from './ImportProperties/PropertiesImportModal';
+import { useCampaigns } from '../api';
 // import { FacilityNameRowFragment } from '../../api/operations.generated';
 
 const CampaignsComponent = () => {
@@ -27,52 +29,44 @@ const CampaignsComponent = () => {
     filter,
     updateSortQuery,
     updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
-  // const { data, isError, isLoading } = useName.document.facilities();
-  // const { data: properties, isLoading: propertiesLoading } =
-  //   useName.document.properties();
+    queryParams: { sortBy, page, first, offset, filterBy },
+  } = useUrlQueryParams({ initialSort: { key: 'name', dir: 'asc' } });
+
+  const queryParams = { sortBy, first, offset, filterBy };
+  const {
+    query: { data, isError, isLoading },
+    upsert: { upsert, upsertError, isUpserting },
+    delete: { deleteCampaign, isDeleting, deleteError },
+  } = useCampaigns(queryParams);
+
   const pagination = { page, first, offset };
 
   const { isOpen, onClose, onOpen } = useEditModal<any>();
-  const importPropertiesModalController = useToggle();
 
   const onRowClick = (row: any) => {
-    setSelectedId(row.id);
-    onOpen();
+    console.log('Saving a campaign)');
+    // setSelectedId(row.id);
+    // onOpen();
+    deleteCampaign('random');
   };
+
+  console.log('data', data);
 
   const columns = useColumns<any>(
     [
-      {
-        key: 'code',
-        label: 'label.code',
-        Cell: TooltipTextCell,
-        width: 100,
-      },
       'name',
       {
-        key: 'isSupplier',
-        label: 'label.supplier',
-        align: ColumnAlign.Center,
-        Cell: DotCell,
-        width: 75,
+        key: 'startDate',
+        label: 'label.start-date',
+        width: 150,
+        format: ColumnFormat.Date,
         sortable: false,
       },
       {
-        key: 'isCustomer',
-        label: 'label.customer',
-        align: ColumnAlign.Center,
-        Cell: DotCell,
-        width: 75,
-        sortable: false,
-      },
-      {
-        key: 'isDonor',
-        label: 'label.donor',
-        align: ColumnAlign.Center,
-        Cell: DotCell,
-        width: 75,
+        key: 'endDate',
+        label: 'label.end-date',
+        width: 150,
+        format: ColumnFormat.Date,
         sortable: false,
       },
     ],
@@ -85,16 +79,7 @@ const CampaignsComponent = () => {
 
   return (
     <>
-      {/* <PropertiesImportModal
-        isOpen={importPropertiesModalController.isOn}
-        onClose={importPropertiesModalController.toggleOff}
-      /> */}
-      {/* <AppBarButtons
-        importModalController={importPropertiesModalController}
-        properties={properties}
-        propertiesLoading={propertiesLoading}
-      /> */}
-      <Toolbar filter={filter} />
+      {/* <Toolbar filter={filter} /> */}
       {/* {isOpen && (
         <FacilityEditModal
           isOpen={isOpen}
@@ -103,8 +88,8 @@ const CampaignsComponent = () => {
           setNextFacility={setSelectedId}
         />
       )} */}
-      {/* <DataTable
-        id="name-list"
+      <DataTable
+        id="campaign-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={updatePaginationQuery}
         columns={columns}
@@ -113,7 +98,7 @@ const CampaignsComponent = () => {
         isError={isError}
         noDataElement={<NothingHere body={t('error.no-facilities')} />}
         onRowClick={onRowClick}
-      /> */}
+      />
     </>
   );
 };

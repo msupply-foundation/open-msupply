@@ -1171,6 +1171,8 @@
   "label.snapshot-num-of-packs": "Packs Snapshot",
   "label.soh": "SOH",
   "label.start-datetime": "Start date / time",
+  "label.start-date": "Start date",
+  "label.end-date": "End date",
   "label.status": "Status",
   "label.status-given": "Given",
   "label.status-late": "Overdue",
