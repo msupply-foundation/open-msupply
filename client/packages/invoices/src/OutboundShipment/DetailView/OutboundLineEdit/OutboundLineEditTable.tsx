@@ -39,7 +39,13 @@ const TotalCell = styled(TableCell)({
   fontWeight: 'bold',
 });
 
-const PlaceholderRow = ({ quantity }: { quantity: number | null }) => {
+const PlaceholderRow = ({
+  quantity,
+  extraColumnOffset,
+}: {
+  quantity: number | null;
+  extraColumnOffset: number;
+}) => {
   const t = useTranslation();
 
   const formattedValue = useFormatNumber().round(quantity ?? 0, 2);
@@ -47,7 +53,10 @@ const PlaceholderRow = ({ quantity }: { quantity: number | null }) => {
   // TODO - maybe should be editable? Can't clear when manually allocating..
   return quantity === null ? null : (
     <tr>
-      <PlaceholderCell colSpan={3} sx={{ color: 'secondary.main' }}>
+      <PlaceholderCell
+        colSpan={4 + extraColumnOffset}
+        sx={{ color: 'secondary.main' }}
+      >
         {t('label.placeholder')}
       </PlaceholderCell>
       <PlaceholderCell
@@ -68,20 +77,20 @@ const PlaceholderRow = ({ quantity }: { quantity: number | null }) => {
   );
 };
 
-const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
+const TotalRow = ({
+  allocatedQuantity,
+  extraColumnOffset,
+}: {
+  allocatedQuantity: number;
+  extraColumnOffset: number;
+}) => {
   const t = useTranslation();
   const formattedValue = useFormatNumber().round(allocatedQuantity, 2);
-  const { data: prefs } = usePreference(
-    PreferenceKey.SortByVvmStatusThenExpiry,
-    PreferenceKey.ManageVvmStatusForStock
-  );
-  const hasExtraVVMColumn =
-    prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry;
 
   return (
     <tr>
       <TotalCell colSpan={3}>{t('label.total-quantity')}</TotalCell>
-      <TotalCell colSpan={hasExtraVVMColumn ? 6 : 5}></TotalCell>
+      <TotalCell colSpan={6 + extraColumnOffset}></TotalCell>
       <Tooltip title={allocatedQuantity.toString()}>
         <TotalCell
           style={{
@@ -105,6 +114,10 @@ export const OutboundLineEditTable = ({
   const t = useTranslation();
   const { format } = useFormatNumber();
   const tableStore = useTableStore();
+  const { data: prefs } = usePreference(
+    PreferenceKey.SortByVvmStatusThenExpiry,
+    PreferenceKey.ManageVvmStatusForStock
+  );
 
   const {
     draftLines,
@@ -151,12 +164,18 @@ export const OutboundLineEditTable = ({
       </Box>
     );
 
+  let extraColumnOffset = 0;
+  if (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) {
+    extraColumnOffset += 1;
+  }
+
   const additionalRows = [
     <PlaceholderRow
       // Only show a 0 placeholder if we have no stock lines to show
       quantity={
         placeholderUnits === 0 && lines.length ? null : placeholderUnits
       }
+      extraColumnOffset={extraColumnOffset}
       key="placeholder-row"
     />,
     <tr key="divider-row">
@@ -171,6 +190,7 @@ export const OutboundLineEditTable = ({
           ? allocatedQuantity * allocateIn.packSize
           : allocatedQuantity
       }
+      extraColumnOffset={extraColumnOffset}
     />,
   ];
 
