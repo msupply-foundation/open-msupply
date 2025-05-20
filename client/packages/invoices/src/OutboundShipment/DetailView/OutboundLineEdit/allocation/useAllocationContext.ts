@@ -153,6 +153,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       placeholderUnits: 0,
       isDirty: true,
       allocateIn,
+      alerts: [],
     }));
   },
 
