@@ -15,7 +15,8 @@ import {
   Divider,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
-import { AutoAllocate } from '../../../Allocation/AutoAllocate';
+import { AutoAllocateField } from '../../../Allocation/AutoAllocateIssueField';
+import { AutoAllocationAlerts } from '../../../Allocation/AutoAllocationAlerts';
 import { useOutbound, useOutboundLineEditData } from '../../api';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import {
@@ -130,7 +131,13 @@ const AllocationInner = () => {
       </ModalRow>
       <Grid container gap="4px" width="100%">
         <Divider margin={10} />
-        <AutoAllocate />
+
+        <Box display="flex" alignItems="flex-start" gap={2}>
+          <Grid container alignItems="center" pt={1}>
+            <AutoAllocateField />
+          </Grid>
+          <AutoAllocationAlerts />
+        </Box>
       </Grid>
       <TableWrapper
         isLoading={false}

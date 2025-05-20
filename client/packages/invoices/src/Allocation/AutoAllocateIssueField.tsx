@@ -13,17 +13,18 @@ import { AllocationAlerts } from '../StockOut';
 import { AllocateIn, useAllocationContext } from './useAllocationContext';
 import { getAllocatedQuantity } from './utils';
 
-export const AutoAllocate = () => {
+export const AutoAllocateField = () => {
   const t = useTranslation();
   const { format } = useFormatNumber();
 
-  const { autoAllocate, alerts, allocatedQuantity, allocateIn } =
-    useAllocationContext(state => ({
+  const { autoAllocate, allocatedQuantity, allocateIn } = useAllocationContext(
+    state => ({
       autoAllocate: state.autoAllocate,
       alerts: state.alerts,
       allocatedQuantity: getAllocatedQuantity(state),
       allocateIn: state.allocateIn,
-    }));
+    })
+  );
 
   // Using buffer state with the allocated quantity, so gets pre-populated with existing
   // quantity, and updated when the user edits the individual lines
@@ -57,21 +58,14 @@ export const AutoAllocate = () => {
 
   return (
     <>
-      <Box display="flex" alignItems="flex-start" gap={2}>
-        <Grid container alignItems="center" pt={1}>
-          <ModalLabel label={t('label.issue')} />
-          <NumericTextInput
-            autoFocus
-            value={issueQuantity}
-            onChange={handleIssueQuantityChange}
-          />
-          <Box marginLeft={1} />
-          {allocateIn === AllocateIn.Doses
-            ? t('label.doses')
-            : t('label.units')}
-        </Grid>
-        <AllocationAlerts allocationAlerts={alerts} />
-      </Box>
+      <ModalLabel label={t('label.issue')} />
+      <NumericTextInput
+        autoFocus
+        value={issueQuantity}
+        onChange={handleIssueQuantityChange}
+      />
+      <Box marginLeft={1} />
+      {allocateIn === AllocateIn.Doses ? t('label.doses') : t('label.units')}
     </>
   );
 };
