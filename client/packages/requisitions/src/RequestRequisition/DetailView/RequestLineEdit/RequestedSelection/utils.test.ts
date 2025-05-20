@@ -6,17 +6,16 @@ import {
 
 describe('caclulatePackQuantity', () => {
   it('should round based on precision parameter', () => {
-    expect(calculatePackQuantity(4, 1, 3)).toBe(0.3333);
-    expect(calculatePackQuantity(2, 1, 3)).toBe(0.33);
-    expect(calculatePackQuantity(0, 1, 3)).toBe(0);
+    expect(calculatePackQuantity(2, 1)).toBe(0.33);
+    expect(calculatePackQuantity(0, 1)).toBe(0);
   });
 
   it('should return 0 when pack quantity is 0', () => {
-    expect(calculatePackQuantity(0, 0, 1)).toBe(0);
+    expect(calculatePackQuantity(0, 0)).toBe(0);
   });
 
   it('should return 0 when pack quantity is undefined', () => {
-    expect(calculatePackQuantity(0, undefined, 1)).toBe(0);
+    expect(calculatePackQuantity(0, undefined)).toBe(0);
   });
 });
 

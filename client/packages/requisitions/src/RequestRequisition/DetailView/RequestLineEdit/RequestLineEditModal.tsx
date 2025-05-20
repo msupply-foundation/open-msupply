@@ -14,25 +14,25 @@ import { Representation, RepresentationValue } from './utils';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
 
 interface RequestLineEditModalProps {
+  store?: UserStoreNodeFragment;
+  mode: ModalMode | null;
   requisition: RequestFragment;
   itemId: string | null;
   isOpen: boolean;
   onClose: () => void;
-  mode: ModalMode | null;
-  store?: UserStoreNodeFragment;
 }
 
 export const RequestLineEditModal = ({
+  store,
+  mode,
   requisition,
   itemId,
   isOpen,
   onClose,
-  mode,
-  store,
 }: RequestLineEditModalProps) => {
-  const isDisabled = isRequestDisabled(requisition);
   const { Modal } = useDialog({ onClose, isOpen });
   const deleteLine = useRequest.line.deleteLine();
+  const isDisabled = isRequestDisabled(requisition);
 
   const lines = useMemo(
     () =>

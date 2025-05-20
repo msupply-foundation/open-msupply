@@ -30,6 +30,7 @@ export const Layout = ({ Top, Left, Middle, Right }: LayoutProps) => {
       bgcolor="background.toolbar"
       padding={2}
       paddingBottom={1}
+      borderRadius={2}
       boxShadow={theme => theme.shadows[2]}
     >
       <Grid size={12} sx={{ mb: 2 }}>

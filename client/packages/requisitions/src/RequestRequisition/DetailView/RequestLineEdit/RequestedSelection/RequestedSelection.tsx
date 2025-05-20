@@ -80,14 +80,13 @@ export const RequestedSelection = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        text: 'black',
         mb: 1,
       }}
     >
       <Typography variant="body1" fontWeight="bold">
         {t('label.requested')}:
       </Typography>
-      <Box gap={1} display="flex" flexDirection="row" alignItems="center">
+      <Box gap={1} display="flex" flexDirection="row">
         <NumericTextInput
           width={150}
           min={0}
