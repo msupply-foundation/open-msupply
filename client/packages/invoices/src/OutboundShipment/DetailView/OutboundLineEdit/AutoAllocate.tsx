@@ -13,18 +13,19 @@ import {
 import { AllocationAlerts } from '../../../StockOut';
 import { useAllocationContext } from './allocation/useAllocationContext';
 import { getAllocatedQuantity } from './allocation/utils';
+import { AllocateInSelector } from './AllocateInSelector';
 
 export const AutoAllocate = () => {
   const t = useTranslation();
   const { format } = useFormatNumber();
 
-  const { autoAllocate, alerts, allocatedQuantity, allocateIn } =
-    useAllocationContext(state => ({
+  const { autoAllocate, alerts, allocatedQuantity } = useAllocationContext(
+    state => ({
       autoAllocate: state.autoAllocate,
       alerts: state.alerts,
       allocatedQuantity: getAllocatedQuantity(state),
-      allocateIn: state.allocateIn,
-    }));
+    })
+  );
 
   // Using buffer state with the allocated quantity, so gets pre-populated with existing
   // quantity, and updated when the user edits the individual lines
@@ -68,11 +69,8 @@ export const AutoAllocate = () => {
               onChange={handleIssueQuantityChange}
             />
             <Box marginLeft={1} />
-            TODO:
-            {allocateIn.type} - {allocateIn.packSize}
-            {/* {allocateIn.type === AllocateIn.Doses
-              ? t('label.doses')
-              : t('label.units')} */}
+
+            <AllocateInSelector />
           </Grid>
           <AllocationAlerts allocationAlerts={alerts} />
         </Box>

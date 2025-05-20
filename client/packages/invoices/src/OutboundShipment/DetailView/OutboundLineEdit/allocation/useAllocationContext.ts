@@ -10,7 +10,6 @@ import { getAllocationAlerts, StockOutAlert } from '../../../../StockOut';
 import { DraftStockOutLineFragment } from '../../../api/operations.generated';
 import {
   canAllocate,
-  canAutoAllocate,
   getAllocatedQuantity,
   issueDoses,
   issuePacks,
@@ -57,7 +56,6 @@ interface AllocationContext {
   nonAllocatableLines: DraftStockOutLineFragment[];
   alerts: StockOutAlert[];
   allocateIn: AllocateInOption;
-  availablePackSizes: number[];
   item: DraftItem | null;
   placeholderQuantity: number | null;
 
@@ -65,7 +63,6 @@ interface AllocationContext {
     itemData: OutboundLineEditData;
     strategy: AllocationStrategy;
     allowPlaceholder: boolean;
-    allocateVaccineItemsInDoses?: boolean;
     scannedBatch?: string;
   }) => void;
 
@@ -93,13 +90,11 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   nonAllocatableLines: [],
   placeholderQuantity: null,
   alerts: [],
-  availablePackSizes: [],
-  allocateIn: { type: AllocateInType.Units, packSize: 1 },
+  allocateIn: { type: AllocateInType.Units },
 
   initialise: ({
     itemData: { item, draftLines, placeholderQuantity },
     strategy,
-    allocateVaccineItemsInDoses,
     allowPlaceholder,
     scannedBatch,
   }) => {
@@ -117,25 +112,12 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       }
     );
 
-    // Get unique pack sizes from allocatable lines
-    const availablePackSizes = [
-      ...new Set(
-        allocatableLines.filter(canAutoAllocate).map(line => line.packSize)
-      ),
-    ].sort((a, b) => a - b);
-
     set({
       isDirty: false,
       item,
 
-      allocateIn:
-        item.isVaccine && allocateVaccineItemsInDoses
-          ? { type: AllocateInType.Doses }
-          : { type: AllocateInType.Units },
-
       draftLines: allocatableLines,
       nonAllocatableLines,
-      availablePackSizes,
 
       placeholderQuantity: allowPlaceholder ? (placeholderQuantity ?? 0) : null,
       alerts: [],

@@ -30,7 +30,6 @@ interface AllocationProps {
   allowPlaceholder: boolean;
   scannedBatch?: string;
   prefOptions: {
-    allocateVaccineItemsInDoses: boolean;
     sortByVvmStatus: boolean;
   };
 }
@@ -40,7 +39,7 @@ export const Allocation = ({
   invoiceId,
   allowPlaceholder,
   scannedBatch,
-  prefOptions: { allocateVaccineItemsInDoses, sortByVvmStatus },
+  prefOptions: { sortByVvmStatus },
 }: AllocationProps) => {
   const { initialise, item } = useAllocationContext(({ initialise, item }) => ({
     initialise,
@@ -64,7 +63,6 @@ export const Allocation = ({
           : AllocationStrategy.FEFO,
         allowPlaceholder,
         scannedBatch,
-        allocateVaccineItemsInDoses,
       });
     });
     // Expect dependencies to be stable
@@ -103,7 +101,6 @@ const AllocationInner = () => {
           unitName: pluralisedUnitName,
         })
       : t('label.available-quantity', {
-          // todo - not "quantity"
           number: unitCount,
           unitName: pluralisedUnitName,
         });
