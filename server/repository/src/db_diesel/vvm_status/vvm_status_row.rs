@@ -19,7 +19,7 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
+    Clone, Default, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
 )]
 #[diesel(table_name = vvm_status)]
 #[diesel(treat_none_as_null = true)]
@@ -31,20 +31,6 @@ pub struct VVMStatusRow {
     pub is_active: bool,
     pub unusable: bool,
     pub reason_id: Option<String>,
-}
-
-impl Default for VVMStatusRow {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            description: Default::default(),
-            code: Default::default(),
-            level: Default::default(),
-            is_active: Default::default(),
-            unusable: false,
-            reason_id: Default::default(),
-        }
-    }
 }
 
 pub struct VVMStatusRowRepository<'a> {
