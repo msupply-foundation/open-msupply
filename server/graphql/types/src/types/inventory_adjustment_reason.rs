@@ -1,9 +1,6 @@
 use async_graphql::*;
 use repository::{ReasonOption, ReasonOptionRow, ReasonOptionType};
 use service::ListResult;
-
-use super::ReasonOptionNodeType;
-
 #[derive(PartialEq, Debug)]
 pub struct InventoryAdjustmentReasonNode {
     inventory_adjustment_reason: ReasonOption,
