@@ -82,6 +82,13 @@ export type StockOutLineFragment = {
       isVaccine: boolean;
       doses: number;
     };
+    vvmStatus?: {
+      __typename: 'VvmstatusNode';
+      id: string;
+      level: number;
+      unusable: boolean;
+      description: string;
+    } | null;
   } | null;
 };
 
@@ -170,6 +177,13 @@ export const StockOutLineFragmentDoc = gql`
         code
         isVaccine
         doses
+      }
+      vvmStatus {
+        __typename
+        id
+        level
+        unusable
+        description
       }
     }
   }

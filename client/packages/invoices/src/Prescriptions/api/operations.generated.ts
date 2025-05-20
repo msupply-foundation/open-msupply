@@ -131,6 +131,13 @@ export type PrescriptionRowFragment = {
             code: string;
           }>;
         };
+        vvmStatus?: {
+          __typename: 'VvmstatusNode';
+          id: string;
+          level: number;
+          unusable: boolean;
+          description: string;
+        } | null;
       } | null;
     }>;
   };
@@ -260,6 +267,13 @@ export type PrescriptionLineFragment = {
         code: string;
       }>;
     };
+    vvmStatus?: {
+      __typename: 'VvmstatusNode';
+      id: string;
+      level: number;
+      unusable: boolean;
+      description: string;
+    } | null;
   } | null;
 };
 
@@ -469,6 +483,13 @@ export type PrescriptionsQuery = {
                 code: string;
               }>;
             };
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              id: string;
+              level: number;
+              unusable: boolean;
+              description: string;
+            } | null;
           } | null;
         }>;
       };
@@ -649,6 +670,13 @@ export type PrescriptionByNumberQuery = {
                   code: string;
                 }>;
               };
+              vvmStatus?: {
+                __typename: 'VvmstatusNode';
+                id: string;
+                level: number;
+                unusable: boolean;
+                description: string;
+              } | null;
             } | null;
           }>;
         };
@@ -838,6 +866,13 @@ export type PrescriptionByIdQuery = {
                   code: string;
                 }>;
               };
+              vvmStatus?: {
+                __typename: 'VvmstatusNode';
+                id: string;
+                level: number;
+                unusable: boolean;
+                description: string;
+              } | null;
             } | null;
           }>;
         };
@@ -1287,6 +1322,13 @@ export const PrescriptionLineFragmentDoc = gql`
         warnings {
           ...Warning
         }
+      }
+      vvmStatus {
+        __typename
+        id
+        level
+        unusable
+        description
       }
     }
   }

@@ -17,6 +17,7 @@ import {
   usePreference,
   PreferenceKey,
   getDosesPerUnitColumn,
+  getVaccineVialManagementStatusColumn,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -77,8 +78,8 @@ export const usePrescriptionColumn = ({
   const { data: OMSPrefs } = usePreference(
     PreferenceKey.DisplayVaccinesInDoses
   );
-  const { store: { preferences } = {} } = useAuthContext();
-  const hasPrescribedQty = preferences?.editPrescribedQuantityOnPrescription;
+  const { store } = useAuthContext();
+  const hasPrescribedQty = store?.preferences?.editPrescribedQuantityOnPrescription;
 
   const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
     GenericColumnKey.Selection,
@@ -152,6 +153,12 @@ export const usePrescriptionColumn = ({
           ]),
       },
     ],
+  ];
+    if (store?.preferences.ableToSpecifyVvmStatusWhenReceivingItems) {
+      columns.push(getVaccineVialManagementStatusColumn(t))
+    }
+
+  columns.push(
     [
       'expiryDate',
       {
@@ -213,7 +220,7 @@ export const usePrescriptionColumn = ({
           ]),
       },
     ],
-  ];
+  );
 
   if (OMSPrefs?.displayVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));

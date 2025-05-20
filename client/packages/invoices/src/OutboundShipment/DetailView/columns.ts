@@ -16,6 +16,8 @@ import {
   UNDEFINED_STRING_VALUE,
   useTranslation,
   getDosesPerUnitColumn,
+  useAuthContext,
+  getVaccineVialManagementStatusColumn,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -49,6 +51,7 @@ export const useOutboundColumns = ({
   displayDoseColumns,
 }: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
   const t = useTranslation();
+  const {store} = useAuthContext();
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
 
   const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
@@ -178,6 +181,11 @@ export const useOutboundColumns = ({
 
   if (displayDoseColumns) {
     columns.push(getDosesPerUnitColumn(t));
+  }
+
+
+  if (store?.preferences.ableToSpecifyVvmStatusWhenReceivingItems) {
+    columns.push(getVaccineVialManagementStatusColumn(t))
   }
 
   columns.push(

@@ -164,6 +164,13 @@ fragment PrescriptionLine on InvoiceLineNode {
         ...Warning
       }
     }
+    vvmStatus {
+      __typename
+      id
+      level
+      unusable
+      description
+    }
   }
 }
 
