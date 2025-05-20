@@ -33,6 +33,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             display_vaccines_in_doses,
             manage_vvm_status_for_stock,
             sort_by_vvm_status_then_expiry,
+            use_simplified_mobile_ui,
         } = self.get_preference_provider();
 
         let input = AppendIfTypeInputs {
@@ -51,6 +52,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(display_vaccines_in_doses, &mut prefs, &input)?;
         append_if_type(manage_vvm_status_for_stock, &mut prefs, &input)?;
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
+        append_if_type(use_simplified_mobile_ui, &mut prefs, &input)?;
 
         Ok(prefs)
     }
