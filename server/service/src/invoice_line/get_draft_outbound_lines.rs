@@ -13,7 +13,7 @@ use repository::{
 use util::uuid::uuid;
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct DraftOutboundShipmentLine {
+pub struct DraftStockOutLine {
     pub id: String,
     pub item_id: String,
     pub stock_line_id: String,
@@ -31,18 +31,18 @@ pub struct DraftOutboundShipmentLine {
     pub item_variant_id: Option<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct AdditionalStockOutData {
+    pub placeholder_quantity: Option<f64>,
+    pub prescribed_quantity: Option<f64>,
+}
+
 pub fn get_draft_outbound_shipment_lines(
     ctx: &ServiceContext,
     store_id: &str,
     item_id: &str,
     invoice_id: &str,
-) -> Result<
-    (
-        Vec<DraftOutboundShipmentLine>,
-        Option<f64>, /* placeholder_quantity */
-    ),
-    ListError,
-> {
+) -> Result<(Vec<DraftStockOutLine>, AdditionalStockOutData), ListError> {
     let outbound = get_invoice(ctx, Some(&store_id), invoice_id)?.ok_or(
         ListError::DatabaseError(RepositoryError::DBError {
             msg: "Invoice not found".to_string(),
@@ -66,8 +66,7 @@ pub fn get_draft_outbound_shipment_lines(
     )?;
 
     // return existing first, then new lines
-    let all_lines: Vec<DraftOutboundShipmentLine> =
-        existing_lines.into_iter().chain(new_lines).collect();
+    let all_lines: Vec<DraftStockOutLine> = existing_lines.into_iter().chain(new_lines).collect();
 
     let placeholder_quantity = InvoiceLineRepository::new(&ctx.connection)
         .query_one(
@@ -78,14 +77,21 @@ pub fn get_draft_outbound_shipment_lines(
         )?
         .map(|l| l.invoice_line_row.number_of_packs);
 
-    Ok((all_lines, placeholder_quantity))
+    let prescribed_quantity = Some(-999.0); // TODO: get this from the invoice line
+
+    let draft_stock_out_data = AdditionalStockOutData {
+        placeholder_quantity,
+        prescribed_quantity,
+    };
+
+    Ok((all_lines, draft_stock_out_data))
 }
 
 fn get_existing_shipment_lines(
     ctx: &ServiceContext,
     item_id: &str,
     outbound: &InvoiceRow,
-) -> Result<Vec<DraftOutboundShipmentLine>, ListError> {
+) -> Result<Vec<DraftStockOutLine>, ListError> {
     let invoice_line_repo = InvoiceLineRepository::new(&ctx.connection);
 
     let existing_invoice_lines = invoice_line_repo.query_by_filter(
@@ -98,8 +104,8 @@ fn get_existing_shipment_lines(
 
     let as_draft_lines = existing_invoice_lines
         .into_iter()
-        .map(|l| DraftOutboundShipmentLine::from_invoice_line(l, &outbound.status))
-        .collect::<Result<Vec<DraftOutboundShipmentLine>, RepositoryError>>()
+        .map(|l| DraftStockOutLine::from_invoice_line(l, &outbound.status))
+        .collect::<Result<Vec<DraftStockOutLine>, RepositoryError>>()
         .map_err(ListError::DatabaseError)?;
 
     Ok(as_draft_lines)
@@ -111,7 +117,7 @@ fn generate_new_draft_lines(
     item_id: &str,
     other_party_id: String,
     existing_stock_line_ids: Vec<String>,
-) -> Result<Vec<DraftOutboundShipmentLine>, ListError> {
+) -> Result<Vec<DraftStockOutLine>, ListError> {
     let stock_line_repo = StockLineRepository::new(&ctx.connection);
 
     let available_stock_lines = stock_line_repo.query_by_filter(
@@ -135,15 +141,15 @@ fn generate_new_draft_lines(
     )
     .map_err(ListError::DatabaseError)?;
 
-    let new_lines: Vec<DraftOutboundShipmentLine> = available_stock_lines
+    let new_lines: Vec<DraftStockOutLine> = available_stock_lines
         .into_iter()
-        .map(|stock_line| DraftOutboundShipmentLine::from_stock_line(stock_line, &item_pricing))
+        .map(|stock_line| DraftStockOutLine::from_stock_line(stock_line, &item_pricing))
         .collect();
 
     Ok(new_lines)
 }
 
-impl DraftOutboundShipmentLine {
+impl DraftStockOutLine {
     fn from_stock_line(line: StockLine, item_pricing: &ItemPrice) -> Self {
         let sell_price_per_pack = get_sell_price(&line.stock_line_row, item_pricing);
 
@@ -322,7 +328,7 @@ mod test {
 
         let store_id = mock_store_b().id;
 
-        let (result, placeholder_quantity) = service
+        let (result, additional_data) = service
             .get_draft_outbound_shipment_lines(
                 &context,
                 &store_id,
@@ -343,6 +349,6 @@ mod test {
             outbound_item_b_line.number_of_packs // first line returned should be the one already in the invoice
         );
 
-        assert_eq!(placeholder_quantity, Some(7.0));
+        assert_eq!(additional_data.placeholder_quantity, Some(7.0));
     }
 }

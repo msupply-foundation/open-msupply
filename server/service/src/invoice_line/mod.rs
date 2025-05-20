@@ -67,13 +67,7 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         store_id: &str,
         item_id: &str,
         invoice_id: &str,
-    ) -> Result<
-        (
-            Vec<DraftOutboundShipmentLine>,
-            Option<f64>, /* placeholder quantity */
-        ),
-        ListError,
-    > {
+    ) -> Result<(Vec<DraftStockOutLine>, AdditionalStockOutData), ListError> {
         get_draft_outbound_shipment_lines(ctx, store_id, item_id, invoice_id)
     }
 

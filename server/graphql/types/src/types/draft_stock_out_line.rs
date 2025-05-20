@@ -4,17 +4,18 @@ use graphql_core::{
     loader::{ItemVariantByItemVariantIdLoader, LocationByIdLoader, VVMStatusByIdLoader},
     ContextExt,
 };
-use service::invoice_line::get_draft_outbound_lines::DraftOutboundShipmentLine;
+use service::invoice_line::get_draft_outbound_lines::DraftStockOutLine;
 
 use super::{ItemVariantNode, LocationNode, VVMStatusNode};
 
-pub struct DraftOutboundShipmentItemData {
-    pub lines: Vec<DraftOutboundShipmentLine>,
+pub struct DraftStockOutItemData {
+    pub lines: Vec<DraftStockOutLine>,
     pub placeholder_quantity: Option<f64>,
+    pub prescribed_quantity: Option<f64>,
 }
 
 #[Object]
-impl DraftOutboundShipmentItemData {
+impl DraftStockOutItemData {
     pub async fn draft_lines(&self) -> Vec<DraftOutboundShipmentLineNode> {
         DraftOutboundShipmentLineNode::from_vec(self.lines.clone())
     }
@@ -22,16 +23,18 @@ impl DraftOutboundShipmentItemData {
     pub async fn placeholder_quantity(&self) -> Option<f64> {
         self.placeholder_quantity
     }
+
+    pub async fn prescribed_quantity(&self) -> Option<f64> {
+        self.prescribed_quantity
+    }
 }
 
 pub struct DraftOutboundShipmentLineNode {
-    pub shipment_line: DraftOutboundShipmentLine,
+    pub shipment_line: DraftStockOutLine,
 }
 
 impl DraftOutboundShipmentLineNode {
-    pub fn from_vec(
-        shipment_lines: Vec<DraftOutboundShipmentLine>,
-    ) -> Vec<DraftOutboundShipmentLineNode> {
+    pub fn from_vec(shipment_lines: Vec<DraftStockOutLine>) -> Vec<DraftOutboundShipmentLineNode> {
         shipment_lines
             .into_iter()
             .map(|shipment_line| DraftOutboundShipmentLineNode { shipment_line })

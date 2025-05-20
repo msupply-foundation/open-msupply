@@ -3,7 +3,7 @@ pub mod mutations;
 use self::mutations::{inbound_shipment_line, outbound_shipment_line, prescription_line};
 use async_graphql::*;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
-use graphql_types::types::{DraftOutboundShipmentItemData, InvoiceNode};
+use graphql_types::types::{DraftStockOutItemData, InvoiceNode};
 use invoice_line_queries::{
     draft_outbound_lines, invoice_lines, InvoiceLineFilterInput, InvoiceLineSortInput,
     InvoiceLinesResponse,
@@ -32,7 +32,7 @@ impl InvoiceLineQueries {
         store_id: String,
         item_id: String,
         invoice_id: String,
-    ) -> Result<DraftOutboundShipmentItemData> {
+    ) -> Result<DraftStockOutItemData> {
         draft_outbound_lines(ctx, &store_id, &item_id, &invoice_id)
     }
 }

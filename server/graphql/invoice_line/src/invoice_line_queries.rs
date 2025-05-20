@@ -13,7 +13,7 @@ use graphql_invoice::invoice_queries::{
     EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput,
 };
 use graphql_types::types::{
-    DraftOutboundShipmentItemData, InvoiceLineConnector, InvoiceLineNodeType, InvoiceNodeStatus,
+    DraftStockOutItemData, InvoiceLineConnector, InvoiceLineNodeType, InvoiceNodeStatus,
     InvoiceNodeType,
 };
 use repository::{
@@ -213,7 +213,7 @@ pub fn draft_outbound_lines(
     store_id: &str,
     item_id: &str,
     invoice_id: &str,
-) -> Result<DraftOutboundShipmentItemData> {
+) -> Result<DraftStockOutItemData> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -229,10 +229,11 @@ pub fn draft_outbound_lines(
     let result =
         service.get_draft_outbound_shipment_lines(&service_ctx, store_id, item_id, invoice_id);
 
-    if let Ok((draft_lines, placeholder_quantity)) = result {
-        Ok(DraftOutboundShipmentItemData {
+    if let Ok((draft_lines, additional_data)) = result {
+        Ok(DraftStockOutItemData {
             lines: draft_lines,
-            placeholder_quantity,
+            placeholder_quantity: additional_data.placeholder_quantity,
+            prescribed_quantity: additional_data.prescribed_quantity,
         })
     } else {
         let err = result.unwrap_err();
