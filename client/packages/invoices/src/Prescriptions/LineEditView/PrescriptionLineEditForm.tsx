@@ -33,7 +33,7 @@ import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 import { getPrescriptionDirections } from './getPrescriptionDirections';
 import { useAbbreviations } from '../api/hooks/useAbbreviations';
-import { Allocation } from './Allocation';
+import { AllocationSection } from './AllocationSection';
 
 interface PrescriptionLineEditFormProps {
   allocatedUnits: number;
@@ -99,17 +99,6 @@ export const PrescriptionLineEditForm: React.FC<
   const note = prescriptionLineWithNote?.note ?? '';
 
   useEffect(() => {
-    // if (preferences?.editPrescribedQuantityOnPrescription) {
-    //   const selectedItem = items.find(
-    //     prescriptionItem => prescriptionItem.id === item?.id
-    //   );
-    //   const newPrescribedQuantity =
-    //     selectedItem?.lines?.find(
-    //       ({ prescribedQuantity }) => prescribedQuantity != null
-    //     )?.prescribedQuantity ?? 0;
-    //   setPrescribedQuantity(newPrescribedQuantity);
-    // }
-
     const newIssueQuantity = NumUtils.round(
       allocatedUnits /
         Math.abs(Number(packSizeController.selected?.value || 1)),
@@ -206,7 +195,7 @@ export const PrescriptionLineEditForm: React.FC<
               gap={5}
               paddingBottom={2}
             >
-              <Allocation
+              <AllocationSection
                 itemId={item?.id ?? ''}
                 invoiceId={invoiceId}
                 allowPlaceholder={false}
@@ -365,12 +354,8 @@ const TableWrapper: React.FC<TableProps> = ({
         })}
       >
         <PrescriptionLineEditTable
-          // packSizeController={packSizeController}
-          onChange={updateQuantity}
-          rows={draftPrescriptionLines}
-          item={currentItem}
-          allocatedUnits={allocatedUnits}
-          isDisabled={isDisabled}
+          disabled={isDisabled}
+          isExternalSupplier={false}
         />
       </TableProvider>
     </>

@@ -7,6 +7,7 @@ export type OutboundLineEditData = {
   item: DraftItem;
   draftLines: DraftStockOutLineFragment[];
   placeholderQuantity: number | null;
+  prescribedQuantity?: number | null;
 };
 
 export const useOutboundLineEditData = (invoiceId: string, itemId?: string) => {

@@ -53,11 +53,13 @@ interface AllocationContext {
   allocateIn: AllocateIn;
   item: DraftItem | null;
   placeholderQuantity: number | null;
+  prescribedQuantity: number | null;
 
   initialise: (params: {
     itemData: OutboundLineEditData;
     strategy: AllocationStrategy;
     allowPlaceholder: boolean;
+    allowPrescribedQuantity?: boolean;
     allocateVaccineItemsInDoses?: boolean;
     scannedBatch?: string;
   }) => void;
@@ -84,14 +86,16 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   draftLines: [],
   nonAllocatableLines: [],
   placeholderQuantity: null,
+  prescribedQuantity: null,
   alerts: [],
   allocateIn: AllocateIn.Units,
 
   initialise: ({
-    itemData: { item, draftLines, placeholderQuantity },
+    itemData: { item, draftLines, placeholderQuantity, prescribedQuantity },
     strategy,
     allocateVaccineItemsInDoses,
     allowPlaceholder,
+    allowPrescribedQuantity,
     scannedBatch,
   }) => {
     const sortedLines = draftLines.sort(SorterByStrategy[strategy]);
@@ -121,6 +125,9 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       nonAllocatableLines,
 
       placeholderQuantity: allowPlaceholder ? (placeholderQuantity ?? 0) : null,
+      prescribedQuantity: allowPrescribedQuantity
+        ? (prescribedQuantity ?? 0)
+        : null,
       alerts: [],
     });
   },
@@ -141,6 +148,12 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     set(state => ({
       ...state,
       alerts,
+    })),
+
+  setPrescribedQuantity: (quantity: number | null) =>
+    set(state => ({
+      ...state,
+      prescribedQuantity: quantity,
     })),
 
   autoAllocate: (quantity, format, t) => {
@@ -193,6 +206,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     return allocatedQuantity;
   },
 
+  // TODO Manual Allocate in Units
   manualAllocate: (lineId, quantity, format, t) => {
     const { allocateIn, draftLines } = get();
 

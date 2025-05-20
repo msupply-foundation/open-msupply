@@ -2,31 +2,29 @@ import React from 'react';
 import {
   ModalLabel,
   useTranslation,
-  Box,
   NumericTextInput,
   useFormatNumber,
   useBufferState,
   useDebounceCallback,
 } from '@openmsupply-client/common';
-import { AllocateIn, useAllocationContext } from './useAllocationContext';
-import { getAllocatedQuantity } from './utils';
 
-export const AutoAllocateField = () => {
+import { useAllocationContext } from './useAllocationContext';
+
+export const AutoAllocatePrescribedQuantityField = () => {
   const t = useTranslation();
   const { format } = useFormatNumber();
 
-  const { autoAllocate, allocatedQuantity, allocateIn } = useAllocationContext(
-    state => ({
-      autoAllocate: state.autoAllocate,
-      alerts: state.alerts,
-      allocatedQuantity: getAllocatedQuantity(state),
-      allocateIn: state.allocateIn,
-    })
-  );
+  const { autoAllocate, prescribedQuantity } = useAllocationContext(state => ({
+    autoAllocate: state.autoAllocate,
+    alerts: state.alerts,
+    prescribedQuantity: state.prescribedQuantity,
+    allocateIn: state.allocateIn,
+  }));
 
   // Using buffer state with the allocated quantity, so gets pre-populated with existing
   // quantity, and updated when the user edits the individual lines
-  const [issueQuantity, setIssueQuantity] = useBufferState(allocatedQuantity);
+  const [prescribedQuantityBuffer, setPrescribedQuantityBuffer] =
+    useBufferState(prescribedQuantity ?? 0);
 
   // using a debounced value for the allocation. In the scenario where
   // you have only pack sizes > 1 available, and try to type a quantity which starts with 1
@@ -37,33 +35,31 @@ export const AutoAllocateField = () => {
   const debouncedAllocate = useDebounceCallback(
     quantity => {
       const allocated = autoAllocate(quantity, format, t);
-      setIssueQuantity(allocated);
+      setPrescribedQuantityBuffer(allocated);
     },
     [],
     500
   );
 
-  const handleIssueQuantityChange = (quantity: number | undefined) => {
+  const handlePrescribedQuantityChange = (quantity: number | undefined) => {
     // this method is also called onBlur... check that there actually has been a change
     // in quantity (to prevent triggering auto allocation if only focus has moved)
-    if (quantity === issueQuantity) return;
+    if (quantity === prescribedQuantity) return;
 
     // Set immediate value to the input
     // may be overwritten with actually allocated value after debounced call
-    setIssueQuantity(quantity ?? 0);
+    setPrescribedQuantityBuffer(quantity ?? 0);
     debouncedAllocate(quantity ?? 0);
   };
 
   return (
     <>
-      <ModalLabel label={t('label.issue')} />
+      <ModalLabel label={t('label.prescribed-quantity')} />
       <NumericTextInput
         autoFocus
-        value={issueQuantity}
-        onChange={handleIssueQuantityChange}
+        value={prescribedQuantityBuffer}
+        onChange={handlePrescribedQuantityChange}
       />
-      <Box marginLeft={1} />
-      {allocateIn === AllocateIn.Doses ? t('label.doses') : t('label.units')}
     </>
   );
 };
