@@ -20,6 +20,7 @@ pub struct UpsertPreferences {
     pub display_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,
     pub sort_by_vvm_status_then_expiry: Option<Vec<StorePrefUpdate<bool>>>,
+    pub use_simplified_mobile_ui: Option<Vec<StorePrefUpdate<bool>>>,
 }
 
 pub fn upsert_preferences(
@@ -33,6 +34,7 @@ pub fn upsert_preferences(
         display_vaccines_in_doses: display_vaccines_in_doses_input,
         manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
         sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry_input,
+        use_simplified_mobile_ui: use_simplified_mobile_ui_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -44,6 +46,7 @@ pub fn upsert_preferences(
         display_vaccines_in_doses,
         manage_vvm_status_for_stock,
         sort_by_vvm_status_then_expiry,
+        use_simplified_mobile_ui,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -61,7 +64,7 @@ pub fn upsert_preferences(
                 show_contact_tracing.upsert(connection, input, None)?;
             }
 
-            // Store peferences, input could be array of store IDs and values - iterate and insert...
+            // Store preferences, input could be array of store IDs and values - iterate and insert...
             if let Some(input) = display_vaccines_in_doses_input {
                 for update in input.into_iter() {
                     display_vaccines_in_doses.upsert(
@@ -85,6 +88,16 @@ pub fn upsert_preferences(
             if let Some(input) = sort_by_vvm_status_then_expiry_input {
                 for update in input.into_iter() {
                     sort_by_vvm_status_then_expiry.upsert(
+                        connection,
+                        update.value,
+                        Some(update.store_id),
+                    )?;
+                }
+            }
+
+            if let Some(input) = use_simplified_mobile_ui_input {
+                for update in input.into_iter() {
+                    use_simplified_mobile_ui.upsert(
                         connection,
                         update.value,
                         Some(update.store_id),
