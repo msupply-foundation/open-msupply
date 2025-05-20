@@ -1,22 +1,13 @@
-import {
-  Autocomplete,
-  DialogButton,
-  InputWithLabelRow,
-  TextArea,
-} from '@common/components';
+import { DialogButton, InputWithLabelRow, TextArea } from '@common/components';
 import { useDialog } from '@common/hooks';
 import { Box, FnUtils, useTranslation } from '@openmsupply-client/common';
 import React, { ReactElement, useEffect, useState } from 'react';
 import {
-  useVvmStatusList,
+  useActiveVVMStatuses,
   useVvmStatusLog,
   VvmStatusLogRowFragment,
 } from '../../api';
-
-interface VvmStatusOption {
-  label: string;
-  value: string;
-}
+import { VVMStatusSearchInput } from '../VVMStatusSearchInput';
 
 interface VvmStatusLogModalProps {
   isOpen: boolean;
@@ -34,29 +25,21 @@ export const VvmStatusLogModal = ({
   const t = useTranslation();
   const isCreating = !selectedStatusLog;
   const [comment, setComment] = useState<string>('');
-  const [selectedVvmStatusOption, setSelectedVvmStatusOption] =
-    useState<VvmStatusOption | null>();
+  const [selectedStatusId, setSelectedStatusId] = useState<string | null>();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const {
     create: { createMutation },
     update: { updateMutation },
   } = useVvmStatusLog();
-  const {
-    query: { data: vvmStatus },
-  } = useVvmStatusList();
-
-  const options = vvmStatus.map(({ id, description }) => ({
-    label: description,
-    value: id,
-  }));
+  const { data: vvmStatus = [] } = useActiveVVMStatuses();
 
   const handleConfirm = () => {
-    if (isCreating && stockLineId && selectedVvmStatusOption)
+    if (isCreating && stockLineId && selectedStatusId)
       createMutation({
         id: FnUtils.generateUUID(),
         stockLineId,
-        statusId: selectedVvmStatusOption.value,
+        statusId: selectedStatusId,
         comment,
       });
 
@@ -74,10 +57,8 @@ export const VvmStatusLogModal = ({
       ({ id }) => id === selectedStatusLog?.status?.id
     );
 
-    const vvmStatusOption = selectedVvmStatus
-      ? { label: selectedVvmStatus.description, value: selectedVvmStatus.id }
-      : null;
-    setSelectedVvmStatusOption(vvmStatusOption);
+    const vvmStatusOption = selectedVvmStatus ? selectedVvmStatus.id : null;
+    setSelectedStatusId(vvmStatusOption);
     setComment(selectedStatusLog?.comment ?? '');
   }, [selectedStatusLog, vvmStatus]);
 
@@ -100,17 +81,10 @@ export const VvmStatusLogModal = ({
         <InputWithLabelRow
           label={t('label.vvm-status')}
           Input={
-            <Autocomplete
-              options={options}
-              required={isCreating}
+            <VVMStatusSearchInput
+              selectedId={selectedStatusId ?? null}
+              onChange={variantId => setSelectedStatusId(variantId)}
               disabled={!isCreating}
-              disableClearable={false}
-              value={selectedVvmStatusOption}
-              getOptionLabel={option => option.label}
-              onChange={(_, value) => setSelectedVvmStatusOption(value)}
-              isOptionEqualToValue={(option, value) =>
-                option.value === value.value
-              }
             />
           }
           sx={{

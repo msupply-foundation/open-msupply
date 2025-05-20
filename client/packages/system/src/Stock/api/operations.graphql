@@ -86,13 +86,6 @@ fragment LedgerRow on LedgerNode {
   storeId
 }
 
-fragment VVMStatus on VvmstatusNode {
-  id
-  description
-  code
-  isActive
-}
-
 fragment VVMStatusLogRow on VvmstatusLogNode {
   id
   createdDatetime
@@ -104,6 +97,7 @@ fragment VVMStatusLogRow on VvmstatusLogNode {
   status {
     id
     description
+    code
     level
   }
   createdDatetime
@@ -276,6 +270,28 @@ mutation insertStockLine($input: InsertStockLineInput!, $storeId: String!) {
         ... on AdjustmentReasonNotProvided {
           __typename
         }
+      }
+    }
+  }
+}
+
+fragment VVMStatus on VvmstatusNode {
+  __typename
+  code
+  description
+  id
+  isActive
+  level
+  reasonId
+  unusable
+}
+
+query activeVvmStatuses($storeId: String!) {
+  activeVvmStatuses(storeId: $storeId) {
+    ... on VvmstatusConnector {
+      __typename
+      nodes {
+        ...VVMStatus
       }
     }
   }
