@@ -32,6 +32,7 @@ fragment StockLine on StockLineNode {
     warnings {
       ...Warning
     }
+    isVaccine
   }
   note
   onHold

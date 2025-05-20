@@ -67,10 +67,7 @@ impl ItemLedgerNode {
         &self.ledger.invoice_id
     }
     pub async fn reason(&self) -> &Option<String> {
-        if self.ledger.return_reason.is_some() {
-            return &self.ledger.return_reason;
-        }
-        &self.ledger.inventory_adjustment_reason
+        &self.ledger.reason
     }
 
     pub async fn invoice_status(&self) -> InvoiceNodeStatus {

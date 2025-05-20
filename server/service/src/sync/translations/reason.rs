@@ -1,7 +1,6 @@
 use repository::{
-    reason_option_row::{ReasonOptionRow, ReasonOptionType},
-    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowDelete, InventoryAdjustmentType,
-    ReturnReasonRow, StorageConnection, SyncBufferRow,
+    reason_option_row::{ReasonOptionRow, ReasonOptionRowDelete, ReasonOptionType},
+    StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -13,6 +12,8 @@ pub enum LegacyOptionsType {
     PositiveInventoryAdjustment,
     #[serde(rename = "negativeInventoryAdjustment")]
     NegativeInventoryAdjustment,
+    #[serde(rename = "openVialWastage")]
+    OpenVialWastage,
     #[serde(rename = "returnReason")]
     ReturnReason,
     #[serde(rename = "requisitionLineVariance")]
@@ -55,37 +56,24 @@ impl SyncTranslation for ReasonTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyOptionsRow>(&sync_record.data)?;
 
-        let result = match data.r#type {
-            LegacyOptionsType::PositiveInventoryAdjustment => {
-                PullTranslateResult::upsert(InventoryAdjustmentReasonRow {
-                    id: data.id.to_string(),
-                    r#type: InventoryAdjustmentType::Positive,
-                    is_active: data.is_active,
-                    reason: data.reason,
-                })
-            }
+        let reason_option_type = match data.r#type {
             LegacyOptionsType::NegativeInventoryAdjustment => {
-                PullTranslateResult::upsert(InventoryAdjustmentReasonRow {
-                    id: data.id.to_string(),
-                    r#type: InventoryAdjustmentType::Negative,
-                    is_active: data.is_active,
-                    reason: data.reason,
-                })
+                ReasonOptionType::NegativeInventoryAdjustment
             }
-            LegacyOptionsType::ReturnReason => PullTranslateResult::upsert(ReturnReasonRow {
-                id: data.id.to_string(),
-                is_active: data.is_active,
-                reason: data.reason,
-            }),
-            LegacyOptionsType::RequisitionLineVariance => {
-                PullTranslateResult::upsert(ReasonOptionRow {
-                    id: data.id.to_string(),
-                    is_active: data.is_active,
-                    reason: data.reason,
-                    r#type: ReasonOptionType::RequisitionLineVariance,
-                })
+            LegacyOptionsType::PositiveInventoryAdjustment => {
+                ReasonOptionType::PositiveInventoryAdjustment
             }
+            LegacyOptionsType::RequisitionLineVariance => ReasonOptionType::RequisitionLineVariance,
+            LegacyOptionsType::ReturnReason => ReasonOptionType::ReturnReason,
+            LegacyOptionsType::OpenVialWastage => ReasonOptionType::OpenVialWastage,
         };
+
+        let result = PullTranslateResult::upsert(ReasonOptionRow {
+            id: data.id.to_string(),
+            r#type: reason_option_type,
+            is_active: data.is_active,
+            reason: data.reason,
+        });
 
         Ok(result)
     }
@@ -96,9 +84,9 @@ impl SyncTranslation for ReasonTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(
-            InventoryAdjustmentReasonRowDelete(sync_record.record_id.clone()),
-        ))
+        Ok(PullTranslateResult::delete(ReasonOptionRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 }
 

@@ -5,15 +5,12 @@ import {
   usePatchState,
   useQuery,
 } from '@openmsupply-client/common';
-import {
-  InventoryAdjustmentReasonRowFragment,
-  StockLineRowFragment,
-} from '../../..';
+import { ReasonOptionRowFragment, StockLineRowFragment } from '../../..';
 import { STOCK_LINE } from './keys';
 import { useStockGraphQL } from '../useStockGraphQL';
 
 export interface DraftStockLine extends StockLineRowFragment {
-  inventoryAdjustmentReason: InventoryAdjustmentReasonRowFragment | null;
+  reasonOption: ReasonOptionRowFragment | null;
 }
 
 const defaultDraftStockLine: DraftStockLine = {
@@ -33,7 +30,7 @@ const defaultDraftStockLine: DraftStockLine = {
     name: '',
     isVaccine: false,
   },
-  inventoryAdjustmentReason: null,
+  reasonOption: null,
   vvmStatusLogs: {
     __typename: 'VvmstatusLogConnector',
     nodes: [],
@@ -114,7 +111,7 @@ const useCreate = () => {
 
   const mutationFn = async ({
     itemId,
-    inventoryAdjustmentReason,
+    reasonOption,
     packSize,
     totalNumberOfPacks,
     barcode,
@@ -140,7 +137,7 @@ const useCreate = () => {
         onHold,
         numberOfPacks: totalNumberOfPacks,
         location: setNullableInput('id', location),
-        inventoryAdjustmentReasonId: inventoryAdjustmentReason?.id,
+        reasonOptionId: reasonOption?.id,
         itemVariantId,
       },
     });
