@@ -18,8 +18,7 @@ export type DraftStocktakeLine = Omit<StocktakeLineFragment, '__typename'> & {
 export const DraftLine = {
   fromItem: (
     stocktakeId: string,
-    item: ItemRowFragment,
-    defaultPackSize: number
+    item: ItemRowFragment
   ): DraftStocktakeLine => {
     return {
       stocktakeId,
@@ -32,7 +31,7 @@ export const DraftLine = {
       itemId: item.id,
       sellPricePerPack: 0,
       costPricePerPack: 0,
-      packSize: defaultPackSize,
+      packSize: item.defaultPackSize,
       location: null,
       itemName: item.name,
       item: {

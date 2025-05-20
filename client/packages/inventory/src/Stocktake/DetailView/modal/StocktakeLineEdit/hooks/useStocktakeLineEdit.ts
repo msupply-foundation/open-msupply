@@ -46,10 +46,7 @@ export const useStocktakeLineEdit = (
 
   const addLine = () => {
     if (item) {
-      setDraftLines(lines => [
-        DraftLine.fromItem(id, item, item.defaultPackSize),
-        ...lines,
-      ]);
+      setDraftLines(lines => [DraftLine.fromItem(id, item), ...lines]);
     }
   };
 
