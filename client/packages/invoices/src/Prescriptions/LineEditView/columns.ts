@@ -26,9 +26,9 @@ export const usePrescriptionLineEditColumns = ({
 }) => {
   const t = useTranslation();
   const { data: preferences } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses
+    PreferenceKey.ManageVaccinesInDoses
   );
-  const displayInDoses = !!preferences?.displayVaccinesInDoses && !!isVaccine;
+  const displayInDoses = !!preferences?.manageVaccinesInDoses && !!isVaccine;
   const unit = Formatter.sentenceCase(unitName);
 
   const columns: ColumnDescription<

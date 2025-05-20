@@ -97,9 +97,7 @@ export const PrescriptionLineEditForm: React.FC<
   const { format } = useFormatNumber();
   const { rows: items } = usePrescription();
   const { store: { preferences } = {} } = useAuthContext();
-  const { data: OMSPrefs } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses
-  );
+  const { data: OMSPrefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
 
   const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
   const [prescribedQuantity, setPrescribedQuantity] = useState<number | null>(
@@ -114,8 +112,7 @@ export const PrescriptionLineEditForm: React.FC<
     []
   );
   const isDirectionsDisabled = !issueUnitQuantity;
-  const displayInDoses =
-    !!OMSPrefs?.displayVaccinesInDoses && !!item?.isVaccine;
+  const displayInDoses = !!OMSPrefs?.manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = item?.unitName ?? t('label.unit');
   const unit = displayInDoses ? t('label.doses') : unitName;
 

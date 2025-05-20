@@ -1809,7 +1809,7 @@
   "preference.allowTrackingOfReceivedStockByDonor": "Permitir o rastreamento do estoque recebido por doador",
   "preference.allowTrackingOfStockByDonor": "Permitir o rastreamento do estoque por doador",
   "preference.displayPopulationBasedForecasting": "Exibir previsão baseada na população",
-  "preference.displayVaccinesInDoses": "Exibir vacinas em doses",
+  "preference.manageVaccinesInDoses": "Gerenciar vacinas em doses",
   "preference.manageVvmStatusForStock": "Gerenciar status do VVM para o estoque",
   "preference.showContactTracing": "Mostrar rastreamento de contatos",
   "preference.sortByVvmStatusThenExpiry": "Classificar os lotes disponíveis pelo status do VVM e depois pela validade",
