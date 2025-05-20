@@ -57,7 +57,7 @@ interface AllocationContext {
   alerts: StockOutAlert[];
   allocateIn: AllocateInOption;
   item: DraftItem | null;
-  placeholderQuantity: number | null;
+  placeholderUnits: number | null;
 
   initialise: (params: {
     itemData: OutboundLineEditData;
@@ -88,7 +88,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   item: null,
   draftLines: [],
   nonAllocatableLines: [],
-  placeholderQuantity: null,
+  placeholderUnits: null,
   alerts: [],
   allocateIn: { type: AllocateInType.Units },
 
@@ -119,7 +119,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       draftLines: allocatableLines,
       nonAllocatableLines,
 
-      placeholderQuantity: allowPlaceholder ? (placeholderQuantity ?? 0) : null,
+      placeholderUnits: allowPlaceholder ? (placeholderQuantity ?? 0) : null,
       alerts: [],
     });
   },
@@ -130,7 +130,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       isDirty: false,
       draftLines: [],
       nonAllocatableLines: [],
-      placeholderQuantity: null,
+      placeholderUnits: null,
       item: null,
       allocateIn: { type: AllocateInType.Units },
       availablePackSizes: [],
@@ -145,10 +145,12 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     // reallocating on change of allocation type/pack size
     const result = allocateQuantities(draftLines, 0, { allocateIn });
 
+    // OR SHOULD WE SET THE PLACEHOLDER?
+
     set(state => ({
       ...state,
       draftLines: result?.allocatedLines ?? draftLines,
-      placeholderQuantity: 0,
+      placeholderUnits: 0,
       isDirty: true,
       allocateIn,
     }));
@@ -161,7 +163,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     })),
 
   autoAllocate: (quantity, format, t) => {
-    const { draftLines, nonAllocatableLines, placeholderQuantity, allocateIn } =
+    const { draftLines, nonAllocatableLines, placeholderUnits, allocateIn } =
       get();
 
     const result = allocateQuantities(draftLines, quantity, {
@@ -200,11 +202,18 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       t
     );
 
+    // Note that a placeholder is always considered to be pack size 1, 1 dose per unit
+    // So if issuing in larger pack sizes, we need to adjust the placeholder
+    const placeholderAccountingForPacks =
+      allocateIn.type === AllocateInType.Packs
+        ? stillToAllocate * allocateIn.packSize
+        : stillToAllocate;
+
     set(state => ({
       ...state,
       alerts,
-      placeholderQuantity:
-        placeholderQuantity === null ? null : stillToAllocate,
+      placeholderUnits:
+        placeholderUnits === null ? null : placeholderAccountingForPacks,
       isDirty: true,
       draftLines: result.allocatedLines,
     }));

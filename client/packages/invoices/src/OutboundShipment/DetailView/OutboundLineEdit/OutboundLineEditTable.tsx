@@ -108,7 +108,7 @@ export const OutboundLineEditTable = ({
 
   const {
     draftLines,
-    placeholderQuantity,
+    placeholderUnits,
     nonAllocatableLines,
     allocateIn,
     allocatedQuantity,
@@ -144,7 +144,7 @@ export const OutboundLineEditTable = ({
   }, []);
 
   // Null means we aren't using placeholder
-  if (!lines.length && placeholderQuantity === null)
+  if (!lines.length && placeholderUnits === null)
     return (
       <Box sx={{ margin: 'auto' }}>
         <Typography>{t('messages.no-stock-available')}</Typography>
@@ -153,9 +153,9 @@ export const OutboundLineEditTable = ({
 
   const additionalRows = [
     <PlaceholderRow
-      // If placeholder quantity is 0, and we have lines, don't show placeholder row
+      // Only show a 0 placeholder if we have no stock lines to show
       quantity={
-        placeholderQuantity === 0 && lines.length ? null : placeholderQuantity
+        placeholderUnits === 0 && lines.length ? null : placeholderUnits
       }
       key="placeholder-row"
     />,

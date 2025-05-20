@@ -59,7 +59,7 @@ export const OutboundLineEdit = ({
   const {
     draftLines,
     allocatedQuantity,
-    placeholderQuantity,
+    placeholderUnits: placeholderQuantity,
     alerts,
     isDirty,
     setAlerts,
