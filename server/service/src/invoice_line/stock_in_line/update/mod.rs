@@ -139,9 +139,8 @@ mod test {
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
-        EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-        InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
-        StorePreferenceRow, StorePreferenceRowRepository,
+        EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceStatus, InvoiceType, StorePreferenceRow, StorePreferenceRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -419,23 +418,9 @@ mod test {
         )
         .unwrap();
 
-        let InvoiceLine {
-            invoice_line_row: inbound_line,
-            stock_line_option,
-            ..
-        } = InvoiceLineRepository::new(&connection)
-            .query_by_filter(InvoiceLineFilter::new().id(EqualFilter::equal_to(
-                "delivered_invoice_line_with_vvm_status",
-            )))
-            .unwrap()
-            .pop()
-            .unwrap();
-
-        let stock_line = stock_line_option.unwrap();
-
-        let vvm_log_filter = VVMStatusLogFilter::new()
-            .invoice_line_id(EqualFilter::equal_to(&inbound_line.id))
-            .stock_line_id(EqualFilter::equal_to(&stock_line.id));
+        let vvm_log_filter = VVMStatusLogFilter::new().invoice_line_id(EqualFilter::equal_to(
+            "delivered_invoice_line_with_vvm_status",
+        ));
 
         let vvm_status_log = VVMStatusLogRepository::new(&connection)
             .query_by_filter(vvm_log_filter.clone())
@@ -446,7 +431,7 @@ mod test {
         assert_eq!(vvm_status_log, Some(mock_vvm_status_a().id));
 
         // Update the invoice line with a new vvm status
-        update_stock_in_line(
+        let result = update_stock_in_line(
             &context,
             UpdateStockInLine {
                 id: "delivered_invoice_line_with_vvm_status".to_string(),
@@ -456,19 +441,9 @@ mod test {
             },
         )
         .unwrap();
-
-        let inbound_line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id("delivered_invoice_line_with_vvm_status")
-            .unwrap()
-            .unwrap();
-
         assert_eq!(
-            inbound_line,
-            InvoiceLineRow {
-                id: "delivered_invoice_line_with_vvm_status".to_string(),
-                vvm_status_id: Some(mock_vvm_status_b().id),
-                ..inbound_line.clone()
-            }
+            result.invoice_line_row.vvm_status_id,
+            Some(mock_vvm_status_b().id),
         );
 
         let vvm_status_log = VVMStatusLogRepository::new(&connection)
@@ -480,7 +455,7 @@ mod test {
         assert_eq!(vvm_status_log, Some(mock_vvm_status_b().id));
 
         // Clear the vvm_status_id from invoice line
-        update_stock_in_line(
+        let result = update_stock_in_line(
             &context,
             UpdateStockInLine {
                 id: "delivered_invoice_line_with_vvm_status".to_string(),
@@ -490,20 +465,7 @@ mod test {
             },
         )
         .unwrap();
-
-        let inbound_line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id("delivered_invoice_line_with_vvm_status")
-            .unwrap()
-            .unwrap();
-
-        assert_eq!(
-            inbound_line,
-            InvoiceLineRow {
-                id: "delivered_invoice_line_with_vvm_status".to_string(),
-                vvm_status_id: None,
-                ..inbound_line.clone()
-            }
-        );
+        assert_eq!(result.invoice_line_row.vvm_status_id, None,);
 
         let vvm_status_log = VVMStatusLogRepository::new(&connection)
             .query_by_filter(vvm_log_filter)

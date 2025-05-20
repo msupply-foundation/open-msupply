@@ -551,23 +551,9 @@ mod test {
         )
         .unwrap();
 
-        let InvoiceLine {
-            invoice_line_row: inbound_line,
-            stock_line_option,
-            ..
-        } = InvoiceLineRepository::new(&connection)
-            .query_by_filter(InvoiceLineFilter::new().id(EqualFilter::equal_to(
-                "delivered_invoice_line_with_vvm_status",
-            )))
-            .unwrap()
-            .pop()
-            .unwrap();
-
-        let stock_line = stock_line_option.unwrap();
-
-        let vvm_log_filter = VVMStatusLogFilter::new()
-            .invoice_line_id(EqualFilter::equal_to(&inbound_line.id))
-            .stock_line_id(EqualFilter::equal_to(&stock_line.id));
+        let vvm_log_filter = VVMStatusLogFilter::new().invoice_line_id(EqualFilter::equal_to(
+            "delivered_invoice_line_with_vvm_status",
+        ));
 
         let vvm_status_log = VVMStatusLogRepository::new(&connection)
             .query_by_filter(vvm_log_filter)

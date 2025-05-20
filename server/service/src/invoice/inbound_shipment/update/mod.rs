@@ -772,7 +772,9 @@ mod test {
 
         assert_eq!(stock_lines_delivered, stock_lines_verified);
 
-        // Test VVM logs not generated on an inbound shipment with status New
+        // Test VVM logs
+
+        // Add line with VVM status to new invoice
         insert_stock_in_line(
             &context,
             InsertStockInLine {
@@ -788,13 +790,8 @@ mod test {
         )
         .unwrap();
 
-        let invoice_line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id("invoice_line_with_vvm_status")
-            .unwrap()
-            .unwrap();
-
-        let vvm_log_filter =
-            VVMStatusLogFilter::new().invoice_line_id(EqualFilter::equal_to(&invoice_line.id));
+        let vvm_log_filter = VVMStatusLogFilter::new()
+            .invoice_line_id(EqualFilter::equal_to("invoice_line_with_vvm_status"));
 
         let vvm_status_log = VVMStatusLogRepository::new(&connection)
             .query_by_filter(vvm_log_filter.clone())
@@ -802,6 +799,7 @@ mod test {
             .first()
             .map(|log| log.id.clone());
 
+        // Check no logs exist before update
         assert_eq!(vvm_status_log, None);
 
         // Test updating to Delivered generates Activity logs and VVM status logs
@@ -810,7 +808,6 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_c().id;
-                    r.other_party_id = Some(supplier().id);
                     r.status = Some(UpdateInboundShipmentStatus::Delivered);
                 }),
             )
