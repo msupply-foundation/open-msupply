@@ -23,7 +23,7 @@ import {
 } from '@openmsupply-client/common';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { DraftStockOutLineFragment } from '../../api/operations.generated';
-import { getPackQuantityCellId } from 'packages/invoices/src/utils';
+import { getStockOutQuantityCellId } from 'packages/invoices/src/utils';
 import { AllocateIn } from '../../../Allocation/useAllocationContext';
 import { DraftItem } from '../../..';
 import { getDoseQuantity, packsToDoses } from '../../../Allocation/utils';
@@ -155,7 +155,7 @@ const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
     max={props.rowData.availablePacks}
-    id={getPackQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
+    id={getStockOutQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
     decimalLimit={2}
     min={0}
   />
@@ -208,7 +208,7 @@ const DoseQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
     max={packsToDoses(props.rowData.availablePacks, props.rowData)}
-    id={getPackQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
+    id={getStockOutQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
     decimalLimit={0}
     min={0}
     // bit longer debounce, as we might overwrite value to whole number of packs

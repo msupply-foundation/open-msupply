@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { getPackQuantityCellId } from '../../../../utils';
+import { getStockOutQuantityCellId } from '../../../../utils';
 import { ScannedBarcode } from '../../../../types';
 import { useOutbound } from '../../../api';
 import { useAllocationContext } from '../../../../Allocation/useAllocationContext';
@@ -42,7 +42,7 @@ const useFocusNumberOfPacksInput = (
   useEffect(() => {
     if (!batch || !itemId) return;
     setTimeout(() => {
-      const input = document.getElementById(getPackQuantityCellId(batch));
+      const input = document.getElementById(getStockOutQuantityCellId(batch));
       if (input) {
         input.focus();
       }

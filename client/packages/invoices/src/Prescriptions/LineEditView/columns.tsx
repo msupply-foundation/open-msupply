@@ -21,7 +21,7 @@ import { AllocateIn } from '../../Allocation/useAllocationContext';
 import { DraftItem } from '../..';
 import { DraftStockOutLineFragment } from '../../OutboundShipment/api/operations.generated';
 import { getDoseQuantity, packsToDoses } from '../../Allocation/utils';
-import { getPackQuantityCellId } from '../../utils';
+import { getStockOutQuantityCellId } from '../../utils';
 
 export const usePrescriptionLineEditColumns = ({
   allocate,
@@ -93,7 +93,7 @@ export const usePrescriptionLineEditColumns = ({
     align: ColumnAlign.Right,
     width: 80,
     accessor: ({ rowData }) =>
-      (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
+      (rowData.inStorePacks ?? 0) * (rowData.packSize ?? 1),
   });
 
   if (displayInDoses) {
@@ -130,7 +130,7 @@ const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
     max={props.rowData.availablePacks}
-    id={getPackQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
+    id={getStockOutQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
     decimalLimit={2}
     min={0}
   />
@@ -140,7 +140,7 @@ const UnitQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
     max={props.rowData.availablePacks}
-    id={getPackQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
+    id={getStockOutQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
     decimalLimit={2}
     min={0}
   />
