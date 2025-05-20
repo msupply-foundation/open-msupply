@@ -26,7 +26,7 @@ impl InvoiceLineQueries {
         invoice_lines(ctx, &store_id, page, filter, sort, report_sort)
     }
 
-    pub async fn draft_outbound_shipment_lines(
+    pub async fn draft_stock_out_lines(
         &self,
         ctx: &Context<'_>,
         store_id: String,

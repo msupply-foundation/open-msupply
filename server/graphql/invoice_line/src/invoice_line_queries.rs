@@ -73,6 +73,7 @@ impl InvoiceLineFilterInput {
             verified_datetime: self.verified_datetime.map(DatetimeFilter::from),
             picked_datetime: None,
             delivered_datetime: None,
+            has_prescribed_quantity: None,
         }
     }
 }
@@ -101,6 +102,7 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
             inventory_adjustment_reason: f.inventory_adjustment_reason.map(EqualFilter::from),
             picked_datetime: None,
             delivered_datetime: None,
+            has_prescribed_quantity: None,
         }
     }
 }
@@ -226,8 +228,7 @@ pub fn draft_outbound_lines(
     let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
     let service = &service_provider.invoice_line_service;
 
-    let result =
-        service.get_draft_outbound_shipment_lines(&service_ctx, store_id, item_id, invoice_id);
+    let result = service.get_draft_stock_out_lines(&service_ctx, store_id, item_id, invoice_id);
 
     if let Ok((draft_lines, additional_data)) = result {
         Ok(DraftStockOutItemData {

@@ -37,7 +37,7 @@ pub struct AdditionalStockOutData {
     pub prescribed_quantity: Option<f64>,
 }
 
-pub fn get_draft_outbound_shipment_lines(
+pub fn get_draft_stock_out_lines(
     ctx: &ServiceContext,
     store_id: &str,
     item_id: &str,
@@ -77,7 +77,15 @@ pub fn get_draft_outbound_shipment_lines(
         )?
         .map(|l| l.invoice_line_row.number_of_packs);
 
-    let prescribed_quantity = Some(-999.0); // TODO: get this from the invoice line
+    let prescribed_quantity = InvoiceLineRepository::new(&ctx.connection)
+        .query_one(
+            InvoiceLineFilter::new()
+                .invoice_id(EqualFilter::equal_to(&outbound.invoice_row.id))
+                .item_id(EqualFilter::equal_to(item_id))
+                .has_prescribed_quantity(true),
+        )?
+        .map(|l| l.invoice_line_row.prescribed_quantity)
+        .unwrap_or_default();
 
     let draft_stock_out_data = AdditionalStockOutData {
         placeholder_quantity,
@@ -329,7 +337,7 @@ mod test {
         let store_id = mock_store_b().id;
 
         let (result, additional_data) = service
-            .get_draft_outbound_shipment_lines(
+            .get_draft_stock_out_lines(
                 &context,
                 &store_id,
                 &mock_item_b().id,

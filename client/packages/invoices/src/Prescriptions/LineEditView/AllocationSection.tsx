@@ -21,7 +21,6 @@ import { AutoAllocatePrescribedQuantityField } from '../../Allocation/AutoAlloca
 interface AllocationProps {
   itemId: string;
   invoiceId: string;
-  allowPlaceholder: boolean;
   scannedBatch?: string;
   disabled?: boolean;
   prefOptions: {
@@ -33,7 +32,6 @@ interface AllocationProps {
 export const AllocationSection = ({
   itemId,
   invoiceId,
-  allowPlaceholder,
   scannedBatch,
   disabled,
   prefOptions: { allocateVaccineItemsInDoses, sortByVvmStatus },
@@ -58,7 +56,8 @@ export const AllocationSection = ({
         strategy: sortByVvmStatus
           ? AllocationStrategy.VVMStatus
           : AllocationStrategy.FEFO,
-        allowPlaceholder,
+        allowPlaceholder: false,
+        allowPrescribedQuantity: true,
         scannedBatch,
         allocateVaccineItemsInDoses,
       });
@@ -89,7 +88,7 @@ const AllocationInner = ({ disabled }: { disabled?: boolean }) => {
       <AccordionPanelSection
         title={t('label.batches')}
         defaultExpanded={false}
-        // key={key + '_table'}
+        // key={key + '_table'} // Do we need to use a custom key again? item_id?
         key={'item_table'}
         backgroundColor="background.white"
       >

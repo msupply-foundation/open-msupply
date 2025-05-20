@@ -2285,14 +2285,15 @@ export type DoseConfigurationNotAllowed = UpsertItemVariantErrorInterface & {
   description: Scalars['String']['output'];
 };
 
-export type DraftOutboundShipmentItemData = {
-  __typename: 'DraftOutboundShipmentItemData';
-  draftLines: Array<DraftOutboundShipmentLineNode>;
+export type DraftStockOutItemData = {
+  __typename: 'DraftStockOutItemData';
+  draftLines: Array<DraftStockOutLineNode>;
   placeholderQuantity?: Maybe<Scalars['Float']['output']>;
+  prescribedQuantity?: Maybe<Scalars['Float']['output']>;
 };
 
-export type DraftOutboundShipmentLineNode = {
-  __typename: 'DraftOutboundShipmentLineNode';
+export type DraftStockOutLineNode = {
+  __typename: 'DraftStockOutLineNode';
   availablePacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
   defaultDosesPerUnit: Scalars['Int']['output'];
@@ -6403,7 +6404,7 @@ export type Queries = {
   documentHistory: DocumentHistoryResponse;
   documentRegistries: DocumentRegistryResponse;
   documents: DocumentResponse;
-  draftOutboundShipmentLines: DraftOutboundShipmentItemData;
+  draftStockOutLines: DraftStockOutItemData;
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
@@ -6721,7 +6722,7 @@ export type QueriesDocumentsArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type QueriesDraftOutboundShipmentLinesArgs = {
+export type QueriesDraftStockOutLinesArgs = {
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];

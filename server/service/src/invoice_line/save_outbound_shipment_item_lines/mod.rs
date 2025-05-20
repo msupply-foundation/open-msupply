@@ -16,29 +16,33 @@ use super::{
         InsertOutboundShipmentUnallocatedLineError, UpdateOutboundShipmentUnallocatedLineError,
     },
     stock_out_line::{
-        delete_stock_out_line, insert_stock_out_line, update_stock_out_line,
-        DeleteStockOutLineError, InsertStockOutLineError, UpdateStockOutLineError,
+        delete_stock_out_line, insert_stock_out_line, set_prescribed_quantity,
+        update_stock_out_line, DeleteStockOutLineError, InsertStockOutLineError,
+        SetPrescribedQuantity, SetPrescribedQuantityError, UpdateStockOutLineError,
     },
 };
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct SaveOutboundShipmentItemLines {
+pub struct SaveStockOutInvoiceLines {
     pub invoice_id: String,
     pub item_id: String,
-    pub lines: Vec<SaveOutboundShipmentLine>,
+    pub lines: Vec<SaveStockOutInvoiceLine>,
     pub placeholder_quantity: Option<f64>,
+    pub prescribed_quantity: Option<f64>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct SaveOutboundShipmentLine {
+pub struct SaveStockOutInvoiceLine {
     pub id: String,
     pub number_of_packs: f64,
     pub stock_line_id: String,
 }
 
 #[derive(PartialEq, Debug)]
-pub enum SaveOutboundShipmentLinesError {
+pub enum SaveStockOutInvoiceLinesError {
     OutboundShipmentNotFound,
+    PrescriptionNotFound,
+    InvalidInvoiceType,
     InvoiceDoesNotBelongToCurrentStore,
     InvoiceNotEditable,
     NotAnOutboundShipment,
@@ -57,6 +61,7 @@ pub enum SaveOutboundShipmentLinesError {
         error: DeleteStockOutLineError,
     },
     PlaceholderError(PlaceholderError),
+    PrescribedQuantityError(SetPrescribedQuantityError),
     DatabaseError(RepositoryError),
 }
 
@@ -69,22 +74,23 @@ pub enum PlaceholderError {
 
 pub fn save_outbound_shipment_item_lines(
     ctx: &ServiceContext,
-    input: SaveOutboundShipmentItemLines,
-) -> Result<Invoice, SaveOutboundShipmentLinesError> {
-    let outbound_shipment = ctx
+    input: SaveStockOutInvoiceLines,
+) -> Result<Invoice, SaveStockOutInvoiceLinesError> {
+    let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &ctx.store_id, &input.invoice_id)?;
+            let invoice = validate(connection, &ctx.store_id, &input.invoice_id)?;
+
             let GenerateResult {
                 lines_to_add,
                 lines_to_update,
                 lines_to_delete,
                 manage_placeholder,
-            } = generate(connection, input.clone())?;
+            } = generate(connection, invoice, input.clone())?;
 
             for line in lines_to_add {
                 insert_stock_out_line(ctx, line.clone()).map_err(|error| {
-                    SaveOutboundShipmentLinesError::LineInsertError {
+                    SaveStockOutInvoiceLinesError::LineInsertError {
                         line_id: line.id,
                         error,
                     }
@@ -93,7 +99,7 @@ pub fn save_outbound_shipment_item_lines(
 
             for line in lines_to_update {
                 update_stock_out_line(ctx, line.clone()).map_err(|error| {
-                    SaveOutboundShipmentLinesError::LineUpdateError {
+                    SaveStockOutInvoiceLinesError::LineUpdateError {
                         line_id: line.id,
                         error,
                     }
@@ -102,7 +108,7 @@ pub fn save_outbound_shipment_item_lines(
 
             for line in lines_to_delete {
                 delete_stock_out_line(ctx, line.clone()).map_err(|error| {
-                    SaveOutboundShipmentLinesError::LineDeleteError {
+                    SaveStockOutInvoiceLinesError::LineDeleteError {
                         line_id: line.id,
                         error,
                     }
@@ -112,21 +118,21 @@ pub fn save_outbound_shipment_item_lines(
             match manage_placeholder {
                 ManagePlaceholderLine::Insert(input) => {
                     insert_outbound_shipment_unallocated_line(ctx, input).map_err(|error| {
-                        SaveOutboundShipmentLinesError::PlaceholderError(
+                        SaveStockOutInvoiceLinesError::PlaceholderError(
                             PlaceholderError::InsertError(error),
                         )
                     })?;
                 }
                 ManagePlaceholderLine::Update(input) => {
                     update_outbound_shipment_unallocated_line(ctx, input).map_err(|error| {
-                        SaveOutboundShipmentLinesError::PlaceholderError(
+                        SaveStockOutInvoiceLinesError::PlaceholderError(
                             PlaceholderError::UpdateError(error),
                         )
                     })?;
                 }
                 ManagePlaceholderLine::Delete(input) => {
                     delete_outbound_shipment_unallocated_line(ctx, input).map_err(|error| {
-                        SaveOutboundShipmentLinesError::PlaceholderError(
+                        SaveStockOutInvoiceLinesError::PlaceholderError(
                             PlaceholderError::DeleteError(error),
                         )
                     })?;
@@ -134,18 +140,32 @@ pub fn save_outbound_shipment_item_lines(
                 ManagePlaceholderLine::NothingToDo => {}
             };
 
+            // Set the prescribed quanity if it is provided
+            // Note this means it's not clearable, which I think is ok?
+            if let Some(prescribed_quantity) = input.prescribed_quantity {
+                set_prescribed_quantity(
+                    ctx,
+                    SetPrescribedQuantity {
+                        invoice_id: input.invoice_id.clone(),
+                        item_id: input.item_id.clone(),
+                        prescribed_quantity,
+                    },
+                )
+                .map_err(|error| SaveStockOutInvoiceLinesError::PrescribedQuantityError(error))?;
+            }
+
             get_invoice(ctx, None, &input.invoice_id)
-                .map_err(SaveOutboundShipmentLinesError::DatabaseError)?
-                .ok_or(SaveOutboundShipmentLinesError::UpdatedShipmentDoesNotExist)
+                .map_err(SaveStockOutInvoiceLinesError::DatabaseError)?
+                .ok_or(SaveStockOutInvoiceLinesError::UpdatedShipmentDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
-    Ok(outbound_shipment)
+    Ok(invoice)
 }
 
-impl From<RepositoryError> for SaveOutboundShipmentLinesError {
+impl From<RepositoryError> for SaveStockOutInvoiceLinesError {
     fn from(error: RepositoryError) -> Self {
-        SaveOutboundShipmentLinesError::DatabaseError(error)
+        SaveStockOutInvoiceLinesError::DatabaseError(error)
     }
 }
 
@@ -154,8 +174,8 @@ mod test {
     use crate::{
         invoice_line::{
             save_outbound_shipment_item_lines::{
-                SaveOutboundShipmentItemLines, SaveOutboundShipmentLine,
-                SaveOutboundShipmentLinesError as ServiceError,
+                SaveStockOutInvoiceLine, SaveStockOutInvoiceLines,
+                SaveStockOutInvoiceLinesError as ServiceError,
             },
             stock_out_line::InsertStockOutLineError,
         },
@@ -230,7 +250,7 @@ mod test {
                 .invoice_line_service
                 .save_outbound_shipment_item_lines(
                     &context,
-                    SaveOutboundShipmentItemLines {
+                    SaveStockOutInvoiceLines {
                         invoice_id: "non-existent-id".to_string(),
                         ..Default::default()
                     }
@@ -244,7 +264,7 @@ mod test {
                 .invoice_line_service
                 .save_outbound_shipment_item_lines(
                     &context,
-                    SaveOutboundShipmentItemLines {
+                    SaveStockOutInvoiceLines {
                         invoice_id: mock_customer_return_a().id,
                         ..Default::default()
                     }
@@ -258,7 +278,7 @@ mod test {
                 .invoice_line_service
                 .save_outbound_shipment_item_lines(
                     &context,
-                    SaveOutboundShipmentItemLines {
+                    SaveStockOutInvoiceLines {
                         invoice_id: wrong_store().id,
                         ..Default::default()
                     }
@@ -272,7 +292,7 @@ mod test {
                 .invoice_line_service
                 .save_outbound_shipment_item_lines(
                     &context,
-                    SaveOutboundShipmentItemLines {
+                    SaveStockOutInvoiceLines {
                         invoice_id: verified_shipment().id,
                         ..Default::default()
                     }
@@ -286,10 +306,10 @@ mod test {
                 .invoice_line_service
                 .save_outbound_shipment_item_lines(
                     &context,
-                    SaveOutboundShipmentItemLines {
+                    SaveStockOutInvoiceLines {
                         invoice_id: mock_outbound_shipment_a().id,
                         item_id: mock_item_a().id,
-                        lines: vec![SaveOutboundShipmentLine {
+                        lines: vec![SaveStockOutInvoiceLine {
                             id: "new_line".to_string(),
                             number_of_packs: 1000.0,
                             stock_line_id: mock_stock_line_vaccine_item_a().id
@@ -305,6 +325,7 @@ mod test {
             }),
         );
     }
+    // TODO Tests for prescriptions with prescribed quantity
 
     #[actix_rt::test]
     async fn test_save_outbound_shipment_lines_success() {
@@ -358,27 +379,28 @@ mod test {
             .invoice_line_service
             .save_outbound_shipment_item_lines(
                 &context,
-                SaveOutboundShipmentItemLines {
+                SaveStockOutInvoiceLines {
                     invoice_id: outbound_to_edit().id,
                     item_id: mock_item_a().id,
                     lines: vec![
-                        SaveOutboundShipmentLine {
+                        SaveStockOutInvoiceLine {
                             id: "line1".to_string(), // create
                             number_of_packs: 1.0,
                             stock_line_id: mock_stock_line_b().id,
                         },
-                        SaveOutboundShipmentLine {
+                        SaveStockOutInvoiceLine {
                             id: line_to_update().id,
                             number_of_packs: 2.0,
                             stock_line_id: mock_stock_line_a().id,
                         },
-                        SaveOutboundShipmentLine {
+                        SaveStockOutInvoiceLine {
                             id: line_to_delete().id,
                             number_of_packs: 0.0,
                             ..Default::default()
                         },
                     ],
                     placeholder_quantity: Some(5.0),
+                    prescribed_quantity: None,
                 },
             )
             .unwrap();

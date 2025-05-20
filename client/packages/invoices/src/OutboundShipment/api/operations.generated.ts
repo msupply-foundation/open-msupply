@@ -1024,7 +1024,7 @@ export type InsertBarcodeMutation = {
 };
 
 export type DraftStockOutLineFragment = {
-  __typename: 'DraftOutboundShipmentLineNode';
+  __typename: 'DraftStockOutLineNode';
   id: string;
   stockLineId: string;
   numberOfPacks: number;
@@ -1070,11 +1070,12 @@ export type GetOutboundEditLinesQuery = {
       isVaccine: boolean;
     }>;
   };
-  draftOutboundShipmentLines: {
-    __typename: 'DraftOutboundShipmentItemData';
+  draftStockOutLines: {
+    __typename: 'DraftStockOutItemData';
     placeholderQuantity?: number | null;
+    prescribedQuantity?: number | null;
     draftLines: Array<{
-      __typename: 'DraftOutboundShipmentLineNode';
+      __typename: 'DraftStockOutLineNode';
       id: string;
       stockLineId: string;
       numberOfPacks: number;
@@ -1238,7 +1239,7 @@ export const CannotHaveEstimatedDeliveryDateBeforeShippedDateErrorFragmentDoc = 
   }
 `;
 export const DraftStockOutLineFragmentDoc = gql`
-  fragment DraftStockOutLine on DraftOutboundShipmentLineNode {
+  fragment DraftStockOutLine on DraftStockOutLineNode {
     __typename
     id
     stockLineId
@@ -2003,13 +2004,14 @@ export const GetOutboundEditLinesDocument = gql`
         }
       }
     }
-    draftOutboundShipmentLines(
+    draftStockOutLines(
       storeId: $storeId
       itemId: $itemId
       invoiceId: $invoiceId
     ) {
-      ... on DraftOutboundShipmentItemData {
+      ... on DraftStockOutItemData {
         placeholderQuantity
+        prescribedQuantity
         draftLines {
           ...DraftStockOutLine
         }

@@ -1,16 +1,16 @@
-use repository::{InvoiceType, StorageConnection};
+use repository::{InvoiceRow, InvoiceType, StorageConnection};
 
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
-    invoice_line::save_outbound_shipment_item_lines::SaveOutboundShipmentLinesError,
+    invoice_line::save_outbound_shipment_item_lines::SaveStockOutInvoiceLinesError,
 };
 
 pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     id: &str,
-) -> Result<(), SaveOutboundShipmentLinesError> {
-    use SaveOutboundShipmentLinesError::*;
+) -> Result<InvoiceRow, SaveStockOutInvoiceLinesError> {
+    use SaveStockOutInvoiceLinesError::*;
 
     let outbound = check_invoice_exists(id, connection)?.ok_or(OutboundShipmentNotFound)?;
 
@@ -24,5 +24,5 @@ pub fn validate(
         return Err(NotAnOutboundShipment);
     }
 
-    Ok(())
+    Ok(outbound)
 }

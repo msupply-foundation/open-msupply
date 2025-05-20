@@ -6,11 +6,9 @@ import {
   ExpiryDateCell,
   Formatter,
   getDosesPerUnitColumn,
-  LocaleKey,
   NumberCell,
   NumberInputCell,
   PreferenceKey,
-  TypedTFunction,
   useColumns,
   useIntlUtils,
   usePreference,
@@ -20,14 +18,12 @@ import { getPrescriptionLineDosesColumns } from './columnsDoses';
 import { AllocateIn } from '../../Allocation/useAllocationContext';
 import { DraftItem } from '../..';
 import { DraftStockOutLineFragment } from '../../OutboundShipment/api/operations.generated';
-import { getDoseQuantity, packsToDoses } from '../../Allocation/utils';
 import { getStockOutQuantityCellId } from '../../utils';
 
 export const usePrescriptionLineEditColumns = ({
   allocate,
   item,
   allocateIn,
-  disabled,
 }: {
   allocate: (key: string, value: number) => number;
   item: DraftItem | null;

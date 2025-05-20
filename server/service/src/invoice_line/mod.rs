@@ -61,14 +61,14 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         get_invoice_lines(ctx, store_id, pagination, filter, sort)
     }
 
-    fn get_draft_outbound_shipment_lines(
+    fn get_draft_stock_out_lines(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
         item_id: &str,
         invoice_id: &str,
     ) -> Result<(Vec<DraftStockOutLine>, AdditionalStockOutData), ListError> {
-        get_draft_outbound_shipment_lines(ctx, store_id, item_id, invoice_id)
+        get_draft_stock_out_lines(ctx, store_id, item_id, invoice_id)
     }
 
     // Stock out: Outbound Shipment/Supplier Return/Prescription
@@ -214,8 +214,8 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
     fn save_outbound_shipment_item_lines(
         &self,
         ctx: &ServiceContext,
-        input: SaveOutboundShipmentItemLines,
-    ) -> Result<Invoice, SaveOutboundShipmentLinesError> {
+        input: SaveStockOutInvoiceLines,
+    ) -> Result<Invoice, SaveStockOutInvoiceLinesError> {
         save_outbound_shipment_item_lines(ctx, input)
     }
 

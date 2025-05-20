@@ -822,7 +822,7 @@ mutation insertBarcode($storeId: String!, $input: InsertBarcodeInput!) {
   }
 }
 
-fragment DraftStockOutLine on DraftOutboundShipmentLineNode {
+fragment DraftStockOutLine on DraftStockOutLineNode {
   __typename
   id
   stockLineId
@@ -876,13 +876,14 @@ query getOutboundEditLines(
   }
 
   # The draft lines
-  draftOutboundShipmentLines(
+  draftStockOutLines(
     storeId: $storeId
     itemId: $itemId
     invoiceId: $invoiceId
   ) {
-    ... on DraftOutboundShipmentItemData {
+    ... on DraftStockOutItemData {
       placeholderQuantity
+      prescribedQuantity
       draftLines {
         ...DraftStockOutLine
       }

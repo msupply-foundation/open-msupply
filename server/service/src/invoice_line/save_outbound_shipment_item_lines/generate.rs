@@ -1,6 +1,6 @@
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, RepositoryError,
-    StorageConnection,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
+    InvoiceType, StorageConnection,
 };
 use util::uuid;
 
@@ -12,7 +12,7 @@ use crate::invoice_line::{
     stock_out_line::{DeleteStockOutLine, InsertStockOutLine, StockOutType, UpdateStockOutLine},
 };
 
-use super::{SaveOutboundShipmentItemLines, SaveOutboundShipmentLine};
+use super::{SaveStockOutInvoiceLine, SaveStockOutInvoiceLines, SaveStockOutInvoiceLinesError};
 
 pub enum ManagePlaceholderLine {
     Insert(InsertOutboundShipmentUnallocatedLine),
@@ -29,13 +29,32 @@ pub struct GenerateResult {
 
 pub fn generate(
     connection: &StorageConnection,
-    SaveOutboundShipmentItemLines {
+    invoice: InvoiceRow,
+    SaveStockOutInvoiceLines {
         invoice_id,
         item_id,
         lines,
         placeholder_quantity,
-    }: SaveOutboundShipmentItemLines,
-) -> Result<GenerateResult, RepositoryError> {
+        prescribed_quantity: _,
+    }: SaveStockOutInvoiceLines,
+) -> Result<GenerateResult, SaveStockOutInvoiceLinesError> {
+    let stock_out_type = match invoice.r#type {
+        InvoiceType::OutboundShipment => StockOutType::OutboundShipment,
+        InvoiceType::Prescription => StockOutType::Prescription,
+        InvoiceType::CustomerReturn => StockOutType::SupplierReturn,
+        InvoiceType::InventoryReduction => StockOutType::InventoryReduction,
+        InvoiceType::InboundShipment => {
+            return Err(SaveStockOutInvoiceLinesError::InvalidInvoiceType)
+        }
+        InvoiceType::InventoryAddition => {
+            return Err(SaveStockOutInvoiceLinesError::InvalidInvoiceType)
+        }
+        InvoiceType::Repack => return Err(SaveStockOutInvoiceLinesError::InvalidInvoiceType),
+        InvoiceType::SupplierReturn => {
+            return Err(SaveStockOutInvoiceLinesError::InvalidInvoiceType)
+        }
+    };
+
     let existing_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .item_id(EqualFilter::equal_to(&item_id))
@@ -53,14 +72,14 @@ pub fn generate(
         .into_iter()
         .filter(|line| line.number_of_packs > 0.0 && !check_already_exists(&line.id))
         .map(
-            |SaveOutboundShipmentLine {
+            |SaveStockOutInvoiceLine {
                  id,
                  number_of_packs,
                  stock_line_id,
              }| InsertStockOutLine {
                 id,
                 invoice_id: invoice_id.clone(),
-                r#type: StockOutType::OutboundShipment,
+                r#type: stock_out_type.clone(),
                 stock_line_id,
                 number_of_packs,
                 // Default (use None so the stock line values are used)
@@ -83,7 +102,7 @@ pub fn generate(
         .into_iter()
         .filter(|line| line.number_of_packs > 0.0 && check_already_exists(&line.id))
         .map(
-            |SaveOutboundShipmentLine {
+            |SaveStockOutInvoiceLine {
                  id,
                  number_of_packs,
                  stock_line_id,
@@ -91,7 +110,7 @@ pub fn generate(
                 id,
                 stock_line_id: Some(stock_line_id),
                 number_of_packs: Some(number_of_packs),
-                r#type: Some(StockOutType::OutboundShipment),
+                r#type: Some(stock_out_type.clone()),
                 // Default
                 prescribed_quantity: None,
                 total_before_tax: None,
@@ -107,7 +126,7 @@ pub fn generate(
         .filter(|line| line.number_of_packs <= 0.0 && check_already_exists(&line.id))
         .map(|line| DeleteStockOutLine {
             id: line.id,
-            r#type: Some(StockOutType::OutboundShipment),
+            r#type: Some(stock_out_type.clone()),
         })
         .collect();
 

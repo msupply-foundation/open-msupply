@@ -16,8 +16,8 @@ pub struct DraftStockOutItemData {
 
 #[Object]
 impl DraftStockOutItemData {
-    pub async fn draft_lines(&self) -> Vec<DraftOutboundShipmentLineNode> {
-        DraftOutboundShipmentLineNode::from_vec(self.lines.clone())
+    pub async fn draft_lines(&self) -> Vec<DraftStockOutLineNode> {
+        DraftStockOutLineNode::from_vec(self.lines.clone())
     }
 
     pub async fn placeholder_quantity(&self) -> Option<f64> {
@@ -29,21 +29,21 @@ impl DraftStockOutItemData {
     }
 }
 
-pub struct DraftOutboundShipmentLineNode {
+pub struct DraftStockOutLineNode {
     pub shipment_line: DraftStockOutLine,
 }
 
-impl DraftOutboundShipmentLineNode {
-    pub fn from_vec(shipment_lines: Vec<DraftStockOutLine>) -> Vec<DraftOutboundShipmentLineNode> {
+impl DraftStockOutLineNode {
+    pub fn from_vec(shipment_lines: Vec<DraftStockOutLine>) -> Vec<DraftStockOutLineNode> {
         shipment_lines
             .into_iter()
-            .map(|shipment_line| DraftOutboundShipmentLineNode { shipment_line })
+            .map(|shipment_line| DraftStockOutLineNode { shipment_line })
             .collect()
     }
 }
 
 #[Object]
-impl DraftOutboundShipmentLineNode {
+impl DraftStockOutLineNode {
     pub async fn id(&self) -> &str {
         &self.shipment_line.id
     }

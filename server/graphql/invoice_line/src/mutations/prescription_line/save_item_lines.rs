@@ -11,15 +11,15 @@ use service::invoice_line::save_outbound_shipment_item_lines::{
 };
 
 #[derive(InputObject)]
-pub struct SaveOutboundShipmentLinesInput {
+pub struct SavePrescriptionLinesInput {
     pub invoice_id: String,
     pub item_id: String,
-    pub lines: Vec<OutboundShipmentLineInput>,
-    pub placeholder_quantity: Option<f64>,
+    pub lines: Vec<PrescriptionLineInput>,
+    pub prescribed_quantity: Option<f64>,
 }
 
 #[derive(InputObject)]
-pub struct OutboundShipmentLineInput {
+pub struct PrescriptionLineInput {
     pub id: String,
     pub number_of_packs: f64,
     pub stock_line_id: String,
@@ -28,12 +28,12 @@ pub struct OutboundShipmentLineInput {
 pub fn save_outbound_shipment_item_lines(
     ctx: &Context<'_>,
     store_id: &str,
-    input: SaveOutboundShipmentLinesInput,
+    input: SavePrescriptionLinesInput,
 ) -> Result<InvoiceNode> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateOutboundShipment,
+            resource: Resource::MutatePrescription,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -57,19 +57,20 @@ pub fn map_response(from: Result<Invoice, SaveStockOutInvoiceLinesError>) -> Res
     Ok(result)
 }
 
-impl SaveOutboundShipmentLinesInput {
+impl SavePrescriptionLinesInput {
     pub fn to_domain(self) -> SaveStockOutInvoiceLines {
-        let SaveOutboundShipmentLinesInput {
+        let SavePrescriptionLinesInput {
             invoice_id,
             item_id,
             lines,
-            placeholder_quantity,
+            prescribed_quantity,
         } = self;
 
         SaveStockOutInvoiceLines {
             invoice_id,
             item_id,
-            placeholder_quantity,
+            placeholder_quantity: None, // Not used in Prescriptions
+            prescribed_quantity,
             lines: lines
                 .into_iter()
                 .map(|line| SaveStockOutInvoiceLine {
@@ -78,7 +79,6 @@ impl SaveOutboundShipmentLinesInput {
                     stock_line_id: line.stock_line_id,
                 })
                 .collect(),
-            prescribed_quantity: None, // Only used for prescription lines
         }
     }
 }

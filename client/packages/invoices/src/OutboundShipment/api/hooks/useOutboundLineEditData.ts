@@ -29,7 +29,7 @@ export const useOutboundLineEditData = (invoiceId: string, itemId?: string) => {
       if (!item) return;
 
       const { draftLines, placeholderQuantity = null } =
-        result.draftOutboundShipmentLines;
+        result.draftStockOutLines;
 
       return {
         item,
