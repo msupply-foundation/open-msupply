@@ -164,15 +164,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     const { draftLines, nonAllocatableLines, placeholderQuantity, allocateIn } =
       get();
 
-    // If allocating in packs with a specific pack size, filter the lines to only those with matching pack size
-    let allocatableLines = draftLines;
-    if (allocateIn.type === AllocateInType.Packs && allocateIn.packSize) {
-      allocatableLines = draftLines.filter(
-        line => line.packSize === allocateIn.packSize
-      );
-    }
-
-    const result = allocateQuantities(allocatableLines, quantity, {
+    const result = allocateQuantities(draftLines, quantity, {
       allocateIn,
     });
 
@@ -181,21 +173,9 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       return getAllocatedQuantity({ allocateIn, draftLines });
     }
 
-    // Merge allocated lines back with unallocated lines if we were filtering by pack size
-    let updatedDraftLines = result.allocatedLines;
-    if (allocateIn.type === AllocateInType.Packs && allocateIn.packSize) {
-      updatedDraftLines = draftLines.map(line => {
-        if (line.packSize !== allocateIn.packSize) return line;
-        const allocatedLine = result.allocatedLines.find(
-          al => al.id === line.id
-        );
-        return allocatedLine || line;
-      });
-    }
-
     const allocatedQuantity = getAllocatedQuantity({
       allocateIn,
-      draftLines: updatedDraftLines,
+      draftLines: result.allocatedLines,
     });
 
     const hasOnHold = nonAllocatableLines.some(
@@ -226,7 +206,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       placeholderQuantity:
         placeholderQuantity === null ? null : stillToAllocate,
       isDirty: true,
-      draftLines: updatedDraftLines,
+      draftLines: result.allocatedLines,
     }));
 
     return allocatedQuantity;
