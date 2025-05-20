@@ -129,11 +129,16 @@ mod test {
     use repository::{
         barcode::{BarcodeFilter, BarcodeRepository},
         mock::{
-            mock_customer_return_a, mock_customer_return_a_invoice_line_a, mock_inbound_shipment_c,
-            mock_inbound_shipment_e, mock_item_a, mock_name_store_b, mock_outbound_shipment_e,
-            mock_store_a, mock_store_b, mock_user_account_a, MockData, MockDataInserts,
+            mock_customer_return_a, mock_customer_return_a_invoice_line_a, mock_inbound_shipment_a,
+            mock_inbound_shipment_c, mock_inbound_shipment_e, mock_item_a, mock_name_store_b,
+            mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_user_account_a,
+            mock_vaccine_item_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
+        vvm_status::{
+            vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
+            vvm_status_log_row::VVMStatusLogRow,
+        },
         EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
         InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StorePreferenceRow,
         StorePreferenceRowRepository,
@@ -148,7 +153,7 @@ mod test {
         NullableUpdate,
     };
 
-    use super::insert_stock_in_line;
+    use super::super::insert_stock_in_line;
 
     #[actix_rt::test]
     async fn insert_stock_in_line_errors() {
@@ -318,6 +323,22 @@ mod test {
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
+
+        // VVMStatusDoesNotExist
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.pack_size = 1.0;
+                    r.number_of_packs = 1.0;
+                    r.item_id = mock_vaccine_item_a().id;
+                    r.invoice_id = mock_inbound_shipment_a().id; // DELIVERED
+                    r.vvm_status_id = Some("vvm_status".to_string());
+                }),
+            ),
+            Err(ServiceError::VVMStatusDoesNotExist)
+        );
     }
 
     #[actix_rt::test]
@@ -479,5 +500,93 @@ mod test {
                 u
             })
         );
+
+        // Check vvm status log is not created on an inbound shipment with status: New
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "new_invoice_line_with_vvm_status".to_string(),
+                invoice_id: mock_inbound_shipment_c().id,
+                item_id: mock_vaccine_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                r#type: StockInType::InboundShipment,
+                vvm_status_id: Some("vvm_status_id_a".to_string()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let invoice_line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("new_invoice_line_with_vvm_status")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            invoice_line.vvm_status_id,
+            Some("vvm_status_id_a".to_string())
+        );
+
+        let log_filter =
+            VVMStatusLogFilter::new().invoice_line_id(EqualFilter::equal_to(&invoice_line.id));
+
+        let log = VVMStatusLogRepository::new(&connection)
+            .query_by_filter(log_filter)
+            .unwrap()
+            .first()
+            .map(|log| log.id.clone());
+
+        assert_eq!(log, None);
+
+        // Check vvm status log is created on an inbound shipment with status: Delivered
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "delivered_invoice_line_with_vvm_status".to_string(),
+                invoice_id: mock_inbound_shipment_a().id,
+                item_id: mock_vaccine_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                r#type: StockInType::InboundShipment,
+                vvm_status_id: Some("vvm_status_id_a".to_string()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let InvoiceLine {
+            invoice_line_row: inbound_line,
+            stock_line_option,
+            ..
+        } = InvoiceLineRepository::new(&connection)
+            .query_by_filter(InvoiceLineFilter::new().id(EqualFilter::equal_to(
+                "delivered_invoice_line_with_vvm_status",
+            )))
+            .unwrap()
+            .pop()
+            .unwrap();
+
+        let stock_line = stock_line_option.unwrap();
+
+        let vvm_log_filter = VVMStatusLogFilter::new()
+            .invoice_line_id(EqualFilter::equal_to(&inbound_line.id))
+            .stock_line_id(EqualFilter::equal_to(&stock_line.id));
+
+        let vvm_status_log = VVMStatusLogRepository::new(&connection)
+            .query_by_filter(vvm_log_filter)
+            .unwrap();
+        let log = vvm_status_log.first().expect("VVM status log should exist");
+
+        let expected_vvm_log = VVMStatusLogRow {
+            id: log.id.clone(),
+            status_id: "vvm_status_id_a".to_string(),
+            created_datetime: log.created_datetime.clone(),
+            stock_line_id: log.stock_line_id.clone(),
+            comment: None,
+            created_by: "user_account_a".to_string(),
+            invoice_line_id: Some("delivered_invoice_line_with_vvm_status".to_string()),
+            store_id: mock_store_a().id,
+        };
+        assert_eq!(log, &expected_vvm_log);
     }
 }

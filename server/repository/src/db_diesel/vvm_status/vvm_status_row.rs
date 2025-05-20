@@ -33,6 +33,20 @@ pub struct VVMStatusRow {
     pub reason_id: Option<String>,
 }
 
+impl Default for VVMStatusRow {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            description: Default::default(),
+            code: Default::default(),
+            level: Default::default(),
+            is_active: Default::default(),
+            unusable: false,
+            reason_id: Default::default(),
+        }
+    }
+}
+
 pub struct VVMStatusRowRepository<'a> {
     connection: &'a StorageConnection,
 }
