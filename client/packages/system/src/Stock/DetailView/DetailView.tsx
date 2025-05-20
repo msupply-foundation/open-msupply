@@ -93,7 +93,7 @@ export const StockLineDetailView: React.FC = () => {
     adjustmentModalController.toggleOn
   );
 
-  const isVaccine = data?.item?.isVaccine ?? false;
+  const isVaccine = draft?.item?.isVaccine ?? false;
 
   const tabs = [
     {

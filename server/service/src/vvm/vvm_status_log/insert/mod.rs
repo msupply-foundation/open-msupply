@@ -1,6 +1,6 @@
 use repository::{
     vvm_status::vvm_status_log_row::{VVMStatusLogRow, VVMStatusLogRowRepository},
-    RepositoryError, TransactionError,
+    RepositoryError, StockLineRowRepository, TransactionError,
 };
 
 use crate::service_provider::ServiceContext;
@@ -36,8 +36,16 @@ pub fn insert_vvm_status_log(
         .connection
         .transaction_sync(|connection| {
             validate(&input, connection)?;
-            let vvm_status_log = generate(store_id, &ctx.user_id, input);
+            let vvm_status_log = generate(store_id, &ctx.user_id, input.clone());
             VVMStatusLogRowRepository::new(connection).upsert_one(&vvm_status_log)?;
+
+            let stock_line_repository = StockLineRowRepository::new(connection);
+            let mut stock_line = stock_line_repository
+                .find_one_by_id(&input.stock_line_id.to_string())?
+                .ok_or(InsertVVMStatusLogError::StockLineDoesNotExist)?;
+
+            stock_line.vvm_status_id = Some(vvm_status_log.status_id.clone());
+            stock_line_repository.upsert_one(&stock_line)?;
 
             Ok(vvm_status_log)
         })

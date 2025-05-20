@@ -135,6 +135,14 @@ impl SyncTranslation for VVMStatusLogTranslation {
             serde_json::to_value(legacy_row)?,
         ))
     }
+
+    fn try_translate_to_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<PushTranslateResult, Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
+    }
 }
 
 #[cfg(test)]
