@@ -64,6 +64,13 @@ export const useOutboundLineEditColumns = ({
         accessor: ({ rowData }) => rowData.batch,
       },
     ],
+    [
+      'expiryDate',
+      {
+        Cell: ExpiryDateCell,
+        width: 100,
+      },
+    ],
   ];
 
   // If we have use VVM status, we need to show the VVM status column
@@ -81,13 +88,6 @@ export const useOutboundLineEditColumns = ({
   }
 
   columnDefinitions.push(
-    [
-      'expiryDate',
-      {
-        Cell: ExpiryDateCell,
-        width: 100,
-      },
-    ],
     [
       'location',
       {
