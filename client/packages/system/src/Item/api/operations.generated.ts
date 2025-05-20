@@ -1454,6 +1454,7 @@ export const StockLineFragmentDoc = gql`
       warnings {
         ...Warning
       }
+      isVaccine
     }
     note
     onHold

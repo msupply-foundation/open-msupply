@@ -227,6 +227,7 @@ export const ItemWithStatsFragmentDoc = gql`
       stockOnHand
       monthsOfStockOnHand
     }
+    isVaccine
   }
 `;
 export const RequestLineFragmentDoc = gql`
