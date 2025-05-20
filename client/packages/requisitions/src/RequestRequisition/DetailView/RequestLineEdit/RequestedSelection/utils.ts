@@ -6,7 +6,12 @@ export const calculatePackQuantity = (
   requestedQuantity?: number,
   defaultPackSize?: number
 ): number => {
-  return NumUtils.round((requestedQuantity ?? 0) / (defaultPackSize ?? 1), 2);
+  const requested = requestedQuantity ?? 0;
+  const defaultSize = defaultPackSize ?? 1;
+
+  if (defaultSize === 0) return 0;
+
+  return NumUtils.round(requested / defaultSize, 2);
 };
 
 // Value formatting for requestedQuantity based on Representation
