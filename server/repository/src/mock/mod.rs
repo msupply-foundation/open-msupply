@@ -68,6 +68,7 @@ mod unit;
 mod user_account;
 mod vaccination;
 mod vaccine_course;
+mod vvm_status;
 
 pub use asset::*;
 pub use asset_log::*;
@@ -133,6 +134,7 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 pub use vaccination::*;
 pub use vaccine_course::*;
+pub use vvm_status::*;
 
 use crate::{
     assets::{
@@ -148,6 +150,7 @@ use crate::{
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
     },
+    vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository},
     *,
 };
 
@@ -234,6 +237,7 @@ pub struct MockData {
     pub backend_plugin: Vec<BackendPluginRow>,
     pub printer: Vec<PrinterRow>,
     pub store_preferences: Vec<StorePreferenceRow>,
+    pub vvm_statuses: Vec<VVMStatusRow>,
 }
 
 impl MockData {
@@ -321,6 +325,7 @@ pub struct MockDataInserts {
     pub backend_plugin: bool,
     pub printer: bool,
     pub store_preferences: bool,
+    pub vvm_statuses: bool,
 }
 
 impl MockDataInserts {
@@ -329,6 +334,7 @@ impl MockDataInserts {
             user_accounts: true,
             user_store_joins: true,
             user_permissions: true,
+            vvm_statuses: true,
             names: true,
             name_tags: true,
             name_tag_joins: true,
@@ -844,6 +850,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             contact_form: mock_contact_form(),
             reports: mock_reports(),
             printer: mock_printers(),
+            vvm_statuses: mock_vvm_statuses(),
             ..Default::default()
         },
     );
@@ -1402,6 +1409,12 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.vvm_statuses {
+            let repo = VVMStatusRowRepository::new(connection);
+            for row in &mock_data.vvm_statuses {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1482,6 +1495,7 @@ impl MockData {
             backend_plugin: _,
             mut printer,
             mut store_preferences,
+            mut vvm_statuses,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1556,8 +1570,8 @@ impl MockData {
         self.contact_form.append(&mut contact_form);
         self.reports.append(&mut reports);
         self.printer.append(&mut printer);
-
         self.store_preferences.append(&mut store_preferences);
+        self.vvm_statuses.append(&mut vvm_statuses);
         self
     }
 }

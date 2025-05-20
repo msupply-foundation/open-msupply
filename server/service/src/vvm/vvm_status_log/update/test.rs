@@ -3,7 +3,6 @@ mod update {
     use repository::{
         mock::{mock_stock_line_a, mock_store_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
-        vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository},
     };
 
     use crate::{
@@ -48,18 +47,6 @@ mod update {
         let service = service_provider.vvm_service;
         let store_id = &mock_store_a().id;
 
-        VVMStatusRowRepository::new(&context.connection)
-            .upsert_one(&VVMStatusRow {
-                id: "vvm_status_id".to_string(),
-                description: "VVM Stage 1 - Good".to_string(),
-                code: "VVM1".to_string(),
-                level: 1,
-                is_active: true,
-                unusable: false,
-                reason_id: None,
-            })
-            .unwrap();
-
         service
             .insert_vvm_status_log(
                 &context,
@@ -67,7 +54,7 @@ mod update {
                 InsertVVMStatusLogInput {
                     id: "vvm_status_log_id".to_string(),
                     stock_line_id: mock_stock_line_a().id.clone(),
-                    status_id: "vvm_status_id".to_string(),
+                    status_id: "vvm_status_id_a".to_string(),
                     comment: Some("comment".to_string()),
                 },
             )
