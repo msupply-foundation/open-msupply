@@ -74,6 +74,7 @@ export const RequestLineEditModal = ({
 
   const onChangeItem = (item: ItemWithStatsFragment) => {
     deletePreviousLine();
+    setRepresentation(Representation.UNITS);
     setCurrentItem(item);
   };
 
