@@ -145,8 +145,6 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     // reallocating on change of allocation type/pack size
     const result = allocateQuantities(draftLines, 0, { allocateIn });
 
-    // OR SHOULD WE SET THE PLACEHOLDER?
-
     set(state => ({
       ...state,
       draftLines: result?.allocatedLines ?? draftLines,
