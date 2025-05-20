@@ -35,6 +35,7 @@ pub(crate) mod location_movement;
 pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
+pub(crate) mod message;
 pub(crate) mod name;
 pub(crate) mod name_insurance_join;
 pub(crate) mod name_oms_fields;
@@ -76,7 +77,6 @@ pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
 pub(crate) mod vaccine_course_item;
 pub(crate) mod warning;
-pub mod message;
 
 pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncomingRecord> {
     let mut test_records = Vec::new();
@@ -159,6 +159,7 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingR
     test_records.append(&mut currency::test_pull_upsert_records());
     test_records.append(&mut indicator_value::test_pull_upsert_records());
     test_records.append(&mut name_insurance_join::test_pull_upsert_records());
+    test_records.append(&mut message::test_pull_upsert_records());
 
     // Open mSupply central
     test_records.append(&mut rnr_form::test_pull_upsert_records());
@@ -218,6 +219,7 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut name_store_join::test_push_upsert());
     test_records.append(&mut name_to_name_store_join::test_push_records());
     test_records.append(&mut name_insurance_join::test_push_records());
+    test_records.append(&mut message::test_push_records());
 
     test_records
 }

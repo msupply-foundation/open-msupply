@@ -1,28 +1,37 @@
 use crate::sync::{
-    sync_serde::{empty_str_as_option_string, zero_date_as_option},
+    sync_serde::{empty_str_as_option_string, naive_time},
     translations::{PullTranslateResult, SyncTranslation},
 };
 
-use chrono::{NaiveDate, NaiveTime};
-use repository::{MessageRow, MessageStatus, MessageType, StorageConnection};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use repository::{
+    ChangelogRow, ChangelogTableName, MessageRow, MessageRowRepository, MessageRowStatus,
+    MessageRowType, StorageConnection,
+};
 use serde::{Deserialize, Serialize};
+
+use super::PushTranslateResult;
 
 /// Message from mSupply Central Server
 #[derive(Deserialize, Serialize, Debug)]
 pub struct LegacyMessageRow {
-    pub ID: String,
+    #[serde(rename = "ID")]
+    pub id: String,
     #[serde(rename = "toStoreID")]
     pub to_store_id: String,
-    #[serde(rename = "fromStoreID", deserialize_with = "empty_str_as_option_string")]
+    #[serde(
+        rename = "fromStoreID",
+        deserialize_with = "empty_str_as_option_string"
+    )]
     pub from_store_id: Option<String>,
     pub body: String,
-    #[serde(rename = "createdDate", deserialize_with = "zero_date_as_option")]
-    pub created_date: Option<NaiveDate>,
-    #[serde(rename = "createdTime")]
-    pub created_time: i32,
+    #[serde(rename = "createdDate")]
+    pub created_date: NaiveDate,
+    #[serde(rename = "createdTime", deserialize_with = "naive_time")]
+    pub created_time: NaiveTime,
     pub status: LegacyMessageStatus,
     #[serde(rename = "type")]
-    pub type_: LegacyMessageType,
+    pub r#type: MessageRowType,
 }
 
 #[derive(Debug, Deserialize, Serialize, Default, PartialEq)]
@@ -30,21 +39,13 @@ pub struct LegacyMessageRow {
 pub enum LegacyMessageStatus {
     #[default]
     New,
-    Read,
     Processed,
-    Failed,
+    Error,
 }
 
-#[derive(Debug, Deserialize, Serialize, Default, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub enum LegacyMessageType {
-    #[default]
-    RequestFieldChange,
-    Notification,
-    Alert,
-    Info,
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(MessageTranslation)
 }
-
 pub struct MessageTranslation;
 
 impl SyncTranslation for MessageTranslation {
@@ -61,44 +62,109 @@ impl SyncTranslation for MessageTranslation {
         _: &StorageConnection,
         sync_record: &repository::SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyMessageRow>(&sync_record.data)?;
+        let LegacyMessageRow {
+            id,
+            to_store_id,
+            from_store_id,
+            body,
+            created_date,
+            created_time,
+            status,
+            r#type,
+        } = serde_json::from_str::<LegacyMessageRow>(&sync_record.data)?;
 
-        let message_status = match data.status {
-            LegacyMessageStatus::New => MessageStatus::New,
-            LegacyMessageStatus::Read => MessageStatus::Read,
-            LegacyMessageStatus::Processed => MessageStatus::Processed,
-            LegacyMessageStatus::Failed => MessageStatus::Failed,
-        };
-
-        let message_type = match data.type_ {
-            LegacyMessageType::RequestFieldChange => MessageType::RequestFieldChange,
-            LegacyMessageType::Notification => MessageType::Notification,
-            LegacyMessageType::Alert => MessageType::Alert,
-            LegacyMessageType::Info => MessageType::Info,
+        let status = match status {
+            LegacyMessageStatus::New => MessageRowStatus::New,
+            LegacyMessageStatus::Processed => MessageRowStatus::Processed,
+            LegacyMessageStatus::Error => MessageRowStatus::Error,
         };
 
         let result = MessageRow {
-            id: data.ID,
-            to_store_id: data.to_store_id,
-            from_store_id: data.from_store_id,
-            body: data.body,
-            created_date: data.created_date.unwrap_or_else(|| chrono::Local::now().date_naive()),
-            created_time: data.created_time,
-            status: message_status,
-            r#type: message_type,
+            id,
+            to_store_id,
+            from_store_id,
+            body,
+            created_datetime: NaiveDateTime::new(created_date, created_time),
+            status,
+            r#type,
         };
 
         Ok(PullTranslateResult::upsert(result))
     }
-    
-    fn try_translate_from_delete_sync_record(
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::Message)
+    }
+
+    fn try_translate_to_upsert_sync_record(
         &self,
-        _: &StorageConnection,
-        sync_record: &repository::SyncBufferRow,
-    ) -> Result<PullTranslateResult, anyhow::Error> {
-        use repository::MessageRowDelete;
-        Ok(PullTranslateResult::delete(MessageRowDelete(
-            sync_record.record_id.clone(),
-        )))
+        connection: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Some(message) =
+            MessageRowRepository::new(connection).find_one_by_id(&changelog.record_id)?
+        else {
+            return Err(anyhow::anyhow!("Message not found"));
+        };
+
+        let MessageRow {
+            id,
+            to_store_id,
+            from_store_id,
+            body,
+            created_datetime,
+            status,
+            r#type,
+        } = message;
+
+        let created_date = created_datetime.date();
+        let created_time = created_datetime.time();
+
+        let legacy_row = LegacyMessageRow {
+            id: id.clone(),
+            to_store_id,
+            from_store_id,
+            body,
+            created_date,
+            created_time,
+            status: match status {
+                MessageRowStatus::New => LegacyMessageStatus::New,
+                MessageRowStatus::Processed => LegacyMessageStatus::Processed,
+                MessageRowStatus::Error => LegacyMessageStatus::Error,
+            },
+            r#type,
+        };
+
+        let json_record = serde_json::to_value(legacy_row)?;
+
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            json_record,
+        ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_message_translation() {
+        use crate::sync::test::test_data::message as test_data;
+        let translator = MessageTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_message_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
     }
 }

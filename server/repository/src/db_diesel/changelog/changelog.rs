@@ -125,6 +125,7 @@ pub enum ChangelogTableName {
     FormSchema,
     PluginData,
     Preference,
+    Message,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -202,6 +203,7 @@ impl ChangelogTableName {
             ChangelogTableName::FormSchema => ChangeLogSyncStyle::Central,
             ChangelogTableName::PluginData => ChangeLogSyncStyle::RemoteAndCentral,
             ChangelogTableName::Preference => ChangeLogSyncStyle::Central,
+            ChangelogTableName::Message => ChangeLogSyncStyle::Remote,
         }
     }
 }
