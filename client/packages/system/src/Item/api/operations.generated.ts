@@ -65,6 +65,7 @@ export type StockLineFragment = {
     id: string;
     dosesPerUnit: number;
   } | null;
+  donor?: { __typename: 'NameNode'; id: string } | null;
 };
 
 export type ItemRowFragment = {
@@ -387,6 +388,7 @@ export type ItemFragment = {
         id: string;
         dosesPerUnit: number;
       } | null;
+      donor?: { __typename: 'NameNode'; id: string } | null;
     }>;
   };
   stats: {
@@ -575,6 +577,7 @@ export type ItemsWithStockLinesQuery = {
             id: string;
             dosesPerUnit: number;
           } | null;
+          donor?: { __typename: 'NameNode'; id: string } | null;
         }>;
       };
       stats: {
@@ -889,6 +892,7 @@ export type ItemByIdQuery = {
             id: string;
             dosesPerUnit: number;
           } | null;
+          donor?: { __typename: 'NameNode'; id: string } | null;
         }>;
       };
       variants: Array<{
@@ -1145,6 +1149,7 @@ export type GetHistoricalStockLinesQuery = {
         id: string;
         dosesPerUnit: number;
       } | null;
+      donor?: { __typename: 'NameNode'; id: string } | null;
     }>;
   };
 };
@@ -1537,6 +1542,9 @@ export const StockLineFragmentDoc = gql`
     itemVariant {
       id
       dosesPerUnit
+    }
+    donor(storeId: $storeId) {
+      id
     }
   }
   ${ItemDirectionFragmentDoc}
