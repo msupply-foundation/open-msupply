@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_able_to_specify_vvm_status_when_receiving_items_pref;
 mod add_created_fields_to_item_variant;
 mod add_donor_id_to_invoice_and_invoice_lines;
 mod add_donor_id_to_stock_lines;
@@ -41,6 +42,7 @@ impl Migration for V2_08_00 {
             Box::new(add_vvm_status_id_to_stock_line::Migrate),
             Box::new(add_donor_id_to_stock_lines::Migrate),
             Box::new(add_donor_id_to_stocktake_line::Migrate),
+            Box::new(add_able_to_specify_vvm_status_when_receiving_items_pref::Migrate),
         ]
     }
 }

@@ -32,6 +32,7 @@ export type UserStoreNodeFragment = {
     manuallyLinkInternalOrderToInboundShipment: boolean;
     useConsumptionAndStockFromCustomersForInternalOrders: boolean;
     editPrescribedQuantityOnPrescription: boolean;
+    ableToSpecifyVvmStatusWhenReceivingItems: boolean;
   };
 };
 
@@ -101,6 +102,7 @@ export type MeQuery = {
         manuallyLinkInternalOrderToInboundShipment: boolean;
         useConsumptionAndStockFromCustomersForInternalOrders: boolean;
         editPrescribedQuantityOnPrescription: boolean;
+        ableToSpecifyVvmStatusWhenReceivingItems: boolean;
       };
     } | null;
     stores: {
@@ -135,6 +137,7 @@ export type MeQuery = {
           manuallyLinkInternalOrderToInboundShipment: boolean;
           useConsumptionAndStockFromCustomersForInternalOrders: boolean;
           editPrescribedQuantityOnPrescription: boolean;
+          ableToSpecifyVvmStatusWhenReceivingItems: boolean;
         };
       }>;
     };
@@ -254,6 +257,7 @@ export const UserStoreNodeFragmentDoc = gql`
       manuallyLinkInternalOrderToInboundShipment
       useConsumptionAndStockFromCustomersForInternalOrders
       editPrescribedQuantityOnPrescription
+      ableToSpecifyVvmStatusWhenReceivingItems
     }
     createdDate
     homeCurrencyCode

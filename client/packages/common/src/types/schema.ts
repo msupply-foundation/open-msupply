@@ -8314,6 +8314,7 @@ export type StoreNodeNameArgs = {
 
 export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
+  ableToSpecifyVvmStatusWhenReceivingItems: Scalars['Boolean']['output'];
   editPrescribedQuantityOnPrescription: Scalars['Boolean']['output'];
   extraFieldsInRequisition: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
