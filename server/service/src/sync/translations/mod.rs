@@ -36,6 +36,7 @@ pub(crate) mod location_movement;
 pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
+pub(crate) mod message;
 pub(crate) mod name;
 pub(crate) mod name_insurance_join;
 pub(crate) mod name_oms_fields;
@@ -185,6 +186,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         name_insurance_join::boxed(),
         report::boxed(),
         preference::boxed(),
+        message::boxed(),
     ]
 }
 
