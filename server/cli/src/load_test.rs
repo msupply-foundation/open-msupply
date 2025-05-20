@@ -1,4 +1,4 @@
-use std::{default, path::PathBuf};
+use std::{io::Write, path::PathBuf};
 
 use repository::database_settings::DatabaseSettings;
 use reqwest::Client;
@@ -19,7 +19,7 @@ pub struct LoadTest {
     pub url: String,
 
     /// The output directory for test results
-    #[clap(short, long, default_value = "./load_test")]
+    #[clap(short, long, default_value = "load_test")]
     pub output_dir: PathBuf,
 
     /// The site name of the initial test site that th cli will use to access the API
@@ -49,8 +49,6 @@ pub struct LoadTest {
 
 #[derive(Deserialize, Debug)]
 struct SyncSite {
-    #[serde(rename = "ID")]
-    id: String,
     #[serde(rename = "site_ID")]
     site_id: usize,
     name: String,
@@ -94,6 +92,9 @@ impl LoadTest {
     }
 
     pub async fn run(&self) -> anyhow::Result<()> {
+        use std::process::Command;
+        use std::time::Duration;
+        use tokio::time::sleep;
         use util::hash::sha256;
 
         println!("Starting load test with the following parameters:");
@@ -186,10 +187,44 @@ impl LoadTest {
             std::fs::create_dir_all(&self.output_dir)?;
         }
 
+        let base_config = Settings {
+            server: ServerSettings {
+                port: 8000,
+                danger_allow_http: true,
+                debug_no_access_control: true,
+                discovery: DiscoveryMode::Disabled,
+                cors_origins: vec![
+                    "http://localhost:3003".to_string(),
+                    "https://demo-open.msupply.org".to_string(),
+                    "http://localhost:8000".to_string(),
+                ],
+                base_dir: Some("app_data".to_string()),
+                machine_uid: None,
+            },
+            database: DatabaseSettings {
+                username: "postgres".to_owned(),
+                password: "password".to_owned(),
+                port: 5432,
+                host: "localhost".to_owned(),
+                database_name: "omsupply-database".to_string(),
+                database_path: None,
+                init_sql: None,
+            },
+            logging: None,
+            backup: None,
+            mail: None,
+            sync: None,
+        };
+        let base_config_path = self.output_dir.join("base.yaml");
+        std::fs::write(base_config_path, serde_yml::to_string(&base_config)?)?;
+
         for (i, site_n_store) in site_n_stores.iter().enumerate() {
-            let port = self.base_port + i as u16;
-            let config_file_path = self.output_dir.join(format!("site_{}_config.json", i + 1));
-            let database_path = self.output_dir.to_string_lossy().to_string();
+            let port = self.base_port + (i * 2) as u16;
+            let config_file_path = self.output_dir.join(format!(
+                "site_{}_config.yaml",
+                site_n_store.site.site_id + 1
+            ));
+            let database_path = self.output_dir.display();
 
             let config = Settings {
                 server: ServerSettings {
@@ -198,7 +233,7 @@ impl LoadTest {
                     debug_no_access_control: true, // Allow us to use GQL on the remote sites without auth
                     discovery: DiscoveryMode::Disabled,
                     cors_origins: vec![],
-                    base_dir: None,
+                    base_dir: Some(database_path.to_string()),
                     machine_uid: Some("1337_test".to_owned()),
                 },
                 database: DatabaseSettings {
@@ -207,7 +242,7 @@ impl LoadTest {
                     port: 5432,
                     host: "localhost".to_owned(),
                     database_name: format!("site_{}", site_n_store.site.site_id),
-                    database_path: Some(database_path.clone()),
+                    database_path: Some(database_path.to_string()),
                     init_sql: None,
                 },
                 sync: Some(SyncSettings {
@@ -227,8 +262,47 @@ impl LoadTest {
             };
 
             std::fs::write(&config_file_path, serde_yml::to_string(&config)?)?;
-            println!("Created config file {database_path}",);
+            println!("Created config file {:?}", config_file_path);
         }
+
+        // Start each remote OMS instance
+        println!("Starting remote OMS instances...");
+        let mut child_processes = Vec::new();
+
+        let output = Command::new("pwd").output()?;
+        std::io::stdout().write_all(&output.stdout)?;
+
+        for site_n_store in site_n_stores.iter() {
+            let config_file_path = self
+                .output_dir
+                .join(format!("site_{}_config.yaml", site_n_store.site.site_id));
+
+            let child = Command::new("cargo")
+                .arg("run")
+                .arg("--")
+                .arg("--config-path")
+                .arg(&config_file_path)
+                .spawn()?;
+
+            child_processes.push(child);
+
+            // Give a little time for the instance to start before launching the next one
+            sleep(Duration::from_millis(200)).await
+        }
+
+        // Run for the specified duration
+        println!("Running test for {} seconds", self.duration);
+        sleep(Duration::from_secs(self.duration as u64)).await;
+
+        // Terminate all child processes
+        for mut child in child_processes {
+            match child.kill() {
+                Ok(_) => println!("Process terminated successfully"),
+                Err(_) => println!("Failed to kill process {:?}", child),
+            }
+        }
+
+        std::fs::remove_dir_all(&self.output_dir)?;
 
         println!("end");
         Ok(())
