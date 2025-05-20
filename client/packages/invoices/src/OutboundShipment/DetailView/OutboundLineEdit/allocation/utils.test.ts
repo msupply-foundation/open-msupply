@@ -1,6 +1,6 @@
 import { FnUtils } from '@common/utils';
 import { DraftStockOutLineFragment } from '../../../api/operations.generated';
-import { AllocateIn } from './useAllocationContext';
+import { AllocateInType } from './useAllocationContext';
 import {
   canAutoAllocate,
   getAllocatedQuantity,
@@ -62,7 +62,7 @@ describe('getAllocatedQuantity', () => {
     const result = getAllocatedQuantity({
       // line 1 uses default doses per unit, line 2 uses item variant doses per unit
       draftLines, // line1: 2*3*2=12, line2: 5*10*3=150 == 162
-      allocateIn: AllocateIn.Doses,
+      allocateIn: { type: AllocateInType.Doses },
     });
     expect(result).toBe(162);
   });
@@ -70,7 +70,7 @@ describe('getAllocatedQuantity', () => {
   it('returns unit quantity when allocating in units', () => {
     const result = getAllocatedQuantity({
       draftLines, // line1: 2*3=6, line2: 5*10=50 == 56
-      allocateIn: AllocateIn.Units,
+      allocateIn: { type: AllocateInType.Units },
     });
     expect(result).toBe(56);
   });
@@ -78,7 +78,7 @@ describe('getAllocatedQuantity', () => {
   it('includes placeholder quantity when provided', () => {
     const result = getAllocatedQuantity({
       draftLines, // line1: 2*3=6, line2: 5*10=50 == 56
-      allocateIn: AllocateIn.Units,
+      allocateIn: { type: AllocateInType.Units },
       placeholderQuantity: 100,
     });
     expect(result).toBe(156);

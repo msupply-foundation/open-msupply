@@ -16,7 +16,10 @@ import {
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
-import { useAllocationContext } from './allocation/useAllocationContext';
+import {
+  AllocateInType,
+  useAllocationContext,
+} from './allocation/useAllocationContext';
 import { getAllocatedQuantity } from './allocation/utils';
 
 export interface OutboundLineEditTableProps {
@@ -126,7 +129,7 @@ export const OutboundLineEditTable = ({
     item,
     currency,
     isExternalSupplier,
-    allocateIn,
+    allocateIn: allocateIn.type,
   });
 
   // Display all stock lines to user, including non-allocatable ones at the bottom
@@ -161,7 +164,14 @@ export const OutboundLineEditTable = ({
         <Divider margin={10} />
       </td>
     </tr>,
-    <TotalRow key="total-row" allocatedQuantity={allocatedQuantity} />,
+    <TotalRow
+      key="total-row"
+      allocatedQuantity={
+        allocateIn.type === AllocateInType.Packs
+          ? allocatedQuantity * allocateIn.packSize
+          : allocatedQuantity
+      }
+    />,
   ];
 
   return (

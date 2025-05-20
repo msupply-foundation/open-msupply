@@ -20,7 +20,7 @@ import { CurrencyRowFragment } from '@openmsupply-client/system';
 import {
   useAllocationContext,
   AllocationStrategy,
-  AllocateIn,
+  AllocateInType,
 } from './allocation/useAllocationContext';
 import { sumAvailableDoses, sumAvailableUnits } from './allocation/utils';
 
@@ -96,13 +96,14 @@ const AllocationInner = () => {
     const unitName = item?.unitName ?? t('label.unit');
     const pluralisedUnitName = getPlural(unitName, unitCount);
 
-    return allocateIn === AllocateIn.Doses
+    return allocateIn.type === AllocateInType.Doses
       ? t('label.available-quantity-doses', {
           doseCount: sumAvailableDoses(draftLines).toFixed(0),
           unitCount: unitCount,
           unitName: pluralisedUnitName,
         })
       : t('label.available-quantity', {
+          // todo - not "quantity"
           number: unitCount,
           unitName: pluralisedUnitName,
         });

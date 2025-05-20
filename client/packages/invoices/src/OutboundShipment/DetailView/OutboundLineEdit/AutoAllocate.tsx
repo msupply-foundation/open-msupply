@@ -11,10 +11,7 @@ import {
   useDebounceCallback,
 } from '@openmsupply-client/common';
 import { AllocationAlerts } from '../../../StockOut';
-import {
-  AllocateIn,
-  useAllocationContext,
-} from './allocation/useAllocationContext';
+import { useAllocationContext } from './allocation/useAllocationContext';
 import { getAllocatedQuantity } from './allocation/utils';
 
 export const AutoAllocate = () => {
@@ -71,9 +68,11 @@ export const AutoAllocate = () => {
               onChange={handleIssueQuantityChange}
             />
             <Box marginLeft={1} />
-            {allocateIn === AllocateIn.Doses
+            TODO:
+            {allocateIn.type} - {allocateIn.packSize}
+            {/* {allocateIn.type === AllocateIn.Doses
               ? t('label.doses')
-              : t('label.units')}
+              : t('label.units')} */}
           </Grid>
           <AllocationAlerts allocationAlerts={alerts} />
         </Box>

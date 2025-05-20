@@ -10,6 +10,7 @@ import { getAllocationAlerts, StockOutAlert } from '../../../../StockOut';
 import { DraftStockOutLineFragment } from '../../../api/operations.generated';
 import {
   canAllocate,
+  canAutoAllocate,
   getAllocatedQuantity,
   issueDoses,
   issuePacks,
@@ -21,18 +22,23 @@ import { allocateQuantities } from './allocateQuantities';
 import { DraftItem } from '../../../..';
 
 /**
- * Allocation can be in units, or doses. In future, could allocate in packs too!
+ * Allocation can be in units, doses, or packs of a specific size.
  *
  * Throughout allocation code & components, we use `quantity` where possible,
- * this means that piece of logic is agnostic to whether it's in units or doses.
+ * this means that piece of logic is agnostic to whether it's in units, doses, or packs.
  *
- * Where behaviour differs, we use `allocateIn` to determine use of units or doses.
+ * Where behaviour differs, we use `allocateIn` to determine the allocation type.
  */
-export enum AllocateIn {
+export enum AllocateInType {
   Units = 'Units',
   Doses = 'Doses',
-  // Not allocating in packs, at least for now, many use cases to cover
+  Packs = 'Packs',
 }
+
+export type AllocateInOption =
+  // Pack size only required when allocating in packs
+  | { type: AllocateInType.Packs; packSize: number }
+  | { type: Exclude<AllocateInType, AllocateInType.Packs> };
 
 export enum AllocationStrategy {
   FEFO = 'FEFO',
@@ -50,7 +56,8 @@ interface AllocationContext {
   /** Lines which cannot be allocated from, but should be shown to the user */
   nonAllocatableLines: DraftStockOutLineFragment[];
   alerts: StockOutAlert[];
-  allocateIn: AllocateIn;
+  allocateIn: AllocateInOption;
+  availablePackSizes: number[];
   item: DraftItem | null;
   placeholderQuantity: number | null;
 
@@ -63,6 +70,7 @@ interface AllocationContext {
   }) => void;
 
   setAlerts: (alerts: StockOutAlert[]) => void;
+  setAllocateIn: (allocateIn: AllocateInOption) => void;
   clear: () => void;
 
   manualAllocate: (
@@ -85,7 +93,8 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   nonAllocatableLines: [],
   placeholderQuantity: null,
   alerts: [],
-  allocateIn: AllocateIn.Units,
+  availablePackSizes: [],
+  allocateIn: { type: AllocateInType.Units, packSize: 1 },
 
   initialise: ({
     itemData: { item, draftLines, placeholderQuantity },
@@ -108,17 +117,25 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       }
     );
 
+    // Get unique pack sizes from allocatable lines
+    const availablePackSizes = [
+      ...new Set(
+        allocatableLines.filter(canAutoAllocate).map(line => line.packSize)
+      ),
+    ].sort((a, b) => a - b);
+
     set({
       isDirty: false,
       item,
 
       allocateIn:
         item.isVaccine && allocateVaccineItemsInDoses
-          ? AllocateIn.Doses
-          : AllocateIn.Units,
+          ? { type: AllocateInType.Doses }
+          : { type: AllocateInType.Units },
 
       draftLines: allocatableLines,
       nonAllocatableLines,
+      availablePackSizes,
 
       placeholderQuantity: allowPlaceholder ? (placeholderQuantity ?? 0) : null,
       alerts: [],
@@ -133,8 +150,15 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       nonAllocatableLines: [],
       placeholderQuantity: null,
       item: null,
-      allocateIn: AllocateIn.Units,
+      allocateIn: { type: AllocateInType.Units },
+      availablePackSizes: [],
       alerts: [],
+    })),
+
+  setAllocateIn: (allocateIn: AllocateInOption) =>
+    set(state => ({
+      ...state,
+      allocateIn,
     })),
 
   setAlerts: alerts =>
@@ -147,16 +171,38 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     const { draftLines, nonAllocatableLines, placeholderQuantity, allocateIn } =
       get();
 
-    const result = allocateQuantities(draftLines, quantity, { allocateIn });
+    // If allocating in packs with a specific pack size, filter the lines to only those with matching pack size
+    let allocatableLines = draftLines;
+    if (allocateIn.type === AllocateInType.Packs && allocateIn.packSize) {
+      allocatableLines = draftLines.filter(
+        line => line.packSize === allocateIn.packSize
+      );
+    }
+
+    const result = allocateQuantities(allocatableLines, quantity, {
+      allocateIn,
+    });
 
     // Early return if no allocation was possible
     if (!result) {
       return getAllocatedQuantity({ allocateIn, draftLines });
     }
 
+    // Merge allocated lines back with unallocated lines if we were filtering by pack size
+    let updatedDraftLines = result.allocatedLines;
+    if (allocateIn.type === AllocateInType.Packs && allocateIn.packSize) {
+      updatedDraftLines = draftLines.map(line => {
+        if (line.packSize !== allocateIn.packSize) return line;
+        const allocatedLine = result.allocatedLines.find(
+          al => al.id === line.id
+        );
+        return allocatedLine || line;
+      });
+    }
+
     const allocatedQuantity = getAllocatedQuantity({
       allocateIn,
-      draftLines: result.allocatedLines,
+      draftLines: updatedDraftLines,
     });
 
     const hasOnHold = nonAllocatableLines.some(
@@ -187,7 +233,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       placeholderQuantity:
         placeholderQuantity === null ? null : stillToAllocate,
       isDirty: true,
-      draftLines: result.allocatedLines,
+      draftLines: updatedDraftLines,
     }));
 
     return allocatedQuantity;
@@ -200,7 +246,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     const allowPartialPacks = false;
 
     const updatedLines =
-      allocateIn === AllocateIn.Doses
+      allocateIn.type === AllocateInType.Doses
         ? issueDoses(draftLines, lineId, quantity, allowPartialPacks)
         : issuePacks(draftLines, lineId, quantity);
 
@@ -208,9 +254,9 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     const updatedLine = updatedLines.find(line => line.id === lineId);
 
     const allocatedQuantity = updatedLine
-      ? allocateIn === AllocateIn.Doses
+      ? allocateIn.type === AllocateInType.Doses
         ? packsToDoses(updatedLine.numberOfPacks, updatedLine)
-        : // when not in doses, manual allocation is in packs
+        : // when not in doses or packs, manual allocation is in packs
           updatedLine.numberOfPacks
       : 0;
 

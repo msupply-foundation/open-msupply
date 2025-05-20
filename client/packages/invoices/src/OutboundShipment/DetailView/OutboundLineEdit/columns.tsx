@@ -24,7 +24,7 @@ import {
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { DraftStockOutLineFragment } from '../../api/operations.generated';
 import { getPackQuantityCellId } from 'packages/invoices/src/utils';
-import { AllocateIn } from './allocation/useAllocationContext';
+import { AllocateInType } from './allocation/useAllocationContext';
 import { DraftItem } from '../../..';
 import { getDoseQuantity, packsToDoses } from './allocation/utils';
 
@@ -39,7 +39,7 @@ export const useOutboundLineEditColumns = ({
   item: DraftItem | null;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
-  allocateIn: AllocateIn;
+  allocateIn: AllocateInType;
 }) => {
   const { store } = useAuthContext();
   const t = useTranslation();
@@ -123,7 +123,7 @@ export const useOutboundLineEditColumns = ({
 
   columnDefinitions.push(['packSize', { width: 90 }]);
 
-  if (allocateIn === AllocateIn.Doses) {
+  if (allocateIn === AllocateInType.Doses) {
     columnDefinitions.push(...getAllocateInDosesColumns(t, allocate, unit));
   } else {
     columnDefinitions.push(
