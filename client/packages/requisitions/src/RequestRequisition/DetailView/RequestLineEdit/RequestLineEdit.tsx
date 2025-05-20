@@ -183,7 +183,10 @@ export const RequestLineEdit = ({
                 slotProps={{
                   input: {
                     sx: {
-                      backgroundColor: theme => theme.palette.background.white,
+                      backgroundColor: theme =>
+                        disabled
+                          ? theme.palette.background.toolbar
+                          : theme.palette.background.white,
                     },
                   },
                 }}

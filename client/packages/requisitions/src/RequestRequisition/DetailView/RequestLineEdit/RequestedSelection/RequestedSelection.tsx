@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import {
-  Autocomplete,
   Box,
   NumericTextInput,
+  Select,
   Typography,
   useIntlUtils,
   useTranslation,
@@ -62,9 +62,6 @@ export const RequestedSelection = ({
     ];
   }, [isPacksEnabled, unitName, currentValue]);
 
-  const defaultOption =
-    options.find(option => option.value === representation) || options[0];
-
   const handleValueChange = (value?: number) => {
     const updatedRequest = getUpdatedRequest(
       value,
@@ -88,6 +85,7 @@ export const RequestedSelection = ({
       </Typography>
       <Box gap={1} display="flex" flexDirection="row">
         <NumericTextInput
+          autoFocus
           width={150}
           min={0}
           value={currentValue}
@@ -96,9 +94,32 @@ export const RequestedSelection = ({
           slotProps={{
             input: {
               sx: {
-                background: theme => theme.palette.background.white,
+                background: theme =>
+                  disabled
+                    ? theme.palette.background.toolbar
+                    : theme.palette.background.white,
               },
             },
+          }}
+          sx={{
+            '& .MuiInputBase-input': {
+              p: '3px 4px',
+              backgroundColor: theme =>
+                disabled
+                  ? theme.palette.background.toolbar
+                  : theme.palette.background.white,
+            },
+          }}
+        />
+        <Select
+          fullWidth
+          clearable={false}
+          options={options}
+          value={representation}
+          onChange={e => {
+            setRepresentation(
+              (e.target.value as RepresentationValue) ?? Representation.UNITS
+            );
           }}
           sx={{
             '& .MuiInputBase-input': {
@@ -106,19 +127,14 @@ export const RequestedSelection = ({
               backgroundColor: theme => theme.palette.background.white,
             },
           }}
-        />
-        <Autocomplete
-          fullWidth
-          clearable={false}
-          options={options}
-          value={defaultOption}
-          onChange={(_, option) => {
-            setRepresentation(option?.value ?? Representation.UNITS);
-          }}
-          getOptionLabel={option => option.label}
-          textSx={{
-            borderRadius: 2,
-            background: theme => theme.palette.background.white,
+          slotProps={{
+            input: {
+              disableUnderline: true,
+              sx: {
+                backgroundColor: theme => theme.palette.background.white,
+                borderRadius: 2,
+              },
+            },
           }}
         />
       </Box>
