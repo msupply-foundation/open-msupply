@@ -31,16 +31,26 @@ const UIComponent = (props: ControlProps) => {
 
   const { handleChange, label, path } = props;
   const { core } = useJsonForms();
-  const { data, isLoading } = useProgramList({
-    isImmunisation: props.uischema.options?.['programType'] === 'immunisation',
-  });
+
+  const { data, isLoading } = useProgramList(
+    props.uischema.options?.['programType'] === 'immunisation'
+      ? {
+          isImmunisation: true,
+        }
+      : {}
+  );
   const [program, setProgram] = useState<ProgramFragment | null>(null);
   const programId = extractProperty(core?.data, 'programId');
 
-  const onChange = async (program: ProgramFragment) => {
+  const onChange = async (program: ProgramFragment | null) => {
     setProgram(program);
-    handleChange(path, program.id);
-    handleChange('elmisCode', program.elmisCode ?? '');
+    if (program === null) {
+      handleChange(path, undefined);
+      handleChange('elmisCode', undefined);
+    } else {
+      handleChange(path, program?.id);
+      handleChange('elmisCode', program.elmisCode ?? undefined);
+    }
   };
 
   if (programId && !program) {
@@ -67,9 +77,18 @@ const UIComponent = (props: ControlProps) => {
           onChange={(_, newVal) =>
             newVal && newVal.id !== program?.id && onChange(newVal)
           }
+          onInputChange={(
+            _event: React.SyntheticEvent<Element, Event>,
+            _value: string,
+            reason: string
+          ) => {
+            if (reason === 'clear') {
+              onChange(null);
+            }
+          }}
           value={program ? { label: program.name ?? '', ...program } : null}
           isOptionEqualToValue={(option, value) => option.id === value.id}
-          clearable={false}
+          clearable={props.uischema.options?.['clearable'] ?? false}
         />
       }
     />
