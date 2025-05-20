@@ -220,8 +220,8 @@ mod test {
             mock_inbound_shipment_c, mock_inbound_shipment_e, mock_inbound_shipment_f, mock_item_a,
             mock_name_a, mock_name_linked_to_store_join, mock_name_not_linked_to_store_join,
             mock_outbound_shipment_e, mock_stock_line_a, mock_store_a, mock_store_b,
-            mock_store_linked_to_name, mock_user_account_a, mock_vaccine_item_a, MockData,
-            MockDataInserts,
+            mock_store_linked_to_name, mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a,
+            MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
@@ -776,13 +776,13 @@ mod test {
         insert_stock_in_line(
             &context,
             InsertStockInLine {
-                id: "invoice_with_vvm_status".to_string(),
+                id: "invoice_line_with_vvm_status".to_string(),
                 invoice_id: mock_inbound_shipment_c().id, // New status
                 item_id: mock_vaccine_item_a().id,
                 pack_size: 1.0,
                 number_of_packs: 1.0,
                 r#type: StockInType::InboundShipment,
-                vvm_status_id: Some("vvm_status_id_a".to_string()),
+                vvm_status_id: Some(mock_vvm_status_a().id),
                 ..Default::default()
             },
         )
@@ -836,7 +836,7 @@ mod test {
         assert!(invoice.delivered_datetime.unwrap() > now);
         assert!(invoice.delivered_datetime.unwrap() < end_time);
         assert_eq!(activity_log.r#type, ActivityLogType::InvoiceStatusDelivered);
-        assert_eq!(vvm_status_log, Some("vvm_status_id_a".to_string()));
+        assert_eq!(vvm_status_log, Some(mock_vvm_status_a().id));
 
         let filter =
             InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.clone().id]));

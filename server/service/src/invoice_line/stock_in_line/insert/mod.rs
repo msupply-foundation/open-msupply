@@ -132,7 +132,7 @@ mod test {
             mock_customer_return_a, mock_customer_return_a_invoice_line_a, mock_inbound_shipment_a,
             mock_inbound_shipment_c, mock_inbound_shipment_e, mock_item_a, mock_name_store_b,
             mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_user_account_a,
-            mock_vaccine_item_a, MockData, MockDataInserts,
+            mock_vaccine_item_a, mock_vvm_status_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::{
@@ -511,7 +511,7 @@ mod test {
                 pack_size: 1.0,
                 number_of_packs: 1.0,
                 r#type: StockInType::InboundShipment,
-                vvm_status_id: Some("vvm_status_id_a".to_string()),
+                vvm_status_id: Some(mock_vvm_status_a().id),
                 ..Default::default()
             },
         )
@@ -522,10 +522,7 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            invoice_line.vvm_status_id,
-            Some("vvm_status_id_a".to_string())
-        );
+        assert_eq!(invoice_line.vvm_status_id, Some(mock_vvm_status_a().id));
 
         let log_filter =
             VVMStatusLogFilter::new().invoice_line_id(EqualFilter::equal_to(&invoice_line.id));
@@ -548,7 +545,7 @@ mod test {
                 pack_size: 1.0,
                 number_of_packs: 1.0,
                 r#type: StockInType::InboundShipment,
-                vvm_status_id: Some("vvm_status_id_a".to_string()),
+                vvm_status_id: Some(mock_vvm_status_a().id),
                 ..Default::default()
             },
         )
@@ -579,7 +576,7 @@ mod test {
 
         let expected_vvm_log = VVMStatusLogRow {
             id: log.id.clone(),
-            status_id: "vvm_status_id_a".to_string(),
+            status_id: mock_vvm_status_a().id,
             created_datetime: log.created_datetime.clone(),
             stock_line_id: log.stock_line_id.clone(),
             comment: None,

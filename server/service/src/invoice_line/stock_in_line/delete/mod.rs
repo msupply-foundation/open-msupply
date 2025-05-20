@@ -115,10 +115,10 @@ mod test {
     use repository::{
         mock::{
             mock_customer_return_a, mock_customer_return_a_invoice_line_a,
-            mock_customer_return_a_invoice_line_b, mock_inbound_shipment_a, mock_item_a,
-            mock_name_store_b, mock_store_a, mock_store_b, mock_supplier_return_b_invoice_line_a,
+            mock_customer_return_a_invoice_line_b, mock_item_a, mock_name_store_b, mock_store_a,
+            mock_store_b, mock_supplier_return_b_invoice_line_a,
             mock_transferred_inbound_shipment_a, mock_transferred_inbound_shipment_a_line_b,
-            mock_user_account_a, mock_vaccine_item_a, MockData, MockDataInserts,
+            mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
@@ -317,7 +317,7 @@ mod test {
                 pack_size: 1.0,
                 number_of_packs: 1.0,
                 r#type: StockInType::InboundShipment,
-                vvm_status_id: Some("vvm_status_id_a".to_string()),
+                vvm_status_id: Some(mock_vvm_status_a().id),
                 ..Default::default()
             },
         )
@@ -348,7 +348,7 @@ mod test {
             .map(|log| log.status_id.clone());
 
         // Check the log exists
-        assert_eq!(vvm_status_log, Some("vvm_status_id_a".to_string()));
+        assert_eq!(vvm_status_log, Some(mock_vvm_status_a().id));
 
         // delete the inbound shipment line
         delete_stock_in_line(

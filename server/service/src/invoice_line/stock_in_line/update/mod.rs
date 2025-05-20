@@ -134,7 +134,8 @@ mod test {
             mock_customer_return_a_invoice_line_a, mock_customer_return_a_invoice_line_b,
             mock_item_a, mock_item_b, mock_name_store_b, mock_store_a, mock_store_b,
             mock_supplier_return_a_invoice_line_a, mock_transferred_inbound_shipment_a,
-            mock_user_account_a, mock_vaccine_item_a, MockData, MockDataInserts,
+            mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a, mock_vvm_status_b,
+            MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
@@ -412,7 +413,7 @@ mod test {
                 pack_size: 1.0,
                 number_of_packs: 1.0,
                 r#type: StockInType::InboundShipment,
-                vvm_status_id: Some("vvm_status_id_a".to_string()),
+                vvm_status_id: Some(mock_vvm_status_a().id),
                 ..Default::default()
             },
         )
@@ -442,14 +443,14 @@ mod test {
             .first()
             .map(|log| log.status_id.clone());
 
-        assert_eq!(vvm_status_log, Some("vvm_status_id_a".to_string()));
+        assert_eq!(vvm_status_log, Some(mock_vvm_status_a().id));
 
         // Update the invoice line with a new vvm status
         update_stock_in_line(
             &context,
             UpdateStockInLine {
                 id: "delivered_invoice_line_with_vvm_status".to_string(),
-                vvm_status_id: Some("vvm_status_id_b".to_string()),
+                vvm_status_id: Some(mock_vvm_status_b().id),
                 r#type: StockInType::InboundShipment,
                 ..Default::default()
             },
@@ -465,7 +466,7 @@ mod test {
             inbound_line,
             InvoiceLineRow {
                 id: "delivered_invoice_line_with_vvm_status".to_string(),
-                vvm_status_id: Some("vvm_status_id_b".to_string()),
+                vvm_status_id: Some(mock_vvm_status_b().id),
                 ..inbound_line.clone()
             }
         );
@@ -476,7 +477,7 @@ mod test {
             .first()
             .map(|log| log.status_id.clone());
 
-        assert_eq!(vvm_status_log, Some("vvm_status_id_b".to_string()));
+        assert_eq!(vvm_status_log, Some(mock_vvm_status_b().id));
 
         // Clear the vvm_status_id from invoice line
         update_stock_in_line(

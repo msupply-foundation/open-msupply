@@ -1,6 +1,6 @@
 use crate::vvm_status::vvm_status_row::VVMStatusRow;
 
-fn vvm_status_a() -> VVMStatusRow {
+pub fn mock_vvm_status_a() -> VVMStatusRow {
     VVMStatusRow {
         id: "vvm_status_id_a".to_string(),
         description: "VVM Stage 1 - Good".to_string(),
@@ -12,7 +12,7 @@ fn vvm_status_a() -> VVMStatusRow {
     }
 }
 
-fn vvm_status_b() -> VVMStatusRow {
+pub fn mock_vvm_status_b() -> VVMStatusRow {
     VVMStatusRow {
         id: "vvm_status_id_b".to_string(),
         description: "VVM Stage 2 - Okay".to_string(),
@@ -25,5 +25,5 @@ fn vvm_status_b() -> VVMStatusRow {
 }
 
 pub fn mock_vvm_statuses() -> Vec<VVMStatusRow> {
-    vec![vvm_status_a(), vvm_status_b()]
+    vec![mock_vvm_status_a(), mock_vvm_status_b()]
 }
