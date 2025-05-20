@@ -997,26 +997,14 @@ export type AddToOutboundShipmentFromMasterListMutation = {
     | { __typename: 'InvoiceLineConnector'; totalCount: number };
 };
 
-export type ItemPriceFragment = {
-  __typename: 'ItemPriceNode';
-  defaultPricePerUnit?: number | null;
-  discountPercentage?: number | null;
-  calculatedPricePerUnit?: number | null;
-};
-
-export type GetItemPricingQueryVariables = Types.Exact<{
+export type SaveOutboundShipmentItemLinesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  input: Types.ItemPriceInput;
+  input: Types.SaveOutboundShipmentLinesInput;
 }>;
 
-export type GetItemPricingQuery = {
-  __typename: 'Queries';
-  itemPrice: {
-    __typename: 'ItemPriceNode';
-    defaultPricePerUnit?: number | null;
-    discountPercentage?: number | null;
-    calculatedPricePerUnit?: number | null;
-  };
+export type SaveOutboundShipmentItemLinesMutation = {
+  __typename: 'Mutations';
+  saveOutboundShipmentItemLines: { __typename: 'InvoiceNode'; id: string };
 };
 
 export type InsertBarcodeMutationVariables = Types.Exact<{
@@ -1032,6 +1020,91 @@ export type InsertBarcodeMutation = {
     itemId: string;
     packSize?: number | null;
     gtin: string;
+  };
+};
+
+export type DraftStockOutLineFragment = {
+  __typename: 'DraftOutboundShipmentLineNode';
+  id: string;
+  stockLineId: string;
+  numberOfPacks: number;
+  packSize: number;
+  batch?: string | null;
+  expiryDate?: string | null;
+  sellPricePerPack: number;
+  inStorePacks: number;
+  availablePacks: number;
+  stockLineOnHold: boolean;
+  defaultDosesPerUnit: number;
+  location?: {
+    __typename: 'LocationNode';
+    id: string;
+    name: string;
+    code: string;
+    onHold: boolean;
+  } | null;
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    level: number;
+    unusable: boolean;
+    description: string;
+  } | null;
+  itemVariant?: { __typename: 'ItemVariantNode'; dosesPerUnit: number } | null;
+};
+
+export type GetOutboundEditLinesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  itemId: Types.Scalars['String']['input'];
+  invoiceId: Types.Scalars['String']['input'];
+}>;
+
+export type GetOutboundEditLinesQuery = {
+  __typename: 'Queries';
+  items: {
+    __typename: 'ItemConnector';
+    nodes: Array<{
+      __typename: 'ItemNode';
+      id: string;
+      unitName?: string | null;
+      isVaccine: boolean;
+    }>;
+  };
+  draftOutboundShipmentLines: {
+    __typename: 'DraftOutboundShipmentItemData';
+    placeholderQuantity?: number | null;
+    draftLines: Array<{
+      __typename: 'DraftOutboundShipmentLineNode';
+      id: string;
+      stockLineId: string;
+      numberOfPacks: number;
+      packSize: number;
+      batch?: string | null;
+      expiryDate?: string | null;
+      sellPricePerPack: number;
+      inStorePacks: number;
+      availablePacks: number;
+      stockLineOnHold: boolean;
+      defaultDosesPerUnit: number;
+      location?: {
+        __typename: 'LocationNode';
+        id: string;
+        name: string;
+        code: string;
+        onHold: boolean;
+      } | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        level: number;
+        unusable: boolean;
+        description: string;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        dosesPerUnit: number;
+      } | null;
+    }>;
   };
 };
 
@@ -1164,11 +1237,37 @@ export const CannotHaveEstimatedDeliveryDateBeforeShippedDateErrorFragmentDoc = 
     description
   }
 `;
-export const ItemPriceFragmentDoc = gql`
-  fragment itemPrice on ItemPriceNode {
-    defaultPricePerUnit
-    discountPercentage
-    calculatedPricePerUnit
+export const DraftStockOutLineFragmentDoc = gql`
+  fragment DraftStockOutLine on DraftOutboundShipmentLineNode {
+    __typename
+    id
+    stockLineId
+    numberOfPacks
+    packSize
+    batch
+    expiryDate
+    sellPricePerPack
+    inStorePacks
+    availablePacks
+    stockLineOnHold
+    defaultDosesPerUnit
+    location {
+      __typename
+      id
+      name
+      code
+      onHold
+    }
+    vvmStatus {
+      __typename
+      id
+      level
+      unusable
+      description
+    }
+    itemVariant {
+      dosesPerUnit
+    }
   }
 `;
 export const InvoicesDocument = gql`
@@ -1861,15 +1960,18 @@ export const AddToOutboundShipmentFromMasterListDocument = gql`
     }
   }
 `;
-export const GetItemPricingDocument = gql`
-  query getItemPricing($storeId: String!, $input: ItemPriceInput!) {
-    itemPrice(storeId: $storeId, input: $input) {
-      ... on ItemPriceNode {
-        ...itemPrice
+export const SaveOutboundShipmentItemLinesDocument = gql`
+  mutation saveOutboundShipmentItemLines(
+    $storeId: String!
+    $input: SaveOutboundShipmentLinesInput!
+  ) {
+    saveOutboundShipmentItemLines(input: $input, storeId: $storeId) {
+      ... on InvoiceNode {
+        __typename
+        id
       }
     }
   }
-  ${ItemPriceFragmentDoc}
 `;
 export const InsertBarcodeDocument = gql`
   mutation insertBarcode($storeId: String!, $input: InsertBarcodeInput!) {
@@ -1880,6 +1982,41 @@ export const InsertBarcodeDocument = gql`
     }
   }
   ${BarcodeFragmentDoc}
+`;
+export const GetOutboundEditLinesDocument = gql`
+  query getOutboundEditLines(
+    $storeId: String!
+    $itemId: String!
+    $invoiceId: String!
+  ) {
+    items(
+      storeId: $storeId
+      filter: { id: { equalTo: $itemId }, isActive: true }
+    ) {
+      ... on ItemConnector {
+        __typename
+        nodes {
+          __typename
+          id
+          unitName
+          isVaccine
+        }
+      }
+    }
+    draftOutboundShipmentLines(
+      storeId: $storeId
+      itemId: $itemId
+      invoiceId: $invoiceId
+    ) {
+      ... on DraftOutboundShipmentItemData {
+        placeholderQuantity
+        draftLines {
+          ...DraftStockOutLine
+        }
+      }
+    }
+  }
+  ${DraftStockOutLineFragmentDoc}
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -2089,19 +2226,19 @@ export function getSdk(
         variables
       );
     },
-    getItemPricing(
-      variables: GetItemPricingQueryVariables,
+    saveOutboundShipmentItemLines(
+      variables: SaveOutboundShipmentItemLinesMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<GetItemPricingQuery> {
+    ): Promise<SaveOutboundShipmentItemLinesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GetItemPricingQuery>(
-            GetItemPricingDocument,
+          client.request<SaveOutboundShipmentItemLinesMutation>(
+            SaveOutboundShipmentItemLinesDocument,
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'getItemPricing',
-        'query',
+        'saveOutboundShipmentItemLines',
+        'mutation',
         variables
       );
     },
@@ -2118,6 +2255,22 @@ export function getSdk(
           ),
         'insertBarcode',
         'mutation',
+        variables
+      );
+    },
+    getOutboundEditLines(
+      variables: GetOutboundEditLinesQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<GetOutboundEditLinesQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<GetOutboundEditLinesQuery>(
+            GetOutboundEditLinesDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'getOutboundEditLines',
+        'query',
         variables
       );
     },

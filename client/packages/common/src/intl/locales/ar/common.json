@@ -1051,7 +1051,6 @@
   "label.unit-plural_other": "{{unit}}",
   "label.unit-price": "سعر الوحدة",
   "label.unit-quantity": "كمية الوحدة",
-  "label.unit-quantity-issued": "{{unit}} كمية صادرة",
   "label.unit-variant-and-pack-size": "متغير الوحدة/حجم العبوة",
   "label.units": "الوحدات",
   "label.units-plural_few": "الوحدات",

@@ -59,6 +59,11 @@ export type StockLineFragment = {
       code: string;
     }>;
   };
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    dosesPerUnit: number;
+  } | null;
 };
 
 export type ItemRowFragment = {
@@ -375,6 +380,11 @@ export type ItemFragment = {
           code: string;
         }>;
       };
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        dosesPerUnit: number;
+      } | null;
     }>;
   };
   stats: {
@@ -557,6 +567,11 @@ export type ItemsWithStockLinesQuery = {
               code: string;
             }>;
           };
+          itemVariant?: {
+            __typename: 'ItemVariantNode';
+            id: string;
+            dosesPerUnit: number;
+          } | null;
         }>;
       };
       stats: {
@@ -865,6 +880,11 @@ export type ItemByIdQuery = {
               code: string;
             }>;
           };
+          itemVariant?: {
+            __typename: 'ItemVariantNode';
+            id: string;
+            dosesPerUnit: number;
+          } | null;
         }>;
       };
       variants: Array<{
@@ -960,6 +980,7 @@ export type ItemByIdQuery = {
 export type ItemVariantOptionFragment = {
   __typename: 'ItemVariantNode';
   id: string;
+  dosesPerUnit: number;
   label: string;
   bundledItemVariants: Array<{ __typename: 'BundledItemNode'; id: string }>;
 };
@@ -987,6 +1008,7 @@ export type ItemVariantsQuery = {
       variants: Array<{
         __typename: 'ItemVariantNode';
         id: string;
+        dosesPerUnit: number;
         label: string;
         bundledItemVariants: Array<{
           __typename: 'BundledItemNode';
@@ -1052,6 +1074,11 @@ export type GetHistoricalStockLinesQuery = {
           code: string;
         }>;
       };
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        dosesPerUnit: number;
+      } | null;
     }>;
   };
 };
@@ -1440,6 +1467,10 @@ export const StockLineFragmentDoc = gql`
     storeId
     totalNumberOfPacks
     itemVariantId
+    itemVariant {
+      id
+      dosesPerUnit
+    }
   }
   ${ItemDirectionFragmentDoc}
   ${WarningFragmentDoc}
@@ -1601,6 +1632,7 @@ export const ItemVariantOptionFragmentDoc = gql`
     bundledItemVariants {
       id
     }
+    dosesPerUnit
   }
 `;
 export const ItemLedgerFragmentDoc = gql`

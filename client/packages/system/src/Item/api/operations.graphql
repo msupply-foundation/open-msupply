@@ -41,6 +41,11 @@ fragment StockLine on StockLineNode {
   storeId
   totalNumberOfPacks
   itemVariantId
+
+  itemVariant {
+    id
+    dosesPerUnit
+  }
 }
 
 fragment ItemRow on ItemNode {
@@ -372,6 +377,8 @@ fragment ItemVariantOption on ItemVariantNode {
   bundledItemVariants {
     id
   }
+  # Selected option passed through to vaccine items
+  dosesPerUnit
 }
 
 query itemVariantsConfigured($storeId: String!) {

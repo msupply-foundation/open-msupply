@@ -1188,7 +1188,6 @@
   "label.unit-plural_other": "{{unit}}s",
   "label.unit-price": "Prix unitaire",
   "label.unit-quantity": "Qté totale",
-  "label.unit-quantity-issued": "Qté de {{unit}} distribuée",
   "label.unit-sell-price": "Prix de vente unitaire",
   "label.unit-variant-and-pack-size": "Variante d'unité / taille d'emballage",
   "label.units": "Unités",

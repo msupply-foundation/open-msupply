@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { useAuthApi } from './useAuthApi';
 
-export const usePreference = <T extends PreferenceKey>(pref: T) => {
+export const usePreference = <T extends PreferenceKey>(...prefs: T[]) => {
   const { keys, client } = useAuthApi();
   const { storeId } = useAuthContext();
 
@@ -16,7 +16,7 @@ export const usePreference = <T extends PreferenceKey>(pref: T) => {
   const PreferencesDocument = gql`
   query preferences {
     preferences(storeId: "${storeId}") {
-      ${pref}
+      ${prefs.map(pref => pref).join('\n')}
     }
   }
 `;
@@ -29,7 +29,7 @@ export const usePreference = <T extends PreferenceKey>(pref: T) => {
   };
 
   return useQuery({
-    queryKey: [keys.preferences(), pref],
+    queryKey: [keys.preferences(), ...prefs],
     queryFn: async () => {
       const result = await client.request<PreferencesQuery, undefined>(
         PreferencesDocument
