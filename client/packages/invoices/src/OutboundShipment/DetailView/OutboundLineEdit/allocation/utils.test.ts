@@ -248,6 +248,10 @@ describe('canAutoAllocate ', () => {
       vvmStatus: { unusable: false },
     });
     expect(canAutoAllocate(usableVVMLine)).toEqual(true);
+
+    const packSize2 = createTestLine({ packSize: 2 });
+    expect(canAutoAllocate(packSize2, 2)).toEqual(true);
+    expect(canAutoAllocate(packSize2, 3)).toEqual(false);
   });
 });
 

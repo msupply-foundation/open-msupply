@@ -129,7 +129,7 @@ export const OutboundLineEditTable = ({
     item,
     currency,
     isExternalSupplier,
-    allocateIn: allocateIn.type,
+    allocateIn: allocateIn,
   });
 
   // Display all stock lines to user, including non-allocatable ones at the bottom

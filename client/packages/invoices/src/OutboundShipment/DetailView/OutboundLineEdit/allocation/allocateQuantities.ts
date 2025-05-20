@@ -73,11 +73,10 @@ export const allocateQuantities = (
     numberOfPacks: 0,
   }));
 
-  const validBatches = newDraftLines.filter(
-    line =>
-      canAutoAllocate(line) &&
-      (allocateIn.type !== AllocateInType.Packs ||
-        line.packSize === allocateIn.packSize)
+  const requiredPackSize =
+    allocateIn.type === AllocateInType.Packs ? allocateIn.packSize : undefined;
+  const validBatches = newDraftLines.filter(line =>
+    canAutoAllocate(line, requiredPackSize)
   );
 
   let quantityToAllocate = quantity;

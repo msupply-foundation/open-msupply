@@ -193,12 +193,17 @@ export const issueDoses = (
 export const canAllocate = (line: DraftStockOutLineFragment): boolean =>
   !line.stockLineOnHold && !line.location?.onHold && line.availablePacks > 0;
 
-export const canAutoAllocate = (line: DraftStockOutLineFragment) =>
+export const canAutoAllocate = (
+  line: DraftStockOutLineFragment,
+  requiredPackSize?: number
+) =>
   canAllocate(line) &&
   // shouldn't auto-allocate expired lines
   !(!!line.expiryDate && DateUtils.isExpired(new Date(line.expiryDate))) &&
   // should not be able to auto-allocate lines with unusable VVM status
-  !line.vvmStatus?.unusable;
+  !line.vvmStatus?.unusable &&
+  // if pack size is specified, should match the line's pack size
+  (!requiredPackSize || line.packSize === requiredPackSize);
 
 export const scannedBatchFilter = (
   allLines: DraftStockOutLineFragment[],

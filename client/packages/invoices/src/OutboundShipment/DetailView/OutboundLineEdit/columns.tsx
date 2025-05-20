@@ -24,9 +24,16 @@ import {
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { DraftStockOutLineFragment } from '../../api/operations.generated';
 import { getPackQuantityCellId } from 'packages/invoices/src/utils';
-import { AllocateInType } from './allocation/useAllocationContext';
+import {
+  AllocateInOption,
+  AllocateInType,
+} from './allocation/useAllocationContext';
 import { DraftItem } from '../../..';
-import { getDoseQuantity, packsToDoses } from './allocation/utils';
+import {
+  canAutoAllocate,
+  getDoseQuantity,
+  packsToDoses,
+} from './allocation/utils';
 
 export const useOutboundLineEditColumns = ({
   allocate,
@@ -39,7 +46,7 @@ export const useOutboundLineEditColumns = ({
   item: DraftItem | null;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
-  allocateIn: AllocateInType;
+  allocateIn: AllocateInOption;
 }) => {
   const { store } = useAuthContext();
   const t = useTranslation();
@@ -53,11 +60,23 @@ export const useOutboundLineEditColumns = ({
     PreferenceKey.ManageVvmStatusForStock
   );
 
+  const packSize =
+    allocateIn.type === AllocateInType.Packs ? allocateIn.packSize : undefined;
+
   const ForeignCurrencyCell = useCurrencyCell<DraftStockOutLineFragment>(
     currency?.code as Currencies
   );
 
   const columnDefinitions: ColumnDescription<DraftStockOutLineFragment>[] = [
+    {
+      label: '',
+      description: 'description.used-in-auto-allocation',
+      key: 'canAllocate',
+      Cell: CheckCell,
+      accessor: ({ rowData }) => canAutoAllocate(rowData, packSize),
+      align: ColumnAlign.Center,
+      width: 50,
+    },
     [
       'batch',
       {
@@ -123,7 +142,7 @@ export const useOutboundLineEditColumns = ({
 
   columnDefinitions.push(['packSize', { width: 90 }]);
 
-  if (allocateIn === AllocateInType.Doses) {
+  if (allocateIn.type === AllocateInType.Doses) {
     columnDefinitions.push(...getAllocateInDosesColumns(t, allocate, unit));
   } else {
     columnDefinitions.push(
