@@ -172,7 +172,10 @@ export const useStocktakeColumns = ({
           getColumnProperty(rowData, [
             { path: ['lines', 'packSize'] },
             { path: ['packSize'] },
-          ]) ?? rowData.item?.defaultPackSize,
+          ]),
+        cellProps: {
+          defaultValue: UNDEFINED_STRING_VALUE,
+        },
       },
     ],
   ];
