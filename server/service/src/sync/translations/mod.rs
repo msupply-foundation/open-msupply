@@ -10,6 +10,7 @@ pub(crate) mod asset_property;
 pub(crate) mod asset_type;
 pub(crate) mod backend_plugin;
 pub(crate) mod barcode;
+pub(crate) mod campaign;
 pub(crate) mod category;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
@@ -120,6 +121,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         property::boxed(),
         name_property::boxed(),
         cold_storage_type::boxed(),
+        campaign::boxed(),
         // Remote
         location::boxed(),
         location_movement::boxed(),
