@@ -57,6 +57,7 @@ pub enum ProcessorType {
 impl ProcessorType {
     pub(super) fn get_processors(&self) -> Vec<Box<dyn Processor>> {
         match self {
+            // Using a vector because plugin processors are dynamic and multiple can be added
             ProcessorType::ContactFormEmail => vec![Box::new(QueueContactEmailProcessor)],
             ProcessorType::LoadPlugin => vec![Box::new(LoadPlugin)],
             ProcessorType::AssignRequisitionNumber => vec![Box::new(AssignRequisitionNumber)],
