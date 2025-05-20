@@ -137,11 +137,22 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       alerts: [],
     })),
 
-  setAllocateIn: (allocateIn: AllocateInOption) =>
+  setAllocateIn: (allocateIn: AllocateInOption) => {
+    const { draftLines } = get();
+
+    // Clear the existing allocated stock if changing how we are allocating
+    // This might be annoying... but should validate before spending time on
+    // reallocating on change of allocation type/pack size
+    const result = allocateQuantities(draftLines, 0, { allocateIn });
+
     set(state => ({
       ...state,
+      draftLines: result?.allocatedLines ?? draftLines,
+      placeholderQuantity: 0,
+      isDirty: true,
       allocateIn,
-    })),
+    }));
+  },
 
   setAlerts: alerts =>
     set(state => ({
