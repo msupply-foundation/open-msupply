@@ -1,5 +1,5 @@
 import { FnUtils } from '@openmsupply-client/common';
-import { ItemRowFragment, StockLineFragment } from '@openmsupply-client/system';
+import { StockLineFragment } from '@openmsupply-client/system';
 import { StocktakeLineFragment } from './../../../api';
 
 // A DraftStocktakeLine represents a stocktake line with additional state flags:
@@ -18,7 +18,7 @@ export type DraftStocktakeLine = Omit<StocktakeLineFragment, '__typename'> & {
 export const DraftLine = {
   fromItem: (
     stocktakeId: string,
-    item: ItemRowFragment
+    item: StocktakeLineFragment['item']
   ): DraftStocktakeLine => {
     return {
       stocktakeId,

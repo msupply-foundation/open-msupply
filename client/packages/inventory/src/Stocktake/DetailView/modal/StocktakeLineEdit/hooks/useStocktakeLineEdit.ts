@@ -3,7 +3,6 @@ import {
   ArrayUtils,
   getErrorMessage,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
 import { StocktakeLineFragment, useStocktakeOld } from './../../../../api';
 import { DraftStocktakeLine, DraftLine } from '../utils';
 import { useNextItem } from './useNextItem';
@@ -14,11 +13,11 @@ interface useStocktakeLineEditController {
   addLine: () => void;
   save: () => Promise<{ errorMessages?: string[] }>;
   isSaving: boolean;
-  nextItem: ItemRowFragment | null;
+  nextItem: StocktakeLineFragment['item'] | null;
 }
 
 export const useStocktakeLineEdit = (
-  item: ItemRowFragment | null
+  item: StocktakeLineFragment['item'] | null
 ): useStocktakeLineEditController => {
   const { id } = useStocktakeOld.document.fields('id');
   const { items } = useStocktakeOld.line.rows();
