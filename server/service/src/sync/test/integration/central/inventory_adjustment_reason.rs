@@ -4,7 +4,7 @@ use crate::sync::{
     },
     translations::IntegrationOperation,
 };
-use repository::{InventoryAdjustmentReasonRow, InventoryAdjustmentType};
+use repository::{ReasonOptionRow, ReasonOptionType};
 
 use serde_json::json;
 use util::uuid::uuid;
@@ -15,30 +15,30 @@ impl SyncRecordTester for InventoryAdjustmentReasonTester {
     fn test_step_data(&self, _: &NewSiteProperties) -> Vec<TestStepData> {
         let mut result = Vec::new();
         // STEP 1 - insert
-        let pos_1 = InventoryAdjustmentReasonRow {
+        let pos_1 = ReasonOptionRow {
             id: uuid(),
-            r#type: InventoryAdjustmentType::Positive,
+            r#type: ReasonOptionType::PositiveInventoryAdjustment,
             is_active: true,
             reason: "POS 1".to_string(),
         };
 
-        let pos_2 = InventoryAdjustmentReasonRow {
+        let pos_2 = ReasonOptionRow {
             id: uuid(),
-            r#type: InventoryAdjustmentType::Positive,
+            r#type: ReasonOptionType::PositiveInventoryAdjustment,
             is_active: false,
             reason: "POS 2".to_string(),
         };
 
-        let neg_1 = InventoryAdjustmentReasonRow {
+        let neg_1 = ReasonOptionRow {
             id: uuid(),
-            r#type: InventoryAdjustmentType::Negative,
+            r#type: ReasonOptionType::NegativeInventoryAdjustment,
             is_active: false,
             reason: "NEG 1".to_string(),
         };
 
-        let neg_2 = InventoryAdjustmentReasonRow {
+        let neg_2 = ReasonOptionRow {
             id: uuid(),
-            r#type: InventoryAdjustmentType::Negative,
+            r#type: ReasonOptionType::NegativeInventoryAdjustment,
             is_active: true,
             reason: "NEG 2".to_string(),
         };
