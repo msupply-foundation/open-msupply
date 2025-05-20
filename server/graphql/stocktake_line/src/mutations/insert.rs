@@ -34,9 +34,11 @@ pub struct InsertInput {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option_id")]
     pub inventory_adjustment_reason_id: Option<String>,
     pub item_variant_id: Option<String>,
     pub donor_id: Option<String>,
+    pub reason_option_id: Option<String>,
 }
 
 #[derive(Union)]
@@ -157,6 +159,7 @@ impl InsertInput {
             inventory_adjustment_reason_id,
             item_variant_id,
             donor_id,
+            reason_option_id,
         } = self;
 
         ServiceInput {
@@ -175,9 +178,9 @@ impl InsertInput {
             cost_price_per_pack,
             sell_price_per_pack,
             note,
-            inventory_adjustment_reason_id,
             item_variant_id,
             donor_id,
+            reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
         }
     }
 }
@@ -297,9 +300,9 @@ mod test {
                     cost_price_per_pack: Some(10.0),
                     sell_price_per_pack: Some(12.0),
                     note: Some("note".to_string()),
-                    inventory_adjustment_reason_id: None,
                     item_variant_id: None,
                     donor_link_id: None,
+                    reason_option_id: None,
                 },
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),

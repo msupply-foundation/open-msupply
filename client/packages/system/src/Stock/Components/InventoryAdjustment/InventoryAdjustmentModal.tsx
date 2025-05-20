@@ -9,9 +9,10 @@ import {
   AdjustmentTypeInput,
   useDialog,
   useFormatNumber,
+  ReasonOptionNodeType,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
-import { InventoryAdjustmentReasonSearchInput } from '../../..';
+import { ReasonOptionsSearchInput } from '../../..';
 import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionSearchInput';
 import { INPUT_WIDTH, StyledInputRow } from '../StyledInputRow';
 
@@ -88,10 +89,14 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
             label={t('label.reason')}
             Input={
               <Box display="flex" width={INPUT_WIDTH}>
-                <InventoryAdjustmentReasonSearchInput
+                <ReasonOptionsSearchInput
                   onChange={reason => setDraft(state => ({ ...state, reason }))}
                   value={draft.reason}
-                  adjustmentType={draft.adjustmentType}
+                  type={
+                    draft.adjustmentType === AdjustmentTypeInput.Addition
+                      ? ReasonOptionNodeType.PositiveInventoryAdjustment
+                      : ReasonOptionNodeType.NegativeInventoryAdjustment
+                  }
                   width={INPUT_WIDTH}
                 />
               </Box>
