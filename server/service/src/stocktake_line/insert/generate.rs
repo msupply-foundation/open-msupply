@@ -21,6 +21,7 @@ pub fn generate(
         sell_price_per_pack,
         note,
         item_variant_id,
+        donor_id,
         reason_option_id,
     }: InsertStocktakeLine,
 ) -> StocktakeLineRow {
@@ -57,6 +58,7 @@ pub fn generate(
         sell_price_per_pack,
         note,
         item_variant_id,
+        donor_link_id: donor_id,
         reason_option_id,
     }
 }

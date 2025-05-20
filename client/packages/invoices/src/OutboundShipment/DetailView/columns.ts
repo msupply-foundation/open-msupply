@@ -13,13 +13,18 @@ import {
   NumberCell,
   CurrencyCell,
   ColumnDescription,
+  UNDEFINED_STRING_VALUE,
+  useTranslation,
+  getDosesPerUnitColumn,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
+import { getDosesQuantityColumn } from '../../DoseQtyColumn';
 
 interface UseOutboundColumnOptions {
   sortBy: SortBy<StockOutLineFragment | StockOutItem>;
   onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
+  displayDoseColumns: boolean;
 }
 
 const expansionColumn = getRowExpandColumn<
@@ -41,7 +46,9 @@ const getUnitQuantity = (row: StockOutLineFragment) =>
 export const useOutboundColumns = ({
   sortBy,
   onChangeSortBy,
+  displayDoseColumns,
 }: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
+  const t = useTranslation();
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
 
   const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
@@ -162,18 +169,18 @@ export const useOutboundColumns = ({
     [
       'packSize',
       {
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'packSize'] },
-            { path: ['packSize'], default: '' },
-          ]),
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'packSize'] },
-            { path: ['packSize'], default: '' },
-          ]),
+        getSortValue: row => String(getPackSizeValue(row, getColumnProperty)),
+
+        accessor: ({ rowData }) => getPackSizeValue(rowData, getColumnProperty),
       },
     ],
+  ];
+
+  if (displayDoseColumns) {
+    columns.push(getDosesPerUnitColumn(t));
+  }
+
+  columns.push(
     [
       'numberOfPacks',
       {
@@ -216,7 +223,14 @@ export const useOutboundColumns = ({
           }
         },
       },
-    ],
+    ]
+  );
+
+  if (displayDoseColumns) {
+    columns.push(getDosesQuantityColumn());
+  }
+
+  columns.push(
     {
       label: 'label.unit-sell-price',
       key: 'sellPricePerUnit',
@@ -273,8 +287,29 @@ export const useOutboundColumns = ({
         }
       },
     },
-    expansionColumn,
-  ];
+    expansionColumn
+  );
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
+};
+
+const getPackSizeValue = (
+  row: StockOutLineFragment | StockOutItem,
+  getColumnProperty: ReturnType<typeof useColumnUtils>['getColumnProperty']
+) => {
+  const lineType = getColumnProperty(row, [
+    { path: ['lines', 'type'] },
+    { path: ['type'], default: '' },
+  ]);
+
+  if (lineType === InvoiceLineNodeType.UnallocatedStock) {
+    const unitQuantity =
+      'lines' in row ? ArrayUtils.getUnitQuantity(row.lines) : row.packSize;
+
+    if (unitQuantity === 0) return UNDEFINED_STRING_VALUE;
+  }
+  return getColumnProperty(row, [
+    { path: ['lines', 'packSize'] },
+    { path: ['packSize'], default: '' },
+  ]);
 };

@@ -1,5 +1,5 @@
 use async_graphql::*;
-use repository::{InventoryAdjustmentType, ReasonOption, ReasonOptionRow};
+use repository::{ReasonOption, ReasonOptionRow, ReasonOptionType};
 use service::ListResult;
 
 use super::ReasonOptionNodeType;
@@ -27,8 +27,8 @@ impl InventoryAdjustmentReasonNode {
         &self.row().id
     }
 
-    pub async fn r#type(&self) -> ReasonOptionNodeType {
-        ReasonOptionNodeType::from_domain(&self.row().r#type)
+    pub async fn r#type(&self) -> Result<InventoryAdjustmentReasonNodeType> {
+        InventoryAdjustmentReasonNodeType::from_domain(&self.row().r#type)
     }
 
     pub async fn is_active(&self) -> &bool {
@@ -53,23 +53,27 @@ impl InventoryAdjustmentReasonNode {
 }
 
 impl InventoryAdjustmentReasonNodeType {
-    pub fn from_domain(from: &InventoryAdjustmentType) -> InventoryAdjustmentReasonNodeType {
+    pub fn from_domain(from: &ReasonOptionType) -> Result<InventoryAdjustmentReasonNodeType> {
         use InventoryAdjustmentReasonNodeType as to;
-        use InventoryAdjustmentType as from;
+        use ReasonOptionType as from;
 
         match from {
-            from::Positive => to::Positive,
-            from::Negative => to::Negative,
+            from::PositiveInventoryAdjustment => Ok(to::Positive),
+            from::NegativeInventoryAdjustment => Ok(to::Negative),
+            _ => Err(Error::new(format!(
+                "Invalid inventory adjustment reason type: {:?}",
+                from,
+            ))),
         }
     }
 
-    pub fn to_domain(self) -> InventoryAdjustmentType {
+    pub fn to_domain(self) -> ReasonOptionType {
         use InventoryAdjustmentReasonNodeType as from;
-        use InventoryAdjustmentType as to;
+        use ReasonOptionType as to;
 
         match self {
-            from::Positive => to::Positive,
-            from::Negative => to::Negative,
+            from::Positive => to::PositiveInventoryAdjustment,
+            from::Negative => to::NegativeInventoryAdjustment,
         }
     }
 }

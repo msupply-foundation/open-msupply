@@ -380,6 +380,7 @@ mod test {
                 stock_line: Some(stock_line),
                 location: None,
                 item: mock_item_a(),
+                donor: None,
             }])
         );
 

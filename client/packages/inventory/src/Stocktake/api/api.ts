@@ -70,6 +70,7 @@ const stocktakeParser = {
         : undefined,
       comment: line.comment ?? '',
       itemVariantId: setNullableInput('itemVariantId', line),
+      donorId: setNullableInput('donorId', line),
       reasonOptionId: line.reasonOption?.id,
     }),
     toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => ({
@@ -88,6 +89,7 @@ const stocktakeParser = {
         : undefined,
       comment: line.comment ?? '',
       itemVariantId: line.itemVariantId,
+      donorId: line.donorId,
       reasonOptionId: line.reasonOption?.id,
     }),
   },

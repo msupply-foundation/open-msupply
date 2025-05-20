@@ -122,6 +122,7 @@ impl MigrationFragment for Migrate {
                     item_variant_id TEXT REFERENCES item_variant(id),
                     prescribed_quantity REAL,
                     linked_invoice_id TEXT,
+                    donor_id TEXT,
                     reason_option_id REFERENCES reason_option(id)
                 );
 
@@ -148,6 +149,7 @@ impl MigrationFragment for Migrate {
                     item_variant_id,
                     prescribed_quantity,
                     linked_invoice_id,
+                    donor_id,
                     reason_option_id                
                 )
                 SELECT 
@@ -173,6 +175,7 @@ impl MigrationFragment for Migrate {
                     item_variant_id,
                     prescribed_quantity,
                     linked_invoice_id,
+                    donor_id,
                     reason_option_id  
                 FROM invoice_line_old;
 
@@ -197,6 +200,7 @@ impl MigrationFragment for Migrate {
                     item_link_id TEXT NOT NULL REFERENCES item_link(id),
                     item_name TEXT NOT NULL,
                     item_variant_id TEXT REFERENCES item_variant(id),
+                    donor_link_id TEXT,
                     reason_option_id TEXT REFERENCES reason_option(id)
                 );
 
@@ -217,6 +221,7 @@ impl MigrationFragment for Migrate {
                     item_link_id,
                     item_name,
                     item_variant_id,
+                    donor_link_id,
                     reason_option_id          
                 )
                 SELECT 
@@ -236,6 +241,7 @@ impl MigrationFragment for Migrate {
                     item_link_id,
                     item_name,
                     item_variant_id,
+                    donor_link_id,
                     reason_option_id  
                 FROM stocktake_line_old;
 
@@ -249,6 +255,9 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
+                DROP TABLE inventory_adjustment_reason;
+                DROP TABLE return_reason;
+
                 UPDATE sync_buffer
                 SET integration_datetime = NULL
                 WHERE table_name = 'reason_option';   

@@ -31,6 +31,10 @@ const defaultDraftStockLine: DraftStockLine = {
     isVaccine: false,
   },
   reasonOption: null,
+  vvmStatusLogs: {
+    __typename: 'VvmstatusLogConnector',
+    nodes: [],
+  },
 };
 
 export function useStockLine(id?: string) {
