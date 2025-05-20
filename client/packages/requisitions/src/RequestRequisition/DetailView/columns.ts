@@ -55,6 +55,7 @@ export const useRequestColumns = () => {
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.item.unitName,
       sortable: false,
+      defaultHideOnMobile: true,
     },
     {
       key: 'defaultPackSize',
@@ -63,6 +64,7 @@ export const useRequestColumns = () => {
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.item.defaultPackSize,
       getSortValue: rowData => rowData.item.defaultPackSize,
+      defaultHideOnMobile: true,
     },
     {
       key: 'availableStockOnHand',
@@ -105,6 +107,7 @@ export const useRequestColumns = () => {
         rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
       getSortValue: rowData =>
         rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
+      defaultHideOnMobile: true,
     },
     {
       key: 'suggestedQuantity',

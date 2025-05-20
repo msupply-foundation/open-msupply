@@ -90,6 +90,8 @@ export interface Column<T extends RecordWithId> {
   maxLength?: number;
   backgroundColor?: string;
 
+  defaultHideOnMobile?: boolean;
+
   Cell: JSXElementConstructor<CellProps<T>>;
   // For passing additional props to the above Cell -- ⚠️ use with caution as
   // these are not properly typed
