@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   DialogButton,
   ModalMode,
@@ -6,11 +6,12 @@ import {
   useDialog,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
-import { RequestFragment } from '../../api';
+import { RequestFragment, useRequest } from '../../api';
 import { useDraftRequisitionLine, useNextRequestLine } from './hooks';
 import { isRequestDisabled } from '../../../utils';
 import { RequestLineEdit } from './RequestLineEdit';
 import { Representation, RepresentationValue } from './utils';
+import { ItemWithStatsFragment } from '@openmsupply-client/system';
 
 interface RequestLineEditModalProps {
   requisition: RequestFragment;
@@ -21,7 +22,7 @@ interface RequestLineEditModalProps {
   store?: UserStoreNodeFragment;
 }
 
-export const RequestLineEditModalInner = ({
+export const RequestLineEditModal = ({
   requisition,
   itemId,
   isOpen,
@@ -31,13 +32,22 @@ export const RequestLineEditModalInner = ({
 }: RequestLineEditModalProps) => {
   const isDisabled = isRequestDisabled(requisition);
   const { Modal } = useDialog({ onClose, isOpen });
+  const deleteLine = useRequest.line.deleteLine();
 
-  const lines = requisition?.lines.nodes.sort((a, b) =>
-    a.item.name.localeCompare(b.item.name)
+  const lines = useMemo(
+    () =>
+      requisition?.lines.nodes
+        .slice()
+        .sort((a, b) => a.item.name.localeCompare(b.item.name)) ?? [],
+    [requisition?.lines.nodes]
   );
+
   const [currentItem, setCurrentItem] = useBufferState(
     lines?.find(line => line.item.id === itemId)?.item
   );
+  const [previousItemLineId, setPreviousItemLineId] = useBufferState<
+    string | null
+  >(null);
   const [representation, setRepresentation] = useState<RepresentationValue>(
     Representation.UNITS
   );
@@ -51,9 +61,37 @@ export const RequestLineEditModalInner = ({
   const isProgram = !!requisition?.program;
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
 
+  const deletePreviousLine = () => {
+    if (previousItemLineId && !isDisabled) deleteLine(previousItemLineId);
+  };
+
   const onCancel = () => {
+    if (mode === ModalMode.Create) {
+      deletePreviousLine();
+    }
     onClose();
   };
+
+  const onChangeItem = (item: ItemWithStatsFragment) => {
+    deletePreviousLine();
+    setCurrentItem(item);
+  };
+
+  const onSave = async () => {
+    await save();
+    setPreviousItemLineId(null);
+    if (mode === ModalMode.Update && next) setCurrentItem(next);
+    else if (mode === ModalMode.Create) setCurrentItem(undefined);
+    else onClose();
+  };
+
+  useEffect(() => {
+    if (!!draft?.isCreated) {
+      save();
+    } else {
+      if (!!draft?.id) setPreviousItemLineId(draft.id);
+    }
+  }, [draft, setPreviousItemLineId]);
 
   return (
     <Modal
@@ -64,12 +102,7 @@ export const RequestLineEditModalInner = ({
         <DialogButton
           disabled={nextDisabled}
           variant="next-and-ok"
-          onClick={async () => {
-            await save();
-            if (mode === ModalMode.Update && next) setCurrentItem(next);
-            else if (mode === ModalMode.Create) setCurrentItem(undefined);
-            else onClose();
-          }}
+          onClick={onSave}
         />
       }
       okButton={
@@ -85,42 +118,20 @@ export const RequestLineEditModalInner = ({
       height={800}
       width={1200}
     >
-      <>
-        <RequestLineEdit
-          requisition={requisition}
-          lines={lines}
-          currentItem={currentItem}
-          setCurrentItem={setCurrentItem}
-          draft={draft}
-          update={update}
-          isPacksEnabled={isPacksEnabled}
-          representation={representation}
-          setRepresentation={setRepresentation}
-          disabled={isDisabled}
-          isUpdateMode={mode === ModalMode.Update}
-          showExtraFields={useConsumptionData && isProgram}
-        />
-      </>
+      <RequestLineEdit
+        requisition={requisition}
+        lines={lines}
+        currentItem={currentItem}
+        onChangeItem={onChangeItem}
+        draft={draft}
+        update={update}
+        isPacksEnabled={isPacksEnabled}
+        representation={representation}
+        setRepresentation={setRepresentation}
+        disabled={isDisabled}
+        isUpdateMode={mode === ModalMode.Update}
+        showExtraFields={useConsumptionData && isProgram}
+      />
     </Modal>
-  );
-};
-
-export const RequestLineEditModal = ({
-  requisition,
-  itemId,
-  isOpen,
-  onClose,
-  mode,
-  store,
-}: RequestLineEditModalProps) => {
-  return (
-    <RequestLineEditModalInner
-      requisition={requisition}
-      itemId={itemId}
-      isOpen={isOpen}
-      onClose={onClose}
-      mode={mode}
-      store={store}
-    />
   );
 };

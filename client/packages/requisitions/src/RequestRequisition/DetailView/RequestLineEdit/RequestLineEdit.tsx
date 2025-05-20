@@ -35,7 +35,7 @@ interface RequestLineEditProps {
   requisition: RequestFragment;
   lines: RequestLineFragment[];
   currentItem?: ItemWithStatsFragment;
-  setCurrentItem: (item: ItemWithStatsFragment) => void;
+  onChangeItem: (item: ItemWithStatsFragment) => void;
   draft?: DraftRequestLine | null;
   update: (patch: Partial<DraftRequestLine>) => void;
   isPacksEnabled: boolean;
@@ -51,7 +51,7 @@ export const RequestLineEdit = ({
   lines,
   draft,
   currentItem,
-  setCurrentItem,
+  onChangeItem,
   update,
   isPacksEnabled,
   representation,
@@ -112,7 +112,7 @@ export const RequestLineEdit = ({
                 disabled={disabled}
                 currentItemId={currentItem?.id}
                 onChange={(newItem: ItemWithStatsFragment | null) =>
-                  newItem && setCurrentItem(newItem)
+                  newItem && onChangeItem(newItem)
                 }
                 extraFilter={item =>
                   !lines.some(line => line.item.id === item.id)
@@ -122,15 +122,15 @@ export const RequestLineEdit = ({
           </>
         }
         Left={
-          currentItem ? (
+          draft ? (
             <>
-              {currentItem.unitName && (
+              {currentItem?.unitName && (
                 <InfoRow label={t('label.unit')} value={unitName} />
               )}
               {isPacksEnabled && (
                 <InfoRow
                   label={t('label.default-pack-size')}
-                  value={String(currentItem.defaultPackSize)}
+                  value={String(currentItem?.defaultPackSize)}
                 />
               )}
               {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
@@ -138,14 +138,14 @@ export const RequestLineEdit = ({
           ) : null
         }
         Middle={
-          currentItem ? (
+          draft ? (
             <>
               {renderValueInfoRows(getMiddlePanel(t, draft, showExtraFields))}
             </>
           ) : null
         }
         Right={
-          currentItem ? (
+          draft ? (
             <>
               <RequestedSelection
                 disabled={disabled}
