@@ -18,8 +18,9 @@ impl CampaignQueries {
         page: Option<PaginationInput>,
         filter: Option<CampaignFilterInput>,
         sort: Option<Vec<CampaignSortInput>>,
+        store_id: String,
     ) -> Result<CampaignsResponse> {
-        get_campaigns(ctx, page, filter, sort).await
+        get_campaigns(ctx, page, filter, sort, store_id).await
     }
 }
 

@@ -18,12 +18,13 @@ pub async fn get_campaigns(
     page: Option<PaginationInput>,
     filter: Option<CampaignFilterInput>,
     sort: Option<Vec<CampaignSortInput>>,
+    store_id: String,
 ) -> Result<CampaignsResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryCampaigns,
-            store_id: None,
+            store_id: Some(store_id.clone()),
         },
     )?;
 
