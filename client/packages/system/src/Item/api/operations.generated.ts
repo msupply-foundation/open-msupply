@@ -12,7 +12,6 @@ export type ServiceItemRowFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
-  defaultPackSize: number;
 };
 
 export type StockLineFragment = {
@@ -76,7 +75,6 @@ export type ItemRowFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
-  defaultPackSize: number;
 };
 
 export type ItemRowWithDirectionsFragment = {
@@ -87,7 +85,6 @@ export type ItemRowWithDirectionsFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
-  defaultPackSize: number;
   itemDirections: Array<{
     __typename: 'ItemDirectionNode';
     directions: string;
@@ -113,7 +110,6 @@ export type ItemRowWithWarningsFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
-  defaultPackSize: number;
   warnings: Array<{
     __typename: 'WarningNode';
     warningText: string;
@@ -702,7 +698,6 @@ export type ItemsQuery = {
       unitName?: string | null;
       isVaccine: boolean;
       doses: number;
-      defaultPackSize: number;
     }>;
   };
 };
@@ -1356,7 +1351,6 @@ export const ServiceItemRowFragmentDoc = gql`
     unitName
     isVaccine
     doses
-    defaultPackSize
   }
 `;
 export const ItemRowFragmentDoc = gql`
@@ -1368,7 +1362,6 @@ export const ItemRowFragmentDoc = gql`
     unitName
     isVaccine
     doses
-    defaultPackSize
   }
 `;
 export const WarningFragmentDoc = gql`

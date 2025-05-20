@@ -102,7 +102,6 @@ export const createPrescriptionPlaceholderRow = (
     __typename: 'ItemNode',
     itemDirections: [],
     warnings: [],
-    defaultPackSize: 1,
   },
   itemName: '',
   stockLine: {
@@ -142,7 +141,6 @@ export const createPrescriptionPlaceholderRow = (
           priority: false,
         },
       ],
-      defaultPackSize: 1,
     },
   },
 });
@@ -189,7 +187,6 @@ export const createDraftPrescriptionLineFromStockLine = ({
       __typename: 'ItemNode',
       itemDirections: [],
       warnings: [],
-      defaultPackSize: stockLine?.item?.defaultPackSize ?? 1,
     },
     itemVariant: stockLine?.itemVariant,
 

@@ -6,7 +6,6 @@ fragment ServiceItemRow on ItemNode {
   unitName
   isVaccine
   doses
-  defaultPackSize
 }
 
 fragment StockLine on StockLineNode {
@@ -58,7 +57,6 @@ fragment ItemRow on ItemNode {
   unitName
   isVaccine
   doses
-  defaultPackSize
 }
 
 fragment ItemRowWithDirections on ItemNode {

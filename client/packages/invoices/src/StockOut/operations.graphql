@@ -51,7 +51,6 @@ fragment StockOutLine on InvoiceLineNode {
     unitName
     isVaccine
     doses
-    defaultPackSize
   }
 
   location {
