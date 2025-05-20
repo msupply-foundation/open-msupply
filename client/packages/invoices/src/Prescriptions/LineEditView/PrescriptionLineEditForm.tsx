@@ -3,12 +3,7 @@ import {
   Grid,
   BasicTextInput,
   useTranslation,
-  Box,
   Typography,
-  TableProvider,
-  createTableStore,
-  createQueryParamsStore,
-  InlineSpinner,
   TypedTFunction,
   LocaleKey,
   NumUtils,
@@ -30,7 +25,6 @@ import { PackSizeController } from '../../StockOut';
 import { StockOutAlert, StockOutAlerts } from '../../StockOut';
 import { DraftPrescriptionLine } from '../../types';
 import { AccordionPanelSection } from './PanelSection';
-import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 import { getPrescriptionDirections } from './getPrescriptionDirections';
 import { useAbbreviations } from '../api/hooks/useAbbreviations';
 import { AllocationSection } from './AllocationSection';
@@ -207,7 +201,7 @@ export const PrescriptionLineEditForm: React.FC<
                 }}
               />
             </Grid>
-          </AccordionPanelSection>{' '}
+          </AccordionPanelSection>
         </>
       )}
       {item && (
@@ -295,73 +289,11 @@ export const PrescriptionLineEditForm: React.FC<
           )}
         </AccordionPanelSection>
       )}
-      {/* {!item && <Box height={100} />} */}
     </Grid>
   );
 };
 
-interface TableProps {
-  canAutoAllocate: boolean;
-  currentItem: ItemRowWithDirectionsFragment | null;
-  isLoading: boolean;
-  packSizeController: PackSizeController;
-  updateQuantity: (batchId: string, updateQuantity: number) => void;
-  draftPrescriptionLines: DraftPrescriptionLine[];
-  allocatedUnits: number;
-  isDisabled: boolean;
-}
-
-const TableWrapper: React.FC<TableProps> = ({
-  canAutoAllocate,
-  currentItem,
-  isLoading,
-  // packSizeController,
-  updateQuantity,
-  draftPrescriptionLines,
-  allocatedUnits,
-  isDisabled,
-}) => {
-  const t = useTranslation();
-
-  if (!currentItem) return null;
-
-  if (isLoading)
-    return (
-      <Box
-        display="flex"
-        flex={1}
-        height={400}
-        justifyContent="center"
-        alignItems="center"
-      >
-        <InlineSpinner />
-      </Box>
-    );
-
-  if (!canAutoAllocate)
-    return (
-      <Box sx={{ margin: 'auto' }}>
-        <Typography>{t('messages.no-stock-available')}</Typography>
-      </Box>
-    );
-
-  return (
-    <>
-      <TableProvider
-        createStore={createTableStore}
-        queryParamsStore={createQueryParamsStore({
-          initialSortBy: { key: 'expiryDate' },
-        })}
-      >
-        <PrescriptionLineEditTable
-          disabled={isDisabled}
-          isExternalSupplier={false}
-        />
-      </TableProvider>
-    </>
-  );
-};
-
+// TODO: Change these to use Allocation Context
 const summarise = (
   t: TypedTFunction<LocaleKey>,
   lines: DraftPrescriptionLine[],
