@@ -1,6 +1,6 @@
 import { useGql, SortBy } from '@openmsupply-client/common';
-import { getSdk, ReasonOptionRowFragment } from '../../operations.generated';
-import { getReasonOptionsQuery } from '../../api';
+import { getSdk, ReasonOptionRowFragment } from '../operations.generated';
+import { getReasonOptionsQuery } from '../api';
 
 export const useReasonOptionsApi = () => {
   const keys = {

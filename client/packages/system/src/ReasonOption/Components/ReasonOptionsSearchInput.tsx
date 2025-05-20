@@ -8,7 +8,7 @@ import {
   ReasonOptionNode,
   ReasonOptionNodeType,
 } from '@openmsupply-client/common';
-import { reasonOptions } from '../api';
+import { useReasonOptions } from '../api';
 
 interface ReasonOptionsSearchInputProps {
   value?: ReasonOptionNode | null;
@@ -19,6 +19,7 @@ interface ReasonOptionsSearchInputProps {
   isError?: boolean;
   isDisabled?: boolean;
   onBlur?: () => void;
+  initialStocktake?: boolean;
 }
 
 export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
@@ -30,8 +31,9 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
   isError,
   isDisabled,
   onBlur,
+  initialStocktake,
 }) => {
-  const { data, isLoading } = reasonOptions.document.listAllActive();
+  const { data, isLoading } = useReasonOptions();
 
   const reasonFilter = (reason: ReasonOptionNode) => {
     switch (type) {
@@ -49,7 +51,7 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
   };
   const reasons = (data?.nodes ?? []).filter(reasonFilter);
 
-  const isRequired = reasons.length !== 0;
+  const isRequired = reasons.length !== 0 && !initialStocktake;
 
   return (
     <Box display="flex" flexDirection="row" width={120}>

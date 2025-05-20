@@ -97,9 +97,8 @@ impl SyncRecordTester for InvoiceRecordTester {
             tax_percentage: Some(10.0),
             number_of_packs: 10.129,
             foreign_currency_price_before_tax: Some(8.0),
-            inventory_adjustment_reason_id: None, // TODO: Add test to update this with update_inventory_adjustment_reason_id
+            reason_option_id: None, // TODO: Add test to update this with update_inventory_adjustment_reason_id
             note: None,
-            return_reason_id: None,
             item_variant_id: None,
             prescribed_quantity: None,
             linked_invoice_id: None,

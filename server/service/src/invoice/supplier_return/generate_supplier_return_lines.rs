@@ -169,7 +169,7 @@ fn outbound_line_from_stock_line_and_invoice_line(
 
     let InvoiceLineRow {
         id,
-        return_reason_id,
+        reason_option_id,
         note,
         number_of_packs,
         ..
@@ -184,7 +184,7 @@ fn outbound_line_from_stock_line_and_invoice_line(
         id,
         note,
         number_of_packs,
-        reason_id: return_reason_id,
+        reason_id: reason_option_id,
         available_number_of_packs: number_of_packs_available_to_return,
         stock_line,
     }

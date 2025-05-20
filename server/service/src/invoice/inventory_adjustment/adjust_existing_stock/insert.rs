@@ -32,7 +32,7 @@ pub struct InsertInventoryAdjustment {
     pub stock_line_id: String,
     pub adjustment: f64,
     pub adjustment_type: AdjustmentType,
-    pub inventory_adjustment_reason_id: Option<String>,
+    pub reason_option_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -84,9 +84,9 @@ pub fn insert_inventory_adjustment(
 
             // Add inventory adjustment reason to the invoice line
             let invoice_line_repo = InvoiceLineRowRepository::new(connection);
-            invoice_line_repo.update_inventory_adjustment_reason_id(
+            invoice_line_repo.update_reason_option_id(
                 &update_inventory_adjustment_reason.invoice_line_id,
-                update_inventory_adjustment_reason.reason_id,
+                update_inventory_adjustment_reason.reason_option_id,
             )?;
 
             let verified_invoice = InvoiceRow {
@@ -128,8 +128,8 @@ mod test {
             MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentType, InvoiceRowRepository,
-        InvoiceStatus, StockLineFilter, StockLineRepository, StockLineRowRepository,
+        EqualFilter, InvoiceRowRepository, InvoiceStatus, ReasonOptionRow, ReasonOptionType,
+        StockLineFilter, StockLineRepository, StockLineRowRepository,
     };
     use util::inline_edit;
 
@@ -146,19 +146,19 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_inventory_adjustment_errors() {
-        fn reduction_reason() -> InventoryAdjustmentReasonRow {
-            InventoryAdjustmentReasonRow {
+        fn reduction_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
                 id: "reduction".to_string(),
                 reason: "test reduction".to_string(),
                 is_active: true,
-                r#type: InventoryAdjustmentType::Negative,
+                r#type: ReasonOptionType::NegativeInventoryAdjustment,
             }
         }
         let (_, _, connection_manager, _) = setup_all_with_data(
             "insert_inventory_adjustment_errors",
             MockDataInserts::all(),
             MockData {
-                inventory_adjustment_reasons: vec![reduction_reason()],
+                reason_options: vec![reduction_reason()],
                 ..Default::default()
             },
         )
@@ -217,7 +217,7 @@ mod test {
                 InsertInventoryAdjustment {
                     stock_line_id: mock_stock_line_a().id,
                     adjustment: 2.0,
-                    inventory_adjustment_reason_id: Some("invalid".to_string()),
+                    reason_option_id: Some("invalid".to_string()),
                     ..Default::default()
                 }
             ),
@@ -268,7 +268,7 @@ mod test {
                     adjustment_type:
                         crate::invoice::inventory_adjustment::AdjustmentType::Reduction,
                     adjustment: 50.0,
-                    inventory_adjustment_reason_id: Some(reduction_reason().id),
+                    reason_option_id: Some(reduction_reason().id),
                 }
             ),
             Err(ServiceError::StockLineReducedBelowZero(stock_line))
