@@ -20,12 +20,14 @@ export const AllocateInSelector = () => {
 
   const { allocateIn, availablePackSizes, setAllocateIn, item } =
     useAllocationContext(({ allocateIn, draftLines, item, setAllocateIn }) => ({
-      item: item,
+      item,
       allocateIn,
       setAllocateIn,
       availablePackSizes: [
         ...new Set(
-          draftLines.filter(canAutoAllocate).map(line => line.packSize)
+          draftLines
+            .filter(line => canAutoAllocate(line))
+            .map(line => line.packSize)
         ),
       ].sort((a, b) => a - b),
     }));
