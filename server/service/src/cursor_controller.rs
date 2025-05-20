@@ -41,11 +41,21 @@ impl CursorController {
         connection: &StorageConnection,
         cursor: u64,
     ) -> Result<(), RepositoryError> {
-        match &self.0 {
-            CursorType::Standard(key_type) => self.update_standard(connection, key_type, cursor),
-            CursorType::Dynamic(cursor_id) => self.update_dynamic(connection, cursor_id, cursor),
-        }
+        // Transaction because in case of dynamic cursor we need to update on key of JSON text
+        connection
+            .transaction_sync(|connection| match &self.0 {
+                CursorType::Standard(key_type) => {
+                    self.update_standard(connection, key_type, cursor)
+                }
+                CursorType::Dynamic(cursor_id) => {
+                    self.update_dynamic(connection, cursor_id, cursor)
+                }
+            })
+            .map_err(|e| e.to_inner_error())?;
+
+        Ok(())
     }
+
     fn update_standard(
         &self,
         connection: &StorageConnection,
@@ -54,19 +64,29 @@ impl CursorController {
     ) -> Result<(), RepositoryError> {
         KeyValueStoreRepository::new(connection).set_i32(key_type.clone(), Some(cursor as i32))
     }
+
+    fn get_dynamic_json(
+        &self,
+        connection: &StorageConnection,
+    ) -> Result<serde_json::Value, RepositoryError> {
+        let json_text = KeyValueStoreRepository::new(connection)
+            .get_string(KeyType::DynamicCursor)?
+            .unwrap_or_else(|| "{}".to_string());
+        let json_value: serde_json::Value = serde_json::from_str(&json_text).unwrap_or_default();
+        Ok(json_value)
+    }
+
     fn update_dynamic(
         &self,
         connection: &StorageConnection,
         cursor_id: &str,
         cursor: u64,
     ) -> Result<(), RepositoryError> {
-        let mut json_text = KeyValueStoreRepository::new(connection)
-            .get_string(KeyType::DynamicCursor)?
-            .unwrap_or_else(|| "{}".to_string());
-        let mut json_value: serde_json::Value =
-            serde_json::from_str(&json_text).unwrap_or_default();
+        let mut json_value = self.get_dynamic_json(connection)?;
+
         json_value[cursor_id] = serde_json::Value::from(cursor);
-        json_text = serde_json::to_string(&json_value).unwrap_or_default();
+        let json_text = serde_json::to_string(&json_value).unwrap_or_default();
+
         KeyValueStoreRepository::new(connection)
             .set_string(KeyType::DynamicCursor, Some(json_text))?;
         Ok(())
@@ -77,14 +97,9 @@ impl CursorController {
         connection: &StorageConnection,
         cursor_id: &str,
     ) -> Result<u64, RepositoryError> {
-        let json_text =
-            KeyValueStoreRepository::new(connection).get_string(KeyType::DynamicCursor)?;
-        let value = json_text.and_then(|json| {
-            serde_json::from_str::<serde_json::Value>(&json)
-                .ok()
-                .and_then(|json_value| json_value[cursor_id].as_u64())
-        });
-        let cursor = value.unwrap_or(0);
+        let json_value = self.get_dynamic_json(connection)?;
+
+        let cursor = json_value[cursor_id].as_u64().unwrap_or(0);
         Ok(cursor as u64)
     }
 }
