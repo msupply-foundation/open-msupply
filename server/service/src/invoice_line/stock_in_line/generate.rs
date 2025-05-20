@@ -110,6 +110,7 @@ pub fn generate_batch(
         item_variant_id,
         donor_id,
         vvm_status_id: None, // Setting to none until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
+        campaign_id: None,
     };
 
     Ok(stock_line_row)

@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_campaign_change_log_table_name;
+mod add_campaign_id_to_stock_line;
 mod add_campaign_table;
 mod add_created_fields_to_item_variant;
 mod add_donor_id_to_invoice_and_invoice_lines;
@@ -47,6 +48,7 @@ impl Migration for V2_08_00 {
             Box::new(add_donor_id_to_stocktake_line::Migrate),
             Box::new(migrate_reason_option_ids::Migrate),
             Box::new(add_vvm_status_log_table::Migrate),
+            Box::new(add_campaign_id_to_stock_line::Migrate),
         ]
     }
 }

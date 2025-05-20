@@ -370,6 +370,7 @@ pub fn generate_lines_and_stock_lines(
                 item_variant_id,
                 donor_id,
                 vvm_status_id: None,
+                campaign_id: None,
             };
             result.push(LineAndStockLine {
                 line,

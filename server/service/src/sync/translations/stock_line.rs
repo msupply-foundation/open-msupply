@@ -128,6 +128,7 @@ impl SyncTranslation for StockLineTranslation {
             item_variant_id,
             donor_id,
             vvm_status_id,
+            campaign_id: None,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -169,6 +170,7 @@ impl SyncTranslation for StockLineTranslation {
                     item_variant_id,
                     donor_id,
                     vvm_status_id,
+                    campaign_id: _,
                 },
             item_row,
             supplier_name_row,

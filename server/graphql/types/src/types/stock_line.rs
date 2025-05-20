@@ -147,6 +147,10 @@ impl StockLineNode {
 
         Ok(result.map(VVMStatusLogConnector::from_domain))
     }
+
+    pub async fn campaign_id(&self) -> &Option<String> {
+        &self.row().campaign_id
+    }
 }
 
 #[derive(Union)]
