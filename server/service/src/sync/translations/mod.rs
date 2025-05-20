@@ -36,6 +36,7 @@ pub(crate) mod location_movement;
 pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
+pub(crate) mod message;
 pub(crate) mod name;
 pub(crate) mod name_insurance_join;
 pub(crate) mod name_oms_fields;
@@ -78,7 +79,6 @@ pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
 pub(crate) mod vaccine_course_item;
 pub(crate) mod warning;
-pub mod message;
 
 use repository::*;
 use thiserror::Error;
@@ -186,7 +186,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         name_insurance_join::boxed(),
         report::boxed(),
         preference::boxed(),
-        Box::new(MessageTranslation {}),
+        message::boxed(),
     ]
 }
 

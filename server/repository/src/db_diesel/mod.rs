@@ -80,6 +80,7 @@ pub mod master_list_line;
 mod master_list_line_row;
 pub mod master_list_name_join;
 mod master_list_row;
+pub mod message_row;
 mod migration_fragment_log;
 pub mod name;
 pub mod name_insurance_join_row;
@@ -162,8 +163,6 @@ pub mod vaccination_row;
 pub mod vaccine_course;
 pub mod warning;
 pub mod warning_row;
-pub mod message;
-pub mod message_row;
 
 pub use abbreviation_row::*;
 pub use activity_log_row::*;
@@ -220,6 +219,7 @@ pub use master_list_line::*;
 pub use master_list_line_row::*;
 pub use master_list_name_join::*;
 pub use master_list_row::*;
+pub use message_row::*;
 pub(crate) use migration_fragment_log::*;
 pub use name::*;
 pub use name_link_row::*;
@@ -295,10 +295,6 @@ pub use vaccination_card::*;
 pub use vaccination_row::*;
 pub use warning::*;
 pub use warning_row::*;
-pub use self::{
-    message::{Message, MessageFilter, MessageRepository, MessageSort, MessageSortField},
-    message_row::{MessageRow, MessageRowDelete, MessageRowRepository, MessageStatus, MessageType},
-};
 
 use diesel::{
     prelude::*,

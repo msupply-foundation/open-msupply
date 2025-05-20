@@ -1,29 +1,42 @@
-use super::{store_row::store, StorageConnection};
-use crate::{Delete, RepositoryError, Upsert};
+use super::{
+    store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
+    StorageConnection,
+};
+use crate::{RepositoryError, Upsert};
 
-use chrono::NaiveDate;
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum MessageStatus {
+#[PgType = "message_status"]
+pub enum MessageRowStatus {
     #[default]
     New,
-    Read,
     Processed,
-    Failed,
+    Error,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum MessageType {
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+pub enum MessageRowType {
     #[default]
     RequestFieldChange,
-    Notification,
-    Alert,
-    Info,
+    #[serde(untagged)]
+    Other(String),
+}
+
+impl From<String> for MessageRowType {
+    fn from(value: String) -> Self {
+        serde_json::from_str(&value).unwrap_or_default()
+    }
+}
+
+impl From<MessageRowType> for String {
+    fn from(value: MessageRowType) -> Self {
+        serde_json::to_string(&value).unwrap_or_default()
+    }
 }
 
 table! {
@@ -32,10 +45,10 @@ table! {
         to_store_id -> Text,
         from_store_id -> Nullable<Text>,
         body -> Text,
-        created_date -> Date,
-        created_time -> Integer,
-        status -> crate::db_diesel::message_row::MessageStatusMapping,
-        type_ -> crate::db_diesel::message_row::MessageTypeMapping,
+        created_datetime -> Timestamp,
+        status -> crate::db_diesel::message_row::MessageRowStatusMapping,
+        #[sql_name = "type"]
+        type_ -> Text
     }
 }
 
@@ -49,11 +62,10 @@ pub struct MessageRow {
     pub to_store_id: String,
     pub from_store_id: Option<String>,
     pub body: String,
-    pub created_date: NaiveDate,
-    pub created_time: i32,
-    pub status: MessageStatus,
-    #[diesel(column_name = type_)]
-    pub r#type: MessageType,
+    pub created_datetime: NaiveDateTime,
+    pub status: MessageRowStatus,
+    #[diesel(column_name = type_, serialize_as = String, deserialize_as = String)]
+    pub r#type: MessageRowType,
 }
 
 pub struct MessageRowRepository<'a> {
@@ -65,14 +77,14 @@ impl<'a> MessageRowRepository<'a> {
         MessageRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &MessageRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &MessageRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(message::table)
-            .values(row)
+            .values(row.clone())
             .on_conflict(message::id)
             .do_update()
-            .set(row)
+            .set(row.clone())
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row)
     }
 
     pub fn find_one_by_id(&self, message_id: &str) -> Result<Option<MessageRow>, RepositoryError> {
@@ -83,46 +95,23 @@ impl<'a> MessageRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<MessageRow>, RepositoryError> {
-        let result = message::table
-            .filter(message::id.eq_any(ids))
-            .load(self.connection.lock().connection())?;
-        Ok(result)
-    }
+    fn insert_changelog(&self, row: &MessageRow) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::Message,
+            record_id: row.id.clone(),
+            row_action: RowActionType::Upsert,
+            store_id: Some(row.to_store_id.clone()),
+            name_link_id: None,
+        };
 
-    pub fn all(&self) -> Result<Vec<MessageRow>, RepositoryError> {
-        let result = message::table.load(self.connection.lock().connection())?;
-        Ok(result)
-    }
-
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(message::table.filter(message::id.eq(id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct MessageRowDelete(pub String);
-impl Delete for MessageRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        MessageRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
-    }
-
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            MessageRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 }
 
 impl Upsert for MessageRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        MessageRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        let change_log_id = MessageRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id)) // Table not in Changelog
     }
 
     // Test only
@@ -131,5 +120,55 @@ impl Upsert for MessageRow {
             MessageRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use util::assert_variant;
+
+    use crate::{
+        mock::{mock_store_a, MockDataInserts},
+        test_db::{setup_test, SetupOption, SetupResult},
+    };
+
+    use super::*;
+
+    #[actix_rt::test]
+    async fn message_type() {
+        let SetupResult { connection, .. } = setup_test(SetupOption {
+            db_name: &format!("message_type"),
+            inserts: MockDataInserts::none().names().stores(),
+            ..Default::default()
+        })
+        .await;
+
+        let message = MessageRow {
+            id: "message1".to_string(),
+            to_store_id: mock_store_a().id.clone(),
+            r#type: MessageRowType::Other("SomethingNotInTheEnum".to_string()),
+            ..Default::default()
+        };
+        MessageRowRepository::new(&connection)
+            .upsert_one(&message)
+            .unwrap();
+
+        let found_message = assert_variant!(MessageRowRepository::new(&connection).find_one_by_id(&message.id), Ok(Some(msg)) => msg);
+        assert_eq!(
+            found_message.r#type,
+            MessageRowType::Other("SomethingNotInTheEnum".to_string())
+        );
+
+        let message = MessageRow {
+            id: "message2".to_string(),
+            r#type: MessageRowType::RequestFieldChange,
+            ..message
+        };
+        MessageRowRepository::new(&connection)
+            .upsert_one(&message)
+            .unwrap();
+
+        let found_message = assert_variant!(MessageRowRepository::new(&connection).find_one_by_id(&message.id), Ok(Some(msg)) => msg);
+        assert_eq!(found_message.r#type, MessageRowType::RequestFieldChange);
     }
 }
