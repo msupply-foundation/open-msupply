@@ -1287,6 +1287,7 @@ export const PrescriptionLineFragmentDoc = gql`
       warnings {
         ...Warning
       }
+      isVaccine
     }
     itemVariant {
       id
@@ -1322,6 +1323,7 @@ export const PrescriptionLineFragmentDoc = gql`
         warnings {
           ...Warning
         }
+        isVaccine
       }
       vvmStatus {
         __typename
@@ -1443,6 +1445,7 @@ export const PartialPrescriptionLineFragmentDoc = gql`
       warnings {
         ...Warning
       }
+      isVaccine
     }
     itemVariant {
       id

@@ -126,6 +126,7 @@ fragment PrescriptionLine on InvoiceLineNode {
     warnings {
       ...Warning
     }
+    isVaccine
   }
   itemVariant {
     id
@@ -163,6 +164,7 @@ fragment PrescriptionLine on InvoiceLineNode {
       warnings {
         ...Warning
       }
+      isVaccine
     }
     vvmStatus {
       __typename
@@ -212,6 +214,7 @@ fragment PartialPrescriptionLine on StockLineNode {
     warnings {
       ...Warning
     }
+    isVaccine
   }
   itemVariant {
     id

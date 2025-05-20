@@ -73,7 +73,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             cost_price_per_pack: Some(0.0),
             sell_price_per_pack: Some(0.0),
             note: None,
-            inventory_adjustment_reason_id: None,
+            reason_option_id: None,
             item_variant_id: None,
         };
         result.push(TestStepData {
