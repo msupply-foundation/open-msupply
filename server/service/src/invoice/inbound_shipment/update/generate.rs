@@ -371,6 +371,7 @@ pub fn generate_lines_and_stock_lines(
             donor_id,
             note,
             vvm_status_id,
+            reason_option_id: _,
             ..
         }: InvoiceLineRow = invoice_line;
 

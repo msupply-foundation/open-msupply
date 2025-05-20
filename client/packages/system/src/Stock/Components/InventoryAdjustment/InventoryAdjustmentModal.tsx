@@ -9,9 +9,10 @@ import {
   AdjustmentTypeInput,
   useDialog,
   useFormatNumber,
+  getReasonOptionType,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
-import { InventoryAdjustmentReasonSearchInput } from '../../..';
+import { ReasonOptionsSearchInput } from '../../..';
 import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionSearchInput';
 import { INPUT_WIDTH, StyledInputRow } from '../StyledInputRow';
 
@@ -34,6 +35,8 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
 
   const packUnit = String(stockLine.packSize);
   const saveDisabled = draft.adjustment === 0;
+  const isInventoryReduction =
+    draft.adjustmentType === AdjustmentTypeInput.Reduction;
 
   const save = async () => {
     try {
@@ -88,10 +91,13 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
             label={t('label.reason')}
             Input={
               <Box display="flex" width={INPUT_WIDTH}>
-                <InventoryAdjustmentReasonSearchInput
+                <ReasonOptionsSearchInput
                   onChange={reason => setDraft(state => ({ ...state, reason }))}
                   value={draft.reason}
-                  adjustmentType={draft.adjustmentType}
+                  type={getReasonOptionType(
+                    isInventoryReduction,
+                    stockLine.item.isVaccine
+                  )}
                   width={INPUT_WIDTH}
                 />
               </Box>

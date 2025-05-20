@@ -174,10 +174,9 @@ fn generate_line(
         foreign_currency_price_before_tax,
         item_variant_id,
         vvm_status_id,
-        inventory_adjustment_reason_id: None,
-        return_reason_id: None,
         linked_invoice_id: None,
         donor_id: None,
+        reason_option_id: None,
     })
 }
 
