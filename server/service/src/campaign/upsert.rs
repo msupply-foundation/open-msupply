@@ -65,6 +65,7 @@ pub fn generate(
         name,
         start_date,
         end_date,
+        deleted_datetime: None,
     }
 }
 
