@@ -2,7 +2,6 @@ use std::sync::{Arc, RwLock};
 
 use base64::{prelude::BASE64_STANDARD, Engine};
 
-use log::info;
 use repository::{BackendPluginRow, FrontendPluginRow, PluginType, PluginTypes, PluginVariantType};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
