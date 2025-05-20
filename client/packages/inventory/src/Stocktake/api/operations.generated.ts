@@ -57,10 +57,12 @@ export type StocktakeLineFragment = {
     id: string;
     dosesPerUnit: number;
   } | null;
-  inventoryAdjustmentReason?: {
-    __typename: 'InventoryAdjustmentReasonNode';
-    id: string;
+  reasonOption?: {
+    __typename: 'ReasonOptionNode';
     reason: string;
+    type: Types.ReasonOptionNodeType;
+    isActive: boolean;
+    id: string;
   } | null;
 };
 
@@ -126,10 +128,12 @@ export type StocktakeFragment = {
         id: string;
         dosesPerUnit: number;
       } | null;
-      inventoryAdjustmentReason?: {
-        __typename: 'InventoryAdjustmentReasonNode';
-        id: string;
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
         reason: string;
+        type: Types.ReasonOptionNodeType;
+        isActive: boolean;
+        id: string;
       } | null;
     }>;
   };
@@ -236,10 +240,12 @@ export type StocktakeQuery = {
               id: string;
               dosesPerUnit: number;
             } | null;
-            inventoryAdjustmentReason?: {
-              __typename: 'InventoryAdjustmentReasonNode';
-              id: string;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
               reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+              id: string;
             } | null;
           }>;
         };
@@ -317,10 +323,12 @@ export type StocktakeByNumberQuery = {
               id: string;
               dosesPerUnit: number;
             } | null;
-            inventoryAdjustmentReason?: {
-              __typename: 'InventoryAdjustmentReasonNode';
-              id: string;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
               reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+              id: string;
             } | null;
           }>;
         };
@@ -382,10 +390,12 @@ export type StocktakeLinesQuery = {
         id: string;
         dosesPerUnit: number;
       } | null;
-      inventoryAdjustmentReason?: {
-        __typename: 'InventoryAdjustmentReasonNode';
-        id: string;
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
         reason: string;
+        type: Types.ReasonOptionNodeType;
+        isActive: boolean;
+        id: string;
       } | null;
     }>;
   };
@@ -664,10 +674,11 @@ export const StocktakeLineFragmentDoc = gql`
       id
       dosesPerUnit
     }
-    inventoryAdjustmentReason {
-      __typename
-      id
+    reasonOption {
       reason
+      type
+      isActive
+      id
     }
   }
 `;

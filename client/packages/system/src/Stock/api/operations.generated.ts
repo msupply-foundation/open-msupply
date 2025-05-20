@@ -41,8 +41,31 @@ export type StockLineRowFragment = {
     code: string;
     name: string;
     unitName?: string | null;
+    isVaccine: boolean;
     masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
   };
+  vvmStatusLogs?: {
+    __typename: 'VvmstatusLogConnector';
+    nodes: Array<{
+      __typename: 'VvmstatusLogNode';
+      id: string;
+      createdDatetime: string;
+      comment?: string | null;
+      user?: {
+        __typename: 'UserNode';
+        firstName?: string | null;
+        lastName?: string | null;
+        username: string;
+      } | null;
+      status?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        description: string;
+        code: string;
+        level: number;
+      } | null;
+    }>;
+  } | null;
 };
 
 export type RepackStockLineFragment = {
@@ -140,6 +163,26 @@ export type LedgerRowFragment = {
   storeId: string;
 };
 
+export type VvmStatusLogRowFragment = {
+  __typename: 'VvmstatusLogNode';
+  id: string;
+  createdDatetime: string;
+  comment?: string | null;
+  user?: {
+    __typename: 'UserNode';
+    firstName?: string | null;
+    lastName?: string | null;
+    username: string;
+  } | null;
+  status?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    description: string;
+    code: string;
+    level: number;
+  } | null;
+};
+
 export type StockLinesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -191,11 +234,34 @@ export type StockLinesQuery = {
         code: string;
         name: string;
         unitName?: string | null;
+        isVaccine: boolean;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
         }> | null;
       };
+      vvmStatusLogs?: {
+        __typename: 'VvmstatusLogConnector';
+        nodes: Array<{
+          __typename: 'VvmstatusLogNode';
+          id: string;
+          createdDatetime: string;
+          comment?: string | null;
+          user?: {
+            __typename: 'UserNode';
+            firstName?: string | null;
+            lastName?: string | null;
+            username: string;
+          } | null;
+          status?: {
+            __typename: 'VvmstatusNode';
+            id: string;
+            description: string;
+            code: string;
+            level: number;
+          } | null;
+        }>;
+      } | null;
     }>;
   };
 };
@@ -247,11 +313,34 @@ export type StockLineQuery = {
         code: string;
         name: string;
         unitName?: string | null;
+        isVaccine: boolean;
         masterLists?: Array<{
           __typename: 'MasterListNode';
           name: string;
         }> | null;
       };
+      vvmStatusLogs?: {
+        __typename: 'VvmstatusLogConnector';
+        nodes: Array<{
+          __typename: 'VvmstatusLogNode';
+          id: string;
+          createdDatetime: string;
+          comment?: string | null;
+          user?: {
+            __typename: 'UserNode';
+            firstName?: string | null;
+            lastName?: string | null;
+            username: string;
+          } | null;
+          status?: {
+            __typename: 'VvmstatusNode';
+            id: string;
+            description: string;
+            code: string;
+            level: number;
+          } | null;
+        }>;
+      } | null;
     }>;
   };
 };
@@ -329,11 +418,34 @@ export type UpdateStockLineMutation = {
           code: string;
           name: string;
           unitName?: string | null;
+          isVaccine: boolean;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
           }> | null;
         };
+        vvmStatusLogs?: {
+          __typename: 'VvmstatusLogConnector';
+          nodes: Array<{
+            __typename: 'VvmstatusLogNode';
+            id: string;
+            createdDatetime: string;
+            comment?: string | null;
+            user?: {
+              __typename: 'UserNode';
+              firstName?: string | null;
+              lastName?: string | null;
+              username: string;
+            } | null;
+            status?: {
+              __typename: 'VvmstatusNode';
+              id: string;
+              description: string;
+              code: string;
+              level: number;
+            } | null;
+          }>;
+        } | null;
       }
     | { __typename: 'UpdateStockLineError' };
 };
@@ -450,6 +562,27 @@ export type RepacksByStockLineQuery = {
   };
 };
 
+export type VvmStatusQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type VvmStatusQuery = {
+  __typename: 'Queries';
+  activeVvmStatuses: {
+    __typename: 'VvmstatusConnector';
+    nodes: Array<{
+      __typename: 'VvmstatusNode';
+      code: string;
+      description: string;
+      id: string;
+      isActive: boolean;
+      level: number;
+      reasonId?: string | null;
+      unusable: boolean;
+    }>;
+  };
+};
+
 export type InsertRepackMutationVariables = Types.Exact<{
   input: Types.InsertRepackInput;
   storeId: Types.Scalars['String']['input'];
@@ -561,14 +694,112 @@ export type InsertStockLineMutation = {
           code: string;
           name: string;
           unitName?: string | null;
+          isVaccine: boolean;
           masterLists?: Array<{
             __typename: 'MasterListNode';
             name: string;
           }> | null;
         };
+        vvmStatusLogs?: {
+          __typename: 'VvmstatusLogConnector';
+          nodes: Array<{
+            __typename: 'VvmstatusLogNode';
+            id: string;
+            createdDatetime: string;
+            comment?: string | null;
+            user?: {
+              __typename: 'UserNode';
+              firstName?: string | null;
+              lastName?: string | null;
+              username: string;
+            } | null;
+            status?: {
+              __typename: 'VvmstatusNode';
+              id: string;
+              description: string;
+              code: string;
+              level: number;
+            } | null;
+          }>;
+        } | null;
       };
 };
 
+export type VvmStatusFragment = {
+  __typename: 'VvmstatusNode';
+  code: string;
+  description: string;
+  id: string;
+  isActive: boolean;
+  level: number;
+  reasonId?: string | null;
+  unusable: boolean;
+};
+
+export type ActiveVvmStatusesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type ActiveVvmStatusesQuery = {
+  __typename: 'Queries';
+  activeVvmStatuses: {
+    __typename: 'VvmstatusConnector';
+    nodes: Array<{
+      __typename: 'VvmstatusNode';
+      code: string;
+      description: string;
+      id: string;
+      isActive: boolean;
+      level: number;
+      reasonId?: string | null;
+      unusable: boolean;
+    }>;
+  };
+};
+
+export type InsertVvmStatusLogMutationVariables = Types.Exact<{
+  input: Types.InsertVvmStatusLogInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type InsertVvmStatusLogMutation = {
+  __typename: 'Mutations';
+  insertVvmStatusLog: {
+    __typename: 'VvmstatusLogNode';
+    id: string;
+    status?: { __typename: 'VvmstatusNode'; id: string; code: string } | null;
+  };
+};
+
+export type UpdateVvmStatusLogMutationVariables = Types.Exact<{
+  input: Types.UpdateVvmStatusLogInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type UpdateVvmStatusLogMutation = {
+  __typename: 'Mutations';
+  updateVvmStatusLog: { __typename: 'IdResponse'; id: string };
+};
+
+export const VvmStatusLogRowFragmentDoc = gql`
+  fragment VVMStatusLogRow on VvmstatusLogNode {
+    id
+    createdDatetime
+    user {
+      firstName
+      lastName
+      username
+    }
+    status {
+      id
+      description
+      code
+      level
+    }
+    createdDatetime
+    comment
+  }
+`;
 export const StockLineRowFragmentDoc = gql`
   fragment StockLineRow on StockLineNode {
     availableNumberOfPacks
@@ -596,10 +827,17 @@ export const StockLineRowFragmentDoc = gql`
       masterLists(storeId: $storeId) {
         name
       }
+      isVaccine
     }
     barcode
+    vvmStatusLogs {
+      nodes {
+        ...VVMStatusLogRow
+      }
+    }
   }
   ${LocationRowFragmentDoc}
+  ${VvmStatusLogRowFragmentDoc}
 `;
 export const RepackStockLineFragmentDoc = gql`
   fragment RepackStockLine on RepackStockLineNode {
@@ -653,6 +891,18 @@ export const LedgerRowFragmentDoc = gql`
     reason
     stockLineId
     storeId
+  }
+`;
+export const VvmStatusFragmentDoc = gql`
+  fragment VVMStatus on VvmstatusNode {
+    __typename
+    code
+    description
+    id
+    isActive
+    level
+    reasonId
+    unusable
   }
 `;
 export const StockLinesDocument = gql`
@@ -756,6 +1006,20 @@ export const RepacksByStockLineDocument = gql`
   }
   ${RepackFragmentDoc}
 `;
+export const VvmStatusDocument = gql`
+  query vvmStatus($storeId: String!) {
+    activeVvmStatuses(storeId: $storeId) {
+      ... on VvmstatusConnector {
+        __typename
+        nodes {
+          __typename
+          ...VVMStatus
+        }
+      }
+    }
+  }
+  ${VvmStatusFragmentDoc}
+`;
 export const InsertRepackDocument = gql`
   mutation insertRepack($input: InsertRepackInput!, $storeId: String!) {
     insertRepack(input: $input, storeId: $storeId) {
@@ -830,6 +1094,47 @@ export const InsertStockLineDocument = gql`
     }
   }
   ${StockLineRowFragmentDoc}
+`;
+export const ActiveVvmStatusesDocument = gql`
+  query activeVvmStatuses($storeId: String!) {
+    activeVvmStatuses(storeId: $storeId) {
+      ... on VvmstatusConnector {
+        __typename
+        nodes {
+          ...VVMStatus
+        }
+      }
+    }
+  }
+  ${VvmStatusFragmentDoc}
+`;
+export const InsertVvmStatusLogDocument = gql`
+  mutation insertVvmStatusLog(
+    $input: InsertVVMStatusLogInput!
+    $storeId: String!
+  ) {
+    insertVvmStatusLog(input: $input, storeId: $storeId) {
+      ... on VvmstatusLogNode {
+        id
+        status {
+          id
+          code
+        }
+      }
+    }
+  }
+`;
+export const UpdateVvmStatusLogDocument = gql`
+  mutation updateVvmStatusLog(
+    $input: UpdateVVMStatusLogInput!
+    $storeId: String!
+  ) {
+    updateVvmStatusLog(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+    }
+  }
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -943,6 +1248,21 @@ export function getSdk(
         variables
       );
     },
+    vvmStatus(
+      variables: VvmStatusQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<VvmStatusQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<VvmStatusQuery>(VvmStatusDocument, variables, {
+            ...requestHeaders,
+            ...wrappedRequestHeaders,
+          }),
+        'vvmStatus',
+        'query',
+        variables
+      );
+    },
     insertRepack(
       variables: InsertRepackMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders
@@ -987,6 +1307,54 @@ export function getSdk(
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
         'insertStockLine',
+        'mutation',
+        variables
+      );
+    },
+    activeVvmStatuses(
+      variables: ActiveVvmStatusesQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<ActiveVvmStatusesQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ActiveVvmStatusesQuery>(
+            ActiveVvmStatusesDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'activeVvmStatuses',
+        'query',
+        variables
+      );
+    },
+    insertVvmStatusLog(
+      variables: InsertVvmStatusLogMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<InsertVvmStatusLogMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertVvmStatusLogMutation>(
+            InsertVvmStatusLogDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'insertVvmStatusLog',
+        'mutation',
+        variables
+      );
+    },
+    updateVvmStatusLog(
+      variables: UpdateVvmStatusLogMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<UpdateVvmStatusLogMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdateVvmStatusLogMutation>(
+            UpdateVvmStatusLogDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'updateVvmStatusLog',
         'mutation',
         variables
       );

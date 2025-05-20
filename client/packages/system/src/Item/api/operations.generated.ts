@@ -1451,6 +1451,7 @@ export const StockLineFragmentDoc = gql`
       name
       code
       unitName
+      defaultPackSize
       doses
       isVaccine
       itemDirections {
@@ -1459,7 +1460,6 @@ export const StockLineFragmentDoc = gql`
       warnings {
         ...Warning
       }
-      defaultPackSize
     }
     note
     onHold
