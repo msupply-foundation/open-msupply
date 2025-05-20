@@ -111,9 +111,9 @@ pub fn update_stocktake(
             }
             // Add inventory adjustment reasons to the invoice lines
             for update_reason in result.inventory_adjustment_reason_updates {
-                invoice_line_repo.update_inventory_adjustment_reason_id(
+                invoice_line_repo.update_reason_option_id(
                     &update_reason.invoice_line_id,
-                    update_reason.reason_id,
+                    update_reason.reason_option_id,
                 )?;
             }
             // write updated stocktake lines (update with stock_line_ids for newly created stock lines)
@@ -380,6 +380,7 @@ mod test {
                 stock_line: Some(stock_line),
                 location: None,
                 item: mock_item_a(),
+                donor: None,
             }])
         );
 

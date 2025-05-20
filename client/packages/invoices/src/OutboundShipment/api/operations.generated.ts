@@ -1043,6 +1043,13 @@ export type DraftStockOutLineFragment = {
     code: string;
     onHold: boolean;
   } | null;
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    level: number;
+    unusable: boolean;
+    description: string;
+  } | null;
   itemVariant?: { __typename: 'ItemVariantNode'; dosesPerUnit: number } | null;
 };
 
@@ -1085,6 +1092,13 @@ export type GetOutboundEditLinesQuery = {
         name: string;
         code: string;
         onHold: boolean;
+      } | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        level: number;
+        unusable: boolean;
+        description: string;
       } | null;
       itemVariant?: {
         __typename: 'ItemVariantNode';
@@ -1243,6 +1257,13 @@ export const DraftStockOutLineFragmentDoc = gql`
       name
       code
       onHold
+    }
+    vvmStatus {
+      __typename
+      id
+      level
+      unusable
+      description
     }
     itemVariant {
       dosesPerUnit

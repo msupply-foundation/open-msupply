@@ -1405,7 +1405,9 @@ export type CreateInventoryAdjustmentError = {
 export type CreateInventoryAdjustmentInput = {
   adjustment: Scalars['Float']['input'];
   adjustmentType: AdjustmentTypeInput;
+  /** @deprecated Since 2.8.0. Use reason_option_id */
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
+  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   stockLineId: Scalars['String']['input'];
 };
 
@@ -1521,6 +1523,7 @@ export type CustomerReturnLineNode = {
   numberOfPacksReturned: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
+  reasonOption?: Maybe<ReasonOptionNode>;
   stockLineId?: Maybe<Scalars['String']['output']>;
 };
 
@@ -2306,6 +2309,7 @@ export type DraftOutboundShipmentLineNode = {
   sellPricePerPack: Scalars['Float']['output'];
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
+  vvmStatus?: Maybe<VvmstatusNode>;
 };
 
 export type EmergencyResponseRequisitionCounts = {
@@ -3583,6 +3587,7 @@ export type InsertStockLineInput = {
   costPricePerPack: Scalars['Float']['input'];
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  /** @deprecated Since 2.8.0. Use reason_option_id */
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemId: Scalars['String']['input'];
   itemVariantId?: InputMaybe<Scalars['String']['input']>;
@@ -3590,6 +3595,7 @@ export type InsertStockLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   onHold: Scalars['Boolean']['input'];
   packSize: Scalars['Float']['input'];
+  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack: Scalars['Float']['input'];
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3621,14 +3627,17 @@ export type InsertStocktakeLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  donorId?: InputMaybe<Scalars['String']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  /** @deprecated Since 2.8.0. Use reason_option_id */
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemId?: InputMaybe<Scalars['String']['input']>;
   itemVariantId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
+  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   stocktakeId: Scalars['String']['input'];
@@ -3925,6 +3934,7 @@ export type InvoiceLineConnector = {
 
 export type InvoiceLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
+  /** @deprecated Since 2.8.0. Use reason_option */
   inventoryAdjustmentReason?: InputMaybe<EqualFilterStringInput>;
   invoiceId?: InputMaybe<EqualFilterStringInput>;
   invoiceStatus?: InputMaybe<EqualFilterInvoiceStatusInput>;
@@ -3932,6 +3942,7 @@ export type InvoiceLineFilterInput = {
   itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   numberOfPacks?: InputMaybe<EqualFilterBigFloatingNumberInput>;
+  reasonOption?: InputMaybe<EqualFilterStringInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
@@ -3943,9 +3954,12 @@ export type InvoiceLineNode = {
   __typename: 'InvoiceLineNode';
   batch?: Maybe<Scalars['String']['output']>;
   costPricePerPack: Scalars['Float']['output'];
+  donorId?: Maybe<Scalars['String']['output']>;
+  donorName?: Maybe<Scalars['String']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   foreignCurrencyPriceBeforeTax?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
+  /** @deprecated Since 2.8.0. Use reason_option instead */
   inventoryAdjustmentReason?: Maybe<InventoryAdjustmentReasonNode>;
   invoiceId: Scalars['String']['output'];
   item: ItemNode;
@@ -3962,7 +3976,10 @@ export type InvoiceLineNode = {
   packSize: Scalars['Float']['output'];
   prescribedQuantity?: Maybe<Scalars['Float']['output']>;
   pricing: PricingNode;
+  reasonOption?: Maybe<ReasonOptionNode>;
+  /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReason?: Maybe<ReturnReasonNode>;
+  /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReasonId?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
   stockLine?: Maybe<StockLineNode>;
@@ -6440,6 +6457,7 @@ export type Queries = {
   insurancePolicies: InsurancesResponse;
   insurancePolicy: InsuranceResponse;
   insuranceProviders: InsuranceProvidersResponse;
+  /** @deprecated Since 2.8.0. Use reason_options instead */
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
@@ -6506,6 +6524,7 @@ export type Queries = {
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
+  /** @deprecated Since 2.8.0. Use reason_options instead */
   returnReasons: ReturnReasonResponse;
   schedulesWithPeriodsByProgram: PeriodSchedulesResponse;
   /** Query omSupply "sensor" entries */
@@ -8085,6 +8104,7 @@ export type StockLineNode = {
   supplierName?: Maybe<Scalars['String']['output']>;
   totalNumberOfPacks: Scalars['Float']['output'];
   vvmStatus?: Maybe<VvmstatusNode>;
+  vvmStatusLogs?: Maybe<VvmstatusLogConnector>;
 };
 
 export type StockLineReducedBelowZero =
@@ -8173,9 +8193,13 @@ export type StocktakeLineNode = {
   comment?: Maybe<Scalars['String']['output']>;
   costPricePerPack?: Maybe<Scalars['Float']['output']>;
   countedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
+  donorId?: Maybe<Scalars['String']['output']>;
+  donorName?: Maybe<Scalars['String']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  /** @deprecated Since 2.8.0. Use reason_option instead */
   inventoryAdjustmentReason?: Maybe<InventoryAdjustmentReasonNode>;
+  /** @deprecated Since 2.8.0. Use reason_option instead */
   inventoryAdjustmentReasonId?: Maybe<Scalars['String']['output']>;
   item: ItemNode;
   itemId: Scalars['String']['output'];
@@ -8185,6 +8209,7 @@ export type StocktakeLineNode = {
   location?: Maybe<LocationNode>;
   note?: Maybe<Scalars['String']['output']>;
   packSize?: Maybe<Scalars['Float']['output']>;
+  reasonOption?: Maybe<ReasonOptionNode>;
   sellPricePerPack?: Maybe<Scalars['Float']['output']>;
   snapshotNumberOfPacks: Scalars['Float']['output'];
   stockLine?: Maybe<StockLineNode>;
@@ -8419,6 +8444,7 @@ export type SupplierReturnLineNode = {
   numberOfPacksToReturn: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
+  reasonOption?: Maybe<ReasonOptionNode>;
   stockLineId: Scalars['String']['output'];
 };
 
@@ -9536,13 +9562,16 @@ export type UpdateStocktakeLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   countedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  donorId?: InputMaybe<NullableStringUpdate>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  /** @deprecated Since 2.8.0. Use reason_option_id */
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
+  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   snapshotNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
 };

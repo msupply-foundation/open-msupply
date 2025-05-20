@@ -21,7 +21,7 @@ import {
   PreferenceKey,
   getDosesPerUnitColumn,
 } from '@openmsupply-client/common';
-import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
+import { ReasonOptionRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
 import { useStocktakeLineErrorContext } from '../../context';
@@ -41,13 +41,13 @@ const getStocktakeReasons = (
 ) => {
   if ('lines' in rowData) {
     const { lines } = rowData;
-    const inventoryAdjustmentReasons = lines
-      .map(({ inventoryAdjustmentReason }) => inventoryAdjustmentReason)
-      .filter(Boolean) as InventoryAdjustmentReasonRowFragment[];
-    if (inventoryAdjustmentReasons.length !== 0) {
+    const reasonOptions = lines
+      .map(({ reasonOption }) => reasonOption)
+      .filter(Boolean) as ReasonOptionRowFragment[];
+    if (reasonOptions.length !== 0) {
       return (
         ArrayUtils.ifTheSameElseDefault(
-          inventoryAdjustmentReasons,
+          reasonOptions,
           'reason',
           t('multiple')
         ) ?? ''
@@ -56,7 +56,23 @@ const getStocktakeReasons = (
       return '';
     }
   } else {
-    return rowData.inventoryAdjustmentReason?.reason ?? '';
+    return rowData.reasonOption?.reason ?? '';
+  }
+};
+
+const getStocktakeDonor = (
+  rowData: StocktakeLineFragment | StocktakeSummaryItem,
+  t: TypedTFunction<LocaleKey>
+) => {
+  if ('lines' in rowData) {
+    const { lines } = rowData;
+
+    return (
+      ArrayUtils.ifTheSameElseDefault(lines, 'donorName', t('multiple')) ??
+      UNDEFINED_STRING_VALUE
+    );
+  } else {
+    return rowData.donorName ?? UNDEFINED_STRING_VALUE;
   }
 };
 
@@ -69,7 +85,8 @@ export const useStocktakeColumns = ({
   const t = useTranslation();
   const { getError } = useStocktakeLineErrorContext();
   const { data: preferences } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses
+    PreferenceKey.DisplayVaccinesInDoses,
+    PreferenceKey.AllowTrackingOfStockByDonor
   );
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
@@ -293,11 +310,18 @@ export const useStocktakeColumns = ({
       label: 'label.reason',
       accessor: ({ rowData }) => getStocktakeReasons(rowData, t),
       sortable: false,
-    },
-
-    getCommentPopoverColumn(),
-    expandColumn
+    }
   );
+  if (preferences?.allowTrackingOfStockByDonor) {
+    columns.push({
+      key: 'donorId',
+      label: 'label.donor',
+      accessor: ({ rowData }) => getStocktakeDonor(rowData, t),
+      sortable: false,
+    });
+  }
+
+  columns.push(getCommentPopoverColumn(), expandColumn);
 
   return useColumns(columns, { sortBy, onChangeSortBy }, [
     sortBy,
@@ -341,8 +365,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
     {
       key: 'inventoryAdjustmentReason',
       label: 'label.reason',
-      accessor: ({ rowData }) =>
-        rowData.inventoryAdjustmentReason?.reason || '',
+      accessor: ({ rowData }) => rowData.reasonOption?.reason || '',
     },
   ]);
 };

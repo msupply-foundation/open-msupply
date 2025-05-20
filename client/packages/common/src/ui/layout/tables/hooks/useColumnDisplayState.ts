@@ -26,6 +26,11 @@ export const useColumnDisplayState = <T extends RecordWithId>(
           .map(col => col.key as string)
       : []);
 
+  // TO-DO Implement for column display...
+  const simplifiedTabletView = useSimplifiedTabletUI();
+  // eslint-disable-next-line
+  console.log('Mobile UI?', simplifiedTabletView);
+
   const [columnDisplayState, setColumnDisplayState] = useState<
     Record<string, boolean>
   >(

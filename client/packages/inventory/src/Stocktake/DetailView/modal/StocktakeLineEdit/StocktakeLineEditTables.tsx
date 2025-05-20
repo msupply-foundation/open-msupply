@@ -17,16 +17,19 @@ import {
   getColumnLookupWithOverrides,
   NumberInputCell,
   ColumnAlign,
-  AdjustmentTypeInput,
   NumberCell,
+  usePreference,
+  PreferenceKey,
+  ReasonOptionNodeType,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
+  getDonorColumn,
   getLocationInputColumn,
-  InventoryAdjustmentReasonRowFragment,
-  InventoryAdjustmentReasonSearchInput,
   ItemVariantInputCell,
   PackSizeEntryCell,
+  ReasonOptionRowFragment,
+  ReasonOptionsSearchInput,
   useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
 import {
@@ -106,16 +109,14 @@ const getInventoryAdjustmentReasonInputColumn = (
     label: 'label.reason',
     sortable: false,
     width: 120,
-    accessor: ({ rowData }) => rowData.inventoryAdjustmentReason || '',
+    accessor: ({ rowData }) => rowData.reasonOption || '',
     Cell: ({ rowData, column, columnIndex, rowIndex }) => {
       const value = column.accessor({
         rowData,
-      }) as InventoryAdjustmentReasonRowFragment | null;
+      }) as ReasonOptionRowFragment | null;
 
-      const onChange = (
-        inventoryAdjustmentReason: InventoryAdjustmentReasonRowFragment | null
-      ) => {
-        setter({ ...rowData, inventoryAdjustmentReason });
+      const onChange = (reasonOption: ReasonOptionRowFragment | null) => {
+        setter({ ...rowData, reasonOption });
       };
 
       const autoFocus = columnIndex === 0 && rowIndex === 0;
@@ -128,15 +129,15 @@ const getInventoryAdjustmentReasonInputColumn = (
       // https://github.com/openmsupply/open-msupply/pull/1252#discussion_r1119577142, this would ideally live in inventory package
       // and instead of this method we do all of the logic in InventoryAdjustmentReasonSearchInput and use it in `Cell` field of the column
       return (
-        <InventoryAdjustmentReasonSearchInput
+        <ReasonOptionsSearchInput
           autoFocus={autoFocus}
           value={value}
           width={Number(column.width)}
           onChange={onChange}
-          adjustmentType={
+          type={
             rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0)
-              ? AdjustmentTypeInput.Reduction
-              : AdjustmentTypeInput.Addition
+              ? ReasonOptionNodeType.NegativeInventoryAdjustment
+              : ReasonOptionNodeType.PositiveInventoryAdjustment
           }
           isError={isAdjustmentReasonError}
           isDisabled={
@@ -221,12 +222,12 @@ export const BatchTable = ({
           // If counted number of packs was changed to result in no adjustment we
           // should remove inventoryAdjustmentReason, otherwise could have a
           // reason on a line with no adjustments
-          const inventoryAdjustmentReason =
+          const reasonOption =
             !patch.countedNumberOfPacks ||
             patch.snapshotNumberOfPacks == patch.countedNumberOfPacks
               ? null
-              : patch.inventoryAdjustmentReason;
-          update({ ...patch, countThisLine: true, inventoryAdjustmentReason });
+              : patch.reasonOption;
+          update({ ...patch, countThisLine: true, reasonOption });
         },
         accessor: ({ rowData }) => rowData.countedNumberOfPacks,
       },
@@ -302,7 +303,11 @@ export const LocationTable = ({
 }: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
-  const columns = useColumns<DraftStocktakeLine>([
+  const { data: preferences } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor
+  );
+
+  const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
     [
@@ -312,20 +317,27 @@ export const LocationTable = ({
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
-    [
-      'comment',
-      {
-        label: 'label.stocktake-comment',
-        Cell: TextInputCell,
-        cellProps: {
-          fullWidth: true,
-        },
-        width: 200,
-        setter: patch => update({ ...patch, countThisLine: true }),
-        accessor: ({ rowData }) => rowData.comment || '',
+  ];
+  if (preferences?.allowTrackingOfStockByDonor) {
+    columnDefinitions.push(
+      getDonorColumn(patch => update({ ...patch, countThisLine: true }))
+    );
+  }
+  columnDefinitions.push([
+    'comment',
+    {
+      label: 'label.stocktake-comment',
+      Cell: TextInputCell,
+      cellProps: {
+        fullWidth: true,
       },
-    ],
+      width: 200,
+      setter: patch => update({ ...patch, countThisLine: true }),
+      accessor: ({ rowData }) => rowData.comment || '',
+    },
   ]);
+
+  const columns = useColumns(columnDefinitions);
 
   return (
     <DataTable

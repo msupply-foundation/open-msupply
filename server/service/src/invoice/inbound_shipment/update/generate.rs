@@ -59,7 +59,7 @@ pub(crate) fn generate(
         .tax
         .map(|tax| tax.percentage)
         .unwrap_or(update_invoice.tax_percentage);
-    update_invoice.default_donor_id = input_donor_id.clone().or(update_invoice.default_donor_id);
+    update_invoice.default_donor_id = input_donor_id.clone();
 
     if let Some(status) = patch.status.clone() {
         update_invoice.status = status.full_status()
@@ -67,7 +67,8 @@ pub(crate) fn generate(
 
     if let Some(other_party) = other_party_option {
         update_invoice.name_store_id = other_party.store_id().map(|id| id.to_string());
-        // TODO: Should be using the name link id not the name row id...
+        // Assigning name_row id as name_link is ok, input name_row should always an active name
+        // - only querying needs to go via link table
         update_invoice.name_link_id = other_party.name_row.id;
     }
 
@@ -120,18 +121,14 @@ pub(crate) fn generate(
         None
     };
 
-    let update_donor = if update_invoice.status.index() >= InvoiceStatus::Delivered.index() {
-        match patch.default_donor {
-            Some(update) => Some(update_donor_on_lines_and_stock(
-                connection,
-                &update_invoice.id,
-                update.donor_id,
-                update.apply_to_lines,
-            )?),
-            None => None,
-        }
-    } else {
-        None
+    let update_donor = match patch.default_donor {
+        Some(update) => Some(update_donor_on_lines_and_stock(
+            connection,
+            &update_invoice.id,
+            update.donor_id,
+            update.apply_to_lines,
+        )?),
+        None => None,
     };
 
     Ok(GenerateResult {
@@ -349,6 +346,7 @@ pub fn generate_lines_and_stock_lines(
             pack_size,
             donor_id,
             note,
+            reason_option_id: _,
             ..
         }: InvoiceLineRow = invoice_line;
 

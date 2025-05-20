@@ -9,6 +9,10 @@
  * - The store pref "Use Simplified Mobile UI" is enabled
  * - The (old) preference "Pack size to 1" is enabled
  * - The device screen size is "tablet" size or smaller
+ *
+ * We may wish to modify this so that the "pack size to 1" preference is only
+ * required where it would be relevant. In which case, we would make
+ * "requirePackToOne" a parameter to this hook.
  */
 
 import { useAppTheme, useMediaQuery, Breakpoints } from '@common/styles';
