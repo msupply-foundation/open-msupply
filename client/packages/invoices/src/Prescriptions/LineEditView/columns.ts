@@ -28,7 +28,8 @@ export const usePrescriptionLineEditColumns = ({
   const { data: preferences } = usePreference(
     PreferenceKey.ManageVaccinesInDoses
   );
-  const displayInDoses = !!preferences?.manageVaccinesInDoses && !!isVaccine;
+  const manageVaccinesInDoses =
+    !!preferences?.manageVaccinesInDoses && !!isVaccine;
   const unit = Formatter.sentenceCase(unitName);
 
   const columns: ColumnDescription<
@@ -49,7 +50,7 @@ export const usePrescriptionLineEditColumns = ({
     ],
   ];
 
-  if (displayInDoses) {
+  if (manageVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t, unitName));
   } else {
     columns.push(['packSize', { width: 90 }]);
@@ -68,7 +69,7 @@ export const usePrescriptionLineEditColumns = ({
       (rowData.stockLine?.packSize ?? 1),
   });
 
-  if (displayInDoses) {
+  if (manageVaccinesInDoses) {
     columns.push(...getPrescriptionLineDosesColumns(onChange));
   } else {
     columns.push(

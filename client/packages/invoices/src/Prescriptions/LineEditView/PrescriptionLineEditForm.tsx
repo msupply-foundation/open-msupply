@@ -112,9 +112,10 @@ export const PrescriptionLineEditForm: React.FC<
     []
   );
   const isDirectionsDisabled = !issueUnitQuantity;
-  const displayInDoses = !!OMSPrefs?.manageVaccinesInDoses && !!item?.isVaccine;
+  const manageVaccinesInDoses =
+    !!OMSPrefs?.manageVaccinesInDoses && !!item?.isVaccine;
   const unitName = item?.unitName ?? t('label.unit');
-  const unit = displayInDoses ? t('label.doses') : unitName;
+  const unit = manageVaccinesInDoses ? t('label.doses') : unitName;
 
   const allocate = (
     numPacks: number,
@@ -315,7 +316,7 @@ export const PrescriptionLineEditForm: React.FC<
           <AccordionPanelSection
             title={t('label.quantity')}
             closedSummary={
-              displayInDoses
+              manageVaccinesInDoses
                 ? dosesSummary(t, draftPrescriptionLines)
                 : summarise(t, draftPrescriptionLines, getPlural)
             }
@@ -341,7 +342,7 @@ export const PrescriptionLineEditForm: React.FC<
                     }
                     disabled={disabled}
                     value={
-                      displayInDoses
+                      manageVaccinesInDoses
                         ? NumUtils.round(prescribedQuantity ?? 0 * item.doses)
                         : (prescribedQuantity ?? undefined)
                     }
@@ -349,7 +350,7 @@ export const PrescriptionLineEditForm: React.FC<
                       if (qty) {
                         const dosesToUnit = qty / (item.doses || 1);
                         handlePrescribedQuantityChange(
-                          displayInDoses ? dosesToUnit : qty
+                          manageVaccinesInDoses ? dosesToUnit : qty
                         );
                       }
                     }}
@@ -374,7 +375,7 @@ export const PrescriptionLineEditForm: React.FC<
                   autoFocus={!preferences?.editPrescribedQuantityOnPrescription}
                   disabled={disabled}
                   value={
-                    displayInDoses
+                    manageVaccinesInDoses
                       ? NumUtils.round(issueUnitQuantity * item.doses)
                       : issueUnitQuantity
                   }
@@ -385,7 +386,7 @@ export const PrescriptionLineEditForm: React.FC<
                       // doses per unit - should be resolved by new allocation context
                       const dosesToUnit = qty / (item.doses || 1);
                       handleIssueQuantityChange(
-                        displayInDoses ? dosesToUnit : qty
+                        manageVaccinesInDoses ? dosesToUnit : qty
                       );
                     }
                   }}
@@ -408,7 +409,7 @@ export const PrescriptionLineEditForm: React.FC<
                 <InputLabel sx={{ fontSize: 12 }}>
                   {getPlural(
                     unit,
-                    displayInDoses
+                    manageVaccinesInDoses
                       ? issueUnitQuantity * item?.doses
                       : issueUnitQuantity
                   )}
