@@ -129,7 +129,14 @@ export const OutboundLineEditTable = ({
     manualAllocate,
   } = useAllocationContext(state => ({
     ...state,
-    allocatedQuantity: getAllocatedQuantity(state),
+    allocatedQuantity: getAllocatedQuantity({
+      draftLines: state.draftLines,
+      allocateIn:
+        state.allocateIn.type === AllocateInType.Doses
+          ? state.allocateIn
+          : // Even when allocating in packs, show the total in units
+            { type: AllocateInType.Units },
+    }),
   }));
 
   const allocate = (key: string, value: number) => {
@@ -186,9 +193,8 @@ export const OutboundLineEditTable = ({
     <TotalRow
       key="total-row"
       allocatedQuantity={
-        allocateIn.type === AllocateInType.Packs
-          ? allocatedQuantity * allocateIn.packSize
-          : allocatedQuantity
+        // placeholder is in units (even in dose view, as placeholder doses is 1 dose per unit)
+        allocatedQuantity + (placeholderUnits ?? 0)
       }
       extraColumnOffset={extraColumnOffset}
     />,

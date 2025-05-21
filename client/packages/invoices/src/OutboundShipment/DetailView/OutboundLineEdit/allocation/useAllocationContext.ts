@@ -67,7 +67,12 @@ interface AllocationContext {
   }) => void;
 
   setAlerts: (alerts: StockOutAlert[]) => void;
-  setAllocateIn: (allocateIn: AllocateInOption) => void;
+  setAllocateIn: (
+    allocateIn: AllocateInOption,
+    // TODO: these are passed into a few functions, can we intialise with them instead?
+    format: (value: number, options?: Intl.NumberFormatOptions) => string,
+    t: TypedTFunction<LocaleKey>
+  ) => void;
   clear: () => void;
 
   manualAllocate: (
@@ -137,22 +142,30 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       alerts: [],
     })),
 
-  setAllocateIn: (allocateIn: AllocateInOption) => {
-    const { draftLines } = get();
-
-    // Clear the existing allocated stock if changing how we are allocating
-    // This might be annoying... but should validate before spending time on
-    // reallocating on change of allocation type/pack size
-    const result = allocateQuantities(draftLines, 0, { allocateIn });
+  setAllocateIn: (allocateIn, format, t) => {
+    const { draftLines, placeholderUnits, autoAllocate } = get();
 
     set(state => ({
       ...state,
-      draftLines: result?.allocatedLines ?? draftLines,
-      placeholderUnits: 0,
-      isDirty: true,
-      allocateIn,
       alerts: [],
+      allocateIn,
     }));
+
+    // Changing to unit or dose is just a lens change,
+    // but changing which pack size to allocate in means we might
+    // need to redistribute the stock.
+    if (allocateIn.type === AllocateInType.Packs) {
+      const existingQuantityInUnits =
+        getAllocatedQuantity({
+          draftLines,
+          allocateIn: { type: AllocateInType.Units },
+        }) + (placeholderUnits ?? 0);
+
+      const quantityInNewPackSize =
+        existingQuantityInUnits / allocateIn.packSize;
+
+      autoAllocate(quantityInNewPackSize, format, t);
+    }
   },
 
   setAlerts: alerts =>
@@ -203,7 +216,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
 
     // Note that a placeholder is always considered to be pack size 1, 1 dose per unit
     // So if issuing in larger pack sizes, we need to adjust the placeholder
-    const placeholderAccountingForPacks =
+    const placeholderInUnits =
       allocateIn.type === AllocateInType.Packs
         ? stillToAllocate * allocateIn.packSize
         : stillToAllocate;
@@ -212,7 +225,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       ...state,
       alerts,
       placeholderUnits:
-        placeholderUnits === null ? null : placeholderAccountingForPacks,
+        placeholderUnits === null ? null : Math.round(placeholderInUnits), // handle .0000000001 when switching between pack sizes
       isDirty: true,
       draftLines: result.allocatedLines,
     }));

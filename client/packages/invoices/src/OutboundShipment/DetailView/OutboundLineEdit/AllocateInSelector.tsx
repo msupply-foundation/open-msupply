@@ -5,6 +5,7 @@ import {
   usePreference,
   PreferenceKey,
   useIntlUtils,
+  useFormatNumber,
 } from '@openmsupply-client/common';
 import {
   AllocateInType,
@@ -14,6 +15,7 @@ import { canAutoAllocate } from './allocation/utils';
 
 export const AllocateInSelector = () => {
   const t = useTranslation();
+  const { format } = useFormatNumber();
   const { getPlural } = useIntlUtils();
 
   const { data: prefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
@@ -58,12 +60,12 @@ export const AllocateInSelector = () => {
 
   const handleAllocateInChange = (value: AllocateInType | number) => {
     if (typeof value === 'number') {
-      setAllocateIn({ type: AllocateInType.Packs, packSize: value });
+      setAllocateIn({ type: AllocateInType.Packs, packSize: value }, format, t);
     } else if (
       value === AllocateInType.Doses ||
       value === AllocateInType.Units
     ) {
-      setAllocateIn({ type: value });
+      setAllocateIn({ type: value }, format, t);
     } else {
       console.error('Invalid value for allocateIn:', value);
     }

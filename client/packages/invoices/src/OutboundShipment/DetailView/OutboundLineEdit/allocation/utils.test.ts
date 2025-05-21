@@ -75,13 +75,12 @@ describe('getAllocatedQuantity', () => {
     expect(result).toBe(56);
   });
 
-  it('includes placeholder quantity when provided', () => {
+  it('returns pack quantity when allocating in packs', () => {
     const result = getAllocatedQuantity({
-      draftLines, // line1: 2*3=6, line2: 5*10=50 == 56
-      allocateIn: { type: AllocateInType.Units },
-      placeholderQuantity: 100,
+      draftLines, // line1: 2*3=6 units (.6 pack size 10s), line2: 5*10=50 units (5 packs) == 5.6
+      allocateIn: { type: AllocateInType.Packs, packSize: 10 },
     });
-    expect(result).toBe(156);
+    expect(result).toBe(5.6);
   });
 });
 

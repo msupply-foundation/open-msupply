@@ -27,12 +27,6 @@ export const sumAvailableDoses = (draftLines: DraftStockOutLineFragment[]) => {
   return sum;
 };
 
-const getAllocatedPacks = (draftLines: DraftStockOutLineFragment[]) =>
-  NumUtils.round(
-    draftLines.reduce((acc, { numberOfPacks }) => acc + numberOfPacks, 0),
-    3
-  );
-
 const getAllocatedUnits = (draftLines: DraftStockOutLineFragment[]) =>
   NumUtils.round(
     draftLines.reduce(
@@ -48,33 +42,25 @@ const getAllocatedDoses = (draftLines: DraftStockOutLineFragment[]) => {
 
 export const getAllocatedQuantity = ({
   draftLines,
-  placeholderQuantity,
   allocateIn,
 }: {
   draftLines: DraftStockOutLineFragment[];
   allocateIn: AllocateInOption;
-  placeholderQuantity?: number | null;
-}) => {
-  let quantity = 0;
-
+}): number => {
   switch (allocateIn.type) {
     case AllocateInType.Doses:
-      quantity = getAllocatedDoses(draftLines);
-      break;
+      return getAllocatedDoses(draftLines);
 
     case AllocateInType.Units:
-      quantity = getAllocatedUnits(draftLines);
-      break;
+      return getAllocatedUnits(draftLines);
 
     case AllocateInType.Packs:
-      quantity = getAllocatedPacks(draftLines);
-      break;
+      return getAllocatedUnits(draftLines) / (allocateIn.packSize || 1);
 
     default:
       noOtherVariants(allocateIn);
+      throw new Error('Unhandled allocation unit of measure');
   }
-
-  return quantity + (placeholderQuantity ?? 0);
 };
 
 /** Converts the value of the `numberOfPacks` field to dose quantity */
