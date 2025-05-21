@@ -14,7 +14,7 @@ use super::{
 pub enum PrefKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
-    DisplayVaccinesInDoses,
+    ManageVaccinesInDoses,
     ShowContactTracing,
     // Store preferences
     DisplayPopulationBasedForecasting,
