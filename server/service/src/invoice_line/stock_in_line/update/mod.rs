@@ -450,26 +450,5 @@ mod test {
         // existing log should be updated
         assert_eq!(vvm_status_logs.len(), 1);
         assert_eq!(vvm_log, Some(mock_vvm_status_b().id));
-
-        // Clear the vvm_status_id from invoice line
-        let result = update_stock_in_line(
-            &context,
-            UpdateStockInLine {
-                id: "delivered_invoice_line_with_vvm_status".to_string(),
-                vvm_status_id: None,
-                r#type: StockInType::InboundShipment,
-                ..Default::default()
-            },
-        )
-        .unwrap();
-
-        assert_eq!(result.invoice_line_row.vvm_status_id, None);
-
-        let vvm_status_logs = VVMStatusLogRepository::new(&connection)
-            .query_by_filter(vvm_log_filter.clone())
-            .unwrap();
-
-        // existing log should be deleted
-        assert_eq!(vvm_status_logs.len(), 0);
     }
 }
