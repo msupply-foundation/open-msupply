@@ -276,7 +276,7 @@ function createTestLine({
   dosesPerUnit = 1,
 }: TestLineParams): DraftStockOutLineFragment {
   return {
-    __typename: 'DraftOutboundShipmentLineNode',
+    __typename: 'DraftStockOutLineNode',
     id,
     stockLineId: '',
     numberOfPacks,

@@ -271,7 +271,7 @@ function createTestLine({
   vvmStatus = null,
 }: TestLineParams): DraftStockOutLineFragment {
   return {
-    __typename: 'DraftOutboundShipmentLineNode',
+    __typename: 'DraftStockOutLineNode',
     id,
     stockLineId: '',
     numberOfPacks,
