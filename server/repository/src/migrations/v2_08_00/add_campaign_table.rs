@@ -15,7 +15,8 @@ impl MigrationFragment for Migrate {
                     id TEXT NOT NULL PRIMARY KEY,
                     name TEXT NOT NULL,
                     start_date {DATE},
-                    end_date {DATE}
+                    end_date {DATE},
+                    deleted_datetime {DATETIME}
                 );
             "#
         )?;

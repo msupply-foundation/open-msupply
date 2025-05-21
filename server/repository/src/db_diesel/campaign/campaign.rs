@@ -109,6 +109,9 @@ fn create_filtered_query(filter: Option<CampaignFilter>) -> BoxedCampaignQuery {
         apply_equal_filter!(query, id, campaign::id);
         apply_string_filter!(query, name, campaign::name);
     }
+
+    query = query.filter(campaign::deleted_datetime.is_null());
+
     query
 }
 
@@ -141,6 +144,7 @@ mod tests {
                 name: name.clone(),
                 start_date: None,
                 end_date: None,
+                deleted_datetime: None,
             })
             .unwrap();
 

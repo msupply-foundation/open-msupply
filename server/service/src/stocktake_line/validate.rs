@@ -70,7 +70,12 @@ pub fn check_reason_is_valid(
     } else if let Some(reason_id) = &reason_option_id {
         let reason = ReasonOptionRepository::new(connection).query_by_filter(
             ReasonOptionFilter::new()
-                .r#type(ReasonOptionType::NegativeInventoryAdjustment.equal_to())
+                .r#type(
+                    ReasonOptionType::NegativeInventoryAdjustment.equal_any(vec![
+                        ReasonOptionType::NegativeInventoryAdjustment,
+                        ReasonOptionType::OpenVialWastage,
+                    ]),
+                )
                 .is_active(true)
                 .id(EqualFilter::equal_to(reason_id)),
         )?;
