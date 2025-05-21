@@ -2,19 +2,15 @@ use crate::{
     invoice::common::generate_invoice_user_id_update, service_provider::ServiceContext, WithDBError,
 };
 use repository::{
-    vvm_status::{
-        vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
-        vvm_status_log_row::VVMStatusLogRowRepository,
-    },
-    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
-    StockLineRowRepository, StorageConnection,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLineRowRepository,
+    InvoiceRowRepository, RepositoryError, StockLineRowRepository,
 };
 
 mod validate;
 
 use validate::validate;
 
-use super::StockInType;
+use super::{get_existing_vvm_status_log_id, StockInType};
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct DeleteStockInLine {
@@ -32,15 +28,18 @@ pub fn delete_stock_in_line(
         .connection
         .transaction_sync(|connection| {
             let (invoice_row, line) = validate(&input, &ctx.store_id, connection)?;
+            let delete_batch_id_option = line.stock_line_id.clone();
 
-            let delete_vvm_status_log_option = get_vvm_status_log_to_delete(connection, &line)?;
-            if let Some(id) = delete_vvm_status_log_option {
-                VVMStatusLogRowRepository::new(connection).delete(&id)?;
+            if let Some(batch_id) = &delete_batch_id_option {
+                if let Some(existing_log_id) =
+                    get_existing_vvm_status_log_id(connection, batch_id, &line.id)?
+                {
+                    VVMStatusLogRowRepository::new(connection).delete(&existing_log_id)?;
+                }
             }
 
             InvoiceLineRowRepository::new(connection).delete(&line.id)?;
-            
-            let delete_batch_id_option = line.stock_line_id.clone();
+
             if let Some(id) = delete_batch_id_option {
                 StockLineRowRepository::new(connection).delete(&id)?;
             }
@@ -53,29 +52,6 @@ pub fn delete_stock_in_line(
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(line_id)
-}
-
-fn get_vvm_status_log_to_delete(
-    connection: &StorageConnection,
-    line: &InvoiceLineRow,
-) -> Result<Option<String>, RepositoryError> {
-    // if the line to delete has a vvm status, find the vvm log and set the id to delete
-    if line.vvm_status_id.is_some() {
-        let mut filter = VVMStatusLogFilter::new();
-        if let Some(stock_line_id) = &line.stock_line_id {
-            filter = filter.stock_line_id(EqualFilter::equal_to(stock_line_id))
-        }
-        filter = filter.invoice_line_id(EqualFilter::equal_to(&line.id));
-
-        let vvm_status_log_line = VVMStatusLogRepository::new(connection)
-            .query_by_filter(filter)?
-            .first()
-            .map(|log| log.id.clone());
-
-        Ok(vvm_status_log_line)
-    } else {
-        Ok(None)
-    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
