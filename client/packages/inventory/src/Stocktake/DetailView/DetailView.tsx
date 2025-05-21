@@ -11,6 +11,8 @@ import {
   DetailTabs,
   useRowHighlight,
   useBreadcrumbs,
+  useSimplifiedTabletUI,
+  Box,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -33,18 +35,13 @@ const StocktakeTabs = ({
   id,
   isDisabled,
   onOpen,
+  onRowClick,
 }: {
   id: string | undefined;
   isDisabled: boolean;
   onOpen: (item?: StocktakeLineFragment['item'] | null | undefined) => void;
+  onRowClick: (item: StocktakeLineFragment | StocktakeSummaryItem) => void;
 }) => {
-  const onRowClick = useCallback(
-    (item: StocktakeLineFragment | StocktakeSummaryItem) => {
-      if (item.item) onOpen(item.item);
-    },
-    [onOpen]
-  );
-
   const tabs = [
     {
       Component: (
@@ -70,9 +67,17 @@ const DetailViewComponent = ({
 }: {
   stocktake: StocktakeFragment;
   isDisabled: boolean;
-  onOpen: () => void;
+  onOpen: (item?: StocktakeLineFragment['item'] | null | undefined) => void;
 }) => {
   const { HighlightStyles } = useRowHighlight();
+  const useSimplifiedTabletView = useSimplifiedTabletUI();
+
+  const onRowClick = useCallback(
+    (item: StocktakeLineFragment | StocktakeSummaryItem) => {
+      if (item.item) onOpen(item.item);
+    },
+    [onOpen]
+  );
 
   return (
     <>
@@ -83,12 +88,27 @@ const DetailViewComponent = ({
       <SidePanel />
 
       <Toolbar />
-
-      <StocktakeTabs
-        id={stocktake?.id}
-        onOpen={onOpen}
-        isDisabled={isDisabled}
-      />
+      {useSimplifiedTabletView ? (
+        <Box
+          sx={{
+            display: 'flex',
+            flex: 1,
+            justifyContent: 'center',
+          }}
+        >
+          <ContentArea
+            onRowClick={!isDisabled ? onRowClick : null}
+            onAddItem={() => onOpen()}
+          />
+        </Box>
+      ) : (
+        <StocktakeTabs
+          id={stocktake?.id}
+          onOpen={onOpen}
+          onRowClick={onRowClick}
+          isDisabled={isDisabled}
+        />
+      )}
     </>
   );
 };

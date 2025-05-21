@@ -132,6 +132,7 @@ export const useStocktakeColumns = ({
             { path: ['lines', 'batch'] },
             { path: ['batch'] },
           ]),
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -142,6 +143,7 @@ export const useStocktakeColumns = ({
             { path: ['lines', 'expiryDate'] },
             { path: ['expiryDate'] },
           ]),
+        defaultHideOnMobile: true,
       },
     ],
     {
@@ -153,6 +155,7 @@ export const useStocktakeColumns = ({
           { path: ['lines', 'location', 'code'] },
           { path: ['location', 'code'] },
         ]),
+      defaultHideOnMobile: true,
     },
     [
       'itemUnit',
@@ -162,6 +165,7 @@ export const useStocktakeColumns = ({
         },
         accessor: ({ rowData }) => rowData.item?.unitName ?? '',
         sortable: false,
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -176,6 +180,7 @@ export const useStocktakeColumns = ({
         cellProps: {
           defaultValue: UNDEFINED_STRING_VALUE,
         },
+        defaultHideOnMobile: true,
       },
     ],
   ];
@@ -321,6 +326,7 @@ export const useStocktakeColumns = ({
       label: 'label.donor',
       accessor: ({ rowData }) => getStocktakeDonor(rowData, t),
       sortable: false,
+      defaultHideOnMobile: true,
     });
   }
 
