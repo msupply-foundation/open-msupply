@@ -6,20 +6,23 @@ import {
   useTranslation,
   AppFooterPortal,
 } from '@openmsupply-client/common';
-import { useOutbound } from '../api';
 
-export const FooterComponent: FC = () => {
+interface FooterProps {
+  selectedRowCount: number;
+  deleteRows: () => void;
+}
+
+export const FooterComponent: FC<FooterProps> = ({
+  selectedRowCount,
+  deleteRows,
+}) => {
   const t = useTranslation();
-
-  const { selectedRows, confirmAndDelete } = useOutbound.document.deleteRows();
-
-  console.log('selectedRows', selectedRows);
 
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
-      onClick: confirmAndDelete,
+      onClick: deleteRows,
     },
   ];
 
@@ -27,10 +30,10 @@ export const FooterComponent: FC = () => {
     <AppFooterPortal
       Content={
         <>
-          {selectedRows.length !== 0 && (
+          {selectedRowCount > 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={selectedRows.length}
+              selectedRowCount={selectedRowCount}
             />
           )}
         </>

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { CampaignRowFragment } from '../operations.generated';
 import { useCampaignGraphQL } from '../useCampaignGraphQL';
 import { CAMPAIGN } from './keys';
@@ -9,6 +10,9 @@ import {
   CampaignFilterInput,
   CampaignSortFieldInput,
   UpsertCampaignInput,
+  FnUtils,
+  setNullableInput,
+  Formatter,
 } from '@openmsupply-client/common';
 
 type ListParams = {
@@ -18,16 +22,42 @@ type ListParams = {
   filterBy?: CampaignFilterInput | null;
 };
 
+export type DraftCampaign = {
+  id: string;
+  name: string;
+  startDate: Date | null;
+  endDate: Date | null;
+};
+
+export const defaultDraftCampaign: DraftCampaign = {
+  id: '',
+  name: '',
+  startDate: null,
+  endDate: null,
+};
+
 export const useCampaigns = (queryParams?: ListParams) => {
+  const [draft, setDraft] = useState<DraftCampaign>(defaultDraftCampaign);
+
   // QUERY
   const { data, isLoading, isError } = useGetList(queryParams);
 
+  // UPDATE DRAFT
+  const updateDraft = (patch: Partial<DraftCampaign>) => {
+    setDraft({ ...draft, ...patch });
+  };
+
   // UPSERT
   const {
-    mutateAsync: upsert,
+    mutateAsync: upsertMutation,
     isLoading: isUpserting,
     error: upsertError,
   } = useUpsertCampaign();
+
+  const upsert = async () => {
+    await upsertMutation(draft);
+    // To-DO: handle error
+  };
 
   // DELETE
   const {
@@ -40,6 +70,8 @@ export const useCampaigns = (queryParams?: ListParams) => {
     query: { data, isLoading, isError },
     upsert: { upsert, isUpserting, upsertError },
     delete: { deleteCampaign, isDeleting, deleteError },
+    draft,
+    updateDraft,
   };
 };
 
@@ -75,7 +107,19 @@ const toSortInput = (sortBy?: SortBy<CampaignRowFragment>) => ({
 const useUpsertCampaign = () => {
   const { campaignApi, queryClient } = useCampaignGraphQL();
 
-  const mutationFn = async (input: UpsertCampaignInput) => {
+  const mutationFn = async (draft: DraftCampaign) => {
+    const startDate = draft.startDate
+      ? Formatter.naiveDate(draft.startDate)
+      : null;
+
+    const endDate = draft.endDate ? Formatter.naiveDate(draft.endDate) : null;
+
+    const input = {
+      id: draft.id ?? FnUtils.generateUUID(),
+      name: draft.name,
+      startDate,
+      endDate,
+    };
     await campaignApi.upsertCampaign({ input });
   };
 

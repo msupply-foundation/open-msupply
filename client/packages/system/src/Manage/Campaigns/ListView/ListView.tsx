@@ -13,18 +13,23 @@ import {
   TooltipTextCell,
   useTranslation,
   ColumnFormat,
+  CampaignNode,
+  GenericColumnKey,
+  useTableStore,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
 // import { useName } from '../../api';
 import { Toolbar } from './Toolbar';
+import { Footer } from './Footer';
 import { CampaignEditModal } from './CampaignEditModal';
 import { AppBarButtons } from './AppBarButtons';
-import { PropertiesImportModal } from './ImportProperties/PropertiesImportModal';
-import { useCampaigns } from '../api';
-// import { FacilityNameRowFragment } from '../../api/operations.generated';
+import { CampaignRowFragment, DraftCampaign, useCampaigns } from '../api';
 
 const CampaignsComponent = () => {
   const t = useTranslation();
-  const [selectedId, setSelectedId] = useState('');
+  // const [selectedCampaign, setSelectedCampaign] = useState<
+  //   CampaignNode | undefined
+  // >();
   const {
     filter,
     updateSortQuery,
@@ -35,25 +40,51 @@ const CampaignsComponent = () => {
   const queryParams = { sortBy, first, offset, filterBy };
   const {
     query: { data, isError, isLoading },
-    upsert: { upsert, upsertError, isUpserting },
-    delete: { deleteCampaign, isDeleting, deleteError },
+    upsert: { upsert },
+    delete: { deleteCampaign },
+    draft,
+    updateDraft,
   } = useCampaigns(queryParams);
 
   const pagination = { page, first, offset };
 
   const { isOpen, onClose, onOpen } = useEditModal<any>();
 
-  const onRowClick = (row: any) => {
-    console.log('Saving a campaign)');
-    // setSelectedId(row.id);
-    // onOpen();
-    deleteCampaign('random');
+  const { selectedRows } = useTableStore(state => ({
+    selectedRows: Object.keys(state.rowState)
+      .filter(id => state.rowState[id]?.isSelected)
+      .map(selectedId => data?.nodes?.find(({ id }) => selectedId === id))
+      .filter(Boolean),
+  }));
+
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction: async () =>
+      selectedRows.forEach(row => {
+        if (row) {
+          deleteCampaign(row.id);
+        }
+      }),
+    messages: {
+      confirmMessage: t('messages.confirm-delete-campaigns', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-campaigns', {
+        count: selectedRows.length,
+      }),
+    },
+  });
+
+  const onRowClick = (row: CampaignNode) => {
+    const selected = data?.nodes.find(campaign => campaign.id === row.id);
+    // setSelectedCampaign(selected);
+    updateDraft(selected as DraftCampaign);
+    onOpen();
   };
 
-  console.log('data', data);
-
-  const columns = useColumns<any>(
+  const columns = useColumns<CampaignRowFragment>(
     [
+      GenericColumnKey.Selection,
       'name',
       {
         key: 'startDate',
@@ -79,15 +110,16 @@ const CampaignsComponent = () => {
 
   return (
     <>
-      {/* <Toolbar filter={filter} /> */}
-      {/* {isOpen && (
-        <FacilityEditModal
+      <AppBarButtons onOpen={onOpen} />
+      {isOpen && (
+        <CampaignEditModal
           isOpen={isOpen}
-          nameId={selectedId}
+          campaign={draft}
           onClose={onClose}
-          setNextFacility={setSelectedId}
+          upsert={upsert}
+          updateDraft={updateDraft}
         />
-      )} */}
+      )}
       <DataTable
         id="campaign-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
@@ -96,8 +128,12 @@ const CampaignsComponent = () => {
         data={data?.nodes}
         isLoading={isLoading}
         isError={isError}
-        noDataElement={<NothingHere body={t('error.no-facilities')} />}
+        noDataElement={<NothingHere body={t('error.no-campaigns')} />}
         onRowClick={onRowClick}
+      />
+      <Footer
+        selectedRowCount={selectedRows.length}
+        deleteRows={confirmAndDelete}
       />
     </>
   );

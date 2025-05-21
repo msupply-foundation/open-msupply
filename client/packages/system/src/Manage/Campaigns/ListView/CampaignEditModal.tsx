@@ -1,184 +1,101 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import {
   useTranslation,
   DetailContainer,
   Box,
-  BasicSpinner,
   useDialog,
   DialogButton,
-  Typography,
-  TabList,
-  Tab,
-  TabContext,
-  TabPanel,
-  NamePropertyNode,
-  useIsGapsStoreOnly,
+  InputWithLabelRow,
+  BasicTextInput,
+  DateUtils,
+  DateTimePickerInput,
 } from '@openmsupply-client/common';
-import { useName } from '../../api';
-import { NameRenderer } from '..';
-import { DisplayCoordinates } from './DisplayCoordinates';
-import { FacilityProperties } from './FacilityProperties';
-import {
-  DraftProperties,
-  useDraftFacilityProperties,
-} from './useDraftFacilityProperties';
-import { EditStorePreferences } from './EditStorePreferences';
+import { DraftCampaign, defaultDraftCampaign } from '../api';
 
-interface FacilityEditModalProps {
-  nameId: string;
+interface CampaignEditModalProps {
+  campaign: DraftCampaign;
   isOpen: boolean;
   onClose: () => void;
-  setNextFacility?: (nameId: string) => void;
+  updateDraft: (campaign: Partial<DraftCampaign>) => void;
+  upsert: () => Promise<void>;
 }
 
-export const CampaignEditModal: FC<FacilityEditModalProps> = ({
-  nameId,
+export const CampaignEditModal: FC<CampaignEditModalProps> = ({
+  campaign,
   isOpen,
   onClose,
-  setNextFacility,
+  updateDraft,
+  upsert,
 }) => {
   const t = useTranslation();
 
-  const { data: properties, isLoading: propertiesLoading } =
-    useName.document.properties();
-
-  const { data, isLoading } = useName.document.get(nameId);
-
-  const { mutateAsync } = useName.document.updateProperties(nameId);
-
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const { draftProperties, setDraftProperties } = useDraftFacilityProperties(
-    data?.properties
-  );
+  const { name, startDate, endDate, id } = campaign;
 
-  const nextId = useName.utils.nextFacilityId(nameId);
-
-  const save = async () => {
-    mutateAsync({
-      id: nameId,
-      properties: JSON.stringify(draftProperties),
-    });
-  };
-
-  if (isLoading || propertiesLoading) return <BasicSpinner />;
-
-  return !!data ? (
+  return (
     <Modal
-      title=""
-      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      title={id ? 'Edit Campaign' : 'Create Campaign'}
+      cancelButton={
+        <DialogButton
+          variant="cancel"
+          onClick={() => {
+            onClose();
+            updateDraft(defaultDraftCampaign);
+          }}
+        />
+      }
       okButton={
         <DialogButton
           variant="ok"
           onClick={async () => {
-            await save();
+            await upsert();
             onClose();
+            updateDraft(defaultDraftCampaign);
           }}
         />
-      }
-      nextButton={
-        setNextFacility && (
-          <DialogButton
-            disabled={!nextId}
-            variant="next-and-ok"
-            onClick={async () => {
-              await save();
-              nextId && setNextFacility(nextId);
-              // Returning true triggers the animation/slide out
-              return true;
-            }}
-          />
-        )
       }
       height={1000}
       width={800}
     >
       <DetailContainer>
         <Box display="flex" flexDirection="column" gap={2}>
-          <NameRenderer
-            isStore={!!data.store}
-            label={data.name}
-            sx={{ fontWeight: 'bold', fontSize: 18 }}
+          <InputWithLabelRow
+            key="name"
+            label={t('label.name')}
+            Input={
+              <BasicTextInput
+                size="small"
+                sx={{ width: 250 }}
+                value={name}
+                onChange={e => updateDraft({ name: e.target.value })}
+              />
+            }
           />
-          <Box display="flex" flexDirection="column">
-            <Box display="flex" flexDirection="row">
-              <Typography fontWeight="bold">{t('label.code')}:</Typography>
-              <Typography paddingX={1}>{data.code}</Typography>
-            </Box>
-            <DisplayCoordinates
-              latitude={(draftProperties['latitude'] as number) ?? 0}
-              longitude={(draftProperties['longitude'] as number) ?? 0}
-              onDraftPropertiesChange={(latitude, longitude) => {
-                setDraftProperties({
-                  ...draftProperties,
-                  latitude,
-                  longitude,
-                });
-              }}
-            />
-          </Box>
-          <ModalTabs
-            storeId={data.store?.id}
-            propertyConfigs={properties ?? []}
-            draftProperties={draftProperties}
-            updateProperty={patch =>
-              setDraftProperties({ ...draftProperties, ...patch })
+          <InputWithLabelRow
+            key="start-date"
+            label={t('label.start-date')}
+            Input={
+              <DateTimePickerInput
+                // sx={{ width: 250 }}
+                value={DateUtils.getDateOrNull(startDate)}
+                onChange={startDate => updateDraft({ startDate })}
+              />
+            }
+          />
+          <InputWithLabelRow
+            key="end-date"
+            label={t('label.end-date')}
+            Input={
+              <DateTimePickerInput
+                // sx={{ width: 250 }}
+                value={DateUtils.getDateOrNull(endDate)}
+                onChange={endDate => updateDraft({ endDate })}
+              />
             }
           />
         </Box>
       </DetailContainer>
     </Modal>
-  ) : null;
-};
-
-export enum Tabs {
-  Properties = 'Properties',
-  Preferences = 'Preferences',
-}
-
-interface ModalTabProps {
-  storeId: string | undefined;
-  propertyConfigs: NamePropertyNode[];
-  draftProperties: DraftProperties;
-  updateProperty: (update: DraftProperties) => void;
-}
-
-const ModalTabs = ({
-  storeId,
-  propertyConfigs,
-  draftProperties,
-  updateProperty,
-}: ModalTabProps) => {
-  const t = useTranslation();
-  const isGapsMobileStore = useIsGapsStoreOnly();
-  const [currentTab, setCurrentTab] = useState(
-    storeId && !isGapsMobileStore ? Tabs.Preferences : Tabs.Properties
-  );
-
-  return (
-    <TabContext value={currentTab}>
-      <TabList
-        value={currentTab}
-        centered
-        onChange={(_, v) => setCurrentTab(v)}
-      >
-        {storeId && (
-          <Tab value={Tabs.Preferences} label={t('label.preferences')} />
-        )}
-        <Tab value={Tabs.Properties} label={t('label.properties')} />
-      </TabList>
-      {storeId && (
-        <TabPanel value={Tabs.Preferences}>
-          <EditStorePreferences storeId={storeId} />
-        </TabPanel>
-      )}
-      <TabPanel value={Tabs.Properties}>
-        <FacilityProperties
-          propertyConfigs={propertyConfigs}
-          draftProperties={draftProperties}
-          updateProperty={updateProperty}
-        />
-      </TabPanel>
-    </TabContext>
   );
 };
