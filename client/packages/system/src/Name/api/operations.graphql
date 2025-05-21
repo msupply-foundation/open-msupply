@@ -16,6 +16,7 @@ fragment FacilityNameRow on NameNode {
   id
   isCustomer
   isSupplier
+  isDonor
   isOnHold
   name
   store {

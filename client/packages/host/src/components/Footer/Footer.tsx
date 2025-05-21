@@ -21,7 +21,7 @@ import {
 } from '@openmsupply-client/common';
 import { StoreSelector } from './StoreSelector';
 import { LanguageSelector } from './LanguageSelector';
-import { FacilityEditModal, useName } from '@openmsupply-client/system';
+import { StoreEditModal, useName } from '@openmsupply-client/system';
 import { UserDetails } from './UserDetails';
 
 interface PaddedCellProps {
@@ -156,7 +156,7 @@ export const Footer: FC = () => {
         />
       ) : null}
       {isOpen && (
-        <FacilityEditModal
+        <StoreEditModal
           nameId={store?.nameId ?? ''}
           isOpen={isOpen}
           onClose={onClose}
