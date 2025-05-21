@@ -475,9 +475,7 @@ mod test {
             .query_by_filter(vvm_log_filter.clone())
             .unwrap();
 
-        let vvm_log: Option<String> = vvm_status_logs.first().map(|log| log.status_id.clone());
-
         // existing log should be deleted
-        assert_eq!(vvm_log, None);
+        assert_eq!(vvm_status_logs.len(), 0);
     }
 }
