@@ -68,7 +68,7 @@ const STORE_PREFERENCE_1: (&str, &str) = (
         "omSupplyUsesProgramModule": true,
         "stocktakeFrequency": 1.34,
         "keepRequisitionLinesWithZeroQuantity": true,
-        "canLinkRequistionToSupplierInvoice": false,
+        "canLinkRequistionToSupplierInvoice": false
     }
 }"#,
 );
@@ -123,7 +123,7 @@ const STORE_PREFERENCE_2: (&str, &str) = (
         "usesPatientTypes": false,
         "usesHideSnapshotColumn": false,
         "pickfaceReplenishmentsMustAuthorised": false,
-        "ableToSpecifyVVMStatusWhenReceivingItems": true,
+        "ableToSpecifyVVMStatusWhenReceivingItems": false,
         "good_receipt_finalise_next_action": "supplier_invoice_on_hold",
         "stock_transfer_supplier_invoice_is_on_hold": true,
         "monthlyConsumptionLookBackPeriod": "0",
@@ -166,7 +166,6 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 use_consumption_and_stock_from_customers_for_internal_orders: true,
                 manually_link_internal_order_to_inbound_shipment: false,
                 edit_prescribed_quantity_on_prescription: false,
-                able_to_specify_vvm_status_when_receiving_items: false,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -178,6 +177,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 pack_to_one: false,
                 response_requisition_requires_authorisation: false,
                 request_requisition_requires_authorisation: true,
+                // This one is missing, should default to false
                 om_program_module: false,
                 vaccine_module: true,
                 issue_in_foreign_currency: false,
@@ -192,7 +192,6 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 use_consumption_and_stock_from_customers_for_internal_orders: false,
                 manually_link_internal_order_to_inbound_shipment: true,
                 edit_prescribed_quantity_on_prescription: false,
-                able_to_specify_vvm_status_when_receiving_items: true,
             },
         ),
     ]

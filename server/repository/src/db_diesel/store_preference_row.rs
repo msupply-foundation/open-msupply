@@ -30,7 +30,6 @@ table! {
         use_consumption_and_stock_from_customers_for_internal_orders -> Bool,
         manually_link_internal_order_to_inbound_shipment -> Bool,
         edit_prescribed_quantity_on_prescription -> Bool,
-        able_to_specify_vvm_status_when_receiving_items -> Bool,
     }
 }
 
@@ -71,7 +70,6 @@ pub struct StorePreferenceRow {
     pub use_consumption_and_stock_from_customers_for_internal_orders: bool,
     pub manually_link_internal_order_to_inbound_shipment: bool,
     pub edit_prescribed_quantity_on_prescription: bool,
-    pub able_to_specify_vvm_status_when_receiving_items: bool,
 }
 
 impl Default for StorePreferenceRow {
@@ -95,7 +93,6 @@ impl Default for StorePreferenceRow {
             use_consumption_and_stock_from_customers_for_internal_orders: false,
             manually_link_internal_order_to_inbound_shipment: false,
             edit_prescribed_quantity_on_prescription: false,
-            able_to_specify_vvm_status_when_receiving_items: false,
 
             // Default
             id: Default::default(),

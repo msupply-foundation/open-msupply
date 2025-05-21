@@ -77,9 +77,6 @@ pub struct LegacyPrefData {
     #[serde(default)]
     #[serde(rename = "editPrescribedQuantityOnPrescription")]
     pub edit_prescribed_quantity_on_prescription: bool,
-    #[serde(default)]
-    #[serde(rename = "ableToSpecifyVVMStatusWhenReceivingItems")]
-    pub able_to_specify_vvm_status_when_receiving_items: bool,
 }
 
 // Needs to be added to all_translators()
@@ -134,7 +131,6 @@ impl SyncTranslation for StorePreferenceTranslation {
             use_consumption_and_stock_from_customers_for_internal_orders,
             manually_link_internal_order_to_inbound_shipment,
             edit_prescribed_quantity_on_prescription,
-            able_to_specify_vvm_status_when_receiving_items,
         } = data;
 
         let result = StorePreferenceRow {
@@ -161,7 +157,6 @@ impl SyncTranslation for StorePreferenceTranslation {
             use_consumption_and_stock_from_customers_for_internal_orders,
             manually_link_internal_order_to_inbound_shipment,
             edit_prescribed_quantity_on_prescription,
-            able_to_specify_vvm_status_when_receiving_items,
         };
 
         Ok(PullTranslateResult::upsert(result))

@@ -85,12 +85,6 @@ impl StorePreferenceNode {
             .store_preference
             .edit_prescribed_quantity_on_prescription
     }
-
-    pub async fn able_to_specify_vvm_status_when_receiving_items(&self) -> &bool {
-        &self
-            .store_preference
-            .able_to_specify_vvm_status_when_receiving_items
-    }
 }
 
 impl StorePreferenceNode {
