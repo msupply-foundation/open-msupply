@@ -195,7 +195,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                       </StyledTabContainer>
                     </StyledTabPanel>
 
-                    <StyledTabPanel value={Tabs.Location}>
+                    <StyledTabPanel value={Tabs.Other}>
                       <StyledTabContainer>
                         <QueryParamsProvider
                           createStore={createQueryParamsStore<LocationRowFragment>(
