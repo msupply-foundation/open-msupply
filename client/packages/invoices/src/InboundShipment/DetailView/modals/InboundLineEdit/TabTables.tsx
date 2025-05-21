@@ -44,7 +44,7 @@ interface TableProps {
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
   hasItemVariantsEnabled?: boolean;
-  hasVVMStatusesEnabled?: boolean;
+  hasVvmStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
 }
 
@@ -53,7 +53,7 @@ export const QuantityTableComponent = ({
   updateDraftLine,
   isDisabled = false,
   hasItemVariantsEnabled,
-  hasVVMStatusesEnabled,
+  hasVvmStatusesEnabled,
   item,
 }: TableProps) => {
   const t = useTranslation();
@@ -83,7 +83,7 @@ export const QuantityTableComponent = ({
     columnDefinitions.push(getDosesPerUnitColumn(t, unitName));
   }
 
-  if (!!hasVVMStatusesEnabled && item?.isVaccine) {
+  if (!!hasVvmStatusesEnabled && item?.isVaccine) {
     columnDefinitions.push(vvmStatusesColumn(updateDraftLine));
   }
 
