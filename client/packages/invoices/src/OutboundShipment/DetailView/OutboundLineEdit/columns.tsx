@@ -70,12 +70,14 @@ export const useOutboundLineEditColumns = ({
   const columnDefinitions: ColumnDescription<DraftStockOutLineFragment>[] = [
     {
       label: '',
-      description: 'description.used-in-auto-allocation',
       key: 'canAllocate',
       Cell: CheckCell,
+      cellProps: {
+        tooltipText: t('description.used-in-auto-allocation'),
+      },
       accessor: ({ rowData }) => canAutoAllocate(rowData, packSize),
       align: ColumnAlign.Center,
-      width: 50,
+      width: 35,
     },
     [
       'batch',
