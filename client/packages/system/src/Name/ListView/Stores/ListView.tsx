@@ -111,7 +111,7 @@ const StoresListComponent = () => {
         data={data?.nodes}
         isLoading={isLoading}
         isError={isError}
-        noDataElement={<NothingHere body={t('error.no-facilities')} />}
+        noDataElement={<NothingHere body={t('error.no-stores')} />}
         onRowClick={onRowClick}
       />
     </>
