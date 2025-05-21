@@ -42,7 +42,6 @@ export const OutboundLineEdit = ({
   const { info, warning } = useNotification();
   const [itemId, setItemId] = useState(openedWith?.itemId);
   const { data: prefs } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses,
     PreferenceKey.SortByVvmStatusThenExpiry
   );
 
@@ -60,7 +59,7 @@ export const OutboundLineEdit = ({
   const {
     draftLines,
     allocatedQuantity,
-    placeholderQuantity,
+    placeholderUnits: placeholderQuantity,
     alerts,
     isDirty,
     setAlerts,
@@ -167,8 +166,6 @@ export const OutboundLineEdit = ({
             allowPlaceholder={status === InvoiceNodeStatus.New}
             scannedBatch={asBarcodeOrNull(openedWith)?.batch}
             prefOptions={{
-              allocateVaccineItemsInDoses:
-                prefs?.manageVaccinesInDoses ?? false,
               sortByVvmStatus: prefs?.sortByVvmStatusThenExpiry ?? false,
             }}
           />

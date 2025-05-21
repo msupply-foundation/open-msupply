@@ -1,5 +1,5 @@
 import { DraftStockOutLineFragment } from '../../../api/operations.generated';
-import { AllocateIn } from './useAllocationContext';
+import { AllocateInOption, AllocateInType } from './useAllocationContext';
 import { canAutoAllocate, packsToQuantity, quantityToPacks } from './utils';
 
 /**
@@ -53,7 +53,7 @@ import { canAutoAllocate, packsToQuantity, quantityToPacks } from './utils';
 export const allocateQuantities = (
   draftLines: DraftStockOutLineFragment[],
   quantity: number,
-  { allocateIn }: { allocateIn: AllocateIn }
+  { allocateIn }: { allocateIn: AllocateInOption }
 ) => {
   // if invalid quantity entered, don't allocate
   if (quantity < 0 || Number.isNaN(quantity)) {
@@ -73,7 +73,11 @@ export const allocateQuantities = (
     numberOfPacks: 0,
   }));
 
-  const validBatches = newDraftLines.filter(canAutoAllocate);
+  const requiredPackSize =
+    allocateIn.type === AllocateInType.Packs ? allocateIn.packSize : undefined;
+  const validBatches = newDraftLines.filter(line =>
+    canAutoAllocate(line, requiredPackSize)
+  );
 
   let quantityToAllocate = quantity;
 
@@ -123,7 +127,7 @@ const allocateToBatches = ({
   validBatches: DraftStockOutLineFragment[];
   newDraftLines: DraftStockOutLineFragment[];
   quantityToAllocate: number;
-  allocateIn: AllocateIn;
+  allocateIn: AllocateInOption;
   roundUp?: boolean;
 }) => {
   validBatches.forEach(batch => {
@@ -136,9 +140,9 @@ const allocateToBatches = ({
 
     // helpers
     const toQuantity = (packs: number) =>
-      packsToQuantity(allocateIn, packs, draftLine);
+      packsToQuantity(allocateIn.type, packs, draftLine);
     const toPacks = (quantity: number) =>
-      quantityToPacks(allocateIn, quantity, draftLine);
+      quantityToPacks(allocateIn.type, quantity, draftLine);
 
     // TODO: Allow partial packs check would be needed before .floor() here
     const allocatablePacks = Math.floor(
@@ -178,7 +182,7 @@ const reduceBatchAllocation = ({
   quantityToAllocate: number;
   validBatches: DraftStockOutLineFragment[];
   newDraftLines: DraftStockOutLineFragment[];
-  allocateIn: AllocateIn;
+  allocateIn: AllocateInOption;
 }) => {
   validBatches
     .slice()
@@ -199,9 +203,9 @@ const reduceBatchAllocation = ({
 
       // helper closures
       const toQuantity = (packs: number) =>
-        packsToQuantity(allocateIn, packs, draftLine);
+        packsToQuantity(allocateIn.type, packs, draftLine);
       const toPacks = (quantity: number) =>
-        quantityToPacks(allocateIn, quantity, draftLine);
+        quantityToPacks(allocateIn.type, quantity, draftLine);
 
       // -----------------------
 

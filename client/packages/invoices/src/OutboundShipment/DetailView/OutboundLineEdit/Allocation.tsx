@@ -20,7 +20,7 @@ import { CurrencyRowFragment } from '@openmsupply-client/system';
 import {
   useAllocationContext,
   AllocationStrategy,
-  AllocateIn,
+  AllocateInType,
 } from './allocation/useAllocationContext';
 import { sumAvailableDoses, sumAvailableUnits } from './allocation/utils';
 
@@ -30,7 +30,6 @@ interface AllocationProps {
   allowPlaceholder: boolean;
   scannedBatch?: string;
   prefOptions: {
-    allocateVaccineItemsInDoses: boolean;
     sortByVvmStatus: boolean;
   };
 }
@@ -40,7 +39,7 @@ export const Allocation = ({
   invoiceId,
   allowPlaceholder,
   scannedBatch,
-  prefOptions: { allocateVaccineItemsInDoses, sortByVvmStatus },
+  prefOptions: { sortByVvmStatus },
 }: AllocationProps) => {
   const { initialise, item } = useAllocationContext(({ initialise, item }) => ({
     initialise,
@@ -64,7 +63,6 @@ export const Allocation = ({
           : AllocationStrategy.FEFO,
         allowPlaceholder,
         scannedBatch,
-        allocateVaccineItemsInDoses,
       });
     });
     // Expect dependencies to be stable
@@ -96,7 +94,7 @@ const AllocationInner = () => {
     const unitName = item?.unitName ?? t('label.unit');
     const pluralisedUnitName = getPlural(unitName, unitCount);
 
-    return allocateIn === AllocateIn.Doses
+    return allocateIn.type === AllocateInType.Doses
       ? t('label.available-quantity-doses', {
           doseCount: sumAvailableDoses(draftLines).toFixed(0),
           unitCount: unitCount,

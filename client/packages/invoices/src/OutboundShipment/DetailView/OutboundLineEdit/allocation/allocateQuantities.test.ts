@@ -1,7 +1,7 @@
 import { FnUtils } from '@openmsupply-client/common';
 import { allocateQuantities } from './allocateQuantities';
 import { DraftStockOutLineFragment } from '../../../api/operations.generated';
-import { AllocateIn } from './useAllocationContext';
+import { AllocateInType } from './useAllocationContext';
 
 describe('allocateQuantities - standard behaviour.', () => {
   it('allocates quantity to a row', () => {
@@ -14,7 +14,9 @@ describe('allocateQuantities - standard behaviour.', () => {
     };
 
     expect(
-      allocateQuantities(draftLines, 3, { allocateIn: AllocateIn.Units })
+      allocateQuantities(draftLines, 3, {
+        allocateIn: { type: AllocateInType.Units },
+      })
     ).toEqual(expected);
   });
 
@@ -28,7 +30,7 @@ describe('allocateQuantities - standard behaviour.', () => {
       { ...two, numberOfPacks: 5 },
     ];
     const allocated = allocateQuantities(draftLines, 15, {
-      allocateIn: AllocateIn.Units,
+      allocateIn: { type: AllocateInType.Units },
     });
 
     expect(allocated?.allocatedLines).toEqual(expected);
@@ -44,7 +46,7 @@ describe('allocateQuantities - standard behaviour.', () => {
 
     const expected = [{ ...lineOne, numberOfPacks: 1 }];
     const allocated = allocateQuantities(draftLines, 5, {
-      allocateIn: AllocateIn.Units,
+      allocateIn: { type: AllocateInType.Units },
     });
 
     expect(allocated?.allocatedLines).toEqual(expected);
@@ -57,7 +59,7 @@ describe('allocateQuantities - standard behaviour.', () => {
 
     const expected = [{ ...lineOne, numberOfPacks: 1 }];
     const allocated = allocateQuantities(draftLines, 5, {
-      allocateIn: AllocateIn.Units,
+      allocateIn: { type: AllocateInType.Units },
     });
 
     expect(allocated?.allocatedLines).toEqual(expected);
@@ -82,7 +84,7 @@ describe('Allocate quantities - with differing pack sizes', () => {
       { ...two, numberOfPacks: 1 },
     ];
     const allocated = allocateQuantities(draftLines, 3, {
-      allocateIn: AllocateIn.Units,
+      allocateIn: { type: AllocateInType.Units },
     });
 
     expect(allocated?.allocatedLines).toEqual(expected);
@@ -107,8 +109,9 @@ describe('Allocated quantities - skips invalid lines', () => {
     ];
 
     expect(
-      allocateQuantities(draftLines, 2, { allocateIn: AllocateIn.Units })
-        ?.allocatedLines
+      allocateQuantities(draftLines, 2, {
+        allocateIn: { type: AllocateInType.Units },
+      })?.allocatedLines
     ).toEqual([
       expiredLine,
       onHoldLine,
@@ -131,7 +134,9 @@ describe('Allocated quantities - coping with over-allocation', () => {
     const draftLines = [{ ...line1 }, { ...line2PackSize10 }, { ...line3 }];
 
     expect(
-      allocateQuantities(draftLines, 7, { allocateIn: AllocateIn.Units })
+      allocateQuantities(draftLines, 7, {
+        allocateIn: { type: AllocateInType.Units },
+      })
     ).toEqual({
       allocatedLines: [
         { ...line1, numberOfPacks: 5 },
@@ -148,7 +153,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
     const { allocatedLines, remainingQuantity } = allocateQuantities(
       draftLines,
       20,
-      { allocateIn: AllocateIn.Units }
+      { allocateIn: { type: AllocateInType.Units } }
     )!;
 
     expect(allocatedLines).toEqual([
@@ -176,7 +181,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
     const { allocatedLines, remainingQuantity } = allocateQuantities(
       draftLines,
       43,
-      { allocateIn: AllocateIn.Units }
+      { allocateIn: { type: AllocateInType.Units } }
     )!;
 
     expect(allocatedLines).toEqual([
@@ -191,7 +196,9 @@ describe('Allocated quantities - coping with over-allocation', () => {
     const draftLines = [{ ...line1 }, { ...line2PackSize10 }];
 
     expect(
-      allocateQuantities(draftLines, 47, { allocateIn: AllocateIn.Units })
+      allocateQuantities(draftLines, 47, {
+        allocateIn: { type: AllocateInType.Units },
+      })
     ).toEqual({
       allocatedLines: [
         { ...line1, numberOfPacks: 0 },
@@ -214,7 +221,7 @@ describe('Allocating in doses', () => {
     const doseQuantity = 20; // 5 units per pack * 2 doses per unit == 2 packs
 
     const result = allocateQuantities(draftLines, doseQuantity, {
-      allocateIn: AllocateIn.Doses,
+      allocateIn: { type: AllocateInType.Doses },
     });
 
     expect(result).toEqual({
@@ -245,7 +252,7 @@ describe('Allocating in doses', () => {
     const { allocatedLines, remainingQuantity } = allocateQuantities(
       draftLines,
       doseQuantity,
-      { allocateIn: AllocateIn.Doses }
+      { allocateIn: { type: AllocateInType.Doses } }
     )!;
 
     expect(allocatedLines).toEqual([
@@ -253,6 +260,23 @@ describe('Allocating in doses', () => {
       { ...lineTwo, numberOfPacks: 2 },
     ]);
     expect(remainingQuantity === 0).toBe(true);
+  });
+});
+
+describe('Allocating in packs', () => {
+  it('allocates only to correct pack size', () => {
+    const lineOne = createTestLine({ availablePacks: 10, packSize: 5 });
+    const lineTwo = createTestLine({ availablePacks: 10, packSize: 10 });
+    const draftLines = [lineOne, lineTwo];
+
+    const result = allocateQuantities(draftLines, 3, {
+      allocateIn: { type: AllocateInType.Packs, packSize: 10 },
+    });
+
+    expect(result).toEqual({
+      allocatedLines: [lineOne, { ...lineTwo, numberOfPacks: 3 }],
+      remainingQuantity: 0,
+    });
   });
 });
 
