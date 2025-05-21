@@ -7330,6 +7330,7 @@ export type ReasonOptionNode = {
 
 export enum ReasonOptionNodeType {
   NegativeInventoryAdjustment = 'NEGATIVE_INVENTORY_ADJUSTMENT',
+  OpenVialWastage = 'OPEN_VIAL_WASTAGE',
   PositiveInventoryAdjustment = 'POSITIVE_INVENTORY_ADJUSTMENT',
   RequisitionLineVariance = 'REQUISITION_LINE_VARIANCE',
   ReturnReason = 'RETURN_REASON',
@@ -8248,6 +8249,7 @@ export type StocktakeFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isLocked?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramStocktake?: InputMaybe<Scalars['Boolean']['input']>;
+  programId?: InputMaybe<EqualFilterStringInput>;
   status?: InputMaybe<EqualFilterStocktakeStatusInput>;
   stocktakeDate?: InputMaybe<DateFilterInput>;
   stocktakeNumber?: InputMaybe<EqualFilterBigNumberInput>;

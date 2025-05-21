@@ -11,6 +11,7 @@ query campaigns(
   $first: Int
   $offset: Int
   $filter: CampaignFilterInput
+  $storeId: String!
 ) {
   centralServer {
     campaign {
@@ -18,6 +19,7 @@ query campaigns(
         sort: $sort
         page: { first: $first, offset: $offset }
         filter: $filter
+        storeId: $storeId
       ) {
         __typename
         ... on CampaignConnector {
@@ -33,121 +35,57 @@ query campaigns(
   }
 }
 
-# mutation insertLocation($input: InsertLocationInput!, $storeId: String!) {
-#   insertLocation(input: $input, storeId: $storeId) {
-#     ... on InsertLocationError {
-#       __typename
-#       error {
-#         description
-#         ... on InternalError {
-#           __typename
-#           description
-#           fullError
-#         }
-#         ... on DatabaseError {
-#           __typename
-#           description
-#           fullError
-#         }
-#         ... on RecordAlreadyExist {
-#           __typename
-#           description
-#         }
-#         ... on UniqueValueViolation {
-#           __typename
-#           description
-#           field
-#         }
-#       }
-#     }
-#     ...CampaignRow
-#   }
-# }
-
-# mutation updateLocation($input: UpdateLocationInput!, $storeId: String!) {
-#   updateLocation(input: $input, storeId: $storeId) {
-#     ... on UpdateLocationError {
-#       __typename
-#       error {
-#         description
-#         ... on InternalError {
-#           __typename
-#           description
-#           fullError
-#         }
-#         ... on DatabaseError {
-#           __typename
-#           description
-#           fullError
-#         }
-#         ... on RecordBelongsToAnotherStore {
-#           __typename
-#           description
-#         }
-#         ... on RecordNotFound {
-#           __typename
-#           description
-#         }
-#         ... on UniqueValueViolation {
-#           __typename
-#           description
-#           field
-#         }
-#       }
-#     }
-#     ...CampaignRow
-#   }
-# }
-
-# mutation deleteLocation($storeId: String!, $input: DeleteLocationInput!) {
-#   deleteLocation(storeId: $storeId, input: $input) {
-#     ... on DeleteLocationError {
-#       __typename
-#       error {
-#         description
-#         ... on RecordNotFound {
-#           __typename
-#           description
-#         }
-#         ... on DatabaseError {
-#           __typename
-#           description
-#           fullError
-#         }
-#         ... on RecordBelongsToAnotherStore {
-#           __typename
-#           description
-#         }
-#         ... on LocationInUse {
-#           __typename
-#           description
-#           stockLines {
-#             ... on StockLineConnector {
-#               __typename
-#               nodes {
-#                 __typename
-#                 id
-#                 itemId
-#               }
-#               totalCount
-#             }
-#           }
-#           invoiceLines {
-#             ... on InvoiceLineConnector {
-#               __typename
-#               nodes {
-#                 __typename
-#                 id
-#               }
-#             }
-#             totalCount
-#           }
-#         }
-#       }
-#     }
-#     ... on DeleteResponse {
-#       __typename
-#       id
-#     }
-#   }
-# }
+mutation upsertCampaign($input: UpsertCampaignInput!) {
+  centralServer {
+    campaign {
+      upsertCampaign(input: $input) {
+        ... on UpsertCampaignError {
+          __typename
+          error {
+            description
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+            ... on InternalError {
+              __typename
+              description
+              fullError
+            }
+            ... on UniqueValueViolation {
+              __typename
+              description
+              field
+            }
+          }
+        }
+        ... on CampaignNode {
+          ...CampaignRow
+        }
+      }
+    }
+  }
+}
+mutation deleteCampaign($id: String!) {
+  centralServer {
+    campaign {
+      deleteCampaign(input: { id: $id }) {
+        ... on DeleteCampaignError {
+          __typename
+          error {
+            description
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+          }
+        }
+        ... on DeleteCampaignSuccess {
+          id
+        }
+      }
+    }
+  }
+}

@@ -1,3 +1,3 @@
 export * from './hooks';
-export { LocationRowFragment } from './operations.generated';
-export { LOCATION } from './hooks/keys';
+export { CampaignRowFragment } from './operations.generated';
+export { CAMPAIGN } from './hooks/keys';

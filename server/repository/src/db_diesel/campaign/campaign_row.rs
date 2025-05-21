@@ -1,10 +1,10 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType, 
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
     StorageConnection, Upsert,
 };
+use chrono::NaiveDate;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use chrono::NaiveDate;
 
 table! {
     campaign(id) {
@@ -12,6 +12,7 @@ table! {
         name -> Text,
         start_date -> Nullable<Date>,
         end_date -> Nullable<Date>,
+        deleted_datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -25,6 +26,7 @@ pub struct CampaignRow {
     pub name: String,
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
+    pub deleted_datetime: Option<chrono::NaiveDateTime>,
 }
 
 pub struct CampaignRowRepository<'a> {
@@ -73,10 +75,7 @@ impl<'a> CampaignRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<CampaignRow>, RepositoryError> {
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<CampaignRow>, RepositoryError> {
         let result = campaign::table
             .filter(campaign::id.eq_any(ids))
             .load(self.connection.lock().connection())?;
@@ -84,8 +83,12 @@ impl<'a> CampaignRowRepository<'a> {
     }
 
     pub fn delete(&self, campaign_id: &str) -> Result<i64, RepositoryError> {
-        diesel::delete(campaign::table.filter(campaign::id.eq(campaign_id)))
+        diesel::update(campaign::table.filter(campaign::id.eq(campaign_id)))
+            .set(campaign::deleted_datetime.eq(chrono::Utc::now().naive_utc()))
             .execute(self.connection.lock().connection())?;
+
+        // diesel::delete(campaign::table.filter(campaign::id.eq(campaign_id)))
+        //     .execute(self.connection.lock().connection())?;
 
         self.insert_changelog(campaign_id.to_owned(), RowActionType::Delete)
     }

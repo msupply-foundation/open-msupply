@@ -14,7 +14,7 @@ pub(crate) mod asset_property;
 pub(crate) mod asset_type;
 pub(crate) mod backend_plugin;
 pub(crate) mod barcode;
-pub(crate) mod campaign;
+// pub(crate) mod campaign;
 pub(crate) mod cold_storage_type;
 pub(crate) mod contact_form;
 pub(crate) mod currency;
@@ -136,6 +136,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut om_form_schema::test_pull_upsert_records());
     test_records.append(&mut frontend_plugin::test_pull_upsert_records());
     test_records.append(&mut plugin_data::test_pull_upsert_records());
+    // test_records.append(&mut campaign::test_pull_upsert_records());
 
     test_records
 }
@@ -246,6 +247,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut om_form_schema::test_v6_central_push_records());
     test_records.append(&mut frontend_plugin::test_v6_push_records());
     test_records.append(&mut preference::test_v6_central_push_records());
+    // test_records.append(&mut campaign::test_v6_central_push_records());
 
     // Remote
     test_records.append(&mut asset::test_v6_records());

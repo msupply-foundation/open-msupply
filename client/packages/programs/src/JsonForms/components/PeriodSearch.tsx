@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { z } from 'zod';
 import {
@@ -63,19 +63,29 @@ const UIComponent = (props: ControlProps) => {
     ? (data.pages[data.pages.length - 1]?.pageNumber ?? 0)
     : 0;
 
-  const onChange = async (period: PeriodFragment) => {
+  const onChange = async (period: PeriodFragment | null) => {
     setPeriod(period);
-
-    if (path === 'periodId') {
-      handleChange(path, period.id);
+    if (period === null) {
+      handleChange(path, undefined);
+      handleChange('before', undefined);
     } else {
-      // date range so we can use it if no period id is saved
-      handleChange(path, new Date(period.startDate).toISOString());
-      const endOfDay = new Date(period.endDate);
-      endOfDay.setHours(24, 59, 59, 999);
-      handleChange('before', endOfDay.toISOString());
+      if (path === 'periodId') {
+        handleChange(path, period.id);
+      } else {
+        // date range so we can use it if no period id is saved
+        handleChange(path, new Date(period.startDate).toISOString());
+        const endOfDay = new Date(period.endDate);
+        endOfDay.setHours(24, 59, 59, 999);
+        handleChange('before', endOfDay.toISOString());
+      }
     }
   };
+
+  useEffect(() => {
+    if (options?.findByProgram) {
+      onChange(null);
+    }
+  }, [programId]);
 
   return (
     <DetailInputWithLabelRow
@@ -93,10 +103,19 @@ const UIComponent = (props: ControlProps) => {
           loading={isFetching}
           optionKey="name"
           onChange={(_, value) => value && onChange(value)}
+          onInputChange={(
+            _event: React.SyntheticEvent<Element, Event>,
+            _value: string,
+            reason: string
+          ) => {
+            if (reason === 'clear') {
+              onChange(null);
+            }
+          }}
           getOptionLabel={option => option.name}
           value={period ? { label: period.name ?? '', ...period } : null}
           isOptionEqualToValue={(option, value) => option.id === value.id}
-          clearable={false}
+          clearable={props.uischema.options?.['clearable'] ?? false}
           disabled={options?.findByProgram ? !programId : false}
           onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
           paginationDebounce={300}

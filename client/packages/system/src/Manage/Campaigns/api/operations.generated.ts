@@ -18,6 +18,7 @@ export type CampaignsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   filter?: Types.InputMaybe<Types.CampaignFilterInput>;
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 export type CampaignsQuery = {
@@ -41,6 +42,73 @@ export type CampaignsQuery = {
   };
 };
 
+export type UpsertCampaignMutationVariables = Types.Exact<{
+  input: Types.UpsertCampaignInput;
+}>;
+
+export type UpsertCampaignMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    campaign: {
+      __typename: 'CampaignMutations';
+      upsertCampaign:
+        | {
+            __typename: 'CampaignNode';
+            id: string;
+            name: string;
+            startDate?: string | null;
+            endDate?: string | null;
+          }
+        | {
+            __typename: 'UpsertCampaignError';
+            error:
+              | {
+                  __typename: 'DatabaseError';
+                  description: string;
+                  fullError: string;
+                }
+              | {
+                  __typename: 'InternalError';
+                  description: string;
+                  fullError: string;
+                }
+              | {
+                  __typename: 'UniqueValueViolation';
+                  description: string;
+                  field: Types.UniqueValueKey;
+                };
+          };
+    };
+  };
+};
+
+export type DeleteCampaignMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+}>;
+
+export type DeleteCampaignMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    campaign: {
+      __typename: 'CampaignMutations';
+      deleteCampaign:
+        | {
+            __typename: 'DeleteCampaignError';
+            error:
+              | {
+                  __typename: 'DatabaseError';
+                  description: string;
+                  fullError: string;
+                }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteCampaignSuccess'; id: string };
+    };
+  };
+};
+
 export const CampaignRowFragmentDoc = gql`
   fragment CampaignRow on CampaignNode {
     __typename
@@ -56,6 +124,7 @@ export const CampaignsDocument = gql`
     $first: Int
     $offset: Int
     $filter: CampaignFilterInput
+    $storeId: String!
   ) {
     centralServer {
       campaign {
@@ -63,6 +132,7 @@ export const CampaignsDocument = gql`
           sort: $sort
           page: { first: $first, offset: $offset }
           filter: $filter
+          storeId: $storeId
         ) {
           __typename
           ... on CampaignConnector {
@@ -78,6 +148,65 @@ export const CampaignsDocument = gql`
     }
   }
   ${CampaignRowFragmentDoc}
+`;
+export const UpsertCampaignDocument = gql`
+  mutation upsertCampaign($input: UpsertCampaignInput!) {
+    centralServer {
+      campaign {
+        upsertCampaign(input: $input) {
+          ... on UpsertCampaignError {
+            __typename
+            error {
+              description
+              ... on DatabaseError {
+                __typename
+                description
+                fullError
+              }
+              ... on InternalError {
+                __typename
+                description
+                fullError
+              }
+              ... on UniqueValueViolation {
+                __typename
+                description
+                field
+              }
+            }
+          }
+          ... on CampaignNode {
+            ...CampaignRow
+          }
+        }
+      }
+    }
+  }
+  ${CampaignRowFragmentDoc}
+`;
+export const DeleteCampaignDocument = gql`
+  mutation deleteCampaign($id: String!) {
+    centralServer {
+      campaign {
+        deleteCampaign(input: { id: $id }) {
+          ... on DeleteCampaignError {
+            __typename
+            error {
+              description
+              ... on DatabaseError {
+                __typename
+                description
+                fullError
+              }
+            }
+          }
+          ... on DeleteCampaignSuccess {
+            id
+          }
+        }
+      }
+    }
+  }
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -100,7 +229,7 @@ export function getSdk(
 ) {
   return {
     campaigns(
-      variables?: CampaignsQueryVariables,
+      variables: CampaignsQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<CampaignsQuery> {
       return withWrapper(
@@ -111,6 +240,38 @@ export function getSdk(
           }),
         'campaigns',
         'query',
+        variables
+      );
+    },
+    upsertCampaign(
+      variables: UpsertCampaignMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<UpsertCampaignMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpsertCampaignMutation>(
+            UpsertCampaignDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'upsertCampaign',
+        'mutation',
+        variables
+      );
+    },
+    deleteCampaign(
+      variables: DeleteCampaignMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<DeleteCampaignMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteCampaignMutation>(
+            DeleteCampaignDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'deleteCampaign',
+        'mutation',
         variables
       );
     },

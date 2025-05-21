@@ -27,7 +27,9 @@ impl SyncTranslation for CampaignTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<CampaignRow>(&sync_record.data)?))
+        Ok(PullTranslateResult::upsert(serde_json::from_str::<
+            CampaignRow,
+        >(&sync_record.data)?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -80,7 +82,6 @@ impl SyncTranslation for CampaignTranslation {
 mod tests {
     use super::*;
     use repository::{mock::MockDataInserts, test_db::setup_all};
-    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_campaign_pull_translation() {
@@ -93,6 +94,7 @@ mod tests {
             name: "Test Campaign".to_string(),
             start_date: None,
             end_date: None,
+            deleted_datetime: None,
         };
 
         let sync_buffer_row = SyncBufferRow {

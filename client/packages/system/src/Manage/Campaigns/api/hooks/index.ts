@@ -1,3 +1,2 @@
-export * from './useLocationList';
-export * from './useLocation';
-export { LOCATION } from './keys';
+export * from './useCampaigns';
+export { CAMPAIGN } from './keys';

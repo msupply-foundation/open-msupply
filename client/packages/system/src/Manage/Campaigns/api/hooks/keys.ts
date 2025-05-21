@@ -1,1 +1,1 @@
-export const LOCATION = 'location';
+export const CAMPAIGN = 'campaign';
