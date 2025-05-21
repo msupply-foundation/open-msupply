@@ -206,7 +206,7 @@ export const useResponseColumns = () => {
   columnDefinitions.push(
     {
       key: 'suggestedQuantity',
-      label: 'label.suggested-quantity',
+      label: 'label.suggested',
       width: 150,
       align: ColumnAlign.Right,
       sortable: false,
