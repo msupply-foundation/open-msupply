@@ -53,8 +53,7 @@ export const useCampaigns = (queryParams?: ListParams) => {
   } = useUpsertCampaign();
 
   const upsert = async () => {
-    await upsertMutation(draft);
-    // To-DO: handle error
+    return await upsertMutation(draft);
   };
 
   // DELETE
@@ -118,7 +117,8 @@ const useUpsertCampaign = () => {
       startDate,
       endDate,
     };
-    await campaignApi.upsertCampaign({ input });
+    const result = await campaignApi.upsertCampaign({ input });
+    return result?.centralServer?.campaign?.upsertCampaign;
   };
 
   return useMutation({

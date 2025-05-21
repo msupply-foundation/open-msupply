@@ -13,6 +13,7 @@ import {
   GenericColumnKey,
   useTableStore,
   useDeleteConfirmation,
+  useNotification,
 } from '@openmsupply-client/common';
 import { Footer } from './Footer';
 import { CampaignEditModal } from './CampaignEditModal';
@@ -41,12 +42,24 @@ const CampaignsComponent = () => {
 
   const { isOpen, onClose, onOpen } = useEditModal<any>();
 
+  const { error, success } = useNotification();
+
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
       .map(selectedId => data?.nodes?.find(({ id }) => selectedId === id))
       .filter(Boolean),
   }));
+
+  const save = async () => {
+    const result = await upsert();
+    if (result.__typename === 'CampaignNode')
+      success(t('messages.campaign-saved'))();
+    else
+      error(
+        `${t('messages.error-saving-campaign')} — ${result?.error?.description ?? ''}`
+      )();
+  };
 
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
@@ -106,7 +119,7 @@ const CampaignsComponent = () => {
           isOpen={isOpen}
           campaign={draft}
           onClose={onClose}
-          upsert={upsert}
+          upsert={save}
           updateDraft={updateDraft}
         />
       )}
