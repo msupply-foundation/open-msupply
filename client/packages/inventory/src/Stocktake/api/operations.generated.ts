@@ -50,6 +50,7 @@ export type StocktakeLineFragment = {
     unitName?: string | null;
     isVaccine: boolean;
     doses: number;
+    defaultPackSize: number;
   };
   itemVariant?: {
     __typename: 'ItemVariantNode';
@@ -120,6 +121,7 @@ export type StocktakeFragment = {
         unitName?: string | null;
         isVaccine: boolean;
         doses: number;
+        defaultPackSize: number;
       };
       itemVariant?: {
         __typename: 'ItemVariantNode';
@@ -231,6 +233,7 @@ export type StocktakeQuery = {
               unitName?: string | null;
               isVaccine: boolean;
               doses: number;
+              defaultPackSize: number;
             };
             itemVariant?: {
               __typename: 'ItemVariantNode';
@@ -313,6 +316,7 @@ export type StocktakeByNumberQuery = {
               unitName?: string | null;
               isVaccine: boolean;
               doses: number;
+              defaultPackSize: number;
             };
             itemVariant?: {
               __typename: 'ItemVariantNode';
@@ -379,6 +383,7 @@ export type StocktakeLinesQuery = {
         unitName?: string | null;
         isVaccine: boolean;
         doses: number;
+        defaultPackSize: number;
       };
       itemVariant?: {
         __typename: 'ItemVariantNode';
@@ -663,6 +668,7 @@ export const StocktakeLineFragmentDoc = gql`
       unitName
       isVaccine
       doses
+      defaultPackSize
     }
     itemVariant {
       id

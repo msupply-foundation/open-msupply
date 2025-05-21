@@ -198,6 +198,8 @@ export const BatchTable = ({
         cellProps: {
           getIsDisabled: (rowData: DraftStocktakeLine) => !!rowData?.stockLine,
         },
+        accessor: ({ rowData }) =>
+          rowData.packSize ?? rowData.item?.defaultPackSize,
       }),
       {
         key: 'snapshotNumberOfPacks',
