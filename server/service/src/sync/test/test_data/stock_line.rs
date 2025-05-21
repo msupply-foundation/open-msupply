@@ -101,6 +101,7 @@ fn item_line_1_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: Some("test_donor_id".to_string()),
             vvm_status_id: None,
+            campaign_id: None,
         }),
     }
 }
@@ -198,6 +199,7 @@ fn item_line_2_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: None,
             vvm_status_id: None,
+            campaign_id: None,
         }),
     }
 }
