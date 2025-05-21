@@ -3,6 +3,7 @@ use crate::sync::{
     translations::{PullTranslateResult, SyncTranslation},
 };
 
+use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, MessageRow, MessageRowRepository, MessageRowStatus,
@@ -24,7 +25,7 @@ pub struct LegacyMessageRow {
         deserialize_with = "empty_str_as_option_string"
     )]
     pub from_store_id: Option<String>,
-    pub body: String,
+    pub body: serde_json::Value,
     #[serde(rename = "createdDate")]
     pub created_date: NaiveDate,
     #[serde(rename = "createdTime", deserialize_with = "naive_time")]
@@ -79,6 +80,8 @@ impl SyncTranslation for MessageTranslation {
             LegacyMessageStatus::Error => MessageRowStatus::Error,
         };
 
+        let body = serde_json::to_string(&body).context("Failed to serialize message body")?;
+
         let result = MessageRow {
             id,
             to_store_id,
@@ -119,6 +122,9 @@ impl SyncTranslation for MessageTranslation {
 
         let created_date = created_datetime.date();
         let created_time = created_datetime.time();
+
+        // "unwrap_or" here would result in a string version of body json
+        let body = serde_json::from_str(&body).unwrap_or(serde_json::json!(body));
 
         let legacy_row = LegacyMessageRow {
             id: id.clone(),

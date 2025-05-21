@@ -11,6 +11,9 @@ import type { ProcessorOutput } from './ProcessorOutput';
 import type { StorePreferenceRow } from './StorePreferenceRow';
 import type { TransformRequestRequisitionLineInput } from './TransformRequestRequisitionLineInput';
 import type { TransformRequestRequisitionLineOutput } from './TransformRequestRequisitionLineOutput';
+import type { UseGraphqlInput } from './UseGraphqlInput';
+import type { UseRepositoryInput } from './UseRepositoryInput';
+import type { UseRepositoryOutput } from './UseRepositoryOutput';
 
 export type PluginTypes = {
   average_monthly_consumption: Function<
@@ -25,4 +28,6 @@ export type PluginTypes = {
   processor: Function<ProcessorInput, ProcessorOutput>;
   get_store_preferences: StorePreferenceRow;
   get_plugin_data: Function<PluginDataFilter, Array<PluginDataRow>>;
+  use_repository: Function<UseRepositoryInput, UseRepositoryOutput>;
+  use_graphql: Function<UseGraphqlInput, JsonValue>;
 };

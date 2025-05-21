@@ -11,7 +11,7 @@ struct Args {
     config_args: configuration::ConfigArgs,
 }
 
-#[actix_web::main]
+#[tokio::main(flavor = "multi_thread")]
 async fn main() -> std::io::Result<()> {
     let args = Args::parse();
 

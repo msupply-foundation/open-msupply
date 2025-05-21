@@ -62,6 +62,8 @@ where
     methods::sql_type::bind_method(context)?;
     methods::get_plugin_data::bind_method(context)?;
     methods::get_store_preferences::bind_method(context)?;
+    methods::use_repository::bind_method(context)?;
+    methods::use_graphql::bind_method(context)?;
 
     let callable = find_callable_in_exports(context, module, export_location)?;
 
