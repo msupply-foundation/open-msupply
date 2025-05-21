@@ -32,4 +32,5 @@ export const getCommentPopoverColumn = <T extends RecordWithId>(
       </PaperHoverPopover>
     ) : null;
   },
+  defaultHideOnMobile: true,
 });
