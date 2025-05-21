@@ -30,7 +30,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             display_population_based_forecasting,
 
             // Store preferences
-            display_vaccines_in_doses,
+            manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
@@ -49,7 +49,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
         // Store preferences
-        append_if_type(display_vaccines_in_doses, &mut prefs, &input)?;
+        append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
         append_if_type(manage_vvm_status_for_stock, &mut prefs, &input)?;
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
         append_if_type(use_simplified_mobile_ui, &mut prefs, &input)?;

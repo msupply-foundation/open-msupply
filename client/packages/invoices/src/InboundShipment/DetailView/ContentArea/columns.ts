@@ -51,7 +51,7 @@ export const useInboundShipmentColumns = ({
 }: InboundShipmentColumnsProps) => {
   const t = useTranslation();
   const { data: preferences } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses,
+    PreferenceKey.ManageVaccinesInDoses,
     PreferenceKey.AllowTrackingOfStockByDonor
   );
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
@@ -200,7 +200,7 @@ export const useInboundShipmentColumns = ({
     ],
   ];
 
-  if (preferences?.displayVaccinesInDoses) {
+  if (preferences?.manageVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));
   }
 
@@ -249,7 +249,7 @@ export const useInboundShipmentColumns = ({
     ]
   );
 
-  if (preferences?.displayVaccinesInDoses) {
+  if (preferences?.manageVaccinesInDoses) {
     columns.push(getDosesQuantityColumn());
   }
 

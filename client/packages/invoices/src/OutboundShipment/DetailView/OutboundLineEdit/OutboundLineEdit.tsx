@@ -42,7 +42,7 @@ export const OutboundLineEdit = ({
   const { info, warning } = useNotification();
   const [itemId, setItemId] = useState(openedWith?.itemId);
   const { data: prefs } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses,
+    PreferenceKey.ManageVaccinesInDoses,
     PreferenceKey.SortByVvmStatusThenExpiry
   );
 
@@ -168,7 +168,7 @@ export const OutboundLineEdit = ({
             scannedBatch={asBarcodeOrNull(openedWith)?.batch}
             prefOptions={{
               allocateVaccineItemsInDoses:
-                prefs?.displayVaccinesInDoses ?? false,
+                prefs?.manageVaccinesInDoses ?? false,
               sortByVvmStatus: prefs?.sortByVvmStatusThenExpiry ?? false,
             }}
           />
