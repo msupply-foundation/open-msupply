@@ -127,17 +127,21 @@ mod test {
         mock::{
             mock_customer_return_a_invoice_line_a, mock_customer_return_a_invoice_line_b,
             mock_item_a, mock_item_b, mock_name_store_b, mock_store_a, mock_store_b,
-            mock_supplier_return_a_invoice_line_a, mock_user_account_a, MockData, MockDataInserts,
+            mock_supplier_return_a_invoice_line_a, mock_transferred_inbound_shipment_a,
+            mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a, mock_vvm_status_b,
+            MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
-        InvoiceType, StorePreferenceRow, StorePreferenceRowRepository,
+        vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
+        EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceStatus, InvoiceType, StorePreferenceRow, StorePreferenceRowRepository,
     };
     use util::{inline_edit, inline_init};
 
     use crate::{
         invoice_line::stock_in_line::{
-            update::UpdateStockInLine, update_stock_in_line, UpdateStockInLineError as ServiceError,
+            insert_stock_in_line, update::UpdateStockInLine, update_stock_in_line,
+            InsertStockInLine, StockInType, UpdateStockInLineError as ServiceError,
         },
         service_provider::ServiceProvider,
         NullableUpdate,
@@ -391,5 +395,81 @@ mod test {
                 u
             })
         );
+
+        // Check vvm status id is updated on an inbound shipment with status: Delivered
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "delivered_invoice_line_with_vvm_status".to_string(),
+                invoice_id: mock_transferred_inbound_shipment_a().id,
+                item_id: mock_vaccine_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                r#type: StockInType::InboundShipment,
+                vvm_status_id: Some(mock_vvm_status_a().id),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let vvm_log_filter = VVMStatusLogFilter::new().invoice_line_id(EqualFilter::equal_to(
+            "delivered_invoice_line_with_vvm_status",
+        ));
+
+        let vvm_status_logs = VVMStatusLogRepository::new(&connection)
+            .query_by_filter(vvm_log_filter.clone())
+            .unwrap();
+
+        let latest_log = vvm_status_logs.first().map(|log| log.status_id.clone());
+
+        assert_eq!(vvm_status_logs.len(), 1);
+        assert_eq!(latest_log, Some(mock_vvm_status_a().id));
+
+        // Update the invoice line with a new vvm status
+        let result = update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: "delivered_invoice_line_with_vvm_status".to_string(),
+                vvm_status_id: Some(mock_vvm_status_b().id),
+                r#type: StockInType::InboundShipment,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            result.invoice_line_row.vvm_status_id,
+            Some(mock_vvm_status_b().id),
+        );
+
+        let vvm_status_logs = VVMStatusLogRepository::new(&connection)
+            .query_by_filter(vvm_log_filter.clone())
+            .unwrap();
+
+        let vvm_log = vvm_status_logs.first().map(|log| log.status_id.clone());
+
+        // existing log should be updated
+        assert_eq!(vvm_status_logs.len(), 1);
+        assert_eq!(vvm_log, Some(mock_vvm_status_b().id));
+
+        // Clear the vvm_status_id from invoice line
+        let result = update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: "delivered_invoice_line_with_vvm_status".to_string(),
+                vvm_status_id: None,
+                r#type: StockInType::InboundShipment,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        assert_eq!(result.invoice_line_row.vvm_status_id, None);
+
+        let vvm_status_logs = VVMStatusLogRepository::new(&connection)
+            .query_by_filter(vvm_log_filter.clone())
+            .unwrap();
+
+        // existing log should be deleted
+        assert_eq!(vvm_status_logs.len(), 0);
     }
 }
