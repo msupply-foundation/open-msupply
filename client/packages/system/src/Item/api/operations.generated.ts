@@ -43,6 +43,7 @@ export type StockLineFragment = {
     unitName?: string | null;
     doses: number;
     isVaccine: boolean;
+    defaultPackSize: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -364,6 +365,7 @@ export type ItemFragment = {
         unitName?: string | null;
         doses: number;
         isVaccine: boolean;
+        defaultPackSize: number;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -551,6 +553,7 @@ export type ItemsWithStockLinesQuery = {
             unitName?: string | null;
             doses: number;
             isVaccine: boolean;
+            defaultPackSize: number;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -741,6 +744,8 @@ export type ItemsWithStatsFragment = {
   name: string;
   unitName?: string | null;
   defaultPackSize: number;
+  isVaccine: boolean;
+  doses: number;
   availableStockOnHand: number;
   stats: {
     __typename: 'ItemStatsNode';
@@ -774,6 +779,8 @@ export type ItemsWithStatsQuery = {
       name: string;
       unitName?: string | null;
       defaultPackSize: number;
+      isVaccine: boolean;
+      doses: number;
       availableStockOnHand: number;
       stats: {
         __typename: 'ItemStatsNode';
@@ -860,6 +867,7 @@ export type ItemByIdQuery = {
             unitName?: string | null;
             doses: number;
             isVaccine: boolean;
+            defaultPackSize: number;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -1054,6 +1062,7 @@ export type GetHistoricalStockLinesQuery = {
         unitName?: string | null;
         doses: number;
         isVaccine: boolean;
+        defaultPackSize: number;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -1446,6 +1455,7 @@ export const StockLineFragmentDoc = gql`
       name
       code
       unitName
+      defaultPackSize
       doses
       isVaccine
       itemDirections {
@@ -1606,6 +1616,8 @@ export const ItemsWithStatsFragmentDoc = gql`
     name
     unitName
     defaultPackSize
+    isVaccine
+    doses
     availableStockOnHand(storeId: $storeId)
     stats(storeId: $storeId) {
       __typename

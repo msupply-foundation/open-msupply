@@ -166,9 +166,9 @@ mod test {
     use repository::{
         mock::{
             mock_finalised_request_requisition_line, mock_new_response_program_requisition,
-            mock_new_response_requisition_test, mock_option, mock_response_program_requisition,
-            mock_sent_request_requisition_line, mock_store_a, mock_store_b, mock_user_account_b,
-            MockDataInserts,
+            mock_new_response_requisition_test, mock_reason_option,
+            mock_response_program_requisition, mock_sent_request_requisition_line, mock_store_a,
+            mock_store_b, mock_user_account_b, MockDataInserts,
         },
         test_db::setup_all,
         RequisitionLineRowRepository, RequisitionRowRepository,
@@ -325,7 +325,7 @@ mod test {
                     comment: Some("comment".to_string()),
                     requested_quantity: Some(99.0),
                     stock_on_hand: Some(99.0),
-                    option_id: Some(mock_option().id),
+                    option_id: Some(mock_reason_option().id),
                     ..Default::default()
                 },
             )

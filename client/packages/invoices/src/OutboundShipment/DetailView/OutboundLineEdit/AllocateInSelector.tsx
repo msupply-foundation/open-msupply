@@ -16,7 +16,7 @@ export const AllocateInSelector = () => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
 
-  const { data: prefs } = usePreference(PreferenceKey.DisplayVaccinesInDoses);
+  const { data: prefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
 
   const { allocateIn, availablePackSizes, setAllocateIn, item } =
     useAllocationContext(({ allocateIn, draftLines, item, setAllocateIn }) => ({
@@ -49,7 +49,7 @@ export const AllocateInSelector = () => {
   ];
 
   // If can dispense in doses, give that option at the top of the list (smallest unit)
-  if (item?.isVaccine && prefs?.displayVaccinesInDoses) {
+  if (item?.isVaccine && prefs?.manageVaccinesInDoses) {
     options.unshift({
       label: t('label.doses'),
       value: AllocateInType.Doses,

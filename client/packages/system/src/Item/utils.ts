@@ -6,6 +6,7 @@ import {
 } from './api';
 import { styled } from '@common/styles';
 import { ItemFilterInput } from '@common/types';
+import { ItemWithStatsFragment } from '..';
 
 export const toItemRow = (line: ItemLike): ItemRowFragment => ({
   __typename: 'ItemNode',
@@ -49,3 +50,13 @@ export const ItemOption = styled('li')(({ theme }) => ({
   color: theme.palette.gray.main,
   backgroundColor: theme.palette.background.toolbar,
 }));
+
+export interface StockItemSearchInputWithStatsProps
+  extends GenericStockItemSearchInputProps {
+  onChange: (item: ItemWithStatsFragment | null) => void;
+  extraFilter?: (item: ItemWithStatsFragment) => boolean;
+}
+
+export const itemFilterOptions = {
+  stringify: (item: ItemWithStatsFragment) => `${item.code} ${item.name}`,
+};
