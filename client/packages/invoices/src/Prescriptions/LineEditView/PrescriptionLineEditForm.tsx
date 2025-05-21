@@ -28,30 +28,22 @@ import { AccordionPanelSection } from './PanelSection';
 import { getPrescriptionDirections } from './getPrescriptionDirections';
 import { useAbbreviations } from '../api/hooks/useAbbreviations';
 import { AllocationSection } from './AllocationSection';
+import { AutoAllocationAlerts } from '../../Allocation/AutoAllocationAlerts';
 
 interface PrescriptionLineEditFormProps {
   allocatedUnits: number;
   availableUnits: number;
   item: ItemRowWithDirectionsFragment | null;
   onChangeItem: (newItem: ItemRowWithDirectionsFragment | null) => void;
-  onChangeQuantity: (
-    quantity: number,
-    packSize: number | null,
-    isAutoAllocated: boolean,
-    prescribedQuantity: number | null
-  ) => DraftPrescriptionLine[] | undefined;
   packSizeController: PackSizeController;
   disabled: boolean;
   isNew: boolean;
-  canAutoAllocate: boolean;
-  isAutoAllocated: boolean;
   updateNotes: (note: string) => void;
   draftPrescriptionLines: DraftPrescriptionLine[];
   showZeroQuantityConfirmation: boolean;
   hasOnHold: boolean;
   hasExpired: boolean;
   isLoading: boolean;
-  updateQuantity: (batchId: string, updateQuantity: number) => void;
   programId?: string;
   invoiceId: string;
 }
@@ -59,16 +51,15 @@ interface PrescriptionLineEditFormProps {
 export const PrescriptionLineEditForm: React.FC<
   PrescriptionLineEditFormProps
 > = ({
-  allocatedUnits,
+  // allocatedUnits,
   onChangeItem,
   item,
-  packSizeController,
+  // packSizeController,
   disabled,
   isNew,
   updateNotes,
   draftPrescriptionLines,
-  showZeroQuantityConfirmation,
-  isAutoAllocated,
+  // showZeroQuantityConfirmation,
   programId,
   invoiceId,
 }) => {
@@ -80,9 +71,7 @@ export const PrescriptionLineEditForm: React.FC<
     PreferenceKey.SortByVvmStatusThenExpiry
   );
 
-  const [issueUnitQuantity, setIssueUnitQuantity] = useState(0);
-
-  const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
+  // const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
   const [defaultDirection, setDefaultDirection] = useState<string>('');
   const [abbreviation, setAbbreviation] = useState<string>('');
 
@@ -93,22 +82,23 @@ export const PrescriptionLineEditForm: React.FC<
   const note = prescriptionLineWithNote?.note ?? '';
 
   useEffect(() => {
-    const newIssueQuantity = NumUtils.round(
-      allocatedUnits /
-        Math.abs(Number(packSizeController.selected?.value || 1)),
-      2
-    );
-    if (newIssueQuantity !== issueUnitQuantity)
-      setIssueUnitQuantity(newIssueQuantity);
-    setAllocationAlerts([]);
+    // TODO: CHeck this is manged by allocation context
+    // const newIssueQuantity = NumUtils.round(
+    //   allocatedUnits /
+    //     Math.abs(Number(packSizeController.selected?.value || 1)),
+    //   2
+    // );
+    // if (newIssueQuantity !== issueUnitQuantity)
+    //   setIssueUnitQuantity(newIssueQuantity);
+    // setAllocationAlerts([]);
 
     setAbbreviation('');
     setDefaultDirection('');
   }, [item?.id]);
 
-  useEffect(() => {
-    setIssueUnitQuantity(allocatedUnits);
-  }, [allocatedUnits]);
+  // useEffect(() => {
+  //   setIssueUnitQuantity(allocatedUnits);
+  // }, [allocatedUnits]);
 
   const key = item?.id ?? 'new';
 
@@ -165,11 +155,13 @@ export const PrescriptionLineEditForm: React.FC<
       {item && (
         <>
           {!disabled && (
-            <StockOutAlerts
-              allocationAlerts={allocationAlerts}
-              showZeroQuantityConfirmation={showZeroQuantityConfirmation}
-              isAutoAllocated={isAutoAllocated}
-            />
+            <AutoAllocationAlerts />
+            // TODO: Impl Allocation Alerts for Prescriptions
+            // <StockOutAlerts
+            //   allocationAlerts={allocationAlerts}
+            //   showZeroQuantityConfirmation={showZeroQuantityConfirmation}
+            //   isAutoAllocated={isAutoAllocated}
+            // />
           )}
           <AccordionPanelSection
             title={t('label.quantity')}
@@ -192,7 +184,6 @@ export const PrescriptionLineEditForm: React.FC<
               <AllocationSection
                 itemId={item?.id ?? ''}
                 invoiceId={invoiceId}
-                allowPlaceholder={false}
                 disabled={disabled}
                 prefOptions={{
                   allocateVaccineItemsInDoses:

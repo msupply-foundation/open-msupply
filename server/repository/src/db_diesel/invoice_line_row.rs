@@ -196,6 +196,20 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(())
     }
 
+    pub fn update_note_by_invoice_and_item_id(
+        &self,
+        invoice: &str,
+        item_link: &str,
+        new_note: Option<String>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(invoice_line)
+            .filter(invoice_id.eq(invoice))
+            .filter(item_link_id.eq(item_link))
+            .set(note.eq(new_note))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn delete(&self, invoice_line_id: &str) -> Result<Option<i64>, RepositoryError> {
         let old_row = self.find_one_by_id(invoice_line_id)?;
         let change_log_id = match old_row {

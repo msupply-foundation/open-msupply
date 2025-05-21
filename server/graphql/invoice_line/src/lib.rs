@@ -144,8 +144,16 @@ impl InvoiceLineMutations {
         )
     }
 
-    // Inbound
+    async fn save_prescription_item_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: prescription_line::save_item_lines::SavePrescriptionLinesInput,
+    ) -> Result<InvoiceNode> {
+        prescription_line::save_item_lines::save_prescription_item_lines(ctx, &store_id, input)
+    }
 
+    // Inbound
     async fn insert_inbound_shipment_line(
         &self,
         ctx: &Context<'_>,

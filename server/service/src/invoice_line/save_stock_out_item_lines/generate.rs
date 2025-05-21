@@ -12,7 +12,7 @@ use crate::invoice_line::{
     stock_out_line::{DeleteStockOutLine, InsertStockOutLine, StockOutType, UpdateStockOutLine},
 };
 
-use super::{SaveStockOutInvoiceLine, SaveStockOutInvoiceLines, SaveStockOutInvoiceLinesError};
+use super::{SaveStockOutInvoiceLine, SaveStockOutItemLines, SaveStockOutItemLinesError};
 
 pub enum ManagePlaceholderLine {
     Insert(InsertOutboundShipmentUnallocatedLine),
@@ -30,29 +30,26 @@ pub struct GenerateResult {
 pub fn generate(
     connection: &StorageConnection,
     invoice: InvoiceRow,
-    SaveStockOutInvoiceLines {
+    SaveStockOutItemLines {
         invoice_id,
         item_id,
         lines,
         placeholder_quantity,
         prescribed_quantity: _,
-    }: SaveStockOutInvoiceLines,
-) -> Result<GenerateResult, SaveStockOutInvoiceLinesError> {
+        note: _,
+    }: SaveStockOutItemLines,
+) -> Result<GenerateResult, SaveStockOutItemLinesError> {
     let stock_out_type = match invoice.r#type {
         InvoiceType::OutboundShipment => StockOutType::OutboundShipment,
         InvoiceType::Prescription => StockOutType::Prescription,
         InvoiceType::CustomerReturn => StockOutType::SupplierReturn,
         InvoiceType::InventoryReduction => StockOutType::InventoryReduction,
-        InvoiceType::InboundShipment => {
-            return Err(SaveStockOutInvoiceLinesError::InvalidInvoiceType)
-        }
+        InvoiceType::InboundShipment => return Err(SaveStockOutItemLinesError::InvalidInvoiceType),
         InvoiceType::InventoryAddition => {
-            return Err(SaveStockOutInvoiceLinesError::InvalidInvoiceType)
+            return Err(SaveStockOutItemLinesError::InvalidInvoiceType)
         }
-        InvoiceType::Repack => return Err(SaveStockOutInvoiceLinesError::InvalidInvoiceType),
-        InvoiceType::SupplierReturn => {
-            return Err(SaveStockOutInvoiceLinesError::InvalidInvoiceType)
-        }
+        InvoiceType::Repack => return Err(SaveStockOutItemLinesError::InvalidInvoiceType),
+        InvoiceType::SupplierReturn => return Err(SaveStockOutItemLinesError::InvalidInvoiceType),
     };
 
     let existing_lines = InvoiceLineRepository::new(connection).query_by_filter(

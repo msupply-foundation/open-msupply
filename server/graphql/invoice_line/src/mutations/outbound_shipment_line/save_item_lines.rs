@@ -6,8 +6,8 @@ use graphql_types::types::InvoiceNode;
 
 use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::save_outbound_shipment_item_lines::{
-    SaveStockOutInvoiceLine, SaveStockOutInvoiceLines, SaveStockOutInvoiceLinesError,
+use service::invoice_line::save_stock_out_item_lines::{
+    SaveStockOutInvoiceLine, SaveStockOutItemLines, SaveStockOutItemLinesError,
 };
 
 #[derive(InputObject)]
@@ -44,11 +44,11 @@ pub fn save_outbound_shipment_item_lines(
     map_response(
         service_provider
             .invoice_line_service
-            .save_outbound_shipment_item_lines(&service_context, input.to_domain()),
+            .save_stock_out_item_lines(&service_context, input.to_domain()),
     )
 }
 
-pub fn map_response(from: Result<Invoice, SaveStockOutInvoiceLinesError>) -> Result<InvoiceNode> {
+pub fn map_response(from: Result<Invoice, SaveStockOutItemLinesError>) -> Result<InvoiceNode> {
     let result = match from {
         Ok(invoice) => InvoiceNode::from_domain(invoice),
         Err(error) => map_error(error)?,
@@ -58,7 +58,7 @@ pub fn map_response(from: Result<Invoice, SaveStockOutInvoiceLinesError>) -> Res
 }
 
 impl SaveOutboundShipmentLinesInput {
-    pub fn to_domain(self) -> SaveStockOutInvoiceLines {
+    pub fn to_domain(self) -> SaveStockOutItemLines {
         let SaveOutboundShipmentLinesInput {
             invoice_id,
             item_id,
@@ -66,7 +66,7 @@ impl SaveOutboundShipmentLinesInput {
             placeholder_quantity,
         } = self;
 
-        SaveStockOutInvoiceLines {
+        SaveStockOutItemLines {
             invoice_id,
             item_id,
             placeholder_quantity,
@@ -79,12 +79,13 @@ impl SaveOutboundShipmentLinesInput {
                 })
                 .collect(),
             prescribed_quantity: None, // Only used for prescription lines
+            note: None,                // Not used yet
         }
     }
 }
 
-fn map_error(error: SaveStockOutInvoiceLinesError) -> Result<InvoiceNode> {
-    use SaveStockOutInvoiceLinesError::*;
+fn map_error(error: SaveStockOutItemLinesError) -> Result<InvoiceNode> {
+    use SaveStockOutItemLinesError::*;
     let formatted_error = format!("{:#?}", error);
 
     log::error!("Error: {}", formatted_error);
@@ -98,11 +99,10 @@ fn map_error(error: SaveStockOutInvoiceLinesError) -> Result<InvoiceNode> {
         | PlaceholderError(_)
         | PrescribedQuantityError(_)
         | InvoiceDoesNotBelongToCurrentStore
-        | NotAnOutboundShipment
+        | InvoiceNotFound
         | InvoiceNotEditable
-        | PrescriptionNotFound
-        | InvalidInvoiceType
-        | OutboundShipmentNotFound => StandardGraphqlError::BadUserInput(formatted_error),
+        | NotAStockOutInvoice
+        | InvalidInvoiceType => StandardGraphqlError::BadUserInput(formatted_error),
         DatabaseError(_) | UpdatedShipmentDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
         }

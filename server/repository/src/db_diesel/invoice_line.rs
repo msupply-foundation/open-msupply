@@ -90,6 +90,7 @@ pub struct InvoiceLineFilter {
     pub verified_datetime: Option<DatetimeFilter>,
     pub inventory_adjustment_reason: Option<EqualFilter<String>>,
     pub has_prescribed_quantity: Option<bool>,
+    pub has_note: Option<bool>,
 }
 
 impl InvoiceLineFilter {
@@ -174,6 +175,11 @@ impl InvoiceLineFilter {
 
     pub fn has_prescribed_quantity(mut self, filter: bool) -> Self {
         self.has_prescribed_quantity = Some(filter);
+        self
+    }
+
+    pub fn has_note(mut self, filter: bool) -> Self {
+        self.has_note = Some(filter);
         self
     }
 }
@@ -314,6 +320,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
             verified_datetime,
             inventory_adjustment_reason,
             has_prescribed_quantity,
+            has_note,
         } = f;
 
         apply_equal_filter!(query, id, invoice_line::id);
@@ -346,6 +353,14 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
                     );
             } else {
                 query = query.filter(invoice_line::prescribed_quantity.is_null());
+            }
+        }
+
+        if let Some(has_note) = has_note {
+            if has_note {
+                query = query.filter(invoice_line::note.is_not_null());
+            } else {
+                query = query.filter(invoice_line::note.is_null());
             }
         }
     }

@@ -884,6 +884,7 @@ query getOutboundEditLines(
     ... on DraftStockOutItemData {
       placeholderQuantity
       prescribedQuantity
+      note
       draftLines {
         ...DraftStockOutLine
       }

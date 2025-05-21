@@ -2288,6 +2288,7 @@ export type DoseConfigurationNotAllowed = UpsertItemVariantErrorInterface & {
 export type DraftStockOutItemData = {
   __typename: 'DraftStockOutItemData';
   draftLines: Array<DraftStockOutLineNode>;
+  note?: Maybe<Scalars['String']['output']>;
   placeholderQuantity?: Maybe<Scalars['Float']['output']>;
   prescribedQuantity?: Maybe<Scalars['Float']['output']>;
 };
@@ -4805,6 +4806,7 @@ export type Mutations = {
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
   saveOutboundShipmentItemLines: InvoiceNode;
+  savePrescriptionItemLines: InvoiceNode;
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
   updateAsset: UpdateAssetResponse;
@@ -5233,6 +5235,11 @@ export type MutationsManualSyncArgs = {
 
 export type MutationsSaveOutboundShipmentItemLinesArgs = {
   input: SaveOutboundShipmentLinesInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsSavePrescriptionItemLinesArgs = {
+  input: SavePrescriptionLinesInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6039,6 +6046,12 @@ export type PreferencesNode = {
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
+};
+
+export type PrescriptionLineInput = {
+  id: Scalars['String']['input'];
+  numberOfPacks: Scalars['Float']['input'];
+  stockLineId: Scalars['String']['input'];
 };
 
 export type PricingNode = {
@@ -7879,6 +7892,14 @@ export type SaveOutboundShipmentLinesInput = {
   itemId: Scalars['String']['input'];
   lines: Array<OutboundShipmentLineInput>;
   placeholderQuantity?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type SavePrescriptionLinesInput = {
+  invoiceId: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  lines: Array<PrescriptionLineInput>;
+  note?: InputMaybe<Scalars['String']['input']>;
+  prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type ScannedDataParseError = {

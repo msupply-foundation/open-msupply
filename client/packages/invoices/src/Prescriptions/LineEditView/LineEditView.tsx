@@ -20,12 +20,18 @@ import { PrescriptionLineEdit } from './PrescriptionLineEdit';
 import { DraftPrescriptionLine } from '../../types';
 import { Footer } from './Footer';
 import { NavBar } from './NavBar';
+import { useAllocationContext } from '../../Allocation/useAllocationContext';
+import { useSaveOutboundLines } from '../../OutboundShipment/api/hooks/useSaveOutboundLines';
 
 export const PrescriptionLineEditView = () => {
   const { invoiceId = '', itemId } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const isDirty = useRef(false);
   const navigate = useNavigate();
+
+  const { isDirty: allocationIsDirty, draftLines } = useAllocationContext();
+  // TODO: Change prescription version of this hook
+  const { mutateAsync: saveOutBound } = useSaveOutboundLines(invoiceId);
 
   const {
     query: { data, loading: isLoading },
@@ -112,6 +118,14 @@ export const PrescriptionLineEditView = () => {
   };
 
   const onSave = async () => {
+    if (allocationIsDirty) {
+      saveOutBound({
+        itemId: currentItem?.id ?? '',
+        lines: draftLines,
+        placeholderQuantity: 0,
+      });
+    }
+
     if (!isDirty.current) return;
 
     const flattenedLines = Object.values(allDraftLines).flat();
@@ -133,7 +147,7 @@ export const PrescriptionLineEditView = () => {
         : undefined;
 
     await saveLines({
-      draftPrescriptionLines: flattenedLines,
+      draftPrescriptionLines: [], // TODO Remove or update this
       patch,
     });
 
@@ -209,7 +223,7 @@ export const PrescriptionLineEditView = () => {
       />
       <Footer
         isSaving={isSavingLines}
-        isDirty={isDirty.current}
+        isDirty={isDirty.current || allocationIsDirty}
         handleSave={onSave}
         handleCancel={() =>
           navigate(

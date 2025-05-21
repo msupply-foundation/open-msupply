@@ -38,8 +38,8 @@ use self::update_return_reason_id::*;
 pub mod inbound_shipment_from_internal_order_lines;
 use self::inbound_shipment_from_internal_order_lines::*;
 
-pub mod save_outbound_shipment_item_lines;
-use self::save_outbound_shipment_item_lines::*;
+pub mod save_stock_out_item_lines;
+use self::save_stock_out_item_lines::*;
 
 pub trait InvoiceLineServiceTrait: Sync + Send {
     fn get_invoice_line(
@@ -67,7 +67,7 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         store_id: &str,
         item_id: &str,
         invoice_id: &str,
-    ) -> Result<(Vec<DraftStockOutLine>, AdditionalStockOutData), ListError> {
+    ) -> Result<(Vec<DraftStockOutLine>, DraftStockOutItemData), ListError> {
         get_draft_stock_out_lines(ctx, store_id, item_id, invoice_id)
     }
 
@@ -211,12 +211,12 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         allocate_outbound_shipment_unallocated_line(ctx, line_id)
     }
 
-    fn save_outbound_shipment_item_lines(
+    fn save_stock_out_item_lines(
         &self,
         ctx: &ServiceContext,
-        input: SaveStockOutInvoiceLines,
-    ) -> Result<Invoice, SaveStockOutInvoiceLinesError> {
-        save_outbound_shipment_item_lines(ctx, input)
+        input: SaveStockOutItemLines,
+    ) -> Result<Invoice, SaveStockOutItemLinesError> {
+        save_stock_out_item_lines(ctx, input)
     }
 
     fn update_return_reason_id(

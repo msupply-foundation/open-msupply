@@ -9,9 +9,9 @@ import { usePrescription } from '../api';
 import {
   getAllocatedQuantity,
   sumAvailableQuantity,
-  usePackSizeController,
+  // usePackSizeController,
 } from '../../StockOut';
-import { allocateQuantities } from '../api/hooks/utils';
+// import { allocateQuantities } from '../api/hooks/utils';
 import { DraftPrescriptionLine } from '../../types';
 import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
 import { ItemRowWithDirectionsFragment } from '@openmsupply-client/system';
@@ -35,72 +35,34 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
 }) => {
   const isNew = item === null;
   const [currentItem, setCurrentItem] = useBufferState(item);
-  const [isAutoAllocated, setIsAutoAllocated] = useState(false);
-  const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
-    useState(false);
+  // const [isAutoAllocated, setIsAutoAllocated] = useState(false);
+  // const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
+  //   useState(false);
   const {
     query: { data },
     isDisabled,
   } = usePrescription();
   const { prescriptionDate } = data ?? {};
-  const { isLoading, updateQuantity, updateNotes } = useDraftPrescriptionLines(
+  const { isLoading, updateNotes } = useDraftPrescriptionLines(
     currentItem,
     draftPrescriptionLines,
     updateLines,
     DateUtils.getDateOrNull(prescriptionDate)
   );
 
-  const packSizeController = usePackSizeController(draftPrescriptionLines);
+  // const packSizeController = usePackSizeController(draftPrescriptionLines);
 
-  const onUpdateQuantity = (batchId: string, packs: number) => {
-    updateQuantity(batchId, packs);
-    setIsAutoAllocated(false);
-    setIsDirty(true);
-  };
+  // const onUpdateQuantity = (batchId: string, packs: number) => {
+  //   updateQuantity(batchId, packs);
+  //   setIsAutoAllocated(false);
+  //   setIsDirty(true);
+  // };
 
   const onUpdateNotes = (note: string) => {
     updateNotes(note);
-    setIsAutoAllocated(false);
+    // setIsAutoAllocated(false);
     setIsDirty(true);
   };
-
-  const onAllocate = (
-    numPacks: number,
-    packSize: number | null,
-    autoAllocated = false,
-    prescribedQuantity: number | null
-  ) => {
-    const newAllocateQuantities = allocateQuantities(
-      // Hack - we're using shared allocateQuantities function, which supports placeholder lines in
-      // New status. Placeholder lines aren't supported for prescriptions though, so we'll just pretend
-      // we're already in pick :)
-      InvoiceNodeStatus.Picked,
-      draftPrescriptionLines
-    )(numPacks, packSize, true, prescribedQuantity);
-
-    setIsDirty(true);
-    updateLines(newAllocateQuantities ?? draftPrescriptionLines);
-    setIsAutoAllocated(autoAllocated);
-    if (showZeroQuantityConfirmation && numPacks !== 0)
-      setShowZeroQuantityConfirmation(false);
-
-    // TODO: refactor prescription view
-    // Validation should be managed against overall `draft`, and not using `isDirty`
-    if (
-      // Don't allow save if both prescribed quantity and allocated packs are zero for all lines
-      newAllocateQuantities?.every(
-        line =>
-          line.numberOfPacks === 0 &&
-          (!line.prescribedQuantity || line.prescribedQuantity === 0)
-      )
-    ) {
-      setIsDirty(false);
-    }
-
-    return newAllocateQuantities;
-  };
-
-  const canAutoAllocate = !!(currentItem && draftPrescriptionLines.length);
 
   const hasOnHold = draftPrescriptionLines.some(
     ({ stockLine }) =>
@@ -117,24 +79,21 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
     <PrescriptionLineEditForm
       disabled={isDisabled}
       isNew={isNew}
-      packSizeController={packSizeController}
+      // packSizeController={packSizeController}
       onChangeItem={(item: ItemRowWithDirectionsFragment | null) => {
-        setIsAutoAllocated(false);
+        // setIsAutoAllocated(false);
         setCurrentItem(item);
       }}
       item={currentItem}
       allocatedUnits={getAllocatedQuantity(draftPrescriptionLines)}
       availableUnits={sumAvailableQuantity(draftPrescriptionLines)}
-      onChangeQuantity={onAllocate}
-      canAutoAllocate={canAutoAllocate}
-      isAutoAllocated={isAutoAllocated}
+      setIsDirty={setIsDirty}
       updateNotes={onUpdateNotes}
       draftPrescriptionLines={draftPrescriptionLines}
-      showZeroQuantityConfirmation={showZeroQuantityConfirmation}
+      // showZeroQuantityConfirmation={showZeroQuantityConfirmation}
       hasOnHold={hasOnHold}
       hasExpired={hasExpired}
       isLoading={isLoading}
-      updateQuantity={onUpdateQuantity}
       programId={programId}
       invoiceId={invoiceId}
     />

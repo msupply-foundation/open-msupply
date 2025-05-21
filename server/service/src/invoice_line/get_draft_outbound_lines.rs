@@ -4,7 +4,7 @@ use crate::{
     service_provider::ServiceContext,
     ListError,
 };
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
     InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, RepositoryError, StockLine,
@@ -32,9 +32,10 @@ pub struct DraftStockOutLine {
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct AdditionalStockOutData {
+pub struct DraftStockOutItemData {
     pub placeholder_quantity: Option<f64>,
     pub prescribed_quantity: Option<f64>,
+    pub note: Option<String>,
 }
 
 pub fn get_draft_stock_out_lines(
@@ -42,15 +43,15 @@ pub fn get_draft_stock_out_lines(
     store_id: &str,
     item_id: &str,
     invoice_id: &str,
-) -> Result<(Vec<DraftStockOutLine>, AdditionalStockOutData), ListError> {
-    let outbound = get_invoice(ctx, Some(&store_id), invoice_id)?.ok_or(
+) -> Result<(Vec<DraftStockOutLine>, DraftStockOutItemData), ListError> {
+    let invoice = get_invoice(ctx, Some(&store_id), invoice_id)?.ok_or(
         ListError::DatabaseError(RepositoryError::DBError {
             msg: "Invoice not found".to_string(),
             extra: invoice_id.to_string(),
         }),
     )?;
 
-    let existing_lines = get_existing_shipment_lines(ctx, &item_id, &outbound.invoice_row)?;
+    let existing_lines = get_existing_shipment_lines(ctx, &item_id, &invoice.invoice_row)?;
 
     let existing_stock_line_ids: Vec<String> = existing_lines
         .iter()
@@ -61,8 +62,9 @@ pub fn get_draft_stock_out_lines(
         ctx,
         store_id.to_string(),
         &item_id,
-        outbound.name_row.id,
+        invoice.name_row.id,
         existing_stock_line_ids,
+        invoice.invoice_row.backdated_datetime,
     )?;
 
     // return existing first, then new lines
@@ -71,7 +73,7 @@ pub fn get_draft_stock_out_lines(
     let placeholder_quantity = InvoiceLineRepository::new(&ctx.connection)
         .query_one(
             InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to(&outbound.invoice_row.id))
+                .invoice_id(EqualFilter::equal_to(&invoice.invoice_row.id))
                 .r#type(InvoiceLineType::UnallocatedStock.equal_to())
                 .item_id(EqualFilter::equal_to(item_id)),
         )?
@@ -80,16 +82,27 @@ pub fn get_draft_stock_out_lines(
     let prescribed_quantity = InvoiceLineRepository::new(&ctx.connection)
         .query_one(
             InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to(&outbound.invoice_row.id))
+                .invoice_id(EqualFilter::equal_to(&invoice.invoice_row.id))
                 .item_id(EqualFilter::equal_to(item_id))
                 .has_prescribed_quantity(true),
         )?
         .map(|l| l.invoice_line_row.prescribed_quantity)
         .unwrap_or_default();
 
-    let draft_stock_out_data = AdditionalStockOutData {
+    let note = InvoiceLineRepository::new(&ctx.connection)
+        .query_one(
+            InvoiceLineFilter::new()
+                .invoice_id(EqualFilter::equal_to(&invoice.invoice_row.id))
+                .item_id(EqualFilter::equal_to(item_id))
+                .has_note(true),
+        )?
+        .map(|l| l.invoice_line_row.note)
+        .unwrap_or_default();
+
+    let draft_stock_out_data = DraftStockOutItemData {
         placeholder_quantity,
         prescribed_quantity,
+        note,
     };
 
     Ok((all_lines, draft_stock_out_data))
@@ -125,8 +138,12 @@ fn generate_new_draft_lines(
     item_id: &str,
     other_party_id: String,
     existing_stock_line_ids: Vec<String>,
+    datetime: Option<NaiveDateTime>,
 ) -> Result<Vec<DraftStockOutLine>, ListError> {
     let stock_line_repo = StockLineRepository::new(&ctx.connection);
+
+    // If there's a datetime provide we need to get the stock lines available at that time
+    // otherwise we get the current stock lines
 
     let available_stock_lines = stock_line_repo.query_by_filter(
         StockLineFilter::new()

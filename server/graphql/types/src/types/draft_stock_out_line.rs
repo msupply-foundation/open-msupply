@@ -12,6 +12,7 @@ pub struct DraftStockOutItemData {
     pub lines: Vec<DraftStockOutLine>,
     pub placeholder_quantity: Option<f64>,
     pub prescribed_quantity: Option<f64>,
+    pub note: Option<String>,
 }
 
 #[Object]
@@ -26,6 +27,10 @@ impl DraftStockOutItemData {
 
     pub async fn prescribed_quantity(&self) -> Option<f64> {
         self.prescribed_quantity
+    }
+
+    pub async fn note(&self) -> Option<String> {
+        self.note.clone()
     }
 }
 

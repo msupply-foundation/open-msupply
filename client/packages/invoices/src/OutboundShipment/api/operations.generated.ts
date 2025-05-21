@@ -1074,6 +1074,7 @@ export type GetOutboundEditLinesQuery = {
     __typename: 'DraftStockOutItemData';
     placeholderQuantity?: number | null;
     prescribedQuantity?: number | null;
+    note?: string | null;
     draftLines: Array<{
       __typename: 'DraftStockOutLineNode';
       id: string;
@@ -2012,6 +2013,7 @@ export const GetOutboundEditLinesDocument = gql`
       ... on DraftStockOutItemData {
         placeholderQuantity
         prescribedQuantity
+        note
         draftLines {
           ...DraftStockOutLine
         }

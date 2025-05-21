@@ -74,6 +74,7 @@ impl InvoiceLineFilterInput {
             picked_datetime: None,
             delivered_datetime: None,
             has_prescribed_quantity: None,
+            has_note: None,
         }
     }
 }
@@ -103,6 +104,7 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
             picked_datetime: None,
             delivered_datetime: None,
             has_prescribed_quantity: None,
+            has_note: None,
         }
     }
 }
@@ -230,11 +232,12 @@ pub fn draft_outbound_lines(
 
     let result = service.get_draft_stock_out_lines(&service_ctx, store_id, item_id, invoice_id);
 
-    if let Ok((draft_lines, additional_data)) = result {
+    if let Ok((draft_lines, item_data)) = result {
         Ok(DraftStockOutItemData {
             lines: draft_lines,
-            placeholder_quantity: additional_data.placeholder_quantity,
-            prescribed_quantity: additional_data.prescribed_quantity,
+            placeholder_quantity: item_data.placeholder_quantity,
+            prescribed_quantity: item_data.prescribed_quantity,
+            note: item_data.note,
         })
     } else {
         let err = result.unwrap_err();
