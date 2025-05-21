@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   TableProvider,
   DataTable,
@@ -6,11 +6,7 @@ import {
   createTableStore,
   NothingHere,
   useUrlQueryParams,
-  DotCell,
-  ColumnAlign,
   useEditModal,
-  useToggle,
-  TooltipTextCell,
   useTranslation,
   ColumnFormat,
   CampaignNode,
@@ -18,8 +14,6 @@ import {
   useTableStore,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
-// import { useName } from '../../api';
-import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { CampaignEditModal } from './CampaignEditModal';
 import { AppBarButtons } from './AppBarButtons';
@@ -27,11 +21,8 @@ import { CampaignRowFragment, DraftCampaign, useCampaigns } from '../api';
 
 const CampaignsComponent = () => {
   const t = useTranslation();
-  // const [selectedCampaign, setSelectedCampaign] = useState<
-  //   CampaignNode | undefined
-  // >();
   const {
-    filter,
+    // filter,
     updateSortQuery,
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset, filterBy },
@@ -77,7 +68,6 @@ const CampaignsComponent = () => {
 
   const onRowClick = (row: CampaignNode) => {
     const selected = data?.nodes.find(campaign => campaign.id === row.id);
-    // setSelectedCampaign(selected);
     updateDraft(selected as DraftCampaign);
     onOpen();
   };
