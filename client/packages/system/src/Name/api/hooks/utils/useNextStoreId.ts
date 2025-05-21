@@ -1,6 +1,6 @@
 import { useStores } from '../document/useStores';
 
-export const useNextFacilityId = (currentId: string): string | undefined => {
+export const useNextStoreId = (currentId: string): string | undefined => {
   const { data } = useStores();
 
   const rows = data?.nodes ?? [];
