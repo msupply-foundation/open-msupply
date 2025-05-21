@@ -1,3 +1,4 @@
+pub mod campaign;
 mod mutations;
 mod queries;
 mod sync_api_error;
