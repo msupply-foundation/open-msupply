@@ -8163,6 +8163,7 @@ export type StocktakeFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isLocked?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramStocktake?: InputMaybe<Scalars['Boolean']['input']>;
+  programId?: InputMaybe<EqualFilterStringInput>;
   status?: InputMaybe<EqualFilterStocktakeStatusInput>;
   stocktakeDate?: InputMaybe<DateFilterInput>;
   stocktakeNumber?: InputMaybe<EqualFilterBigNumberInput>;
