@@ -34,6 +34,10 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   itemCategoryName,
   programId,
 }) => {
+  const t = useTranslation();
+  const formatNumber = useFormatNumber();
+  const selectControl = useToggle();
+
   const { filter, onFilter } = useStringFilter('codeOrName');
   const [search, setSearch] = useState('');
 
@@ -64,10 +68,6 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const { data: currentItem } = useItemById(currentItemId ?? undefined);
 
   const pageNumber = data?.pages[data?.pages.length - 1]?.pageNumber ?? 0;
-
-  const t = useTranslation();
-  const formatNumber = useFormatNumber();
-  const selectControl = useToggle();
 
   const filterOptions = useCallback(
     (
