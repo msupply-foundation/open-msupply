@@ -73,8 +73,12 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   onRowClick,
 }) => {
   const t = useTranslation();
-  const { data: prefs } = usePreference(PreferenceKey.DisplayVaccinesInDoses);
+  const { data: prefs } = usePreference(
+    PreferenceKey.DisplayVaccinesInDoses,
+    PreferenceKey.ManageVvmStatusForStock
+  );
   const displayDoseColumns = prefs?.displayVaccinesInDoses ?? false;
+  const displayVvmStatusColumns = prefs?.manageVvmStatusForStock ?? false;
 
   const {
     updateSortQuery,
@@ -86,6 +90,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     onChangeSortBy: updateSortQuery,
     sortBy,
     displayDoseColumns,
+    displayVvmStatusColumns,
   });
   const isDisabled = useOutbound.utils.isDisabled();
   useHighlightPlaceholderRows(rows);

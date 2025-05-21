@@ -23,7 +23,6 @@ fragment UserStoreNode on UserStoreNode {
     manuallyLinkInternalOrderToInboundShipment
     useConsumptionAndStockFromCustomersForInternalOrders
     editPrescribedQuantityOnPrescription
-    ableToSpecifyVvmStatusWhenReceivingItems
   }
   createdDate
   homeCurrencyCode

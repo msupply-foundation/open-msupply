@@ -76,7 +76,8 @@ export const usePrescriptionColumn = ({
   const t = useTranslation();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
   const { data: OMSPrefs } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses
+    PreferenceKey.DisplayVaccinesInDoses,
+    PreferenceKey.ManageVvmStatusForStock
   );
   const { store } = useAuthContext();
   const hasPrescribedQty = store?.preferences?.editPrescribedQuantityOnPrescription;
@@ -154,9 +155,9 @@ export const usePrescriptionColumn = ({
       },
     ],
   ];
-    if (store?.preferences.ableToSpecifyVvmStatusWhenReceivingItems) {
-      columns.push(getVaccineVialManagementStatusColumn(t))
-    }
+  if (OMSPrefs?.manageVvmStatusForStock) {
+    columns.push(getVaccineVialManagementStatusColumn(t))
+  }
 
   columns.push(
     [

@@ -11,8 +11,8 @@ import { useOutboundColumns } from './../../../DetailView/columns';
 
 export const useOutboundRows = (isGrouped = true) => {
   const {
-    data: { displayVaccinesInDoses } = { displayVaccinesInDoses: false },
-  } = usePreference(PreferenceKey.DisplayVaccinesInDoses);
+    data: { displayVaccinesInDoses, manageVvmStatusForStock } = { displayVaccinesInDoses: false, manageVvmStatusForStock: false },
+  } = usePreference(PreferenceKey.DisplayVaccinesInDoses, PreferenceKey.ManageVvmStatusForStock);
   const {
     queryParams: { sortBy },
     updateSortQuery: onChangeSortBy,
@@ -23,6 +23,7 @@ export const useOutboundRows = (isGrouped = true) => {
     onChangeSortBy,
     sortBy,
     displayDoseColumns: displayVaccinesInDoses,
+    displayVvmStatusColumns: manageVvmStatusForStock,
   });
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
