@@ -173,6 +173,9 @@ export const useStocktakeColumns = ({
             { path: ['lines', 'packSize'] },
             { path: ['packSize'] },
           ]),
+        cellProps: {
+          defaultValue: UNDEFINED_STRING_VALUE,
+        },
       },
     ],
   ];

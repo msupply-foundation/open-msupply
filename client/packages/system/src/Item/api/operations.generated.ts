@@ -43,6 +43,7 @@ export type StockLineFragment = {
     unitName?: string | null;
     doses: number;
     isVaccine: boolean;
+    defaultPackSize: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -364,6 +365,7 @@ export type ItemFragment = {
         unitName?: string | null;
         doses: number;
         isVaccine: boolean;
+        defaultPackSize: number;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -551,6 +553,7 @@ export type ItemsWithStockLinesQuery = {
             unitName?: string | null;
             doses: number;
             isVaccine: boolean;
+            defaultPackSize: number;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -864,6 +867,7 @@ export type ItemByIdQuery = {
             unitName?: string | null;
             doses: number;
             isVaccine: boolean;
+            defaultPackSize: number;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -1058,6 +1062,7 @@ export type GetHistoricalStockLinesQuery = {
         unitName?: string | null;
         doses: number;
         isVaccine: boolean;
+        defaultPackSize: number;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -1450,6 +1455,7 @@ export const StockLineFragmentDoc = gql`
       name
       code
       unitName
+      defaultPackSize
       doses
       isVaccine
       itemDirections {
@@ -1458,7 +1464,6 @@ export const StockLineFragmentDoc = gql`
       warnings {
         ...Warning
       }
-      isVaccine
     }
     note
     onHold
