@@ -112,7 +112,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.names;
     },
-    facilities: async ({
+    stores: async ({
       first,
       offset,
       sortBy,

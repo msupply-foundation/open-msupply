@@ -1,7 +1,7 @@
 import { NumUtils, useQuery } from '@openmsupply-client/common';
 import { useNameApi } from '../utils/useNameApi';
 
-export const useFacilitiesAll = () => {
+export const useStoresAll = () => {
   const api = useNameApi();
 
   const queryParams = {
@@ -9,6 +9,6 @@ export const useFacilitiesAll = () => {
   };
 
   return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.facilities(queryParams)
+    api.get.stores(queryParams)
   );
 };

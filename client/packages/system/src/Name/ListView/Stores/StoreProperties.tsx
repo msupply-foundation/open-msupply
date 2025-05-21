@@ -10,19 +10,19 @@ import {
   PropertyNodeValueType,
   NamePropertyNode,
 } from '@openmsupply-client/common';
-import { DraftProperties } from './useDraftFacilityProperties';
+import { DraftProperties } from './useDraftStoreProperties';
 
-interface FacilityPropertiesProps {
+interface StorePropertiesProps {
   propertyConfigs: NamePropertyNode[];
   draftProperties: DraftProperties;
   updateProperty: (update: DraftProperties) => void;
 }
 
-export const FacilityProperties = ({
+export const StoreProperties = ({
   propertyConfigs,
   draftProperties,
   updateProperty,
-}: FacilityPropertiesProps) => {
+}: StorePropertiesProps) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
 

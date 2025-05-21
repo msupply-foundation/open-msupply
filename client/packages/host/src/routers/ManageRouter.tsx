@@ -15,7 +15,7 @@ const EquipmentService = React.lazy(
 );
 
 const fullFacilitiesPath = RouteBuilder.create(AppRoute.Manage)
-  .addPart(AppRoute.Facilities)
+  .addPart(AppRoute.Stores)
   .addWildCard()
   .build();
 

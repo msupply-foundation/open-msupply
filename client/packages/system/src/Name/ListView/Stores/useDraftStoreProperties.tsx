@@ -3,13 +3,13 @@ import { Dispatch, SetStateAction, useState, useEffect } from 'react';
 
 export type DraftProperties = Record<string, string | number | boolean | null>;
 
-interface DraftFacilityProperties {
+interface DraftStoreProperties {
   draftProperties: DraftProperties;
   setDraftProperties: Dispatch<SetStateAction<DraftProperties>>;
 }
-export const useDraftFacilityProperties = (
+export const useDraftStoreProperties = (
   initialProperties?: string | null
-): DraftFacilityProperties => {
+): DraftStoreProperties => {
   const [draftProperties, setDraftProperties] = useState<DraftProperties>(
     ObjUtils.parse(initialProperties)
   );
