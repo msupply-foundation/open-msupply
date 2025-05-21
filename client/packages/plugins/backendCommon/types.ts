@@ -27,4 +27,10 @@ declare global {
   var get_plugin_data: (
     _: PluginTypes['get_plugin_data']['input']
   ) => PluginTypes['get_plugin_data']['output'];
+  var use_repository: (
+    _: PluginTypes['use_repository']['input']
+  ) => PluginTypes['use_repository']['output'];
+  var use_graphql: (
+    _: PluginTypes['use_graphql']['input']
+  ) => PluginTypes['use_graphql']['output'];
 }

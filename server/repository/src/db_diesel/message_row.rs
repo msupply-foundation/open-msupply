@@ -3,13 +3,14 @@ use super::{
     StorageConnection,
 };
 use crate::{RepositoryError, Upsert};
+use ts_rs::TS;
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, TS, Eq, Hash, Default, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 #[PgType = "message_status"]
 pub enum MessageRowStatus {
@@ -19,7 +20,7 @@ pub enum MessageRowStatus {
     Error,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, TS)]
 pub enum MessageRowType {
     #[default]
     RequestFieldChange,
@@ -55,7 +56,9 @@ table! {
 joinable!(message -> store (to_store_id));
 allow_tables_to_appear_in_same_query!(message, store);
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, AsChangeset, Default)]
+#[derive(
+    Clone, Queryable, Insertable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize, TS,
+)]
 #[diesel(table_name = message)]
 pub struct MessageRow {
     pub id: String,
