@@ -113,7 +113,7 @@ const useUpsertCampaign = () => {
     const endDate = draft.endDate ? Formatter.naiveDate(draft.endDate) : null;
 
     const input = {
-      id: draft.id ?? FnUtils.generateUUID(),
+      id: draft.id || FnUtils.generateUUID(),
       name: draft.name,
       startDate,
       endDate,
