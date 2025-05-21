@@ -1,8 +1,8 @@
 use super::vvm_status_log_row::vvm_status_log::dsl::*;
 use crate::{
     db_diesel::{invoice_line_row::invoice_line, stock_line_row::stock_line, store_row::store},
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
+    RowActionType, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -79,10 +79,17 @@ impl<'a> VVMStatusLogRowRepository<'a> {
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
-    pub fn delete(&self, log_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, log_id: &str) -> Result<Option<i64>, RepositoryError> {
+        let old_row = self.find_one_by_id(log_id)?;
+        let change_log_id = match old_row {
+            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
+            None => {
+                return Ok(None);
+            }
+        };
         diesel::delete(vvm_status_log.filter(id.eq(log_id)))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        Ok(Some(change_log_id))
     }
 
     fn insert_changelog(
@@ -99,6 +106,22 @@ impl<'a> VVMStatusLogRowRepository<'a> {
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct VVMStatusLogRowDelete(pub String);
+
+impl Delete for VVMStatusLogRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        VVMStatusLogRowRepository::new(con).delete(&self.0)
+    }
+
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            VVMStatusLogRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
     }
 }
 

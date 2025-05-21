@@ -4,3 +4,4 @@ export * from './StockItemSearchInput';
 export * from './ListItems';
 export * from './ItemVariantSearchInput';
 export * from './ColdStorageTypeInput';
+export * from './StockItemSearchInputWithStats';

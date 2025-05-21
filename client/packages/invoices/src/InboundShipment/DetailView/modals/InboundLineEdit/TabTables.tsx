@@ -60,11 +60,11 @@ export const QuantityTableComponent = ({
   const theme = useTheme();
   const { getPlural } = useIntlUtils();
   const { data: preferences } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses
+    PreferenceKey.ManageVaccinesInDoses
   );
 
   const displayInDoses =
-    !!preferences?.displayVaccinesInDoses && !!item?.isVaccine;
+    !!preferences?.manageVaccinesInDoses && !!item?.isVaccine;
 
   const unitName = Formatter.sentenceCase(
     item?.unitName ? item.unitName : t('label.unit')

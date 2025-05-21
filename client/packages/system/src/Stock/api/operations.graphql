@@ -33,6 +33,10 @@ fragment StockLineRow on StockLineNode {
       ...VVMStatusLogRow
     }
   }
+  vvmStatus {
+    id
+    description
+  }
 }
 
 fragment RepackStockLine on RepackStockLineNode {
