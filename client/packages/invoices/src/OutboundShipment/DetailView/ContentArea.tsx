@@ -74,10 +74,10 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
 }) => {
   const t = useTranslation();
   const { data: prefs } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses,
+    PreferenceKey.ManageVaccinesInDoses,
     PreferenceKey.ManageVvmStatusForStock
   );
-  const displayDoseColumns = prefs?.displayVaccinesInDoses ?? false;
+  const displayDoseColumns = prefs?.manageVaccinesInDoses ?? false;
   const displayVvmStatusColumns = prefs?.manageVvmStatusForStock ?? false;
 
   const {
