@@ -39,7 +39,7 @@ pub fn delete_stock_in_line(
             }
 
             InvoiceLineRowRepository::new(connection).delete(&line.id)?;
-            
+
             let delete_batch_id_option = line.stock_line_id.clone();
             if let Some(id) = delete_batch_id_option {
                 StockLineRowRepository::new(connection).delete(&id)?;
@@ -117,18 +117,19 @@ mod test {
             mock_customer_return_a, mock_customer_return_a_invoice_line_a,
             mock_customer_return_a_invoice_line_b, mock_item_a, mock_name_store_b, mock_store_a,
             mock_store_b, mock_supplier_return_b_invoice_line_a,
-            mock_transferred_inbound_shipment_a_line_b, mock_user_account_a, MockData,
-            MockDataInserts,
+            mock_transferred_inbound_shipment_a, mock_transferred_inbound_shipment_a_line_b,
+            mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
-        InvoiceType, StockLineRow, StockLineRowRepository,
+        vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
+        EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
     };
 
     use crate::{
         invoice_line::stock_in_line::{
-            delete::DeleteStockInLine, delete_stock_in_line,
-            DeleteStockInLineError as ServiceError, StockInType,
+            delete::DeleteStockInLine, delete_stock_in_line, insert_stock_in_line,
+            DeleteStockInLineError as ServiceError, InsertStockInLine, StockInType,
         },
         service_provider::ServiceProvider,
     };
@@ -304,5 +305,62 @@ mod test {
                 .unwrap(),
             None
         );
+
+        // Check vvm status log is deleted when the associated inbound shipment line is deleted
+
+        // Create a new inbound shipment line with vvm status
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "delivered_invoice_line_with_vvm_status".to_string(),
+                invoice_id: mock_transferred_inbound_shipment_a().id,
+                item_id: mock_vaccine_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                r#type: StockInType::InboundShipment,
+                vvm_status_id: Some(mock_vvm_status_a().id),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let vvm_log_filter = VVMStatusLogFilter::new().invoice_line_id(EqualFilter::equal_to(
+            "delivered_invoice_line_with_vvm_status",
+        ));
+
+        let vvm_status_log = VVMStatusLogRepository::new(&connection)
+            .query_by_filter(vvm_log_filter.clone())
+            .unwrap()
+            .first()
+            .map(|log| log.status_id.clone());
+
+        // Check the log exists
+        assert_eq!(vvm_status_log, Some(mock_vvm_status_a().id));
+
+        // delete the inbound shipment line
+        delete_stock_in_line(
+            &context,
+            DeleteStockInLine {
+                id: "delivered_invoice_line_with_vvm_status".to_string(),
+                r#type: StockInType::InboundShipment,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        // Check the shipment line no longer exists
+        let deleted_line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("delivered_invoice_line_with_vvm_status")
+            .unwrap();
+        assert_eq!(deleted_line, None);
+
+        let vvm_status_log = VVMStatusLogRepository::new(&connection)
+            .query_by_filter(vvm_log_filter)
+            .unwrap()
+            .first()
+            .map(|log| log.status_id.clone());
+
+        // Check the log no longer exists
+        assert_eq!(vvm_status_log, None);
     }
 }

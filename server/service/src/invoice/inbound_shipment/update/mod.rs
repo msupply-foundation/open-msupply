@@ -220,9 +220,11 @@ mod test {
             mock_inbound_shipment_c, mock_inbound_shipment_e, mock_inbound_shipment_f, mock_item_a,
             mock_name_a, mock_name_linked_to_store_join, mock_name_not_linked_to_store_join,
             mock_outbound_shipment_e, mock_stock_line_a, mock_store_a, mock_store_b,
-            mock_store_linked_to_name, mock_user_account_a, MockData, MockDataInserts,
+            mock_store_linked_to_name, mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a,
+            MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
+        vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRow,
         InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
         InvoiceType, NameRow, NameStoreJoinRow, StockLineRowRepository,
@@ -235,7 +237,7 @@ mod test {
         },
         invoice_line::{
             query::get_invoice_lines,
-            stock_in_line::{InsertStockInLine, StockInType},
+            stock_in_line::{insert_stock_in_line, InsertStockInLine, StockInType},
             ShipmentTaxUpdate,
         },
         service_provider::ServiceProvider,
@@ -770,13 +772,42 @@ mod test {
 
         assert_eq!(stock_lines_delivered, stock_lines_verified);
 
-        // Test Confirmed and logging
+        // Test VVM logs
+
+        // Add line with VVM status to new invoice
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "invoice_line_with_vvm_status".to_string(),
+                invoice_id: mock_inbound_shipment_c().id, // New status
+                item_id: mock_vaccine_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                r#type: StockInType::InboundShipment,
+                vvm_status_id: Some(mock_vvm_status_a().id),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let vvm_log_filter = VVMStatusLogFilter::new()
+            .invoice_line_id(EqualFilter::equal_to("invoice_line_with_vvm_status"));
+
+        let vvm_status_log = VVMStatusLogRepository::new(&connection)
+            .query_by_filter(vvm_log_filter.clone())
+            .unwrap()
+            .first()
+            .map(|log| log.id.clone());
+
+        // Check no logs exist before update
+        assert_eq!(vvm_status_log, None);
+
+        // Test updating to Delivered generates Activity logs and VVM status logs
         service
             .update_inbound_shipment(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_c().id;
-                    r.other_party_id = Some(supplier().id);
                     r.status = Some(UpdateInboundShipmentStatus::Delivered);
                 }),
             )
@@ -786,17 +817,23 @@ mod test {
             .find_one_by_id(&mock_inbound_shipment_c().id)
             .unwrap()
             .unwrap();
-        let log = ActivityLogRowRepository::new(&connection)
+        let activity_log = ActivityLogRowRepository::new(&connection)
             .find_many_by_record_id(&mock_inbound_shipment_c().id)
             .unwrap()
             .into_iter()
             .find(|l| l.r#type == ActivityLogType::InvoiceStatusDelivered)
             .unwrap();
+        let vvm_status_log = VVMStatusLogRepository::new(&connection)
+            .query_by_filter(vvm_log_filter.clone())
+            .unwrap()
+            .first()
+            .map(|log| log.status_id.clone());
 
         assert_eq!(invoice.verified_datetime, None);
         assert!(invoice.delivered_datetime.unwrap() > now);
         assert!(invoice.delivered_datetime.unwrap() < end_time);
-        assert_eq!(log.r#type, ActivityLogType::InvoiceStatusDelivered);
+        assert_eq!(activity_log.r#type, ActivityLogType::InvoiceStatusDelivered);
+        assert_eq!(vvm_status_log, Some(mock_vvm_status_a().id));
 
         let filter =
             InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.clone().id]));
