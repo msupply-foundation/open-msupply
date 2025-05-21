@@ -339,6 +339,7 @@ export const LocationTable = ({
       width: 200,
       setter: patch => update({ ...patch, countThisLine: true }),
       accessor: ({ rowData }) => rowData.comment || '',
+      defaultHideOnMobile: true,
     },
   ]);
 
