@@ -8,7 +8,7 @@ use dataloader::DataLoader;
 use graphql_core::{
     loader::{
         ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader, NameByNameLinkIdLoader,
-        NameByNameLinkIdLoaderInput, StockLineByIdLoader,
+        NameByNameLinkIdLoaderInput, ReasonOptionLoader, StockLineByIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
