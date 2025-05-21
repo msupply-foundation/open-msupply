@@ -1,3 +1,0 @@
-[submodule "client/packages/plugins/myPluginBundle"]
-	path = client/packages/plugins/myPluginBundle
-	url = https://github.com/msupply-foundation/open-msupply-plugins.git
