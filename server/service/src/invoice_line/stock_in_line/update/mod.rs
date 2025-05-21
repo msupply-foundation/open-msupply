@@ -422,13 +422,14 @@ mod test {
             "delivered_invoice_line_with_vvm_status",
         ));
 
-        let vvm_status_log = VVMStatusLogRepository::new(&connection)
+        let vvm_status_logs = VVMStatusLogRepository::new(&connection)
             .query_by_filter(vvm_log_filter.clone())
-            .unwrap()
-            .first()
-            .map(|log| log.status_id.clone());
+            .unwrap();
 
-        assert_eq!(vvm_status_log, Some(mock_vvm_status_a().id));
+        let latest_log = vvm_status_logs.first().map(|log| log.status_id.clone());
+
+        assert_eq!(vvm_status_logs.len(), 1);
+        assert_eq!(latest_log, Some(mock_vvm_status_a().id));
 
         // Update the invoice line with a new vvm status
         let result = update_stock_in_line(
@@ -446,13 +447,15 @@ mod test {
             Some(mock_vvm_status_b().id),
         );
 
-        let vvm_status_log = VVMStatusLogRepository::new(&connection)
+        let vvm_status_logs = VVMStatusLogRepository::new(&connection)
             .query_by_filter(vvm_log_filter.clone())
-            .unwrap()
-            .first()
-            .map(|log| log.status_id.clone());
+            .unwrap();
 
-        assert_eq!(vvm_status_log, Some(mock_vvm_status_b().id));
+        let vvm_log = vvm_status_logs.first().map(|log| log.status_id.clone());
+
+        // existing log should be updated
+        assert_eq!(vvm_status_logs.len(), 1);
+        assert_eq!(vvm_log, Some(mock_vvm_status_b().id));
 
         // Clear the vvm_status_id from invoice line
         let result = update_stock_in_line(
@@ -465,14 +468,16 @@ mod test {
             },
         )
         .unwrap();
-        assert_eq!(result.invoice_line_row.vvm_status_id, None,);
 
-        let vvm_status_log = VVMStatusLogRepository::new(&connection)
-            .query_by_filter(vvm_log_filter)
-            .unwrap()
-            .first()
-            .map(|log| log.status_id.clone());
+        assert_eq!(result.invoice_line_row.vvm_status_id, None);
 
-        assert_eq!(vvm_status_log, None);
+        let vvm_status_logs = VVMStatusLogRepository::new(&connection)
+            .query_by_filter(vvm_log_filter.clone())
+            .unwrap();
+
+        let vvm_log: Option<String> = vvm_status_logs.first().map(|log| log.status_id.clone());
+
+        // existing log should be deleted
+        assert_eq!(vvm_log, None);
     }
 }
