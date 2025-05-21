@@ -23,7 +23,6 @@ export const AppBarButtonsComponent = () => {
   const t = useTranslation();
   const { fetchAllStock, isLoading } = useExportStockList();
   const simplifiedTabletView = useSimplifiedTabletUI();
-  console.log('Mobile UI?', simplifiedTabletView);
 
   const { isOpen, onClose, onOpen } = useEditModal();
 

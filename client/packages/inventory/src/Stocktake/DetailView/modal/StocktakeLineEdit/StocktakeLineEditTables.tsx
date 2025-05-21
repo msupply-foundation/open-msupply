@@ -200,6 +200,7 @@ export const BatchTable = ({
         },
         accessor: ({ rowData }) =>
           rowData.packSize ?? rowData.item?.defaultPackSize,
+        defaultHideOnMobile: true,
       }),
       {
         key: 'snapshotNumberOfPacks',
