@@ -1,17 +1,18 @@
 use crate::{
     barcode::{self, BarcodeInput},
-    invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
+    invoice::common::{
+        calculate_total_after_tax, generate_invoice_user_id_update, generate_vvm_status_log,
+        GenerateVVMStatusLogInput,
+    },
     invoice_line::stock_in_line::{
         convert_invoice_line_to_single_pack, generate_batch, StockInType, StockLineInput,
     },
     store_preference::get_store_preferences,
 };
-use chrono::Utc;
 use repository::{
     vvm_status::vvm_status_log_row::VVMStatusLogRow, BarcodeRow, InvoiceLineRow, InvoiceLineType,
     InvoiceRow, InvoiceStatus, ItemRow, RepositoryError, StockLineRow, StorageConnection,
 };
-use util::uuid::uuid;
 
 use super::InsertStockInLine;
 
@@ -43,7 +44,6 @@ pub fn generate(
     let (batch_option, vvm_status_log) =
         if should_upsert_batch(&input.r#type, &existing_invoice_row) {
             let batch = generate_batch(
-                // include vvm status here
                 connection,
                 new_line.clone(),
                 StockLineInput {
@@ -64,16 +64,18 @@ pub fn generate(
             new_line.stock_line_id = Some(batch.id.clone());
 
             let vvm_status_log = if let Some(vvm_status_id) = input.vvm_status_id {
-                generate_vvm_status_log(VVMStatusInput {
+                Some(generate_vvm_status_log(GenerateVVMStatusLogInput {
+                    id: None,
                     store_id: existing_invoice_row.store_id.clone(),
+                    created_by: user_id.to_string(),
                     vvm_status_id,
                     stock_line_id: batch.id.clone(),
                     invoice_line_id: new_line.id.clone(),
-                    created_by: user_id.to_string(),
-                })
+                }))
             } else {
                 None
             };
+
             (Some(batch), vvm_status_log)
         } else {
             (None, None)
@@ -104,12 +106,12 @@ fn generate_line(
         note,
         stock_line_id,
         item_variant_id,
+        vvm_status_id,
         barcode: _,
         stock_on_hold: _,
         tax_percentage: _,
         donor_id,
         r#type: _,
-        vvm_status_id,
     }: InsertStockInLine,
     ItemRow {
         name: item_name,
@@ -193,34 +195,4 @@ fn generate_barcode(
     };
 
     Ok(barcode)
-}
-
-struct VVMStatusInput {
-    store_id: String,
-    vvm_status_id: String,
-    stock_line_id: String,
-    invoice_line_id: String,
-    created_by: String,
-}
-
-fn generate_vvm_status_log(
-    VVMStatusInput {
-        store_id,
-        vvm_status_id,
-        stock_line_id,
-        invoice_line_id,
-        created_by,
-    }: VVMStatusInput,
-) -> Option<VVMStatusLogRow> {
-    let log_status = VVMStatusLogRow {
-        id: uuid(),
-        status_id: vvm_status_id,
-        created_datetime: Utc::now().naive_utc(),
-        stock_line_id,
-        comment: None,
-        created_by,
-        invoice_line_id: Some(invoice_line_id),
-        store_id,
-    };
-    return Some(log_status);
 }

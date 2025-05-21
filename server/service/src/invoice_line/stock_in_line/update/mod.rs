@@ -53,12 +53,10 @@ pub fn update_stock_in_line(
                 updated_line,
                 upsert_batch_option,
                 batch_to_delete_id,
-                vvm_status_log,
-                vvm_status_log_to_delete,
+                vvm_status_log_option,
             } = generate(connection, &ctx.user_id, input, line, item, invoice)?;
 
             let stock_line_repository = StockLineRowRepository::new(connection);
-            let vvm_status_log_repository = VVMStatusLogRowRepository::new(connection);
             if let Some(upsert_batch) = upsert_batch_option {
                 stock_line_repository.upsert_one(&upsert_batch)?;
             }
@@ -69,15 +67,11 @@ pub fn update_stock_in_line(
                 stock_line_repository.delete(&id)?;
             }
 
-            if let Some(id) = vvm_status_log_to_delete {
-                vvm_status_log_repository.delete(&id)?;
-            }
-
             if let Some(invoice_row) = invoice_row_option {
                 InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
             }
 
-            if let Some(vvm_status_log_row) = vvm_status_log {
+            if let Some(vvm_status_log_row) = vvm_status_log_option {
                 VVMStatusLogRowRepository::new(connection).upsert_one(&vvm_status_log_row)?;
             }
 

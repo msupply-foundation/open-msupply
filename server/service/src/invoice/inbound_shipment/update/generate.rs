@@ -11,7 +11,10 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
+use crate::invoice::common::{
+    calculate_foreign_currency_total, calculate_total_after_tax, generate_vvm_status_log,
+    GenerateVVMStatusLogInput,
+};
 use crate::service_provider::ServiceContext;
 
 use super::{
@@ -98,12 +101,13 @@ pub(crate) fn generate(
             .iter()
             .filter_map(|batch| {
                 batch.line.vvm_status_id.clone().map(|vvm_status_id| {
-                    generate_vvm_status_log(VVMStatusInput {
-                        store_id: ctx.store_id.to_owned(),
+                    generate_vvm_status_log(GenerateVVMStatusLogInput {
+                        id: None,
+                        store_id: update_invoice.store_id.clone(),
+                        created_by: ctx.user_id.clone(),
                         vvm_status_id,
-                        stock_line_id: batch.line.stock_line_id.clone().unwrap_or_default(),
+                        stock_line_id: batch.stock_line.as_ref().unwrap().id.clone(),
                         invoice_line_id: batch.line.id.clone(),
-                        created_by: ctx.user_id.to_string(),
                     })
                 })
             })
@@ -464,33 +468,4 @@ fn update_donor_on_lines_and_stock(
         result.push(LineAndStockLine { line, stock_line });
     }
     Ok(result)
-}
-
-struct VVMStatusInput {
-    store_id: String,
-    vvm_status_id: String,
-    stock_line_id: String,
-    invoice_line_id: String,
-    created_by: String,
-}
-
-fn generate_vvm_status_log(
-    VVMStatusInput {
-        store_id,
-        vvm_status_id,
-        stock_line_id,
-        invoice_line_id,
-        created_by,
-    }: VVMStatusInput,
-) -> VVMStatusLogRow {
-    VVMStatusLogRow {
-        id: uuid(),
-        status_id: vvm_status_id,
-        created_datetime: Utc::now().naive_utc(),
-        stock_line_id,
-        comment: None,
-        created_by,
-        invoice_line_id: Some(invoice_line_id),
-        store_id,
-    }
 }
