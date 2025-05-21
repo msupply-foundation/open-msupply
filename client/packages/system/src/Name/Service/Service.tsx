@@ -7,7 +7,7 @@ import { FacilitiesListView } from '../ListView/Facilities/ListView';
 export const Service: FC = () => {
   const customersRoute = RouteBuilder.create(AppRoute.Customer).build();
   const suppliersRoute = RouteBuilder.create(AppRoute.Suppliers).build();
-  const facilitiesRoute = RouteBuilder.create(AppRoute.Facilities).build();
+  const facilitiesRoute = RouteBuilder.create(AppRoute.Stores).build();
 
   return (
     <Routes>
