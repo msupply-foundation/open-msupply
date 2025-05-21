@@ -279,20 +279,11 @@ impl SyncTranslation for InvoiceLineTranslation {
             number_of_packs,
             prescribed_quantity,
             note,
-            inventory_adjustment_reason_id: match invoice.r#type {
-                InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => {
-                    option_id.clone()
-                }
-                _ => None,
-            },
-            return_reason_id: match invoice.r#type {
-                InvoiceType::CustomerReturn | InvoiceType::SupplierReturn => option_id,
-                _ => None,
-            },
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
             donor_link_id: donor_id,
+            reason_option_id: option_id,
         };
 
         let result = adjust_negative_values(result);
@@ -344,25 +335,17 @@ impl SyncTranslation for InvoiceLineTranslation {
                     number_of_packs,
                     prescribed_quantity,
                     note,
-                    inventory_adjustment_reason_id,
-                    return_reason_id,
                     foreign_currency_price_before_tax,
                     item_variant_id,
                     linked_invoice_id,
                     donor_link_id,
+                    reason_option_id,
                 },
             item_row,
-            invoice_row,
             ..
         } = invoice_line;
 
-        let option_id = match invoice_row.r#type {
-            InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => {
-                inventory_adjustment_reason_id
-            }
-            InvoiceType::CustomerReturn | InvoiceType::SupplierReturn => return_reason_id,
-            _ => None,
-        };
+        let option_id = reason_option_id;
 
         let legacy_row = LegacyTransLineRow {
             id: id.clone(),

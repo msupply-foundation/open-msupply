@@ -59,10 +59,11 @@ fragment StocktakeLine on StocktakeLineNode {
     dosesPerUnit
   }
 
-  inventoryAdjustmentReason {
-    __typename
-    id
+  reasonOption {
     reason
+    type
+    isActive
+    id
   }
 }
 

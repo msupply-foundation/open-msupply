@@ -4,6 +4,7 @@ mod insert {
         mock::{mock_stock_line_a, mock_store_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
         vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository},
+        StockLineRowRepository,
     };
 
     use crate::{
@@ -126,5 +127,16 @@ mod insert {
             .unwrap();
 
         assert_eq!(result.id, "vvm_status_log_id");
+
+        // Check if the VVM Status Id is updated in the stock line
+        let updated_stock_line = StockLineRowRepository::new(&context.connection)
+            .find_one_by_id(&result.stock_line_id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            updated_stock_line.vvm_status_id,
+            Some(result.status_id.clone())
+        );
     }
 }

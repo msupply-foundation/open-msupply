@@ -8,17 +8,18 @@ import {
   ReasonOptionNode,
   ReasonOptionNodeType,
 } from '@openmsupply-client/common';
-import { reasonOptions } from '../api';
+import { useReasonOptions } from '../api';
 
 interface ReasonOptionsSearchInputProps {
   value?: ReasonOptionNode | null;
   width?: number | string;
   onChange: (reasonOption: ReasonOptionNode | null) => void;
   autoFocus?: boolean;
-  type: ReasonOptionNodeType;
+  type: ReasonOptionNodeType | ReasonOptionNodeType[];
   isError?: boolean;
   isDisabled?: boolean;
   onBlur?: () => void;
+  initialStocktake?: boolean;
 }
 
 export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
@@ -30,26 +31,19 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
   isError,
   isDisabled,
   onBlur,
+  initialStocktake,
 }) => {
-  const { data, isLoading } = reasonOptions.document.listAllActive();
+  const { data, isLoading } = useReasonOptions();
 
-  const reasonFilter = (reason: ReasonOptionNode) => {
-    switch (type) {
-      case ReasonOptionNodeType.PositiveInventoryAdjustment:
-        return reason.type === ReasonOptionNodeType.PositiveInventoryAdjustment;
-      case ReasonOptionNodeType.NegativeInventoryAdjustment:
-        return reason.type === ReasonOptionNodeType.NegativeInventoryAdjustment;
-      case ReasonOptionNodeType.RequisitionLineVariance:
-        return reason.type === ReasonOptionNodeType.RequisitionLineVariance;
-      case ReasonOptionNodeType.ReturnReason:
-        return reason.type === ReasonOptionNodeType.ReturnReason;
-      default:
-        return false;
+  const reasonFilter = (reasonOption: ReasonOptionNode) => {
+    if (Array.isArray(type)) {
+      return type.includes(reasonOption.type);
     }
+    return reasonOption.type === type;
   };
   const reasons = (data?.nodes ?? []).filter(reasonFilter);
 
-  const isRequired = reasons.length !== 0;
+  const isRequired = reasons.length !== 0 && !initialStocktake;
 
   return (
     <Box display="flex" flexDirection="row" width={120}>

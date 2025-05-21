@@ -346,6 +346,7 @@ pub fn generate_lines_and_stock_lines(
             pack_size,
             donor_link_id,
             note,
+            reason_option_id: _,
             ..
         }: InvoiceLineRow = invoice_line;
 
