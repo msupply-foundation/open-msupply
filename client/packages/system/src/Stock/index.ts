@@ -1,4 +1,9 @@
-export { StockLineRowFragment, useStockList, useRepack } from './api';
+export {
+  StockLineRowFragment,
+  useStockList,
+  useRepack,
+  useVvmStatusesEnabled,
+} from './api';
 export * from './ListView';
 export * from './DetailView';
 export * from './types';
