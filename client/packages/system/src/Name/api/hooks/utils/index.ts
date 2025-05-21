@@ -3,5 +3,5 @@ import { useNextFacilityId } from './useNextFacilityId';
 
 export const Utils = {
   useNameApi,
-  useNextFacilityId,
+  useNextStoreId: useNextFacilityId,
 };

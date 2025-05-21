@@ -1,7 +1,7 @@
-import { useFacilities } from '../document/useFacilities';
+import { useStores } from '../document/useStores';
 
 export const useNextFacilityId = (currentId: string): string | undefined => {
-  const { data } = useFacilities();
+  const { data } = useStores();
 
   const rows = data?.nodes ?? [];
 

@@ -15,12 +15,12 @@ import {
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
 import { Toolbar } from './Toolbar';
-import { FacilityEditModal } from './FacilityEditModal';
+import { StoreEditModal } from './StoreEditModal';
 import { AppBarButtons } from './AppBarButtons';
 import { PropertiesImportModal } from '../ImportProperties/PropertiesImportModal';
 import { FacilityNameRowFragment } from '../../api/operations.generated';
 
-const FacilitiesListComponent = () => {
+const StoresListComponent = () => {
   const t = useTranslation();
   const [selectedId, setSelectedId] = useState('');
   const {
@@ -29,7 +29,7 @@ const FacilitiesListComponent = () => {
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams();
-  const { data, isError, isLoading } = useName.document.facilities();
+  const { data, isError, isLoading } = useName.document.stores();
   const { data: properties, isLoading: propertiesLoading } =
     useName.document.properties();
   const pagination = { page, first, offset };
@@ -96,11 +96,11 @@ const FacilitiesListComponent = () => {
       />
       <Toolbar filter={filter} />
       {isOpen && (
-        <FacilityEditModal
+        <StoreEditModal
           isOpen={isOpen}
           nameId={selectedId}
           onClose={onClose}
-          setNextFacility={setSelectedId}
+          setNextStore={setSelectedId}
         />
       )}
       <DataTable
@@ -118,8 +118,8 @@ const FacilitiesListComponent = () => {
   );
 };
 
-export const FacilitiesListView = () => (
+export const StoresListView = () => (
   <TableProvider createStore={createTableStore}>
-    <FacilitiesListComponent />
+    <StoresListComponent />
   </TableProvider>
 );
