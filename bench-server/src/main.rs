@@ -25,6 +25,15 @@ query AuthToken($username: String!, $password: String) {
 }
 "#;
 
+const DOUBLE_ECHO: &str = r#"
+query MyQuery($input: JSON!) {
+ root: pluginGraphqlQuery(
+    input: $input
+    pluginCode: "plugin_examples"
+    storeId: "572B52B26FB54D4896C740F35BCBC75E"
+  )
+}"#;
+
 const CREATE_INTENRAL_ORDER: &str = r#"
 mutation insertRequest($storeId: String!, $input: InsertRequestRequisitionInput!) {
    root: insertRequestRequisition(input: $input, storeId: $storeId) {
@@ -412,8 +421,8 @@ mutation addFromMasterList(
 #[tokio::main]
 async fn main() {
     let config = Config {
-        url: "http://localhost:8000".to_string(),
-        username: "dtac".to_string(),
+        url: "https://192.168.1.73:8000".to_string(),
+        username: "test".to_string(),
         password: "pass".to_string(),
         store_id: "800BC536A8C542EF94F5A30FDA51FD92".to_string(),
         supplying_name_id: "EF54B258B86B8D4FABAB7B813BE41FE9".to_string(),
@@ -423,6 +432,8 @@ async fn main() {
     let mut set = JoinSet::new();
 
     let test = GqlTest(config.gql_url().unwrap(), 0);
+
+    println!("Starting test");
 
     // TOKEN
     let token = test
@@ -442,10 +453,14 @@ async fn main() {
         .unwrap()
         .to_string();
 
+    println!("Auth token acquired");
+
     for task_number in 0..30 {
         let config_closure = config.clone();
         let token_closure = token.clone();
-        set.spawn(async move { bench(config_closure, task_number, token_closure).await });
+        set.spawn(
+            async move { bench_async_blocking(config_closure, task_number, token_closure).await },
+        );
     }
 
     let mut errors = Vec::new();
@@ -465,6 +480,30 @@ async fn main() {
         println!("Error at {task_number} - {description}");
         println!("{error:?}");
     }
+}
+
+async fn bench_async_blocking(
+    config: Config,
+    task_number: u32,
+    token: String,
+) -> Result<(), TaskError> {
+    let test = GqlTest(config.gql_url().unwrap(), task_number + 1);
+
+    test.gql(
+        "Async blocking",
+        DOUBLE_ECHO,
+        serde_json::json! ({
+          "input": {
+            "type": "doubleEcho",
+            "echo": "echome"
+          }
+        }),
+        Some(token.clone()),
+        "",
+    )
+    .await?;
+
+    Ok(())
 }
 
 async fn bench(config: Config, task_number: u32, token: String) -> Result<(), TaskError> {
@@ -802,7 +841,11 @@ impl GqlTest {
             "variables": variables
         });
 
-        let mut client = reqwest::Client::new().post(self.0.clone());
+        let mut client = reqwest::Client::builder()
+            .danger_accept_invalid_certs(true)
+            .build()
+            .unwrap()
+            .post(self.0.clone());
 
         if let Some(token) = token {
             client = client.bearer_auth(token)
@@ -823,6 +866,7 @@ impl GqlTest {
 
         let result = json_result.data.root;
 
+        println!("{:?}", result);
         if expected_typename.len() > 0 && result["__typename"] != expected_typename {
             anyhow::bail!(
                 "Failed to validate typename {expected_typename} - {}",
