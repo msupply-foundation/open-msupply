@@ -7,7 +7,7 @@ use graphql_types::types::{VVMStatusConnector, VVMStatusesResponse};
 use service::auth::{Resource, ResourceAccessRequest};
 
 pub fn active_vvm_statuses(ctx: &Context<'_>, store_id: String) -> Result<VVMStatusesResponse> {
-    let user = validate_auth(
+    validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryAndMutateVvmStatus,
@@ -16,7 +16,7 @@ pub fn active_vvm_statuses(ctx: &Context<'_>, store_id: String) -> Result<VVMSta
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_context = service_provider.basic_context()?;
 
     let result = service_provider
         .vvm_service

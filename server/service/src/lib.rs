@@ -351,7 +351,7 @@ fn check_vvm_status_exists(
 ) -> Result<Option<VVMStatusRow>, RepositoryError> {
     let vvm_status = VVMStatusRowRepository::new(connection).find_one_by_id(vvm_status_id)?;
 
-    return Ok(vvm_status);
+    Ok(vvm_status)
 }
 
 #[derive(Serialize, Deserialize)]
