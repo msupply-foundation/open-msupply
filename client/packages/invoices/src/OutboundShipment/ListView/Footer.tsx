@@ -13,8 +13,6 @@ export const FooterComponent: FC = () => {
 
   const { selectedRows, confirmAndDelete } = useOutbound.document.deleteRows();
 
-  console.log('selectedRows', selectedRows);
-
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
