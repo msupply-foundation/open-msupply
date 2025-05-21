@@ -11,6 +11,7 @@ import {
   ButtonWithIcon,
   PlusCircleIcon,
   useToggle,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { useStocktakeOld } from '../api';
@@ -39,6 +40,7 @@ export const AppBarButtons = ({
     direction: 'desc',
     isDesc: true,
   });
+  const useSimplifiedTabletView = useSimplifiedTabletUI();
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -68,14 +70,16 @@ export const AppBarButtons = ({
           navigate={navigate}
           description={description}
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          variant="outlined"
-          isLoading={isLoading}
-          onClick={csvExport}
-          disabled={EnvUtils.platform === Platform.Android}
-          label={t('button.export')}
-        />
+        {!useSimplifiedTabletView && (
+          <LoadingButton
+            startIcon={<DownloadIcon />}
+            variant="outlined"
+            isLoading={isLoading}
+            onClick={csvExport}
+            disabled={EnvUtils.platform === Platform.Android}
+            label={t('button.export')}
+          />
+        )}
       </Grid>
     </AppBarButtonsPortal>
   );
