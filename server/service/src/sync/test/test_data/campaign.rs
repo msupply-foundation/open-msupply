@@ -11,7 +11,8 @@ const CAMPAIGN1: (&str, &str) = (
         "id": "5fb99f9c-03f4-47f2-965b-c9ecd083c675",
         "name": "COVID-19 Campaign",
         "start_date": "2023-01-01",
-        "end_date": "2023-12-31"
+        "end_date": "2023-12-31",
+        "deleted_datetime": null
     }"#,
 );
 
@@ -21,6 +22,7 @@ fn campaign1() -> CampaignRow {
         name: "COVID-19 Campaign".to_string(),
         start_date: Some(chrono::NaiveDate::from_ymd_opt(2023, 1, 1).unwrap()),
         end_date: Some(chrono::NaiveDate::from_ymd_opt(2023, 12, 31).unwrap()),
+        deleted_datetime: None,
     }
 }
 
@@ -30,7 +32,8 @@ const CAMPAIGN2: (&str, &str) = (
         "id": "a9a986cd-a6dc-4e96-811c-4bc225a4f2d8",
         "name": "Polio Vaccination Campaign",
         "start_date": "2023-06-01",
-        "end_date": "2023-06-30"
+        "end_date": "2023-06-30",
+        "deleted_datetime": null
     }"#,
 );
 
@@ -40,6 +43,7 @@ fn campaign2() -> CampaignRow {
         name: "Polio Vaccination Campaign".to_string(),
         start_date: Some(chrono::NaiveDate::from_ymd_opt(2023, 6, 1).unwrap()),
         end_date: Some(chrono::NaiveDate::from_ymd_opt(2023, 6, 30).unwrap()),
+        deleted_datetime: None,
     }
 }
 

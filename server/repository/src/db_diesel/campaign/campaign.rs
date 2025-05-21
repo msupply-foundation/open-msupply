@@ -144,6 +144,7 @@ mod tests {
                 name: name.clone(),
                 start_date: None,
                 end_date: None,
+                deleted_datetime: None,
             })
             .unwrap();
 
