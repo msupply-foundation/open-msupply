@@ -51,7 +51,7 @@ pub fn get_draft_stock_out_lines(
         }),
     )?;
 
-    let existing_lines = get_existing_shipment_lines(ctx, &item_id, &invoice.invoice_row)?;
+    let existing_lines = get_outgoing_invoice_lines(ctx, &item_id, &invoice.invoice_row)?;
 
     let existing_stock_line_ids: Vec<String> = existing_lines
         .iter()
@@ -108,7 +108,7 @@ pub fn get_draft_stock_out_lines(
     Ok((all_lines, draft_stock_out_data))
 }
 
-fn get_existing_shipment_lines(
+fn get_outgoing_invoice_lines(
     ctx: &ServiceContext,
     item_id: &str,
     outbound: &InvoiceRow,
@@ -118,7 +118,6 @@ fn get_existing_shipment_lines(
     let existing_invoice_lines = invoice_line_repo.query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&outbound.id))
-            .invoice_type(InvoiceType::OutboundShipment.equal_to())
             .r#type(InvoiceLineType::StockOut.equal_to())
             .item_id(EqualFilter::equal_to(item_id)),
     )?;
@@ -224,6 +223,8 @@ impl DraftStockOutLine {
             sell_price_per_pack,
             ..
         } = line.invoice_line_row;
+
+        println!("from_invoice_line : {} - {:?}", number_of_packs, batch,);
 
         let StockLineRow {
             id: stock_line_id,
