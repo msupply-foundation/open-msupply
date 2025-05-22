@@ -21,6 +21,7 @@ import {
   usePreference,
   PreferenceKey,
   getReasonOptionType,
+  ReasonOptionNode,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -31,6 +32,7 @@ import {
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
   useIsItemVariantsEnabled,
+  useReasonOptions,
 } from '@openmsupply-client/system';
 import {
   useStocktakeLineErrorContext,
@@ -102,6 +104,8 @@ const getCountThisLineColumn = (
 const getInventoryAdjustmentReasonInputColumn = (
   setter: DraftLineSetter,
   { getError }: UseStocktakeLineErrors,
+  reasonOptions: ReasonOptionNode[],
+  isLoading: boolean,
   initialStocktake?: boolean
 ): ColumnDescription<DraftStocktakeLine> => {
   return {
@@ -148,6 +152,8 @@ const getInventoryAdjustmentReasonInputColumn = (
             rowData.snapshotNumberOfPacks == rowData.countedNumberOfPacks
           }
           initialStocktake={initialStocktake}
+          reasonOptions={reasonOptions}
+          isLoading={isLoading}
         />
       );
     },
@@ -164,6 +170,7 @@ export const BatchTable = ({
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
   useDisableStocktakeRows(batches);
+  const { data: reasonOptions, isLoading } = useReasonOptions();
 
   const errorsContext = useStocktakeLineErrorContext();
 
@@ -238,6 +245,8 @@ export const BatchTable = ({
       getInventoryAdjustmentReasonInputColumn(
         update,
         errorsContext,
+        reasonOptions?.nodes ?? [],
+        isLoading,
         isInitialStocktake
       )
     );
