@@ -112,9 +112,15 @@ export const PrescriptionLineEditView = () => {
     }
   );
   const onSave = async () => {
+    const contextItemId = item?.id ?? currentItem?.id ?? newItemId.current;
+    if (!contextItemId) {
+      alert('No itemId found');
+      return;
+    }
+
     if (allocationIsDirty) {
       savePrescriptionItemLineData({
-        itemId: currentItem?.id ?? '',
+        itemId: contextItemId,
         lines: draftLines,
         prescribedQuantity: prescribedQuantity,
         note,
@@ -124,6 +130,8 @@ export const PrescriptionLineEditView = () => {
     // TODO: Move to picked status? Backend?
 
     // For "NEW" items, navigate to newly-created item page
+
+    // TODO: Fix this logic, not working currently
     if (newItemId.current) {
       const itemId = newItemId.current;
       newItemId.current = undefined;
