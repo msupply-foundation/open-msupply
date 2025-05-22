@@ -21,6 +21,7 @@ mod add_vvm_status_log_update_to_activity_log;
 mod add_vvm_status_table;
 mod donor_id_to_donor_link_id;
 mod migrate_reason_option_ids;
+mod reintegrate_options_sync_buffer_records;
 
 pub(crate) struct V2_08_00;
 
@@ -54,6 +55,7 @@ impl Migration for V2_08_00 {
             Box::new(add_vvm_status_id_to_invoice_line::Migrate),
             Box::new(add_open_vial_wastage_to_reason_option_type::Migrate),
             Box::new(add_campaign_id_to_stock_line::Migrate),
+            Box::new(reintegrate_options_sync_buffer_records::Migrate),
             Box::new(donor_id_to_donor_link_id::Migrate),
         ]
     }
