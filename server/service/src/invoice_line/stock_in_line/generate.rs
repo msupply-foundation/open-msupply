@@ -101,6 +101,7 @@ pub fn generate_batch(
         item_variant_id,
         vvm_status_id,
         donor_id,
+        campaign_id: None,
     };
 
     Ok(stock_line_row)

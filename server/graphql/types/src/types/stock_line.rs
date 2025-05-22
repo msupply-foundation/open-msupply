@@ -1,11 +1,13 @@
-use super::{ItemNode, ItemVariantNode, LocationNode, VVMStatusLogConnector, VVMStatusNode};
+use super::{
+    CampaignNode, ItemNode, ItemVariantNode, LocationNode, VVMStatusLogConnector, VVMStatusNode,
+};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
-        ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader, VVMStatusByIdLoader,
-        VVMStatusLogByStockLineIdLoader,
+        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader,
+        VVMStatusByIdLoader, VVMStatusLogByStockLineIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
@@ -149,6 +151,18 @@ impl StockLineNode {
         let result = loader.load_one(self.row().id.clone()).await?;
 
         Ok(result.map(VVMStatusLogConnector::from_domain))
+    }
+
+    pub async fn campaign(&self, ctx: &Context<'_>) -> Result<Option<CampaignNode>> {
+        let loader = ctx.get_loader::<DataLoader<CampaignByIdLoader>>();
+
+        let campaign_id = match &self.row().campaign_id {
+            Some(campaign_id) => campaign_id,
+            None => return Ok(None),
+        };
+
+        let result = loader.load_one(campaign_id.clone()).await?;
+        Ok(result.map(CampaignNode::from_domain))
     }
 }
 

@@ -179,6 +179,7 @@ pub fn generate_lines_from_master_list(
                     item_variant_id,
                     donor_id,
                     vvm_status_id: _,
+                    campaign_id: _,
                 } = line.stock_line_row;
 
                 result.push(StocktakeLineRow {
@@ -244,6 +245,7 @@ pub fn generate_lines_from_location(
                 item_variant_id,
                 donor_id,
                 vvm_status_id: _,
+                campaign_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {
@@ -349,6 +351,7 @@ pub fn generate_lines_with_stock(
                 item_variant_id,
                 donor_id,
                 vvm_status_id: _,
+                campaign_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {
@@ -411,6 +414,7 @@ pub fn generate_lines_expiring_before(
                 item_variant_id,
                 donor_id,
                 vvm_status_id: _,
+                campaign_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {
