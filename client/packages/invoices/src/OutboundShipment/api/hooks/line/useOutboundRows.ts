@@ -11,7 +11,7 @@ import { useOutboundColumns } from './../../../DetailView/columns';
 
 export const useOutboundRows = (isGrouped = true) => {
   const { data: { manageVaccinesInDoses } = { manageVaccinesInDoses: false } } =
-    usePreference(PreferenceKey.ManageVaccinesInDoses, PreferenceKey.ManageVvmStatusForStock);
+    usePreference(PreferenceKey.ManageVaccinesInDoses);
   const {
     queryParams: { sortBy },
     updateSortQuery: onChangeSortBy,
