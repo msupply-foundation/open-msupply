@@ -40,7 +40,7 @@ const CampaignsComponent = () => {
 
   const pagination = { page, first, offset };
 
-  const { isOpen, onClose, onOpen } = useEditModal<any>();
+  const { isOpen, onClose, onOpen } = useEditModal();
 
   const { error, success } = useNotification();
 
@@ -53,11 +53,11 @@ const CampaignsComponent = () => {
 
   const save = async () => {
     const result = await upsert();
-    if (result.__typename === 'CampaignNode')
+    if (result?.__typename === 'CampaignNode')
       success(t('messages.campaign-saved'))();
-    else
+    else if ('error' in result)
       error(
-        `${t('messages.error-saving-campaign')} — ${result?.error?.description ?? ''}`
+        `${t('messages.error-saving-campaign')} — ${result?.error?.description ?? ''}`
       )();
   };
 

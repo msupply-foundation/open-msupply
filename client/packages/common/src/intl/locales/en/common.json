@@ -1985,6 +1985,7 @@
   "select-store": "Select store",
   "sensors": "Sensors",
   "server-error.DemographicIndicatorHasNoName": "Demographic indicator has no name",
+  "server-error.InvalidDates": "Invalid dates",
   "settings": "Settings",
   "settings.label-printing": "Label Printing",
   "settings.printer-address": "IP address",
