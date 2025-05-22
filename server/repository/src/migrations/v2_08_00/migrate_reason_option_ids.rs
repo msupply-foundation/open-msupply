@@ -260,7 +260,7 @@ impl MigrationFragment for Migrate {
 
                 UPDATE sync_buffer
                 SET integration_datetime = NULL
-                WHERE table_name = 'options';   
+                WHERE table_name = 'reason_option';   
                 "#
         )?;
 
