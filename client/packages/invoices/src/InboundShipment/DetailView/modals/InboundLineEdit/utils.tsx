@@ -10,7 +10,10 @@ import {
   Theme,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
-import { ItemVariantInputCell } from '@openmsupply-client/system';
+import {
+  ItemVariantInputCell,
+  VVMStatusInputCell,
+} from '@openmsupply-client/system';
 
 const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
 const getBatchColumn = (
@@ -71,6 +74,17 @@ export const itemVariantColumn = (
   Cell: props => (
     <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
   ),
+  setter: updateDraftLine,
+});
+
+export const vvmStatusesColumn = (
+  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void
+): ColumnDescription<DraftInboundLine> => ({
+  key: 'vvmStatusId',
+  label: 'label.vvm-status',
+  width: 170,
+  Cell: VVMStatusInputCell,
+  accessor: ({ rowData }) => rowData.vvmStatusId,
   setter: updateDraftLine,
 });
 
