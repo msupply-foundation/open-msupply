@@ -35,7 +35,7 @@ const TRANSACT_1: (&str, &str) = (
       "currency_rate": 1.32,
       "custom_data": null,
       "diagnosis_ID": "",
-      "donor_default_id": "1",
+      "donor_default_id": "donor_a",
       "encounter_id": "",
       "entry_date": "2021-07-30",
       "entry_time": 47046,
@@ -148,7 +148,7 @@ fn transact_1_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_percentage: Some(2.5),
             is_cancellation: false,
             expected_delivery_date: None,
-            default_donor_link_id: Some("1".to_string()),
+            default_donor_link_id: Some("donor_a".to_string()),
         },
     )
 }
@@ -211,7 +211,7 @@ fn transact_1_push_record() -> TestSyncOutgoingRecord {
             insurance_discount_percentage: Some(2.5),
             is_cancellation: false,
             expected_delivery_date: None,
-            default_donor_id: Some("1".to_string()),
+            default_donor_id: Some("donor_a".to_string()),
         }),
     }
 }

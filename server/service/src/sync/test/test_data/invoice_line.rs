@@ -65,7 +65,7 @@ const TRANS_LINE_1: (&str, &str) = (
         "vaccine_vial_monitor_status_ID": "",
         "volume_per_pack": 0,
         "om_item_variant_id": "",
-        "donor_id": "test_donor_id"
+        "donor_id": "donor_a"
         }
     "#,
 );
@@ -96,7 +96,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
             linked_invoice_id: None,
-            donor_link_id: Some("test_donor_id".to_string()),
+            donor_link_id: Some("donor_a".to_string()),
             vvm_status_id: None,
             reason_option_id: None,
         },
@@ -130,7 +130,7 @@ fn trans_line_1_push_record() -> TestSyncOutgoingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
             linked_invoice_id: None,
-            donor_id: Some("test_donor_id".to_string()),
+            donor_id: Some("donor_a".to_string()),
             vvm_status_id: None
         }),
     }
