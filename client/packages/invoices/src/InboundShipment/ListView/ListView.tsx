@@ -41,8 +41,17 @@ export const InboundListView: FC = () => {
     filter,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
-    filters: [{ key: 'invoiceNumber', condition: 'equalTo', isNumber: true }],
+    filters: [
+      { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
+      { key: 'otherPartyName' },
+      {
+        key: 'createdDatetime',
+        condition: 'between',
+      },
+      { key: 'status', condition: 'equalTo' },
+    ],
   });
+
   const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
 
