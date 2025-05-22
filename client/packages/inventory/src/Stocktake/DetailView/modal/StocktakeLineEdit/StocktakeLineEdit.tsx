@@ -16,8 +16,6 @@ import {
   useNotification,
   useIsGrouped,
   useUrlQueryParams,
-  usePreference,
-  PreferenceKey,
 } from '@openmsupply-client/common';
 import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 import { useStocktakeLineEdit } from './hooks';
@@ -40,6 +38,7 @@ interface StocktakeLineEditProps {
   onClose: () => void;
   isOpen: boolean;
   isInitialStocktake: boolean;
+  enableDonorTracking: boolean;
 }
 
 export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
@@ -48,14 +47,11 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   onClose,
   isOpen,
   isInitialStocktake,
+  enableDonorTracking,
 }) => {
   const theme = useAppTheme();
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const [currentItem, setCurrentItem] = useState(item);
-
-  const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor
-  );
 
   const { isDisabled, items, totalLineCount } = useStocktakeOld.line.rows();
   const { draftLines, update, addLine, isSaving, save, nextItem } =
@@ -212,9 +208,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                             isDisabled={isDisabled}
                             batches={reversedDraftLines}
                             update={update}
-                            trackStockDonor={
-                              preferences?.allowTrackingOfStockByDonor
-                            }
+                            trackStockDonor={enableDonorTracking}
                           />
                         </QueryParamsProvider>
                       </StyledTabContainer>
