@@ -64,6 +64,7 @@ export const DraftLine = {
       itemName: stockLine.item.name,
       itemVariantId: stockLine.itemVariantId,
       itemVariant: stockLine.itemVariant,
+      donorId: stockLine.donor?.id,
       item: {
         __typename: 'ItemNode',
         id: stockLine.itemId,

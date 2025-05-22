@@ -1,11 +1,13 @@
-use super::{ItemNode, ItemVariantNode, LocationNode, VVMStatusLogConnector, VVMStatusNode};
+use super::{
+    ItemNode, ItemVariantNode, LocationNode, NameNode, VVMStatusLogConnector, VVMStatusNode,
+};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
-        ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader, VVMStatusByIdLoader,
-        VVMStatusLogByStockLineIdLoader,
+        ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader, NameByNameLinkIdLoader,
+        NameByNameLinkIdLoaderInput, VVMStatusByIdLoader, VVMStatusLogByStockLineIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
@@ -149,6 +151,19 @@ impl StockLineNode {
         let result = loader.load_one(self.row().id.clone()).await?;
 
         Ok(result.map(VVMStatusLogConnector::from_domain))
+    }
+
+    pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
+        let donor_link_id = match &self.row().donor_link_id {
+            None => return Ok(None),
+            Some(donor_link_id) => donor_link_id,
+        };
+        let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
+        let result = loader
+            .load_one(NameByNameLinkIdLoaderInput::new(&store_id, donor_link_id))
+            .await?;
+
+        Ok(result.map(NameNode::from_domain))
     }
 }
 

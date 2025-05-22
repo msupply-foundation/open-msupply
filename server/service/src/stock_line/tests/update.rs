@@ -1,7 +1,10 @@
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_stock_line_a, mock_store_a, mock_user_account_a, MockDataInserts},
+        mock::{
+            mock_name_b, mock_name_customer_a, mock_stock_line_a, mock_store_a,
+            mock_user_account_a, MockDataInserts,
+        },
         test_db::setup_all,
         StockLineRowRepository,
     };
@@ -59,6 +62,51 @@ mod test {
                 })
             ),
             Err(ServiceError::ItemVariantDoesNotExist)
+        );
+
+        // DonorDoesNotExist
+        assert_eq!(
+            service.update_stock_line(
+                &context,
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    donor_id: Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    }),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::DonorDoesNotExist)
+        );
+
+        // DonorNotVisible
+        assert_eq!(
+            service.update_stock_line(
+                &context,
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    donor_id: Some(NullableUpdate {
+                        value: Some(mock_name_b().id), // Not visible in store_a
+                    }),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::DonorNotVisible)
+        );
+
+        // DonorIsNotADonor
+        assert_eq!(
+            service.update_stock_line(
+                &context,
+                UpdateStockLine {
+                    id: mock_stock_line_a().id,
+                    donor_id: Some(NullableUpdate {
+                        value: Some(mock_name_customer_a().id), // Not a donor
+                    }),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::DonorIsNotADonor)
         );
 
         // StockDoesNotBelongToStore

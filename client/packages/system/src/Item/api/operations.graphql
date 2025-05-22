@@ -47,6 +47,10 @@ fragment StockLine on StockLineNode {
     id
     dosesPerUnit
   }
+
+  donor(storeId: $storeId) {
+    id
+  }
 }
 
 fragment ItemRow on ItemNode {

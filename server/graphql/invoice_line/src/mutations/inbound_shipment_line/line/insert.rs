@@ -160,6 +160,9 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::LocationDoesNotExist
         | ServiceError::ItemVariantDoesNotExist
         | ServiceError::VVMStatusDoesNotExist
+        | ServiceError::DonorDoesNotExist
+        | ServiceError::DonorNotVisible
+        | ServiceError::DonorIsNotADonor
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
             InternalError(formatted_error)

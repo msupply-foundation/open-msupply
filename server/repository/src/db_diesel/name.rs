@@ -399,6 +399,10 @@ impl Name {
         self.name_row.is_manufacturer
     }
 
+    pub fn is_donor(&self) -> bool {
+        self.name_row.is_donor
+    }
+
     pub fn is_visible(&self) -> bool {
         self.name_store_join_row.is_some()
     }

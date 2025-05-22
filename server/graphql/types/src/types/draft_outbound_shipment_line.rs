@@ -1,12 +1,15 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
 use graphql_core::{
-    loader::{ItemVariantByItemVariantIdLoader, LocationByIdLoader, VVMStatusByIdLoader},
+    loader::{
+        ItemVariantByItemVariantIdLoader, LocationByIdLoader, NameByNameLinkIdLoader,
+        NameByNameLinkIdLoaderInput, VVMStatusByIdLoader,
+    },
     ContextExt,
 };
 use service::invoice_line::get_draft_outbound_lines::DraftOutboundShipmentLine;
 
-use super::{ItemVariantNode, LocationNode, VVMStatusNode};
+use super::{ItemVariantNode, LocationNode, NameNode, VVMStatusNode};
 
 pub struct DraftOutboundShipmentItemData {
     pub lines: Vec<DraftOutboundShipmentLine>,
@@ -83,6 +86,19 @@ impl DraftOutboundShipmentLineNode {
 
     pub async fn default_doses_per_unit(&self) -> i32 {
         self.shipment_line.default_doses_per_unit
+    }
+
+    pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
+        let donor_link_id = match &self.shipment_line.donor_link_id {
+            None => return Ok(None),
+            Some(donor_link_id) => donor_link_id,
+        };
+        let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
+        let result = loader
+            .load_one(NameByNameLinkIdLoaderInput::new(&store_id, donor_link_id))
+            .await?;
+
+        Ok(result.map(NameNode::from_domain))
     }
 
     pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
