@@ -15,6 +15,7 @@ import {
   TooltipTextCell,
   GenericColumnKey,
   getCommentPopoverColumn,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -47,12 +48,14 @@ const OutboundShipmentListViewComponent: FC = () => {
       { key: 'theirReference' },
       { key: 'createdDatetime', condition: 'between' },
       { key: 'shippedDatetime', condition: 'between' },
+      { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
     ],
   });
   const navigate = useNavigate();
   const modalController = useToggle();
   const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const { data, isError, isLoading } = useOutbound.document.list(queryParams);
   useDisableOutboundRows(data?.nodes);
@@ -100,7 +103,7 @@ const OutboundShipmentListViewComponent: FC = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
+      <Toolbar filter={filter} simplifiedTabletView={simplifiedTabletView} />
       <AppBarButtons modalController={modalController} />
 
       <DataTable
