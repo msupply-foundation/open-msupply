@@ -41,9 +41,9 @@ export type StockLineFragment = {
     name: string;
     code: string;
     unitName?: string | null;
+    defaultPackSize: number;
     doses: number;
     isVaccine: boolean;
-    defaultPackSize: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -363,9 +363,9 @@ export type ItemFragment = {
         name: string;
         code: string;
         unitName?: string | null;
+        defaultPackSize: number;
         doses: number;
         isVaccine: boolean;
-        defaultPackSize: number;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -551,9 +551,9 @@ export type ItemsWithStockLinesQuery = {
             name: string;
             code: string;
             unitName?: string | null;
+            defaultPackSize: number;
             doses: number;
             isVaccine: boolean;
-            defaultPackSize: number;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -865,9 +865,9 @@ export type ItemByIdQuery = {
             name: string;
             code: string;
             unitName?: string | null;
+            defaultPackSize: number;
             doses: number;
             isVaccine: boolean;
-            defaultPackSize: number;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -1060,9 +1060,9 @@ export type GetHistoricalStockLinesQuery = {
         name: string;
         code: string;
         unitName?: string | null;
+        defaultPackSize: number;
         doses: number;
         isVaccine: boolean;
-        defaultPackSize: number;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;

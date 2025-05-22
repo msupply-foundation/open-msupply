@@ -1507,6 +1507,7 @@ export type CustomerReturnLineInput = {
   numberOfPacksReturned: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CustomerReturnLineNode = {
@@ -3987,6 +3988,7 @@ export type InvoiceLineNode = {
   totalAfterTax: Scalars['Float']['output'];
   totalBeforeTax: Scalars['Float']['output'];
   type: InvoiceLineNodeType;
+  vvmStatusId?: Maybe<Scalars['String']['output']>;
 };
 
 export enum InvoiceLineNodeType {
@@ -8105,6 +8107,7 @@ export type StockLineNode = {
   supplierName?: Maybe<Scalars['String']['output']>;
   totalNumberOfPacks: Scalars['Float']['output'];
   vvmStatus?: Maybe<VvmstatusNode>;
+  vvmStatusId?: Maybe<Scalars['String']['output']>;
   vvmStatusLogs?: Maybe<VvmstatusLogConnector>;
 };
 
@@ -8928,6 +8931,7 @@ export type UpdateInboundShipmentLineInput = {
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateInboundShipmentLineResponse =

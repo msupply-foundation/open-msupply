@@ -162,7 +162,7 @@ fn generate_stock_in_out_or_update(
             total_before_tax: None,
             tax_percentage: None,
             donor_id: None,
-            vvm_status_id: None, // Setting to none until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
+            vvm_status_id: None,
         })
     } else {
         StockChange::StockOut(InsertStockOutLine {
@@ -327,14 +327,14 @@ fn generate_new_stock_line(
         stock_line_id: Some(stock_line_id.clone()),
         item_id,
         note: row.note,
+        item_variant_id: stocktake_line.line.item_variant_id.clone(),
         // Default
         stock_on_hold: false,
         barcode: None,
         total_before_tax: None,
         tax_percentage: None,
-        item_variant_id: stocktake_line.line.item_variant_id.clone(),
         donor_id: None,
-        vvm_status_id: None, // Setting to none until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
+        vvm_status_id: None,
     });
 
     // If new stock line has a location, create location movement

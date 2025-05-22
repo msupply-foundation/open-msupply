@@ -21,6 +21,8 @@ import { AppRoute } from '@openmsupply-client/config';
 import {
   ActivityLogList,
   toItemWithPackSize,
+  useIsItemVariantsEnabled,
+  useVvmStatusesEnabled,
 } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -57,6 +59,8 @@ const DetailViewInner = () => {
   const { data: preference } = usePreference(
     PreferenceKey.ManageVaccinesInDoses
   );
+  const { data: vvmStatuses } = useVvmStatusesEnabled();
+  const hasItemVariantsEnabled = useIsItemVariantsEnabled();
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
@@ -141,6 +145,8 @@ const DetailViewInner = () => {
                 item={entity}
                 currency={data.currency}
                 isExternalSupplier={!data.otherParty.store}
+                hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
+                hasItemVariantsEnabled={hasItemVariantsEnabled}
               />
             )}
             {returnsIsOpen && (

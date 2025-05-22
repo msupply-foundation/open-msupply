@@ -41,6 +41,7 @@ pub enum UpdateStockLineError {
     ItemVariantDoesNotExist,
     UpdatedStockNotFound,
     StockMovementNotFound,
+    VVMStatusDoesNotExist,
 }
 
 pub fn update_stock_line(

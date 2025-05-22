@@ -306,6 +306,7 @@ fn generate_customer_return(
             batch: stock_line_row.batch,
             pack_size: stock_line_row.pack_size,
             number_of_packs: amount,
+            vvm_status_id: stock_line_row.vvm_status_id,
             reason_id: None,
             note: None,
         }],

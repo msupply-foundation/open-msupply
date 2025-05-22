@@ -1,6 +1,10 @@
 import React from 'react';
-import { Autocomplete, useTranslation } from '@openmsupply-client/common';
-import { useActiveVVMStatuses, VvmStatusFragment } from '../../api';
+import {
+  Autocomplete,
+  Tooltip,
+  useTranslation,
+} from '@openmsupply-client/common';
+import { useVvmStatusesEnabled, VvmStatusFragment } from '../../api';
 
 interface VVMStatusSearchInputProps {
   selectedId: string | null;
@@ -16,7 +20,7 @@ export const VVMStatusSearchInput = ({
   disabled,
 }: VVMStatusSearchInputProps) => {
   const t = useTranslation();
-  const { data, isLoading } = useActiveVVMStatuses();
+  const { data, isLoading } = useVvmStatusesEnabled();
 
   if (!data) return null;
 
@@ -29,18 +33,20 @@ export const VVMStatusSearchInput = ({
   const selected = options.find(option => option.id === selectedId) ?? null;
 
   return (
-    <Autocomplete
-      disabled={disabled}
-      width={`${width}px`}
-      popperMinWidth={Math.min(Number(width), 200)}
-      value={selected ?? null}
-      loading={isLoading}
-      onChange={(_, option) => onChange(option?.id ?? null)}
-      options={options}
-      getOptionLabel={option => option.description ?? ''}
-      noOptionsText={t('messages.no-vvm-statuses')}
-      isOptionEqualToValue={(option, value) => option.id === value?.id}
-      clearable
-    />
+    <Tooltip title={selected?.description ?? ''} placement="top">
+      <Autocomplete
+        disabled={disabled}
+        width="100%"
+        popperMinWidth={Math.min(Number(width), 200)}
+        value={selected ?? null}
+        loading={isLoading}
+        onChange={(_, option) => onChange(option?.id ?? null)}
+        options={options}
+        getOptionLabel={option => option.description ?? ''}
+        noOptionsText={t('messages.no-vvm-statuses')}
+        isOptionEqualToValue={(option, value) => option.id === value?.id}
+        clearable={false} // VVM status shouldn't be cleared once set
+      />
+    </Tooltip>
   );
 };
