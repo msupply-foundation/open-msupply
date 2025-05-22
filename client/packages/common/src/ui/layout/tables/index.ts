@@ -33,3 +33,12 @@ export const DEFAULT_PAGE_SIZE = 25;
 export const placeholderRowStyle: AppSxProp = {
   color: theme => theme.palette.secondary.light,
 };
+
+export const textStyles = {
+  default: { fontSize: '14px', paddingLeft: '16px', paddingRight: 0 },
+  dense: {
+    fontSize: '12px',
+    paddingLeft: '12px',
+    paddingRight: '4px',
+  },
+};

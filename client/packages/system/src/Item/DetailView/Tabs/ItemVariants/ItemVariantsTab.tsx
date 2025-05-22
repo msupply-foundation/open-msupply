@@ -8,6 +8,7 @@ import {
   InputWithLabelRow,
   NothingHere,
   NumericTextInput,
+  Tooltip,
   Typography,
 } from '@common/components';
 import {
@@ -95,9 +96,21 @@ const ItemVariant = ({
   return (
     <Box maxWidth="1000px" margin="25px auto" paddingBottom={6}>
       <Box display="flex" justifyContent="space-between" alignItems="end">
-        <Typography variant="h6" fontWeight="bold" color="black">
-          {variant.name}
-        </Typography>
+        <Tooltip title={variant?.name ?? ''}>
+          <Typography
+            variant="h6"
+            fontWeight="bold"
+            color="black"
+            sx={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: 800,
+            }}
+            title={variant.name}
+          >
+            {variant.name}
+          </Typography>
+        </Tooltip>
         <Box display="flex" gap={2}>
           <FlatButton
             label={t('label.edit')}

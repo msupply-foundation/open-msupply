@@ -19,6 +19,7 @@ export interface CellProps<T extends RecordWithId> {
   localisedText: TypedTFunction<LocaleKey>;
   localisedDate: (date: string | number | Date) => string;
   debounceTime?: number;
+  dense?: boolean;
 }
 
 export interface HeaderProps<T extends RecordWithId> {
