@@ -15,9 +15,9 @@ export interface PrescriptionLineEditTableProps {
   disabled?: boolean;
 }
 
-export const PrescriptionLineEditTable: React.FC<
-  PrescriptionLineEditTableProps
-> = ({ disabled }) => {
+export const PrescriptionLineEditTable = ({
+  disabled,
+}: PrescriptionLineEditTableProps) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
   const { draftLines, allocateIn, item, manualAllocate } = useAllocationContext(

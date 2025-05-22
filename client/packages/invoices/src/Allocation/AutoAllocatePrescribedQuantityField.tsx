@@ -1,10 +1,10 @@
 import React from 'react';
 import {
-  ModalLabel,
   useTranslation,
   NumericTextInput,
   useFormatNumber,
   useDebounceCallback,
+  InputLabel,
 } from '@openmsupply-client/common';
 
 import { useAllocationContext } from './useAllocationContext';
@@ -49,7 +49,9 @@ export const AutoAllocatePrescribedQuantityField = () => {
 
   return (
     <>
-      <ModalLabel label={t('label.prescribed-quantity')} />
+      <InputLabel sx={{ fontSize: 12 }}>
+        {t('label.prescribed-quantity')}
+      </InputLabel>
       <NumericTextInput
         autoFocus
         value={prescribedQuantity ?? 0}

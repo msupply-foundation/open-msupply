@@ -28,6 +28,7 @@ import {
   sumAvailableDoses,
   sumAvailableUnits,
 } from 'packages/invoices/src/Allocation/utils';
+import { AllocateInSelector } from '../../../Allocation/AllocateInSelector';
 
 interface AllocationProps {
   itemId: string;
@@ -133,6 +134,7 @@ const AllocationInner = () => {
         <Box display="flex" alignItems="flex-start" gap={2}>
           <Grid container alignItems="center" pt={1}>
             <AutoAllocateField />
+            <AllocateInSelector includePackSizeOptions />
           </Grid>
           <AutoAllocationAlerts />
         </Box>

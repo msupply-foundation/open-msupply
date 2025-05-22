@@ -6,14 +6,17 @@ import {
   PreferenceKey,
   useIntlUtils,
   useFormatNumber,
+  Typography,
+  Box,
 } from '@openmsupply-client/common';
-import {
-  AllocateInType,
-  useAllocationContext,
-} from 'packages/invoices/src/Allocation/useAllocationContext';
-import { canAutoAllocate } from 'packages/invoices/src/Allocation/utils';
+import { AllocateInType, useAllocationContext } from './useAllocationContext';
+import { canAutoAllocate } from './utils';
 
-export const AllocateInSelector = () => {
+export const AllocateInSelector = ({
+  includePackSizeOptions = false,
+}: {
+  includePackSizeOptions?: boolean;
+}) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
   const { getPlural } = useIntlUtils();
@@ -37,21 +40,33 @@ export const AllocateInSelector = () => {
   const unitName = item?.unitName ?? t('label.unit');
   const pluralisedUnitName = getPlural(unitName, 2);
 
+  const includeDosesOption = item?.isVaccine && prefs?.manageVaccinesInDoses;
+
+  // EARLY RETURN - if only allocating in units, don't show the selector
+  if (!includePackSizeOptions && !includeDosesOption) {
+    return <Typography sx={{ fontSize: 12 }}>{pluralisedUnitName}</Typography>;
+  }
+
   const options: { label: string; value: AllocateInType | number }[] = [
     // Always default to allocating in units
     {
       label: pluralisedUnitName,
       value: AllocateInType.Units,
     },
-    // Then list available pack sizes
-    ...availablePackSizes.map(packSize => ({
-      label: t('label.packs-of-pack-size', { packSize }),
-      value: packSize,
-    })),
   ];
 
+  if (includePackSizeOptions) {
+    // Then list available pack sizes
+    options.push(
+      ...availablePackSizes.map(packSize => ({
+        label: t('label.packs-of-pack-size', { packSize }),
+        value: packSize,
+      }))
+    );
+  }
+
   // If can dispense in doses, give that option at the top of the list (smallest unit)
-  if (item?.isVaccine && prefs?.manageVaccinesInDoses) {
+  if (includeDosesOption) {
     options.unshift({
       label: t('label.doses'),
       value: AllocateInType.Doses,
@@ -72,17 +87,20 @@ export const AllocateInSelector = () => {
   };
 
   return (
-    <Select
-      options={options}
-      value={
-        allocateIn.type === AllocateInType.Packs
-          ? allocateIn.packSize
-          : allocateIn.type
-      }
-      onChange={e =>
-        handleAllocateInChange(e.target.value as AllocateInType | number)
-      }
-      sx={{ width: '150px' }}
-    />
+    <>
+      <Box marginLeft={1} />
+      <Select
+        options={options}
+        value={
+          allocateIn.type === AllocateInType.Packs
+            ? allocateIn.packSize
+            : allocateIn.type
+        }
+        onChange={e =>
+          handleAllocateInChange(e.target.value as AllocateInType | number)
+        }
+        sx={{ width: '150px' }}
+      />
+    </>
   );
 };

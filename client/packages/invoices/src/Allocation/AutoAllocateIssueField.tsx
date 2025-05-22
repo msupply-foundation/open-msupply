@@ -2,7 +2,6 @@ import React from 'react';
 import {
   ModalLabel,
   useTranslation,
-  Box,
   NumericTextInput,
   useFormatNumber,
   useBufferState,
@@ -10,7 +9,6 @@ import {
 } from '@openmsupply-client/common';
 import { useAllocationContext } from './useAllocationContext';
 import { getAllocatedQuantity } from './utils';
-import { AllocateInSelector } from '../OutboundShipment/DetailView/OutboundLineEdit/AllocateInSelector';
 
 export const AutoAllocateField = () => {
   const t = useTranslation();
@@ -60,9 +58,6 @@ export const AutoAllocateField = () => {
         value={issueQuantity}
         onChange={handleIssueQuantityChange}
       />
-      <Box marginLeft={1} />
-      {/* // TODO - probs not wanted in prescriptions!  */}
-      <AllocateInSelector />
     </>
   );
 };
