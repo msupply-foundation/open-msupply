@@ -1,6 +1,6 @@
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
-    InvoiceType, StorageConnection,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType,
+    InvoiceRow, InvoiceType, StorageConnection,
 };
 use util::uuid;
 
@@ -57,6 +57,10 @@ pub fn generate(
             .item_id(EqualFilter::equal_to(&item_id))
             .invoice_id(EqualFilter::equal_to(&invoice_id)),
     )?;
+
+    // The frontend generates ids for each line, however, if we already have a line with the same
+    // stock_line_id, we need to use the existing line id instead of the new one.
+    let lines = remap_ids(lines, &existing_lines);
 
     let check_already_exists = |id: &str| {
         existing_lines
@@ -166,4 +170,77 @@ pub fn generate(
         lines_to_delete,
         manage_placeholder,
     })
+}
+
+fn remap_ids(
+    lines: Vec<SaveStockOutInvoiceLine>,
+    existing_lines: &Vec<InvoiceLine>,
+) -> Vec<SaveStockOutInvoiceLine> {
+    lines
+        .into_iter()
+        .map(|line| {
+            let existing_line = existing_lines.iter().find(|existing_line| {
+                existing_line.invoice_line_row.stock_line_id == Some(line.stock_line_id.clone())
+            });
+            match existing_line {
+                Some(existing_line) => SaveStockOutInvoiceLine {
+                    id: existing_line.invoice_line_row.id.clone(),
+                    ..line
+                },
+                None => line,
+            }
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use repository::{InvoiceLine, InvoiceLineRow};
+
+    use crate::invoice_line::save_stock_out_item_lines::{
+        generate::remap_ids, SaveStockOutInvoiceLine,
+    };
+
+    #[test]
+    fn test_remap_ids() {
+        let lines = vec![
+            SaveStockOutInvoiceLine {
+                id: "newA".to_string(),
+                number_of_packs: 1.0,
+                stock_line_id: "A".to_string(),
+            },
+            SaveStockOutInvoiceLine {
+                id: "newB".to_string(),
+                number_of_packs: 2.0,
+                stock_line_id: "B".to_string(),
+            },
+        ];
+
+        let existing_lines = vec![
+            InvoiceLine {
+                invoice_line_row: InvoiceLineRow {
+                    id: "existingA".to_string(),
+                    number_of_packs: 7.0,
+                    stock_line_id: Some("A".to_string()),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            InvoiceLine {
+                invoice_line_row: InvoiceLineRow {
+                    id: "existingC".to_string(),
+                    stock_line_id: Some("C".to_string()),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+        ];
+
+        let result = remap_ids(lines, &existing_lines);
+
+        assert_eq!(result[0].id, "existingA");
+        assert_eq!(result[0].number_of_packs, 1.0);
+        assert_eq!(result[1].id, "newB");
+        assert_eq!(result[1].number_of_packs, 2.0);
+    }
 }
