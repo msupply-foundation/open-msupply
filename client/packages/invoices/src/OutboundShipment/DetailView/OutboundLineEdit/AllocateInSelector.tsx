@@ -10,8 +10,8 @@ import {
 import {
   AllocateInType,
   useAllocationContext,
-} from './allocation/useAllocationContext';
-import { canAutoAllocate } from './allocation/utils';
+} from 'packages/invoices/src/Allocation/useAllocationContext';
+import { canAutoAllocate } from 'packages/invoices/src/Allocation/utils';
 
 export const AllocateInSelector = () => {
   const t = useTranslation();
