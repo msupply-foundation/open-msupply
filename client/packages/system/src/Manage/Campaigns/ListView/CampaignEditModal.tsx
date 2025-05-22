@@ -65,7 +65,6 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
             label={t('label.name')}
             Input={
               <BasicTextInput
-                size="small"
                 sx={{ width: 250 }}
                 value={name}
                 onChange={e => updateDraft({ name: e.target.value })}
@@ -77,7 +76,7 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
             label={t('label.start-date')}
             Input={
               <DateTimePickerInput
-                // sx={{ width: 250 }}
+                sx={{ width: 250 }}
                 value={DateUtils.getDateOrNull(startDate)}
                 onChange={startDate => updateDraft({ startDate })}
               />
@@ -88,7 +87,7 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
             label={t('label.end-date')}
             Input={
               <DateTimePickerInput
-                // sx={{ width: 250 }}
+                sx={{ width: 250 }}
                 value={DateUtils.getDateOrNull(endDate)}
                 onChange={endDate => updateDraft({ endDate })}
               />
