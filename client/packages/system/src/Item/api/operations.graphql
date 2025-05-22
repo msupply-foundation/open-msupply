@@ -24,6 +24,7 @@ fragment StockLine on StockLineNode {
     name
     code
     unitName
+    defaultPackSize
     doses
     isVaccine
     itemDirections {
@@ -303,6 +304,8 @@ fragment ItemsWithStats on ItemNode {
   name
   unitName
   defaultPackSize
+  isVaccine
+  doses
   availableStockOnHand(storeId: $storeId)
   stats(storeId: $storeId) {
     __typename

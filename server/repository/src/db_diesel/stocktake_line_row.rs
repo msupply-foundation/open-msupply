@@ -1,6 +1,6 @@
 use super::{
-    inventory_adjustment_reason_row::inventory_adjustment_reason, item_link_row::item_link,
-    location_row::location, stock_line_row::stock_line, stocktake_row::stocktake,
+    item_link_row::item_link, location_row::location, name_link_row::name_link,
+    reason_option_row::reason_option, stock_line_row::stock_line, stocktake_row::stocktake,
     StorageConnection,
 };
 
@@ -33,17 +33,20 @@ table! {
         cost_price_per_pack -> Nullable<Double>,
         sell_price_per_pack -> Nullable<Double>,
         note -> Nullable<Text>,
-        inventory_adjustment_reason_id -> Nullable<Text>,
         item_variant_id -> Nullable<Text>,
+        donor_link_id -> Nullable<Text>,
+        reason_option_id -> Nullable<Text>,
     }
 }
 
 joinable!(stocktake_line -> item_link (item_link_id));
+joinable!(stocktake_line -> name_link (donor_link_id));
 joinable!(stocktake_line -> location (location_id));
 joinable!(stocktake_line -> stocktake (stocktake_id));
 joinable!(stocktake_line -> stock_line (stock_line_id));
-joinable!(stocktake_line -> inventory_adjustment_reason (inventory_adjustment_reason_id));
+joinable!(stocktake_line -> reason_option (reason_option_id));
 allow_tables_to_appear_in_same_query!(stocktake_line, item_link);
+allow_tables_to_appear_in_same_query!(stocktake_line, name_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(treat_none_as_null = true)]
@@ -68,8 +71,9 @@ pub struct StocktakeLineRow {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
-    pub inventory_adjustment_reason_id: Option<String>,
     pub item_variant_id: Option<String>,
+    pub donor_link_id: Option<String>,
+    pub reason_option_id: Option<String>,
 }
 
 pub struct StocktakeLineRowRepository<'a> {

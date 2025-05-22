@@ -65,10 +65,9 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         invoice_line.pack_size,
         invoice_line.note,
         invoice_line.type,
-        invoice_line.inventory_adjustment_reason_id,
+        invoice_line.reason_option_id,
         invoice_line.foreign_currency_price_before_tax,
         invoice_line.item_link_id,
-        invoice_line.return_reason_id,
         item_link.item_id AS item_id,
         CASE
             WHEN "type" = 'STOCK_IN' THEN (number_of_packs * pack_size)
@@ -144,8 +143,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         invoice.type AS invoice_type,
         invoice.invoice_number AS invoice_number,
         invoice.id AS invoice_id,
-        inventory_adjustment_reason.reason as inventory_adjustment_reason,
-        return_reason.reason as return_reason,
+        reason_option.reason AS reason,
         stock_line_id,
         invoice_line_stock_movement.expiry_date AS expiry_date,
         invoice_line_stock_movement.batch AS batch,
@@ -157,8 +155,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         invoice_line_stock_movement.number_of_packs as number_of_packs
     FROM
         invoice_line_stock_movement
-        LEFT JOIN inventory_adjustment_reason ON invoice_line_stock_movement.inventory_adjustment_reason_id = inventory_adjustment_reason.id
-        LEFT JOIN return_reason ON invoice_line_stock_movement.return_reason_id = return_reason.id
+        LEFT JOIN reason_option ON invoice_line_stock_movement.reason_option_id = reason_option.id
         LEFT JOIN stock_line ON stock_line.id = invoice_line_stock_movement.stock_line_id
         JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
         JOIN name_link ON invoice.name_link_id = name_link.id

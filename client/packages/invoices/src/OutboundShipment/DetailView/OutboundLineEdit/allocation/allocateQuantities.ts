@@ -1,11 +1,14 @@
 import { DraftStockOutLineFragment } from '../../../api/operations.generated';
-import { canAutoAllocate } from './utils';
+import { AllocateInOption, AllocateInType } from './useAllocationContext';
+import { canAutoAllocate, packsToQuantity, quantityToPacks } from './utils';
 
 /**
  * Attempts to allocate the requested quantity to the available stock lines.
  *
  * @param draftLines - The stock lines to allocate from - should be sorted according to allocation strategy (e.g. FEFO)
- * @param requestedUnits - The quantity to allocate
+ * @param quantity - The quantity to allocate
+ * @param options - allocateIn: The unit of measure to allocate in (e.g. units, doses)
+ * @returns The allocated stock lines and the remaining quantity
  *
  * Only available stock lines will be allocated to (i.e. not on hold, not expired, etc).
  *
@@ -49,17 +52,18 @@ import { canAutoAllocate } from './utils';
 
 export const allocateQuantities = (
   draftLines: DraftStockOutLineFragment[],
-  requestedUnits: number
+  quantity: number,
+  { allocateIn }: { allocateIn: AllocateInOption }
 ) => {
   // if invalid quantity entered, don't allocate
-  if (requestedUnits < 0 || Number.isNaN(requestedUnits)) {
+  if (quantity < 0 || Number.isNaN(quantity)) {
     return;
   }
 
   if (draftLines.length === 0) {
     return {
       allocatedLines: [],
-      remainingQuantity: requestedUnits,
+      remainingQuantity: quantity,
     };
   }
 
@@ -69,132 +73,158 @@ export const allocateQuantities = (
     numberOfPacks: 0,
   }));
 
-  const validBatches = newDraftLines.filter(canAutoAllocate);
+  const requiredPackSize =
+    allocateIn.type === AllocateInType.Packs ? allocateIn.packSize : undefined;
+  const validBatches = newDraftLines.filter(line =>
+    canAutoAllocate(line, requiredPackSize)
+  );
 
-  let toAllocate = requestedUnits;
+  let quantityToAllocate = quantity;
 
   // Step 1: allocate to the nearest (rounded down) pack size
-  toAllocate = allocateToBatches({
+  quantityToAllocate = allocateToBatches({
     validBatches,
     newDraftLines,
-    toAllocate,
+    quantityToAllocate,
+    allocateIn,
   });
 
   // Step 2: if still some remaining quantity allocate to the nearest (rounded up) pack size
-  if (toAllocate > 0) {
-    toAllocate = allocateToBatches({
+  if (quantityToAllocate > 0) {
+    quantityToAllocate = allocateToBatches({
       validBatches,
       newDraftLines,
-      toAllocate,
+      quantityToAllocate,
+      allocateIn,
       roundUp: true,
     });
   }
 
-  // Step 3: if over-allocated (negative toAllocate), reduce the smaller/earlier
+  // Step 3: if over-allocated (negative quantityToAllocate), reduce the smaller/earlier
   // lines to try to get back to the requested quantity
-  if (toAllocate < 0) {
-    toAllocate = reduceBatchAllocation({
-      toAllocate: toAllocate * -1,
+  if (quantityToAllocate < 0) {
+    quantityToAllocate = reduceBatchAllocation({
+      quantityToAllocate: quantityToAllocate * -1,
       validBatches,
       newDraftLines,
+      allocateIn,
     });
   }
 
   return {
     allocatedLines: newDraftLines,
-    remainingQuantity: toAllocate,
+    remainingQuantity: quantityToAllocate,
   };
 };
 
 const allocateToBatches = ({
   validBatches,
   newDraftLines,
-  toAllocate,
+  quantityToAllocate: remainingQuantityToAllocate,
+  allocateIn,
   roundUp = false,
 }: {
   validBatches: DraftStockOutLineFragment[];
   newDraftLines: DraftStockOutLineFragment[];
-  toAllocate: number;
+  quantityToAllocate: number;
+  allocateIn: AllocateInOption;
   roundUp?: boolean;
 }) => {
   validBatches.forEach(batch => {
-    if (toAllocate <= 0) return null;
+    if (remainingQuantityToAllocate <= 0) return null;
 
-    const draftOutboundLineFragmentIdx = newDraftLines.findIndex(
-      ({ id }) => batch.id === id
+    const draftLineIndex = newDraftLines.findIndex(({ id }) => batch.id === id);
+    const draftLine = newDraftLines[draftLineIndex];
+
+    if (!draftLine) return null;
+
+    // helpers
+    const toQuantity = (packs: number) =>
+      packsToQuantity(allocateIn.type, packs, draftLine);
+    const toPacks = (quantity: number) =>
+      quantityToPacks(allocateIn.type, quantity, draftLine);
+
+    // TODO: Allow partial packs check would be needed before .floor() here
+    const allocatablePacks = Math.floor(
+      // remove already allocated packs from available
+      draftLine.availablePacks - draftLine.numberOfPacks
     );
-    const draftOutboundLineFragment =
-      newDraftLines[draftOutboundLineFragmentIdx];
 
-    if (!draftOutboundLineFragment) return null;
+    const quantityToAllocate = Math.min(
+      remainingQuantityToAllocate,
+      toQuantity(allocatablePacks)
+    );
 
-    const {
-      availablePacks,
-      packSize,
-      numberOfPacks: numPacksAlreadyAllocated,
-    } = draftOutboundLineFragment;
+    const numberOfPacksToAllocate = toPacks(quantityToAllocate);
 
-    const availableUnits =
-      Math.floor(availablePacks - numPacksAlreadyAllocated) * packSize;
-
-    const unitsToAllocate = Math.min(toAllocate, availableUnits);
-    const numberOfPacksToAllocate = unitsToAllocate / packSize;
-
+    // TODO: Allow partial packs check would be needed before rounding here
     const allocatedNumberOfPacks = roundUp
       ? Math.ceil(numberOfPacksToAllocate)
       : Math.floor(numberOfPacksToAllocate);
 
-    toAllocate -= allocatedNumberOfPacks * packSize;
+    remainingQuantityToAllocate -= toQuantity(allocatedNumberOfPacks);
 
-    const numberOfPacks = numPacksAlreadyAllocated + allocatedNumberOfPacks;
-
-    newDraftLines[draftOutboundLineFragmentIdx] = {
-      ...draftOutboundLineFragment,
-      numberOfPacks,
+    newDraftLines[draftLineIndex] = {
+      ...draftLine,
+      numberOfPacks: draftLine.numberOfPacks + allocatedNumberOfPacks,
     };
   });
 
-  return toAllocate;
+  return remainingQuantityToAllocate;
 };
 
 const reduceBatchAllocation = ({
-  toAllocate,
+  quantityToAllocate: remainingQuantityToAllocate,
   validBatches,
   newDraftLines,
+  allocateIn,
 }: {
-  toAllocate: number;
+  quantityToAllocate: number;
   validBatches: DraftStockOutLineFragment[];
   newDraftLines: DraftStockOutLineFragment[];
+  allocateIn: AllocateInOption;
 }) => {
   validBatches
     .slice()
     .reverse() // Reduce the last stock first (e.g. last expiring)
     .forEach(batch => {
-      const draftOutboundLineFragmentIdx = newDraftLines.findIndex(
+      const draftLineIndex = newDraftLines.findIndex(
         ({ id }) => batch.id === id
       );
-      const draftOutboundLineFragment =
-        newDraftLines[draftOutboundLineFragmentIdx];
-      if (!draftOutboundLineFragment) return null;
+      const draftLine = newDraftLines[draftLineIndex];
+      if (!draftLine) return null;
 
-      const { packSize, numberOfPacks: allocatedPacks } =
-        draftOutboundLineFragment;
+      const { packSize, numberOfPacks: allocatedPacks } = draftLine;
 
-      if (packSize > toAllocate) return null;
       if (allocatedPacks === 0) return null;
 
-      const allocatedUnits = allocatedPacks * packSize;
-      const unitsToReduce = Math.min(toAllocate, allocatedUnits);
+      // TODO: Allow partial packs check would be needed before early exit here.
+      if (packSize > remainingQuantityToAllocate) return null;
 
-      const numberOfPacks = Math.floor(
-        (allocatedUnits - unitsToReduce) / packSize
+      // helper closures
+      const toQuantity = (packs: number) =>
+        packsToQuantity(allocateIn.type, packs, draftLine);
+      const toPacks = (quantity: number) =>
+        quantityToPacks(allocateIn.type, quantity, draftLine);
+
+      // -----------------------
+
+      const allocatedQuantity = toQuantity(allocatedPacks);
+
+      const quantityToReduce = Math.min(
+        remainingQuantityToAllocate,
+        allocatedQuantity
       );
-      toAllocate -= unitsToReduce;
 
-      newDraftLines[draftOutboundLineFragmentIdx] = {
-        ...draftOutboundLineFragment,
-        numberOfPacks: numberOfPacks,
+      // TODO: Allow partial packs check would be needed before .floor() here
+      const packsToReduce = Math.floor(toPacks(quantityToReduce));
+
+      remainingQuantityToAllocate -= toQuantity(packsToReduce);
+
+      newDraftLines[draftLineIndex] = {
+        ...draftLine,
+        numberOfPacks: allocatedPacks - packsToReduce,
       };
     });
-  return -toAllocate;
+  return -remainingQuantityToAllocate;
 };

@@ -11,23 +11,21 @@ import {
   useDebounceCallback,
 } from '@openmsupply-client/common';
 import { AllocationAlerts } from '../../../StockOut';
-import {
-  AllocateIn,
-  useAllocationContext,
-} from './allocation/useAllocationContext';
-import { getAllocatedUnits } from './allocation/utils';
+import { useAllocationContext } from './allocation/useAllocationContext';
+import { getAllocatedQuantity } from './allocation/utils';
+import { AllocateInSelector } from './AllocateInSelector';
 
 export const AutoAllocate = () => {
   const t = useTranslation();
   const { format } = useFormatNumber();
 
-  const { autoAllocate, alerts, allocatedQuantity, allocateIn } =
-    useAllocationContext(state => ({
+  const { autoAllocate, alerts, allocatedQuantity } = useAllocationContext(
+    state => ({
       autoAllocate: state.autoAllocate,
       alerts: state.alerts,
-      allocatedQuantity: getAllocatedUnits(state),
-      allocateIn: state.allocateIn,
-    }));
+      allocatedQuantity: getAllocatedQuantity(state),
+    })
+  );
 
   // Using buffer state with the allocated quantity, so gets pre-populated with existing
   // quantity, and updated when the user edits the individual lines
@@ -39,7 +37,10 @@ export const AutoAllocate = () => {
   // pack size which stops you entering the required quantity.
   // See https://github.com/msupply-foundation/open-msupply/issues/2727
   const debouncedAllocate = useDebounceCallback(
-    quantity => autoAllocate(quantity, format, t),
+    quantity => {
+      const allocated = autoAllocate(quantity, format, t);
+      setIssueQuantity(allocated);
+    },
     [],
     500
   );
@@ -49,6 +50,8 @@ export const AutoAllocate = () => {
     // in quantity (to prevent triggering auto allocation if only focus has moved)
     if (quantity === issueQuantity) return;
 
+    // Set immediate value to the input
+    // may be overwritten with actually allocated value after debounced call
     setIssueQuantity(quantity ?? 0);
     debouncedAllocate(quantity ?? 0);
   };
@@ -66,9 +69,8 @@ export const AutoAllocate = () => {
               onChange={handleIssueQuantityChange}
             />
             <Box marginLeft={1} />
-            {allocateIn === AllocateIn.Doses
-              ? t('label.doses')
-              : t('label.units')}
+
+            <AllocateInSelector />
           </Grid>
           <AllocationAlerts allocationAlerts={alerts} />
         </Box>

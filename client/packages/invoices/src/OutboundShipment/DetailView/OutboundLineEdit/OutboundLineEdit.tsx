@@ -7,6 +7,8 @@ import {
   ModalMode,
   useNotification,
   InvoiceNodeStatus,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { useNextItem } from './hooks';
 import { ScannedBarcode } from '../../../types';
@@ -15,7 +17,7 @@ import { Allocation } from './Allocation';
 import { useOpenedWithBarcode } from './hooks/useOpenedWithBarcode';
 import { useAllocationContext } from './allocation/useAllocationContext';
 import { useSaveOutboundLines } from '../../api/hooks/useSaveOutboundLines';
-import { getAllocatedUnits } from './allocation/utils';
+import { getAllocatedQuantity } from './allocation/utils';
 
 export type OutboundOpenedWith = { itemId: string } | ScannedBarcode | null;
 
@@ -39,6 +41,9 @@ export const OutboundLineEdit = ({
   const t = useTranslation();
   const { info, warning } = useNotification();
   const [itemId, setItemId] = useState(openedWith?.itemId);
+  const { data: prefs } = usePreference(
+    PreferenceKey.SortByVvmStatusThenExpiry
+  );
 
   const onClose = () => {
     clear();
@@ -53,15 +58,15 @@ export const OutboundLineEdit = ({
 
   const {
     draftLines,
-    allocatedUnits,
-    placeholderQuantity,
+    allocatedQuantity,
+    placeholderUnits: placeholderQuantity,
     alerts,
     isDirty,
     setAlerts,
     clear,
   } = useAllocationContext(state => ({
     ...state,
-    allocatedUnits: getAllocatedUnits(state),
+    allocatedQuantity: getAllocatedQuantity(state),
   }));
 
   const onSave = async () => {
@@ -86,7 +91,7 @@ export const OutboundLineEdit = ({
   const handleSave = async (onSaved: () => boolean | void) => {
     const confirmZeroQuantityMessage = t('messages.confirm-zero-quantity');
     if (
-      allocatedUnits === 0 &&
+      allocatedQuantity === 0 &&
       !alerts.some(alert => alert.message === confirmZeroQuantityMessage)
     ) {
       setAlerts([{ message: confirmZeroQuantityMessage, severity: 'warning' }]);
@@ -160,6 +165,9 @@ export const OutboundLineEdit = ({
             invoiceId={invoiceId}
             allowPlaceholder={status === InvoiceNodeStatus.New}
             scannedBatch={asBarcodeOrNull(openedWith)?.batch}
+            prefOptions={{
+              sortByVvmStatus: prefs?.sortByVvmStatusThenExpiry ?? false,
+            }}
           />
         )}
       </Grid>

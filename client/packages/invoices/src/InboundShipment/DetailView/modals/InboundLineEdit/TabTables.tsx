@@ -23,17 +23,18 @@ import {
 import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
+  getDonorColumn,
   getLocationInputColumn,
   ItemRowFragment,
   LocationRowFragment,
   PackSizeEntryCell,
-  useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
 import {
   getBatchExpiryColumns,
   getInboundDosesColumns,
   itemVariantColumn,
   NumberOfPacksCell,
+  vvmStatusesColumn,
 } from './utils';
 
 interface TableProps {
@@ -42,6 +43,8 @@ interface TableProps {
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
+  hasItemVariantsEnabled?: boolean;
+  hasVvmStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
 }
 
@@ -49,31 +52,39 @@ export const QuantityTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled = false,
+  hasItemVariantsEnabled,
+  hasVvmStatusesEnabled,
   item,
 }: TableProps) => {
   const t = useTranslation();
   const theme = useTheme();
   const { getPlural } = useIntlUtils();
   const { data: preferences } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses
+    PreferenceKey.ManageVaccinesInDoses
   );
-  const itemVariantsEnabled = useIsItemVariantsEnabled();
+
   const displayInDoses =
-    !!preferences?.displayVaccinesInDoses && !!item?.isVaccine;
-  const unitName = getPlural(
-    Formatter.sentenceCase(item?.unitName ? item.unitName : t('label.unit')),
-    2
+    !!preferences?.manageVaccinesInDoses && !!item?.isVaccine;
+
+  const unitName = Formatter.sentenceCase(
+    item?.unitName ? item.unitName : t('label.unit')
   );
+  const pluralisedUnitName = getPlural(unitName, 2);
+
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     ...getBatchExpiryColumns(updateDraftLine, theme),
   ];
 
-  if (itemVariantsEnabled) {
-    columnDefinitions.push(itemVariantColumn(updateDraftLine, displayInDoses));
+  if (hasItemVariantsEnabled) {
+    columnDefinitions.push(itemVariantColumn(updateDraftLine));
   }
 
   if (displayInDoses) {
     columnDefinitions.push(getDosesPerUnitColumn(t, unitName));
+  }
+
+  if (!!hasVvmStatusesEnabled && item?.isVaccine) {
+    columnDefinitions.push(vvmStatusesColumn(updateDraftLine));
   }
 
   columnDefinitions.push(
@@ -107,7 +118,7 @@ export const QuantityTableComponent = ({
   columnDefinitions.push({
     key: 'unitsPerPack',
     label: t('label.units-received', {
-      unit: unitName,
+      unit: pluralisedUnitName,
     }),
     width: 100,
     Cell: NumberInputCell,
@@ -285,19 +296,25 @@ export const LocationTableComponent = ({
   updateDraftLine,
   isDisabled,
 }: TableProps) => {
-  const columns = useColumns<DraftInboundLine>(
-    [
-      [
-        'batch',
-        {
-          accessor: ({ rowData }) => rowData.batch || '',
-        },
-      ],
-      [getLocationInputColumn(), { setter: updateDraftLine, width: 800 }],
-    ],
-    {},
-    [updateDraftLine, lines]
+  const { data: preferences } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor
   );
+
+  const columnDescriptions: ColumnDescription<DraftInboundLine>[] = [
+    [
+      'batch',
+      {
+        accessor: ({ rowData }) => rowData.batch || '',
+      },
+    ],
+    [getLocationInputColumn(), { setter: updateDraftLine, width: 550 }],
+  ];
+
+  if (preferences?.allowTrackingOfStockByDonor) {
+    columnDescriptions.push(getDonorColumn(patch => updateDraftLine(patch)));
+  }
+
+  const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);
 
   return (
     <QueryParamsProvider

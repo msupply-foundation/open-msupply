@@ -11,11 +11,16 @@ import {
   NumUtils,
   Typography,
   useTableStore,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
-import { useAllocationContext } from './allocation/useAllocationContext';
-import { getAllocatedUnits } from './allocation/utils';
+import {
+  AllocateInType,
+  useAllocationContext,
+} from './allocation/useAllocationContext';
+import { getAllocatedQuantity } from './allocation/utils';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
@@ -34,7 +39,13 @@ const TotalCell = styled(TableCell)({
   fontWeight: 'bold',
 });
 
-const PlaceholderRow = ({ quantity }: { quantity: number | null }) => {
+const PlaceholderRow = ({
+  quantity,
+  extraColumnOffset,
+}: {
+  quantity: number | null;
+  extraColumnOffset: number;
+}) => {
   const t = useTranslation();
 
   const formattedValue = useFormatNumber().round(quantity ?? 0, 2);
@@ -42,7 +53,10 @@ const PlaceholderRow = ({ quantity }: { quantity: number | null }) => {
   // TODO - maybe should be editable? Can't clear when manually allocating..
   return quantity === null ? null : (
     <tr>
-      <PlaceholderCell colSpan={3} sx={{ color: 'secondary.main' }}>
+      <PlaceholderCell
+        colSpan={4 + extraColumnOffset}
+        sx={{ color: 'secondary.main' }}
+      >
         {t('label.placeholder')}
       </PlaceholderCell>
       <PlaceholderCell
@@ -63,14 +77,20 @@ const PlaceholderRow = ({ quantity }: { quantity: number | null }) => {
   );
 };
 
-const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
+const TotalRow = ({
+  allocatedQuantity,
+  extraColumnOffset,
+}: {
+  allocatedQuantity: number;
+  extraColumnOffset: number;
+}) => {
   const t = useTranslation();
   const formattedValue = useFormatNumber().round(allocatedQuantity, 2);
 
   return (
     <tr>
       <TotalCell colSpan={3}>{t('label.total-quantity')}</TotalCell>
-      <TotalCell colSpan={5}></TotalCell>
+      <TotalCell colSpan={6 + extraColumnOffset}></TotalCell>
       <Tooltip title={allocatedQuantity.toString()}>
         <TotalCell
           style={{
@@ -92,31 +112,44 @@ export const OutboundLineEditTable = ({
   isExternalSupplier,
 }: OutboundLineEditTableProps) => {
   const t = useTranslation();
+  const { format } = useFormatNumber();
   const tableStore = useTableStore();
+  const { data: prefs } = usePreference(
+    PreferenceKey.SortByVvmStatusThenExpiry,
+    PreferenceKey.ManageVvmStatusForStock
+  );
 
   const {
-    allocatedUnits,
     draftLines,
-    placeholderQuantity,
+    placeholderUnits,
     nonAllocatableLines,
+    allocateIn,
+    allocatedQuantity,
     item,
     manualAllocate,
   } = useAllocationContext(state => ({
     ...state,
-    allocatedUnits: getAllocatedUnits(state),
+    allocatedQuantity: getAllocatedQuantity({
+      draftLines: state.draftLines,
+      allocateIn:
+        state.allocateIn.type === AllocateInType.Doses
+          ? state.allocateIn
+          : // Even when allocating in packs, show the total in units
+            { type: AllocateInType.Units },
+    }),
   }));
 
-  const onEditStockLine = (key: string, value: number) => {
+  const allocate = (key: string, value: number) => {
     const num = Number.isNaN(value) ? 0 : value;
-    manualAllocate(key, num);
+    return manualAllocate(key, num, format, t);
   };
-  const unit = item?.unitName ?? t('label.unit');
 
   const columns = useOutboundLineEditColumns({
-    onChange: onEditStockLine,
-    unit,
+    allocate,
+    item,
     currency,
     isExternalSupplier,
+    allocateIn: allocateIn,
   });
 
   // Display all stock lines to user, including non-allocatable ones at the bottom
@@ -131,27 +164,40 @@ export const OutboundLineEditTable = ({
   }, []);
 
   // Null means we aren't using placeholder
-  if (!lines.length && placeholderQuantity === null)
+  if (!lines.length && placeholderUnits === null)
     return (
       <Box sx={{ margin: 'auto' }}>
         <Typography>{t('messages.no-stock-available')}</Typography>
       </Box>
     );
 
+  let extraColumnOffset = 0;
+  if (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) {
+    extraColumnOffset += 1;
+  }
+
   const additionalRows = [
     <PlaceholderRow
-      // If placeholder quantity is 0, and we have lines, don't show placeholder row
+      // Only show a 0 placeholder if we have no stock lines to show
       quantity={
-        placeholderQuantity === 0 && lines.length ? null : placeholderQuantity
+        placeholderUnits === 0 && lines.length ? null : placeholderUnits
       }
+      extraColumnOffset={extraColumnOffset}
       key="placeholder-row"
     />,
     <tr key="divider-row">
-      <td colSpan={10}>
+      <td colSpan={12}>
         <Divider margin={10} />
       </td>
     </tr>,
-    <TotalRow key="total-row" allocatedQuantity={allocatedUnits} />,
+    <TotalRow
+      key="total-row"
+      allocatedQuantity={
+        // placeholder is in units (even in dose view, as placeholder doses is 1 dose per unit)
+        allocatedQuantity + (placeholderUnits ?? 0)
+      }
+      extraColumnOffset={extraColumnOffset}
+    />,
   ];
 
   return (

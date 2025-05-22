@@ -3,6 +3,7 @@
 use backend_plugin::plugin_provider::PluginError;
 use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository};
 use repository::location::{LocationFilter, LocationRepository};
+use repository::vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository};
 use repository::{EqualFilter, Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
 use repository::{RepositoryError, StorageConnection};
 use serde::de::DeserializeOwned;
@@ -20,6 +21,7 @@ pub mod activity_log;
 pub mod apis;
 pub mod app_data;
 pub mod boajs;
+pub mod campaign;
 
 pub mod asset;
 pub mod auth;
@@ -42,7 +44,6 @@ pub mod document;
 pub mod email;
 pub mod insurance;
 pub mod insurance_provider;
-pub mod inventory_adjustment_reason;
 pub mod invoice;
 pub mod invoice_line;
 pub mod item;
@@ -74,7 +75,6 @@ pub mod repack;
 pub mod report;
 pub mod requisition;
 pub mod requisition_line;
-pub mod return_reason;
 pub mod rnr_form;
 pub mod sensor;
 pub mod service_provider;
@@ -344,6 +344,15 @@ fn check_item_variant_exists(
     let variant = ItemVariantRowRepository::new(connection).find_one_by_id(item_variant_id)?;
 
     Ok(variant)
+}
+
+fn check_vvm_status_exists(
+    connection: &StorageConnection,
+    vvm_status_id: &str,
+) -> Result<Option<VVMStatusRow>, RepositoryError> {
+    let vvm_status = VVMStatusRowRepository::new(connection).find_one_by_id(vvm_status_id)?;
+
+    Ok(vvm_status)
 }
 
 #[derive(Serialize, Deserialize)]

@@ -1,10 +1,11 @@
-use super::{ItemNode, ItemVariantNode, LocationNode, VVMStatusNode};
+use super::{ItemNode, ItemVariantNode, LocationNode, VVMStatusLogConnector, VVMStatusNode};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
         ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader, VVMStatusByIdLoader,
+        VVMStatusLogByStockLineIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
@@ -48,6 +49,9 @@ impl StockLineNode {
     }
     pub async fn item_variant_id(&self) -> &Option<String> {
         &self.row().item_variant_id
+    }
+    pub async fn vvm_status_id(&self) -> &Option<String> {
+        &self.row().vvm_status_id
     }
     pub async fn cost_price_per_pack(&self) -> f64 {
         self.row().cost_price_per_pack
@@ -104,7 +108,6 @@ impl StockLineNode {
     pub async fn supplier_name(&self) -> Option<&str> {
         self.stock_line.supplier_name()
     }
-
     pub async fn barcode(&self) -> Option<&str> {
         self.stock_line.barcode()
     }
@@ -137,6 +140,15 @@ impl StockLineNode {
             .load_one(type_id)
             .await?
             .map(VVMStatusNode::from_domain))
+    }
+    pub async fn vvm_status_logs(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<VVMStatusLogConnector>> {
+        let loader = ctx.get_loader::<DataLoader<VVMStatusLogByStockLineIdLoader>>();
+        let result = loader.load_one(self.row().id.clone()).await?;
+
+        Ok(result.map(VVMStatusLogConnector::from_domain))
     }
 }
 

@@ -834,12 +834,23 @@ fragment DraftStockOutLine on DraftOutboundShipmentLineNode {
   inStorePacks
   availablePacks
   stockLineOnHold
+  defaultDosesPerUnit
   location {
     __typename
     id
     name
     code
     onHold
+  }
+  vvmStatus {
+    __typename
+    id
+    level
+    unusable
+    description
+  }
+  itemVariant {
+    dosesPerUnit
   }
 }
 

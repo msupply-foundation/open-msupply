@@ -117,6 +117,8 @@ const inboundParsers = {
       invoiceId: line.invoiceId,
       location: setNullableInput('id', line.location),
       itemVariantId: line.itemVariantId,
+      vvmStatusId: 'vvmStatusId' in line ? line.vvmStatusId : undefined,
+      donorId: line.donorId,
     };
   },
   toInsertLineFromInternalOrder: (line: {
@@ -143,6 +145,8 @@ const inboundParsers = {
     itemVariantId: setNullableInput('itemVariantId', {
       itemVariantId: line.itemVariantId,
     }),
+    vvmStatusId: 'vvmStatusId' in line ? line.vvmStatusId : undefined,
+    donorId: setNullableInput('donorId', { donorId: line.donorId ?? null }), // set to null if undefined, so value is cleared
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };

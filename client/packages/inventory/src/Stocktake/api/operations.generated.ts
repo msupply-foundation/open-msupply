@@ -32,6 +32,8 @@ export type StocktakeLineFragment = {
   costPricePerPack?: number | null;
   comment?: string | null;
   itemVariantId?: string | null;
+  donorId?: string | null;
+  donorName?: string | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -48,16 +50,19 @@ export type StocktakeLineFragment = {
     unitName?: string | null;
     isVaccine: boolean;
     doses: number;
+    defaultPackSize: number;
   };
   itemVariant?: {
     __typename: 'ItemVariantNode';
     id: string;
     dosesPerUnit: number;
   } | null;
-  inventoryAdjustmentReason?: {
-    __typename: 'InventoryAdjustmentReasonNode';
-    id: string;
+  reasonOption?: {
+    __typename: 'ReasonOptionNode';
     reason: string;
+    type: Types.ReasonOptionNodeType;
+    isActive: boolean;
+    id: string;
   } | null;
 };
 
@@ -98,6 +103,8 @@ export type StocktakeFragment = {
       costPricePerPack?: number | null;
       comment?: string | null;
       itemVariantId?: string | null;
+      donorId?: string | null;
+      donorName?: string | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -114,16 +121,19 @@ export type StocktakeFragment = {
         unitName?: string | null;
         isVaccine: boolean;
         doses: number;
+        defaultPackSize: number;
       };
       itemVariant?: {
         __typename: 'ItemVariantNode';
         id: string;
         dosesPerUnit: number;
       } | null;
-      inventoryAdjustmentReason?: {
-        __typename: 'InventoryAdjustmentReasonNode';
-        id: string;
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
         reason: string;
+        type: Types.ReasonOptionNodeType;
+        isActive: boolean;
+        id: string;
       } | null;
     }>;
   };
@@ -205,6 +215,8 @@ export type StocktakeQuery = {
             costPricePerPack?: number | null;
             comment?: string | null;
             itemVariantId?: string | null;
+            donorId?: string | null;
+            donorName?: string | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -221,16 +233,19 @@ export type StocktakeQuery = {
               unitName?: string | null;
               isVaccine: boolean;
               doses: number;
+              defaultPackSize: number;
             };
             itemVariant?: {
               __typename: 'ItemVariantNode';
               id: string;
               dosesPerUnit: number;
             } | null;
-            inventoryAdjustmentReason?: {
-              __typename: 'InventoryAdjustmentReasonNode';
-              id: string;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
               reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+              id: string;
             } | null;
           }>;
         };
@@ -283,6 +298,8 @@ export type StocktakeByNumberQuery = {
             costPricePerPack?: number | null;
             comment?: string | null;
             itemVariantId?: string | null;
+            donorId?: string | null;
+            donorName?: string | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -299,16 +316,19 @@ export type StocktakeByNumberQuery = {
               unitName?: string | null;
               isVaccine: boolean;
               doses: number;
+              defaultPackSize: number;
             };
             itemVariant?: {
               __typename: 'ItemVariantNode';
               id: string;
               dosesPerUnit: number;
             } | null;
-            inventoryAdjustmentReason?: {
-              __typename: 'InventoryAdjustmentReasonNode';
-              id: string;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
               reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+              id: string;
             } | null;
           }>;
         };
@@ -345,6 +365,8 @@ export type StocktakeLinesQuery = {
       costPricePerPack?: number | null;
       comment?: string | null;
       itemVariantId?: string | null;
+      donorId?: string | null;
+      donorName?: string | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -361,16 +383,19 @@ export type StocktakeLinesQuery = {
         unitName?: string | null;
         isVaccine: boolean;
         doses: number;
+        defaultPackSize: number;
       };
       itemVariant?: {
         __typename: 'ItemVariantNode';
         id: string;
         dosesPerUnit: number;
       } | null;
-      inventoryAdjustmentReason?: {
-        __typename: 'InventoryAdjustmentReasonNode';
-        id: string;
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
         reason: string;
+        type: Types.ReasonOptionNodeType;
+        isActive: boolean;
+        id: string;
       } | null;
     }>;
   };
@@ -620,6 +645,10 @@ export const StocktakeLineFragmentDoc = gql`
     costPricePerPack
     comment
     itemVariantId
+    donorId
+    donorName
+    donorId
+    donorName
     location {
       __typename
       id
@@ -639,15 +668,17 @@ export const StocktakeLineFragmentDoc = gql`
       unitName
       isVaccine
       doses
+      defaultPackSize
     }
     itemVariant {
       id
       dosesPerUnit
     }
-    inventoryAdjustmentReason {
-      __typename
-      id
+    reasonOption {
       reason
+      type
+      isActive
+      id
     }
   }
 `;

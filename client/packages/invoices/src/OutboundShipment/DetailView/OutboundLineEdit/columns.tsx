@@ -5,7 +5,6 @@ import {
   ExpiryDateCell,
   CheckCell,
   LocationCell,
-  Column,
   NumberCell,
   ColumnDescription,
   useAuthContext,
@@ -14,35 +13,95 @@ import {
   CurrencyCell,
   CellProps,
   NumberInputCell,
+  usePreference,
+  PreferenceKey,
+  useTranslation,
+  TypedTFunction,
+  LocaleKey,
+  useIntlUtils,
+  Formatter,
 } from '@openmsupply-client/common';
-import { StockOutLineFragment } from '../../../StockOut';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { DraftStockOutLineFragment } from '../../api/operations.generated';
 import { getPackQuantityCellId } from 'packages/invoices/src/utils';
+import {
+  AllocateInOption,
+  AllocateInType,
+} from './allocation/useAllocationContext';
+import { DraftItem } from '../../..';
+import {
+  canAutoAllocate,
+  getDoseQuantity,
+  packsToDoses,
+} from './allocation/utils';
 
 export const useOutboundLineEditColumns = ({
-  onChange,
-  unit,
+  allocate,
+  item,
   currency,
   isExternalSupplier,
+  allocateIn,
 }: {
-  onChange: (key: string, value: number) => void;
-  unit: string;
+  allocate: (key: string, value: number) => number;
+  item: DraftItem | null;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
+  allocateIn: AllocateInOption;
 }) => {
   const { store } = useAuthContext();
+  const t = useTranslation();
+  const { getPlural } = useIntlUtils();
+
+  const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
+  const pluralisedUnitName = getPlural(unit, 2);
+
+  const { data: prefs } = usePreference(
+    PreferenceKey.SortByVvmStatusThenExpiry,
+    PreferenceKey.ManageVvmStatusForStock
+  );
+
+  const packSize =
+    allocateIn.type === AllocateInType.Packs ? allocateIn.packSize : undefined;
 
   const ForeignCurrencyCell = useCurrencyCell<DraftStockOutLineFragment>(
     currency?.code as Currencies
   );
+
   const columnDefinitions: ColumnDescription<DraftStockOutLineFragment>[] = [
+    {
+      label: '',
+      key: 'canAllocate',
+      Cell: CheckCell,
+      cellProps: {
+        tooltipText: t('description.used-in-auto-allocation'),
+      },
+      accessor: ({ rowData }) => canAutoAllocate(rowData, packSize),
+      align: ColumnAlign.Center,
+      width: 35,
+    },
     [
       'batch',
       {
         accessor: ({ rowData }) => rowData.batch,
       },
     ],
+  ];
+
+  // If we have use VVM status, we need to show the VVM status column
+  if (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) {
+    columnDefinitions.push({
+      key: 'vvmStatus',
+      label: 'label.vvm-status',
+      accessor: ({ rowData }) => {
+        if (!rowData.vvmStatus) return '';
+        // TODO: Show unusable VVM status somehow?
+        return `${rowData.vvmStatus?.description} (${rowData.vvmStatus?.level})`;
+      },
+      width: 85,
+    });
+  }
+
+  columnDefinitions.push(
     [
       'expiryDate',
       {
@@ -64,8 +123,8 @@ export const useOutboundLineEditColumns = ({
         Cell: CurrencyCell,
         width: 85,
       },
-    ],
-  ];
+    ]
+  );
 
   if (isExternalSupplier && !!store?.preferences.issueInForeignCurrency) {
     columnDefinitions.push({
@@ -83,104 +142,164 @@ export const useOutboundLineEditColumns = ({
     });
   }
 
-  columnDefinitions.push(
-    ['packSize', { width: 90 }],
-    {
-      Cell: NumberCell,
-      label: 'label.in-store',
-      key: 'totalNumberOfPacks',
-      align: ColumnAlign.Right,
-      width: 80,
-      accessor: ({ rowData }) => rowData.inStorePacks,
-    },
-    {
-      Cell: NumberCell,
-      label: 'label.available-packs',
-      key: 'availableNumberOfPacks',
-      align: ColumnAlign.Right,
-      width: 90,
-      accessor: ({ rowData }) =>
-        rowData.location?.onHold || rowData.stockLineOnHold
-          ? 0
-          : rowData.availablePacks,
-    },
-    [
-      'numberOfPacks',
-      {
-        Cell: PackQuantityCell,
-        width: 100,
-        label: 'label.pack-quantity-issued',
-        setter: ({ id, numberOfPacks }) => onChange(id, numberOfPacks ?? 0),
-      },
-    ],
-    [
-      'unitQuantity',
-      {
-        label: 'label.unit-quantity-issued',
-        labelProps: { unit },
-        accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
-        width: 90,
-      },
-    ],
-    {
-      label: 'label.on-hold',
-      key: 'onHold',
-      Cell: CheckCell,
-      accessor: ({ rowData }) =>
-        rowData.stockLineOnHold || rowData.location?.onHold,
-      align: ColumnAlign.Center,
-      width: 70,
-    }
-  );
+  columnDefinitions.push(['packSize', { width: 90 }]);
+
+  if (allocateIn.type === AllocateInType.Doses) {
+    columnDefinitions.push(...getAllocateInDosesColumns(t, allocate, unit));
+  } else {
+    columnDefinitions.push(
+      ...getAllocateInUnitsColumns(allocate, pluralisedUnitName)
+    );
+  }
+
+  columnDefinitions.push({
+    label: 'label.on-hold',
+    key: 'onHold',
+    Cell: CheckCell,
+    accessor: ({ rowData }) =>
+      rowData.stockLineOnHold || rowData.location?.onHold,
+    align: ColumnAlign.Center,
+    width: 70,
+  });
 
   const columns = useColumns<DraftStockOutLineFragment>(columnDefinitions, {}, [
-    onChange,
+    allocate,
   ]);
 
   return columns;
-};
-
-export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
-  const columns: ColumnDescription<StockOutLineFragment>[] = [
-    'batch',
-    'expiryDate',
-    [
-      'location',
-      {
-        accessor: ({ rowData }) => rowData.location?.code,
-      },
-    ],
-    [
-      'itemUnit',
-      {
-        accessor: ({ rowData }) => rowData.item.unitName,
-      },
-    ],
-    ['packSize', { Cell: NumberCell }],
-    'numberOfPacks',
-    [
-      'unitQuantity',
-      {
-        accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
-      },
-    ],
-    [
-      'sellPricePerUnit',
-      {
-        accessor: ({ rowData }) => rowData.sellPricePerPack / rowData.packSize,
-      },
-    ],
-  ];
-
-  return useColumns(columns);
 };
 
 const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
     max={props.rowData.availablePacks}
-    id={getPackQuantityCellId(props.rowData.batch)}
+    id={getPackQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
     decimalLimit={2}
     min={0}
   />
 );
+
+const getAllocateInUnitsColumns = (
+  allocate: (key: string, numPacks: number) => void,
+  pluralisedUnitName: string
+): ColumnDescription<DraftStockOutLineFragment>[] => [
+  {
+    Cell: NumberCell,
+    label: 'label.in-store',
+    key: 'totalNumberOfPacks',
+    align: ColumnAlign.Right,
+    width: 80,
+    accessor: ({ rowData }) => rowData.inStorePacks,
+  },
+  {
+    Cell: NumberCell,
+    label: 'label.available-packs',
+    key: 'availablePacks',
+    align: ColumnAlign.Right,
+    width: 90,
+    accessor: ({ rowData }) =>
+      rowData.location?.onHold || rowData.stockLineOnHold
+        ? 0
+        : rowData.availablePacks,
+  },
+  [
+    'numberOfPacks',
+    {
+      Cell: PackQuantityCell,
+      width: 100,
+      label: 'label.pack-quantity-issued',
+      setter: ({ id, numberOfPacks }) => allocate(id, numberOfPacks ?? 0),
+    },
+  ],
+  [
+    'unitQuantity',
+    {
+      label: 'label.units-issued',
+      labelProps: { unit: pluralisedUnitName },
+      accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
+      width: 90,
+    },
+  ],
+];
+
+const DoseQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
+  <NumberInputCell
+    {...props}
+    max={packsToDoses(props.rowData.availablePacks, props.rowData)}
+    id={getPackQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
+    decimalLimit={0}
+    min={0}
+    // bit longer debounce, as we might overwrite value to whole number of packs
+    debounce={750}
+  />
+);
+
+const getAllocateInDosesColumns = (
+  t: TypedTFunction<LocaleKey>,
+  allocate: (key: string, numPacks: number) => void,
+  unit: string
+): ColumnDescription<DraftStockOutLineFragment>[] => {
+  return [
+    {
+      key: 'dosesPerUnit',
+      label: unit
+        ? t('label.doses-per-unit-name', {
+            unit,
+          })
+        : 'label.doses-per-unit',
+      width: 80,
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => {
+        return (
+          rowData?.itemVariant?.dosesPerUnit ?? rowData.defaultDosesPerUnit
+        );
+      },
+    },
+    {
+      label: 'label.in-store-doses',
+      Cell: NumberCell,
+      key: 'inStorePacks',
+      align: ColumnAlign.Right,
+      width: 80,
+      accessor: ({ rowData }) => packsToDoses(rowData.inStorePacks, rowData),
+    },
+    {
+      label: 'label.available-doses',
+      Cell: NumberCell,
+      key: 'availablePacks',
+      align: ColumnAlign.Right,
+      width: 90,
+      accessor: ({ rowData }) =>
+        rowData.location?.onHold || rowData.stockLineOnHold
+          ? 0
+          : packsToDoses(rowData.availablePacks, rowData),
+    },
+    {
+      key: 'dosesIssued',
+      Cell: DoseQuantityCell,
+      width: 100,
+      label: 'label.doses-issued',
+      setter: (
+        row: Partial<DraftStockOutLineFragment> & {
+          id: string;
+          // Extra field only in the context of this setter, based on key above
+          dosesIssued?: number;
+        }
+      ) => {
+        const allocatedQuantity = allocate(row.id, row.dosesIssued ?? 0);
+        return allocatedQuantity; // return to NumberInputCell to ensure value is correct
+      },
+      accessor: ({ rowData }) => getDoseQuantity(rowData),
+    },
+    // Can only issue in whole packs in Outbound Shipment, so we'll show the user
+    [
+      'numberOfPacks',
+      {
+        label: 'label.pack-quantity-issued',
+        labelProps: { unit },
+        accessor: ({ rowData }) => rowData.numberOfPacks,
+        width: 90,
+      },
+    ],
+  ];
+};
