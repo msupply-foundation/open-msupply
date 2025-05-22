@@ -4,7 +4,6 @@ import {
   useTranslation,
   NumericTextInput,
   useFormatNumber,
-  useBufferState,
   useDebounceCallback,
 } from '@openmsupply-client/common';
 
@@ -14,17 +13,14 @@ export const AutoAllocatePrescribedQuantityField = () => {
   const t = useTranslation();
   const { format } = useFormatNumber();
 
-  const { autoAllocate, prescribedQuantity } = useAllocationContext(state => ({
-    autoAllocate: state.autoAllocate,
-    alerts: state.alerts,
-    prescribedQuantity: state.prescribedQuantity,
-    allocateIn: state.allocateIn,
-  }));
-
-  // Using buffer state with the allocated quantity, so gets pre-populated with existing
-  // quantity, and updated when the user edits the individual lines
-  const [prescribedQuantityBuffer, setPrescribedQuantityBuffer] =
-    useBufferState(prescribedQuantity ?? 0);
+  const { autoAllocate, prescribedQuantity, setPrescribedQuantity } =
+    useAllocationContext(state => ({
+      autoAllocate: state.autoAllocate,
+      alerts: state.alerts,
+      prescribedQuantity: state.prescribedQuantity,
+      allocateIn: state.allocateIn,
+      setPrescribedQuantity: state.setPrescribedQuantity,
+    }));
 
   // using a debounced value for the allocation. In the scenario where
   // you have only pack sizes > 1 available, and try to type a quantity which starts with 1
@@ -35,7 +31,6 @@ export const AutoAllocatePrescribedQuantityField = () => {
   const debouncedAllocate = useDebounceCallback(
     quantity => {
       autoAllocate(quantity, format, t);
-      setPrescribedQuantityBuffer(quantity ?? 0);
     },
     [],
     500
@@ -46,9 +41,9 @@ export const AutoAllocatePrescribedQuantityField = () => {
     // in quantity (to prevent triggering auto allocation if only focus has moved)
     if (quantity === prescribedQuantity) return;
 
-    // Set immediate value to the input
-    // may be overwritten with actually allocated value after debounced call
-    setPrescribedQuantityBuffer(quantity ?? 0);
+    // Immediately update the prescribed quantity, attempt to auto-allocate after a wait time
+    // (to allow the user to type a number without triggering auto allocation)
+    setPrescribedQuantity(quantity ?? 0);
     debouncedAllocate(quantity ?? 0);
   };
 
@@ -57,7 +52,7 @@ export const AutoAllocatePrescribedQuantityField = () => {
       <ModalLabel label={t('label.prescribed-quantity')} />
       <NumericTextInput
         autoFocus
-        value={prescribedQuantityBuffer}
+        value={prescribedQuantity ?? 0}
         onChange={handlePrescribedQuantityChange}
       />
     </>

@@ -66,6 +66,7 @@ interface AllocationContext {
   }) => void;
 
   setAlerts: (alerts: StockOutAlert[]) => void;
+  setPrescribedQuantity: (quantity: number | null) => void;
   setNote: (note: string | null) => void;
   clear: () => void;
 
@@ -173,6 +174,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     set(state => ({
       ...state,
       prescribedQuantity: quantity,
+      isDirty: true,
     })),
 
   autoAllocate: (quantity, format, t) => {
