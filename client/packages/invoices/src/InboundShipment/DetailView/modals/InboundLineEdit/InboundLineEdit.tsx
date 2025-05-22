@@ -28,6 +28,8 @@ interface InboundLineEditProps {
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
+  hasVvmStatusesEnabled?: boolean;
+  hasItemVariantsEnabled?: boolean;
 }
 
 const useDraftInboundLines = (item: InboundLineItem | null) => {
@@ -119,6 +121,8 @@ export const InboundLineEdit = ({
   isDisabled = false,
   currency,
   isExternalSupplier,
+  hasVvmStatusesEnabled = false,
+  hasItemVariantsEnabled = false,
 }: InboundLineEditProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -126,6 +130,7 @@ export const InboundLineEdit = ({
   const { next: nextItem, disabled: nextDisabled } = useInbound.document.next(
     currentItem?.id ?? ''
   );
+
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
     useDraftInboundLines(currentItem);
@@ -180,7 +185,7 @@ export const InboundLineEdit = ({
             }}
           />
         }
-        height={600}
+        height={700}
         width={1200}
         enableAutocomplete /* Required for previously entered batches to be remembered and suggested in future shipments */
       >
@@ -202,6 +207,8 @@ export const InboundLineEdit = ({
               currency={currency}
               isExternalSupplier={isExternalSupplier}
               item={currentItem}
+              hasItemVariantsEnabled={hasItemVariantsEnabled}
+              hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
             />
           </>
         )}

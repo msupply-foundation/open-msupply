@@ -3,7 +3,7 @@ import { useDialog } from '@common/hooks';
 import { Box, FnUtils, useTranslation } from '@openmsupply-client/common';
 import React, { ReactElement, useEffect, useState } from 'react';
 import {
-  useActiveVVMStatuses,
+  useVvmStatusesEnabled,
   useVvmStatusLog,
   VvmStatusLogRowFragment,
 } from '../../api';
@@ -32,7 +32,7 @@ export const VvmStatusLogModal = ({
     create: { createMutation },
     update: { updateMutation },
   } = useVvmStatusLog();
-  const { data: vvmStatus = [] } = useActiveVVMStatuses();
+  const { data: vvmStatus = [] } = useVvmStatusesEnabled();
 
   const handleConfirm = () => {
     if (isCreating && stockLineId && selectedStatusId)

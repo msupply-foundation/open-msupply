@@ -12,7 +12,7 @@ import {
   useRowHighlight,
   useBreadcrumbs,
 } from '@openmsupply-client/common';
-import { ItemRowFragment, ActivityLogList } from '@openmsupply-client/system';
+import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -36,7 +36,7 @@ const StocktakeTabs = ({
 }: {
   id: string | undefined;
   isDisabled: boolean;
-  onOpen: (item?: ItemRowFragment | null | undefined) => void;
+  onOpen: (item?: StocktakeLineFragment['item'] | null | undefined) => void;
 }) => {
   const onRowClick = useCallback(
     (item: StocktakeLineFragment | StocktakeSummaryItem) => {
@@ -101,7 +101,7 @@ export const DetailView = () => {
 
   const navigate = useNavigate();
   const { isOpen, entity, onOpen, onClose, mode } =
-    useEditModal<ItemRowFragment>();
+    useEditModal<StocktakeLineFragment['item']>();
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: stocktake?.stocktakeNumber.toString() ?? '' });

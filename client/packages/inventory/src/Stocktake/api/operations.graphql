@@ -52,6 +52,7 @@ fragment StocktakeLine on StocktakeLineNode {
     unitName
     isVaccine
     doses
+    defaultPackSize
   }
 
   itemVariant {

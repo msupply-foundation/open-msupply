@@ -3,17 +3,6 @@ use repository::{
 };
 use util::uuid::uuid;
 
-pub fn convert_stock_line_to_single_pack(stock_line: StockLineRow) -> StockLineRow {
-    StockLineRow {
-        total_number_of_packs: stock_line.total_number_of_packs * stock_line.pack_size,
-        available_number_of_packs: stock_line.available_number_of_packs * stock_line.pack_size,
-        cost_price_per_pack: stock_line.cost_price_per_pack / stock_line.pack_size,
-        sell_price_per_pack: stock_line.sell_price_per_pack / stock_line.pack_size,
-        pack_size: 1.0,
-        ..stock_line
-    }
-}
-
 pub fn convert_invoice_line_to_single_pack(invoice_line: InvoiceLineRow) -> InvoiceLineRow {
     InvoiceLineRow {
         number_of_packs: invoice_line.number_of_packs * invoice_line.pack_size,
@@ -23,6 +12,7 @@ pub fn convert_invoice_line_to_single_pack(invoice_line: InvoiceLineRow) -> Invo
         ..invoice_line
     }
 }
+
 pub struct StockLineInput {
     pub stock_line_id: Option<String>,
     pub store_id: String,
@@ -51,6 +41,7 @@ pub fn generate_batch(
         note,
         item_variant_id,
         donor_link_id,
+        vvm_status_id,
         ..
     }: InvoiceLineRow,
     StockLineInput {
@@ -109,7 +100,7 @@ pub fn generate_batch(
         barcode_id,
         item_variant_id,
         donor_link_id,
-        vvm_status_id: None, // Setting to none until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
+        vvm_status_id,
     };
 
     Ok(stock_line_row)

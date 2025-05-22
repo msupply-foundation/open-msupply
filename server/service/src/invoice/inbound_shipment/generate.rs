@@ -44,6 +44,7 @@ pub fn generate_empty_invoice_lines(
                     item_variant_id: None,
                     linked_invoice_id: None,
                     donor_link_id: None,
+                    vvm_status_id: None,
                     reason_option_id: None,
                 });
             }

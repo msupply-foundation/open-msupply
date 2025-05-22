@@ -21,6 +21,7 @@ export type InboundLineFragment = {
   foreignCurrencyPriceBeforeTax?: number | null;
   itemName: string;
   itemVariantId?: string | null;
+  vvmStatusId?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   itemVariant?: {
     __typename: 'ItemVariantNode';
@@ -58,6 +59,7 @@ export type InboundLineFragment = {
     totalNumberOfPacks: number;
     onHold: boolean;
     note?: string | null;
+    vvmStatusId?: string | null;
   } | null;
 };
 
@@ -118,6 +120,7 @@ export type InboundFragment = {
       foreignCurrencyPriceBeforeTax?: number | null;
       itemName: string;
       itemVariantId?: string | null;
+      vvmStatusId?: string | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
       itemVariant?: {
         __typename: 'ItemVariantNode';
@@ -155,6 +158,7 @@ export type InboundFragment = {
         totalNumberOfPacks: number;
         onHold: boolean;
         note?: string | null;
+        vvmStatusId?: string | null;
       } | null;
     }>;
   };
@@ -333,6 +337,7 @@ export type InvoiceQuery = {
             foreignCurrencyPriceBeforeTax?: number | null;
             itemName: string;
             itemVariantId?: string | null;
+            vvmStatusId?: string | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
             itemVariant?: {
               __typename: 'ItemVariantNode';
@@ -370,6 +375,7 @@ export type InvoiceQuery = {
               totalNumberOfPacks: number;
               onHold: boolean;
               note?: string | null;
+              vvmStatusId?: string | null;
             } | null;
           }>;
         };
@@ -483,6 +489,7 @@ export type InboundByNumberQuery = {
             foreignCurrencyPriceBeforeTax?: number | null;
             itemName: string;
             itemVariantId?: string | null;
+            vvmStatusId?: string | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
             itemVariant?: {
               __typename: 'ItemVariantNode';
@@ -520,6 +527,7 @@ export type InboundByNumberQuery = {
               totalNumberOfPacks: number;
               onHold: boolean;
               note?: string | null;
+              vvmStatusId?: string | null;
             } | null;
           }>;
         };
@@ -1008,6 +1016,7 @@ export const InboundLineFragmentDoc = gql`
     foreignCurrencyPriceBeforeTax
     itemName
     itemVariantId
+    vvmStatusId
     donor(storeId: $storeId) {
       id
       name
@@ -1047,6 +1056,7 @@ export const InboundLineFragmentDoc = gql`
       totalNumberOfPacks
       onHold
       note
+      vvmStatusId
     }
   }
 `;

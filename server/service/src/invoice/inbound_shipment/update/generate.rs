@@ -1,5 +1,6 @@
 use chrono::Utc;
 
+use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, LocationMovementRow,
     Name, RepositoryError,
@@ -10,7 +11,10 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
+use crate::invoice::common::{
+    calculate_foreign_currency_total, calculate_total_after_tax, generate_vvm_status_log,
+    GenerateVVMStatusLogInput,
+};
 use crate::service_provider::ServiceContext;
 
 use super::{
@@ -30,6 +34,7 @@ pub(crate) struct GenerateResult {
     pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
     pub(crate) update_tax_for_lines: Option<Vec<InvoiceLineRow>>,
     pub(crate) update_currency_for_lines: Option<Vec<InvoiceLineRow>>,
+    pub(crate) vvm_status_logs_to_update: Option<Vec<VVMStatusLogRow>>,
     pub(crate) update_donor: Option<Vec<LineAndStockLine>>,
 }
 
@@ -91,6 +96,28 @@ pub(crate) fn generate(
         None
     };
 
+    let vvm_status_logs_to_update = if let Some(batches) = &batches_to_update {
+        let vvm_status_logs: Vec<VVMStatusLogRow> = batches
+            .iter()
+            .filter_map(|batch| {
+                batch.line.vvm_status_id.clone().map(|vvm_status_id| {
+                    generate_vvm_status_log(GenerateVVMStatusLogInput {
+                        id: None,
+                        store_id: update_invoice.store_id.clone(),
+                        created_by: ctx.user_id.clone(),
+                        vvm_status_id,
+                        stock_line_id: batch.stock_line.as_ref().unwrap().id.clone(),
+                        invoice_line_id: batch.line.id.clone(),
+                    })
+                })
+            })
+            .collect();
+
+        Some(vvm_status_logs)
+    } else {
+        None
+    };
+
     let location_movements = if let Some(batches) = &batches_to_update {
         Some(generate_location_movements(
             update_invoice.store_id.clone(),
@@ -138,6 +165,7 @@ pub(crate) fn generate(
         location_movements,
         update_tax_for_lines,
         update_currency_for_lines,
+        vvm_status_logs_to_update,
         update_donor,
     })
 }
@@ -346,6 +374,7 @@ pub fn generate_lines_and_stock_lines(
             pack_size,
             donor_link_id,
             note,
+            vvm_status_id,
             reason_option_id: _,
             ..
         }: InvoiceLineRow = invoice_line;
@@ -369,7 +398,7 @@ pub fn generate_lines_and_stock_lines(
                 barcode_id: None,
                 item_variant_id,
                 donor_link_id,
-                vvm_status_id: None,
+                vvm_status_id,
             };
             result.push(LineAndStockLine {
                 line,
@@ -439,6 +468,5 @@ fn update_donor_on_lines_and_stock(
 
         result.push(LineAndStockLine { line, stock_line });
     }
-
     Ok(result)
 }

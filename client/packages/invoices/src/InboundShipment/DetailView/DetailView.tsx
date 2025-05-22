@@ -21,6 +21,8 @@ import { AppRoute } from '@openmsupply-client/config';
 import {
   ActivityLogList,
   toItemWithPackSize,
+  useIsItemVariantsEnabled,
+  useVvmStatusesEnabled,
 } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -55,8 +57,10 @@ const DetailViewInner = () => {
   const { info, error } = useNotification();
   const { clearSelected } = useTableStore();
   const { data: preference } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses
+    PreferenceKey.ManageVaccinesInDoses
   );
+  const { data: vvmStatuses } = useVvmStatusesEnabled();
+  const hasItemVariantsEnabled = useIsItemVariantsEnabled();
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
@@ -105,7 +109,7 @@ const DetailViewInner = () => {
         <ContentArea
           onRowClick={!isDisabled ? onRowClick : null}
           onAddItem={() => onOpen()}
-          displayInDoses={preference?.displayVaccinesInDoses}
+          displayInDoses={preference?.manageVaccinesInDoses}
         />
       ),
       value: 'Details',
@@ -141,6 +145,8 @@ const DetailViewInner = () => {
                 item={entity}
                 currency={data.currency}
                 isExternalSupplier={!data.otherParty.store}
+                hasVvmStatusesEnabled={!!vvmStatuses && vvmStatuses.length > 0}
+                hasItemVariantsEnabled={hasItemVariantsEnabled}
               />
             )}
             {returnsIsOpen && (
