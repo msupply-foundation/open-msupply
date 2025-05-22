@@ -21,7 +21,7 @@ import { DraftPrescriptionLine } from '../../types';
 import { Footer } from './Footer';
 import { NavBar } from './NavBar';
 import { useAllocationContext } from '../../Allocation/useAllocationContext';
-import { useSaveOutboundLines } from '../../OutboundShipment/api/hooks/useSaveOutboundLines';
+import { useSavePrescriptionItemLineData } from '../api/hooks/useSavePrescriptionItemLineData';
 
 export const PrescriptionLineEditView = () => {
   const { invoiceId = '', itemId } = useParams();
@@ -29,10 +29,16 @@ export const PrescriptionLineEditView = () => {
   const isDirty = useRef(false);
   const navigate = useNavigate();
 
-  const { isDirty: allocationIsDirty, draftLines } = useAllocationContext();
+  const {
+    isDirty: allocationIsDirty,
+    draftLines,
+    prescribedQuantity,
+  } = useAllocationContext();
   // TODO: Change prescription version of this hook
-  const { mutateAsync: saveOutBound, isLoading: isSavingLines } =
-    useSaveOutboundLines(invoiceId);
+  const {
+    mutateAsync: savePrescriptionItemLineData,
+    isLoading: isSavingLines,
+  } = useSavePrescriptionItemLineData(invoiceId);
 
   const {
     query: { data, loading: isLoading },
@@ -115,10 +121,11 @@ export const PrescriptionLineEditView = () => {
 
   const onSave = async () => {
     if (allocationIsDirty) {
-      saveOutBound({
+      savePrescriptionItemLineData({
         itemId: currentItem?.id ?? '',
         lines: draftLines,
-        placeholderQuantity: 0,
+        prescribedQuantity: prescribedQuantity,
+        note: 'TODO: Add note here',
       });
     }
 

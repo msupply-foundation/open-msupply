@@ -82,15 +82,7 @@ export const PrescriptionLineEditForm: React.FC<
   const note = prescriptionLineWithNote?.note ?? '';
 
   useEffect(() => {
-    // TODO: CHeck this is manged by allocation context
-    // const newIssueQuantity = NumUtils.round(
-    //   allocatedUnits /
-    //     Math.abs(Number(packSizeController.selected?.value || 1)),
-    //   2
-    // );
-    // if (newIssueQuantity !== issueUnitQuantity)
-    //   setIssueUnitQuantity(newIssueQuantity);
-    // setAllocationAlerts([]);
+    // TODO: CHeck this is managed by allocation context
 
     setAbbreviation('');
     setDefaultDirection('');
