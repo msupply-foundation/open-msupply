@@ -288,7 +288,7 @@ impl InvoiceNode {
                 .map(|name_row| {
                     let name_id = name_row.id.clone();
                     Name {
-                        name_row: name_row,
+                        name_row,
                         name_link_row: NameLinkRow {
                             id: name_id.clone(),
                             name_id,
