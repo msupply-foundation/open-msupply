@@ -16,6 +16,7 @@ import {
   Platform,
   RouteBuilder,
   useNavigate,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
@@ -33,6 +34,7 @@ export const AppBarButtonsComponent: FC<{
     direction: 'desc',
     isDesc: true,
   });
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -79,14 +81,16 @@ export const AppBarButtonsComponent: FC<{
             }
           }}
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          isLoading={isLoading}
-          variant="outlined"
-          onClick={csvExport}
-          disabled={EnvUtils.platform === Platform.Android}
-          label={t('button.export')}
-        />
+        {!simplifiedTabletView && (
+          <LoadingButton
+            startIcon={<DownloadIcon />}
+            isLoading={isLoading}
+            variant="outlined"
+            onClick={csvExport}
+            disabled={EnvUtils.platform === Platform.Android}
+            label={t('button.export')}
+          />
+        )}
       </Grid>
     </AppBarButtonsPortal>
   );
