@@ -136,46 +136,26 @@ export const quantityToPacks = (
   }
 };
 
-export const issuePacks = (
+export const issue = (
   draftLines: DraftStockOutLineFragment[],
   idToIssue: string,
-  packs: number
+  quantity: number,
+  allocateIn: AllocateInType,
+  allowPartialPacks: boolean = false // todo - true?
 ) => {
   const foundRowIdx = draftLines.findIndex(({ id }) => id === idToIssue);
   const foundRow = draftLines[foundRowIdx];
   if (!foundRow) return draftLines;
-
-  const newDraftLines = [...draftLines];
-  newDraftLines[foundRowIdx] = {
-    ...foundRow,
-    numberOfPacks: packs,
-  };
-
-  return newDraftLines;
-};
-
-export const issueDoses = (
-  draftLines: DraftStockOutLineFragment[],
-  idToIssue: string,
-  doses: number,
-  allowPartialPacks: boolean = false
-) => {
-  const foundRowIdx = draftLines.findIndex(({ id }) => id === idToIssue);
-  const foundRow = draftLines[foundRowIdx];
-  if (!foundRow) return draftLines;
-
   const newDraftLines = [...draftLines];
 
-  const numberOfPacks = dosesToPacks(doses, foundRow);
+  const numberOfPacks = quantityToPacks(allocateIn, quantity, foundRow);
 
   newDraftLines[foundRowIdx] = {
     ...foundRow,
     numberOfPacks: allowPartialPacks ? numberOfPacks : Math.ceil(numberOfPacks),
   };
-
   return newDraftLines;
 };
-
 export const canAllocate = (line: DraftStockOutLineFragment): boolean =>
   !line.stockLineOnHold && !line.location?.onHold && line.availablePacks > 0;
 

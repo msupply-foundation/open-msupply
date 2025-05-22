@@ -42,7 +42,11 @@ export const useOutboundLineEditColumns = ({
   isExternalSupplier,
   allocateIn,
 }: {
-  allocate: (key: string, value: number) => number;
+  allocate: (
+    key: string,
+    value: number,
+    allocateInType?: AllocateInType
+  ) => number;
   item: DraftItem | null;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
@@ -183,7 +187,11 @@ const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
 );
 
 const getAllocateInUnitsColumns = (
-  allocate: (key: string, numPacks: number) => void,
+  allocate: (
+    key: string,
+    numPacks: number,
+    allocateInType?: AllocateInType
+  ) => void,
   pluralisedUnitName: string
 ): ColumnDescription<DraftStockOutLineFragment>[] => [
   {
@@ -211,7 +219,9 @@ const getAllocateInUnitsColumns = (
       Cell: PackQuantityCell,
       width: 100,
       label: 'label.pack-quantity-issued',
-      setter: ({ id, numberOfPacks }) => allocate(id, numberOfPacks ?? 0),
+      setter: ({ id, numberOfPacks }) =>
+        // Pack QTY column, so should issue in packs, even though in unit lens
+        allocate(id, numberOfPacks ?? 0, AllocateInType.Packs),
     },
   ],
   [

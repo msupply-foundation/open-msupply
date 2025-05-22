@@ -5,8 +5,7 @@ import {
   canAutoAllocate,
   getAllocatedQuantity,
   getDoseQuantity,
-  issueDoses,
-  issuePacks,
+  issue,
 } from './utils';
 
 describe('getDoseQuantity', () => {
@@ -84,14 +83,14 @@ describe('getAllocatedQuantity', () => {
   });
 });
 
-describe('issuePacks', () => {
+describe('issue = in packs', () => {
   it('updates the number of packs for the specified line', () => {
     const draftLines = [
       { id: '1', numberOfPacks: 2, packSize: 10 },
       { id: '2', numberOfPacks: 3, packSize: 5 },
     ] as DraftStockOutLineFragment[];
 
-    const result = issuePacks(draftLines, '1', 5);
+    const result = issue(draftLines, '1', 5, AllocateInType.Packs);
     expect(result).toEqual([
       { id: '1', numberOfPacks: 5, packSize: 10 },
       { id: '2', numberOfPacks: 3, packSize: 5 },
@@ -104,12 +103,12 @@ describe('issuePacks', () => {
       { id: '2', numberOfPacks: 3, packSize: 5 },
     ] as DraftStockOutLineFragment[];
 
-    const result = issuePacks(draftLines, '3', 5);
+    const result = issue(draftLines, '3', 5, AllocateInType.Packs);
     expect(result).toEqual(draftLines);
   });
 });
 
-describe('issueDoses', () => {
+describe('issue = doses', () => {
   const line1 = {
     id: '1',
     numberOfPacks: 2,
@@ -123,7 +122,7 @@ describe('issueDoses', () => {
       { ...line1, id: '2', numberOfPacks: 3 },
     ] as DraftStockOutLineFragment[];
 
-    const result = issueDoses(draftLines, '3', 5);
+    const result = issue(draftLines, '3', 5, AllocateInType.Doses);
     expect(result).toEqual(draftLines);
   });
 
@@ -136,7 +135,7 @@ describe('issueDoses', () => {
 
     const draftLines = [line1, line2];
 
-    const result = issueDoses(draftLines, '2', 30);
+    const result = issue(draftLines, '2', 30, AllocateInType.Doses);
     expect(result).toEqual([
       line1,
       { ...line2, numberOfPacks: 3 }, // 30 doses / (5 units per pack * 2 dose per unit) = 3 packs
@@ -155,7 +154,7 @@ describe('issueDoses', () => {
 
     const draftLines = [line1, line2];
 
-    const result = issueDoses(draftLines, '2', 30);
+    const result = issue(draftLines, '2', 30, AllocateInType.Doses);
     expect(result).toEqual([
       line1,
       { ...line2, numberOfPacks: 2 }, // 30 doses / (5 units per pack * 3 dose per unit) = 2 packs
@@ -171,7 +170,7 @@ describe('issueDoses', () => {
 
     const draftLines = [line1, line2];
 
-    const result = issueDoses(draftLines, '2', 30);
+    const result = issue(draftLines, '2', 30, AllocateInType.Doses);
     expect(result).toEqual([
       line1,
       { ...line2, numberOfPacks: 6 }, // 30 doses / 5 units per pack / (none) = 6 packs
@@ -187,7 +186,7 @@ describe('issueDoses', () => {
 
     const draftLines = [line1, line2];
 
-    const result = issueDoses(draftLines, '2', 18);
+    const result = issue(draftLines, '2', 18, AllocateInType.Doses);
     expect(result).toEqual([
       line1,
       // 18 doses / 2 units per pack / 5 doses per unit = 1.8 ~= 2 packs
@@ -204,7 +203,7 @@ describe('issueDoses', () => {
 
     const draftLines = [line1, line2];
 
-    const result = issueDoses(draftLines, '2', 18, true);
+    const result = issue(draftLines, '2', 18, AllocateInType.Doses, true);
     expect(result).toEqual([
       line1,
       // 18 doses / 2 units per pack / 5 doses per unit = 1.8
@@ -212,6 +211,7 @@ describe('issueDoses', () => {
     ]);
   });
 });
+
 describe('canAutoAllocate ', () => {
   it('canAutoAllocateTests', () => {
     const availableLine = createTestLine({ availablePacks: 10 });

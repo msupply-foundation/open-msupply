@@ -17,6 +17,7 @@ import {
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 import { AutoAllocatePrescribedQuantityField } from '../../Allocation/AutoAllocatePrescribedQuantityField';
+import { AllocateInSelector } from '../../Allocation/AllocateInSelector';
 
 interface AllocationProps {
   itemId: string;
@@ -84,6 +85,7 @@ const AllocationInner = ({ disabled }: { disabled?: boolean }) => {
       )}
       <Grid display="flex" alignItems="center" gap={1}>
         <AutoAllocateField />
+        <AllocateInSelector />
       </Grid>
       <AccordionPanelSection
         title={t('label.batches')}

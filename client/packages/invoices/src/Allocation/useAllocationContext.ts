@@ -11,8 +11,7 @@ import { DraftStockOutLineFragment } from '../OutboundShipment/api/operations.ge
 import {
   canAllocate,
   getAllocatedQuantity,
-  issueDoses,
-  issuePacks,
+  issue,
   packsToDoses,
   scannedBatchFilter,
 } from './utils';
@@ -84,7 +83,9 @@ interface AllocationContext {
     lineId: string,
     quantity: number,
     format: (value: number, options?: Intl.NumberFormatOptions) => string,
-    t: TypedTFunction<LocaleKey>
+    t: TypedTFunction<LocaleKey>,
+    /** manualAllocate can be called from a different lens than we currently displaying in */
+    allocateInType?: AllocateInType
   ) => number;
   autoAllocate: (
     quantity: number,
@@ -268,22 +269,27 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   },
 
   // TODO Manual Allocate in Units
-  manualAllocate: (lineId, quantity, format, t) => {
+  manualAllocate: (lineId, quantity, format, t, inputAllocateIn) => {
     const { allocateIn, draftLines } = get();
+    const allocateInType = inputAllocateIn ?? allocateIn.type;
 
     // TODO: pass in when using for prescriptions
-    const allowPartialPacks = false;
+    const allowPartialPacks = allocateInType === AllocateInType.Doses;
 
-    const updatedLines =
-      allocateIn.type === AllocateInType.Doses
-        ? issueDoses(draftLines, lineId, quantity, allowPartialPacks)
-        : issuePacks(draftLines, lineId, quantity);
+    const updatedLines = issue(
+      draftLines,
+      lineId,
+      quantity,
+      allocateInType,
+      allowPartialPacks
+    );
 
     // Now check if we need to show any alerts
     const updatedLine = updatedLines.find(line => line.id === lineId);
 
+    // todo: no longer trye...
     const allocatedQuantity = updatedLine
-      ? allocateIn.type === AllocateInType.Doses
+      ? allocateInType === AllocateInType.Doses
         ? packsToDoses(updatedLine.numberOfPacks, updatedLine)
         : // when not in doses, manual allocation is in packs
           updatedLine.numberOfPacks
