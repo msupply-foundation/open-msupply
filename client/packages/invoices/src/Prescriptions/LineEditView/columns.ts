@@ -55,18 +55,20 @@ export const usePrescriptionLineEditColumns = ({
     ],
   ];
 
-  if (manageVaccinesInDoses && preferences?.manageVvmStatusForStock) {
-    columns.push({  label: 'label.vvm-status',
-      key: 'vvmStatus',
-      width: 100,
-      sortable: false,
-      align: ColumnAlign.Right,
-      Cell: TooltipTextCell,
-      accessor: ({ rowData }) => {
-        return rowData?.stockLine?.vvmStatus?.description ?? UNDEFINED_STRING_VALUE;
-      },
-      defaultHideOnMobile: true,
-    });
+  if (manageVaccinesInDoses) {
+    if (preferences?.manageVvmStatusForStock) {
+      columns.push({  label: 'label.vvm-status',
+        key: 'vvmStatus',
+        width: 100,
+        sortable: false,
+        align: ColumnAlign.Right,
+        Cell: TooltipTextCell,
+        accessor: ({ rowData }) => {
+          return rowData?.stockLine?.vvmStatus?.description ?? UNDEFINED_STRING_VALUE;
+        },
+        defaultHideOnMobile: true,
+      });
+    }
     columns.push(getDosesPerUnitColumn(t, unitName));
   } else {
     columns.push(['packSize', { width: 90 }]);
