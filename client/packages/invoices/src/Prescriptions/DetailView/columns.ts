@@ -150,7 +150,6 @@ export const usePrescriptionColumn = ({
           ]),
       },
     ],
-
     [
       'expiryDate',
       {
@@ -212,9 +211,7 @@ export const usePrescriptionColumn = ({
           ]),
       },
     ],
-
   ];
-
 
   if (OMSPrefs?.manageVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));
