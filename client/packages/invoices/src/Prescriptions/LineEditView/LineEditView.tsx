@@ -33,6 +33,7 @@ export const PrescriptionLineEditView = () => {
     draftLines,
     item,
     prescribedQuantity,
+    note,
   } = useAllocationContext();
   // TODO: Change prescription version of this hook
   const {
@@ -110,27 +111,15 @@ export const PrescriptionLineEditView = () => {
       },
     }
   );
-
-  // const updateAllLines = (lines: DraftPrescriptionLine[]) => {
-  //   if (itemId === 'new') {
-  //     newItemId.current = lines[0]?.item.id;
-  //   }
-
-  //   if (typeof itemId === 'string')
-  //     setAllDraftLines({ ...allDraftLines, [itemId]: lines });
-  // };
-
   const onSave = async () => {
     if (allocationIsDirty) {
       savePrescriptionItemLineData({
         itemId: currentItem?.id ?? '',
         lines: draftLines,
         prescribedQuantity: prescribedQuantity,
-        note: 'TODO: Add note here',
+        note,
       });
     }
-
-    // if (!isDirty.current) return;
 
     // TODO: Move to picked status? Backend?
 

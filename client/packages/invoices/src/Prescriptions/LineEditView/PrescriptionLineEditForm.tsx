@@ -27,6 +27,7 @@ import { AllocationSection } from './AllocationSection';
 import { AutoAllocationAlerts } from '../../Allocation/AutoAllocationAlerts';
 import { DraftStockOutLineFragment } from '../../OutboundShipment/api/operations.generated';
 import { useAllocationContext } from '../../Allocation/useAllocationContext';
+import { getAllocatedQuantity } from '../../Allocation/utils';
 
 interface PrescriptionLineEditFormProps {
   item: ItemRowWithDirectionsFragment | null;
@@ -54,20 +55,20 @@ export const PrescriptionLineEditForm = ({
     PreferenceKey.SortByVvmStatusThenExpiry
   );
 
-  const { draftLines, item, note, setNote } = useAllocationContext(
-    ({ draftLines, item, note, setNote }) => ({
-      draftLines,
-      item,
-      note,
-      setNote,
-    })
-  );
+  const { draftLines, item, note, allocatedQuantity, setNote } =
+    useAllocationContext(state => ({
+      draftLines: state.draftLines,
+      item: state.item,
+      note: state.note,
+      setNote: state.setNote,
+      allocatedQuantity: getAllocatedQuantity(state),
+    }));
 
   // TODO - ensure key change, this should clear
   const [defaultDirection, setDefaultDirection] = useState<string>('');
   const [abbreviation, setAbbreviation] = useState<string>('');
 
-  const isDirectionsDisabled = true; // !issueUnitQuantity;
+  const isDirectionsDisabled = !allocatedQuantity;
   const displayInDoses = !!prefs?.displayVaccinesInDoses && !!item?.isVaccine;
 
   const key = prescriptionItem?.id ?? 'new';
