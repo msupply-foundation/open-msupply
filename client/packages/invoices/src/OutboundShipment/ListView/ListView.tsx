@@ -104,7 +104,10 @@ const OutboundShipmentListViewComponent: FC = () => {
   return (
     <>
       <Toolbar filter={filter} simplifiedTabletView={simplifiedTabletView} />
-      <AppBarButtons modalController={modalController} />
+      <AppBarButtons
+        modalController={modalController}
+        simplifiedTabletView={simplifiedTabletView}
+      />
 
       <DataTable
         id="outbound-list"

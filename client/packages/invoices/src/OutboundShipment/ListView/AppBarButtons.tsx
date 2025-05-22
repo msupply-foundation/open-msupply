@@ -16,7 +16,6 @@ import {
   Platform,
   RouteBuilder,
   useNavigate,
-  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
@@ -24,7 +23,8 @@ import { outboundsToCsv } from '../../utils';
 
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
-}> = ({ modalController }) => {
+  simplifiedTabletView?: boolean;
+}> = ({ modalController, simplifiedTabletView }) => {
   const navigate = useNavigate();
   const { success, error } = useNotification();
   const { mutateAsync: onCreate } = useOutbound.document.insert();
@@ -34,7 +34,6 @@ export const AppBarButtonsComponent: FC<{
     direction: 'desc',
     isDesc: true,
   });
-  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const csvExport = async () => {
     const data = await fetchAsync();
