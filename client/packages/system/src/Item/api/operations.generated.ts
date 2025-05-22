@@ -41,9 +41,9 @@ export type StockLineFragment = {
     name: string;
     code: string;
     unitName?: string | null;
+    defaultPackSize: number;
     doses: number;
     isVaccine: boolean;
-    defaultPackSize: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -64,6 +64,13 @@ export type StockLineFragment = {
     __typename: 'ItemVariantNode';
     id: string;
     dosesPerUnit: number;
+  } | null;
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    level: number;
+    unusable: boolean;
+    description: string;
   } | null;
 };
 
@@ -363,9 +370,9 @@ export type ItemFragment = {
         name: string;
         code: string;
         unitName?: string | null;
+        defaultPackSize: number;
         doses: number;
         isVaccine: boolean;
-        defaultPackSize: number;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -386,6 +393,13 @@ export type ItemFragment = {
         __typename: 'ItemVariantNode';
         id: string;
         dosesPerUnit: number;
+      } | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        level: number;
+        unusable: boolean;
+        description: string;
       } | null;
     }>;
   };
@@ -551,9 +565,9 @@ export type ItemsWithStockLinesQuery = {
             name: string;
             code: string;
             unitName?: string | null;
+            defaultPackSize: number;
             doses: number;
             isVaccine: boolean;
-            defaultPackSize: number;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -574,6 +588,13 @@ export type ItemsWithStockLinesQuery = {
             __typename: 'ItemVariantNode';
             id: string;
             dosesPerUnit: number;
+          } | null;
+          vvmStatus?: {
+            __typename: 'VvmstatusNode';
+            id: string;
+            level: number;
+            unusable: boolean;
+            description: string;
           } | null;
         }>;
       };
@@ -865,9 +886,9 @@ export type ItemByIdQuery = {
             name: string;
             code: string;
             unitName?: string | null;
+            defaultPackSize: number;
             doses: number;
             isVaccine: boolean;
-            defaultPackSize: number;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -888,6 +909,13 @@ export type ItemByIdQuery = {
             __typename: 'ItemVariantNode';
             id: string;
             dosesPerUnit: number;
+          } | null;
+          vvmStatus?: {
+            __typename: 'VvmstatusNode';
+            id: string;
+            level: number;
+            unusable: boolean;
+            description: string;
           } | null;
         }>;
       };
@@ -1060,9 +1088,9 @@ export type GetHistoricalStockLinesQuery = {
         name: string;
         code: string;
         unitName?: string | null;
+        defaultPackSize: number;
         doses: number;
         isVaccine: boolean;
-        defaultPackSize: number;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -1083,6 +1111,13 @@ export type GetHistoricalStockLinesQuery = {
         __typename: 'ItemVariantNode';
         id: string;
         dosesPerUnit: number;
+      } | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        level: number;
+        unusable: boolean;
+        description: string;
       } | null;
     }>;
   };
@@ -1476,6 +1511,13 @@ export const StockLineFragmentDoc = gql`
     itemVariant {
       id
       dosesPerUnit
+    }
+    vvmStatus {
+      __typename
+      id
+      level
+      unusable
+      description
     }
   }
   ${ItemDirectionFragmentDoc}

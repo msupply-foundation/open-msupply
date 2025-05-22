@@ -4,6 +4,7 @@ import {
   ExpiryDateCell,
   Formatter,
   getDosesPerUnitColumn,
+  getVaccineVialManagementStatusColumn,
   NumberCell,
   NumUtils,
   PreferenceKey,
@@ -51,6 +52,7 @@ export const usePrescriptionLineEditColumns = ({
   ];
 
   if (manageVaccinesInDoses) {
+    columns.push(getVaccineVialManagementStatusColumn(t));
     columns.push(getDosesPerUnitColumn(t, unitName));
   } else {
     columns.push(['packSize', { width: 90 }]);

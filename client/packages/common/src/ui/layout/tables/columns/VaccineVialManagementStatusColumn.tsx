@@ -2,11 +2,10 @@ import { TypedTFunction, LocaleKey } from '@common/intl';
 import { RecordWithId } from '@common/types';
 import { UNDEFINED_STRING_VALUE } from '@common/utils';
 import { ColumnDefinition, ColumnAlign } from './types';
-import { StockOutLineFragment } from 'packages/invoices/src/StockOut';
+import { DraftPrescriptionLine } from 'packages/invoices/src/types';
 
 export const getVaccineVialManagementStatusColumn = <
-  T extends RecordWithId &
-    (StockOutLineFragment | { lines: StockOutLineFragment[] }),
+  T extends RecordWithId & DraftPrescriptionLine,
 >(
   t: TypedTFunction<LocaleKey>
 ): ColumnDefinition<T> => ({
@@ -34,4 +33,5 @@ export const getVaccineVialManagementStatusColumn = <
       );
     }
   },
+  defaultHideOnMobile: true,
 });
