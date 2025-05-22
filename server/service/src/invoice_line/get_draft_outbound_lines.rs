@@ -2,17 +2,14 @@ use crate::{
     invoice::query::get_invoice,
     pricing::item_price::{get_pricing_for_item, ItemPrice, ItemPriceLookup},
     service_provider::ServiceContext,
-    stock_line::{
-        historical_stock::{self, get_historical_stock_lines},
-        query::get_stock_lines,
-    },
+    stock_line::{historical_stock::get_historical_stock_lines, query::get_stock_lines},
     ListError,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
     InvoiceLineType, InvoiceRow, InvoiceStatus, RepositoryError, StockLine, StockLineFilter,
-    StockLineRepository, StockLineRow,
+    StockLineRow,
 };
 use util::uuid::uuid;
 
