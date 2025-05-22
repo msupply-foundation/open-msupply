@@ -27,8 +27,8 @@ impl PreferencesNode {
     }
 
     // Store preferences
-    pub async fn display_vaccines_in_doses(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.display_vaccines_in_doses)
+    pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.manage_vaccines_in_doses)
     }
 
     pub async fn manage_vvm_status_for_stock(&self) -> Result<bool> {
@@ -37,6 +37,10 @@ impl PreferencesNode {
 
     pub async fn sort_by_vvm_status_then_expiry(&self) -> Result<bool> {
         self.load_preference(&self.preferences.sort_by_vvm_status_then_expiry)
+    }
+
+    pub async fn use_simplified_mobile_ui(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.use_simplified_mobile_ui)
     }
 }
 
@@ -89,9 +93,10 @@ pub enum PreferenceKey {
     DisplayPopulationBasedForecasting,
     ShowContactTracing,
     // Store preferences
-    DisplayVaccinesInDoses,
+    ManageVaccinesInDoses,
     ManageVvmStatusForStock,
     SortByVvmStatusThenExpiry,
+    UseSimplifiedMobileUi,
 }
 
 impl PreferenceKey {
@@ -104,9 +109,10 @@ impl PreferenceKey {
                 PreferenceKey::DisplayPopulationBasedForecasting
             }
             // Store preferences
-            PrefKey::DisplayVaccinesInDoses => PreferenceKey::DisplayVaccinesInDoses,
+            PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
             PrefKey::SortByVvmStatusThenExpiry => PreferenceKey::SortByVvmStatusThenExpiry,
+            PrefKey::UseSimplifiedMobileUi => PreferenceKey::UseSimplifiedMobileUi,
         }
     }
 }

@@ -15,9 +15,9 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { getPrescriptionLineDosesColumns } from './columnsDoses';
-import { AllocateIn } from '../../Allocation/useAllocationContext';
 import { DraftItem } from '../..';
 import { DraftStockOutLineFragment } from '../../OutboundShipment/api/operations.generated';
+import { AllocateInType } from '../../Allocation/useAllocationContext';
 
 export const usePrescriptionLineEditColumns = ({
   allocate,
@@ -26,7 +26,7 @@ export const usePrescriptionLineEditColumns = ({
 }: {
   allocate: (key: string, value: number) => number;
   item: DraftItem | null;
-  allocateIn: AllocateIn;
+  allocateIn: AllocateInType;
   disabled?: boolean;
 }) => {
   const t = useTranslation();
@@ -40,7 +40,7 @@ export const usePrescriptionLineEditColumns = ({
     PreferenceKey.ManageVvmStatusForStock
   );
 
-  const displayInDoses = allocateIn === AllocateIn.Doses;
+  const displayInDoses = allocateIn === AllocateInType.Doses;
 
   const columnDefinitions: ColumnDescription<DraftStockOutLineFragment>[] = [
     [

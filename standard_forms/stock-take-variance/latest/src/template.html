@@ -50,8 +50,8 @@
     <td class="table_number">{{Vvariance | round( precision=2)}}</td>
     <td class="table_number">{{VvarianceValue | round( precision=2)}}</td>
 
-    {% if line.inventoryAdjustmentReasonId %}
-    <td  class="table_text">{{line.inventoryAdjustmentReason.reason}}</td>
+    {% if line.reasonOption.id %}
+    <td  class="table_text">{{line.reasonOption.reason}}</td>
     {% else %}
     <td  class="table_text">N/A</td>
     {% endif %}

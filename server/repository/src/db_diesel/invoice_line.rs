@@ -1,8 +1,8 @@
 use super::{
-    inventory_adjustment_reason_row::inventory_adjustment_reason, invoice_line_row::invoice_line,
-    invoice_row::invoice, item_link_row::item_link, item_row::item, location_row::location,
-    stock_line_row::stock_line, DBType, DatetimeFilter, InventoryAdjustmentReasonRow,
-    InvoiceLineRow, InvoiceLineType, InvoiceRow, LocationRow, StorageConnection,
+    invoice_line_row::invoice_line, invoice_row::invoice, item_link_row::item_link, item_row::item,
+    location_row::location, reason_option_row::reason_option, stock_line_row::stock_line, DBType,
+    DatetimeFilter, InvoiceLineRow, InvoiceLineType, InvoiceRow, LocationRow, ReasonOptionRow,
+    StorageConnection,
 };
 
 use crate::{
@@ -88,7 +88,7 @@ pub struct InvoiceLineFilter {
     pub picked_datetime: Option<DatetimeFilter>,
     pub delivered_datetime: Option<DatetimeFilter>,
     pub verified_datetime: Option<DatetimeFilter>,
-    pub inventory_adjustment_reason: Option<EqualFilter<String>>,
+    pub reason_option: Option<EqualFilter<String>>,
     pub has_prescribed_quantity: Option<bool>,
     pub has_note: Option<bool>,
 }
@@ -168,8 +168,8 @@ impl InvoiceLineFilter {
         self
     }
 
-    pub fn inventory_adjustment_reason(mut self, filter: EqualFilter<String>) -> Self {
-        self.inventory_adjustment_reason = Some(filter);
+    pub fn reason_option(mut self, filter: EqualFilter<String>) -> Self {
+        self.reason_option = Some(filter);
         self
     }
 
@@ -190,7 +190,7 @@ type InvoiceLineJoin = (
     InvoiceRow,
     Option<LocationRow>,
     Option<StockLineRow>,
-    Option<InventoryAdjustmentReasonRow>,
+    Option<ReasonOptionRow>,
 );
 
 pub struct InvoiceLineRepository<'a> {
@@ -288,7 +288,7 @@ type BoxedInvoiceLineQuery = IntoBoxed<
             >,
             stock_line::table,
         >,
-        inventory_adjustment_reason::table,
+        reason_option::table,
     >,
     DBType,
 >;
@@ -299,7 +299,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         .inner_join(invoice::table)
         .left_join(location::table)
         .left_join(stock_line::table)
-        .left_join(inventory_adjustment_reason::table)
+        .left_join(reason_option::table)
         .into_boxed();
 
     if let Some(f) = filter {
@@ -318,7 +318,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
             picked_datetime,
             delivered_datetime,
             verified_datetime,
-            inventory_adjustment_reason,
+            reason_option,
             has_prescribed_quantity,
             has_note,
         } = f;
@@ -334,11 +334,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         apply_equal_filter!(query, invoice_type, invoice::type_);
         apply_equal_filter!(query, invoice_status, invoice::status);
         apply_equal_filter!(query, stock_line_id, stock_line::id);
-        apply_equal_filter!(
-            query,
-            inventory_adjustment_reason,
-            inventory_adjustment_reason::reason
-        );
+        apply_equal_filter!(query, reason_option, reason_option::reason);
         apply_date_time_filter!(query, picked_datetime, invoice::picked_datetime);
         apply_date_time_filter!(query, delivered_datetime, invoice::delivered_datetime);
         apply_date_time_filter!(query, verified_datetime, invoice::verified_datetime);

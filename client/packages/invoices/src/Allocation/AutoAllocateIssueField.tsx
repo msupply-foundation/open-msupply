@@ -8,21 +8,19 @@ import {
   useBufferState,
   useDebounceCallback,
 } from '@openmsupply-client/common';
-import { AllocateIn, useAllocationContext } from './useAllocationContext';
+import { useAllocationContext } from './useAllocationContext';
 import { getAllocatedQuantity } from './utils';
+import { AllocateInSelector } from '../OutboundShipment/DetailView/OutboundLineEdit/AllocateInSelector';
 
 export const AutoAllocateField = () => {
   const t = useTranslation();
   const { format } = useFormatNumber();
 
-  const { autoAllocate, allocatedQuantity, allocateIn } = useAllocationContext(
-    state => ({
-      autoAllocate: state.autoAllocate,
-      alerts: state.alerts,
-      allocatedQuantity: getAllocatedQuantity(state),
-      allocateIn: state.allocateIn,
-    })
-  );
+  const { autoAllocate, allocatedQuantity } = useAllocationContext(state => ({
+    autoAllocate: state.autoAllocate,
+    allocatedQuantity: getAllocatedQuantity(state),
+    allocateIn: state.allocateIn,
+  }));
 
   // Using buffer state with the allocated quantity, so gets pre-populated with existing
   // quantity, and updated when the user edits the individual lines
@@ -63,7 +61,8 @@ export const AutoAllocateField = () => {
         onChange={handleIssueQuantityChange}
       />
       <Box marginLeft={1} />
-      {allocateIn === AllocateIn.Doses ? t('label.doses') : t('label.units')}
+      {/* // TODO - probs not wanted in prescriptions!  */}
+      <AllocateInSelector />
     </>
   );
 };

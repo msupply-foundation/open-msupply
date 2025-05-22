@@ -51,7 +51,7 @@ export const PrescriptionLineEditForm = ({
   const { getPlural } = useIntlUtils();
   const { rows: items } = usePrescription();
   const { data: prefs } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses,
+    PreferenceKey.ManageVaccinesInDoses,
     PreferenceKey.SortByVvmStatusThenExpiry
   );
 
@@ -69,7 +69,7 @@ export const PrescriptionLineEditForm = ({
   const [abbreviation, setAbbreviation] = useState<string>('');
 
   const isDirectionsDisabled = !allocatedQuantity;
-  const displayInDoses = !!prefs?.displayVaccinesInDoses && !!item?.isVaccine;
+  const displayInDoses = !!prefs?.manageVaccinesInDoses && !!item?.isVaccine;
 
   const key = prescriptionItem?.id ?? 'new';
 
@@ -163,7 +163,7 @@ export const PrescriptionLineEditForm = ({
                 disabled={disabled}
                 prefOptions={{
                   allocateVaccineItemsInDoses:
-                    prefs?.displayVaccinesInDoses ?? false,
+                    prefs?.manageVaccinesInDoses ?? false,
                   sortByVvmStatus: prefs?.sortByVvmStatusThenExpiry ?? false,
                 }}
               />

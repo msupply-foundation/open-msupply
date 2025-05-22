@@ -55,6 +55,7 @@ fragment StocktakeLine on StocktakeLineNode {
     unitName
     isVaccine
     doses
+    defaultPackSize
   }
 
   itemVariant {
@@ -62,10 +63,11 @@ fragment StocktakeLine on StocktakeLineNode {
     dosesPerUnit
   }
 
-  inventoryAdjustmentReason {
-    __typename
-    id
+  reasonOption {
     reason
+    type
+    isActive
+    id
   }
 }
 

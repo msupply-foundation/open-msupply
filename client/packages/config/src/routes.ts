@@ -42,7 +42,7 @@ export enum AppRoute {
 
   Manage = 'manage',
   Programs = 'programs',
-  Facilities = 'facilities',
+  Stores = 'stores',
   GlobalPreferences = 'global-preferences',
 
   Tools = 'tools',

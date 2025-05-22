@@ -1,8 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
-import {
-  ItemRowFragment,
-  LocationRowFragment,
-} from '@openmsupply-client/system';
+import { LocationRowFragment } from '@openmsupply-client/system';
 import {
   BasicSpinner,
   Breakpoints,
@@ -28,7 +25,7 @@ import {
   StyledTabPanel,
   Tabs,
 } from './StocktakeLineEditTabs';
-import { useStocktakeOld } from '../../../api';
+import { StocktakeLineFragment, useStocktakeOld } from '../../../api';
 import {
   LocationTable,
   BatchTable,
@@ -36,7 +33,7 @@ import {
 } from './StocktakeLineEditTables';
 import { StocktakeLineEditModal } from './StocktakeLineEditModal';
 interface StocktakeLineEditProps {
-  item: ItemRowFragment | null;
+  item: StocktakeLineFragment['item'] | null;
   mode: ModalMode | null;
   onClose: () => void;
   isOpen: boolean;
@@ -195,7 +192,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                       </StyledTabContainer>
                     </StyledTabPanel>
 
-                    <StyledTabPanel value={Tabs.Location}>
+                    <StyledTabPanel value={Tabs.Other}>
                       <StyledTabContainer>
                         <QueryParamsProvider
                           createStore={createQueryParamsStore<LocationRowFragment>(

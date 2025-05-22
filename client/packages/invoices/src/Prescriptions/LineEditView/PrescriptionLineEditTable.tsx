@@ -35,7 +35,7 @@ export const PrescriptionLineEditTable: React.FC<
   const columns = usePrescriptionLineEditColumns({
     allocate,
     item,
-    allocateIn,
+    allocateIn: allocateIn.type,
     disabled,
   });
 

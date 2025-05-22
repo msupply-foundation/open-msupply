@@ -24,7 +24,7 @@ interface AllocationProps {
   scannedBatch?: string;
   disabled?: boolean;
   prefOptions: {
-    allocateVaccineItemsInDoses: boolean;
+    allocateVaccineItemsInDoses?: boolean;
     sortByVvmStatus: boolean;
   };
 }
@@ -58,8 +58,8 @@ export const AllocationSection = ({
           : AllocationStrategy.FEFO,
         allowPlaceholder: false,
         allowPrescribedQuantity: true,
+        // allocateVaccineItemsInDoses, // TODO: here or nah?
         scannedBatch,
-        allocateVaccineItemsInDoses,
       });
     });
     // Expect dependencies to be stable

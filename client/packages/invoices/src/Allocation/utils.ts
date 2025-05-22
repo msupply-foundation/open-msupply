@@ -1,7 +1,7 @@
 import { noOtherVariants, NumUtils } from '@common/utils';
 import { DraftStockOutLineFragment } from '../OutboundShipment/api/operations.generated';
 import { DateUtils } from '@common/intl';
-import { AllocateIn } from './useAllocationContext';
+import { AllocateInType, AllocateInOption } from './useAllocationContext';
 
 export const sumAvailableUnits = (draftLines: DraftStockOutLineFragment[]) => {
   const sum = draftLines.reduce(
@@ -42,19 +42,25 @@ const getAllocatedDoses = (draftLines: DraftStockOutLineFragment[]) => {
 
 export const getAllocatedQuantity = ({
   draftLines,
-  placeholderQuantity,
   allocateIn,
 }: {
   draftLines: DraftStockOutLineFragment[];
-  allocateIn: AllocateIn;
-  placeholderQuantity?: number | null;
-}) => {
-  const quantity =
-    allocateIn === AllocateIn.Doses
-      ? getAllocatedDoses(draftLines)
-      : getAllocatedUnits(draftLines);
+  allocateIn: AllocateInOption;
+}): number => {
+  switch (allocateIn.type) {
+    case AllocateInType.Doses:
+      return getAllocatedDoses(draftLines);
 
-  return quantity + (placeholderQuantity ?? 0);
+    case AllocateInType.Units:
+      return getAllocatedUnits(draftLines);
+
+    case AllocateInType.Packs:
+      return getAllocatedUnits(draftLines) / (allocateIn.packSize || 1);
+
+    default:
+      noOtherVariants(allocateIn);
+      throw new Error('Unhandled allocation unit of measure');
+  }
 };
 
 /** Converts the value of the `numberOfPacks` field to dose quantity */
@@ -88,16 +94,19 @@ export const dosesToPacks = (
 
 /** Converts a number of packs to quantity based on allocation unit of measure */
 export const packsToQuantity = (
-  allocateIn: AllocateIn,
+  allocateIn: AllocateInType,
   numPacks: number,
   line: DraftStockOutLineFragment
 ): number => {
   switch (allocateIn) {
-    case AllocateIn.Doses:
+    case AllocateInType.Doses:
       return packsToDoses(numPacks, line);
 
-    case AllocateIn.Units:
+    case AllocateInType.Units:
       return numPacks * line.packSize;
+
+    case AllocateInType.Packs:
+      return numPacks;
 
     default:
       noOtherVariants(allocateIn);
@@ -107,16 +116,20 @@ export const packsToQuantity = (
 
 /** Converts a quantity to number of packs based on allocation unit of measure */
 export const quantityToPacks = (
-  allocateIn: AllocateIn,
+  allocateIn: AllocateInType,
   quantity: number,
   line: DraftStockOutLineFragment
 ): number => {
   switch (allocateIn) {
-    case AllocateIn.Doses:
+    case AllocateInType.Doses:
       return dosesToPacks(quantity, line);
 
-    case AllocateIn.Units:
+    case AllocateInType.Units:
       return quantity / line.packSize;
+
+    case AllocateInType.Packs:
+      return quantity;
+
     default:
       noOtherVariants(allocateIn);
       throw new Error('Unhandled allocation unit of measure');
@@ -166,12 +179,17 @@ export const issueDoses = (
 export const canAllocate = (line: DraftStockOutLineFragment): boolean =>
   !line.stockLineOnHold && !line.location?.onHold && line.availablePacks > 0;
 
-export const canAutoAllocate = (line: DraftStockOutLineFragment) =>
+export const canAutoAllocate = (
+  line: DraftStockOutLineFragment,
+  requiredPackSize?: number
+) =>
   canAllocate(line) &&
   // shouldn't auto-allocate expired lines
   !(!!line.expiryDate && DateUtils.isExpired(new Date(line.expiryDate))) &&
   // should not be able to auto-allocate lines with unusable VVM status
-  !line.vvmStatus?.unusable;
+  !line.vvmStatus?.unusable &&
+  // if pack size is specified, should match the line's pack size
+  (!requiredPackSize || line.packSize === requiredPackSize);
 
 export const scannedBatchFilter = (
   allLines: DraftStockOutLineFragment[],

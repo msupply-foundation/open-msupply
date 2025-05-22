@@ -23,10 +23,17 @@ import {
 } from '@openmsupply-client/common';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { DraftStockOutLineFragment } from '../../api/operations.generated';
-import { getStockOutQuantityCellId } from 'packages/invoices/src/utils';
-import { AllocateIn } from '../../../Allocation/useAllocationContext';
 import { DraftItem } from '../../..';
-import { getDoseQuantity, packsToDoses } from '../../../Allocation/utils';
+import { getStockOutQuantityCellId } from '../../../utils';
+import {
+  AllocateInOption,
+  AllocateInType,
+} from '../../../Allocation/useAllocationContext';
+import {
+  canAutoAllocate,
+  getDoseQuantity,
+  packsToDoses,
+} from '../../../Allocation/utils';
 
 export const useOutboundLineEditColumns = ({
   allocate,
@@ -39,7 +46,7 @@ export const useOutboundLineEditColumns = ({
   item: DraftItem | null;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
-  allocateIn: AllocateIn;
+  allocateIn: AllocateInOption;
 }) => {
   const { store } = useAuthContext();
   const t = useTranslation();
@@ -53,11 +60,25 @@ export const useOutboundLineEditColumns = ({
     PreferenceKey.ManageVvmStatusForStock
   );
 
+  const packSize =
+    allocateIn.type === AllocateInType.Packs ? allocateIn.packSize : undefined;
+
   const ForeignCurrencyCell = useCurrencyCell<DraftStockOutLineFragment>(
     currency?.code as Currencies
   );
 
   const columnDefinitions: ColumnDescription<DraftStockOutLineFragment>[] = [
+    {
+      label: '',
+      key: 'canAllocate',
+      Cell: CheckCell,
+      cellProps: {
+        tooltipText: t('description.used-in-auto-allocation'),
+      },
+      accessor: ({ rowData }) => canAutoAllocate(rowData, packSize),
+      align: ColumnAlign.Center,
+      width: 35,
+    },
     [
       'batch',
       {
@@ -126,7 +147,7 @@ export const useOutboundLineEditColumns = ({
 
   columnDefinitions.push(['packSize', { width: 90 }]);
 
-  if (allocateIn === AllocateIn.Doses) {
+  if (allocateIn.type === AllocateInType.Doses) {
     columnDefinitions.push(...getAllocateInDosesColumns(t, allocate, unit));
   } else {
     columnDefinitions.push(
