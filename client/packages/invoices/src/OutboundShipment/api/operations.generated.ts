@@ -93,13 +93,6 @@ export type OutboundFragment = {
           isVaccine: boolean;
           doses: number;
         };
-        vvmStatus?: {
-          __typename: 'VvmstatusNode';
-          id: string;
-          level: number;
-          unusable: boolean;
-          description: string;
-        } | null;
       } | null;
     }>;
   };
@@ -326,13 +319,6 @@ export type InvoiceQuery = {
                 isVaccine: boolean;
                 doses: number;
               };
-              vvmStatus?: {
-                __typename: 'VvmstatusNode';
-                id: string;
-                level: number;
-                unusable: boolean;
-                description: string;
-              } | null;
             } | null;
           }>;
         };
@@ -474,13 +460,6 @@ export type OutboundByNumberQuery = {
                 isVaccine: boolean;
                 doses: number;
               };
-              vvmStatus?: {
-                __typename: 'VvmstatusNode';
-                id: string;
-                level: number;
-                unusable: boolean;
-                description: string;
-              } | null;
             } | null;
           }>;
         };
