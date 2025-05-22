@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   useTranslation,
   DetailContainer,
@@ -17,26 +17,26 @@ import {
 import { useName } from '../../api';
 import { NameRenderer } from '../..';
 import { DisplayCoordinates } from './DisplayCoordinates';
-import { FacilityProperties } from './FacilityProperties';
+import { StoreProperties } from './StoreProperties';
 import {
   DraftProperties,
-  useDraftFacilityProperties,
-} from './useDraftFacilityProperties';
+  useDraftStoreProperties,
+} from './useDraftStoreProperties';
 import { EditStorePreferences } from './EditStorePreferences';
 
-interface FacilityEditModalProps {
+interface StoreEditModalProps {
   nameId: string;
   isOpen: boolean;
   onClose: () => void;
-  setNextFacility?: (nameId: string) => void;
+  setNextStore?: (nameId: string) => void;
 }
 
-export const FacilityEditModal: FC<FacilityEditModalProps> = ({
+export const StoreEditModal = ({
   nameId,
   isOpen,
   onClose,
-  setNextFacility,
-}) => {
+  setNextStore,
+}: StoreEditModalProps) => {
   const t = useTranslation();
 
   const { data: properties, isLoading: propertiesLoading } =
@@ -48,11 +48,11 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const { draftProperties, setDraftProperties } = useDraftFacilityProperties(
+  const { draftProperties, setDraftProperties } = useDraftStoreProperties(
     data?.properties
   );
 
-  const nextId = useName.utils.nextFacilityId(nameId);
+  const nextId = useName.utils.nextStoreId(nameId);
 
   const save = async () => {
     mutateAsync({
@@ -77,13 +77,13 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
         />
       }
       nextButton={
-        setNextFacility && (
+        setNextStore && (
           <DialogButton
             disabled={!nextId}
             variant="next-and-ok"
             onClick={async () => {
               await save();
-              nextId && setNextFacility(nextId);
+              nextId && setNextStore(nextId);
               // Returning true triggers the animation/slide out
               return true;
             }}
@@ -173,7 +173,7 @@ const ModalTabs = ({
         </TabPanel>
       )}
       <TabPanel value={Tabs.Properties}>
-        <FacilityProperties
+        <StoreProperties
           propertyConfigs={propertyConfigs}
           draftProperties={draftProperties}
           updateProperty={updateProperty}

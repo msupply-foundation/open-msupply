@@ -37,9 +37,9 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
             visible={isCentralServer}
             end
             to={RouteBuilder.create(AppRoute.Manage)
-              .addPart(AppRoute.Facilities)
+              .addPart(AppRoute.Stores)
               .build()}
-            text={t('facilities')}
+            text={t('stores')}
           />
           <AppNavLink
             visible={isCentralServer && vaccineModuleEnabled}

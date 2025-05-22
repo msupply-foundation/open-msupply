@@ -132,6 +132,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::StockDoesNotBelongToStore => BadUserInput(formatted_error),
         ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
         ServiceError::ItemVariantDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::VVMStatusDoesNotExist => BadUserInput(formatted_error),
         ServiceError::UpdatedStockNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };

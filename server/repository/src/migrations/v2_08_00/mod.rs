@@ -13,6 +13,7 @@ mod add_initial_stocktake_field;
 mod add_item_variant_enums_to_activity_log;
 mod add_open_vial_wastage_to_reason_option_type;
 mod add_view_and_edit_vvm_status_permission;
+mod add_vvm_status_id_to_invoice_line;
 mod add_vvm_status_id_to_stock_line;
 mod add_vvm_status_log_change_log_table_name;
 mod add_vvm_status_log_table;
@@ -49,6 +50,7 @@ impl Migration for V2_08_00 {
             Box::new(add_donor_id_to_stocktake_line::Migrate),
             Box::new(migrate_reason_option_ids::Migrate),
             Box::new(add_vvm_status_log_table::Migrate),
+            Box::new(add_vvm_status_id_to_invoice_line::Migrate),
             Box::new(add_open_vial_wastage_to_reason_option_type::Migrate),
             Box::new(add_campaign_id_to_stock_line::Migrate),
         ]

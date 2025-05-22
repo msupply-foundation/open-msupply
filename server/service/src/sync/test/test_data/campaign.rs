@@ -6,9 +6,9 @@ use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 const TABLE_NAME: &str = "campaign";
 
 const CAMPAIGN1: (&str, &str) = (
-    "5fb99f9c-03f4-47f2-965b-c9ecd083c675",
+    "CAMPAIGN1",
     r#"{
-        "id": "5fb99f9c-03f4-47f2-965b-c9ecd083c675",
+        "id": "CAMPAIGN1",
         "name": "COVID-19 Campaign",
         "start_date": "2023-01-01",
         "end_date": "2023-12-31",
@@ -27,9 +27,9 @@ fn campaign1() -> CampaignRow {
 }
 
 const CAMPAIGN2: (&str, &str) = (
-    "a9a986cd-a6dc-4e96-811c-4bc225a4f2d8",
+    "CAMPAIGN2",
     r#"{
-        "id": "a9a986cd-a6dc-4e96-811c-4bc225a4f2d8",
+        "id": "CAMPAIGN2",
         "name": "Polio Vaccination Campaign",
         "start_date": "2023-06-01",
         "end_date": "2023-06-30",

@@ -19,7 +19,7 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
+    Clone, Default, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
 )]
 #[diesel(table_name = vvm_status)]
 #[diesel(treat_none_as_null = true)]

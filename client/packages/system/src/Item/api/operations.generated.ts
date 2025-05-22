@@ -41,6 +41,7 @@ export type StockLineFragment = {
     name: string;
     code: string;
     unitName?: string | null;
+    defaultPackSize: number;
     doses: number;
     isVaccine: boolean;
     itemDirections: Array<{
@@ -362,6 +363,7 @@ export type ItemFragment = {
         name: string;
         code: string;
         unitName?: string | null;
+        defaultPackSize: number;
         doses: number;
         isVaccine: boolean;
         itemDirections: Array<{
@@ -549,6 +551,7 @@ export type ItemsWithStockLinesQuery = {
             name: string;
             code: string;
             unitName?: string | null;
+            defaultPackSize: number;
             doses: number;
             isVaccine: boolean;
             itemDirections: Array<{
@@ -741,6 +744,8 @@ export type ItemsWithStatsFragment = {
   name: string;
   unitName?: string | null;
   defaultPackSize: number;
+  isVaccine: boolean;
+  doses: number;
   availableStockOnHand: number;
   stats: {
     __typename: 'ItemStatsNode';
@@ -774,6 +779,8 @@ export type ItemsWithStatsQuery = {
       name: string;
       unitName?: string | null;
       defaultPackSize: number;
+      isVaccine: boolean;
+      doses: number;
       availableStockOnHand: number;
       stats: {
         __typename: 'ItemStatsNode';
@@ -858,6 +865,7 @@ export type ItemByIdQuery = {
             name: string;
             code: string;
             unitName?: string | null;
+            defaultPackSize: number;
             doses: number;
             isVaccine: boolean;
             itemDirections: Array<{
@@ -973,14 +981,6 @@ export type ItemByIdQuery = {
   };
 };
 
-export type ItemVariantOptionFragment = {
-  __typename: 'ItemVariantNode';
-  id: string;
-  dosesPerUnit: number;
-  label: string;
-  bundledItemVariants: Array<{ __typename: 'BundledItemNode'; id: string }>;
-};
-
 export type ItemVariantsConfiguredQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
@@ -1004,11 +1004,80 @@ export type ItemVariantsQuery = {
       variants: Array<{
         __typename: 'ItemVariantNode';
         id: string;
+        name: string;
+        itemId: string;
+        manufacturerId?: string | null;
+        coldStorageTypeId?: string | null;
         dosesPerUnit: number;
-        label: string;
+        vvmType?: string | null;
+        item?: {
+          __typename: 'ItemNode';
+          id: string;
+          name: string;
+          isVaccine: boolean;
+        } | null;
+        manufacturer?: {
+          __typename: 'NameNode';
+          code: string;
+          id: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        } | null;
+        coldStorageType?: {
+          __typename: 'ColdStorageTypeNode';
+          id: string;
+          name: string;
+          minTemperature: number;
+          maxTemperature: number;
+        } | null;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          name: string;
+          packagingLevel: number;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
         bundledItemVariants: Array<{
           __typename: 'BundledItemNode';
           id: string;
+          ratio: number;
+          principalItemVariant?: {
+            __typename: 'ItemVariantNode';
+            id: string;
+            name: string;
+            itemId: string;
+            itemName: string;
+          } | null;
+          bundledItemVariant?: {
+            __typename: 'ItemVariantNode';
+            id: string;
+            name: string;
+            itemId: string;
+            itemName: string;
+          } | null;
+        }>;
+        bundlesWith: Array<{
+          __typename: 'BundledItemNode';
+          id: string;
+          ratio: number;
+          principalItemVariant?: {
+            __typename: 'ItemVariantNode';
+            id: string;
+            name: string;
+            itemId: string;
+            itemName: string;
+          } | null;
+          bundledItemVariant?: {
+            __typename: 'ItemVariantNode';
+            id: string;
+            name: string;
+            itemId: string;
+            itemName: string;
+          } | null;
         }>;
       }>;
     }>;
@@ -1052,6 +1121,7 @@ export type GetHistoricalStockLinesQuery = {
         name: string;
         code: string;
         unitName?: string | null;
+        defaultPackSize: number;
         doses: number;
         isVaccine: boolean;
         itemDirections: Array<{
@@ -1446,6 +1516,7 @@ export const StockLineFragmentDoc = gql`
       name
       code
       unitName
+      defaultPackSize
       doses
       isVaccine
       itemDirections {
@@ -1454,7 +1525,6 @@ export const StockLineFragmentDoc = gql`
       warnings {
         ...Warning
       }
-      isVaccine
     }
     note
     onHold
@@ -1607,6 +1677,8 @@ export const ItemsWithStatsFragmentDoc = gql`
     name
     unitName
     defaultPackSize
+    isVaccine
+    doses
     availableStockOnHand(storeId: $storeId)
     stats(storeId: $storeId) {
       __typename
@@ -1617,17 +1689,6 @@ export const ItemsWithStatsFragmentDoc = gql`
       totalConsumption
       stockOnHand
     }
-  }
-`;
-export const ItemVariantOptionFragmentDoc = gql`
-  fragment ItemVariantOption on ItemVariantNode {
-    __typename
-    id
-    label: name
-    bundledItemVariants {
-      id
-    }
-    dosesPerUnit
   }
 `;
 export const ItemLedgerFragmentDoc = gql`
@@ -1802,13 +1863,13 @@ export const ItemVariantsDocument = gql`
         nodes {
           __typename
           variants {
-            ...ItemVariantOption
+            ...ItemVariant
           }
         }
       }
     }
   }
-  ${ItemVariantOptionFragmentDoc}
+  ${ItemVariantFragmentDoc}
 `;
 export const GetHistoricalStockLinesDocument = gql`
   query getHistoricalStockLines(

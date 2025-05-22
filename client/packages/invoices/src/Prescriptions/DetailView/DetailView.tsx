@@ -33,7 +33,7 @@ export const PrescriptionDetailView = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const { data: preference } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses
+    PreferenceKey.ManageVaccinesInDoses
   );
   const {
     query: { data, loading },
@@ -86,7 +86,7 @@ export const PrescriptionDetailView = () => {
         <ContentArea
           onRowClick={onRowClick}
           onAddItem={onAddItem}
-          displayInDoses={preference?.displayVaccinesInDoses}
+          displayInDoses={preference?.manageVaccinesInDoses}
         />
       ),
       value: 'Details',
