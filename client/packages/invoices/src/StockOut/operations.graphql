@@ -79,13 +79,6 @@ fragment StockOutLine on InvoiceLineNode {
       isVaccine
       doses
     }
-    vvmStatus {
-      __typename
-      id
-      level
-      unusable
-      description
-    }
   }
 }
 

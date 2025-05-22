@@ -74,10 +74,9 @@ export const usePrescriptionColumn = ({
 >[] => {
   const t = useTranslation();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
-  const { data: OMSPrefs } = usePreference(PreferenceKey.ManageVaccinesInDoses,
-    PreferenceKey.ManageVvmStatusForStock);
-  const { store } = useAuthContext();
-  const hasPrescribedQty = store?.preferences?.editPrescribedQuantityOnPrescription;
+  const { data: OMSPrefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
+  const { store: { preferences } = {} } = useAuthContext();
+  const hasPrescribedQty = preferences?.editPrescribedQuantityOnPrescription;
 
   const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
     GenericColumnKey.Selection,
@@ -151,9 +150,7 @@ export const usePrescriptionColumn = ({
           ]),
       },
     ],
-  ];
 
-  columns.push(
     [
       'expiryDate',
       {
@@ -215,7 +212,9 @@ export const usePrescriptionColumn = ({
           ]),
       },
     ],
-  );
+
+  ];
+
 
   if (OMSPrefs?.manageVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));
