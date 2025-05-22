@@ -4,10 +4,10 @@ import {
   ExpiryDateCell,
   Formatter,
   getDosesPerUnitColumn,
-  getVaccineVialManagementStatusColumn,
   NumberCell,
   NumUtils,
   PreferenceKey,
+  UNDEFINED_STRING_VALUE,
   useColumns,
   usePreference,
   useTranslation,
@@ -52,7 +52,15 @@ export const usePrescriptionLineEditColumns = ({
   ];
 
   if (manageVaccinesInDoses) {
-    columns.push(getVaccineVialManagementStatusColumn(t));
+    columns.push({  label: 'label.vvm-status',
+      key: 'vvmStatus',
+      width: 100,
+      sortable: false,
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => {
+        return rowData?.stockLine?.vvmStatus?.description ?? UNDEFINED_STRING_VALUE;
+      },
+      defaultHideOnMobile: true,});
     columns.push(getDosesPerUnitColumn(t, unitName));
   } else {
     columns.push(['packSize', { width: 90 }]);

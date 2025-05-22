@@ -17,7 +17,6 @@ import {
   usePreference,
   PreferenceKey,
   getDosesPerUnitColumn,
-  getVaccineVialManagementStatusColumn,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -153,9 +152,6 @@ export const usePrescriptionColumn = ({
       },
     ],
   ];
-  if (OMSPrefs?.manageVvmStatusForStock) {
-    columns.push(getVaccineVialManagementStatusColumn(t))
-  }
 
   columns.push(
     [
