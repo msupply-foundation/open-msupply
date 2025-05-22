@@ -42,7 +42,7 @@ export const DonorEditModal = ({
 
   const [donor, setDonor] = useState<DonorOption | null>(null);
   const [isDirty, setIsDirty] = useState(false);
-  const [method, setMethod] = useState<ApplyToLinesInput>();
+  const [method, setMethod] = useState(ApplyToLinesInput.None);
 
   const width = '350px';
 
@@ -71,7 +71,7 @@ export const DonorEditModal = ({
       id: invoiceId,
       defaultDonorUpdate: {
         donorId: donor?.id ?? null,
-        applyToLines: method ?? ApplyToLinesInput.None,
+        applyToLines: method,
       },
     });
 
@@ -109,6 +109,7 @@ export const DonorEditModal = ({
             clearable
             width={width}
             inputProps={{
+              label: t('label.donor'),
               placeholder: t('label.no-donor-selected'),
             }}
           />
@@ -144,7 +145,6 @@ export const DonorEditModal = ({
               }
             }}
             fullWidth
-            clearable
             slotProps={{ inputLabel: { shrink: true } }}
           />
         </Box>
