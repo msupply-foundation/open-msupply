@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Grid,
   BasicTextInput,
@@ -7,7 +7,6 @@ import {
   TypedTFunction,
   LocaleKey,
   NumUtils,
-  ItemNode,
   DropdownMenu,
   DropdownMenuItem,
   TextArea,
@@ -17,52 +16,36 @@ import {
   PreferenceKey,
 } from '@openmsupply-client/common';
 import {
-  StockItemSearchInput,
   ItemRowWithDirectionsFragment,
+  StockItemSearchInput,
 } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
-import { PackSizeController } from '../../StockOut';
-import { StockOutAlert, StockOutAlerts } from '../../StockOut';
-import { DraftPrescriptionLine } from '../../types';
 import { AccordionPanelSection } from './PanelSection';
 import { getPrescriptionDirections } from './getPrescriptionDirections';
 import { useAbbreviations } from '../api/hooks/useAbbreviations';
 import { AllocationSection } from './AllocationSection';
 import { AutoAllocationAlerts } from '../../Allocation/AutoAllocationAlerts';
+import { DraftStockOutLineFragment } from '../../OutboundShipment/api/operations.generated';
+import { useAllocationContext } from '../../Allocation/useAllocationContext';
 
 interface PrescriptionLineEditFormProps {
-  allocatedUnits: number;
-  availableUnits: number;
   item: ItemRowWithDirectionsFragment | null;
   onChangeItem: (newItem: ItemRowWithDirectionsFragment | null) => void;
-  packSizeController: PackSizeController;
   disabled: boolean;
   isNew: boolean;
-  updateNotes: (note: string) => void;
-  draftPrescriptionLines: DraftPrescriptionLine[];
-  showZeroQuantityConfirmation: boolean;
-  hasOnHold: boolean;
-  hasExpired: boolean;
-  isLoading: boolean;
   programId?: string;
   invoiceId: string;
 }
 
-export const PrescriptionLineEditForm: React.FC<
-  PrescriptionLineEditFormProps
-> = ({
-  // allocatedUnits,
-  onChangeItem,
-  item,
-  // packSizeController,
+export const PrescriptionLineEditForm = ({
+  // tODO: consolidate with item in useAllocationContext
+  item: prescriptionItem,
   disabled,
   isNew,
-  updateNotes,
-  draftPrescriptionLines,
-  // showZeroQuantityConfirmation,
   programId,
   invoiceId,
-}) => {
+  onChangeItem,
+}: PrescriptionLineEditFormProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
   const { rows: items } = usePrescription();
@@ -71,35 +54,30 @@ export const PrescriptionLineEditForm: React.FC<
     PreferenceKey.SortByVvmStatusThenExpiry
   );
 
-  // const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
+  const { draftLines, item, note, setNote } = useAllocationContext(
+    ({ draftLines, item, note, setNote }) => ({
+      draftLines,
+      item,
+      note,
+      setNote,
+    })
+  );
+
+  // TODO - ensure key change, this should clear
   const [defaultDirection, setDefaultDirection] = useState<string>('');
   const [abbreviation, setAbbreviation] = useState<string>('');
 
-  const isDirectionsDisabled = true; //!issueUnitQuantity;
+  const isDirectionsDisabled = true; // !issueUnitQuantity;
   const displayInDoses = !!prefs?.displayVaccinesInDoses && !!item?.isVaccine;
 
-  const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);
-  const note = prescriptionLineWithNote?.note ?? '';
-
-  useEffect(() => {
-    // TODO: CHeck this is managed by allocation context
-
-    setAbbreviation('');
-    setDefaultDirection('');
-  }, [item?.id]);
-
-  // useEffect(() => {
-  //   setIssueUnitQuantity(allocatedUnits);
-  // }, [allocatedUnits]);
-
-  const key = item?.id ?? 'new';
+  const key = prescriptionItem?.id ?? 'new';
 
   const { data: options = [] } = useAbbreviations();
 
   const saveAbbreviation = () => {
     if (!abbreviation) return;
     const note = getPrescriptionDirections(abbreviation, options);
-    updateNotes(note);
+    setNote(note);
     setDefaultDirection('');
   };
 
@@ -107,7 +85,7 @@ export const PrescriptionLineEditForm: React.FC<
     if (!direction) return;
     setDefaultDirection(direction);
     const note = getPrescriptionDirections(direction, options);
-    updateNotes(note);
+    setNote(note);
     setAbbreviation('');
   };
 
@@ -129,10 +107,10 @@ export const PrescriptionLineEditForm: React.FC<
       >
         <Grid flex={1}>
           <StockItemSearchInput
-            autoFocus={!item}
-            openOnFocus={!item}
+            autoFocus={!prescriptionItem}
+            openOnFocus={!prescriptionItem}
             disabled={!isNew || disabled}
-            currentItemId={item?.id}
+            currentItemId={prescriptionItem?.id}
             onChange={onChangeItem}
             filter={{ isVisibleOrOnHand: true }}
             extraFilter={
@@ -144,7 +122,7 @@ export const PrescriptionLineEditForm: React.FC<
           />
         </Grid>
       </AccordionPanelSection>
-      {item && (
+      {prescriptionItem && (
         <>
           {!disabled && (
             <AutoAllocationAlerts />
@@ -159,8 +137,13 @@ export const PrescriptionLineEditForm: React.FC<
             title={t('label.quantity')}
             closedSummary={
               displayInDoses
-                ? dosesSummary(t, draftPrescriptionLines)
-                : summarise(t, draftPrescriptionLines, getPlural)
+                ? dosesSummary(t, draftLines)
+                : summarise(
+                    t,
+                    prescriptionItem.unitName ?? t('label.unit'),
+                    draftLines,
+                    getPlural
+                  )
             }
             defaultExpanded={isNew && !disabled}
             key={key + '_quantity'}
@@ -174,7 +157,7 @@ export const PrescriptionLineEditForm: React.FC<
               paddingBottom={2}
             >
               <AllocationSection
-                itemId={item?.id ?? ''}
+                itemId={prescriptionItem?.id ?? ''}
                 invoiceId={invoiceId}
                 disabled={disabled}
                 prefOptions={{
@@ -187,10 +170,10 @@ export const PrescriptionLineEditForm: React.FC<
           </AccordionPanelSection>
         </>
       )}
-      {item && (
+      {item && prescriptionItem && (
         <AccordionPanelSection
           title={t('label.directions')}
-          closedSummary={isDirectionsDisabled ? '' : note}
+          closedSummary={isDirectionsDisabled ? '' : (note ?? '')}
           defaultExpanded={(isNew || !note) && !disabled}
           key={item?.id ?? 'new'}
         >
@@ -227,12 +210,12 @@ export const PrescriptionLineEditForm: React.FC<
                       : t('placeholder.item-directions')
                   }
                 >
-                  {item.itemDirections.length == 0 ? (
+                  {prescriptionItem.itemDirections.length == 0 ? (
                     <DropdownMenuItem sx={{ fontSize: 14 }}>
                       {t('message.no-directions')}
                     </DropdownMenuItem>
                   ) : (
-                    item.itemDirections
+                    prescriptionItem.itemDirections
                       .sort((a, b) => a.priority - b.priority)
                       .map(
                         direction =>
@@ -259,7 +242,7 @@ export const PrescriptionLineEditForm: React.FC<
                     <TextArea
                       value={note}
                       onChange={e => {
-                        updateNotes(e.target.value);
+                        setNote(e.target.value);
                         setAbbreviation('');
                         setDefaultDirection('');
                       }}
@@ -279,18 +262,19 @@ export const PrescriptionLineEditForm: React.FC<
 // TODO: Change these to use Allocation Context
 const summarise = (
   t: TypedTFunction<LocaleKey>,
-  lines: DraftPrescriptionLine[],
+  unitName: string,
+  lines: DraftStockOutLineFragment[],
   getPlural: (word: string, count: number) => string
 ) => {
   // Count how many of each pack size
   const counts: Record<number, { unitName: string; count: number }> = {};
-  lines.forEach(({ packSize, numberOfPacks, stockLine }) => {
+  lines.forEach(({ packSize, numberOfPacks }) => {
     if (numberOfPacks === 0) return;
     if (counts[packSize]) {
       counts[packSize].count += packSize * numberOfPacks;
     } else {
       counts[packSize] = {
-        unitName: (stockLine?.item as ItemNode)?.unitName ?? 'unit',
+        unitName,
         count: NumUtils.round(packSize * numberOfPacks, 2),
       };
     }
@@ -326,12 +310,14 @@ const summarise = (
 
 const dosesSummary = (
   t: TypedTFunction<LocaleKey>,
-  lines: DraftPrescriptionLine[]
+  lines: DraftStockOutLineFragment[]
 ) => {
   const totalDoses = lines.reduce(
-    (sum, { packSize, numberOfPacks, item, itemVariant }) =>
+    (sum, { packSize, numberOfPacks, defaultDosesPerUnit, itemVariant }) =>
       sum +
-      packSize * numberOfPacks * (itemVariant?.dosesPerUnit ?? item.doses),
+      packSize *
+        numberOfPacks *
+        (itemVariant?.dosesPerUnit ?? defaultDosesPerUnit),
     0
   );
 

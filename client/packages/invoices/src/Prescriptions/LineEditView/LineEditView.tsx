@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   BasicSpinner,
   InvoiceNodeStatus,
@@ -17,7 +17,6 @@ import { PageLayout } from './PageLayout';
 import { usePrescription } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { PrescriptionLineEdit } from './PrescriptionLineEdit';
-import { DraftPrescriptionLine } from '../../types';
 import { Footer } from './Footer';
 import { NavBar } from './NavBar';
 import { useAllocationContext } from '../../Allocation/useAllocationContext';
@@ -32,6 +31,7 @@ export const PrescriptionLineEditView = () => {
   const {
     isDirty: allocationIsDirty,
     draftLines,
+    item,
     prescribedQuantity,
   } = useAllocationContext();
   // TODO: Change prescription version of this hook
@@ -59,13 +59,9 @@ export const PrescriptionLineEditView = () => {
     data?.lines.nodes.sort((a, b) => a.id.localeCompare(b.id)) ?? [];
 
   const status = data?.status;
-
-  const [allDraftLines, setAllDraftLines] = useState<
-    Record<string, DraftPrescriptionLine[]>
-  >({});
-
   const currentItem = lines.find(line => line.item.id === itemId)?.item;
 
+  // TODO: this should be simple query?
   const items = useMemo(() => {
     const itemSet = new Set();
     const items: ItemRowFragment[] = [];
@@ -78,6 +74,10 @@ export const PrescriptionLineEditView = () => {
     return items;
   }, [lines]);
 
+  // TODO: add itemId draft lines
+  // const enteredLineIds = draftLines
+  //   .filter(line => line.numberOfPacks !== 0)
+  //   .map(line => line.itemId);
   const enteredLineIds = lines
     .filter(line => line.numberOfPacks !== 0)
     .map(line => line.item.id);
@@ -85,10 +85,11 @@ export const PrescriptionLineEditView = () => {
   useEffect(() => {
     setCustomBreadcrumbs({
       1: data?.invoiceNumber.toString() ?? '',
-      2: currentItem?.name || '',
+      2: item?.name || '',
     });
-  }, [currentItem, data?.invoiceNumber, itemId]);
+  }, [item, data?.invoiceNumber, itemId]);
 
+  // TODO - just save between items?!
   useConfirmOnLeaving(
     'prescription-line-edit',
     // Need a custom checking method here, as we don't want to warn user when
@@ -110,14 +111,14 @@ export const PrescriptionLineEditView = () => {
     }
   );
 
-  const updateAllLines = (lines: DraftPrescriptionLine[]) => {
-    if (itemId === 'new') {
-      newItemId.current = lines[0]?.item.id;
-    }
+  // const updateAllLines = (lines: DraftPrescriptionLine[]) => {
+  //   if (itemId === 'new') {
+  //     newItemId.current = lines[0]?.item.id;
+  //   }
 
-    if (typeof itemId === 'string')
-      setAllDraftLines({ ...allDraftLines, [itemId]: lines });
-  };
+  //   if (typeof itemId === 'string')
+  //     setAllDraftLines({ ...allDraftLines, [itemId]: lines });
+  // };
 
   const onSave = async () => {
     if (allocationIsDirty) {
@@ -147,7 +148,6 @@ export const PrescriptionLineEditView = () => {
       );
     }
     isDirty.current = false;
-    setAllDraftLines({});
   };
 
   if (isLoading || !itemId) return <BasicSpinner />;
@@ -178,11 +178,6 @@ export const PrescriptionLineEditView = () => {
           <>
             <PrescriptionLineEdit
               item={currentItem ?? null}
-              draftLines={allDraftLines[itemId] ?? []}
-              updateLines={updateAllLines}
-              setIsDirty={dirty => {
-                isDirty.current = dirty;
-              }}
               programId={data?.programId ?? undefined}
               invoiceId={invoiceId}
             />

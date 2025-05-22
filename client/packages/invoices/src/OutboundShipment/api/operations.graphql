@@ -870,6 +870,7 @@ query getOutboundEditLines(
         __typename
         id
         unitName
+        name
         isVaccine
       }
     }

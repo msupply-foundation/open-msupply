@@ -1,102 +1,37 @@
-import React, { useState } from 'react';
-import {
-  useBufferState,
-  InvoiceNodeStatus,
-  DateUtils,
-} from '@openmsupply-client/common';
-import { useDraftPrescriptionLines } from './hooks';
+import React from 'react';
+import { useBufferState } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
-import {
-  getAllocatedQuantity,
-  sumAvailableQuantity,
-  // usePackSizeController,
-} from '../../StockOut';
 // import { allocateQuantities } from '../api/hooks/utils';
-import { DraftPrescriptionLine } from '../../types';
 import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
 import { ItemRowWithDirectionsFragment } from '@openmsupply-client/system';
 
 interface PrescriptionLineEditProps {
   item: ItemRowWithDirectionsFragment | null;
-  draftLines: DraftPrescriptionLine[];
-  updateLines: (lines: DraftPrescriptionLine[]) => void;
-  setIsDirty: (dirty: boolean) => void;
   programId?: string;
   invoiceId: string;
 }
 
 export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
   item,
-  draftLines: draftPrescriptionLines,
-  updateLines,
-  setIsDirty,
   programId,
   invoiceId,
 }) => {
   const isNew = item === null;
   const [currentItem, setCurrentItem] = useBufferState(item);
-  // const [isAutoAllocated, setIsAutoAllocated] = useState(false);
-  // const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
-  //   useState(false);
-  const {
-    query: { data },
-    isDisabled,
-  } = usePrescription();
-  const { prescriptionDate } = data ?? {};
-  const { isLoading, updateNotes } = useDraftPrescriptionLines(
-    currentItem,
-    draftPrescriptionLines,
-    updateLines,
-    DateUtils.getDateOrNull(prescriptionDate)
-  );
 
-  // const packSizeController = usePackSizeController(draftPrescriptionLines);
-
-  // const onUpdateQuantity = (batchId: string, packs: number) => {
-  //   updateQuantity(batchId, packs);
-  //   setIsAutoAllocated(false);
-  //   setIsDirty(true);
-  // };
-
-  const onUpdateNotes = (note: string) => {
-    updateNotes(note);
-    // setIsAutoAllocated(false);
-    setIsDirty(true);
-  };
-
-  const hasOnHold = draftPrescriptionLines.some(
-    ({ stockLine }) =>
-      (stockLine?.availableNumberOfPacks ?? 0) > 0 && !!stockLine?.onHold
-  );
-  const hasExpired = draftPrescriptionLines.some(
-    ({ stockLine }) =>
-      (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
-      !!stockLine?.expiryDate &&
-      DateUtils.isExpired(new Date(stockLine?.expiryDate))
-  );
+  const { isDisabled } = usePrescription();
 
   return (
     <PrescriptionLineEditForm
       disabled={isDisabled}
       isNew={isNew}
-      // packSizeController={packSizeController}
       onChangeItem={(item: ItemRowWithDirectionsFragment | null) => {
         // setIsAutoAllocated(false);
         setCurrentItem(item);
       }}
       item={currentItem}
-      allocatedUnits={getAllocatedQuantity(draftPrescriptionLines)}
-      availableUnits={sumAvailableQuantity(draftPrescriptionLines)}
-      updateNotes={onUpdateNotes}
-      draftPrescriptionLines={draftPrescriptionLines}
-      // showZeroQuantityConfirmation={showZeroQuantityConfirmation}
-      hasOnHold={hasOnHold}
-      hasExpired={hasExpired}
-      isLoading={isLoading}
       programId={programId}
       invoiceId={invoiceId}
-      packSizeController={undefined}
-      showZeroQuantityConfirmation={false}
     />
   );
 };

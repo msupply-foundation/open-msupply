@@ -1067,6 +1067,7 @@ export type GetOutboundEditLinesQuery = {
       __typename: 'ItemNode';
       id: string;
       unitName?: string | null;
+      name: string;
       isVaccine: boolean;
     }>;
   };
@@ -2001,6 +2002,7 @@ export const GetOutboundEditLinesDocument = gql`
           __typename
           id
           unitName
+          name
           isVaccine
         }
       }

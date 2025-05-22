@@ -54,6 +54,7 @@ interface AllocationContext {
   item: DraftItem | null;
   placeholderQuantity: number | null;
   prescribedQuantity: number | null;
+  note: string | null;
 
   initialise: (params: {
     itemData: OutboundLineEditData;
@@ -65,6 +66,7 @@ interface AllocationContext {
   }) => void;
 
   setAlerts: (alerts: StockOutAlert[]) => void;
+  setNote: (note: string | null) => void;
   clear: () => void;
 
   manualAllocate: (
@@ -89,9 +91,16 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   prescribedQuantity: null,
   alerts: [],
   allocateIn: AllocateIn.Units,
+  note: null,
 
   initialise: ({
-    itemData: { item, draftLines, placeholderQuantity, prescribedQuantity },
+    itemData: {
+      item,
+      draftLines,
+      placeholderQuantity,
+      prescribedQuantity,
+      note,
+    },
     strategy,
     allocateVaccineItemsInDoses,
     allowPlaceholder,
@@ -115,6 +124,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     set({
       isDirty: false,
       item,
+      note,
 
       allocateIn:
         item.isVaccine && allocateVaccineItemsInDoses
@@ -142,12 +152,21 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       item: null,
       allocateIn: AllocateIn.Units,
       alerts: [],
+      note: null,
+      prescribedQuantity: null,
     })),
 
   setAlerts: alerts =>
     set(state => ({
       ...state,
       alerts,
+    })),
+
+  setNote: note =>
+    set(state => ({
+      ...state,
+      note,
+      isDirty: true,
     })),
 
   setPrescribedQuantity: (quantity: number | null) =>

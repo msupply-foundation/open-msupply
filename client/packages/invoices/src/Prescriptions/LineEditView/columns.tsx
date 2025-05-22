@@ -18,7 +18,6 @@ import { getPrescriptionLineDosesColumns } from './columnsDoses';
 import { AllocateIn } from '../../Allocation/useAllocationContext';
 import { DraftItem } from '../..';
 import { DraftStockOutLineFragment } from '../../OutboundShipment/api/operations.generated';
-import { getStockOutQuantityCellId } from '../../utils';
 
 export const usePrescriptionLineEditColumns = ({
   allocate,
@@ -122,65 +121,11 @@ export const usePrescriptionLineEditColumns = ({
   return useColumns(columnDefinitions, {}, [allocate]);
 };
 
-const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
-  <NumberInputCell
-    {...props}
-    max={props.rowData.availablePacks}
-    id={getStockOutQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
-    decimalLimit={2}
-    min={0}
-  />
-);
-
 const UnitQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
     max={props.rowData.availablePacks}
-    id={getStockOutQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
     decimalLimit={2}
     min={0}
   />
 );
-
-const getAllocateInUnitsColumns = (
-  allocate: (key: string, numPacks: number) => void,
-  pluralisedUnitName: string
-): ColumnDescription<DraftStockOutLineFragment>[] => [
-  {
-    Cell: NumberCell,
-    label: 'label.in-store',
-    key: 'totalNumberOfPacks',
-    align: ColumnAlign.Right,
-    width: 80,
-    accessor: ({ rowData }) => rowData.inStorePacks,
-  },
-  {
-    Cell: NumberCell,
-    label: 'label.available-packs',
-    key: 'availablePacks',
-    align: ColumnAlign.Right,
-    width: 90,
-    accessor: ({ rowData }) =>
-      rowData.location?.onHold || rowData.stockLineOnHold
-        ? 0
-        : rowData.availablePacks,
-  },
-  [
-    'numberOfPacks',
-    {
-      Cell: PackQuantityCell,
-      width: 100,
-      label: 'label.pack-quantity-issued',
-      setter: ({ id, numberOfPacks }) => allocate(id, numberOfPacks ?? 0),
-    },
-  ],
-  [
-    'unitQuantity',
-    {
-      label: 'label.units-issued',
-      labelProps: { unit: pluralisedUnitName },
-      accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
-      width: 90,
-    },
-  ],
-];
