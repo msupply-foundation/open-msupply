@@ -1,6 +1,6 @@
 use super::{
-    item_link_row::item_link, location_row::location, name_link_row::name_link, store_row::store,
-    StorageConnection,
+    campaign_row::campaign, item_link_row::item_link, location_row::location,
+    name_link_row::name_link, store_row::store, StorageConnection,
 };
 
 use crate::{
@@ -33,6 +33,7 @@ table! {
         item_variant_id -> Nullable<Text>,
         donor_link_id -> Nullable<Text>,
         vvm_status_id -> Nullable<Text>,
+        campaign_id -> Nullable<Text>,
     }
 }
 
@@ -41,7 +42,7 @@ joinable!(stock_line -> store (store_id));
 joinable!(stock_line -> location (location_id));
 joinable!(stock_line -> barcode (barcode_id));
 joinable!(stock_line -> vvm_status (vvm_status_id));
-
+joinable!(stock_line -> campaign (campaign_id));
 allow_tables_to_appear_in_same_query!(stock_line, item_link);
 // NOTE: both supplier_link_id and donor_link_id are foreign keys to name_link
 // so not defining a default joinable here, so as not to accidentally join on the wrong one
@@ -69,6 +70,7 @@ pub struct StockLineRow {
     pub item_variant_id: Option<String>,
     pub donor_link_id: Option<String>,
     pub vvm_status_id: Option<String>,
+    pub campaign_id: Option<String>,
 }
 
 pub struct StockLineRowRepository<'a> {

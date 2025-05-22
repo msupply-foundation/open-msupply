@@ -74,6 +74,7 @@ fn item_line_1_pull_record() -> TestSyncIncomingRecord {
             item_variant_id: None,
             donor_link_id: Some("donor_a".to_string()),
             vvm_status_id: None,
+            campaign_id: None,
         },
     )
 }
@@ -100,6 +101,7 @@ fn item_line_1_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: Some("donor_a".to_string()),
             vvm_status_id: None,
+            campaign_id: None,
         }),
     }
 }
@@ -170,6 +172,7 @@ fn item_line_2_pull_record() -> TestSyncIncomingRecord {
             item_variant_id: None,
             donor_link_id: None,
             vvm_status_id: None,
+            campaign_id: None,
         },
     )
 }
@@ -196,6 +199,7 @@ fn item_line_2_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: None,
             vvm_status_id: None,
+            campaign_id: None,
         }),
     }
 }
