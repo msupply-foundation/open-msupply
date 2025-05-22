@@ -3,10 +3,14 @@ import { useOutboundApi } from './utils/useOutboundApi';
 import { DraftStockOutLineFragment } from '../operations.generated';
 import { DraftItem } from 'packages/invoices/src';
 
+// TODO move me to shared location
+
 export type OutboundLineEditData = {
   item: DraftItem;
   draftLines: DraftStockOutLineFragment[];
   placeholderQuantity: number | null;
+  prescribedQuantity?: number | null;
+  note?: string | null;
 };
 
 export const useOutboundLineEditData = (invoiceId: string, itemId?: string) => {
@@ -27,13 +31,19 @@ export const useOutboundLineEditData = (invoiceId: string, itemId?: string) => {
 
       if (!item) return;
 
-      const { draftLines, placeholderQuantity = null } =
-        result.draftStockOutLines;
+      const {
+        draftLines,
+        placeholderQuantity = null,
+        prescribedQuantity,
+        note,
+      } = result.draftStockOutLines;
 
       return {
         item,
         draftLines,
         placeholderQuantity,
+        prescribedQuantity,
+        note,
       };
     },
     // We'll call this manually

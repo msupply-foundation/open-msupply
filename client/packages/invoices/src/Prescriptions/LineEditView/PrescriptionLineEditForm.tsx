@@ -75,7 +75,7 @@ export const PrescriptionLineEditForm: React.FC<
   const [defaultDirection, setDefaultDirection] = useState<string>('');
   const [abbreviation, setAbbreviation] = useState<string>('');
 
-  const isDirectionsDisabled = !issueUnitQuantity;
+  const isDirectionsDisabled = true; //!issueUnitQuantity;
   const displayInDoses = !!prefs?.displayVaccinesInDoses && !!item?.isVaccine;
 
   const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);

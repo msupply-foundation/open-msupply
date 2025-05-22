@@ -39,4 +39,4 @@ export const useOutbound = {
   },
 };
 
-export * from './useOutboundLineEditData';
+export * from './useStockOutLineEditData';

@@ -606,3 +606,15 @@ query labelPrinterSettings {
     port
   }
 }
+
+mutation savePrescriptionItemLines(
+  $storeId: String!
+  $input: SavePrescriptionLinesInput!
+) {
+  savePrescriptionItemLines(input: $input, storeId: $storeId) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+  }
+}

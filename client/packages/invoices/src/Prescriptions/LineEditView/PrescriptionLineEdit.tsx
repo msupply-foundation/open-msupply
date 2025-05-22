@@ -87,7 +87,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
       item={currentItem}
       allocatedUnits={getAllocatedQuantity(draftPrescriptionLines)}
       availableUnits={sumAvailableQuantity(draftPrescriptionLines)}
-      setIsDirty={setIsDirty}
       updateNotes={onUpdateNotes}
       draftPrescriptionLines={draftPrescriptionLines}
       // showZeroQuantityConfirmation={showZeroQuantityConfirmation}
@@ -96,6 +95,8 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
       isLoading={isLoading}
       programId={programId}
       invoiceId={invoiceId}
+      packSizeController={undefined}
+      showZeroQuantityConfirmation={false}
     />
   );
 };

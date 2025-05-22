@@ -14,7 +14,7 @@ import {
 import { ItemRowFragment, ListItems } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PageLayout } from './PageLayout';
-import { usePrescription, usePrescriptionLines } from '../api';
+import { usePrescription } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { PrescriptionLineEdit } from './PrescriptionLineEdit';
 import { DraftPrescriptionLine } from '../../types';
@@ -31,17 +31,13 @@ export const PrescriptionLineEditView = () => {
 
   const { isDirty: allocationIsDirty, draftLines } = useAllocationContext();
   // TODO: Change prescription version of this hook
-  const { mutateAsync: saveOutBound } = useSaveOutboundLines(invoiceId);
+  const { mutateAsync: saveOutBound, isLoading: isSavingLines } =
+    useSaveOutboundLines(invoiceId);
 
   const {
     query: { data, loading: isLoading },
     isDisabled,
   } = usePrescription();
-
-  const {
-    save: { saveLines, isSavingLines },
-    // delete: { deleteLines },
-  } = usePrescriptionLines(data?.id);
 
   const newItemId = useRef<string>();
 
@@ -126,30 +122,9 @@ export const PrescriptionLineEditView = () => {
       });
     }
 
-    if (!isDirty.current) return;
+    // if (!isDirty.current) return;
 
-    const flattenedLines = Object.values(allDraftLines).flat();
-
-    // needed since placeholders aren't being created for prescriptions yet, but
-    // still adding to array
-    const isOnHold = flattenedLines.some(
-      ({ stockLine, location }) => stockLine?.onHold || location?.onHold
-    );
-
-    const patch =
-      status !== InvoiceNodeStatus.Picked &&
-      flattenedLines.length >= 1 &&
-      !isOnHold
-        ? {
-            id: invoiceId,
-            status: InvoiceNodeStatus.Picked,
-          }
-        : undefined;
-
-    await saveLines({
-      draftPrescriptionLines: [], // TODO Remove or update this
-      patch,
-    });
+    // TODO: Move to picked status? Backend?
 
     // For "NEW" items, navigate to newly-created item page
     if (newItemId.current) {
