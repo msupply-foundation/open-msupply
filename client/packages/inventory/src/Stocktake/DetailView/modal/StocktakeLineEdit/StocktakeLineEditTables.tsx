@@ -26,7 +26,7 @@ import { DraftStocktakeLine } from './utils';
 import {
   getDonorColumn,
   getLocationInputColumn,
-  ItemVariantInputCell,
+  ItemVariantInputCellOld,
   PackSizeEntryCell,
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
@@ -185,7 +185,7 @@ export const BatchTable = ({
         label: 'label.item-variant',
         width: 170,
         Cell: props => (
-          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+          <ItemVariantInputCellOld {...props} itemId={props.rowData.item.id} />
         ),
         setter: patch => update({ ...patch }),
       });
