@@ -37,9 +37,8 @@ export const ItemVariantModal = ({
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen: true, onClose, disableBackdrop: true });
   const { success, error } = useNotification();
-  const { data } = usePreference(PreferenceKey.DisplayVaccinesInDoses);
-  const displayVaccinesInDoses =
-    item?.isVaccine && data?.displayVaccinesInDoses;
+  const { data } = usePreference(PreferenceKey.ManageVaccinesInDoses);
+  const displayVaccinesInDoses = item?.isVaccine && data?.manageVaccinesInDoses;
 
   const { draft, isComplete, updateDraft, updatePackagingVariant, save } =
     useItemVariant({
