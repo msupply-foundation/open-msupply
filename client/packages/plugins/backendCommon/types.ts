@@ -12,6 +12,9 @@ export type BackendPlugins = {
   graphql_query?: (
     _: PluginTypes['graphql_query']['input']
   ) => PluginTypes['graphql_query']['output'];
+  processor?: (
+    _: PluginTypes['processor']['input']
+  ) => PluginTypes['processor']['output'];
 };
 
 declare global {
