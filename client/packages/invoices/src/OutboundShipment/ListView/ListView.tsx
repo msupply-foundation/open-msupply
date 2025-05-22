@@ -60,7 +60,10 @@ const OutboundShipmentListViewComponent: FC = () => {
   const columns = useColumns<OutboundRowFragment>(
     [
       GenericColumnKey.Selection,
-      [getNameAndColorColumn(), { setter: onUpdate }],
+      [
+        getNameAndColorColumn(),
+        { setter: onUpdate, defaultHideOnMobile: true },
+      ],
       [
         'status',
         {
@@ -79,6 +82,7 @@ const OutboundShipmentListViewComponent: FC = () => {
         label: 'label.reference',
         Cell: TooltipTextCell,
         width: 175,
+        defaultHideOnMobile: true,
       },
       getCommentPopoverColumn(),
       [
@@ -86,6 +90,7 @@ const OutboundShipmentListViewComponent: FC = () => {
         {
           accessor: ({ rowData }) => rowData.pricing.totalAfterTax,
           width: 125,
+          defaultHideOnMobile: true,
         },
       ],
     ],
