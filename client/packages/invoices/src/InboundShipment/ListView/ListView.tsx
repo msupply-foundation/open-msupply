@@ -15,6 +15,7 @@ import {
   TooltipTextCell,
   GenericColumnKey,
   getCommentPopoverColumn,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -32,7 +33,6 @@ const useDisableInboundRows = (rows?: InboundRowFragment[]) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows]);
 };
-
 export const InboundListView: FC = () => {
   const { mutate: onUpdate } = useInbound.document.update();
   const {
@@ -41,14 +41,7 @@ export const InboundListView: FC = () => {
     filter,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
-    filters: [
-      { key: 'otherPartyName' },
-      {
-        key: 'createdDatetime',
-        condition: 'between',
-      },
-      { key: 'status', condition: 'equalTo' },
-    ],
+    filters: [{ key: 'invoiceNumber', condition: 'equalTo', isNumber: true }],
   });
   const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
@@ -56,6 +49,7 @@ export const InboundListView: FC = () => {
   const navigate = useNavigate();
   const invoiceModalController = useToggle();
   const linkRequestModalController = useToggle();
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const { data, isError, isLoading } = useInbound.document.list(queryParams);
   useDisableInboundRows(data?.nodes);
@@ -65,7 +59,10 @@ export const InboundListView: FC = () => {
   const columns = useColumns<InboundRowFragment>(
     [
       GenericColumnKey.Selection,
-      [getNameAndColorColumn(), { setter: onUpdate }],
+      [
+        getNameAndColorColumn(),
+        { setter: onUpdate, defaultHideOnMobile: true },
+      ],
       [
         'status',
         {
@@ -75,19 +72,21 @@ export const InboundListView: FC = () => {
       ],
       ['invoiceNumber', { maxWidth: 100 }],
       'createdDatetime',
-      'deliveredDatetime',
+      ['deliveredDatetime', { defaultHideOnMobile: true }],
       getCommentPopoverColumn(),
       [
         'theirReference',
         {
           Cell: TooltipTextCell,
           width: 225,
+          defaultHideOnMobile: true,
         },
       ],
       [
         'totalAfterTax',
         {
           accessor: ({ rowData }) => rowData.pricing.totalAfterTax,
+          defaultHideOnMobile: true,
         },
       ],
     ],
@@ -97,12 +96,12 @@ export const InboundListView: FC = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
+      <Toolbar filter={filter} simplifiedTabletView={simplifiedTabletView} />
       <AppBarButtons
         invoiceModalController={invoiceModalController}
         linkRequestModalController={linkRequestModalController}
+        simplifiedTabletView={simplifiedTabletView}
       />
-
       <DataTable
         id="inbound-line-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
