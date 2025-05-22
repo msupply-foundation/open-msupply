@@ -11,9 +11,20 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                ALTER TABLE invoice RENAME COLUMN default_donor_id TO default_donor_link_id;
-                ALTER TABLE invoice_line RENAME COLUMN donor_id TO donor_link_id;
-                ALTER TABLE stock_line RENAME COLUMN donor_id TO donor_link_id;
+                -- Add the new columns, with reference to the name_link table
+                ALTER TABLE invoice ADD COLUMN default_donor_link_id TEXT REFERENCES name_link(id);
+                ALTER TABLE invoice_line ADD COLUMN donor_link_id TEXT REFERENCES name_link(id);
+                ALTER TABLE stock_line ADD COLUMN donor_link_id TEXT REFERENCES name_link(id);
+
+                -- Assign existing values to the new columns
+                UPDATE invoice SET default_donor_link_id = default_donor_id;
+                UPDATE invoice_line SET donor_link_id = donor_id;
+                UPDATE stock_line SET donor_link_id = donor_id;
+
+                -- Remove the old columns
+                ALTER TABLE invoice DROP COLUMN default_donor_id;
+                ALTER TABLE invoice_line DROP COLUMN donor_id;
+                ALTER TABLE stock_line DROP COLUMN donor_id;
             "#
         )?;
 
