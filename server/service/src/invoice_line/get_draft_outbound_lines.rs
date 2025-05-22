@@ -2,13 +2,17 @@ use crate::{
     invoice::query::get_invoice,
     pricing::item_price::{get_pricing_for_item, ItemPrice, ItemPriceLookup},
     service_provider::ServiceContext,
+    stock_line::{
+        historical_stock::{self, get_historical_stock_lines},
+        query::get_stock_lines,
+    },
     ListError,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, RepositoryError, StockLine,
-    StockLineFilter, StockLineRepository, StockLineRow,
+    InvoiceLineType, InvoiceRow, InvoiceStatus, RepositoryError, StockLine, StockLineFilter,
+    StockLineRepository, StockLineRow,
 };
 use util::uuid::uuid;
 
@@ -51,7 +55,15 @@ pub fn get_draft_stock_out_lines(
         }),
     )?;
 
-    let existing_lines = get_outgoing_invoice_lines(ctx, &item_id, &invoice.invoice_row)?;
+    let historical_stock_lines = get_historical_stock_lines_local(
+        ctx,
+        store_id,
+        item_id,
+        invoice.invoice_row.backdated_datetime,
+    )?;
+
+    let existing_lines =
+        get_outgoing_invoice_lines(ctx, &item_id, &invoice.invoice_row, &historical_stock_lines)?;
 
     let existing_stock_line_ids: Vec<String> = existing_lines
         .iter()
@@ -60,11 +72,10 @@ pub fn get_draft_stock_out_lines(
 
     let new_lines = generate_new_draft_lines(
         ctx,
-        store_id.to_string(),
         &item_id,
         invoice.name_row.id,
         existing_stock_line_ids,
-        invoice.invoice_row.backdated_datetime,
+        historical_stock_lines,
     )?;
 
     // return existing first, then new lines
@@ -108,10 +119,36 @@ pub fn get_draft_stock_out_lines(
     Ok((all_lines, draft_stock_out_data))
 }
 
+fn get_historical_stock_lines_local(
+    ctx: &ServiceContext,
+    store_id: &str,
+    item_id: &str,
+    datetime: Option<NaiveDateTime>,
+) -> Result<Vec<StockLine>, ListError> {
+    let historical_stock_lines = match datetime {
+        Some(datetime) => get_historical_stock_lines(ctx, store_id, item_id, &datetime)?,
+        None => get_stock_lines(
+            ctx,
+            None,
+            Some(
+                StockLineFilter::new()
+                    .store_id(EqualFilter::equal_to(store_id))
+                    .item_id(EqualFilter::equal_to(item_id))
+                    .is_available(true),
+            ),
+            None,
+            Some(store_id.to_string()),
+        )?,
+    };
+
+    Ok(historical_stock_lines.rows)
+}
+
 fn get_outgoing_invoice_lines(
     ctx: &ServiceContext,
     item_id: &str,
     outbound: &InvoiceRow,
+    historical_stock_lines: &Vec<StockLine>,
 ) -> Result<Vec<DraftStockOutLine>, ListError> {
     let invoice_line_repo = InvoiceLineRepository::new(&ctx.connection);
 
@@ -124,7 +161,7 @@ fn get_outgoing_invoice_lines(
 
     let as_draft_lines = existing_invoice_lines
         .into_iter()
-        .map(|l| DraftStockOutLine::from_invoice_line(l, &outbound.status))
+        .map(|l| DraftStockOutLine::from_invoice_line(l, &outbound.status, historical_stock_lines))
         .collect::<Result<Vec<DraftStockOutLine>, RepositoryError>>()
         .map_err(ListError::DatabaseError)?;
 
@@ -133,28 +170,16 @@ fn get_outgoing_invoice_lines(
 
 fn generate_new_draft_lines(
     ctx: &ServiceContext,
-    store_id: String,
     item_id: &str,
     other_party_id: String,
     existing_stock_line_ids: Vec<String>,
-    datetime: Option<NaiveDateTime>,
+    historical_stock_lines: Vec<StockLine>,
 ) -> Result<Vec<DraftStockOutLine>, ListError> {
-    let stock_line_repo = StockLineRepository::new(&ctx.connection);
-
-    // If there's a datetime provide we need to get the stock lines available at that time
-    // otherwise we get the current stock lines
-
-    let available_stock_lines = stock_line_repo.query_by_filter(
-        StockLineFilter::new()
-            // For selected item
-            .item_id(EqualFilter::equal_to(item_id))
-            // With available stock in this store
-            .store_id(EqualFilter::equal_to(&store_id))
-            .has_packs_in_store(true)
-            // Exclude stock lines already in the invoice
-            .id(EqualFilter::not_equal_all(existing_stock_line_ids)),
-        Some(store_id.clone()),
-    )?;
+    // filter out the stock lines that are already in the invoice
+    let available_stock_lines: Vec<StockLine> = historical_stock_lines
+        .into_iter()
+        .filter(|line| !existing_stock_line_ids.contains(&line.stock_line_row.id))
+        .collect();
 
     let item_pricing = get_pricing_for_item(
         ctx,
@@ -171,6 +196,24 @@ fn generate_new_draft_lines(
         .collect();
 
     Ok(new_lines)
+}
+
+fn find_stock_line_by_id(
+    stock_line_id: Option<String>,
+    stock_lines: &Vec<StockLine>,
+) -> Result<Option<StockLine>, RepositoryError> {
+    let stock_line_id = match stock_line_id {
+        Some(id) => id,
+        None => return Ok(None),
+    };
+    let stock_line = stock_lines
+        .into_iter()
+        .find(|line| line.stock_line_row.id == stock_line_id)
+        .ok_or(RepositoryError::DBError {
+            msg: "Stock line not found".to_string(),
+            extra: stock_line_id.to_string(),
+        })?;
+    Ok(Some(stock_line.clone()))
 }
 
 impl DraftStockOutLine {
@@ -212,6 +255,7 @@ impl DraftStockOutLine {
     fn from_invoice_line(
         line: InvoiceLine,
         status: &InvoiceStatus,
+        historical_stock_lines: &Vec<StockLine>,
     ) -> Result<Self, RepositoryError> {
         let InvoiceLineRow {
             id,
@@ -224,8 +268,6 @@ impl DraftStockOutLine {
             ..
         } = line.invoice_line_row;
 
-        println!("from_invoice_line : {} - {:?}", number_of_packs, batch,);
-
         let StockLineRow {
             id: stock_line_id,
             total_number_of_packs,
@@ -234,10 +276,12 @@ impl DraftStockOutLine {
             vvm_status_id,
             item_variant_id,
             ..
-        } = line.stock_line_option.ok_or(RepositoryError::DBError {
-            msg: "No related stock line".to_string(),
-            extra: id.clone(),
-        })?;
+        } = find_stock_line_by_id(line.invoice_line_row.stock_line_id, historical_stock_lines)?
+            .ok_or(RepositoryError::DBError {
+                msg: "No related stock line".to_string(),
+                extra: id.clone(),
+            })?
+            .stock_line_row;
 
         Ok(Self {
             id,
