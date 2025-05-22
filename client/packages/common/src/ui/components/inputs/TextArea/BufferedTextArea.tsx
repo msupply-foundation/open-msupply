@@ -1,20 +1,17 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { StandardTextFieldProps } from '@mui/material/TextField';
 import { BasicTextInput } from '../TextInput';
+import { useBufferState } from '@common/hooks';
 
-export const BufferedTextArea: FC<StandardTextFieldProps> = ({
+export const BufferedTextArea = ({
   value,
   onChange,
   maxRows = 4,
   minRows = 4,
   slotProps,
   ...props
-}) => {
-  const [buffer, setBuffer] = React.useState(value);
-
-  React.useEffect(() => {
-    setBuffer(value);
-  }, [value]);
+}: StandardTextFieldProps) => {
+  const [buffer, setBuffer] = useBufferState(value);
 
   return (
     <BasicTextInput

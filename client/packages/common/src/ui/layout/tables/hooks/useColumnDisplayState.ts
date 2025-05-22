@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { useLocalStorage } from '@openmsupply-client/common';
+import {
+  useLocalStorage,
+  useSimplifiedTabletUI,
+} from '@openmsupply-client/common';
 import { Column } from '../columns';
 import { RecordWithId } from '@common/types';
 
@@ -9,7 +12,19 @@ export const useColumnDisplayState = <T extends RecordWithId>(
 ) => {
   const [hiddenColsStorage, setHiddenColsStorage] =
     useLocalStorage('/columns/hidden');
-  const hiddenColKeys = hiddenColsStorage?.[tableId] ?? [];
+
+  const simplifiedMobileView = useSimplifiedTabletUI();
+
+  const hiddenColKeys =
+    hiddenColsStorage?.[tableId] ??
+    // If "Simplified Mobile View" is enabled, hide designated columns by
+    // default, but only if no manual column hide/show statuses have already
+    // been set.
+    (simplifiedMobileView
+      ? initialColumns
+          .filter(col => col.defaultHideOnMobile)
+          .map(col => col.key as string)
+      : []);
 
   const [columnDisplayState, setColumnDisplayState] = useState<
     Record<string, boolean>

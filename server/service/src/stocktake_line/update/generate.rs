@@ -16,9 +16,9 @@ pub fn generate(
         cost_price_per_pack,
         sell_price_per_pack,
         note,
-        inventory_adjustment_reason_id,
         item_variant_id,
         donor_id,
+        reason_option_id,
     }: UpdateStocktakeLine,
 ) -> Result<StocktakeLineRow, UpdateStocktakeLineError> {
     let existing_line = existing.line;
@@ -60,9 +60,8 @@ pub fn generate(
         cost_price_per_pack: cost_price_per_pack.or(existing_line.cost_price_per_pack),
         sell_price_per_pack: sell_price_per_pack.or(existing_line.sell_price_per_pack),
         note: note.or(existing_line.note),
-        inventory_adjustment_reason_id: inventory_adjustment_reason_id
-            .or(existing_line.inventory_adjustment_reason_id),
         item_variant_id,
         donor_link_id,
+        reason_option_id: reason_option_id.or(existing_line.reason_option_id),
     })
 }

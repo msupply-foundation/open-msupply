@@ -29,12 +29,14 @@ interface TabLayoutProps {
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
   item: ItemRowFragment | null;
+  hasItemVariantsEnabled?: boolean;
+  hasVvmStatusesEnabled?: boolean;
 }
 
 enum Tabs {
   Batch = 'Batch',
   Pricing = 'Pricing',
-  Location = 'Location',
+  Other = 'Other',
 }
 
 export const TabLayout = ({
@@ -44,6 +46,8 @@ export const TabLayout = ({
   updateDraftLine,
   currency,
   isExternalSupplier,
+  hasItemVariantsEnabled,
+  hasVvmStatusesEnabled,
   item,
 }: TabLayoutProps) => {
   const t = useTranslation();
@@ -57,7 +61,7 @@ export const TabLayout = ({
   return (
     <TabContext value={currentTab}>
       <TabKeybindings
-        tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Location]}
+        tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Other]}
         onAdd={addDraftLine}
         setCurrentTab={setCurrentTab}
         dependencies={[draftLines]}
@@ -82,8 +86,8 @@ export const TabLayout = ({
               tabIndex={-1}
             />
             <Tab
-              value={Tabs.Location}
-              label={`${t('label.location')} (Ctrl+3)`}
+              value={Tabs.Other}
+              label={`${t('heading.other')} (Ctrl+3)`}
               tabIndex={-1}
             />
           </TabList>
@@ -115,6 +119,8 @@ export const TabLayout = ({
             lines={draftLines}
             updateDraftLine={updateDraftLine}
             item={item}
+            hasItemVariantsEnabled={hasItemVariantsEnabled}
+            hasVvmStatusesEnabled={hasVvmStatusesEnabled}
           />
         </InboundLineEditPanel>
 
@@ -128,7 +134,7 @@ export const TabLayout = ({
           />
         </InboundLineEditPanel>
 
-        <InboundLineEditPanel value={Tabs.Location}>
+        <InboundLineEditPanel value={Tabs.Other}>
           <LocationTable
             isDisabled={isDisabled}
             lines={draftLines}

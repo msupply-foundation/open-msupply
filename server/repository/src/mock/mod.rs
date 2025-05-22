@@ -28,7 +28,6 @@ mod name;
 mod name_store_join;
 mod name_tag;
 mod number;
-mod option;
 mod period_and_period_schedule;
 mod printer;
 mod program;
@@ -37,6 +36,7 @@ mod program_indicator;
 mod program_order_types;
 mod program_requisition_settings;
 mod property;
+mod reason_option;
 mod reports;
 mod rnr_form;
 mod sensor;
@@ -68,6 +68,7 @@ mod unit;
 mod user_account;
 mod vaccination;
 mod vaccine_course;
+mod vvm_status;
 
 pub use asset::*;
 pub use asset_log::*;
@@ -96,7 +97,6 @@ pub use name::*;
 pub use name_store_join::*;
 pub use name_tag::*;
 pub use number::*;
-pub use option::*;
 pub use period_and_period_schedule::*;
 pub use printer::*;
 pub use program::*;
@@ -105,6 +105,7 @@ pub use program_indicator::*;
 pub use program_order_types::*;
 pub use program_requisition_settings::*;
 pub use property::*;
+pub use reason_option::*;
 pub use reports::*;
 pub use rnr_form::*;
 pub use sensor::*;
@@ -133,6 +134,7 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 pub use vaccination::*;
 pub use vaccine_course::*;
+pub use vvm_status::*;
 
 use crate::{
     assets::{
@@ -148,6 +150,7 @@ use crate::{
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
     },
+    vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository},
     *,
 };
 
@@ -201,8 +204,6 @@ pub struct MockData {
     pub sync_logs: Vec<SyncLogRow>,
     pub name_tags: Vec<NameTagRow>,
     pub name_tag_joins: Vec<NameTagJoinRow>,
-    pub inventory_adjustment_reasons: Vec<InventoryAdjustmentReasonRow>,
-    pub return_reasons: Vec<ReturnReasonRow>,
     pub program_requisition_settings: Vec<ProgramRequisitionSettingsRow>,
     pub programs: Vec<ProgramRow>,
     pub program_order_types: Vec<ProgramRequisitionOrderTypeRow>,
@@ -228,12 +229,13 @@ pub struct MockData {
     pub indicator_columns: Vec<IndicatorColumnRow>,
     pub indicator_values: Vec<IndicatorValueRow>,
     pub categories: Vec<CategoryRow>,
-    pub options: Vec<ReasonOptionRow>,
     pub contact_form: Vec<ContactFormRow>,
     pub reports: Vec<crate::ReportRow>,
     pub backend_plugin: Vec<BackendPluginRow>,
     pub printer: Vec<PrinterRow>,
     pub store_preferences: Vec<StorePreferenceRow>,
+    pub reason_options: Vec<ReasonOptionRow>,
+    pub vvm_statuses: Vec<VVMStatusRow>,
 }
 
 impl MockData {
@@ -288,8 +290,6 @@ pub struct MockDataInserts {
     pub key_value_store_rows: bool,
     pub activity_logs: bool,
     pub sync_logs: bool,
-    pub inventory_adjustment_reasons: bool,
-    pub return_reasons: bool,
     pub barcodes: bool,
     pub programs: bool,
     pub program_requisition_settings: bool,
@@ -321,6 +321,8 @@ pub struct MockDataInserts {
     pub backend_plugin: bool,
     pub printer: bool,
     pub store_preferences: bool,
+    pub reason_options: bool,
+    pub vvm_statuses: bool,
 }
 
 impl MockDataInserts {
@@ -329,6 +331,7 @@ impl MockDataInserts {
             user_accounts: true,
             user_store_joins: true,
             user_permissions: true,
+            vvm_statuses: true,
             names: true,
             name_tags: true,
             name_tag_joins: true,
@@ -364,8 +367,6 @@ impl MockDataInserts {
             key_value_store_rows: true,
             activity_logs: true,
             sync_logs: true,
-            inventory_adjustment_reasons: true,
-            return_reasons: true,
             barcodes: true,
             programs: true,
             program_requisition_settings: true,
@@ -397,6 +398,7 @@ impl MockDataInserts {
             backend_plugin: true,
             printer: true,
             store_preferences: true,
+            reason_options: true,
         }
     }
 
@@ -570,15 +572,6 @@ impl MockDataInserts {
         self
     }
 
-    pub fn inventory_adjustment_reasons(mut self) -> Self {
-        self.inventory_adjustment_reasons = true;
-        self
-    }
-    pub fn return_reasons(mut self) -> Self {
-        self.return_reasons = true;
-        self
-    }
-
     pub fn barcodes(mut self) -> Self {
         self.barcodes = true;
         self
@@ -721,11 +714,6 @@ impl MockDataInserts {
         self
     }
 
-    pub fn options(mut self) -> Self {
-        self.options = true;
-        self
-    }
-
     pub fn contact_form(mut self) -> Self {
         self.contact_form = true;
         self
@@ -748,6 +736,11 @@ impl MockDataInserts {
 
     pub fn store_preferences(mut self) -> Self {
         self.store_preferences = true;
+        self
+    }
+
+    pub fn reason_options(mut self) -> Self {
+        self.reason_options = true;
         self
     }
 }
@@ -840,10 +833,11 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             indicator_lines: mock_indicator_lines(),
             indicator_columns: mock_indicator_columns(),
             indicator_values: mock_indicator_values(),
-            options: mock_options(),
+            reason_options: mock_reason_options(),
             contact_form: mock_contact_form(),
             reports: mock_reports(),
             printer: mock_printers(),
+            vvm_statuses: mock_vvm_statuses(),
             ..Default::default()
         },
     );
@@ -1182,19 +1176,6 @@ pub fn insert_mock_data(
             }
         }
 
-        if inserts.inventory_adjustment_reasons {
-            for row in &mock_data.inventory_adjustment_reasons {
-                let repo = InventoryAdjustmentReasonRowRepository::new(connection);
-                repo.upsert_one(row).unwrap();
-            }
-        }
-        if inserts.return_reasons {
-            for row in &mock_data.return_reasons {
-                let repo = ReturnReasonRowRepository::new(connection);
-                repo.upsert_one(row).unwrap();
-            }
-        }
-
         if inserts.programs {
             for row in &mock_data.programs {
                 let repo = ProgramRowRepository::new(connection);
@@ -1362,13 +1343,6 @@ pub fn insert_mock_data(
             }
         }
 
-        if inserts.options {
-            let repo = ReasonOptionRowRepository::new(connection);
-            for row in &mock_data.options {
-                repo.upsert_one(row).unwrap();
-            }
-        }
-
         if inserts.contact_form {
             let repo = ContactFormRowRepository::new(connection);
             for row in &mock_data.contact_form {
@@ -1399,6 +1373,19 @@ pub fn insert_mock_data(
         if inserts.store_preferences {
             let repo = StorePreferenceRowRepository::new(connection);
             for row in &mock_data.store_preferences {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.reason_options {
+            let repo = ReasonOptionRowRepository::new(connection);
+            for row in &mock_data.reason_options {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+        if inserts.vvm_statuses {
+            let repo = VVMStatusRowRepository::new(connection);
+            for row in &mock_data.vvm_statuses {
                 repo.upsert_one(row).unwrap();
             }
         }
@@ -1445,8 +1432,6 @@ impl MockData {
             mut key_value_store_rows,
             mut activity_logs,
             mut sync_logs,
-            mut inventory_adjustment_reasons,
-            mut return_reasons,
             mut name_tag_joins,
             mut program_requisition_settings,
             mut programs,
@@ -1476,12 +1461,13 @@ impl MockData {
             mut indicator_columns,
             mut indicator_values,
             mut categories,
-            mut options,
             mut contact_form,
             mut reports,
             backend_plugin: _,
             mut printer,
             mut store_preferences,
+            mut reason_options,
+            mut vvm_statuses,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1518,9 +1504,6 @@ impl MockData {
         self.key_value_store_rows.append(&mut key_value_store_rows);
         self.activity_logs.append(&mut activity_logs);
         self.sync_logs.append(&mut sync_logs);
-        self.inventory_adjustment_reasons
-            .append(&mut inventory_adjustment_reasons);
-        self.return_reasons.append(&mut return_reasons);
         self.name_tag_joins.append(&mut name_tag_joins);
         self.program_requisition_settings
             .append(&mut program_requisition_settings);
@@ -1552,12 +1535,12 @@ impl MockData {
         self.indicator_columns.append(&mut indicator_columns);
         self.indicator_values.append(&mut indicator_values);
         self.categories.append(&mut categories);
-        self.options.append(&mut options);
         self.contact_form.append(&mut contact_form);
         self.reports.append(&mut reports);
         self.printer.append(&mut printer);
-
+        self.reason_options.append(&mut reason_options);
         self.store_preferences.append(&mut store_preferences);
+        self.vvm_statuses.append(&mut vvm_statuses);
         self
     }
 }
