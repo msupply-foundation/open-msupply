@@ -55,8 +55,6 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
           }}
         />
       }
-      height={1000}
-      width={800}
     >
       <DetailContainer>
         <Box display="flex" flexDirection="column" gap={2}>

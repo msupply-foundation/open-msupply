@@ -63,12 +63,20 @@ const CampaignsComponent = () => {
 
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
-    deleteAction: async () =>
-      selectedRows.forEach(row => {
-        if (row) {
-          deleteCampaign(row.id);
-        }
-      }),
+    deleteAction: async () => {
+      const result = await Promise.all(
+        selectedRows.map(row => {
+          if (row) {
+            return deleteCampaign(row.id);
+          }
+        })
+      );
+      if (result.some(row => row?.__typename !== 'DeleteCampaignSuccess')) {
+        // Will currently show the "Can't delete" toast if *any* of the rows
+        // fail to delete
+        throw new Error('Delete failed');
+      }
+    },
     messages: {
       confirmMessage: t('messages.confirm-delete-campaigns', {
         count: selectedRows.length,

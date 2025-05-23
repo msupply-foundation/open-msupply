@@ -317,7 +317,7 @@
   "error.no-asset-log-reasons": "There are no asset log reasons to display.",
   "error.no-asset-view-permission": "You do not have permission to view assets.",
   "error.no-assets": "There are no assets to display.",
-  "error.no-campaigns": "No campaigns to display",
+  "error.no-campaigns": "There are no campaigns to display",
   "error.no-create-outbound-shipment-permission": "You do not have permission to create an Outbound Shipment from a Requisition",
   "error.no-customer-return-items": "No items have been added to this return.",
   "error.no-customer-returns": "There are no Customer Returns to display.",

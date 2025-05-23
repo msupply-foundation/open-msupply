@@ -57,9 +57,13 @@ export const useCampaigns = (queryParams?: ListParams) => {
     return await upsertMutation(draft);
   };
 
+  const deleteCampaign = async (id: string) => {
+    return await deleteMutation(id);
+  };
+
   // DELETE
   const {
-    mutateAsync: deleteCampaign,
+    mutateAsync: deleteMutation,
     isLoading: isDeleting,
     error: deleteError,
   } = useDeleteCampaign();
@@ -150,9 +154,19 @@ const useUpsertCampaign = () => {
 
 const useDeleteCampaign = () => {
   const { campaignApi, queryClient } = useCampaignGraphQL();
+  const { translateServerError } = useIntlUtils();
 
   const mutationFn = async (id: string) => {
-    await campaignApi.deleteCampaign({ id });
+    try {
+      const result = await campaignApi.deleteCampaign({ id });
+      console.log('Full result', result);
+      return result?.centralServer?.campaign?.deleteCampaign;
+    } catch (error) {
+      return {
+        __typename: 'DeleteCampaignError',
+        error: { description: translateServerError((error as Error)?.message) },
+      };
+    }
   };
 
   return useMutation({
