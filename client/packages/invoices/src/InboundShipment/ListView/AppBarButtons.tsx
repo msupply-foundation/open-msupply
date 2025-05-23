@@ -29,9 +29,11 @@ import { LinkInternalOrderModal } from './LinkInternalOrderModal';
 export const AppBarButtons = ({
   invoiceModalController,
   linkRequestModalController,
+  simplifiedTabletView,
 }: {
   invoiceModalController: ToggleState;
   linkRequestModalController: ToggleState;
+  simplifiedTabletView?: boolean;
 }) => {
   const t = useTranslation();
   const navigate = useNavigate();
@@ -103,14 +105,16 @@ export const AppBarButtons = ({
           label={t('button.new-shipment')}
           onClick={invoiceModalController.toggleOn}
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          variant="outlined"
-          onClick={csvExport}
-          isLoading={isLoading}
-          disabled={EnvUtils.platform === Platform.Android}
-          label={t('button.export')}
-        />
+        {!simplifiedTabletView && (
+          <LoadingButton
+            startIcon={<DownloadIcon />}
+            variant="outlined"
+            onClick={csvExport}
+            isLoading={isLoading}
+            disabled={EnvUtils.platform === Platform.Android}
+            label={t('button.export')}
+          />
+        )}
       </Grid>
       <LinkInternalOrderModal
         isOpen={linkRequestModalController.isOn}
