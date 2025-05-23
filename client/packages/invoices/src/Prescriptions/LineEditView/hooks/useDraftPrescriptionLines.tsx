@@ -2,7 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { DateUtils, SortUtils, uniqBy } from '@openmsupply-client/common';
 import { useHistoricalStockLines } from '@openmsupply-client/system';
 import { usePrescription } from '../../api';
-import { DraftItem } from '../../../..';
+import { DraftItem } from 'packages/invoices/src/StockOut';
 import { DraftPrescriptionLine } from '../../../types';
 import {
   createDraftPrescriptionLine,

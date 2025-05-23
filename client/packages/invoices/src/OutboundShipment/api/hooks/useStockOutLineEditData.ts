@@ -1,7 +1,7 @@
 import { useQuery } from '@openmsupply-client/common';
 import { useOutboundApi } from './utils/useOutboundApi';
 import { DraftStockOutLineFragment } from '../operations.generated';
-import { DraftItem } from 'packages/invoices/src';
+import { DraftItem } from 'packages/invoices/src/StockOut';
 
 // TODO move me to shared location
 

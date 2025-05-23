@@ -15,11 +15,6 @@ import {
   usePreference,
   PreferenceKey,
 } from '@openmsupply-client/common';
-import {
-  ItemRowWithDirectionsFragment,
-  StockItemSearchInput,
-} from '@openmsupply-client/system';
-import { usePrescription } from '../api';
 import { AccordionPanelSection } from './PanelSection';
 import { getPrescriptionDirections } from './getPrescriptionDirections';
 import { useAbbreviations } from '../api/hooks/useAbbreviations';
@@ -30,26 +25,16 @@ import { useAllocationContext } from '../../Allocation/useAllocationContext';
 import { getAllocatedQuantity } from '../../Allocation/utils';
 
 interface PrescriptionLineEditFormProps {
-  item: ItemRowWithDirectionsFragment | null;
-  onChangeItem: (newItem: ItemRowWithDirectionsFragment | null) => void;
   disabled: boolean;
   isNew: boolean;
-  programId?: string;
-  invoiceId: string;
 }
 
 export const PrescriptionLineEditForm = ({
-  // tODO: consolidate with item in useAllocationContext
-  item: prescriptionItem,
   disabled,
   isNew,
-  programId,
-  invoiceId,
-  onChangeItem,
 }: PrescriptionLineEditFormProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
-  const { rows: items } = usePrescription();
   const { data: prefs } = usePreference(
     PreferenceKey.ManageVaccinesInDoses,
     PreferenceKey.SortByVvmStatusThenExpiry
@@ -64,14 +49,11 @@ export const PrescriptionLineEditForm = ({
       allocatedQuantity: getAllocatedQuantity(state),
     }));
 
-  // TODO - ensure key change, this should clear
-  const [defaultDirection, setDefaultDirection] = useState<string>('');
-  const [abbreviation, setAbbreviation] = useState<string>('');
+  const [defaultDirection, setDefaultDirection] = useState('');
+  const [abbreviation, setAbbreviation] = useState('');
 
   const isDirectionsDisabled = !allocatedQuantity;
   const displayInDoses = !!prefs?.manageVaccinesInDoses && !!item?.isVaccine;
-
-  const key = prescriptionItem?.id ?? 'new';
 
   const { data: options = [] } = useAbbreviations();
 
@@ -93,90 +75,39 @@ export const PrescriptionLineEditForm = ({
   const abbreviationRef = React.useRef<HTMLInputElement>(null);
 
   return (
-    <Grid
-      container
-      gap="4px"
-      sx={{ minHeight: 200, display: 'flex', flexDirection: 'column' }}
-    >
-      <AccordionPanelSection
-        // Key ensures component will reload when switching item, but not when
-        // making other changes within item (e.g. quantity)
-        key={key + '_item_search'}
-        title={t('label.item', { count: 1 })}
-        closedSummary={item?.name}
-        defaultExpanded={isNew && !disabled}
-      >
-        <Grid flex={1}>
-          <StockItemSearchInput
-            autoFocus={!prescriptionItem}
-            openOnFocus={!prescriptionItem}
-            disabled={!isNew || disabled}
-            currentItemId={prescriptionItem?.id}
-            onChange={onChangeItem}
-            filter={{ isVisibleOrOnHand: true }}
-            extraFilter={
-              disabled
-                ? undefined
-                : item => !items?.some(({ id }) => id === item.id)
-            }
-            programId={programId}
-          />
-        </Grid>
-      </AccordionPanelSection>
-      {prescriptionItem && (
-        <>
-          {!disabled && (
-            <AutoAllocationAlerts />
-            // TODO: Impl Allocation Alerts for Prescriptions
-            // <StockOutAlerts
-            //   allocationAlerts={allocationAlerts}
-            //   showZeroQuantityConfirmation={showZeroQuantityConfirmation}
-            //   isAutoAllocated={isAutoAllocated}
-            // />
-          )}
-          <AccordionPanelSection
-            title={t('label.quantity')}
-            closedSummary={
-              displayInDoses
-                ? dosesSummary(t, draftLines)
-                : summarise(
-                    t,
-                    prescriptionItem.unitName ?? t('label.unit'),
-                    draftLines,
-                    getPlural
-                  )
-            }
-            defaultExpanded={isNew && !disabled}
-            key={key + '_quantity'}
+    item && (
+      <>
+        {!disabled && <AutoAllocationAlerts />}
+
+        <AccordionPanelSection
+          title={t('label.quantity')}
+          closedSummary={
+            displayInDoses
+              ? dosesSummary(t, draftLines)
+              : summarise(
+                  t,
+                  item.unitName ?? t('label.unit'),
+                  draftLines,
+                  getPlural
+                )
+          }
+          defaultExpanded={isNew && !disabled}
+        >
+          <Grid
+            container
+            alignItems="center"
+            display="flex"
+            flexDirection="row"
+            gap={5}
+            paddingBottom={2}
           >
-            <Grid
-              container
-              alignItems="center"
-              display="flex"
-              flexDirection="row"
-              gap={5}
-              paddingBottom={2}
-            >
-              <AllocationSection
-                itemId={prescriptionItem?.id ?? ''}
-                invoiceId={invoiceId}
-                disabled={disabled}
-                prefOptions={{
-                  allocateVaccineItemsInDoses:
-                    prefs?.manageVaccinesInDoses ?? false,
-                  sortByVvmStatus: prefs?.sortByVvmStatusThenExpiry ?? false,
-                }}
-              />
-            </Grid>
-          </AccordionPanelSection>
-        </>
-      )}
-      {item && prescriptionItem && (
+            <AllocationSection disabled={disabled} />
+          </Grid>
+        </AccordionPanelSection>
         <AccordionPanelSection
           title={t('label.directions')}
           closedSummary={isDirectionsDisabled ? '' : (note ?? '')}
           defaultExpanded={(isNew || !note) && !disabled}
-          key={item?.id ?? 'new'}
         >
           {isDirectionsDisabled ? (
             <Typography>{t('messages.cannot-add-directions')}</Typography>
@@ -211,12 +142,12 @@ export const PrescriptionLineEditForm = ({
                       : t('placeholder.item-directions')
                   }
                 >
-                  {prescriptionItem.itemDirections.length == 0 ? (
+                  {item.itemDirections.length == 0 ? (
                     <DropdownMenuItem sx={{ fontSize: 14 }}>
                       {t('message.no-directions')}
                     </DropdownMenuItem>
                   ) : (
-                    prescriptionItem.itemDirections
+                    item.itemDirections
                       .sort((a, b) => a.priority - b.priority)
                       .map(
                         direction =>
@@ -255,12 +186,11 @@ export const PrescriptionLineEditForm = ({
             </>
           )}
         </AccordionPanelSection>
-      )}
-    </Grid>
+      </>
+    )
   );
 };
 
-// TODO: Change these to use Allocation Context
 const summarise = (
   t: TypedTFunction<LocaleKey>,
   unitName: string,

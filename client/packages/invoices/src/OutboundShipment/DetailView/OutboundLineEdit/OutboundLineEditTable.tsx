@@ -142,10 +142,13 @@ export const OutboundLineEditTable = ({
   const allocate = (
     key: string,
     value: number,
-    allocateInType?: AllocateInType
+    options?: {
+      allocateInType?: AllocateInType;
+      preventPartialPacks?: boolean;
+    }
   ) => {
     const num = Number.isNaN(value) ? 0 : value;
-    return manualAllocate(key, num, format, t, allocateInType);
+    return manualAllocate(key, num, format, t, options);
   };
 
   const columns = useOutboundLineEditColumns({

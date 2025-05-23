@@ -872,6 +872,9 @@ query getOutboundEditLines(
         unitName
         name
         isVaccine
+        itemDirections {
+          ...ItemDirection
+        }
       }
     }
   }

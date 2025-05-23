@@ -4,11 +4,13 @@ import {
   InvoiceNodeStatus,
   isEqual,
   NothingHere,
+  PreferenceKey,
   RouteBuilder,
   useBreadcrumbs,
   useConfirmOnLeaving,
   useNavigate,
   useParams,
+  usePreference,
 } from '@openmsupply-client/common';
 
 import { ItemRowFragment, ListItems } from '@openmsupply-client/system';
@@ -27,6 +29,11 @@ export const PrescriptionLineEditView = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const isDirty = useRef(false);
   const navigate = useNavigate();
+
+  const { data: prefs } = usePreference(
+    PreferenceKey.ManageVaccinesInDoses,
+    PreferenceKey.SortByVvmStatusThenExpiry
+  );
 
   const {
     isDirty: allocationIsDirty,
@@ -60,7 +67,6 @@ export const PrescriptionLineEditView = () => {
     data?.lines.nodes.sort((a, b) => a.id.localeCompare(b.id)) ?? [];
 
   const status = data?.status;
-  const currentItem = lines.find(line => line.item.id === itemId)?.item;
 
   // TODO: this should be simple query?
   const items = useMemo(() => {
@@ -112,7 +118,7 @@ export const PrescriptionLineEditView = () => {
     }
   );
   const onSave = async () => {
-    const contextItemId = item?.id ?? currentItem?.id ?? newItemId.current;
+    const contextItemId = item?.id ?? itemId ?? newItemId.current;
     if (!contextItemId) {
       alert('No itemId found');
       return;
@@ -174,9 +180,14 @@ export const PrescriptionLineEditView = () => {
         Right={
           <>
             <PrescriptionLineEdit
-              item={currentItem ?? null}
+              itemId={itemId}
               programId={data?.programId ?? undefined}
               invoiceId={invoiceId}
+              prefOptions={{
+                allocateVaccineItemsInDoses:
+                  prefs?.manageVaccinesInDoses ?? false,
+                sortByVvmStatus: prefs?.sortByVvmStatusThenExpiry ?? false,
+              }}
             />
             <NavBar
               items={itemIdList}

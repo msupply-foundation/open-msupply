@@ -3,6 +3,7 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { StockOutLineFragmentDoc } from '../../StockOut/operations.generated';
+import { ItemDirectionFragmentDoc } from '../../../../system/src/Item/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type OutboundFragment = {
   __typename: 'InvoiceNode';
@@ -1069,6 +1070,13 @@ export type GetOutboundEditLinesQuery = {
       unitName?: string | null;
       name: string;
       isVaccine: boolean;
+      itemDirections: Array<{
+        __typename: 'ItemDirectionNode';
+        directions: string;
+        id: string;
+        itemId: string;
+        priority: number;
+      }>;
     }>;
   };
   draftStockOutLines: {
@@ -2004,6 +2012,9 @@ export const GetOutboundEditLinesDocument = gql`
           unitName
           name
           isVaccine
+          itemDirections {
+            ...ItemDirection
+          }
         }
       }
     }
@@ -2022,6 +2033,7 @@ export const GetOutboundEditLinesDocument = gql`
       }
     }
   }
+  ${ItemDirectionFragmentDoc}
   ${DraftStockOutLineFragmentDoc}
 `;
 

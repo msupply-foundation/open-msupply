@@ -23,7 +23,7 @@ import {
 } from '@openmsupply-client/common';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { DraftStockOutLineFragment } from '../../api/operations.generated';
-import { DraftItem } from '../../..';
+import { DraftItem } from 'packages/invoices/src/StockOut';
 import { getStockOutQuantityCellId } from '../../../utils';
 import {
   AllocateInOption,

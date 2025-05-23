@@ -59,13 +59,6 @@ fragment ItemRow on ItemNode {
   doses
 }
 
-fragment ItemRowWithDirections on ItemNode {
-  ...ItemRow
-  itemDirections {
-    ...ItemDirection
-  }
-}
-
 fragment ItemDirection on ItemDirectionNode {
   __typename
   directions
@@ -97,7 +90,7 @@ fragment ItemWithPackSize on ItemNode {
 fragment ItemStockOnHand on ItemNode {
   ...ItemWithPackSize
   availableStockOnHand(storeId: $storeId)
-  ...ItemRowWithDirections
+  ...ItemRow
 }
 fragment ItemRowWithStats on ItemNode {
   ...ItemStockOnHand

@@ -17,7 +17,7 @@ import {
 } from './utils';
 import { OutboundLineEditData } from '../OutboundShipment/api';
 import { allocateQuantities } from './allocateQuantities';
-import { DraftItem } from '..';
+import { DraftItem } from '../StockOut';
 
 /**
  * Allocation can be in units, doses, or packs of a specific size.

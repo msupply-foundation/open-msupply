@@ -26,7 +26,7 @@ import { Footer } from './Footer';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 import { HistoryModal } from './History/HistoryModal';
-import { Draft } from '../..';
+import { Draft } from '../../StockOut';
 
 export const PrescriptionDetailView = () => {
   const t = useTranslation();

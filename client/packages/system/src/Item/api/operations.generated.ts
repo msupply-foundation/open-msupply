@@ -41,9 +41,9 @@ export type StockLineFragment = {
     name: string;
     code: string;
     unitName?: string | null;
+    defaultPackSize: number;
     doses: number;
     isVaccine: boolean;
-    defaultPackSize: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -75,23 +75,6 @@ export type ItemRowFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
-};
-
-export type ItemRowWithDirectionsFragment = {
-  __typename: 'ItemNode';
-  id: string;
-  code: string;
-  name: string;
-  unitName?: string | null;
-  isVaccine: boolean;
-  doses: number;
-  itemDirections: Array<{
-    __typename: 'ItemDirectionNode';
-    directions: string;
-    id: string;
-    itemId: string;
-    priority: number;
-  }>;
 };
 
 export type ItemDirectionFragment = {
@@ -150,13 +133,6 @@ export type ItemStockOnHandFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
-  itemDirections: Array<{
-    __typename: 'ItemDirectionNode';
-    directions: string;
-    id: string;
-    itemId: string;
-    priority: number;
-  }>;
 };
 
 export type ItemRowWithStatsFragment = {
@@ -178,13 +154,6 @@ export type ItemRowWithStatsFragment = {
     totalConsumption: number;
     stockOnHand: number;
   };
-  itemDirections: Array<{
-    __typename: 'ItemDirectionNode';
-    directions: string;
-    id: string;
-    itemId: string;
-    priority: number;
-  }>;
 };
 
 export type ColdStorageTypeFragment = {
@@ -363,9 +332,9 @@ export type ItemFragment = {
         name: string;
         code: string;
         unitName?: string | null;
+        defaultPackSize: number;
         doses: number;
         isVaccine: boolean;
-        defaultPackSize: number;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -551,9 +520,9 @@ export type ItemsWithStockLinesQuery = {
             name: string;
             code: string;
             unitName?: string | null;
+            defaultPackSize: number;
             doses: number;
             isVaccine: boolean;
-            defaultPackSize: number;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -726,13 +695,6 @@ export type ItemStockOnHandQuery = {
       unitName?: string | null;
       isVaccine: boolean;
       doses: number;
-      itemDirections: Array<{
-        __typename: 'ItemDirectionNode';
-        directions: string;
-        id: string;
-        itemId: string;
-        priority: number;
-      }>;
     }>;
   };
 };
@@ -865,9 +827,9 @@ export type ItemByIdQuery = {
             name: string;
             code: string;
             unitName?: string | null;
+            defaultPackSize: number;
             doses: number;
             isVaccine: boolean;
-            defaultPackSize: number;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -1060,9 +1022,9 @@ export type GetHistoricalStockLinesQuery = {
         name: string;
         code: string;
         unitName?: string | null;
+        defaultPackSize: number;
         doses: number;
         isVaccine: boolean;
-        defaultPackSize: number;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -1395,33 +1357,14 @@ export const ItemWithPackSizeFragmentDoc = gql`
   }
   ${ItemRowFragmentDoc}
 `;
-export const ItemDirectionFragmentDoc = gql`
-  fragment ItemDirection on ItemDirectionNode {
-    __typename
-    directions
-    id
-    itemId
-    priority
-  }
-`;
-export const ItemRowWithDirectionsFragmentDoc = gql`
-  fragment ItemRowWithDirections on ItemNode {
-    ...ItemRow
-    itemDirections {
-      ...ItemDirection
-    }
-  }
-  ${ItemRowFragmentDoc}
-  ${ItemDirectionFragmentDoc}
-`;
 export const ItemStockOnHandFragmentDoc = gql`
   fragment ItemStockOnHand on ItemNode {
     ...ItemWithPackSize
     availableStockOnHand(storeId: $storeId)
-    ...ItemRowWithDirections
+    ...ItemRow
   }
   ${ItemWithPackSizeFragmentDoc}
-  ${ItemRowWithDirectionsFragmentDoc}
+  ${ItemRowFragmentDoc}
 `;
 export const ItemRowWithStatsFragmentDoc = gql`
   fragment ItemRowWithStats on ItemNode {
@@ -1437,6 +1380,15 @@ export const ItemRowWithStatsFragmentDoc = gql`
     }
   }
   ${ItemStockOnHandFragmentDoc}
+`;
+export const ItemDirectionFragmentDoc = gql`
+  fragment ItemDirection on ItemDirectionNode {
+    __typename
+    directions
+    id
+    itemId
+    priority
+  }
 `;
 export const StockLineFragmentDoc = gql`
   fragment StockLine on StockLineNode {
