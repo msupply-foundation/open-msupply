@@ -7,6 +7,8 @@ import {
   NumberCell,
   NumUtils,
   PreferenceKey,
+  TooltipTextCell,
+  UNDEFINED_STRING_VALUE,
   useColumns,
   usePreference,
   useTranslation,
@@ -26,10 +28,13 @@ export const usePrescriptionLineEditColumns = ({
 }) => {
   const t = useTranslation();
   const { data: preferences } = usePreference(
-    PreferenceKey.ManageVaccinesInDoses
+    PreferenceKey.ManageVaccinesInDoses,
+    PreferenceKey.ManageVvmStatusForStock
   );
+
   const manageVaccinesInDoses =
     !!preferences?.manageVaccinesInDoses && !!isVaccine;
+
   const unit = Formatter.sentenceCase(unitName);
 
   const columns: ColumnDescription<
@@ -49,6 +54,20 @@ export const usePrescriptionLineEditColumns = ({
       },
     ],
   ];
+
+  if (preferences?.manageVvmStatusForStock && !!isVaccine) {
+    columns.push({  label: 'label.vvm-status',
+      key: 'vvmStatus',
+      width: 100,
+      sortable: false,
+      align: ColumnAlign.Right,
+      Cell: TooltipTextCell,
+      accessor: ({ rowData }) => {
+        return rowData?.stockLine?.vvmStatus?.description ?? UNDEFINED_STRING_VALUE;
+      },
+      defaultHideOnMobile: true,
+    });
+  }
 
   if (manageVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t, unitName));
