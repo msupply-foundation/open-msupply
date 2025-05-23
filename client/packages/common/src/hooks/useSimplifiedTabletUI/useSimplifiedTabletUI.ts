@@ -33,9 +33,9 @@ export const useSimplifiedTabletUI = () => {
   const useSimplifiedMobileUi = data?.useSimplifiedMobileUi ?? true;
 
   // Uncomment to debug individual values
-  console.log('useSimplifiedMobileUi', useSimplifiedMobileUi);
-  console.log('packToOne', packToOne);
-  console.log('isMediumScreen', isMediumScreen);
+  // console.log('useSimplifiedMobileUi', useSimplifiedMobileUi);
+  // console.log('packToOne', packToOne);
+  // console.log('isMediumScreen', isMediumScreen);
 
   return isMediumScreen && useSimplifiedMobileUi && packToOne;
 };
