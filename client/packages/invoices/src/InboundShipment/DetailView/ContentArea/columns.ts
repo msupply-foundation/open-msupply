@@ -165,6 +165,7 @@ export const useInboundShipmentColumns = ({
             { path: ['location', 'code'], default: '' },
           ]),
         width: 150,
+        defaultHideOnMobile: true,
       },
     ],
 
@@ -181,6 +182,7 @@ export const useInboundShipmentColumns = ({
             { path: ['lines', 'item', 'unitName'] },
             { path: ['item', 'unitName'], default: '' },
           ]),
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -196,6 +198,7 @@ export const useInboundShipmentColumns = ({
             { path: ['lines', 'packSize'] },
             { path: ['packSize'], default: '' },
           ]),
+        defaultHideOnMobile: true,
       },
     ],
   ];
@@ -245,6 +248,7 @@ export const useInboundShipmentColumns = ({
             return getUnitQuantity(rowData);
           }
         },
+        defaultHideOnMobile: true,
       },
     ]
   );
@@ -269,6 +273,7 @@ export const useInboundShipmentColumns = ({
         }
       },
       sortable: false,
+      defaultHideOnMobile: true,
     },
     {
       label: 'label.total',
@@ -278,6 +283,7 @@ export const useInboundShipmentColumns = ({
       Cell: CurrencyCell,
       accessor: ({ rowData }) => calculateRowTotalCost(rowData),
       getSortValue: rowData => calculateRowTotalCost(rowData),
+      defaultHideOnMobile: true,
     }
   );
 
