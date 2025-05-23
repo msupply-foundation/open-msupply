@@ -11,8 +11,10 @@ import {
   DetailTabs,
   useRowHighlight,
   useBreadcrumbs,
+  PreferenceKey,
+  usePreference,
 } from '@openmsupply-client/common';
-import { ItemRowFragment, ActivityLogList } from '@openmsupply-client/system';
+import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -36,7 +38,7 @@ const StocktakeTabs = ({
 }: {
   id: string | undefined;
   isDisabled: boolean;
-  onOpen: (item?: ItemRowFragment | null | undefined) => void;
+  onOpen: (item?: StocktakeLineFragment['item'] | null | undefined) => void;
 }) => {
   const onRowClick = useCallback(
     (item: StocktakeLineFragment | StocktakeSummaryItem) => {
@@ -95,13 +97,17 @@ const DetailViewComponent = ({
 
 export const DetailView = () => {
   const { data: stocktake, isLoading } = useStocktakeOld.document.get();
+  const { data: preferences } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor
+  );
+
   const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
 
   const navigate = useNavigate();
   const { isOpen, entity, onOpen, onClose, mode } =
-    useEditModal<ItemRowFragment>();
+    useEditModal<StocktakeLineFragment['item']>();
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: stocktake?.stocktakeNumber.toString() ?? '' });
@@ -140,6 +146,9 @@ export const DetailView = () => {
             mode={mode}
             item={entity}
             isInitialStocktake={stocktake.isInitialStocktake}
+            enableDonorTracking={
+              preferences?.[PreferenceKey.AllowTrackingOfStockByDonor] ?? false
+            }
           />
         )}
       </TableProvider>

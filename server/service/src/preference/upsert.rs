@@ -17,7 +17,7 @@ pub struct UpsertPreferences {
     pub show_contact_tracing: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
     // Store preferences
-    pub display_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
+    pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,
     pub sort_by_vvm_status_then_expiry: Option<Vec<StorePrefUpdate<bool>>>,
     pub use_simplified_mobile_ui: Option<Vec<StorePrefUpdate<bool>>>,
@@ -31,7 +31,7 @@ pub fn upsert_preferences(
         display_population_based_forecasting: display_population_based_forecasting_input,
         show_contact_tracing: show_contact_tracing_input,
         // Store preferences
-        display_vaccines_in_doses: display_vaccines_in_doses_input,
+        manage_vaccines_in_doses: manage_vaccines_in_doses_input,
         manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
         sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry_input,
         use_simplified_mobile_ui: use_simplified_mobile_ui_input,
@@ -43,7 +43,7 @@ pub fn upsert_preferences(
         display_population_based_forecasting,
         show_contact_tracing,
         // Store preferences
-        display_vaccines_in_doses,
+        manage_vaccines_in_doses,
         manage_vvm_status_for_stock,
         sort_by_vvm_status_then_expiry,
         use_simplified_mobile_ui,
@@ -65,9 +65,9 @@ pub fn upsert_preferences(
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...
-            if let Some(input) = display_vaccines_in_doses_input {
+            if let Some(input) = manage_vaccines_in_doses_input {
                 for update in input.into_iter() {
-                    display_vaccines_in_doses.upsert(
+                    manage_vaccines_in_doses.upsert(
                         connection,
                         update.value,
                         Some(update.store_id),

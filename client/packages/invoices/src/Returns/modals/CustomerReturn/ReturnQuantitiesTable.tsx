@@ -11,7 +11,7 @@ import {
   useColumns,
 } from '@openmsupply-client/common';
 import {
-  ItemVariantInputCell,
+  ItemVariantInputCellOld,
   useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
 import React, { useMemo } from 'react';
@@ -55,7 +55,7 @@ export const QuantityReturnedTableComponent = ({
         width: 170,
         setter: updateLine,
         Cell: props => (
-          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+          <ItemVariantInputCellOld {...props} itemId={props.rowData.item.id} />
         ),
         getIsDisabled: () => isDisabled,
       });

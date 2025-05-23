@@ -24,6 +24,7 @@ fragment StockLine on StockLineNode {
     name
     code
     unitName
+    defaultPackSize
     doses
     isVaccine
     itemDirections {
@@ -32,7 +33,6 @@ fragment StockLine on StockLineNode {
     warnings {
       ...Warning
     }
-    isVaccine
   }
   note
   onHold
@@ -304,6 +304,8 @@ fragment ItemsWithStats on ItemNode {
   name
   unitName
   defaultPackSize
+  isVaccine
+  doses
   availableStockOnHand(storeId: $storeId)
   stats(storeId: $storeId) {
     __typename
@@ -368,18 +370,6 @@ query itemById($storeId: String!, $itemId: String!) {
   }
 }
 
-fragment ItemVariantOption on ItemVariantNode {
-  __typename
-  id
-  label: name
-  # To determine if the variant already has other variants bundled to it
-  bundledItemVariants {
-    id
-  }
-  # Selected option passed through to vaccine items
-  dosesPerUnit
-}
-
 query itemVariantsConfigured($storeId: String!) {
   itemVariantsConfigured(storeId: $storeId)
 }
@@ -394,7 +384,7 @@ query itemVariants($storeId: String!, $itemId: String!) {
       nodes {
         __typename
         variants {
-          ...ItemVariantOption
+          ...ItemVariant
         }
       }
     }

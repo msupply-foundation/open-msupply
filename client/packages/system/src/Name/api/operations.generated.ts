@@ -20,6 +20,7 @@ export type FacilityNameRowFragment = {
   id: string;
   isCustomer: boolean;
   isSupplier: boolean;
+  isDonor: boolean;
   isOnHold: boolean;
   name: string;
   properties: string;
@@ -106,6 +107,7 @@ export type FacilitiesQuery = {
       id: string;
       isCustomer: boolean;
       isSupplier: boolean;
+      isDonor: boolean;
       isOnHold: boolean;
       name: string;
       properties: string;
@@ -231,6 +233,7 @@ export const FacilityNameRowFragmentDoc = gql`
     id
     isCustomer
     isSupplier
+    isDonor
     isOnHold
     name
     store {
