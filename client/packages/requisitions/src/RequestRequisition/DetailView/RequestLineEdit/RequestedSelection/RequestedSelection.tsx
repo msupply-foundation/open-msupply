@@ -9,7 +9,7 @@ import {
 } from '@openmsupply-client/common';
 import { getCurrentValue, getUpdatedRequest } from './utils';
 import { DraftRequestLine } from '../hooks';
-import { Representation, RepresentationValue } from '../utils';
+import { Representation, RepresentationValue } from '../../../../common';
 
 interface Option {
   label: string;

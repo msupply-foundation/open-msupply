@@ -1,5 +1,5 @@
 import { NumUtils } from '@common/utils';
-import { Representation, RepresentationValue } from '../utils';
+import { Representation, RepresentationValue } from '../../../../common';
 
 // Quantity Calculation
 export const calculatePackQuantity = (
