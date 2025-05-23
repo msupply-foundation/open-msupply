@@ -74,8 +74,11 @@ fn validate(
     input: &UpsertCampaign,
 ) -> Result<(), UpsertCampaignError> {
     // Check for duplicate name
-    let campaigns_with_duplicate_name = CampaignRepository::new(connection)
-        .query_by_filter(CampaignFilter::new().name(StringFilter::equal_to(input.name.trim())))?;
+    let campaigns_with_duplicate_name = CampaignRepository::new(connection).query_by_filter(
+        CampaignFilter::new()
+            .name(StringFilter::equal_to(input.name.trim()))
+            .id(EqualFilter::not_equal_to(&input.id)),
+    )?;
 
     if !campaigns_with_duplicate_name.is_empty() {
         return Err(UpsertCampaignError::DuplicateName);
