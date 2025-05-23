@@ -90,7 +90,7 @@ const AllocationInner = ({ disabled }: { disabled?: boolean }) => {
         <AutoAllocatePrescribedQuantityField />
       )}
       <Grid display="flex" alignItems="center" gap={1}>
-        <AutoAllocateField inputColor="white" />
+        <AutoAllocateField inputColor="white" allowPartialPacks />
         <AllocateInSelector />
       </Grid>
       <AccordionPanelSection

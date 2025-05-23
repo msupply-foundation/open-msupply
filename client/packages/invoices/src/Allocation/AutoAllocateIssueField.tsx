@@ -10,7 +10,13 @@ import {
 import { useAllocationContext } from './useAllocationContext';
 import { getAllocatedQuantity } from './utils';
 
-export const AutoAllocateField = ({ inputColor }: { inputColor?: string }) => {
+export const AutoAllocateField = ({
+  inputColor,
+  allowPartialPacks,
+}: {
+  inputColor?: string;
+  allowPartialPacks?: boolean;
+}) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
 
@@ -32,7 +38,7 @@ export const AutoAllocateField = ({ inputColor }: { inputColor?: string }) => {
   // and https://github.com/msupply-foundation/open-msupply/issues/3532
   const debouncedAllocate = useDebounceCallback(
     quantity => {
-      const allocated = autoAllocate(quantity, format, t);
+      const allocated = autoAllocate(quantity, format, t, allowPartialPacks);
       setIssueQuantity(allocated);
     },
     [],

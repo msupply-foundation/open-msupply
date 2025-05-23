@@ -95,7 +95,8 @@ interface AllocationContext {
   autoAllocate: (
     quantity: number,
     format: (value: number, options?: Intl.NumberFormatOptions) => string,
-    t: TypedTFunction<LocaleKey>
+    t: TypedTFunction<LocaleKey>,
+    allowPartialPacks?: boolean
   ) => number;
 }
 
@@ -216,12 +217,13 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       isDirty: true,
     })),
 
-  autoAllocate: (quantity, format, t) => {
+  autoAllocate: (quantity, format, t, allowPartialPacks = false) => {
     const { draftLines, nonAllocatableLines, placeholderUnits, allocateIn } =
       get();
 
     const result = allocateQuantities(draftLines, quantity, {
       allocateIn,
+      allowPartialPacks,
     });
 
     // Early return if no allocation was possible

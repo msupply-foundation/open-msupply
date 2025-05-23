@@ -30,7 +30,7 @@ export const AutoAllocatePrescribedQuantityField = () => {
   // and https://github.com/msupply-foundation/open-msupply/issues/3532
   const debouncedAllocate = useDebounceCallback(
     quantity => {
-      autoAllocate(quantity, format, t);
+      autoAllocate(quantity, format, t, true);
     },
     [],
     500
