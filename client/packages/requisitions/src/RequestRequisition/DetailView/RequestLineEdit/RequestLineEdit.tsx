@@ -4,6 +4,7 @@ import {
   ReasonOptionsSearchInput,
   RequestFragment,
   StockItemSearchInputWithStats,
+  useReasonOptions,
 } from '@openmsupply-client/system';
 import {
   useTranslation,
@@ -18,18 +19,18 @@ import {
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
 import { RequestedSelection } from './RequestedSelection';
-import { RepresentationValue } from './utils';
-import {
-  InfoRow,
-  Layout,
-  ValueInfo,
-  ValueInfoRow,
-  getLeftPanel,
-  getMiddlePanel,
-} from './Layout';
+import { RepresentationValue } from '../../../common';
 import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
 import { StockEvolution } from './ItemCharts/StockEvolution';
 import { StockDistribution } from './ItemCharts/StockDistribution';
+import {
+  getLeftPanel,
+  getMiddlePanel,
+  InfoRow,
+  ModalContentLayout,
+  ValueInfo,
+  ValueInfoRow,
+} from '../../../common';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;
@@ -66,6 +67,7 @@ export const RequestLineEdit = ({
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
   const disableItemSelection = disabled || isUpdateMode;
+  const { data: reasonOptions, isLoading } = useReasonOptions();
 
   const line = useMemo(
     () => lines.find(line => line.id === draft?.id),
@@ -96,7 +98,7 @@ export const RequestLineEdit = ({
 
   return (
     <>
-      <Layout
+      <ModalContentLayout
         Top={
           <>
             {(disableItemSelection && (
@@ -171,6 +173,8 @@ export const RequestLineEdit = ({
                       draft?.requestedQuantity === draft?.suggestedQuantity ||
                       disabled
                     }
+                    reasonOptions={reasonOptions?.nodes ?? []}
+                    isLoading={isLoading}
                   />
                 </Typography>
               )}

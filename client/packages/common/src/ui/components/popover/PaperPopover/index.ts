@@ -12,3 +12,4 @@ export interface PaperPopoverProps {
 export * from './PaperClickPopover';
 export * from './PaperHoverPopover';
 export * from './PaperPopoverSection';
+export * from './PersistentPaperPopover';

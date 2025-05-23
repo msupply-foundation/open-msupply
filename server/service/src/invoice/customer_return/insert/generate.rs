@@ -75,7 +75,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_id: None,
+        default_donor_link_id: None,
     };
 
     let lines_with_packs: Vec<CustomerReturnLineInput> = customer_return_lines
@@ -105,6 +105,7 @@ pub fn generate(
                  reason_id: _,
                  note,
                  item_variant_id,
+                 vvm_status_id,
              }| InsertStockInLine {
                 id,
                 expiry_date,
@@ -116,6 +117,7 @@ pub fn generate(
                 note,
                 r#type: StockInType::CustomerReturn,
                 item_variant_id,
+                vvm_status_id,
                 // Default
                 location: None,
                 cost_price_per_pack: 0.0,
@@ -126,7 +128,6 @@ pub fn generate(
                 barcode: None,
                 stock_on_hold: false,
                 donor_id: None,
-                vvm_status_id: None, // Setting to none until the ability to record vvm status is added by https://github.com/msupply-foundation/open-msupply/issues/7366
             },
         )
         .collect();

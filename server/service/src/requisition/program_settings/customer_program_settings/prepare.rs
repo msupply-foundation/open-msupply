@@ -418,7 +418,7 @@ mod test {
         let ServiceTestContext {
             service_provider, ..
         } = setup_all_with_data_and_service_provider(
-            "get_customer_program_requisition_settings",
+            "get_customer_program_requisition_settings_prepare",
             MockDataInserts::none().names().stores(),
             MockData {
                 periods: vec![

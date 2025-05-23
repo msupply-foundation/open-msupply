@@ -1,5 +1,6 @@
 use chrono::Utc;
 
+use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, LocationMovementRow,
     Name, RepositoryError,
@@ -10,7 +11,10 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
+use crate::invoice::common::{
+    calculate_foreign_currency_total, calculate_total_after_tax, generate_vvm_status_log,
+    GenerateVVMStatusLogInput,
+};
 use crate::service_provider::ServiceContext;
 
 use super::{
@@ -30,6 +34,7 @@ pub(crate) struct GenerateResult {
     pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
     pub(crate) update_tax_for_lines: Option<Vec<InvoiceLineRow>>,
     pub(crate) update_currency_for_lines: Option<Vec<InvoiceLineRow>>,
+    pub(crate) vvm_status_logs_to_update: Option<Vec<VVMStatusLogRow>>,
     pub(crate) update_donor: Option<Vec<LineAndStockLine>>,
 }
 
@@ -47,7 +52,7 @@ pub(crate) fn generate(
 
     let input_donor_id = match patch.default_donor.clone() {
         Some(update) => update.donor_id,
-        None => update_invoice.default_donor_id.clone(),
+        None => update_invoice.default_donor_link_id.clone(),
     };
 
     update_invoice.user_id = Some(ctx.user_id.clone());
@@ -59,7 +64,7 @@ pub(crate) fn generate(
         .tax
         .map(|tax| tax.percentage)
         .unwrap_or(update_invoice.tax_percentage);
-    update_invoice.default_donor_id = input_donor_id.clone();
+    update_invoice.default_donor_link_id = input_donor_id.clone();
 
     if let Some(status) = patch.status.clone() {
         update_invoice.status = status.full_status()
@@ -87,6 +92,28 @@ pub(crate) fn generate(
                 currency_rate: &update_invoice.currency_rate,
             },
         )?)
+    } else {
+        None
+    };
+
+    let vvm_status_logs_to_update = if let Some(batches) = &batches_to_update {
+        let vvm_status_logs: Vec<VVMStatusLogRow> = batches
+            .iter()
+            .filter_map(|batch| {
+                batch.line.vvm_status_id.clone().map(|vvm_status_id| {
+                    generate_vvm_status_log(GenerateVVMStatusLogInput {
+                        id: None,
+                        store_id: update_invoice.store_id.clone(),
+                        created_by: ctx.user_id.clone(),
+                        vvm_status_id,
+                        stock_line_id: batch.stock_line.as_ref().unwrap().id.clone(),
+                        invoice_line_id: batch.line.id.clone(),
+                    })
+                })
+            })
+            .collect();
+
+        Some(vvm_status_logs)
     } else {
         None
     };
@@ -138,6 +165,7 @@ pub(crate) fn generate(
         location_movements,
         update_tax_for_lines,
         update_currency_for_lines,
+        vvm_status_logs_to_update,
         update_donor,
     })
 }
@@ -344,8 +372,9 @@ pub fn generate_lines_and_stock_lines(
             batch,
             expiry_date,
             pack_size,
-            donor_id,
+            donor_link_id,
             note,
+            vvm_status_id,
             reason_option_id: _,
             ..
         }: InvoiceLineRow = invoice_line;
@@ -368,8 +397,9 @@ pub fn generate_lines_and_stock_lines(
                 supplier_link_id: Some(supplier_id.to_string()),
                 barcode_id: None,
                 item_variant_id,
-                donor_id,
-                vvm_status_id: None,
+                donor_link_id,
+                vvm_status_id,
+                campaign_id: None,
             };
             result.push(LineAndStockLine {
                 line,
@@ -420,24 +450,24 @@ fn update_donor_on_lines_and_stock(
         let mut stock_line = invoice_line.stock_line_option;
 
         let new_donor_id = match donor_update_method.clone() {
-            ApplyDonorToInvoiceLines::None => line.donor_id.clone(),
-            ApplyDonorToInvoiceLines::UpdateExistingDonor => match line.donor_id {
+            ApplyDonorToInvoiceLines::None => line.donor_link_id.clone(),
+            ApplyDonorToInvoiceLines::UpdateExistingDonor => match line.donor_link_id {
                 Some(_) => updated_default_donor_id.clone(),
                 None => None,
             },
-            ApplyDonorToInvoiceLines::AssignIfNone => {
-                line.donor_id.clone().or(updated_default_donor_id.clone())
-            }
+            ApplyDonorToInvoiceLines::AssignIfNone => line
+                .donor_link_id
+                .clone()
+                .or(updated_default_donor_id.clone()),
             ApplyDonorToInvoiceLines::AssignToAll => updated_default_donor_id.clone(),
         };
 
-        line.donor_id = new_donor_id.clone();
+        line.donor_link_id = new_donor_id.clone();
         if let Some(ref mut stock_line) = stock_line {
-            stock_line.donor_id = new_donor_id;
+            stock_line.donor_link_id = new_donor_id;
         }
 
         result.push(LineAndStockLine { line, stock_line });
     }
-
     Ok(result)
 }

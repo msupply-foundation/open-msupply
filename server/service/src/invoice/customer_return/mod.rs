@@ -23,4 +23,5 @@ pub struct CustomerReturnLineInput {
     pub reason_id: Option<String>,
     pub note: Option<String>,
     pub item_variant_id: Option<String>,
+    pub vvm_status_id: Option<String>,
 }

@@ -12,7 +12,7 @@ import {
   getValueInUnitsOrPacks,
   Representation,
   RepresentationValue,
-} from '../utils';
+} from './utils';
 
 interface LayoutProps {
   Top: React.ReactElement;
@@ -21,7 +21,12 @@ interface LayoutProps {
   Right: React.ReactElement | null;
 }
 
-export const Layout = ({ Top, Left, Middle, Right }: LayoutProps) => {
+export const ModalContentLayout = ({
+  Top,
+  Left,
+  Middle,
+  Right,
+}: LayoutProps) => {
   return (
     <Grid
       container

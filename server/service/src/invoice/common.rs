@@ -1,9 +1,11 @@
+use chrono::Utc;
 use repository::{
-    CurrencyFilter, CurrencyRepository, EqualFilter, InvoiceLine, InvoiceLineFilter,
-    InvoiceLineRepository, InvoiceLineType, InvoiceRow, MasterList, MasterListFilter,
-    MasterListRepository, NameLinkRowRepository, RepositoryError, StockLineRow, StorageConnection,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow, CurrencyFilter, CurrencyRepository,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType,
+    InvoiceRow, MasterList, MasterListFilter, MasterListRepository, NameLinkRowRepository,
+    RepositoryError, StockLineRow, StorageConnection,
 };
-use util::inline_edit;
+use util::{inline_edit, uuid::uuid};
 
 use crate::store_preference::get_store_preferences;
 
@@ -138,4 +140,35 @@ pub(crate) fn get_invoice_status_datetime(invoice: &InvoiceRow) -> chrono::Naive
     invoice
         .backdated_datetime
         .unwrap_or_else(|| chrono::Utc::now().naive_utc())
+}
+
+pub struct GenerateVVMStatusLogInput {
+    pub id: Option<String>,
+    pub store_id: String,
+    pub created_by: String,
+    pub vvm_status_id: String,
+    pub stock_line_id: String,
+    pub invoice_line_id: String,
+}
+
+pub fn generate_vvm_status_log(
+    GenerateVVMStatusLogInput {
+        id,
+        store_id,
+        vvm_status_id,
+        stock_line_id,
+        invoice_line_id,
+        created_by,
+    }: GenerateVVMStatusLogInput,
+) -> VVMStatusLogRow {
+    VVMStatusLogRow {
+        id: id.unwrap_or(uuid()),
+        store_id: store_id.to_string(),
+        created_by: created_by.to_string(),
+        created_datetime: Utc::now().naive_utc(),
+        status_id: vvm_status_id.to_string(),
+        stock_line_id: stock_line_id.to_string(),
+        invoice_line_id: Some(invoice_line_id.to_string()),
+        comment: None,
+    }
 }

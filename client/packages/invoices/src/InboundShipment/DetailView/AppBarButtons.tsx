@@ -20,9 +20,13 @@ import { AddButton } from './AddButton';
 
 interface AppBarButtonProps {
   onAddItem: (newState: boolean) => void;
+  simplifiedTabletView?: boolean;
 }
 
-export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
+export const AppBarButtonsComponent = ({
+  onAddItem,
+  simplifiedTabletView,
+}: AppBarButtonProps) => {
   const t = useTranslation();
   const { store } = useAuthContext();
   const isDisabled = useInbound.utils.isDisabled();
@@ -72,7 +76,7 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
           isPrinting={isPrinting}
           buttonLabel={t('button.print')}
         />
-        {OpenButton}
+        {!simplifiedTabletView && OpenButton}
       </Grid>
     </AppBarButtonsPortal>
   );

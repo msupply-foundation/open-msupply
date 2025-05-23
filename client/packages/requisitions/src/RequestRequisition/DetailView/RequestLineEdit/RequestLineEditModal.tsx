@@ -10,7 +10,8 @@ import { RequestFragment, useRequest } from '../../api';
 import { useDraftRequisitionLine, useNextRequestLine } from './hooks';
 import { isRequestDisabled } from '../../../utils';
 import { RequestLineEdit } from './RequestLineEdit';
-import { Representation, RepresentationValue } from './utils';
+import { Representation, RepresentationValue } from '../../../common';
+
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
 
 interface RequestLineEditModalProps {

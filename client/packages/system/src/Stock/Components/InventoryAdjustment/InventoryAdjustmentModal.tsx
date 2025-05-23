@@ -12,7 +12,7 @@ import {
   getReasonOptionType,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
-import { ReasonOptionsSearchInput } from '../../..';
+import { ReasonOptionsSearchInput, useReasonOptions } from '../../..';
 import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionSearchInput';
 import { INPUT_WIDTH, StyledInputRow } from '../StyledInputRow';
 
@@ -32,6 +32,7 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
   const { round } = useFormatNumber();
 
   const { draft, setDraft, create } = useInventoryAdjustment(stockLine);
+  const { data, isLoading } = useReasonOptions();
 
   const packUnit = String(stockLine.packSize);
   const saveDisabled = draft.adjustment === 0;
@@ -99,6 +100,8 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
                     stockLine.item.isVaccine
                   )}
                   width={INPUT_WIDTH}
+                  reasonOptions={data?.nodes ?? []}
+                  isLoading={isLoading}
                 />
               </Box>
             }

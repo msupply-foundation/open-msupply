@@ -60,4 +60,5 @@ export const getDosesQuantityColumn = <
         : 0;
     }
   },
+  defaultHideOnMobile: true,
 });

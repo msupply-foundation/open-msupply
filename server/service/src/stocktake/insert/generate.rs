@@ -177,8 +177,9 @@ pub fn generate_lines_from_master_list(
                     available_number_of_packs: _,
                     barcode_id: _,
                     item_variant_id,
-                    donor_id,
+                    donor_link_id,
                     vvm_status_id: _,
+                    campaign_id: _,
                 } = line.stock_line_row;
 
                 result.push(StocktakeLineRow {
@@ -198,7 +199,7 @@ pub fn generate_lines_from_master_list(
                     comment: None,
                     counted_number_of_packs: None,
                     item_variant_id,
-                    donor_link_id: donor_id,
+                    donor_link_id,
                     reason_option_id: None,
                 });
             });
@@ -242,8 +243,9 @@ pub fn generate_lines_from_location(
                 available_number_of_packs: _,
                 barcode_id: _,
                 item_variant_id,
-                donor_id,
+                donor_link_id,
                 vvm_status_id: _,
+                campaign_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {
@@ -263,7 +265,7 @@ pub fn generate_lines_from_location(
                 comment: None,
                 counted_number_of_packs: None,
                 item_variant_id,
-                donor_link_id: donor_id,
+                donor_link_id,
                 reason_option_id: None,
             }
         })
@@ -347,8 +349,9 @@ pub fn generate_lines_with_stock(
                 available_number_of_packs: _,
                 barcode_id: _,
                 item_variant_id,
-                donor_id,
+                donor_link_id,
                 vvm_status_id: _,
+                campaign_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {
@@ -368,7 +371,7 @@ pub fn generate_lines_with_stock(
                 comment: None,
                 counted_number_of_packs: None,
                 item_variant_id,
-                donor_link_id: donor_id,
+                donor_link_id,
                 reason_option_id: None,
             }
         })
@@ -409,8 +412,9 @@ pub fn generate_lines_expiring_before(
                 available_number_of_packs: _,
                 barcode_id: _,
                 item_variant_id,
-                donor_id,
+                donor_link_id,
                 vvm_status_id: _,
+                campaign_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {
@@ -430,7 +434,7 @@ pub fn generate_lines_expiring_before(
                 counted_number_of_packs: None,
                 item_name: line.item_row.name,
                 item_variant_id,
-                donor_link_id: donor_id,
+                donor_link_id,
                 reason_option_id: None,
             }
         })

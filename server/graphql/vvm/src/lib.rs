@@ -4,8 +4,9 @@ use mutations::vvm_status_log::{
     insert::{insert, InsertInput, InsertResponse},
     update::{update_vvm_status_log, UpdateVVMStatusResponse},
 };
-
-use queries::{vvm_status::active_vvm_statuses, vvm_status_log::get_vvm_status_log_by_stock_line};
+use queries::{
+    active_vvm_statuses::active_vvm_statuses, vvm_status_log::get_vvm_status_log_by_stock_line,
+};
 
 pub mod mutations;
 pub mod queries;
