@@ -12,7 +12,7 @@ import {
   canAllocate,
   getAllocatedQuantity,
   issue,
-  packsToDoses,
+  packsToQuantity,
   scannedBatchFilter,
 } from './utils';
 import { OutboundLineEditData } from '../OutboundShipment/api';
@@ -84,8 +84,12 @@ interface AllocationContext {
     quantity: number,
     format: (value: number, options?: Intl.NumberFormatOptions) => string,
     t: TypedTFunction<LocaleKey>,
-    /** manualAllocate can be called from a different lens than we currently displaying in */
-    allocateInType?: AllocateInType
+    options?: {
+      /** manualAllocate can be called from a different lens than we currently displaying in */
+      allocateInType?: AllocateInType;
+      /** manualAllocate can be called from a different lens than we currently displaying in */
+      preventPartialPacks?: boolean;
+    }
   ) => number;
   autoAllocate: (
     quantity: number,
@@ -268,31 +272,23 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     return allocatedQuantity;
   },
 
-  // TODO Manual Allocate in Units
-  manualAllocate: (lineId, quantity, format, t, inputAllocateIn) => {
+  manualAllocate: (lineId, quantity, format, t, options) => {
     const { allocateIn, draftLines } = get();
-    const allocateInType = inputAllocateIn ?? allocateIn.type;
-
-    // TODO: pass in when using for prescriptions
-    const allowPartialPacks = allocateInType === AllocateInType.Doses;
+    const allocateInType = options?.allocateInType ?? allocateIn.type;
 
     const updatedLines = issue(
       draftLines,
       lineId,
       quantity,
       allocateInType,
-      allowPartialPacks
+      !options?.preventPartialPacks
     );
 
     // Now check if we need to show any alerts
     const updatedLine = updatedLines.find(line => line.id === lineId);
 
-    // todo: no longer trye...
     const allocatedQuantity = updatedLine
-      ? allocateInType === AllocateInType.Doses
-        ? packsToDoses(updatedLine.numberOfPacks, updatedLine)
-        : // when not in doses, manual allocation is in packs
-          updatedLine.numberOfPacks
+      ? packsToQuantity(allocateInType, updatedLine.numberOfPacks, updatedLine)
       : 0;
 
     // Todo: once prescriptions refactored, see if we can streamline alerts?

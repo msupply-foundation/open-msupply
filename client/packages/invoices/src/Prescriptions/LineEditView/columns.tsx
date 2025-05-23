@@ -18,6 +18,7 @@ import { getPrescriptionLineDosesColumns } from './columnsDoses';
 import { DraftItem } from '../..';
 import { DraftStockOutLineFragment } from '../../OutboundShipment/api/operations.generated';
 import { AllocateInType } from '../../Allocation/useAllocationContext';
+import { packsToQuantity } from '../../Allocation/utils';
 
 export const usePrescriptionLineEditColumns = ({
   allocate,
@@ -42,7 +43,10 @@ export const usePrescriptionLineEditColumns = ({
 
   const displayInDoses = allocateIn === AllocateInType.Doses;
 
-  const columnDefinitions: ColumnDescription<DraftStockOutLineFragment>[] = [
+  const columnDefinitions: ColumnDescription<
+    // unitQuantity field added by UnitQuantity column setter
+    DraftStockOutLineFragment & { unitQuantity?: number }
+  >[] = [
     [
       'batch',
       {
@@ -106,15 +110,22 @@ export const usePrescriptionLineEditColumns = ({
         accessor: ({ rowData }) =>
           (rowData.availablePacks ?? 0) * (rowData.packSize ?? 1),
       },
-      [
-        'numberOfPacks', // TODO: This should be in units, not packs
-        {
-          Cell: UnitQuantityCell,
-          width: 100,
-          label: t('label.units-issued', { unit: pluralisedUnitName }),
-          setter: ({ id, numberOfPacks }) => allocate(id, numberOfPacks ?? 0),
-        },
-      ]
+      {
+        key: 'unitQuantity',
+        Cell: UnitQuantityCell,
+        width: 100,
+        label: t('label.units-issued', { unit: pluralisedUnitName }),
+        setter: ({
+          id,
+          unitQuantity,
+        }: Partial<DraftStockOutLineFragment> & {
+          id: string;
+          // Extra field only in the context of this setter, based on key above
+          unitQuantity?: number;
+        }) => allocate(id, unitQuantity ?? 0),
+        accessor: ({ rowData }) =>
+          packsToQuantity(AllocateInType.Units, rowData.numberOfPacks, rowData),
+      }
     );
   }
 

@@ -1,0 +1,55 @@
+import React from 'react';
+import {
+  CellProps,
+  ColumnAlign,
+  ColumnDescription,
+  NumberCell,
+  NumberInputCell,
+} from '@openmsupply-client/common';
+import { DraftStockOutLineFragment } from '../../OutboundShipment/api/operations.generated';
+import { getDoseQuantity, packsToDoses } from '../../Allocation/utils';
+
+export const getPrescriptionLineDosesColumns = (
+  allocate: (key: string, numPacks: number) => void
+): ColumnDescription<DraftStockOutLineFragment>[] => [
+  {
+    Cell: NumberCell,
+    label: 'label.doses-available',
+    key: 'availableDoses',
+    align: ColumnAlign.Right,
+    width: 85,
+    accessor: ({ rowData }) => {
+      const total = (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1);
+
+      return (
+        total *
+        (rowData.itemVariant?.dosesPerUnit ?? rowData.defaultDosesPerUnit)
+      );
+    },
+  },
+  {
+    key: 'dosesIssued',
+    Cell: DoseQuantityCell,
+    width: 100,
+    label: 'label.doses-issued',
+    setter: (
+      row: Partial<DraftStockOutLineFragment> & {
+        id: string;
+        // Extra field only in the context of this setter, based on key above
+        dosesIssued?: number;
+      }
+    ) => {
+      allocate(row.id, row.dosesIssued ?? 0);
+    },
+    accessor: ({ rowData }) => getDoseQuantity(rowData),
+  },
+];
+
+const DoseQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
+  <NumberInputCell
+    {...props}
+    max={packsToDoses(props.rowData.availablePacks, props.rowData)}
+    decimalLimit={0}
+    min={0}
+  />
+);

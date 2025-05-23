@@ -35,6 +35,15 @@ import {
   packsToDoses,
 } from '../../../Allocation/utils';
 
+type AllocateFn = (
+  key: string,
+  value: number,
+  options?: {
+    allocateInType?: AllocateInType;
+    preventPartialPacks?: boolean;
+  }
+) => number;
+
 export const useOutboundLineEditColumns = ({
   allocate,
   item,
@@ -42,11 +51,7 @@ export const useOutboundLineEditColumns = ({
   isExternalSupplier,
   allocateIn,
 }: {
-  allocate: (
-    key: string,
-    value: number,
-    allocateInType?: AllocateInType
-  ) => number;
+  allocate: AllocateFn;
   item: DraftItem | null;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
@@ -187,11 +192,7 @@ const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
 );
 
 const getAllocateInUnitsColumns = (
-  allocate: (
-    key: string,
-    numPacks: number,
-    allocateInType?: AllocateInType
-  ) => void,
+  allocate: AllocateFn,
   pluralisedUnitName: string
 ): ColumnDescription<DraftStockOutLineFragment>[] => [
   {
@@ -221,7 +222,9 @@ const getAllocateInUnitsColumns = (
       label: 'label.pack-quantity-issued',
       setter: ({ id, numberOfPacks }) =>
         // Pack QTY column, so should issue in packs, even though in unit lens
-        allocate(id, numberOfPacks ?? 0, AllocateInType.Packs),
+        allocate(id, numberOfPacks ?? 0, {
+          allocateInType: AllocateInType.Packs,
+        }),
     },
   ],
   [
@@ -249,7 +252,7 @@ const DoseQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
 
 const getAllocateInDosesColumns = (
   t: TypedTFunction<LocaleKey>,
-  allocate: (key: string, numPacks: number) => void,
+  allocate: AllocateFn,
   unit: string
 ): ColumnDescription<DraftStockOutLineFragment>[] => {
   return [
@@ -299,7 +302,9 @@ const getAllocateInDosesColumns = (
           dosesIssued?: number;
         }
       ) => {
-        const allocatedQuantity = allocate(row.id, row.dosesIssued ?? 0);
+        const allocatedQuantity = allocate(row.id, row.dosesIssued ?? 0, {
+          preventPartialPacks: true,
+        });
         return allocatedQuantity; // return to NumberInputCell to ensure value is correct
       },
       accessor: ({ rowData }) => getDoseQuantity(rowData),
