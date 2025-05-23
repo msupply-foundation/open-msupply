@@ -20,17 +20,17 @@ import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
 import { RequestedSelection } from './RequestedSelection';
 import { RepresentationValue } from './utils';
-import {
-  InfoRow,
-  Layout,
-  ValueInfo,
-  ValueInfoRow,
-  getLeftPanel,
-  getMiddlePanel,
-} from './Layout';
 import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
 import { StockEvolution } from './ItemCharts/StockEvolution';
 import { StockDistribution } from './ItemCharts/StockDistribution';
+import {
+  getLeftPanel,
+  getMiddlePanel,
+  InfoRow,
+  ModalContentLayout,
+  ValueInfo,
+  ValueInfoRow,
+} from '../../../common';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;
@@ -98,7 +98,7 @@ export const RequestLineEdit = ({
 
   return (
     <>
-      <Layout
+      <ModalContentLayout
         Top={
           <>
             {(disableItemSelection && (
