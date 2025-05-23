@@ -36,8 +36,6 @@ export const ReasonOptionsSearchInput = ({
   reasonOptions,
   isLoading,
 }: ReasonOptionsSearchInputProps) => {
-  // const { data, isLoading } = useReasonOptions();
-
   const reasonFilter = (reasonOption: ReasonOptionNode) => {
     if (Array.isArray(type)) {
       return type.includes(reasonOption.type);
@@ -45,7 +43,6 @@ export const ReasonOptionsSearchInput = ({
     return reasonOption.type === type;
   };
   const reasons = (reasonOptions ?? []).filter(reasonFilter);
-
   const isRequired = reasons.length !== 0 && !initialStocktake;
 
   return (
