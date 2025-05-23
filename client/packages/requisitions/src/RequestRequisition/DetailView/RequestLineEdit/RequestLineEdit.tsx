@@ -4,6 +4,7 @@ import {
   ReasonOptionsSearchInput,
   RequestFragment,
   StockItemSearchInputWithStats,
+  useReasonOptions,
 } from '@openmsupply-client/system';
 import {
   useTranslation,
@@ -66,6 +67,7 @@ export const RequestLineEdit = ({
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
   const disableItemSelection = disabled || isUpdateMode;
+  const { data: reasonOptions, isLoading } = useReasonOptions();
 
   const line = useMemo(
     () => lines.find(line => line.id === draft?.id),
@@ -171,6 +173,8 @@ export const RequestLineEdit = ({
                       draft?.requestedQuantity === draft?.suggestedQuantity ||
                       disabled
                     }
+                    reasonOptions={reasonOptions?.nodes ?? []}
+                    isLoading={isLoading}
                   />
                 </Typography>
               )}

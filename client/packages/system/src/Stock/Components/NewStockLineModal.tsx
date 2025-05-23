@@ -17,7 +17,11 @@ import {
 } from '@openmsupply-client/common';
 import { useStockLine } from '../api';
 import { StockLineForm } from './StockLineForm';
-import { ReasonOptionsSearchInput, StockItemSearchInput } from '../..';
+import {
+  ReasonOptionsSearchInput,
+  StockItemSearchInput,
+  useReasonOptions,
+} from '../..';
 import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -36,6 +40,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   const pluginEvents = usePluginEvents({
     isDirty: false,
   });
+  const { data: reasonOptions } = useReasonOptions();
 
   const { Modal } = useDialog({ isOpen, onClose });
 
@@ -153,6 +158,8 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
                       type={ReasonOptionNodeType.PositiveInventoryAdjustment}
                       value={draft.reasonOption}
                       onChange={reason => updatePatch({ reasonOption: reason })}
+                      reasonOptions={reasonOptions?.nodes ?? []}
+                      isLoading={isLoading}
                     />
                   </Box>
                 }
