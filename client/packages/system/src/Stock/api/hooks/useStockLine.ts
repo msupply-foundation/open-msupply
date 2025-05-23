@@ -40,6 +40,11 @@ const defaultDraftStockLine: DraftStockLine = {
     id: '',
     description: '',
   },
+  campaign: {
+    __typename: 'CampaignNode',
+    id: '',
+    name: '',
+  },
 };
 
 export function useStockLine(id?: string) {
@@ -123,6 +128,7 @@ const useCreate = () => {
     onHold,
     itemVariantId,
     vvmStatusId,
+    campaign,
   }: DraftStockLine) => {
     return await stockApi.insertStockLine({
       storeId,
@@ -141,6 +147,7 @@ const useCreate = () => {
         reasonOptionId: reasonOption?.id,
         itemVariantId,
         vvmStatusId,
+        campaignId: campaign?.id,
       },
     });
   };
@@ -166,6 +173,7 @@ const useUpdate = (id: string) => {
     location,
     itemVariantId,
     vvmStatusId,
+    campaign,
   }: Partial<DraftStockLine>) => {
     const result = await stockApi.updateStockLine({
       input: {
@@ -179,6 +187,7 @@ const useUpdate = (id: string) => {
         location: setNullableInput('id', location),
         itemVariantId: setNullableInput('itemVariantId', { itemVariantId }),
         vvmStatusId,
+        campaignId: campaign?.id,
       },
       storeId,
     });

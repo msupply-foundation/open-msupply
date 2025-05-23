@@ -28,6 +28,7 @@ pub struct UpdateInput {
     pub barcode: Option<String>,
     pub item_variant_id: Option<NullableUpdateInput<String>>,
     pub vvm_status_id: Option<String>,
+    pub campaign_id: Option<String>,
 }
 
 #[derive(Interface)]
@@ -95,6 +96,7 @@ impl UpdateInput {
             barcode,
             item_variant_id,
             vvm_status_id,
+            campaign_id,
         } = self;
 
         ServiceInput {
@@ -112,6 +114,7 @@ impl UpdateInput {
                 value: item_variant_id.value,
             }),
             vvm_status_id,
+            campaign_id,
         }
     }
 }

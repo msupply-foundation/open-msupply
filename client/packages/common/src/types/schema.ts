@@ -3669,6 +3669,7 @@ export type InsertStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
   barcode?: InputMaybe<Scalars['String']['input']>;
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack: Scalars['Float']['input'];
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
@@ -9616,6 +9617,7 @@ export type UpdateStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
   barcode?: InputMaybe<Scalars['String']['input']>;
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
