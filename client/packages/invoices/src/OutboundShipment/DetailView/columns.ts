@@ -118,6 +118,7 @@ export const useOutboundColumns = ({
             { path: ['lines', 'batch'] },
             { path: ['batch'] },
           ]),
+          defaultHideOnMobile: true,
       },
     ],
     [
