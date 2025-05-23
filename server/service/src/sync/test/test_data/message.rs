@@ -19,7 +19,7 @@ const MESSAGE_1: (&str, &str) = (
     "ID": "message1",
     "toStoreID": "store_a",
     "fromStoreID": "store_b",
-    "body": "{\"key\": \"value\"}",
+    "body": {"key": "value"},
     "createdDate": "2023-01-01",
     "createdTime": 7384,
     "status": "new",
@@ -32,7 +32,7 @@ pub fn message_1() -> TestSyncIncomingRecord {
         id: "message1".to_string(),
         to_store_id: "store_a".to_string(),
         from_store_id: Some("store_b".to_string()),
-        body: "{\"key\": \"value\"}".to_string(),
+        body: "{\"key\":\"value\"}".to_string(),
         created_datetime: NaiveDate::from_ymd_opt(2023, 1, 1)
             .unwrap()
             .and_hms_opt(2, 3, 4)
@@ -60,7 +60,7 @@ fn message_1_push_record() -> TestSyncOutgoingRecord {
             id: MESSAGE_1.0.to_string(),
             to_store_id: "store_a".to_string(),
             from_store_id: Some("store_b".to_string()),
-            body: "{\"key\": \"value\"}".to_string(),
+            body: json!({"key": "value"}),
             created_date: NaiveDate::from_ymd_opt(2023, 1, 1).unwrap(),
             created_time: NaiveTime::from_hms_opt(2, 3, 4).unwrap(),
             status: LegacyMessageStatus::New,

@@ -10,7 +10,7 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
         NativeFunction::from_copy_closure(move |_, args, mut ctx| {
             let filter: PluginDataFilter = get_serde_argument(&mut ctx, args, 0)?;
 
-            // When using PluginContext, it's best to use 'scope' see PluginContext for a link to testing repo
+            // When using BoaJsContext, it's best to use 'scope' see PluginContext for a link to testing repo
             let plugin_data: Vec<PluginDataRow> = {
                 let service_provider = BoaJsContext::service_provider();
                 let connection = service_provider
