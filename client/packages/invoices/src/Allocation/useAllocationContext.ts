@@ -66,6 +66,7 @@ interface AllocationContext {
     allowPlaceholder: boolean;
     allowPrescribedQuantity?: boolean;
     scannedBatch?: string;
+    allocateIn?: AllocateInOption;
   }) => void;
 
   setAlerts: (alerts: StockOutAlert[]) => void;
@@ -121,6 +122,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     allowPlaceholder,
     allowPrescribedQuantity,
     scannedBatch,
+    allocateIn,
   }) => {
     const sortedLines = draftLines.sort(SorterByStrategy[strategy]);
 
@@ -140,6 +142,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       isDirty: false,
       item,
       note,
+      allocateIn: allocateIn ?? { type: AllocateInType.Units },
 
       draftLines: allocatableLines,
       nonAllocatableLines,

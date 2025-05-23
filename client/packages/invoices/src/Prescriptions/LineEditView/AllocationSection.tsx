@@ -13,6 +13,7 @@ import { useOutboundLineEditData } from '../../OutboundShipment/api'; // TODO: F
 import {
   useAllocationContext,
   AllocationStrategy,
+  AllocateInType,
 } from '../../Allocation/useAllocationContext';
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
@@ -59,8 +60,13 @@ export const AllocationSection = ({
           : AllocationStrategy.FEFO,
         allowPlaceholder: false,
         allowPrescribedQuantity: true,
-        // allocateVaccineItemsInDoses, // TODO: here or nah?
         scannedBatch,
+        // In prescriptions, default to allocate in doses for vaccines
+        // if pref is on
+        allocateIn:
+          allocateVaccineItemsInDoses && data.item.isVaccine
+            ? { type: AllocateInType.Doses }
+            : undefined,
       });
     });
     // Expect dependencies to be stable
