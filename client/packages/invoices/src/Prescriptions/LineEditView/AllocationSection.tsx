@@ -16,7 +16,7 @@ import {
 } from '../../Allocation/useAllocationContext';
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
-import { AutoAllocatePrescribedQuantityField } from '../../Allocation/AutoAllocatePrescribedQuantityField';
+import { AutoAllocatePrescribedQuantityField } from './AutoAllocatePrescribedQuantityField';
 import { AllocateInSelector } from '../../Allocation/AllocateInSelector';
 
 interface AllocationProps {
@@ -84,7 +84,7 @@ const AllocationInner = ({ disabled }: { disabled?: boolean }) => {
         <AutoAllocatePrescribedQuantityField />
       )}
       <Grid display="flex" alignItems="center" gap={1}>
-        <AutoAllocateField />
+        <AutoAllocateField inputColor="white" />
         <AllocateInSelector />
       </Grid>
       <AccordionPanelSection

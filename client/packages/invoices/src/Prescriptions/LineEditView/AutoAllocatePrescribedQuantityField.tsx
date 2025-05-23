@@ -7,7 +7,7 @@ import {
   InputLabel,
 } from '@openmsupply-client/common';
 
-import { useAllocationContext } from './useAllocationContext';
+import { useAllocationContext } from '../../Allocation/useAllocationContext';
 
 export const AutoAllocatePrescribedQuantityField = () => {
   const t = useTranslation();
@@ -56,6 +56,7 @@ export const AutoAllocatePrescribedQuantityField = () => {
         autoFocus
         value={prescribedQuantity ?? 0}
         onChange={handlePrescribedQuantityChange}
+        slotProps={{ htmlInput: { sx: { backgroundColor: 'white' } } }}
       />
     </>
   );

@@ -148,5 +148,6 @@ const UnitQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
     max={props.rowData.availablePacks}
     decimalLimit={2}
     min={0}
+    slotProps={{ htmlInput: { sx: { backgroundColor: 'white' } } }}
   />
 );

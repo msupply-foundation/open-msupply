@@ -10,7 +10,7 @@ import {
 import { useAllocationContext } from './useAllocationContext';
 import { getAllocatedQuantity } from './utils';
 
-export const AutoAllocateField = () => {
+export const AutoAllocateField = ({ inputColor }: { inputColor?: string }) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
 
@@ -57,6 +57,11 @@ export const AutoAllocateField = () => {
         autoFocus
         value={issueQuantity}
         onChange={handleIssueQuantityChange}
+        slotProps={
+          inputColor
+            ? { htmlInput: { sx: { backgroundColor: inputColor } } }
+            : undefined
+        }
       />
     </>
   );

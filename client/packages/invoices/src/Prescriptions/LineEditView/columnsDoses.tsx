@@ -42,6 +42,7 @@ const DoseQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
     max={packsToDoses(props.rowData.availablePacks, props.rowData)}
+    slotProps={{ htmlInput: { sx: { backgroundColor: 'white' } } }}
     decimalLimit={0}
     min={0}
   />
