@@ -87,9 +87,6 @@ export const QuantityTableComponent = ({
     columnDefinitions.push(vvmStatusesColumn(updateDraftLine));
   }
 
-  console.log('vvm status enabled', hasVvmStatusesEnabled);
-  console.log('item is vaccine', item?.isVaccine);
-
   columnDefinitions.push(
     getColumnLookupWithOverrides('packSize', {
       Cell: PackSizeEntryCell<DraftInboundLine>,
