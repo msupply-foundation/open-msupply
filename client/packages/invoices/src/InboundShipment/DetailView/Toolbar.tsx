@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarContentPortal,
   Box,
@@ -35,7 +35,13 @@ const InboundInfoPanel = ({
   return <Alert severity="info">{loadMessage(shipment)}</Alert>;
 };
 
-export const Toolbar: FC = () => {
+interface ToolbarProps {
+  simplifiedTabletView?: boolean;
+}
+
+export const Toolbar = ({ simplifiedTabletView }: ToolbarProps) => {
+  const t = useTranslation();
+
   const isDisabled = useInbound.utils.isDisabled();
   const { data } = useInbound.lines.items();
   const { data: shipment } = useInbound.document.get();
@@ -45,7 +51,6 @@ export const Toolbar: FC = () => {
     'theirReference',
   ]);
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
-  const t = useTranslation();
 
   const isTransfer = !!shipment?.linkedShipment?.id;
   if (!data) return null;
@@ -107,22 +112,24 @@ export const Toolbar: FC = () => {
             <InboundInfoPanel shipment={shipment} />
           </Box>
         </Grid>
-        <Grid
-          display="flex"
-          gap={1}
-          justifyContent="flex-end"
-          alignItems="center"
-        >
-          <Box sx={{ marginRight: 2 }}>
-            <Switch
-              label={t('label.group-by-item')}
-              onChange={toggleIsGrouped}
-              checked={isGrouped}
-              size="small"
-              color="secondary"
-            />
-          </Box>
-        </Grid>
+        {!simplifiedTabletView && (
+          <Grid
+            display="flex"
+            gap={1}
+            justifyContent="flex-end"
+            alignItems="center"
+          >
+            <Box sx={{ marginRight: 2 }}>
+              <Switch
+                label={t('label.group-by-item')}
+                onChange={toggleIsGrouped}
+                checked={isGrouped}
+                size="small"
+                color="secondary"
+              />
+            </Box>
+          </Grid>
+        )}
       </Grid>
     </AppBarContentPortal>
   );
