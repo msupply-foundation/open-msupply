@@ -47,6 +47,13 @@ fragment StockLine on StockLineNode {
     id
     dosesPerUnit
   }
+  vvmStatus {
+    __typename
+    id
+    level
+    unusable
+    description
+  }
 }
 
 fragment ItemRow on ItemNode {
