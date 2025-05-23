@@ -12,7 +12,7 @@ import {
   getValueInUnitsOrPacks,
   Representation,
   RepresentationValue,
-} from '../RequestRequisition/DetailView/RequestLineEdit/utils';
+} from './utils';
 
 interface LayoutProps {
   Top: React.ReactElement;
