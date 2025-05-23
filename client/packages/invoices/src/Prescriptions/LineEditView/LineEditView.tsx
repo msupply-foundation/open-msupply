@@ -125,7 +125,7 @@ export const PrescriptionLineEditView = () => {
     }
 
     if (allocationIsDirty) {
-      savePrescriptionItemLineData({
+      await savePrescriptionItemLineData({
         itemId: contextItemId,
         lines: draftLines,
         prescribedQuantity: prescribedQuantity,
@@ -135,22 +135,16 @@ export const PrescriptionLineEditView = () => {
 
     // TODO: Move to picked status? Backend?
 
-    // For "NEW" items, navigate to newly-created item page
-
-    // TODO: Fix this logic, not working currently
-    if (newItemId.current) {
-      const itemId = newItemId.current;
-      newItemId.current = undefined;
+    if (itemId === 'new') {
       navigate(
         RouteBuilder.create(AppRoute.Dispensary)
           .addPart(AppRoute.Prescription)
           .addPart(invoiceId)
-          .addPart(itemId)
+          .addPart(contextItemId)
           .build(),
         { replace: true }
       );
     }
-    isDirty.current = false;
   };
 
   if (isLoading || !itemId) return <BasicSpinner />;
@@ -180,7 +174,8 @@ export const PrescriptionLineEditView = () => {
         Right={
           <>
             <PrescriptionLineEdit
-              itemId={itemId}
+              key={itemId}
+              itemId={itemId === 'new' ? undefined : itemId}
               programId={data?.programId ?? undefined}
               invoiceId={invoiceId}
               prefOptions={{

@@ -1,10 +1,10 @@
 import { useMutation } from '@openmsupply-client/common';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { DraftStockOutLineFragment } from 'packages/invoices/src/OutboundShipment/api/operations.generated';
+import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
 
-export const useSavePrescriptionItemLineData = (outboundId: string) => {
-  const { prescriptionApi, storeId } = usePrescriptionGraphQL();
-  // const queryClient = useQueryClient();
+export const useSavePrescriptionItemLineData = (invoiceId: string) => {
+  const { prescriptionApi, storeId, queryClient } = usePrescriptionGraphQL();
 
   return useMutation(
     async ({
@@ -21,7 +21,7 @@ export const useSavePrescriptionItemLineData = (outboundId: string) => {
       return await prescriptionApi.savePrescriptionItemLines({
         storeId,
         input: {
-          invoiceId: outboundId,
+          invoiceId,
           itemId,
           lines: lines.map(line => ({
             id: line.id,
@@ -35,8 +35,11 @@ export const useSavePrescriptionItemLineData = (outboundId: string) => {
     },
     {
       onSuccess: () => {
-        // TODO: Invalidate the query for the draft lines
-        // queryClient.invalidateQueries(keys.detail(outboundId));
+        queryClient.invalidateQueries([
+          PRESCRIPTION,
+          PRESCRIPTION_LINE,
+          invoiceId,
+        ]);
       },
     }
   );

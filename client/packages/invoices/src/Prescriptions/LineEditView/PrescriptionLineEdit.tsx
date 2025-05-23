@@ -39,14 +39,16 @@ export const PrescriptionLineEdit = ({
   // Needs to update when user clicks on different item in the list, or when
   // changing item with the selector
   const [currentItemId, setCurrentItemId] = useBufferState(itemId);
-  // const [currentItem, setCurrentItem] = useBufferState(item);
 
   const { isDisabled, rows: items } = usePrescription(); // TODO: how much can we strip now?
 
-  const { initialise, item } = useAllocationContext(({ initialise, item }) => ({
-    initialise,
-    item,
-  }));
+  const { clear, initialise, item } = useAllocationContext(
+    ({ initialise, item, clear }) => ({
+      initialise,
+      item,
+      clear,
+    })
+  );
 
   const { refetch: queryData, isFetching } = useOutboundLineEditData(
     invoiceId,
@@ -54,7 +56,13 @@ export const PrescriptionLineEdit = ({
   );
 
   useEffect(() => {
-    // Manual query, only initialise when data is available
+    if (!currentItemId) {
+      clear(); // Clear context if switched to new item
+      return;
+    }
+
+    // Manual query for item + prescription line data,
+    // only initialise for allocation when data is available
     queryData().then(({ data }) => {
       if (!data) return;
 
@@ -86,17 +94,16 @@ export const PrescriptionLineEdit = ({
       <AccordionPanelSection
         // Key ensures component will reload when switching item, but not when
         // making other changes within item (e.g. quantity)
-        key={itemId + '_item_search'}
         title={t('label.item', { count: 1 })}
         closedSummary={item?.name}
         defaultExpanded={isNew && !isDisabled}
       >
         <Grid flex={1}>
           <StockItemSearchInput
-            autoFocus={!itemId}
-            openOnFocus={!itemId}
+            autoFocus={isNew}
+            openOnFocus={isNew}
             disabled={!isNew || isDisabled}
-            currentItemId={currentItemId}
+            currentItemId={itemId ?? currentItemId}
             onChange={item => setCurrentItemId(item?.id)}
             filter={{ isVisibleOrOnHand: true }}
             extraFilter={
@@ -112,11 +119,7 @@ export const PrescriptionLineEdit = ({
       {isFetching ? (
         <BasicSpinner />
       ) : item ? (
-        <PrescriptionLineEditForm
-          key={itemId + '_form'}
-          disabled={isDisabled}
-          isNew={isNew}
-        />
+        <PrescriptionLineEditForm disabled={isDisabled} isNew={isNew} />
       ) : null}
     </Grid>
   );
