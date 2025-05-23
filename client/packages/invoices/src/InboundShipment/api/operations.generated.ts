@@ -22,8 +22,7 @@ export type InboundLineFragment = {
   itemName: string;
   itemVariantId?: string | null;
   vvmStatusId?: string | null;
-  donorId?: string | null;
-  donorName?: string | null;
+  donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   itemVariant?: {
     __typename: 'ItemVariantNode';
     id: string;
@@ -85,9 +84,8 @@ export type InboundFragment = {
   type: Types.InvoiceNodeType;
   taxPercentage?: number | null;
   expectedDeliveryDate?: string | null;
-  defaultDonorId?: string | null;
-  defaultDonorName?: string | null;
   currencyRate: number;
+  defaultDonor?: { __typename: 'NameNode'; id: string; name: string } | null;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
   user?: {
     __typename: 'UserNode';
@@ -123,8 +121,7 @@ export type InboundFragment = {
       itemName: string;
       itemVariantId?: string | null;
       vvmStatusId?: string | null;
-      donorId?: string | null;
-      donorName?: string | null;
+      donor?: { __typename: 'NameNode'; id: string; name: string } | null;
       itemVariant?: {
         __typename: 'ItemVariantNode';
         id: string;
@@ -300,9 +297,12 @@ export type InvoiceQuery = {
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
-        defaultDonorId?: string | null;
-        defaultDonorName?: string | null;
         currencyRate: number;
+        defaultDonor?: {
+          __typename: 'NameNode';
+          id: string;
+          name: string;
+        } | null;
         linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
         user?: {
           __typename: 'UserNode';
@@ -338,8 +338,7 @@ export type InvoiceQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
-            donorId?: string | null;
-            donorName?: string | null;
+            donor?: { __typename: 'NameNode'; id: string; name: string } | null;
             itemVariant?: {
               __typename: 'ItemVariantNode';
               id: string;
@@ -450,9 +449,12 @@ export type InboundByNumberQuery = {
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
-        defaultDonorId?: string | null;
-        defaultDonorName?: string | null;
         currencyRate: number;
+        defaultDonor?: {
+          __typename: 'NameNode';
+          id: string;
+          name: string;
+        } | null;
         linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
         user?: {
           __typename: 'UserNode';
@@ -488,8 +490,7 @@ export type InboundByNumberQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
-            donorId?: string | null;
-            donorName?: string | null;
+            donor?: { __typename: 'NameNode'; id: string; name: string } | null;
             itemVariant?: {
               __typename: 'ItemVariantNode';
               id: string;
@@ -1016,8 +1017,10 @@ export const InboundLineFragmentDoc = gql`
     itemName
     itemVariantId
     vvmStatusId
-    donorId
-    donorName
+    donor(storeId: $storeId) {
+      id
+      name
+    }
     itemVariant {
       id
       dosesPerUnit
@@ -1079,8 +1082,10 @@ export const InboundFragmentDoc = gql`
     type
     taxPercentage
     expectedDeliveryDate
-    defaultDonorId
-    defaultDonorName
+    defaultDonor(storeId: $storeId) {
+      id
+      name
+    }
     linkedShipment {
       __typename
       id

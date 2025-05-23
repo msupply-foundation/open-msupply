@@ -3955,8 +3955,7 @@ export type InvoiceLineNode = {
   __typename: 'InvoiceLineNode';
   batch?: Maybe<Scalars['String']['output']>;
   costPricePerPack: Scalars['Float']['output'];
-  donorId?: Maybe<Scalars['String']['output']>;
-  donorName?: Maybe<Scalars['String']['output']>;
+  donor?: Maybe<NameNode>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   foreignCurrencyPriceBeforeTax?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
@@ -3989,6 +3988,10 @@ export type InvoiceLineNode = {
   totalBeforeTax: Scalars['Float']['output'];
   type: InvoiceLineNodeType;
   vvmStatusId?: Maybe<Scalars['String']['output']>;
+};
+
+export type InvoiceLineNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export enum InvoiceLineNodeType {
@@ -4035,8 +4038,7 @@ export type InvoiceNode = {
   createdDatetime: Scalars['DateTime']['output'];
   currency?: Maybe<CurrencyNode>;
   currencyRate: Scalars['Float']['output'];
-  defaultDonorId?: Maybe<Scalars['String']['output']>;
-  defaultDonorName?: Maybe<Scalars['String']['output']>;
+  defaultDonor?: Maybe<NameNode>;
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   diagnosis?: Maybe<DiagnosisNode>;
   diagnosisId?: Maybe<Scalars['String']['output']>;
@@ -4084,6 +4086,10 @@ export type InvoiceNode = {
    */
   user?: Maybe<UserNode>;
   verifiedDatetime?: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type InvoiceNodeDefaultDonorArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type InvoiceNodeOtherPartyArgs = {
@@ -8089,6 +8095,7 @@ export type StockLineNode = {
   barcode?: Maybe<Scalars['String']['output']>;
   batch?: Maybe<Scalars['String']['output']>;
   costPricePerPack: Scalars['Float']['output'];
+  donor?: Maybe<NameNode>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   item: ItemNode;
@@ -8109,6 +8116,10 @@ export type StockLineNode = {
   vvmStatus?: Maybe<VvmstatusNode>;
   vvmStatusId?: Maybe<Scalars['String']['output']>;
   vvmStatusLogs?: Maybe<VvmstatusLogConnector>;
+};
+
+export type StockLineNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type StockLineReducedBelowZero =

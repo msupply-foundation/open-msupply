@@ -11,6 +11,8 @@ import {
   DetailTabs,
   useRowHighlight,
   useBreadcrumbs,
+  PreferenceKey,
+  usePreference,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -95,6 +97,10 @@ const DetailViewComponent = ({
 
 export const DetailView = () => {
   const { data: stocktake, isLoading } = useStocktakeOld.document.get();
+  const { data: preferences } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor
+  );
+
   const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
@@ -140,6 +146,9 @@ export const DetailView = () => {
             mode={mode}
             item={entity}
             isInitialStocktake={stocktake.isInitialStocktake}
+            enableDonorTracking={
+              preferences?.[PreferenceKey.AllowTrackingOfStockByDonor] ?? false
+            }
           />
         )}
       </TableProvider>
