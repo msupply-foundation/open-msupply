@@ -20,6 +20,7 @@ import {
   LocaleKey,
   useIntlUtils,
   Formatter,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { DraftStockOutLineFragment } from '../../api/operations.generated';
@@ -98,6 +99,7 @@ export const useOutboundLineEditColumns = ({
         return `${rowData.vvmStatus?.description} (${rowData.vvmStatus?.level})`;
       },
       width: 85,
+      Cell: TooltipTextCell,
     });
   }
 
