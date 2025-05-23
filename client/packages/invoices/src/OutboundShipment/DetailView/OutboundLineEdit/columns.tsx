@@ -58,7 +58,8 @@ export const useOutboundLineEditColumns = ({
 
   const { data: prefs } = usePreference(
     PreferenceKey.SortByVvmStatusThenExpiry,
-    PreferenceKey.ManageVvmStatusForStock
+    PreferenceKey.ManageVvmStatusForStock,
+    PreferenceKey.ManageVaccinesInDoses
   );
 
   const packSize =
@@ -89,7 +90,11 @@ export const useOutboundLineEditColumns = ({
   ];
 
   // If we have use VVM status, we need to show the VVM status column
-  if (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) {
+  if (
+    prefs?.manageVvmStatusForStock &&
+    item?.isVaccine &&
+    prefs?.manageVaccinesInDoses
+  ) {
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
