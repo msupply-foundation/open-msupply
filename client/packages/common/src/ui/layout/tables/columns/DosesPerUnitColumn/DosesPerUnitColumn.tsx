@@ -48,4 +48,5 @@ export const getDosesPerUnitColumn = <
         : UNDEFINED_STRING_VALUE;
     }
   },
+  defaultHideOnMobile: true,
 });
