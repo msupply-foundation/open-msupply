@@ -286,9 +286,9 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
-            donor_id,
-            vvm_status_id,
+            donor_link_id: donor_id,
             reason_option_id,
+            vvm_status_id,
         };
 
         let result = adjust_negative_values(result);
@@ -343,7 +343,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     foreign_currency_price_before_tax,
                     item_variant_id,
                     linked_invoice_id,
-                    donor_id,
+                    donor_link_id,
                     vvm_status_id,
                     reason_option_id,
                 },
@@ -375,7 +375,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             item_variant_id,
             reason_option_id,
             linked_invoice_id,
-            donor_id,
+            donor_id: donor_link_id,
             vvm_status_id,
         };
         Ok(PushTranslateResult::upsert(

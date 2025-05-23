@@ -467,7 +467,7 @@ mod test {
             inbound_line,
             inline_edit(&inbound_line, |mut u| {
                 u.id = "new_invoice_line_id_with_donor".to_string();
-                u.donor_id = Some("donor_a".to_string());
+                u.donor_link_id = Some("donor_a".to_string());
 
                 u
             })
@@ -497,7 +497,7 @@ mod test {
             inbound_line,
             inline_edit(&inbound_line, |mut u| {
                 u.id = "new_invoice_line_id_with_no_donor".to_string();
-                u.donor_id = None;
+                u.donor_link_id = None;
                 u
             })
         );

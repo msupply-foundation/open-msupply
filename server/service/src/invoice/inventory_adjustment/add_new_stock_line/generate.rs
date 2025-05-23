@@ -88,7 +88,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_id: None,
+        default_donor_link_id: None,
     };
 
     let invoice_line_id = uuid();
