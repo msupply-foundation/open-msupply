@@ -357,6 +357,7 @@ export const useExpansionColumns = (
       label: 'label.donor',
       width: 175,
       accessor: ({ rowData }) => rowData.donor?.name,
+      defaultHideOnMobile: true,
     });
   }
 
