@@ -37,6 +37,10 @@ fragment StockLineRow on StockLineNode {
     id
     description
   }
+  campaign {
+    id
+    name
+  }
 }
 
 fragment RepackStockLine on RepackStockLineNode {

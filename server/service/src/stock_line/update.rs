@@ -30,6 +30,7 @@ pub struct UpdateStockLine {
     pub barcode: Option<String>,
     pub item_variant_id: Option<NullableUpdate<String>>,
     pub vvm_status_id: Option<String>,
+    pub campaign_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -139,6 +140,7 @@ fn generate(
         barcode,
         item_variant_id,
         vvm_status_id,
+        campaign_id,
     }: UpdateStockLine,
 ) -> Result<GenerateResult, UpdateStockLineError> {
     let mut existing = existing_line.stock_line_row;
@@ -190,6 +192,7 @@ fn generate(
         .map(|v| v.value)
         .unwrap_or(existing.item_variant_id);
     existing.vvm_status_id = vvm_status_id.or(existing.vvm_status_id);
+    existing.campaign_id = campaign_id.or(existing.campaign_id);
 
     Ok(GenerateResult {
         new_stock_line: existing,
