@@ -8,6 +8,7 @@ import {
 import { LocaleKey, TypedTFunction } from '@common/intl';
 import React from 'react';
 import { StockOutAlert } from './Components';
+import { AllocateInOption } from '../Allocation/useAllocationContext';
 
 export const createStockOutPlaceholderRow = (
   invoiceId: string,
@@ -127,6 +128,7 @@ export const getAllocationAlerts = (
   placeholderQuantity: number,
   hasOnHold: boolean,
   hasExpired: boolean,
+  allocateIn: AllocateInOption,
   format: (value: number, options?: Intl.NumberFormatOptions) => string,
   t: TypedTFunction<LocaleKey>
 ) => {
@@ -143,7 +145,7 @@ export const getAllocationAlerts = (
     });
   }
 
-  if (allocatedQuantity !== requestedQuantity && allocatedQuantity > 0) {
+  if (allocatedQuantity > requestedQuantity && allocatedQuantity > 0) {
     alerts.push({
       message: t('messages.over-allocated', {
         quantity: format(allocatedQuantity),
@@ -153,11 +155,33 @@ export const getAllocationAlerts = (
     });
     return alerts;
   }
-  if (placeholderQuantity > 0) {
+
+  if (allocatedQuantity < requestedQuantity) {
     alerts.push({
-      message: t('messages.placeholder-allocated', { placeholderQuantity }),
-      severity: 'info',
+      // todo this message should say units/doses respectively
+      message: t('warning.cannot-create-placeholder-units', {
+        allocatedQuantity: format(allocatedQuantity),
+        requestedQuantity: format(requestedQuantity),
+      }),
+      severity: 'warning',
     });
+    // TODO: ... maybe pass in draftLines for this?
+    // // do any lines have a decimal number of packs?
+    // message should mention doses/units accordingly (does it need to show nearest above?)
+    // const quantityAsPacks = packsToQuantity(allocateIn.type, allocatedQuantity);
+    // if (NumUtils.round(quantityAsPacks) !== quantityAsPacks) {
+    //   const nearestAbove = Math.ceil(numPacks) * packSize;
+    //   alerts.push({
+    //     message: t('messages.partial-pack-warning', { nearestAbove }),
+    //     severity: 'warning',
+    //   });
+    // }
+    if (placeholderQuantity > 0) {
+      alerts.push({
+        message: t('messages.placeholder-allocated', { placeholderQuantity }),
+        severity: 'info',
+      });
+    }
   }
 
   return alerts;

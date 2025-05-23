@@ -67,6 +67,7 @@ interface AllocationContext {
     allowPrescribedQuantity?: boolean;
     scannedBatch?: string;
     allocateIn?: AllocateInOption;
+    ignoreNonAllocatableLines?: boolean;
   }) => void;
 
   setAlerts: (alerts: StockOutAlert[]) => void;
@@ -124,6 +125,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     allowPrescribedQuantity,
     scannedBatch,
     allocateIn,
+    ignoreNonAllocatableLines,
   }) => {
     const sortedLines = draftLines.sort(SorterByStrategy[strategy]);
 
@@ -146,7 +148,9 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       allocateIn: allocateIn ?? { type: AllocateInType.Units },
 
       draftLines: allocatableLines,
-      nonAllocatableLines,
+      // When not ignored, we still want to display non-allocatable lines to the user
+      // (e.g. stock on hold, expired) for context, and show alerts about them
+      nonAllocatableLines: ignoreNonAllocatableLines ? [] : nonAllocatableLines,
 
       placeholderUnits: allowPlaceholder ? (placeholderQuantity ?? 0) : null,
       prescribedQuantity: allowPrescribedQuantity
@@ -246,7 +250,9 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     );
 
     const stillToAllocate =
-      result.remainingQuantity > 0 ? result.remainingQuantity : 0;
+      result.remainingQuantity > 0 && placeholderUnits !== null
+        ? result.remainingQuantity
+        : 0;
 
     const alerts = getAllocationAlerts(
       quantity,
@@ -254,6 +260,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       stillToAllocate,
       hasOnHold,
       hasExpired,
+      allocateIn,
       format,
       t
     );

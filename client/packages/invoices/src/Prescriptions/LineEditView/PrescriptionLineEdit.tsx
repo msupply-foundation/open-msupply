@@ -73,6 +73,7 @@ export const PrescriptionLineEdit = ({
           : AllocationStrategy.FEFO,
         allowPlaceholder: false,
         allowPrescribedQuantity: true,
+        ignoreNonAllocatableLines: true,
         // In prescriptions, default to allocate in doses for vaccines
         // if pref is on
         allocateIn:
