@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Autocomplete,
   BasicTextInput,
@@ -8,7 +8,6 @@ import {
   ReasonOptionNode,
   ReasonOptionNodeType,
 } from '@openmsupply-client/common';
-import { useReasonOptions } from '../api';
 
 interface ReasonOptionsSearchInputProps {
   value?: ReasonOptionNode | null;
@@ -20,9 +19,11 @@ interface ReasonOptionsSearchInputProps {
   isDisabled?: boolean;
   onBlur?: () => void;
   initialStocktake?: boolean;
+  reasonOptions: ReasonOptionNode[];
+  isLoading: boolean;
 }
 
-export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
+export const ReasonOptionsSearchInput = ({
   value,
   width,
   onChange,
@@ -32,17 +33,16 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
   isDisabled,
   onBlur,
   initialStocktake,
-}) => {
-  const { data, isLoading } = useReasonOptions();
-
+  reasonOptions,
+  isLoading,
+}: ReasonOptionsSearchInputProps) => {
   const reasonFilter = (reasonOption: ReasonOptionNode) => {
     if (Array.isArray(type)) {
       return type.includes(reasonOption.type);
     }
     return reasonOption.type === type;
   };
-  const reasons = (data?.nodes ?? []).filter(reasonFilter);
-
+  const reasons = (reasonOptions ?? []).filter(reasonFilter);
   const isRequired = reasons.length !== 0 && !initialStocktake;
 
   return (
@@ -71,7 +71,12 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
             slotProps={{
               input: {
                 disableUnderline: false,
-                style: props.disabled ? { paddingLeft: 0 } : {},
+                sx: {
+                  background: isDisabled
+                    ? theme => theme.palette.background.drawer
+                    : theme => theme.palette.background.white,
+                  paddingLeft: props.disabled ? 0 : {},
+                },
                 ...props.InputProps,
               },
             }}

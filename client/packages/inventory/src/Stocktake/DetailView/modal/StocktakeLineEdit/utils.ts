@@ -1,5 +1,5 @@
 import { FnUtils } from '@openmsupply-client/common';
-import { ItemRowFragment, StockLineFragment } from '@openmsupply-client/system';
+import { StockLineFragment } from '@openmsupply-client/system';
 import { StocktakeLineFragment } from './../../../api';
 
 // A DraftStocktakeLine represents a stocktake line with additional state flags:
@@ -18,8 +18,7 @@ export type DraftStocktakeLine = Omit<StocktakeLineFragment, '__typename'> & {
 export const DraftLine = {
   fromItem: (
     stocktakeId: string,
-    item: ItemRowFragment,
-    defaultPackSize: number
+    item: StocktakeLineFragment['item']
   ): DraftStocktakeLine => {
     return {
       stocktakeId,
@@ -32,7 +31,7 @@ export const DraftLine = {
       itemId: item.id,
       sellPricePerPack: 0,
       costPricePerPack: 0,
-      packSize: defaultPackSize,
+      packSize: item.defaultPackSize,
       location: null,
       itemName: item.name,
       item: {
@@ -43,6 +42,7 @@ export const DraftLine = {
         name: item.name,
         isVaccine: item.isVaccine,
         doses: item.doses,
+        defaultPackSize: item.defaultPackSize,
       },
     };
   },
@@ -72,6 +72,7 @@ export const DraftLine = {
         name: stockLine.item.name,
         isVaccine: stockLine.item.isVaccine,
         doses: stockLine.item.doses,
+        defaultPackSize: stockLine.item.defaultPackSize,
       },
     };
   },

@@ -51,7 +51,7 @@ export const useInboundShipmentColumns = ({
 }: InboundShipmentColumnsProps) => {
   const t = useTranslation();
   const { data: preferences } = usePreference(
-    PreferenceKey.DisplayVaccinesInDoses,
+    PreferenceKey.ManageVaccinesInDoses,
     PreferenceKey.AllowTrackingOfStockByDonor
   );
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
@@ -200,7 +200,7 @@ export const useInboundShipmentColumns = ({
     ],
   ];
 
-  if (preferences?.displayVaccinesInDoses) {
+  if (preferences?.manageVaccinesInDoses) {
     columns.push(getDosesPerUnitColumn(t));
   }
 
@@ -249,7 +249,7 @@ export const useInboundShipmentColumns = ({
     ]
   );
 
-  if (preferences?.displayVaccinesInDoses) {
+  if (preferences?.manageVaccinesInDoses) {
     columns.push(getDosesQuantityColumn());
   }
 
@@ -287,8 +287,8 @@ export const useInboundShipmentColumns = ({
       label: 'label.donor',
       accessor: ({ rowData }) =>
         getColumnProperty(rowData, [
-          { path: ['lines', 'donorName'] },
-          { path: ['donorName'], default: '' },
+          { path: ['lines', 'donor', 'name'] },
+          { path: ['donor', 'name'], default: '' },
         ]),
       sortable: false,
     });
@@ -350,7 +350,7 @@ export const useExpansionColumns = (
       key: 'donorName',
       label: 'label.donor',
       width: 175,
-      accessor: ({ rowData }) => rowData.donorName,
+      accessor: ({ rowData }) => rowData.donor?.name,
     });
   }
 

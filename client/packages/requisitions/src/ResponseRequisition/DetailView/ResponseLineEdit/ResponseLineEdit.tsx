@@ -4,6 +4,7 @@ import {
   ItemRowFragment,
   ReasonOptionsSearchInput,
   StockItemSearchInput,
+  useReasonOptions,
 } from '@openmsupply-client/system';
 import { DraftResponseLine } from './hooks';
 import {
@@ -77,6 +78,7 @@ export const ResponseLineEdit = ({
   const [theirStatsAnchorEl, setTheirStatsAnchorEl] =
     React.useState<null | HTMLElement>(null);
   const isNew = !draft;
+  const { data: reasonOptions, isLoading } = useReasonOptions();
 
   const incomingStock =
     (draft?.incomingUnits ?? 0) + (draft?.additionInUnits ?? 0);
@@ -414,7 +416,7 @@ export const ResponseLineEdit = ({
                   />
                 }
                 labelWidth={LABEL_WIDTH}
-                label={t('label.suggested-quantity')}
+                label={t('label.suggested')}
                 sx={{ marginBottom: 1 }}
               />
               <InputWithLabelRow
@@ -507,6 +509,8 @@ export const ResponseLineEdit = ({
                         isFinalised
                       }
                       onBlur={save}
+                      reasonOptions={reasonOptions?.nodes ?? []}
+                      isLoading={isLoading}
                     />
                   }
                   labelWidth={'66px'}
