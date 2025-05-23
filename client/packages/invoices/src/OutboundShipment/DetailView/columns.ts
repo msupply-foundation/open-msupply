@@ -133,6 +133,7 @@ export const useOutboundColumns = ({
             { path: ['lines', 'expiryDate'] },
             { path: ['expiryDate'] },
           ]),
+          defaultHideOnMobile: true,
       },
     ],
     [
@@ -149,6 +150,7 @@ export const useOutboundColumns = ({
             { path: ['location', 'code'], default: '' },
           ]),
         width: 100,
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -164,6 +166,7 @@ export const useOutboundColumns = ({
             { path: ['lines', 'item', 'unitName'] },
             { path: ['item', 'unitName'], default: '' },
           ]),
+          defaultHideOnMobile: true,
       },
     ],
     [
@@ -172,6 +175,7 @@ export const useOutboundColumns = ({
         getSortValue: row => String(getPackSizeValue(row, getColumnProperty)),
 
         accessor: ({ rowData }) => getPackSizeValue(rowData, getColumnProperty),
+        defaultHideOnMobile: true,
       },
     ],
   ];
@@ -222,6 +226,7 @@ export const useOutboundColumns = ({
             return getUnitQuantity(rowData);
           }
         },
+        defaultHideOnMobile: true,
       },
     ]
   );
@@ -256,6 +261,7 @@ export const useOutboundColumns = ({
           return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
         }
       },
+      defaultHideOnMobile: true,
     },
     {
       label: 'label.total',
@@ -286,6 +292,7 @@ export const useOutboundColumns = ({
           return x;
         }
       },
+      defaultHideOnMobile: true,
     },
     expansionColumn
   );
