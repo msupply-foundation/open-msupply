@@ -265,11 +265,8 @@ const getAllocateInDosesColumns = (
         : 'label.doses-per-unit',
       width: 80,
       align: ColumnAlign.Right,
-      accessor: ({ rowData }) => {
-        return (
-          rowData?.itemVariant?.dosesPerUnit ?? rowData.defaultDosesPerUnit
-        );
-      },
+      accessor: ({ rowData }) =>
+        rowData?.itemVariant?.dosesPerUnit ?? rowData.defaultDosesPerUnit,
     },
     {
       label: 'label.in-store-doses',

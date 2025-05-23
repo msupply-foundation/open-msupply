@@ -18,14 +18,7 @@ export const getPrescriptionLineDosesColumns = (
     key: 'availableDoses',
     align: ColumnAlign.Right,
     width: 85,
-    accessor: ({ rowData }) => {
-      const total = (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1);
-
-      return (
-        total *
-        (rowData.itemVariant?.dosesPerUnit ?? rowData.defaultDosesPerUnit)
-      );
-    },
+    accessor: ({ rowData }) => packsToDoses(rowData.availablePacks, rowData),
   },
   {
     key: 'dosesIssued',

@@ -5,7 +5,6 @@ import {
   ColumnDescription,
   ExpiryDateCell,
   Formatter,
-  getDosesPerUnitColumn,
   NumberCell,
   NumberInputCell,
   PreferenceKey,
@@ -78,7 +77,18 @@ export const usePrescriptionLineEditColumns = ({
   }
 
   if (displayInDoses) {
-    columnDefinitions.push(getDosesPerUnitColumn(t, pluralisedUnitName));
+    columnDefinitions.push({
+      key: 'dosesPerUnit',
+      label: unit
+        ? t('label.doses-per-unit-name', {
+            unit,
+          })
+        : 'label.doses-per-unit',
+      width: 80,
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) =>
+        rowData?.itemVariant?.dosesPerUnit ?? rowData.defaultDosesPerUnit,
+    });
   } else {
     columnDefinitions.push(['packSize', { width: 90 }]);
   }
