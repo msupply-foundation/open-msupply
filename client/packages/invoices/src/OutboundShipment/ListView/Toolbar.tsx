@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarContentPortal,
   useTranslation,
@@ -10,12 +10,13 @@ import {
   FilterRule,
 } from '@openmsupply-client/common';
 
-export const Toolbar: FC<{
+interface ToolbarProps {
   filter: FilterController;
   simplifiedTabletView?: boolean;
-}> = ({ filter, simplifiedTabletView }) => {
-  const t = useTranslation();
+}
 
+export const Toolbar = ({ filter, simplifiedTabletView }: ToolbarProps) => {
+  const t = useTranslation();
   const key = 'invoiceNumber';
   const filterString =
     ((filter.filterBy?.[key] as FilterRule)?.equalTo as string) || '';
