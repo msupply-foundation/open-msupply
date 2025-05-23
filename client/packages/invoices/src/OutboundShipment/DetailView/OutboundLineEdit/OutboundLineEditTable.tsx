@@ -13,6 +13,7 @@ import {
   useTableStore,
   usePreference,
   PreferenceKey,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
@@ -118,6 +119,7 @@ export const OutboundLineEditTable = ({
     PreferenceKey.SortByVvmStatusThenExpiry,
     PreferenceKey.ManageVvmStatusForStock
   );
+  const useSimplifiedTabletView = useSimplifiedTabletUI();
 
   const {
     draftLines,
@@ -205,7 +207,7 @@ export const OutboundLineEditTable = ({
       <Divider margin={10} />
       <Box
         style={{
-          maxHeight: 325,
+          maxHeight: useSimplifiedTabletView ? 290 : 325,
           display: 'flex',
           flexDirection: 'column',
           overflowX: 'hidden',
@@ -218,6 +220,7 @@ export const OutboundLineEditTable = ({
           data={lines}
           dense
           additionalRows={additionalRows}
+          enableColumnSelection={true}
         />
       </Box>
     </Box>

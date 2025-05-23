@@ -78,6 +78,7 @@ export const useOutboundLineEditColumns = ({
       accessor: ({ rowData }) => canAutoAllocate(rowData, packSize),
       align: ColumnAlign.Center,
       width: 35,
+      defaultHideOnMobile: true,
     },
     [
       'batch',
@@ -87,7 +88,6 @@ export const useOutboundLineEditColumns = ({
     ],
   ];
 
-  // If we have use VVM status, we need to show the VVM status column
   if (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) {
     columnDefinitions.push({
       key: 'vvmStatus',
@@ -98,6 +98,7 @@ export const useOutboundLineEditColumns = ({
         return `${rowData.vvmStatus?.description} (${rowData.vvmStatus?.level})`;
       },
       width: 85,
+      defaultHideOnMobile: true,
     });
   }
 
@@ -115,6 +116,7 @@ export const useOutboundLineEditColumns = ({
         accessor: ({ rowData }) => rowData.location?.code,
         width: 85,
         Cell: LocationCell,
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -122,6 +124,7 @@ export const useOutboundLineEditColumns = ({
       {
         Cell: CurrencyCell,
         width: 85,
+        defaultHideOnMobile: true,
       },
     ]
   );
@@ -139,10 +142,14 @@ export const useOutboundLineEditColumns = ({
           return rowData.sellPricePerPack / currency.rate;
         }
       },
+      defaultHideOnMobile: true,
     });
   }
 
-  columnDefinitions.push(['packSize', { width: 90 }]);
+  columnDefinitions.push([
+    'packSize',
+    { width: 90, defaultHideOnMobile: true },
+  ]);
 
   if (allocateIn.type === AllocateInType.Doses) {
     columnDefinitions.push(...getAllocateInDosesColumns(t, allocate, unit));
@@ -160,6 +167,7 @@ export const useOutboundLineEditColumns = ({
       rowData.stockLineOnHold || rowData.location?.onHold,
     align: ColumnAlign.Center,
     width: 70,
+    defaultHideOnMobile: true,
   });
 
   const columns = useColumns<DraftStockOutLineFragment>(columnDefinitions, {}, [
@@ -190,6 +198,7 @@ const getAllocateInUnitsColumns = (
     align: ColumnAlign.Right,
     width: 80,
     accessor: ({ rowData }) => rowData.inStorePacks,
+    defaultHideOnMobile: true,
   },
   {
     Cell: NumberCell,
@@ -218,6 +227,7 @@ const getAllocateInUnitsColumns = (
       labelProps: { unit: pluralisedUnitName },
       accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
       width: 90,
+      defaultHideOnMobile: true,
     },
   ],
 ];
@@ -254,6 +264,7 @@ const getAllocateInDosesColumns = (
           rowData?.itemVariant?.dosesPerUnit ?? rowData.defaultDosesPerUnit
         );
       },
+      defaultHideOnMobile: true,
     },
     {
       label: 'label.in-store-doses',
@@ -262,6 +273,7 @@ const getAllocateInDosesColumns = (
       align: ColumnAlign.Right,
       width: 80,
       accessor: ({ rowData }) => packsToDoses(rowData.inStorePacks, rowData),
+      defaultHideOnMobile: true,
     },
     {
       label: 'label.available-doses',
@@ -299,6 +311,7 @@ const getAllocateInDosesColumns = (
         labelProps: { unit },
         accessor: ({ rowData }) => rowData.numberOfPacks,
         width: 90,
+        defaultHideOnMobile: true,
       },
     ],
   ];
