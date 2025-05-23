@@ -133,8 +133,8 @@ mod test {
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
         ContextRow, EqualFilter, MasterListNameJoinRepository, MasterListNameJoinRow,
-        MasterListRow, Name, NameRow, NameStoreJoinRepository, NameStoreJoinRow, ProgramRow,
-        ProgramSupplier, ProgramSupplierFilter, ProgramSupplierRepository, StoreRow,
+        MasterListRow, Name, NameLinkRow, NameRow, NameStoreJoinRepository, NameStoreJoinRow,
+        ProgramRow, ProgramSupplier, ProgramSupplierFilter, ProgramSupplierRepository, StoreRow,
     };
 
     #[actix_rt::test]
@@ -143,10 +143,18 @@ mod test {
             id: "name1".to_string(),
             ..Default::default()
         };
+        let name_link1 = NameLinkRow {
+            id: "name1".to_string(),
+            name_id: "name1".to_string(),
+        };
 
         let store_name1 = NameRow {
             id: "store_name1".to_string(),
             ..Default::default()
+        };
+        let store_name_link1 = NameLinkRow {
+            id: "store_name1".to_string(),
+            name_id: "store_name1".to_string(),
         };
         let store1 = StoreRow {
             id: "store1".to_string(),
@@ -156,6 +164,10 @@ mod test {
         let store_name2 = NameRow {
             id: "store_name2".to_string(),
             ..Default::default()
+        };
+        let store_name_link2 = NameLinkRow {
+            id: "store_name2".to_string(),
+            name_id: "store_name2".to_string(),
         };
 
         let store2 = StoreRow {
@@ -167,6 +179,10 @@ mod test {
         let store_name3 = NameRow {
             id: "store_name3".to_string(),
             ..Default::default()
+        };
+        let store_name_link3 = NameLinkRow {
+            id: "store_name3".to_string(),
+            name_id: "store_name3".to_string(),
         };
         let store3 = StoreRow {
             id: "store3".to_string(),
@@ -257,6 +273,12 @@ mod test {
                     store_name2.clone(),
                     store_name3.clone(),
                 ],
+                name_links: vec![
+                    name_link1,
+                    store_name_link1.clone(),
+                    store_name_link2.clone(),
+                    store_name_link3,
+                ],
                 master_lists: vec![master_list1, master_list2],
                 contexts: vec![context1, context2],
                 programs: vec![program1.clone(), program2.clone()],
@@ -296,6 +318,7 @@ mod test {
             Ok(vec![ProgramSupplier {
                 supplier: Name {
                     name_row: store_name1.clone(),
+                    name_link_row: store_name_link1.clone(),
                     name_store_join_row: Some(name_store_join2.clone()),
                     store_row: Some(store1.clone()),
                     properties: None,
@@ -326,6 +349,7 @@ mod test {
                 ProgramSupplier {
                     supplier: Name {
                         name_row: store_name1.clone(),
+                        name_link_row: store_name_link1,
                         name_store_join_row: Some(name_store_join2.clone()),
                         store_row: Some(store1.clone()),
                         properties: None,
@@ -335,6 +359,7 @@ mod test {
                 ProgramSupplier {
                     supplier: Name {
                         name_row: store_name2.clone(),
+                        name_link_row: store_name_link2,
                         name_store_join_row: Some(name_store_join3.clone()),
                         store_row: Some(store2.clone()),
                         properties: None,

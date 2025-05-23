@@ -32,24 +32,15 @@ export const AdditionalInfoSectionComponent = () => {
     PreferenceKey.AllowTrackingOfStockByDonor
   );
 
-  const {
-    id,
-    user,
-    comment,
-    colour,
-    createdDatetime,
-    defaultDonorId,
-    defaultDonorName,
-    update,
-  } = useInbound.document.fields([
-    'id',
-    'comment',
-    'colour',
-    'user',
-    'createdDatetime',
-    'defaultDonorId',
-    'defaultDonorName',
-  ]);
+  const { id, user, comment, colour, createdDatetime, defaultDonor, update } =
+    useInbound.document.fields([
+      'id',
+      'comment',
+      'colour',
+      'user',
+      'createdDatetime',
+      'defaultDonor',
+    ]);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
 
   return (
@@ -60,7 +51,7 @@ export const AdditionalInfoSectionComponent = () => {
             {donorModalOn && (
               <DonorEditModal
                 invoiceId={id}
-                donorId={defaultDonorId ?? ''}
+                donorId={defaultDonor?.id ?? ''}
                 onClose={toggleOff}
                 isOpen
               />
@@ -75,7 +66,7 @@ export const AdditionalInfoSectionComponent = () => {
                 />
               </PanelField>
               <PanelField>
-                {defaultDonorName ?? t('label.no-donor-selected')}
+                {defaultDonor?.name ?? t('label.no-donor-selected')}
               </PanelField>
             </PanelRow>
           </>

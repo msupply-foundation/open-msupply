@@ -44,7 +44,7 @@ pub(crate) fn generate_inbound_lines(
                  foreign_currency_price_before_tax,
                  item_variant_id,
                  linked_invoice_id: _,
-                 donor_id,
+                 donor_link_id,
                  vvm_status_id,
                  reason_option_id: _,
              }| {
@@ -84,7 +84,7 @@ pub(crate) fn generate_inbound_lines(
                     // Default
                     stock_line_id: None,
                     location_id: None,
-                    donor_id,
+                    donor_link_id,
                     reason_option_id: None,
                 }
             },

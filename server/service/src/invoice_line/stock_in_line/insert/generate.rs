@@ -120,7 +120,7 @@ fn generate_line(
     }: ItemRow,
     InvoiceRow {
         tax_percentage,
-        default_donor_id,
+        default_donor_link_id: default_donor_id,
         ..
     }: InvoiceRow,
 ) -> InvoiceLineRow {
@@ -150,7 +150,7 @@ fn generate_line(
         note,
         item_variant_id,
         vvm_status_id,
-        donor_id,
+        donor_link_id: donor_id,
         foreign_currency_price_before_tax: None,
         linked_invoice_id: None,
         prescribed_quantity: None,
