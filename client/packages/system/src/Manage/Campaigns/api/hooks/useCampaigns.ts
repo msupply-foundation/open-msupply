@@ -159,7 +159,6 @@ const useDeleteCampaign = () => {
   const mutationFn = async (id: string) => {
     try {
       const result = await campaignApi.deleteCampaign({ id });
-      console.log('Full result', result);
       return result?.centralServer?.campaign?.deleteCampaign;
     } catch (error) {
       return {
