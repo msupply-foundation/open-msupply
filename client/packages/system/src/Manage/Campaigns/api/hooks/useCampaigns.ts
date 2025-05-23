@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { CampaignRowFragment } from '../operations.generated';
 import { useCampaignGraphQL } from '../useCampaignGraphQL';
 import { CAMPAIGN } from './keys';
@@ -8,7 +9,9 @@ import {
   LIST_KEY,
   CampaignFilterInput,
   CampaignSortFieldInput,
-  UpsertCampaignInput,
+  FnUtils,
+  Formatter,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 
 type ListParams = {
@@ -18,20 +21,49 @@ type ListParams = {
   filterBy?: CampaignFilterInput | null;
 };
 
+export type DraftCampaign = {
+  id: string;
+  name: string;
+  startDate: Date | null;
+  endDate: Date | null;
+};
+
+export const defaultDraftCampaign: DraftCampaign = {
+  id: '',
+  name: '',
+  startDate: null,
+  endDate: null,
+};
+
 export const useCampaigns = (queryParams?: ListParams) => {
+  const [draft, setDraft] = useState<DraftCampaign>(defaultDraftCampaign);
+
   // QUERY
   const { data, isLoading, isError } = useGetList(queryParams);
 
+  // UPDATE DRAFT
+  const updateDraft = (patch: Partial<DraftCampaign>) => {
+    setDraft({ ...draft, ...patch });
+  };
+
   // UPSERT
   const {
-    mutateAsync: upsert,
+    mutateAsync: upsertMutation,
     isLoading: isUpserting,
     error: upsertError,
   } = useUpsertCampaign();
 
+  const upsert = async () => {
+    return await upsertMutation(draft);
+  };
+
+  const deleteCampaign = async (id: string) => {
+    return await deleteMutation(id);
+  };
+
   // DELETE
   const {
-    mutateAsync: deleteCampaign,
+    mutateAsync: deleteMutation,
     isLoading: isDeleting,
     error: deleteError,
   } = useDeleteCampaign();
@@ -40,6 +72,8 @@ export const useCampaigns = (queryParams?: ListParams) => {
     query: { data, isLoading, isError },
     upsert: { upsert, isUpserting, upsertError },
     delete: { deleteCampaign, isDeleting, deleteError },
+    draft,
+    updateDraft,
   };
 };
 
@@ -74,9 +108,37 @@ const toSortInput = (sortBy?: SortBy<CampaignRowFragment>) => ({
 
 const useUpsertCampaign = () => {
   const { campaignApi, queryClient } = useCampaignGraphQL();
+  const { translateServerError } = useIntlUtils();
 
-  const mutationFn = async (input: UpsertCampaignInput) => {
-    await campaignApi.upsertCampaign({ input });
+  const mutationFn = async (draft: DraftCampaign) => {
+    // If the dates have been modified, they will be Date objects, but initial
+    // value from database is string/null
+    const startDate =
+      draft.startDate instanceof Date
+        ? Formatter.naiveDate(draft.startDate)
+        : draft.startDate;
+
+    const endDate =
+      draft.endDate instanceof Date
+        ? Formatter.naiveDate(draft.endDate)
+        : draft.endDate;
+
+    const input = {
+      id: draft.id || FnUtils.generateUUID(),
+      name: draft.name,
+      startDate,
+      endDate,
+    };
+    try {
+      const result = await campaignApi.upsertCampaign({ input });
+      return result?.centralServer?.campaign?.upsertCampaign;
+    } catch (error) {
+      // For invalid dates, server returns a GraphQL standard error
+      return {
+        __typename: 'UpsertCampaignError',
+        error: { description: translateServerError((error as Error)?.message) },
+      };
+    }
   };
 
   return useMutation({
@@ -92,9 +154,18 @@ const useUpsertCampaign = () => {
 
 const useDeleteCampaign = () => {
   const { campaignApi, queryClient } = useCampaignGraphQL();
+  const { translateServerError } = useIntlUtils();
 
   const mutationFn = async (id: string) => {
-    await campaignApi.deleteCampaign({ id });
+    try {
+      const result = await campaignApi.deleteCampaign({ id });
+      return result?.centralServer?.campaign?.deleteCampaign;
+    } catch (error) {
+      return {
+        __typename: 'DeleteCampaignError',
+        error: { description: translateServerError((error as Error)?.message) },
+      };
+    }
   };
 
   return useMutation({
