@@ -1,2 +1,2 @@
 export * from './ItemVariantSearchInput';
-export * from './ItemVariantInputCell';
+export * from './ItemVariantInputCellOld';

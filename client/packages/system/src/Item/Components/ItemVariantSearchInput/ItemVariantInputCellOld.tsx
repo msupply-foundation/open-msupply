@@ -1,9 +1,9 @@
 import React from 'react';
 import { RecordWithId, CellProps } from '@openmsupply-client/common';
 import { ItemVariantSearchInput } from '.';
-import { ItemVariantOptionFragment } from '../../api';
+import { ItemVariantFragment } from '../../api';
 
-export const ItemVariantInputCell = <T extends RecordWithId>({
+export const ItemVariantInputCellOld = <T extends RecordWithId>({
   rowData,
   column,
   isDisabled,
@@ -13,7 +13,7 @@ export const ItemVariantInputCell = <T extends RecordWithId>({
     rowData,
   }) as string | null;
 
-  const onChange = (variant: ItemVariantOptionFragment | null) => {
+  const onChange = (variant: ItemVariantFragment | null) => {
     column.setter({
       ...rowData,
       itemVariantId: variant?.id ?? null,
