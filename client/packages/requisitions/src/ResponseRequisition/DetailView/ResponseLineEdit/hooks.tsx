@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useResponse, ResponseLineFragment } from '../../api';
-import { ItemRowFragment } from '@openmsupply-client/system';
+import {
+  ItemRowFragment,
+  ItemWithStatsFragment,
+} from '@openmsupply-client/system';
 import { useNotification } from '@common/hooks';
 
 export type DraftResponseLine = Omit<ResponseLineFragment, '__typename'> & {
@@ -67,35 +70,24 @@ export const useDraftRequisitionLine = (item?: ItemRowFragment | null) => {
   return { draft, isLoading, save, update };
 };
 
-export const usePreviousNextResponseLine = (
-  lines?: ResponseLineFragment[],
-  currentItem?: ItemRowFragment | null
+export const useNextResponseLine = (
+  currentItem?: ItemWithStatsFragment | null
 ) => {
-  if (!lines || !currentItem) {
-    return { hasNext: false, next: null, hasPrevious: false, previous: null };
-  }
+  const { lines } = useResponse.line.list();
 
-  const state: {
-    hasPrevious: boolean;
-    previous: null | ItemRowFragment;
+  const nextState: {
     hasNext: boolean;
-    next: null | ItemRowFragment;
-  } = { hasNext: true, next: null, hasPrevious: true, previous: null };
+    next: ItemWithStatsFragment | null;
+  } = { hasNext: true, next: null };
   const idx = lines.findIndex(l => l.item.id === currentItem?.id);
-  const previous = lines[idx - 1];
   const next = lines[idx + 1];
 
-  if (!previous) {
-    state.hasPrevious = false;
-  } else {
-    state.previous = previous.item;
-  }
-
   if (!next) {
-    state.hasNext = false;
-  } else {
-    state.next = next.item;
+    nextState.hasNext = false;
+    return nextState;
   }
 
-  return state;
+  nextState.next = next.item;
+
+  return nextState;
 };
