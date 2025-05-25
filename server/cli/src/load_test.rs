@@ -1,16 +1,89 @@
-use std::{io::Write, path::PathBuf};
+use std::{path::PathBuf, time::Duration};
 
 use repository::database_settings::DatabaseSettings;
-use reqwest::Client;
-use serde::Deserialize;
+use reqwest::{Client, Error, Response};
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use serde_yml;
 use service::{
     settings::{DiscoveryMode, ServerSettings, Settings},
     sync::settings::{BatchSize, SyncSettings},
 };
+use tokio::{process::Child, time::sleep};
 use util::uuid::uuid;
 const TEST_API: &str = "sync/v5/test";
+
+const SYNC_INFO_QUERY: &str = r#"
+query SyncInfo {
+  latestSyncStatus { isSyncing }
+}
+"#;
+
+const MANUAL_SYNC_QUERY: &str = r#"
+mutation ManualSync {
+  manualSync
+}
+"#;
+
+const INSERT_REQUISITION_MUTATION: &str = r#"
+mutation InsertRequestRequisition($storeId: String!, $input: InsertRequestRequisitionInput!) {
+  insertRequestRequisition(storeId:$storeId, input: $input){
+    ... on RequisitionNode {
+      id
+    }
+    ... on InsertRequestRequisitionError {
+      error {
+        description
+      }
+    }
+  }
+}
+"#;
+
+const INSERT_REQUISITION_LINE_MUTATION: &str = r#"
+mutation InsertRequestRequisitionLine($storeId: String!, $input: InsertRequestRequisitionLineInput!) {
+  insertRequestRequisitionLine(storeId: $storeId, input: $input){
+    ... on RequisitionLineNode {
+      id
+    }
+    ... on InsertRequestRequisitionLineError {
+      error {
+        description
+      }
+    }
+  }
+}
+"#;
+
+const UPDATE_REQUISITION_LINE_MUTATION: &str = r#"
+mutation UpdateRequestRequisitionLine ($storeId: String!, $input: UpdateRequestRequisitionLineInput!) {
+  updateRequestRequisitionLine(storeId: $storeId, input: $input) {
+    ... on RequisitionLineNode {
+    	id
+    }
+    ... on UpdateRequestRequisitionLineError {
+      error {
+        description
+      }
+    }
+  }
+}
+"#;
+
+const UPDATE_REQUISITION_MUTATION: &str = r#"
+mutation UpdateRequestRequisition ($storeId: String!, $input: UpdateRequestRequisitionInput!) {
+  updateRequestRequisition(storeId: $storeId, input: $input) {
+    ... on RequisitionNode {
+    	id
+    }
+    ... on UpdateRequestRequisitionError {
+      error {
+        description
+      }
+    }
+  }
+}
+"#;
 
 #[derive(clap::Args)]
 pub struct LoadTest {
@@ -39,15 +112,15 @@ pub struct LoadTest {
     pub sites: usize,
 
     /// The number of lines to include in each invoice
-    #[clap(short, long)]
-    pub invoice_lines: usize,
+    #[clap(short, long, default_value = "25")]
+    pub lines: usize,
 
     /// Duration in seconds to run the test for
     #[clap(short, long)]
     pub duration: usize,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 struct SyncSite {
     #[serde(rename = "site_ID")]
     site_id: usize,
@@ -55,17 +128,44 @@ struct SyncSite {
     #[serde(rename = "password")]
     password_sha256: String,
 }
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 struct SyncStore {
     #[serde(rename = "ID")]
     id: String,
     #[serde(rename = "name_ID")]
     name_id: String,
 }
-#[derive(Deserialize, Debug)]
-pub(crate) struct SiteNStore {
+#[derive(Deserialize, Debug, Clone)]
+struct SiteNStore {
     site: SyncSite,
     store: SyncStore,
+}
+
+#[derive(Clone)]
+struct TestSite {
+    client: Client,
+    graphql_url: String,
+    site: SyncSite,
+    store: SyncStore,
+    settings: Settings,
+    next_store: SyncStore,
+    config_file_path: PathBuf,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct SyncInfo {
+    data: LatestSyncStatus,
+}
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct LatestSyncStatus {
+    latest_sync_status: SyncStatus,
+}
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct SyncStatus {
+    is_syncing: bool,
 }
 
 impl LoadTest {
@@ -76,7 +176,7 @@ impl LoadTest {
         test_site_name: Option<String>,
         test_site_pass: Option<String>,
         sites: usize,
-        invoice_lines: usize,
+        lines: usize,
         duration: usize,
     ) -> Self {
         Self {
@@ -86,15 +186,13 @@ impl LoadTest {
             test_site_name,
             test_site_pass,
             sites,
-            invoice_lines,
+            lines,
             duration,
         }
     }
 
     pub async fn run(&self) -> anyhow::Result<()> {
-        use std::process::Command;
-        use std::time::Duration;
-        use tokio::time::sleep;
+        use tokio::process::Command;
         use util::hash::sha256;
 
         println!("Starting load test with the following parameters:");
@@ -103,17 +201,25 @@ impl LoadTest {
         println!("Base Port: {}", self.base_port);
         println!("Output Directory: {}", self.output_dir.display());
         println!("Number of Sites: {}", self.sites);
-        println!("Invoice Lines: {}", self.invoice_lines);
+        println!("Invoice Lines: {}", self.lines);
         println!("Duration: {} seconds", self.duration);
 
+        std::fs::remove_dir_all(&self.output_dir).ok();
         // Creating the sites on OG central
-        let body = r#"{"visibleNameIds":[]}"#;
         let client = Client::new();
         let test_site_name = self.test_site_name.as_ref().unwrap();
         let test_site_pass = Some(sha256(self.test_site_pass.as_ref().unwrap()));
         let mut site_n_stores: Vec<SiteNStore> = Vec::new();
         let num_sites = if self.sites > 1 { self.sites } else { 2 };
+        let mut last_store_name_id: Option<String> = None;
         for _ in 0..num_sites {
+            let body = if last_store_name_id.is_some() {
+                json!({"visibleNameIds": [last_store_name_id]})
+            } else {
+                json!({"visibleNameIds": []})
+            }
+            .to_string();
+
             let response = client
                 .post(url.clone() + "/create_site")
                 .header("app-name", "load_test")
@@ -127,7 +233,9 @@ impl LoadTest {
                 .await?;
 
             if response.status().is_success() {
-                site_n_stores.push(response.json().await?);
+                let site_n_store: SiteNStore = response.json().await?;
+                last_store_name_id = Some(site_n_store.store.name_id.clone());
+                site_n_stores.push(site_n_store);
             } else {
                 dbg!(&response);
                 dbg!(&response.text().await?);
@@ -135,35 +243,80 @@ impl LoadTest {
             }
         }
 
-        // Creating name store joins between each site's store and the next
-        let mut name_store_joins: Vec<Value> = Vec::new();
-
-        for i in 0..site_n_stores.len() {
+        let mut test_sites: Vec<TestSite> = Vec::new();
+        for (i, site_n_store) in site_n_stores.iter().enumerate() {
             let next = if i >= site_n_stores.len() - 1 {
                 0
             } else {
                 i + 1
             };
-            let name_store_join1 = json!({
-                "ID": &uuid(),
-                "name_ID": site_n_stores[next].store.name_id,
-                "store_ID": site_n_stores[i].store.id,
-                "om_name_is_customer": true,
-                "om_name_is_supplier": true,
-            });
-            name_store_joins.push(name_store_join1);
 
-            let name_store_join2 = json!({
-                "ID": &uuid(),
-                "name_ID": site_n_stores[i].store.name_id,
-                "store_ID": site_n_stores[next].store.id,
-                "om_name_is_customer": true,
-                "om_name_is_supplier": true,
-            });
-            name_store_joins.push(name_store_join2);
+            let port = self.base_port + (i * 2) as u16;
+            let database_path = self.output_dir.display();
+            let settings = Settings {
+                server: ServerSettings {
+                    port,
+                    danger_allow_http: true,
+                    debug_no_access_control: true, // Allow us to use GQL on the remote sites without auth
+                    discovery: DiscoveryMode::Disabled,
+                    cors_origins: vec![],
+                    base_dir: Some(database_path.to_string()),
+                    machine_uid: Some("1337_test".to_owned()),
+                },
+                database: DatabaseSettings {
+                    username: "postgres".to_owned(),
+                    password: "password".to_owned(),
+                    port: 5432,
+                    host: "localhost".to_owned(),
+                    database_name: format!("site_{}", site_n_store.site.site_id),
+                    database_path: Some(database_path.to_string()),
+                    init_sql: None,
+                },
+                sync: Some(SyncSettings {
+                    url: self.url.clone(),
+                    username: site_n_store.site.name.clone(),
+                    password_sha256: site_n_store.site.password_sha256.clone(),
+                    interval_seconds: 600,
+                    batch_size: BatchSize {
+                        remote_pull: 512,
+                        remote_push: 512,
+                        central_pull: 512,
+                    },
+                }),
+                logging: None,
+                backup: None,
+                mail: None,
+            };
+
+            let full_site = TestSite {
+                client: Client::new(),
+                graphql_url: format!("http://localhost:{}/{}", settings.server.port, "graphql"),
+                site: site_n_store.site.clone(),
+                store: site_n_store.store.clone(),
+                settings,
+                next_store: site_n_stores[next].store.clone(),
+                config_file_path: self
+                    .output_dir
+                    .join(format!("site_{}_config.yaml", site_n_store.site.site_id)),
+            };
+
+            test_sites.push(full_site);
         }
 
-        let body = json!({"name_store_join": name_store_joins}).to_string();
+        let item_ids: Vec<String> = (0..self.lines).map(|_| uuid()).collect();
+        let items: Vec<Value> = item_ids
+            .iter()
+            .map(|id| {
+                json!({
+                    "ID": id,
+                    "type_of": "general",
+                    "code": "test_item_code",
+                    "item_name": "test_item",
+                    "default_pack_size": 12,
+                })
+            })
+            .collect();
+        let body = json!({"item": items}).to_string();
         let response = client
             .post(url.clone() + "/upsert")
             .header("app-name", "load_test")
@@ -218,93 +371,226 @@ impl LoadTest {
         let base_config_path = self.output_dir.join("base.yaml");
         std::fs::write(base_config_path, serde_yml::to_string(&base_config)?)?;
 
-        for (i, site_n_store) in site_n_stores.iter().enumerate() {
-            let port = self.base_port + (i * 2) as u16;
-            let config_file_path = self.output_dir.join(format!(
-                "site_{}_config.yaml",
-                site_n_store.site.site_id + 1
-            ));
-            let database_path = self.output_dir.display();
-
-            let config = Settings {
-                server: ServerSettings {
-                    port,
-                    danger_allow_http: true,
-                    debug_no_access_control: true, // Allow us to use GQL on the remote sites without auth
-                    discovery: DiscoveryMode::Disabled,
-                    cors_origins: vec![],
-                    base_dir: Some(database_path.to_string()),
-                    machine_uid: Some("1337_test".to_owned()),
-                },
-                database: DatabaseSettings {
-                    username: "postgres".to_owned(),
-                    password: "password".to_owned(),
-                    port: 5432,
-                    host: "localhost".to_owned(),
-                    database_name: format!("site_{}", site_n_store.site.site_id),
-                    database_path: Some(database_path.to_string()),
-                    init_sql: None,
-                },
-                sync: Some(SyncSettings {
-                    url: self.url.clone(),
-                    username: site_n_store.site.name.clone(),
-                    password_sha256: site_n_store.site.password_sha256.clone(),
-                    interval_seconds: 600,
-                    batch_size: BatchSize {
-                        remote_pull: 512,
-                        remote_push: 512,
-                        central_pull: 512,
-                    },
-                }),
-                logging: None,
-                backup: None,
-                mail: None,
-            };
-
-            std::fs::write(&config_file_path, serde_yml::to_string(&config)?)?;
-            println!("Created config file {:?}", config_file_path);
+        for test_site in &test_sites {
+            std::fs::write(
+                &test_site.config_file_path.clone(),
+                serde_yml::to_string(&test_site.settings.clone())?,
+            )?;
         }
 
         // Start each remote OMS instance
         println!("Starting remote OMS instances...");
-        let mut child_processes = Vec::new();
+        let mut handles = Vec::new();
+        let duration = self.duration as u64;
+        let num_lines = self.lines;
 
-        let output = Command::new("pwd").output()?;
-        std::io::stdout().write_all(&output.stdout)?;
+        for test_site in test_sites {
+            let dir = self.output_dir.clone();
+            let item_ids_copy = item_ids.clone();
+            let handle = tokio::spawn(async move {
+                let log = std::fs::File::create(
+                    dir.join(format!("site_{}_output.log", test_site.site.site_id)),
+                )
+                .unwrap();
+                let mut child = match Command::new("cargo") // TODO: be better to run prod binary instead
+                    .arg("run")
+                    .arg("--")
+                    .arg("--config-path")
+                    .arg(&test_site.config_file_path)
+                    .stdout(log.try_clone().unwrap())
+                    .stderr(log)
+                    .env("RUST_LOG", "none")
+                    .kill_on_drop(true)
+                    .spawn()
+                {
+                    Ok(child) => child,
+                    Err(e) => {
+                        println!("Failed to spawn process: {}", e);
+                        return;
+                    }
+                };
+                sleep(Duration::from_secs(10)).await; // Let db get created, migrated and initialisation started
+                let client = Client::new();
 
-        for site_n_store in site_n_stores.iter() {
-            let config_file_path = self
-                .output_dir
-                .join(format!("site_{}_config.yaml", site_n_store.site.site_id));
+                if test_site.wait_for_sync().await.is_err() {
+                    kill(&mut child).await;
+                    return;
+                }
 
-            let child = Command::new("cargo")
-                .arg("run")
-                .arg("--")
-                .arg("--config-path")
-                .arg(&config_file_path)
-                .spawn()?;
+                let start = std::time::Instant::now();
+                loop {
+                    let requisition_id = uuid();
+                    let requisition_gql = json!({
+                        "operationName": "InsertRequestRequisition",
+                        "query": INSERT_REQUISITION_MUTATION,
+                        "variables": {
+                            "storeId": test_site.store.id,
+                            "input": {
+                                "id": requisition_id,
+                                "otherPartyId": test_site.next_store.name_id,
+                                "maxMonthsOfStock": 3,
+                                "minMonthsOfStock": 1
+                            }
+                        }
+                    });
+                    match test_site.do_post(&requisition_gql).await {
+                        Ok(response) => response,
+                        Err(e) => {
+                            println!("insertRequestRequisition request failed: {}", e);
+                            kill(&mut child).await;
+                            return;
+                        }
+                    };
 
-            child_processes.push(child);
+                    for i in 0..num_lines {
+                        let line_id = uuid();
+                        let line_gql = json!({
+                            "operationName": "InsertRequestRequisitionLine",
+                            "query": INSERT_REQUISITION_LINE_MUTATION,
+                            "variables": {
+                                "storeId": test_site.store.id,
+                                "input": {
+                                    "id": line_id,
+                                    "itemId": item_ids_copy[i%num_lines],
+                                    "requisitionId": requisition_id
+                                }
+                            }
+                        });
 
-            // Give a little time for the instance to start before launching the next one
-            sleep(Duration::from_millis(200)).await
+                        match test_site.do_post(&line_gql).await {
+                            Ok(response) => response,
+                            Err(e) => {
+                                println!("insertRequestRequisitionLine request failed: {}", e);
+                                kill(&mut child).await;
+                                return;
+                            }
+                        };
+
+                        let line_gql = json!({
+                            "operationName": "UpdateRequestRequisitionLine",
+                            "query": UPDATE_REQUISITION_LINE_MUTATION,
+                            "variables": {
+                                "storeId": test_site.store.id,
+                                "input": {
+                                    "id": line_id,
+                                    "requestedQuantity": i+1,
+                                    "comment": "Please send me the stocks"
+                                }
+                            }
+                        });
+                        match test_site.do_post(&line_gql).await {
+                            Ok(response) => response,
+                            Err(e) => {
+                                println!("insertRequestRequisitionLine request failed: {}", e);
+                                kill(&mut child).await;
+                                return;
+                            }
+                        };
+                    }
+                    let requisition_gql = json!({
+                        "operationName": "UpdateRequestRequisition",
+                        "query": UPDATE_REQUISITION_MUTATION,
+                        "variables": {
+                            "storeId": test_site.store.id,
+                            "input": {
+                                "id": requisition_id,
+                                "status": "SENT"
+                            }
+                        }
+                    });
+                    match test_site.do_post(&requisition_gql).await {
+                        Ok(response) => response,
+                        Err(e) => {
+                            println!("insertRequestRequisition request failed: {}", e);
+                            kill(&mut child).await;
+                            return;
+                        }
+                    };
+
+                    let sync_gql = json!({
+                        "operationName": "ManualSync",
+                        "query": MANUAL_SYNC_QUERY,
+                    });
+                    match test_site.do_post(&sync_gql).await {
+                        Ok(response) => response,
+                        Err(e) => {
+                            println!("manualSync request failed: {}", e);
+                            kill(&mut child).await;
+                            return;
+                        }
+                    };
+
+                    if test_site.wait_for_sync().await.is_err() {
+                        kill(&mut child).await;
+                        return;
+                    }
+
+                    if start.elapsed().as_secs() >= duration {
+                        kill(&mut child).await;
+                        break;
+                    }
+                }
+            });
+            handles.push(handle)
         }
 
-        // Run for the specified duration
-        println!("Running test for {} seconds", self.duration);
-        sleep(Duration::from_secs(self.duration as u64)).await;
-
-        // Terminate all child processes
-        for mut child in child_processes {
-            match child.kill() {
-                Ok(_) => println!("Process terminated successfully"),
-                Err(_) => println!("Failed to kill process {:?}", child),
+        for handle in handles {
+            if let Err(e) = handle.await {
+                println!("Error joining task: {}", e);
             }
         }
 
-        std::fs::remove_dir_all(&self.output_dir)?;
-
         println!("end");
         Ok(())
+    }
+}
+
+async fn kill(child: &mut Child) {
+    match child.kill().await {
+        Ok(_) => println!("Child terminated successfully"),
+        Err(e) => println!("Failed to kill child: {}", e),
+    }
+}
+
+impl TestSite {
+    async fn do_post<T>(&self, body: &T) -> Result<Response, Error>
+    where
+        T: Serialize,
+    {
+        self.client
+            .post(&self.graphql_url)
+            .header("Authorization", "pretend :)")
+            .body(serde_json::to_string(&body).unwrap())
+            .send()
+            .await
+    }
+
+    async fn wait_for_sync(&self) -> Result<(), Error> {
+        loop {
+            sleep(Duration::from_secs(1)).await;
+            let sync_gql = json!({
+                "operationName": "SyncInfo",
+                "query": SYNC_INFO_QUERY,
+            });
+
+            let response = match self.do_post(&sync_gql).await {
+                Ok(response) => response,
+                Err(_) => continue, // could cause infinite loop, but is a kludge avoid early ending of test run before initialisation has started
+            };
+
+            if response.status().is_success() {
+                match response.json::<SyncInfo>().await {
+                    Ok(sync_info) => {
+                        if !sync_info.data.latest_sync_status.is_syncing {
+                            return Ok(());
+                        }
+                    }
+                    Err(e) => println!("Error parsing SyncInfo: {}", e),
+                };
+            } else {
+                dbg!(&response);
+                dbg!(&response.text().await.unwrap());
+            }
+        }
     }
 }
