@@ -98,7 +98,7 @@ pub enum InsertStockInLineError {
     NotThisStoreInvoice,
     DonorDoesNotExist,
     DonorNotVisible,
-    DonorIsNotADonor,
+    SelectedDonorPartyIsNotADonor,
     CannotEditFinalised,
     LocationDoesNotExist,
     ItemVariantDoesNotExist,
@@ -395,7 +395,7 @@ mod test {
                     ..Default::default()
                 },
             ),
-            Err(ServiceError::DonorIsNotADonor)
+            Err(ServiceError::SelectedDonorPartyIsNotADonor)
         );
     }
 

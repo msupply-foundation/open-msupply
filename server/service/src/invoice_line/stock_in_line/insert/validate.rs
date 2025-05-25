@@ -69,7 +69,7 @@ pub fn validate(
             |e| match e {
                 OtherPartyErrors::OtherPartyDoesNotExist => DonorDoesNotExist {},
                 OtherPartyErrors::OtherPartyNotVisible => DonorNotVisible,
-                OtherPartyErrors::TypeMismatched => DonorIsNotADonor,
+                OtherPartyErrors::TypeMismatched => SelectedDonorPartyIsNotADonor,
                 OtherPartyErrors::DatabaseError(repository_error) => {
                     DatabaseError(repository_error)
                 }
