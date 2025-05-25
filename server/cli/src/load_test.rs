@@ -1,8 +1,8 @@
 use std::{path::PathBuf, time::Duration};
 
 use repository::database_settings::DatabaseSettings;
-use reqwest::{Client, Error};
-use serde::Deserialize;
+use reqwest::{Client, Error, Response};
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use serde_yml;
 use service::{
@@ -141,8 +141,10 @@ struct SiteNStore {
     store: SyncStore,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Clone)]
 struct TestSite {
+    client: Client,
+    graphql_url: String,
     site: SyncSite,
     store: SyncStore,
     settings: Settings,
@@ -287,6 +289,8 @@ impl LoadTest {
             };
 
             let full_site = TestSite {
+                client: Client::new(),
+                graphql_url: format!("http://localhost:{}/{}", settings.server.port, "graphql"),
                 site: site_n_store.site.clone(),
                 store: site_n_store.store.clone(),
                 settings,
@@ -407,10 +411,8 @@ impl LoadTest {
                 };
                 sleep(Duration::from_secs(10)).await; // Let db get created, migrated and initialisation started
                 let client = Client::new();
-                let remote_url = format!("http://localhost:{}", test_site.settings.server.port);
-                let graphql_url = format!("{}/{}", remote_url, "graphql");
 
-                if wait_for_sync(&client, &graphql_url).await.is_err() {
+                if test_site.wait_for_sync().await.is_err() {
                     kill(&mut child).await;
                     return;
                 }
@@ -431,13 +433,7 @@ impl LoadTest {
                             }
                         }
                     });
-                    match client
-                        .post(&graphql_url)
-                        .header("Authorization", "pretend :)")
-                        .body(requisition_gql.to_string())
-                        .send()
-                        .await
-                    {
+                    match test_site.do_post(&requisition_gql).await {
                         Ok(response) => response,
                         Err(e) => {
                             println!("insertRequestRequisition request failed: {}", e);
@@ -461,13 +457,7 @@ impl LoadTest {
                             }
                         });
 
-                        match client
-                            .post(&graphql_url)
-                            .header("Authorization", "pretend :)")
-                            .body(line_gql.to_string())
-                            .send()
-                            .await
-                        {
+                        match test_site.do_post(&line_gql).await {
                             Ok(response) => response,
                             Err(e) => {
                                 println!("insertRequestRequisitionLine request failed: {}", e);
@@ -488,13 +478,7 @@ impl LoadTest {
                                 }
                             }
                         });
-                        match client
-                            .post(&graphql_url)
-                            .header("Authorization", "pretend :)")
-                            .body(line_gql.to_string())
-                            .send()
-                            .await
-                        {
+                        match test_site.do_post(&line_gql).await {
                             Ok(response) => response,
                             Err(e) => {
                                 println!("insertRequestRequisitionLine request failed: {}", e);
@@ -514,13 +498,7 @@ impl LoadTest {
                             }
                         }
                     });
-                    match client
-                        .post(&graphql_url)
-                        .header("Authorization", "pretend :)")
-                        .body(requisition_gql.to_string())
-                        .send()
-                        .await
-                    {
+                    match test_site.do_post(&requisition_gql).await {
                         Ok(response) => response,
                         Err(e) => {
                             println!("insertRequestRequisition request failed: {}", e);
@@ -533,13 +511,7 @@ impl LoadTest {
                         "operationName": "ManualSync",
                         "query": MANUAL_SYNC_QUERY,
                     });
-                    match client
-                        .post(&graphql_url)
-                        .header("Authorization", "pretend :)")
-                        .body(sync_gql.to_string())
-                        .send()
-                        .await
-                    {
+                    match test_site.do_post(&sync_gql).await {
                         Ok(response) => response,
                         Err(e) => {
                             println!("manualSync request failed: {}", e);
@@ -548,7 +520,7 @@ impl LoadTest {
                         }
                     };
 
-                    if wait_for_sync(&client, &graphql_url).await.is_err() {
+                    if test_site.wait_for_sync().await.is_err() {
                         kill(&mut child).await;
                         return;
                     }
@@ -580,37 +552,45 @@ async fn kill(child: &mut Child) {
     }
 }
 
-async fn wait_for_sync(client: &Client, graphql_url: &String) -> Result<(), Error> {
-    loop {
-        sleep(Duration::from_secs(1)).await;
-        let sync_gql = json!({
-            "operationName": "SyncInfo",
-            "query": SYNC_INFO_QUERY,
-        });
-
-        let response = match client
-            .post(graphql_url)
+impl TestSite {
+    async fn do_post<T>(&self, body: &T) -> Result<Response, Error>
+    where
+        T: Serialize,
+    {
+        self.client
+            .post(&self.graphql_url)
             .header("Authorization", "pretend :)")
-            .body(sync_gql.to_string())
+            .body(serde_json::to_string(&body).unwrap())
             .send()
             .await
-        {
-            Ok(response) => response,
-            Err(_) => continue, // could cause infinite loop, is to avoid early ending of test run before initialisation has started
-        };
+    }
 
-        if response.status().is_success() {
-            match response.json::<SyncInfo>().await {
-                Ok(sync_info) => {
-                    if !sync_info.data.latest_sync_status.is_syncing {
-                        return Ok(());
-                    }
-                }
-                Err(e) => println!("Error parsing SyncInfo: {}", e),
+    async fn wait_for_sync(&self) -> Result<(), Error> {
+        loop {
+            sleep(Duration::from_secs(1)).await;
+            let sync_gql = json!({
+                "operationName": "SyncInfo",
+                "query": SYNC_INFO_QUERY,
+            });
+
+            let response = match self.do_post(&sync_gql).await {
+                Ok(response) => response,
+                Err(_) => continue, // could cause infinite loop, but is a kludge avoid early ending of test run before initialisation has started
             };
-        } else {
-            dbg!(&response);
-            dbg!(&response.text().await.unwrap());
+
+            if response.status().is_success() {
+                match response.json::<SyncInfo>().await {
+                    Ok(sync_info) => {
+                        if !sync_info.data.latest_sync_status.is_syncing {
+                            return Ok(());
+                        }
+                    }
+                    Err(e) => println!("Error parsing SyncInfo: {}", e),
+                };
+            } else {
+                dbg!(&response);
+                dbg!(&response.text().await.unwrap());
+            }
         }
     }
 }
