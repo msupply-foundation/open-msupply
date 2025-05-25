@@ -239,9 +239,22 @@ export const getAllocationAlerts = (
       });
     } else {
       // Otherwise warn the user that we couldn't allocate enough stock
+      let messageKey: LocaleKey;
+      switch (allocateIn.type) {
+        case AllocateInType.Doses:
+          messageKey = 'warning.cannot-create-placeholder-doses';
+          break;
+        case AllocateInType.Units:
+          messageKey = 'warning.cannot-create-placeholder-units';
+          break;
+        case AllocateInType.Packs:
+          messageKey = 'warning.cannot-create-placeholder-packs';
+          break;
+        default:
+          messageKey = 'warning.cannot-create-placeholder-units';
+      }
       alerts.push({
-        // todo this message should say units/doses respectively
-        message: t('warning.cannot-create-placeholder-units', {
+        message: t(messageKey, {
           allocatedQuantity: format(allocatedQuantity),
           requestedQuantity: format(requestedQuantity),
         }),
@@ -262,9 +275,12 @@ export const getAllocationAlerts = (
   });
 
   if (wholePackQuantity > allocatedQuantity) {
+    const messageKey =
+      allocateIn.type === AllocateInType.Doses
+        ? 'messages.partial-pack-warning-doses'
+        : 'messages.partial-pack-warning-units';
     alerts.push({
-      // todo - in the requested unit?
-      message: t('messages.partial-pack-warning', {
+      message: t(messageKey, {
         nearestAbove: wholePackQuantity,
       }),
       severity: 'warning',
