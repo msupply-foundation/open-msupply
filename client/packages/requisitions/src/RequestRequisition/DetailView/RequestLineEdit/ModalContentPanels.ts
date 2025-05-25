@@ -4,7 +4,7 @@ import {
   LocaleKey,
   TypedTFunction,
 } from '@openmsupply-client/common';
-import { DraftRequestLine } from '../RequestRequisition/DetailView/RequestLineEdit';
+import { DraftRequestLine } from '.';
 
 export type ValueInfo = {
   label: string;
