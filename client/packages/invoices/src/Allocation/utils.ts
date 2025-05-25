@@ -1,7 +1,8 @@
 import { noOtherVariants, NumUtils } from '@common/utils';
 import { DraftStockOutLineFragment } from '../OutboundShipment/api/operations.generated';
-import { DateUtils } from '@common/intl';
+import { DateUtils, LocaleKey, TypedTFunction } from '@common/intl';
 import { AllocateInType, AllocateInOption } from './useAllocationContext';
+import { StockOutAlert } from '../StockOut';
 
 export const sumAvailableUnits = (draftLines: DraftStockOutLineFragment[]) => {
   const sum = draftLines.reduce(
@@ -182,4 +183,90 @@ export const scannedBatchFilter = (
   if (!linesIncludeScannedBatch) return true;
 
   return selectedLine.batch === scannedBatch;
+};
+
+export const getAllocationAlerts = (
+  requestedQuantity: number,
+  allocatedQuantity: number,
+  placeholderQuantity: number,
+  hasOnHold: boolean,
+  allocateIn: AllocateInOption,
+  draftLines: DraftStockOutLineFragment[],
+  format: (value: number, options?: Intl.NumberFormatOptions) => string,
+  t: TypedTFunction<LocaleKey>
+) => {
+  const alerts: StockOutAlert[] = [];
+
+  const hasExpired = draftLines.some(
+    ({ expiryDate }) =>
+      !!expiryDate && DateUtils.isExpired(new Date(expiryDate))
+  );
+
+  // Explain why some stock lines are not allocated from
+  const unavailableStockWarning = `${
+    hasOnHold ? t('messages.stock-on-hold') : ''
+  } ${hasExpired ? t('messages.stock-expired') : ''}`.trim();
+
+  if (unavailableStockWarning && requestedQuantity > 0) {
+    alerts.push({
+      message: unavailableStockWarning,
+      severity: 'info',
+    });
+  }
+
+  // When available pack sizes meant we had to over-allocate to meet the requested quantity
+  if (allocatedQuantity > requestedQuantity && allocatedQuantity > 0) {
+    alerts.push({
+      message: t('messages.over-allocated', {
+        quantity: format(allocatedQuantity),
+        issueQuantity: format(requestedQuantity),
+      }),
+      severity: 'warning',
+    });
+    return alerts;
+  }
+
+  // If we didn't have enough stock to meet the requested quantity
+  if (allocatedQuantity < requestedQuantity) {
+    // If we were able to create a placeholder, let the user know
+    if (placeholderQuantity > 0) {
+      alerts.push({
+        message: t('messages.placeholder-allocated', { placeholderQuantity }),
+        severity: 'info',
+      });
+    } else {
+      // Otherwise warn the user that we couldn't allocate enough stock
+      alerts.push({
+        // todo this message should say units/doses respectively
+        message: t('warning.cannot-create-placeholder-units', {
+          allocatedQuantity: format(allocatedQuantity),
+          requestedQuantity: format(requestedQuantity),
+        }),
+        severity: 'warning',
+      });
+    }
+  }
+
+  // If we allocated in partial packs, check with user that they are able to break packs
+  const asWholePacks = draftLines.map(line => ({
+    ...line,
+    numberOfPacks: Math.ceil(line.numberOfPacks),
+  }));
+
+  const wholePackQuantity = getAllocatedQuantity({
+    draftLines: asWholePacks,
+    allocateIn,
+  });
+
+  if (wholePackQuantity > allocatedQuantity) {
+    alerts.push({
+      // todo - in the requested unit?
+      message: t('messages.partial-pack-warning', {
+        nearestAbove: wholePackQuantity,
+      }),
+      severity: 'warning',
+    });
+  }
+
+  return alerts;
 };

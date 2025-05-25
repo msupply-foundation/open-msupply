@@ -1,12 +1,11 @@
 import {
   ArrayUtils,
   create,
-  DateUtils,
   LocaleKey,
   SortUtils,
   TypedTFunction,
 } from '@openmsupply-client/common';
-import { getAllocationAlerts, StockOutAlert } from '../StockOut';
+import { StockOutAlert } from '../StockOut';
 import { DraftStockOutLineFragment } from '../OutboundShipment/api/operations.generated';
 import {
   canAllocate,
@@ -14,6 +13,7 @@ import {
   issue,
   packsToQuantity,
   scannedBatchFilter,
+  getAllocationAlerts,
 } from './utils';
 import { OutboundLineEditData } from '../OutboundShipment/api';
 import { allocateQuantities } from './allocateQuantities';
@@ -244,10 +244,6 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       ({ availablePacks, stockLineOnHold }) =>
         availablePacks > 0 && !!stockLineOnHold
     );
-    const hasExpired = draftLines.some(
-      ({ expiryDate }) =>
-        !!expiryDate && DateUtils.isExpired(new Date(expiryDate))
-    );
 
     const stillToAllocate =
       result.remainingQuantity > 0 && placeholderUnits !== null
@@ -259,8 +255,8 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       allocatedQuantity,
       stillToAllocate,
       hasOnHold,
-      hasExpired,
       allocateIn,
+      result.allocatedLines,
       format,
       t
     );
