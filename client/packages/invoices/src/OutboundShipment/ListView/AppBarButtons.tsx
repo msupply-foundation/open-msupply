@@ -23,7 +23,8 @@ import { outboundsToCsv } from '../../utils';
 
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
-}> = ({ modalController }) => {
+  simplifiedTabletView?: boolean;
+}> = ({ modalController, simplifiedTabletView }) => {
   const navigate = useNavigate();
   const { success, error } = useNotification();
   const { mutateAsync: onCreate } = useOutbound.document.insert();
@@ -79,14 +80,16 @@ export const AppBarButtonsComponent: FC<{
             }
           }}
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          isLoading={isLoading}
-          variant="outlined"
-          onClick={csvExport}
-          disabled={EnvUtils.platform === Platform.Android}
-          label={t('button.export')}
-        />
+        {!simplifiedTabletView && (
+          <LoadingButton
+            startIcon={<DownloadIcon />}
+            isLoading={isLoading}
+            variant="outlined"
+            onClick={csvExport}
+            disabled={EnvUtils.platform === Platform.Android}
+            label={t('button.export')}
+          />
+        )}
       </Grid>
     </AppBarButtonsPortal>
   );

@@ -101,7 +101,7 @@ export const useOutboundLineEditColumns = ({
   }
 
   // If we have use VVM status, we need to show the VVM status column
-  if (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) {
+  if (prefs?.manageVvmStatusForStock && item?.isVaccine) {
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
@@ -111,6 +111,7 @@ export const useOutboundLineEditColumns = ({
         return `${rowData.vvmStatus?.description} (${rowData.vvmStatus?.level})`;
       },
       width: 85,
+      Cell: TooltipTextCell,
     });
   }
 

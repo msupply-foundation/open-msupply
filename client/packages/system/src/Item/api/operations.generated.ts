@@ -66,6 +66,13 @@ export type StockLineFragment = {
     dosesPerUnit: number;
   } | null;
   donor?: { __typename: 'NameNode'; id: string } | null;
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    level: number;
+    unusable: boolean;
+    description: string;
+  } | null;
 };
 
 export type ItemRowFragment = {
@@ -389,6 +396,13 @@ export type ItemFragment = {
         dosesPerUnit: number;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        level: number;
+        unusable: boolean;
+        description: string;
+      } | null;
     }>;
   };
   stats: {
@@ -578,6 +592,13 @@ export type ItemsWithStockLinesQuery = {
             dosesPerUnit: number;
           } | null;
           donor?: { __typename: 'NameNode'; id: string } | null;
+          vvmStatus?: {
+            __typename: 'VvmstatusNode';
+            id: string;
+            level: number;
+            unusable: boolean;
+            description: string;
+          } | null;
         }>;
       };
       stats: {
@@ -893,6 +914,13 @@ export type ItemByIdQuery = {
             dosesPerUnit: number;
           } | null;
           donor?: { __typename: 'NameNode'; id: string } | null;
+          vvmStatus?: {
+            __typename: 'VvmstatusNode';
+            id: string;
+            level: number;
+            unusable: boolean;
+            description: string;
+          } | null;
         }>;
       };
       variants: Array<{
@@ -1150,6 +1178,13 @@ export type GetHistoricalStockLinesQuery = {
         dosesPerUnit: number;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        level: number;
+        unusable: boolean;
+        description: string;
+      } | null;
     }>;
   };
 };
@@ -1545,6 +1580,13 @@ export const StockLineFragmentDoc = gql`
     }
     donor(storeId: $storeId) {
       id
+    }
+    vvmStatus {
+      __typename
+      id
+      level
+      unusable
+      description
     }
   }
   ${ItemDirectionFragmentDoc}
