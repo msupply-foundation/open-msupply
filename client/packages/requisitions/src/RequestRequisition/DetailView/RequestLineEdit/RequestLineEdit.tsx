@@ -24,13 +24,12 @@ import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
 import { StockEvolution } from './ItemCharts/StockEvolution';
 import { StockDistribution } from './ItemCharts/StockDistribution';
 import {
-  getLeftPanel,
-  getMiddlePanel,
   InfoRow,
   ModalContentLayout,
-  ValueInfo,
   ValueInfoRow,
+  ValueInfo,
 } from '../../../common';
+import { getLeftPanel, getMiddlePanel } from './ModalContentPanels';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;

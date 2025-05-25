@@ -1,16 +1,6 @@
-import {
-  SxProps,
-  Theme,
-  LocaleKey,
-  TypedTFunction,
-} from '@openmsupply-client/common';
+import { LocaleKey, TypedTFunction } from '@openmsupply-client/common';
 import { DraftRequestLine } from '.';
-
-export type ValueInfo = {
-  label: string;
-  value?: number | null;
-  sx?: SxProps<Theme>;
-};
+import { ValueInfo } from '../../../common';
 
 export const getLeftPanel = (
   t: TypedTFunction<LocaleKey>,

@@ -103,6 +103,12 @@ interface ValueInfoRowProps extends Omit<InfoRowProps, 'value'> {
   unitName: string;
 }
 
+export type ValueInfo = {
+  label: string;
+  value?: number | null;
+  sx?: SxProps<Theme>;
+};
+
 export const ValueInfoRow = ({
   label,
   value,
