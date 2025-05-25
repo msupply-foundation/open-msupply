@@ -22,18 +22,16 @@ import {
   Formatter,
 } from '@openmsupply-client/common';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
-import { DraftStockOutLineFragment } from '../../api/operations.generated';
-import { DraftItem } from 'packages/invoices/src/StockOut';
 import { getStockOutQuantityCellId } from '../../../utils';
-import {
-  AllocateInOption,
-  AllocateInType,
-} from '../../../Allocation/useAllocationContext';
 import {
   canAutoAllocate,
   getDoseQuantity,
   packsToDoses,
-} from '../../../Allocation/utils';
+  DraftStockOutLineFragment,
+  DraftItem,
+  AllocateInOption,
+  AllocateInType,
+} from '../../../StockOut';
 
 type AllocateFn = (
   key: string,

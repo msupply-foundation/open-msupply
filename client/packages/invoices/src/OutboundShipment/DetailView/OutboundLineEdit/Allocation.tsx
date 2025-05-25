@@ -15,20 +15,19 @@ import {
   Divider,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
-import { AutoAllocateField } from '../../../Allocation/AutoAllocateIssueField';
-import { AutoAllocationAlerts } from '../../../Allocation/AutoAllocationAlerts';
-import { useOutbound, useOutboundLineEditData } from '../../api';
-import { CurrencyRowFragment } from '@openmsupply-client/system';
 import {
+  AutoAllocateField,
+  AutoAllocationAlerts,
   useAllocationContext,
   AllocationStrategy,
   AllocateInType,
-} from '../../../Allocation/useAllocationContext';
-import {
   sumAvailableDoses,
   sumAvailableUnits,
-} from 'packages/invoices/src/Allocation/utils';
-import { AllocateInSelector } from '../../../Allocation/AllocateInSelector';
+  AllocateInSelector,
+  useOutboundLineEditData,
+} from '../../../StockOut';
+import { useOutbound } from '../../api';
+import { CurrencyRowFragment } from '@openmsupply-client/system';
 
 interface AllocationProps {
   itemId: string;

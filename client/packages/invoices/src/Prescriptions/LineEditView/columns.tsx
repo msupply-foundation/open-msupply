@@ -14,10 +14,12 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { getPrescriptionLineDosesColumns } from './columnsDoses';
-import { DraftItem } from '../../StockOut';
-import { DraftStockOutLineFragment } from '../../OutboundShipment/api/operations.generated';
-import { AllocateInType } from '../../Allocation/useAllocationContext';
-import { packsToQuantity } from '../../Allocation/utils';
+import {
+  DraftItem,
+  DraftStockOutLineFragment,
+  AllocateInType,
+  packsToQuantity,
+} from '../../StockOut';
 
 export const usePrescriptionLineEditColumns = ({
   allocate,

@@ -5,19 +5,19 @@ import {
   SortUtils,
   TypedTFunction,
 } from '@openmsupply-client/common';
-import { StockOutAlert } from '../StockOut';
-import { DraftStockOutLineFragment } from '../OutboundShipment/api/operations.generated';
 import {
+  StockOutAlert,
   canAllocate,
   getAllocatedQuantity,
   issue,
   packsToQuantity,
   scannedBatchFilter,
   getAllocationAlerts,
-} from './utils';
-import { OutboundLineEditData } from '../OutboundShipment/api';
+  OutboundLineEditData,
+  DraftItem,
+  DraftStockOutLineFragment,
+} from '.';
 import { allocateQuantities } from './allocateQuantities';
-import { DraftItem } from '../StockOut';
 
 /**
  * Allocation can be in units, doses, or packs of a specific size.

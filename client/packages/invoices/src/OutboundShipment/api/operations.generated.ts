@@ -2,8 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { StockOutLineFragmentDoc } from '../../StockOut/operations.generated';
-import { ItemDirectionFragmentDoc } from '../../../../system/src/Item/api/operations.generated';
+import { StockOutLineFragmentDoc } from '../../StockOut/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type OutboundFragment = {
   __typename: 'InvoiceNode';
@@ -1024,101 +1023,6 @@ export type InsertBarcodeMutation = {
   };
 };
 
-export type DraftStockOutLineFragment = {
-  __typename: 'DraftStockOutLineNode';
-  id: string;
-  stockLineId: string;
-  numberOfPacks: number;
-  packSize: number;
-  batch?: string | null;
-  expiryDate?: string | null;
-  sellPricePerPack: number;
-  inStorePacks: number;
-  availablePacks: number;
-  stockLineOnHold: boolean;
-  defaultDosesPerUnit: number;
-  location?: {
-    __typename: 'LocationNode';
-    id: string;
-    name: string;
-    code: string;
-    onHold: boolean;
-  } | null;
-  vvmStatus?: {
-    __typename: 'VvmstatusNode';
-    id: string;
-    level: number;
-    unusable: boolean;
-    description: string;
-  } | null;
-  itemVariant?: { __typename: 'ItemVariantNode'; dosesPerUnit: number } | null;
-};
-
-export type GetOutboundEditLinesQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  itemId: Types.Scalars['String']['input'];
-  invoiceId: Types.Scalars['String']['input'];
-}>;
-
-export type GetOutboundEditLinesQuery = {
-  __typename: 'Queries';
-  items: {
-    __typename: 'ItemConnector';
-    nodes: Array<{
-      __typename: 'ItemNode';
-      id: string;
-      unitName?: string | null;
-      name: string;
-      isVaccine: boolean;
-      itemDirections: Array<{
-        __typename: 'ItemDirectionNode';
-        directions: string;
-        id: string;
-        itemId: string;
-        priority: number;
-      }>;
-    }>;
-  };
-  draftStockOutLines: {
-    __typename: 'DraftStockOutItemData';
-    placeholderQuantity?: number | null;
-    prescribedQuantity?: number | null;
-    note?: string | null;
-    draftLines: Array<{
-      __typename: 'DraftStockOutLineNode';
-      id: string;
-      stockLineId: string;
-      numberOfPacks: number;
-      packSize: number;
-      batch?: string | null;
-      expiryDate?: string | null;
-      sellPricePerPack: number;
-      inStorePacks: number;
-      availablePacks: number;
-      stockLineOnHold: boolean;
-      defaultDosesPerUnit: number;
-      location?: {
-        __typename: 'LocationNode';
-        id: string;
-        name: string;
-        code: string;
-        onHold: boolean;
-      } | null;
-      vvmStatus?: {
-        __typename: 'VvmstatusNode';
-        id: string;
-        level: number;
-        unusable: boolean;
-        description: string;
-      } | null;
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        dosesPerUnit: number;
-      } | null;
-    }>;
-  };
-};
-
 export const OutboundFragmentDoc = gql`
   fragment Outbound on InvoiceNode {
     __typename
@@ -1246,39 +1150,6 @@ export const CannotHaveEstimatedDeliveryDateBeforeShippedDateErrorFragmentDoc = 
   fragment CannotHaveEstimatedDeliveryDateBeforeShippedDateError on CannotHaveEstimatedDeliveryDateBeforeShippedDate {
     __typename
     description
-  }
-`;
-export const DraftStockOutLineFragmentDoc = gql`
-  fragment DraftStockOutLine on DraftStockOutLineNode {
-    __typename
-    id
-    stockLineId
-    numberOfPacks
-    packSize
-    batch
-    expiryDate
-    sellPricePerPack
-    inStorePacks
-    availablePacks
-    stockLineOnHold
-    defaultDosesPerUnit
-    location {
-      __typename
-      id
-      name
-      code
-      onHold
-    }
-    vvmStatus {
-      __typename
-      id
-      level
-      unusable
-      description
-    }
-    itemVariant {
-      dosesPerUnit
-    }
   }
 `;
 export const InvoicesDocument = gql`
@@ -1994,48 +1865,6 @@ export const InsertBarcodeDocument = gql`
   }
   ${BarcodeFragmentDoc}
 `;
-export const GetOutboundEditLinesDocument = gql`
-  query getOutboundEditLines(
-    $storeId: String!
-    $itemId: String!
-    $invoiceId: String!
-  ) {
-    items(
-      storeId: $storeId
-      filter: { id: { equalTo: $itemId }, isActive: true }
-    ) {
-      ... on ItemConnector {
-        __typename
-        nodes {
-          __typename
-          id
-          unitName
-          name
-          isVaccine
-          itemDirections {
-            ...ItemDirection
-          }
-        }
-      }
-    }
-    draftStockOutLines(
-      storeId: $storeId
-      itemId: $itemId
-      invoiceId: $invoiceId
-    ) {
-      ... on DraftStockOutItemData {
-        placeholderQuantity
-        prescribedQuantity
-        note
-        draftLines {
-          ...DraftStockOutLine
-        }
-      }
-    }
-  }
-  ${ItemDirectionFragmentDoc}
-  ${DraftStockOutLineFragmentDoc}
-`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -2273,22 +2102,6 @@ export function getSdk(
           ),
         'insertBarcode',
         'mutation',
-        variables
-      );
-    },
-    getOutboundEditLines(
-      variables: GetOutboundEditLinesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<GetOutboundEditLinesQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<GetOutboundEditLinesQuery>(
-            GetOutboundEditLinesDocument,
-            variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
-        'getOutboundEditLines',
-        'query',
         variables
       );
     },

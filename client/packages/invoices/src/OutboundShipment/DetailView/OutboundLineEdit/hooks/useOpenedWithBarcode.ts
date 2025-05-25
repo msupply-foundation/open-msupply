@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { getStockOutQuantityCellId } from '../../../../utils';
 import { ScannedBarcode } from '../../../../types';
 import { useOutbound } from '../../../api';
-import { useAllocationContext } from '../../../../Allocation/useAllocationContext';
+import { useAllocationContext } from '../../../../StockOut';
 
 export const useOpenedWithBarcode = (barcode: ScannedBarcode | null) => {
   const { mutateAsync: insertBarcode } = useOutbound.utils.barcodeInsert();

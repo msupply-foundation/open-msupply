@@ -7,11 +7,10 @@ import {
   Grid,
   useAuthContext,
 } from '@openmsupply-client/common';
-import { AutoAllocateField } from '../../Allocation/AutoAllocateIssueField';
+import { AutoAllocateField, AllocateInSelector } from '../../StockOut';
 import { AccordionPanelSection } from './PanelSection';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 import { AutoAllocatePrescribedQuantityField } from './AutoAllocatePrescribedQuantityField';
-import { AllocateInSelector } from '../../Allocation/AllocateInSelector';
 
 export const AllocationSection = ({ disabled }: { disabled?: boolean }) => {
   const t = useTranslation();

@@ -1,8 +1,11 @@
 import { noOtherVariants, NumUtils } from '@common/utils';
-import { DraftStockOutLineFragment } from '../OutboundShipment/api/operations.generated';
 import { DateUtils, LocaleKey, TypedTFunction } from '@common/intl';
-import { AllocateInType, AllocateInOption } from './useAllocationContext';
-import { StockOutAlert } from '../StockOut';
+import {
+  AllocateInOption,
+  AllocateInType,
+  DraftStockOutLineFragment,
+  StockOutAlert,
+} from '.';
 
 export const sumAvailableUnits = (draftLines: DraftStockOutLineFragment[]) => {
   const sum = draftLines.reduce(

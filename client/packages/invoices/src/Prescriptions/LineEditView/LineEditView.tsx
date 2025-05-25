@@ -21,7 +21,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { PrescriptionLineEdit } from './PrescriptionLineEdit';
 import { Footer } from './Footer';
 import { NavBar } from './NavBar';
-import { useAllocationContext } from '../../Allocation/useAllocationContext';
+import { useAllocationContext } from '../../StockOut';
 import { useSavePrescriptionItemLineData } from '../api/hooks/useSavePrescriptionItemLineData';
 
 export const PrescriptionLineEditView = () => {

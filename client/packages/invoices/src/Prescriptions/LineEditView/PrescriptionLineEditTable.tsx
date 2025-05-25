@@ -8,8 +8,7 @@ import {
 } from '@openmsupply-client/common';
 
 import { usePrescriptionLineEditColumns } from './columns';
-import { getAllocatedQuantity } from '../../Allocation/utils';
-import { useAllocationContext } from '../../Allocation/useAllocationContext';
+import { getAllocatedQuantity, useAllocationContext } from '../../StockOut';
 
 export interface PrescriptionLineEditTableProps {
   disabled?: boolean;

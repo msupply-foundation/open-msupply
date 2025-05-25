@@ -1,6 +1,10 @@
-import { DraftStockOutLineFragment } from '../OutboundShipment/api/operations.generated';
 import { AllocateInOption, AllocateInType } from './useAllocationContext';
-import { canAutoAllocate, packsToQuantity, quantityToPacks } from './utils';
+import {
+  canAutoAllocate,
+  packsToQuantity,
+  quantityToPacks,
+  DraftStockOutLineFragment,
+} from '.';
 
 /**
  * Attempts to allocate the requested quantity to the available stock lines.

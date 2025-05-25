@@ -12,8 +12,8 @@ import {
   AllocateInType,
   AllocationStrategy,
   useAllocationContext,
-} from '../../Allocation/useAllocationContext';
-import { useOutboundLineEditData } from '../../OutboundShipment/api';
+  useOutboundLineEditData,
+} from '../../StockOut';
 import { AccordionPanelSection } from './PanelSection';
 
 interface PrescriptionLineEditProps {

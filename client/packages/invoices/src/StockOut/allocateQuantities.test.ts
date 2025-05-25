@@ -1,7 +1,7 @@
 import { FnUtils } from '@openmsupply-client/common';
 import { allocateQuantities } from './allocateQuantities';
 import { AllocateInType } from './useAllocationContext';
-import { DraftStockOutLineFragment } from '../OutboundShipment/api/operations.generated';
+import { DraftStockOutLineFragment } from '.';
 
 describe('allocateQuantities - standard behaviour.', () => {
   it('allocates quantity to a row', () => {

@@ -7,8 +7,8 @@ import {
   useBufferState,
   useDebounceCallback,
 } from '@openmsupply-client/common';
-import { useAllocationContext } from './useAllocationContext';
-import { getAllocatedQuantity } from './utils';
+import { useAllocationContext } from '../useAllocationContext';
+import { getAllocatedQuantity } from '../utils';
 
 export const AutoAllocateField = ({
   inputColor,

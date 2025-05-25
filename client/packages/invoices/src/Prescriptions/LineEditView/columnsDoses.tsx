@@ -6,8 +6,11 @@ import {
   NumberCell,
   NumberInputCell,
 } from '@openmsupply-client/common';
-import { DraftStockOutLineFragment } from '../../OutboundShipment/api/operations.generated';
-import { getDoseQuantity, packsToDoses } from '../../Allocation/utils';
+import {
+  getDoseQuantity,
+  packsToDoses,
+  DraftStockOutLineFragment,
+} from '../../StockOut';
 
 export const getPrescriptionLineDosesColumns = (
   allocate: (key: string, numPacks: number) => void

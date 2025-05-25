@@ -1,9 +1,9 @@
-import { GetOutboundEditLinesQuery } from '../OutboundShipment/api/operations.generated';
+import { GetOutboundEditLinesQuery } from './api/operations.generated';
 
 export {
   StockOutLineFragment,
-  PartialStockLineFragment,
-} from './operations.generated';
+  DraftStockOutLineFragment,
+} from './api/operations.generated';
 
 export type DraftItem = GetOutboundEditLinesQuery['items']['nodes'][number];
 
@@ -13,3 +13,6 @@ export type Draft = {
 };
 
 export * from './Components';
+export * from './utils';
+export * from './useAllocationContext';
+export * from './api/useStockOutLineEditData';

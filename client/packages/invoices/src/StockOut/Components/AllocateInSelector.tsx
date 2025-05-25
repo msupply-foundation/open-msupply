@@ -9,8 +9,8 @@ import {
   Typography,
   Box,
 } from '@openmsupply-client/common';
-import { AllocateInType, useAllocationContext } from './useAllocationContext';
-import { canAutoAllocate } from './utils';
+import { AllocateInType, useAllocationContext } from '../useAllocationContext';
+import { canAutoAllocate } from '../utils';
 
 export const AllocateInSelector = ({
   includePackSizeOptions = false,

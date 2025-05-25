@@ -7,7 +7,7 @@ import {
   InputLabel,
 } from '@openmsupply-client/common';
 
-import { useAllocationContext } from '../../Allocation/useAllocationContext';
+import { useAllocationContext } from '../../StockOut';
 
 export const AutoAllocatePrescribedQuantityField = () => {
   const t = useTranslation();

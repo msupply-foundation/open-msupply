@@ -1,7 +1,7 @@
 import { useMutation } from '@openmsupply-client/common';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
-import { DraftStockOutLineFragment } from 'packages/invoices/src/OutboundShipment/api/operations.generated';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
+import { DraftStockOutLineFragment } from '../../../StockOut';
 
 export const useSavePrescriptionItemLineData = (invoiceId: string) => {
   const { prescriptionApi, storeId, queryClient } = usePrescriptionGraphQL();

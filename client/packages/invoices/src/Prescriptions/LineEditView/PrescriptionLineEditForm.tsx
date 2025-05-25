@@ -19,10 +19,12 @@ import { AccordionPanelSection } from './PanelSection';
 import { getPrescriptionDirections } from './getPrescriptionDirections';
 import { useAbbreviations } from '../api/hooks/useAbbreviations';
 import { AllocationSection } from './AllocationSection';
-import { AutoAllocationAlerts } from '../../Allocation/AutoAllocationAlerts';
-import { DraftStockOutLineFragment } from '../../OutboundShipment/api/operations.generated';
-import { useAllocationContext } from '../../Allocation/useAllocationContext';
-import { getAllocatedQuantity } from '../../Allocation/utils';
+import {
+  AutoAllocationAlerts,
+  DraftStockOutLineFragment,
+  useAllocationContext,
+  getAllocatedQuantity,
+} from '../../StockOut';
 
 interface PrescriptionLineEditFormProps {
   disabled: boolean;
