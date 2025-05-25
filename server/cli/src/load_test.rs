@@ -25,24 +25,58 @@ mutation ManualSync {
 }
 "#;
 
-const STOCK_TAKE_MUTATION: &str = r#"
-mutation InsertStockTake($storeId: String!, $input: InsertStocktakeInput!) {
-  insertStocktake(storeId: $storeId, input: $input) {
-    ... on StocktakeNode {
+const INSERT_REQUISITION_MUTATION: &str = r#"
+mutation InsertRequestRequisition($storeId: String!, $input: InsertRequestRequisitionInput!) {
+  insertRequestRequisition(storeId:$storeId, input: $input){
+    ... on RequisitionNode {
       id
+    }
+    ... on InsertRequestRequisitionError {
+      error {
+        description
+      }
     }
   }
 }
 "#;
 
-const STOCK_TAKE_LINE_MUTATION: &str = r#"
-mutation InsertStockTakeLine ($storeId: String!, $input: InsertStocktakeLineInput!) {
-  insertStocktakeLine (storeId: $storeId, input: $input) {
-    __typename
-    ... on StocktakeLineNode {
+const INSERT_REQUISITION_LINE_MUTATION: &str = r#"
+mutation InsertRequestRequisitionLine($storeId: String!, $input: InsertRequestRequisitionLineInput!) {
+  insertRequestRequisitionLine(storeId: $storeId, input: $input){
+    ... on RequisitionLineNode {
       id
     }
-    ... on InsertStocktakeLineError{
+    ... on InsertRequestRequisitionLineError {
+      error {
+        description
+      }
+    }
+  }
+}
+"#;
+
+const UPDATE_REQUISITION_LINE_MUTATION: &str = r#"
+mutation UpdateRequestRequisitionLine ($storeId: String!, $input: UpdateRequestRequisitionLineInput!) {
+  updateRequestRequisitionLine(storeId: $storeId, input: $input) {
+    ... on RequisitionLineNode {
+    	id
+    }
+    ... on UpdateRequestRequisitionLineError {
+      error {
+        description
+      }
+    }
+  }
+}
+"#;
+
+const UPDATE_REQUISITION_MUTATION: &str = r#"
+mutation UpdateRequestRequisition ($storeId: String!, $input: UpdateRequestRequisitionInput!) {
+  updateRequestRequisition(storeId: $storeId, input: $input) {
+    ... on RequisitionNode {
+    	id
+    }
+    ... on UpdateRequestRequisitionError {
       error {
         description
       }
@@ -78,8 +112,8 @@ pub struct LoadTest {
     pub sites: usize,
 
     /// The number of lines to include in each invoice
-    #[clap(short, long)]
-    pub invoice_lines: usize,
+    #[clap(short, long, default_value = "25")]
+    pub lines: usize,
 
     /// Duration in seconds to run the test for
     #[clap(short, long)]
@@ -140,7 +174,7 @@ impl LoadTest {
         test_site_name: Option<String>,
         test_site_pass: Option<String>,
         sites: usize,
-        invoice_lines: usize,
+        lines: usize,
         duration: usize,
     ) -> Self {
         Self {
@@ -150,7 +184,7 @@ impl LoadTest {
             test_site_name,
             test_site_pass,
             sites,
-            invoice_lines,
+            lines,
             duration,
         }
     }
@@ -165,18 +199,25 @@ impl LoadTest {
         println!("Base Port: {}", self.base_port);
         println!("Output Directory: {}", self.output_dir.display());
         println!("Number of Sites: {}", self.sites);
-        println!("Invoice Lines: {}", self.invoice_lines);
+        println!("Invoice Lines: {}", self.lines);
         println!("Duration: {} seconds", self.duration);
 
         std::fs::remove_dir_all(&self.output_dir).ok();
         // Creating the sites on OG central
-        let body = r#"{"visibleNameIds":[]}"#;
         let client = Client::new();
         let test_site_name = self.test_site_name.as_ref().unwrap();
         let test_site_pass = Some(sha256(self.test_site_pass.as_ref().unwrap()));
         let mut site_n_stores: Vec<SiteNStore> = Vec::new();
         let num_sites = if self.sites > 1 { self.sites } else { 2 };
+        let mut last_store_name_id: Option<String> = None;
         for _ in 0..num_sites {
+            let body = if last_store_name_id.is_some() {
+                json!({"visibleNameIds": [last_store_name_id]})
+            } else {
+                json!({"visibleNameIds": []})
+            }
+            .to_string();
+
             let response = client
                 .post(url.clone() + "/create_site")
                 .header("app-name", "load_test")
@@ -190,7 +231,9 @@ impl LoadTest {
                 .await?;
 
             if response.status().is_success() {
-                site_n_stores.push(response.json().await?);
+                let site_n_store: SiteNStore = response.json().await?;
+                last_store_name_id = Some(site_n_store.store.name_id.clone());
+                site_n_stores.push(site_n_store);
             } else {
                 dbg!(&response);
                 dbg!(&response.text().await?);
@@ -256,36 +299,20 @@ impl LoadTest {
             test_sites.push(full_site);
         }
 
-        // Creating name store joins between each site's store and the next
-        let mut name_store_joins: Vec<Value> = Vec::new();
-        for test_site in &test_sites {
-            let name_store_join1 = json!({
-                "ID": &uuid(),
-                "name_ID": test_site.next_store.name_id,
-                "store_ID": test_site.store.id,
-                "om_name_is_customer": true,
-                "om_name_is_supplier": true,
-            });
-            name_store_joins.push(name_store_join1);
-
-            let name_store_join2 = json!({
-                "ID": &uuid(),
-                "name_ID": test_site.store.name_id,
-                "store_ID": test_site.next_store.id,
-                "om_name_is_customer": true,
-                "om_name_is_supplier": true,
-            });
-            name_store_joins.push(name_store_join2);
-        }
-        let item_id = uuid();
-        let item = json!( [{
-            "ID": item_id,
-            "type_of": "general",
-            "code": "test_item_code",
-            "item_name": "test_item",
-            "default_pack_size": 12,
-        }]);
-        let body = json!({"name_store_join": name_store_joins, "item": item}).to_string();
+        let item_ids: Vec<String> = (0..self.lines).map(|_| uuid()).collect();
+        let items: Vec<Value> = item_ids
+            .iter()
+            .map(|id| {
+                json!({
+                    "ID": id,
+                    "type_of": "general",
+                    "code": "test_item_code",
+                    "item_name": "test_item",
+                    "default_pack_size": 12,
+                })
+            })
+            .collect();
+        let body = json!({"item": items}).to_string();
         let response = client
             .post(url.clone() + "/upsert")
             .header("app-name", "load_test")
@@ -351,11 +378,11 @@ impl LoadTest {
         println!("Starting remote OMS instances...");
         let mut handles = Vec::new();
         let duration = self.duration as u64;
-        let num_lines = self.invoice_lines;
+        let num_lines = self.lines;
 
         for test_site in test_sites {
             let dir = self.output_dir.clone();
-            let item_id_copy = item_id.clone();
+            let item_ids_copy = item_ids.clone();
             let handle = tokio::spawn(async move {
                 let log = std::fs::File::create(
                     dir.join(format!("site_{}_output.log", test_site.site.site_id)),
@@ -368,6 +395,7 @@ impl LoadTest {
                     .arg(&test_site.config_file_path)
                     .stdout(log.try_clone().unwrap())
                     .stderr(log)
+                    .env("RUST_LOG", "none")
                     .kill_on_drop(true)
                     .spawn()
                 {
@@ -377,7 +405,7 @@ impl LoadTest {
                         return;
                     }
                 };
-                sleep(Duration::from_secs(20)).await; // Let db get created, migrated and initialisation started
+                sleep(Duration::from_secs(10)).await; // Let db get created, migrated and initialisation started
                 let client = Client::new();
                 let remote_url = format!("http://localhost:{}", test_site.settings.server.port);
                 let graphql_url = format!("{}/{}", remote_url, "graphql");
@@ -389,72 +417,132 @@ impl LoadTest {
 
                 let start = std::time::Instant::now();
                 loop {
-                    let stock_take_id = uuid();
-                    let stock_take_gql = json!({
-                        "operationName": "InsertStockTake",
-                        "query": STOCK_TAKE_MUTATION,
-                        "variables": {"storeId": test_site.store.id, "input": {"id": stock_take_id}}
+                    let requisition_id = uuid();
+                    let requisition_gql = json!({
+                        "operationName": "InsertRequestRequisition",
+                        "query": INSERT_REQUISITION_MUTATION,
+                        "variables": {
+                            "storeId": test_site.store.id,
+                            "input": {
+                                "id": requisition_id,
+                                "otherPartyId": test_site.next_store.name_id,
+                                "maxMonthsOfStock": 3,
+                                "minMonthsOfStock": 1
+                            }
+                        }
                     });
                     match client
                         .post(&graphql_url)
-                        .header(
-                            "Authorization",
-                            "is disabled :) but still need a token to pretend",
-                        )
-                        .body(stock_take_gql.to_string())
+                        .header("Authorization", "pretend :)")
+                        .body(requisition_gql.to_string())
                         .send()
                         .await
                     {
                         Ok(response) => response,
                         Err(e) => {
-                            println!("Failed to make stocktake request: {}", e);
+                            println!("insertRequestRequisition request failed: {}", e);
                             kill(&mut child).await;
                             return;
                         }
                     };
 
                     for i in 0..num_lines {
+                        let line_id = uuid();
                         let line_gql = json!({
-                            "operationName": "InsertStockTakeLine",
-                            "query": STOCK_TAKE_LINE_MUTATION,
-                            "variables": {"storeId": test_site.store.id, "input": {"id": uuid(), "stocktakeId": stock_take_id, "itemId": item_id_copy, "countedNumberOfPacks": i, "packSize": i, "batch": "abc-123" } }
+                            "operationName": "InsertRequestRequisitionLine",
+                            "query": INSERT_REQUISITION_LINE_MUTATION,
+                            "variables": {
+                                "storeId": test_site.store.id,
+                                "input": {
+                                    "id": line_id,
+                                    "itemId": item_ids_copy[i%num_lines],
+                                    "requisitionId": requisition_id
+                                }
+                            }
                         });
+
                         match client
                             .post(&graphql_url)
-                            .header(
-                                "Authorization",
-                                "is disabled :) but still need a token to pretend",
-                            )
+                            .header("Authorization", "pretend :)")
                             .body(line_gql.to_string())
                             .send()
                             .await
                         {
                             Ok(response) => response,
                             Err(e) => {
-                                println!("Failed to make stocktake line request: {}", e);
+                                println!("insertRequestRequisitionLine request failed: {}", e);
+                                kill(&mut child).await;
+                                return;
+                            }
+                        };
+
+                        let line_gql = json!({
+                            "operationName": "UpdateRequestRequisitionLine",
+                            "query": UPDATE_REQUISITION_LINE_MUTATION,
+                            "variables": {
+                                "storeId": test_site.store.id,
+                                "input": {
+                                    "id": line_id,
+                                    "requestedQuantity": i+1,
+                                    "comment": "Please send me the stocks"
+                                }
+                            }
+                        });
+                        match client
+                            .post(&graphql_url)
+                            .header("Authorization", "pretend :)")
+                            .body(line_gql.to_string())
+                            .send()
+                            .await
+                        {
+                            Ok(response) => response,
+                            Err(e) => {
+                                println!("insertRequestRequisitionLine request failed: {}", e);
                                 kill(&mut child).await;
                                 return;
                             }
                         };
                     }
+                    let requisition_gql = json!({
+                        "operationName": "UpdateRequestRequisition",
+                        "query": UPDATE_REQUISITION_MUTATION,
+                        "variables": {
+                            "storeId": test_site.store.id,
+                            "input": {
+                                "id": requisition_id,
+                                "status": "SENT"
+                            }
+                        }
+                    });
+                    match client
+                        .post(&graphql_url)
+                        .header("Authorization", "pretend :)")
+                        .body(requisition_gql.to_string())
+                        .send()
+                        .await
+                    {
+                        Ok(response) => response,
+                        Err(e) => {
+                            println!("insertRequestRequisition request failed: {}", e);
+                            kill(&mut child).await;
+                            return;
+                        }
+                    };
 
                     let sync_gql = json!({
-                        "operationName": "manualSync",
+                        "operationName": "ManualSync",
                         "query": MANUAL_SYNC_QUERY,
                     });
                     match client
                         .post(&graphql_url)
-                        .header(
-                            "Authorization",
-                            "is disabled :) but still need a token to pretend",
-                        )
+                        .header("Authorization", "pretend :)")
                         .body(sync_gql.to_string())
                         .send()
                         .await
                     {
                         Ok(response) => response,
                         Err(e) => {
-                            println!("Failed to make stocktake request: {}", e);
+                            println!("manualSync request failed: {}", e);
                             kill(&mut child).await;
                             return;
                         }
@@ -499,21 +587,16 @@ async fn wait_for_sync(client: &Client, graphql_url: &String) -> Result<(), Erro
             "operationName": "SyncInfo",
             "query": SYNC_INFO_QUERY,
         });
+
         let response = match client
             .post(graphql_url)
-            .header(
-                "Authorization",
-                "is disabled :) but still need a token to pretend",
-            )
+            .header("Authorization", "pretend :)")
             .body(sync_gql.to_string())
             .send()
             .await
         {
             Ok(response) => response,
-            Err(e) => {
-                println!("SyncInfo request failed: {}", e);
-                return Err(e);
-            }
+            Err(_) => continue, // could cause infinite loop, is to avoid early ending of test run before initialisation has started
         };
 
         if response.status().is_success() {

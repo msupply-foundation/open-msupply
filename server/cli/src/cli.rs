@@ -709,7 +709,7 @@ async fn main() -> anyhow::Result<()> {
             test_site_name,
             test_site_pass,
             sites,
-            invoice_lines,
+            lines,
             duration,
         }) => {
             let load_test = LoadTest::new(
@@ -719,7 +719,7 @@ async fn main() -> anyhow::Result<()> {
                 test_site_name,
                 test_site_pass,
                 sites,
-                invoice_lines,
+                lines,
                 duration,
             );
             load_test.run().await?;
