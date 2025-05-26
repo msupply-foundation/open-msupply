@@ -889,6 +889,7 @@ impl AuthServiceTrait for AuthService {
         resource_request: &ResourceAccessRequest,
     ) -> Result<ValidatedUser, AuthError> {
         let user_id = if let Some(override_user_id) = override_user_id {
+            log::info!("Overriding user id with: {}", override_user_id);
             override_user_id.clone()
         } else {
             validate_auth(auth_data, auth_token)?.user_id
