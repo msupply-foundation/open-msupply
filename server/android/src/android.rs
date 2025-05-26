@@ -75,6 +75,7 @@ pub mod android {
 
         // run server in background thread
         let thread = thread::spawn(move || {
+            // This code is from expanding macro in main.rs
             tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
                 .build()
