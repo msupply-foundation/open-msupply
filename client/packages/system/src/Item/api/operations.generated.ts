@@ -65,6 +65,7 @@ export type StockLineFragment = {
     id: string;
     dosesPerUnit: number;
   } | null;
+  donor?: { __typename: 'NameNode'; id: string } | null;
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
@@ -394,6 +395,7 @@ export type ItemFragment = {
         id: string;
         dosesPerUnit: number;
       } | null;
+      donor?: { __typename: 'NameNode'; id: string } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
@@ -589,6 +591,7 @@ export type ItemsWithStockLinesQuery = {
             id: string;
             dosesPerUnit: number;
           } | null;
+          donor?: { __typename: 'NameNode'; id: string } | null;
           vvmStatus?: {
             __typename: 'VvmstatusNode';
             id: string;
@@ -910,6 +913,7 @@ export type ItemByIdQuery = {
             id: string;
             dosesPerUnit: number;
           } | null;
+          donor?: { __typename: 'NameNode'; id: string } | null;
           vvmStatus?: {
             __typename: 'VvmstatusNode';
             id: string;
@@ -1173,6 +1177,7 @@ export type GetHistoricalStockLinesQuery = {
         id: string;
         dosesPerUnit: number;
       } | null;
+      donor?: { __typename: 'NameNode'; id: string } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
@@ -1572,6 +1577,9 @@ export const StockLineFragmentDoc = gql`
     itemVariant {
       id
       dosesPerUnit
+    }
+    donor(storeId: $storeId) {
+      id
     }
     vvmStatus {
       __typename

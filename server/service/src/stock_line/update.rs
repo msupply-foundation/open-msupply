@@ -13,6 +13,7 @@ use crate::{
     check_item_variant_exists, check_location_exists,
     common_stock::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
+    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate, SingleRecordError,
 };
 
@@ -30,6 +31,7 @@ pub struct UpdateStockLine {
     pub barcode: Option<String>,
     pub item_variant_id: Option<NullableUpdate<String>>,
     pub vvm_status_id: Option<String>,
+    pub donor_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -39,6 +41,9 @@ pub enum UpdateStockLineError {
     StockDoesNotExist,
     LocationDoesNotExist,
     ItemVariantDoesNotExist,
+    DonorDoesNotExist,
+    DonorNotVisible,
+    DonorIsNotADonor,
     UpdatedStockNotFound,
     StockMovementNotFound,
     VVMStatusDoesNotExist,
@@ -115,6 +120,22 @@ fn validate(
         }
     }
 
+    if let Some(NullableUpdate {
+        value: Some(donor_id),
+    }) = &input.donor_id
+    {
+        check_other_party(connection, store_id, donor_id, CheckOtherPartyType::Donor).map_err(
+            |e| match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => DonorDoesNotExist {},
+                OtherPartyErrors::OtherPartyNotVisible => DonorNotVisible,
+                OtherPartyErrors::TypeMismatched => DonorIsNotADonor,
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    DatabaseError(repository_error)
+                }
+            },
+        )?;
+    };
+
     Ok(stock_line)
 }
 
@@ -139,6 +160,7 @@ fn generate(
         barcode,
         item_variant_id,
         vvm_status_id,
+        donor_id,
     }: UpdateStockLine,
 ) -> Result<GenerateResult, UpdateStockLineError> {
     let mut existing = existing_line.stock_line_row;
@@ -190,6 +212,7 @@ fn generate(
         .map(|v| v.value)
         .unwrap_or(existing.item_variant_id);
     existing.vvm_status_id = vvm_status_id.or(existing.vvm_status_id);
+    existing.donor_link_id = donor_id.map(|v| v.value).unwrap_or(existing.donor_link_id);
 
     Ok(GenerateResult {
         new_stock_line: existing,

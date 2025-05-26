@@ -1051,6 +1051,7 @@ export type DraftStockOutLineFragment = {
     description: string;
   } | null;
   itemVariant?: { __typename: 'ItemVariantNode'; dosesPerUnit: number } | null;
+  donor?: { __typename: 'NameNode'; id: string; name: string } | null;
 };
 
 export type GetOutboundEditLinesQueryVariables = Types.Exact<{
@@ -1104,6 +1105,7 @@ export type GetOutboundEditLinesQuery = {
         __typename: 'ItemVariantNode';
         dosesPerUnit: number;
       } | null;
+      donor?: { __typename: 'NameNode'; id: string; name: string } | null;
     }>;
   };
 };
@@ -1267,6 +1269,10 @@ export const DraftStockOutLineFragmentDoc = gql`
     }
     itemVariant {
       dosesPerUnit
+    }
+    donor(storeId: $storeId) {
+      id
+      name
     }
   }
 `;

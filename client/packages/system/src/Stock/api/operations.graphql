@@ -37,6 +37,9 @@ fragment StockLineRow on StockLineNode {
     id
     description
   }
+  donor(storeId: $storeId) {
+    id
+  }
 }
 
 fragment RepackStockLine on RepackStockLineNode {

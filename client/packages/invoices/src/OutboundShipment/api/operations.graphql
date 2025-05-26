@@ -852,6 +852,10 @@ fragment DraftStockOutLine on DraftOutboundShipmentLineNode {
   itemVariant {
     dosesPerUnit
   }
+  donor(storeId: $storeId) {
+    id
+    name
+  }
 }
 
 query getOutboundEditLines(

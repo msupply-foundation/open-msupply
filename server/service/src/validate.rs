@@ -29,6 +29,7 @@ pub enum CheckOtherPartyType {
     Customer,
     Supplier,
     Manufacturer,
+    Donor,
     Patient,
 }
 
@@ -96,6 +97,11 @@ pub fn check_other_party(
         }
         CheckOtherPartyType::Manufacturer => {
             if !other_party.is_manufacturer() {
+                return Err(OtherPartyErrors::TypeMismatched);
+            }
+        }
+        CheckOtherPartyType::Donor => {
+            if !other_party.is_donor() {
                 return Err(OtherPartyErrors::TypeMismatched);
             }
         }

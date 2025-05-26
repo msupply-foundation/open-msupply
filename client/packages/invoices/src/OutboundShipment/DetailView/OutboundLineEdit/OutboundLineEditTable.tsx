@@ -116,7 +116,8 @@ export const OutboundLineEditTable = ({
   const tableStore = useTableStore();
   const { data: prefs } = usePreference(
     PreferenceKey.SortByVvmStatusThenExpiry,
-    PreferenceKey.ManageVvmStatusForStock
+    PreferenceKey.ManageVvmStatusForStock,
+    PreferenceKey.AllowTrackingOfStockByDonor
   );
 
   const {
@@ -175,6 +176,9 @@ export const OutboundLineEditTable = ({
   if (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) {
     extraColumnOffset += 1;
   }
+  if (prefs?.allowTrackingOfStockByDonor) {
+    extraColumnOffset += 1;
+  }
 
   const additionalRows = [
     <PlaceholderRow
@@ -186,7 +190,7 @@ export const OutboundLineEditTable = ({
       key="placeholder-row"
     />,
     <tr key="divider-row">
-      <td colSpan={12}>
+      <td colSpan={13}>
         <Divider margin={10} />
       </td>
     </tr>,
