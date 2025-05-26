@@ -35,8 +35,6 @@ pub fn update_picked_date(
     connection: &StorageConnection,
     invoice: &InvoiceRow,
 ) -> Result<(), RepositoryError> {
-    println!("Updating picked date for invoice with ID: {}", invoice.id);
-
     // Some invoices such as prescriptions should be automatically picked when lines are added
     let invoice = auto_pick_invoice(connection, invoice.clone())?;
 
