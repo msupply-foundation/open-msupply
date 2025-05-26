@@ -191,7 +191,7 @@ const useUpdate = (id: string) => {
         itemVariantId: setNullableInput('itemVariantId', { itemVariantId }),
         vvmStatusId,
         donorId: setNullableInput('id', donor),
-        campaignId: campaign?.id,
+        campaignId: setNullableInput('id', campaign),
       },
       storeId,
     });
