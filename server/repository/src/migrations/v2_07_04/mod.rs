@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod create_dynamic_cursor_key;
 mod create_message_table;
+mod create_plugin_user;
 
 pub(crate) struct V2_07_04;
 
@@ -19,6 +20,7 @@ impl Migration for V2_07_04 {
         vec![
             Box::new(create_dynamic_cursor_key::Migrate),
             Box::new(create_message_table::Migrate),
+            Box::new(create_plugin_user::Migrate),
         ]
     }
 }

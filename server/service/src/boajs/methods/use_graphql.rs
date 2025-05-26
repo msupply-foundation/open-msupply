@@ -1,7 +1,7 @@
 use boa_engine::*;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
-use util::constants::SYSTEM_USER_ID;
+use util::constants::PLUGIN_USER_ID;
 
 use crate::{boajs::context::BoaJsContext, boajs::utils::*};
 
@@ -12,7 +12,7 @@ pub(crate) struct UseGraphqlInput {
 }
 
 // TODO this method should accept user id, when call plugin is called it should accept this user id
-// optional, defaulting to SYSTEM_USER_ID.
+// optional, defaulting to PLUGIN_USER_ID.
 pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
     context.register_global_callable(
         JsString::from("use_graphql"),
@@ -23,7 +23,7 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
             let runtime_handle = BoaJsContext::runtime_handle();
             let value = do_async_blocking(runtime_handle, async move {
                 graphql
-                    .execute_graphql(SYSTEM_USER_ID, &query, variables)
+                    .execute_graphql(PLUGIN_USER_ID, &query, variables)
                     .await
             })
             .map_err(std_error_to_js_error)?;
