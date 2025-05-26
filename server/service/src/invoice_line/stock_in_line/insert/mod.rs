@@ -45,6 +45,7 @@ pub struct InsertStockInLine {
     pub item_variant_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<String>,
+    pub campaign_id: Option<String>,
 }
 
 type OutError = InsertStockInLineError;
@@ -96,6 +97,9 @@ pub enum InsertStockInLineError {
     InvoiceDoesNotExist,
     NotAStockIn,
     NotThisStoreInvoice,
+    DonorDoesNotExist,
+    DonorNotVisible,
+    SelectedDonorPartyIsNotADonor,
     CannotEditFinalised,
     LocationDoesNotExist,
     ItemVariantDoesNotExist,
@@ -130,9 +134,10 @@ mod test {
         barcode::{BarcodeFilter, BarcodeRepository},
         mock::{
             mock_customer_return_a, mock_customer_return_a_invoice_line_a, mock_inbound_shipment_a,
-            mock_inbound_shipment_c, mock_inbound_shipment_e, mock_item_a, mock_name_store_b,
-            mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_user_account_a,
-            mock_vaccine_item_a, mock_vvm_status_a, MockData, MockDataInserts,
+            mock_inbound_shipment_c, mock_inbound_shipment_e, mock_item_a, mock_name_b,
+            mock_name_customer_a, mock_name_store_b, mock_outbound_shipment_e, mock_store_a,
+            mock_store_b, mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a, MockData,
+            MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::{
@@ -338,6 +343,60 @@ mod test {
                 }),
             ),
             Err(ServiceError::VVMStatusDoesNotExist)
+        );
+
+        // DonorDoesNotExist
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new invoice line id".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    item_id: mock_item_a().id,
+                    invoice_id: mock_inbound_shipment_a().id,
+                    r#type: StockInType::InboundShipment,
+                    donor_id: Some("invalid".to_string()),
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::DonorDoesNotExist)
+        );
+
+        // DonorNotVisible
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new invoice line id".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    item_id: mock_item_a().id,
+                    invoice_id: mock_inbound_shipment_c().id,
+                    r#type: StockInType::InboundShipment,
+                    donor_id: Some(mock_name_b().id), // Not visible in store_a
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::DonorNotVisible)
+        );
+
+        // DonorIsNotADonor
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new invoice line id".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    item_id: mock_item_a().id,
+                    invoice_id: mock_inbound_shipment_e().id,
+                    r#type: StockInType::InboundShipment,
+                    donor_id: Some(mock_name_customer_a().id), // Not a donor
+                    ..Default::default()
+                },
+            ),
+            Err(ServiceError::SelectedDonorPartyIsNotADonor)
         );
     }
 
