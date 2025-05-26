@@ -62,8 +62,7 @@ export const SupplySelection = ({
     const updatedRequest = getUpdatedSupply(
       value,
       representation,
-      defaultPackSize,
-      draft?.requestedQuantity
+      defaultPackSize
     );
     update(updatedRequest);
   };

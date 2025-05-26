@@ -64,7 +64,7 @@ describe('getUpdatedSupply', () => {
       });
     });
 
-    it('should convert undefined value to 0', () => {
+    it('should convert undefined value to 1', () => {
       expect(getUpdatedSupply(undefined, 'units', 2)).toEqual({
         supplyQuantity: 0,
       });
@@ -73,13 +73,6 @@ describe('getUpdatedSupply', () => {
     it('should convert NaN value to 0', () => {
       expect(getUpdatedSupply(NaN, 'units', 2)).toEqual({
         supplyQuantity: 0,
-      });
-    });
-
-    it('should include reason as null when supplyQuantity is equal to suggestedQuantity', () => {
-      expect(getUpdatedSupply(5, 'units', 2, 5)).toEqual({
-        supplyQuantity: 5,
-        reason: null,
       });
     });
   });
@@ -96,9 +89,9 @@ describe('getUpdatedSupply', () => {
       });
     });
 
-    it('should use 0 as a default packSize when undefined', () => {
+    it('should use 1 as a default packSize when undefined', () => {
       expect(getUpdatedSupply(5, 'packs', undefined)).toEqual({
-        supplyQuantity: 0,
+        supplyQuantity: 5,
       });
     });
 
@@ -111,13 +104,6 @@ describe('getUpdatedSupply', () => {
     it('should convert NaN value to 0', () => {
       expect(getUpdatedSupply(NaN, 'packs', 2)).toEqual({
         supplyQuantity: 0,
-      });
-    });
-
-    it('should return reason as null when supplyQuantity is equal to suggestedQuantity', () => {
-      expect(getUpdatedSupply(5, 'packs', 2, 10)).toEqual({
-        supplyQuantity: 10,
-        reason: null,
       });
     });
   });

@@ -99,12 +99,12 @@ export const ResponseLineEditModal = ({
           defaultPackSize={currentItem?.defaultPackSize || 1}
           representation={representation}
           unitName={currentItem?.unitName}
-          stockOnHand={data?.responseStoreStats.stockOnHand || 0}
-          incomingStock={data?.responseStoreStats.incomingStock || 0}
-          stockOnOrder={data?.responseStoreStats.stockOnOrder || 0}
-          requestedQuantity={data?.responseStoreStats.requestedQuantity || 0}
+          stockOnHand={data?.responseStoreStats.stockOnHand ?? 0}
+          incomingStock={data?.responseStoreStats.incomingStock ?? 0}
+          stockOnOrder={data?.responseStoreStats.stockOnOrder ?? 0}
+          requestedQuantity={data?.responseStoreStats.requestedQuantity ?? 0}
           otherRequestedQuantity={
-            data?.responseStoreStats.otherRequestedQuantity || 0
+            data?.responseStoreStats.otherRequestedQuantity ?? 0
           }
         />
       ),
@@ -114,13 +114,13 @@ export const ResponseLineEditModal = ({
       Component: (
         <RequestStoreStats
           representation={representation}
-          defaultPackSize={currentItem?.defaultPackSize || 1}
+          defaultPackSize={currentItem?.defaultPackSize ?? 1}
           unitName={currentItem?.unitName}
-          maxMonthsOfStock={data?.requestStoreStats.maxMonthsOfStock || 0}
-          suggestedQuantity={data?.requestStoreStats.suggestedQuantity || 0}
-          availableStockOnHand={data?.requestStoreStats.stockOnHand || 0}
+          maxMonthsOfStock={data?.requestStoreStats.maxMonthsOfStock ?? 0}
+          suggestedQuantity={data?.requestStoreStats.suggestedQuantity ?? 0}
+          availableStockOnHand={data?.requestStoreStats.stockOnHand ?? 0}
           averageMonthlyConsumption={
-            data?.requestStoreStats.averageMonthlyConsumption || 0
+            data?.requestStoreStats.averageMonthlyConsumption ?? 0
           }
         />
       ),
@@ -175,6 +175,7 @@ export const ResponseLineEditModal = ({
               display: 'flex',
               justifyContent: 'center',
               background: theme => theme.palette.background.toolbar,
+              pt: 1,
             }}
           />
         )}

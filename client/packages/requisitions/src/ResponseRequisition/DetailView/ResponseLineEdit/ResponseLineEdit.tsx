@@ -206,8 +206,14 @@ export const ResponseLineEdit = ({
                 disabledOverride: true,
               })}
               {numericInput('label.requested', draft?.requestedQuantity, {
-                onChange: value =>
-                  update({ requestedQuantity: value, reason: null }),
+                onChange: value => {
+                  draft?.suggestedQuantity === value
+                    ? update({
+                        requestedQuantity: value,
+                        reason: null,
+                      })
+                    : update({ requestedQuantity: value });
+                },
               })}
             </Box>
             {showExtraFields && (

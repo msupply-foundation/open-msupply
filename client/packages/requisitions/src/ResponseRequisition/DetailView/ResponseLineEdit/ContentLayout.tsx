@@ -72,56 +72,45 @@ export const NumInputRow = ({
   };
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 1,
-        px: 1,
-        ...sx,
-      }}
-    >
-      <Box sx={{ flex: 1 }}>
-        <InputWithLabelRow
-          Input={
-            <NumericTextInput
-              sx={{
-                '& .MuiInputBase-input': {
-                  p: '3px 4px',
-                  backgroundColor: theme =>
+    <Box sx={{ marginBottom: 1, px: 1, flex: 1, ...sx }}>
+      <InputWithLabelRow
+        Input={
+          <NumericTextInput
+            sx={{
+              '& .MuiInputBase-input': {
+                p: '3px 4px',
+                backgroundColor: theme =>
+                  disabled
+                    ? theme.palette.background.toolbar
+                    : theme.palette.background.white,
+              },
+            }}
+            slotProps={{
+              input: {
+                sx: {
+                  boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
+                  background: theme =>
                     disabled
                       ? theme.palette.background.toolbar
                       : theme.palette.background.white,
                 },
-              }}
-              slotProps={{
-                input: {
-                  sx: {
-                    boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
-                    background: theme =>
-                      disabled
-                        ? theme.palette.background.toolbar
-                        : theme.palette.background.white,
-                  },
-                },
-              }}
-              min={0}
-              width={145}
-              value={roundedValue}
-              onChange={handleChange}
-              disabled={disabled}
-              autoFocus={autoFocus}
-              decimalLimit={0}
-              endAdornment={endAdornment}
-            />
-          }
-          label={label}
-          sx={{
-            justifyContent: 'space-between',
-          }}
-        />
-      </Box>
+              },
+            }}
+            min={0}
+            width={145}
+            value={roundedValue}
+            onChange={handleChange}
+            disabled={disabled}
+            autoFocus={autoFocus}
+            decimalLimit={0}
+            endAdornment={endAdornment}
+          />
+        }
+        label={label}
+        sx={{
+          justifyContent: 'space-between',
+        }}
+      />
     </Box>
   );
 };
