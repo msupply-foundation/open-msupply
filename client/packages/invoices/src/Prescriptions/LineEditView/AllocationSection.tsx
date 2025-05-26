@@ -33,7 +33,6 @@ export const AllocationSection = ({ disabled }: { disabled?: boolean }) => {
       <AccordionPanelSection
         title={t('label.batches')}
         defaultExpanded={false}
-        // key={key + '_table'} // Do we need to use a custom key again? item_id?
         key={'item_table'}
         backgroundColor="background.white"
       >

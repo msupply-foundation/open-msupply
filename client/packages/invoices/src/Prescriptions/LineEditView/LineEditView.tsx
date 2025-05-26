@@ -180,6 +180,7 @@ export const PrescriptionLineEditView = () => {
         Right={
           <>
             <PrescriptionLineEdit
+              // Key resets all component state when itemId changes
               key={itemId}
               itemId={itemId === 'new' ? undefined : itemId}
               programId={data?.programId ?? undefined}

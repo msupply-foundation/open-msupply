@@ -93,8 +93,6 @@ export const PrescriptionLineEdit = ({
       sx={{ minHeight: 200, display: 'flex', flexDirection: 'column' }}
     >
       <AccordionPanelSection
-        // Key ensures component will reload when switching item, but not when
-        // making other changes within item (e.g. quantity)
         title={t('label.item', { count: 1 })}
         closedSummary={item?.name}
         defaultExpanded={isNew && !isDisabled}
