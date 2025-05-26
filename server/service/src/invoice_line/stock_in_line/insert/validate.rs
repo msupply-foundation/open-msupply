@@ -1,10 +1,11 @@
 use crate::{
-    check_item_variant_exists, check_location_exists,
+    check_item_variant_exists, check_location_exists, check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         stock_in_line::check_pack_size,
         validate::{check_item_exists, check_line_exists, check_number_of_packs},
     },
+    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
 use repository::{InvoiceRow, ItemRow, StorageConnection};
@@ -44,6 +45,12 @@ pub fn validate(
         }
     }
 
+    if let Some(vvm_status_id) = &input.vvm_status_id {
+        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
+            return Err(VVMStatusDoesNotExist);
+        }
+    }
+
     let invoice =
         check_invoice_exists(&input.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
 
@@ -56,6 +63,19 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
+
+    if let Some(donor_id) = &input.donor_id {
+        check_other_party(connection, store_id, donor_id, CheckOtherPartyType::Donor).map_err(
+            |e| match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => DonorDoesNotExist {},
+                OtherPartyErrors::OtherPartyNotVisible => DonorNotVisible,
+                OtherPartyErrors::TypeMismatched => SelectedDonorPartyIsNotADonor,
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    DatabaseError(repository_error)
+                }
+            },
+        )?;
+    };
 
     // TODO: LocationDoesNotBelongToCurrentStore
 

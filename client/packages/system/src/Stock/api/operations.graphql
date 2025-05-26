@@ -7,6 +7,7 @@ fragment StockLineRow on StockLineNode {
   itemId
   locationId
   itemVariantId
+  vvmStatusId
   locationName
   onHold
   packSize
@@ -35,6 +36,13 @@ fragment StockLineRow on StockLineNode {
   vvmStatus {
     id
     description
+  }
+  donor(storeId: $storeId) {
+    id
+  }
+  campaign {
+    id
+    name
   }
 }
 

@@ -11,6 +11,10 @@ import {
   DetailTabs,
   useRowHighlight,
   useBreadcrumbs,
+  PreferenceKey,
+  usePreference,
+  useSimplifiedTabletUI,
+  Box,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -33,18 +37,13 @@ const StocktakeTabs = ({
   id,
   isDisabled,
   onOpen,
+  onRowClick,
 }: {
   id: string | undefined;
   isDisabled: boolean;
   onOpen: (item?: StocktakeLineFragment['item'] | null | undefined) => void;
+  onRowClick: (item: StocktakeLineFragment | StocktakeSummaryItem) => void;
 }) => {
-  const onRowClick = useCallback(
-    (item: StocktakeLineFragment | StocktakeSummaryItem) => {
-      if (item.item) onOpen(item.item);
-    },
-    [onOpen]
-  );
-
   const tabs = [
     {
       Component: (
@@ -70,9 +69,17 @@ const DetailViewComponent = ({
 }: {
   stocktake: StocktakeFragment;
   isDisabled: boolean;
-  onOpen: () => void;
+  onOpen: (item?: StocktakeLineFragment['item'] | null | undefined) => void;
 }) => {
   const { HighlightStyles } = useRowHighlight();
+  const simplifiedTabletView = useSimplifiedTabletUI();
+
+  const onRowClick = useCallback(
+    (item: StocktakeLineFragment | StocktakeSummaryItem) => {
+      if (item.item) onOpen(item.item);
+    },
+    [onOpen]
+  );
 
   return (
     <>
@@ -83,18 +90,37 @@ const DetailViewComponent = ({
       <SidePanel />
 
       <Toolbar />
-
-      <StocktakeTabs
-        id={stocktake?.id}
-        onOpen={onOpen}
-        isDisabled={isDisabled}
-      />
+      {simplifiedTabletView ? (
+        <Box
+          sx={{
+            display: 'flex',
+            flex: 1,
+            justifyContent: 'center',
+          }}
+        >
+          <ContentArea
+            onRowClick={!isDisabled ? onRowClick : null}
+            onAddItem={() => onOpen()}
+          />
+        </Box>
+      ) : (
+        <StocktakeTabs
+          id={stocktake?.id}
+          onOpen={onOpen}
+          onRowClick={onRowClick}
+          isDisabled={isDisabled}
+        />
+      )}
     </>
   );
 };
 
 export const DetailView = () => {
   const { data: stocktake, isLoading } = useStocktakeOld.document.get();
+  const { data: preferences } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor
+  );
+
   const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
@@ -140,6 +166,9 @@ export const DetailView = () => {
             mode={mode}
             item={entity}
             isInitialStocktake={stocktake.isInitialStocktake}
+            enableDonorTracking={
+              preferences?.[PreferenceKey.AllowTrackingOfStockByDonor] ?? false
+            }
           />
         )}
       </TableProvider>

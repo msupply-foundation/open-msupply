@@ -142,6 +142,7 @@ pub use self::warning::*;
 pub mod vvm_status;
 pub use self::vvm_status::*;
 
+mod campaign;
 pub mod draft_stock_out_line;
 pub use self::draft_stock_out_line::*;
 
@@ -172,3 +173,5 @@ impl OkResponse {
         true
     }
 }
+
+pub use campaign::*;

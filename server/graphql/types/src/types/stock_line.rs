@@ -1,10 +1,14 @@
-use super::{ItemNode, ItemVariantNode, LocationNode, VVMStatusLogConnector, VVMStatusNode};
+use super::{
+    CampaignNode, ItemNode, ItemVariantNode, LocationNode, NameNode, VVMStatusLogConnector,
+    VVMStatusNode,
+};
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
-        ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader, VVMStatusByIdLoader,
+        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader,
+        NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput, VVMStatusByIdLoader,
         VVMStatusLogByStockLineIdLoader,
     },
     simple_generic_errors::NodeError,
@@ -49,6 +53,9 @@ impl StockLineNode {
     }
     pub async fn item_variant_id(&self) -> &Option<String> {
         &self.row().item_variant_id
+    }
+    pub async fn vvm_status_id(&self) -> &Option<String> {
+        &self.row().vvm_status_id
     }
     pub async fn cost_price_per_pack(&self) -> f64 {
         self.row().cost_price_per_pack
@@ -146,6 +153,31 @@ impl StockLineNode {
         let result = loader.load_one(self.row().id.clone()).await?;
 
         Ok(result.map(VVMStatusLogConnector::from_domain))
+    }
+
+    pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
+        let donor_link_id = match &self.row().donor_link_id {
+            None => return Ok(None),
+            Some(donor_link_id) => donor_link_id,
+        };
+        let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
+        let result = loader
+            .load_one(NameByNameLinkIdLoaderInput::new(&store_id, donor_link_id))
+            .await?;
+
+        Ok(result.map(NameNode::from_domain))
+    }
+
+    pub async fn campaign(&self, ctx: &Context<'_>) -> Result<Option<CampaignNode>> {
+        let loader = ctx.get_loader::<DataLoader<CampaignByIdLoader>>();
+
+        let campaign_id = match &self.row().campaign_id {
+            Some(campaign_id) => campaign_id,
+            None => return Ok(None),
+        };
+
+        let result = loader.load_one(campaign_id.clone()).await?;
+        Ok(result.map(CampaignNode::from_domain))
     }
 }
 

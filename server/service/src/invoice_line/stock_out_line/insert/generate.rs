@@ -125,7 +125,9 @@ fn generate_line(
         expiry_date,
         location_id,
         item_variant_id,
+        donor_link_id,
         note: _,
+        vvm_status_id,
         ..
     }: StockLineRow,
     InvoiceRow {
@@ -169,12 +171,14 @@ fn generate_line(
         total_before_tax,
         total_after_tax,
         tax_percentage,
+        donor_link_id,
         note,
         foreign_currency_price_before_tax,
         item_variant_id,
+        vvm_status_id,
         linked_invoice_id: None,
-        donor_id: None,
         reason_option_id: None,
+        campaign_id: None,
     })
 }
 

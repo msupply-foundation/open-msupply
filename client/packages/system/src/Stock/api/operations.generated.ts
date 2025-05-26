@@ -14,6 +14,7 @@ export type StockLineRowFragment = {
   itemId: string;
   locationId?: string | null;
   itemVariantId?: string | null;
+  vvmStatusId?: string | null;
   locationName?: string | null;
   onHold: boolean;
   packSize: number;
@@ -71,6 +72,8 @@ export type StockLineRowFragment = {
     id: string;
     description: string;
   } | null;
+  donor?: { __typename: 'NameNode'; id: string } | null;
+  campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
 };
 
 export type RepackStockLineFragment = {
@@ -212,6 +215,7 @@ export type StockLinesQuery = {
       itemId: string;
       locationId?: string | null;
       itemVariantId?: string | null;
+      vvmStatusId?: string | null;
       locationName?: string | null;
       onHold: boolean;
       packSize: number;
@@ -271,6 +275,12 @@ export type StockLinesQuery = {
         __typename: 'VvmstatusNode';
         id: string;
         description: string;
+      } | null;
+      donor?: { __typename: 'NameNode'; id: string } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
       } | null;
     }>;
   };
@@ -296,6 +306,7 @@ export type StockLineQuery = {
       itemId: string;
       locationId?: string | null;
       itemVariantId?: string | null;
+      vvmStatusId?: string | null;
       locationName?: string | null;
       onHold: boolean;
       packSize: number;
@@ -355,6 +366,12 @@ export type StockLineQuery = {
         __typename: 'VvmstatusNode';
         id: string;
         description: string;
+      } | null;
+      donor?: { __typename: 'NameNode'; id: string } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
       } | null;
     }>;
   };
@@ -406,6 +423,7 @@ export type UpdateStockLineMutation = {
         itemId: string;
         locationId?: string | null;
         itemVariantId?: string | null;
+        vvmStatusId?: string | null;
         locationName?: string | null;
         onHold: boolean;
         packSize: number;
@@ -465,6 +483,12 @@ export type UpdateStockLineMutation = {
           __typename: 'VvmstatusNode';
           id: string;
           description: string;
+        } | null;
+        donor?: { __typename: 'NameNode'; id: string } | null;
+        campaign?: {
+          __typename: 'CampaignNode';
+          id: string;
+          name: string;
         } | null;
       }
     | { __typename: 'UpdateStockLineError' };
@@ -687,6 +711,7 @@ export type InsertStockLineMutation = {
         itemId: string;
         locationId?: string | null;
         itemVariantId?: string | null;
+        vvmStatusId?: string | null;
         locationName?: string | null;
         onHold: boolean;
         packSize: number;
@@ -746,6 +771,12 @@ export type InsertStockLineMutation = {
           __typename: 'VvmstatusNode';
           id: string;
           description: string;
+        } | null;
+        donor?: { __typename: 'NameNode'; id: string } | null;
+        campaign?: {
+          __typename: 'CampaignNode';
+          id: string;
+          name: string;
         } | null;
       };
 };
@@ -835,6 +866,7 @@ export const StockLineRowFragmentDoc = gql`
     itemId
     locationId
     itemVariantId
+    vvmStatusId
     locationName
     onHold
     packSize
@@ -863,6 +895,13 @@ export const StockLineRowFragmentDoc = gql`
     vvmStatus {
       id
       description
+    }
+    donor(storeId: $storeId) {
+      id
+    }
+    campaign {
+      id
+      name
     }
   }
   ${LocationRowFragmentDoc}

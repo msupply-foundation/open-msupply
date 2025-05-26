@@ -23,18 +23,19 @@ import {
 import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
+  getCampaignColumn,
   getDonorColumn,
   getLocationInputColumn,
   ItemRowFragment,
   LocationRowFragment,
   PackSizeEntryCell,
-  useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
 import {
   getBatchExpiryColumns,
   getInboundDosesColumns,
   itemVariantColumn,
   NumberOfPacksCell,
+  vvmStatusesColumn,
 } from './utils';
 
 interface TableProps {
@@ -43,6 +44,8 @@ interface TableProps {
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
+  hasItemVariantsEnabled?: boolean;
+  hasVvmStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
 }
 
@@ -50,6 +53,8 @@ export const QuantityTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled = false,
+  hasItemVariantsEnabled,
+  hasVvmStatusesEnabled,
   item,
 }: TableProps) => {
   const t = useTranslation();
@@ -58,7 +63,7 @@ export const QuantityTableComponent = ({
   const { data: preferences } = usePreference(
     PreferenceKey.ManageVaccinesInDoses
   );
-  const itemVariantsEnabled = useIsItemVariantsEnabled();
+
   const displayInDoses =
     !!preferences?.manageVaccinesInDoses && !!item?.isVaccine;
 
@@ -71,12 +76,16 @@ export const QuantityTableComponent = ({
     ...getBatchExpiryColumns(updateDraftLine, theme),
   ];
 
-  if (itemVariantsEnabled) {
-    columnDefinitions.push(itemVariantColumn(updateDraftLine));
+  if (hasItemVariantsEnabled) {
+    columnDefinitions.push(itemVariantColumn(updateDraftLine, displayInDoses));
   }
 
   if (displayInDoses) {
     columnDefinitions.push(getDosesPerUnitColumn(t, unitName));
+  }
+
+  if (!!hasVvmStatusesEnabled && item?.isVaccine) {
+    columnDefinitions.push(vvmStatusesColumn(updateDraftLine));
   }
 
   columnDefinitions.push(
@@ -303,8 +312,13 @@ export const LocationTableComponent = ({
   ];
 
   if (preferences?.allowTrackingOfStockByDonor) {
-    columnDescriptions.push(getDonorColumn(patch => updateDraftLine(patch)));
+    columnDescriptions.push([
+      getDonorColumn((id, donor) => updateDraftLine({ id, donor })),
+      { accessor: ({ rowData }) => rowData.donor?.id },
+    ] as ColumnDescription<DraftInboundLine>);
   }
+
+  columnDescriptions.push(getCampaignColumn(patch => updateDraftLine(patch)));
 
   const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);
 

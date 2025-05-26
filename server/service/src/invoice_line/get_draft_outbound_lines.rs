@@ -30,6 +30,7 @@ pub struct DraftStockOutLine {
     pub vvm_status_id: Option<String>,
     pub default_doses_per_unit: i32,
     pub item_variant_id: Option<String>,
+    pub donor_link_id: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -227,6 +228,7 @@ impl DraftStockOutLine {
             total_number_of_packs,
             on_hold,
             item_variant_id,
+            donor_link_id,
             ..
         } = line.stock_line_row;
 
@@ -235,6 +237,7 @@ impl DraftStockOutLine {
             item_id: line.item_row.id,
             stock_line_id: id,
             item_variant_id,
+            donor_link_id,
             batch,
             pack_size,
             expiry_date,
@@ -262,6 +265,7 @@ impl DraftStockOutLine {
             expiry_date,
             location_id,
             sell_price_per_pack,
+            donor_link_id,
             ..
         } = line.invoice_line_row;
 
@@ -284,6 +288,7 @@ impl DraftStockOutLine {
             id,
             item_id: line.item_row.id,
             item_variant_id,
+            donor_link_id,
             number_of_packs,
             stock_line_id,
             pack_size,
