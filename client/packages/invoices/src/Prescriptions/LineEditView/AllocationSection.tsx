@@ -16,13 +16,18 @@ export const AllocationSection = ({ disabled }: { disabled?: boolean }) => {
   const t = useTranslation();
   const { store: { preferences } = {} } = useAuthContext();
 
+  const showPrescribedQuantity =
+    preferences?.editPrescribedQuantityOnPrescription ?? true;
+
   return (
     <>
-      {preferences?.editPrescribedQuantityOnPrescription && (
-        <AutoAllocatePrescribedQuantityField />
-      )}
+      {showPrescribedQuantity && <AutoAllocatePrescribedQuantityField />}
       <Grid display="flex" alignItems="center" gap={1}>
-        <AutoAllocateField inputColor="white" allowPartialPacks />
+        <AutoAllocateField
+          inputColor="white"
+          allowPartialPacks
+          autoFocus={!showPrescribedQuantity}
+        />
         <AllocateInSelector />
       </Grid>
       <AccordionPanelSection

@@ -13,9 +13,11 @@ import { getAllocatedQuantity } from '../utils';
 export const AutoAllocateField = ({
   inputColor,
   allowPartialPacks,
+  autoFocus = true,
 }: {
   inputColor?: string;
   allowPartialPacks?: boolean;
+  autoFocus?: boolean;
 }) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
@@ -60,7 +62,7 @@ export const AutoAllocateField = ({
     <>
       <ModalLabel label={t('label.issue')} />
       <NumericTextInput
-        autoFocus
+        autoFocus={autoFocus}
         value={issueQuantity}
         onChange={handleIssueQuantityChange}
         slotProps={
