@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   DialogButton,
   ModalMode,
@@ -31,6 +31,7 @@ export const ResponseLineEditModal = ({
 }: ResponseLineEditModalProps) => {
   const { Modal } = useDialog({ onClose, isOpen });
   const deleteLine = useResponse.line.deleteLine();
+  const isDisabled = useResponse.utils.isDisabled();
 
   const lines = useMemo(
     () =>
@@ -53,7 +54,6 @@ export const ResponseLineEditModal = ({
   const { hasNext, next } = useNextResponseLine(currentItem);
 
   const isPacksEnabled = !!currentItem?.defaultPackSize;
-  const isDisabled = requisition.status !== 'NEW';
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
   const showExtraFields = store?.preferences?.extraFieldsInRequisition;
 
@@ -81,6 +81,14 @@ export const ResponseLineEditModal = ({
     else if (mode === ModalMode.Create) setCurrentItem(undefined);
     else onClose();
   };
+
+  useEffect(() => {
+    if (!!draft?.isCreated) {
+      save();
+    } else {
+      if (!!draft?.id) setPreviousItemLineId(draft.id);
+    }
+  }, [draft, setPreviousItemLineId]);
 
   return (
     <Modal
