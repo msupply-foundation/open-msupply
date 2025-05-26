@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import {
   BasicSpinner,
   InvoiceNodeStatus,
-  isEqual,
   NothingHere,
   PreferenceKey,
   RouteBuilder,
@@ -41,8 +40,9 @@ export const PrescriptionLineEditView = () => {
     item,
     prescribedQuantity,
     note,
+    setIsDirty: setAllocationIsDirty,
   } = useAllocationContext();
-  // TODO: Change prescription version of this hook
+
   const {
     mutateAsync: savePrescriptionItemLineData,
     isLoading: isSavingLines,
@@ -68,23 +68,21 @@ export const PrescriptionLineEditView = () => {
 
   const status = data?.status;
 
-  // TODO: this should be simple query?
   const items = useMemo(() => {
     const itemSet = new Set();
     const items: ItemRowFragment[] = [];
-    lines.forEach(line => {
-      if (!itemSet.has(line.item.id)) {
-        items.push(line.item);
-        itemSet.add(line.item.id);
-      }
-    });
+    (data?.lines.nodes ?? [])
+      .sort((a, b) => a.item.name.localeCompare(b.item.name))
+      .forEach(line => {
+        if (!itemSet.has(line.item.id)) {
+          items.push(line.item);
+          itemSet.add(line.item.id);
+        }
+      });
     return items;
-  }, [lines]);
+  }, [data]);
 
   // TODO: add itemId draft lines
-  // const enteredLineIds = draftLines
-  //   .filter(line => line.numberOfPacks !== 0)
-  //   .map(line => line.itemId);
   const enteredLineIds = lines
     .filter(line => line.numberOfPacks !== 0)
     .map(line => line.item.id);
@@ -96,27 +94,26 @@ export const PrescriptionLineEditView = () => {
     });
   }, [item, data?.invoiceNumber, itemId]);
 
-  // TODO - just save between items?!
   useConfirmOnLeaving(
     'prescription-line-edit',
     // Need a custom checking method here, as we don't want to warn user when
     // switching to a different item within this page
     {
       customCheck: {
-        navigate: (current, next) => {
-          if (!isDirty.current) return false;
-
-          const currentPathParts = current.pathname.split('/');
-          const nextPathParts = next.pathname.split('/');
-          // Compare URLS, but don't include the last part, which is the ItemID
-          currentPathParts.pop();
-          nextPathParts.pop();
-          return !isEqual(currentPathParts, nextPathParts);
-        },
+        navigate: () => isDirty.current,
         refresh: () => isDirty.current,
       },
     }
   );
+
+  // TODO: We need a better solution for this long term!
+  useEffect(() => {
+    // Using useAllocationContext isDirty for rest of form, need to sync it with
+    // the isDirty state for confirm on leaving
+    isDirty.current = allocationIsDirty;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allocationIsDirty]);
+
   const onSave = async () => {
     const contextItemId = item?.id ?? itemId ?? newItemId.current;
     if (!contextItemId) {
@@ -131,9 +128,13 @@ export const PrescriptionLineEditView = () => {
         prescribedQuantity: prescribedQuantity,
         note,
       });
-    }
 
-    // TODO: Move to picked status? Backend?
+      setAllocationIsDirty(false);
+      // Need to reset explicitly here, as state is not updated before the useConfirmOnLeaving
+      // hook checks for unsaved changes
+      // TODO: solution to consolidate the two...
+      isDirty.current = false;
+    }
 
     if (itemId === 'new') {
       navigate(

@@ -79,6 +79,7 @@ interface AllocationContext {
     format: (value: number, options?: Intl.NumberFormatOptions) => string,
     t: TypedTFunction<LocaleKey>
   ) => void;
+  setIsDirty: (isDirty: boolean) => void;
   clear: () => void;
 
   manualAllocate: (
@@ -205,6 +206,12 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     set(state => ({
       ...state,
       alerts,
+    })),
+
+  setIsDirty: isDirty =>
+    set(state => ({
+      ...state,
+      isDirty,
     })),
 
   setNote: note =>
