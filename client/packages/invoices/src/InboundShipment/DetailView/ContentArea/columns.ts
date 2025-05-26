@@ -300,6 +300,17 @@ export const useInboundShipmentColumns = ({
     });
   }
 
+  columns.push({
+    key: 'campaign',
+    label: 'label.campaign',
+    accessor: ({ rowData }) =>
+      getColumnProperty(rowData, [
+        { path: ['lines', 'campaign', 'name'] },
+        { path: ['campaign', 'name'], default: '' },
+      ]),
+    defaultHideOnMobile: true,
+  });
+
   columns.push(getRowExpandColumn());
 
   return useColumns(columns, { sortBy, onChangeSortBy }, [
@@ -360,6 +371,14 @@ export const useExpansionColumns = (
       defaultHideOnMobile: true,
     });
   }
+
+  columns.push({
+    key: 'campaign',
+    label: 'label.campaign',
+    width: 100,
+    accessor: ({ rowData }) => rowData.campaign?.name,
+    defaultHideOnMobile: true,
+  });
 
   return useColumns(columns, {}, []);
 };

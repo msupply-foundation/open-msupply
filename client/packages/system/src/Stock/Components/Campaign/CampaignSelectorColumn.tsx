@@ -7,7 +7,7 @@ export const getCampaignColumn = <T extends DraftInboundLine>(
   update: (patch: Partial<T> & { id: string }) => void
 ): ColumnDescription<T> => {
   return {
-    key: 'campaignId',
+    key: 'campaign',
     label: 'label.campaign',
     width: 200,
     Cell: CampaignCell,
@@ -20,9 +20,9 @@ const CampaignCell = <T extends DraftInboundLine>({
   column,
 }: CellProps<T>): JSX.Element => (
   <CampaignSelector
-    campaignId={rowData.campaignId ?? undefined}
+    campaignId={rowData.campaign?.id ?? undefined}
     onChange={campaign =>
-      column.setter({ ...rowData, campaignId: campaign?.id })
+      column.setter({ ...rowData, campaign: campaign ?? null })
     }
   />
 );

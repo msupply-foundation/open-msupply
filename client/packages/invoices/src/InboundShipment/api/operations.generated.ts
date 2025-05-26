@@ -22,8 +22,8 @@ export type InboundLineFragment = {
   itemName: string;
   itemVariantId?: string | null;
   vvmStatusId?: string | null;
-  campaignId?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
   itemVariant?: {
     __typename: 'ItemVariantNode';
     id: string;
@@ -122,8 +122,12 @@ export type InboundFragment = {
       itemName: string;
       itemVariantId?: string | null;
       vvmStatusId?: string | null;
-      campaignId?: string | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
+      } | null;
       itemVariant?: {
         __typename: 'ItemVariantNode';
         id: string;
@@ -340,8 +344,12 @@ export type InvoiceQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
-            campaignId?: string | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            campaign?: {
+              __typename: 'CampaignNode';
+              id: string;
+              name: string;
+            } | null;
             itemVariant?: {
               __typename: 'ItemVariantNode';
               id: string;
@@ -493,8 +501,12 @@ export type InboundByNumberQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
-            campaignId?: string | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            campaign?: {
+              __typename: 'CampaignNode';
+              id: string;
+              name: string;
+            } | null;
             itemVariant?: {
               __typename: 'ItemVariantNode';
               id: string;
@@ -1025,7 +1037,10 @@ export const InboundLineFragmentDoc = gql`
       id
       name
     }
-    campaignId
+    campaign {
+      id
+      name
+    }
     itemVariant {
       id
       dosesPerUnit
