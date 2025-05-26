@@ -32,7 +32,7 @@ export const ResponseStoreStats = ({
 
   const statsDisplay = stats(t, getPlural, unit, representation);
 
-  const formattedSOH = useValueInUnitsOrPacks(
+  const formattedSoh = useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     stockOnHand
@@ -42,7 +42,7 @@ export const ResponseStoreStats = ({
     defaultPackSize,
     incomingStock
   );
-  const formattedSOO = useValueInUnitsOrPacks(
+  const formattedSoo = useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     stockOnOrder
@@ -58,7 +58,7 @@ export const ResponseStoreStats = ({
     otherRequestedQuantity
   );
 
-  const predictedStockLevels = formattedSOH + formattedIncoming + formattedSOO;
+  const predictedStockLevels = formattedSoh + formattedIncoming + formattedSoo;
   const totalRequested = formattedRequested + formattedOtherRequested;
 
   const predictedStockPercent = calculatePercentage(
@@ -77,6 +77,7 @@ export const ResponseStoreStats = ({
         margin: '0 auto',
         display: 'flex',
         flexDirection: 'column',
+        pt: 2,
       }}
     >
       <Box
@@ -85,7 +86,7 @@ export const ResponseStoreStats = ({
           p: '4px 8px',
         }}
       >
-        {formattedSOH === 0 && formattedIncoming === 0 && formattedSOO === 0 ? (
+        {formattedSoh === 0 && formattedIncoming === 0 && formattedSoo === 0 ? (
           <Typography fontSize={14} style={{ textAlign: 'center' }}>
             ⓘ
             <span style={{ fontStyle: 'italic', paddingLeft: 4 }}>
@@ -103,11 +104,11 @@ export const ResponseStoreStats = ({
               display="flex"
               alignItems="flex-start"
               flexDirection="column"
-              width={predictedStockPercent}
+              width={`${predictedStockPercent}%`}
             >
               <Box display="flex" width="100%">
                 <NewValueBar
-                  value={formattedSOH}
+                  value={formattedSoh}
                   total={predictedStockLevels}
                   colour="gray.dark"
                 />
@@ -117,16 +118,16 @@ export const ResponseStoreStats = ({
                   colour="gray.main"
                 />
                 <NewValueBar
-                  value={formattedSOO}
+                  value={formattedSoo}
                   total={predictedStockLevels}
                   colour="gray.light"
                 />
               </Box>
               <Box paddingTop={1}>
-                {!!formattedSOH &&
+                {!!formattedSoh &&
                   statsDisplay(
                     'label.stock-on-hand',
-                    formattedSOH,
+                    formattedSoh,
                     'gray.dark'
                   )}
                 {!!formattedIncoming &&
@@ -135,10 +136,10 @@ export const ResponseStoreStats = ({
                     formattedIncoming,
                     'gray.main'
                   )}
-                {!!formattedSOO &&
+                {!!formattedSoo &&
                   statsDisplay(
                     'label.stock-on-order',
-                    formattedSOO,
+                    formattedSoo,
                     'gray.light'
                   )}
               </Box>
@@ -160,7 +161,7 @@ export const ResponseStoreStats = ({
               display="flex"
               alignItems="flex-start"
               flexDirection="column"
-              width={requestedPercent}
+              width={`${requestedPercent}%`}
             >
               <Box display="flex" width="100%">
                 <NewValueBar

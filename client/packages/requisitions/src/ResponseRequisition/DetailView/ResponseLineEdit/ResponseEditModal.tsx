@@ -98,7 +98,7 @@ export const ResponseLineEditModal = ({
         <ResponseStoreStats
           defaultPackSize={currentItem?.defaultPackSize || 1}
           representation={representation}
-          unitName={currentItem?.unitName || ''}
+          unitName={currentItem?.unitName}
           stockOnHand={data?.responseStoreStats.stockOnHand || 0}
           incomingStock={data?.responseStoreStats.incomingStock || 0}
           stockOnOrder={data?.responseStoreStats.stockOnOrder || 0}
@@ -113,6 +113,9 @@ export const ResponseLineEditModal = ({
     {
       Component: (
         <RequestStoreStats
+          representation={representation}
+          defaultPackSize={currentItem?.defaultPackSize || 1}
+          unitName={currentItem?.unitName}
           maxMonthsOfStock={data?.requestStoreStats.maxMonthsOfStock || 0}
           suggestedQuantity={data?.requestStoreStats.suggestedQuantity || 0}
           availableStockOnHand={data?.requestStoreStats.stockOnHand || 0}
