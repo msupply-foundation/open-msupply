@@ -29,6 +29,7 @@ pub struct AddNewStockLine {
     pub barcode: Option<String>,
     pub item_variant_id: Option<String>,
     pub vvm_status_id: Option<String>,
+    pub donor_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
