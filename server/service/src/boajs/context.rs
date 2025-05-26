@@ -15,7 +15,8 @@ pub struct BoaJsContext {
 
 impl BoaJsContext {
     // Handle must come from main runtime, rather then actix_web runtime
-    // actix_web runtime does not support functionality do_async_blocking
+    // actix_web runtime does not support block_in_place and needs handle for spawn
+    // see do_async_blocking
     pub fn new(
         service_provider: &Data<ServiceProvider>,
         graphql: impl ExecuteGraphql,

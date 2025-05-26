@@ -261,6 +261,7 @@ pub async fn start_server(
     BoaJsContext::new(
         &service_provider,
         PluginExecuteGraphql(graphql_schema.clone()),
+        // See explanation in BoaJsContext::new and in do_async_blocking
         tokio::runtime::Handle::current(),
     )
     .bind();
