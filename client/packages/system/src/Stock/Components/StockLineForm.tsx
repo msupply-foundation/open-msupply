@@ -29,6 +29,7 @@ import { LocationSearchInput } from '../../Location/Components/LocationSearchInp
 import { DonorSearchInput, ItemVariantSearchInput } from '../..';
 import { StyledInputRow } from './StyledInputRow';
 import { PackSizeNumberInput, useIsItemVariantsEnabled } from '../../Item';
+import { CampaignSelector } from './Campaign';
 
 interface StockLineFormProps {
   draft: StockLineRowFragment;
@@ -293,7 +294,6 @@ export const StockLineForm = ({
               }
             />
           )}
-
           {preferences?.allowTrackingOfStockByDonor && (
             <StyledInputRow
               label={t('label.donor')}
@@ -307,6 +307,15 @@ export const StockLineForm = ({
               }
             />
           )}
+          <StyledInputRow
+            label={t('label.campaign')}
+            Input={
+              <CampaignSelector
+                campaignId={draft.campaign?.id}
+                onChange={campaign => onUpdate({ campaign })}
+              />
+            }
+          />
         </Grid>
       </Grid>
     </DetailContainer>
