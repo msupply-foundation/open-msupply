@@ -12,6 +12,7 @@ import {
 } from '../../context';
 import { Fade, Tooltip } from '@mui/material';
 import { TypedTFunction, LocaleKey } from '@common/intl';
+import { Link } from 'packages/common/src';
 
 interface DataRowProps<T extends RecordWithId> {
   columns: Column<T>[];
@@ -26,6 +27,7 @@ interface DataRowProps<T extends RecordWithId> {
   localisedText: TypedTFunction<LocaleKey>;
   localisedDate: (date: string | number | Date) => string;
   isAnimated: boolean;
+  route?: (rowData: T) => string;
 }
 const Animation: FC<PropsWithChildren<{ isAnimated: boolean }>> = ({
   children,
@@ -52,6 +54,7 @@ const DataRowComponent = <T extends RecordWithId>({
   localisedText,
   localisedDate,
   isAnimated,
+  route,
 }: DataRowProps<T>): JSX.Element => {
   const hasOnClick = !!onClick;
   const { isExpanded } = useExpanded(rowData.id);
@@ -68,91 +71,106 @@ const DataRowComponent = <T extends RecordWithId>({
     if (isFocused) onRowClick();
   }, [keyboardActivated]);
 
+  const TableRowContent = (
+    <TableRow
+      key={`tr-${rowKey}`}
+      sx={{
+        backgroundColor: isFocused
+          ? theme => alpha(theme.palette.secondary.main, 0.1)
+          : null,
+        '&.MuiTableRow-root': {
+          '&:nth-of-type(even)': {
+            backgroundColor: 'background.toolbar',
+          },
+          '&:hover': hasOnClick
+            ? theme => ({
+                backgroundColor: alpha(theme.palette.secondary.main, 0.1),
+              })
+            : {},
+        },
+        color: isDisabled ? 'gray.main' : 'black',
+        alignItems: 'center',
+        height: '40px',
+        maxHeight: '45px',
+        boxShadow: dense
+          ? 'none'
+          : theme => `inset 0 0.5px 0 0 ${alpha(theme.palette.gray.main, 0.5)}`,
+        ...rowStyle,
+      }}
+      onClick={onRowClick}
+    >
+      {columns.map((column, columnIndex) => {
+        const isError = column.getIsError?.(rowData);
+        return (
+          <TableCell
+            key={`${rowKey}${String(column.key)}`}
+            align={column.align}
+            sx={{
+              borderBottom: 'none',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              paddingLeft: paddingX,
+              paddingRight: paddingX,
+              paddingTop: paddingY,
+              paddingBottom: paddingY,
+              ...(hasOnClick && { cursor: 'pointer' }),
+              minWidth: column.minWidth,
+              maxWidth: column.maxWidth,
+              width: column.width,
+              color: 'inherit',
+              fontSize: dense ? '12px' : '14px',
+              backgroundColor: column.backgroundColor,
+              fontWeight: 'normal',
+              ...(isError
+                ? {
+                    borderWidth: '2px',
+                    borderStyle: 'solid',
+                    borderColor: 'error.main',
+                    borderRadius: '8px',
+                  }
+                : {}),
+            }}
+          >
+            {
+              <column.Cell
+                isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
+                rowData={rowData}
+                columns={columns}
+                isError={isError}
+                column={column}
+                rowKey={rowKey}
+                columnIndex={columnIndex}
+                rowIndex={rowIndex}
+                autocompleteName={column.autocompleteProvider?.(rowData)}
+                localisedText={localisedText}
+                localisedDate={localisedDate}
+                dense={dense}
+                {...column.cellProps}
+              />
+            }
+          </TableCell>
+        );
+      })}
+    </TableRow>
+  );
+
   return (
     <>
       <Animation isAnimated={isAnimated}>
         <Tooltip title={rowTitle} followCursor placement="bottom-start">
-          <TableRow
-            key={`tr-${rowKey}`}
-            sx={{
-              backgroundColor: isFocused
-                ? theme => alpha(theme.palette.secondary.main, 0.1)
-                : null,
-              '&.MuiTableRow-root': {
-                '&:nth-of-type(even)': {
-                  backgroundColor: 'background.toolbar',
-                },
-                '&:hover': hasOnClick
-                  ? theme => ({
-                      backgroundColor: alpha(theme.palette.secondary.main, 0.1),
-                    })
-                  : {},
-              },
-              color: isDisabled ? 'gray.main' : 'black',
-              alignItems: 'center',
-              height: '40px',
-              maxHeight: '45px',
-              boxShadow: dense
-                ? 'none'
-                : theme =>
-                    `inset 0 0.5px 0 0 ${alpha(theme.palette.gray.main, 0.5)}`,
-              ...rowStyle,
-            }}
-            onClick={onRowClick}
-          >
-            {columns.map((column, columnIndex) => {
-              const isError = column.getIsError?.(rowData);
-              return (
-                <TableCell
-                  key={`${rowKey}${String(column.key)}`}
-                  align={column.align}
-                  sx={{
-                    borderBottom: 'none',
-                    overflow: 'hidden',
-                    whiteSpace: 'nowrap',
-                    paddingLeft: paddingX,
-                    paddingRight: paddingX,
-                    paddingTop: paddingY,
-                    paddingBottom: paddingY,
-                    ...(hasOnClick && { cursor: 'pointer' }),
-                    minWidth: column.minWidth,
-                    maxWidth: column.maxWidth,
-                    width: column.width,
-                    color: 'inherit',
-                    fontSize: dense ? '12px' : '14px',
-                    backgroundColor: column.backgroundColor,
-                    fontWeight: 'normal',
-                    ...(isError
-                      ? {
-                          borderWidth: '2px',
-                          borderStyle: 'solid',
-                          borderColor: 'error.main',
-                          borderRadius: '8px',
-                        }
-                      : {}),
-                  }}
-                >
-                  {
-                    <column.Cell
-                      isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
-                      rowData={rowData}
-                      columns={columns}
-                      isError={isError}
-                      column={column}
-                      rowKey={rowKey}
-                      columnIndex={columnIndex}
-                      rowIndex={rowIndex}
-                      autocompleteName={column.autocompleteProvider?.(rowData)}
-                      localisedText={localisedText}
-                      localisedDate={localisedDate}
-                      dense={dense}
-                      {...column.cellProps}
-                    />
-                  }
-                </TableCell>
-              );
-            })}
-          </TableRow>
+          {route ? (
+            <Link
+              to={route ? route(rowData) : ''}
+              style={{
+                textDecoration: 'none',
+                color: 'inherit',
+              }}
+            >
+              {TableRowContent}
+            </Link>
+          ) : (
+            TableRowContent
+          )}
         </Tooltip>
       </Animation>
       {isExpanded && !!ExpandContent ? (

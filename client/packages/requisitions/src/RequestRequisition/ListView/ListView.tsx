@@ -1,11 +1,11 @@
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { FC, useEffect } from 'react';
+// import { useHref } from 'react-router-dom';
 import {
   DataTable,
   useColumns,
   TableProvider,
   createTableStore,
   getNameAndColorColumn,
-  useNavigate,
   useTranslation,
   RequisitionNodeStatus,
   useTableStore,
@@ -15,6 +15,7 @@ import {
   ColumnDescription,
   GenericColumnKey,
   getCommentPopoverColumn,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -25,6 +26,7 @@ import {
   isRequestDisabled,
 } from '../../utils';
 import { Footer } from './Footer';
+import { AppRoute } from '@openmsupply-client/config';
 
 const useDisableRequestRows = (rows?: RequestRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -35,7 +37,6 @@ const useDisableRequestRows = (rows?: RequestRowFragment[]) => {
 };
 
 export const RequestRequisitionListView: FC = () => {
-  const navigate = useNavigate();
   const t = useTranslation();
   const modalController = useToggle();
   const { data: programSettings } = useRequest.utils.programSettings();
@@ -125,12 +126,18 @@ export const RequestRequisitionListView: FC = () => {
     [sortBy, updateSortQuery]
   );
 
-  const onRowClick = useCallback(
-    (row: RequestRowFragment) => {
-      navigate(String(row.id));
-    },
-    [navigate]
-  );
+  // const onRowClick = useCallback(
+  //   (row: RequestRowFragment) => {
+  //     navigate(String(row.id));
+  //   },
+  //   [navigate]
+  // );
+
+  const getRoute = (row: RequestRowFragment) =>
+    RouteBuilder.create(AppRoute.Replenishment)
+      .addPart(AppRoute.InternalOrder)
+      .addPart(row.id)
+      .build();
 
   return (
     <>
@@ -143,7 +150,7 @@ export const RequestRequisitionListView: FC = () => {
         onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes}
-        onRowClick={onRowClick}
+        route={getRoute}
         isError={isError}
         isLoading={isLoading}
         noDataElement={

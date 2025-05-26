@@ -42,4 +42,5 @@ export interface TableProps<T extends RecordWithId> {
   onChangePage?: (page: number) => void;
   onRowClick?: null | ((row: T) => void);
   additionalRows?: JSX.Element[];
+  route?: (row: T) => string;
 }
