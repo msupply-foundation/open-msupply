@@ -171,17 +171,21 @@ export const ResponseLineEdit = ({
                 {numericInput('label.available', available, {
                   disabledOverride: true,
                 })}
+                {numericInput(
+                  'label.amc/amd',
+                  draft?.averageMonthlyConsumption,
+                  {
+                    onChange: value =>
+                      update({ averageMonthlyConsumption: value }),
+                  }
+                )}
+
+                {numericInput('label.months-of-stock', mos, {
+                  disabledOverride: true,
+                  endAdornmentOverride: t('label.months'),
+                })}
               </>
             )}
-            {numericInput('label.amc/amd', draft?.averageMonthlyConsumption, {
-              onChange: value => update({ averageMonthlyConsumption: value }),
-            })}
-
-            {showExtraFields &&
-              numericInput('label.months-of-stock', mos, {
-                disabledOverride: true,
-                endAdornmentOverride: t('label.months'),
-              })}
 
             <Box
               sx={{
@@ -216,7 +220,7 @@ export const ResponseLineEdit = ({
                       onChange={value => {
                         update({ reason: value });
                       }}
-                      width={240}
+                      width={230}
                       type={ReasonOptionNodeType.RequisitionLineVariance}
                       isDisabled={
                         draft?.requestedQuantity === draft?.suggestedQuantity ||
@@ -259,7 +263,6 @@ export const ResponseLineEdit = ({
                 representation={representation}
                 setRepresentation={setRepresentation}
                 unitName={unitName}
-                showExtraFields={showExtraFields}
               />
               {numericInput(
                 'label.remaining-to-supply',
