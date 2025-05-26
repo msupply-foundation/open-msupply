@@ -10,7 +10,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   useEndAdornment,
-  getValueInUnitsOrPacks,
+  useValueInUnitsOrPacks,
   RepresentationValue,
 } from './utils';
 
@@ -111,7 +111,7 @@ export const ValueInfoRow = ({
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
   const { round } = useFormatNumber();
-  const valueInUnitsOrPacks = getValueInUnitsOrPacks(
+  const valueInUnitsOrPacks = useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     value
@@ -122,8 +122,8 @@ export const ValueInfoRow = ({
     getPlural,
     unitName,
     representation,
-    endAdornmentOverride,
-    valueInUnitsOrPacks
+    valueInUnitsOrPacks,
+    endAdornmentOverride
   );
 
   return (

@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   useEndAdornment,
-  getValueInUnitsOrPacks,
+  useValueInUnitsOrPacks,
   Representation,
   RepresentationValue,
 } from '../../../common';
@@ -46,7 +46,7 @@ export const NumInputRow = ({
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
 
-  const valueInUnitsOrPacks = getValueInUnitsOrPacks(
+  const valueInUnitsOrPacks = useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     value
@@ -58,8 +58,8 @@ export const NumInputRow = ({
     getPlural,
     unitName,
     representation,
-    endAdornmentOverride,
-    valueInUnitsOrPacks
+    valueInUnitsOrPacks,
+    endAdornmentOverride
   );
 
   const handleChange = (newValue?: number) => {

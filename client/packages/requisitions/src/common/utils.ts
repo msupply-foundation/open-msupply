@@ -9,25 +9,25 @@ export const Representation = {
 export type RepresentationValue =
   (typeof Representation)[keyof typeof Representation];
 
-export const getValueInUnitsOrPacks = (
+export const useValueInUnitsOrPacks = (
   representation: RepresentationValue,
   defaultPackSize: number,
   value?: number | null
-): number => {
-  if (!value) return 0;
-
-  return representation === Representation.PACKS
-    ? value / defaultPackSize
-    : value;
-};
+): number =>
+  useMemo(() => {
+    if (!value) return 0;
+    return representation === Representation.PACKS
+      ? value / defaultPackSize
+      : value;
+  }, [representation, defaultPackSize, value]);
 
 export const useEndAdornment = (
   t: TypedTFunction<LocaleKey>,
   getPlural: (word: string, value: number) => string,
   unitName: string,
   representation: RepresentationValue,
-  endAdornmentOverride: string | undefined,
-  valueInUnitsOrPacks: number
+  valueInUnitsOrPacks: number,
+  endAdornmentOverride?: string
 ) =>
   useMemo(
     () =>

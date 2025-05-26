@@ -7,8 +7,12 @@ import {
   Typography,
   ValueBar,
 } from '@openmsupply-client/common';
+import { RepresentationValue } from 'packages/requisitions/src/common';
 
 export interface RequestStoreStatsProps {
+  representation: RepresentationValue;
+  defaultPackSize: number;
+  unitName?: string | null;
   maxMonthsOfStock: number;
   suggestedQuantity: number;
   availableStockOnHand: number;
@@ -104,6 +108,9 @@ const CalculationError = ({
 };
 
 export const RequestStoreStats = ({
+  representation,
+  defaultPackSize,
+  unitName,
   maxMonthsOfStock,
   suggestedQuantity,
   availableStockOnHand,
