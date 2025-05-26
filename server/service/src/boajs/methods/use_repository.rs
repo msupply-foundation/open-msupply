@@ -1,5 +1,5 @@
 use boa_engine::*;
-use repository::{MessageRow, MessageRowRepository};
+use repository::{SyncMessageRow, SyncMessageRowRepository};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -8,15 +8,15 @@ use crate::{boajs::context::BoaJsContext, boajs::utils::*};
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(tag = "t", content = "v")]
 pub(crate) enum UseRepositoryInput {
-    GetMessageById(String),
-    UpsertMessage(MessageRow),
+    GetSyncMessageById(String),
+    UpsertSyncMessage(SyncMessageRow),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(tag = "t", content = "v")]
 pub(crate) enum UseRepositoryOutput {
-    GetMessageById(Option<MessageRow>),
-    UpsertMessage(i64),
+    GetSyncMessageById(Option<SyncMessageRow>),
+    UpsertSyncMessage(i64),
 }
 
 pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
@@ -37,13 +37,13 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
                 use UseRepositoryOutput as Out;
 
                 match input {
-                    In::GetMessageById(id) => Out::GetMessageById(
-                        MessageRowRepository::new(&connection)
+                    In::GetSyncMessageById(id) => Out::GetSyncMessageById(
+                        SyncMessageRowRepository::new(&connection)
                             .find_one_by_id(&id)
                             .map_err(std_error_to_js_error)?,
                     ),
-                    In::UpsertMessage(message_row) => Out::UpsertMessage(
-                        MessageRowRepository::new(&connection)
+                    In::UpsertSyncMessage(message_row) => Out::UpsertSyncMessage(
+                        SyncMessageRowRepository::new(&connection)
                             .upsert_one(&message_row)
                             .map_err(std_error_to_js_error)?,
                     ),

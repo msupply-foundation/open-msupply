@@ -16,6 +16,13 @@ enum GetStringArgumentError {
     FromUtf16Error(#[from] FromUtf16Error),
 }
 
+pub(super) struct NullError;
+impl From<NullError> for JsError {
+    fn from(_: NullError) -> Self {
+        JsError::from_opaque(js_string!("Null value encountered").into())
+    }
+}
+
 pub(super) fn get_string_argument(args: &[JsValue], index: usize) -> Result<String, JsError> {
     use GetStringArgumentError as Error;
 
@@ -33,8 +40,7 @@ pub(super) fn get_string_argument(args: &[JsValue], index: usize) -> Result<Stri
 }
 
 pub(super) fn std_error_to_js_error(error: impl StandardError) -> JsError {
-    let as_string = JsValue::String(js_string!(format_error(&error)));
-    JsError::from_opaque(as_string)
+    JsError::from_opaque(js_string!(format_error(&error)).into())
 }
 
 #[derive(Debug, Error)]
@@ -54,15 +60,15 @@ pub(super) fn get_serde_argument<D: DeserializeOwned>(
 ) -> Result<D, JsError> {
     use GetJsonArgumentError as Error;
 
-    let mut closure = move || -> Result<D, GetJsonArgumentError> {
+    let mut closure = move || -> Result<Option<D>, GetJsonArgumentError> {
         let arg = args.get(index).ok_or(Error::NoArgumentAtIndex(index))?;
 
         let value = arg.to_json(context)?;
 
-        Ok(serde_json::from_value(value)?)
+        Ok(value.map(serde_json::from_value).transpose()?)
     };
 
-    closure().map_err(std_error_to_js_error)
+    Ok(closure().map_err(std_error_to_js_error)?.ok_or(NullError)?)
 }
 
 #[derive(Error, Debug)]

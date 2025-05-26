@@ -2,8 +2,8 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod create_dynamic_cursor_key;
-mod create_message_table;
 mod create_plugin_user;
+mod create_sync_message_table;
 
 pub(crate) struct V2_07_04;
 
@@ -19,7 +19,7 @@ impl Migration for V2_07_04 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(create_dynamic_cursor_key::Migrate),
-            Box::new(create_message_table::Migrate),
+            Box::new(create_sync_message_table::Migrate),
             Box::new(create_plugin_user::Migrate),
         ]
     }
