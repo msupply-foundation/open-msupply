@@ -57,8 +57,6 @@ export const PrescriptionLineEditView = () => {
     isDisabled,
   } = usePrescription();
 
-  const newItemId = useRef<string>();
-
   // This ref is attached to the currently selected list item, and is used to
   // "scroll into view" when the Previous/Next buttons are clicked in the NavBar
   const scrollRef = useRef<null | HTMLLIElement>(null);
@@ -120,9 +118,9 @@ export const PrescriptionLineEditView = () => {
   }, [allocationIsDirty]);
 
   const onSave = async () => {
-    const contextItemId = item?.id ?? itemId ?? newItemId.current;
+    // Save should only be enabled if we have an item anyway...
+    const contextItemId = item?.id ?? itemId;
     if (!contextItemId) {
-      alert('No itemId found');
       return;
     }
 
@@ -210,9 +208,10 @@ export const PrescriptionLineEditView = () => {
       />
       <Footer
         isSaving={isSavingLines}
-        isDirty={
-          allocationIsDirty &&
-          (allocatedQuantity > 0 || (prescribedQuantity ?? 0) > 0)
+        disabled={
+          !item?.id ||
+          !allocationIsDirty ||
+          (allocatedQuantity === 0 && prescribedQuantity === 0)
         }
         handleSave={onSave}
         handleCancel={() =>
