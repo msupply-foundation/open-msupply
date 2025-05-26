@@ -121,13 +121,13 @@ const StockListComponent: FC = () => {
       label: 'label.pack-size',
       Cell: TooltipTextCell,
       width: 125,
+      defaultHideOnMobile: true,
     },
     [
       'numberOfPacks',
       {
         accessor: ({ rowData }) => rowData.totalNumberOfPacks.toFixed(2),
         width: 125,
-        defaultHideOnMobile: true,
       },
     ],
     [

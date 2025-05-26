@@ -53,7 +53,7 @@ export const Toolbar = () => {
       >
         {useSimplifiedTabletView ? (
           <Grid display="flex" flex={1} flexDirection="row" gap={1}>
-            <DescriptionButtons
+            <InformationFields
               isDisabled={isDisabled}
               descriptionBuffer={descriptionBuffer}
               setDescriptionBuffer={setDescriptionBuffer}
@@ -65,16 +65,17 @@ export const Toolbar = () => {
           </Grid>
         ) : (
           <>
-            <Grid display="flex" flex={1} flexDirection="column" gap={1}></Grid>
-            <DescriptionButtons
-              isDisabled={isDisabled}
-              descriptionBuffer={descriptionBuffer}
-              setDescriptionBuffer={setDescriptionBuffer}
-              update={update}
-              t={t}
-              stocktakeDate={stocktakeDate}
-              infoMessage={infoMessage}
-            />
+            <Grid display="flex" flex={1} flexDirection="column" gap={1}>
+              <InformationFields
+                isDisabled={isDisabled}
+                descriptionBuffer={descriptionBuffer}
+                setDescriptionBuffer={setDescriptionBuffer}
+                update={update}
+                t={t}
+                stocktakeDate={stocktakeDate}
+                infoMessage={infoMessage}
+              />
+            </Grid>
             <Grid
               display="flex"
               gap={1}
@@ -96,7 +97,7 @@ export const Toolbar = () => {
   );
 };
 
-const DescriptionButtons = ({
+const InformationFields = ({
   isDisabled,
   descriptionBuffer,
   setDescriptionBuffer,

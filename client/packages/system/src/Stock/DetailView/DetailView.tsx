@@ -155,25 +155,25 @@ export const StockLineDetailView: React.FC = () => {
         openRepack={repackModalController.toggleOn}
         openAdjust={openInventoryAdjustmentModal}
       />
-      {simplifiedTabletView ? (
-        <>
-          <StockLineForm
-            loading={isLoading}
-            draft={draft}
-            onUpdate={updatePatch}
-            pluginEvents={pluginEvents}
-          />
-        </>
-      ) : (
-        <>
-          <TableProvider createStore={createTableStore}>
+      <TableProvider createStore={createTableStore}>
+        {simplifiedTabletView ? (
+          <>
+            <StockLineForm
+              loading={isLoading}
+              draft={draft}
+              onUpdate={updatePatch}
+              pluginEvents={pluginEvents}
+            />
+          </>
+        ) : (
+          <>
             <DetailTabs tabs={tabs} />
-            {(tab === t('label.details') || !tab) && (
-              <Footer {...footerProps} />
-            )}
-          </TableProvider>
-        </>
-      )}
+          </>
+        )}
+        {(tab === t('label.details') || !tab || simplifiedTabletView) && (
+          <Footer {...footerProps} />
+        )}
+      </TableProvider>
     </>
   );
 };
