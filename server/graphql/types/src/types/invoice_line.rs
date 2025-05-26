@@ -250,6 +250,10 @@ impl InvoiceLineNode {
         let result = loader.load_one(reason_option_id.clone()).await?;
         Ok(result.map(ReasonOptionNode::from_domain))
     }
+
+    pub async fn campaign_id(&self) -> &Option<String> {
+        &self.row().campaign_id
+    }
 }
 
 #[derive(Union)]

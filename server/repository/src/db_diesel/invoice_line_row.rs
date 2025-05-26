@@ -1,7 +1,8 @@
 use super::{
-    invoice_line_row::invoice_line::dsl::*, invoice_row::invoice, item_link_row::item_link,
-    location_row::location, name_link_row::name_link, reason_option_row::reason_option,
-    stock_line_row::stock_line, vvm_status::vvm_status_row::vvm_status, StorageConnection,
+    campaign_row::campaign, invoice_line_row::invoice_line::dsl::*, invoice_row::invoice,
+    item_link_row::item_link, location_row::location, name_link_row::name_link,
+    reason_option_row::reason_option, stock_line_row::stock_line,
+    vvm_status::vvm_status_row::vvm_status, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -43,6 +44,7 @@ table! {
         donor_link_id -> Nullable<Text>,
         vvm_status_id -> Nullable<Text>,
         reason_option_id -> Nullable<Text>,
+        campaign_id -> Nullable<Text>,
     }
 }
 
@@ -52,6 +54,7 @@ joinable!(invoice_line -> invoice (invoice_id));
 joinable!(invoice_line -> location (location_id));
 joinable!(invoice_line -> vvm_status (vvm_status_id));
 joinable!(invoice_line -> reason_option (reason_option_id));
+joinable!(invoice_line -> campaign (campaign_id));
 
 allow_tables_to_appear_in_same_query!(invoice_line, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line, name_link);
@@ -99,6 +102,7 @@ pub struct InvoiceLineRow {
     pub donor_link_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub reason_option_id: Option<String>,
+    pub campaign_id: Option<String>,
 }
 
 pub struct InvoiceLineRowRepository<'a> {
