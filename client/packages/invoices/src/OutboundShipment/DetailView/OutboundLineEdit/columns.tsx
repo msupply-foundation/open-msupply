@@ -20,6 +20,8 @@ import {
   LocaleKey,
   useIntlUtils,
   Formatter,
+  UNDEFINED_STRING_VALUE,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { DraftStockOutLineFragment } from '../../api/operations.generated';
@@ -57,7 +59,8 @@ export const useOutboundLineEditColumns = ({
 
   const { data: prefs } = usePreference(
     PreferenceKey.SortByVvmStatusThenExpiry,
-    PreferenceKey.ManageVvmStatusForStock
+    PreferenceKey.ManageVvmStatusForStock,
+    PreferenceKey.AllowTrackingOfStockByDonor
   );
 
   const packSize =
@@ -86,9 +89,8 @@ export const useOutboundLineEditColumns = ({
       },
     ],
   ];
-
   // If we have use VVM status, we need to show the VVM status column
-  if (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) {
+  if (prefs?.manageVvmStatusForStock && item?.isVaccine) {
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
@@ -98,6 +100,7 @@ export const useOutboundLineEditColumns = ({
         return `${rowData.vvmStatus?.description} (${rowData.vvmStatus?.level})`;
       },
       width: 85,
+      Cell: TooltipTextCell,
     });
   }
 
@@ -116,15 +119,26 @@ export const useOutboundLineEditColumns = ({
         width: 85,
         Cell: LocationCell,
       },
-    ],
-    [
-      'sellPricePerPack',
-      {
-        Cell: CurrencyCell,
-        width: 85,
-      },
     ]
   );
+
+  if (prefs?.allowTrackingOfStockByDonor) {
+    columnDefinitions.push({
+      key: 'donor',
+      label: 'label.donor',
+      accessor: ({ rowData }) => rowData.donor?.name ?? UNDEFINED_STRING_VALUE,
+      Cell: TooltipTextCell,
+      width: 100,
+    });
+  }
+
+  columnDefinitions.push([
+    'sellPricePerPack',
+    {
+      Cell: CurrencyCell,
+      width: 85,
+    },
+  ]);
 
   if (isExternalSupplier && !!store?.preferences.issueInForeignCurrency) {
     columnDefinitions.push({

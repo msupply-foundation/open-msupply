@@ -71,6 +71,7 @@ pub fn generate(
                     on_hold: false,
                     barcode_id: None,
                     overwrite_stock_levels: true,
+                    campaign_id: None,
                 },
             )?;
             update_line.stock_line_id = Some(new_batch.id.clone());
@@ -139,6 +140,7 @@ fn generate_line(
         item_variant_id,
         vvm_status_id,
         donor_id,
+        campaign_id,
     }: UpdateStockInLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -192,6 +194,10 @@ fn generate_line(
 
     update_line.total_after_tax =
         calculate_total_after_tax(update_line.total_before_tax, update_line.tax_percentage);
+
+    update_line.campaign_id = campaign_id
+        .map(|c| c.value)
+        .unwrap_or(update_line.campaign_id);
 
     Ok(update_line)
 }
