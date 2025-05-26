@@ -72,7 +72,7 @@ const DetailViewComponent = ({
   onOpen: (item?: StocktakeLineFragment['item'] | null | undefined) => void;
 }) => {
   const { HighlightStyles } = useRowHighlight();
-  const useSimplifiedTabletView = useSimplifiedTabletUI();
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const onRowClick = useCallback(
     (item: StocktakeLineFragment | StocktakeSummaryItem) => {
@@ -90,7 +90,7 @@ const DetailViewComponent = ({
       <SidePanel />
 
       <Toolbar />
-      {useSimplifiedTabletView ? (
+      {simplifiedTabletView ? (
         <Box
           sx={{
             display: 'flex',

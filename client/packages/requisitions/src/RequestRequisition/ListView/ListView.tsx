@@ -60,7 +60,7 @@ export const RequestRequisitionListView: FC = () => {
   const { data, isError, isLoading } = useRequest.document.list(queryParams);
   useDisableRequestRows(data?.nodes);
   const { requireSupplierAuthorisation } = useRequest.utils.preferences();
-  const useSimplifiedTabletView = useSimplifiedTabletUI();
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const columnDefinitions: ColumnDescription<RequestRowFragment>[] = [
     GenericColumnKey.Selection,
@@ -73,7 +73,7 @@ export const RequestRequisitionListView: FC = () => {
     ['createdDatetime', { width: 150 }],
   ];
 
-  if (useSimplifiedTabletView) {
+  if (simplifiedTabletView) {
     columnDefinitions.push({
       key: 'count',
       label: 'label.number-of-items',

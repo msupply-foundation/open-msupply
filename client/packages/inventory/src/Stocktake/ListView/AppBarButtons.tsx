@@ -40,7 +40,7 @@ export const AppBarButtons = ({
     direction: 'desc',
     isDesc: true,
   });
-  const useSimplifiedTabletView = useSimplifiedTabletUI();
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -70,7 +70,7 @@ export const AppBarButtons = ({
           navigate={navigate}
           description={description}
         />
-        {!useSimplifiedTabletView && (
+        {!simplifiedTabletView && (
           <LoadingButton
             startIcon={<DownloadIcon />}
             variant="outlined"

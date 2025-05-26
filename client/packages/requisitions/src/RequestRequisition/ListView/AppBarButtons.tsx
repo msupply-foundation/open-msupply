@@ -36,7 +36,7 @@ export const AppBarButtons: FC<{
     direction: 'desc',
     isDesc: true,
   });
-  const useSimplifiedTabletView = useSimplifiedTabletUI();
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -58,7 +58,7 @@ export const AppBarButtons: FC<{
           label={t('label.new-internal-order')}
           onClick={modalController.toggleOn}
         />
-        {!useSimplifiedTabletView && (
+        {!simplifiedTabletView && (
           <LoadingButton
             startIcon={<DownloadIcon />}
             variant="outlined"

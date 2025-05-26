@@ -20,7 +20,7 @@ export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
   const t = useTranslation();
-  const useSimplifiedTabletView = useSimplifiedTabletUI();
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const onFilterChange: AutocompleteOnChange<StatusOption> = (_, option) => {
     if (!option) {
@@ -30,7 +30,7 @@ export const Toolbar: FC<{
     filter.onChangeStringFilterRule('status', 'equalTo', option.value);
   };
 
-  return useSimplifiedTabletView ? null : (
+  return simplifiedTabletView ? null : (
     <AppBarContentPortal
       sx={{
         paddingBottom: '16px',
