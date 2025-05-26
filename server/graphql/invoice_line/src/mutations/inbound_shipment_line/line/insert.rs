@@ -118,6 +118,7 @@ impl InsertInput {
             stock_line_id: None,
             barcode: None,
             stock_on_hold: false,
+            campaign_id: None,
         }
     }
 }

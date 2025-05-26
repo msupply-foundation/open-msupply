@@ -163,6 +163,7 @@ fn generate_stock_in_out_or_update(
             tax_percentage: None,
             donor_id: None,
             vvm_status_id: None,
+            campaign_id: None,
         })
     } else {
         StockChange::StockOut(InsertStockOutLine {
@@ -335,6 +336,7 @@ fn generate_new_stock_line(
         tax_percentage: None,
         donor_id: None,
         vvm_status_id: None,
+        campaign_id: None,
     });
 
     // If new stock line has a location, create location movement
