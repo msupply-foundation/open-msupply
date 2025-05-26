@@ -34,7 +34,7 @@ export const useColumnDisplayState = <T extends RecordWithId>(
           .filter(col => !hiddenColKeys.includes(String(col.key)))
           .map(col => [col.key, true]),
       ]),
-    [hiddenColKeys, initialColumns]
+    [hiddenColsStorage, initialColumns]
   );
 
   const toggleColumn = (colKey: string) => {
