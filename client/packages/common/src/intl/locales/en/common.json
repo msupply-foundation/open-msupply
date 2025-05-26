@@ -233,6 +233,7 @@
   "docs": "Docs",
   "easter-egg": "Easter egg",
   "encounter": "Encounters",
+  "label.count-rows": "Number of rows",
   "equipment": "Equipment",
   "error.404": "Click the back arrow or use the menu to find your way again.",
   "error.account-blocked": "Account is blocked until the lockout period has expired",
