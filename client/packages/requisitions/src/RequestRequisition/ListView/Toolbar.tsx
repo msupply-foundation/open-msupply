@@ -6,14 +6,15 @@ import {
   FilterMenu,
   Box,
   RequisitionNodeStatus,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 
 export const Toolbar: FC<{
   filter: FilterController;
 }> = () => {
   const t = useTranslation();
-
-  return (
+  const simplifiedTabletView = useSimplifiedTabletUI();
+  return simplifiedTabletView ? null : (
     <AppBarContentPortal
       sx={{
         paddingBottom: '16px',

@@ -16,6 +16,10 @@ import {
   useNotification,
   useIsGrouped,
   useUrlQueryParams,
+  useSimplifiedTabletUI,
+  ButtonWithIcon,
+  PlusCircleIcon,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 import { useStocktakeLineEdit } from './hooks';
@@ -56,6 +60,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const { isDisabled, items, totalLineCount } = useStocktakeOld.line.rows();
   const { draftLines, update, addLine, isSaving, save, nextItem } =
     useStocktakeLineEdit(currentItem);
+  const t = useTranslation();
   const { highlightRows } = useRowHighlight();
   const { error } = useNotification();
   const { isGrouped } = useIsGrouped('stocktake');
@@ -67,6 +72,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   // Order by newly added batch since new batches are now
   // added to the top of the stocktake list instead of the bottom
   const reversedDraftLines = [...draftLines].reverse();
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const onNext = async () => {
     if (isSaving) return;
@@ -131,6 +137,69 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
 
+  const tableContent = simplifiedTabletView ? (
+    <>
+      <BatchTable
+        isDisabled={isDisabled}
+        batches={reversedDraftLines}
+        update={update}
+        isInitialStocktake={isInitialStocktake}
+      />
+      <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
+        <ButtonWithIcon
+          disabled={isDisabled}
+          color="primary"
+          variant="outlined"
+          onClick={addLine}
+          label={`${t('label.add-batch')} (+)`}
+          Icon={<PlusCircleIcon />}
+        />
+      </Box>
+    </>
+  ) : (
+    <>
+      <StocktakeLineEditTabs isDisabled={isDisabled} onAddLine={addLine}>
+        <StyledTabPanel value={Tabs.Batch}>
+          <StyledTabContainer>
+            <BatchTable
+              isDisabled={isDisabled}
+              batches={reversedDraftLines}
+              update={update}
+              isInitialStocktake={isInitialStocktake}
+            />
+          </StyledTabContainer>
+        </StyledTabPanel>
+
+        <StyledTabPanel value={Tabs.Pricing}>
+          <StyledTabContainer>
+            <PricingTable
+              isDisabled={isDisabled}
+              batches={reversedDraftLines}
+              update={update}
+            />
+          </StyledTabContainer>
+        </StyledTabPanel>
+
+        <StyledTabPanel value={Tabs.Other}>
+          <StyledTabContainer>
+            <QueryParamsProvider
+              createStore={createQueryParamsStore<LocationRowFragment>({
+                initialSortBy: { key: 'name' },
+              })}
+            >
+              <LocationTable
+                isDisabled={isDisabled}
+                batches={reversedDraftLines}
+                update={update}
+                trackStockDonor={enableDonorTracking}
+              />
+            </QueryParamsProvider>
+          </StyledTabContainer>
+        </StyledTabPanel>
+      </StocktakeLineEditTabs>
+    </>
+  );
+
   return (
     <TableProvider
       createStore={createTableStore}
@@ -170,50 +239,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
               {!!currentItem ? (
                 <>
                   <Divider margin={5} />
-                  <StocktakeLineEditTabs
-                    isDisabled={isDisabled}
-                    onAddLine={addLine}
-                  >
-                    <StyledTabPanel value={Tabs.Batch}>
-                      <StyledTabContainer>
-                        <BatchTable
-                          isDisabled={isDisabled}
-                          batches={reversedDraftLines}
-                          update={update}
-                          isInitialStocktake={isInitialStocktake}
-                        />
-                      </StyledTabContainer>
-                    </StyledTabPanel>
-
-                    <StyledTabPanel value={Tabs.Pricing}>
-                      <StyledTabContainer>
-                        <PricingTable
-                          isDisabled={isDisabled}
-                          batches={reversedDraftLines}
-                          update={update}
-                        />
-                      </StyledTabContainer>
-                    </StyledTabPanel>
-
-                    <StyledTabPanel value={Tabs.Other}>
-                      <StyledTabContainer>
-                        <QueryParamsProvider
-                          createStore={createQueryParamsStore<LocationRowFragment>(
-                            {
-                              initialSortBy: { key: 'name' },
-                            }
-                          )}
-                        >
-                          <LocationTable
-                            isDisabled={isDisabled}
-                            batches={reversedDraftLines}
-                            update={update}
-                            trackStockDonor={enableDonorTracking}
-                          />
-                        </QueryParamsProvider>
-                      </StyledTabContainer>
-                    </StyledTabPanel>
-                  </StocktakeLineEditTabs>
+                  {tableContent}
                 </>
               ) : null}
             </>

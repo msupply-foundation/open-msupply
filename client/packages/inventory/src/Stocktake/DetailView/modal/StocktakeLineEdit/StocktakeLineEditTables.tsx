@@ -206,6 +206,7 @@ export const BatchTable = ({
         },
         accessor: ({ rowData }) =>
           rowData.packSize ?? rowData.item?.defaultPackSize,
+        defaultHideOnMobile: true,
       }),
       {
         key: 'snapshotNumberOfPacks',
@@ -351,6 +352,7 @@ export const LocationTable = ({
       width: 200,
       setter: patch => update({ ...patch, countThisLine: true }),
       accessor: ({ rowData }) => rowData.comment || '',
+      defaultHideOnMobile: true,
     },
   ]);
 
