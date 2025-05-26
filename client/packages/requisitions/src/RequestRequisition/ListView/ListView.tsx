@@ -76,7 +76,7 @@ export const RequestRequisitionListView: FC = () => {
   if (simplifiedTabletView) {
     columnDefinitions.push({
       key: 'count',
-      label: 'label.number-of-items',
+      label: 'label.count-rows',
       width: 110,
       accessor: ({ rowData }: { rowData: RequestRowFragment }) =>
         rowData.lines.totalCount,
