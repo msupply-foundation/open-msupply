@@ -7,14 +7,6 @@ import {
 } from '@openmsupply-client/common';
 import { RepresentationValue, useEndAdornment } from '../../../common';
 
-export const styleConstants = {
-  labelWidth: 150,
-  fontSize: {
-    normal: 12,
-    title: 14,
-  },
-};
-
 type StatsInfoProps = {
   t: TypedTFunction<LocaleKey>;
   getPlural: (word: string, value: number) => string;
@@ -44,16 +36,12 @@ const StatsInfoValue = ({
         minHeight: 10,
       }}
     />
-    <Typography
-      width={styleConstants.labelWidth}
-      fontSize={styleConstants.fontSize.normal}
-      style={{ textAlign: 'start' }}
-    >
+    <Typography width={150} fontSize={12} style={{ textAlign: 'start' }}>
       {t(label)}
     </Typography>
     <Typography
       fontWeight={800}
-      fontSize={styleConstants.fontSize.normal}
+      fontSize={12}
       sx={{
         display: 'flex',
         alignItems: 'center',

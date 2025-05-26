@@ -130,17 +130,8 @@ fn generate(
         option_id: updated_option_id,
     }: UpdateResponseRequisitionLine,
 ) -> (Option<RequisitionRow>, RequisitionLineRow) {
-    let suggested_quantity = generate_suggested_quantity(GenerateSuggestedQuantity {
-        average_monthly_consumption: updated_average_monthly_consumption
-            .unwrap_or(existing.average_monthly_consumption),
-        available_stock_on_hand: updated_stock_on_hand.unwrap_or(existing.available_stock_on_hand),
-        min_months_of_stock: existing_requisition_row.min_months_of_stock,
-        max_months_of_stock: existing_requisition_row.max_months_of_stock,
-    });
-
     let requisition_line_row = inline_edit(&existing, |mut u| {
         u.supply_quantity = updated_supply_quantity.unwrap_or(u.supply_quantity);
-        u.suggested_quantity = suggested_quantity;
         u.comment = updated_comment.or(u.comment);
         if existing_requisition_row.linked_requisition_id.is_none() {
             u.available_stock_on_hand = updated_stock_on_hand.unwrap_or(0.0);
