@@ -418,4 +418,25 @@ mod test {
 
         assert_eq!(additional_data.placeholder_quantity, Some(7.0));
     }
+
+    // #[actix_rt::test]
+    // TODO: Make sure the historical stock lines are correctly fetched in this context
+    // async fn test_draft_outbound_lines_historical() {
+    //     let (_, _, connection_manager, _) = setup_all_with_data(
+    //         "test_draft_outbound_lines_historical",
+    //         MockDataInserts::all(),
+    //         MockData {
+    //             stock_lines: vec![StockLineRow {
+    //                 id: "stock_line_1".to_string(),
+    //                 item_link_id: mock_item_b().id,
+    //                 store_id: mock_store_b().id,
+    //                 available_number_of_packs: 10.0,
+    //                 total_number_of_packs: 10.0,
+    //                 pack_size: 1.0,
+    //                 ..Default::default()
+    //             }],
+    //             ..Default::default()
+    //         },
+    //     )
+    //     .await;
 }

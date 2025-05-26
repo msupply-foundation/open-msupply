@@ -194,10 +194,9 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_inbound_shipment_a, mock_item_a, mock_name_store_b, mock_outbound_shipment_a,
-            mock_stock_line_a, mock_stock_line_b, mock_stock_line_vaccine_item_a, mock_store_a,
-            mock_store_b, mock_transferred_inbound_shipment_a, mock_user_account_a, MockData,
-            MockDataInserts,
+            mock_item_a, mock_name_store_b, mock_outbound_shipment_a, mock_stock_line_a,
+            mock_stock_line_b, mock_stock_line_vaccine_item_a, mock_store_a, mock_store_b,
+            mock_transferred_inbound_shipment_a, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
