@@ -2,7 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { ItemDirectionFragmentDoc } from '@openmsupply-client/system/src/Item/api/operations.generated';
+import { ItemDirectionFragmentDoc } from '../../../../system/src/Item/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type StockOutLineFragment = {
   __typename: 'InvoiceLineNode';
@@ -87,6 +87,7 @@ export type DraftStockOutLineFragment = {
     description: string;
   } | null;
   itemVariant?: { __typename: 'ItemVariantNode'; dosesPerUnit: number } | null;
+  donor?: { __typename: 'NameNode'; id: string; name: string } | null;
 };
 
 export type GetOutboundEditLinesQueryVariables = Types.Exact<{
@@ -150,6 +151,7 @@ export type GetOutboundEditLinesQuery = {
         __typename: 'ItemVariantNode';
         dosesPerUnit: number;
       } | null;
+      donor?: { __typename: 'NameNode'; id: string; name: string } | null;
     }>;
   };
 };
@@ -240,6 +242,10 @@ export const DraftStockOutLineFragmentDoc = gql`
     }
     itemVariant {
       dosesPerUnit
+    }
+    donor(storeId: $storeId) {
+      id
+      name
     }
   }
 `;
