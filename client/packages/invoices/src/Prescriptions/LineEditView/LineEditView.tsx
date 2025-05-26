@@ -68,6 +68,8 @@ export const PrescriptionLineEditView = () => {
 
   const status = data?.status;
 
+  // Future TODO: expose on Prescription/Invoice query - items, and whether they have
+  // any packs allocated or not!
   const items = useMemo(() => {
     const itemSet = new Set();
     const items: ItemRowFragment[] = [];
@@ -82,7 +84,6 @@ export const PrescriptionLineEditView = () => {
     return items;
   }, [data]);
 
-  // TODO: add itemId draft lines
   const enteredLineIds = lines
     .filter(line => line.numberOfPacks !== 0)
     .map(line => line.item.id);
