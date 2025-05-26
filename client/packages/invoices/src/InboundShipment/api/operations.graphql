@@ -22,7 +22,7 @@ fragment InboundLine on InvoiceLineNode {
     id
     name
   }
-
+  campaignId
   itemVariant {
     id
     dosesPerUnit

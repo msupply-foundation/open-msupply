@@ -23,6 +23,7 @@ import {
 import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
+  getCampaignColumn,
   getDonorColumn,
   getLocationInputColumn,
   ItemRowFragment,
@@ -316,6 +317,8 @@ export const LocationTableComponent = ({
       { accessor: ({ rowData }) => rowData.donor?.id },
     ] as ColumnDescription<DraftInboundLine>);
   }
+
+  columnDescriptions.push(getCampaignColumn(patch => updateDraftLine(patch)));
 
   const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);
 

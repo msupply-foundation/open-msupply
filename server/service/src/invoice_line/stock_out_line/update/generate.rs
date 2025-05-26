@@ -137,6 +137,7 @@ fn generate_line(
         linked_invoice_id: None,
         donor_link_id: None,
         reason_option_id: None,
+        campaign_id: None,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {

@@ -112,6 +112,7 @@ pub fn generate_invoice_lines(
             donor_link_id: None,
             vvm_status_id: None,
             reason_option_id: None,
+            campaign_id: None,
         });
     }
 
