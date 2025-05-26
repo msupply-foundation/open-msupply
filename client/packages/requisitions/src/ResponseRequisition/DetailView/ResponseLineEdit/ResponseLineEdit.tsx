@@ -23,6 +23,7 @@ import {
   RepresentationValue,
 } from '../../../common';
 import { SupplySelection } from './SuppliedSelection';
+import { useStockCalculations } from './utils';
 import { createNumericInput } from './ContentLayout';
 
 interface ResponseLineEditProps {
@@ -69,16 +70,7 @@ export const ResponseLineEdit = ({
     [lines, currentItem?.id]
   );
 
-  const incomingStock =
-    (draft?.incomingUnits ?? 0) + (draft?.additionInUnits ?? 0);
-  const outgoingStock = (draft?.lossInUnits ?? 0) + (draft?.outgoingUnits ?? 0);
-  const available =
-    (draft?.initialStockOnHandUnits ?? 0) + incomingStock - outgoingStock;
-  const mos =
-    draft?.averageMonthlyConsumption !== 0
-      ? available / (draft?.averageMonthlyConsumption ?? 1)
-      : 0;
-
+  const { available, mos } = useStockCalculations(draft);
   const numericInput = createNumericInput(t, {
     defaultPackSize,
     representation,

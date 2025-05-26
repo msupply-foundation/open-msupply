@@ -25,6 +25,7 @@ interface SupplySelectionProps {
   representation: RepresentationValue;
   setRepresentation: (rep: RepresentationValue) => void;
   unitName: string;
+  showExtraFields?: boolean;
 }
 
 export const SupplySelection = ({
@@ -36,6 +37,7 @@ export const SupplySelection = ({
   representation,
   setRepresentation,
   unitName,
+  showExtraFields = false,
 }: SupplySelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -81,7 +83,7 @@ export const SupplySelection = ({
       </Typography>
       <Box gap={1} display="flex" flexDirection="row">
         <NumericTextInput
-          autoFocus
+          autoFocus={!showExtraFields}
           width={150}
           min={0}
           value={currentValue}

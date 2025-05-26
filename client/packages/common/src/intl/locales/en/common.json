@@ -639,6 +639,7 @@
   "label.apply-donor-unassigned": "Lines without a donor",
   "label.apply-donor-which-lines": "Which shipment lines should be updated to this donor?",
   "label.approval-comment": "Approval Comment",
+  "label.approved": "Approved",
   "label.approved-packs": "Approved packs",
   "label.approved-quantity": "Approved units",
   "label.asset-notes": "Notes",
