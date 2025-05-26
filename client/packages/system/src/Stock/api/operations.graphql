@@ -37,6 +37,9 @@ fragment StockLineRow on StockLineNode {
     id
     description
   }
+  donor(storeId: $storeId) {
+    id
+  }
   campaign {
     id
     name

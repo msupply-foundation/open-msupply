@@ -128,6 +128,7 @@ const useCreate = () => {
     onHold,
     itemVariantId,
     vvmStatusId,
+    donor,
     campaign,
   }: DraftStockLine) => {
     return await stockApi.insertStockLine({
@@ -147,6 +148,7 @@ const useCreate = () => {
         reasonOptionId: reasonOption?.id,
         itemVariantId,
         vvmStatusId,
+        donorId: donor?.id,
         campaignId: campaign?.id,
       },
     });
@@ -173,6 +175,7 @@ const useUpdate = (id: string) => {
     location,
     itemVariantId,
     vvmStatusId,
+    donor,
     campaign,
   }: Partial<DraftStockLine>) => {
     const result = await stockApi.updateStockLine({
@@ -187,6 +190,7 @@ const useUpdate = (id: string) => {
         location: setNullableInput('id', location),
         itemVariantId: setNullableInput('itemVariantId', { itemVariantId }),
         vvmStatusId,
+        donorId: setNullableInput('id', donor),
         campaignId: campaign?.id,
       },
       storeId,
