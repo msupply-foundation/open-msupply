@@ -20,7 +20,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { PrescriptionLineEdit } from './PrescriptionLineEdit';
 import { Footer } from './Footer';
 import { NavBar } from './NavBar';
-import { useAllocationContext } from '../../StockOut';
+import { getAllocatedQuantity, useAllocationContext } from '../../StockOut';
 import { useSavePrescriptionItemLineData } from '../api/hooks/useSavePrescriptionItemLineData';
 
 export const PrescriptionLineEditView = () => {
@@ -40,8 +40,12 @@ export const PrescriptionLineEditView = () => {
     item,
     prescribedQuantity,
     note,
+    allocatedQuantity,
     setIsDirty: setAllocationIsDirty,
-  } = useAllocationContext();
+  } = useAllocationContext(state => ({
+    ...state,
+    allocatedQuantity: getAllocatedQuantity(state),
+  }));
 
   const {
     mutateAsync: savePrescriptionItemLineData,
@@ -205,7 +209,10 @@ export const PrescriptionLineEditView = () => {
       />
       <Footer
         isSaving={isSavingLines}
-        isDirty={isDirty.current || allocationIsDirty}
+        isDirty={
+          allocationIsDirty &&
+          (allocatedQuantity > 0 || (prescribedQuantity ?? 0) > 0)
+        }
         handleSave={onSave}
         handleCancel={() =>
           navigate(

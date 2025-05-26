@@ -28,7 +28,8 @@ export const useSavePrescriptionItemLineData = (invoiceId: string) => {
             numberOfPacks: line.numberOfPacks,
             stockLineId: line.stockLineId,
           })),
-          prescribedQuantity,
+          prescribedQuantity:
+            (prescribedQuantity ?? 0) > 0 ? prescribedQuantity : null,
           note,
         },
       });
