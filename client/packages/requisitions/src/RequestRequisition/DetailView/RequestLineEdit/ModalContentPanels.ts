@@ -19,6 +19,7 @@ export const getLeftPanel = (
     {
       label: t('label.months-of-stock'),
       value: draft?.itemStats.availableMonthsOfStockOnHand,
+      endAdornmentOverride: t('label.months'),
     },
   ];
 

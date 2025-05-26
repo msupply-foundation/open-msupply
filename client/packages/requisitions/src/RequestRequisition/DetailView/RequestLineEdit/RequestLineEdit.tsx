@@ -80,11 +80,12 @@ export const RequestLineEdit = ({
   const renderValueInfoRows = useMemo(() => {
     return (info: ValueInfo[]) => (
       <>
-        {info.map(({ label, value, sx }) => (
+        {info.map(({ label, value, sx, endAdornmentOverride }) => (
           <ValueInfoRow
             key={label}
             label={label}
             value={value}
+            endAdornmentOverride={endAdornmentOverride}
             defaultPackSize={defaultPackSize}
             representation={representation}
             unitName={unitName}
