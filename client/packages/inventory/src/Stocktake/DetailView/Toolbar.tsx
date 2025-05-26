@@ -28,7 +28,7 @@ export const Toolbar = () => {
       'description',
       'stocktakeDate',
     ]);
-  const useSimplifiedTabletView = useSimplifiedTabletUI();
+  const simplifiedTabletView = useSimplifiedTabletUI();
   const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
 
   const infoMessage = isLocked
@@ -51,7 +51,7 @@ export const Toolbar = () => {
         flex={1}
         alignItems="flex-end"
       >
-        {useSimplifiedTabletView ? (
+        {simplifiedTabletView ? (
           <Grid display="flex" flex={1} flexDirection="row" gap={1}>
             <InformationFields
               isDisabled={isDisabled}

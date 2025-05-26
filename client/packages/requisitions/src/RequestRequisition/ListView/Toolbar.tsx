@@ -13,8 +13,8 @@ export const Toolbar: FC<{
   filter: FilterController;
 }> = () => {
   const t = useTranslation();
-  const useSimplifiedTabletView = useSimplifiedTabletUI();
-  return useSimplifiedTabletView ? null : (
+  const simplifiedTabletView = useSimplifiedTabletUI();
+  return simplifiedTabletView ? null : (
     <AppBarContentPortal
       sx={{
         paddingBottom: '16px',
