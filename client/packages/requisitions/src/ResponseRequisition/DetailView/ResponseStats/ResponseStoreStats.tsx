@@ -1,10 +1,8 @@
 import React from 'react';
 import { useTranslation } from '@common/intl';
 import { Box, Typography, NewValueBar } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
 
 export interface ResponseStoreStatsProps {
-  item?: ItemRowFragment;
   stockOnHand: number;
   incomingStock: number;
   stockOnOrder: number;
@@ -12,14 +10,13 @@ export interface ResponseStoreStatsProps {
   otherRequestedQuantity: number;
 }
 
-export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
-  item,
+export const ResponseStoreStats = ({
   stockOnHand,
   incomingStock,
   stockOnOrder,
   requestedQuantity,
   otherRequestedQuantity,
-}) => {
+}: ResponseStoreStatsProps) => {
   const t = useTranslation();
   const predictedStockLevels = stockOnHand + incomingStock + stockOnOrder;
   const totalRequested = requestedQuantity + otherRequestedQuantity;
@@ -38,35 +35,10 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
 
   return (
     <Box sx={{ minHeight: 200, maxHeight: 400, width: 400 }}>
-      <Box display="flex" flexDirection="column" paddingTop={2} paddingLeft={4}>
-        <Box display="flex">
-          <Typography fontSize={12} fontWeight={700}>
-            {t('label.name')}:&nbsp;
-          </Typography>
-          <Typography fontSize={12}>{item?.name ?? ''}</Typography>
-        </Box>
-        <Box display="flex" gap={5}>
-          <Box display="flex">
-            <Typography fontSize={12} fontWeight={700}>
-              {t('label.code')}:&nbsp;
-            </Typography>
-            <Typography fontSize={12}>{item?.code ?? ''}</Typography>
-          </Box>
-          <Box display="flex">
-            <Typography fontSize={12} fontWeight={700}>
-              {t('label.unit')}:&nbsp;
-            </Typography>
-            <Typography fontSize={12}>{item?.unitName ?? ''}</Typography>
-          </Box>
-        </Box>
-      </Box>
       <Box
         flex={1}
         sx={{
-          paddingLeft: 4,
-          paddingRight: 4,
-          paddingTop: 2,
-          paddingBottom: 2,
+          p: '4px 8px',
         }}
       >
         {stockOnHand === 0 && incomingStock === 0 && stockOnOrder === 0 ? (
@@ -79,7 +51,7 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
         ) : (
           <>
             <Box>
-              <Typography fontSize={12} style={{ textAlign: 'start' }}>
+              <Typography variant="h6" style={{ textAlign: 'start' }}>
                 {t('label.our-stock')}
               </Typography>
             </Box>
@@ -183,16 +155,13 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
       </Box>
       <Box
         sx={{
-          paddingLeft: 4,
-          paddingRight: 4,
-          paddingTop: 2,
-          paddingBottom: 2,
+          p: '4px 8px',
         }}
       >
         {(!!requestedQuantity || !!otherRequestedQuantity) && (
           <>
             <Box>
-              <Typography fontSize={12} style={{ textAlign: 'start' }}>
+              <Typography style={{ textAlign: 'start' }} variant="h6">
                 {t('label.requested')}
               </Typography>
             </Box>

@@ -7,10 +7,8 @@ import {
   Typography,
   ValueBar,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
 
 export interface RequestStoreStatsProps {
-  item?: ItemRowFragment;
   maxMonthsOfStock: number;
   suggestedQuantity: number;
   availableStockOnHand: number;
@@ -105,13 +103,12 @@ const CalculationError = ({
   );
 };
 
-export const RequestStoreStats: React.FC<RequestStoreStatsProps> = ({
-  item,
+export const RequestStoreStats = ({
   maxMonthsOfStock,
   suggestedQuantity,
   availableStockOnHand,
   averageMonthlyConsumption,
-}) => {
+}: RequestStoreStatsProps) => {
   const t = useTranslation();
   if (averageMonthlyConsumption === 0) return <CalculationError isAmcZero />;
 
@@ -127,34 +124,13 @@ export const RequestStoreStats: React.FC<RequestStoreStatsProps> = ({
 
   return (
     <Box sx={{ maxHeight: 400, width: 500, minHeight: 200 }}>
-      <Box display="flex" flexDirection="column" paddingTop={2} paddingLeft={4}>
-        <Box display="flex">
-          <Typography fontSize={12} fontWeight={700}>
-            {t('label.name')}:&nbsp;
-          </Typography>
-          <Typography fontSize={12}>{item?.name ?? ''}</Typography>
-        </Box>
-        <Box display="flex" gap={5}>
-          <Box display="flex">
-            <Typography fontSize={12} fontWeight={700}>
-              {t('label.code')}:&nbsp;
-            </Typography>
-            <Typography fontSize={12}>{item?.code ?? ''}</Typography>
-          </Box>
-          <Box display="flex">
-            <Typography fontSize={12} fontWeight={700}>
-              {t('label.unit')}:&nbsp;
-            </Typography>
-            <Typography fontSize={12}>{item?.unitName ?? ''}</Typography>
-          </Box>
-        </Box>
-      </Box>
       <Box
         sx={{
           paddingLeft: 4,
           paddingRight: 4,
           paddingTop: 4,
           paddingBottom: 2,
+          p: '8pm 8px 4px',
         }}
       >
         <>

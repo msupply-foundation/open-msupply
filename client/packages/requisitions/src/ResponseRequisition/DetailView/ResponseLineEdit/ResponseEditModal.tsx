@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   DialogButton,
   ModalMode,
+  ModalTabs,
   useBufferState,
   useDialog,
   UserStoreNodeFragment,
@@ -11,6 +12,8 @@ import { ResponseLineEdit } from './ResponseLineEdit';
 import { useDraftRequisitionLine, useNextResponseLine } from './hooks';
 import { Representation, RepresentationValue } from '../../../common';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
+import { ResponseStoreStats } from '../ResponseStats/ResponseStoreStats';
+import { RequestStoreStats } from '../ResponseStats/RequestStoreStats';
 
 interface ResponseLineEditModalProps {
   requisition: ResponseFragment;
@@ -52,10 +55,9 @@ export const ResponseLineEditModal = ({
 
   const { draft, update, save } = useDraftRequisitionLine(currentItem);
   const { hasNext, next } = useNextResponseLine(currentItem);
+  const { data } = useResponse.line.stats(draft?.id);
 
-  const isPacksEnabled = !!currentItem?.defaultPackSize;
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
-  const showExtraFields = store?.preferences?.extraFieldsInRequisition;
 
   const deletePreviousLine = () => {
     if (previousItemLineId && !isDisabled) deleteLine(previousItemLineId);
@@ -90,6 +92,36 @@ export const ResponseLineEditModal = ({
     }
   }, [draft, setPreviousItemLineId]);
 
+  const tabs = [
+    {
+      Component: (
+        <ResponseStoreStats
+          stockOnHand={data?.responseStoreStats.stockOnHand || 0}
+          incomingStock={data?.responseStoreStats.incomingStock || 0}
+          stockOnOrder={data?.responseStoreStats.stockOnOrder || 0}
+          requestedQuantity={data?.responseStoreStats.requestedQuantity || 0}
+          otherRequestedQuantity={
+            data?.responseStoreStats.otherRequestedQuantity || 0
+          }
+        />
+      ),
+      value: 'label.my-store',
+    },
+    {
+      Component: (
+        <RequestStoreStats
+          maxMonthsOfStock={data?.requestStoreStats.maxMonthsOfStock || 0}
+          suggestedQuantity={data?.requestStoreStats.suggestedQuantity || 0}
+          availableStockOnHand={data?.requestStoreStats.stockOnHand || 0}
+          averageMonthlyConsumption={
+            data?.requestStoreStats.averageMonthlyConsumption || 0
+          }
+        />
+      ),
+      value: 'label.customer',
+    },
+  ];
+
   return (
     <Modal
       title=""
@@ -115,20 +147,30 @@ export const ResponseLineEditModal = ({
       height={800}
       width={1200}
     >
-      <ResponseLineEdit
-        requisition={requisition}
-        lines={lines}
-        draft={draft}
-        currentItem={currentItem}
-        onChangeItem={onChangeItem}
-        update={update}
-        isPacksEnabled={isPacksEnabled}
-        representation={representation}
-        setRepresentation={setRepresentation}
-        disabled={isDisabled}
-        isUpdateMode={mode === ModalMode.Update}
-        showExtraFields={showExtraFields && !!requisition.programName}
-      />
+      <>
+        <ResponseLineEdit
+          store={store}
+          requisition={requisition}
+          lines={lines}
+          draft={draft}
+          totalStockOnHand={data?.responseStoreStats.stockOnHand || 0}
+          currentItem={currentItem}
+          onChangeItem={onChangeItem}
+          update={update}
+          representation={representation}
+          setRepresentation={setRepresentation}
+          disabled={isDisabled}
+          isUpdateMode={mode === ModalMode.Update}
+        />
+        <ModalTabs
+          tabs={tabs}
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            background: theme => theme.palette.background.toolbar,
+          }}
+        />
+      </>
     </Modal>
   );
 };
