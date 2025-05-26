@@ -46,6 +46,7 @@ pub fn generate_empty_invoice_lines(
                     donor_id: None,
                     vvm_status_id: None,
                     reason_option_id: None,
+                    campaign_id: None,
                 });
             }
             Ok(None) => {}

@@ -3167,6 +3167,7 @@ export type InsertInboundShipmentLineFromInternalOrderLineResponseWithId = {
 
 export type InsertInboundShipmentLineInput = {
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack: Scalars['Float']['input'];
   donorId?: InputMaybe<Scalars['String']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
@@ -4040,6 +4041,7 @@ export type InvoiceLineFilterInput = {
 export type InvoiceLineNode = {
   __typename: 'InvoiceLineNode';
   batch?: Maybe<Scalars['String']['output']>;
+  campaignId?: Maybe<Scalars['String']['output']>;
   costPricePerPack: Scalars['Float']['output'];
   donorId?: Maybe<Scalars['String']['output']>;
   donorName?: Maybe<Scalars['String']['output']>;
@@ -9008,6 +9010,7 @@ export type UpdateInboundShipmentLineErrorInterface = {
 
 export type UpdateInboundShipmentLineInput = {
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<NullableStringUpdate>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   donorId?: InputMaybe<NullableStringUpdate>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;

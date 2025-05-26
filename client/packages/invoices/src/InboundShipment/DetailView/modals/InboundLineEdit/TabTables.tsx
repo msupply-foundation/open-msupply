@@ -23,6 +23,7 @@ import {
 import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
+  getCampaignColumn,
   getDonorColumn,
   getLocationInputColumn,
   ItemRowFragment,
@@ -313,6 +314,8 @@ export const LocationTableComponent = ({
   if (preferences?.allowTrackingOfStockByDonor) {
     columnDescriptions.push(getDonorColumn(patch => updateDraftLine(patch)));
   }
+
+  columnDescriptions.push(getCampaignColumn(patch => updateDraftLine(patch)));
 
   const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);
 

@@ -157,6 +157,7 @@ fn generate_line(
         linked_invoice_id: None,
         prescribed_quantity: None,
         reason_option_id: None,
+        campaign_id: None,
     }
 }
 

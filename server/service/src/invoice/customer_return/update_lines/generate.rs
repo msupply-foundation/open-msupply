@@ -117,6 +117,7 @@ pub fn generate(
                 tax_percentage: None,
                 total_before_tax: None,
                 donor_id: None,
+                campaign_id: None,
             },
         )
         .collect();

@@ -20,6 +20,7 @@ fragment InboundLine on InvoiceLineNode {
   vvmStatusId
   donorId
   donorName
+  campaignId
 
   itemVariant {
     id

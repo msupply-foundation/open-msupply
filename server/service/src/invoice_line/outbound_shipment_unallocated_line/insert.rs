@@ -128,6 +128,7 @@ fn generate(
         donor_id: None,
         vvm_status_id: None,
         reason_option_id: None,
+        campaign_id: None,
     };
 
     Ok(new_line)
