@@ -25,18 +25,17 @@ export const getCurrentValue = (
   return Math.ceil(supplyQuantity ?? 0);
 };
 
-// Updated Respone Calculation
-interface UpdatedResponse {
+interface UpdatedSupply {
   supplyQuantity: number;
   reason?: null;
 }
 
-export const getUpdatedResponse = (
+export const getUpdatedSupply = (
   value: number | undefined,
   representation: RepresentationValue,
   defaultPackSize?: number,
   requestedQuantity?: number
-): UpdatedResponse => {
+): UpdatedSupply => {
   const newValue = typeof value === 'number' && !isNaN(value) ? value : 0;
   const supplyQuantity =
     representation === Representation.PACKS

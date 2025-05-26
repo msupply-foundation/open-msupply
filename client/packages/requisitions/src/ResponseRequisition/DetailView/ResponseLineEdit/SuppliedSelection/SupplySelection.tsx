@@ -7,7 +7,7 @@ import {
   useIntlUtils,
   useTranslation,
 } from '@openmsupply-client/common';
-import { getCurrentValue, getUpdatedResponse } from './utils';
+import { getCurrentValue, getUpdatedSupply } from './utils';
 import { Representation, RepresentationValue } from '../../../../common';
 import { DraftResponseLine } from '../hooks';
 
@@ -61,7 +61,7 @@ export const SupplySelection = ({
   }, [isPacksEnabled, unitName, currentValue]);
 
   const handleValueChange = (value?: number) => {
-    const updatedRequest = getUpdatedResponse(
+    const updatedRequest = getUpdatedSupply(
       value,
       representation,
       defaultPackSize,
