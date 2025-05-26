@@ -20,6 +20,7 @@ import {
   LocaleKey,
   useIntlUtils,
   Formatter,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { DraftStockOutLineFragment } from '../../api/operations.generated';
@@ -51,6 +52,7 @@ export const useOutboundLineEditColumns = ({
   const { store } = useAuthContext();
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
   const pluralisedUnitName = getPlural(unit, 2);
@@ -84,6 +86,7 @@ export const useOutboundLineEditColumns = ({
       'batch',
       {
         accessor: ({ rowData }) => rowData.batch,
+        width: simplifiedTabletView ? 190 : 100,
       },
     ],
   ];
@@ -107,7 +110,7 @@ export const useOutboundLineEditColumns = ({
       'expiryDate',
       {
         Cell: ExpiryDateCell,
-        width: 100,
+        width: simplifiedTabletView ? 190 : 100,
       },
     ],
     [
@@ -155,7 +158,11 @@ export const useOutboundLineEditColumns = ({
     columnDefinitions.push(...getAllocateInDosesColumns(t, allocate, unit));
   } else {
     columnDefinitions.push(
-      ...getAllocateInUnitsColumns(allocate, pluralisedUnitName)
+      ...getAllocateInUnitsColumns(
+        allocate,
+        pluralisedUnitName,
+        simplifiedTabletView
+      )
     );
   }
 
@@ -189,7 +196,8 @@ const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
 
 const getAllocateInUnitsColumns = (
   allocate: (key: string, numPacks: number) => void,
-  pluralisedUnitName: string
+  pluralisedUnitName: string,
+  simplifiedTabletView: boolean
 ): ColumnDescription<DraftStockOutLineFragment>[] => [
   {
     Cell: NumberCell,
@@ -205,7 +213,7 @@ const getAllocateInUnitsColumns = (
     label: 'label.available-packs',
     key: 'availablePacks',
     align: ColumnAlign.Right,
-    width: 90,
+    width: simplifiedTabletView ? 190 : 90,
     accessor: ({ rowData }) =>
       rowData.location?.onHold || rowData.stockLineOnHold
         ? 0
@@ -215,7 +223,7 @@ const getAllocateInUnitsColumns = (
     'numberOfPacks',
     {
       Cell: PackQuantityCell,
-      width: 100,
+      width: simplifiedTabletView ? 190 : 100,
       label: 'label.pack-quantity-issued',
       setter: ({ id, numberOfPacks }) => allocate(id, numberOfPacks ?? 0),
     },
