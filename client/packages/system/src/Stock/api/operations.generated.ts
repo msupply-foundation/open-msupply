@@ -72,6 +72,7 @@ export type StockLineRowFragment = {
     id: string;
     description: string;
   } | null;
+  donor?: { __typename: 'NameNode'; id: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
 };
 
@@ -275,6 +276,7 @@ export type StockLinesQuery = {
         id: string;
         description: string;
       } | null;
+      donor?: { __typename: 'NameNode'; id: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
@@ -365,6 +367,7 @@ export type StockLineQuery = {
         id: string;
         description: string;
       } | null;
+      donor?: { __typename: 'NameNode'; id: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
@@ -481,6 +484,7 @@ export type UpdateStockLineMutation = {
           id: string;
           description: string;
         } | null;
+        donor?: { __typename: 'NameNode'; id: string } | null;
         campaign?: {
           __typename: 'CampaignNode';
           id: string;
@@ -768,6 +772,7 @@ export type InsertStockLineMutation = {
           id: string;
           description: string;
         } | null;
+        donor?: { __typename: 'NameNode'; id: string } | null;
         campaign?: {
           __typename: 'CampaignNode';
           id: string;
@@ -890,6 +895,9 @@ export const StockLineRowFragmentDoc = gql`
     vvmStatus {
       id
       description
+    }
+    donor(storeId: $storeId) {
+      id
     }
     campaign {
       id

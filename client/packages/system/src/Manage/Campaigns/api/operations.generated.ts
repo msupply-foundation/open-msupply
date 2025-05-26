@@ -201,6 +201,7 @@ export const DeleteCampaignDocument = gql`
             }
           }
           ... on DeleteCampaignSuccess {
+            __typename
             id
           }
         }

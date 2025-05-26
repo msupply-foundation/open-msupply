@@ -1,12 +1,17 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, SyntheticEvent } from 'react';
 import { useCampaigns } from '@openmsupply-client/system/src/Manage/Campaigns/api';
-import { Autocomplete } from '@common/components';
+import { Autocomplete, AutocompleteOption } from '@common/components';
 import { CampaignNode } from '@common/types';
 import { useTranslation } from '@common/intl';
 
+interface CampaignOption {
+  label: string;
+  value: string | null;
+}
+
 interface CampaignSelectorProps {
   campaignId?: string;
-  onChange: (value: CampaignNode) => void;
+  onChange: (value: CampaignNode | null) => void;
 }
 
 export const CampaignSelector = ({
@@ -20,13 +25,32 @@ export const CampaignSelector = ({
     sortBy: { key: 'name', direction: 'asc' },
   });
 
-  const options =
-    data?.nodes.map(({ id, name }) => ({
+  const campaigns = data?.nodes ?? [];
+  const options: AutocompleteOption<CampaignOption>[] = campaigns.map(
+    ({ id, name }) => ({
       label: name,
       value: id,
-    })) ?? [];
+    })
+  );
 
-  const selectedCampaign = data?.nodes.find(({ id }) => id === campaignId);
+  const selectedCampaign = campaigns.find(({ id }) => id === campaignId);
+
+  if (
+    campaigns.length > 0 &&
+    selectedCampaign != null &&
+    selectedCampaign !== undefined
+  ) {
+    options.push({ label: t('label.remove'), value: null });
+  }
+
+  const handleChange = (_: SyntheticEvent, option: CampaignOption | null) => {
+    if (option === null || option?.value === null) {
+      onChange(null);
+      return;
+    }
+    const selectedOption = data?.nodes.find(({ id }) => id === option?.value);
+    if (selectedOption) onChange(selectedOption);
+  };
 
   return (
     <Autocomplete
@@ -37,12 +61,7 @@ export const CampaignSelector = ({
         label: selectedCampaign?.name ?? '',
         value: selectedCampaign?.id ?? '',
       }}
-      onChange={(_, option) => {
-        const selectedOption = data?.nodes.find(
-          ({ id }) => id === option?.value
-        );
-        if (selectedOption) onChange(selectedOption);
-      }}
+      onChange={handleChange}
       noOptionsText={t('messages.no-campaigns')}
       isOptionEqualToValue={(option, value) => option.value === value?.value}
       width={'160px'}

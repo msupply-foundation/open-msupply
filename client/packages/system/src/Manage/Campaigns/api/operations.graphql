@@ -83,6 +83,7 @@ mutation deleteCampaign($id: String!) {
           }
         }
         ... on DeleteCampaignSuccess {
+          __typename
           id
         }
       }

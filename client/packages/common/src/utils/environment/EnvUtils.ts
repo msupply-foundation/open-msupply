@@ -94,6 +94,8 @@ const mapRoute = (route: string): RouteMapping => {
         title: 'indicators-demographics',
         docs: '/manage/demographics/',
       };
+    case inRoute(AppRoute.Campaigns):
+      return { title: 'campaigns', docs: '/manage/campaigns/' };
     case inRoute(AppRoute.ImmunisationPrograms):
       return { title: 'immunisations', docs: '/programs/immunizations/' };
     case inRoute(AppRoute.RnRForms):

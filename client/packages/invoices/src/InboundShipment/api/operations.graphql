@@ -18,10 +18,11 @@ fragment InboundLine on InvoiceLineNode {
   itemName
   itemVariantId
   vvmStatusId
-  donorId
-  donorName
+  donor(storeId: $storeId) {
+    id
+    name
+  }
   campaignId
-
   itemVariant {
     id
     dosesPerUnit
@@ -85,8 +86,10 @@ fragment Inbound on InvoiceNode {
   type
   taxPercentage
   expectedDeliveryDate
-  defaultDonorId
-  defaultDonorName
+  defaultDonor(storeId: $storeId) {
+    id
+    name
+  }
 
   linkedShipment {
     __typename

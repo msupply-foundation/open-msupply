@@ -65,6 +65,14 @@ export type StockLineFragment = {
     id: string;
     dosesPerUnit: number;
   } | null;
+  donor?: { __typename: 'NameNode'; id: string } | null;
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    level: number;
+    unusable: boolean;
+    description: string;
+  } | null;
 };
 
 export type ItemRowFragment = {
@@ -387,6 +395,14 @@ export type ItemFragment = {
         id: string;
         dosesPerUnit: number;
       } | null;
+      donor?: { __typename: 'NameNode'; id: string } | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        level: number;
+        unusable: boolean;
+        description: string;
+      } | null;
     }>;
   };
   stats: {
@@ -574,6 +590,14 @@ export type ItemsWithStockLinesQuery = {
             __typename: 'ItemVariantNode';
             id: string;
             dosesPerUnit: number;
+          } | null;
+          donor?: { __typename: 'NameNode'; id: string } | null;
+          vvmStatus?: {
+            __typename: 'VvmstatusNode';
+            id: string;
+            level: number;
+            unusable: boolean;
+            description: string;
           } | null;
         }>;
       };
@@ -889,6 +913,14 @@ export type ItemByIdQuery = {
             id: string;
             dosesPerUnit: number;
           } | null;
+          donor?: { __typename: 'NameNode'; id: string } | null;
+          vvmStatus?: {
+            __typename: 'VvmstatusNode';
+            id: string;
+            level: number;
+            unusable: boolean;
+            description: string;
+          } | null;
         }>;
       };
       variants: Array<{
@@ -1144,6 +1176,14 @@ export type GetHistoricalStockLinesQuery = {
         __typename: 'ItemVariantNode';
         id: string;
         dosesPerUnit: number;
+      } | null;
+      donor?: { __typename: 'NameNode'; id: string } | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        level: number;
+        unusable: boolean;
+        description: string;
       } | null;
     }>;
   };
@@ -1537,6 +1577,16 @@ export const StockLineFragmentDoc = gql`
     itemVariant {
       id
       dosesPerUnit
+    }
+    donor(storeId: $storeId) {
+      id
+    }
+    vvmStatus {
+      __typename
+      id
+      level
+      unusable
+      description
     }
   }
   ${ItemDirectionFragmentDoc}
