@@ -2384,6 +2384,7 @@ export type DraftOutboundShipmentLineNode = {
   availablePacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
   defaultDosesPerUnit: Scalars['Int']['output'];
+  donor?: Maybe<NameNode>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   inStorePacks: Scalars['Float']['output'];
@@ -2395,6 +2396,10 @@ export type DraftOutboundShipmentLineNode = {
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
   vvmStatus?: Maybe<VvmstatusNode>;
+};
+
+export type DraftOutboundShipmentLineNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type EmergencyResponseRequisitionCounts = {
@@ -3669,7 +3674,9 @@ export type InsertStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
   barcode?: InputMaybe<Scalars['String']['input']>;
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<Scalars['String']['input']>;
   costPricePerPack: Scalars['Float']['input'];
+  donorId?: InputMaybe<Scalars['String']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   /** @deprecated Since 2.8.0. Use reason_option_id */
@@ -8182,6 +8189,7 @@ export type StockLineNode = {
   batch?: Maybe<Scalars['String']['output']>;
   campaign?: Maybe<CampaignNode>;
   costPricePerPack: Scalars['Float']['output'];
+  donor?: Maybe<NameNode>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   item: ItemNode;
@@ -8202,6 +8210,10 @@ export type StockLineNode = {
   vvmStatus?: Maybe<VvmstatusNode>;
   vvmStatusId?: Maybe<Scalars['String']['output']>;
   vvmStatusLogs?: Maybe<VvmstatusLogConnector>;
+};
+
+export type StockLineNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type StockLineReducedBelowZero =
@@ -9616,7 +9628,9 @@ export type UpdateStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
   barcode?: InputMaybe<Scalars['String']['input']>;
   batch?: InputMaybe<Scalars['String']['input']>;
+  campaignId?: InputMaybe<NullableStringUpdate>;
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
+  donorId?: InputMaybe<NullableStringUpdate>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemVariantId?: InputMaybe<NullableStringUpdate>;
