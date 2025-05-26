@@ -2400,7 +2400,7 @@ export type DraftStockOutLineNode = {
   vvmStatus?: Maybe<VvmstatusNode>;
 };
 
-export type DraftOutboundShipmentLineNodeDonorArgs = {
+export type DraftStockOutLineNodeDonorArgs = {
   storeId: Scalars['String']['input'];
 };
 
