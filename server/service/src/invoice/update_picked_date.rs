@@ -1,5 +1,5 @@
 use repository::{
-    Invoice, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, RepositoryError,
+    InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, RepositoryError,
     StorageConnection,
 };
 
@@ -13,10 +13,6 @@ fn auto_pick_invoice(
 ) -> Result<InvoiceRow, RepositoryError> {
     // If the invoice is a prescription and it's in the new status, we should automatically pick it
     if invoice.r#type == InvoiceType::Prescription && invoice.status == InvoiceStatus::New {
-        println!(
-            "Automatically picking prescription invoice with ID: {}",
-            invoice.id
-        );
         let update = InvoiceRow {
             status: InvoiceStatus::Picked,
             picked_datetime: Some(get_invoice_status_datetime(&invoice)),
