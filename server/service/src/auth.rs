@@ -144,6 +144,9 @@ pub enum Resource {
     // Preferences
     MutatePreferences,
     QueryAndMutateVvmStatus,
+    // Campaigns
+    QueryCampaigns,
+    MutateCampaigns,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -649,6 +652,16 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::ViewAndEditVvmStatus),
         ]),
+    );
+
+    map.insert(
+        Resource::MutateCampaigns,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+
+    map.insert(
+        Resource::QueryCampaigns,
+        PermissionDSL::Any(vec![PermissionDSL::HasStoreAccess]),
     );
 
     map

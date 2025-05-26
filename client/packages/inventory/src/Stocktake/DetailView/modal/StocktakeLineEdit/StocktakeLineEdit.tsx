@@ -42,6 +42,7 @@ interface StocktakeLineEditProps {
   onClose: () => void;
   isOpen: boolean;
   isInitialStocktake: boolean;
+  enableDonorTracking: boolean;
 }
 
 export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
@@ -50,10 +51,12 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   onClose,
   isOpen,
   isInitialStocktake,
+  enableDonorTracking,
 }) => {
   const theme = useAppTheme();
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const [currentItem, setCurrentItem] = useState(item);
+
   const { isDisabled, items, totalLineCount } = useStocktakeOld.line.rows();
   const { draftLines, update, addLine, isSaving, save, nextItem } =
     useStocktakeLineEdit(currentItem);
@@ -177,7 +180,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
           </StyledTabContainer>
         </StyledTabPanel>
 
-        <StyledTabPanel value={Tabs.Location}>
+        <StyledTabPanel value={Tabs.Other}>
           <StyledTabContainer>
             <QueryParamsProvider
               createStore={createQueryParamsStore<LocationRowFragment>({
@@ -188,6 +191,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                 isDisabled={isDisabled}
                 batches={reversedDraftLines}
                 update={update}
+                trackStockDonor={enableDonorTracking}
               />
             </QueryParamsProvider>
           </StyledTabContainer>

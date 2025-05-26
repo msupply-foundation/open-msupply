@@ -3,6 +3,7 @@ use crate::{
     asset::AssetServiceTrait,
     auth::{AuthService, AuthServiceTrait},
     barcode::{BarcodeService, BarcodeServiceTrait},
+    campaign::{CampaignService, CampaignServiceTrait},
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
     cold_chain::{ColdChainService, ColdChainServiceTrait},
@@ -182,6 +183,8 @@ pub struct ServiceProvider {
     pub preference_service: Box<dyn PreferenceServiceTrait>,
     // VVM
     pub vvm_service: Box<dyn VVMServiceTrait>,
+    // Campaign
+    pub campaign_service: Box<dyn CampaignServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -285,6 +288,7 @@ impl ServiceProvider {
             frontend_plugins_cache: FrontendPluginCache::new(),
             preference_service: Box::new(PreferenceService {}),
             vvm_service: Box::new(VVMService {}),
+            campaign_service: Box::new(CampaignService),
         }
     }
 

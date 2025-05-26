@@ -980,6 +980,64 @@ export type BundledItemNode = {
   ratio: Scalars['Float']['output'];
 };
 
+export type CampaignConnector = {
+  __typename: 'CampaignConnector';
+  nodes: Array<CampaignNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type CampaignFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
+export type CampaignMutations = {
+  __typename: 'CampaignMutations';
+  deleteCampaign: DeleteCampaignResponse;
+  upsertCampaign: UpsertCampaignResponse;
+};
+
+export type CampaignMutationsDeleteCampaignArgs = {
+  input: DeleteCampaignInput;
+};
+
+export type CampaignMutationsUpsertCampaignArgs = {
+  input: UpsertCampaignInput;
+};
+
+export type CampaignNode = {
+  __typename: 'CampaignNode';
+  endDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  startDate?: Maybe<Scalars['NaiveDate']['output']>;
+};
+
+export type CampaignQueries = {
+  __typename: 'CampaignQueries';
+  campaigns: CampaignsResponse;
+};
+
+export type CampaignQueriesCampaignsArgs = {
+  filter?: InputMaybe<CampaignFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<CampaignSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export enum CampaignSortFieldInput {
+  Name = 'name',
+}
+
+export type CampaignSortInput = {
+  /** Sort query result is sorted descending or ascending (if not provided the default is ascending) */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: CampaignSortFieldInput;
+};
+
+export type CampaignsResponse = CampaignConnector;
+
 export type CanOnlyChangeToAllocatedWhenNoUnallocatedLines =
   UpdateErrorInterface & {
     __typename: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines';
@@ -1167,6 +1225,7 @@ export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   assetCatalogue: AssetCatalogueMutations;
   bundledItem: BundledItemMutations;
+  campaign: CampaignMutations;
   demographic: DemographicMutations;
   general: CentralGeneralMutations;
   itemVariant: ItemVariantMutations;
@@ -1178,6 +1237,7 @@ export type CentralServerMutationNode = {
 
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
+  campaign: CampaignQueries;
   plugin: CentralPluginQueries;
 };
 
@@ -1507,6 +1567,7 @@ export type CustomerReturnLineInput = {
   numberOfPacksReturned: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CustomerReturnLineNode = {
@@ -1530,6 +1591,7 @@ export type CustomerReturnLineNode = {
 export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   DeleteAssetErrorInterface &
   DeleteAssetLogReasonErrorInterface &
+  DeleteCampaignErrorInterface &
   DeleteLocationErrorInterface &
   DeleteVaccineCourseErrorInterface &
   InsertAssetCatalogueItemErrorInterface &
@@ -1549,6 +1611,7 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   UpdateSensorErrorInterface &
   UpdateVaccineCourseErrorInterface &
   UpsertBundledItemErrorInterface &
+  UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
     __typename: 'DatabaseError';
     description: Scalars['String']['output'];
@@ -1619,6 +1682,28 @@ export type DeleteBundledItemInput = {
 };
 
 export type DeleteBundledItemResponse = DeleteResponse;
+
+export type DeleteCampaignError = {
+  __typename: 'DeleteCampaignError';
+  error: DeleteCampaignErrorInterface;
+};
+
+export type DeleteCampaignErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeleteCampaignInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteCampaignResponse =
+  | DeleteCampaignError
+  | DeleteCampaignSuccess;
+
+export type DeleteCampaignSuccess = {
+  __typename: 'DeleteCampaignSuccess';
+  id: Scalars['String']['output'];
+};
 
 export type DeleteCustomerReturnError = {
   __typename: 'DeleteCustomerReturnError';
@@ -3807,6 +3892,7 @@ export type InternalError = InsertAssetCatalogueItemErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
   UpsertBundledItemErrorInterface &
+  UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
     __typename: 'InternalError';
     description: Scalars['String']['output'];
@@ -3954,8 +4040,7 @@ export type InvoiceLineNode = {
   __typename: 'InvoiceLineNode';
   batch?: Maybe<Scalars['String']['output']>;
   costPricePerPack: Scalars['Float']['output'];
-  donorId?: Maybe<Scalars['String']['output']>;
-  donorName?: Maybe<Scalars['String']['output']>;
+  donor?: Maybe<NameNode>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   foreignCurrencyPriceBeforeTax?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
@@ -3987,6 +4072,11 @@ export type InvoiceLineNode = {
   totalAfterTax: Scalars['Float']['output'];
   totalBeforeTax: Scalars['Float']['output'];
   type: InvoiceLineNodeType;
+  vvmStatusId?: Maybe<Scalars['String']['output']>;
+};
+
+export type InvoiceLineNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export enum InvoiceLineNodeType {
@@ -4033,8 +4123,7 @@ export type InvoiceNode = {
   createdDatetime: Scalars['DateTime']['output'];
   currency?: Maybe<CurrencyNode>;
   currencyRate: Scalars['Float']['output'];
-  defaultDonorId?: Maybe<Scalars['String']['output']>;
-  defaultDonorName?: Maybe<Scalars['String']['output']>;
+  defaultDonor?: Maybe<NameNode>;
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   diagnosis?: Maybe<DiagnosisNode>;
   diagnosisId?: Maybe<Scalars['String']['output']>;
@@ -4082,6 +4171,10 @@ export type InvoiceNode = {
    */
   user?: Maybe<UserNode>;
   verifiedDatetime?: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type InvoiceNodeDefaultDonorArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type InvoiceNodeOtherPartyArgs = {
@@ -7300,6 +7393,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteAssetCatalogueItemErrorInterface &
   DeleteAssetErrorInterface &
   DeleteAssetLogReasonErrorInterface &
+  DeleteCampaignErrorInterface &
   DeleteCustomerReturnErrorInterface &
   DeleteErrorInterface &
   DeleteInboundShipmentErrorInterface &
@@ -8086,6 +8180,7 @@ export type StockLineNode = {
   availableNumberOfPacks: Scalars['Float']['output'];
   barcode?: Maybe<Scalars['String']['output']>;
   batch?: Maybe<Scalars['String']['output']>;
+  campaign?: Maybe<CampaignNode>;
   costPricePerPack: Scalars['Float']['output'];
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
@@ -8105,6 +8200,7 @@ export type StockLineNode = {
   supplierName?: Maybe<Scalars['String']['output']>;
   totalNumberOfPacks: Scalars['Float']['output'];
   vvmStatus?: Maybe<VvmstatusNode>;
+  vvmStatusId?: Maybe<Scalars['String']['output']>;
   vvmStatusLogs?: Maybe<VvmstatusLogConnector>;
 };
 
@@ -8163,6 +8259,7 @@ export type StocktakeFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isLocked?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramStocktake?: InputMaybe<Scalars['Boolean']['input']>;
+  programId?: InputMaybe<EqualFilterStringInput>;
   status?: InputMaybe<EqualFilterStocktakeStatusInput>;
   stocktakeDate?: InputMaybe<DateFilterInput>;
   stocktakeNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -8717,6 +8814,7 @@ export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface &
   UpdateDemographicProjectionErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
+  UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
     __typename: 'UniqueValueViolation';
     description: Scalars['String']['output'];
@@ -8927,6 +9025,7 @@ export type UpdateInboundShipmentLineInput = {
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
+  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateInboundShipmentLineResponse =
@@ -9751,6 +9850,24 @@ export type UpsertBundledItemInput = {
 export type UpsertBundledItemResponse =
   | BundledItemNode
   | UpsertBundledItemError;
+
+export type UpsertCampaignError = {
+  __typename: 'UpsertCampaignError';
+  error: UpsertCampaignErrorInterface;
+};
+
+export type UpsertCampaignErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpsertCampaignInput = {
+  endDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  startDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+};
+
+export type UpsertCampaignResponse = CampaignNode | UpsertCampaignError;
 
 export type UpsertItemVariantError = {
   __typename: 'UpsertItemVariantError';

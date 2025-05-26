@@ -20,13 +20,21 @@ import {
   LocaleKey,
   useIntlUtils,
   Formatter,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { DraftStockOutLineFragment } from '../../api/operations.generated';
 import { getPackQuantityCellId } from 'packages/invoices/src/utils';
-import { AllocateIn } from './allocation/useAllocationContext';
+import {
+  AllocateInOption,
+  AllocateInType,
+} from './allocation/useAllocationContext';
 import { DraftItem } from '../../..';
-import { getDoseQuantity, packsToDoses } from './allocation/utils';
+import {
+  canAutoAllocate,
+  getDoseQuantity,
+  packsToDoses,
+} from './allocation/utils';
 
 export const useOutboundLineEditColumns = ({
   allocate,
@@ -39,7 +47,7 @@ export const useOutboundLineEditColumns = ({
   item: DraftItem | null;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
-  allocateIn: AllocateIn;
+  allocateIn: AllocateInOption;
 }) => {
   const { store } = useAuthContext();
   const t = useTranslation();
@@ -53,11 +61,25 @@ export const useOutboundLineEditColumns = ({
     PreferenceKey.ManageVvmStatusForStock
   );
 
+  const packSize =
+    allocateIn.type === AllocateInType.Packs ? allocateIn.packSize : undefined;
+
   const ForeignCurrencyCell = useCurrencyCell<DraftStockOutLineFragment>(
     currency?.code as Currencies
   );
 
   const columnDefinitions: ColumnDescription<DraftStockOutLineFragment>[] = [
+    {
+      label: '',
+      key: 'canAllocate',
+      Cell: CheckCell,
+      cellProps: {
+        tooltipText: t('description.used-in-auto-allocation'),
+      },
+      accessor: ({ rowData }) => canAutoAllocate(rowData, packSize),
+      align: ColumnAlign.Center,
+      width: 35,
+    },
     [
       'batch',
       {
@@ -67,7 +89,7 @@ export const useOutboundLineEditColumns = ({
   ];
 
   // If we have use VVM status, we need to show the VVM status column
-  if (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) {
+  if (prefs?.manageVvmStatusForStock && item?.isVaccine) {
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
@@ -77,6 +99,7 @@ export const useOutboundLineEditColumns = ({
         return `${rowData.vvmStatus?.description} (${rowData.vvmStatus?.level})`;
       },
       width: 85,
+      Cell: TooltipTextCell,
     });
   }
 
@@ -123,7 +146,7 @@ export const useOutboundLineEditColumns = ({
 
   columnDefinitions.push(['packSize', { width: 90 }]);
 
-  if (allocateIn === AllocateIn.Doses) {
+  if (allocateIn.type === AllocateInType.Doses) {
     columnDefinitions.push(...getAllocateInDosesColumns(t, allocate, unit));
   } else {
     columnDefinitions.push(
