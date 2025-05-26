@@ -207,7 +207,7 @@ export const OutboundLineEditTable = ({
       <Divider margin={10} />
       <Box
         style={{
-          maxHeight: useSimplifiedTabletView ? 290 : 325,
+          maxHeight: useSimplifiedTabletView ? 255 : 325,
           display: 'flex',
           flexDirection: 'column',
           overflowX: 'hidden',
