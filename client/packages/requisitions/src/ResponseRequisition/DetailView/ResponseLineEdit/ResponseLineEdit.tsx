@@ -11,6 +11,7 @@ import {
   BasicTextInput,
   Box,
   BufferedTextArea,
+  InputWithLabelRow,
   ReasonOptionNodeType,
   RequisitionNodeApprovalStatus,
   Typography,
@@ -18,11 +19,11 @@ import {
 import { ResponseFragment, ResponseLineFragment, useResponse } from '../../api';
 import {
   InfoRow,
-  InputRow,
   ModalContentLayout,
   RepresentationValue,
 } from '../../../common';
 import { SupplySelection } from './SuppliedSelection';
+import { createNumericInput } from './ContentLayout';
 
 interface ResponseLineEditProps {
   requisition: ResponseFragment;
@@ -56,12 +57,10 @@ export const ResponseLineEdit = ({
   const t = useTranslation();
   const { data } = useResponse.line.stats(draft?.id);
   const { data: reasonOptions, isLoading } = useReasonOptions();
+  const isDisabled = disabled || !!requisition.linkedRequisition;
   const disableItemSelection = disabled || isUpdateMode;
-
-  const line = useMemo(
-    () => lines.find(line => line.id === draft?.id),
-    [lines, draft?.id]
-  );
+  const hasApproval =
+    requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved;
 
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
@@ -75,14 +74,17 @@ export const ResponseLineEdit = ({
   const outgoingStock = (draft?.lossInUnits ?? 0) + (draft?.outgoingUnits ?? 0);
   const available =
     (draft?.initialStockOnHandUnits ?? 0) + incomingStock - outgoingStock;
-  const MOS =
+  const mos =
     draft?.averageMonthlyConsumption !== 0
       ? available / (draft?.averageMonthlyConsumption ?? 1)
       : 0;
 
-  const isProgram = !!requisition?.program;
-  const hasApproval =
-    requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved;
+  const numericInput = createNumericInput(t, {
+    defaultPackSize,
+    representation,
+    unitName,
+    disabled: isDisabled,
+  });
 
   return (
     <>
@@ -123,128 +125,72 @@ export const ResponseLineEdit = ({
                   value={String(currentItem?.defaultPackSize)}
                 />
               )}
-              {isProgram ? (
-                <InputRow
-                  label={t('label.initial-stock-on-hand')}
-                  value={draft?.initialStockOnHandUnits ?? 0}
-                  onChange={value => update({ initialStockOnHandUnits: value })}
-                  disabled={!!requisition.linkedRequisition || disabled}
-                  defaultPackSize={defaultPackSize}
-                  representation={representation}
-                  unitName={unitName}
-                  autoFocus={true}
-                />
+              {!showExtraFields ? (
+                <>
+                  {numericInput(
+                    'label.customer-soh',
+                    draft?.availableStockOnHand,
+                    {
+                      onChange: value =>
+                        update({ availableStockOnHand: value }),
+                      autoFocus: true,
+                    }
+                  )}
+                </>
               ) : (
-                <InputRow
-                  label={t('label.customer-soh')}
-                  value={draft?.availableStockOnHand ?? 0}
-                  onChange={value => update({ availableStockOnHand: value })}
-                  disabled={!!requisition.linkedRequisition || disabled}
-                  defaultPackSize={defaultPackSize}
-                  representation={representation}
-                  unitName={unitName}
-                  autoFocus={true}
-                />
+                <>
+                  {numericInput(
+                    'label.initial-stock-on-hand',
+                    draft?.initialStockOnHandUnits,
+                    {
+                      onChange: value =>
+                        update({ initialStockOnHandUnits: value }),
+                      autoFocus: true,
+                    }
+                  )}
+                  {numericInput('label.incoming', draft?.incomingUnits, {
+                    onChange: value => update({ incomingUnits: value }),
+                  })}
+                  {numericInput('label.outgoing', draft?.outgoingUnits, {
+                    onChange: value => update({ outgoingUnits: value }),
+                  })}
+                  {numericInput('label.losses', draft?.lossInUnits, {
+                    onChange: value => update({ lossInUnits: value }),
+                  })}
+                  {numericInput('label.additions', draft?.additionInUnits, {
+                    onChange: value => update({ additionInUnits: value }),
+                  })}
+                  {numericInput(
+                    'label.days-out-of-stock',
+                    draft?.daysOutOfStock,
+                    {
+                      onChange: value => update({ daysOutOfStock: value }),
+                    }
+                  )}
+                </>
               )}
-              <InputRow
-                label={t('label.available')}
-                value={available}
-                disabled={true}
-                defaultPackSize={defaultPackSize}
-                representation={representation}
-                unitName={unitName}
-              />
-              <InputRow
-                label={t('label.incoming')}
-                value={draft?.incomingUnits ?? 0}
-                onChange={value =>
-                  update({
-                    incomingUnits: value,
-                  })
-                }
-                disabled={disabled}
-                defaultPackSize={defaultPackSize}
-                representation={representation}
-                unitName={unitName}
-              />
-              <InputRow
-                label={t('label.outgoing')}
-                value={draft?.outgoingUnits ?? 0}
-                onChange={value =>
-                  update({
-                    outgoingUnits: value,
-                  })
-                }
-                disabled={disabled}
-                defaultPackSize={defaultPackSize}
-                representation={representation}
-                unitName={unitName}
-              />
-              <InputRow
-                label={t('label.losses')}
-                value={draft?.lossInUnits ?? 0}
-                onChange={value =>
-                  update({
-                    lossInUnits: value,
-                  })
-                }
-                disabled={disabled}
-                defaultPackSize={defaultPackSize}
-                representation={representation}
-                unitName={unitName}
-              />
-              <InputRow
-                label={t('label.additions')}
-                value={draft?.additionInUnits ?? 0}
-                onChange={value =>
-                  update({
-                    additionInUnits: value,
-                  })
-                }
-                disabled={disabled}
-                defaultPackSize={defaultPackSize}
-                representation={representation}
-                unitName={unitName}
-              />
-              <InputRow
-                label={t('label.days-out-of-stock')}
-                value={draft?.daysOutOfStock ?? 0}
-                onChange={value =>
-                  update({
-                    daysOutOfStock: value,
-                  })
-                }
-                disabled={disabled}
-                defaultPackSize={defaultPackSize}
-                representation={representation}
-                unitName={unitName}
-              />
             </>
           ) : null
         }
         Middle={
           <>
-            <InputRow
-              label={t('label.amc/amd')}
-              value={draft?.averageMonthlyConsumption ?? 0}
-              onChange={value =>
-                update({
-                  averageMonthlyConsumption: value,
-                })
-              }
-              disabled={!!requisition.linkedRequisition || disabled}
-              defaultPackSize={defaultPackSize}
-              representation={representation}
-              unitName={unitName}
-            />
-            <InputRow
-              label={t('label.months-of-stock')}
-              value={MOS}
-              disabled={true}
-              defaultPackSize={defaultPackSize}
-              representation={representation}
-              unitName={unitName}
-            />
+            {showExtraFields && (
+              <>
+                {numericInput('label.available', available, {
+                  disabledOverride: true,
+                })}
+              </>
+            )}
+            {numericInput('label.amc/amd', draft?.averageMonthlyConsumption, {
+              onChange: value => update({ averageMonthlyConsumption: value }),
+            })}
+
+            {showExtraFields &&
+              numericInput('label.months-of-stock', mos, {
+                disabledOverride: true,
+                endAdornmentOverride: t('label.months'),
+              })}
+
             <Box
               sx={{
                 background: theme => theme.palette.background.group,
@@ -253,64 +199,65 @@ export const ResponseLineEdit = ({
                 borderRadius: 2,
               }}
             >
-              <InputRow
-                label={t('label.our-soh')}
-                value={data?.responseStoreStats.stockOnHand ?? 0}
-                disabled={true}
-                defaultPackSize={defaultPackSize}
-                representation={representation}
-                unitName={unitName}
-              />
-              <InputRow
-                label={t('label.suggested')}
-                value={draft?.suggestedQuantity ?? 0}
-                disabled={true}
-                defaultPackSize={defaultPackSize}
-                representation={representation}
-                unitName={unitName}
-              />
-              <InputRow
-                label={t('label.requested')}
-                value={draft?.requestedQuantity ?? 0}
-                onChange={value =>
-                  update({ requestedQuantity: value, reason: null })
+              {numericInput(
+                'label.our-soh',
+                data?.responseStoreStats.stockOnHand,
+                {
+                  disabledOverride: true,
                 }
-                disabled={disabled}
-                defaultPackSize={defaultPackSize}
-                representation={representation}
-                unitName={unitName}
-              />
+              )}
+              {numericInput('label.suggested', draft?.suggestedQuantity, {
+                disabledOverride: true,
+              })}
+              {numericInput('label.requested', draft?.requestedQuantity, {
+                onChange: value =>
+                  update({ requestedQuantity: value, reason: null }),
+              })}
             </Box>
-            <InputRow
-              label={t('label.short-expiry')}
-              value={draft?.expiringUnits ?? 0}
-              onChange={value =>
-                update({
-                  expiringUnits: value,
-                })
-              }
-              disabled={disabled}
-              defaultPackSize={defaultPackSize}
-              representation={representation}
-              unitName={unitName}
-            />
+            {showExtraFields && (
+              <>
+                <InputWithLabelRow
+                  label={t('label.reason')}
+                  Input={
+                    <ReasonOptionsSearchInput
+                      value={draft?.reason}
+                      onChange={value => {
+                        update({ reason: value });
+                      }}
+                      width={240}
+                      type={ReasonOptionNodeType.RequisitionLineVariance}
+                      isDisabled={
+                        draft?.requestedQuantity === draft?.suggestedQuantity ||
+                        disabled
+                      }
+                      reasonOptions={reasonOptions?.nodes ?? []}
+                      isLoading={isLoading}
+                    />
+                  }
+                  sx={{
+                    pl: 1,
+                    pt: 0.5,
+                    pb: 0.5,
+                  }}
+                />
+                {numericInput('label.short-expiry', draft?.expiringUnits, {
+                  onChange: value => update({ expiringUnits: value }),
+                })}
+              </>
+            )}
           </>
         }
         Right={
           draft ? (
             <>
-              <InputRow
-                label={t('label.approved-quantity')}
-                value={draft?.approvedQuantity ?? 0}
-                disabled={true}
-                defaultPackSize={defaultPackSize}
-                representation={representation}
-                unitName={unitName}
-                sx={{
-                  pt: 1,
-                  pl: 0,
-                }}
-              />
+              {hasApproval &&
+                numericInput('label.approved', draft?.approvedQuantity, {
+                  disabledOverride: true,
+                  sx: {
+                    pt: 1,
+                    pl: 0,
+                  },
+                })}
               <SupplySelection
                 disabled={disabled}
                 defaultPackSize={defaultPackSize}
@@ -320,51 +267,24 @@ export const ResponseLineEdit = ({
                 representation={representation}
                 setRepresentation={setRepresentation}
                 unitName={unitName}
+                showExtraFields={showExtraFields}
               />
-              <InputRow
-                label={t('label.remaining-to-supply')}
-                value={Math.max(
-                  (draft?.supplyQuantity ?? 0) - (draft?.alreadyIssued ?? 0),
-                  0
-                )}
-                disabled={true}
-                defaultPackSize={defaultPackSize}
-                representation={representation}
-                unitName={unitName}
-                sx={{
-                  pl: 0,
-                }}
-              />
-              <InputRow
-                label={t('label.already-issued')}
-                value={draft?.alreadyIssued ?? 0}
-                disabled={true}
-                defaultPackSize={defaultPackSize}
-                representation={representation}
-                unitName={unitName}
-                sx={{
-                  pl: 0,
-                }}
-              />
-              {showExtraFields && (
-                <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
-                  {t('label.reason')}:
-                  <ReasonOptionsSearchInput
-                    value={draft?.reason}
-                    onChange={value => {
-                      update({ reason: value });
-                    }}
-                    width={360}
-                    type={ReasonOptionNodeType.RequisitionLineVariance}
-                    isDisabled={
-                      draft?.requestedQuantity === draft?.suggestedQuantity ||
-                      disabled
-                    }
-                    reasonOptions={reasonOptions?.nodes ?? []}
-                    isLoading={isLoading}
-                  />
-                </Typography>
+              {numericInput(
+                'label.remaining-to-supply',
+                draft?.remainingQuantityToSupply,
+                {
+                  disabledOverride: true,
+                  sx: {
+                    pl: 0,
+                  },
+                }
               )}
+              {numericInput('label.already-issued', draft?.alreadyIssued, {
+                disabledOverride: true,
+                sx: {
+                  pl: 0,
+                },
+              })}
               <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
                 {t('heading.comment')}:
               </Typography>

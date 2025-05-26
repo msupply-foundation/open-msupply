@@ -124,3 +124,50 @@ export const NumInputRow = ({
     </Box>
   );
 };
+
+interface NumericInputOptions {
+  onChange?: (value?: number) => void;
+  autoFocus?: boolean;
+  disabledOverride?: boolean;
+  endAdornmentOverride?: string;
+  sx?: Record<string, unknown>;
+}
+
+export const createNumericInput =
+  (
+    t: TypedTFunction<LocaleKey>,
+    commonProps: {
+      defaultPackSize: number;
+      representation: RepresentationValue;
+      unitName: string;
+      disabled: boolean;
+    }
+  ) =>
+  (
+    label: LocaleKey,
+    value: number | null | undefined,
+    options: NumericInputOptions = {}
+  ) => {
+    const {
+      onChange = () => {},
+      disabledOverride,
+      autoFocus = false,
+      endAdornmentOverride,
+      sx = {},
+    } = options;
+
+    return (
+      <NumInputRow
+        label={t(label)}
+        value={value ?? 0}
+        onChange={onChange}
+        disabled={disabledOverride ?? commonProps.disabled}
+        defaultPackSize={commonProps.defaultPackSize}
+        representation={commonProps.representation}
+        unitName={commonProps.unitName}
+        autoFocus={autoFocus}
+        endAdornmentOverride={endAdornmentOverride}
+        sx={sx}
+      />
+    );
+  };

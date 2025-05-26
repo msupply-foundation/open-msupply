@@ -117,7 +117,6 @@ export const ResponseLineEditModal = ({
     >
       <ResponseLineEdit
         requisition={requisition}
-        store={store}
         lines={lines}
         draft={draft}
         currentItem={currentItem}
