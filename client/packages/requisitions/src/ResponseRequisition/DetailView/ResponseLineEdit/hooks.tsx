@@ -1,49 +1,75 @@
 import { useEffect, useState } from 'react';
-import { useResponse, ResponseLineFragment } from '../../api';
-import {
-  ItemRowFragment,
-  ItemWithStatsFragment,
-} from '@openmsupply-client/system';
-import { useNotification } from '@common/hooks';
+import { useResponse, ResponseLineFragment, ResponseFragment } from '../../api';
+import { ItemWithStatsFragment } from '@openmsupply-client/system';
+import { FnUtils } from '@common/utils';
 
-export type DraftResponseLine = Omit<ResponseLineFragment, '__typename'> & {
+export type DraftResponseLine = Omit<
+  ResponseLineFragment,
+  '__typename' | 'item' | 'itemStats'
+> & {
   requisitionId: string;
+  isCreated: boolean;
 };
 
-const createDraftLine = (
-  line: ResponseLineFragment,
-  requisitionId: string
+const createDraftFromItem = (
+  item: ItemWithStatsFragment,
+  requisition: ResponseFragment
+): DraftResponseLine => {
+  return {
+    id: FnUtils.generateUUID(),
+    itemId: item.id,
+    requisitionId: requisition.id,
+    requisitionNumber: requisition.requisitionNumber,
+    itemName: item.name,
+    requestedQuantity: 0,
+    supplyQuantity: 0,
+    initialStockOnHandUnits: 0,
+    incomingUnits: 0,
+    outgoingUnits: 0,
+    lossInUnits: 0,
+    additionInUnits: 0,
+    daysOutOfStock: 0,
+    expiringUnits: 0,
+    remainingQuantityToSupply: 0,
+    averageMonthlyConsumption: 0,
+    approvedQuantity: 0,
+    alreadyIssued: 0,
+    availableStockOnHand: 0,
+    suggestedQuantity: 0,
+    isCreated: true,
+  };
+};
+
+const createDraftFromResponseLine = (
+  line: ResponseLineFragment
 ): DraftResponseLine => ({
   ...line,
-  requisitionId,
-  itemId: line.item.id,
-  requestedQuantity: line.requestedQuantity,
-  supplyQuantity: line.supplyQuantity,
+  isCreated: false,
 });
 
-export const useDraftRequisitionLine = (item?: ItemRowFragment | null) => {
-  const { id: reqId, lines } = useResponse.document.fields(['id', 'lines']);
-  const { mutateAsync: saveAction, isLoading } = useResponse.line.save();
-  const { error } = useNotification();
+export const useDraftRequisitionLine = (
+  item?: ItemWithStatsFragment | null
+) => {
+  const { lines } = useResponse.line.list();
+  const { data } = useResponse.document.get();
+  const { mutateAsync: save, isLoading } = useResponse.line.save();
 
   const [draft, setDraft] = useState<DraftResponseLine | null>(null);
 
   useEffect(() => {
-    if (lines && item && reqId) {
-      const existingLine = lines.nodes.find(
+    if (lines && item && data) {
+      const existingLine = lines.find(
         ({ item: reqItem }) => reqItem.id === item.id
       );
       if (existingLine) {
-        if (draft && draft.id === existingLine.id) {
-          setDraft(draft);
-        } else {
-          setDraft(createDraftLine(existingLine, reqId));
-        }
+        setDraft(createDraftFromResponseLine(existingLine));
+      } else {
+        setDraft(createDraftFromItem(item, data));
       }
     } else {
       setDraft(null);
     }
-  }, [lines, item, reqId, draft]);
+  }, [lines, item, data]);
 
   const update = (patch: Partial<DraftResponseLine>) => {
     if (draft) {
@@ -51,23 +77,7 @@ export const useDraftRequisitionLine = (item?: ItemRowFragment | null) => {
     }
   };
 
-  const save = async () => {
-    if (draft) {
-      const result = await saveAction(draft);
-      if (
-        result.updateResponseRequisitionLine.__typename ===
-        'UpdateResponseRequisitionLineError'
-      ) {
-        switch (result.updateResponseRequisitionLine.error.__typename) {
-          default:
-            error(result.updateResponseRequisitionLine.error.description)();
-            break;
-        }
-      }
-    }
-  };
-
-  return { draft, isLoading, save, update };
+  return { draft, isLoading, save: () => draft && save(draft), update };
 };
 
 export const useNextResponseLine = (
