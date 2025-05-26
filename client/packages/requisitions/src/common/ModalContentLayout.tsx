@@ -1,10 +1,6 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
-  Box,
   Grid,
-  InputWithLabelRow,
-  NumericTextInput,
-  NumUtils,
   SxProps,
   Theme,
   Typography,
@@ -13,8 +9,8 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import {
+  useEndAdornment,
   getValueInUnitsOrPacks,
-  Representation,
   RepresentationValue,
 } from './utils';
 
@@ -133,13 +129,13 @@ export const ValueInfoRow = ({
     value
   );
 
-  const endAdornment = useMemo(
-    () =>
-      endAdornmentOverride ??
-      (representation === Representation.PACKS
-        ? getPlural(t('label.pack').toLowerCase(), valueInUnitsOrPacks)
-        : getPlural(unitName.toLowerCase(), valueInUnitsOrPacks)),
-    [endAdornmentOverride, representation, unitName, valueInUnitsOrPacks]
+  const endAdornment = useEndAdornment(
+    t,
+    getPlural,
+    unitName,
+    representation,
+    endAdornmentOverride,
+    valueInUnitsOrPacks
   );
 
   return (
