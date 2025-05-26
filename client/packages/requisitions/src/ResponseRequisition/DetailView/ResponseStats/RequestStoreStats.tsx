@@ -123,61 +123,55 @@ export const RequestStoreStats = ({
       : 100;
 
   return (
-    <Box sx={{ maxHeight: 400, width: 500, minHeight: 200 }}>
+    <Box>
       <Box
         sx={{
-          paddingLeft: 4,
-          paddingRight: 4,
-          paddingTop: 4,
-          paddingBottom: 2,
-          p: '8pm 8px 4px',
+          p: '8px 8px 4px',
         }}
       >
-        <>
-          <Typography variant="body1" fontWeight={700} fontSize={12}>
-            {t('heading.target-quantity')}
-          </Typography>
-          <Box
-            display="flex"
-            alignItems="flex-start"
-            width={`${monthlyConsumptionWidth}%`}
-            style={{ paddingBottom: 7 }}
-          >
-            <MonthlyBar
-              flexBasis="1px"
-              label={
-                monthlyConsumptionWidth > MIN_MC_WIDTH_TO_SHOW_TEXT ? '0' : ''
-              }
-              left={true}
-            />
+        <Typography variant="body1" fontWeight={700} fontSize={12}>
+          {t('heading.target-quantity')}
+        </Typography>
+        <Box
+          display="flex"
+          alignItems="flex-start"
+          width={`${monthlyConsumptionWidth}%`}
+          style={{ paddingBottom: 7 }}
+        >
+          <MonthlyBar
+            flexBasis="1px"
+            label={
+              monthlyConsumptionWidth > MIN_MC_WIDTH_TO_SHOW_TEXT ? '0' : ''
+            }
+            left={true}
+          />
 
-            {Array.from({ length: maxMonthsOfStock }, (_, i) => (
-              <MonthlyConsumption
-                key={i}
-                month={i + 1}
-                flexBasis={`${100 / maxMonthsOfStock}%`}
-                averageMonthlyConsumption={averageMonthlyConsumption}
-                showText={monthlyConsumptionWidth > MIN_MC_WIDTH_TO_SHOW_TEXT}
-              />
-            ))}
-          </Box>
+          {Array.from({ length: maxMonthsOfStock }, (_, i) => (
+            <MonthlyConsumption
+              key={i}
+              month={i + 1}
+              flexBasis={`${100 / maxMonthsOfStock}%`}
+              averageMonthlyConsumption={averageMonthlyConsumption}
+              showText={monthlyConsumptionWidth > MIN_MC_WIDTH_TO_SHOW_TEXT}
+            />
+          ))}
+        </Box>
 
-          <Box display="flex" alignItems="flex-start" width="100%">
-            <ValueBar
-              value={availableStockOnHand}
-              total={targetQuantity}
-              label={t('label.stock-on-hand')}
-              colour="gray.main"
-              startDivider
-            />
-            <ValueBar
-              value={suggestedQuantity}
-              total={targetQuantity}
-              label={t('label.suggested-order-quantity')}
-              colour="primary.light"
-            />
-          </Box>
-        </>
+        <Box display="flex" alignItems="flex-start" width="100%">
+          <ValueBar
+            value={availableStockOnHand}
+            total={targetQuantity}
+            label={t('label.stock-on-hand')}
+            colour="gray.main"
+            startDivider
+          />
+          <ValueBar
+            value={suggestedQuantity}
+            total={targetQuantity}
+            label={t('label.suggested-order-quantity')}
+            colour="primary.light"
+          />
+        </Box>
       </Box>
     </Box>
   );

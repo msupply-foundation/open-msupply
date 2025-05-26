@@ -7,11 +7,11 @@ import {
   useDialog,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
+import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { ResponseFragment, useResponse } from '../../api';
 import { ResponseLineEdit } from './ResponseLineEdit';
 import { useDraftRequisitionLine, useNextResponseLine } from './hooks';
 import { Representation, RepresentationValue } from '../../../common';
-import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { ResponseStoreStats } from '../ResponseStats/ResponseStoreStats';
 import { RequestStoreStats } from '../ResponseStats/RequestStoreStats';
 
@@ -96,6 +96,9 @@ export const ResponseLineEditModal = ({
     {
       Component: (
         <ResponseStoreStats
+          defaultPackSize={currentItem?.defaultPackSize || 1}
+          representation={representation}
+          unitName={currentItem?.unitName || ''}
           stockOnHand={data?.responseStoreStats.stockOnHand || 0}
           incomingStock={data?.responseStoreStats.incomingStock || 0}
           stockOnOrder={data?.responseStoreStats.stockOnOrder || 0}
@@ -162,14 +165,16 @@ export const ResponseLineEditModal = ({
           disabled={isDisabled}
           isUpdateMode={mode === ModalMode.Update}
         />
-        <ModalTabs
-          tabs={tabs}
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            background: theme => theme.palette.background.toolbar,
-          }}
-        />
+        {draft && (
+          <ModalTabs
+            tabs={tabs}
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              background: theme => theme.palette.background.toolbar,
+            }}
+          />
+        )}
       </>
     </Modal>
   );

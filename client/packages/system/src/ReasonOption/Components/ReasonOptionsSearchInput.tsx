@@ -7,6 +7,8 @@ import {
   getDefaultOptionRenderer,
   ReasonOptionNode,
   ReasonOptionNodeType,
+  SxProps,
+  Theme,
 } from '@openmsupply-client/common';
 
 interface ReasonOptionsSearchInputProps {
@@ -17,10 +19,10 @@ interface ReasonOptionsSearchInputProps {
   type: ReasonOptionNodeType | ReasonOptionNodeType[];
   isError?: boolean;
   isDisabled?: boolean;
-  onBlur?: () => void;
   initialStocktake?: boolean;
   reasonOptions: ReasonOptionNode[];
   isLoading: boolean;
+  inputSx?: SxProps<Theme>;
 }
 
 export const ReasonOptionsSearchInput = ({
@@ -31,10 +33,10 @@ export const ReasonOptionsSearchInput = ({
   type,
   isError,
   isDisabled,
-  onBlur,
   initialStocktake,
   reasonOptions,
   isLoading,
+  inputSx,
 }: ReasonOptionsSearchInputProps) => {
   const reasonFilter = (reasonOption: ReasonOptionNode) => {
     if (Array.isArray(type)) {
@@ -64,6 +66,7 @@ export const ReasonOptionsSearchInput = ({
         onChange={(_, reason) => {
           onChange(reason);
         }}
+        textSx={inputSx}
         renderInput={props => (
           <BasicTextInput
             {...props}
@@ -73,9 +76,10 @@ export const ReasonOptionsSearchInput = ({
                 disableUnderline: false,
                 sx: {
                   background: isDisabled
-                    ? theme => theme.palette.background.drawer
+                    ? theme => theme.palette.background.toolbar
                     : theme => theme.palette.background.white,
                   paddingLeft: props.disabled ? 0 : {},
+                  borderRadius: 1,
                 },
                 ...props.InputProps,
               },
@@ -83,7 +87,6 @@ export const ReasonOptionsSearchInput = ({
             sx={{ minWidth: width }}
             error={isError}
             required={isRequired && !isDisabled}
-            onBlur={onBlur}
           />
         )}
         options={defaultOptionMapper(reasons, 'reason')}

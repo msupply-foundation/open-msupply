@@ -149,55 +149,76 @@ export const RequestLineEdit = ({
         Right={
           draft ? (
             <>
-              <RequestedSelection
-                disabled={disabled}
-                defaultPackSize={defaultPackSize}
-                isPacksEnabled={isPacksEnabled}
-                draft={draft}
-                update={update}
-                representation={representation}
-                setRepresentation={setRepresentation}
-                unitName={unitName}
-              />
-              {showExtraFields && (
-                <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
-                  {t('label.reason')}:
-                  <ReasonOptionsSearchInput
-                    value={draft?.reason}
-                    onChange={value => {
-                      update({ reason: value });
-                    }}
-                    width={360}
-                    type={ReasonOptionNodeType.RequisitionLineVariance}
-                    isDisabled={
-                      draft?.requestedQuantity === draft?.suggestedQuantity ||
-                      disabled
-                    }
-                    reasonOptions={reasonOptions?.nodes ?? []}
-                    isLoading={isLoading}
-                  />
-                </Typography>
-              )}
-              <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
-                {t('heading.comment')}:
-              </Typography>
-              <BufferedTextArea
-                value={draft?.comment ?? ''}
-                onChange={e => update({ comment: e.target.value })}
-                slotProps={{
-                  input: {
-                    sx: {
-                      backgroundColor: theme =>
-                        disabled
-                          ? theme.palette.background.toolbar
-                          : theme.palette.background.white,
-                    },
-                  },
+              <Box
+                sx={{
+                  background: theme => theme.palette.background.group,
+                  padding: '0px 8px',
+                  borderRadius: 2,
+                  paddingBottom: 1,
                 }}
-                disabled={disabled}
-                minRows={2}
-                maxRows={2}
-              />
+              >
+                <RequestedSelection
+                  disabled={disabled}
+                  defaultPackSize={defaultPackSize}
+                  isPacksEnabled={isPacksEnabled}
+                  draft={draft}
+                  update={update}
+                  representation={representation}
+                  setRepresentation={setRepresentation}
+                  unitName={unitName}
+                />
+                {showExtraFields && (
+                  <Typography
+                    variant="body1"
+                    fontWeight="bold"
+                    paddingBottom={0}
+                  >
+                    {t('label.reason')}:
+                    <ReasonOptionsSearchInput
+                      value={draft?.reason}
+                      onChange={value => {
+                        update({ reason: value });
+                      }}
+                      width={360}
+                      type={ReasonOptionNodeType.RequisitionLineVariance}
+                      isDisabled={
+                        draft?.requestedQuantity === draft?.suggestedQuantity ||
+                        disabled
+                      }
+                      reasonOptions={reasonOptions?.nodes ?? []}
+                      isLoading={isLoading}
+                      inputSx={{
+                        boxShadow: theme => theme.shadows[2],
+                        backgroundColor: theme =>
+                          disabled
+                            ? theme.palette.background.toolbar
+                            : theme.palette.background.white,
+                        borderRadius: 1,
+                      }}
+                    />
+                  </Typography>
+                )}
+                <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
+                  {t('heading.comment')}:
+                </Typography>
+                <BufferedTextArea
+                  value={draft?.comment ?? ''}
+                  onChange={e => update({ comment: e.target.value })}
+                  slotProps={{
+                    input: {
+                      sx: {
+                        backgroundColor: theme =>
+                          disabled
+                            ? theme.palette.background.toolbar
+                            : theme.palette.background.white,
+                      },
+                    },
+                  }}
+                  disabled={disabled}
+                  minRows={2}
+                  maxRows={2}
+                />
+              </Box>
             </>
           ) : null
         }

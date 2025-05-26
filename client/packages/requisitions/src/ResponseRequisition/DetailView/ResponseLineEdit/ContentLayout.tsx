@@ -98,6 +98,7 @@ export const NumInputRow = ({
               slotProps={{
                 input: {
                   sx: {
+                    boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
                     background: theme =>
                       disabled
                         ? theme.palette.background.toolbar

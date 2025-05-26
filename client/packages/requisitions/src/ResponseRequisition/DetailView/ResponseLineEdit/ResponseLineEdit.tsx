@@ -15,8 +15,9 @@ import {
   ReasonOptionNodeType,
   RequisitionNodeApprovalStatus,
   Typography,
+  UserStoreNodeFragment,
 } from '@openmsupply-client/common';
-import { ResponseFragment, ResponseLineFragment, useResponse } from '../../api';
+import { ResponseFragment, ResponseLineFragment } from '../../api';
 import {
   InfoRow,
   ModalContentLayout,
@@ -27,13 +28,14 @@ import { useStockCalculations } from './utils';
 import { createNumericInput } from './ContentLayout';
 
 interface ResponseLineEditProps {
+  store?: UserStoreNodeFragment;
   requisition: ResponseFragment;
   currentItem?: ItemWithStatsFragment;
   onChangeItem: (item: ItemWithStatsFragment) => void;
   lines: ResponseLineFragment[];
   draft?: DraftResponseLine | null;
+  totalStockOnHand?: number;
   update: (patch: Partial<DraftResponseLine>) => void;
-  isPacksEnabled: boolean;
   representation: RepresentationValue;
   setRepresentation: (type: RepresentationValue) => void;
   disabled: boolean;
@@ -42,26 +44,29 @@ interface ResponseLineEditProps {
 }
 
 export const ResponseLineEdit = ({
+  store,
   requisition,
   currentItem,
   onChangeItem,
   lines,
   draft,
+  totalStockOnHand,
   update,
-  isPacksEnabled,
   representation,
   setRepresentation,
   disabled = false,
   isUpdateMode = false,
-  showExtraFields = true,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
-  const { data } = useResponse.line.stats(draft?.id);
   const { data: reasonOptions, isLoading } = useReasonOptions();
-  const isDisabled = disabled || !!requisition.linkedRequisition;
-  const disableItemSelection = disabled || isUpdateMode;
   const hasApproval =
     requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved;
+  const isPacksEnabled = !!currentItem?.defaultPackSize;
+
+  const showExtraFields =
+    store?.preferences?.extraFieldsInRequisition && !!requisition.program;
+  const isDisabled = disabled || !!requisition.linkedRequisition;
+  const disableItemSelection = disabled || isUpdateMode;
 
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
@@ -79,92 +84,91 @@ export const ResponseLineEdit = ({
   });
 
   return (
-    <>
-      <ModalContentLayout
-        Top={
+    <ModalContentLayout
+      Top={
+        <>
+          {(disableItemSelection && (
+            <BasicTextInput
+              value={`${currentItem?.code}     ${originalItemName}`}
+              disabled
+              fullWidth
+            />
+          )) || (
+            <StockItemSearchInputWithStats
+              autoFocus={!currentItem}
+              openOnFocus={!currentItem}
+              disabled={disabled}
+              currentItemId={currentItem?.id}
+              onChange={(newItem: ItemWithStatsFragment | null) =>
+                newItem && onChangeItem(newItem)
+              }
+              extraFilter={item =>
+                !lines.some(line => line.item.id === item.id)
+              }
+            />
+          )}
+        </>
+      }
+      Left={
+        draft ? (
           <>
-            {(disableItemSelection && (
-              <BasicTextInput
-                value={`${currentItem?.code}     ${originalItemName}`}
-                disabled
-                fullWidth
-              />
-            )) || (
-              <StockItemSearchInputWithStats
-                autoFocus={!currentItem}
-                openOnFocus={!currentItem}
-                disabled={disabled}
-                currentItemId={currentItem?.id}
-                onChange={(newItem: ItemWithStatsFragment | null) =>
-                  newItem && onChangeItem(newItem)
-                }
-                extraFilter={item =>
-                  !lines.some(line => line.item.id === item.id)
-                }
+            {currentItem?.unitName && (
+              <InfoRow label={t('label.unit')} value={unitName} />
+            )}
+            {isPacksEnabled && (
+              <InfoRow
+                label={t('label.default-pack-size')}
+                value={String(currentItem?.defaultPackSize)}
               />
             )}
+            {!showExtraFields ? (
+              <>
+                {numericInput(
+                  'label.customer-soh',
+                  draft?.availableStockOnHand,
+                  {
+                    onChange: value => update({ availableStockOnHand: value }),
+                    autoFocus: true,
+                  }
+                )}
+              </>
+            ) : (
+              <>
+                {numericInput(
+                  'label.initial-stock-on-hand',
+                  draft?.initialStockOnHandUnits,
+                  {
+                    onChange: value =>
+                      update({ initialStockOnHandUnits: value }),
+                    autoFocus: true,
+                  }
+                )}
+                {numericInput('label.incoming', draft?.incomingUnits, {
+                  onChange: value => update({ incomingUnits: value }),
+                })}
+                {numericInput('label.outgoing', draft?.outgoingUnits, {
+                  onChange: value => update({ outgoingUnits: value }),
+                })}
+                {numericInput('label.losses', draft?.lossInUnits, {
+                  onChange: value => update({ lossInUnits: value }),
+                })}
+                {numericInput('label.additions', draft?.additionInUnits, {
+                  onChange: value => update({ additionInUnits: value }),
+                })}
+                {numericInput(
+                  'label.days-out-of-stock',
+                  draft?.daysOutOfStock,
+                  {
+                    onChange: value => update({ daysOutOfStock: value }),
+                  }
+                )}
+              </>
+            )}
           </>
-        }
-        Left={
-          draft ? (
-            <>
-              {currentItem?.unitName && (
-                <InfoRow label={t('label.unit')} value={unitName} />
-              )}
-              {isPacksEnabled && (
-                <InfoRow
-                  label={t('label.default-pack-size')}
-                  value={String(currentItem?.defaultPackSize)}
-                />
-              )}
-              {!showExtraFields ? (
-                <>
-                  {numericInput(
-                    'label.customer-soh',
-                    draft?.availableStockOnHand,
-                    {
-                      onChange: value =>
-                        update({ availableStockOnHand: value }),
-                      autoFocus: true,
-                    }
-                  )}
-                </>
-              ) : (
-                <>
-                  {numericInput(
-                    'label.initial-stock-on-hand',
-                    draft?.initialStockOnHandUnits,
-                    {
-                      onChange: value =>
-                        update({ initialStockOnHandUnits: value }),
-                      autoFocus: true,
-                    }
-                  )}
-                  {numericInput('label.incoming', draft?.incomingUnits, {
-                    onChange: value => update({ incomingUnits: value }),
-                  })}
-                  {numericInput('label.outgoing', draft?.outgoingUnits, {
-                    onChange: value => update({ outgoingUnits: value }),
-                  })}
-                  {numericInput('label.losses', draft?.lossInUnits, {
-                    onChange: value => update({ lossInUnits: value }),
-                  })}
-                  {numericInput('label.additions', draft?.additionInUnits, {
-                    onChange: value => update({ additionInUnits: value }),
-                  })}
-                  {numericInput(
-                    'label.days-out-of-stock',
-                    draft?.daysOutOfStock,
-                    {
-                      onChange: value => update({ daysOutOfStock: value }),
-                    }
-                  )}
-                </>
-              )}
-            </>
-          ) : null
-        }
-        Middle={
+        ) : null
+      }
+      Middle={
+        draft ? (
           <>
             {showExtraFields && (
               <>
@@ -195,13 +199,9 @@ export const ResponseLineEdit = ({
                 borderRadius: 2,
               }}
             >
-              {numericInput(
-                'label.our-soh',
-                data?.responseStoreStats.stockOnHand,
-                {
-                  disabledOverride: true,
-                }
-              )}
+              {numericInput('label.our-soh', totalStockOnHand, {
+                disabledOverride: true,
+              })}
               {numericInput('label.suggested', draft?.suggestedQuantity, {
                 disabledOverride: true,
               })}
@@ -236,16 +236,26 @@ export const ResponseLineEdit = ({
                     pb: 0.5,
                   }}
                 />
-                {numericInput('label.short-expiry', draft?.expiringUnits, {
-                  onChange: value => update({ expiringUnits: value }),
-                })}
               </>
             )}
           </>
-        }
-        Right={
-          draft ? (
-            <>
+        ) : null
+      }
+      Right={
+        draft ? (
+          <>
+            {showExtraFields &&
+              numericInput('label.short-expiry', draft?.expiringUnits, {
+                onChange: value => update({ expiringUnits: value }),
+              })}
+            <Box
+              sx={{
+                background: theme => theme.palette.background.group,
+                padding: '0px 8px',
+                borderRadius: 2,
+                paddingBottom: 1,
+              }}
+            >
               {hasApproval &&
                 numericInput('label.approved', draft?.approvedQuantity, {
                   disabledOverride: true,
@@ -280,30 +290,32 @@ export const ResponseLineEdit = ({
                   pl: 0,
                 },
               })}
-              <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
-                {t('heading.comment')}:
-              </Typography>
-              <BufferedTextArea
-                value={draft?.comment ?? ''}
-                onChange={e => update({ comment: e.target.value })}
-                slotProps={{
-                  input: {
-                    sx: {
-                      backgroundColor: theme =>
-                        disabled
-                          ? theme.palette.background.toolbar
-                          : theme.palette.background.white,
-                    },
+            </Box>
+            <Typography variant="body1" fontWeight="bold" p="4px">
+              {t('heading.comment')}:
+            </Typography>
+            <BufferedTextArea
+              value={draft?.comment ?? ''}
+              onChange={e => update({ comment: e.target.value })}
+              slotProps={{
+                input: {
+                  sx: {
+                    boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
+                    borderRadius: 2,
+                    backgroundColor: theme =>
+                      disabled
+                        ? theme.palette.background.toolbar
+                        : theme.palette.background.white,
                   },
-                }}
-                disabled={disabled}
-                minRows={2}
-                maxRows={2}
-              />
-            </>
-          ) : null
-        }
-      />
-    </>
+                },
+              }}
+              disabled={disabled}
+              minRows={2}
+              maxRows={2}
+            />
+          </>
+        ) : null
+      }
+    />
   );
 };

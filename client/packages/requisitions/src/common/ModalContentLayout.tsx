@@ -35,8 +35,6 @@ export const ModalContentLayout = ({
       bgcolor="background.toolbar"
       padding={2}
       paddingBottom={1}
-      borderRadius={2}
-      boxShadow={theme => theme.shadows[2]}
     >
       <Grid size={12} sx={{ mb: 2 }}>
         {Top}
@@ -44,17 +42,7 @@ export const ModalContentLayout = ({
       <Grid size={12} container spacing={2}>
         <Grid size={4}>{Left}</Grid>
         <Grid size={4}>{Middle}</Grid>
-        <Grid
-          size={4}
-          sx={{
-            background: theme => theme.palette.background.group,
-            padding: '0px 8px',
-            borderRadius: 2,
-            paddingBottom: 1,
-          }}
-        >
-          {Right}
-        </Grid>
+        <Grid size={4}>{Right}</Grid>
       </Grid>
     </Grid>
   );
