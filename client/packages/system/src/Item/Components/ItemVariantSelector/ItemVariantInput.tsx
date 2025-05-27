@@ -11,7 +11,7 @@ interface ItemVariantInputProps {
   itemId: string;
   selectedId: string | null;
   onChange: (itemVariant: ItemVariantFragment | null) => void;
-  displayInDoses: boolean;
+  displayDoseColumns: boolean;
   width?: number | string;
   disabled?: boolean;
 }
@@ -19,7 +19,7 @@ interface ItemVariantInputProps {
 export const ItemVariantInput = ({
   selectedId,
   itemId,
-  displayInDoses,
+  displayDoseColumns,
   disabled,
   width,
   onChange,
@@ -48,7 +48,7 @@ export const ItemVariantInput = ({
     <ItemVariantSelector
       selectedId={selectedId}
       onVariantSelected={onVariantSelected}
-      displayInDoses={displayInDoses}
+      displayInDoses={displayDoseColumns}
       isLoading={isLoading}
       variants={data ?? []}
     >
