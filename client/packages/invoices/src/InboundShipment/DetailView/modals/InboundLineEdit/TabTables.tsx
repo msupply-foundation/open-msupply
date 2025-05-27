@@ -94,8 +94,6 @@ export const QuantityTableComponent = ({
       setter: updateDraftLine,
       label: 'label.pack-size',
     }),
-    // needs to update units received and doses received when nulling
-    // is regardless of whether doses is on or off
     [
       'numberOfPacks',
       {
