@@ -123,7 +123,6 @@ const useCreate = () => {
     donor,
     campaign,
   }: DraftStockLine) => {
-    console.log('new stockline -> campaign ', campaign);
     return await stockApi.insertStockLine({
       storeId,
       input: {
