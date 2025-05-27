@@ -103,7 +103,7 @@ export const QuantityTableComponent = ({
         setter: patch => {
           const { packSize, numberOfPacks } = patch;
 
-          if (!!packSize && !!numberOfPacks) {
+          if (packSize !== undefined && numberOfPacks !== undefined) {
             const packToUnits = packSize * numberOfPacks;
 
             updateDraftLine({
