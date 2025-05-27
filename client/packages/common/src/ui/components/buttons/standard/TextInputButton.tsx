@@ -23,6 +23,7 @@ export const StyledTextInputButton = styled(MuiButton)(({
     fontWeight: 'unset',
     fontSize: 'unset',
     width: '100%',
+    textTransform: 'none',
   };
 });
 
