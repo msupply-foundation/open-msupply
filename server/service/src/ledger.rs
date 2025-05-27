@@ -87,3 +87,227 @@ fn calculate_ledger_balance(
     }
     item_ledgers
 }
+
+// Add tests for calculate_ledger_balance function
+// Note test does not simulate case where multiple items are queried.
+#[cfg(test)]
+mod tests {
+    use std::default;
+
+    use super::*;
+    use chrono::{NaiveDate, NaiveDateTime};
+    use repository::ledger::LedgerRow;
+
+    #[actix_rt::test]
+    async fn test_calculate_ledger_balance() {
+        // ledger rows can be called in any order. In this case simulating descending order by datetime
+        let ledger_rows = vec![
+            LedgerRow {
+                quantity: -1176.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-05-19T02:57:15.920256",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
+                ..Default::default()
+            },
+            LedgerRow {
+                quantity: 1200.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-02-05T04:43:02.213892",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
+                ..Default::default()
+            },
+            LedgerRow {
+                quantity: -1200.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-02-05T04:43:02.213892",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
+                ..Default::default()
+            },
+            LedgerRow {
+                quantity: 2400.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-02-03T22:16:26.986939",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
+                ..Default::default()
+            },
+        ];
+
+        let all_ledger_items = vec![
+            LedgerRow {
+                quantity: 2400.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-02-03T22:16:26.986939",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
+                ..Default::default()
+            },
+            LedgerRow {
+                quantity: 1200.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-02-05T04:43:02.213892",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
+                ..Default::default()
+            },
+            LedgerRow {
+                quantity: -1200.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-02-05T04:43:02.213892",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                ..Default::default()
+            },
+            LedgerRow {
+                quantity: -1176.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-05-19T02:57:15.920256",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                ..Default::default()
+            },
+        ];
+
+        let result = calculate_ledger_balance(ledger_rows, all_ledger_items);
+
+        assert_eq!(result.len(), 4);
+
+        // check that balances are calculated correctly by line rather than summing when multiple ledgers
+        // occur at the same time
+        // in this case the middle two ledgers are a repack, and occur at the same time
+        assert_eq!(result[0].balance, 1224.0);
+        assert_eq!(result[1].balance, 2400.0);
+        assert_eq!(result[2].balance, 3600.0);
+        assert_eq!(result[3].balance, 2400.0);
+    }
+
+    #[actix_rt::test]
+    async fn test_calculate_ledger_balance_with_multiple_items() {
+        // ledger rows can be called in any order. In this case simulating descending order by datetime
+        let ledger_rows = vec![
+            LedgerRow {
+                item_id: "item1".to_string(),
+                quantity: -1176.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-05-19T02:57:15.920256",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
+                ..Default::default()
+            },
+            LedgerRow {
+                item_id: "item2".to_string(),
+                quantity: 1200.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-02-05T04:43:02.213892",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
+                ..Default::default()
+            },
+            LedgerRow {
+                item_id: "item2".to_string(),
+                quantity: -1200.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-02-05T04:43:02.213892",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
+                ..Default::default()
+            },
+            LedgerRow {
+                item_id: "item1".to_string(),
+                quantity: 2400.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-02-03T22:16:26.986939",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
+                ..Default::default()
+            },
+        ];
+
+        let all_ledger_items = vec![
+            LedgerRow {
+                item_id: "item1".to_string(),
+                quantity: 2400.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-02-03T22:16:26.986939",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
+                ..Default::default()
+            },
+            LedgerRow {
+                item_id: "item2".to_string(),
+                quantity: 1200.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-02-05T04:43:02.213892",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
+                ..Default::default()
+            },
+            LedgerRow {
+                item_id: "item2".to_string(),
+                quantity: -1200.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-02-05T04:43:02.213892",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                ..Default::default()
+            },
+            LedgerRow {
+                item_id: "item1".to_string(),
+                quantity: -1176.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-05-19T02:57:15.920256",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                ..Default::default()
+            },
+        ];
+
+        let result = calculate_ledger_balance(ledger_rows, all_ledger_items);
+
+        assert_eq!(result.len(), 4);
+
+        // check that balances are calculated correctly differentiating by item_id
+        assert_eq!(result[0].balance, 1224.0);
+        assert_eq!(result[0].ledger.item_id, "item1");
+
+        assert_eq!(result[1].balance, 0.0);
+        assert_eq!(result[1].ledger.item_id, "item2");
+
+        assert_eq!(result[2].balance, 1200.0);
+        assert_eq!(result[2].ledger.item_id, "item2");
+
+        assert_eq!(result[3].balance, 2400.0);
+        assert_eq!(result[3].ledger.item_id, "item1");
+    }
+}
