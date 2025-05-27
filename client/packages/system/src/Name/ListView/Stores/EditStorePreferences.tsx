@@ -44,6 +44,12 @@ export const EditStorePreferences = ({ storeId }: { storeId: string }) => {
           borderBottom: isLast ? 'none' : '1px dashed',
           borderColor: 'gray.main',
           padding: 1,
+          gap: 2,
+          flexDirection: 'row-reverse',
+          justifyContent: 'flex-end',
+          '& .MuiFormLabel-root': {
+            width: '100%',
+          },
         }}
       />
     );
