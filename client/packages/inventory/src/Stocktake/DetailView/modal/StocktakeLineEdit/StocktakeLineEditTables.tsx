@@ -221,7 +221,8 @@ export const BatchTable = ({
       },
       {
         key: 'countedNumberOfPacks',
-        label: 'description.counted-num-of-packs',
+        label: 'label.counted-num-of-packs',
+        align: ColumnAlign.Right,
         width: 100,
         getIsError: rowData =>
           errorsContext.getError(rowData)?.__typename ===
