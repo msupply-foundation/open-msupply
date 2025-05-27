@@ -4049,7 +4049,7 @@ export type InvoiceLineFilterInput = {
 export type InvoiceLineNode = {
   __typename: 'InvoiceLineNode';
   batch?: Maybe<Scalars['String']['output']>;
-  campaignId?: Maybe<Scalars['String']['output']>;
+  campaign?: Maybe<CampaignNode>;
   costPricePerPack: Scalars['Float']['output'];
   donor?: Maybe<NameNode>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;

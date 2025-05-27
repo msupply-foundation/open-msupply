@@ -93,6 +93,7 @@ export const QuantityTableComponent = ({
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: updateDraftLine,
       label: 'label.pack-size',
+      defaultHideOnMobile: true,
     }),
     [
       'numberOfPacks',
@@ -103,7 +104,7 @@ export const QuantityTableComponent = ({
         setter: patch => {
           const { packSize, numberOfPacks } = patch;
 
-          if (!!packSize && !!numberOfPacks) {
+          if (packSize !== undefined && numberOfPacks !== undefined) {
             const packToUnits = packSize * numberOfPacks;
 
             updateDraftLine({
@@ -140,6 +141,7 @@ export const QuantityTableComponent = ({
     accessor: ({ rowData }) => {
       return rowData.numberOfPacks * rowData.packSize;
     },
+    defaultHideOnMobile: true,
   });
 
   if (displayInDoses) {
