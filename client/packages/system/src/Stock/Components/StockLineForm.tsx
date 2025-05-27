@@ -26,9 +26,13 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
-import { DonorSearchInput, ItemVariantSearchInput } from '../..';
+import { DonorSearchInput } from '../..';
 import { StyledInputRow } from './StyledInputRow';
-import { PackSizeNumberInput, useIsItemVariantsEnabled } from '../../Item';
+import {
+  ItemVariantInput,
+  PackSizeNumberInput,
+  useIsItemVariantsEnabled,
+} from '../../Item';
 import { CampaignSelector } from './Campaign';
 
 interface StockLineFormProps {
@@ -51,7 +55,8 @@ export const StockLineForm = ({
   const { error } = useNotification();
 
   const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor
+    PreferenceKey.AllowTrackingOfStockByDonor,
+    PreferenceKey.ManageVaccinesInDoses
   );
 
   const { isConnected, isEnabled, isScanning, startScan } =
@@ -190,11 +195,12 @@ export const StockLineForm = ({
             <StyledInputRow
               label={t('label.item-variant')}
               Input={
-                <ItemVariantSearchInput
+                <ItemVariantInput
                   itemId={draft.itemId}
                   selectedId={draft.itemVariantId ?? null}
-                  width={160}
+                  // width={160}
                   onChange={variant => onUpdate({ itemVariantId: variant?.id })}
+                  displayInDoses={preferences?.manageVaccinesInDoses ?? false}
                 />
               }
             />
