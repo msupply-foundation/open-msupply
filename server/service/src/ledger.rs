@@ -52,6 +52,19 @@ pub fn get_item_ledger(
             desc: Some(false),
         }),
     )?;
+
+    let item_ledgers = calculate_ledger_balance(rows, all_ledger_items);
+
+    Ok(ListResult {
+        count: i64_to_u32(repository.count(Some(filter))?),
+        rows: item_ledgers,
+    })
+}
+
+fn calculate_ledger_balance(
+    rows: Vec<LedgerRow>,
+    all_ledger_items: Vec<LedgerRow>,
+) -> Vec<ItemLedger> {
     let mut item_ledgers = vec![];
 
     for row in rows {
@@ -72,9 +85,5 @@ pub fn get_item_ledger(
 
         item_ledgers.push(ledger);
     }
-
-    Ok(ListResult {
-        count: i64_to_u32(repository.count(Some(filter))?),
-        rows: item_ledgers,
-    })
+    item_ledgers
 }
