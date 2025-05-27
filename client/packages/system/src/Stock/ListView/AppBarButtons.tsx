@@ -48,12 +48,6 @@ export const AppBarButtonsComponent = () => {
           label={t('button.new-stock')}
           onClick={onOpen}
         />
-
-        <ButtonWithIcon
-          Icon={<PlusCircleIcon />}
-          label={t('button.new-stock')}
-          onClick={onOpen}
-        />
         {!simplifiedTabletView && (
           <LoadingButton
             startIcon={<DownloadIcon />}
