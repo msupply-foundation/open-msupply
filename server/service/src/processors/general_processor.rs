@@ -36,6 +36,8 @@ pub(crate) enum ProcessorError {
     GetActiveStoresOnSiteError(GetActiveStoresOnSiteError),
     #[error("Error in plugin processor, with input {0:?}")]
     PluginError(processor::Input, #[source] PluginError),
+    #[error("Error in plugin processor, with input {0:?} {1}")]
+    PluginErrorString(processor::Input, String),
     #[error("Unexpected plugin result for input {0:?}")]
     PluginOutputMismatch(processor::Input),
     #[error("Other error: {0}")]
@@ -115,11 +117,17 @@ pub(crate) async fn process_records(
             let cursor = cursor_controller
                 .get(&ctx.connection)
                 .map_err(Error::DatabaseError)?;
-
+            log::info!(
+                "Processing records for processor: {}, cursor: {:?} {:?}",
+                processor.get_description(),
+                cursor,
+                filter
+            );
             let logs = changelog_repo
                 .changelogs(cursor, CHANGELOG_BATCH_SIZE, Some(filter.clone()))
                 .map_err(Error::DatabaseError)?;
 
+            log::info!("Found logs: {:?}", logs);
             if logs.is_empty() {
                 break;
             }
