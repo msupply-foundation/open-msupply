@@ -94,6 +94,8 @@ export const QuantityTableComponent = ({
       setter: updateDraftLine,
       label: 'label.pack-size',
     }),
+    // needs to update units received and doses received when nulling
+    // is regardless of whether doses is on or off
     [
       'numberOfPacks',
       {
@@ -103,7 +105,7 @@ export const QuantityTableComponent = ({
         setter: patch => {
           const { packSize, numberOfPacks } = patch;
 
-          if (!!packSize && !!numberOfPacks) {
+          if (packSize !== undefined && numberOfPacks !== undefined) {
             const packToUnits = packSize * numberOfPacks;
 
             updateDraftLine({
