@@ -11,6 +11,10 @@ import {
   TableProvider,
   createTableStore,
   createQueryParamsStore,
+  useSimplifiedTabletUI,
+  Box,
+  ButtonWithIcon,
+  PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import { InboundLineFragment, useInbound } from '../../../api';
@@ -18,6 +22,7 @@ import { DraftInboundLine } from '../../../../types';
 import { CreateDraft } from '../utils';
 import { TabLayout } from './TabLayout';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
+import { QuantityTable } from './TabTables';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
@@ -137,10 +142,46 @@ export const InboundLineEdit = ({
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
   const zeroNumberOfPacks = draftLines.some(line => line.numberOfPacks === 0);
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
+
+  const tableContent = simplifiedTabletView ? (
+    <>
+      <QuantityTable
+        isDisabled={isDisabled}
+        lines={draftLines}
+        updateDraftLine={updateDraftLine}
+        item={currentItem}
+        hasItemVariantsEnabled={hasItemVariantsEnabled}
+        hasVvmStatusesEnabled={hasVvmStatusesEnabled}
+      />
+      <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
+        <ButtonWithIcon
+          disabled={isDisabled}
+          color="primary"
+          variant="outlined"
+          onClick={addDraftLine}
+          label={`${t('label.add-batch')} (+)`}
+          Icon={<PlusCircleIcon />}
+        />
+      </Box>
+    </>
+  ) : (
+    <TabLayout
+      draftLines={draftLines}
+      addDraftLine={addDraftLine}
+      updateDraftLine={updateDraftLine}
+      isDisabled={isDisabled}
+      currency={currency}
+      isExternalSupplier={isExternalSupplier}
+      item={currentItem}
+      hasItemVariantsEnabled={hasItemVariantsEnabled}
+      hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
+    />
+  );
 
   return (
     <TableProvider
@@ -199,17 +240,7 @@ export const InboundLineEdit = ({
               onChangeItem={setCurrentItem}
             />
             <Divider margin={5} />
-            <TabLayout
-              draftLines={draftLines}
-              addDraftLine={addDraftLine}
-              updateDraftLine={updateDraftLine}
-              isDisabled={isDisabled}
-              currency={currency}
-              isExternalSupplier={isExternalSupplier}
-              item={currentItem}
-              hasItemVariantsEnabled={hasItemVariantsEnabled}
-              hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
-            />
+            {tableContent}
           </>
         )}
       </Modal>
