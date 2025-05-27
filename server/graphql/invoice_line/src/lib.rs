@@ -3,7 +3,7 @@ pub mod mutations;
 use self::mutations::{inbound_shipment_line, outbound_shipment_line, prescription_line};
 use async_graphql::*;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
-use graphql_types::types::{DraftOutboundShipmentItemData, InvoiceNode};
+use graphql_types::types::{DraftStockOutItemData, InvoiceNode};
 use invoice_line_queries::{
     draft_outbound_lines, invoice_lines, InvoiceLineFilterInput, InvoiceLineSortInput,
     InvoiceLinesResponse,
@@ -26,13 +26,13 @@ impl InvoiceLineQueries {
         invoice_lines(ctx, &store_id, page, filter, sort, report_sort)
     }
 
-    pub async fn draft_outbound_shipment_lines(
+    pub async fn draft_stock_out_lines(
         &self,
         ctx: &Context<'_>,
         store_id: String,
         item_id: String,
         invoice_id: String,
-    ) -> Result<DraftOutboundShipmentItemData> {
+    ) -> Result<DraftStockOutItemData> {
         draft_outbound_lines(ctx, &store_id, &item_id, &invoice_id)
     }
 }
@@ -144,8 +144,16 @@ impl InvoiceLineMutations {
         )
     }
 
-    // Inbound
+    async fn save_prescription_item_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: prescription_line::save_item_lines::SavePrescriptionLinesInput,
+    ) -> Result<InvoiceNode> {
+        prescription_line::save_item_lines::save_prescription_item_lines(ctx, &store_id, input)
+    }
 
+    // Inbound
     async fn insert_inbound_shipment_line(
         &self,
         ctx: &Context<'_>,

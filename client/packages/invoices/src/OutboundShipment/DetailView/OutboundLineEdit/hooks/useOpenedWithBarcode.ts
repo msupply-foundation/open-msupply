@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { getPackQuantityCellId } from '../../../../utils';
+import { getStockOutQuantityCellId } from '../../../../utils';
 import { ScannedBarcode } from '../../../../types';
 import { useOutbound } from '../../../api';
-import { useAllocationContext } from '../allocation/useAllocationContext';
+import { useAllocationContext } from '../../../../StockOut';
 
 export const useOpenedWithBarcode = (barcode: ScannedBarcode | null) => {
   const { mutateAsync: insertBarcode } = useOutbound.utils.barcodeInsert();
@@ -42,7 +42,7 @@ const useFocusNumberOfPacksInput = (
   useEffect(() => {
     if (!batch || !itemId) return;
     setTimeout(() => {
-      const input = document.getElementById(getPackQuantityCellId(batch));
+      const input = document.getElementById(getStockOutQuantityCellId(batch));
       if (input) {
         input.focus();
       }

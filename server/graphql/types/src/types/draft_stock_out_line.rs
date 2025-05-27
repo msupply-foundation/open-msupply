@@ -7,43 +7,51 @@ use graphql_core::{
     },
     ContextExt,
 };
-use service::invoice_line::get_draft_outbound_lines::DraftOutboundShipmentLine;
+use service::invoice_line::get_draft_outbound_lines::DraftStockOutLine;
 
 use super::{ItemVariantNode, LocationNode, NameNode, VVMStatusNode};
 
-pub struct DraftOutboundShipmentItemData {
-    pub lines: Vec<DraftOutboundShipmentLine>,
+pub struct DraftStockOutItemData {
+    pub lines: Vec<DraftStockOutLine>,
     pub placeholder_quantity: Option<f64>,
+    pub prescribed_quantity: Option<f64>,
+    pub note: Option<String>,
 }
 
 #[Object]
-impl DraftOutboundShipmentItemData {
-    pub async fn draft_lines(&self) -> Vec<DraftOutboundShipmentLineNode> {
-        DraftOutboundShipmentLineNode::from_vec(self.lines.clone())
+impl DraftStockOutItemData {
+    pub async fn draft_lines(&self) -> Vec<DraftStockOutLineNode> {
+        DraftStockOutLineNode::from_vec(self.lines.clone())
     }
 
     pub async fn placeholder_quantity(&self) -> Option<f64> {
         self.placeholder_quantity
     }
+
+    pub async fn prescribed_quantity(&self) -> Option<f64> {
+        self.prescribed_quantity
+    }
+
+    pub async fn note(&self) -> Option<String> {
+        self.note.clone()
+    }
 }
 
-pub struct DraftOutboundShipmentLineNode {
-    pub shipment_line: DraftOutboundShipmentLine,
+pub struct DraftStockOutLineNode {
+    pub shipment_line: DraftStockOutLine,
 }
 
-impl DraftOutboundShipmentLineNode {
-    pub fn from_vec(
-        shipment_lines: Vec<DraftOutboundShipmentLine>,
-    ) -> Vec<DraftOutboundShipmentLineNode> {
+impl DraftStockOutLineNode {
+    pub fn from_vec(shipment_lines: Vec<DraftStockOutLine>) -> Vec<DraftStockOutLineNode> {
         shipment_lines
             .into_iter()
-            .map(|shipment_line| DraftOutboundShipmentLineNode { shipment_line })
+            .map(|shipment_line| DraftStockOutLineNode { shipment_line })
             .collect()
     }
 }
 
 #[Object]
-impl DraftOutboundShipmentLineNode {
+impl DraftStockOutLineNode {
     pub async fn id(&self) -> &str {
         &self.shipment_line.id
     }
