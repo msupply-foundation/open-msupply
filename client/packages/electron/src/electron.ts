@@ -210,6 +210,21 @@ const start = (): void => {
     },
   });
 
+  // add a context menu which shows when the user right clicks
+  window.webContents.on('context-menu', (_event, params) => {
+    const template: Electron.MenuItemConstructorOptions[] = [
+      { role: 'cut' },
+      { role: 'copy' },
+      { role: 'paste' },
+      { role: 'selectAll' },
+      { type: 'separator' },
+      { role: 'reload' },
+      { role: 'toggleDevTools' },
+    ];
+    const menu = Menu.buildFromTemplate(template);
+    menu.popup({ window, x: params.x, y: params.y });
+  });
+
   // and load discovery (with autoconnect=true by default)
   window.loadURL(START_URL);
 
