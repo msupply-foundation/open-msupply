@@ -17,7 +17,7 @@ import {
 } from '../operations.generated';
 import React from 'react';
 
-import { getPackQuantityCellId } from '../../../utils';
+import { getStockOutQuantityCellId } from '../../../utils';
 import { DraftPrescriptionLine } from '../../../types';
 
 export const sortFieldMap: Record<string, InvoiceSortFieldInput> = {
@@ -551,7 +551,7 @@ export const UnitQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
       (props.rowData.stockLine?.availableNumberOfPacks ?? 0) *
       (props.rowData.stockLine?.packSize ?? 1)
     }
-    id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
+    id={getStockOutQuantityCellId(props.rowData.stockLine?.batch)}
     min={0}
     decimalLimit={2}
     slotProps={{
@@ -568,7 +568,7 @@ export const PackQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
   <NumberInputCell
     {...props}
     max={props.rowData.stockLine?.availableNumberOfPacks}
-    id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
+    id={getStockOutQuantityCellId(props.rowData.stockLine?.batch)}
     decimalLimit={2}
     min={0}
   />
@@ -582,7 +582,7 @@ export const DosesQuantityCell = (props: CellProps<DraftPrescriptionLine>) => (
       (props.rowData.stockLine?.packSize ?? 1) *
       (props.rowData.itemVariant?.dosesPerUnit ?? props.rowData.item.doses)
     }
-    id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
+    id={getStockOutQuantityCellId(props.rowData.stockLine?.batch)}
     min={0}
     decimalLimit={2}
     slotProps={{

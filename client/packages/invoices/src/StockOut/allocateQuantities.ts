@@ -1,6 +1,10 @@
-import { DraftStockOutLineFragment } from '../../../api/operations.generated';
 import { AllocateInOption, AllocateInType } from './useAllocationContext';
-import { canAutoAllocate, packsToQuantity, quantityToPacks } from './utils';
+import {
+  canAutoAllocate,
+  packsToQuantity,
+  quantityToPacks,
+  DraftStockOutLineFragment,
+} from '.';
 
 /**
  * Attempts to allocate the requested quantity to the available stock lines.
@@ -53,7 +57,10 @@ import { canAutoAllocate, packsToQuantity, quantityToPacks } from './utils';
 export const allocateQuantities = (
   draftLines: DraftStockOutLineFragment[],
   quantity: number,
-  { allocateIn }: { allocateIn: AllocateInOption }
+  {
+    allocateIn,
+    allowPartialPacks,
+  }: { allocateIn: AllocateInOption; allowPartialPacks?: boolean }
 ) => {
   // if invalid quantity entered, don't allocate
   if (quantity < 0 || Number.isNaN(quantity)) {
@@ -81,13 +88,18 @@ export const allocateQuantities = (
 
   let quantityToAllocate = quantity;
 
-  // Step 1: allocate to the nearest (rounded down) pack size
+  // Step 1: allocate to the nearest (rounded down) pack size (unless allowPartialPacks)
   quantityToAllocate = allocateToBatches({
     validBatches,
     newDraftLines,
     quantityToAllocate,
     allocateIn,
+    allowPartialPacks,
   });
+
+  // Note: if we can allocate partial packs, under/over allocation due to pack size
+  // won't occur, in the first place - we just allocate the exact quantity requested
+  // Step 2 and 3 only required when allowPartialPacks is false
 
   // Step 2: if still some remaining quantity allocate to the nearest (rounded up) pack size
   if (quantityToAllocate > 0) {
@@ -123,12 +135,14 @@ const allocateToBatches = ({
   quantityToAllocate: remainingQuantityToAllocate,
   allocateIn,
   roundUp = false,
+  allowPartialPacks = false,
 }: {
   validBatches: DraftStockOutLineFragment[];
   newDraftLines: DraftStockOutLineFragment[];
   quantityToAllocate: number;
   allocateIn: AllocateInOption;
   roundUp?: boolean;
+  allowPartialPacks?: boolean;
 }) => {
   validBatches.forEach(batch => {
     if (remainingQuantityToAllocate <= 0) return null;
@@ -144,11 +158,11 @@ const allocateToBatches = ({
     const toPacks = (quantity: number) =>
       quantityToPacks(allocateIn.type, quantity, draftLine);
 
-    // TODO: Allow partial packs check would be needed before .floor() here
-    const allocatablePacks = Math.floor(
-      // remove already allocated packs from available
-      draftLine.availablePacks - draftLine.numberOfPacks
-    );
+    // discount already allocated packs from available
+    const allocatablePacks = allowPartialPacks
+      ? draftLine.availablePacks - draftLine.numberOfPacks
+      : // round down to the nearest whole pack size
+        Math.floor(draftLine.availablePacks - draftLine.numberOfPacks);
 
     const quantityToAllocate = Math.min(
       remainingQuantityToAllocate,
@@ -157,10 +171,11 @@ const allocateToBatches = ({
 
     const numberOfPacksToAllocate = toPacks(quantityToAllocate);
 
-    // TODO: Allow partial packs check would be needed before rounding here
-    const allocatedNumberOfPacks = roundUp
-      ? Math.ceil(numberOfPacksToAllocate)
-      : Math.floor(numberOfPacksToAllocate);
+    const allocatedNumberOfPacks = allowPartialPacks
+      ? numberOfPacksToAllocate
+      : roundUp
+        ? Math.ceil(numberOfPacksToAllocate)
+        : Math.floor(numberOfPacksToAllocate);
 
     remainingQuantityToAllocate -= toQuantity(allocatedNumberOfPacks);
 
@@ -198,7 +213,6 @@ const reduceBatchAllocation = ({
 
       if (allocatedPacks === 0) return null;
 
-      // TODO: Allow partial packs check would be needed before early exit here.
       if (packSize > remainingQuantityToAllocate) return null;
 
       // helper closures
@@ -216,7 +230,6 @@ const reduceBatchAllocation = ({
         allocatedQuantity
       );
 
-      // TODO: Allow partial packs check would be needed before .floor() here
       const packsToReduce = Math.floor(toPacks(quantityToReduce));
 
       remainingQuantityToAllocate -= toQuantity(packsToReduce);

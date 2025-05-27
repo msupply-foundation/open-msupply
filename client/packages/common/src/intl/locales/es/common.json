@@ -1528,7 +1528,7 @@
   "messages.only-closed-periods-visible": "Nota: solo se muestran los períodos cerrados",
   "messages.outbound-shipment-created-on": "Salida creada el {{date}}",
   "messages.over-allocated": "Debido a los tamaños de los paquetes disponibles, se ha asignado una cantidad total de {{quantity}} en lugar de {{issueQuantity}}",
-  "messages.partial-pack-warning": "Has enviado un número no entero de paquetes. ¿Estás seguro que quieres hacer esto? Si no, necesitarás enviar {{nearestAbove}} unidades para enviar paquetes enteros.",
+  "messages.partial-pack-warning-units": "Has enviado un número no entero de paquetes. ¿Estás seguro que quieres hacer esto? Si no, necesitarás enviar {{nearestAbove}} unidades para enviar paquetes enteros.",
   "messages.patient-data-required-for-search": "Por favor ingrese la información del paciente",
   "messages.patients-create": "Haz clic en [Crear nuevo] para agregar un nuevo paciente con los detalles que ingresaste en la pestaña anterior, o haz clic en un paciente existente a continuación para ver sus detalles.",
   "messages.patients-found_few": "Se encontraron {{count}} pacientes que coinciden con los detalles proporcionados",

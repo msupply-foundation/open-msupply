@@ -2373,14 +2373,16 @@ export type DoseConfigurationNotAllowed = UpsertItemVariantErrorInterface & {
   description: Scalars['String']['output'];
 };
 
-export type DraftOutboundShipmentItemData = {
-  __typename: 'DraftOutboundShipmentItemData';
-  draftLines: Array<DraftOutboundShipmentLineNode>;
+export type DraftStockOutItemData = {
+  __typename: 'DraftStockOutItemData';
+  draftLines: Array<DraftStockOutLineNode>;
+  note?: Maybe<Scalars['String']['output']>;
   placeholderQuantity?: Maybe<Scalars['Float']['output']>;
+  prescribedQuantity?: Maybe<Scalars['Float']['output']>;
 };
 
-export type DraftOutboundShipmentLineNode = {
-  __typename: 'DraftOutboundShipmentLineNode';
+export type DraftStockOutLineNode = {
+  __typename: 'DraftStockOutLineNode';
   availablePacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
   defaultDosesPerUnit: Scalars['Int']['output'];
@@ -2398,7 +2400,7 @@ export type DraftOutboundShipmentLineNode = {
   vvmStatus?: Maybe<VvmstatusNode>;
 };
 
-export type DraftOutboundShipmentLineNodeDonorArgs = {
+export type DraftStockOutLineNodeDonorArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -4919,6 +4921,7 @@ export type Mutations = {
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
   saveOutboundShipmentItemLines: InvoiceNode;
+  savePrescriptionItemLines: InvoiceNode;
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
   updateAsset: UpdateAssetResponse;
@@ -5347,6 +5350,11 @@ export type MutationsManualSyncArgs = {
 
 export type MutationsSaveOutboundShipmentItemLinesArgs = {
   input: SaveOutboundShipmentLinesInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsSavePrescriptionItemLinesArgs = {
+  input: SavePrescriptionLinesInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6157,6 +6165,12 @@ export type PreferencesNode = {
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
 };
 
+export type PrescriptionLineInput = {
+  id: Scalars['String']['input'];
+  numberOfPacks: Scalars['Float']['input'];
+  stockLineId: Scalars['String']['input'];
+};
+
 export type PricingNode = {
   __typename: 'PricingNode';
   foreignCurrencyTotalAfterTax?: Maybe<Scalars['Float']['output']>;
@@ -6520,7 +6534,7 @@ export type Queries = {
   documentHistory: DocumentHistoryResponse;
   documentRegistries: DocumentRegistryResponse;
   documents: DocumentResponse;
-  draftOutboundShipmentLines: DraftOutboundShipmentItemData;
+  draftStockOutLines: DraftStockOutItemData;
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
@@ -6840,7 +6854,7 @@ export type QueriesDocumentsArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type QueriesDraftOutboundShipmentLinesArgs = {
+export type QueriesDraftStockOutLinesArgs = {
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
@@ -7999,6 +8013,14 @@ export type SaveOutboundShipmentLinesInput = {
   itemId: Scalars['String']['input'];
   lines: Array<OutboundShipmentLineInput>;
   placeholderQuantity?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type SavePrescriptionLinesInput = {
+  invoiceId: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  lines: Array<PrescriptionLineInput>;
+  note?: InputMaybe<Scalars['String']['input']>;
+  prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type ScannedDataParseError = {

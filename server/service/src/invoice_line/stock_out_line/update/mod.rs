@@ -779,7 +779,41 @@ mod test {
         let updated_picked_date = invoice.picked_datetime.unwrap();
         assert_eq!(updated_picked_date, inserted_picked_date);
 
-        // Make sure that the picked date is not updated if the invoice is not in picked status
+        // Make sure that the picked date is not updated if the invoice is not in picked status unless it's a prescription
+        let outbound1 = InvoiceRow {
+            id: "outbound_invoice-1".to_string(),
+            invoice_number: 1,
+            name_link_id: mock_name_store_a().id,
+            r#type: InvoiceType::OutboundShipment,
+            store_id: context.store_id.clone(),
+            created_datetime: datetime,
+            picked_datetime: None,
+            status: InvoiceStatus::New,
+            ..Default::default()
+        };
+
+        outbound1.upsert(&context.connection).unwrap();
+
+        let stock_out_line = InsertStockOutLine {
+            id: "outbound_invoice-1-1".to_string(),
+            r#type: StockOutType::OutboundShipment,
+            invoice_id: outbound1.id.clone(),
+            stock_line_id: mock_stock_line_b().id.clone(),
+            number_of_packs: 1.0,
+            ..Default::default()
+        };
+
+        invoice_line_service
+            .insert_stock_out_line(&context, stock_out_line)
+            .unwrap();
+
+        let invoice = invoice_row_repo
+            .find_one_by_id(&outbound1.id)
+            .unwrap()
+            .unwrap();
+
+        assert!(invoice.picked_datetime.is_none());
+
         let prescription1 = InvoiceRow {
             id: "prescription_invoice-1".to_string(),
             invoice_number: 1,
@@ -812,7 +846,7 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert!(invoice.picked_datetime.is_none());
+        assert!(invoice.picked_datetime.is_some());
     }
 
     #[actix_rt::test]

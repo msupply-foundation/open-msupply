@@ -1706,7 +1706,7 @@
   "messages.outbound-shipment-created-on": "Saída criada em {{date}}",
   "messages.over-allocated": "Por conta do tamanho dos pacotes disponíveis a quantidade total de {{quantity}} foi alocada ao invés de {{issueQuantity}}",
   "messages.over-allocated-line": "Devido ao tamanho do pacote, uma quantidade de {{quantity}} foi alocada em vez de {{issueQuantity}}",
-  "messages.partial-pack-warning": "Estarás a subdividir um pacote para emitir esse número de unidades. Tem certeza de que gostaria de fazer isso? Se não, terás que emitir {{nearestAbove}} unidades para emitir pacotes inteiros.",
+  "messages.partial-pack-warning-units": "Estarás a subdividir um pacote para emitir esse número de unidades. Tem certeza de que gostaria de fazer isso? Se não, terás que emitir {{nearestAbove}} unidades para emitir pacotes inteiros.",
   "messages.patient-data-required-for-search": "Por favor insira a informação do paciente",
   "messages.patients-create": "Clique [Criar Novo] para adicionar um novo paciente com os detalhes que inseriste na janela anterior, ou clique em um paciente existente abaixo para ver os seus detalhes.",
   "messages.patients-found_few": "Foram encontrados {{count}} pacientes que correspondem aos dados fornecidos",
