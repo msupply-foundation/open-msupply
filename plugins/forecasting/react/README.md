@@ -4,6 +4,5 @@ Refer to the [readme](https://github.com/msupply-foundation/open-msupply/blob/de
 
 For details of the plugin validation process, refer to that [readme](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/plugin/plugin_validation.md)
 
-In this repo, the `./examples` directory has some plugins to get you started.
 
 
