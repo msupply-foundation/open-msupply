@@ -35,16 +35,8 @@ const defaultDraftStockLine: DraftStockLine = {
     __typename: 'VvmstatusLogConnector',
     nodes: [],
   },
-  vvmStatus: {
-    __typename: 'VvmstatusNode',
-    id: '',
-    description: '',
-  },
-  campaign: {
-    __typename: 'CampaignNode',
-    id: '',
-    name: '',
-  },
+  vvmStatus: null,
+  campaign: null,
 };
 
 export function useStockLine(id?: string) {
@@ -131,6 +123,7 @@ const useCreate = () => {
     donor,
     campaign,
   }: DraftStockLine) => {
+    console.log('new stockline -> campaign ', campaign);
     return await stockApi.insertStockLine({
       storeId,
       input: {
