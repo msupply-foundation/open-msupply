@@ -7,6 +7,7 @@ export interface InputWithLabelRowProps {
   label: string;
   labelProps?: FormLabelProps;
   labelWidth?: string | null;
+  labelRight?: boolean;
   sx?: SxProps<Theme>;
 }
 
@@ -15,17 +16,29 @@ export const InputWithLabelRow: FC<InputWithLabelRowProps> = ({
   Input = <BasicTextInput />,
   labelProps,
   labelWidth = '120px',
+  labelRight = false,
   sx,
 }) => {
   const { sx: labelSx, ...labelPropsRest } = labelProps || {};
 
   return (
-    <Box display="flex" alignItems="center" gap={1} sx={sx}>
+    <Box
+      sx={{
+        ...sx,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        ...(labelRight
+          ? { gap: 2, flexDirection: 'row-reverse', justifyContent: 'flex-end' }
+          : {}),
+      }}
+    >
       <FormLabel
         sx={{ width: labelWidth, fontWeight: 'bold', ...labelSx }}
         {...labelPropsRest}
       >
-        {label}:
+        {label}
+        {labelRight ? '' : ':'}
       </FormLabel>
       {Input}
     </Box>
