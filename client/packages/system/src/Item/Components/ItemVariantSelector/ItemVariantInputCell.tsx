@@ -29,7 +29,12 @@ export const ItemVariantInputCell = <T extends RecordWithId>({
   const selected = data?.find(variant => variant.id === selectedId);
 
   const onVariantSelected = (itemVariantId: string | null) => {
-    column.setter({ ...rowData, itemVariantId });
+    const newSelected = data?.find(variant => variant.id === itemVariantId);
+    column.setter({
+      ...rowData,
+      itemVariantId,
+      itemVariant: newSelected ?? null,
+    });
   };
 
   return (
