@@ -148,43 +148,40 @@ export const InboundLineEdit = ({
     setCurrentItem(item);
   }, [item]);
 
-  let tableContent;
-  simplifiedTabletView
-    ? (tableContent = (
-        <>
-          <QuantityTable
-            isDisabled={isDisabled}
-            lines={draftLines}
-            updateDraftLine={updateDraftLine}
-            item={currentItem}
-            hasItemVariantsEnabled={hasItemVariantsEnabled}
-            hasVvmStatusesEnabled={hasVvmStatusesEnabled}
-          />
-          <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
-            <ButtonWithIcon
-              disabled={isDisabled}
-              color="primary"
-              variant="outlined"
-              onClick={addDraftLine}
-              label={`${t('label.add-batch')} (+)`}
-              Icon={<PlusCircleIcon />}
-            />
-          </Box>
-        </>
-      ))
-    : (tableContent = (
-        <TabLayout
-          draftLines={draftLines}
-          addDraftLine={addDraftLine}
-          updateDraftLine={updateDraftLine}
-          isDisabled={isDisabled}
-          currency={currency}
-          isExternalSupplier={isExternalSupplier}
-          item={currentItem}
-          hasItemVariantsEnabled={hasItemVariantsEnabled}
-          hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
+  const tableContent = simplifiedTabletView ? (
+    <>
+      <QuantityTable
+        isDisabled={isDisabled}
+        lines={draftLines}
+        updateDraftLine={updateDraftLine}
+        item={currentItem}
+        hasItemVariantsEnabled={hasItemVariantsEnabled}
+        hasVvmStatusesEnabled={hasVvmStatusesEnabled}
+      />
+      <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
+        <ButtonWithIcon
+          disabled={isDisabled}
+          color="primary"
+          variant="outlined"
+          onClick={addDraftLine}
+          label={`${t('label.add-batch')} (+)`}
+          Icon={<PlusCircleIcon />}
         />
-      ));
+      </Box>
+    </>
+  ) : (
+    <TabLayout
+      draftLines={draftLines}
+      addDraftLine={addDraftLine}
+      updateDraftLine={updateDraftLine}
+      isDisabled={isDisabled}
+      currency={currency}
+      isExternalSupplier={isExternalSupplier}
+      item={currentItem}
+      hasItemVariantsEnabled={hasItemVariantsEnabled}
+      hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
+    />
+  );
 
   return (
     <TableProvider
