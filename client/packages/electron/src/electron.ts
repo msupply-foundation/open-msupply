@@ -24,6 +24,7 @@ import ElectronStore from 'electron-store';
 import { KeyboardScanner } from './keyboardScanner/keyboardScanner';
 import https from 'https';
 import http from 'http';
+import defaultTranslations from '../../common/src/intl/locales/en/desktop.json';
 
 // We'll lazy load, once we have the locale available
 const importDesktopTranslations = async (locale: string) =>
@@ -224,16 +225,15 @@ const start = (): void => {
   importDesktopTranslations(appLocale)
     // Some locales are in the format of 'fr-DJ', check if we have translations for the base (fr)
     .catch(() => importDesktopTranslations(appLocale.split('-')[0] ?? ''))
+    .catch(() => {}) // swallow error, use default translations
     .then(translations => {
-      importDesktopTranslations('en').then(defaultTranslations => {
-        // Merge the translations with the default translations
-        const mergedTranslations = {
-          ...defaultTranslations,
-          ...translations,
-        };
-        // Configure app menus once we have translations available
-        configureMenus(window, mergedTranslations);
-      });
+      // Merge the translations with the default translations
+      const mergedTranslations = {
+        ...defaultTranslations,
+        ...translations,
+      };
+      // Configure app menus once we have translations available
+      configureMenus(window, mergedTranslations);
     });
 
   // and load discovery (with autoconnect=true by default)
@@ -441,9 +441,9 @@ app.addListener(
 // If a menu option has a role, but no label, a label for role should be translated by default by electron
 function configureMenus(
   window: BrowserWindow,
-  translations: Record<string, string>
+  translations: Record<keyof typeof defaultTranslations, string>
 ) {
-  const t = (key: string) => translations[key] || key;
+  const t = (key: keyof typeof defaultTranslations) => translations[key] || key;
 
   // add a context menu which shows when the user right clicks
   window.webContents.on('context-menu', (_event, params) => {
