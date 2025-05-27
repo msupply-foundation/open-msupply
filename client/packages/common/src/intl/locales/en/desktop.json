@@ -1,4 +1,5 @@
 {
+  "about-oms": "About Open mSupply",
   "clear-data-confirm-message": "This will clear all local data and close the application. Are you sure?",
   "confirmation": "Confirmation",
   "copy": "Copy",
@@ -6,6 +7,8 @@
   "clear-data": "Clear Data",
   "developer-tools": "Developer Tools",
   "documentation": "Documentation",
+  "file": "File",
+  "help": "Help",
   "no": "No",
   "paste": "Paste",
   "reload": "Reload",
