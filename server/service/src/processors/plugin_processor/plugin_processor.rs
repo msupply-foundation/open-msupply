@@ -78,14 +78,21 @@ impl Processor for PluginProcessor {
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
         let input = processor::Input::Process(changelog.clone());
-        let result = self
-            .call(input.clone())
-            .map_err(|e| ProcessorError::PluginError(input.clone(), e))?;
+        let input_closure = input.clone();
+        let processor_closure = self.0.clone();
+        let result = tokio::task::spawn_blocking(move || {
+            processor::Trait::call(&(*processor_closure), input.clone())
+                .map_err(|e| (input, format_error(&e)))
+        })
+        .await
+        .unwrap()
+        .map_err(|(input_string, error_string)| {
+            ProcessorError::PluginErrorString(input_string, error_string)
+        })?;
 
         let processor::Output::Process(status) = result else {
-            return Err(ProcessorError::PluginOutputMismatch(input));
+            return Err(ProcessorError::PluginOutputMismatch(input_closure));
         };
-
         Ok(status)
     }
 }
