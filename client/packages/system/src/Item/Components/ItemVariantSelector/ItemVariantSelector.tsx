@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 import {
   PaperPopoverSection,
   useTranslation,
@@ -6,7 +6,6 @@ import {
   createTableStore,
   DataTable,
   NothingHere,
-  EditIcon,
   PersistentPaperPopover,
 } from '@openmsupply-client/common';
 import { useItemVariantSelectorColumns } from './columns';
@@ -21,20 +20,19 @@ interface ItemVariantSelectorProps {
 }
 
 export const ItemVariantSelector = ({
+  children,
   selectedId,
   variants,
   isLoading = false,
   onVariantSelected,
   displayInDoses,
-}: ItemVariantSelectorProps) => {
+}: ItemVariantSelectorProps & PropsWithChildren) => {
   const t = useTranslation();
   const columns = useItemVariantSelectorColumns({
     selectedId,
     onVariantSelected,
     displayInDoses,
   });
-
-  if (!variants) return null;
 
   return (
     <TableProvider createStore={createTableStore}>
@@ -55,7 +53,7 @@ export const ItemVariantSelector = ({
           </PaperPopoverSection>
         }
       >
-        <EditIcon style={{ fontSize: 16, fill: 'none' }} />
+        {children}
       </PersistentPaperPopover>
     </TableProvider>
   );

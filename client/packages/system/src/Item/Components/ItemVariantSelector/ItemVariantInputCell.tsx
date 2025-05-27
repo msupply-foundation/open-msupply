@@ -13,6 +13,7 @@ export const ItemVariantInputCell = <T extends RecordWithId>({
   column,
   itemId,
   displayInDoses,
+  // width,
 }: CellProps<T> & ItemVariantInputCellProps) => {
   const selectedId = column.accessor({
     rowData,

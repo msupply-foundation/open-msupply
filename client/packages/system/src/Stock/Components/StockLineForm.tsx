@@ -198,7 +198,7 @@ export const StockLineForm = ({
                 <ItemVariantInput
                   itemId={draft.itemId}
                   selectedId={draft.itemVariantId ?? null}
-                  // width={160}
+                  width={160}
                   onChange={variant => onUpdate({ itemVariantId: variant?.id })}
                   displayInDoses={preferences?.manageVaccinesInDoses ?? false}
                 />

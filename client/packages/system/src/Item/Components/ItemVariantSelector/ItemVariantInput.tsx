@@ -1,9 +1,8 @@
 import React from 'react';
 import {
-  Typography,
-  Box,
-  textStyles,
-  Tooltip,
+  EditIcon,
+  TextInputButton,
+  ButtonProps,
 } from '@openmsupply-client/common';
 import { ItemVariantFragment, useItemVariants } from '../../api';
 import { ItemVariantSelector } from './ItemVariantSelector';
@@ -13,14 +12,19 @@ interface ItemVariantInputProps {
   selectedId: string | null;
   onChange: (itemVariant: ItemVariantFragment | null) => void;
   displayInDoses: boolean;
+  width?: number | string;
+  disabled?: boolean;
 }
 
 export const ItemVariantInput = ({
   selectedId,
   itemId,
   displayInDoses,
+  disabled,
+  width,
   onChange,
-}: ItemVariantInputProps) => {
+  ...props
+}: ItemVariantInputProps & ButtonProps) => {
   const { data, isLoading } = useItemVariants(itemId);
   const selected = data?.find(variant => variant.id === selectedId);
 
@@ -29,26 +33,27 @@ export const ItemVariantInput = ({
     onChange(selectedVariant ?? null);
   };
 
-  return (
-    <Box display="flex" justifyContent="space-between">
-      <Tooltip title={selected?.name}>
-        <Typography
-          sx={{
-            ...textStyles.default,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {selected?.name}
-        </Typography>
-      </Tooltip>
-      <ItemVariantSelector
-        selectedId={selectedId}
-        variants={data}
-        isLoading={isLoading}
-        onVariantSelected={onVariantSelected}
-        displayInDoses={displayInDoses}
-      />
-    </Box>
+  const ItemVariantButton = (
+    <TextInputButton
+      sx={{ width }}
+      endIcon={<EditIcon />}
+      disabled={disabled}
+      {...props}
+    >
+      <span>{selected?.name ?? ''}</span>
+    </TextInputButton>
+  );
+
+  return !disabled ? (
+    <ItemVariantSelector
+      selectedId={selectedId}
+      onVariantSelected={onVariantSelected}
+      displayInDoses={displayInDoses}
+      isLoading={isLoading}
+    >
+      {ItemVariantButton}
+    </ItemVariantSelector>
+  ) : (
+    ItemVariantButton
   );
 };
