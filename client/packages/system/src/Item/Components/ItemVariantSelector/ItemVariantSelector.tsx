@@ -13,7 +13,7 @@ import { ItemVariantFragment } from '../../api';
 
 interface ItemVariantSelectorProps {
   selectedId: string | null;
-  variants?: ItemVariantFragment[];
+  variants: ItemVariantFragment[];
   isLoading?: boolean;
   onVariantSelected: (itemVariantId: string | null) => void;
   displayInDoses: boolean;

@@ -50,6 +50,7 @@ export const ItemVariantInput = ({
       onVariantSelected={onVariantSelected}
       displayInDoses={displayInDoses}
       isLoading={isLoading}
+      variants={data ?? []}
     >
       {ItemVariantButton}
     </ItemVariantSelector>
