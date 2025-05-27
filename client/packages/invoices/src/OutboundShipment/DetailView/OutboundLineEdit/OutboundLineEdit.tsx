@@ -15,9 +15,8 @@ import { ScannedBarcode } from '../../../types';
 import { SelectItem } from './SelectItem';
 import { Allocation } from './Allocation';
 import { useOpenedWithBarcode } from './hooks/useOpenedWithBarcode';
-import { useAllocationContext } from './allocation/useAllocationContext';
+import { useAllocationContext, getAllocatedQuantity } from '../../../StockOut';
 import { useSaveOutboundLines } from '../../api/hooks/useSaveOutboundLines';
-import { getAllocatedQuantity } from './allocation/utils';
 
 export type OutboundOpenedWith = { itemId: string } | ScannedBarcode | null;
 

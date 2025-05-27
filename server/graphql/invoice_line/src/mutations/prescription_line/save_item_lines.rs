@@ -11,29 +11,30 @@ use service::invoice_line::save_stock_out_item_lines::{
 };
 
 #[derive(InputObject)]
-pub struct SaveOutboundShipmentLinesInput {
+pub struct SavePrescriptionLinesInput {
     pub invoice_id: String,
     pub item_id: String,
-    pub lines: Vec<OutboundShipmentLineInput>,
-    pub placeholder_quantity: Option<f64>,
+    pub lines: Vec<PrescriptionLineInput>,
+    pub prescribed_quantity: Option<f64>,
+    pub note: Option<String>,
 }
 
 #[derive(InputObject)]
-pub struct OutboundShipmentLineInput {
+pub struct PrescriptionLineInput {
     pub id: String,
     pub number_of_packs: f64,
     pub stock_line_id: String,
 }
 
-pub fn save_outbound_shipment_item_lines(
+pub fn save_prescription_item_lines(
     ctx: &Context<'_>,
     store_id: &str,
-    input: SaveOutboundShipmentLinesInput,
+    input: SavePrescriptionLinesInput,
 ) -> Result<InvoiceNode> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateOutboundShipment,
+            resource: Resource::MutatePrescription,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -57,19 +58,22 @@ pub fn map_response(from: Result<Invoice, SaveStockOutItemLinesError>) -> Result
     Ok(result)
 }
 
-impl SaveOutboundShipmentLinesInput {
+impl SavePrescriptionLinesInput {
     pub fn to_domain(self) -> SaveStockOutItemLines {
-        let SaveOutboundShipmentLinesInput {
+        let SavePrescriptionLinesInput {
             invoice_id,
             item_id,
             lines,
-            placeholder_quantity,
+            prescribed_quantity,
+            note,
         } = self;
 
         SaveStockOutItemLines {
             invoice_id,
             item_id,
-            placeholder_quantity,
+            placeholder_quantity: None, // Not used in Prescriptions
+            prescribed_quantity,
+            note,
             lines: lines
                 .into_iter()
                 .map(|line| SaveStockOutInvoiceLine {
@@ -78,8 +82,6 @@ impl SaveOutboundShipmentLinesInput {
                     stock_line_id: line.stock_line_id,
                 })
                 .collect(),
-            prescribed_quantity: None, // Only used for prescription lines
-            note: None,                // Not used yet
         }
     }
 }
@@ -99,9 +101,9 @@ fn map_error(error: SaveStockOutItemLinesError) -> Result<InvoiceNode> {
         | PlaceholderError(_)
         | PrescribedQuantityError(_)
         | InvoiceDoesNotBelongToCurrentStore
-        | InvoiceNotFound
-        | InvoiceNotEditable
         | NotAStockOutInvoice
+        | InvoiceNotEditable
+        | InvoiceNotFound
         | InvalidInvoiceType => StandardGraphqlError::BadUserInput(formatted_error),
         DatabaseError(_) | UpdatedShipmentDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
