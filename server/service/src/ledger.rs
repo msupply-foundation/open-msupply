@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use repository::{
     ledger::{LedgerFilter, LedgerRepository, LedgerRow, LedgerSort, LedgerSortField},
     EqualFilter, Pagination, PaginationOption, StorageConnection, StorageConnectionManager,
@@ -66,25 +68,30 @@ fn calculate_ledger_balance(
     all_ledger_items: Vec<LedgerRow>,
 ) -> Vec<ItemLedger> {
     let mut item_ledgers = vec![];
+    // TODO fix in refactor. Hashmap because currently we can still query for multiple items.
+    // See in issue #7905
+    let mut running_balance = HashMap::<String, f64>::new();
+    // balance for each ledger item. Save these separately to preserve the queried order of rows
+    let mut ledger_balance = HashMap::<String, f64>::new();
+
+    for ledger in all_ledger_items {
+        // we want to iterate through all ledger items to calculate the balance
+        let previous_balance = running_balance.get(&ledger.item_id).cloned().unwrap_or(0.0);
+        running_balance.insert(ledger.item_id.clone(), previous_balance + ledger.quantity);
+
+        // only add the queried rows to the item_ledgers to return
+        if rows.iter().any(|row| row.id == ledger.id) {
+            ledger_balance.insert(ledger.id.clone(), running_balance[&ledger.item_id]);
+        }
+    }
 
     for row in rows {
-        let current_and_previous_entries = all_ledger_items
-            .iter()
-            .filter(|ledger| ledger.item_id == row.item_id && ledger.datetime <= row.datetime)
-            .collect::<Vec<_>>();
-
-        let balance = current_and_previous_entries
-            .iter()
-            .map(|ledger| ledger.quantity)
-            .sum();
-
-        let ledger = ItemLedger {
-            ledger: row,
-            balance,
-        };
-
-        item_ledgers.push(ledger);
+        item_ledgers.push(ItemLedger {
+            ledger: row.clone(),
+            balance: ledger_balance.get(&row.id).cloned().unwrap_or(0.0),
+        });
     }
+
     item_ledgers
 }
 
@@ -92,10 +99,9 @@ fn calculate_ledger_balance(
 // Note test does not simulate case where multiple items are queried.
 #[cfg(test)]
 mod tests {
-    use std::default;
 
     use super::*;
-    use chrono::{NaiveDate, NaiveDateTime};
+    use chrono::NaiveDateTime;
     use repository::ledger::LedgerRow;
 
     #[actix_rt::test]
@@ -103,69 +109,77 @@ mod tests {
         // ledger rows can be called in any order. In this case simulating descending order by datetime
         let ledger_rows = vec![
             LedgerRow {
+                id: "4".to_string(),
+                item_id: "item1".to_string(),
                 quantity: -1176.0,
                 datetime: NaiveDateTime::parse_from_str(
                     "2025-05-19T02:57:15.920256",
                     "%Y-%m-%dT%H:%M:%S%.f",
                 )
                 .unwrap(),
-                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
                 ..Default::default()
             },
             LedgerRow {
-                quantity: 1200.0,
-                datetime: NaiveDateTime::parse_from_str(
-                    "2025-02-05T04:43:02.213892",
-                    "%Y-%m-%dT%H:%M:%S%.f",
-                )
-                .unwrap(),
-                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
-                ..Default::default()
-            },
-            LedgerRow {
+                id: "3".to_string(),
+                item_id: "item1".to_string(),
                 quantity: -1200.0,
                 datetime: NaiveDateTime::parse_from_str(
                     "2025-02-05T04:43:02.213892",
                     "%Y-%m-%dT%H:%M:%S%.f",
                 )
                 .unwrap(),
-                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
                 ..Default::default()
             },
             LedgerRow {
+                id: "2".to_string(),
+                item_id: "item1".to_string(),
+                quantity: 1200.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-02-05T04:43:02.213892",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                ..Default::default()
+            },
+            LedgerRow {
+                id: "1".to_string(),
+                item_id: "item1".to_string(),
                 quantity: 2400.0,
                 datetime: NaiveDateTime::parse_from_str(
                     "2025-02-03T22:16:26.986939",
                     "%Y-%m-%dT%H:%M:%S%.f",
                 )
                 .unwrap(),
-                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
                 ..Default::default()
             },
         ];
 
         let all_ledger_items = vec![
             LedgerRow {
+                id: "1".to_string(),
+                item_id: "item1".to_string(),
                 quantity: 2400.0,
                 datetime: NaiveDateTime::parse_from_str(
                     "2025-02-03T22:16:26.986939",
                     "%Y-%m-%dT%H:%M:%S%.f",
                 )
                 .unwrap(),
-                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
                 ..Default::default()
             },
             LedgerRow {
+                id: "2".to_string(),
+                item_id: "item1".to_string(),
                 quantity: 1200.0,
                 datetime: NaiveDateTime::parse_from_str(
                     "2025-02-05T04:43:02.213892",
                     "%Y-%m-%dT%H:%M:%S%.f",
                 )
                 .unwrap(),
-                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
                 ..Default::default()
             },
             LedgerRow {
+                id: "3".to_string(),
+                item_id: "item1".to_string(),
                 quantity: -1200.0,
                 datetime: NaiveDateTime::parse_from_str(
                     "2025-02-05T04:43:02.213892",
@@ -175,6 +189,8 @@ mod tests {
                 ..Default::default()
             },
             LedgerRow {
+                id: "4".to_string(),
+                item_id: "item1".to_string(),
                 quantity: -1176.0,
                 datetime: NaiveDateTime::parse_from_str(
                     "2025-05-19T02:57:15.920256",
@@ -203,6 +219,7 @@ mod tests {
         // ledger rows can be called in any order. In this case simulating descending order by datetime
         let ledger_rows = vec![
             LedgerRow {
+                id: "4".to_string(),
                 item_id: "item1".to_string(),
                 quantity: -1176.0,
                 datetime: NaiveDateTime::parse_from_str(
@@ -210,21 +227,10 @@ mod tests {
                     "%Y-%m-%dT%H:%M:%S%.f",
                 )
                 .unwrap(),
-                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
                 ..Default::default()
             },
             LedgerRow {
-                item_id: "item2".to_string(),
-                quantity: 1200.0,
-                datetime: NaiveDateTime::parse_from_str(
-                    "2025-02-05T04:43:02.213892",
-                    "%Y-%m-%dT%H:%M:%S%.f",
-                )
-                .unwrap(),
-                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
-                ..Default::default()
-            },
-            LedgerRow {
+                id: "3".to_string(),
                 item_id: "item2".to_string(),
                 quantity: -1200.0,
                 datetime: NaiveDateTime::parse_from_str(
@@ -232,10 +238,21 @@ mod tests {
                     "%Y-%m-%dT%H:%M:%S%.f",
                 )
                 .unwrap(),
-                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
                 ..Default::default()
             },
             LedgerRow {
+                id: "2".to_string(),
+                item_id: "item2".to_string(),
+                quantity: 1200.0,
+                datetime: NaiveDateTime::parse_from_str(
+                    "2025-02-05T04:43:02.213892",
+                    "%Y-%m-%dT%H:%M:%S%.f",
+                )
+                .unwrap(),
+                ..Default::default()
+            },
+            LedgerRow {
+                id: "1".to_string(),
                 item_id: "item1".to_string(),
                 quantity: 2400.0,
                 datetime: NaiveDateTime::parse_from_str(
@@ -243,13 +260,13 @@ mod tests {
                     "%Y-%m-%dT%H:%M:%S%.f",
                 )
                 .unwrap(),
-                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
                 ..Default::default()
             },
         ];
 
         let all_ledger_items = vec![
             LedgerRow {
+                id: "1".to_string(),
                 item_id: "item1".to_string(),
                 quantity: 2400.0,
                 datetime: NaiveDateTime::parse_from_str(
@@ -257,10 +274,10 @@ mod tests {
                     "%Y-%m-%dT%H:%M:%S%.f",
                 )
                 .unwrap(),
-                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
                 ..Default::default()
             },
             LedgerRow {
+                id: "2".to_string(),
                 item_id: "item2".to_string(),
                 quantity: 1200.0,
                 datetime: NaiveDateTime::parse_from_str(
@@ -268,10 +285,10 @@ mod tests {
                     "%Y-%m-%dT%H:%M:%S%.f",
                 )
                 .unwrap(),
-                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()),
                 ..Default::default()
             },
             LedgerRow {
+                id: "3".to_string(),
                 item_id: "item2".to_string(),
                 quantity: -1200.0,
                 datetime: NaiveDateTime::parse_from_str(
@@ -282,6 +299,7 @@ mod tests {
                 ..Default::default()
             },
             LedgerRow {
+                id: "4".to_string(),
                 item_id: "item1".to_string(),
                 quantity: -1176.0,
                 datetime: NaiveDateTime::parse_from_str(
@@ -294,6 +312,8 @@ mod tests {
         ];
 
         let result = calculate_ledger_balance(ledger_rows, all_ledger_items);
+
+        println!("{:?}", result);
 
         assert_eq!(result.len(), 4);
 
