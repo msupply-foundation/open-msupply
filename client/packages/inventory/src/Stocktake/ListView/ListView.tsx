@@ -58,7 +58,10 @@ export const StocktakeListView = () => {
   const columns = useColumns<StocktakeRowFragment>(
     [
       GenericColumnKey.Selection,
-      ['stocktakeNumber', { maxWidth: 75, sortable: false }],
+      [
+        'stocktakeNumber',
+        { maxWidth: 75, sortable: false, defaultHideOnMobile: true },
+      ],
       [
         'status',
         {
@@ -70,7 +73,7 @@ export const StocktakeListView = () => {
       ],
       ['description', { sortable: false }],
       ['createdDatetime', { format: ColumnFormat.Date }],
-      ['stocktakeDate', { sortable: false }],
+      ['stocktakeDate', { sortable: false, defaultHideOnMobile: true }],
       getCommentPopoverColumn(),
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
