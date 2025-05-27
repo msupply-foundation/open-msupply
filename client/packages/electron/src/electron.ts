@@ -464,36 +464,6 @@ function configureMenus(
     submenu: [{ role: 'quit' }],
   };
 
-  // const editMenu: MenuItemConstructorOptions = {
-  //   label: 'Edit',
-  //   submenu: [
-  //     { role: 'undo' },
-  //     { role: 'redo' },
-  //     { type: 'separator' },
-  //     { role: 'cut' },
-  //     { role: 'copy' },
-  //     { role: 'paste' },
-  //     { role: 'delete' },
-  //     { type: 'separator' },
-  //     { role: 'selectAll' },
-  //   ],
-  // };
-
-  // const viewMenu: MenuItemConstructorOptions = {
-  //   label: 'View',
-  //   submenu: [
-  //     { role: 'reload' },
-  //     { role: 'forceReload' },
-  //     { role: 'toggleDevTools' },
-  //     { type: 'separator' },
-  //     { role: 'resetZoom' },
-  //     { role: 'zoomIn' },
-  //     { role: 'zoomOut' },
-  //     { type: 'separator' },
-  //     { role: 'togglefullscreen' },
-  //   ],
-  // };
-
   const helpMenu: MenuItemConstructorOptions = {
     label: t('help'),
     role: 'help',
