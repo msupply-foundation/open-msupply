@@ -438,7 +438,6 @@ app.addListener(
   }
 );
 
-// If a menu option has a role, but no label, a label for role should be translated by default by electron
 function configureMenus(
   window: BrowserWindow,
   translations: Record<keyof typeof defaultTranslations, string>
