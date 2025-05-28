@@ -1,4 +1,4 @@
-import React, { FC, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { FormLabel, Box, FormLabelProps, SxProps, Theme } from '@mui/material';
 import { BasicTextInput } from './BasicTextInput';
 
@@ -10,13 +10,13 @@ export interface InputWithLabelRowProps {
   sx?: SxProps<Theme>;
 }
 
-export const InputWithLabelRow: FC<InputWithLabelRowProps> = ({
+export const InputWithLabelRow = ({
   label,
   Input = <BasicTextInput />,
   labelProps,
   labelWidth = '120px',
   sx,
-}) => {
+}: InputWithLabelRowProps) => {
   const { sx: labelSx, ...labelPropsRest } = labelProps || {};
 
   return (
