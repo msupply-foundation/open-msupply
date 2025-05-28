@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Box,
   NumericTextInput,
   Select,
   Typography,
+  useDebounceCallback,
   useIntlUtils,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -49,6 +50,7 @@ export const RequestedSelection = ({
       ),
     [representation, draft?.requestedQuantity, defaultPackSize]
   );
+  const [value, setValue] = useState(currentValue);
 
   const options = useMemo((): Option[] => {
     const unitPlural = getPlural(unitName, currentValue);
@@ -62,14 +64,22 @@ export const RequestedSelection = ({
     ];
   }, [isPacksEnabled, unitName, currentValue]);
 
+  const debouncedUpdate = useDebounceCallback(
+    (value?: number) => {
+      const updatedRequest = getUpdatedRequest(
+        value,
+        representation,
+        defaultPackSize,
+        draft?.suggestedQuantity
+      );
+      update(updatedRequest);
+    },
+    [representation, defaultPackSize, update]
+  );
+
   const handleValueChange = (value?: number) => {
-    const updatedRequest = getUpdatedRequest(
-      value,
-      representation,
-      defaultPackSize,
-      draft?.suggestedQuantity
-    );
-    update(updatedRequest);
+    setValue(value ?? 0);
+    debouncedUpdate(value);
   };
 
   return (
@@ -88,7 +98,7 @@ export const RequestedSelection = ({
           autoFocus
           width={170}
           min={0}
-          value={currentValue}
+          value={value}
           disabled={disabled}
           onChange={handleValueChange}
           slotProps={{
