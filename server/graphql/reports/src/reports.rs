@@ -20,6 +20,8 @@ use service::report::report_service::{GetReportError, GetReportsError};
 pub enum ReportSortFieldInput {
     Id,
     Name,
+    Code,
+    Version,
 }
 
 #[derive(InputObject)]
@@ -148,6 +150,10 @@ impl ReportNode {
             .clone()
             .map(|schema| FormSchemaNode { schema })
     }
+
+    pub async fn version(&self) -> &str {
+        &self.row.report_row.version
+    }
 }
 
 pub fn report(
@@ -214,6 +220,41 @@ pub fn reports(
     }
 }
 
+pub fn all_report_versions(
+    ctx: &Context<'_>,
+    store_id: String,
+    user_language: String,
+    filter: Option<ReportFilterInput>,
+    sort: Option<Vec<ReportSortInput>>,
+) -> Result<ReportsResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::ServerAdmin,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id, user.user_id)?;
+    let translation_service = &service_provider.translations_service;
+
+    match service_provider.report_service.query_all_report_versions(
+        &service_context,
+        &translation_service,
+        user_language,
+        filter.map(|f| f.to_domain()),
+        sort.and_then(|mut sort_list| sort_list.pop())
+            .map(|sort| sort.to_domain()),
+    ) {
+        Ok(reports) => Ok(ReportsResponse::Response(ReportConnector {
+            total_count: reports.len() as u32,
+            nodes: reports.into_iter().map(|row| ReportNode { row }).collect(),
+        })),
+        Err(err) => map_reports_error(err),
+    }
+}
+
 impl ReportFilterInput {
     pub fn to_domain(self) -> ReportFilter {
         ReportFilter {
@@ -235,6 +276,8 @@ impl ReportSortInput {
         let key = match self.key {
             ReportSortFieldInput::Id => ReportSortField::Id,
             ReportSortFieldInput::Name => ReportSortField::Name,
+            ReportSortFieldInput::Code => ReportSortField::Code,
+            ReportSortFieldInput::Version => ReportSortField::Version,
         };
         ReportSort {
             key,

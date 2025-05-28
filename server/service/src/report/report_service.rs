@@ -113,6 +113,17 @@ pub trait ReportServiceTrait: Sync + Send {
         query_reports(ctx, translation_service, user_language, filter, sort)
     }
 
+    fn query_all_report_versions(
+        &self,
+        ctx: &ServiceContext,
+        translation_service: &Box<Localisations>,
+        user_language: String,
+        filter: Option<ReportFilter>,
+        sort: Option<ReportSort>,
+    ) -> Result<Vec<Report>, GetReportsError> {
+        query_all_report_versions(ctx, translation_service, user_language, filter, sort)
+    }
+
     /// Loads a report definition by id and resolves it
     fn resolve_report(
         &self,
@@ -381,6 +392,30 @@ fn query_reports(
 
     let reports = repo
         .query(Some(filter), sort)
+        .map_err(|err| GetReportsError::ListError(ListError::DatabaseError(err)))?;
+
+    let reports = reports
+        .into_iter()
+        .map(|r| {
+            translate_report_arugment_schema(r, translation_service, &user_language)
+                .map_err(GetReportsError::TranslationError)
+        })
+        .collect::<Result<Vec<Report>, GetReportsError>>();
+
+    reports
+}
+
+fn query_all_report_versions(
+    ctx: &ServiceContext,
+    translation_service: &Box<Localisations>,
+    user_language: String,
+    filter: Option<ReportFilter>,
+    sort: Option<ReportSort>,
+) -> Result<Vec<Report>, GetReportsError> {
+    let repo = ReportRepository::new(&ctx.connection);
+
+    let reports = repo
+        .query(filter, sort)
         .map_err(|err| GetReportsError::ListError(ListError::DatabaseError(err)))?;
 
     let reports = reports

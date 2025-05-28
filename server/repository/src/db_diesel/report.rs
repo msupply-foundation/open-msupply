@@ -57,6 +57,8 @@ pub struct ReportFilter {
 pub enum ReportSortField {
     Id,
     Name,
+    Code,
+    Version,
 }
 
 pub type ReportSort = Sort<ReportSortField>;
@@ -133,6 +135,12 @@ impl<'a> ReportRepository<'a> {
                 ReportSortField::Name => {
                     apply_sort_no_case!(query, sort, report::name);
                 }
+                ReportSortField::Code => {
+                    apply_sort_no_case!(query, sort, report::code);
+                }
+                ReportSortField::Version => {
+                    apply_sort_no_case!(query, sort, report::version);
+                }
             }
         }
         let result = query.load::<ReportJoin>(self.connection.lock().connection())?;
@@ -156,6 +164,12 @@ impl<'a> ReportRepository<'a> {
                 }
                 ReportSortField::Name => {
                     apply_sort_no_case!(query, sort, report::name);
+                }
+                ReportSortField::Code => {
+                    apply_sort_no_case!(query, sort, report::code);
+                }
+                ReportSortField::Version => {
+                    apply_sort_no_case!(query, sort, report::version);
                 }
             }
         }
