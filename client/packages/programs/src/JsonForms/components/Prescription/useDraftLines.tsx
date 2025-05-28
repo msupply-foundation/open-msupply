@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { uniqBy } from '@openmsupply-client/common';
-import { DraftPrescriptionLine } from 'packages/invoices/src/types';
-import { useHistoricalStockLines } from 'packages/system/src';
-import { createDraftPrescriptionLineFromStockLine } from 'packages/invoices/src/Prescriptions/api/hooks/utils';
+import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
+import { useHistoricalStockLines } from '@openmsupply-client/system/src';
+import { createDraftPrescriptionLineFromStockLine } from '@openmsupply-client/invoices/src/Prescriptions/api/hooks/utils';
 
 export const useDraftLines = (itemId: string | null) => {
   const [draftLines, setDraftLines] = useState<DraftPrescriptionLine[]>([]);
