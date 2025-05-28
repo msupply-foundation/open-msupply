@@ -72,15 +72,16 @@ export const SupplySelection = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
+        p: 1,
         mb: 1,
       }}
     >
-      <Typography variant="body1" fontWeight="bold">
+      <Typography variant="body1" fontWeight="bold" p={0.5}>
         {t('label.supply')}:
       </Typography>
       <Box gap={1} display="flex" flexDirection="row">
         <NumericTextInput
-          width={150}
+          width={170}
           min={0}
           value={currentValue}
           disabled={disabled}
@@ -129,6 +130,7 @@ export const SupplySelection = ({
               sx: {
                 backgroundColor: theme => theme.palette.background.white,
                 borderRadius: 2,
+                p: 0.5,
               },
             },
           }}

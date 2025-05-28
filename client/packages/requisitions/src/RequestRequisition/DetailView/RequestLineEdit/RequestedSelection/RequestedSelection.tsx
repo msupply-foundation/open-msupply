@@ -86,7 +86,7 @@ export const RequestedSelection = ({
       <Box gap={1} display="flex" flexDirection="row">
         <NumericTextInput
           autoFocus
-          width={150}
+          width={170}
           min={0}
           value={currentValue}
           disabled={disabled}
@@ -135,6 +135,7 @@ export const RequestedSelection = ({
               sx: {
                 backgroundColor: theme => theme.palette.background.white,
                 borderRadius: 2,
+                p: 1,
               },
             },
           }}

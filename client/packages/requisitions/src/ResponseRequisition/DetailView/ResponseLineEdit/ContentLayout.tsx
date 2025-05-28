@@ -78,7 +78,6 @@ export const NumInputRow = ({
           <NumericTextInput
             sx={{
               '& .MuiInputBase-input': {
-                p: '3px 4px',
                 backgroundColor: theme =>
                   disabled
                     ? theme.palette.background.toolbar
@@ -97,7 +96,7 @@ export const NumInputRow = ({
               },
             }}
             min={0}
-            width={145}
+            width={170}
             value={roundedValue}
             onChange={handleChange}
             disabled={disabled}

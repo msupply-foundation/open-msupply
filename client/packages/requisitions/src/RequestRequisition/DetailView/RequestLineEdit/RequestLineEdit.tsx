@@ -213,8 +213,8 @@ export const RequestLineEdit = ({
                     },
                   }}
                   disabled={disabled}
-                  minRows={2}
-                  maxRows={2}
+                  minRows={3}
+                  maxRows={3}
                 />
               </Box>
             </>
