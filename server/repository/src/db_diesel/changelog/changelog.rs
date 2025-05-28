@@ -127,6 +127,7 @@ pub enum ChangelogTableName {
     Preference,
     VVMStatusLog,
     Campaign,
+    SupportUpload,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -206,6 +207,7 @@ impl ChangelogTableName {
             ChangelogTableName::Preference => ChangeLogSyncStyle::RemoteAndCentral,
             ChangelogTableName::VVMStatusLog => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Campaign => ChangeLogSyncStyle::Central,
+            ChangelogTableName::SupportUpload => ChangeLogSyncStyle::RemoteAndCentral,
         }
     }
 }

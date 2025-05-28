@@ -65,6 +65,7 @@ pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
+pub(crate) mod support_upload;
 pub(crate) mod sync_file_reference;
 pub(crate) mod system_log;
 pub(crate) mod temperature_breach;
@@ -137,6 +138,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut frontend_plugin::test_pull_upsert_records());
     test_records.append(&mut plugin_data::test_pull_upsert_records());
     test_records.append(&mut campaign::test_pull_upsert_records());
+    test_records.append(&mut support_upload::test_pull_upsert_records());
 
     test_records
 }
@@ -171,6 +173,7 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingR
     test_records.append(&mut vaccination::test_pull_upsert_records());
     test_records.append(&mut plugin_data::test_pull_upsert_records());
     test_records.append(&mut preference::test_pull_upsert_records());
+
     test_records
 }
 
@@ -264,6 +267,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut system_log::test_v6_records());
     test_records.append(&mut contact_form::test_v6_records());
     test_records.append(&mut plugin_data::test_v6_push_records());
+    test_records.append(&mut support_upload::test_v6_records());
 
     test_records
 }

@@ -66,6 +66,7 @@ pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
+pub(crate) mod support_upload;
 pub(crate) mod sync_file_reference;
 pub(crate) mod system_log;
 pub(crate) mod temperature_breach;
@@ -191,6 +192,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         name_insurance_join::boxed(),
         report::boxed(),
         preference::boxed(),
+        support_upload::boxed(),
     ]
 }
 
