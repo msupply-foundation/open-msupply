@@ -27,7 +27,10 @@ jobs:
           python .github/workflows/auto-translate-fr.py
         env:
           DEEPL_AUTH_KEY: ${{ secrets.DEEPL_AUTH_KEY }}
-
+      - name: Sort files
+        run: |
+          chmod +x .github/workflows/sort-json.sh 
+          .github/workflows/sort-json.sh
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
