@@ -1,0 +1,42 @@
+fragment ReportWithVersionRow on ReportNode {
+  __typename
+  context
+  id
+  name
+  code
+  isCustom
+  isActive
+  version
+}
+
+query allReportVersions(
+  $storeId: String!
+  $userLanguage: String!
+  $key: ReportSortFieldInput!
+  $desc: Boolean
+  $filter: ReportFilterInput
+) {
+  reports(
+    storeId: $storeId
+    userLanguage: $userLanguage
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    __typename
+    ... on ReportConnector {
+      nodes {
+        ...ReportWithVersionRow
+      }
+      totalCount
+    }
+    ... on QueryReportsError {
+      __typename
+      error {
+        ... on FailedTranslation {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
