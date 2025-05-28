@@ -30,7 +30,6 @@ export const useDraftLines = (itemId: string | null) => {
   }, [historicalStockLines]);
 
   const updateQuantity = (id: string, numberOfPacks: number) => {
-    console.log(id, numberOfPacks);
     setDraftLines(prevLines =>
       prevLines.map(line =>
         line.id === id ? { ...line, numberOfPacks } : line
