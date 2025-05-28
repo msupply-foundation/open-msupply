@@ -76,14 +76,14 @@ const ReportsComponent = () => {
     <>
       <AppBarButtons />
       <DataTable
-        id="campaign-list"
+        id="report-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes}
         isLoading={isLoading}
         isError={isError}
-        noDataElement={<NothingHere body={t('error.no-campaigns')} />}
+        noDataElement={<NothingHere body={t('error.no-reports')} />}
       />
     </>
   );
