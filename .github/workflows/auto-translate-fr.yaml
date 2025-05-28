@@ -7,6 +7,7 @@ on:
       - 999-rnd-auto-translate-fr
     paths:
       - "client/**"
+      - ".github/workflows/*
   workflow_dispatch:
 
 jobs:
@@ -26,11 +27,11 @@ jobs:
           .github/workflows/auto-translate-fr.sh
         env:
           DEEPL_AUTH_KEY: ${{ secrets.DEEPL_AUTH_KEY }}
-        
+
       - name: Create Pull Request
-              uses: peter-evans/create-pull-request@v7
-              with:
-                commit-message: Update French
-                title: Update French Translations
-                body: This should be a summary of translations english and french versions to make it easier to review.
-                branch: auto-translate-fr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: Update French
+          title: Update French Translations
+          body: This should be a summary of translations english and french versions to make it easier to review.
+          branch: auto-translate-fr
