@@ -24,7 +24,7 @@ jobs:
       - name: Update French Translations
         run: |
           chmod +x .github/workflows/auto-translate-fr.py
-          python .github/workflows/auto-translate-fr.pr
+          python .github/workflows/auto-translate-fr.py
         env:
           DEEPL_AUTH_KEY: ${{ secrets.DEEPL_AUTH_KEY }}
 
