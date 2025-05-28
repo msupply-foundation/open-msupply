@@ -1,0 +1,36 @@
+name: Update Draft French Translations
+
+on:
+  push:
+    branches:
+      - develop
+      - 999-rnd-auto-translate-fr
+    paths:
+      - "client/**"
+  workflow_dispatch:
+
+jobs:
+  sort:
+    name: Sort JSON locale files
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          token: ${{ secrets.JSON_SORT_PAT }}
+      - name: Update French Translations
+        run: |
+          chmod +x .github/workflows/auto-translate-fr.sh
+          .github/workflows/auto-translate-fr.sh
+        env:
+          DEEPL_AUTH_KEY: ${{ secrets.DEEPL_AUTH_KEY }}
+        
+      - name: Create Pull Request
+              uses: peter-evans/create-pull-request@v7
+              with:
+                commit-message: Update French
+                title: Update French Translations
+                body: This should be a summary of translations english and french versions to make it easier to review.
+                branch: auto-translate-fr
