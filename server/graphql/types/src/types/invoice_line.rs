@@ -1,14 +1,15 @@
 use super::{
-    InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, NameNode, PricingNode,
-    ReasonOptionNode, ReturnReasonNode, StockLineNode,
+    CampaignNode, InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, NameNode,
+    PricingNode, ReasonOptionNode, ReturnReasonNode, StockLineNode,
 };
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
     loader::{
-        ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader, NameByNameLinkIdLoader,
-        NameByNameLinkIdLoaderInput, ReasonOptionLoader, StockLineByIdLoader,
+        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader,
+        NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput, ReasonOptionLoader,
+        StockLineByIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
@@ -251,8 +252,16 @@ impl InvoiceLineNode {
         Ok(result.map(ReasonOptionNode::from_domain))
     }
 
-    pub async fn campaign_id(&self) -> &Option<String> {
-        &self.row().campaign_id
+    pub async fn campaign(&self, ctx: &Context<'_>) -> Result<Option<CampaignNode>> {
+        let loader = ctx.get_loader::<DataLoader<CampaignByIdLoader>>();
+
+        let campaign_id = match &self.row().campaign_id {
+            Some(campaign_id) => campaign_id,
+            None => return Ok(None),
+        };
+
+        let result = loader.load_one(campaign_id.clone()).await?;
+        Ok(result.map(CampaignNode::from_domain))
     }
 }
 

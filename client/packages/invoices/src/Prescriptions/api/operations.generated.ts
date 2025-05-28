@@ -1235,6 +1235,16 @@ export type LabelPrinterSettingsQuery = {
   } | null;
 };
 
+export type SavePrescriptionItemLinesMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.SavePrescriptionLinesInput;
+}>;
+
+export type SavePrescriptionItemLinesMutation = {
+  __typename: 'Mutations';
+  savePrescriptionItemLines: { __typename: 'InvoiceNode'; id: string };
+};
+
 export const ItemDirectionFragmentDoc = gql`
   fragment ItemDirection on ItemDirectionNode {
     __typename
@@ -1869,6 +1879,19 @@ export const LabelPrinterSettingsDocument = gql`
     }
   }
 `;
+export const SavePrescriptionItemLinesDocument = gql`
+  mutation savePrescriptionItemLines(
+    $storeId: String!
+    $input: SavePrescriptionLinesInput!
+  ) {
+    savePrescriptionItemLines(input: $input, storeId: $storeId) {
+      ... on InvoiceNode {
+        __typename
+        id
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -2044,6 +2067,22 @@ export function getSdk(
           ),
         'labelPrinterSettings',
         'query',
+        variables
+      );
+    },
+    savePrescriptionItemLines(
+      variables: SavePrescriptionItemLinesMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<SavePrescriptionItemLinesMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SavePrescriptionItemLinesMutation>(
+            SavePrescriptionItemLinesDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'savePrescriptionItemLines',
+        'mutation',
         variables
       );
     },

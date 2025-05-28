@@ -256,7 +256,7 @@
   "messages.mark-as-visited": "Cette visite est encore marquée comme étant en attente. Si vous avez terminé, marquez-la comme réalisée.",
   "messages.outbound-shipment-created-on": "Sortie de stock créée le {{date}}",
   "messages.over-allocated": "En raison des boites disponibles, une quantité totale de {{quantity}} a été allouée au lieu de {{issueQuantity}}",
-  "messages.partial-pack-warning": "Vous avez délivré un nombre non entier de boites. Êtes-vous sûr de pouvoir le faire ? Si ce n'est pas le cas, vous devrez délivrer {{nearestAbove}} unités pour délivrer des boites entières.",
+  "messages.partial-pack-warning-units": "Vous avez délivré un nombre non entier de boites. Êtes-vous sûr de pouvoir le faire ? Si ce n'est pas le cas, vous devrez délivrer {{nearestAbove}} unités pour délivrer des boites entières.",
   "messages.save-encounter-as-visited": "Enregistrer la visite comme réalisée ?",
   "outbound-shipment": "Sorties de stock",
   "outbound-shipments": "Sorties de stock",

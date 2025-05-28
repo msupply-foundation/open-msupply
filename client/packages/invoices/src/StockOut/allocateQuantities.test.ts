@@ -1,7 +1,7 @@
 import { FnUtils } from '@openmsupply-client/common';
 import { allocateQuantities } from './allocateQuantities';
-import { DraftStockOutLineFragment } from '../../../api/operations.generated';
 import { AllocateInType } from './useAllocationContext';
+import { DraftStockOutLineFragment } from '.';
 
 describe('allocateQuantities - standard behaviour.', () => {
   it('allocates quantity to a row', () => {
@@ -122,16 +122,20 @@ describe('Allocated quantities - skips invalid lines', () => {
 });
 
 describe('Allocated quantities - coping with over-allocation', () => {
-  const line1 = createTestLine({ id: '1', availablePacks: 5 });
-  const line2PackSize10 = createTestLine({
+  const fivePacksOfOne = createTestLine({ id: '1', availablePacks: 5 });
+  const fivePacksOfTen = createTestLine({
     id: '2',
     availablePacks: 5,
     packSize: 10,
   });
-  const line3 = createTestLine({ id: '3', availablePacks: 10 });
+  const tenPacksOfOne = createTestLine({ id: '3', availablePacks: 10 });
 
   it('skips large pack size to prevent over allocating', () => {
-    const draftLines = [{ ...line1 }, { ...line2PackSize10 }, { ...line3 }];
+    const draftLines = [
+      { ...fivePacksOfOne },
+      { ...fivePacksOfTen },
+      { ...tenPacksOfOne },
+    ];
 
     expect(
       allocateQuantities(draftLines, 7, {
@@ -139,16 +143,16 @@ describe('Allocated quantities - coping with over-allocation', () => {
       })
     ).toEqual({
       allocatedLines: [
-        { ...line1, numberOfPacks: 5 },
-        { ...line2PackSize10, numberOfPacks: 0 },
-        { ...line3, numberOfPacks: 2 },
+        { ...fivePacksOfOne, numberOfPacks: 5 },
+        { ...fivePacksOfTen, numberOfPacks: 0 }, // skipped pack size 10
+        { ...tenPacksOfOne, numberOfPacks: 2 },
       ],
       remainingQuantity: 0,
     });
   });
 
   it('reduces earlier lines to prevent over allocating', () => {
-    const draftLines = [{ ...line1 }, { ...line2PackSize10 }];
+    const draftLines = [{ ...fivePacksOfOne }, { ...fivePacksOfTen }];
 
     const { allocatedLines, remainingQuantity } = allocateQuantities(
       draftLines,
@@ -157,8 +161,8 @@ describe('Allocated quantities - coping with over-allocation', () => {
     )!;
 
     expect(allocatedLines).toEqual([
-      { ...line1, numberOfPacks: 0 },
-      { ...line2PackSize10, numberOfPacks: 2 },
+      { ...fivePacksOfOne, numberOfPacks: 0 },
+      { ...fivePacksOfTen, numberOfPacks: 2 },
     ]);
     expect(remainingQuantity === 0).toBe(true);
   });
@@ -193,7 +197,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
   });
 
   it('over-allocates if required to meet requested quantity', () => {
-    const draftLines = [{ ...line1 }, { ...line2PackSize10 }];
+    const draftLines = [{ ...fivePacksOfOne }, { ...fivePacksOfTen }];
 
     expect(
       allocateQuantities(draftLines, 47, {
@@ -201,10 +205,32 @@ describe('Allocated quantities - coping with over-allocation', () => {
       })
     ).toEqual({
       allocatedLines: [
-        { ...line1, numberOfPacks: 0 },
-        { ...line2PackSize10, numberOfPacks: 5 }, // i.e. 50 packs
+        { ...fivePacksOfOne, numberOfPacks: 0 },
+        { ...fivePacksOfTen, numberOfPacks: 5 }, // i.e. 50 packs
       ],
       remainingQuantity: -3, // over-allocated by 3
+    });
+  });
+
+  it('issues partial packs if allowed', () => {
+    const draftLines = [
+      { ...fivePacksOfOne },
+      { ...fivePacksOfTen },
+      { ...tenPacksOfOne },
+    ];
+
+    expect(
+      allocateQuantities(draftLines, 7, {
+        allocateIn: { type: AllocateInType.Units },
+        allowPartialPacks: true,
+      })
+    ).toEqual({
+      allocatedLines: [
+        { ...fivePacksOfOne, numberOfPacks: 5 },
+        { ...fivePacksOfTen, numberOfPacks: 0.2 }, // 2 units = 0.2 packs
+        { ...tenPacksOfOne, numberOfPacks: 0 },
+      ],
+      remainingQuantity: 0,
     });
   });
 });
@@ -300,7 +326,7 @@ function createTestLine({
   dosesPerUnit = 1,
 }: TestLineParams): DraftStockOutLineFragment {
   return {
-    __typename: 'DraftOutboundShipmentLineNode',
+    __typename: 'DraftStockOutLineNode',
     id,
     stockLineId: '',
     numberOfPacks,
