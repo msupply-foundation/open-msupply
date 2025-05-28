@@ -57,6 +57,7 @@ pub fn generate(
                         StockInType::InventoryAddition => false,
                         _ => true,
                     },
+                    campaign_id: input.campaign_id.clone(),
                 },
             )?;
 
@@ -112,6 +113,7 @@ fn generate_line(
         tax_percentage: _,
         donor_id,
         r#type: _,
+        campaign_id,
     }: InsertStockInLine,
     ItemRow {
         name: item_name,
@@ -155,6 +157,7 @@ fn generate_line(
         linked_invoice_id: None,
         prescribed_quantity: None,
         reason_option_id: None,
+        campaign_id,
     }
 }
 

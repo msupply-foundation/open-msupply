@@ -23,6 +23,7 @@ export type InboundLineFragment = {
   itemVariantId?: string | null;
   vvmStatusId?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
   itemVariant?: {
     __typename: 'ItemVariantNode';
     id: string;
@@ -122,6 +123,11 @@ export type InboundFragment = {
       itemVariantId?: string | null;
       vvmStatusId?: string | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
+      } | null;
       itemVariant?: {
         __typename: 'ItemVariantNode';
         id: string;
@@ -339,6 +345,11 @@ export type InvoiceQuery = {
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            campaign?: {
+              __typename: 'CampaignNode';
+              id: string;
+              name: string;
+            } | null;
             itemVariant?: {
               __typename: 'ItemVariantNode';
               id: string;
@@ -491,6 +502,11 @@ export type InboundByNumberQuery = {
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
             donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            campaign?: {
+              __typename: 'CampaignNode';
+              id: string;
+              name: string;
+            } | null;
             itemVariant?: {
               __typename: 'ItemVariantNode';
               id: string;
@@ -1018,6 +1034,10 @@ export const InboundLineFragmentDoc = gql`
     itemVariantId
     vvmStatusId
     donor(storeId: $storeId) {
+      id
+      name
+    }
+    campaign {
       id
       name
     }

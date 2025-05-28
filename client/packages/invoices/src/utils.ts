@@ -444,7 +444,7 @@ export const prescriptionToCsv = (
   return Formatter.csv({ fields, data });
 };
 
-export const getPackQuantityCellId = (batch?: string | null) =>
+export const getStockOutQuantityCellId = (batch?: string | null) =>
   `pack_quantity_${batch}`;
 
 // Returns the ID of the next *distinct* item from a collection of lines -- i.e.

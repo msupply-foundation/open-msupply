@@ -19,8 +19,8 @@ import { CurrencyRowFragment } from '@openmsupply-client/system';
 import {
   AllocateInType,
   useAllocationContext,
-} from './allocation/useAllocationContext';
-import { getAllocatedQuantity } from './allocation/utils';
+  getAllocatedQuantity,
+} from '../../../StockOut';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
@@ -140,9 +140,16 @@ export const OutboundLineEditTable = ({
     }),
   }));
 
-  const allocate = (key: string, value: number) => {
+  const allocate = (
+    key: string,
+    value: number,
+    options?: {
+      allocateInType?: AllocateInType;
+      preventPartialPacks?: boolean;
+    }
+  ) => {
     const num = Number.isNaN(value) ? 0 : value;
-    return manualAllocate(key, num, format, t);
+    return manualAllocate(key, num, format, t, options);
   };
 
   const columns = useOutboundLineEditColumns({

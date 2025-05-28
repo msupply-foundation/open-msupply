@@ -1,24 +1,23 @@
 import {
   ArrayUtils,
   create,
-  DateUtils,
   LocaleKey,
   SortUtils,
   TypedTFunction,
 } from '@openmsupply-client/common';
-import { getAllocationAlerts, StockOutAlert } from '../../../../StockOut';
-import { DraftStockOutLineFragment } from '../../../api/operations.generated';
 import {
+  StockOutAlert,
   canAllocate,
   getAllocatedQuantity,
-  issueDoses,
-  issuePacks,
-  packsToDoses,
+  issue,
+  packsToQuantity,
   scannedBatchFilter,
-} from './utils';
-import { OutboundLineEditData } from '../../../api';
+  getAllocationAlerts,
+  OutboundLineEditData,
+  DraftItem,
+  DraftStockOutLineFragment,
+} from '.';
 import { allocateQuantities } from './allocateQuantities';
-import { DraftItem } from '../../../..';
 
 /**
  * Allocation can be in units, doses, or packs of a specific size.
@@ -58,33 +57,48 @@ interface AllocationContext {
   allocateIn: AllocateInOption;
   item: DraftItem | null;
   placeholderUnits: number | null;
+  prescribedQuantity: number | null;
+  note: string | null;
 
   initialise: (params: {
     itemData: OutboundLineEditData;
     strategy: AllocationStrategy;
     allowPlaceholder: boolean;
+    allowPrescribedQuantity?: boolean;
     scannedBatch?: string;
+    allocateIn?: AllocateInOption;
+    ignoreNonAllocatableLines?: boolean;
   }) => void;
 
   setAlerts: (alerts: StockOutAlert[]) => void;
+  setPrescribedQuantity: (quantity: number | null) => void;
+  setNote: (note: string | null) => void;
   setAllocateIn: (
     allocateIn: AllocateInOption,
     // TODO: these are passed into a few functions, can we intialise with them instead?
     format: (value: number, options?: Intl.NumberFormatOptions) => string,
     t: TypedTFunction<LocaleKey>
   ) => void;
+  setIsDirty: (isDirty: boolean) => void;
   clear: () => void;
 
   manualAllocate: (
     lineId: string,
     quantity: number,
     format: (value: number, options?: Intl.NumberFormatOptions) => string,
-    t: TypedTFunction<LocaleKey>
+    t: TypedTFunction<LocaleKey>,
+    options?: {
+      /** manualAllocate can be called from a different lens than we currently displaying in */
+      allocateInType?: AllocateInType;
+      /** manualAllocate can be called from a different lens than we currently displaying in */
+      preventPartialPacks?: boolean;
+    }
   ) => number;
   autoAllocate: (
     quantity: number,
     format: (value: number, options?: Intl.NumberFormatOptions) => string,
-    t: TypedTFunction<LocaleKey>
+    t: TypedTFunction<LocaleKey>,
+    allowPartialPacks?: boolean
   ) => number;
 }
 
@@ -94,14 +108,25 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   draftLines: [],
   nonAllocatableLines: [],
   placeholderUnits: null,
+  prescribedQuantity: null,
   alerts: [],
   allocateIn: { type: AllocateInType.Units },
+  note: null,
 
   initialise: ({
-    itemData: { item, draftLines, placeholderQuantity },
+    itemData: {
+      item,
+      draftLines,
+      placeholderQuantity,
+      prescribedQuantity,
+      note,
+    },
     strategy,
     allowPlaceholder,
+    allowPrescribedQuantity,
     scannedBatch,
+    allocateIn,
+    ignoreNonAllocatableLines,
   }) => {
     const sortedLines = draftLines.sort(SorterByStrategy[strategy]);
 
@@ -120,11 +145,18 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     set({
       isDirty: false,
       item,
+      note,
+      allocateIn: allocateIn ?? { type: AllocateInType.Units },
 
       draftLines: allocatableLines,
-      nonAllocatableLines,
+      // When not ignored, we still want to display non-allocatable lines to the user
+      // (e.g. stock on hold, expired) for context, and show alerts about them
+      nonAllocatableLines: ignoreNonAllocatableLines ? [] : nonAllocatableLines,
 
       placeholderUnits: allowPlaceholder ? (placeholderQuantity ?? 0) : null,
+      prescribedQuantity: allowPrescribedQuantity
+        ? (prescribedQuantity ?? 0)
+        : null,
       alerts: [],
     });
   },
@@ -140,6 +172,8 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       allocateIn: { type: AllocateInType.Units },
       availablePackSizes: [],
       alerts: [],
+      note: null,
+      prescribedQuantity: null,
     })),
 
   setAllocateIn: (allocateIn, format, t) => {
@@ -174,12 +208,33 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       alerts,
     })),
 
-  autoAllocate: (quantity, format, t) => {
+  setIsDirty: isDirty =>
+    set(state => ({
+      ...state,
+      isDirty,
+    })),
+
+  setNote: note =>
+    set(state => ({
+      ...state,
+      note,
+      isDirty: true,
+    })),
+
+  setPrescribedQuantity: (quantity: number | null) =>
+    set(state => ({
+      ...state,
+      prescribedQuantity: quantity,
+      isDirty: true,
+    })),
+
+  autoAllocate: (quantity, format, t, allowPartialPacks = false) => {
     const { draftLines, nonAllocatableLines, placeholderUnits, allocateIn } =
       get();
 
     const result = allocateQuantities(draftLines, quantity, {
       allocateIn,
+      allowPartialPacks,
     });
 
     // Early return if no allocation was possible
@@ -196,20 +251,19 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       ({ availablePacks, stockLineOnHold }) =>
         availablePacks > 0 && !!stockLineOnHold
     );
-    const hasExpired = draftLines.some(
-      ({ expiryDate }) =>
-        !!expiryDate && DateUtils.isExpired(new Date(expiryDate))
-    );
 
     const stillToAllocate =
-      result.remainingQuantity > 0 ? result.remainingQuantity : 0;
+      result.remainingQuantity > 0 && placeholderUnits !== null
+        ? result.remainingQuantity
+        : 0;
 
     const alerts = getAllocationAlerts(
       quantity,
       allocatedQuantity,
       stillToAllocate,
       hasOnHold,
-      hasExpired,
+      allocateIn,
+      result.allocatedLines,
       format,
       t
     );
@@ -233,25 +287,23 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     return allocatedQuantity;
   },
 
-  manualAllocate: (lineId, quantity, format, t) => {
+  manualAllocate: (lineId, quantity, format, t, options) => {
     const { allocateIn, draftLines } = get();
+    const allocateInType = options?.allocateInType ?? allocateIn.type;
 
-    // TODO: pass in when using for prescriptions
-    const allowPartialPacks = false;
-
-    const updatedLines =
-      allocateIn.type === AllocateInType.Doses
-        ? issueDoses(draftLines, lineId, quantity, allowPartialPacks)
-        : issuePacks(draftLines, lineId, quantity);
+    const updatedLines = issue(
+      draftLines,
+      lineId,
+      quantity,
+      allocateInType,
+      !options?.preventPartialPacks
+    );
 
     // Now check if we need to show any alerts
     const updatedLine = updatedLines.find(line => line.id === lineId);
 
     const allocatedQuantity = updatedLine
-      ? allocateIn.type === AllocateInType.Doses
-        ? packsToDoses(updatedLine.numberOfPacks, updatedLine)
-        : // when not in doses, manual allocation is in packs
-          updatedLine.numberOfPacks
+      ? packsToQuantity(allocateInType, updatedLine.numberOfPacks, updatedLine)
       : 0;
 
     // Todo: once prescriptions refactored, see if we can streamline alerts?

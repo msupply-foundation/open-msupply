@@ -35,11 +35,8 @@ const defaultDraftStockLine: DraftStockLine = {
     __typename: 'VvmstatusLogConnector',
     nodes: [],
   },
-  vvmStatus: {
-    __typename: 'VvmstatusNode',
-    id: '',
-    description: '',
-  },
+  vvmStatus: null,
+  campaign: null,
 };
 
 export function useStockLine(id?: string) {
@@ -124,6 +121,7 @@ const useCreate = () => {
     itemVariantId,
     vvmStatusId,
     donor,
+    campaign,
   }: DraftStockLine) => {
     return await stockApi.insertStockLine({
       storeId,
@@ -143,6 +141,7 @@ const useCreate = () => {
         itemVariantId,
         vvmStatusId,
         donorId: donor?.id,
+        campaignId: campaign?.id,
       },
     });
   };
@@ -169,6 +168,7 @@ const useUpdate = (id: string) => {
     itemVariantId,
     vvmStatusId,
     donor,
+    campaign,
   }: Partial<DraftStockLine>) => {
     const result = await stockApi.updateStockLine({
       input: {
@@ -183,6 +183,7 @@ const useUpdate = (id: string) => {
         itemVariantId: setNullableInput('itemVariantId', { itemVariantId }),
         vvmStatusId,
         donorId: setNullableInput('id', donor),
+        campaignId: setNullableInput('id', campaign),
       },
       storeId,
     });

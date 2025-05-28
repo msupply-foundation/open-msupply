@@ -20,12 +20,14 @@ import {
   NumberCell,
   getReasonOptionType,
   ReasonOptionNode,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
   getDonorColumn,
   getLocationInputColumn,
-  ItemVariantInputCellOld,
+  ItemVariantInputCell,
   PackSizeEntryCell,
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
@@ -168,10 +170,14 @@ export const BatchTable = ({
   const t = useTranslation();
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
+  const { data: preferences } = usePreference(
+    PreferenceKey.ManageVaccinesInDoses
+  );
   useDisableStocktakeRows(batches);
   const { data: reasonOptions, isLoading } = useReasonOptions();
-
   const errorsContext = useStocktakeLineErrorContext();
+
+  const displayInDoses = !!preferences?.manageVaccinesInDoses;
 
   const columnDefinitions = useMemo(() => {
     const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
@@ -191,7 +197,13 @@ export const BatchTable = ({
         label: 'label.item-variant',
         width: 170,
         Cell: props => (
-          <ItemVariantInputCellOld {...props} itemId={props.rowData.item.id} />
+          <ItemVariantInputCell
+            displayInDoses={
+              (displayInDoses && props.rowData.item.isVaccine) ?? false
+            }
+            {...props}
+            itemId={props.rowData.item.id}
+          />
         ),
         setter: patch => update({ ...patch }),
       });
@@ -207,6 +219,7 @@ export const BatchTable = ({
         align: ColumnAlign.Left,
         accessor: ({ rowData }) =>
           rowData.packSize ?? rowData.item?.defaultPackSize,
+        defaultHideOnMobile: true,
       }),
       {
         key: 'snapshotNumberOfPacks',
@@ -352,6 +365,7 @@ export const LocationTable = ({
       width: 200,
       setter: patch => update({ ...patch, countThisLine: true }),
       accessor: ({ rowData }) => rowData.comment || '',
+      defaultHideOnMobile: true,
     },
   ]);
 

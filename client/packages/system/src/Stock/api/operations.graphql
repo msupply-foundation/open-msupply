@@ -40,6 +40,10 @@ fragment StockLineRow on StockLineNode {
   donor(storeId: $storeId) {
     id
   }
+  campaign {
+    id
+    name
+  }
 }
 
 fragment RepackStockLine on RepackStockLineNode {

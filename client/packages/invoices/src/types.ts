@@ -3,7 +3,7 @@ import {
   CustomerReturnLineFragment,
   SupplierReturnLineFragment,
 } from './Returns';
-import { StockOutLineFragment } from './StockOut/operations.generated';
+import { StockOutLineFragment } from './StockOut/api/operations.generated';
 import { PrescriptionLineFragment } from './Prescriptions';
 
 export interface DraftInboundLine extends InboundLineFragment {

@@ -29,6 +29,7 @@ import { PrescriptionInfo } from './PrescriptionInfo';
 
 export const prescriptionTester = rankWith(10, uiTypeIs('Prescription'));
 
+// TODO: update me with new prescriptions allocation!
 const Options = z
   .object({
     /**
@@ -79,7 +80,7 @@ const UIComponent = (props: ControlProps) => {
   >([]);
 
   useDraftPrescriptionLines(
-    selectedItem,
+    selectedItem ? { ...selectedItem, itemDirections: [] } : null,
     draftPrescriptionLines,
     setDraftPrescriptionLines
   );
