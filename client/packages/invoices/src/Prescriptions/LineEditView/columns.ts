@@ -56,14 +56,17 @@ export const usePrescriptionLineEditColumns = ({
   ];
 
   if (preferences?.manageVvmStatusForStock && !!isVaccine) {
-    columns.push({  label: 'label.vvm-status',
+    columns.push({
+      label: 'label.vvm-status',
       key: 'vvmStatus',
       width: 100,
       sortable: false,
       align: ColumnAlign.Right,
       Cell: TooltipTextCell,
       accessor: ({ rowData }) => {
-        return rowData?.stockLine?.vvmStatus?.description ?? UNDEFINED_STRING_VALUE;
+        return (
+          rowData?.stockLine?.vvmStatus?.description ?? UNDEFINED_STRING_VALUE
+        );
       },
       defaultHideOnMobile: true,
     });
@@ -110,7 +113,7 @@ export const usePrescriptionLineEditColumns = ({
           unit,
         }),
         key: 'unitQuantity',
-        align: ColumnAlign.Right,
+        align: ColumnAlign.Left,
         width: 120,
         setter: ({ packSize, id, unitQuantity }) =>
           onChange(id, (unitQuantity ?? 0) / (packSize ?? 1)),

@@ -223,6 +223,7 @@ const getAllocateInUnitsColumns = (
       width: 100,
       label: 'label.pack-quantity-issued',
       setter: ({ id, numberOfPacks }) => allocate(id, numberOfPacks ?? 0),
+      align: ColumnAlign.Left,
     },
   ],
   [

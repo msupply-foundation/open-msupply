@@ -92,6 +92,7 @@ export const QuantityTableComponent = ({
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: updateDraftLine,
       label: 'label.pack-size',
+      align: ColumnAlign.Left,
     }),
     [
       'numberOfPacks',
@@ -99,6 +100,7 @@ export const QuantityTableComponent = ({
         label: 'label.packs-received',
         Cell: NumberOfPacksCell,
         width: 100,
+        align: ColumnAlign.Left,
         setter: patch => {
           const { packSize, numberOfPacks } = patch;
 
@@ -122,7 +124,7 @@ export const QuantityTableComponent = ({
     }),
     width: 100,
     Cell: NumberInputCell,
-    align: ColumnAlign.Right,
+    align: ColumnAlign.Left,
     setter: patch => {
       const { unitsPerPack, packSize } = patch;
 
