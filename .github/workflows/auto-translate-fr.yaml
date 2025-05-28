@@ -12,7 +12,7 @@ on:
 
 jobs:
   sort:
-    name: Sort JSON locale files
+    name: Translate common.json into French
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
