@@ -6696,6 +6696,7 @@ export type QueriesActivityLogsArgs = {
 
 export type QueriesAllReportVersionsArgs = {
   filter?: InputMaybe<ReportFilterInput>;
+  page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ReportSortInput>>;
   storeId: Scalars['String']['input'];
   userLanguage: Scalars['String']['input'];

@@ -14,9 +14,12 @@ query allReportVersions(
   $userLanguage: String!
   $key: ReportSortFieldInput!
   $desc: Boolean
+  $first: Int
+  $offset: Int
   $filter: ReportFilterInput
 ) {
   allReportVersions(
+    page: { first: $first, offset: $offset }
     storeId: $storeId
     userLanguage: $userLanguage
     sort: { key: $key, desc: $desc }

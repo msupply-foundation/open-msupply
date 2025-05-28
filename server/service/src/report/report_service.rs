@@ -2,8 +2,8 @@ use base64::prelude::*;
 use chrono::{DateTime, Utc};
 use log::error;
 use repository::{
-    migrations::Version, EqualFilter, Report, ReportFilter, ReportMetaData, ReportRepository,
-    ReportRowRepository, ReportSort, RepositoryError,
+    migrations::Version, EqualFilter, Pagination, PaginationOption, Report, ReportFilter,
+    ReportMetaData, ReportRepository, ReportRowRepository, ReportSort, RepositoryError,
 };
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
@@ -13,10 +13,11 @@ use util::{format_error, uuid::uuid};
 
 use crate::{
     boajs::{call_method, BoaJsError},
+    get_default_pagination, i64_to_u32,
     localisations::{Localisations, TranslationError},
     service_provider::ServiceContext,
     static_files::{StaticFileCategory, StaticFileService},
-    ListError,
+    ListError, ListResult,
 };
 
 use super::{
@@ -120,8 +121,16 @@ pub trait ReportServiceTrait: Sync + Send {
         user_language: String,
         filter: Option<ReportFilter>,
         sort: Option<ReportSort>,
-    ) -> Result<Vec<Report>, GetReportsError> {
-        query_all_report_versions(ctx, translation_service, user_language, filter, sort)
+        pagination: Option<PaginationOption>,
+    ) -> Result<ListResult<Report>, GetReportsError> {
+        query_all_report_versions(
+            ctx,
+            translation_service,
+            user_language,
+            filter,
+            sort,
+            pagination,
+        )
     }
 
     /// Loads a report definition by id and resolves it
@@ -391,7 +400,7 @@ fn query_reports(
     let filter = ReportFilter::new().id(EqualFilter::equal_any(reports_to_show_meta_data));
 
     let reports = repo
-        .query(Some(filter), sort)
+        .query(Pagination::all(), Some(filter), sort)
         .map_err(|err| GetReportsError::ListError(ListError::DatabaseError(err)))?;
 
     let reports = reports
@@ -411,11 +420,15 @@ fn query_all_report_versions(
     user_language: String,
     filter: Option<ReportFilter>,
     sort: Option<ReportSort>,
-) -> Result<Vec<Report>, GetReportsError> {
+    pagination: Option<PaginationOption>,
+) -> Result<ListResult<Report>, GetReportsError> {
+    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)
+        .map_err(GetReportsError::ListError)?;
+
     let repo = ReportRepository::new(&ctx.connection);
 
     let reports = repo
-        .query(filter, sort)
+        .query(pagination, filter.clone(), sort)
         .map_err(|err| GetReportsError::ListError(ListError::DatabaseError(err)))?;
 
     // we don't return schema currently - but maybe we will need so leaving here for now
@@ -425,9 +438,15 @@ fn query_all_report_versions(
             translate_report_arugment_schema(r, translation_service, &user_language)
                 .map_err(GetReportsError::TranslationError)
         })
-        .collect::<Result<Vec<Report>, GetReportsError>>();
+        .collect::<Result<Vec<Report>, GetReportsError>>()?;
 
-    reports
+    Ok(ListResult {
+        count: i64_to_u32(
+            repo.count(filter)
+                .map_err(|err| GetReportsError::ListError(ListError::DatabaseError(err)))?,
+        ),
+        rows: reports,
+    })
 }
 
 fn report_filter_method(reports: Vec<ReportMetaData>, app_version: Version) -> Vec<String> {

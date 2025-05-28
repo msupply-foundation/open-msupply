@@ -19,6 +19,8 @@ export type AllReportVersionsQueryVariables = Types.Exact<{
   userLanguage: Types.Scalars['String']['input'];
   key: Types.ReportSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   filter?: Types.InputMaybe<Types.ReportFilterInput>;
 }>;
 
@@ -63,9 +65,12 @@ export const AllReportVersionsDocument = gql`
     $userLanguage: String!
     $key: ReportSortFieldInput!
     $desc: Boolean
+    $first: Int
+    $offset: Int
     $filter: ReportFilterInput
   ) {
     allReportVersions(
+      page: { first: $first, offset: $offset }
       storeId: $storeId
       userLanguage: $userLanguage
       sort: { key: $key, desc: $desc }

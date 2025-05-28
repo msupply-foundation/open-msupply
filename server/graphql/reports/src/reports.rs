@@ -9,11 +9,12 @@ use graphql_core::{
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::FormSchemaNode;
 use repository::{
-    ContextType as ReportContextDomain, EqualFilter, Report, ReportFilter, ReportSort,
-    ReportSortField, StringFilter,
+    ContextType as ReportContextDomain, EqualFilter, PaginationOption, Report, ReportFilter,
+    ReportSort, ReportSortField, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 use service::report::report_service::{GetReportError, GetReportsError};
+use service::{usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -156,6 +157,36 @@ impl ReportNode {
     }
 }
 
+impl ReportNode {
+    pub fn from_domain(row: Report) -> ReportNode {
+        ReportNode { row }
+    }
+
+    pub fn row(&self) -> &Report {
+        &self.row
+    }
+}
+
+impl ReportConnector {
+    pub fn from_domain(reports: ListResult<Report>) -> ReportConnector {
+        ReportConnector {
+            total_count: reports.count,
+            nodes: reports
+                .rows
+                .into_iter()
+                .map(ReportNode::from_domain)
+                .collect(),
+        }
+    }
+
+    pub fn from_vec(reports: Vec<Report>) -> ReportConnector {
+        ReportConnector {
+            total_count: usize_to_u32(reports.len()),
+            nodes: reports.into_iter().map(ReportNode::from_domain).collect(),
+        }
+    }
+}
+
 pub fn report(
     ctx: &Context<'_>,
     store_id: String,
@@ -226,6 +257,7 @@ pub fn all_report_versions(
     user_language: String,
     filter: Option<ReportFilterInput>,
     sort: Option<Vec<ReportSortInput>>,
+    pagination: Option<PaginationOption>,
 ) -> Result<ReportsResponse> {
     let user = validate_auth(
         ctx,
@@ -239,20 +271,22 @@ pub fn all_report_versions(
     let service_context = service_provider.context(store_id, user.user_id)?;
     let translation_service = &service_provider.translations_service;
 
-    match service_provider.report_service.query_all_report_versions(
+    let reports = match service_provider.report_service.query_all_report_versions(
         &service_context,
         &translation_service,
         user_language,
         filter.map(|f| f.to_domain()),
         sort.and_then(|mut sort_list| sort_list.pop())
             .map(|sort| sort.to_domain()),
+        pagination,
     ) {
-        Ok(reports) => Ok(ReportsResponse::Response(ReportConnector {
-            total_count: reports.len() as u32,
-            nodes: reports.into_iter().map(|row| ReportNode { row }).collect(),
-        })),
-        Err(err) => map_reports_error(err),
-    }
+        Ok(reports) => reports,
+        Err(err) => return map_reports_error(err),
+    };
+
+    Ok(ReportsResponse::Response(ReportConnector::from_domain(
+        reports,
+    )))
 }
 
 impl ReportFilterInput {

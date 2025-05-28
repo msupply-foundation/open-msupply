@@ -61,6 +61,8 @@ const useGetList = (queryParams?: ReportListParams) => {
         desc: sortBy.isDesc,
         storeId,
         userLanguage: language,
+        first,
+        offset,
       });
 
       if (query?.allReportVersions?.__typename == 'ReportConnector') {

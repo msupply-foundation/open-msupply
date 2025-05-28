@@ -1,10 +1,11 @@
 use async_graphql::*;
-use graphql_core::generic_inputs::PrintReportSortInput;
+use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
 use print::{generate_report, generate_report_definition, PrintReportResponse};
 use reports::{
     all_report_versions, report, reports, ReportFilterInput, ReportResponse, ReportSortInput,
     ReportsResponse,
 };
+use repository::PaginationOption;
 use service::report::report_service::PrintFormat as ServicePrintFormat;
 
 mod print;
@@ -51,9 +52,17 @@ impl ReportQueries {
         store_id: String,
         user_language: String,
         filter: Option<ReportFilterInput>,
+        page: Option<PaginationInput>,
         sort: Option<Vec<ReportSortInput>>,
     ) -> Result<ReportsResponse> {
-        all_report_versions(ctx, store_id, user_language, filter, sort)
+        all_report_versions(
+            ctx,
+            store_id,
+            user_language,
+            filter,
+            sort,
+            page.map(PaginationOption::from),
+        )
     }
 
     /// Creates a generated report.
