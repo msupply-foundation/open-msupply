@@ -24,7 +24,7 @@ export type AllReportVersionsQueryVariables = Types.Exact<{
 
 export type AllReportVersionsQuery = {
   __typename: 'Queries';
-  reports:
+  allReportVersions:
     | {
         __typename: 'QueryReportsError';
         error: { __typename: 'FailedTranslation'; description: string };
@@ -65,7 +65,7 @@ export const AllReportVersionsDocument = gql`
     $desc: Boolean
     $filter: ReportFilterInput
   ) {
-    reports(
+    allReportVersions(
       storeId: $storeId
       userLanguage: $userLanguage
       sort: { key: $key, desc: $desc }

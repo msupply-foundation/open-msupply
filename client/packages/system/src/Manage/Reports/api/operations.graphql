@@ -16,7 +16,7 @@ query allReportVersions(
   $desc: Boolean
   $filter: ReportFilterInput
 ) {
-  reports(
+  allReportVersions(
     storeId: $storeId
     userLanguage: $userLanguage
     sort: { key: $key, desc: $desc }

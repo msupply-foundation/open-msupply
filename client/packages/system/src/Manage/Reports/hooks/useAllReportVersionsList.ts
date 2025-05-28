@@ -35,9 +35,8 @@ export const useAllReportVersionsList = ({
 };
 
 const useGetList = (queryParams?: ReportListParams) => {
-    const { reportApi, storeId } = useAllReportVersionsGraphQL();
-    
-    const { currentLanguage: language } = useIntlUtils();
+  const { reportApi, storeId } = useAllReportVersionsGraphQL();
+  const { currentLanguage: language } = useIntlUtils();
   const { error } = useNotification();
   const t = useTranslation();
 
@@ -57,7 +56,6 @@ const useGetList = (queryParams?: ReportListParams) => {
       const query = await reportApi.allReportVersions({
         filter: {
           ...filterBy,
-          isActive: true,
         },
         key: sortBy.key as ReportSortFieldInput,
         desc: sortBy.isDesc,
@@ -65,18 +63,18 @@ const useGetList = (queryParams?: ReportListParams) => {
         userLanguage: language,
       });
 
-      if (query?.reports?.__typename == 'ReportConnector') {
+      if (query?.allReportVersions?.__typename == 'ReportConnector') {
         return {
-          nodes: query.reports.nodes,
-          totalCount: query.reports.totalCount,
+          nodes: query.allReportVersions.nodes,
+          totalCount: query.allReportVersions.totalCount,
         };
       }
-      if (query?.reports.__typename == 'QueryReportsError') {
+      if (query?.allReportVersions.__typename == 'QueryReportsError') {
         let errorMessage;
-        switch (query.reports.error.__typename) {
+        switch (query.allReportVersions.error.__typename) {
           case 'FailedTranslation':
             errorMessage = t('report.error-translating', {
-              key: query.reports.error.description,
+              key: query.allReportVersions.error.description,
             });
             break;
           // TODO add never exhaustive error handling if adding more error types to QueryReportError

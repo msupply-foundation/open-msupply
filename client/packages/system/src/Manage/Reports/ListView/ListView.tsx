@@ -19,7 +19,7 @@ const ReportsComponent = () => {
     updateSortQuery,
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset, filterBy },
-  } = useUrlQueryParams({ initialSort: { key: 'name', dir: 'asc' } });
+  } = useUrlQueryParams({ initialSort: { key: 'code', dir: 'asc' } });
 
   const queryParams = { sortBy, first, offset, filterBy };
   const {
@@ -44,6 +44,7 @@ const ReportsComponent = () => {
         label: 'label.code',
         width: 150,
         sortable: true,
+        Cell: TooltipTextCell,
       },
       {
         key: 'version',

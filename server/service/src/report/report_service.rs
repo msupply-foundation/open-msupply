@@ -418,6 +418,7 @@ fn query_all_report_versions(
         .query(filter, sort)
         .map_err(|err| GetReportsError::ListError(ListError::DatabaseError(err)))?;
 
+    // we don't return schema currently - but maybe we will need so leaving here for now
     let reports = reports
         .into_iter()
         .map(|r| {
