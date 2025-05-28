@@ -1,31 +1,32 @@
 import React from 'react';
 import {
-  Grid,
   ModalLabel,
   useTranslation,
-  Divider,
-  Box,
   NumericTextInput,
   useFormatNumber,
   useBufferState,
   useDebounceCallback,
 } from '@openmsupply-client/common';
-import { AllocationAlerts } from '../../../StockOut';
-import { useAllocationContext } from './allocation/useAllocationContext';
-import { getAllocatedQuantity } from './allocation/utils';
-import { AllocateInSelector } from './AllocateInSelector';
+import { useAllocationContext } from '../useAllocationContext';
+import { getAllocatedQuantity } from '../utils';
 
-export const AutoAllocate = () => {
+export const AutoAllocateField = ({
+  inputColor,
+  allowPartialPacks,
+  autoFocus = true,
+}: {
+  inputColor?: string;
+  allowPartialPacks?: boolean;
+  autoFocus?: boolean;
+}) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
 
-  const { autoAllocate, alerts, allocatedQuantity } = useAllocationContext(
-    state => ({
-      autoAllocate: state.autoAllocate,
-      alerts: state.alerts,
-      allocatedQuantity: getAllocatedQuantity(state),
-    })
-  );
+  const { autoAllocate, allocatedQuantity } = useAllocationContext(state => ({
+    autoAllocate: state.autoAllocate,
+    allocatedQuantity: getAllocatedQuantity(state),
+    allocateIn: state.allocateIn,
+  }));
 
   // Using buffer state with the allocated quantity, so gets pre-populated with existing
   // quantity, and updated when the user edits the individual lines
@@ -36,9 +37,10 @@ export const AutoAllocate = () => {
   // e.g. 10, 12, 100.. then the allocation rounds the 1 up immediately to the available
   // pack size which stops you entering the required quantity.
   // See https://github.com/msupply-foundation/open-msupply/issues/2727
+  // and https://github.com/msupply-foundation/open-msupply/issues/3532
   const debouncedAllocate = useDebounceCallback(
     quantity => {
-      const allocated = autoAllocate(quantity, format, t);
+      const allocated = autoAllocate(quantity, format, t, allowPartialPacks);
       setIssueQuantity(allocated);
     },
     [],
@@ -57,24 +59,18 @@ export const AutoAllocate = () => {
   };
 
   return (
-    <Grid container gap="4px" width="100%">
-      <>
-        <Divider margin={10} />
-        <Box display="flex" alignItems="flex-start" gap={2}>
-          <Grid container alignItems="center" pt={1}>
-            <ModalLabel label={t('label.issue')} />
-            <NumericTextInput
-              autoFocus
-              value={issueQuantity}
-              onChange={handleIssueQuantityChange}
-            />
-            <Box marginLeft={1} />
-
-            <AllocateInSelector />
-          </Grid>
-          <AllocationAlerts allocationAlerts={alerts} />
-        </Box>
-      </>
-    </Grid>
+    <>
+      <ModalLabel label={t('label.issue')} />
+      <NumericTextInput
+        autoFocus={autoFocus}
+        value={issueQuantity}
+        onChange={handleIssueQuantityChange}
+        slotProps={
+          inputColor
+            ? { htmlInput: { sx: { backgroundColor: inputColor } } }
+            : undefined
+        }
+      />
+    </>
   );
 };

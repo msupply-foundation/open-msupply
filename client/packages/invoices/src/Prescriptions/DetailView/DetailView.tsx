@@ -23,10 +23,9 @@ import { AppBarButtons } from './AppBarButton';
 import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
 import { Footer } from './Footer';
-import { StockOutLineFragment } from '../../StockOut';
+import { StockOutLineFragment, Draft } from '../../StockOut';
 import { StockOutItem } from '../../types';
 import { HistoryModal } from './History/HistoryModal';
-import { Draft } from '../..';
 
 export const PrescriptionDetailView = () => {
   const t = useTranslation();

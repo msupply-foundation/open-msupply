@@ -28,6 +28,8 @@ pub struct UpdateInput {
     pub barcode: Option<String>,
     pub item_variant_id: Option<NullableUpdateInput<String>>,
     pub vvm_status_id: Option<String>,
+    pub donor_id: Option<NullableUpdateInput<String>>,
+    pub campaign_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Interface)]
@@ -95,6 +97,8 @@ impl UpdateInput {
             barcode,
             item_variant_id,
             vvm_status_id,
+            donor_id,
+            campaign_id,
         } = self;
 
         ServiceInput {
@@ -111,7 +115,13 @@ impl UpdateInput {
             item_variant_id: item_variant_id.map(|item_variant_id| NullableUpdate {
                 value: item_variant_id.value,
             }),
+            donor_id: donor_id.map(|donor_id| NullableUpdate {
+                value: donor_id.value,
+            }),
             vvm_status_id,
+            campaign_id: campaign_id.map(|campaign_id| NullableUpdate {
+                value: campaign_id.value,
+            }),
         }
     }
 }
@@ -129,10 +139,13 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
         }
         // Standard Graphql Errors
-        ServiceError::StockDoesNotBelongToStore => BadUserInput(formatted_error),
-        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::ItemVariantDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::VVMStatusDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::DonorDoesNotExist
+        | ServiceError::DonorNotVisible
+        | ServiceError::DonorIsNotADonor
+        | ServiceError::VVMStatusDoesNotExist
+        | ServiceError::StockDoesNotBelongToStore
+        | ServiceError::LocationDoesNotExist
+        | ServiceError::ItemVariantDoesNotExist => BadUserInput(formatted_error),
         ServiceError::UpdatedStockNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };

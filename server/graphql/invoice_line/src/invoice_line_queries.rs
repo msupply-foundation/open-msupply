@@ -13,7 +13,7 @@ use graphql_invoice::invoice_queries::{
     EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput,
 };
 use graphql_types::types::{
-    DraftOutboundShipmentItemData, InvoiceLineConnector, InvoiceLineNodeType, InvoiceNodeStatus,
+    DraftStockOutItemData, InvoiceLineConnector, InvoiceLineNodeType, InvoiceNodeStatus,
     InvoiceNodeType,
 };
 use repository::{
@@ -78,6 +78,8 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
                 .or(f.inventory_adjustment_reason.map(EqualFilter::from)),
             picked_datetime: None,
             delivered_datetime: None,
+            has_prescribed_quantity: None,
+            has_note: None,
         }
     }
 }
@@ -190,7 +192,7 @@ pub fn draft_outbound_lines(
     store_id: &str,
     item_id: &str,
     invoice_id: &str,
-) -> Result<DraftOutboundShipmentItemData> {
+) -> Result<DraftStockOutItemData> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -203,13 +205,14 @@ pub fn draft_outbound_lines(
     let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
     let service = &service_provider.invoice_line_service;
 
-    let result =
-        service.get_draft_outbound_shipment_lines(&service_ctx, store_id, item_id, invoice_id);
+    let result = service.get_draft_stock_out_lines(&service_ctx, store_id, item_id, invoice_id);
 
-    if let Ok((draft_lines, placeholder_quantity)) = result {
-        Ok(DraftOutboundShipmentItemData {
+    if let Ok((draft_lines, item_data)) = result {
+        Ok(DraftStockOutItemData {
             lines: draft_lines,
-            placeholder_quantity,
+            placeholder_quantity: item_data.placeholder_quantity,
+            prescribed_quantity: item_data.prescribed_quantity,
+            note: item_data.note,
         })
     } else {
         let err = result.unwrap_err();

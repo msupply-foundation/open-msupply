@@ -72,6 +72,8 @@ export type StockLineRowFragment = {
     id: string;
     description: string;
   } | null;
+  donor?: { __typename: 'NameNode'; id: string } | null;
+  campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
 };
 
 export type RepackStockLineFragment = {
@@ -274,6 +276,12 @@ export type StockLinesQuery = {
         id: string;
         description: string;
       } | null;
+      donor?: { __typename: 'NameNode'; id: string } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
+      } | null;
     }>;
   };
 };
@@ -358,6 +366,12 @@ export type StockLineQuery = {
         __typename: 'VvmstatusNode';
         id: string;
         description: string;
+      } | null;
+      donor?: { __typename: 'NameNode'; id: string } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
       } | null;
     }>;
   };
@@ -469,6 +483,12 @@ export type UpdateStockLineMutation = {
           __typename: 'VvmstatusNode';
           id: string;
           description: string;
+        } | null;
+        donor?: { __typename: 'NameNode'; id: string } | null;
+        campaign?: {
+          __typename: 'CampaignNode';
+          id: string;
+          name: string;
         } | null;
       }
     | { __typename: 'UpdateStockLineError' };
@@ -752,6 +772,12 @@ export type InsertStockLineMutation = {
           id: string;
           description: string;
         } | null;
+        donor?: { __typename: 'NameNode'; id: string } | null;
+        campaign?: {
+          __typename: 'CampaignNode';
+          id: string;
+          name: string;
+        } | null;
       };
 };
 
@@ -869,6 +895,13 @@ export const StockLineRowFragmentDoc = gql`
     vvmStatus {
       id
       description
+    }
+    donor(storeId: $storeId) {
+      id
+    }
+    campaign {
+      id
+      name
     }
   }
   ${LocationRowFragmentDoc}

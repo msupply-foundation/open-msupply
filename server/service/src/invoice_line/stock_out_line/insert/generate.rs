@@ -178,6 +178,7 @@ fn generate_line(
         vvm_status_id,
         linked_invoice_id: None,
         reason_option_id: None,
+        campaign_id: None,
     })
 }
 

@@ -12,7 +12,7 @@ import {
   InvoiceLineNode,
   DialogButton,
 } from '@openmsupply-client/common';
-import { Draft } from '../../..';
+import { Draft } from 'packages/invoices/src/StockOut';
 
 import { useHistoryColumns } from './columns';
 import { usePrescriptionList } from '../../api';

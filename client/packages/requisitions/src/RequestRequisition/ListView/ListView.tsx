@@ -15,6 +15,7 @@ import {
   ColumnDescription,
   GenericColumnKey,
   getCommentPopoverColumn,
+  useSimplifiedTabletUI,
   RouteBuilder,
   TooltipTextCell,
 } from '@openmsupply-client/common';
@@ -61,6 +62,7 @@ export const RequestRequisitionListView: FC = () => {
   const { data, isError, isLoading } = useRequest.document.list(queryParams);
   useDisableRequestRows(data?.nodes);
   const { requireSupplierAuthorisation } = useRequest.utils.preferences();
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const columnDefinitions: ColumnDescription<RequestRowFragment>[] = [
     GenericColumnKey.Selection,
@@ -73,6 +75,16 @@ export const RequestRequisitionListView: FC = () => {
     ['createdDatetime', { width: 150 }],
   ];
 
+  if (simplifiedTabletView) {
+    columnDefinitions.push({
+      key: 'count',
+      label: 'label.count-rows',
+      width: 110,
+      accessor: ({ rowData }: { rowData: RequestRowFragment }) =>
+        rowData.lines.totalCount,
+    });
+  }
+
   if (programSettings && programSettings.length > 0) {
     columnDefinitions.push(
       {
@@ -82,6 +94,7 @@ export const RequestRequisitionListView: FC = () => {
         description: 'description.program',
         sortable: true,
         width: 150,
+        defaultHideOnMobile: true,
         Cell: TooltipTextCell,
       },
       {
@@ -89,12 +102,15 @@ export const RequestRequisitionListView: FC = () => {
         accessor: ({ rowData }) => rowData.orderType,
         label: 'label.order-type',
         sortable: true,
+        width: 100,
+        defaultHideOnMobile: true,
       },
       {
         key: 'period',
         accessor: ({ rowData }) => rowData.period?.name ?? '',
         label: 'label.period',
         sortable: true,
+        defaultHideOnMobile: true,
       }
     );
   }
@@ -125,15 +141,8 @@ export const RequestRequisitionListView: FC = () => {
   const columns = useColumns<RequestRowFragment>(
     columnDefinitions,
     { sortBy, onChangeSortBy: updateSortQuery },
-    [sortBy, updateSortQuery]
+    [sortBy]
   );
-
-  // const onRowClick = useCallback(
-  //   (row: RequestRowFragment) => {
-  //     navigate(String(row.id));
-  //   },
-  //   [navigate]
-  // );
 
   const getRoute = (row: RequestRowFragment) =>
     RouteBuilder.create(AppRoute.Replenishment)
@@ -151,10 +160,11 @@ export const RequestRequisitionListView: FC = () => {
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={updatePaginationQuery}
         columns={columns}
-        data={data?.nodes}
+        data={data?.nodes ?? []}
         rowLinkBuilder={getRoute}
         isError={isError}
         isLoading={isLoading}
+        enableColumnSelection
         noDataElement={
           <NothingHere
             body={t('error.no-internal-orders')}
@@ -167,7 +177,7 @@ export const RequestRequisitionListView: FC = () => {
   );
 };
 
-export const ListView: FC = () => (
+export const ListView = () => (
   <TableProvider createStore={createTableStore}>
     <RequestRequisitionListView />
   </TableProvider>
