@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   TableProvider,
   DataTable,
@@ -16,7 +16,7 @@ import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { MasterListRowFragment, useMasterLists } from '../api';
 
-const MasterListComponent: FC = () => {
+const MasterListComponent = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { store } = useAuthContext();
@@ -74,7 +74,7 @@ const MasterListComponent: FC = () => {
   );
 };
 
-export const MasterListListView: FC = () => (
+export const MasterListListView = () => (
   <TableProvider<MasterListRowFragment>
     createStore={createTableStore}
     queryParamsStore={createQueryParamsStore<MasterListRowFragment>({
