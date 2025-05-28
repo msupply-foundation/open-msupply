@@ -16,6 +16,7 @@ import {
   GenericColumnKey,
   getCommentPopoverColumn,
   RouteBuilder,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -81,6 +82,7 @@ export const RequestRequisitionListView: FC = () => {
         description: 'description.program',
         sortable: true,
         width: 150,
+        Cell: TooltipTextCell,
       },
       {
         key: 'orderType',
@@ -150,7 +152,7 @@ export const RequestRequisitionListView: FC = () => {
         onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes}
-        route={getRoute}
+        rowLinkBuilder={getRoute}
         isError={isError}
         isLoading={isLoading}
         noDataElement={
