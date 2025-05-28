@@ -22,10 +22,10 @@ import {
   usePrescription,
   usePrescriptionLines,
 } from '@openmsupply-client/invoices/src/Prescriptions';
-import { useDraftPrescriptionLines } from '@openmsupply-client/invoices/src/Prescriptions/LineEditView/hooks';
 import { StockLineTable } from './StockLineTable';
 import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
 import { PrescriptionInfo } from './PrescriptionInfo';
+import { useDraftLines } from './useDraftLines';
 
 export const prescriptionTester = rankWith(10, uiTypeIs('Prescription'));
 
@@ -75,14 +75,8 @@ const UIComponent = (props: ControlProps) => {
       formActions.getState(`${path}_item`) ?? null
     );
 
-  const [draftPrescriptionLines, setDraftPrescriptionLines] = useState<
-    DraftPrescriptionLine[]
-  >([]);
-
-  useDraftPrescriptionLines(
-    selectedItem ? { ...selectedItem, itemDirections: [] } : null,
-    draftPrescriptionLines,
-    setDraftPrescriptionLines
+  const { draftLines, setDraftLines, updateQuantity } = useDraftLines(
+    selectedItem?.id ?? null
   );
 
   const { success } = useNotification();
@@ -102,7 +96,7 @@ const UIComponent = (props: ControlProps) => {
       `${path}_stockline`
     );
     if (existing && existing[0]?.item.id === selectedItem?.id)
-      setDraftPrescriptionLines(existing);
+      setDraftLines(existing);
   }, []);
 
   useEffect(() => {
@@ -129,8 +123,8 @@ const UIComponent = (props: ControlProps) => {
       handleChange(prescriptionIdPath, FnUtils.generateUUID());
   };
 
-  const handleStockLineUpdate = (draftLines: DraftPrescriptionLine[]) => {
-    setDraftPrescriptionLines(draftLines);
+  const handleUpdateQuantity = (stocklineId: string, numPacks: number) => {
+    updateQuantity(stocklineId, numPacks);
     formActions.setState(`${path}_stockline`, draftLines);
     formActions.register(
       prescriptionIdPath,
@@ -211,8 +205,8 @@ const UIComponent = (props: ControlProps) => {
             />
 
             <StockLineTable
-              stocklines={draftPrescriptionLines}
-              handleStockLineUpdate={handleStockLineUpdate}
+              stocklines={draftLines}
+              updateQuantity={handleUpdateQuantity}
             />
           </Box>
         )}

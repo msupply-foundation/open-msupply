@@ -32,13 +32,15 @@ export const useDraftPrescriptionLines = (
   const lines = prescriptionData?.lines.nodes.filter(
     line => item?.id === line.item.id
   );
-  const { data, isLoading } = useHistoricalStockLines({
+  const { data: historicalStockLines, isLoading } = useHistoricalStockLines({
     itemId: item?.id ?? '',
     datetime: date ? date.toISOString() : undefined,
   });
 
   useEffect(() => {
-    if (!data) return;
+    if (!historicalStockLines) return;
+
+    console.log('historicalStockLines', historicalStockLines);
 
     // Stock lines (data.nodes) are coming from availableStockLines from
     // itemNode these are filtered by totalNumberOfPacks > 0 but it's possible
@@ -48,7 +50,7 @@ export const useDraftPrescriptionLines = (
       l.stockLine ? [l.stockLine] : []
     );
     const stockLines = uniqBy(
-      [...data.nodes, ...invoiceLineStockLines],
+      [...historicalStockLines.nodes, ...invoiceLineStockLines],
       'id'
     ).filter(stockLine => !stockLine.onHold); // Filter out on hold stock lines
 
@@ -97,7 +99,7 @@ export const useDraftPrescriptionLines = (
     }
 
     updateDraftLines(rows);
-  }, [data, item, prescriptionData]);
+  }, [historicalStockLines, item, prescriptionData]);
 
   const onChangeRowQuantity = useCallback(
     (batchId: string, packs: number) => {
