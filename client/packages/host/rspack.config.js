@@ -1,13 +1,10 @@
-const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
-const CopyPlugin = require('copy-webpack-plugin');
-const webpack = require('webpack');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin;
+const ReactRefreshPlugin = require('@rspack/plugin-react-refresh');
+const { rspack } = require('@rspack/core');
+const HtmlWebpackPlugin = require('html-webpack-plugin'); //compatible with rspack
 const path = require('path');
 const dependencies = require('./package.json').dependencies;
 const BundleAnalyzerPlugin =
-  require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+  require('webpack-bundle-analyzer').BundleAnalyzerPlugin; //compatible with rspack
 class DummyWebpackPlugin {
   apply(compiler) {
     compiler.hooks.run.tap('DummyWebpackPlugin', () => {});
@@ -51,7 +48,7 @@ module.exports = env => {
     },
     resolve: {
       extensions: ['.js', '.css', '.ts', '.tsx'],
-      plugins: [new TsconfigPathsPlugin()],
+      tsConfig: path.resolve(__dirname, './tsconfig.json'),
     },
     output: {
       publicPath: '/',
@@ -108,8 +105,8 @@ module.exports = env => {
       ],
     },
     plugins: [
-      new ReactRefreshWebpackPlugin(),
-      new webpack.DefinePlugin({
+      new ReactRefreshPlugin(),
+      new rspack.DefinePlugin({
         FEATURE_EXAMPLE: env.FEATURE_EXAMPLE,
         FEATURE_PRINTER_SETTINGS: env.FEATURE_PRINTER_SETTINGS,
         LOAD_REMOTE_PLUGINS: env.LOAD_REMOTE_PLUGINS,
@@ -122,7 +119,7 @@ module.exports = env => {
         favicon: './public/favicon.ico',
         template: './public/index.html',
       }),
-      new CopyPlugin({
+      new rspack.CopyRspackPlugin({
         patterns: [
           { from: './public/game', to: 'game' },
           {
@@ -139,7 +136,7 @@ module.exports = env => {
           },
         ],
       }),
-      new ModuleFederationPlugin({
+      new rspack.container.ModuleFederationPlugin({
         name: 'host',
         shared: [
           {
