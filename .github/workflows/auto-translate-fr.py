@@ -89,7 +89,6 @@ def main():
             text = en_data[key]
             # call the deepL API to translate the text, then save it to the fr/common.json file
             print(f"Key: {key}")
-            print(f"Text: {text}")
 
             translated_text = translate_text(auth_key, [text], "FR")
             if translated_text and 'translations' in translated_text:
@@ -101,7 +100,7 @@ def main():
     
         # Save updated French data back to file
         with open(fr_file, 'w', encoding='utf-8') as f:
-            json.dump(fr_data, f, ensure_ascii=False, indent=4)
+            json.dump(fr_data, f, ensure_ascii=False, indent=2)
     else:
         print("No missing keys found in fr/common.json compared to en/common.json.")
 
