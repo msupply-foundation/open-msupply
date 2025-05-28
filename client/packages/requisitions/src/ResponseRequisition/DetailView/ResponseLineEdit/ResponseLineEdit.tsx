@@ -65,6 +65,8 @@ export const ResponseLineEdit = ({
     store?.preferences?.extraFieldsInRequisition && !!requisition.program;
   const isDisabled = disabled || !!requisition.linkedRequisition;
   const disableItemSelection = disabled || isUpdateMode;
+  const disableReasons =
+    draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
 
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
@@ -210,41 +212,44 @@ export const ResponseLineEdit = ({
                     : update({ requestedQuantity: value });
                 },
               })}
+              {showExtraFields && (
+                <>
+                  <InputWithLabelRow
+                    label={t('label.reason')}
+                    labelWidth={'205px'}
+                    Input={
+                      <ReasonOptionsSearchInput
+                        value={draft?.reason}
+                        onChange={value => {
+                          update({ reason: value });
+                        }}
+                        width={145}
+                        type={ReasonOptionNodeType.RequisitionLineVariance}
+                        disabled={disableReasons}
+                        reasonOptions={reasonOptions?.nodes ?? []}
+                        loading={isLoading}
+                        textSx={
+                          disableReasons
+                            ? {
+                                backgroundColor: theme =>
+                                  theme.palette.background.toolbar,
+                              }
+                            : {
+                                backgroundColor: theme =>
+                                  theme.palette.background.white,
+                              }
+                        }
+                      />
+                    }
+                    sx={{
+                      pl: 1,
+                      pt: 0.5,
+                      pb: 0.5,
+                    }}
+                  />
+                </>
+              )}
             </Box>
-            {showExtraFields && (
-              <>
-                <InputWithLabelRow
-                  label={t('label.reason')}
-                  labelWidth={'205px'}
-                  Input={
-                    <ReasonOptionsSearchInput
-                      value={draft?.reason}
-                      onChange={value => {
-                        update({ reason: value });
-                      }}
-                      width={145}
-                      type={ReasonOptionNodeType.RequisitionLineVariance}
-                      isDisabled={
-                        draft?.requestedQuantity === draft?.suggestedQuantity ||
-                        disabled
-                      }
-                      reasonOptions={reasonOptions?.nodes ?? []}
-                      isLoading={isLoading}
-                      sx={{
-                        boxShadow: theme =>
-                          !disabled ? theme.shadows[2] : 'none',
-                        borderRadius: 2,
-                      }}
-                    />
-                  }
-                  sx={{
-                    pl: 1,
-                    pt: 0.5,
-                    pb: 0.5,
-                  }}
-                />
-              </>
-            )}
           </>
         ) : null
       }

@@ -159,7 +159,8 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
                       value={draft.reasonOption}
                       onChange={reason => updatePatch({ reasonOption: reason })}
                       reasonOptions={reasonOptions?.nodes ?? []}
-                      isLoading={isLoading}
+                      loading={isLoading}
+                      disabled={draft?.totalNumberOfPacks === 0}
                     />
                   </Box>
                 }

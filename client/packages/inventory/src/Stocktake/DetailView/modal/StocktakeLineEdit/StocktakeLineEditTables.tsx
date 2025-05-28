@@ -146,15 +146,17 @@ const getInventoryAdjustmentReasonInputColumn = (
             isInventoryReduction,
             rowData.item.isVaccine
           )}
-          isError={isAdjustmentReasonError}
-          isDisabled={
+          inputProps={{
+            error: isAdjustmentReasonError,
+          }}
+          disabled={
             typeof rowData.countedNumberOfPacks !== 'number' ||
             !rowData.countThisLine ||
             rowData.snapshotNumberOfPacks == rowData.countedNumberOfPacks
           }
           initialStocktake={initialStocktake}
           reasonOptions={reasonOptions}
-          isLoading={isLoading}
+          loading={isLoading}
         />
       );
     },

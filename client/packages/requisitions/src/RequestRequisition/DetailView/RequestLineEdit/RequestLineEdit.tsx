@@ -66,6 +66,8 @@ export const RequestLineEdit = ({
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
   const disableItemSelection = disabled || isUpdateMode;
+  const disableReasons =
+    draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
   const { data: reasonOptions, isLoading } = useReasonOptions();
 
   const line = useMemo(
@@ -168,11 +170,7 @@ export const RequestLineEdit = ({
                   unitName={unitName}
                 />
                 {showExtraFields && (
-                  <Typography
-                    variant="body1"
-                    fontWeight="bold"
-                    paddingBottom={0}
-                  >
+                  <Typography variant="body1" fontWeight="bold">
                     {t('label.reason')}:
                     <ReasonOptionsSearchInput
                       value={draft?.reason}
@@ -181,20 +179,20 @@ export const RequestLineEdit = ({
                       }}
                       width={360}
                       type={ReasonOptionNodeType.RequisitionLineVariance}
-                      isDisabled={
-                        draft?.requestedQuantity === draft?.suggestedQuantity ||
-                        disabled
-                      }
+                      disabled={disableReasons}
                       reasonOptions={reasonOptions?.nodes ?? []}
-                      isLoading={isLoading}
-                      inputSx={{
-                        boxShadow: theme => theme.shadows[2],
-                        backgroundColor: theme =>
-                          disabled
-                            ? theme.palette.background.toolbar
-                            : theme.palette.background.white,
-                        borderRadius: 1,
-                      }}
+                      loading={isLoading}
+                      textSx={
+                        disableReasons
+                          ? {
+                              backgroundColor: theme =>
+                                theme.palette.background.toolbar,
+                            }
+                          : {
+                              backgroundColor: theme =>
+                                theme.palette.background.white,
+                            }
+                      }
                     />
                   </Typography>
                 )}
