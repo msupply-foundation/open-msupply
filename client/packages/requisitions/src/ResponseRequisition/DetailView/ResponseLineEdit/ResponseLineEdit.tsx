@@ -167,27 +167,6 @@ export const ResponseLineEdit = ({
       Middle={
         draft ? (
           <>
-            {showExtraFields && (
-              <>
-                {numericInput('label.available', available, {
-                  disabledOverride: true,
-                })}
-                {numericInput(
-                  'label.amc/amd',
-                  draft?.averageMonthlyConsumption,
-                  {
-                    onChange: value =>
-                      update({ averageMonthlyConsumption: value }),
-                  }
-                )}
-
-                {numericInput('label.months-of-stock', mos, {
-                  disabledOverride: true,
-                  endAdornmentOverride: t('label.months'),
-                })}
-              </>
-            )}
-
             <Box
               sx={{
                 background: theme => theme.palette.background.group,
@@ -213,59 +192,63 @@ export const ResponseLineEdit = ({
                 },
               })}
               {showExtraFields && (
-                <>
-                  <InputWithLabelRow
-                    label={t('label.reason')}
-                    labelWidth={'205px'}
-                    Input={
-                      <ReasonOptionsSearchInput
-                        value={draft?.reason}
-                        onChange={value => {
-                          update({ reason: value });
-                        }}
-                        width={145}
-                        type={ReasonOptionNodeType.RequisitionLineVariance}
-                        disabled={disableReasons}
-                        reasonOptions={reasonOptions?.nodes ?? []}
-                        loading={isLoading}
-                        textSx={
-                          disableReasons
-                            ? {
-                                backgroundColor: theme =>
-                                  theme.palette.background.toolbar,
-                              }
-                            : {
-                                backgroundColor: theme =>
-                                  theme.palette.background.white,
-                              }
-                        }
-                      />
-                    }
-                    sx={{
-                      pl: 1,
-                      pt: 0.5,
-                      pb: 0.5,
-                    }}
-                  />
-                </>
+                <InputWithLabelRow
+                  label={t('label.reason')}
+                  labelWidth={'182px'}
+                  Input={
+                    <ReasonOptionsSearchInput
+                      value={draft?.reason}
+                      onChange={value => {
+                        update({ reason: value });
+                      }}
+                      width={170}
+                      type={ReasonOptionNodeType.RequisitionLineVariance}
+                      disabled={disableReasons}
+                      reasonOptions={reasonOptions?.nodes ?? []}
+                      loading={isLoading}
+                      textSx={
+                        disableReasons
+                          ? {
+                              backgroundColor: theme =>
+                                theme.palette.background.toolbar,
+                              boxShadow: 'none',
+                            }
+                          : {
+                              backgroundColor: theme =>
+                                theme.palette.background.white,
+                              boxShadow: theme => theme.shadows[2],
+                            }
+                      }
+                    />
+                  }
+                  sx={{
+                    pl: 1,
+                    pb: 0.5,
+                  }}
+                />
               )}
             </Box>
+            {showExtraFields && (
+              <>
+                {numericInput('label.available', available, {
+                  disabledOverride: true,
+                })}
+                {numericInput('label.short-expiry', draft?.expiringUnits, {
+                  onChange: value => update({ expiringUnits: value }),
+                })}
+              </>
+            )}
           </>
         ) : null
       }
       Right={
         draft ? (
           <>
-            {showExtraFields &&
-              numericInput('label.short-expiry', draft?.expiringUnits, {
-                onChange: value => update({ expiringUnits: value }),
-              })}
             <Box
               sx={{
                 background: theme => theme.palette.background.group,
-                padding: '0px 8px',
                 borderRadius: 2,
-                paddingBottom: 1,
+                pb: 0.5,
               }}
             >
               {hasApproval &&
@@ -291,19 +274,35 @@ export const ResponseLineEdit = ({
                 draft?.remainingQuantityToSupply,
                 {
                   disabledOverride: true,
-                  sx: {
-                    pl: 0,
-                  },
                 }
               )}
               {numericInput('label.already-issued', draft?.alreadyIssued, {
                 disabledOverride: true,
-                sx: {
-                  pl: 0,
-                },
               })}
             </Box>
-            <Typography variant="body1" fontWeight="bold" p="4px">
+            {!!requisition.linkedRequisition || showExtraFields ? (
+              <>
+                {numericInput(
+                  'label.amc/amd',
+                  draft?.averageMonthlyConsumption,
+                  {
+                    onChange: value =>
+                      update({ averageMonthlyConsumption: value }),
+                    sx: {
+                      pt: 1,
+                    },
+                  }
+                )}
+                {numericInput('label.months-of-stock', mos, {
+                  disabledOverride: true,
+                  endAdornmentOverride: t('label.months'),
+                  sx: {
+                    mb: 0,
+                  },
+                })}
+              </>
+            ) : null}
+            <Typography variant="body1" fontWeight="bold" p={0.5}>
               {t('heading.comment')}:
             </Typography>
             <BufferedTextArea
@@ -322,8 +321,8 @@ export const ResponseLineEdit = ({
                 },
               }}
               disabled={disabled}
-              minRows={2}
-              maxRows={2}
+              minRows={3}
+              maxRows={3}
             />
           </>
         ) : null
