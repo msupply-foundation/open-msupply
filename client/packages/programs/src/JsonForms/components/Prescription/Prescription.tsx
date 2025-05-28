@@ -75,9 +75,7 @@ const UIComponent = (props: ControlProps) => {
       formActions.getState(`${path}_item`) ?? null
     );
 
-  const { draftLines, setDraftLines, updateQuantity } = useDraftLines(
-    selectedItem?.id ?? null
-  );
+  const { draftLines, setDraftLines } = useDraftLines(selectedItem?.id ?? null);
 
   const { success } = useNotification();
 
@@ -123,9 +121,12 @@ const UIComponent = (props: ControlProps) => {
       handleChange(prescriptionIdPath, FnUtils.generateUUID());
   };
 
-  const handleUpdateQuantity = (stocklineId: string, numPacks: number) => {
-    updateQuantity(stocklineId, numPacks);
-    formActions.setState(`${path}_stockline`, draftLines);
+  const handleUpdateQuantity = (stocklineId: string, numberOfPacks: number) => {
+    const newDraftLines = draftLines.map(line =>
+      line.id === stocklineId ? { ...line, numberOfPacks } : line
+    );
+    setDraftLines(newDraftLines);
+    formActions.setState(`${path}_stockline`, newDraftLines);
     formActions.register(
       prescriptionIdPath,
       async (formActionState: Record<string, unknown>) => {

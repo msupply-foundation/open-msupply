@@ -53,7 +53,7 @@ export const StockLineTable = ({
       {
         width: '55px',
         key: 'unitQuantity',
-        label: 'label.units-issued',
+        label: 'label.issued',
         accessor: ({ rowData }) =>
           NumUtils.round(
             (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
