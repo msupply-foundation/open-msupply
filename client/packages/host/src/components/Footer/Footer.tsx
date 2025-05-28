@@ -14,13 +14,14 @@ import {
   CentralIcon,
   useEditModal,
   EditIcon,
-  useTheme,
-  useIsExtraSmallScreen,
   SxProps,
+  useAppTheme,
+  useMediaQuery,
+  Breakpoints,
 } from '@openmsupply-client/common';
 import { StoreSelector } from './StoreSelector';
 import { LanguageSelector } from './LanguageSelector';
-import { FacilityEditModal, useName } from '@openmsupply-client/system';
+import { StoreEditModal, useName } from '@openmsupply-client/system';
 import { UserDetails } from './UserDetails';
 
 interface PaddedCellProps {
@@ -38,7 +39,10 @@ const PaddedCell: FC<PaddedCellProps> = ({
   tooltip,
   onClick,
 }) => {
-  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const theme = useAppTheme();
+  const isExtraSmallScreen = useMediaQuery(
+    theme.breakpoints.down(Breakpoints.sm)
+  );
   return (
     <Box
       onClick={onClick}
@@ -74,9 +78,11 @@ const PaddedCell: FC<PaddedCellProps> = ({
 };
 
 export const Footer: FC = () => {
-  const theme = useTheme();
   const t = useTranslation();
-  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const theme = useAppTheme();
+  const isExtraSmallScreen = useMediaQuery(
+    theme.breakpoints.down(Breakpoints.sm)
+  );
   const { user, store } = useAuthContext();
   const { currentLanguageName, getLocalisedFullName } = useIntlUtils();
 
@@ -150,7 +156,7 @@ export const Footer: FC = () => {
         />
       ) : null}
       {isOpen && (
-        <FacilityEditModal
+        <StoreEditModal
           nameId={store?.nameId ?? ''}
           isOpen={isOpen}
           onClose={onClose}

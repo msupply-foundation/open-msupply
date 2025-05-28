@@ -33,6 +33,6 @@ export const useResponse = {
     preferences: Utils.useRequisitionPreferences,
     supplyRequested: Utils.useSupplyRequestedQuantity,
     isDisabledByAuthorisation: Utils.useIsDisabledByAuthorisation,
-    programSettings: Utils.useProgramSettings,
+    programRequisitionSettingsByCustomer: Utils.useProgramRequisitionSettingsByCustomer,
   },
 };

@@ -54,7 +54,7 @@ pub(crate) fn get_sync_push_changelogs_filter(
 }
 
 #[derive(Error, Debug)]
-pub(crate) enum GetActiveStoresOnSiteError {
+pub enum GetActiveStoresOnSiteError {
     #[error("Database error while getting active store on site")]
     DatabaseError(RepositoryError),
     #[error("Site id is not set in database")]
@@ -152,4 +152,17 @@ pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
         .sync_status_service
         .is_initialised(&ctx)
         .unwrap()
+}
+
+// TEST ONLY
+pub fn test_util_set_is_central_server(is_central: bool) {
+    match is_central {
+        true => {
+            *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::IsCentralServer;
+        }
+        false => {
+            *CENTRAL_SERVER_CONFIG.write().unwrap() =
+                CentralServerConfig::CentralServerUrl("".to_string());
+        }
+    }
 }

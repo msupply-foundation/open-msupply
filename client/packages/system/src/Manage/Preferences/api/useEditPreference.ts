@@ -1,27 +1,50 @@
-import { FnUtils, isEmpty, useMutation } from '@openmsupply-client/common';
-import { JsonData } from '@openmsupply-client/programs';
+import {
+  isEmpty,
+  PreferenceNodeType,
+  UpsertPreferencesInput,
+  useAuthApi,
+  useMutation,
+  useNotification,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { usePreferencesGraphQL } from './usePreferencesGraphQL';
+import { PREFERENCE_DESCRIPTIONS } from './keys';
+import { useAdminPrefsList } from './useAdminPrefsList';
 
-export const useEditPreference = (key: string) => {
+export const useEditPreferences = (
+  prefType: PreferenceNodeType,
+  storeId?: string
+) => {
+  const t = useTranslation();
+  const { error } = useNotification();
+
+  const { data } = useAdminPrefsList(prefType, storeId);
+  const { mutateAsync } = useUpsertPref();
+
+  // Please add debouncing when string prefs are implemented
+  const update = async (input: Partial<UpsertPreferencesInput>) => {
+    try {
+      await mutateAsync(input);
+    } catch (err) {
+      console.error('Error updating preferences:', err);
+      error(t('error.something-wrong'))();
+    }
+  };
+
+  return {
+    preferences: data ?? [],
+    update,
+  };
+};
+
+const useUpsertPref = () => {
   const { api, storeId: requestStoreId, queryClient } = usePreferencesGraphQL();
+  const { keys } = useAuthApi();
 
   return useMutation(
-    async ({
-      id,
-      value,
-      storeId: preferenceStoreId,
-    }: {
-      id?: string;
-      value: JsonData;
-      storeId?: string;
-    }) => {
-      const result = await api.upsertPreference({
-        input: {
-          key,
-          id: id ?? FnUtils.generateUUID(),
-          value: JSON.stringify(value),
-          storeId: preferenceStoreId,
-        },
+    async (input: Partial<UpsertPreferencesInput>) => {
+      const result = await api.upsertPreferences({
+        input,
         storeId: requestStoreId,
       });
       if (!isEmpty(result)) {
@@ -30,7 +53,10 @@ export const useEditPreference = (key: string) => {
       throw new Error('Could not update preferences');
     },
     {
-      onSuccess: () => queryClient.invalidateQueries(['prefsByKey', key]),
+      onSuccess: () => {
+        queryClient.invalidateQueries(keys.preferences());
+        queryClient.invalidateQueries(PREFERENCE_DESCRIPTIONS);
+      },
     }
   );
 };

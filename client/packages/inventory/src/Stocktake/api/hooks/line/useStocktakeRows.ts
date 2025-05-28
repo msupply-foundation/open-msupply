@@ -1,7 +1,7 @@
 import { ArrayUtils } from '@openmsupply-client/common';
 import { StocktakeLineFragment } from '../../operations.generated';
 import { StocktakeSummaryItem } from '../../../../types';
-import { useStocktake } from '..';
+import { useStocktakeOld } from '..';
 import { isStocktakeDisabled } from '../../../../utils';
 import { useStocktakeLines } from './useStocktakeLines';
 import { useMemo } from 'react';
@@ -15,9 +15,12 @@ const getStocktakeItems = (lines: StocktakeLineFragment[]) =>
     } as StocktakeSummaryItem;
   });
 
-export const useStocktakeRows = () => {
-  const { data: stocktake } = useStocktake.document.get();
-  const { data: lineData, isLoading } = useStocktakeLines(stocktake?.id ?? '');
+export const useStocktakeRows = (itemId?: string) => {
+  const { data: stocktake } = useStocktakeOld.document.get();
+  const { data: lineData, isLoading } = useStocktakeLines(
+    stocktake?.id ?? '',
+    itemId
+  );
   const lines = lineData?.nodes;
   const items = useMemo(() => getStocktakeItems(lines ?? []), [lines]);
   const totalLineCount = lineData?.totalCount ?? 0;

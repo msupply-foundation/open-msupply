@@ -1,7 +1,7 @@
 use super::{
-    item_link_row::item_link, item_row::item, location_row::location, stock_line_row::stock_line,
-    stocktake_line_row::stocktake_line, LocationRow, StockLineRow, StocktakeLineRow,
-    StorageConnection,
+    item_link_row::item_link, item_row::item, location_row::location, name_link_row::name_link,
+    name_row::name, stock_line_row::stock_line, stocktake_line_row::stocktake_line, LocationRow,
+    NameLinkRow, NameRow, StockLineRow, StocktakeLineRow, StorageConnection,
 };
 
 use diesel::{
@@ -23,6 +23,7 @@ pub struct StocktakeLineFilter {
     pub stocktake_id: Option<EqualFilter<String>>,
     pub location_id: Option<EqualFilter<String>>,
     pub item_code_or_name: Option<StringFilter>,
+    pub item_id: Option<EqualFilter<String>>,
 }
 
 impl StocktakeLineFilter {
@@ -42,6 +43,11 @@ impl StocktakeLineFilter {
 
     pub fn location_id(mut self, filter: EqualFilter<String>) -> Self {
         self.location_id = Some(filter);
+        self
+    }
+
+    pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.item_id = Some(filter);
         self
     }
 }
@@ -66,6 +72,7 @@ type StocktakeLineJoin = (
     (ItemLinkRow, ItemRow),
     Option<StockLineRow>,
     Option<LocationRow>,
+    Option<(NameLinkRow, NameRow)>,
 );
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -74,6 +81,7 @@ pub struct StocktakeLine {
     pub item: ItemRow,
     pub stock_line: Option<StockLineRow>,
     pub location: Option<LocationRow>,
+    pub donor: Option<NameRow>,
 }
 
 pub struct StocktakeLineRepository<'a> {
@@ -155,10 +163,13 @@ type BoxedStocktakeLineQuery = IntoBoxed<
     'static,
     LeftJoin<
         LeftJoin<
-            InnerJoin<stocktake_line::table, InnerJoin<item_link::table, item::table>>,
-            stock_line::table,
+            LeftJoin<
+                InnerJoin<stocktake_line::table, InnerJoin<item_link::table, item::table>>,
+                stock_line::table,
+            >,
+            location::table,
         >,
-        location::table,
+        InnerJoin<name_link::table, name::table>,
     >,
     DBType,
 >;
@@ -168,23 +179,28 @@ fn create_filtered_query(filter: Option<StocktakeLineFilter>) -> BoxedStocktakeL
         .inner_join(item_link::table.inner_join(item::table))
         .left_join(stock_line::table)
         .left_join(location::table)
+        .left_join(name_link::table.inner_join(name::table))
         .into_boxed();
 
     if let Some(f) = filter {
         apply_equal_filter!(query, f.id, stocktake_line::id);
         apply_equal_filter!(query, f.stocktake_id, stocktake_line::stocktake_id);
         apply_equal_filter!(query, f.location_id, stocktake_line::location_id);
+        apply_equal_filter!(query, f.item_id, item::id);
     }
 
     query
 }
 
-fn to_domain((line, (_, item), stock_line, location): StocktakeLineJoin) -> StocktakeLine {
+fn to_domain(
+    (line, (_, item), stock_line, location, name_link): StocktakeLineJoin,
+) -> StocktakeLine {
     StocktakeLine {
         line,
         item,
         stock_line,
         location,
+        donor: name_link.map(|(_, name_row)| name_row),
     }
 }
 

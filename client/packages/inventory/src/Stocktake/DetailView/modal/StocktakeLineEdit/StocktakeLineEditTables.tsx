@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   TextInputCell,
   alpha,
@@ -17,17 +17,20 @@ import {
   getColumnLookupWithOverrides,
   NumberInputCell,
   ColumnAlign,
-  AdjustmentTypeInput,
   NumberCell,
+  getReasonOptionType,
+  ReasonOptionNode,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
+  getDonorColumn,
   getLocationInputColumn,
-  InventoryAdjustmentReasonRowFragment,
-  InventoryAdjustmentReasonSearchInput,
-  ItemVariantInputCell,
+  ItemVariantInputCellOld,
   PackSizeEntryCell,
+  ReasonOptionRowFragment,
+  ReasonOptionsSearchInput,
   useIsItemVariantsEnabled,
+  useReasonOptions,
 } from '@openmsupply-client/system';
 import {
   useStocktakeLineErrorContext,
@@ -38,6 +41,8 @@ interface StocktakeLineEditTableProps {
   isDisabled?: boolean;
   batches: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
+  isInitialStocktake?: boolean;
+  trackStockDonor?: boolean;
 }
 
 const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
@@ -97,23 +102,24 @@ const getCountThisLineColumn = (
 
 const getInventoryAdjustmentReasonInputColumn = (
   setter: DraftLineSetter,
-  { getError }: UseStocktakeLineErrors
+  { getError }: UseStocktakeLineErrors,
+  reasonOptions: ReasonOptionNode[],
+  isLoading: boolean,
+  initialStocktake?: boolean
 ): ColumnDescription<DraftStocktakeLine> => {
   return {
     key: 'inventoryAdjustmentReasonInput',
     label: 'label.reason',
     sortable: false,
     width: 120,
-    accessor: ({ rowData }) => rowData.inventoryAdjustmentReason || '',
+    accessor: ({ rowData }) => rowData.reasonOption || '',
     Cell: ({ rowData, column, columnIndex, rowIndex }) => {
       const value = column.accessor({
         rowData,
-      }) as InventoryAdjustmentReasonRowFragment | null;
+      }) as ReasonOptionRowFragment | null;
 
-      const onChange = (
-        inventoryAdjustmentReason: InventoryAdjustmentReasonRowFragment | null
-      ) => {
-        setter({ ...rowData, inventoryAdjustmentReason });
+      const onChange = (reasonOption: ReasonOptionRowFragment | null) => {
+        setter({ ...rowData, reasonOption });
       };
 
       const autoFocus = columnIndex === 0 && rowIndex === 0;
@@ -123,40 +129,47 @@ const getInventoryAdjustmentReasonInputColumn = (
         errorType === 'AdjustmentReasonNotProvided' ||
         errorType === 'AdjustmentReasonNotValid';
 
+      const isInventoryReduction =
+        rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0);
+
       // https://github.com/openmsupply/open-msupply/pull/1252#discussion_r1119577142, this would ideally live in inventory package
       // and instead of this method we do all of the logic in InventoryAdjustmentReasonSearchInput and use it in `Cell` field of the column
       return (
-        <InventoryAdjustmentReasonSearchInput
+        <ReasonOptionsSearchInput
           autoFocus={autoFocus}
           value={value}
-          width={Number(column.width) - 12}
+          width={Number(column.width)}
           onChange={onChange}
-          adjustmentType={
-            rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0)
-              ? AdjustmentTypeInput.Reduction
-              : AdjustmentTypeInput.Addition
-          }
+          type={getReasonOptionType(
+            isInventoryReduction,
+            rowData.item.isVaccine
+          )}
           isError={isAdjustmentReasonError}
           isDisabled={
             typeof rowData.countedNumberOfPacks !== 'number' ||
             !rowData.countThisLine ||
             rowData.snapshotNumberOfPacks == rowData.countedNumberOfPacks
           }
+          initialStocktake={initialStocktake}
+          reasonOptions={reasonOptions}
+          isLoading={isLoading}
         />
       );
     },
   };
 };
 
-export const BatchTable: FC<StocktakeLineEditTableProps> = ({
+export const BatchTable = ({
   batches,
   update,
   isDisabled = false,
-}) => {
+  isInitialStocktake,
+}: StocktakeLineEditTableProps) => {
   const t = useTranslation();
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
   useDisableStocktakeRows(batches);
+  const { data: reasonOptions, isLoading } = useReasonOptions();
 
   const errorsContext = useStocktakeLineErrorContext();
 
@@ -178,7 +191,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         label: 'label.item-variant',
         width: 170,
         Cell: props => (
-          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+          <ItemVariantInputCellOld {...props} itemId={props.rowData.item.id} />
         ),
         setter: patch => update({ ...patch }),
       });
@@ -191,6 +204,9 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         cellProps: {
           getIsDisabled: (rowData: DraftStocktakeLine) => !!rowData?.stockLine,
         },
+        accessor: ({ rowData }) =>
+          rowData.packSize ?? rowData.item?.defaultPackSize,
+        defaultHideOnMobile: true,
       }),
       {
         key: 'snapshotNumberOfPacks',
@@ -217,16 +233,22 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
           // If counted number of packs was changed to result in no adjustment we
           // should remove inventoryAdjustmentReason, otherwise could have a
           // reason on a line with no adjustments
-          const inventoryAdjustmentReason =
+          const reasonOption =
             !patch.countedNumberOfPacks ||
             patch.snapshotNumberOfPacks == patch.countedNumberOfPacks
               ? null
-              : patch.inventoryAdjustmentReason;
-          update({ ...patch, countThisLine: true, inventoryAdjustmentReason });
+              : patch.reasonOption;
+          update({ ...patch, countThisLine: true, reasonOption });
         },
         accessor: ({ rowData }) => rowData.countedNumberOfPacks,
       },
-      getInventoryAdjustmentReasonInputColumn(update, errorsContext)
+      getInventoryAdjustmentReasonInputColumn(
+        update,
+        errorsContext,
+        reasonOptions?.nodes ?? [],
+        isLoading,
+        isInitialStocktake
+      )
     );
 
     return columnDefinitions;
@@ -247,11 +269,11 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
   );
 };
 
-export const PricingTable: FC<StocktakeLineEditTableProps> = ({
+export const PricingTable = ({
   batches,
   update,
   isDisabled,
-}) => {
+}: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
   const columns = useColumns<DraftStocktakeLine>([
@@ -287,14 +309,16 @@ export const PricingTable: FC<StocktakeLineEditTableProps> = ({
   );
 };
 
-export const LocationTable: FC<StocktakeLineEditTableProps> = ({
+export const LocationTable = ({
   batches,
   update,
   isDisabled,
-}) => {
+  trackStockDonor,
+}: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
-  const columns = useColumns<DraftStocktakeLine>([
+
+  const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
     [
@@ -304,17 +328,35 @@ export const LocationTable: FC<StocktakeLineEditTableProps> = ({
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
-    [
-      'comment',
-      {
-        label: 'label.stocktake-comment',
-        Cell: TextInputCell,
-        width: 200,
-        setter: patch => update({ ...patch, countThisLine: true }),
-        accessor: ({ rowData }) => rowData.comment || '',
+  ];
+  if (trackStockDonor) {
+    columnDefinitions.push(
+      getDonorColumn((id, donor) =>
+        update({
+          id,
+          donorId: donor?.id ?? null,
+          donorName: donor?.name ?? null,
+          countThisLine: true,
+        })
+      )
+    );
+  }
+  columnDefinitions.push([
+    'comment',
+    {
+      label: 'label.stocktake-comment',
+      Cell: TextInputCell,
+      cellProps: {
+        fullWidth: true,
       },
-    ],
+      width: 200,
+      setter: patch => update({ ...patch, countThisLine: true }),
+      accessor: ({ rowData }) => rowData.comment || '',
+      defaultHideOnMobile: true,
+    },
   ]);
+
+  const columns = useColumns(columnDefinitions);
 
   return (
     <DataTable

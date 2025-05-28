@@ -167,6 +167,7 @@ pub fn generate_lines_and_stock_lines(
                     supplier_link_id: supplier_id.to_string(),
                     // Update existing stock levels if the stock line already exists
                     overwrite_stock_levels: false,
+                    campaign_id: None,
                 },
             )?;
 

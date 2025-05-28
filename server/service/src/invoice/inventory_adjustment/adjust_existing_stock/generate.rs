@@ -34,7 +34,7 @@ pub fn generate(
         stock_line_id,
         adjustment,
         adjustment_type,
-        inventory_adjustment_reason_id,
+        reason_option_id,
     }: InsertInventoryAdjustment,
     stock_line: StockLine,
 ) -> Result<GenerateResult, RepositoryError> {
@@ -93,6 +93,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
+        default_donor_link_id: None,
     };
 
     let StockLineRow {
@@ -105,6 +106,8 @@ pub fn generate(
         note,
         on_hold,
         item_variant_id,
+        donor_link_id,
+        vvm_status_id,
         ..
     } = stock_line.stock_line_row.clone();
 
@@ -130,10 +133,13 @@ pub fn generate(
             stock_on_hold: on_hold,
             note,
             item_variant_id,
+            donor_id: donor_link_id,
+            vvm_status_id,
             // Default
             barcode: None,
             total_before_tax: None,
             tax_percentage: None,
+            campaign_id: None,
         }),
         AdjustmentType::Reduction => InsertStockInOrOutLine::StockOut(InsertStockOutLine {
             r#type: StockOutType::InventoryReduction,
@@ -156,7 +162,7 @@ pub fn generate(
     };
 
     let update_inventory_adjustment_reason = UpdateInventoryAdjustmentReason {
-        reason_id: inventory_adjustment_reason_id,
+        reason_option_id,
         invoice_line_id,
     };
 

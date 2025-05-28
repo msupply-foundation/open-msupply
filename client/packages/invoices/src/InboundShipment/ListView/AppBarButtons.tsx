@@ -29,9 +29,11 @@ import { LinkInternalOrderModal } from './LinkInternalOrderModal';
 export const AppBarButtons = ({
   invoiceModalController,
   linkRequestModalController,
+  simplifiedTabletView,
 }: {
   invoiceModalController: ToggleState;
   linkRequestModalController: ToggleState;
+  simplifiedTabletView?: boolean;
 }) => {
   const t = useTranslation();
   const navigate = useNavigate();
@@ -44,12 +46,10 @@ export const AppBarButtons = ({
     direction: 'desc',
     isDesc: true,
   });
-  const { data, isLoading: internalOrderIsLoading } =
-    useInbound.document.listInternalOrders(name?.id ?? '');
+  const { mutateAsync: fetchInternalOrders } =
+    useInbound.document.listInternalOrdersPromise();
   const manuallyLinkInternalOrder =
     store?.preferences.manuallyLinkInternalOrderToInboundShipment;
-  const showManuallyLinkModal =
-    data?.totalCount !== 0 && manuallyLinkInternalOrder;
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -78,6 +78,25 @@ export const AppBarButtons = ({
     );
   };
 
+  const handleSupplierSelected = async (
+    row: NameRowFragment
+  ): Promise<void> => {
+    invoiceModalController.toggleOff();
+    if (!manuallyLinkInternalOrder) {
+      createInvoice(row.id);
+      return;
+    }
+
+    const data = await fetchInternalOrders(row.id);
+
+    if (data?.internalOrders.totalCount === 0) {
+      createInvoice(row.id);
+    } else {
+      setName(row);
+      linkRequestModalController.toggleOn();
+    }
+  };
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
@@ -86,45 +105,35 @@ export const AppBarButtons = ({
           label={t('button.new-shipment')}
           onClick={invoiceModalController.toggleOn}
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          variant="outlined"
-          onClick={csvExport}
-          isLoading={isLoading}
-          disabled={EnvUtils.platform === Platform.Android}
-          label={t('button.export')}
-        />
+        {!simplifiedTabletView && (
+          <LoadingButton
+            startIcon={<DownloadIcon />}
+            variant="outlined"
+            onClick={csvExport}
+            isLoading={isLoading}
+            disabled={EnvUtils.platform === Platform.Android}
+            label={t('button.export')}
+          />
+        )}
       </Grid>
-
-      {showManuallyLinkModal && (
-        <LinkInternalOrderModal
-          requestRequisitions={data?.nodes}
-          isOpen={linkRequestModalController.isOn}
-          onClose={linkRequestModalController.toggleOff}
-          onRowClick={row => {
-            createInvoice(name?.id ?? '', row.id);
-            linkRequestModalController.toggleOff();
-          }}
-          isLoading={internalOrderIsLoading}
-          onNextClick={() => {
-            if (name) {
-              createInvoice(name.id);
-            }
-          }}
-        />
-      )}
+      <LinkInternalOrderModal
+        isOpen={linkRequestModalController.isOn}
+        onClose={linkRequestModalController.toggleOff}
+        onRowClick={row => {
+          createInvoice(name?.id ?? '', row.id);
+          linkRequestModalController.toggleOff();
+        }}
+        onNextClick={() => {
+          if (name) {
+            createInvoice(name.id);
+          }
+        }}
+        name={name}
+      />
       <SupplierSearchModal
         open={invoiceModalController.isOn}
         onClose={invoiceModalController.toggleOff}
-        onChange={async nameRow => {
-          setName(nameRow);
-          invoiceModalController.toggleOff();
-          if (manuallyLinkInternalOrder) {
-            linkRequestModalController.toggleOn();
-          } else {
-            createInvoice(nameRow.id);
-          }
-        }}
+        onChange={handleSupplierSelected}
       />
     </AppBarButtonsPortal>
   );

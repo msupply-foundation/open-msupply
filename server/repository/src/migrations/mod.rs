@@ -31,7 +31,9 @@ mod v2_05_00;
 mod v2_06_00;
 mod v2_06_01;
 mod v2_06_02;
+mod v2_06_03;
 mod v2_07_00;
+mod v2_08_00;
 mod version;
 mod views;
 
@@ -134,7 +136,9 @@ pub fn migrate(
         Box::new(v2_06_00::V2_06_00),
         Box::new(v2_06_01::V2_06_01),
         Box::new(v2_06_02::V2_06_02),
+        Box::new(v2_06_03::V2_06_03),
         Box::new(v2_07_00::V2_07_00),
+        Box::new(v2_08_00::V2_08_00),
     ];
 
     // Historic diesel migrations
@@ -161,7 +165,7 @@ pub fn migrate(
     let min_version_for_dropping_views = v2_03_00::V2_03_00.version();
     let mut drop_view_has_run = false;
 
-    for migration in migrations {
+    for migration in &migrations {
         let migration_version = migration.version();
 
         if migration_version > to_version {
@@ -187,7 +191,7 @@ pub fn migrate(
 
         // TODO transaction ?
 
-        // Run one time migrations
+        // Run one time migrations only if we're on the last version, if we're in a test case checking an old creating migrations might fail
         if migration_version > database_version {
             log::info!("Running one time database migration {}", migration_version);
             migration
@@ -221,9 +225,20 @@ pub fn migrate(
 
     let final_database_version = get_database_version(connection);
 
-    // Recreate views
-    if final_database_version >= min_version_for_dropping_views {
+    // Unwrap is safe here, because we know that the migration vec is not empty
+    let last_version_in_migration_vec = migrations.last().unwrap().version();
+
+    // Recreate views only if we've migrated to the latest version
+    // Creating Views on an earlier version migration test might fail due to more recent views referencing schema elements that didn't previously exist
+    // Note: When Migration tests run, views won't be available
+    if final_database_version >= last_version_in_migration_vec && drop_view_has_run {
         rebuild_views(connection).map_err(MigrationError::DatabaseViewsError)?;
+    } else {
+        log::warn!(
+            "Not recreating views, database version is {}, last version in migration vec is {}",
+            final_database_version,
+            last_version_in_migration_vec
+        );
     }
 
     set_database_version(connection, &to_version)?;

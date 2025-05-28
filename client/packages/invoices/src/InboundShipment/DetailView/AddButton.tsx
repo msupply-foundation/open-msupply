@@ -2,13 +2,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { SplitButton, SplitButtonOption } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { AddFromMasterListButton } from './AddFromMasterListButton';
-import { useToggle } from '@common/hooks';
+import { useNotification, useToggle } from '@common/hooks';
 import { AddFromInternalOrder } from './AddFromInternalOrder';
 import { PlusCircleIcon } from '@common/icons';
+import { InboundFragment } from '../api';
+import { InvoiceNodeStatus } from '@common/types';
 
 interface AddButtonProps {
   requisitionId: string;
-  invoiceId: string;
+  invoice: InboundFragment | undefined;
   onAddItem: (newState: boolean) => void;
   /** Disable the whole control */
   disable: boolean;
@@ -18,13 +20,14 @@ interface AddButtonProps {
 
 export const AddButton = ({
   requisitionId,
-  invoiceId,
+  invoice,
   onAddItem,
   disable,
   disableAddFromMasterListButton,
   disableAddFromInternalOrderButton,
 }: AddButtonProps) => {
   const t = useTranslation();
+  const { info } = useNotification();
   const masterListModalController = useToggle();
   const internalOrderModalController = useToggle();
 
@@ -67,7 +70,9 @@ export const AddButton = ({
         onAddItem(true);
         break;
       case 'add-from-master-list':
-        masterListModalController.toggleOn();
+        invoice?.status === InvoiceNodeStatus.New
+          ? masterListModalController.toggleOn()
+          : info(t('error.cannot-add-from-masterlist-if-not-new'))();
         break;
       case 'add-from-internal-order':
         internalOrderModalController.toggleOn();
@@ -104,7 +109,7 @@ export const AddButton = ({
           isOpen={internalOrderModalController.isOn}
           onClose={internalOrderModalController.toggleOff}
           requisitionId={requisitionId}
-          invoiceId={invoiceId}
+          invoiceId={invoice?.id ?? ''}
         />
       )}
     </>

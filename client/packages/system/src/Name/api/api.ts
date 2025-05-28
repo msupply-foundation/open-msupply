@@ -58,7 +58,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         key: NameSortFieldInput.Name,
         desc: false,
         storeId,
-        filter: { isDonor: true },
+        filter: { isDonor: true, isVisible: true },
         first: 1000,
       });
 
@@ -88,6 +88,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         desc: !!sortBy?.isDesc,
         storeId,
         filter: {
+          isVisible: true,
           isManufacturer: true,
         },
         first: 1000,
@@ -111,7 +112,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.names;
     },
-    facilities: async ({
+    stores: async ({
       first,
       offset,
       sortBy,

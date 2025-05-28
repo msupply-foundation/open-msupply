@@ -1,10 +1,11 @@
 use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, RepositoryError, StockLine,
-    StockLineRow, StorageConnection, Vaccination, VaccinationRow,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, ItemRow, RepositoryError,
+    StockLine, StockLineRow, StorageConnection, Vaccination, VaccinationRow,
 };
 
 use crate::{
     common_stock::{check_stock_line_exists, CommonStockLineError},
+    invoice_line::validate::check_item_exists,
     name::validate::check_name_exists,
     vaccination::validate::{
         check_clinician_exists, check_encounter_exists, check_item_belongs_to_vaccine_course,
@@ -66,22 +67,42 @@ pub fn validate(
     }
 
     if let Some(facility_name_id) = input.facility_name_id.clone().and_then(|u| u.value) {
-        if !check_name_exists(connection, &facility_name_id)?.is_some() {
+        if check_name_exists(connection, &facility_name_id)?.is_none() {
             return Err(UpdateVaccinationError::FacilityNameDoesNotExist);
         }
     }
+
     // If not given, reason is required
-    if input.given == Some(false) {
-        if input.not_given_reason.is_none() {
-            return Err(UpdateVaccinationError::ReasonNotProvided);
-        };
+    if input.given == Some(false) && input.not_given_reason.is_none() {
+        return Err(UpdateVaccinationError::ReasonNotProvided);
     };
 
+    // If selected item is changing - validate it
+    if let Some(item_id) = input.item_id.clone().and_then(|u| u.value) {
+        let item = check_item_exists(connection, &item_id)?
+            .ok_or(UpdateVaccinationError::ItemDoesNotExist)?;
+
+        let vaccine_course_id = &vaccination.vaccine_course_dose_row.vaccine_course_id;
+
+        if !check_item_belongs_to_vaccine_course(&item_id, vaccine_course_id, connection)? {
+            return Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse);
+        };
+
+        // If vaccination is in given status,
+        // only store that gave the vaccination can change the item
+        if vaccination.vaccination_row.given {
+            check_is_giving_store(store_id, &vaccination)?;
+        }
+
+        check_doses_defined(&item)?;
+    }
+
     let vaccination_row = vaccination.vaccination_row.clone();
-    let vaccine_course_id = vaccination
-        .vaccine_course_dose_row
-        .vaccine_course_id
-        .clone();
+
+    let item_id = input
+        .item_id
+        .clone()
+        .map_or(vaccination_row.item_link_id.clone(), |u| u.value);
     let stock_line_id = input.stock_line_id.clone().and_then(|u| u.value);
 
     let result = match (vaccination_row.given, input.given) {
@@ -95,13 +116,14 @@ pub fn validate(
                 new_stock_line: validate_new_stock_line(
                     connection,
                     store_id,
-                    &vaccine_course_id,
                     stock_line_id,
+                    item_id,
                 )?,
             })
         }
         // Changing given -> not given
         (true, Some(false)) => {
+            check_is_giving_store(store_id, &vaccination)?;
             validate_can_change_given_status(connection, &vaccination, false)?;
 
             ValidateResult::ChangeToNotGiven(ChangeToNotGiven {
@@ -117,6 +139,8 @@ pub fn validate(
         (true, Some(true)) | (true, None) => {
             // If still given, check if selected stock line has changed
             if input.stock_line_id.is_some() && vaccination_row.stock_line_id != stock_line_id {
+                check_is_giving_store(store_id, &vaccination)?;
+
                 ValidateResult::ChangeStockLine(ChangeStockLine {
                     existing_vaccination: vaccination_row.clone(),
                     patient_id: encounter.patient_link_id,
@@ -128,8 +152,8 @@ pub fn validate(
                     new_stock_line: validate_new_stock_line(
                         connection,
                         store_id,
-                        &vaccine_course_id,
                         stock_line_id,
+                        item_id,
                     )?,
                 })
             } else {
@@ -161,7 +185,7 @@ fn validate_existing_prescription(
     let stock_line = match prescription_line.stock_line_option.clone().map(|s| s.id) {
         Some(stock_line_id) => {
             let stock_line = check_stock_line_exists(connection, store_id, &stock_line_id)?;
-            check_doses_defined(&stock_line)?;
+            check_doses_defined(&stock_line.item_row)?;
             stock_line
         }
         None => return Err(UpdateVaccinationError::StockLineDoesNotExist),
@@ -176,22 +200,17 @@ fn validate_existing_prescription(
 fn validate_new_stock_line(
     connection: &StorageConnection,
     store_id: &str,
-    vaccine_course_id: &str,
     stock_line_id: Option<String>,
+    item_id: Option<String>,
 ) -> Result<Option<StockLine>, UpdateVaccinationError> {
     let stock_line = match stock_line_id {
         Some(stock_line_id) => {
             let stock_line = check_stock_line_exists(connection, store_id, &stock_line_id)?;
 
-            if !check_item_belongs_to_vaccine_course(
-                &stock_line.stock_line_row.item_link_id,
-                vaccine_course_id,
-                connection,
-            )? {
-                return Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse);
+            if Some(stock_line.item_row.id.clone()) != item_id {
+                return Err(UpdateVaccinationError::StockLineDoesNotMatchItem);
             };
 
-            check_doses_defined(&stock_line)?;
             Some(stock_line)
         }
         None => None,
@@ -203,16 +222,14 @@ fn validate_new_stock_line(
 // Check we can give/un-give this dose, based on previous and next doses
 pub fn validate_can_change_given_status(
     connection: &StorageConnection,
-    current_vaccination: &Vaccination,
+    existing: &Vaccination,
     new_given_status: bool,
 ) -> Result<(), UpdateVaccinationError> {
     let (previous_vaccination, next_vaccination) = get_related_vaccinations(
         connection,
-        &current_vaccination
-            .vaccine_course_dose_row
-            .vaccine_course_id,
-        &current_vaccination.vaccine_course_dose_row.id,
-        &current_vaccination.vaccination_row.program_enrolment_id,
+        &existing.vaccine_course_dose_row.vaccine_course_id,
+        &existing.vaccine_course_dose_row.id,
+        &existing.vaccination_row.program_enrolment_id,
     )
     .map_err(|err| match err {
         // If there was a previous dose, but a vaccination for it wasn't found
@@ -252,13 +269,25 @@ fn validate_change_to_not_given(
     Ok(())
 }
 
-fn check_doses_defined(stock_line: &StockLine) -> Result<(), UpdateVaccinationError> {
+fn check_doses_defined(item_row: &ItemRow) -> Result<(), UpdateVaccinationError> {
     // This shouldn't be possible (mSupply ensures doses is at least 1 for vaccine items)
     // but if it happens, we should catch it - otherwise we'll dispense infinity!
-    if stock_line.item_row.vaccine_doses == 0 {
+    if item_row.vaccine_doses == 0 {
         return Err(UpdateVaccinationError::InternalError(
             "Item has no doses defined".to_string(),
         ));
+    }
+
+    Ok(())
+}
+
+// If a vaccination is given, key info should only be able to be changed by the store it was given from
+fn check_is_giving_store(
+    store_id: &str,
+    vaccination: &Vaccination,
+) -> Result<(), UpdateVaccinationError> {
+    if vaccination.vaccination_row.given_store_id != Some(store_id.to_string()) {
+        return Err(UpdateVaccinationError::NotGivenFromThisStore);
     }
 
     Ok(())

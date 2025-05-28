@@ -114,9 +114,9 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
         page: { offset, first },
         sort: sortBy
           ? {
-            key: requestParser.toSortField(sortBy),
-            desc: !!sortBy.isDesc,
-          }
+              key: requestParser.toSortField(sortBy),
+              desc: !!sortBy.isDesc,
+            }
           : undefined,
         filter,
       });
@@ -153,8 +153,6 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
         storeId,
         requisitionId,
       });
-
-
       if (result?.requisition.__typename === 'RequisitionNode') {
         return result?.requisition;
       }
@@ -250,7 +248,9 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Unable to update requisition');
   },
   update: async (
-    patch: Partial<RequestFragment | RequestRowFragment> & { id: string }
+    patch: Omit<Partial<RequestFragment | RequestRowFragment>, 'lines'> & {
+      id: string;
+    }
   ) => {
     const input = requestParser.toUpdate(patch);
     const result = await sdk.updateRequest({

@@ -8,6 +8,7 @@ import {
   AutocompleteProps as MuiAutocompleteProps,
   PopperProps,
   SxProps,
+  Theme,
 } from '@mui/material';
 import {
   AutocompleteOption,
@@ -52,7 +53,7 @@ export interface AutocompleteProps<T>
   error?: boolean;
   setError?: (error: string) => void;
   required?: boolean;
-  textSx?: SxProps;
+  textSx?: SxProps<Theme>;
 }
 
 export function Autocomplete<T>({

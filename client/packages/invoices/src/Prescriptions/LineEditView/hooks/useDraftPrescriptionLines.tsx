@@ -1,13 +1,8 @@
 import { useEffect, useCallback } from 'react';
-import {
-  InvoiceLineNodeType,
-  InvoiceNodeStatus,
-  SortUtils,
-  uniqBy,
-} from '@openmsupply-client/common';
+import { DateUtils, SortUtils, uniqBy } from '@openmsupply-client/common';
 import { useHistoricalStockLines } from '@openmsupply-client/system';
 import { usePrescription } from '../../api';
-import { DraftItem } from '../../../..';
+import { DraftItem } from 'packages/invoices/src/StockOut';
 import { DraftPrescriptionLine } from '../../../types';
 import {
   createDraftPrescriptionLine,
@@ -59,13 +54,13 @@ export const useDraftPrescriptionLines = (
 
     const noStockLines = stockLines.length == 0;
 
-    const placeholderItem = createPrescriptionPlaceholderRow(
+    const placeholderLine = createPrescriptionPlaceholderRow(
       invoiceId ?? '',
       item?.id ?? ''
     );
 
     if (noStockLines || !item) {
-      return updateDraftLines([placeholderItem]);
+      return updateDraftLines([placeholderLine]);
     }
 
     const rows = stockLines
@@ -90,30 +85,15 @@ export const useDraftPrescriptionLines = (
       .filter(stockLine => !stockLine.location?.onHold)
       .sort(SortUtils.byExpiryAsc);
 
-    if (status === InvoiceNodeStatus.New) {
-      let placeholder = lines?.find(
-        ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-      );
-      if (!placeholder) {
-        placeholder = draftLines.find(
-          ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-        );
-      }
-      if (placeholder) {
-        const placeholderItem = lines?.find(l => l.item.id === item.id)?.item;
-        if (!!placeholderItem) placeholder.item = placeholderItem;
-        rows.push(
-          createDraftPrescriptionLine({
-            invoiceId: invoiceId ?? '',
-            invoiceLine: placeholder,
-            invoiceStatus: status,
-          })
-        );
-      } else {
-        // Commented out for now until placeholders are implemented for
-        // prescriptions
-        // rows.push(createStockOutPlaceholderRow(invoiceId, item.id));
-      }
+    const allStockLinesExpired = stockLines.every(
+      stockLine =>
+        stockLine.expiryDate && DateUtils.isExpired(stockLine.expiryDate)
+    );
+
+    // In cases where there are no valid stock lines to allocate we should
+    // append a placeholder line in case of user setting prescribed quantity
+    if (allStockLinesExpired) {
+      rows.push(placeholderLine);
     }
 
     updateDraftLines(rows);

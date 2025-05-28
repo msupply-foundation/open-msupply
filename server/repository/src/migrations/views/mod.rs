@@ -28,6 +28,7 @@ pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
       DROP VIEW IF EXISTS requisitions_in_period;
       DROP VIEW IF EXISTS store_items;
       DROP VIEW IF EXISTS vaccination_card;
+      DROP VIEW IF EXISTS vaccination_course;
     "#
     )?;
 
@@ -65,10 +66,9 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         invoice_line.pack_size,
         invoice_line.note,
         invoice_line.type,
-        invoice_line.inventory_adjustment_reason_id,
+        invoice_line.reason_option_id,
         invoice_line.foreign_currency_price_before_tax,
         invoice_line.item_link_id,
-        invoice_line.return_reason_id,
         item_link.item_id AS item_id,
         CASE
             WHEN "type" = 'STOCK_IN' THEN (number_of_packs * pack_size)
@@ -144,8 +144,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         invoice.type AS invoice_type,
         invoice.invoice_number AS invoice_number,
         invoice.id AS invoice_id,
-        inventory_adjustment_reason.reason as inventory_adjustment_reason,
-        return_reason.reason as return_reason,
+        reason_option.reason AS reason,
         stock_line_id,
         invoice_line_stock_movement.expiry_date AS expiry_date,
         invoice_line_stock_movement.batch AS batch,
@@ -157,8 +156,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         invoice_line_stock_movement.number_of_packs as number_of_packs
     FROM
         invoice_line_stock_movement
-        LEFT JOIN inventory_adjustment_reason ON invoice_line_stock_movement.inventory_adjustment_reason_id = inventory_adjustment_reason.id
-        LEFT JOIN return_reason ON invoice_line_stock_movement.return_reason_id = return_reason.id
+        LEFT JOIN reason_option ON invoice_line_stock_movement.reason_option_id = reason_option.id
         LEFT JOIN stock_line ON stock_line.id = invoice_line_stock_movement.stock_line_id
         JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
         JOIN name_link ON invoice.name_link_id = name_link.id
@@ -441,6 +439,51 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
     -- Only show doses that haven't been deleted, unless they have a vaccination
     WHERE vcd.deleted_datetime IS NULL OR v.id IS NOT NULL;
 
+CREATE VIEW vaccination_course AS
+    SELECT
+      vc.id,
+      vc.name AS vaccine_course_name,
+      coverage_rate,
+      wastage_rate,
+      vcd.id AS vaccine_course_dose_id,
+      label AS dose_label,
+      min_interval_days,
+      min_age,
+      max_age,
+      custom_age_label,
+      vci.id AS vaccine_course_item_id,
+      item.id AS item_id,
+      il.id AS item_link_id,
+      item.name AS item_name,
+      item.code AS item_code,
+      item.type AS item_type,
+      item.default_pack_size,
+      item.is_vaccine AS is_vaccine_item,
+      item.vaccine_doses,
+      item.unit_id AS unit_id,
+      unit.name AS unit,
+      unit."index" AS unit_index,
+      di.demographic_id AS demographic_id,
+      di.name AS demographic_name,
+      di.population_percentage AS population_percentage,
+      p.id AS program_id,
+      p.name AS program_name
+    FROM
+      vaccine_course vc
+      JOIN vaccine_course_dose vcd ON vc.id = vcd.vaccine_course_id
+      JOIN vaccine_course_item vci ON vci.vaccine_course_id = vc.id
+      JOIN item_link il ON vci.item_link_id = il.id
+      JOIN item ON item.id = il.item_id
+      LEFT JOIN unit ON item.unit_id = unit.id
+      -- This assumes that there is only one demographic indicator for each 
+      -- "demographic_id", which could potentially change in the future
+      LEFT JOIN demographic_indicator di ON di.demographic_id = vc.demographic_id
+      JOIN PROGRAM p ON p.id = vc.program_id
+    WHERE
+      vc.deleted_datetime IS NULL
+      AND vcd.deleted_datetime IS NULL
+      AND vci.deleted_datetime IS NULL
+      AND vc.is_active = true;
     "#,
     )?;
 

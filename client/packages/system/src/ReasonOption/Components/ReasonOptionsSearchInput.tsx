@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Autocomplete,
   BasicTextInput,
@@ -8,20 +8,22 @@ import {
   ReasonOptionNode,
   ReasonOptionNodeType,
 } from '@openmsupply-client/common';
-import { reasonOptions } from '../api';
 
 interface ReasonOptionsSearchInputProps {
   value?: ReasonOptionNode | null;
   width?: number | string;
   onChange: (reasonOption: ReasonOptionNode | null) => void;
   autoFocus?: boolean;
-  type: ReasonOptionNodeType;
+  type: ReasonOptionNodeType | ReasonOptionNodeType[];
   isError?: boolean;
   isDisabled?: boolean;
   onBlur?: () => void;
+  initialStocktake?: boolean;
+  reasonOptions: ReasonOptionNode[];
+  isLoading: boolean;
 }
 
-export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
+export const ReasonOptionsSearchInput = ({
   value,
   width,
   onChange,
@@ -30,26 +32,18 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
   isError,
   isDisabled,
   onBlur,
-}) => {
-  const { data, isLoading } = reasonOptions.document.listAllActive();
-
-  const reasonFilter = (reason: ReasonOptionNode) => {
-    switch (type) {
-      case ReasonOptionNodeType.PositiveInventoryAdjustment:
-        return reason.type === ReasonOptionNodeType.PositiveInventoryAdjustment;
-      case ReasonOptionNodeType.NegativeInventoryAdjustment:
-        return reason.type === ReasonOptionNodeType.NegativeInventoryAdjustment;
-      case ReasonOptionNodeType.RequisitionLineVariance:
-        return reason.type === ReasonOptionNodeType.RequisitionLineVariance;
-      case ReasonOptionNodeType.ReturnReason:
-        return reason.type === ReasonOptionNodeType.ReturnReason;
-      default:
-        return false;
+  initialStocktake,
+  reasonOptions,
+  isLoading,
+}: ReasonOptionsSearchInputProps) => {
+  const reasonFilter = (reasonOption: ReasonOptionNode) => {
+    if (Array.isArray(type)) {
+      return type.includes(reasonOption.type);
     }
+    return reasonOption.type === type;
   };
-  const reasons = (data?.nodes ?? []).filter(reasonFilter);
-
-  const isRequired = reasons.length !== 0;
+  const reasons = (reasonOptions ?? []).filter(reasonFilter);
+  const isRequired = reasons.length !== 0 && !initialStocktake;
 
   return (
     <Box display="flex" flexDirection="row" width={120}>
@@ -77,7 +71,12 @@ export const ReasonOptionsSearchInput: FC<ReasonOptionsSearchInputProps> = ({
             slotProps={{
               input: {
                 disableUnderline: false,
-                style: props.disabled ? { paddingLeft: 0 } : {},
+                sx: {
+                  background: isDisabled
+                    ? theme => theme.palette.background.drawer
+                    : theme => theme.palette.background.white,
+                  paddingLeft: props.disabled ? 0 : {},
+                },
                 ...props.InputProps,
               },
             }}

@@ -24,6 +24,7 @@ pub struct UpdateVaccinationInput {
     pub clinician_id: Option<NullableUpdateInput<String>>,
     pub comment: Option<String>,
     pub given: Option<bool>,
+    pub item_id: Option<NullableUpdateInput<String>>,
     pub stock_line_id: Option<NullableUpdateInput<String>>,
     pub not_given_reason: Option<String>,
     pub update_transactions: Option<bool>,
@@ -37,6 +38,7 @@ impl From<UpdateVaccinationInput> for UpdateVaccination {
             clinician_id,
             comment,
             given,
+            item_id,
             stock_line_id,
             not_given_reason,
             facility_name_id,
@@ -52,6 +54,9 @@ impl From<UpdateVaccinationInput> for UpdateVaccination {
             }),
             comment,
             given,
+            item_id: item_id.map(|item_id| NullableUpdate {
+                value: item_id.value,
+            }),
             stock_line_id: stock_line_id.map(|stock_line_id| NullableUpdate {
                 value: stock_line_id.value,
             }),
@@ -134,6 +139,9 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::ReasonNotProvided
         | ServiceError::StockLineDoesNotExist
         | ServiceError::NotNextDose
+        | ServiceError::NotGivenFromThisStore
+        | ServiceError::ItemDoesNotExist
+        | ServiceError::StockLineDoesNotMatchItem
         | ServiceError::ItemDoesNotBelongToVaccineCourse => BadUserInput(formatted_error),
 
         ServiceError::UpdatedRecordNotFound

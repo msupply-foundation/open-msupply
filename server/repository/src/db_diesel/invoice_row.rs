@@ -52,6 +52,7 @@ table! {
         insurance_discount_percentage -> Nullable<Double>,
         is_cancellation -> Bool,
         expected_delivery_date -> Nullable<Date>,
+        default_donor_link_id -> Nullable<Text>,
     }
 }
 
@@ -137,6 +138,7 @@ pub struct InvoiceRow {
     pub insurance_discount_percentage: Option<f64>,
     pub is_cancellation: bool,
     pub expected_delivery_date: Option<NaiveDate>,
+    pub default_donor_link_id: Option<String>,
 }
 
 pub struct InvoiceRowRepository<'a> {

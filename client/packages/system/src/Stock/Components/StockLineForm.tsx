@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Checkbox,
   Grid,
@@ -21,12 +21,15 @@ import {
   usePluginProvider,
   UsePluginEvents,
   useRegisterActions,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
-import { ItemVariantSearchInput } from '../..';
+import { DonorSearchInput, ItemVariantSearchInput } from '../..';
 import { StyledInputRow } from './StyledInputRow';
 import { PackSizeNumberInput, useIsItemVariantsEnabled } from '../../Item';
+import { CampaignSelector } from './Campaign';
 
 interface StockLineFormProps {
   draft: StockLineRowFragment;
@@ -36,16 +39,21 @@ interface StockLineFormProps {
   packEditable?: boolean;
   isInModal?: boolean;
 }
-export const StockLineForm: FC<StockLineFormProps> = ({
+export const StockLineForm = ({
   draft,
   loading,
   onUpdate,
   pluginEvents,
   packEditable,
   isInModal = false,
-}) => {
+}: StockLineFormProps) => {
   const t = useTranslation();
   const { error } = useNotification();
+
+  const { data: preferences } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor
+  );
+
   const { isConnected, isEnabled, isScanning, startScan } =
     useBarcodeScannerContext();
   const showItemVariantsInput = useIsItemVariantsEnabled();
@@ -108,27 +116,33 @@ export const StockLineForm: FC<StockLineFormProps> = ({
                 autoFocus
                 disabled={!packEditable}
                 width={160}
-                value={parseFloat(draft.totalNumberOfPacks.toFixed(2))}
+                value={
+                  draft.totalNumberOfPacks
+                    ? parseFloat(draft.totalNumberOfPacks.toFixed(2))
+                    : 0
+                }
                 onChange={totalNumberOfPacks =>
                   onUpdate({ totalNumberOfPacks })
                 }
               />
             }
           />
-          <StyledInputRow
-            label={t('label.available-packs')}
-            Input={
-              <NumericTextInput
-                autoFocus
-                disabled={!packEditable}
-                width={160}
-                value={parseFloat(draft.availableNumberOfPacks.toFixed(2))}
-                onChange={availableNumberOfPacks =>
-                  onUpdate({ availableNumberOfPacks })
-                }
-              />
-            }
-          />
+          {!packEditable && (
+            <StyledInputRow
+              label={t('label.available-packs')}
+              Input={
+                <NumericTextInput
+                  autoFocus
+                  disabled={!packEditable}
+                  width={160}
+                  value={parseFloat(draft.availableNumberOfPacks.toFixed(2))}
+                  onChange={availableNumberOfPacks =>
+                    onUpdate({ availableNumberOfPacks })
+                  }
+                />
+              }
+            />
+          )}
           <StyledInputRow
             label={t('label.cost-price')}
             Input={
@@ -180,7 +194,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
                   itemId={draft.itemId}
                   selectedId={draft.itemVariantId ?? null}
                   width={160}
-                  onChange={id => onUpdate({ itemVariantId: id })}
+                  onChange={variant => onUpdate({ itemVariantId: variant?.id })}
                 />
               }
             />
@@ -268,6 +282,39 @@ export const StockLineForm: FC<StockLineFormProps> = ({
             label={t('label.supplier')}
             text={String(supplierName)}
             textProps={{ textAlign: 'end' }}
+          />
+          {draft?.item?.isVaccine && (
+            <StyledInputRow
+              label={t('label.vvm-status')}
+              Input={
+                <BufferedTextInput
+                  disabled
+                  value={draft.vvmStatus?.description ?? ''}
+                />
+              }
+            />
+          )}
+          {preferences?.allowTrackingOfStockByDonor && (
+            <StyledInputRow
+              label={t('label.donor')}
+              Input={
+                <DonorSearchInput
+                  donorId={draft.donor?.id ?? null}
+                  width={160}
+                  onChange={donor => onUpdate({ donor })}
+                  clearable
+                />
+              }
+            />
+          )}
+          <StyledInputRow
+            label={t('label.campaign')}
+            Input={
+              <CampaignSelector
+                campaignId={draft.campaign?.id}
+                onChange={campaign => onUpdate({ campaign })}
+              />
+            }
           />
         </Grid>
       </Grid>

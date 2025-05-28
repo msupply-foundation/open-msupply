@@ -4,6 +4,7 @@ import {
   Formatter,
   isEmpty,
   setNullableInput,
+  UpdateVaccinationInput,
   useMutation,
   useQuery,
   useTranslation,
@@ -13,12 +14,13 @@ import { Clinician } from '../../Clinician';
 import { useVaccinationsGraphQL } from './useVaccinationsGraphQL';
 import { VACCINATION, VACCINATION_CARD } from './keys';
 import { OTHER_FACILITY } from '../Components/FacilitySearchInput';
-import { VaccinationCardItemFragment } from './operations.generated';
+import {
+  VaccinationCardItemFragment,
+  VaccinationQuery,
+} from './operations.generated';
 
 export interface VaccinationStockLine {
   id: string;
-  itemId: string;
-  itemName?: string;
   batch?: string | null;
 }
 
@@ -29,7 +31,11 @@ export interface VaccinationDraft {
   date: Date | null;
   given?: boolean | null;
   comment?: string | null;
-  itemId?: string;
+  itemId?: string | null;
+  item?: {
+    id: string;
+    name: string;
+  } | null;
   stockLine?: VaccinationStockLine | null;
   notGivenReason?: string | null;
   createTransactions: boolean;
@@ -64,7 +70,7 @@ export function useVaccination({
     vaccineCourseDoseId,
   });
 
-  const { mutateAsync: update } = useUpdate(vaccinationId);
+  const { mutateAsync: update } = useUpdate(vaccination);
 
   const [patch, setPatch] = useState<Partial<VaccinationDraft>>({});
 
@@ -75,6 +81,7 @@ export function useVaccination({
     given,
     notGivenReason,
     stockLine,
+    item,
     facilityNameId,
     facilityFreeText,
   } = vaccination ?? {};
@@ -95,9 +102,11 @@ export function useVaccination({
     stockLine,
     given,
     notGivenReason,
-    itemId: stockLine?.itemId,
+    item,
+    itemId: item?.id,
 
-    createTransactions: true,
+    createTransactions: vaccination ? false : true, // When editing - opt in to more transactions being created
+
     enteredAtOtherFacility:
       facilityNameId && facilityNameId !== store?.nameId
         ? { id: facilityNameId, name: cardRow.facilityName ?? '' }
@@ -168,6 +177,8 @@ const useInsert = ({
     if (!encounterId) return;
 
     const isOtherFacility = input.facilityId === OTHER_FACILITY;
+    const shouldCreatePrescription =
+      input.given && !isOtherFacility && input.createTransactions;
 
     const apiResult = await api.insertVaccination({
       storeId,
@@ -185,8 +196,8 @@ const useInsert = ({
         vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
         comment: input.comment,
         notGivenReason: input.notGivenReason,
-        stockLineId:
-          input.given && !isOtherFacility ? input.stockLine?.id : undefined,
+        itemId: input.itemId,
+        stockLineId: shouldCreatePrescription ? input.stockLine?.id : undefined,
       },
     });
 
@@ -211,45 +222,58 @@ const useInsert = ({
   });
 };
 
-const useUpdate = (vaccinationId: string | undefined) => {
+const useUpdate = (vaccination: VaccinationQuery['vaccination']) => {
   const { api, storeId, queryClient } = useVaccinationsGraphQL();
   const t = useTranslation();
 
   const mutationFn = async (input: VaccinationDraft) => {
-    if (!vaccinationId) {
+    if (!vaccination) {
       throw new Error(t('error.failed-to-save-vaccination'));
     }
 
     const isOtherFacility = input.facilityId === OTHER_FACILITY;
 
+    // We should send a reduced input to the API if vaccination was given
+    // from another store
+    const editingGivenFromOtherStore =
+      vaccination.given && vaccination.givenStoreId !== storeId;
+
+    const apiInput: UpdateVaccinationInput = editingGivenFromOtherStore
+      ? {
+          id: vaccination.id,
+          comment: input.comment,
+        }
+      : {
+          id: vaccination.id,
+          given: input.given ?? false,
+          vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
+          comment: input.comment,
+          notGivenReason: !input.given ? input.notGivenReason : null,
+
+          clinicianId: setNullableInput(
+            'id',
+            isOtherFacility ? null : input.clinician
+          ),
+          itemId: setNullableInput('itemId', input.given ? input : null),
+          stockLineId: setNullableInput(
+            'id',
+            input.given && !isOtherFacility ? input.stockLine : null
+          ),
+          facilityNameId: setNullableInput(
+            'facilityId',
+            isOtherFacility ? null : input
+          ),
+          facilityFreeText: setNullableInput(
+            'facilityFreeText',
+            isOtherFacility ? input : null
+          ),
+
+          updateTransactions: input.createTransactions,
+        };
+
     const apiResult = await api.updateVaccination({
       storeId,
-      input: {
-        id: vaccinationId,
-        given: input.given ?? false,
-        vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
-        comment: input.comment,
-        notGivenReason: !input.given ? input.notGivenReason : null,
-
-        clinicianId: setNullableInput(
-          'id',
-          isOtherFacility ? null : input.clinician
-        ),
-        stockLineId: setNullableInput(
-          'id',
-          input.given && !isOtherFacility ? input.stockLine : null
-        ),
-        facilityNameId: setNullableInput(
-          'facilityId',
-          isOtherFacility ? null : input
-        ),
-        facilityFreeText: setNullableInput(
-          'facilityFreeText',
-          isOtherFacility ? input : null
-        ),
-
-        updateTransactions: input.createTransactions,
-      },
+      input: apiInput,
     });
 
     // will be empty if there's a generic error, such as permission denied

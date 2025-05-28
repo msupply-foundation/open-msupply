@@ -103,6 +103,7 @@ fn generate_line(
         expiry_date,
         location_id,
         item_variant_id,
+        vvm_status_id,
         ..
     }: StockLineRow,
 ) -> InvoiceLineRow {
@@ -130,11 +131,13 @@ fn generate_line(
         tax_percentage,
         r#type,
         note,
-        inventory_adjustment_reason_id: None,
-        return_reason_id: None,
         foreign_currency_price_before_tax,
         item_variant_id,
+        vvm_status_id,
         linked_invoice_id: None,
+        donor_link_id: None,
+        reason_option_id: None,
+        campaign_id: None,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {

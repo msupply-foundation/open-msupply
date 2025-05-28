@@ -16,8 +16,8 @@ const ITEM_LINE_1: (&str, &str) = (
       "barcodeID": "",
       "batch": "stocktake_1",
       "cost_price": 5,
-      "donor_id": "",
       "expiry_date": "2022-02-17",
+      "donor_id": "donor_a",
       "extraData": null,
       "hold": false,
       "initial_quan": 0,
@@ -47,7 +47,7 @@ const ITEM_LINE_1: (&str, &str) = (
       "user_7_ID": "",
       "user_8_ID": "",
       "volume_per_pack": 0,
-      "vvm_status": "",
+      "vvm_status_id": "",
       "weight_per_pack": 0
     }"#,
 );
@@ -72,6 +72,9 @@ fn item_line_1_pull_record() -> TestSyncIncomingRecord {
             supplier_link_id: Some("name_store_b".to_string()),
             barcode_id: None,
             item_variant_id: None,
+            donor_link_id: Some("donor_a".to_string()),
+            vvm_status_id: None,
+            campaign_id: None,
         },
     )
 }
@@ -96,6 +99,9 @@ fn item_line_1_push_record() -> TestSyncOutgoingRecord {
             supplier_id: Some("name_store_b".to_string()),
             barcode_id: None,
             item_variant_id: None,
+            donor_id: Some("donor_a".to_string()),
+            vvm_status_id: None,
+            campaign_id: None,
         }),
     }
 }
@@ -139,7 +145,7 @@ const ITEM_LINE_2: (&str, &str) = (
       "user_7_ID": "",
       "user_8_ID": "",
       "volume_per_pack": 0,
-      "vvm_status": "",
+      "vvm_status_id": "",
       "weight_per_pack": 0
   }"#,
 );
@@ -164,6 +170,9 @@ fn item_line_2_pull_record() -> TestSyncIncomingRecord {
             supplier_link_id: None,
             barcode_id: None,
             item_variant_id: None,
+            donor_link_id: None,
+            vvm_status_id: None,
+            campaign_id: None,
         },
     )
 }
@@ -188,6 +197,9 @@ fn item_line_2_push_record() -> TestSyncOutgoingRecord {
             supplier_id: None,
             barcode_id: None,
             item_variant_id: None,
+            donor_id: None,
+            vvm_status_id: None,
+            campaign_id: None,
         }),
     }
 }

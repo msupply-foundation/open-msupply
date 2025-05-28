@@ -1,33 +1,42 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   DataTable,
   useColumns,
   CurrencyInputCell,
-  getExpiryDateInputColumn,
-  TextInputCell,
   ColumnDescription,
   useTheme,
-  Theme,
-  alpha,
   QueryParamsProvider,
   createQueryParamsStore,
-  CellProps,
   getColumnLookupWithOverrides,
   ColumnAlign,
-  NumberInputCell,
   Currencies,
   useCurrencyCell,
   useAuthContext,
+  useTranslation,
+  usePreference,
+  PreferenceKey,
+  Formatter,
+  useIntlUtils,
+  NumberInputCell,
+  getDosesPerUnitColumn,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
+  getCampaignColumn,
+  getDonorColumn,
   getLocationInputColumn,
-  ItemVariantInputCell,
+  ItemRowFragment,
   LocationRowFragment,
   PackSizeEntryCell,
-  useIsItemVariantsEnabled,
 } from '@openmsupply-client/system';
+import {
+  getBatchExpiryColumns,
+  getInboundDosesColumns,
+  itemVariantColumn,
+  NumberOfPacksCell,
+  vvmStatusesColumn,
+} from './utils';
 
 interface TableProps {
   lines: DraftInboundLine[];
@@ -35,95 +44,109 @@ interface TableProps {
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
+  hasItemVariantsEnabled?: boolean;
+  hasVvmStatusesEnabled?: boolean;
+  item?: ItemRowFragment | null;
 }
 
-const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
-const getBatchColumn = (
-  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void,
-  theme: Theme
-): ColumnDescription<DraftInboundLine> => [
-  'batch',
-  {
-    width: 150,
-    maxWidth: 150,
-    maxLength: 50,
-    Cell: TextInputCell,
-    setter: updateDraftLine,
-    backgroundColor: alpha(theme.palette.background.menu, 0.4),
-    // Remember previously entered batches for this item and suggest them in future shipments
-    autocompleteProvider: data => `inboundshipment${data.item.id}`,
-    accessor: ({ rowData }) => rowData.batch || '',
-  },
-];
-const getExpiryColumn = (
-  updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void,
-  theme: Theme
-): ColumnDescription<DraftInboundLine> => [
-  expiryInputColumn,
-  {
-    width: 150,
-    maxWidth: 150,
-    setter: updateDraftLine,
-    backgroundColor: alpha(theme.palette.background.menu, 0.4),
-  },
-];
-
-const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
-  rowData,
-  ...props
-}) => (
-  <NumberInputCell
-    {...props}
-    isRequired={rowData.numberOfPacks === 0}
-    rowData={rowData}
-  />
-);
-
-export const QuantityTableComponent: FC<TableProps> = ({
+export const QuantityTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled = false,
-}) => {
+  hasItemVariantsEnabled,
+  hasVvmStatusesEnabled,
+  item,
+}: TableProps) => {
+  const t = useTranslation();
   const theme = useTheme();
-  const itemVariantsEnabled = useIsItemVariantsEnabled();
+  const { getPlural } = useIntlUtils();
+  const { data: preferences } = usePreference(
+    PreferenceKey.ManageVaccinesInDoses
+  );
+
+  const displayInDoses =
+    !!preferences?.manageVaccinesInDoses && !!item?.isVaccine;
+
+  const unitName = Formatter.sentenceCase(
+    item?.unitName ? item.unitName : t('label.unit')
+  );
+  const pluralisedUnitName = getPlural(unitName, 2);
 
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
-    getBatchColumn(updateDraftLine, theme),
-    getExpiryColumn(updateDraftLine, theme),
+    ...getBatchExpiryColumns(updateDraftLine, theme),
   ];
 
-  if (itemVariantsEnabled) {
-    columnDefinitions.push({
-      key: 'itemVariantId',
-      label: 'label.item-variant',
-      width: 170,
-      Cell: props => (
-        <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
-      ),
-      setter: updateDraftLine,
-    });
+  if (hasItemVariantsEnabled) {
+    columnDefinitions.push(itemVariantColumn(updateDraftLine, displayInDoses));
   }
+
+  if (displayInDoses) {
+    columnDefinitions.push(getDosesPerUnitColumn(t, unitName));
+  }
+
+  if (!!hasVvmStatusesEnabled && item?.isVaccine) {
+    columnDefinitions.push(vvmStatusesColumn(updateDraftLine));
+  }
+
   columnDefinitions.push(
-    [
-      'numberOfPacks',
-      {
-        Cell: NumberOfPacksCell,
-        width: 100,
-        setter: updateDraftLine,
-      },
-    ],
     getColumnLookupWithOverrides('packSize', {
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: updateDraftLine,
       label: 'label.pack-size',
+      defaultHideOnMobile: true,
     }),
     [
-      'unitQuantity',
+      'numberOfPacks',
       {
-        accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
+        label: 'label.packs-received',
+        Cell: NumberOfPacksCell,
+        width: 100,
+        setter: patch => {
+          const { packSize, numberOfPacks } = patch;
+
+          if (packSize !== undefined && numberOfPacks !== undefined) {
+            const packToUnits = packSize * numberOfPacks;
+
+            updateDraftLine({
+              ...patch,
+              unitsPerPack: packToUnits,
+            });
+          }
+        },
       },
     ]
   );
+
+  columnDefinitions.push({
+    key: 'unitsPerPack',
+    label: t('label.units-received', {
+      unit: pluralisedUnitName,
+    }),
+    width: 100,
+    Cell: NumberInputCell,
+    align: ColumnAlign.Right,
+    setter: patch => {
+      const { unitsPerPack, packSize } = patch;
+
+      if (packSize !== undefined && unitsPerPack !== undefined) {
+        const unitToPacks = unitsPerPack / packSize;
+
+        updateDraftLine({
+          ...patch,
+          unitsPerPack,
+          numberOfPacks: unitToPacks,
+        });
+      }
+    },
+    accessor: ({ rowData }) => {
+      return rowData.numberOfPacks * rowData.packSize;
+    },
+    defaultHideOnMobile: true,
+  });
+
+  if (displayInDoses) {
+    columnDefinitions.push(...getInboundDosesColumns());
+  }
 
   const columns = useColumns<DraftInboundLine>(columnDefinitions, {}, [
     updateDraftLine,
@@ -137,7 +160,6 @@ export const QuantityTableComponent: FC<TableProps> = ({
       isDisabled={isDisabled}
       columns={columns}
       data={lines}
-      noDataMessage="Add a new line"
       dense
     />
   );
@@ -145,13 +167,13 @@ export const QuantityTableComponent: FC<TableProps> = ({
 
 export const QuantityTable = React.memo(QuantityTableComponent);
 
-export const PricingTableComponent: FC<TableProps> = ({
+export const PricingTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled = false,
   currency,
   isExternalSupplier,
-}) => {
+}: TableProps) => {
   const { store } = useAuthContext();
 
   const CurrencyCell = useCurrencyCell<DraftInboundLine>(
@@ -265,7 +287,6 @@ export const PricingTableComponent: FC<TableProps> = ({
       isDisabled={isDisabled}
       columns={columns}
       data={lines}
-      noDataMessage="Add a new line"
       dense
     />
   );
@@ -273,24 +294,35 @@ export const PricingTableComponent: FC<TableProps> = ({
 
 export const PricingTable = React.memo(PricingTableComponent);
 
-export const LocationTableComponent: FC<TableProps> = ({
+export const LocationTableComponent = ({
   lines,
   updateDraftLine,
   isDisabled,
-}) => {
-  const columns = useColumns<DraftInboundLine>(
-    [
-      [
-        'batch',
-        {
-          accessor: ({ rowData }) => rowData.batch || '',
-        },
-      ],
-      [getLocationInputColumn(), { setter: updateDraftLine, width: 800 }],
-    ],
-    {},
-    [updateDraftLine, lines]
+}: TableProps) => {
+  const { data: preferences } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor
   );
+
+  const columnDescriptions: ColumnDescription<DraftInboundLine>[] = [
+    [
+      'batch',
+      {
+        accessor: ({ rowData }) => rowData.batch || '',
+      },
+    ],
+    [getLocationInputColumn(), { setter: updateDraftLine, width: 550 }],
+  ];
+
+  if (preferences?.allowTrackingOfStockByDonor) {
+    columnDescriptions.push([
+      getDonorColumn((id, donor) => updateDraftLine({ id, donor })),
+      { accessor: ({ rowData }) => rowData.donor?.id },
+    ] as ColumnDescription<DraftInboundLine>);
+  }
+
+  columnDescriptions.push(getCampaignColumn(patch => updateDraftLine(patch)));
+
+  const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);
 
   return (
     <QueryParamsProvider

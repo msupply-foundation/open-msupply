@@ -1,9 +1,7 @@
 import React, { FC, useState } from 'react';
 import Papa, { ParseResult } from 'papaparse';
-import { InlineProgress, Typography, Upload } from '@common/components';
-import { ImportPanel } from './ImportPanel';
-import { useTranslation } from '@common/intl';
 import {
+  useTranslation,
   Grid,
   Stack,
   Link,
@@ -11,8 +9,11 @@ import {
   PropertyNode,
   useNotification,
   NamePropertyNode,
+  UploadFile,
+  InlineProgress,
+  Typography,
 } from '@openmsupply-client/common';
-
+import { ImportPanel } from './ImportPanel';
 import { ImportRow } from './PropertiesImportModal';
 import { exportFacilitiesPropertiesToCsv } from '../utils';
 import { processProperties } from '../../../utils';
@@ -50,7 +51,7 @@ export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
   const t = useTranslation();
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
-  const { data: facilitiesData } = useName.document.facilitiesAll();
+  const { data: facilitiesData } = useName.document.storesAll();
 
   const FacilityPropertyBuffer: ImportRow[] = [];
   const propertyNodes: PropertyNode[] | undefined = properties
@@ -187,7 +188,7 @@ export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
         </Grid>
       ) : null}
       <Stack spacing={2}>
-        <Upload onUpload={csvImport} />
+        <UploadFile onUpload={csvImport} />
         <Typography textAlign="center">
           <Link onClick={csvExample} to={''}>
             {t('messages.properties-download-example')}

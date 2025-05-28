@@ -16,7 +16,7 @@ use crate::{
 };
 
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
+    dsl::{Eq, InnerJoin, IntoBoxed, LeftJoin, LeftJoinOn, Nullable},
     prelude::*,
 };
 
@@ -155,12 +155,13 @@ impl<'a> StockLineRepository<'a> {
 type BoxedStockLineQuery = IntoBoxed<
     'static,
     LeftJoin<
-        LeftJoin<
+        LeftJoinOn<
             LeftJoin<
                 InnerJoin<stock_line::table, InnerJoin<item_link::table, item::table>>,
                 location::table,
             >,
             InnerJoin<name_link::table, name::table>,
+            Eq<stock_line::supplier_link_id, Nullable<name_link::id>>,
         >,
         barcode::table,
     >,
@@ -171,7 +172,11 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
     let mut query = stock_line::table
         .inner_join(item_link::table.inner_join(item::table))
         .left_join(location::table)
-        .left_join(name_link::table.inner_join(name::table))
+        .left_join(
+            name_link::table
+                .on(stock_line::supplier_link_id.eq(name_link::id.nullable()))
+                .inner_join(name::table),
+        )
         .left_join(barcode::table)
         .into_boxed();
 

@@ -4,8 +4,9 @@ use crate::sync::{
 };
 use chrono::NaiveDateTime;
 use repository::{
-    ChangelogRow, ChangelogTableName, ItemLinkRowRepository, RequisitionLineRow,
-    RequisitionLineRowDelete, RequisitionLineRowRepository, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository, RequisitionFilter,
+    RequisitionLineRow, RequisitionLineRowDelete, RequisitionLineRowRepository,
+    RequisitionRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
@@ -111,7 +112,9 @@ impl SyncTranslation for RequisitionLineTranslation {
             suggested_quantity: data.suggested_quantity,
             supply_quantity: data.actualQuan,
             available_stock_on_hand: data.stock_on_hand,
-            average_monthly_consumption: (data.daily_usage * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30).ceil(),
+            average_monthly_consumption: (data.daily_usage
+                * APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30)
+                .ceil(),
             comment: data.comment,
             snapshot_datetime: data.snapshot_datetime,
             approved_quantity: data.approved_quantity,
@@ -183,6 +186,18 @@ impl SyncTranslation for RequisitionLineTranslation {
             ))?
             .item_id;
 
+        let is_program_requisition = RequisitionRepository::new(connection)
+            .query_by_filter(RequisitionFilter::new().id(EqualFilter::equal_to(&requisition_id)))?
+            .pop()
+            .map(|requisition| requisition.program.is_some())
+            .unwrap_or(false);
+
+        let prev_stock_balance = if is_program_requisition {
+            initial_stock_on_hand_units
+        } else {
+            available_stock_on_hand
+        };
+
         let legacy_row = LegacyRequisitionLineRow {
             ID: id.clone(),
             requisition_ID: requisition_id,
@@ -197,7 +212,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             approved_quantity,
             approval_comment,
             item_name,
-            initial_stock_on_hand_units,
+            initial_stock_on_hand_units: prev_stock_balance,
             incoming_units,
             outgoing_units,
             loss_in_units,

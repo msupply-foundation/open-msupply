@@ -10,11 +10,12 @@ import {
   Grid,
   InputWithLabelRow,
   Link,
+  LoadingButton,
   Radio,
   RadioGroup,
   RouteBuilder,
+  SaveIcon,
   Select,
-  Switch,
   useAuthContext,
   useDialog,
   useFormatDateTime,
@@ -22,7 +23,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { FormControlLabel, Typography } from '@mui/material';
-import React from 'react';
+import React, { useState } from 'react';
 import { useVaccination, VaccinationDraft } from '../api';
 import { Clinician, ClinicianSearchInput } from '../../Clinician';
 import {
@@ -33,9 +34,9 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
-import { getSwitchReason } from './getSwitchReason';
 import { useConfirmNoStockLineSelected } from './useConfirmNoStockLineSelected';
 import { useClinicians } from '@openmsupply-client/programs';
+import { useConfirmEarlyVaccination } from './useConfirmEarlyVaccination';
 
 interface VaccinationModalProps {
   encounterId?: string;
@@ -56,6 +57,7 @@ export const VaccinationModal = ({
 }: VaccinationModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
+  const [isSaving, setIsSaving] = useState(false);
   const {
     draft,
     updateDraft,
@@ -71,31 +73,43 @@ export const VaccinationModal = ({
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const save = useConfirmNoStockLineSelected(
+  const onSave = async () => {
+    try {
+      setIsSaving(true);
+      const result = await saveVaccination(draft);
+      setIsSaving(false);
+
+      if (result?.__typename === 'VaccinationNode') {
+        result?.invoice?.id && draft.createTransactions
+          ? success(t('messages.vaccination-saved-and-stock-recorded'))()
+          : success(t('messages.vaccination-saved'))();
+        onOk();
+        onClose();
+      }
+
+      if (result?.__typename === 'UpdateVaccinationError') {
+        if (result.error.__typename === 'NotMostRecentGivenDose') {
+          const errorSnack = error(t('error.not-most-recent-given-dose'));
+          errorSnack();
+        }
+      }
+    } catch (e) {
+      setIsSaving(false);
+      console.error(e);
+      error(t('error.something-wrong'))();
+    }
+  };
+
+  const confirmNoStockLine = useConfirmNoStockLineSelected(
     draft,
     !!dose?.vaccineCourse.vaccineCourseItems?.length,
-    async () => {
-      try {
-        const result = await saveVaccination(draft);
+    onSave
+  );
 
-        if (result?.__typename === 'VaccinationNode') {
-          result?.invoice?.id && draft.createTransactions
-            ? success(t('messages.vaccination-saved-and-stock-recorded'))()
-            : success(t('messages.vaccination-saved'))();
-          onOk();
-          onClose();
-        }
-
-        if (result?.__typename === 'UpdateVaccinationError') {
-          if (result.error.__typename === 'NotMostRecentGivenDose') {
-            const errorSnack = error(t('error.not-most-recent-given-dose'));
-            errorSnack();
-          }
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
+  const save = useConfirmEarlyVaccination(
+    cardRow.suggestedDate,
+    draft,
+    confirmNoStockLine
   );
 
   const InfoBox = <VaccineInfoBox vaccination={vaccination} />;
@@ -119,9 +133,13 @@ export const VaccinationModal = ({
       title={dose?.label ?? t('label.vaccination')}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
-        <DialogButton
+        <LoadingButton
+          label={t('button.save')}
+          isLoading={isSaving}
           disabled={!isDirty || !isComplete}
-          variant="ok"
+          startIcon={<SaveIcon />}
+          variant="contained"
+          color="secondary"
           onClick={save}
         />
       }
@@ -147,7 +165,7 @@ const VaccinationForm = ({
   updateDraft: (update: Partial<VaccinationDraft>) => void;
 }) => {
   const t = useTranslation();
-  const { store } = useAuthContext();
+  const { store, storeId } = useAuthContext();
 
   const { data: clinicians } = useClinicians.document.list({});
   const hasClinicians = clinicians?.nodes.length !== 0;
@@ -155,39 +173,12 @@ const VaccinationForm = ({
   if (!dose) {
     return null;
   }
-
-  const transactionSwitchReason = getSwitchReason(
-    draft,
-    !!dose.vaccineCourse.vaccineCourseItems?.length,
-    vaccination
-  );
-  const CreateTransactions = transactionSwitchReason ? (
-    <Switch
-      label={t(transactionSwitchReason)}
-      checked={draft.createTransactions}
-      onChange={() =>
-        updateDraft({
-          createTransactions: !draft.createTransactions,
-        })
-      }
-      labelPlacement="end"
-      size="small"
-    />
-  ) : null;
+  const givenAtOtherStore =
+    !!vaccination?.given && vaccination.givenStoreId !== storeId;
 
   const isFreeTextFacility = draft.facilityId === OTHER_FACILITY;
   const isOtherFacility =
     !!draft.facilityId && draft.facilityId !== store?.nameId;
-
-  const SelectBatch = (
-    <SelectItemAndBatch
-      dose={dose}
-      draft={draft}
-      updateDraft={updateDraft}
-      hasExistingSelectedBatch={!!vaccination?.stockLine}
-      isOtherFacility={isOtherFacility}
-    />
-  );
 
   return (
     <Container
@@ -207,6 +198,7 @@ const VaccinationForm = ({
               }
               facilityId={draft.facilityId}
               enteredAtOtherFacility={draft.enteredAtOtherFacility}
+              disabled={givenAtOtherStore}
             />
 
             {isFreeTextFacility && (
@@ -245,8 +237,9 @@ const VaccinationForm = ({
         label={t('label.date')}
         Input={
           <DatePicker
+            disabled={givenAtOtherStore}
             disableFuture
-            value={draft.date}  
+            value={draft.date}
             onChange={date => updateDraft({ date })}
             sx={{ flex: 1 }}
           />
@@ -256,33 +249,35 @@ const VaccinationForm = ({
         sx={{ margin: '0 auto' }}
         value={draft.given ?? null}
         onChange={event =>
-          updateDraft({ given: event.target.value === 'true' })
+          updateDraft({
+            given: event.target.value === 'true',
+            // Ensure current facility is selected when changing given status
+            facilityId: isFreeTextFacility ? OTHER_FACILITY : store?.nameId,
+          })
         }
       >
         <FormControlLabel
+          disabled={givenAtOtherStore}
           value={true}
           control={<Radio />}
           label={t('label.vaccine-given')}
         />
         <FormControlLabel
+          disabled={givenAtOtherStore}
           value={false}
           control={<Radio />}
           label={t('label.vaccine-not-given')}
         />
       </RadioGroup>
 
-      {/* Switch makes more sense below the batch selection if you're updating the batch */}
-      {transactionSwitchReason === 'label.update-transactions' ? (
-        <>
-          {SelectBatch}
-          {CreateTransactions}
-        </>
-      ) : (
-        <>
-          {CreateTransactions}
-          {SelectBatch}
-        </>
-      )}
+      <SelectItemAndBatch
+        draft={draft}
+        vaccination={vaccination}
+        isOtherFacility={isOtherFacility}
+        dose={dose}
+        updateDraft={updateDraft}
+        givenAtOtherStore={givenAtOtherStore}
+      />
 
       {draft.given === false && (
         <>
@@ -349,8 +344,7 @@ const VaccineInfoBox = ({
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
   const { store } = useAuthContext();
-  const prescriptionCreatedAtStore =
-    vaccination?.invoice?.store?.id === store?.id;
+  const prescriptionCreatedAtStore = vaccination?.givenStoreId === store?.id;
 
   return vaccination?.given ? (
     <Alert severity="success">
