@@ -6,8 +6,6 @@ import {
   getDefaultOptionRenderer,
   ReasonOptionNode,
   ReasonOptionNodeType,
-  SxProps,
-  Theme,
 } from '@openmsupply-client/common';
 
 interface ReasonOptionsSearchInputProps
