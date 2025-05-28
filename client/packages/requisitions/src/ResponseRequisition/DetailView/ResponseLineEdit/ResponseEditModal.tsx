@@ -159,7 +159,6 @@ export const ResponseLineEditModal = ({
           requisition={requisition}
           lines={lines}
           draft={draft}
-          totalStockOnHand={data?.responseStoreStats.stockOnHand || 0}
           currentItem={currentItem}
           onChangeItem={onChangeItem}
           update={update}

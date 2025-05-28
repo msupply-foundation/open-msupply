@@ -5,7 +5,7 @@ import { FnUtils } from '@common/utils';
 
 export type DraftResponseLine = Omit<
   ResponseLineFragment,
-  '__typename' | 'item' | 'itemStats'
+  '__typename' | 'item'
 > & {
   requisitionId: string;
   isCreated: boolean;
@@ -37,6 +37,12 @@ const createDraftFromItem = (
     availableStockOnHand: 0,
     suggestedQuantity: 0,
     isCreated: true,
+    itemStats: {
+      __typename: 'ItemStatsNode',
+      stockOnHand: 0,
+      availableMonthsOfStockOnHand: 0,
+      averageMonthlyConsumption: 0,
+    },
   };
 };
 

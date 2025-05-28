@@ -34,7 +34,6 @@ interface ResponseLineEditProps {
   onChangeItem: (item: ItemWithStatsFragment) => void;
   lines: ResponseLineFragment[];
   draft?: DraftResponseLine | null;
-  totalStockOnHand?: number;
   update: (patch: Partial<DraftResponseLine>) => void;
   representation: RepresentationValue;
   setRepresentation: (type: RepresentationValue) => void;
@@ -50,7 +49,6 @@ export const ResponseLineEdit = ({
   onChangeItem,
   lines,
   draft,
-  totalStockOnHand,
   update,
   representation,
   setRepresentation,
@@ -199,7 +197,7 @@ export const ResponseLineEdit = ({
                 borderRadius: 2,
               }}
             >
-              {numericInput('label.our-soh', totalStockOnHand, {
+              {numericInput('label.our-soh', draft?.itemStats.stockOnHand, {
                 disabledOverride: true,
               })}
               {numericInput('label.suggested', draft?.suggestedQuantity, {
