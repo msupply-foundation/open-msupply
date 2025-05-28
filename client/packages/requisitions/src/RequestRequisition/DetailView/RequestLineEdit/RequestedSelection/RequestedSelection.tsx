@@ -102,6 +102,7 @@ export const RequestedSelection = ({
             },
           }}
           sx={{
+            boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
             '& .MuiInputBase-input': {
               p: '3px 4px',
               backgroundColor: theme =>
@@ -122,6 +123,7 @@ export const RequestedSelection = ({
             );
           }}
           sx={{
+            boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
             '& .MuiInputBase-input': {
               p: '3px 4px',
               backgroundColor: theme => theme.palette.background.white,

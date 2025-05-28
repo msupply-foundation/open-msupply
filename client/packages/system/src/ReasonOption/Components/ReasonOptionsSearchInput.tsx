@@ -22,7 +22,7 @@ interface ReasonOptionsSearchInputProps {
   initialStocktake?: boolean;
   reasonOptions: ReasonOptionNode[];
   isLoading: boolean;
-  inputSx?: SxProps<Theme>;
+  sx?: SxProps<Theme>;
 }
 
 export const ReasonOptionsSearchInput = ({
@@ -36,7 +36,7 @@ export const ReasonOptionsSearchInput = ({
   initialStocktake,
   reasonOptions,
   isLoading,
-  inputSx,
+  sx,
 }: ReasonOptionsSearchInputProps) => {
   const reasonFilter = (reasonOption: ReasonOptionNode) => {
     if (Array.isArray(type)) {
@@ -66,7 +66,7 @@ export const ReasonOptionsSearchInput = ({
         onChange={(_, reason) => {
           onChange(reason);
         }}
-        textSx={inputSx}
+        sx={sx}
         renderInput={props => (
           <BasicTextInput
             {...props}

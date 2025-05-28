@@ -1,13 +1,6 @@
 import React, { useMemo } from 'react';
-import { useTranslation } from '@common/intl';
 import {
-  ItemWithStatsFragment,
-  ReasonOptionsSearchInput,
-  StockItemSearchInputWithStats,
-  useReasonOptions,
-} from '@openmsupply-client/system';
-import { DraftResponseLine } from './hooks';
-import {
+  useTranslation,
   BasicTextInput,
   Box,
   BufferedTextArea,
@@ -17,12 +10,19 @@ import {
   Typography,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
+import {
+  ItemWithStatsFragment,
+  ReasonOptionsSearchInput,
+  StockItemSearchInputWithStats,
+  useReasonOptions,
+} from '@openmsupply-client/system';
 import { ResponseFragment, ResponseLineFragment } from '../../api';
 import {
   InfoRow,
   ModalContentLayout,
   RepresentationValue,
 } from '../../../common';
+import { DraftResponseLine } from './hooks';
 import { SupplySelection } from './SuppliedSelection';
 import { useStockCalculations } from './utils';
 import { createNumericInput } from './ContentLayout';
@@ -110,9 +110,6 @@ export const ResponseLineEdit = ({
       Left={
         draft ? (
           <>
-            {currentItem?.unitName && (
-              <InfoRow label={t('label.unit')} value={unitName} />
-            )}
             {isPacksEnabled && (
               <InfoRow
                 label={t('label.default-pack-size')}
@@ -218,13 +215,14 @@ export const ResponseLineEdit = ({
               <>
                 <InputWithLabelRow
                   label={t('label.reason')}
+                  labelWidth={'205px'}
                   Input={
                     <ReasonOptionsSearchInput
                       value={draft?.reason}
                       onChange={value => {
                         update({ reason: value });
                       }}
-                      width={230}
+                      width={145}
                       type={ReasonOptionNodeType.RequisitionLineVariance}
                       isDisabled={
                         draft?.requestedQuantity === draft?.suggestedQuantity ||
@@ -232,6 +230,11 @@ export const ResponseLineEdit = ({
                       }
                       reasonOptions={reasonOptions?.nodes ?? []}
                       isLoading={isLoading}
+                      sx={{
+                        boxShadow: theme =>
+                          !disabled ? theme.shadows[2] : 'none',
+                        borderRadius: 2,
+                      }}
                     />
                   }
                   sx={{
