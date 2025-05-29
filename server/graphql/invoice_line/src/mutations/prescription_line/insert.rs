@@ -85,6 +85,7 @@ pub enum InsertErrorInterface {
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     use ServiceError::*;
     let formatted_error = format!("{:#?}", error);
+    log::error!("Error inserting prescription line: {}", formatted_error);
 
     let graphql_error = match error {
         // Structured Errors
@@ -136,7 +137,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | InvoiceTypeDoesNotMatch
         | LineAlreadyExists
         | NumberOfPacksBelowZero => StandardGraphqlError::BadUserInput(formatted_error),
-        DatabaseError(_) | NewlyCreatedLineDoesNotExist => {
+        AutoPickFailed(_) | DatabaseError(_) | NewlyCreatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
         }
     };
