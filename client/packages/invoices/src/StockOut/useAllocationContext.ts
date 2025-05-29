@@ -257,23 +257,23 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
         ? result.remainingQuantity
         : 0;
 
-    const alerts = getAllocationAlerts(
-      quantity,
-      allocatedQuantity,
-      stillToAllocate,
-      hasOnHold,
-      allocateIn,
-      result.allocatedLines,
-      format,
-      t
-    );
-
     // Note that a placeholder is always considered to be pack size 1, 1 dose per unit
     // So if issuing in larger pack sizes, we need to adjust the placeholder
     const placeholderInUnits =
       allocateIn.type === AllocateInType.Packs
         ? stillToAllocate * allocateIn.packSize
         : stillToAllocate;
+
+    const alerts = getAllocationAlerts(
+      quantity,
+      allocatedQuantity,
+      placeholderInUnits,
+      hasOnHold,
+      allocateIn,
+      result.allocatedLines,
+      format,
+      t
+    );
 
     set(state => ({
       ...state,
