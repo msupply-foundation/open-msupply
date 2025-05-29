@@ -56,7 +56,8 @@ export const StockLineForm = ({
 
   const { data: preferences } = usePreference(
     PreferenceKey.AllowTrackingOfStockByDonor,
-    PreferenceKey.ManageVaccinesInDoses
+    PreferenceKey.ManageVaccinesInDoses,
+    PreferenceKey.ManageVvmStatusForStock
   );
 
   const { isConnected, isEnabled, isScanning, startScan } =
@@ -293,7 +294,7 @@ export const StockLineForm = ({
             text={String(supplierName)}
             textProps={{ textAlign: 'end' }}
           />
-          {draft?.item?.isVaccine && (
+          {draft?.item?.isVaccine && preferences?.manageVvmStatusForStock && (
             <StyledInputRow
               label={t('label.vvm-status')}
               Input={
