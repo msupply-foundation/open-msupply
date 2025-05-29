@@ -91,14 +91,14 @@ fn calculate_ledger_balance(
         item_ledgers.push(new_ledger);
     }
 
-    // manual sort
+    // TODO Fix or remove manual sort. Sorting by anything other than the existing datetime sort gets balance out of order
     if let Some(sort) = sort {
         match sort.key {
             LedgerSortField::Id => {
                 item_ledgers.sort_by_key(|l| l.ledger.id.clone());
             }
             LedgerSortField::Datetime => {
-                item_ledgers.sort_by_key(|l| l.ledger.datetime);
+                // Don't need to re-sort it, as it's already in datetime order and re-sorting risks getting rows out of order
             }
             LedgerSortField::Name => {
                 item_ledgers.sort_by_key(|l| l.ledger.name.clone());
