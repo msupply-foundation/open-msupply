@@ -95,6 +95,9 @@ pub struct LegacyTransLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "vaccine_vial_monitor_status_ID")]
     pub vvm_status_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub campaign_id: Option<String>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -155,6 +158,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             linked_invoice_id,
             donor_id,
             vvm_status_id,
+            campaign_id,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
         let line_type = match to_invoice_line_type(&r#type) {
             Some(line_type) => line_type,
@@ -286,9 +290,10 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
-            donor_id,
-            vvm_status_id,
+            donor_link_id: donor_id,
             reason_option_id,
+            vvm_status_id,
+            campaign_id,
         };
 
         let result = adjust_negative_values(result);
@@ -343,9 +348,10 @@ impl SyncTranslation for InvoiceLineTranslation {
                     foreign_currency_price_before_tax,
                     item_variant_id,
                     linked_invoice_id,
-                    donor_id,
+                    donor_link_id,
                     vvm_status_id,
                     reason_option_id,
+                    campaign_id,
                 },
             item_row,
             ..
@@ -375,8 +381,9 @@ impl SyncTranslation for InvoiceLineTranslation {
             item_variant_id,
             reason_option_id,
             linked_invoice_id,
-            donor_id,
+            donor_id: donor_link_id,
             vvm_status_id,
+            campaign_id,
         };
         Ok(PushTranslateResult::upsert(
             changelog,

@@ -165,6 +165,7 @@ export const useInboundShipmentColumns = ({
             { path: ['location', 'code'], default: '' },
           ]),
         width: 150,
+        defaultHideOnMobile: true,
       },
     ],
 
@@ -181,6 +182,7 @@ export const useInboundShipmentColumns = ({
             { path: ['lines', 'item', 'unitName'] },
             { path: ['item', 'unitName'], default: '' },
           ]),
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -196,6 +198,7 @@ export const useInboundShipmentColumns = ({
             { path: ['lines', 'packSize'] },
             { path: ['packSize'], default: '' },
           ]),
+        defaultHideOnMobile: true,
       },
     ],
   ];
@@ -245,6 +248,7 @@ export const useInboundShipmentColumns = ({
             return getUnitQuantity(rowData);
           }
         },
+        defaultHideOnMobile: true,
       },
     ]
   );
@@ -269,6 +273,7 @@ export const useInboundShipmentColumns = ({
         }
       },
       sortable: false,
+      defaultHideOnMobile: true,
     },
     {
       label: 'label.total',
@@ -278,6 +283,7 @@ export const useInboundShipmentColumns = ({
       Cell: CurrencyCell,
       accessor: ({ rowData }) => calculateRowTotalCost(rowData),
       getSortValue: rowData => calculateRowTotalCost(rowData),
+      defaultHideOnMobile: true,
     }
   );
 
@@ -287,12 +293,23 @@ export const useInboundShipmentColumns = ({
       label: 'label.donor',
       accessor: ({ rowData }) =>
         getColumnProperty(rowData, [
-          { path: ['lines', 'donorName'] },
-          { path: ['donorName'], default: '' },
+          { path: ['lines', 'donor', 'name'] },
+          { path: ['donor', 'name'], default: '' },
         ]),
       sortable: false,
     });
   }
+
+  columns.push({
+    key: 'campaign',
+    label: 'label.campaign',
+    accessor: ({ rowData }) =>
+      getColumnProperty(rowData, [
+        { path: ['lines', 'campaign', 'name'] },
+        { path: ['campaign', 'name'], default: '' },
+      ]),
+    defaultHideOnMobile: true,
+  });
 
   columns.push(getRowExpandColumn());
 
@@ -350,9 +367,18 @@ export const useExpansionColumns = (
       key: 'donorName',
       label: 'label.donor',
       width: 175,
-      accessor: ({ rowData }) => rowData.donorName,
+      accessor: ({ rowData }) => rowData.donor?.name,
+      defaultHideOnMobile: true,
     });
   }
+
+  columns.push({
+    key: 'campaign',
+    label: 'label.campaign',
+    width: 100,
+    accessor: ({ rowData }) => rowData.campaign?.name,
+    defaultHideOnMobile: true,
+  });
 
   return useColumns(columns, {}, []);
 };

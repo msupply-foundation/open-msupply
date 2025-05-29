@@ -65,7 +65,7 @@ const TRANS_LINE_1: (&str, &str) = (
         "vaccine_vial_monitor_status_ID": "",
         "volume_per_pack": 0,
         "om_item_variant_id": "",
-        "donor_id": "test_donor_id"
+        "donor_id": "donor_a"
         }
     "#,
 );
@@ -96,9 +96,10 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
             linked_invoice_id: None,
-            donor_id: Some("test_donor_id".to_string()),
+            donor_link_id: Some("donor_a".to_string()),
             vvm_status_id: None,
             reason_option_id: None,
+            campaign_id: None,
         },
     )
 }
@@ -130,8 +131,9 @@ fn trans_line_1_push_record() -> TestSyncOutgoingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
             linked_invoice_id: None,
-            donor_id: Some("test_donor_id".to_string()),
-            vvm_status_id: None
+            donor_id: Some("donor_a".to_string()),
+            vvm_status_id: None,
+            campaign_id: None
         }),
     }
 }
@@ -221,9 +223,10 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
             linked_invoice_id: None,
-            donor_id: None,
+            donor_link_id: None,
             vvm_status_id: None,
             reason_option_id: None,
+            campaign_id: None,
         },
     )
 }
@@ -256,7 +259,8 @@ fn trans_line_2_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,
-            vvm_status_id: None
+            vvm_status_id: None,
+            campaign_id: None
         }),
     }
 }
@@ -349,9 +353,10 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: Some("5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string()),
             linked_invoice_id: None,
-            donor_id: None,
+            donor_link_id: None,
             vvm_status_id: None,
             reason_option_id: None,
+            campaign_id: None,
         },
     )
 }
@@ -384,7 +389,8 @@ fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: Some("5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string()),
             linked_invoice_id: None,
             donor_id: None,
-            vvm_status_id: None
+            vvm_status_id: None,
+            campaign_id: None
         }),
     }
 }
@@ -477,9 +483,10 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
             linked_invoice_id: None,
-            donor_id: None,
+            donor_link_id: None,
             vvm_status_id: None,
             reason_option_id: None,
+            campaign_id: None,
         },
     )
 }
@@ -512,7 +519,8 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,
-            vvm_status_id: None
+            vvm_status_id: None,
+            campaign_id: None
         }),
     }
 }
@@ -605,9 +613,10 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(200.0),
             item_variant_id: None,
             linked_invoice_id: None,
-            donor_id: None,
+            donor_link_id: None,
             vvm_status_id: None,
             reason_option_id: None,
+            campaign_id: None,
         },
     )
 }
@@ -640,7 +649,8 @@ fn trans_line_negative_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,
-            vvm_status_id: None
+            vvm_status_id: None,
+            campaign_id: None,
         }),
     }
 }
@@ -734,9 +744,10 @@ fn trans_line_prescribed_quantity_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
             linked_invoice_id: None,
-            donor_id: None,
+            donor_link_id: None,
             vvm_status_id: None,
             reason_option_id: None,
+            campaign_id: None,
         },
     )
 }
@@ -770,7 +781,8 @@ fn trans_line_prescribed_quantity_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,
-            vvm_status_id: None
+            vvm_status_id: None,
+            campaign_id: None,
         }),
     }
 }
@@ -863,9 +875,10 @@ fn trans_line_invalid_stockline_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(200.0),
             item_variant_id: None,
             linked_invoice_id: None,
-            donor_id: None,
+            donor_link_id: None,
             vvm_status_id: None,
             reason_option_id: None,
+            campaign_id: None,
         },
     )
 }
@@ -898,7 +911,8 @@ fn trans_line_invalid_stockline_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,
-            vvm_status_id: None
+            vvm_status_id: None,
+            campaign_id: None,
         }),
     }
 }
@@ -991,9 +1005,10 @@ fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(200.0),
             item_variant_id: None,
             linked_invoice_id: None,
-            donor_id: None,
+            donor_link_id: None,
             vvm_status_id: None,
             reason_option_id: None,
+            campaign_id: None,
         },
     )
 }
@@ -1027,7 +1042,8 @@ fn trans_line_empty_stockline_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,
-            vvm_status_id: None
+            vvm_status_id: None,
+            campaign_id: None,
         }),
     }
 }

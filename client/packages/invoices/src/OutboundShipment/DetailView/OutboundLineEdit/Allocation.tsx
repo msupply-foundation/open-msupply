@@ -12,17 +12,22 @@ import {
   Grid,
   useIntlUtils,
   BasicSpinner,
+  Divider,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
-import { AutoAllocate } from './AutoAllocate';
-import { useOutbound, useOutboundLineEditData } from '../../api';
-import { CurrencyRowFragment } from '@openmsupply-client/system';
 import {
+  AutoAllocateField,
+  AutoAllocationAlerts,
   useAllocationContext,
   AllocationStrategy,
   AllocateInType,
-} from './allocation/useAllocationContext';
-import { sumAvailableDoses, sumAvailableUnits } from './allocation/utils';
+  sumAvailableDoses,
+  sumAvailableUnits,
+  AllocateInSelector,
+  useOutboundLineEditData,
+} from '../../../StockOut';
+import { useOutbound } from '../../api';
+import { CurrencyRowFragment } from '@openmsupply-client/system';
 
 interface AllocationProps {
   itemId: string;
@@ -31,6 +36,7 @@ interface AllocationProps {
   scannedBatch?: string;
   prefOptions: {
     sortByVvmStatus: boolean;
+    manageVaccinesInDoses: boolean;
   };
 }
 
@@ -39,7 +45,7 @@ export const Allocation = ({
   invoiceId,
   allowPlaceholder,
   scannedBatch,
-  prefOptions: { sortByVvmStatus },
+  prefOptions: { sortByVvmStatus, manageVaccinesInDoses },
 }: AllocationProps) => {
   const { initialise, item } = useAllocationContext(({ initialise, item }) => ({
     initialise,
@@ -63,6 +69,11 @@ export const Allocation = ({
           : AllocationStrategy.FEFO,
         allowPlaceholder,
         scannedBatch,
+        // Default to allocate in doses for vaccines if pref is on
+        allocateIn:
+          manageVaccinesInDoses && data.item.isVaccine
+            ? { type: AllocateInType.Doses }
+            : undefined,
       });
     });
     // Expect dependencies to be stable
@@ -122,9 +133,17 @@ const AllocationInner = () => {
           </Typography>
         </Grid>
       </ModalRow>
+      <Grid container gap="4px" width="100%">
+        <Divider margin={10} />
 
-      <AutoAllocate />
-
+        <Box display="flex" alignItems="flex-start" gap={2}>
+          <Grid container alignItems="center" pt={1}>
+            <AutoAllocateField />
+            <AllocateInSelector includePackSizeOptions />
+          </Grid>
+          <AutoAllocationAlerts />
+        </Box>
+      </Grid>
       <TableWrapper
         isLoading={false}
         currency={currency}

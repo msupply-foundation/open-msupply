@@ -102,6 +102,26 @@ pub fn name_store_join_program_a_name_a() -> NameStoreJoinRow {
     }
 }
 
+pub fn store_a_donor_a() -> NameStoreJoinRow {
+    NameStoreJoinRow {
+        id: String::from("mock_name_store_donor_a"),
+        name_link_id: String::from("donor_a"),
+        store_id: String::from("store_a"),
+        name_is_customer: false,
+        name_is_supplier: false,
+    }
+}
+
+pub fn store_a_donor_b() -> NameStoreJoinRow {
+    NameStoreJoinRow {
+        id: String::from("mock_name_store_donor_b"),
+        name_link_id: String::from("donor_b"),
+        store_id: String::from("store_a"),
+        name_is_customer: false,
+        name_is_supplier: false,
+    }
+}
+
 pub fn mock_name_store_joins() -> Vec<NameStoreJoinRow> {
     vec![
         store_a_join_name_b(),
@@ -114,5 +134,7 @@ pub fn mock_name_store_joins() -> Vec<NameStoreJoinRow> {
         name_store_join_program_a(),
         name_store_join_program_b(),
         name_store_join_program_a_name_a(),
+        store_a_donor_a(),
+        store_a_donor_b(),
     ]
 }

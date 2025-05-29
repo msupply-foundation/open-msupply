@@ -20,21 +20,30 @@ import {
   LocaleKey,
   useIntlUtils,
   Formatter,
+  UNDEFINED_STRING_VALUE,
+  TooltipTextCell,
   useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
-import { DraftStockOutLineFragment } from '../../api/operations.generated';
-import { getPackQuantityCellId } from 'packages/invoices/src/utils';
-import {
-  AllocateInOption,
-  AllocateInType,
-} from './allocation/useAllocationContext';
-import { DraftItem } from '../../..';
+import { getStockOutQuantityCellId } from '../../../utils';
 import {
   canAutoAllocate,
   getDoseQuantity,
   packsToDoses,
-} from './allocation/utils';
+  DraftStockOutLineFragment,
+  DraftItem,
+  AllocateInOption,
+  AllocateInType,
+} from '../../../StockOut';
+
+type AllocateFn = (
+  key: string,
+  value: number,
+  options?: {
+    allocateInType?: AllocateInType;
+    preventPartialPacks?: boolean;
+  }
+) => number;
 
 export const useOutboundLineEditColumns = ({
   allocate,
@@ -43,7 +52,7 @@ export const useOutboundLineEditColumns = ({
   isExternalSupplier,
   allocateIn,
 }: {
-  allocate: (key: string, value: number) => number;
+  allocate: AllocateFn;
   item: DraftItem | null;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
@@ -59,7 +68,8 @@ export const useOutboundLineEditColumns = ({
 
   const { data: prefs } = usePreference(
     PreferenceKey.SortByVvmStatusThenExpiry,
-    PreferenceKey.ManageVvmStatusForStock
+    PreferenceKey.ManageVvmStatusForStock,
+    PreferenceKey.AllowTrackingOfStockByDonor
   );
 
   const packSize =
@@ -89,9 +99,19 @@ export const useOutboundLineEditColumns = ({
         width: simplifiedTabletView ? 190 : 100,
       },
     ],
+    [
+      'expiryDate',
+      {
+        Cell: ExpiryDateCell,
+        width: 100,
+      },
+    ],
   ];
-
-  if (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) {
+  // If we have use VVM status, we need to show the VVM status column
+  if (
+    (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) &&
+    item?.isVaccine
+  ) {
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
@@ -101,6 +121,7 @@ export const useOutboundLineEditColumns = ({
         return `${rowData.vvmStatus?.description} (${rowData.vvmStatus?.level})`;
       },
       width: 85,
+      Cell: TooltipTextCell,
       defaultHideOnMobile: true,
     });
   }
@@ -121,16 +142,27 @@ export const useOutboundLineEditColumns = ({
         Cell: LocationCell,
         defaultHideOnMobile: true,
       },
-    ],
-    [
-      'sellPricePerPack',
-      {
-        Cell: CurrencyCell,
-        width: 85,
-        defaultHideOnMobile: true,
-      },
     ]
   );
+  if (prefs?.allowTrackingOfStockByDonor) {
+    columnDefinitions.push({
+      key: 'donor',
+      label: 'label.donor',
+      accessor: ({ rowData }) => rowData.donor?.name ?? UNDEFINED_STRING_VALUE,
+      Cell: TooltipTextCell,
+      width: 100,
+      defaultHideOnMobile: true,
+    });
+  }
+
+  columnDefinitions.push([
+    'sellPricePerPack',
+    {
+      Cell: CurrencyCell,
+      width: 85,
+      defaultHideOnMobile: true,
+    },
+  ]);
 
   if (isExternalSupplier && !!store?.preferences.issueInForeignCurrency) {
     columnDefinitions.push({
@@ -188,14 +220,14 @@ const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
     max={props.rowData.availablePacks}
-    id={getPackQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
+    id={getStockOutQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
     decimalLimit={2}
     min={0}
   />
 );
 
 const getAllocateInUnitsColumns = (
-  allocate: (key: string, numPacks: number) => void,
+  allocate: AllocateFn,
   pluralisedUnitName: string,
   simplifiedTabletView: boolean
 ): ColumnDescription<DraftStockOutLineFragment>[] => [
@@ -225,7 +257,11 @@ const getAllocateInUnitsColumns = (
       Cell: PackQuantityCell,
       width: simplifiedTabletView ? 190 : 100,
       label: 'label.pack-quantity-issued',
-      setter: ({ id, numberOfPacks }) => allocate(id, numberOfPacks ?? 0),
+      setter: ({ id, numberOfPacks }) =>
+        // Pack QTY column, so should issue in packs, even though in unit lens
+        allocate(id, numberOfPacks ?? 0, {
+          allocateInType: AllocateInType.Packs,
+        }),
     },
   ],
   [
@@ -244,7 +280,7 @@ const DoseQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
     max={packsToDoses(props.rowData.availablePacks, props.rowData)}
-    id={getPackQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
+    id={getStockOutQuantityCellId(props.rowData.batch)} // Used by when adding by barcode scanner
     decimalLimit={0}
     min={0}
     // bit longer debounce, as we might overwrite value to whole number of packs
@@ -254,7 +290,7 @@ const DoseQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
 
 const getAllocateInDosesColumns = (
   t: TypedTFunction<LocaleKey>,
-  allocate: (key: string, numPacks: number) => void,
+  allocate: AllocateFn,
   unit: string
 ): ColumnDescription<DraftStockOutLineFragment>[] => {
   return [
@@ -267,11 +303,8 @@ const getAllocateInDosesColumns = (
         : 'label.doses-per-unit',
       width: 80,
       align: ColumnAlign.Right,
-      accessor: ({ rowData }) => {
-        return (
-          rowData?.itemVariant?.dosesPerUnit ?? rowData.defaultDosesPerUnit
-        );
-      },
+      accessor: ({ rowData }) =>
+        rowData?.itemVariant?.dosesPerUnit ?? rowData.defaultDosesPerUnit,
       defaultHideOnMobile: true,
     },
     {
@@ -306,7 +339,9 @@ const getAllocateInDosesColumns = (
           dosesIssued?: number;
         }
       ) => {
-        const allocatedQuantity = allocate(row.id, row.dosesIssued ?? 0);
+        const allocatedQuantity = allocate(row.id, row.dosesIssued ?? 0, {
+          preventPartialPacks: true,
+        });
         return allocatedQuantity; // return to NumberInputCell to ensure value is correct
       },
       accessor: ({ rowData }) => getDoseQuantity(rowData),

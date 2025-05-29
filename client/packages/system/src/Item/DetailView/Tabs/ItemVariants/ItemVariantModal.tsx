@@ -35,6 +35,7 @@ export const ItemVariantModal = ({
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen: true, onClose, disableBackdrop: true });
   const { success, error } = useNotification();
+  const isVaccine = item?.isVaccine;
 
   const { draft, isComplete, updateDraft, updatePackagingVariant, save } =
     useItemVariant({
@@ -85,6 +86,7 @@ export const ItemVariantModal = ({
           updateVariant={updateDraft}
           updatePackagingVariant={updatePackagingVariant}
           variant={draft}
+          isVaccine={isVaccine}
         />
       </QueryParamsProvider>
     </Modal>
@@ -95,10 +97,12 @@ const ItemVariantForm = ({
   variant,
   updateVariant,
   updatePackagingVariant,
+  isVaccine,
 }: {
   variant: ItemVariantFragment;
   updateVariant: (patch: Partial<ItemVariantFragment>) => void;
   updatePackagingVariant: (patch: Partial<PackagingVariantFragment>) => void;
+  isVaccine?: boolean;
 }) => {
   const t = useTranslation();
 
@@ -154,7 +158,7 @@ const ItemVariantForm = ({
             </Box>
           }
         />
-        {variant.item?.isVaccine && (
+        {isVaccine && (
           <>
             <InputWithLabelRow
               label={t('label.doses-per-unit')}

@@ -163,6 +163,7 @@ fn generate_stock_in_out_or_update(
             tax_percentage: None,
             donor_id: None,
             vvm_status_id: None,
+            campaign_id: None,
         })
     } else {
         StockChange::StockOut(InsertStockOutLine {
@@ -335,6 +336,7 @@ fn generate_new_stock_line(
         tax_percentage: None,
         donor_id: None,
         vvm_status_id: None,
+        campaign_id: None,
     });
 
     // If new stock line has a location, create location movement
@@ -581,7 +583,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_id: None,
+        default_donor_link_id: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {

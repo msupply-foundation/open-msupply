@@ -65,6 +65,14 @@ export type StockLineFragment = {
     id: string;
     dosesPerUnit: number;
   } | null;
+  donor?: { __typename: 'NameNode'; id: string } | null;
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    level: number;
+    unusable: boolean;
+    description: string;
+  } | null;
 };
 
 export type ItemRowFragment = {
@@ -75,23 +83,6 @@ export type ItemRowFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
-};
-
-export type ItemRowWithDirectionsFragment = {
-  __typename: 'ItemNode';
-  id: string;
-  code: string;
-  name: string;
-  unitName?: string | null;
-  isVaccine: boolean;
-  doses: number;
-  itemDirections: Array<{
-    __typename: 'ItemDirectionNode';
-    directions: string;
-    id: string;
-    itemId: string;
-    priority: number;
-  }>;
 };
 
 export type ItemDirectionFragment = {
@@ -150,13 +141,6 @@ export type ItemStockOnHandFragment = {
   unitName?: string | null;
   isVaccine: boolean;
   doses: number;
-  itemDirections: Array<{
-    __typename: 'ItemDirectionNode';
-    directions: string;
-    id: string;
-    itemId: string;
-    priority: number;
-  }>;
 };
 
 export type ItemRowWithStatsFragment = {
@@ -178,13 +162,6 @@ export type ItemRowWithStatsFragment = {
     totalConsumption: number;
     stockOnHand: number;
   };
-  itemDirections: Array<{
-    __typename: 'ItemDirectionNode';
-    directions: string;
-    id: string;
-    itemId: string;
-    priority: number;
-  }>;
 };
 
 export type ColdStorageTypeFragment = {
@@ -387,6 +364,14 @@ export type ItemFragment = {
         id: string;
         dosesPerUnit: number;
       } | null;
+      donor?: { __typename: 'NameNode'; id: string } | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        level: number;
+        unusable: boolean;
+        description: string;
+      } | null;
     }>;
   };
   stats: {
@@ -575,6 +560,14 @@ export type ItemsWithStockLinesQuery = {
             id: string;
             dosesPerUnit: number;
           } | null;
+          donor?: { __typename: 'NameNode'; id: string } | null;
+          vvmStatus?: {
+            __typename: 'VvmstatusNode';
+            id: string;
+            level: number;
+            unusable: boolean;
+            description: string;
+          } | null;
         }>;
       };
       stats: {
@@ -726,13 +719,6 @@ export type ItemStockOnHandQuery = {
       unitName?: string | null;
       isVaccine: boolean;
       doses: number;
-      itemDirections: Array<{
-        __typename: 'ItemDirectionNode';
-        directions: string;
-        id: string;
-        itemId: string;
-        priority: number;
-      }>;
     }>;
   };
 };
@@ -889,6 +875,14 @@ export type ItemByIdQuery = {
             id: string;
             dosesPerUnit: number;
           } | null;
+          donor?: { __typename: 'NameNode'; id: string } | null;
+          vvmStatus?: {
+            __typename: 'VvmstatusNode';
+            id: string;
+            level: number;
+            unusable: boolean;
+            description: string;
+          } | null;
         }>;
       };
       variants: Array<{
@@ -981,14 +975,6 @@ export type ItemByIdQuery = {
   };
 };
 
-export type ItemVariantOptionFragment = {
-  __typename: 'ItemVariantNode';
-  id: string;
-  dosesPerUnit: number;
-  label: string;
-  bundledItemVariants: Array<{ __typename: 'BundledItemNode'; id: string }>;
-};
-
 export type ItemVariantsConfiguredQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
@@ -1012,11 +998,80 @@ export type ItemVariantsQuery = {
       variants: Array<{
         __typename: 'ItemVariantNode';
         id: string;
+        name: string;
+        itemId: string;
+        manufacturerId?: string | null;
+        coldStorageTypeId?: string | null;
         dosesPerUnit: number;
-        label: string;
+        vvmType?: string | null;
+        item?: {
+          __typename: 'ItemNode';
+          id: string;
+          name: string;
+          isVaccine: boolean;
+        } | null;
+        manufacturer?: {
+          __typename: 'NameNode';
+          code: string;
+          id: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        } | null;
+        coldStorageType?: {
+          __typename: 'ColdStorageTypeNode';
+          id: string;
+          name: string;
+          minTemperature: number;
+          maxTemperature: number;
+        } | null;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          name: string;
+          packagingLevel: number;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
         bundledItemVariants: Array<{
           __typename: 'BundledItemNode';
           id: string;
+          ratio: number;
+          principalItemVariant?: {
+            __typename: 'ItemVariantNode';
+            id: string;
+            name: string;
+            itemId: string;
+            itemName: string;
+          } | null;
+          bundledItemVariant?: {
+            __typename: 'ItemVariantNode';
+            id: string;
+            name: string;
+            itemId: string;
+            itemName: string;
+          } | null;
+        }>;
+        bundlesWith: Array<{
+          __typename: 'BundledItemNode';
+          id: string;
+          ratio: number;
+          principalItemVariant?: {
+            __typename: 'ItemVariantNode';
+            id: string;
+            name: string;
+            itemId: string;
+            itemName: string;
+          } | null;
+          bundledItemVariant?: {
+            __typename: 'ItemVariantNode';
+            id: string;
+            name: string;
+            itemId: string;
+            itemName: string;
+          } | null;
         }>;
       }>;
     }>;
@@ -1083,6 +1138,14 @@ export type GetHistoricalStockLinesQuery = {
         __typename: 'ItemVariantNode';
         id: string;
         dosesPerUnit: number;
+      } | null;
+      donor?: { __typename: 'NameNode'; id: string } | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        level: number;
+        unusable: boolean;
+        description: string;
       } | null;
     }>;
   };
@@ -1395,33 +1458,14 @@ export const ItemWithPackSizeFragmentDoc = gql`
   }
   ${ItemRowFragmentDoc}
 `;
-export const ItemDirectionFragmentDoc = gql`
-  fragment ItemDirection on ItemDirectionNode {
-    __typename
-    directions
-    id
-    itemId
-    priority
-  }
-`;
-export const ItemRowWithDirectionsFragmentDoc = gql`
-  fragment ItemRowWithDirections on ItemNode {
-    ...ItemRow
-    itemDirections {
-      ...ItemDirection
-    }
-  }
-  ${ItemRowFragmentDoc}
-  ${ItemDirectionFragmentDoc}
-`;
 export const ItemStockOnHandFragmentDoc = gql`
   fragment ItemStockOnHand on ItemNode {
     ...ItemWithPackSize
     availableStockOnHand(storeId: $storeId)
-    ...ItemRowWithDirections
+    ...ItemRow
   }
   ${ItemWithPackSizeFragmentDoc}
-  ${ItemRowWithDirectionsFragmentDoc}
+  ${ItemRowFragmentDoc}
 `;
 export const ItemRowWithStatsFragmentDoc = gql`
   fragment ItemRowWithStats on ItemNode {
@@ -1437,6 +1481,15 @@ export const ItemRowWithStatsFragmentDoc = gql`
     }
   }
   ${ItemStockOnHandFragmentDoc}
+`;
+export const ItemDirectionFragmentDoc = gql`
+  fragment ItemDirection on ItemDirectionNode {
+    __typename
+    directions
+    id
+    itemId
+    priority
+  }
 `;
 export const StockLineFragmentDoc = gql`
   fragment StockLine on StockLineNode {
@@ -1476,6 +1529,16 @@ export const StockLineFragmentDoc = gql`
     itemVariant {
       id
       dosesPerUnit
+    }
+    donor(storeId: $storeId) {
+      id
+    }
+    vvmStatus {
+      __typename
+      id
+      level
+      unusable
+      description
     }
   }
   ${ItemDirectionFragmentDoc}
@@ -1628,17 +1691,6 @@ export const ItemsWithStatsFragmentDoc = gql`
       totalConsumption
       stockOnHand
     }
-  }
-`;
-export const ItemVariantOptionFragmentDoc = gql`
-  fragment ItemVariantOption on ItemVariantNode {
-    __typename
-    id
-    label: name
-    bundledItemVariants {
-      id
-    }
-    dosesPerUnit
   }
 `;
 export const ItemLedgerFragmentDoc = gql`
@@ -1813,13 +1865,13 @@ export const ItemVariantsDocument = gql`
         nodes {
           __typename
           variants {
-            ...ItemVariantOption
+            ...ItemVariant
           }
         }
       }
     }
   }
-  ${ItemVariantOptionFragmentDoc}
+  ${ItemVariantFragmentDoc}
 `;
 export const GetHistoricalStockLinesDocument = gql`
   query getHistoricalStockLines(

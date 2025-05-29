@@ -75,7 +75,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_id: None,
+        default_donor_link_id: None,
     };
 
     let lines_with_packs: Vec<CustomerReturnLineInput> = customer_return_lines
@@ -128,6 +128,7 @@ pub fn generate(
                 barcode: None,
                 stock_on_hold: false,
                 donor_id: None,
+                campaign_id: None,
             },
         )
         .collect();

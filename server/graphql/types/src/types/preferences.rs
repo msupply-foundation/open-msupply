@@ -18,10 +18,6 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.allow_tracking_of_stock_by_donor)
     }
 
-    pub async fn display_population_based_forecasting(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.display_population_based_forecasting)
-    }
-
     pub async fn show_contact_tracing(&self) -> Result<bool> {
         self.load_preference(&self.preferences.show_contact_tracing)
     }
@@ -90,7 +86,6 @@ impl PreferenceDescriptionNode {
 pub enum PreferenceKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
-    DisplayPopulationBasedForecasting,
     ShowContactTracing,
     // Store preferences
     ManageVaccinesInDoses,
@@ -105,9 +100,6 @@ impl PreferenceKey {
             // Global preferences
             PrefKey::AllowTrackingOfStockByDonor => PreferenceKey::AllowTrackingOfStockByDonor,
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
-            PrefKey::DisplayPopulationBasedForecasting => {
-                PreferenceKey::DisplayPopulationBasedForecasting
-            }
             // Store preferences
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,

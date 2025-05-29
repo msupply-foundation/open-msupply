@@ -374,7 +374,7 @@ impl SyncTranslation for InvoiceTranslation {
 
             requisition_id: data.requisition_ID,
             linked_invoice_id: data.linked_transaction_id,
-            default_donor_id: data.default_donor_id,
+            default_donor_link_id: data.default_donor_id,
             transport_reference: data.transport_reference,
             original_shipment_id: data.original_shipment_id,
             backdated_datetime: mapping.backdated_datetime,
@@ -468,7 +468,7 @@ impl SyncTranslation for InvoiceTranslation {
                     insurance_discount_percentage,
                     is_cancellation,
                     expected_delivery_date,
-                    default_donor_id,
+                    default_donor_link_id: default_donor_id,
                 },
             name_row,
             clinician_row,

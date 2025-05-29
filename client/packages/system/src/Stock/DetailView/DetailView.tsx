@@ -15,6 +15,9 @@ import {
   UserPermission,
   usePluginEvents,
   useConfirmOnLeaving,
+  useSimplifiedTabletUI,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButtons';
@@ -44,6 +47,7 @@ export const StockLineDetailView: React.FC = () => {
   const { success, error } = useNotification();
   const { setCustomBreadcrumbs, navigateUpOne } = useBreadcrumbs();
 
+  const simplifiedTabletView = useSimplifiedTabletUI();
   const repackModalController = useToggle();
   const adjustmentModalController = useToggle();
 
@@ -94,6 +98,9 @@ export const StockLineDetailView: React.FC = () => {
   );
 
   const isVaccine = draft?.item?.isVaccine ?? false;
+  const { data: preferences } = usePreference(
+    PreferenceKey.ManageVvmStatusForStock
+  );
 
   const tabs = [
     {
@@ -107,7 +114,7 @@ export const StockLineDetailView: React.FC = () => {
       ),
       value: t('label.details'),
     },
-    ...(isVaccine
+    ...(isVaccine && preferences?.manageVvmStatusForStock
       ? [
           {
             Component: <StatusHistory draft={draft} isLoading={isLoading} />,
@@ -154,8 +161,23 @@ export const StockLineDetailView: React.FC = () => {
         openAdjust={openInventoryAdjustmentModal}
       />
       <TableProvider createStore={createTableStore}>
-        <DetailTabs tabs={tabs} />
-        {(tab === t('label.details') || !tab) && <Footer {...footerProps} />}
+        {simplifiedTabletView ? (
+          <>
+            <StockLineForm
+              loading={isLoading}
+              draft={draft}
+              onUpdate={updatePatch}
+              pluginEvents={pluginEvents}
+            />
+          </>
+        ) : (
+          <>
+            <DetailTabs tabs={tabs} />
+          </>
+        )}
+        {(tab === t('label.details') || !tab || simplifiedTabletView) && (
+          <Footer {...footerProps} />
+        )}
       </TableProvider>
     </>
   );

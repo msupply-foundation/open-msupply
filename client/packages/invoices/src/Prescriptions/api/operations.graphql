@@ -166,6 +166,13 @@ fragment PrescriptionLine on InvoiceLineNode {
       }
       isVaccine
     }
+    vvmStatus {
+      __typename
+      id
+      level
+      unusable
+      description
+    }
   }
 }
 
@@ -607,5 +614,17 @@ query labelPrinterSettings {
     labelHeight
     labelWidth
     port
+  }
+}
+
+mutation savePrescriptionItemLines(
+  $storeId: String!
+  $input: SavePrescriptionLinesInput!
+) {
+  savePrescriptionItemLines(input: $input, storeId: $storeId) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
   }
 }

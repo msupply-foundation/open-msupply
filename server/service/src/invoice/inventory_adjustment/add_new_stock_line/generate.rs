@@ -38,6 +38,8 @@ pub fn generate(
         barcode,
         item_variant_id,
         vvm_status_id,
+        donor_id,
+        campaign_id,
     }: AddNewStockLine,
 ) -> Result<GenerateResult, RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
@@ -87,7 +89,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_id: None,
+        default_donor_link_id: None,
     };
 
     let invoice_line_id = uuid();
@@ -110,8 +112,9 @@ pub fn generate(
         tax_percentage: None,
         barcode,
         item_variant_id,
-        donor_id: None,
+        donor_id,
         vvm_status_id,
+        campaign_id,
     };
 
     let update_inventory_adjustment_reason = UpdateInventoryAdjustmentReason {

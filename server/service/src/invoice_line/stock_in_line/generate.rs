@@ -20,6 +20,7 @@ pub struct StockLineInput {
     pub barcode_id: Option<String>,
     pub supplier_link_id: String,
     pub overwrite_stock_levels: bool,
+    pub campaign_id: Option<String>,
 }
 
 struct StockLevels {
@@ -40,8 +41,8 @@ pub fn generate_batch(
         location_id,
         note,
         item_variant_id,
+        donor_link_id,
         vvm_status_id,
-        donor_id,
         ..
     }: InvoiceLineRow,
     StockLineInput {
@@ -51,6 +52,7 @@ pub fn generate_batch(
         barcode_id,
         supplier_link_id,
         overwrite_stock_levels,
+        campaign_id,
     }: StockLineInput,
 ) -> Result<StockLineRow, RepositoryError> {
     // Generate new stock line id if not provided
@@ -99,8 +101,9 @@ pub fn generate_batch(
         on_hold,
         barcode_id,
         item_variant_id,
+        donor_link_id,
         vvm_status_id,
-        donor_id,
+        campaign_id,
     };
 
     Ok(stock_line_row)

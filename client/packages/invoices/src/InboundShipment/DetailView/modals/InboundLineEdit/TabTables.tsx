@@ -23,6 +23,7 @@ import {
 import { DraftInboundLine } from '../../../../types';
 import {
   CurrencyRowFragment,
+  getCampaignColumn,
   getDonorColumn,
   getLocationInputColumn,
   ItemRowFragment,
@@ -76,7 +77,7 @@ export const QuantityTableComponent = ({
   ];
 
   if (hasItemVariantsEnabled) {
-    columnDefinitions.push(itemVariantColumn(updateDraftLine));
+    columnDefinitions.push(itemVariantColumn(updateDraftLine, displayInDoses));
   }
 
   if (displayInDoses) {
@@ -92,6 +93,7 @@ export const QuantityTableComponent = ({
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: updateDraftLine,
       label: 'label.pack-size',
+      defaultHideOnMobile: true,
     }),
     [
       'numberOfPacks',
@@ -102,7 +104,7 @@ export const QuantityTableComponent = ({
         setter: patch => {
           const { packSize, numberOfPacks } = patch;
 
-          if (!!packSize && !!numberOfPacks) {
+          if (packSize !== undefined && numberOfPacks !== undefined) {
             const packToUnits = packSize * numberOfPacks;
 
             updateDraftLine({
@@ -139,6 +141,7 @@ export const QuantityTableComponent = ({
     accessor: ({ rowData }) => {
       return rowData.numberOfPacks * rowData.packSize;
     },
+    defaultHideOnMobile: true,
   });
 
   if (displayInDoses) {
@@ -311,8 +314,13 @@ export const LocationTableComponent = ({
   ];
 
   if (preferences?.allowTrackingOfStockByDonor) {
-    columnDescriptions.push(getDonorColumn(patch => updateDraftLine(patch)));
+    columnDescriptions.push([
+      getDonorColumn((id, donor) => updateDraftLine({ id, donor })),
+      { accessor: ({ rowData }) => rowData.donor?.id },
+    ] as ColumnDescription<DraftInboundLine>);
   }
+
+  columnDescriptions.push(getCampaignColumn(patch => updateDraftLine(patch)));
 
   const columns = useColumns(columnDescriptions, {}, [updateDraftLine, lines]);
 

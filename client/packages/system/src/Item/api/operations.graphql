@@ -47,6 +47,17 @@ fragment StockLine on StockLineNode {
     id
     dosesPerUnit
   }
+
+  donor(storeId: $storeId) {
+    id
+  }
+  vvmStatus {
+    __typename
+    id
+    level
+    unusable
+    description
+  }
 }
 
 fragment ItemRow on ItemNode {
@@ -57,13 +68,6 @@ fragment ItemRow on ItemNode {
   unitName
   isVaccine
   doses
-}
-
-fragment ItemRowWithDirections on ItemNode {
-  ...ItemRow
-  itemDirections {
-    ...ItemDirection
-  }
 }
 
 fragment ItemDirection on ItemDirectionNode {
@@ -97,7 +101,7 @@ fragment ItemWithPackSize on ItemNode {
 fragment ItemStockOnHand on ItemNode {
   ...ItemWithPackSize
   availableStockOnHand(storeId: $storeId)
-  ...ItemRowWithDirections
+  ...ItemRow
 }
 fragment ItemRowWithStats on ItemNode {
   ...ItemStockOnHand
@@ -370,18 +374,6 @@ query itemById($storeId: String!, $itemId: String!) {
   }
 }
 
-fragment ItemVariantOption on ItemVariantNode {
-  __typename
-  id
-  label: name
-  # To determine if the variant already has other variants bundled to it
-  bundledItemVariants {
-    id
-  }
-  # Selected option passed through to vaccine items
-  dosesPerUnit
-}
-
 query itemVariantsConfigured($storeId: String!) {
   itemVariantsConfigured(storeId: $storeId)
 }
@@ -396,7 +388,7 @@ query itemVariants($storeId: String!, $itemId: String!) {
       nodes {
         __typename
         variants {
-          ...ItemVariantOption
+          ...ItemVariant
         }
       }
     }

@@ -75,6 +75,7 @@ pub fn generate(
                 stock_line_id: None,
                 stock_on_hold: false,
                 donor_id: None,
+                campaign_id: None,
             },
         )
         .collect();
@@ -116,6 +117,7 @@ pub fn generate(
                 tax_percentage: None,
                 total_before_tax: None,
                 donor_id: None,
+                campaign_id: None,
             },
         )
         .collect();

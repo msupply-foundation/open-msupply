@@ -18,9 +18,10 @@ import {
   NumberInputCell,
   ColumnAlign,
   NumberCell,
+  getReasonOptionType,
+  ReasonOptionNode,
   usePreference,
   PreferenceKey,
-  getReasonOptionType,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -31,6 +32,7 @@ import {
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
   useIsItemVariantsEnabled,
+  useReasonOptions,
 } from '@openmsupply-client/system';
 import {
   useStocktakeLineErrorContext,
@@ -42,6 +44,7 @@ interface StocktakeLineEditTableProps {
   batches: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
   isInitialStocktake?: boolean;
+  trackStockDonor?: boolean;
 }
 
 const expiryDateColumn = getExpiryDateInputColumn<DraftStocktakeLine>();
@@ -102,6 +105,8 @@ const getCountThisLineColumn = (
 const getInventoryAdjustmentReasonInputColumn = (
   setter: DraftLineSetter,
   { getError }: UseStocktakeLineErrors,
+  reasonOptions: ReasonOptionNode[],
+  isLoading: boolean,
   initialStocktake?: boolean
 ): ColumnDescription<DraftStocktakeLine> => {
   return {
@@ -148,6 +153,8 @@ const getInventoryAdjustmentReasonInputColumn = (
             rowData.snapshotNumberOfPacks == rowData.countedNumberOfPacks
           }
           initialStocktake={initialStocktake}
+          reasonOptions={reasonOptions}
+          isLoading={isLoading}
         />
       );
     },
@@ -163,9 +170,14 @@ export const BatchTable = ({
   const t = useTranslation();
   const theme = useTheme();
   const itemVariantsEnabled = useIsItemVariantsEnabled();
+  const { data: preferences } = usePreference(
+    PreferenceKey.ManageVaccinesInDoses
+  );
   useDisableStocktakeRows(batches);
-
+  const { data: reasonOptions, isLoading } = useReasonOptions();
   const errorsContext = useStocktakeLineErrorContext();
+
+  const displayInDoses = !!preferences?.manageVaccinesInDoses;
 
   const columnDefinitions = useMemo(() => {
     const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
@@ -185,7 +197,13 @@ export const BatchTable = ({
         label: 'label.item-variant',
         width: 170,
         Cell: props => (
-          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
+          <ItemVariantInputCell
+            displayInDoses={
+              (displayInDoses && props.rowData.item.isVaccine) ?? false
+            }
+            {...props}
+            itemId={props.rowData.item.id}
+          />
         ),
         setter: patch => update({ ...patch }),
       });
@@ -200,6 +218,7 @@ export const BatchTable = ({
         },
         accessor: ({ rowData }) =>
           rowData.packSize ?? rowData.item?.defaultPackSize,
+        defaultHideOnMobile: true,
       }),
       {
         key: 'snapshotNumberOfPacks',
@@ -238,6 +257,8 @@ export const BatchTable = ({
       getInventoryAdjustmentReasonInputColumn(
         update,
         errorsContext,
+        reasonOptions?.nodes ?? [],
+        isLoading,
         isInitialStocktake
       )
     );
@@ -304,12 +325,10 @@ export const LocationTable = ({
   batches,
   update,
   isDisabled,
+  trackStockDonor,
 }: StocktakeLineEditTableProps) => {
   const theme = useTheme();
   const t = useTranslation();
-  const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor
-  );
 
   const columnDefinitions: ColumnDescription<DraftStocktakeLine>[] = [
     getCountThisLineColumn(update, theme),
@@ -322,9 +341,16 @@ export const LocationTable = ({
       },
     ],
   ];
-  if (preferences?.allowTrackingOfStockByDonor) {
+  if (trackStockDonor) {
     columnDefinitions.push(
-      getDonorColumn(patch => update({ ...patch, countThisLine: true }))
+      getDonorColumn((id, donor) =>
+        update({
+          id,
+          donorId: donor?.id ?? null,
+          donorName: donor?.name ?? null,
+          countThisLine: true,
+        })
+      )
     );
   }
   columnDefinitions.push([
@@ -338,6 +364,7 @@ export const LocationTable = ({
       width: 200,
       setter: patch => update({ ...patch, countThisLine: true }),
       accessor: ({ rowData }) => rowData.comment || '',
+      defaultHideOnMobile: true,
     },
   ]);
 

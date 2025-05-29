@@ -81,7 +81,7 @@ const inboundParsers = {
       | RecordPatch<InboundRowFragment>
       | {
           id: string;
-          defaultDonor: UpdateDonorInput;
+          defaultDonorUpdate: UpdateDonorInput;
         }
   ): UpdateInboundShipmentInput => {
     return {
@@ -99,7 +99,8 @@ const inboundParsers = {
           : undefined,
       currencyId: 'currency' in patch ? patch.currency?.id : undefined,
       currencyRate: 'currencyRate' in patch ? patch.currencyRate : undefined,
-      defaultDonor: 'defaultDonor' in patch ? patch.defaultDonor : undefined,
+      defaultDonor:
+        'defaultDonorUpdate' in patch ? patch.defaultDonorUpdate : undefined,
     };
   },
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {
@@ -118,7 +119,8 @@ const inboundParsers = {
       location: setNullableInput('id', line.location),
       itemVariantId: line.itemVariantId,
       vvmStatusId: 'vvmStatusId' in line ? line.vvmStatusId : undefined,
-      donorId: line.donorId,
+      donorId: line.donor?.id,
+      campaignId: line.campaign?.id,
     };
   },
   toInsertLineFromInternalOrder: (line: {
@@ -146,7 +148,10 @@ const inboundParsers = {
       itemVariantId: line.itemVariantId,
     }),
     vvmStatusId: 'vvmStatusId' in line ? line.vvmStatusId : undefined,
-    donorId: setNullableInput('donorId', { donorId: line.donorId ?? null }), // set to null if undefined, so value is cleared
+    donorId: setNullableInput('donorId', { donorId: line.donor?.id ?? null }), // set to null if undefined, so value is cleared
+    campaignId: setNullableInput('campaignId', {
+      campaignId: line.campaign?.id ?? null,
+    }),
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
@@ -297,7 +302,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     patch:
       | RecordPatch<InboundFragment>
       | RecordPatch<InboundRowFragment>
-      | { id: string; defaultDonor: UpdateDonorInput }
+      | { id: string; defaultDonorUpdate: UpdateDonorInput }
   ) =>
     sdk.updateInboundShipment({
       input: inboundParsers.toUpdate(patch),
