@@ -110,7 +110,6 @@ const DataRowComponent = <T extends RecordWithId>({
   }) => {
     return (
       <Box
-        key={`${rowKey}${String(column.key)}`}
         component={rowLinkBuilder ? Link : Box}
         to={rowLinkBuilder ? rowLinkBuilder(rowData) : ''}
         sx={{
@@ -174,7 +173,6 @@ const DataRowComponent = <T extends RecordWithId>({
                     paddingRight: paddingX,
                     paddingTop: paddingY,
                     paddingBottom: paddingY,
-
                     ...(hasOnClick && { cursor: 'pointer' }),
                     minWidth: column.minWidth,
                     maxWidth: column.maxWidth,
@@ -183,7 +181,6 @@ const DataRowComponent = <T extends RecordWithId>({
                     fontSize: dense ? '12px' : '14px',
                     backgroundColor: column.backgroundColor,
                     fontWeight: 'normal',
-
                     ...(isError
                       ? {
                           borderWidth: '2px',
@@ -196,7 +193,6 @@ const DataRowComponent = <T extends RecordWithId>({
                 >
                   <ContentWrapper column={column}>
                     <ColumnContent
-                      key={`${rowKey}${String(column.key)}`}
                       column={column}
                       columnIndex={columnIndex}
                       isError={isError}
