@@ -3,7 +3,6 @@ import {
   DialogButton,
   ModalMode,
   ModalTabs,
-  useBufferState,
   useDialog,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
@@ -38,17 +37,19 @@ export const ResponseLineEditModal = ({
 
   const lines = useMemo(
     () =>
-      requisition?.lines.nodes
+      requisition.lines.nodes
         .slice()
         .sort((a, b) => a.item.name.localeCompare(b.item.name)) ?? [],
-    [requisition?.lines.nodes]
+    [requisition.lines.nodes]
   );
-  const [currentItem, setCurrentItem] = useBufferState(
-    lines?.find(line => line.item.id === itemId)?.item
+
+  const [currentItem, setCurrentItem] = useState(
+    lines.find(line => line.item.id === itemId)?.item
   );
-  const [previousItemLineId, setPreviousItemLineId] = useBufferState<
-    string | null
-  >(null);
+
+  const [previousItemLineId, setPreviousItemLineId] = useState<string | null>(
+    null
+  );
   const [representation, setRepresentation] = useState<RepresentationValue>(
     Representation.UNITS
   );
