@@ -23,7 +23,7 @@ fn support_upload1() -> SupportUploadRow {
         id: SUPPORT_UPLOAD1.0.to_string(),
         datetime: Defaults::naive_date_time(),
         site_id: "1".to_string(),
-        title: Some("database error".to_string()),
+        title: "database error".to_string(),
         status: SupportUploadStatus::InProgress,
         upload_start_datetime: Defaults::naive_date_time(),
     }

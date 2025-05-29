@@ -13,7 +13,7 @@ table! {
         id -> Text,
         datetime -> Timestamp,
         site_id -> Text,
-        title -> Nullable<Text>,
+        title -> Text,
         status -> crate::db_diesel::support_upload_row::SupportUploadStatusMapping,
         upload_start_datetime -> Timestamp,
     }
@@ -37,7 +37,7 @@ pub struct SupportUploadRow {
     pub id: String,
     pub datetime: NaiveDateTime,
     pub site_id: String,
-    pub title: Option<String>,
+    pub title: String,
     pub status: SupportUploadStatus,
     pub upload_start_datetime: NaiveDateTime,
 }

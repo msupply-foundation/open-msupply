@@ -33,7 +33,7 @@ impl MigrationFragment for Migrate {
                     id TEXT NOT NULL PRIMARY KEY, 
                     datetime {DATETIME} NOT NULL,
                     site_id TEXT NOT NULL,
-                    title TEXT, 
+                    title TEXT NOT NULL, 
                     status {STATUS_TYPE} NOT NULL,
                     upload_start_datetime {DATETIME} NOT NULL
                 );
