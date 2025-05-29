@@ -99,6 +99,9 @@ export const StockLineDetailView: React.FC = () => {
   );
 
   const isVaccine = draft?.item?.isVaccine ?? false;
+  const { data: preferences } = usePreference(
+    PreferenceKey.ManageVvmStatusForStock
+  );
 
   const tabs = [
     {
@@ -112,7 +115,7 @@ export const StockLineDetailView: React.FC = () => {
       ),
       value: t('label.details'),
     },
-    ...(isVaccine && prefs?.manageVvmStatusForStock
+    ...(isVaccine && preferences?.manageVvmStatusForStock
       ? [
           {
             Component: <StatusHistory draft={draft} isLoading={isLoading} />,
