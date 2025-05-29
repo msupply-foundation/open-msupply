@@ -16,6 +16,8 @@ import {
   usePluginEvents,
   useConfirmOnLeaving,
   useSimplifiedTabletUI,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButtons';
@@ -42,6 +44,7 @@ export const StockLineDetailView: React.FC = () => {
   const {
     urlQuery: { tab },
   } = useUrlQuery();
+  const { data: prefs } = usePreference(PreferenceKey.ManageVvmStatusForStock);
   const { success, error } = useNotification();
   const { setCustomBreadcrumbs, navigateUpOne } = useBreadcrumbs();
 
@@ -109,7 +112,7 @@ export const StockLineDetailView: React.FC = () => {
       ),
       value: t('label.details'),
     },
-    ...(isVaccine
+    ...(isVaccine && prefs?.manageVvmStatusForStock
       ? [
           {
             Component: <StatusHistory draft={draft} isLoading={isLoading} />,
