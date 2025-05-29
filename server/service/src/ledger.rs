@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
 use repository::{
-    ledger::{self, LedgerFilter, LedgerRepository, LedgerRow, LedgerSort, LedgerSortField},
+    ledger::{LedgerFilter, LedgerRepository, LedgerRow, LedgerSort, LedgerSortField},
     EqualFilter, Pagination, PaginationOption, StorageConnection, StorageConnectionManager,
 };
 
-use crate::{get_default_pagination_unlimited, i64_to_u32, usize_to_u32};
+use crate::{get_default_pagination_unlimited, usize_to_u32};
 
 use super::{ListError, ListResult};
 
@@ -58,11 +58,11 @@ pub fn get_item_ledger(
             desc: Some(false),
         }),
     )?;
-
+    let total_count = usize_to_u32(all_ledger_items.len());
     let item_ledgers = calculate_ledger_balance(pagination, sort, all_ledger_items);
 
     Ok(ListResult {
-        count: i64_to_u32(repository.count(Some(filter))?),
+        count: total_count,
         rows: item_ledgers,
     })
 }
@@ -70,88 +70,76 @@ pub fn get_item_ledger(
 fn calculate_ledger_balance(
     pagination: Pagination,
     sort: Option<LedgerSort>,
-    all_ledger_items: Vec<LedgerRow>,
+    all_ledger_items: Vec<LedgerRow>, // This is assumed to be sorted by datetime ascending
 ) -> Vec<ItemLedger> {
     // TODO fix in refactor. Hashmap because currently we can still query for multiple items.
     // See in issue #7905
-    let mut running_balance = HashMap::<String, f64>::new();
-    // balance for each ledger item. Save these separately to preserve the queried order of rows.
-    let mut ledger_balance = HashMap::<String, (f64, i32)>::new();
-    // Also have a second integer cursor to keep track of order of operations so that ledgers of same datetime are not out of order with how balance is calculated.
-    let mut cursor = 0;
+    let mut running_balance = HashMap::<String, f64>::new(); // String -> item_id, f64 -> running balance
 
-    for ledger in all_ledger_items.clone() {
+    let mut item_ledgers: Vec<ItemLedger> = Vec::new();
+
+    for ledger in all_ledger_items {
         // we want to iterate through all ledger items to calculate the balance
         let previous_balance = running_balance.get(&ledger.item_id).cloned().unwrap_or(0.0);
         running_balance.insert(ledger.item_id.clone(), previous_balance + ledger.quantity);
 
-        ledger_balance.insert(
-            ledger.id.clone(),
-            (running_balance[&ledger.item_id], cursor),
-        );
-        cursor += 1;
-    }
+        let new_ledger = ItemLedger {
+            ledger: ledger.clone(),
+            balance: previous_balance + ledger.quantity,
+        };
 
-    // manual paginate
-    let mut item_ledgers_trimmed: Vec<LedgerRow> = all_ledger_items
-        .into_iter()
-        .skip(pagination.offset as usize)
-        .take(pagination.limit as usize)
-        .collect();
+        item_ledgers.push(new_ledger);
+    }
 
     // manual sort
     if let Some(sort) = sort {
         match sort.key {
             LedgerSortField::Id => {
-                item_ledgers_trimmed.sort_by_key(|l| l.id.clone());
+                item_ledgers.sort_by_key(|l| l.ledger.id.clone());
             }
             LedgerSortField::Datetime => {
-                // first sort by cursor to preserve the order of operations when displaying ledger lines of same datetime
-                item_ledgers_trimmed.sort_by_key(|l| ledger_balance[&l.id].1);
-                item_ledgers_trimmed.sort_by_key(|l| l.datetime);
+                item_ledgers.sort_by_key(|l| l.ledger.datetime);
             }
             LedgerSortField::Name => {
-                item_ledgers_trimmed.sort_by_key(|l| l.name.clone());
+                item_ledgers.sort_by_key(|l| l.ledger.name.clone());
             }
             LedgerSortField::InvoiceType => {
-                item_ledgers_trimmed.sort_by(|a, b| {
-                    a.invoice_type
-                        .partial_cmp(&b.invoice_type)
+                item_ledgers.sort_by(|a, b| {
+                    a.ledger
+                        .invoice_type
+                        .partial_cmp(&b.ledger.invoice_type)
                         .unwrap_or(std::cmp::Ordering::Equal)
                 });
             }
             LedgerSortField::StockLineId => {
-                item_ledgers_trimmed.sort_by_key(|l| l.stock_line_id.clone());
+                item_ledgers.sort_by_key(|l| l.ledger.stock_line_id.clone());
             }
             LedgerSortField::Quantity => {
-                item_ledgers_trimmed.sort_by(|a, b| {
-                    a.quantity
-                        .partial_cmp(&b.quantity)
+                item_ledgers.sort_by(|a, b| {
+                    a.ledger
+                        .quantity
+                        .partial_cmp(&b.ledger.quantity)
                         .unwrap_or(std::cmp::Ordering::Equal)
                 });
             }
             LedgerSortField::ItemId => {
-                item_ledgers_trimmed.sort_by_key(|l| l.item_id.clone());
+                item_ledgers.sort_by_key(|l| l.ledger.item_id.clone());
             }
         }
 
         if sort.desc.unwrap_or(false) {
-            item_ledgers_trimmed.reverse();
+            item_ledgers.reverse();
         }
     }
 
-    // map trimmed ledger items with balance
-    item_ledgers_trimmed
+    // manually paginate, as we didn't paginate the initial query
+    let item_ledgers_trimmed: Vec<ItemLedger> = item_ledgers
         .into_iter()
-        .map(|ledger| ItemLedger {
-            ledger: ledger.clone(),
-            balance: ledger_balance
-                .get(&ledger.id)
-                .cloned()
-                .unwrap_or((0.0, 0))
-                .0,
-        })
-        .collect()
+        .skip(pagination.offset as usize)
+        .take(pagination.limit as usize)
+        .collect();
+
+    item_ledgers_trimmed
 }
 
 // Add tests for calculate_ledger_balance function
@@ -196,7 +184,7 @@ mod tests {
                 item_id: "item1".to_string(),
                 quantity: -1200.0,
                 datetime: NaiveDateTime::parse_from_str(
-                    "2025-02-05T04:43:02.213892",
+                    "2025-02-05T04:43:02.213892", // Same time as above
                     "%Y-%m-%dT%H:%M:%S%.f",
                 )
                 .unwrap(),

@@ -153,7 +153,10 @@ impl<'a> LedgerRepository<'a> {
             }
         }
 
-        let final_query = query;
+        // Apply final sort ordering based on quantity,this means the negative quantities will be first, then the positive ones, so if two operations happen at the same time, the negative one will be first
+        // This makes sense for nulled or cancelled transactions, where we want to see the negative quantity first.
+        // Ideally it should be the actual order of the transactions, but this is at least consistent
+        let final_query = query.order_by(ledger::quantity.asc());
 
         // Debug diesel query
         // println!(
