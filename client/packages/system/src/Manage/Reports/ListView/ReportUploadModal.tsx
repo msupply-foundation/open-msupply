@@ -1,7 +1,7 @@
-import { DialogButton, Typography, UploadFile } from '@common/components';
+import { DialogButton, UploadFile } from '@common/components';
 import { useDialog, useNotification } from '@common/hooks';
 import { useTranslation } from '@common/intl';
-import { Box, DetailContainer, FnUtils } from 'packages/common/src';
+import { Box, DetailContainer } from 'packages/common/src';
 import React, { useState } from 'react';
 import { FileList } from '../../../../../coldchain/src/Equipment/Components';
 import { Environment } from 'packages/config/src';
@@ -38,8 +38,7 @@ export const ReportUploadModal = ({
       return new Promise(resolve => resolve('no files'));
 
     // create new json file id
-    const id = FnUtils.generateUUID();
-    const url = `${Environment.SYNC_FILES_URL}/report-data/${id}`;
+    const url = `${Environment.REPORT_UPLOAD_URL}`;
     try {
       if (draft.files) {
         for (const file of draft.files) {
