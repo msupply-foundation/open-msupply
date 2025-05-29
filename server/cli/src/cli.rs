@@ -45,10 +45,12 @@ use util::inline_init;
 mod backup;
 use backup::*;
 
+#[cfg(feature = "integration_test")]
+use cli::LoadTest;
 use cli::{
     generate_and_install_plugin_bundle, generate_plugin_bundle, generate_report_data,
     generate_reports_recursive, generate_typescript_types, install_plugin_bundle,
-    GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle, LoadTest,
+    GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
     RefreshDatesRepository, ReportError,
 };
 
@@ -211,6 +213,7 @@ enum Action {
     /// Generate TypeScript Types for backend plugins and format with Prettier
     GenerateTypeScriptTypes,
     /// Run load test
+    #[cfg(feature = "integration_test")]
     LoadTest(LoadTest),
 }
 
@@ -702,6 +705,7 @@ async fn main() -> anyhow::Result<()> {
         Action::GenerateTypeScriptTypes => {
             generate_typescript_types()?;
         }
+        #[cfg(feature = "integration_test")]
         Action::LoadTest(LoadTest {
             url,
             base_port,
