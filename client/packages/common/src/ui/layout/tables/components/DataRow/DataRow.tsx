@@ -64,9 +64,7 @@ const DataRowComponent = <T extends RecordWithId>({
   const { isFocused } = useIsFocused(rowData.id);
   const { rowStyle } = useRowStyle(rowData.id);
 
-  const onRowClick = () =>
-    (onClick && onClick(rowData)) ||
-    (rowLinkBuilder && rowLinkBuilder(rowData));
+  const onRowClick = () => onClick?.(rowData) || rowLinkBuilder?.(rowData);
   const paddingX = dense ? '12px' : '16px';
   const paddingY = dense ? '4px' : 0;
   const rowTitle = generateRowTooltip?.(rowData) ?? '';
@@ -75,16 +73,34 @@ const DataRowComponent = <T extends RecordWithId>({
     if (isFocused) onRowClick();
   }, [keyboardActivated]);
 
+  const cellStyles = {
+    textDecoration: 'none',
+    color: 'inherit',
+    display: 'block',
+    padding: `${paddingY}px ${paddingX}px`,
+    height: '40px',
+    width: '100%',
+    lineHeight: '40px',
+  };
+
+  const ContentWrapper = ({ children }: { children: React.ReactNode }) => {
+    if (!rowLinkBuilder) {
+      return <div style={cellStyles}>{children}</div>;
+    }
+    return (
+      <Link to={rowLinkBuilder(rowData)} style={cellStyles}>
+        {children}
+      </Link>
+    );
+  };
+
   return (
     <>
       <Animation isAnimated={isAnimated}>
         <Tooltip title={rowTitle} followCursor placement="bottom-start">
           <TableRow
             key={`tr-${rowKey}`}
-            component={rowLinkBuilder ? Link : 'tr'}
-            {...(rowLinkBuilder && { to: rowLinkBuilder(rowData) })}
             sx={{
-              textDecoration: 'none',
               backgroundColor: isFocused
                 ? theme => alpha(theme.palette.secondary.main, 0.1)
                 : null,
@@ -142,21 +158,23 @@ const DataRowComponent = <T extends RecordWithId>({
                       : {}),
                   }}
                 >
-                  <column.Cell
-                    isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
-                    rowData={rowData}
-                    columns={columns}
-                    isError={isError}
-                    column={column}
-                    rowKey={rowKey}
-                    columnIndex={columnIndex}
-                    rowIndex={rowIndex}
-                    autocompleteName={column.autocompleteProvider?.(rowData)}
-                    localisedText={localisedText}
-                    localisedDate={localisedDate}
-                    dense={dense}
-                    {...column.cellProps}
-                  />
+                  <ContentWrapper>
+                    <column.Cell
+                      isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
+                      rowData={rowData}
+                      columns={columns}
+                      isError={isError}
+                      column={column}
+                      rowKey={rowKey}
+                      columnIndex={columnIndex}
+                      rowIndex={rowIndex}
+                      autocompleteName={column.autocompleteProvider?.(rowData)}
+                      localisedText={localisedText}
+                      localisedDate={localisedDate}
+                      dense={dense}
+                      {...column.cellProps}
+                    />
+                  </ContentWrapper>
                 </TableCell>
               );
             })}

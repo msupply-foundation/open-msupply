@@ -28,7 +28,15 @@ export const getCommentPopoverColumn = <T extends RecordWithId>(
           </PaperPopoverSection>
         }
       >
-        <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
+        <span // to center the svg with flexbox without blocking popover
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            height: '100%',
+          }}
+        >
+          <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
+        </span>
       </PaperHoverPopover>
     ) : null;
   },
