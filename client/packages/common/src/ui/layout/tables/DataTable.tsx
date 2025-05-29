@@ -37,6 +37,8 @@ interface RenderRowsProps<T extends RecordWithId> {
   generateRowTooltip: ((row: T) => string) | undefined;
   isRowAnimated: boolean;
   additionalRows?: JSX.Element[];
+  /** will ignore onRowClick if defined. Allows opening in new tab */
+  rowLinkBuilder?: (row: T) => string;
 }
 const RenderRows = <T extends RecordWithId>({
   mRef,
@@ -49,6 +51,7 @@ const RenderRows = <T extends RecordWithId>({
   generateRowTooltip,
   isRowAnimated,
   additionalRows,
+  rowLinkBuilder,
 }: RenderRowsProps<T>) => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
@@ -71,6 +74,7 @@ const RenderRows = <T extends RecordWithId>({
             localisedText={t}
             localisedDate={localisedDate}
             isAnimated={isRowAnimated}
+            rowLinkBuilder={rowLinkBuilder}
           />
         ))}
         {additionalRows}
@@ -101,6 +105,7 @@ const RenderRows = <T extends RecordWithId>({
             localisedText={t}
             localisedDate={localisedDate}
             isAnimated={isRowAnimated}
+            rowLinkBuilder={rowLinkBuilder}
           />
         )}
       </ViewportList>
@@ -129,6 +134,7 @@ const DataTableComponent = <T extends RecordWithId>({
   onRowClick,
   additionalRows,
   width = '100%',
+  rowLinkBuilder,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation();
   const { setRows, setDisabledRows, setFocus } = useTableStore();
@@ -271,6 +277,7 @@ const DataTableComponent = <T extends RecordWithId>({
             generateRowTooltip={generateRowTooltip}
             isRowAnimated={isRowAnimated}
             additionalRows={additionalRows}
+            rowLinkBuilder={rowLinkBuilder}
           />
         </TableBody>
       </MuiTable>
