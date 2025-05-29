@@ -7,10 +7,11 @@ import {
   useTranslation,
   useNotification,
   LIST_KEY,
+  useMutation,
 } from '@openmsupply-client/common';
 import {  ALLREPORTVERSIONS } from './keys';
 import { ReportRowFragment } from 'packages/system/src/Report/index.js';
-import { useAllReportVersionsGraphQL } from '../api/useReportsGraphQL';
+import { useAllReportVersionsGraphQL as useCentralServerReportsGraphqQL } from '../api/useReportsGraphQL';
 
 export type ReportListParams = {
   filterBy: ReportFilterInput | null;
@@ -19,23 +20,34 @@ export type ReportListParams = {
   offset?: number;
 };
 
-export const useAllReportVersionsList = ({
+export const useCentralReports = ({
   queryParams,
 }: {
   queryParams?: ReportListParams;
 }) => {
 
     // QUERY
-
     const { data, isLoading, isError } = useGetList(queryParams);
+
+    const installUploadedReports = async (fileId: string) => {
+      return await installMutation(fileId)
+    }
+
+    // INSTALL
+    const {
+      mutateAsync: installMutation,
+      isLoading: installLoading,
+      error: installError
+    } = useInstallUploadedReports();
 
     return {
         query: {data, isLoading, isError},
+        install: { installUploadedReports, installLoading, installError }
     };
 };
 
 const useGetList = (queryParams?: ReportListParams) => {
-  const { reportApi, storeId } = useAllReportVersionsGraphQL();
+  const { reportApi, storeId } = useCentralServerReportsGraphqQL();
   const { currentLanguage: language } = useIntlUtils();
   const { error } = useNotification();
   const t = useTranslation();
@@ -100,3 +112,30 @@ const useGetList = (queryParams?: ReportListParams) => {
     },
   });
 };
+
+const useInstallUploadedReports = () => {
+  console.log('trying to install');
+  const { translateServerError } = useIntlUtils();
+  const {reportApi, queryClient} = useCentralServerReportsGraphqQL();
+
+  const mutationFn = async (fileId: string) => {
+    try {
+      const result = await reportApi.installUploadedReports({ fileId });
+      return result?.centralServer?.reports.installUploadedReports;
+    } catch (error) {
+      return {
+        error: { description: translateServerError((error as Error)?.message) },
+      }
+    }
+  };
+
+    return useMutation({
+      mutationFn,
+      onSuccess: () => {
+        queryClient.invalidateQueries([ALLREPORTVERSIONS]);
+      },
+      onError: e => {
+        console.error(e);
+      },
+    });
+}

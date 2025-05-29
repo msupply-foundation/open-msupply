@@ -11,7 +11,7 @@ import {
   useEditModal,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
-import { useAllReportVersionsList } from '../hooks/useAllReportVersionsList';
+import { useCentralReports } from '../hooks/useAllReportVersionsList';
 import { ReportRowFragment } from 'packages/system/src/Report';
 import { ReportUploadModal } from './ReportUploadModal';
 
@@ -26,7 +26,8 @@ const ReportsComponent = () => {
   const queryParams = { sortBy, first, offset, filterBy };
   const {
     query: { data, isError, isLoading },
-  } = useAllReportVersionsList({
+    install,
+  } = useCentralReports({
     queryParams,
   });
 
@@ -79,7 +80,13 @@ const ReportsComponent = () => {
   return (
     <>
       <AppBarButtons onOpen={onOpen} />
-      {isOpen && <ReportUploadModal isOpen={isOpen} onClose={onClose} />}
+      {isOpen && (
+        <ReportUploadModal
+          isOpen={isOpen}
+          onClose={onClose}
+          install={install}
+        />
+      )}
       <DataTable
         id="report-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}

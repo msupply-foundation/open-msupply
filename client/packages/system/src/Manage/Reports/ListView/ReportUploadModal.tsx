@@ -5,15 +5,29 @@ import { Box, DetailContainer, FnUtils } from 'packages/common/src';
 import React, { useState } from 'react';
 import { FileList } from '../../../../../coldchain/src/Equipment/Components';
 import { Environment } from 'packages/config/src';
+import { useCentralReports } from '../hooks/useAllReportVersionsList';
 
 interface ReportUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
+  install: {
+    installUploadedReports: (fileId: string) => Promise<
+      | string[]
+      | {
+          error: {
+            description: string;
+          };
+        }
+    >;
+    installLoading: boolean;
+    installError: unknown;
+  };
 }
 
 export const ReportUploadModal = ({
   isOpen,
   onClose,
+  install,
 }: ReportUploadModalProps) => {
   const t = useTranslation();
   const [draft, setDraft] = useState<{ id?: string; files?: File[] }>({});
@@ -21,22 +35,25 @@ export const ReportUploadModal = ({
   const [errorMessage, setErrorMessage] = useState<string>(() => '');
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
+  const { installUploadedReports, installLoading, installError } = install;
 
   const removeFile = (name: string) => {
     setDraft({ files: draft.files?.filter(file => file.name !== name) });
   };
 
-  const onUpload = (files: File[]) => {
-    files.forEach(file => {
-      if (!file.name.endsWith('json')) {
-        setErrorMessage(t('messages.invalid-file'));
-      }
-    });
+  console.log('error message', errorMessage);
 
-    if (errorMessage != '') {
-      setDraft({ files });
-      setErrorMessage('');
-    }
+  const onUpload = (files: File[]) => {
+    // files.forEach(file => {
+    //   console.log('uploadi9ng');
+    //   if (!file.name.endsWith('json')) {
+    //     setErrorMessage(t('messages.invalid-file'));
+    //   }
+    // });
+    console.log('errorMessage', errorMessage);
+    console.log('setting files');
+    setDraft({ files });
+    setErrorMessage('');
   };
 
   const onOk = async () => {
@@ -45,8 +62,7 @@ export const ReportUploadModal = ({
         return new Promise(resolve => resolve('no files'));
 
       // create new json file id
-      const id = FnUtils.generateUUID();
-      const url = `${Environment.SYNC_FILES_URL}/report-data/${id}`;
+      const url = `${Environment.REPORT_UPLOAD_URL}`;
       const formData = new FormData();
       draft.files?.forEach(file => {
         formData.append('files', file);
@@ -59,13 +75,14 @@ export const ReportUploadModal = ({
         },
         credentials: 'include',
         body: formData,
-      });
+      }).then(res => res.json());
     };
 
     uploadPromise()
       .then(id => {
+        console.log('returned id', id);
+        installUploadedReports(id['file-id']);
         // TODO add install uploaded plugin end point here
-        throw error;
       })
       .then(() => {
         success(t('messages.log-saved-successfully'))();
