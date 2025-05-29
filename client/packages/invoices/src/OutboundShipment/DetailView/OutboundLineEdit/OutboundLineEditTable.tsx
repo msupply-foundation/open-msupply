@@ -22,6 +22,7 @@ import {
   useAllocationContext,
 } from './allocation/useAllocationContext';
 import { getAllocatedQuantity } from './allocation/utils';
+import { min } from 'lodash';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
@@ -207,7 +208,7 @@ export const OutboundLineEditTable = ({
       <Divider margin={10} />
       <Box
         style={{
-          maxHeight: useSimplifiedTabletView ? 230 : 325,
+          maxHeight: min([screen.height - 570, 325]),
           display: 'flex',
           flexDirection: 'column',
           overflowX: 'hidden',
