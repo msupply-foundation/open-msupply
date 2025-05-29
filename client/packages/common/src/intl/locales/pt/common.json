@@ -1714,7 +1714,7 @@
   "messages.patients-found_one": "Foi encontrado 1 paciente que corresponde aos dados fornecidos",
   "messages.patients-found_other": "Foram encontrados {{count}} pacientes que correspondem aos dados fornecidos",
   "messages.period-not-available": "Nenhum período disponível",
-  "messages.placeholder-allocated": "Não há stock suficiente para alocar a quantidade requisitada. Um marcador de posição foi adicionado para {{placeholderQuantity}} unidades.",
+  "messages.placeholder-allocated-units": "Não há stock suficiente para alocar a quantidade requisitada. Um marcador de posição foi adicionado para {{placeholderQuantity}} unidades.",
   "messages.prescription-created": "Prescrição #{{count}} criada",
   "messages.prescription-given": "Prescrito {{amount}} {{item}} no dia {{date}}",
   "messages.prescription-saved": "Prescrição salva 🥳",
