@@ -10,7 +10,7 @@ import {
   useIsFocused,
   useRowStyle,
 } from '../../context';
-import { Fade, Tooltip } from '@mui/material';
+import { Box, Fade, Tooltip } from '@mui/material';
 import { TypedTFunction, LocaleKey } from '@common/intl';
 import { Link } from 'react-router-dom';
 
@@ -73,24 +73,58 @@ const DataRowComponent = <T extends RecordWithId>({
     if (isFocused) onRowClick();
   }, [keyboardActivated]);
 
-  const cellStyles = {
-    textDecoration: 'none',
-    color: 'inherit',
-    display: 'block',
-    padding: `${paddingY}px ${paddingX}px`,
-    height: '40px',
-    width: '100%',
-    lineHeight: '40px',
-  };
+  interface ColumnContentProps<T extends RecordWithId> {
+    column: Column<T>;
+    columnIndex: number;
+    isError: boolean | undefined;
+  }
 
-  const ContentWrapper = ({ children }: { children: React.ReactNode }) => {
-    if (!rowLinkBuilder) {
-      return <div style={cellStyles}>{children}</div>;
-    }
+  const ColumnContent = ({
+    column,
+    columnIndex,
+    isError,
+  }: ColumnContentProps<T>) => (
+    <column.Cell
+      isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
+      rowData={rowData}
+      columns={columns}
+      isError={isError}
+      column={column}
+      rowKey={rowKey}
+      columnIndex={columnIndex}
+      rowIndex={rowIndex}
+      autocompleteName={column.autocompleteProvider?.(rowData)}
+      localisedText={localisedText}
+      localisedDate={localisedDate}
+      dense={dense}
+      {...column.cellProps}
+    />
+  );
+
+  const ContentWrapper = ({
+    children,
+    column,
+  }: {
+    children: React.ReactNode;
+    column: Column<T>;
+  }) => {
     return (
-      <Link to={rowLinkBuilder(rowData)} style={cellStyles}>
+      <Box
+        key={`${rowKey}${String(column.key)}`}
+        component={rowLinkBuilder ? Link : Box}
+        to={rowLinkBuilder ? rowLinkBuilder(rowData) : ''}
+        sx={{
+          display: 'flex',
+          width: '100%',
+          height: '40px',
+          textDecoration: 'none',
+          alignItems: 'center',
+          justifyContent: `${column.align}`,
+          color: 'inherit',
+        }}
+      >
         {children}
-      </Link>
+      </Box>
     );
   };
 
@@ -140,6 +174,7 @@ const DataRowComponent = <T extends RecordWithId>({
                     paddingRight: paddingX,
                     paddingTop: paddingY,
                     paddingBottom: paddingY,
+
                     ...(hasOnClick && { cursor: 'pointer' }),
                     minWidth: column.minWidth,
                     maxWidth: column.maxWidth,
@@ -148,6 +183,7 @@ const DataRowComponent = <T extends RecordWithId>({
                     fontSize: dense ? '12px' : '14px',
                     backgroundColor: column.backgroundColor,
                     fontWeight: 'normal',
+
                     ...(isError
                       ? {
                           borderWidth: '2px',
@@ -158,21 +194,12 @@ const DataRowComponent = <T extends RecordWithId>({
                       : {}),
                   }}
                 >
-                  <ContentWrapper>
-                    <column.Cell
-                      isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
-                      rowData={rowData}
-                      columns={columns}
-                      isError={isError}
+                  <ContentWrapper column={column}>
+                    <ColumnContent
+                      key={`${rowKey}${String(column.key)}`}
                       column={column}
-                      rowKey={rowKey}
                       columnIndex={columnIndex}
-                      rowIndex={rowIndex}
-                      autocompleteName={column.autocompleteProvider?.(rowData)}
-                      localisedText={localisedText}
-                      localisedDate={localisedDate}
-                      dense={dense}
-                      {...column.cellProps}
+                      isError={isError}
                     />
                   </ContentWrapper>
                 </TableCell>
