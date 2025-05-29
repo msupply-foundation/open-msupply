@@ -44,7 +44,6 @@ export const StockLineDetailView: React.FC = () => {
   const {
     urlQuery: { tab },
   } = useUrlQuery();
-  const { data: prefs } = usePreference(PreferenceKey.ManageVvmStatusForStock);
   const { success, error } = useNotification();
   const { setCustomBreadcrumbs, navigateUpOne } = useBreadcrumbs();
 
