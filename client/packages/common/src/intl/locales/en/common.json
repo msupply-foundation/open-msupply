@@ -35,6 +35,8 @@
   "button.add-program": "Add Program",
   "button.add-status-entry": "Add Status Entry",
   "button.adjust": "Adjust",
+  "messsages.reports-installed-successfully": "Added reports successuflly",
+  "error.unable-to-install-reports": "Unable to install reports",
   "button.allocate": "Allocate",
   "button.allocate-lines": "Allocate placeholder lines",
   "button.back": "Back",
