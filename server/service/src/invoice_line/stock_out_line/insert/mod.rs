@@ -1,6 +1,8 @@
 use crate::{
-    invoice::update_picked_date::update_picked_date, invoice_line::query::get_invoice_line,
-    service_provider::ServiceContext, WithDBError,
+    invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
+    invoice_line::query::get_invoice_line,
+    service_provider::ServiceContext,
+    WithDBError,
 };
 use chrono::NaiveDate;
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
@@ -44,6 +46,7 @@ pub enum InsertStockOutLineError {
     LocationIsOnHold,
     LocationNotFound,
     StockLineAlreadyExistsInInvoice(String),
+    AutoPickFailed(String),
     NewlyCreatedLineDoesNotExist,
     BatchIsOnHold,
     ReductionBelowZero { stock_line_id: String },
@@ -80,7 +83,14 @@ pub fn insert_stock_out_line(
             let (new_line, update_batch) = generate(ctx, input, item, batch, invoice.clone())?;
             InvoiceLineRowRepository::new(connection).upsert_one(&new_line)?;
             StockLineRowRepository::new(connection).upsert_one(&update_batch)?;
-            update_picked_date(&connection, &invoice)?;
+
+            update_picked_date(ctx, &invoice).map_err(|e| match e {
+                UpdatePickedDateError::AutoPickFailed(msg) => OutError::AutoPickFailed(msg),
+                UpdatePickedDateError::RepositoryError(repo_error) => {
+                    OutError::DatabaseError(repo_error)
+                }
+            })?;
+
             get_invoice_line(ctx, &new_line.id)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedLineDoesNotExist)
