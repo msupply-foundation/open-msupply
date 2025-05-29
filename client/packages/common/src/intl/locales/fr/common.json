@@ -1668,7 +1668,7 @@
   "messages.patients-found_one": "1 patient trouvé correspondant aux détails fournis",
   "messages.patients-found_other": "{{count}} patients trouvés correspondant aux détails fournis",
   "messages.period-not-available": "Aucune période disponible",
-  "messages.placeholder-allocated": "Il n'y a pas assez de stock disponible pour allouer la quantité demandée. Une ligne temporaire a été ajoutée pour {{placeholderQuantity}} unités.",
+  "messages.placeholder-allocated-units": "Il n'y a pas assez de stock disponible pour allouer la quantité demandée. Une ligne temporaire a été ajoutée pour {{placeholderQuantity}} unités.",
   "messages.prescription-created": "Prescription #{{count}} créée",
   "messages.prescription-given": "Prescrit {{amount}} {{item}} le {{date}}",
   "messages.prescription-saved": "Prescription sauvegardée 🥳",
