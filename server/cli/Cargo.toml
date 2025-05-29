@@ -56,3 +56,4 @@ actix-rt = { workspace = true }
 default = ["sqlite"]
 sqlite = ["server/sqlite"]
 postgres = ["server/postgres"]
+integration_test = []
