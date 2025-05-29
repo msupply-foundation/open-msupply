@@ -5,7 +5,6 @@ import { Box, DetailContainer, FnUtils } from 'packages/common/src';
 import React, { useState } from 'react';
 import { FileList } from '../../../../../coldchain/src/Equipment/Components';
 import { Environment } from 'packages/config/src';
-import { useCentralReports } from '../hooks/useAllReportVersionsList';
 
 interface ReportUploadModalProps {
   isOpen: boolean;
@@ -32,7 +31,7 @@ export const ReportUploadModal = ({
   const t = useTranslation();
   const [draft, setDraft] = useState<{ id?: string; files?: File[] }>({});
   const { error, success } = useNotification();
-  const [errorMessage, setErrorMessage] = useState<string>(() => '');
+  // const [errorMessage, setErrorMessage] = useState<string>(() => '');
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const { installUploadedReports, installLoading, installError } = install;
@@ -41,54 +40,47 @@ export const ReportUploadModal = ({
     setDraft({ files: draft.files?.filter(file => file.name !== name) });
   };
 
-  console.log('error message', errorMessage);
-
   const onUpload = (files: File[]) => {
-    // files.forEach(file => {
-    //   console.log('uploadi9ng');
-    //   if (!file.name.endsWith('json')) {
-    //     setErrorMessage(t('messages.invalid-file'));
-    //   }
-    // });
-    console.log('errorMessage', errorMessage);
-    console.log('setting files');
-    setDraft({ files });
-    setErrorMessage('');
+    if (files.filter(f => !f.name.endsWith('json')).length > 0) {
+      error('error.report-invalid-file')();
+    } else {
+      setDraft({ files });
+    }
   };
 
   const onOk = async () => {
-    const uploadPromise = () => {
-      if (!draft.files?.length)
-        return new Promise(resolve => resolve('no files'));
+    if (!draft.files?.length)
+      return new Promise(resolve => resolve('no files'));
 
-      // create new json file id
-      const url = `${Environment.REPORT_UPLOAD_URL}`;
-      const formData = new FormData();
-      draft.files?.forEach(file => {
-        formData.append('files', file);
-      });
+    // create new json file id
+    const url = `${Environment.REPORT_UPLOAD_URL}`;
+    try {
+      // let upsertedIds = [];
+      if (draft.files) {
+        for (const file of draft.files) {
+          const formData = new FormData();
+          formData.append('files', file);
+          const fileId = await fetch(url, {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+            },
+            credentials: 'include',
+            body: formData,
+          });
+          const id = await fileId.json();
 
-      return fetch(url, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-        },
-        credentials: 'include',
-        body: formData,
-      }).then(res => res.json());
-    };
+          installUploadedReports(id['file-id']);
 
-    uploadPromise()
-      .then(id => {
-        console.log('returned id', id);
-        installUploadedReports(id['file-id']);
-        // TODO add install uploaded plugin end point here
-      })
-      .then(() => {
-        success(t('messages.log-saved-successfully'))();
-        onClose();
-      })
-      .catch(e => error(`${t('error.unable-to-save-log')}: ${e.message}`)());
+          // TODO do something with fileId
+        }
+      }
+      success(t('messsages.reports-installed-successfully'))();
+      onClose();
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      error(`${t('error.unable-to-install-reports')}: ${message}`)();
+    }
   };
 
   return (
@@ -127,7 +119,6 @@ export const ReportUploadModal = ({
             removeFile={removeFile}
           />
         </Box>
-        <Typography>{errorMessage}</Typography>
       </DetailContainer>
     </Modal>
   );
