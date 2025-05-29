@@ -126,24 +126,15 @@ export const useOutboundLineEditColumns = ({
     });
   }
 
-  columnDefinitions.push(
-    [
-      'expiryDate',
-      {
-        Cell: ExpiryDateCell,
-        width: simplifiedTabletView ? 190 : 100,
-      },
-    ],
-    [
-      'location',
-      {
-        accessor: ({ rowData }) => rowData.location?.code,
-        width: 85,
-        Cell: LocationCell,
-        defaultHideOnMobile: true,
-      },
-    ]
-  );
+  columnDefinitions.push([
+    'location',
+    {
+      accessor: ({ rowData }) => rowData.location?.code,
+      width: 85,
+      Cell: LocationCell,
+      defaultHideOnMobile: true,
+    },
+  ]);
   if (prefs?.allowTrackingOfStockByDonor) {
     columnDefinitions.push({
       key: 'donor',

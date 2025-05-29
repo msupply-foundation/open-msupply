@@ -13,7 +13,6 @@ import {
   useTableStore,
   usePreference,
   PreferenceKey,
-  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
@@ -121,7 +120,6 @@ export const OutboundLineEditTable = ({
     PreferenceKey.ManageVvmStatusForStock,
     PreferenceKey.AllowTrackingOfStockByDonor
   );
-  const useSimplifiedTabletView = useSimplifiedTabletUI();
 
   const {
     draftLines,
