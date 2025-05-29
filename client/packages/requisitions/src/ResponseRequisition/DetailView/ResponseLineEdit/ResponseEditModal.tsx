@@ -3,7 +3,6 @@ import {
   DialogButton,
   ModalMode,
   ModalTabs,
-  useBufferState,
   useDialog,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
@@ -38,24 +37,23 @@ export const ResponseLineEditModal = ({
 
   const lines = useMemo(
     () =>
-      requisition?.lines.nodes
+      requisition.lines.nodes
         .slice()
         .sort((a, b) => a.item.name.localeCompare(b.item.name)) ?? [],
-    [requisition?.lines.nodes]
+    [requisition.lines.nodes]
   );
-  const [currentItem, setCurrentItem] = useBufferState(
-    lines?.find(line => line.item.id === itemId)?.item
+  const [currentItem, setCurrentItem] = useState(
+    lines.find(line => line.item.id === itemId)?.item
   );
-  const [previousItemLineId, setPreviousItemLineId] = useBufferState<
-    string | null
-  >(null);
+  const [previousItemLineId, setPreviousItemLineId] = useState<string | null>(
+    null
+  );
   const [representation, setRepresentation] = useState<RepresentationValue>(
     Representation.UNITS
   );
 
   const { draft, update, save } = useDraftRequisitionLine(currentItem);
   const { hasNext, next } = useNextResponseLine(currentItem);
-  const { data } = useResponse.line.stats(draft?.id);
 
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
 
@@ -85,12 +83,15 @@ export const ResponseLineEditModal = ({
   };
 
   useEffect(() => {
+    // Inserts new requisition line if it doesn't exist
     if (!!draft?.isCreated) {
       save();
     } else {
       if (!!draft?.id) setPreviousItemLineId(draft.id);
     }
   }, [draft, setPreviousItemLineId]);
+
+  const { data } = useResponse.line.stats(!draft?.isCreated, draft?.id);
 
   const tabs = [
     {
@@ -131,7 +132,11 @@ export const ResponseLineEditModal = ({
   return (
     <Modal
       title=""
-      contentProps={{ sx: { padding: 0 } }}
+      contentProps={{
+        sx: {
+          padding: 0,
+        },
+      }}
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
       nextButton={
         <DialogButton
@@ -167,7 +172,7 @@ export const ResponseLineEditModal = ({
           disabled={isDisabled}
           isUpdateMode={mode === ModalMode.Update}
         />
-        {draft && (
+        {!!draft && (
           <ModalTabs
             tabs={tabs}
             sx={{

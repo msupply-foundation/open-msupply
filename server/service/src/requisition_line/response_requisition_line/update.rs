@@ -1,10 +1,6 @@
 use crate::{
-    requisition::{
-        common::{
-            check_approval_status, check_requisition_row_exists,
-            generate_requisition_user_id_update,
-        },
-        request_requisition::{generate_suggested_quantity, GenerateSuggestedQuantity},
+    requisition::common::{
+        check_approval_status, check_requisition_row_exists, generate_requisition_user_id_update,
     },
     requisition_line::{common::check_requisition_line_exists, query::get_requisition_line},
     service_provider::ServiceContext,

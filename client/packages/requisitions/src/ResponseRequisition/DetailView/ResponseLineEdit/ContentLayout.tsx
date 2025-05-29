@@ -23,7 +23,6 @@ export interface NumInputRowProps {
   value: number;
   onChange?: (value?: number) => void;
   disabled: boolean;
-  autoFocus?: boolean;
   representation: RepresentationValue;
   defaultPackSize: number;
   unitName: string;
@@ -36,7 +35,6 @@ export const NumInputRow = ({
   value,
   onChange,
   disabled,
-  autoFocus = false,
   representation,
   defaultPackSize,
   unitName,
@@ -100,7 +98,6 @@ export const NumInputRow = ({
             value={roundedValue}
             onChange={handleChange}
             disabled={disabled}
-            autoFocus={autoFocus}
             decimalLimit={0}
             endAdornment={endAdornment}
           />
@@ -116,7 +113,6 @@ export const NumInputRow = ({
 
 interface NumericInputOptions {
   onChange?: (value?: number) => void;
-  autoFocus?: boolean;
   disabledOverride?: boolean;
   endAdornmentOverride?: string;
   sx?: Record<string, unknown>;
@@ -140,7 +136,6 @@ export const createNumericInput =
     const {
       onChange = () => {},
       disabledOverride,
-      autoFocus = false,
       endAdornmentOverride,
       sx = {},
     } = options;
@@ -154,7 +149,6 @@ export const createNumericInput =
         defaultPackSize={commonProps.defaultPackSize}
         representation={commonProps.representation}
         unitName={commonProps.unitName}
-        autoFocus={autoFocus}
         endAdornmentOverride={endAdornmentOverride}
         sx={sx}
       />

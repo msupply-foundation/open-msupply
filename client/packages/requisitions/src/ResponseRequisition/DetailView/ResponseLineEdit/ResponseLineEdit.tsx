@@ -99,9 +99,9 @@ export const ResponseLineEdit = ({
               openOnFocus={!currentItem}
               disabled={disabled}
               currentItemId={currentItem?.id}
-              onChange={(newItem: ItemWithStatsFragment | null) =>
-                newItem && onChangeItem(newItem)
-              }
+              onChange={(newItem: ItemWithStatsFragment | null) => {
+                newItem && onChangeItem(newItem);
+              }}
               extraFilter={item =>
                 !lines.some(line => line.item.id === item.id)
               }
@@ -125,7 +125,6 @@ export const ResponseLineEdit = ({
                   draft?.availableStockOnHand,
                   {
                     onChange: value => update({ availableStockOnHand: value }),
-                    autoFocus: true,
                   }
                 )}
               </>
@@ -137,7 +136,6 @@ export const ResponseLineEdit = ({
                   {
                     onChange: value =>
                       update({ initialStockOnHandUnits: value }),
-                    autoFocus: true,
                   }
                 )}
                 {numericInput('label.incoming', draft?.incomingUnits, {

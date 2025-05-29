@@ -91,6 +91,7 @@ export const SupplySelection = ({
       </Typography>
       <Box gap={1} display="flex" flexDirection="row">
         <NumericTextInput
+          autoFocus
           width={170}
           min={0}
           value={value}
