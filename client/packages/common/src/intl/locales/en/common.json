@@ -1822,7 +1822,6 @@
   "policyType.PERSONAL": "Personal",
   "preference.allowTrackingOfReceivedStockByDonor": "Allow tracking of received stock by donor",
   "preference.allowTrackingOfStockByDonor": "Allow tracking of stock by donor",
-  "preference.displayPopulationBasedForecasting": "Display Population Based Forecasting",
   "preference.manageVaccinesInDoses": "Manage vaccines in doses",
   "preference.manageVvmStatusForStock": "Manage VVM status for stock",
   "preference.showContactTracing": "Show Contact Tracing",
