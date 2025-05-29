@@ -131,10 +131,6 @@ pub fn create_reverse_prescription(
 
     // Reverse the stock direction of each line and update DB
     for mut line in lines {
-        println!(
-            "Reversing stock for line: {} in invoice: {}",
-            line.invoice_line_row.id, orig_invoice.id
-        );
         line.invoice_line_row.id = uuid();
         line.invoice_line_row.invoice_id = new_invoice.id.clone();
         line.invoice_line_row.r#type = match line.invoice_line_row.r#type {
