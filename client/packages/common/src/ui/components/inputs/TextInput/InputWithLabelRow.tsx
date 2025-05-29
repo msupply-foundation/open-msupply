@@ -24,13 +24,13 @@ export const InputWithLabelRow: FC<InputWithLabelRowProps> = ({
   return (
     <Box
       sx={{
-        ...sx,
         display: 'flex',
         alignItems: 'center',
         gap: 1,
         ...(labelRight
           ? { gap: 2, flexDirection: 'row-reverse', justifyContent: 'flex-end' }
           : {}),
+        ...sx,
       }}
     >
       <FormLabel
