@@ -14,25 +14,14 @@ import { UnitQuantityCell } from '@openmsupply-client/invoices/src/Prescriptions
 
 interface StockLineTableProps {
   stocklines: DraftPrescriptionLine[];
-  handleStockLineUpdate: (lines: DraftPrescriptionLine[]) => void;
+  updateQuantity: (batchId: string, packs: number) => void;
 }
 
 export const StockLineTable = ({
   stocklines,
-  handleStockLineUpdate,
+  updateQuantity,
 }: StockLineTableProps) => {
   const t = useTranslation();
-  const handleUpdateDraft = (input: Partial<DraftPrescriptionLine>) => {
-    const updatedDraftLines = [...stocklines];
-    const lineIndex = updatedDraftLines.findIndex(line => line.id === input.id);
-    if (updatedDraftLines[lineIndex]) {
-      updatedDraftLines[lineIndex] = {
-        ...updatedDraftLines[lineIndex],
-        ...input,
-      };
-      handleStockLineUpdate(updatedDraftLines);
-    }
-  };
 
   const columns = useColumns<DraftPrescriptionLine>(
     [
@@ -64,7 +53,7 @@ export const StockLineTable = ({
       {
         width: '55px',
         key: 'unitQuantity',
-        label: 'label.units-issued',
+        label: 'label.issued',
         accessor: ({ rowData }) =>
           NumUtils.round(
             (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
@@ -80,9 +69,9 @@ export const StockLineTable = ({
             unitQuantity: number;
           };
           // Convert input units to packs
-          stockLine.numberOfPacks =
+          const numberOfPacks =
             stockLine.unitQuantity / (stockLine.packSize ?? 1);
-          handleUpdateDraft(stockLine);
+          updateQuantity(stockLine.id, numberOfPacks);
         },
         Cell: UnitQuantityCell,
       },
