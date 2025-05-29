@@ -1312,7 +1312,7 @@
   "log.stocktake-status-finalised": "Finalisé",
   "log.user-logged-in": "Utilisateur connecté",
   "log.zero-quantities-for-invoice-created-before-store": "La quantité de toutes les lignes a été mise à 0 comme avant la création du dépôt.",
-  "login.body": "Que vous dirigiez un entrepôt de distribution pharmaceutique, ou que vous soyez un fabricant ayant besoin de dizaines d'utilisateurs connectés, ou un petit dispensaire, mSupply est un partenaire précieux.",
+  "login.body": "Système d'information de Gestion Logistique",
   "login.heading": "Simple. \nEfficace. \nGestion \nPharmaceutique.",
   "login.store-changed": "Bienvenue dans le dépôt {{store}}",
   "logout": "Se déconnecter",
