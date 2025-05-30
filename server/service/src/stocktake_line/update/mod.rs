@@ -4,7 +4,9 @@ mod validate;
 use validate::validate;
 
 use chrono::NaiveDate;
-use repository::{RepositoryError, StockLine, StocktakeLine, StocktakeLineRowRepository};
+use repository::{
+    RepositoryError, StockLine, StockLineRowRepository, StocktakeLine, StocktakeLineRowRepository,
+};
 
 use crate::{
     service_provider::ServiceContext, stocktake_line::query::get_stocktake_line, NullableUpdate,
@@ -52,8 +54,17 @@ pub fn update_stocktake_line(
         .connection
         .transaction_sync(|connection| {
             let existing = validate(connection, &ctx.store_id, &input)?;
-            let new_stocktake_line = generate(existing, input)?;
+            let new_stocktake_line = generate(existing.clone(), input.clone())?;
             StocktakeLineRowRepository::new(connection).upsert_one(&new_stocktake_line)?;
+
+            // Update stock line donor if changed and stock line exists
+            if let Some(stock_line) = &existing.stock_line {
+                if let Some(donor_id) = &input.donor_id {
+                    let mut stock_line_row = stock_line.clone();
+                    stock_line_row.donor_link_id = donor_id.value.clone();
+                    StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
+                }
+            }
 
             let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
             line.ok_or(UpdateStocktakeLineError::InternalError(

@@ -4,7 +4,9 @@ mod generate;
 use generate::generate;
 
 use chrono::NaiveDate;
-use repository::{RepositoryError, StockLine, StocktakeLine, StocktakeLineRowRepository};
+use repository::{
+    RepositoryError, StockLine, StockLineRowRepository, StocktakeLine, StocktakeLineRowRepository,
+};
 
 use crate::NullableUpdate;
 use crate::{service_provider::ServiceContext, stocktake_line::query::get_stocktake_line};
@@ -61,8 +63,16 @@ pub fn insert_stocktake_line(
                 item_id,
                 item_name,
             } = validate(connection, &ctx.store_id, &input)?;
-            let new_stocktake_line = generate(stock_line, item_id, item_name, input);
+            let new_stocktake_line =
+                generate(stock_line.clone(), item_id, item_name, input.clone());
             StocktakeLineRowRepository::new(connection).upsert_one(&new_stocktake_line)?;
+
+            // Update stock line donor if provided and stock line exists
+            if let (Some(donor_id), Some(existing_stock_line)) = (&input.donor_id, &stock_line) {
+                let mut stock_line_row = existing_stock_line.stock_line_row.clone();
+                stock_line_row.donor_link_id = Some(donor_id.clone());
+                StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
+            }
 
             let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
             line.ok_or(InsertStocktakeLineError::InternalError(
