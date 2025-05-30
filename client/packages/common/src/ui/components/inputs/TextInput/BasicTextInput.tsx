@@ -86,7 +86,7 @@ export const BasicTextInput = React.forwardRef<
                   props.disabled
                     ? theme.palette.background.toolbar
                     : theme.palette.background.menu,
-                borderRadius: 1,
+                borderRadius: 2,
                 padding: 0.5,
                 // Ignoring below, see https://github.com/mui/material-ui/issues/45041
                 // @ts-expect-error: use mergeSlotProps when it's available in MUI-6
@@ -116,6 +116,7 @@ export const BasicTextInput = React.forwardRef<
                 color: 'primary.light',
                 fontSize: '17px',
                 marginRight: 0.5,
+                pl: 0.2,
               }}
             >
               *

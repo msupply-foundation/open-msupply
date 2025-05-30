@@ -68,7 +68,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         let has_program_items = requisition_has_program_items(
             connection,
             &request_requisition.requisition_row.id,
-            &other_party_store_id,
+            other_party_store_id,
         )?;
 
         // TODO Rework once plugin functionality has been implemented
@@ -150,7 +150,7 @@ fn requisition_has_program_items(
     other_party_store_id: &String,
 ) -> Result<bool, RepositoryError> {
     // Get requisition lines
-    let requisition_lines = get_lines_for_requisition(connection, &requisition_id)?;
+    let requisition_lines = get_lines_for_requisition(connection, requisition_id)?;
     if requisition_lines.is_empty() {
         return Ok(false);
     }
@@ -158,7 +158,7 @@ fn requisition_has_program_items(
     // Query for master lists that are program-related and visible to the supplier store
     let supplier_program_master_lists = MasterListRepository::new(connection).query_by_filter(
         MasterListFilter::new()
-            .exists_for_store_id(EqualFilter::equal_to(&other_party_store_id))
+            .exists_for_store_id(EqualFilter::equal_to(other_party_store_id))
             .is_program(true),
     )?;
     if supplier_program_master_lists.is_empty() {
@@ -276,9 +276,9 @@ fn generate_response_requisition_lines(
                          approved_quantity: _,
                          approval_comment: _,
                          item_link_id: _,
+                         supply_quantity: _,
                          requested_quantity,
                          suggested_quantity,
-                         supply_quantity: _,
                          available_stock_on_hand,
                          average_monthly_consumption,
                          snapshot_datetime,
@@ -306,10 +306,6 @@ fn generate_response_requisition_lines(
                 snapshot_datetime,
                 comment: comment.clone(),
                 item_name,
-                // Default
-                supply_quantity: 0.0,
-                approved_quantity: 0.0,
-                approval_comment: None,
                 initial_stock_on_hand_units,
                 incoming_units,
                 outgoing_units,
@@ -318,6 +314,10 @@ fn generate_response_requisition_lines(
                 expiring_units,
                 days_out_of_stock,
                 option_id,
+                // Default
+                supply_quantity: 0.0,
+                approved_quantity: 0.0,
+                approval_comment: None,
             },
         )
         .collect();
