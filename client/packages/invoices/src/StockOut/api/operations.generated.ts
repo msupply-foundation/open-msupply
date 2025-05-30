@@ -30,6 +30,11 @@ export type StockOutLineFragment = {
     isVaccine: boolean;
     doses: number;
   };
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    dosesPerUnit: number;
+  } | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -106,6 +111,7 @@ export type GetOutboundEditLinesQuery = {
       unitName?: string | null;
       name: string;
       isVaccine: boolean;
+      doses: number;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
         directions: string;
@@ -183,6 +189,11 @@ export const StockOutLineFragmentDoc = gql`
       unitName
       isVaccine
       doses
+    }
+    itemVariant {
+      __typename
+      id
+      dosesPerUnit
     }
     location {
       __typename
@@ -267,6 +278,7 @@ export const GetOutboundEditLinesDocument = gql`
           unitName
           name
           isVaccine
+          doses
           itemDirections {
             ...ItemDirection
           }

@@ -262,6 +262,7 @@ mod test {
                     location_row: None,
                     supplier_name_row: None,
                     barcode_row: None,
+                    item_variant_row: None,
                 }],
                 invoice_lines: vec![successful_invoice_line()],
             }))

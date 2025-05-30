@@ -16,6 +16,7 @@ import {
   OutboundLineEditData,
   DraftItem,
   DraftStockOutLineFragment,
+  normaliseToUnits,
 } from '.';
 import { allocateQuantities } from './allocateQuantities';
 
@@ -114,13 +115,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   note: null,
 
   initialise: ({
-    itemData: {
-      item,
-      draftLines,
-      placeholderQuantity,
-      prescribedQuantity,
-      note,
-    },
+    itemData: { item, draftLines, placeholderUnits, prescribedUnits, note },
     strategy,
     allowPlaceholder,
     allowPrescribedQuantity,
@@ -153,9 +148,9 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       // (e.g. stock on hold, expired) for context, and show alerts about them
       nonAllocatableLines: ignoreNonAllocatableLines ? [] : nonAllocatableLines,
 
-      placeholderUnits: allowPlaceholder ? (placeholderQuantity ?? 0) : null,
+      placeholderUnits: allowPlaceholder ? (placeholderUnits ?? 0) : null,
       prescribedQuantity: allowPrescribedQuantity
-        ? (prescribedQuantity ?? 0)
+        ? (prescribedUnits ?? 0)
         : null,
       alerts: [],
     });
@@ -229,8 +224,13 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     })),
 
   autoAllocate: (quantity, format, t, allowPartialPacks = false) => {
-    const { draftLines, nonAllocatableLines, placeholderUnits, allocateIn } =
-      get();
+    const {
+      draftLines,
+      nonAllocatableLines,
+      placeholderUnits,
+      allocateIn,
+      item,
+    } = get();
 
     const result = allocateQuantities(draftLines, quantity, {
       allocateIn,
@@ -252,17 +252,17 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
         availablePacks > 0 && !!stockLineOnHold
     );
 
-    const stillToAllocate =
-      result.remainingQuantity > 0 && placeholderUnits !== null
-        ? result.remainingQuantity
-        : 0;
-
-    // Note that a placeholder is always considered to be pack size 1, 1 dose per unit
+    // Note that a placeholder is always considered to be pack size 1
     // So if issuing in larger pack sizes, we need to adjust the placeholder
-    const placeholderInUnits =
-      allocateIn.type === AllocateInType.Packs
-        ? stillToAllocate * allocateIn.packSize
-        : stillToAllocate;
+    const remainingAsUnits = normaliseToUnits(
+      placeholderUnits !== null ? result.remainingQuantity : 0,
+      allocateIn,
+      item?.doses || 1
+    );
+
+    const placeholderInUnits = allowPartialPacks
+      ? remainingAsUnits
+      : Math.ceil(remainingAsUnits);
 
     const alerts = getAllocationAlerts(
       quantity,
@@ -271,6 +271,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       hasOnHold,
       allocateIn,
       result.allocatedLines,
+      item?.doses || 1,
       format,
       t
     );
@@ -278,8 +279,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     set(state => ({
       ...state,
       alerts,
-      placeholderUnits:
-        placeholderUnits === null ? null : Math.round(placeholderInUnits), // handle .0000000001 when switching between pack sizes
+      placeholderUnits: placeholderUnits === null ? null : placeholderInUnits,
       isDirty: true,
       draftLines: result.allocatedLines,
     }));
