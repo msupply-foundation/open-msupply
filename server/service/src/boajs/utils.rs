@@ -1,9 +1,9 @@
 use boa_engine::{js_string, Context, JsError, JsValue};
 use serde::de::DeserializeOwned;
 use std::error::Error as StandardError;
-use std::{future::Future, string::FromUtf16Error, sync::Arc};
+use std::thread::JoinHandle;
+use std::{future::Future, string::FromUtf16Error};
 use thiserror::Error;
-use tokio::runtime::{Handle, RuntimeFlavor};
 use util::format_error;
 
 #[derive(Debug, Error)]
@@ -14,6 +14,13 @@ enum GetStringArgumentError {
     ArgumentAtIndexIsNotAString(usize),
     #[error(transparent)]
     FromUtf16Error(#[from] FromUtf16Error),
+}
+
+pub(super) struct NullError;
+impl From<NullError> for JsError {
+    fn from(_: NullError) -> Self {
+        JsError::from_opaque(js_string!("Null value encountered").into())
+    }
 }
 
 pub(super) fn get_string_argument(args: &[JsValue], index: usize) -> Result<String, JsError> {
@@ -33,8 +40,11 @@ pub(super) fn get_string_argument(args: &[JsValue], index: usize) -> Result<Stri
 }
 
 pub(super) fn std_error_to_js_error(error: impl StandardError) -> JsError {
-    let as_string = JsValue::String(js_string!(format_error(&error)));
-    JsError::from_opaque(as_string)
+    string_to_js_error(&format_error(&error))
+}
+
+pub(super) fn string_to_js_error(string: &str) -> JsError {
+    JsError::from_opaque(js_string!(string).into())
 }
 
 #[derive(Debug, Error)]
@@ -54,15 +64,15 @@ pub(super) fn get_serde_argument<D: DeserializeOwned>(
 ) -> Result<D, JsError> {
     use GetJsonArgumentError as Error;
 
-    let mut closure = move || -> Result<D, GetJsonArgumentError> {
+    let mut closure = move || -> Result<Option<D>, GetJsonArgumentError> {
         let arg = args.get(index).ok_or(Error::NoArgumentAtIndex(index))?;
 
         let value = arg.to_json(context)?;
 
-        Ok(serde_json::from_value(value)?)
+        Ok(value.map(serde_json::from_value).transpose()?)
     };
 
-    closure().map_err(std_error_to_js_error)
+    Ok(closure().map_err(std_error_to_js_error)?.ok_or(NullError)?)
 }
 
 #[derive(Error, Debug)]
@@ -83,36 +93,20 @@ pub trait ExecuteGraphql: 'static + Send + Sync {
     ) -> Result<serde_json::Value, ExecuteGraphQlError>;
 }
 
-/// Executes an async function in a blocking manner from within an async or sync context.
-/// Required to run async code, like GraphQL queries, from boa js sync context.
-/// Functionality here allows for two examples, one for actix_web server and one for main runtime.
-/// Can be seen in action in open-msupply-plugins repository, through graphql query and message processor
-pub fn do_async_blocking<T, F>(handle: Arc<Handle>, f: F) -> T
+// Creates a new thread and runtime to execute async function
+pub fn do_async_blocking<T, F>(f: F) -> Result<T, JsError>
 where
     F: Future<Output = T> + Send + 'static,
     T: Send + 'static,
 {
-    // Typically block_in_place together with block_on should work, and it should actually work as if the method
-    // calling do_async_blocking is async (as long as it is called from async context, even if it's not awaited)
-    // https://docs.rs/tokio/latest/tokio/task/fn.block_in_place.html#examples
-    // However actix_web server does not support block_in_place, even if 'main' runtime is multi-threaded
-    // https://docs.rs/actix-web/latest/actix_web/rt/index.html#fnref1:~:text=Crates%20that%20use,with%20Actix%20Web
-    if matches!(
-        tokio::runtime::Handle::try_current().map(|h| h.runtime_flavor()),
-        Ok(RuntimeFlavor::MultiThread)
-    ) {
-        return tokio::task::block_in_place(move || handle.block_on(f));
-    }
-
-    // I found that this works well to run async code in actix_web, but this does not work in main runtime (freezes)
-    // it does not work if we try "tokio::runtime::Handle::try_current()" here, handle must be provided from main thread
-    let (tx, rx) = std::sync::mpsc::channel();
-
-    handle.spawn(async move {
-        println!("working");
-        let result = f.await;
-        let _ = tx.send(result);
+    let handle: JoinHandle<Result<T, std::io::Error>> = std::thread::spawn(|| {
+        let rt = tokio::runtime::Runtime::new()?;
+        rt.block_on(async { Ok(f.await) })
     });
-
-    rx.recv().unwrap()
+    // Even though we are using a new thread, we will still blocking the current thread
+    let handle_result = handle
+        .join()
+        .map_err(|_| string_to_js_error("Failed to join thread"))?;
+    let result = handle_result.map_err(std_error_to_js_error)?;
+    Ok(result)
 }
