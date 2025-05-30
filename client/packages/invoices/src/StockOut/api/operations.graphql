@@ -90,6 +90,10 @@ fragment DraftStockOutLine on DraftStockOutLineNode {
     id
     name
   }
+  campaign {
+    name
+    id
+  }
 }
 
 query getOutboundEditLines(
