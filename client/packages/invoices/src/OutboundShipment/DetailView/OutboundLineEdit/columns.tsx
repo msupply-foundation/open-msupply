@@ -22,6 +22,7 @@ import {
   Formatter,
   UNDEFINED_STRING_VALUE,
   TooltipTextCell,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { getStockOutQuantityCellId } from '../../../utils';
@@ -60,6 +61,7 @@ export const useOutboundLineEditColumns = ({
   const { store } = useAuthContext();
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
   const pluralisedUnitName = getPlural(unit, 2);
@@ -88,11 +90,13 @@ export const useOutboundLineEditColumns = ({
       accessor: ({ rowData }) => canAutoAllocate(rowData, packSize),
       align: ColumnAlign.Center,
       width: 35,
+      defaultHideOnMobile: true,
     },
     [
       'batch',
       {
         accessor: ({ rowData }) => rowData.batch,
+        width: simplifiedTabletView ? 190 : 100,
       },
     ],
     [
@@ -118,6 +122,7 @@ export const useOutboundLineEditColumns = ({
       },
       width: 85,
       Cell: TooltipTextCell,
+      defaultHideOnMobile: true,
     });
   }
 
@@ -127,9 +132,9 @@ export const useOutboundLineEditColumns = ({
       accessor: ({ rowData }) => rowData.location?.code,
       width: 85,
       Cell: LocationCell,
+      defaultHideOnMobile: true,
     },
   ]);
-
   if (prefs?.allowTrackingOfStockByDonor) {
     columnDefinitions.push({
       key: 'donor',
@@ -137,6 +142,7 @@ export const useOutboundLineEditColumns = ({
       accessor: ({ rowData }) => rowData.donor?.name ?? UNDEFINED_STRING_VALUE,
       Cell: TooltipTextCell,
       width: 100,
+      defaultHideOnMobile: true,
     });
   }
 
@@ -145,6 +151,7 @@ export const useOutboundLineEditColumns = ({
     {
       Cell: CurrencyCell,
       width: 85,
+      defaultHideOnMobile: true,
     },
   ]);
 
@@ -161,16 +168,24 @@ export const useOutboundLineEditColumns = ({
           return rowData.sellPricePerPack / currency.rate;
         }
       },
+      defaultHideOnMobile: true,
     });
   }
 
-  columnDefinitions.push(['packSize', { width: 90 }]);
+  columnDefinitions.push([
+    'packSize',
+    { width: 90, defaultHideOnMobile: true },
+  ]);
 
   if (allocateIn.type === AllocateInType.Doses) {
     columnDefinitions.push(...getAllocateInDosesColumns(t, allocate, unit));
   } else {
     columnDefinitions.push(
-      ...getAllocateInUnitsColumns(allocate, pluralisedUnitName)
+      ...getAllocateInUnitsColumns(
+        allocate,
+        pluralisedUnitName,
+        simplifiedTabletView
+      )
     );
   }
 
@@ -182,6 +197,7 @@ export const useOutboundLineEditColumns = ({
       rowData.stockLineOnHold || rowData.location?.onHold,
     align: ColumnAlign.Center,
     width: 70,
+    defaultHideOnMobile: true,
   });
 
   const columns = useColumns<DraftStockOutLineFragment>(columnDefinitions, {}, [
@@ -203,7 +219,8 @@ const PackQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
 
 const getAllocateInUnitsColumns = (
   allocate: AllocateFn,
-  pluralisedUnitName: string
+  pluralisedUnitName: string,
+  simplifiedTabletView: boolean
 ): ColumnDescription<DraftStockOutLineFragment>[] => [
   {
     Cell: NumberCell,
@@ -212,13 +229,14 @@ const getAllocateInUnitsColumns = (
     align: ColumnAlign.Right,
     width: 80,
     accessor: ({ rowData }) => rowData.inStorePacks,
+    defaultHideOnMobile: true,
   },
   {
     Cell: NumberCell,
     label: 'label.available-packs',
     key: 'availablePacks',
     align: ColumnAlign.Right,
-    width: 90,
+    width: simplifiedTabletView ? 190 : 90,
     accessor: ({ rowData }) =>
       rowData.location?.onHold || rowData.stockLineOnHold
         ? 0
@@ -228,7 +246,7 @@ const getAllocateInUnitsColumns = (
     'numberOfPacks',
     {
       Cell: PackQuantityCell,
-      width: 100,
+      width: simplifiedTabletView ? 190 : 100,
       label: 'label.pack-quantity-issued',
       setter: ({ id, numberOfPacks }) =>
         // Pack QTY column, so should issue in packs, even though in unit lens
@@ -245,6 +263,7 @@ const getAllocateInUnitsColumns = (
       labelProps: { unit: pluralisedUnitName },
       accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
       width: 90,
+      defaultHideOnMobile: true,
     },
   ],
 ];
@@ -278,6 +297,7 @@ const getAllocateInDosesColumns = (
       align: ColumnAlign.Right,
       accessor: ({ rowData }) =>
         rowData?.itemVariant?.dosesPerUnit ?? rowData.defaultDosesPerUnit,
+      defaultHideOnMobile: true,
     },
     {
       label: 'label.in-store-doses',
@@ -286,6 +306,7 @@ const getAllocateInDosesColumns = (
       align: ColumnAlign.Right,
       width: 80,
       accessor: ({ rowData }) => packsToDoses(rowData.inStorePacks, rowData),
+      defaultHideOnMobile: true,
     },
     {
       label: 'label.available-doses',
@@ -325,6 +346,7 @@ const getAllocateInDosesColumns = (
         labelProps: { unit },
         accessor: ({ rowData }) => rowData.numberOfPacks,
         width: 90,
+        defaultHideOnMobile: true,
       },
     ],
   ];

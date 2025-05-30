@@ -21,6 +21,7 @@ import {
   useAllocationContext,
   getAllocatedQuantity,
 } from '../../../StockOut';
+import { min } from 'lodash';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
@@ -216,7 +217,7 @@ export const OutboundLineEditTable = ({
       <Divider margin={10} />
       <Box
         style={{
-          maxHeight: 325,
+          maxHeight: min([screen.height - 570, 325]),
           display: 'flex',
           flexDirection: 'column',
           overflowX: 'hidden',
@@ -229,6 +230,7 @@ export const OutboundLineEditTable = ({
           data={lines}
           dense
           additionalRows={additionalRows}
+          enableColumnSelection={true}
         />
       </Box>
     </Box>
