@@ -1,7 +1,7 @@
-import { DialogButton, Typography, UploadFile } from '@common/components';
+import { DialogButton, UploadFile } from '@common/components';
 import { useDialog, useNotification } from '@common/hooks';
 import { useTranslation } from '@common/intl';
-import { Box, DetailContainer, FnUtils } from 'packages/common/src';
+import { Box, DetailContainer } from 'packages/common/src';
 import React, { useState } from 'react';
 import { FileList } from '../../../../../coldchain/src/Equipment/Components';
 import { Environment } from 'packages/config/src';
@@ -34,7 +34,7 @@ export const ReportUploadModal = ({
   // const [errorMessage, setErrorMessage] = useState<string>(() => '');
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const { installUploadedReports, installLoading, installError } = install;
+  const { installUploadedReports } = install;
 
   const removeFile = (name: string) => {
     setDraft({ files: draft.files?.filter(file => file.name !== name) });
