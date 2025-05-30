@@ -1,7 +1,13 @@
 use super::{
-    barcode_row::barcode, item_link_row::item_link, item_row::item, location_row::location,
-    name_link_row::name_link, name_row::name, stock_line_row::stock_line, DBType, LocationRow,
-    MasterListFilter, MasterListLineFilter, StockLineRow, StorageConnection,
+    barcode_row::barcode,
+    item_link_row::item_link,
+    item_row::item,
+    item_variant::{item_variant_row::item_variant, item_variant_row::ItemVariantRow},
+    location_row::location,
+    name_link_row::name_link,
+    name_row::name,
+    stock_line_row::stock_line,
+    DBType, LocationRow, MasterListFilter, MasterListLineFilter, StockLineRow, StorageConnection,
 };
 
 use crate::{
@@ -27,6 +33,7 @@ pub struct StockLine {
     pub location_row: Option<LocationRow>,
     pub supplier_name_row: Option<NameRow>,
     pub barcode_row: Option<BarcodeRow>,
+    pub item_variant_row: Option<ItemVariantRow>,
 }
 
 pub enum StockLineSortField {
@@ -60,6 +67,7 @@ pub type StockLineSort = Sort<StockLineSortField>;
 type StockLineJoin = (
     StockLineRow,
     (ItemLinkRow, ItemRow),
+    Option<ItemVariantRow>,
     Option<LocationRow>,
     Option<(NameLinkRow, NameRow)>,
     Option<BarcodeRow>,
@@ -157,7 +165,10 @@ type BoxedStockLineQuery = IntoBoxed<
     LeftJoin<
         LeftJoinOn<
             LeftJoin<
-                InnerJoin<stock_line::table, InnerJoin<item_link::table, item::table>>,
+                LeftJoin<
+                    InnerJoin<stock_line::table, InnerJoin<item_link::table, item::table>>,
+                    item_variant::table,
+                >,
                 location::table,
             >,
             InnerJoin<name_link::table, name::table>,
@@ -171,6 +182,7 @@ type BoxedStockLineQuery = IntoBoxed<
 fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery {
     let mut query = stock_line::table
         .inner_join(item_link::table.inner_join(item::table))
+        .left_join(item_variant::table)
         .left_join(location::table)
         .left_join(
             name_link::table
@@ -261,7 +273,7 @@ fn apply_item_filter(
 }
 
 fn to_domain(
-    (stock_line_row, (_, item_row), location_row, name_link_join, barcode_row): StockLineJoin,
+    (stock_line_row, (_, item_row), item_variant_row, location_row, name_link_join, barcode_row): StockLineJoin,
 ) -> StockLine {
     StockLine {
         stock_line_row,
@@ -269,6 +281,7 @@ fn to_domain(
         location_row,
         supplier_name_row: name_link_join.map(|(_, name_row)| name_row),
         barcode_row,
+        item_variant_row,
     }
 }
 
