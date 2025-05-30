@@ -93,7 +93,7 @@ export const RequestedSelection = ({
         mb: 1,
       }}
     >
-      <Typography variant="body1" fontWeight="bold">
+      <Typography variant="body1" fontWeight="bold" p={0.5}>
         {t('label.requested')}:
       </Typography>
       <Box gap={1} display="flex" flexDirection="row">
@@ -117,7 +117,7 @@ export const RequestedSelection = ({
           sx={{
             boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
             '& .MuiInputBase-input': {
-              p: 0.78,
+              p: '3px 4px',
               backgroundColor: theme =>
                 disabled
                   ? theme.palette.background.toolbar
@@ -148,7 +148,7 @@ export const RequestedSelection = ({
               sx: {
                 backgroundColor: theme => theme.palette.background.white,
                 borderRadius: 2,
-                p: 1,
+                p: 0.5,
               },
             },
           }}

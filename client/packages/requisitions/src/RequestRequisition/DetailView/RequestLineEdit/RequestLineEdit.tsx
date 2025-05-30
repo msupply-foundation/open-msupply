@@ -118,7 +118,8 @@ export const RequestLineEdit = ({
             background: theme => theme.palette.background.group,
             padding: '0px 8px',
             borderRadius: 2,
-            paddingBottom: 1,
+            pb: 2,
+            pt: 0.5,
           }}
         >
           {!showExtraFields && renderValueInfoRows(getSuggestedRow(t, draft))}
