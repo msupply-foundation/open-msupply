@@ -5,8 +5,8 @@ import { useStockOutGraphQL } from './useStockOutGraphQL';
 export type OutboundLineEditData = {
   item: DraftItem;
   draftLines: DraftStockOutLineFragment[];
-  placeholderQuantity: number | null;
-  prescribedQuantity?: number | null;
+  placeholderUnits: number | null;
+  prescribedUnits?: number | null;
   note?: string | null;
 };
 
@@ -38,8 +38,9 @@ export const useOutboundLineEditData = (invoiceId: string, itemId?: string) => {
       return {
         item,
         draftLines,
-        placeholderQuantity,
-        prescribedQuantity,
+        // TODO: rename in API, same on save
+        placeholderUnits: placeholderQuantity,
+        prescribedUnits: prescribedQuantity,
         note,
       };
     },

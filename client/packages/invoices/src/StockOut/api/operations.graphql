@@ -110,6 +110,7 @@ query getOutboundEditLines(
         unitName
         name
         isVaccine
+        doses
         itemDirections {
           ...ItemDirection
         }

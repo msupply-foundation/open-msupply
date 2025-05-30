@@ -106,6 +106,7 @@ export type GetOutboundEditLinesQuery = {
       unitName?: string | null;
       name: string;
       isVaccine: boolean;
+      doses: number;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
         directions: string;
@@ -267,6 +268,7 @@ export const GetOutboundEditLinesDocument = gql`
           unitName
           name
           isVaccine
+          doses
           itemDirections {
             ...ItemDirection
           }
