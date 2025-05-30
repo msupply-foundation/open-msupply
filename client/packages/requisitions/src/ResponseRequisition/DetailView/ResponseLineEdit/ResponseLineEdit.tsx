@@ -163,40 +163,37 @@ export const ResponseLineEdit = ({
             disabledOverride: true,
           })}
           {showExtraFields && (
-            <InputWithLabelRow
-              label={t('label.reason')}
-              labelWidth={'182px'}
-              Input={
-                <ReasonOptionsSearchInput
-                  value={draft?.reason}
-                  onChange={value => {
-                    update({ reason: value });
-                  }}
-                  width={170}
-                  type={ReasonOptionNodeType.RequisitionLineVariance}
-                  disabled={disableReasons}
-                  reasonOptions={reasonOptions?.nodes ?? []}
-                  loading={isLoading}
-                  textSx={
-                    disableReasons
-                      ? {
-                          backgroundColor: theme =>
-                            theme.palette.background.toolbar,
-                          boxShadow: 'none',
-                        }
-                      : {
-                          backgroundColor: theme =>
-                            theme.palette.background.white,
-                          boxShadow: theme => theme.shadows[2],
-                        }
-                  }
-                />
-              }
-              sx={{
-                pl: 1,
-                pb: 0.5,
-              }}
-            />
+            <Typography
+              variant="body1"
+              fontWeight="bold"
+              sx={{ pl: 1, pb: 0.5 }}
+              width={370}
+            >
+              {t('label.reason')}:
+              <ReasonOptionsSearchInput
+                value={draft?.reason}
+                onChange={value => {
+                  update({ reason: value });
+                }}
+                type={ReasonOptionNodeType.RequisitionLineVariance}
+                disabled={disableReasons}
+                reasonOptions={reasonOptions?.nodes ?? []}
+                loading={isLoading}
+                textSx={
+                  disableReasons
+                    ? {
+                        backgroundColor: theme =>
+                          theme.palette.background.toolbar,
+                        boxShadow: 'none',
+                      }
+                    : {
+                        backgroundColor: theme =>
+                          theme.palette.background.white,
+                        boxShadow: theme => theme.shadows[2],
+                      }
+                }
+              />
+            </Typography>
           )}
         </Box>
         {showExtraFields && (
