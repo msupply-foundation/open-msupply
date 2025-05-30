@@ -686,7 +686,7 @@ mod test {
                 invoice_id: invoice().id,
                 item_link_id: mock_vaccine_item_a().id, // 2 doses per unit
                 r#type: InvoiceLineType::UnallocatedStock,
-                number_of_packs: 20.0, // = 40 doses
+                number_of_packs: 19.0, // = 38 doses
                 pack_size: 1.0,
                 ..Default::default()
             }
@@ -697,7 +697,7 @@ mod test {
                 store_id: mock_store_a().id,
                 item_link_id: mock_vaccine_item_a().id,
                 pack_size: 2.0,
-                available_number_of_packs: 3.0,
+                available_number_of_packs: 5.0,
                 item_variant_id: Some(mock_vaccine_item_a_variant_1().id), // 5 doses per unit
                 expiry_date: Some(NaiveDate::from_ymd_opt(2100, 1, 1).unwrap()), // add expiry so this gets used first
                 ..Default::default()
@@ -751,18 +751,21 @@ mod test {
             .allocate_outbound_shipment_unallocated_line(&context, line().id.clone())
             .unwrap();
 
-        assert_eq!(result.inserts.len(), 2);
-        assert_eq!(result.deletes.len(), 1);
-        assert_eq!(result.updates.len(), 0);
-
-        // all 3 available packs * 5 doses per pack * pack size 2.0 = 30 doses
+        // line has 50 doses available, but only in blocks of 10 doses, so should
+        // only allocate 30
+        // 3 packs * 5 doses per pack * pack size 2.0 = 30 doses
         assert_eq!(
             result.inserts[0].stock_line_option.as_ref().unwrap().id,
             variant_stock_line().id
         );
         assert_eq!(result.inserts[0].invoice_line_row.number_of_packs, 3.0);
 
-        // 10 remaining doses / 2 doses per unit = 5 packs
-        assert_eq!(result.inserts[1].invoice_line_row.number_of_packs, 5.0);
+        // 8 remaining doses / 2 doses per unit = 4 packs
+        assert_eq!(result.inserts[1].invoice_line_row.number_of_packs, 4.0);
+
+        // Double check the correct lines got created etc.
+        assert_eq!(result.inserts.len(), 2);
+        assert_eq!(result.deletes.len(), 1);
+        assert_eq!(result.updates.len(), 0);
     }
 }
