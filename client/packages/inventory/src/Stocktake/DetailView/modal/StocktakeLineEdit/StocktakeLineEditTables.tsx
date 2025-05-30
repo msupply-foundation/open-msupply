@@ -218,6 +218,7 @@ export const BatchTable = ({
         cellProps: {
           getIsDisabled: (rowData: DraftStocktakeLine) => !!rowData?.stockLine,
         },
+        align: ColumnAlign.Left,
         accessor: ({ rowData }) =>
           rowData.packSize ?? rowData.item?.defaultPackSize,
         defaultHideOnMobile: true,
@@ -236,7 +237,7 @@ export const BatchTable = ({
       },
       {
         key: 'countedNumberOfPacks',
-        label: 'description.counted-num-of-packs',
+        label: 'label.counted-num-of-packs',
         width: 100,
         getIsError: rowData =>
           errorsContext.getError(rowData)?.__typename ===
