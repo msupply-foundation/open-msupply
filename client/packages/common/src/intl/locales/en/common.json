@@ -68,6 +68,7 @@
   "button.import-properties": "Import Properties",
   "button.initial-stocktake": "initial stocktake",
   "button.initialise": "Initialise",
+  "button.re-initialise": "Re-initialise",
   "button.language": "Language",
   "button.link-contact-to-patient": "Link to Patient",
   "button.login": "Log in",
@@ -2079,5 +2080,6 @@
   "warning.caps-lock": "Warning: Caps lock is on",
   "warning.check-before-vaccinating": "Vaccination records from other stores may not be up to date. Ensure you have synced recently, and always confirm against the patient's physical vaccination card first.",
   "warning.field-not-parsed": "{{field}} not parsed",
-  "warning.nothing-to-supply": "Nothing left to supply!"
+  "warning.nothing-to-supply": "Nothing left to supply!",
+  "tooltip.re-initialise-in-language": "Re-initialise using {{language}} language"
 }
