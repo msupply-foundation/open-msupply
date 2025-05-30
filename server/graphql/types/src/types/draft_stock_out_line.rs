@@ -2,14 +2,14 @@ use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
-        ItemVariantByItemVariantIdLoader, LocationByIdLoader, NameByNameLinkIdLoader,
-        NameByNameLinkIdLoaderInput, VVMStatusByIdLoader,
+        CampaignByIdLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader,
+        NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput, VVMStatusByIdLoader,
     },
     ContextExt,
 };
 use service::invoice_line::get_draft_outbound_lines::DraftStockOutLine;
 
-use super::{ItemVariantNode, LocationNode, NameNode, VVMStatusNode};
+use super::{CampaignNode, ItemVariantNode, LocationNode, NameNode, VVMStatusNode};
 
 pub struct DraftStockOutItemData {
     pub lines: Vec<DraftStockOutLine>,
@@ -107,6 +107,18 @@ impl DraftStockOutLineNode {
             .await?;
 
         Ok(result.map(NameNode::from_domain))
+    }
+
+    pub async fn campaign(&self, ctx: &Context<'_>) -> Result<Option<CampaignNode>> {
+        let loader = ctx.get_loader::<DataLoader<CampaignByIdLoader>>();
+
+        let campaign_id = match &self.shipment_line.campaign_id {
+            Some(campaign_id) => campaign_id,
+            None => return Ok(None),
+        };
+
+        let result = loader.load_one(campaign_id.clone()).await?;
+        Ok(result.map(CampaignNode::from_domain))
     }
 
     pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
