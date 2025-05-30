@@ -19,6 +19,7 @@ interface LayoutProps {
   Left: React.ReactElement | null;
   Middle: React.ReactElement | null;
   Right: React.ReactElement | null;
+  showExtraFields?: boolean;
 }
 
 export const ModalContentLayout = ({
@@ -26,6 +27,7 @@ export const ModalContentLayout = ({
   Left,
   Middle,
   Right,
+  showExtraFields = false,
 }: LayoutProps) => {
   return (
     <Grid
@@ -40,9 +42,9 @@ export const ModalContentLayout = ({
         {Top}
       </Grid>
       <Grid size={12} container spacing={2}>
-        <Grid size={4}>{Left}</Grid>
-        <Grid size={4}>{Middle}</Grid>
-        <Grid size={4}>{Right}</Grid>
+        <Grid size={showExtraFields ? 4 : 6}>{Left}</Grid>
+        <Grid size={showExtraFields ? 4 : 6}>{Middle}</Grid>
+        {showExtraFields && <Grid size={4}>{Right}</Grid>}
       </Grid>
     </Grid>
   );

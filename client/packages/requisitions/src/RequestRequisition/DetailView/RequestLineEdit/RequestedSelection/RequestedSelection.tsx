@@ -26,6 +26,7 @@ interface RequestedSelectionProps {
   representation: RepresentationValue;
   setRepresentation: (rep: RepresentationValue) => void;
   unitName: string;
+  showExtraFields?: boolean;
 }
 
 export const RequestedSelection = ({
@@ -37,9 +38,11 @@ export const RequestedSelection = ({
   representation,
   setRepresentation,
   unitName,
+  showExtraFields,
 }: RequestedSelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+  const width = showExtraFields ? 170 : 250;
 
   const currentValue = useMemo(
     (): number =>
@@ -96,7 +99,7 @@ export const RequestedSelection = ({
       <Box gap={1} display="flex" flexDirection="row">
         <NumericTextInput
           autoFocus
-          width={170}
+          width={width}
           min={0}
           value={value}
           disabled={disabled}
@@ -114,7 +117,7 @@ export const RequestedSelection = ({
           sx={{
             boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
             '& .MuiInputBase-input': {
-              p: '3px 4px',
+              p: 0.78,
               backgroundColor: theme =>
                 disabled
                   ? theme.palette.background.toolbar
