@@ -76,10 +76,6 @@ pub fn save_stock_out_item_lines(
     ctx: &ServiceContext,
     input: SaveStockOutItemLines,
 ) -> Result<Invoice, SaveStockOutItemLinesError> {
-    println!(
-        "\n\n\n******\nSaving stock out item lines for invoice: {}",
-        input.invoice_id
-    );
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {

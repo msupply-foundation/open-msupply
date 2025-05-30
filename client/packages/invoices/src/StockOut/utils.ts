@@ -229,12 +229,18 @@ export const getAllocationAlerts = (
     return alerts;
   }
 
+  const isDoses = allocateIn.type === AllocateInType.Doses;
+
   // If we didn't have enough stock to meet the requested quantity
   if (allocatedQuantity < requestedQuantity) {
     // If we were able to create a placeholder, let the user know
     if (placeholderQuantity > 0) {
       alerts.push({
-        message: t('messages.placeholder-allocated', { placeholderQuantity }),
+        message: t(
+          // When issuing in packs, placeholder quantity is in units
+          `messages.placeholder-allocated-${isDoses ? 'doses' : 'units'}`,
+          { placeholderQuantity: format(placeholderQuantity) }
+        ),
         severity: 'info',
       });
     } else {
@@ -275,14 +281,11 @@ export const getAllocationAlerts = (
   });
 
   if (wholePackQuantity > allocatedQuantity) {
-    const messageKey =
-      allocateIn.type === AllocateInType.Doses
-        ? 'messages.partial-pack-warning-doses'
-        : 'messages.partial-pack-warning-units';
     alerts.push({
-      message: t(messageKey, {
-        nearestAbove: wholePackQuantity,
-      }),
+      message: t(
+        `messages.partial-pack-warning-${isDoses ? 'doses' : 'units'}`,
+        { nearestAbove: wholePackQuantity }
+      ),
       severity: 'warning',
     });
   }
