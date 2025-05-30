@@ -1,6 +1,10 @@
 import React from 'react';
 
-import { BaseButton, useTranslation } from '@openmsupply-client/common';
+import {
+  BaseButton,
+  useIntlUtils,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { useName } from '@openmsupply-client/system';
 
 import { Setting } from './Setting';
@@ -13,7 +17,7 @@ import {
 
 export const ConfigurationSettings = () => {
   const t = useTranslation();
-
+  const { currentLanguage } = useIntlUtils();
   const { mutateAsync, isLoading } = useConfigureNameProperties();
   const { isLoading: dataLoading } = useName.document.properties();
   const { gapsConfigured, populationConfigured } =
@@ -30,9 +34,14 @@ export const ConfigurationSettings = () => {
         component={
           <BaseButton
             onClick={handleClick('gaps')}
-            disabled={dataLoading || isLoading || gapsConfigured}
+            disabled={dataLoading || isLoading}
+            title={t('tooltip.re-initialise-in-language', {
+              language: currentLanguage,
+            })}
           >
-            {gapsConfigured ? t('label.initialised') : t('button.initialise')}
+            {gapsConfigured
+              ? t('button.re-initialise')
+              : t('button.initialise')}
           </BaseButton>
         }
       />
@@ -43,10 +52,13 @@ export const ConfigurationSettings = () => {
         component={
           <BaseButton
             onClick={handleClick('population')}
-            disabled={dataLoading || isLoading || populationConfigured}
+            disabled={dataLoading || isLoading}
+            title={t('tooltip.re-initialise-in-language', {
+              language: currentLanguage,
+            })}
           >
             {populationConfigured
-              ? t('label.initialised')
+              ? t('button.re-initialise')
               : t('button.initialise')}
           </BaseButton>
         }
