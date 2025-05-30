@@ -38,7 +38,6 @@ export const useOutboundLineEditData = (invoiceId: string, itemId?: string) => {
       return {
         item,
         draftLines,
-        // TODO: rename in API, same on save
         placeholderUnits: placeholderQuantity,
         prescribedUnits: prescribedQuantity,
         note,
