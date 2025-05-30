@@ -55,7 +55,6 @@ export const ReportUploadModal = ({
           if (!fileId) {
             throw error;
           }
-          console.log('fileId', fileId.json());
           // TODO do something with fileId
         }
       }
