@@ -8,10 +8,12 @@ import {
   useUrlQueryParams,
   useTranslation,
   TooltipTextCell,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import { useAllReportVersionsList } from '../hooks/useAllReportVersionsList';
 import { ReportRowFragment } from 'packages/system/src/Report';
+import { ReportUploadModal } from './ReportUploadModal';
 
 const ReportsComponent = () => {
   const t = useTranslation();
@@ -29,6 +31,8 @@ const ReportsComponent = () => {
   });
 
   const pagination = { page, first, offset };
+
+  const { isOpen, onClose, onOpen } = useEditModal();
 
   const columns = useColumns<ReportRowFragment>(
     [
@@ -74,7 +78,8 @@ const ReportsComponent = () => {
 
   return (
     <>
-      <AppBarButtons />
+      <AppBarButtons onOpen={onOpen} />
+      {isOpen && <ReportUploadModal isOpen={isOpen} onClose={onClose} />}
       <DataTable
         id="report-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
