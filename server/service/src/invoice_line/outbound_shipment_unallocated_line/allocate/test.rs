@@ -5,11 +5,12 @@ mod test {
     use repository::{
         mock::{
             mock_item_a, mock_item_b, mock_name_a, mock_outbound_shipment_a_invoice_lines,
-            mock_store_a, mock_store_b, MockData, MockDataInserts,
+            mock_store_a, mock_store_b, mock_vaccine_item_a, mock_vaccine_item_a_variant_1,
+            MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceType,
-        StockLine, StockLineRow,
+        PreferenceRow, PreferenceRowRepository, StockLine, StockLineRow,
     };
     use util::{
         constants::stock_line_expiring_soon_offset, date_now, date_now_with_offset, inline_edit,
@@ -18,6 +19,7 @@ mod test {
 
     use crate::{
         invoice_line::AllocateOutboundShipmentUnallocatedLineError as ServiceError,
+        preference::{ManageVaccinesInDoses, Preference},
         service_provider::ServiceProvider,
     };
 
@@ -664,5 +666,103 @@ mod test {
                 u
             })
         );
+    }
+
+    #[actix_rt::test]
+    async fn allocate_doses_with_variants() {
+        fn invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "invoice".to_string(),
+                store_id: mock_store_a().id,
+                name_link_id: mock_name_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                ..Default::default()
+            }
+        }
+
+        fn line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "line".to_string(),
+                invoice_id: invoice().id,
+                item_link_id: mock_vaccine_item_a().id, // 2 doses per unit
+                r#type: InvoiceLineType::UnallocatedStock,
+                number_of_packs: 20.0, // = 40 doses
+                pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+        fn variant_stock_line() -> StockLineRow {
+            StockLineRow {
+                id: "variant_stock_line".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_vaccine_item_a().id,
+                pack_size: 2.0,
+                available_number_of_packs: 3.0,
+                item_variant_id: Some(mock_vaccine_item_a_variant_1().id), // 5 doses per unit
+                expiry_date: Some(NaiveDate::from_ymd_opt(2100, 1, 1).unwrap()), // add expiry so this gets used first
+                ..Default::default()
+            }
+        }
+        fn default_stock_line() -> StockLineRow {
+            StockLineRow {
+                id: "default_stock_line".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_vaccine_item_a().id,
+                pack_size: 1.0,
+                available_number_of_packs: 10.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "allocate_doses_with_variants",
+            MockDataInserts::none()
+                .stores()
+                .items()
+                .item_variants()
+                .names()
+                .units()
+                .currencies(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![invoice()];
+                r.invoice_lines = vec![line()];
+                r.stock_lines = vec![variant_stock_line(), default_stock_line()];
+            }),
+        )
+        .await;
+
+        // Enable manage vaccines in doses preference
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "vaccine_pref".to_string(),
+                store_id: Some(mock_store_a().id),
+                key: ManageVaccinesInDoses.key().to_string(),
+                value: "true".to_string(),
+            })
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_line_service;
+
+        let result = service
+            .allocate_outbound_shipment_unallocated_line(&context, line().id.clone())
+            .unwrap();
+
+        assert_eq!(result.inserts.len(), 2);
+        assert_eq!(result.deletes.len(), 1);
+        assert_eq!(result.updates.len(), 0);
+
+        // all 3 available packs * 5 doses per pack * pack size 2.0 = 30 doses
+        assert_eq!(
+            result.inserts[0].stock_line_option.as_ref().unwrap().id,
+            variant_stock_line().id
+        );
+        assert_eq!(result.inserts[0].invoice_line_row.number_of_packs, 3.0);
+
+        // 10 remaining doses / 2 doses per unit = 5 packs
+        assert_eq!(result.inserts[1].invoice_line_row.number_of_packs, 5.0);
     }
 }
