@@ -80,14 +80,14 @@ mod stocktake_line_test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_item_a, mock_locations, mock_locked_stocktake_line, mock_stock_line_b,
-            mock_stocktake_line_a, mock_stocktake_line_finalised, mock_store_a, MockData,
-            MockDataInserts,
+            mock_donor_a, mock_item_a, mock_locations, mock_locked_stocktake_line,
+            mock_stock_line_b, mock_stocktake_line_a, mock_stocktake_line_finalised, mock_store_a,
+            MockData, MockDataInserts,
         },
-        test_db::setup_all_with_data,
+        test_db::{setup_all, setup_all_with_data},
         EqualFilter, InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType, ReasonOptionRow,
         ReasonOptionRowRepository, ReasonOptionType, StockLineFilter, StockLineRepository,
-        StocktakeLineRow,
+        StockLineRowRepository, StocktakeLineRow,
     };
     use util::inline_init;
 
@@ -428,5 +428,65 @@ mod stocktake_line_test {
                 r.comment = Some("Some comment".to_string());
             })
         );
+    }
+
+    #[actix_rt::test]
+    async fn update_stocktake_line_with_donor_id() {
+        let (_, _, connection_manager, _) = setup_all(
+            "insert_stocktake_line_with_donor_id",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.stocktake_line_service;
+
+        // success with donor_id update
+        let stocktake_line_a = mock_stocktake_line_a();
+        let donor_id = mock_donor_a().id;
+
+        service
+            .update_stocktake_line(
+                &context,
+                inline_init(|r: &mut UpdateStocktakeLine| {
+                    r.id = stocktake_line_a.id.clone();
+                    r.donor_id = Some(NullableUpdate {
+                        value: Some(donor_id.clone()),
+                    });
+                }),
+            )
+            .unwrap();
+
+        // check that the donor_id was set correctly on the stock line
+        if let Some(stock_line_id) = &stocktake_line_a.stock_line_id {
+            let stock_line_row = StockLineRowRepository::new(&context.connection)
+                .find_one_by_id(stock_line_id)
+                .unwrap()
+                .unwrap();
+            assert_eq!(stock_line_row.donor_link_id, Some(donor_id));
+        }
+
+        // success with donor_id removal (set to None)
+        service
+            .update_stocktake_line(
+                &context,
+                inline_init(|r: &mut UpdateStocktakeLine| {
+                    r.id = stocktake_line_a.id.clone();
+                    r.donor_id = Some(NullableUpdate { value: None });
+                }),
+            )
+            .unwrap();
+
+        // check that the donor_id was cleared
+        if let Some(stock_line_id) = &stocktake_line_a.stock_line_id {
+            let stock_line_row = StockLineRowRepository::new(&context.connection)
+                .find_one_by_id(stock_line_id)
+                .unwrap()
+                .unwrap();
+            assert_eq!(stock_line_row.donor_link_id, None);
+        }
     }
 }
