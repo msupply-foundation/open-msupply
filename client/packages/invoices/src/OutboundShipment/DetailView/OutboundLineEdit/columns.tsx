@@ -235,6 +235,7 @@ const getAllocateInUnitsColumns = (
         allocate(id, numberOfPacks ?? 0, {
           allocateInType: AllocateInType.Packs,
         }),
+      align: ColumnAlign.Left,
     },
   ],
   [
