@@ -6,7 +6,7 @@ mod test {
         mock::{
             mock_item_a, mock_item_b, mock_name_a, mock_outbound_shipment_a_invoice_lines,
             mock_store_a, mock_store_b, mock_vaccine_item_a, mock_vaccine_item_a_variant_1,
-            MockData, MockDataInserts,
+            mock_vvm_status_a, mock_vvm_status_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceType,
@@ -19,7 +19,7 @@ mod test {
 
     use crate::{
         invoice_line::AllocateOutboundShipmentUnallocatedLineError as ServiceError,
-        preference::{ManageVaccinesInDoses, Preference},
+        preference::{ManageVaccinesInDoses, Preference, SortByVvmStatusThenExpiry},
         service_provider::ServiceProvider,
     };
 
@@ -764,5 +764,179 @@ mod test {
 
         // 10 remaining doses / 2 doses per unit = 5 packs
         assert_eq!(result.inserts[1].invoice_line_row.number_of_packs, 5.0);
+    }
+
+    #[actix_rt::test]
+    async fn allocate_by_vvm_then_expiry() {
+        fn invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "invoice".to_string(),
+                store_id: mock_store_a().id,
+                name_link_id: mock_name_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                ..Default::default()
+            }
+        }
+
+        fn placeholder() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "placeholder".to_string(),
+                invoice_id: invoice().id,
+                item_link_id: mock_vaccine_item_a().id,
+                r#type: InvoiceLineType::UnallocatedStock,
+                number_of_packs: 2.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+        fn vvm_2_stock_line() -> StockLineRow {
+            StockLineRow {
+                id: "vvm_2_stock_line".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_vaccine_item_a().id,
+                pack_size: 1.0,
+                available_number_of_packs: 2.0,
+                vvm_status_id: Some(mock_vvm_status_b().id), // Level 2
+                // No expiry- in FEFO we'd allocate this last
+                expiry_date: None,
+                ..Default::default()
+            }
+        }
+        fn vvm_1_stock_line_expiring() -> StockLineRow {
+            StockLineRow {
+                id: "vvm_1_stock_line_expiring".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_vaccine_item_a().id,
+                pack_size: 1.0,
+                available_number_of_packs: 2.0,
+                vvm_status_id: Some(mock_vvm_status_a().id), // Level 1 - should be allocated after
+                // Has an expiry, should be allocated before non-expiring
+                expiry_date: Some(NaiveDate::from_ymd_opt(2100, 1, 1).unwrap()),
+                ..Default::default()
+            }
+        }
+        fn vvm_1_stock_line_non_expiring() -> StockLineRow {
+            StockLineRow {
+                id: "vvm_1_stock_line_non_expiring".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_vaccine_item_a().id,
+                pack_size: 1.0,
+                available_number_of_packs: 2.0,
+                vvm_status_id: Some(mock_vvm_status_a().id), // Level 1 - should be allocated after
+                // No expiry, should be allocated last
+                expiry_date: None,
+                ..Default::default()
+            }
+        }
+        fn stock_line_non_expiring_no_vvm() -> StockLineRow {
+            StockLineRow {
+                id: "vvm_1_stock_line_non_expiring".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_vaccine_item_a().id,
+                pack_size: 1.0,
+                available_number_of_packs: 2.0,
+                // No expiry, should be allocated last
+                vvm_status_id: None,
+                expiry_date: None,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "allocate_by_vvm_then_expiry",
+            MockDataInserts::none()
+                .stores()
+                .items()
+                .vvm_statuses()
+                .names()
+                .units()
+                .currencies(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![invoice()];
+                r.invoice_lines = vec![placeholder()];
+                r.stock_lines = vec![
+                    stock_line_non_expiring_no_vvm(),
+                    vvm_1_stock_line_non_expiring(),
+                    vvm_1_stock_line_expiring(),
+                    vvm_2_stock_line(),
+                ];
+            }),
+        )
+        .await;
+
+        // Enable manage vaccines in doses preference
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "vvm_pref".to_string(),
+                store_id: Some(mock_store_a().id),
+                key: SortByVvmStatusThenExpiry.key().to_string(),
+                value: "true".to_string(),
+            })
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_line_service;
+
+        // ------ VVM 2 first
+        let result = service
+            // Allocate placeholder for 2 packs
+            .allocate_outbound_shipment_unallocated_line(&context, placeholder().id.clone())
+            .unwrap();
+        assert_eq!(result.inserts.len(), 1);
+
+        // Allocates the 2 packs from vvm2 line first
+        assert_eq!(
+            result.inserts[0].invoice_line_row.stock_line_id,
+            Some(vvm_2_stock_line().id)
+        );
+
+        let repo = InvoiceLineRowRepository::new(&connection);
+
+        // ------ Next VVM 1, expiring first
+        // Insert placeholder for another 2 packs
+        repo.upsert_one(&placeholder()).unwrap();
+
+        // Allocate again
+        let result = service
+            .allocate_outbound_shipment_unallocated_line(&context, placeholder().id.clone())
+            .unwrap();
+
+        // Now uses the vvm1 expiring line first
+        assert_eq!(
+            result.inserts[0].invoice_line_row.stock_line_id,
+            Some(vvm_1_stock_line_expiring().id)
+        );
+
+        // ------ Still VVM 1, non-expiring
+        // Insert placeholder for another 2 packs
+        repo.upsert_one(&placeholder()).unwrap();
+
+        // Allocate again
+        let result = service
+            .allocate_outbound_shipment_unallocated_line(&context, placeholder().id.clone())
+            .unwrap();
+
+        // Now uses the vvm1 non-expiring line
+        assert_eq!(
+            result.inserts[0].invoice_line_row.stock_line_id,
+            Some(vvm_1_stock_line_non_expiring().id)
+        );
+        // ------ No VVM last
+        // Insert placeholder for another 2 packs
+        repo.upsert_one(&placeholder()).unwrap();
+
+        // Allocate again
+        let result = service
+            .allocate_outbound_shipment_unallocated_line(&context, placeholder().id.clone())
+            .unwrap();
+
+        // Now uses the no vvm non-expiring line
+        assert_eq!(
+            result.inserts[0].invoice_line_row.stock_line_id,
+            Some(stock_line_non_expiring_no_vvm().id)
+        );
     }
 }
