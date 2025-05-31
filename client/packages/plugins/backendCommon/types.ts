@@ -33,4 +33,5 @@ declare global {
   var use_graphql: (
     _: PluginTypes['use_graphql']['input']
   ) => PluginTypes['use_graphql']['output'];
+  var get_active_stores_on_site: () => PluginTypes['get_active_stores_on_site']['output'];
 }

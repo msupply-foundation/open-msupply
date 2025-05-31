@@ -5,6 +5,8 @@ use crate::{repository_error::RepositoryError, Delete, Upsert};
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 table! {
     store (id) {
@@ -19,7 +21,7 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, TS)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum StoreMode {
@@ -32,7 +34,19 @@ joinable!(store -> name_link (name_link_id));
 allow_tables_to_appear_in_same_query!(store, name_link);
 allow_tables_to_appear_in_same_query!(store, item_link);
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    Debug,
+    PartialEq,
+    Eq,
+    AsChangeset,
+    Default,
+    Serialize,
+    Deserialize,
+    TS,
+)]
 #[diesel(table_name = store)]
 pub struct StoreRow {
     pub id: String,

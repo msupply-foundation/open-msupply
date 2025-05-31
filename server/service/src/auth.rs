@@ -5,7 +5,7 @@ use repository::{
     UserPermissionRepository, UserPermissionRow,
 };
 use util::{
-    constants::{PATIENT_CONTEXT_ID, SYSTEM_USER_ID},
+    constants::{PATIENT_CONTEXT_ID, PLUGIN_USER_ID},
     uuid::uuid,
 };
 
@@ -964,8 +964,9 @@ impl AuthServiceTrait for AuthService {
                 }
 
                 // This is only possible with override_user_id, used for plugins, i.e. for processors
-                // we would use system user, overriding permissions
-                if user_id == SYSTEM_USER_ID {
+                // we would use plugin user, overriding permissions.
+                // TODO permissions to be configured for individual plugins, see carry over issue
+                if user_id == PLUGIN_USER_ID {
                     return Ok(ValidatedUser {
                         user_id,
                         capabilities: Vec::new(),

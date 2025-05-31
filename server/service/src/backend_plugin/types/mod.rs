@@ -5,9 +5,12 @@ pub mod transform_request_requisition_lines;
 
 #[cfg(test)]
 mod generate_typescript_types {
-    use crate::boajs::methods::{
-        use_graphql::UseGraphqlInput,
-        use_repository::{UseRepositoryInput, UseRepositoryOutput},
+    use crate::{
+        boajs::methods::{
+            use_graphql::UseGraphqlInput,
+            use_repository::{UseRepositoryInput, UseRepositoryOutput},
+        },
+        sync::ActiveStoresOnSite,
     };
 
     use super::*;
@@ -38,6 +41,7 @@ mod generate_typescript_types {
         get_plugin_data: Function<PluginDataFilter, Vec<PluginDataRow>>,
         use_repository: Function<UseRepositoryInput, UseRepositoryOutput>,
         use_graphql: Function<UseGraphqlInput, serde_json::Value>,
+        get_active_stores_on_site: Function<(), ActiveStoresOnSite>,
     }
 
     #[test]
