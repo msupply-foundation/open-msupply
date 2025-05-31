@@ -1,0 +1,15 @@
+diff --git a/server/Cargo.toml b/server/Cargo.toml
+index 5ec12b5f29..b936ccdac9 100644
+--- a/server/Cargo.toml
++++ b/server/Cargo.toml
+@@ -9,8 +9,8 @@ actix-web = { version = "4.9.0", default-features = false, features = [
+ ] }
+ actix-multipart = "0.7.2"
+ anymap = "0.12.1"
+-async-graphql = { version = "7.0.13", features = ["dataloader", "chrono"] }
+-async-graphql-actix-web = "7.0.13"
++async-graphql = {git = "https://github.com/andreievg/async-graphql.git", rev = "6c476d50f0f2132860445b5ed5b3c6dd6e8cec92", version = "7.0.16", features = ["dataloader", "chrono"] }
++async-graphql-actix-web = {package = "async-graphql-actix-web", git = "https://github.com/andreievg/async-graphql.git",  version = "7.0.16", rev = "6c476d50f0f2132860445b5ed5b3c6dd6e8cec92" }
+ async-trait = "0.1.85"
+ chrono = { version = "0.4.39", features = ["serde"] }
+ clap = { version = "4.5.7", features = ["derive"] }

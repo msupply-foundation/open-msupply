@@ -1,0 +1,141 @@
+name: Dockerise
+
+on:
+ push:
+  tags: 
+   - 'v*'
+
+jobs:
+  build-client:
+    name: Build Client
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read .nvmrc
+        run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
+        id: nvm
+
+      - name: Use Node.js (.nvmrc)
+        uses: actions/setup-node@v1
+        with:
+          node-version: "${{ steps.nvm.outputs.NVMRC }}"
+
+      - name: Install dependencies
+        run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
+
+      - name: Build client
+        run: NODE_OPTIONS="--max_old_space_size=4096" cd ./client && yarn build
+
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-dist
+          path: client/packages/host/dist
+          retention-days: 1
+
+  build-dev-client:
+    name: Build Dev Client
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Builder image
+        run: docker build docker/dev-client/. -t dev-client-build
+        
+      - name: Build dev client
+        run: docker run --rm -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/client dev-client-build yarn
+      
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-dev-client
+          path: client/
+          retention-days: 1
+
+  build-server:
+    name: Build server
+    needs: build-client
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Load client artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: client-dist
+          path: client/packages/host/dist
+
+      - name: Apply async-dataloader patch
+        run: |
+          git apply docker/async-dataloader.patch
+          
+      - name: Build server
+        run: docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:slim cargo build --release --bin remote_server --bin remote_server_cli
+
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-executables
+          path: | 
+            server/target/release/remote_server
+            server/target/release/remote_server_cli
+          retention-days: 1
+
+  dockerise:
+    name: Dockerise
+    needs: [build-server, build-dev-client]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Load server artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: server-executables
+          path: server/target/release/
+
+      - name: Load dev client artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-dev-client
+          path: client/
+    
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract Version from Tag
+        id: tag
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: base
+          push: true
+          tags: |
+            msupplyfoundation/omsupply:${{ env.VERSION }}
+
+      - name: Build and Push Docker Image Dev
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: dev
+          push: true
+          tags: |
+            msupplyfoundation/omsupply:${{ env.VERSION }}-dev
