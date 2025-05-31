@@ -1,12 +1,12 @@
 use chrono::{NaiveDate, NaiveTime};
-use repository::{MessageRow, MessageRowStatus, MessageRowType, SyncBufferRow};
+use repository::{SyncBufferRow, SyncMessageRow, SyncMessageRowStatus, SyncMessageRowType};
 use serde_json::json;
 use util::inline_init;
 
 use crate::sync::{
     test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
     translations::{
-        message::{LegacyMessageRow, LegacyMessageStatus},
+        sync_message::{LegacySyncMessageRow, LegacySyncMessageStatus},
         PullTranslateResult,
     },
 };
@@ -28,17 +28,18 @@ const MESSAGE_1: (&str, &str) = (
 );
 
 pub fn message_1() -> TestSyncIncomingRecord {
-    let row = MessageRow {
+    let row = SyncMessageRow {
         id: "message1".to_string(),
-        to_store_id: "store_a".to_string(),
+        to_store_id: Some("store_a".to_string()),
         from_store_id: Some("store_b".to_string()),
         body: "{\"key\":\"value\"}".to_string(),
         created_datetime: NaiveDate::from_ymd_opt(2023, 1, 1)
             .unwrap()
             .and_hms_opt(2, 3, 4)
             .unwrap(),
-        status: MessageRowStatus::New,
-        r#type: MessageRowType::Other("SomethingNotInTheEnum".to_string()),
+        status: SyncMessageRowStatus::New,
+        r#type: SyncMessageRowType::Other("SomethingNotInTheEnum".to_string()),
+        error_message: None,
     };
 
     TestSyncIncomingRecord {
@@ -56,15 +57,16 @@ fn message_1_push_record() -> TestSyncOutgoingRecord {
     TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: MESSAGE_1.0.to_string(),
-        push_data: json!(LegacyMessageRow {
+        push_data: json!(LegacySyncMessageRow {
             id: MESSAGE_1.0.to_string(),
-            to_store_id: "store_a".to_string(),
+            to_store_id: Some("store_a".to_string()),
             from_store_id: Some("store_b".to_string()),
             body: json!({"key": "value"}),
             created_date: NaiveDate::from_ymd_opt(2023, 1, 1).unwrap(),
             created_time: NaiveTime::from_hms_opt(2, 3, 4).unwrap(),
-            status: LegacyMessageStatus::New,
-            r#type: MessageRowType::Other("SomethingNotInTheEnum".to_string())
+            status: LegacySyncMessageStatus::New,
+            r#type: SyncMessageRowType::Other("SomethingNotInTheEnum".to_string()),
+            error_message: None,
         }),
     }
 }
