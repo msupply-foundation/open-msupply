@@ -296,10 +296,10 @@ impl<'a> ChangelogRepository<'a> {
                 .limit(limit.into());
 
             // // Debug diesel query
-            println!(
-                "{}",
-                diesel::debug_query::<crate::DBType, _>(&query).to_string()
-            );
+            // println!(
+            //     "{}",
+            //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
+            // );
 
             let result: Vec<ChangelogJoin> = query.load(locked_con.connection())?;
             Ok(result.into_iter().map(ChangelogRow::from_join).collect())

@@ -99,6 +99,8 @@ where
     F: Future<Output = T> + Send + 'static,
     T: Send + 'static,
 {
+    // One day our app will be fully async and we wouldn't need this, we will drive
+    // boajs event loop and allow async methods: https://github.com/boa-dev/boa/blob/ac9eb4bcf90d7749d0ceb2ff01e8562d95104ff2/examples/src/bin/module_fetch_async.rs
     let handle: JoinHandle<Result<T, std::io::Error>> = std::thread::spawn(|| {
         let rt = tokio::runtime::Runtime::new()?;
         rt.block_on(async { Ok(f.await) })
