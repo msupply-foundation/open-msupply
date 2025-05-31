@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use log::info;
 use repository::{
     ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter,
     PluginType, RepositoryError, TransactionError,
@@ -117,7 +116,6 @@ pub(crate) async fn process_records(
                 .get(&ctx.connection)
                 .map_err(Error::DatabaseError)?;
 
-            info!("Filter: {:?}", cursor);
             let logs = changelog_repo
                 .changelogs(cursor, CHANGELOG_BATCH_SIZE, Some(filter.clone()))
                 .map_err(Error::DatabaseError)?;

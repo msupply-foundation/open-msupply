@@ -11,7 +11,7 @@ const HARDWARE_ID_KEY: &str = "hardware_id";
 const CLIENT_VERSION: &str = "unspecified";
 
 pub(crate) fn start_discovery(protocol: Protocol, port: u16, hardware_id: String) {
-    tokio::task::spawn(async move {
+    tokio::spawn(async move {
         let mut text_record = HashMap::<String, String>::new();
         text_record.insert(HARDWARE_ID_KEY.to_string(), hardware_id.to_string());
         text_record.insert(CLIENT_VERSION_KEY.to_string(), CLIENT_VERSION.to_string());
