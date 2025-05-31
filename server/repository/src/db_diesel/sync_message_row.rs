@@ -62,13 +62,16 @@ allow_tables_to_appear_in_same_query!(sync_message, store);
 #[diesel(table_name = sync_message)]
 pub struct SyncMessageRow {
     pub id: String,
+    #[ts(optional)]
     pub to_store_id: Option<String>,
+    #[ts(optional)]
     pub from_store_id: Option<String>,
     pub body: String,
     pub created_datetime: NaiveDateTime,
     pub status: SyncMessageRowStatus,
     #[diesel(column_name = type_, serialize_as = String, deserialize_as = String)]
     pub r#type: SyncMessageRowType,
+    #[ts(optional)]
     pub error_message: Option<String>,
 }
 
