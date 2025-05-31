@@ -121,6 +121,7 @@ pub enum NameRowType {
     Repack,
     #[default]
     Store,
+    // TS complains about serde other, other was a capture for unknown types, it's safe to ignore it in type definition
     #[ts(skip)]
     #[serde(other)]
     Others,
