@@ -4,7 +4,10 @@ use repository::{
     EqualFilter, Pagination, PermissionType, RepositoryError, UserPermissionFilter,
     UserPermissionRepository, UserPermissionRow,
 };
-use util::{constants::PATIENT_CONTEXT_ID, uuid::uuid};
+use util::{
+    constants::{PATIENT_CONTEXT_ID, PLUGIN_USER_ID},
+    uuid::uuid,
+};
 
 use crate::{
     auth_data::AuthData,
@@ -730,7 +733,6 @@ pub fn validate_auth(
 
 pub struct ValidatedUser {
     pub user_id: String,
-    pub claims: OmSupplyClaim,
     /// Contains a list of user permission contexts
     capabilities: Vec<String>,
 }
@@ -854,6 +856,7 @@ pub trait AuthServiceTrait: Send + Sync {
         ctx: &ServiceContext,
         auth_data: &AuthData,
         auth_token: &Option<String>,
+        override_user_id: &Option<String>,
         resource_request: &ResourceAccessRequest,
     ) -> Result<ValidatedUser, AuthError>;
 }
@@ -882,13 +885,20 @@ impl AuthServiceTrait for AuthService {
         context: &ServiceContext,
         auth_data: &AuthData,
         auth_token: &Option<String>,
+        override_user_id: &Option<String>,
         resource_request: &ResourceAccessRequest,
     ) -> Result<ValidatedUser, AuthError> {
-        let validated_auth = validate_auth(auth_data, auth_token)?;
+        let user_id = if let Some(override_user_id) = override_user_id {
+            log::info!("Overriding user id with: {}", override_user_id);
+            override_user_id.clone()
+        } else {
+            validate_auth(auth_data, auth_token)?.user_id
+        };
+
         let connection = &context.connection;
 
         let mut permission_filter =
-            UserPermissionFilter::new().user_id(EqualFilter::equal_to(&validated_auth.user_id));
+            UserPermissionFilter::new().user_id(EqualFilter::equal_to(&user_id));
         if let Some(store_id) = &resource_request.store_id {
             permission_filter = permission_filter.store_id(EqualFilter::equal_to(store_id));
         }
@@ -938,7 +948,7 @@ impl AuthServiceTrait for AuthService {
 
         let mut dynamic_permissions = Vec::new();
         match validate_resource_permissions(
-            &validated_auth.user_id,
+            &user_id,
             &user_permissions,
             resource_request,
             required_permissions,
@@ -948,11 +958,21 @@ impl AuthServiceTrait for AuthService {
             Err(msg) => {
                 if auth_data.debug_no_access_control {
                     return Ok(ValidatedUser {
-                        user_id: validated_auth.user_id,
-                        claims: validated_auth.claims,
+                        user_id: user_id,
                         capabilities: Vec::new(),
                     });
                 }
+
+                // This is only possible with override_user_id, used for plugins, i.e. for processors
+                // we would use plugin user, overriding permissions.
+                // TODO permissions to be configured for individual plugins, see carry over issue
+                if user_id == PLUGIN_USER_ID {
+                    return Ok(ValidatedUser {
+                        user_id,
+                        capabilities: Vec::new(),
+                    });
+                }
+
                 return Err(AuthError::Denied(AuthDeniedKind::InsufficientPermission {
                     msg,
                     required_permissions: required_permissions.clone(),
@@ -961,8 +981,7 @@ impl AuthServiceTrait for AuthService {
         };
 
         Ok(ValidatedUser {
-            user_id: validated_auth.user_id,
-            claims: validated_auth.claims,
+            user_id,
             capabilities: dynamic_permissions,
         })
     }
@@ -1277,6 +1296,7 @@ mod permission_validation_test {
                 &context,
                 &auth_data,
                 &Some(token_pair.token.to_owned()),
+                &None,
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: None,
@@ -1298,6 +1318,7 @@ mod permission_validation_test {
                 &context,
                 &auth_data,
                 &Some(token_pair.token.to_owned()),
+                &None,
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: None,
@@ -1320,6 +1341,7 @@ mod permission_validation_test {
                 &context,
                 &auth_data,
                 &Some(token_pair.token.to_owned()),
+                &None,
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: Some("store_a".to_string()),
@@ -1342,6 +1364,7 @@ mod permission_validation_test {
                 &context,
                 &auth_data,
                 &Some(token_pair.token.to_owned()),
+                &None,
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: Some("store_b".to_string()),
@@ -1355,6 +1378,7 @@ mod permission_validation_test {
                 &context,
                 &auth_data,
                 &Some(token_pair.token.to_owned()),
+                &None,
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: Some("store_a".to_string()),
@@ -1450,6 +1474,7 @@ mod permission_validation_test {
                 &context,
                 &auth_data,
                 &Some(token),
+                &None,
                 &ResourceAccessRequest {
                     resource: Resource::MutateRequisition,
                     store_id: Some(store().id)
@@ -1471,6 +1496,7 @@ mod permission_validation_test {
                 &context,
                 &auth_data,
                 &Some(token),
+                &None,
                 &ResourceAccessRequest {
                     resource: Resource::MutateRequisition,
                     store_id: Some(store().id)
