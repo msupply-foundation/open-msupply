@@ -1,6 +1,0 @@
-[submodule "client/packages/plugins/stPlugins"]
-	path = client/packages/plugins/stPlugins
-	url = https://github.com/msupply-foundation/sao-tome-plugins.git
-[submodule "client/packages/plugins/myPluginBundle"]
-	path = client/packages/plugins/myPluginBundle
-	url = https://github.com/msupply-foundation/open-msupply-plugins.git
