@@ -126,7 +126,7 @@ pub enum ChangelogTableName {
     FormSchema,
     PluginData,
     Preference,
-    Message,
+    SyncMessage,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -204,7 +204,7 @@ impl ChangelogTableName {
             ChangelogTableName::FormSchema => ChangeLogSyncStyle::Central,
             ChangelogTableName::PluginData => ChangeLogSyncStyle::RemoteAndCentral,
             ChangelogTableName::Preference => ChangeLogSyncStyle::Central,
-            ChangelogTableName::Message => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::SyncMessage => ChangeLogSyncStyle::Remote,
         }
     }
 }
@@ -296,10 +296,10 @@ impl<'a> ChangelogRepository<'a> {
                 .limit(limit.into());
 
             // // Debug diesel query
-            // println!(
-            //     "{}",
-            //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-            // );
+            println!(
+                "{}",
+                diesel::debug_query::<crate::DBType, _>(&query).to_string()
+            );
 
             let result: Vec<ChangelogJoin> = query.load(locked_con.connection())?;
             Ok(result.into_iter().map(ChangelogRow::from_join).collect())

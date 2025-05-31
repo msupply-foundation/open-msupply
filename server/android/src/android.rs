@@ -76,10 +76,7 @@ pub mod android {
         // run server in background thread
         let thread = thread::spawn(move || {
             // This code is from expanding macro in main.rs
-            tokio::runtime::Builder::new_multi_thread()
-                .enable_all()
-                .build()
-                .expect("Failed building the Runtime")
+            actix_web::rt::System::new()
                 .block_on(start_server(settings, off_switch_receiver))
                 .unwrap();
         });
