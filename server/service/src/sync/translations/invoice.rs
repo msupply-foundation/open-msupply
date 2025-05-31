@@ -671,19 +671,22 @@ fn map_legacy(
             }
             _ => {}
         },
-        InvoiceType::InboundShipment | InvoiceType::CustomerReturn => match data.status {
-            LegacyTransactStatus::Nw if is_transfer => {
-                mapping.shipped_datetime = Some(mapping.created_datetime);
+        InvoiceType::InboundShipment | InvoiceType::CustomerReturn => {
+            mapping.delivered_datetime = confirm_datetime;
+            match data.status {
+                LegacyTransactStatus::Nw if is_transfer => {
+                    mapping.shipped_datetime = Some(mapping.created_datetime);
+                }
+                LegacyTransactStatus::Cn => {
+                    mapping.delivered_datetime = confirm_datetime;
+                }
+                LegacyTransactStatus::Fn => {
+                    mapping.delivered_datetime = confirm_datetime;
+                    mapping.verified_datetime = confirm_datetime;
+                }
+                _ => {}
             }
-            LegacyTransactStatus::Cn => {
-                mapping.delivered_datetime = confirm_datetime;
-            }
-            LegacyTransactStatus::Fn => {
-                mapping.delivered_datetime = confirm_datetime;
-                mapping.verified_datetime = confirm_datetime;
-            }
-            _ => {}
-        },
+        }
         InvoiceType::Prescription => match data.status {
             LegacyTransactStatus::Cn => {
                 mapping.picked_datetime = confirm_datetime;
