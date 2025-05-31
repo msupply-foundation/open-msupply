@@ -30,10 +30,13 @@ use repository::{
     Store, StoreFilter, StoreRepository,
 };
 
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use ts_rs::TS;
 
 use self::api::SiteInfoV5;
 
+#[derive(Serialize, Deserialize, TS, Debug)]
 pub(crate) struct ActiveStoresOnSite {
     stores: Vec<Store>,
 }

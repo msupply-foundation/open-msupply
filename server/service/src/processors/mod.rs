@@ -22,6 +22,7 @@ mod assign_requisition_number;
 mod contact_form;
 mod general_processor;
 mod load_plugin;
+mod plugin_processor;
 pub use general_processor::ProcessorType;
 #[cfg(test)]
 mod test_helpers;
@@ -143,7 +144,7 @@ impl ProcessorsTrigger {
 
     pub(crate) fn trigger_processor(&self, r#type: ProcessorType) {
         if let Err(error) = self.general_processor.try_send(r#type.clone()) {
-            let description = r#type.get_processor().get_description();
+            let description = r#type.get_description();
             log::error!("Problem triggering {description} processor {:#?}", error)
         }
     }

@@ -12,8 +12,10 @@ use crate::{
 
 use diesel::dsl::InnerJoin;
 use diesel::{dsl::IntoBoxed, prelude::*};
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, TS, PartialEq, Clone)]
 pub struct Store {
     pub store_row: StoreRow,
     pub name_row: NameRow,

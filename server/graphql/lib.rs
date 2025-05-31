@@ -54,6 +54,7 @@ use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
 use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
+use service::boajs::utils::{ExecuteGraphQlError, ExecuteGraphql};
 use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
@@ -257,7 +258,7 @@ impl Mutations {
 /// this is done to avoid validations check in operational mode where
 /// data for validation is not available, this struct helps achieve this
 pub struct GraphqlSchema {
-    operational: OperationalSchema,
+    pub(crate) operational: OperationalSchema,
     initialisation: InitialisationSchema,
     /// Set on startup based on InitialisationStatus and then updated via SiteIsInitialisedCallback after initialisation
     is_operational: RwLock<bool>,
@@ -422,4 +423,33 @@ pub fn attach_discovery_graphql_schema(
 
 async fn discovery_index(schema: Data<DiscoverySchema>, req: GraphQLRequest) -> GraphQLResponse {
     schema.execute(req.into_inner()).await.into()
+}
+
+pub struct PluginExecuteGraphql(pub Data<GraphqlSchema>);
+
+#[async_trait::async_trait]
+impl ExecuteGraphql for PluginExecuteGraphql {
+    async fn execute_graphql(
+        &self,
+        override_user_id: &str,
+        query: &str,
+        variables: serde_json::Value,
+    ) -> Result<serde_json::Value, ExecuteGraphQlError> {
+        let request = async_graphql::Request::new(query)
+            .variables(serde_json::from_value(variables)?)
+            .data(RequestUserData {
+                override_user_id: Some(override_user_id.to_string()),
+                auth_token: None,
+                refresh_token: None,
+            });
+        let response = self.0.operational.execute(request).await;
+        // Response is either success with data field populated or error with errors field populated
+        if response.is_err() {
+            return Err(ExecuteGraphQlError::Graphql(serde_json::to_string(
+                &response.errors,
+            )?));
+        }
+
+        Ok(serde_json::to_value(response.data)?)
+    }
 }

@@ -8,6 +8,8 @@ use boa_engine::{
 use serde::{de::DeserializeOwned, Serialize};
 use thiserror::Error;
 
+use crate::boajs::utils::NullError;
+
 use super::methods;
 
 #[derive(Error, Debug)]
@@ -50,9 +52,9 @@ where
 
     // Wait for module to load
     let promise = module.load_link_evaluate(context);
-    context.run_jobs();
+    context.run_jobs()?;
     match promise.state() {
-        PromiseState::Fulfilled(JsValue::Undefined) => {}
+        PromiseState::Fulfilled(v) if v == JsValue::undefined() => {}
         _ => return Err(Error::LoadingModule),
     }
 
@@ -62,6 +64,9 @@ where
     methods::sql_type::bind_method(context)?;
     methods::get_plugin_data::bind_method(context)?;
     methods::get_store_preferences::bind_method(context)?;
+    methods::use_repository::bind_method(context)?;
+    methods::use_graphql::bind_method(context)?;
+    methods::get_active_stores_on_site::bind_method(context)?;
 
     let callable = find_callable_in_exports(context, module, export_location)?;
 
@@ -69,7 +74,8 @@ where
     let js_input = JsValue::from_json(&input, &mut context)?;
 
     let js_output = callable.call(&JsValue::undefined(), &[js_input], context)?;
-    let output = JsValue::to_json(&js_output, &mut context)?;
+    let option_output = JsValue::to_json(&js_output, &mut context)?;
+    let output = option_output.ok_or(JsError::from(NullError))?;
 
     Ok(serde_json::from_value(output)?)
 }
