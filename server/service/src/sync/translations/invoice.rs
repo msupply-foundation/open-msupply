@@ -768,7 +768,7 @@ fn invoice_status(
         // inbound
         InvoiceType::InboundShipment | InvoiceType::CustomerReturn => match data.status {
             LegacyTransactStatus::Sg => InvoiceStatus::New,
-            // Transferred invoices, when migrated from mSupply should be converted to shipped status
+            // Transferred new invoices, when migrated from mSupply should be converted to shipped status
             LegacyTransactStatus::Nw if is_transfer => InvoiceStatus::Shipped,
             LegacyTransactStatus::Nw if !is_transfer => InvoiceStatus::New,
             LegacyTransactStatus::Cn => InvoiceStatus::Delivered,
