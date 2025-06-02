@@ -6,7 +6,8 @@ mod test {
         mock::{
             mock_item_a, mock_item_b, mock_name_a, mock_outbound_shipment_a_invoice_lines,
             mock_store_a, mock_store_b, mock_vaccine_item_a, mock_vaccine_item_a_variant_1,
-            mock_vvm_status_a, mock_vvm_status_b, MockData, MockDataInserts,
+            mock_vvm_status_a, mock_vvm_status_b, mock_vvm_status_c_level3_unusable, MockData,
+            MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceType,
@@ -789,6 +790,17 @@ mod test {
                 ..Default::default()
             }
         }
+        fn vvm_3_unusable_stock_line() -> StockLineRow {
+            StockLineRow {
+                id: "vvm_3_unusable_stock_line".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_vaccine_item_a().id,
+                pack_size: 1.0,
+                available_number_of_packs: 2.0,
+                vvm_status_id: Some(mock_vvm_status_c_level3_unusable().id), // Level 3
+                ..Default::default()
+            }
+        }
         fn vvm_2_stock_line() -> StockLineRow {
             StockLineRow {
                 id: "vvm_2_stock_line".to_string(),
@@ -830,7 +842,7 @@ mod test {
         }
         fn stock_line_non_expiring_no_vvm() -> StockLineRow {
             StockLineRow {
-                id: "vvm_1_stock_line_non_expiring".to_string(),
+                id: "stock_line_non_expiring_no_vvm".to_string(),
                 store_id: mock_store_a().id,
                 item_link_id: mock_vaccine_item_a().id,
                 pack_size: 1.0,
@@ -851,16 +863,18 @@ mod test {
                 .names()
                 .units()
                 .currencies(),
-            inline_init(|r: &mut MockData| {
-                r.invoices = vec![invoice()];
-                r.invoice_lines = vec![placeholder()];
-                r.stock_lines = vec![
+            MockData {
+                invoices: vec![invoice()],
+                invoice_lines: vec![placeholder()],
+                stock_lines: vec![
                     stock_line_non_expiring_no_vvm(),
                     vvm_1_stock_line_non_expiring(),
                     vvm_1_stock_line_expiring(),
                     vvm_2_stock_line(),
-                ];
-            }),
+                    vvm_3_unusable_stock_line(),
+                ],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -891,6 +905,13 @@ mod test {
         assert_eq!(
             result.inserts[0].invoice_line_row.stock_line_id,
             Some(vvm_2_stock_line().id)
+        );
+        // We have VVM3 (unusable) stock - check it is not used
+        assert_eq!(
+            result.skipped_unusable_vvm_status_lines[0]
+                .stock_line_row
+                .id,
+            vvm_3_unusable_stock_line().id
         );
 
         let repo = InvoiceLineRowRepository::new(&connection);

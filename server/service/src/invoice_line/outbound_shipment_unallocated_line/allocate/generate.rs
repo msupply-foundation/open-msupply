@@ -30,6 +30,7 @@ pub struct GenerateOutput {
     pub delete_unallocated_line: Option<DeleteOutboundShipmentUnallocatedLine>,
     pub skipped_expired_stock_lines: Vec<StockLine>,
     pub skipped_on_hold_stock_lines: Vec<StockLine>,
+    pub skipped_unusable_vvm_status_lines: Vec<StockLine>,
     pub issued_expiring_soon_stock_lines: Vec<StockLine>,
 }
 
@@ -78,6 +79,12 @@ pub fn generate(
                 }
                 StockLineAlert::Expired => {
                     result.skipped_expired_stock_lines.push(stock_line.clone());
+                    false
+                }
+                StockLineAlert::VVMStatusUnusable => {
+                    result
+                        .skipped_unusable_vvm_status_lines
+                        .push(stock_line.clone());
                     false
                 }
                 StockLineAlert::ExpiringSoon => {
@@ -148,30 +155,35 @@ enum StockLineAlert {
     OnHold,
     Expired,
     ExpiringSoon,
+    VVMStatusUnusable,
 }
 
 fn get_stock_line_eligibility(stock_line: &StockLine) -> Option<StockLineAlert> {
     use StockLineAlert::*;
     let stock_line_row = &stock_line.stock_line_row;
-    // Expired
     if stock_line_row.on_hold {
         return Some(OnHold);
     }
 
-    let expiry_date = match &stock_line_row.expiry_date {
-        Some(expiry_date) => expiry_date,
-        None => return None,
+    // Expired
+    if let Some(expiry_date) = &stock_line_row.expiry_date {
+        if let Ordering::Less = expiry_date.cmp(&date_now()) {
+            return Some(Expired);
+        }
+
+        if let Ordering::Less =
+            expiry_date.cmp(&date_now_with_offset(stock_line_expiring_soon_offset()))
+        {
+            return Some(ExpiringSoon);
+        }
     };
 
-    if let Ordering::Less = expiry_date.cmp(&date_now()) {
-        return Some(Expired);
-    }
-
-    if let Ordering::Less =
-        expiry_date.cmp(&date_now_with_offset(stock_line_expiring_soon_offset()))
-    {
-        return Some(ExpiringSoon);
-    }
+    // VVM Unusable
+    if let Some(vvm_status) = &stock_line.vvm_status_row {
+        if vvm_status.unusable {
+            return Some(VVMStatusUnusable);
+        }
+    };
 
     None
 }
