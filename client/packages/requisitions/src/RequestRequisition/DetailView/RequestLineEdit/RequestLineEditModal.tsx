@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   DialogButton,
   ModalMode,
-  useBufferState,
   useDialog,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
@@ -43,12 +42,12 @@ export const RequestLineEditModal = ({
     [requisition?.lines.nodes]
   );
 
-  const [currentItem, setCurrentItem] = useBufferState(
+  const [currentItem, setCurrentItem] = useState(
     lines?.find(line => line.item.id === itemId)?.item
   );
-  const [previousItemLineId, setPreviousItemLineId] = useBufferState<
-    string | null
-  >(null);
+  const [previousItemLineId, setPreviousItemLineId] = useState<string | null>(
+    null
+  );
   const [representation, setRepresentation] = useState<RepresentationValue>(
     Representation.UNITS
   );
