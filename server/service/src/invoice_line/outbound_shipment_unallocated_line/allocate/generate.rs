@@ -17,7 +17,7 @@ use crate::{
         },
         stock_out_line::{InsertStockOutLine, StockOutType, UpdateStockOutLine},
     },
-    preference::{ManageVaccinesInDoses, Preference},
+    preference::{ManageVaccinesInDoses, Preference, SortByVvmStatusThenExpiry},
 };
 
 use super::AllocateOutboundShipmentUnallocatedLineError;
@@ -45,6 +45,11 @@ pub fn generate(
         .map_err(|e| {
             AllocateOutboundShipmentUnallocatedLineError::PreferenceError(e.to_string())
         })?;
+    let sort_by_vvm = SortByVvmStatusThenExpiry
+        .load(connection, Some(store_id.to_string()))
+        .map_err(|e| {
+            AllocateOutboundShipmentUnallocatedLineError::PreferenceError(e.to_string())
+        })?;
 
     let should_allocate_in_doses = vaccines_in_doses && unallocated_line.item_row.is_vaccine;
 
@@ -58,10 +63,11 @@ pub fn generate(
         });
         return Ok(result);
     }
-    // TODO: sort by vvm status, if applicable, if pref is on
-    // Asc, by expiry date, nulls last
+
+    // Asc, by expiry date/vvm status (based on pref), nulls last
     let sorted_available_stock_lines =
-        get_sorted_available_stock_lines(connection, store_id, &unallocated_line)?;
+        get_sorted_available_stock_lines(connection, store_id, &unallocated_line, sort_by_vvm)?;
+
     // Use FEFO to allocate
     for stock_line in sorted_available_stock_lines {
         let can_use = get_stock_line_eligibility(&stock_line)
@@ -242,6 +248,7 @@ fn get_sorted_available_stock_lines(
     connection: &StorageConnection,
     store_id: &str,
     unallocated_line: &InvoiceLine,
+    sort_by_vvm: bool,
 ) -> Result<Vec<StockLine>, RepositoryError> {
     let filter = StockLineFilter::new()
         .item_id(EqualFilter::equal_to(&unallocated_line.item_row.id))
@@ -250,7 +257,10 @@ fn get_sorted_available_stock_lines(
 
     // Nulls should be last (as per test stock_line_repository_sort)
     let sort = StockLineSort {
-        key: StockLineSortField::ExpiryDate,
+        key: match sort_by_vvm {
+            true => StockLineSortField::VvmStatusThenExpiry,
+            false => StockLineSortField::ExpiryDate,
+        },
         desc: Some(false),
     };
 
