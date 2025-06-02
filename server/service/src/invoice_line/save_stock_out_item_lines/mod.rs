@@ -37,6 +37,7 @@ pub struct SaveStockOutInvoiceLine {
     pub id: String,
     pub number_of_packs: f64,
     pub stock_line_id: String,
+    pub campaign_id: Option<String>,
 }
 
 #[derive(PartialEq, Debug)]

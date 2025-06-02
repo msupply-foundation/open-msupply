@@ -77,6 +77,7 @@ pub fn generate(
                  id,
                  number_of_packs,
                  stock_line_id,
+                 campaign_id,
              }| InsertStockOutLine {
                 id,
                 invoice_id: invoice_id.clone(),
@@ -94,6 +95,7 @@ pub fn generate(
                 location_id: None,
                 cost_price_per_pack: None,
                 sell_price_per_pack: None,
+                campaign_id,
             },
         )
         .collect();
@@ -107,6 +109,7 @@ pub fn generate(
                  id,
                  number_of_packs,
                  stock_line_id,
+                 campaign_id,
              }| UpdateStockOutLine {
                 id,
                 stock_line_id: Some(stock_line_id),

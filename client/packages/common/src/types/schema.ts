@@ -5858,6 +5858,7 @@ export type OutboundInvoiceCounts = {
 };
 
 export type OutboundShipmentLineInput = {
+  campaignId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
