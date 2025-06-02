@@ -293,6 +293,11 @@ mod graphql {
                             id
                         }
                     }
+                    skippedUnusableVVMStatusLines {
+                        nodes {
+                            id
+                        }
+                    }
                     issuedExpiringSoonStockLines {
                         nodes {
                             id
