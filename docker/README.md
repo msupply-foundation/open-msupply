@@ -18,7 +18,7 @@ And if building `--target dev`, a client.tar.gz with all dev dependencies alread
 
 `entry.sh` calls cli before starting server or allows use of cli as an argument.
 
-Docker hub credentials need to be setup as secrets for `DOCKER_USERNAME' and `DOCKER_PASSWORD` (from docker hub)
+Docker hub credentials need to be setup as secrets for `DOCKER_USERNAME' and `DOCKER_TOKEN` (from docker hub)
 
 ## Build steps
 
