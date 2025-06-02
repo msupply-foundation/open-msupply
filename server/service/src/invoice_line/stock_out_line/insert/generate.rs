@@ -68,6 +68,7 @@ fn generate_batch_update(
         stock_line_id: _,
         total_before_tax: _,
         tax_percentage: _,
+        campaign_id: _,
     }: InsertStockOutLine,
     batch: StockLineRow,
     adjust_total_number_of_packs: bool,
@@ -110,6 +111,7 @@ fn generate_line(
         expiry_date: _,
         cost_price_per_pack: _,
         sell_price_per_pack: _,
+        campaign_id,
     }: InsertStockOutLine,
     ItemRow {
         id: item_id,
@@ -178,7 +180,7 @@ fn generate_line(
         vvm_status_id,
         linked_invoice_id: None,
         reason_option_id: None,
-        campaign_id: None,
+        campaign_id,
     })
 }
 

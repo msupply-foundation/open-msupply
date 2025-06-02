@@ -115,6 +115,8 @@ impl<'a> InvoiceLineRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<i64, RepositoryError> {
+        print!("{:?}", row);
+
         diesel::insert_into(invoice_line)
             .values(row)
             .on_conflict(id)
