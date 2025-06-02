@@ -84,7 +84,7 @@ mod stocktake_line_test {
             mock_stock_line_b, mock_stocktake_line_a, mock_stocktake_line_finalised, mock_store_a,
             MockData, MockDataInserts,
         },
-        test_db::{setup_all, setup_all_with_data},
+        test_db::setup_all_with_data,
         EqualFilter, InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType, ReasonOptionRow,
         ReasonOptionRowRepository, ReasonOptionType, StockLineFilter, StockLineRepository,
         StockLineRowRepository, StocktakeLineRow,
@@ -428,21 +428,6 @@ mod stocktake_line_test {
                 r.comment = Some("Some comment".to_string());
             })
         );
-    }
-
-    #[actix_rt::test]
-    async fn update_stocktake_line_with_donor_id() {
-        let (_, _, connection_manager, _) = setup_all(
-            "insert_stocktake_line_with_donor_id",
-            MockDataInserts::all(),
-        )
-        .await;
-
-        let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider
-            .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let service = service_provider.stocktake_line_service;
 
         // success with donor_id update
         let stocktake_line_a = mock_stocktake_line_a();

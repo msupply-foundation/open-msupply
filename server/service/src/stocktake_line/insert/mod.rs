@@ -307,9 +307,33 @@ mod stocktake_line_test {
 
     #[actix_rt::test]
     async fn insert_stocktake_line_with_donor_id() {
-        let (_, _, connection_manager, _) = setup_all(
+        fn mock_stock_line_for_donor_test() -> StockLineRow {
+            StockLineRow {
+                id: String::from("mock_stock_line_for_donor_test"),
+                item_link_id: String::from("item_a"),
+                location_id: None,
+                store_id: String::from("store_a"),
+                batch: Some(String::from("item_a_batch_b")),
+                available_number_of_packs: 20.0,
+                pack_size: 1.0,
+                cost_price_per_pack: 0.0,
+                sell_price_per_pack: 0.0,
+                total_number_of_packs: 30.0,
+                expiry_date: None,
+                on_hold: false,
+                note: None,
+                supplier_link_id: Some(String::from("name_store_b")),
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
             "insert_stocktake_line_with_donor_id",
             MockDataInserts::all(),
+            MockData {
+                stock_lines: vec![mock_stock_line_for_donor_test()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -322,7 +346,7 @@ mod stocktake_line_test {
         // success with donor_id
         let stocktake_a = mock_stocktake_a();
         let donor_id = mock_donor_a().id;
-        let stock_line = mock_new_stock_line_for_stocktake_a();
+        let stock_line = mock_stock_line_for_donor_test();
         service
             .insert_stocktake_line(
                 &context,
