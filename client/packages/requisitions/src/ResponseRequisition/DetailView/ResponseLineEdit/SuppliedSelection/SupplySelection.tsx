@@ -26,7 +26,6 @@ interface SupplySelectionProps {
   representation: RepresentationValue;
   setRepresentation: (rep: RepresentationValue) => void;
   unitName: string;
-  showExtraFields?: boolean;
 }
 
 export const SupplySelection = ({
@@ -38,11 +37,9 @@ export const SupplySelection = ({
   representation,
   setRepresentation,
   unitName,
-  showExtraFields = false,
 }: SupplySelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
-  const width = showExtraFields ? 170 : 250;
 
   const currentValue = useMemo(
     (): number =>
@@ -89,70 +86,72 @@ export const SupplySelection = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        p: 1,
-        mb: 1,
+        pb: 1,
       }}
     >
-      <Typography variant="body1" fontWeight="bold" p={0.5}>
+      <Typography variant="body1" fontWeight="bold" pt={0.5} pb={0.5}>
         {t('label.supply')}:
       </Typography>
-      <Box gap={1} display="flex" flexDirection="row">
-        <NumericTextInput
-          autoFocus
-          width={width}
-          min={0}
-          value={value}
-          disabled={disabled}
-          onChange={handleValueChange}
-          slotProps={{
-            input: {
-              sx: {
-                background: theme =>
+      <Box display="flex" flexDirection="row" gap={1}>
+        <Box display="flex" flexDirection="column" flex={1}>
+          <NumericTextInput
+            autoFocus
+            fullWidth
+            min={0}
+            value={value}
+            disabled={disabled}
+            onChange={handleValueChange}
+            slotProps={{
+              input: {
+                sx: {
+                  boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
+                  background: theme =>
+                    disabled
+                      ? theme.palette.background.toolbar
+                      : theme.palette.background.white,
+                },
+              },
+            }}
+            sx={{
+              '& .MuiInputBase-input': {
+                p: '3px 4px',
+                backgroundColor: theme =>
                   disabled
                     ? theme.palette.background.toolbar
                     : theme.palette.background.white,
               },
-            },
-          }}
-          sx={{
-            boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
-            '& .MuiInputBase-input': {
-              p: '3px 4px',
-              backgroundColor: theme =>
-                disabled
-                  ? theme.palette.background.toolbar
-                  : theme.palette.background.white,
-            },
-          }}
-        />
-        <Select
-          fullWidth
-          clearable={false}
-          options={options}
-          value={representation}
-          onChange={e => {
-            setRepresentation(
-              (e.target.value as RepresentationValue) ?? Representation.UNITS
-            );
-          }}
-          sx={{
-            boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
-            '& .MuiInputBase-input': {
-              p: '3px 4px',
-              backgroundColor: theme => theme.palette.background.white,
-            },
-          }}
-          slotProps={{
-            input: {
-              disableUnderline: true,
-              sx: {
+            }}
+          />
+        </Box>
+        <Box flex={1}>
+          <Select
+            fullWidth
+            clearable={false}
+            options={options}
+            value={representation}
+            onChange={e => {
+              setRepresentation(
+                (e.target.value as RepresentationValue) ?? Representation.UNITS
+              );
+            }}
+            sx={{
+              boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
+              '& .MuiInputBase-input': {
+                p: '3px 4px',
                 backgroundColor: theme => theme.palette.background.white,
-                borderRadius: 2,
-                p: 0.5,
               },
-            },
-          }}
-        />
+            }}
+            slotProps={{
+              input: {
+                disableUnderline: true,
+                sx: {
+                  backgroundColor: theme => theme.palette.background.white,
+                  borderRadius: 2,
+                },
+              },
+            }}
+          />
+        </Box>
       </Box>
     </Box>
   );

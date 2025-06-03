@@ -28,6 +28,7 @@ export interface NumInputRowProps {
   unitName: string;
   endAdornmentOverride?: string;
   sx?: SxProps<Theme>;
+  showExtraFields?: boolean;
 }
 
 export const NumInputRow = ({
@@ -40,6 +41,7 @@ export const NumInputRow = ({
   unitName,
   endAdornmentOverride,
   sx,
+  showExtraFields = false,
 }: NumInputRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -70,10 +72,18 @@ export const NumInputRow = ({
   };
 
   return (
-    <Box sx={{ marginBottom: 1, px: 1, flex: 1, ...sx }}>
+    <Box
+      sx={{
+        marginBottom: 1,
+        px: 1,
+        flex: 1,
+        ...sx,
+      }}
+    >
       <InputWithLabelRow
         Input={
           <NumericTextInput
+            fullWidth
             sx={{
               '& .MuiInputBase-input': {
                 backgroundColor: theme =>
@@ -94,7 +104,6 @@ export const NumInputRow = ({
               },
             }}
             min={0}
-            width={170}
             value={roundedValue}
             onChange={handleChange}
             disabled={disabled}
@@ -103,8 +112,22 @@ export const NumInputRow = ({
           />
         }
         label={label}
+        labelProps={{
+          sx: {
+            width: {
+              xs: '100%',
+              md: showExtraFields ? '400px' : '600px',
+              lg: showExtraFields ? '370px' : '550px',
+            },
+          },
+        }}
         sx={{
           justifyContent: 'space-between',
+          flexDirection: {
+            xs: 'column',
+            md: 'row',
+          },
+          alignItems: { xs: 'flex-start', md: 'center' },
         }}
       />
     </Box>
@@ -126,6 +149,7 @@ export const createNumericInput =
       representation: RepresentationValue;
       unitName: string;
       disabled: boolean;
+      showExtraFields?: boolean;
     }
   ) =>
   (
@@ -151,6 +175,7 @@ export const createNumericInput =
         unitName={commonProps.unitName}
         endAdornmentOverride={endAdornmentOverride}
         sx={sx}
+        showExtraFields={commonProps.showExtraFields}
       />
     );
   };

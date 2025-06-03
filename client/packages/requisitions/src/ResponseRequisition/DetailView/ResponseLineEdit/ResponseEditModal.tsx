@@ -182,7 +182,6 @@ export const ResponseLineEditModal = ({
               display: 'flex',
               justifyContent: 'center',
               background: theme => theme.palette.background.toolbar,
-              pt: 1,
             }}
           />
         )}

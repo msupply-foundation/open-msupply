@@ -149,7 +149,7 @@ export const RequestedSelection = ({
               variant="caption"
               color="text.secondary"
               pt={0.3}
-              pr={1}
+              pr={1.5}
               sx={{ textAlign: 'right' }}
             >
               {valueInDoses} {t('label.doses').toLowerCase()}

@@ -80,6 +80,7 @@ export const ResponseLineEdit = ({
     representation,
     unitName,
     disabled: isDisabled,
+    showExtraFields,
   });
 
   const getLeftPanelContent = () => {
@@ -166,7 +167,7 @@ export const ResponseLineEdit = ({
               variant="body1"
               fontWeight="bold"
               sx={{ pl: 1, pb: 0.5 }}
-              width={370}
+              width={'calc(100% - 10px)'}
             >
               {t('label.reason')}:
               <ReasonOptionsSearchInput
@@ -218,6 +219,7 @@ export const ResponseLineEdit = ({
           sx={{
             background: theme => theme.palette.background.group,
             borderRadius: 2,
+            p: 1,
             pb: 0.5,
           }}
         >
@@ -225,8 +227,8 @@ export const ResponseLineEdit = ({
             numericInput('label.approved', draft?.approvedQuantity, {
               disabledOverride: true,
               sx: {
-                pt: 1,
-                pl: 0,
+                px: 0,
+                mb: 0,
               },
             })}
           <SupplySelection
@@ -238,17 +240,22 @@ export const ResponseLineEdit = ({
             representation={representation}
             setRepresentation={setRepresentation}
             unitName={unitName}
-            showExtraFields={showExtraFields}
           />
           {numericInput(
             'label.remaining-to-supply',
             draft?.remainingQuantityToSupply,
             {
               disabledOverride: true,
+              sx: {
+                px: 0,
+              },
             }
           )}
           {numericInput('label.already-issued', draft?.alreadyIssued, {
             disabledOverride: true,
+            sx: {
+              px: 0,
+            },
           })}
         </Box>
         {!!requisition.linkedRequisition || showExtraFields ? (
@@ -268,7 +275,7 @@ export const ResponseLineEdit = ({
             })}
           </>
         ) : null}
-        <Typography variant="body1" fontWeight="bold" p={0.5}>
+        <Typography variant="body1" fontWeight="bold" p={1}>
           {t('heading.comment')}:
         </Typography>
         <BufferedTextArea
