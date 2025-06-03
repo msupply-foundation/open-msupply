@@ -1013,18 +1013,6 @@ export type CampaignNode = {
   startDate?: Maybe<Scalars['NaiveDate']['output']>;
 };
 
-export type CampaignQueries = {
-  __typename: 'CampaignQueries';
-  campaigns: CampaignsResponse;
-};
-
-export type CampaignQueriesCampaignsArgs = {
-  filter?: InputMaybe<CampaignFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<CampaignSortInput>>;
-  storeId: Scalars['String']['input'];
-};
-
 export enum CampaignSortFieldInput {
   Name = 'name',
 }
@@ -1237,7 +1225,6 @@ export type CentralServerMutationNode = {
 
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
-  campaign: CampaignQueries;
   plugin: CentralPluginQueries;
 };
 
@@ -6514,6 +6501,7 @@ export type Queries = {
    */
   authToken: AuthTokenResponse;
   barcodeByGtin: BarcodeResponse;
+  campaigns: CampaignsResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
   clinicians: CliniciansResponse;
@@ -6767,6 +6755,13 @@ export type QueriesAuthTokenArgs = {
 
 export type QueriesBarcodeByGtinArgs = {
   gtin: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesCampaignsArgs = {
+  filter?: InputMaybe<CampaignFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<CampaignSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
