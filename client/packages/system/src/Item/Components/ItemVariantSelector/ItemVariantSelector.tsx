@@ -17,6 +17,7 @@ interface ItemVariantSelectorProps {
   isLoading?: boolean;
   onVariantSelected: (itemVariantId: string | null) => void;
   displayInDoses: boolean;
+  disabled?: boolean;
 }
 
 export const ItemVariantSelector = ({
@@ -24,6 +25,7 @@ export const ItemVariantSelector = ({
   selectedId,
   variants,
   isLoading = false,
+  disabled = false,
   onVariantSelected,
   displayInDoses,
 }: ItemVariantSelectorProps & PropsWithChildren) => {
@@ -45,6 +47,7 @@ export const ItemVariantSelector = ({
               id="item-variant-selector"
               columns={columns}
               data={variants ?? []}
+              isDisabled={disabled}
               isLoading={isLoading}
               noDataElement={
                 <NothingHere body={t('messages.no-item-variants')} />

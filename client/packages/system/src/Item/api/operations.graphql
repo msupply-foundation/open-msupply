@@ -45,16 +45,7 @@ fragment StockLine on StockLineNode {
 
   itemVariant {
     id
-    name
-    itemId
     dosesPerUnit
-    vvmType
-    manufacturer(storeId: $storeId) {
-      name
-    }
-    packagingVariants {
-      id
-    }
   }
 
   donor(storeId: $storeId) {
