@@ -35,224 +35,224 @@ pub async fn get_loaders(
         ItemLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let store_by_id_loader = DataLoader::new(
         StoreByIdLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let invoice_by_id_loader = DataLoader::new(
         InvoiceByIdLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let invoice_by_requisition_id_loader = DataLoader::new(
         InvoiceByRequisitionIdLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let invoice_line_by_invoice_id_loader = DataLoader::new(
         InvoiceLineByInvoiceIdLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let invoice_line_for_requisition_line = DataLoader::new(
         InvoiceLineForRequisitionLine {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let invoice_line_stats_loader = DataLoader::new(
         InvoiceStatsLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let stock_line_by_item_id_and_store_id_loader = DataLoader::new(
         StockLineByItemAndStoreIdLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let stock_line_by_location_id_loader = DataLoader::new(
         StockLineByLocationIdLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let stock_line_by_id_loader = DataLoader::new(
         StockLineByIdLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let user_account_loader = DataLoader::new(
         UserLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let name_by_id_loader = DataLoader::new(
         NameByIdLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let location_by_id_loader = DataLoader::new(
         LocationByIdLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let stocktake_line_loader = DataLoader::new(
         StocktakeLineByStocktakeIdLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let requisitions_by_id_loader = DataLoader::new(
         RequisitionsByIdLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let requisition_line_by_requisition_id_loader = DataLoader::new(
         RequisitionLinesByRequisitionIdLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let requisition_line_by_linked_requisition_line_id_loader = DataLoader::new(
         LinkedRequisitionLineLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let item_stats_for_item_loader = DataLoader::new(
         ItemsStatsForItemLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let requisition_line_supply_status_loader = DataLoader::new(
         RequisitionLineSupplyStatusLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let requisition_lines_remaining_to_supply_loader = DataLoader::new(
         RequisitionLinesRemainingToSupplyLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let name_row_loader = DataLoader::new(
         NameRowLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let inventory_adjustment_reason_loader = DataLoader::new(
         InventoryAdjustmentReasonByIdLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let stock_on_hand = DataLoader::new(
         ItemsStockOnHandLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let schema_loader = DataLoader::new(
         JsonSchemaLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let document_loader = DataLoader::new(
         DocumentLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let doc_registry_loader = DataLoader::new(
         DocumentRegistryLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let asset_by_location_loader = DataLoader::new(
         AssetByLocationLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let asset_location_loader = DataLoader::new(
         AssetLocationLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let file_sync_reference_loader = DataLoader::new(
         SyncFileReferenceLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let asset_log_reason_loader = DataLoader::new(
         AssetLogReasonLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let return_reason_loader = DataLoader::new(
         ReturnReasonLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     let program_indicator_value_loader = DataLoader::new(
         IndicatorValueLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     );
 
     loaders.insert(item_loader);
