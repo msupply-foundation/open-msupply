@@ -80,6 +80,7 @@ export const ResponseLineEditModal = ({
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(undefined);
     else onClose();
+    return true;
   };
 
   useEffect(() => {

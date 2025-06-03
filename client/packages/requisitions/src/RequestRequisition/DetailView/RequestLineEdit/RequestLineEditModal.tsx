@@ -86,6 +86,7 @@ export const RequestLineEditModal = ({
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(undefined);
     else onClose();
+    return true;
   };
 
   // When currentItem changes, draft is reset in `useDraftRequisitionLine`
