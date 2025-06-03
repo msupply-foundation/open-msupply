@@ -46,7 +46,7 @@ export enum AllocationStrategy {
 
 const SorterByStrategy = {
   [AllocationStrategy.FEFO]: SortUtils.byExpiryAscNonExpiringLast,
-  [AllocationStrategy.VVMStatus]: SortUtils.byVVMStatusAsc,
+  [AllocationStrategy.VVMStatus]: SortUtils.byVVMStatusDesc,
 };
 
 interface AllocationContext {

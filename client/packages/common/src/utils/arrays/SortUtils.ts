@@ -56,8 +56,8 @@ const getSortByVVMStatus =
     const bLevel = b.vvmStatus?.level;
 
     if (aLevel !== undefined && bLevel !== undefined) {
-      if (aLevel < bLevel) return -1;
-      if (aLevel > bLevel) return 1;
+      if (aLevel < bLevel) return 1;
+      if (aLevel > bLevel) return -1;
     } else if (aLevel !== undefined) {
       return -1;
     } else if (bLevel !== undefined) {
@@ -89,5 +89,5 @@ export const SortUtils = {
   byExpiryAsc: getSortByExpiry(false),
   byExpiryAscNonExpiringLast: getSortByExpiry(false, true),
   byExpiryDesc: getSortByExpiry(true),
-  byVVMStatusAsc: getSortByVVMStatus(),
+  byVVMStatusDesc: getSortByVVMStatus(),
 };
