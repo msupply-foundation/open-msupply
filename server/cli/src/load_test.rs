@@ -40,30 +40,15 @@ mutation InsertRequestRequisition($storeId: String!, $input: InsertRequestRequis
 }
 "#;
 
-const INSERT_REQUISITION_LINE_MUTATION: &str = r#"
-mutation InsertRequestRequisitionLine($storeId: String!, $input: InsertRequestRequisitionLineInput!) {
-  insertRequestRequisitionLine(storeId: $storeId, input: $input){
-    ... on RequisitionLineNode {
-      id
-    }
-    ... on InsertRequestRequisitionLineError {
-      error {
-        description
+const BATCH_REQUISITION_LINES_MUTATION: &str = r#"
+mutation BatchRequestRequisitionLineInsert ($storeId: String!, $input: BatchRequestRequisitionInput!) {
+  batchRequestRequisition(storeId:$storeId, input:$input){
+    ... on BatchRequestRequisitionResponse {
+      insertRequestRequisitionLines  {
+        id
       }
-    }
-  }
-}
-"#;
-
-const UPDATE_REQUISITION_LINE_MUTATION: &str = r#"
-mutation UpdateRequestRequisitionLine ($storeId: String!, $input: UpdateRequestRequisitionLineInput!) {
-  updateRequestRequisitionLine(storeId: $storeId, input: $input) {
-    ... on RequisitionLineNode {
-    	id
-    }
-    ... on UpdateRequestRequisitionLineError {
-      error {
-        description
+      updateRequestRequisitionLines{
+        id
       }
     }
   }
@@ -410,7 +395,6 @@ impl LoadTest {
                     }
                 };
                 sleep(Duration::from_secs(10)).await; // Let db get created, migrated and initialisation started
-                let client = Client::new();
 
                 if test_site.wait_for_sync().await.is_err() {
                     kill(&mut child).await;
@@ -434,59 +418,70 @@ impl LoadTest {
                         }
                     });
                     match test_site.do_post(&requisition_gql).await {
-                        Ok(response) => response,
+                        Ok(response) => dbg!(response.text().await.unwrap()),
                         Err(e) => {
                             println!("insertRequestRequisition request failed: {}", e);
                             kill(&mut child).await;
                             return;
                         }
                     };
+                    let mut line_inserts: Vec<Value> = Vec::new();
+                    let mut line_updates: Vec<Value> = Vec::new();
 
                     for i in 0..num_lines {
                         let line_id = uuid();
-                        let line_gql = json!({
-                            "operationName": "InsertRequestRequisitionLine",
-                            "query": INSERT_REQUISITION_LINE_MUTATION,
-                            "variables": {
-                                "storeId": test_site.store.id,
-                                "input": {
-                                    "id": line_id,
-                                    "itemId": item_ids_copy[i%num_lines],
-                                    "requisitionId": requisition_id
-                                }
-                            }
-                        });
+                        line_inserts.push(json!({
+                            "id": line_id,
+                            "itemId": item_ids_copy[i%num_lines],
+                            "requisitionId": requisition_id
+                        }));
 
-                        match test_site.do_post(&line_gql).await {
-                            Ok(response) => response,
-                            Err(e) => {
-                                println!("insertRequestRequisitionLine request failed: {}", e);
-                                kill(&mut child).await;
-                                return;
-                            }
-                        };
-
-                        let line_gql = json!({
-                            "operationName": "UpdateRequestRequisitionLine",
-                            "query": UPDATE_REQUISITION_LINE_MUTATION,
-                            "variables": {
-                                "storeId": test_site.store.id,
-                                "input": {
-                                    "id": line_id,
-                                    "requestedQuantity": i+1,
-                                    "comment": "Please send me the stocks"
-                                }
-                            }
-                        });
-                        match test_site.do_post(&line_gql).await {
-                            Ok(response) => response,
-                            Err(e) => {
-                                println!("insertRequestRequisitionLine request failed: {}", e);
-                                kill(&mut child).await;
-                                return;
-                            }
-                        };
+                        line_updates.push(json!({
+                            "id": line_id,
+                            "requestedQuantity": i+1,
+                            "comment": "Please send me the stocks"
+                        }))
                     }
+
+                    let line_gql = json!({
+                        "operationName": "BatchRequestRequisitionLineInsert",
+                        "query": BATCH_REQUISITION_LINES_MUTATION,
+                        "variables": {
+                            "storeId": test_site.store.id,
+                            "input": {
+                                "insertRequestRequisitionLines": line_inserts
+                            }
+                        }
+                    });
+
+                    match test_site.do_post(&line_gql).await {
+                        Ok(response) => dbg!(response.text().await.unwrap()),
+                        Err(e) => {
+                            println!("insertRequestRequisitionLine request failed: {}", e);
+                            kill(&mut child).await;
+                            return;
+                        }
+                    };
+
+                    let line_gql = json!({
+                        "operationName": "BatchRequestRequisitionLineInsert",
+                        "query": BATCH_REQUISITION_LINES_MUTATION,
+                        "variables": {
+                            "storeId": test_site.store.id,
+                            "input": {
+                                "updateRequestRequisitionLines": line_updates
+                            }
+                        }
+                    });
+                    match test_site.do_post(&line_gql).await {
+                        Ok(response) => dbg!(response.text().await.unwrap()),
+                        Err(e) => {
+                            println!("insertRequestRequisitionLine request failed: {}", e);
+                            kill(&mut child).await;
+                            return;
+                        }
+                    };
+
                     let requisition_gql = json!({
                         "operationName": "UpdateRequestRequisition",
                         "query": UPDATE_REQUISITION_MUTATION,
@@ -499,7 +494,7 @@ impl LoadTest {
                         }
                     });
                     match test_site.do_post(&requisition_gql).await {
-                        Ok(response) => response,
+                        Ok(response) => dbg!(response.text().await.unwrap()),
                         Err(e) => {
                             println!("insertRequestRequisition request failed: {}", e);
                             kill(&mut child).await;
@@ -512,7 +507,7 @@ impl LoadTest {
                         "query": MANUAL_SYNC_QUERY,
                     });
                     match test_site.do_post(&sync_gql).await {
-                        Ok(response) => response,
+                        Ok(response) => dbg!(response.text().await.unwrap()),
                         Err(e) => {
                             println!("manualSync request failed: {}", e);
                             kill(&mut child).await;
