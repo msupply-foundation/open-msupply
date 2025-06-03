@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { LocaleKey, TypedTFunction } from '@common/intl';
+import { NumUtils } from '@common/utils';
 
 export const Representation = {
   PACKS: 'packs',
@@ -38,9 +39,9 @@ export const calculateValueInDoses = (
 ): number => {
   if (!value) return 0;
   if (representation === Representation.PACKS) {
-    return value * defaultPackSize * dosesPerUnit;
+    return NumUtils.round(value * defaultPackSize * dosesPerUnit, 2);
   }
-  return value * dosesPerUnit;
+  return NumUtils.round(value * dosesPerUnit, 2);
 };
 
 export const useEndAdornment = (
