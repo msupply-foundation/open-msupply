@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   NumericTextInput,
@@ -74,6 +74,10 @@ export const SupplySelection = ({
     },
     [representation, defaultPackSize, update]
   );
+
+  useEffect(() => {
+    setValue(currentValue);
+  }, [currentValue, representation]);
 
   const handleValueChange = (value?: number) => {
     setValue(value ?? 0);

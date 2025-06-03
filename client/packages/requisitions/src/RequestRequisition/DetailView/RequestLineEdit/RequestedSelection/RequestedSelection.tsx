@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   NumericTextInput,
@@ -60,6 +60,10 @@ export const RequestedSelection = ({
     [representation, draft?.requestedQuantity, defaultPackSize]
   );
   const [value, setValue] = useState(currentValue);
+
+  useEffect(() => {
+    setValue(currentValue);
+  }, [currentValue, representation]);
 
   const options = useMemo((): Option[] => {
     const unitPlural = getPlural(unitName, currentValue);
