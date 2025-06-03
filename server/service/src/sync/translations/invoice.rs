@@ -492,6 +492,17 @@ impl SyncTranslation for InvoiceTranslation {
             }
         };
 
+        let entry_date = created_datetime.date();
+        let entry_time = created_datetime.time();
+
+        log::info!(
+            "Translating invoice {} created_datetime {:?} to entry_date {:?} and entry_time {:?}",
+            id,
+            created_datetime,
+            entry_date,
+            entry_time
+        );
+
         let legacy_row = LegacyTransactRow {
             ID: id.clone(),
             user_id,
@@ -505,8 +516,8 @@ impl SyncTranslation for InvoiceTranslation {
             their_ref: their_reference,
             requisition_ID: requisition_id,
             linked_transaction_id: linked_invoice_id,
-            entry_date: created_datetime.date(),
-            entry_time: created_datetime.time(),
+            entry_date,
+            entry_time,
             ship_date: shipped_datetime
                 .map(|shipped_datetime| date_from_date_time(&shipped_datetime)),
             arrival_date_actual: delivered_datetime
