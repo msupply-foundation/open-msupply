@@ -34,7 +34,7 @@ import {
   AllocateInOption,
   AllocateInType,
 } from '../../../StockOut';
-import { useCampaigns } from 'packages/system/src/Manage/Campaigns/api';
+import { useCampaigns } from '@openmsupply-client/system/src/Manage/Campaigns/api';
 
 type AllocateFn = (
   key: string,
