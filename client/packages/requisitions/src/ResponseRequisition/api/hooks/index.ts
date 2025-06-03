@@ -21,9 +21,8 @@ export const useResponse = {
     list: Lines.useResponseLines,
     stats: Lines.useResponseLineStatsData,
     delete: Lines.useDeleteResponseLines,
+    deleteLine: Lines.useDeleteResponseLine,
     save: Lines.useSaveResponseLines,
-    insert: Lines.useInsertResponseLines,
-    updateIndicators: Lines.useUpdateLine,
   },
   utils: {
     api: Utils.useResponseApi,
@@ -33,6 +32,7 @@ export const useResponse = {
     preferences: Utils.useRequisitionPreferences,
     supplyRequested: Utils.useSupplyRequestedQuantity,
     isDisabledByAuthorisation: Utils.useIsDisabledByAuthorisation,
-    programRequisitionSettingsByCustomer: Utils.useProgramRequisitionSettingsByCustomer,
+    programRequisitionSettingsByCustomer:
+      Utils.useProgramRequisitionSettingsByCustomer,
   },
 };
