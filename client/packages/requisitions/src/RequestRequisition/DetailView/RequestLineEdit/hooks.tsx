@@ -94,9 +94,12 @@ export const useDraftRequisitionLine = (
 };
 
 export const useNextRequestLine = (
+  lines?: RequestLineFragment[],
   currentItem?: ItemWithStatsFragment | null
 ) => {
-  const { lines } = useRequest.line.list();
+  if (!lines || !currentItem) {
+    return { hasNext: false, next: null };
+  }
 
   const nextState: {
     hasNext: boolean;

@@ -71,6 +71,7 @@ export const RequestLineEdit = ({
   const { width } = useWindowDimensions();
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
+  const showContent = !!draft && !!currentItem;
   const displayVaccinesInDoses =
     manageVaccinesInDoses && currentItem?.isVaccine;
   const disableItemSelection = disabled || isUpdateMode;
@@ -115,13 +116,13 @@ export const RequestLineEdit = ({
   ]);
 
   const getMiddlePanelContent = () => {
-    if (!draft) return null;
+    if (!showContent) return null;
 
     return renderValueInfoRows(getExtraMiddlePanels(t, draft));
   };
 
   const getRightPanelContent = () => {
-    if (!draft) return null;
+    if (!showContent) return null;
 
     return (
       <>
@@ -227,7 +228,7 @@ export const RequestLineEdit = ({
           </>
         }
         Left={
-          draft ? (
+          showContent ? (
             <>
               {currentItem?.unitName && (
                 <InfoRow label={t('label.unit')} value={unitName} />
@@ -260,7 +261,7 @@ export const RequestLineEdit = ({
           ))}
       </Box>
 
-      {!!draft && (
+      {showContent && (
         <Box
           display="flex"
           flexDirection="column"

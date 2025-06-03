@@ -47,15 +47,12 @@ export const RequestLineEditModal = ({
   const [currentItem, setCurrentItem] = useState(
     lines?.find(line => line.item.id === itemId)?.item
   );
-  const [previousItemLineId, setPreviousItemLineId] = useState<string | null>(
-    null
-  );
   const [representation, setRepresentation] = useState<RepresentationValue>(
     Representation.UNITS
   );
 
   const { draft, save, update } = useDraftRequisitionLine(currentItem);
-  const { hasNext, next } = useNextRequestLine(currentItem);
+  const { hasNext, next } = useNextRequestLine(lines, currentItem);
 
   const isPacksEnabled = !!currentItem?.defaultPackSize;
   const useConsumptionData =
@@ -63,13 +60,22 @@ export const RequestLineEditModal = ({
   const isProgram = !!requisition?.program;
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
 
+  const shouldDeleteLine = () => {
+    if (mode === ModalMode.Create && !draft?.requestedQuantity) return true;
+    if (!draft?.id || isDisabled) return false;
+    if (mode === ModalMode.Update) return false;
+    return false;
+  };
+
   const deletePreviousLine = () => {
-    if (previousItemLineId && !isDisabled) deleteLine(previousItemLineId);
+    if (draft?.id && shouldDeleteLine()) {
+      deleteLine(draft.id);
+    }
   };
 
   const onCancel = () => {
     if (mode === ModalMode.Create) {
-      deletePreviousLine();
+      deleteLine(draft?.id || '');
     }
     onClose();
   };
@@ -80,27 +86,23 @@ export const RequestLineEditModal = ({
     setCurrentItem(item);
   };
 
-  const onSave = async () => {
+  const onNext = async () => {
     await save();
-    setPreviousItemLineId(null);
+    deletePreviousLine();
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(undefined);
     else onClose();
     return true;
   };
 
-  // When currentItem changes, draft is reset in `useDraftRequisitionLine`
-  // If it creates a new requisition line, we save it immediately to have access
-  // to requisition charts.
-  // If user ends up cancelling the modal, or changing the item, we need to
-  // ensure the previous line is deleted (hence storing `previousItemLineId`)
+  // Effect triggered when the selected item changes:
+  // 1. The draft is reset by the useDraftRequisitionLine hook
+  // 2. For newly created lines, we immediately save to enable requisition chart data
   useEffect(() => {
     if (!!draft?.isCreated) {
       save();
-    } else {
-      if (!!draft?.id) setPreviousItemLineId(draft.id);
     }
-  }, [draft, setPreviousItemLineId]);
+  }, [draft]);
 
   return (
     <Modal
@@ -111,7 +113,7 @@ export const RequestLineEditModal = ({
         <DialogButton
           disabled={nextDisabled}
           variant="next-and-ok"
-          onClick={onSave}
+          onClick={onNext}
         />
       }
       okButton={

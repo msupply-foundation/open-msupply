@@ -83,8 +83,10 @@ export const ResponseLineEditModal = ({
     return true;
   };
 
+  // Effect triggered when the selected item changes:
+  // 1. The draft is reset by the useDraftRequisitionLine hook
+  // 2. For newly created lines, we immediately save to enable requisition chart data
   useEffect(() => {
-    // Inserts new requisition line if it doesn't exist
     if (!!draft?.isCreated) {
       save();
     } else {
