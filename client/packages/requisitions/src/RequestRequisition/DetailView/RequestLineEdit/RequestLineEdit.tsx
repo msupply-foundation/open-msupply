@@ -49,6 +49,7 @@ interface RequestLineEditProps {
   isUpdateMode?: boolean;
   showExtraFields?: boolean;
   manageVaccinesInDoses?: boolean;
+  setIsDirty?: (isDirty: boolean) => void;
 }
 
 export const RequestLineEdit = ({
@@ -65,6 +66,7 @@ export const RequestLineEdit = ({
   isUpdateMode,
   showExtraFields,
   manageVaccinesInDoses = false,
+  setIsDirty = () => {},
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
@@ -146,6 +148,7 @@ export const RequestLineEdit = ({
             unitName={unitName}
             displayVaccinesInDoses={displayVaccinesInDoses}
             dosesPerUnit={currentItem?.doses}
+            setIsDirty={setIsDirty}
           />
           {showExtraFields && (
             <Typography variant="body1" fontWeight="bold">

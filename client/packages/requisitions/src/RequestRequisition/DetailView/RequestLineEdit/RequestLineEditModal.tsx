@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  BasicSpinner,
   DialogButton,
   ModalMode,
   useDialog,
@@ -51,7 +52,8 @@ export const RequestLineEditModal = ({
     Representation.UNITS
   );
 
-  const { draft, save, update } = useDraftRequisitionLine(currentItem);
+  const { draft, save, update, isDirty, setIsDirty, isLoading } =
+    useDraftRequisitionLine(currentItem);
   const { hasNext, next } = useNextRequestLine(lines, currentItem);
 
   const isPacksEnabled = !!currentItem?.defaultPackSize;
@@ -111,7 +113,7 @@ export const RequestLineEditModal = ({
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
       nextButton={
         <DialogButton
-          disabled={nextDisabled}
+          disabled={nextDisabled || isDirty}
           variant="next-and-ok"
           onClick={onNext}
         />
@@ -119,7 +121,7 @@ export const RequestLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentItem}
+          disabled={!currentItem || isDirty}
           onClick={async () => {
             await save();
             onClose();
@@ -129,21 +131,26 @@ export const RequestLineEditModal = ({
       height={800}
       width={1200}
     >
-      <RequestLineEdit
-        requisition={requisition}
-        lines={lines}
-        currentItem={currentItem}
-        onChangeItem={onChangeItem}
-        draft={draft}
-        update={update}
-        isPacksEnabled={isPacksEnabled}
-        representation={representation}
-        setRepresentation={setRepresentation}
-        disabled={isDisabled}
-        isUpdateMode={mode === ModalMode.Update}
-        showExtraFields={useConsumptionData && isProgram}
-        manageVaccinesInDoses={manageVaccinesInDoses}
-      />
+      {isLoading ? (
+        <BasicSpinner />
+      ) : (
+        <RequestLineEdit
+          requisition={requisition}
+          lines={lines}
+          currentItem={currentItem}
+          onChangeItem={onChangeItem}
+          draft={draft}
+          update={update}
+          isPacksEnabled={isPacksEnabled}
+          representation={representation}
+          setRepresentation={setRepresentation}
+          disabled={isDisabled}
+          isUpdateMode={mode === ModalMode.Update}
+          showExtraFields={useConsumptionData && isProgram}
+          manageVaccinesInDoses={manageVaccinesInDoses}
+          setIsDirty={setIsDirty}
+        />
+      )}
     </Modal>
   );
 };

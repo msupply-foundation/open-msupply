@@ -33,6 +33,7 @@ interface RequestedSelectionProps {
   showExtraFields?: boolean;
   displayVaccinesInDoses?: boolean;
   dosesPerUnit?: number;
+  setIsDirty?: (isDirty: boolean) => void;
 }
 
 export const RequestedSelection = ({
@@ -46,6 +47,7 @@ export const RequestedSelection = ({
   unitName,
   displayVaccinesInDoses = false,
   dosesPerUnit = 1,
+  setIsDirty = () => {},
 }: RequestedSelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -63,11 +65,12 @@ export const RequestedSelection = ({
 
   useEffect(() => {
     setValue(currentValue);
-  }, [currentValue, representation]);
+  }, [draft?.id, representation]);
 
   const options = useMemo((): Option[] => {
-    const unitPlural = getPlural(unitName, currentValue);
-    const packPlural = getPlural(t('label.pack'), currentValue).toLowerCase();
+    const displayValue = value === 1 ? 1 : 2;
+    const unitPlural = getPlural(unitName, displayValue);
+    const packPlural = getPlural(t('label.pack'), displayValue).toLowerCase();
 
     if (!isPacksEnabled)
       return [{ label: unitName, value: Representation.UNITS }];
@@ -75,7 +78,7 @@ export const RequestedSelection = ({
       { label: unitPlural, value: Representation.UNITS },
       { label: packPlural, value: Representation.PACKS },
     ];
-  }, [isPacksEnabled, unitName, currentValue]);
+  }, [unitName, currentValue, isPacksEnabled]);
 
   const debouncedUpdate = useDebounceCallback(
     (value?: number) => {
@@ -86,13 +89,16 @@ export const RequestedSelection = ({
         draft?.suggestedQuantity
       );
       update(updatedRequest);
+      setIsDirty(false);
     },
     [representation, defaultPackSize, update]
   );
 
-  const handleValueChange = (value?: number) => {
-    setValue(value ?? 0);
-    debouncedUpdate(value);
+  const handleValueChange = (newValue?: number) => {
+    const valueChanged = newValue !== currentValue;
+    setIsDirty(valueChanged);
+    setValue(newValue ?? 0);
+    debouncedUpdate(newValue);
   };
 
   const valueInDoses = useMemo(() => {
@@ -103,7 +109,13 @@ export const RequestedSelection = ({
       dosesPerUnit,
       value
     );
-  }, [displayVaccinesInDoses, defaultPackSize, dosesPerUnit, value]);
+  }, [
+    displayVaccinesInDoses,
+    representation,
+    defaultPackSize,
+    dosesPerUnit,
+    value,
+  ]);
 
   return (
     <Box

@@ -54,7 +54,7 @@ const createDraftFromRequestLine = (
   ...line,
   requisitionId: request.id,
   itemId: line.item.id,
-  requestedQuantity: line.requestedQuantity ?? line.suggestedQuantity,
+  requestedQuantity: line.requestedQuantity,
   suggestedQuantity: line.suggestedQuantity,
   isCreated: false,
   itemStats: line.itemStats,
@@ -65,9 +65,10 @@ export const useDraftRequisitionLine = (
 ) => {
   const { lines } = useRequest.line.list();
   const { data } = useRequest.document.get();
-  const { mutateAsync: save, isLoading } = useRequest.line.save();
+  const { mutateAsync: saveMutation, isLoading } = useRequest.line.save();
 
   const [draft, setDraft] = useState<DraftRequestLine | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
 
   useEffect(() => {
     if (lines && item && data) {
@@ -90,7 +91,26 @@ export const useDraftRequisitionLine = (
     }
   };
 
-  return { draft, isLoading, save: () => draft && save(draft), update };
+  const save = async () => {
+    if (draft && !isDirty) {
+      const result = await saveMutation(draft);
+
+      if (draft.isCreated) {
+        setDraft(prev => (prev ? { ...prev, isCreated: false } : null));
+      }
+      return result;
+    }
+    return null;
+  };
+
+  return {
+    draft,
+    isLoading,
+    save,
+    update,
+    isDirty,
+    setIsDirty,
+  };
 };
 
 export const useNextRequestLine = (
