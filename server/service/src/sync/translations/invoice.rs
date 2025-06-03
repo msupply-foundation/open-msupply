@@ -6,10 +6,10 @@ use crate::sync::{
     translations::{
         clinician::ClinicianTranslation, currency::CurrencyTranslation,
         diagnosis::DiagnosisTranslation, name::NameTranslation,
-        name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation,
+        name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation, to_legacy_time,
     },
 };
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime, SubsecRound};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
     InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceStatus, InvoiceType,
@@ -492,17 +492,6 @@ impl SyncTranslation for InvoiceTranslation {
             }
         };
 
-        let entry_date = created_datetime.date();
-        let entry_time = created_datetime.time().trunc_subsecs(0); // Remove subseconds to match legacy format
-
-        log::info!(
-            "Translating invoice {} created_datetime {:?} to entry_date {:?} and entry_time {:?}",
-            id,
-            created_datetime,
-            entry_date,
-            entry_time
-        );
-
         let legacy_row = LegacyTransactRow {
             ID: id.clone(),
             user_id,
@@ -516,8 +505,8 @@ impl SyncTranslation for InvoiceTranslation {
             their_ref: their_reference,
             requisition_ID: requisition_id,
             linked_transaction_id: linked_invoice_id,
-            entry_date,
-            entry_time,
+            entry_date: created_datetime.date(),
+            entry_time: to_legacy_time(created_datetime),
             ship_date: shipped_datetime
                 .map(|shipped_datetime| date_from_date_time(&shipped_datetime)),
             arrival_date_actual: delivered_datetime
@@ -755,7 +744,7 @@ fn to_legacy_confirm_time(
 
     let date = datetime.map(|datetime| datetime.date());
     let time = datetime
-        .map(|datetime| datetime.time())
+        .map(to_legacy_time)
         .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
     (date, time)
 }
