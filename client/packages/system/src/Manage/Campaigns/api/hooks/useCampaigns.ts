@@ -103,7 +103,7 @@ const useGetList = (queryParams?: ListParams) => {
 
 const toSortInput = (sortBy?: SortBy<CampaignRowFragment>) => ({
   desc: sortBy?.isDesc,
-  key: sortBy?.key as CampaignSortFieldInput,
+  key: (sortBy?.key as CampaignSortFieldInput) ?? CampaignSortFieldInput.Name,
 });
 
 const useUpsertCampaign = () => {
