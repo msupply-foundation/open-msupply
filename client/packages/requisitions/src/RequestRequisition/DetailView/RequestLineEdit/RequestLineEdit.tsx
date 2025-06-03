@@ -64,7 +64,7 @@ export const RequestLineEdit = ({
   disabled,
   isUpdateMode,
   showExtraFields,
-  manageVaccinesInDoses,
+  manageVaccinesInDoses = false,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
@@ -100,11 +100,19 @@ export const RequestLineEdit = ({
             representation={representation}
             unitName={unitName}
             sx={sx}
+            displayVaccinesInDoses={displayVaccinesInDoses}
+            dosesPerUnit={currentItem?.doses}
           />
         ))}
       </>
     );
-  }, [defaultPackSize, representation, unitName]);
+  }, [
+    defaultPackSize,
+    representation,
+    unitName,
+    displayVaccinesInDoses,
+    currentItem?.doses,
+  ]);
 
   const getMiddlePanelContent = () => {
     if (!draft) return null;
@@ -122,8 +130,7 @@ export const RequestLineEdit = ({
             background: theme => theme.palette.background.group,
             padding: '0px 8px',
             borderRadius: 2,
-            pb: 2,
-            pt: 0.5,
+            pb: 1,
           }}
         >
           {!showExtraFields && renderValueInfoRows(getSuggestedRow(t, draft))}
@@ -136,7 +143,8 @@ export const RequestLineEdit = ({
             representation={representation}
             setRepresentation={setRepresentation}
             unitName={unitName}
-            showExtraFields={showExtraFields}
+            displayVaccinesInDoses={displayVaccinesInDoses}
+            dosesPerUnit={currentItem?.doses}
           />
           {showExtraFields && (
             <Typography variant="body1" fontWeight="bold">
@@ -146,7 +154,7 @@ export const RequestLineEdit = ({
                 onChange={value => {
                   update({ reason: value });
                 }}
-                width={360}
+                fullWidth
                 type={ReasonOptionNodeType.RequisitionLineVariance}
                 disabled={disableReasons}
                 reasonOptions={reasonOptions?.nodes ?? []}
@@ -165,7 +173,7 @@ export const RequestLineEdit = ({
               />
             </Typography>
           )}
-          <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
+          <Typography variant="body1" fontWeight="bold" pb={0.5}>
             {t('heading.comment')}:
           </Typography>
           <BufferedTextArea

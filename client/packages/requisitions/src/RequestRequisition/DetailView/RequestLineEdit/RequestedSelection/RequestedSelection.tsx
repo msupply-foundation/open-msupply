@@ -10,7 +10,11 @@ import {
 } from '@openmsupply-client/common';
 import { getCurrentValue, getUpdatedRequest } from './utils';
 import { DraftRequestLine } from '../hooks';
-import { Representation, RepresentationValue } from '../../../../common';
+import {
+  calculateValueInDoses,
+  Representation,
+  RepresentationValue,
+} from '../../../../common';
 
 interface Option {
   label: string;
@@ -27,6 +31,8 @@ interface RequestedSelectionProps {
   setRepresentation: (rep: RepresentationValue) => void;
   unitName: string;
   showExtraFields?: boolean;
+  displayVaccinesInDoses?: boolean;
+  dosesPerUnit?: number;
 }
 
 export const RequestedSelection = ({
@@ -38,11 +44,11 @@ export const RequestedSelection = ({
   representation,
   setRepresentation,
   unitName,
-  showExtraFields,
+  displayVaccinesInDoses = false,
+  dosesPerUnit = 1,
 }: RequestedSelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
-  const width = showExtraFields ? 170 : 250;
 
   const currentValue = useMemo(
     (): number =>
@@ -85,74 +91,95 @@ export const RequestedSelection = ({
     debouncedUpdate(value);
   };
 
+  const valueInDoses = useMemo(() => {
+    if (!displayVaccinesInDoses) return undefined;
+    return calculateValueInDoses(
+      representation,
+      defaultPackSize || 1,
+      dosesPerUnit,
+      value
+    );
+  }, [displayVaccinesInDoses, defaultPackSize, dosesPerUnit, value]);
+
   return (
     <Box
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        mb: 1,
       }}
     >
-      <Typography variant="body1" fontWeight="bold" p={0.5}>
+      <Typography variant="body1" fontWeight="bold" pt={0.5} pb={0.5}>
         {t('label.requested')}:
       </Typography>
-      <Box gap={1} display="flex" flexDirection="row">
-        <NumericTextInput
-          autoFocus
-          width={width}
-          min={0}
-          value={value}
-          disabled={disabled}
-          onChange={handleValueChange}
-          slotProps={{
-            input: {
-              sx: {
-                background: theme =>
+      <Box display="flex" flexDirection="row" gap={1}>
+        <Box display="flex" flexDirection="column" flex={1}>
+          <NumericTextInput
+            autoFocus
+            fullWidth
+            min={0}
+            value={value}
+            disabled={disabled}
+            onChange={handleValueChange}
+            slotProps={{
+              input: {
+                sx: {
+                  background: theme =>
+                    disabled
+                      ? theme.palette.background.toolbar
+                      : theme.palette.background.white,
+                },
+              },
+            }}
+            sx={{
+              '& .MuiInputBase-input': {
+                p: '3px 4px',
+                backgroundColor: theme =>
                   disabled
                     ? theme.palette.background.toolbar
                     : theme.palette.background.white,
               },
-            },
-          }}
-          sx={{
-            boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
-            '& .MuiInputBase-input': {
-              p: '3px 4px',
-              backgroundColor: theme =>
-                disabled
-                  ? theme.palette.background.toolbar
-                  : theme.palette.background.white,
-            },
-          }}
-        />
-        <Select
-          fullWidth
-          clearable={false}
-          options={options}
-          value={representation}
-          onChange={e => {
-            setRepresentation(
-              (e.target.value as RepresentationValue) ?? Representation.UNITS
-            );
-          }}
-          sx={{
-            boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
-            '& .MuiInputBase-input': {
-              p: '3px 4px',
-              backgroundColor: theme => theme.palette.background.white,
-            },
-          }}
-          slotProps={{
-            input: {
-              disableUnderline: true,
-              sx: {
+            }}
+          />
+          {displayVaccinesInDoses && valueInDoses !== undefined && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              pt={0.3}
+              pr={1}
+              sx={{ textAlign: 'right' }}
+            >
+              {valueInDoses} {t('label.doses').toLowerCase()}
+            </Typography>
+          )}
+        </Box>
+        <Box flex={1}>
+          <Select
+            fullWidth
+            clearable={false}
+            options={options}
+            value={representation}
+            onChange={e => {
+              setRepresentation(
+                (e.target.value as RepresentationValue) ?? Representation.UNITS
+              );
+            }}
+            sx={{
+              '& .MuiInputBase-input': {
+                p: '3px 4px',
                 backgroundColor: theme => theme.palette.background.white,
-                borderRadius: 2,
-                p: 0.5,
               },
-            },
-          }}
-        />
+            }}
+            slotProps={{
+              input: {
+                disableUnderline: true,
+                sx: {
+                  backgroundColor: theme => theme.palette.background.white,
+                  borderRadius: 2,
+                },
+              },
+            }}
+          />
+        </Box>
       </Box>
     </Box>
   );
