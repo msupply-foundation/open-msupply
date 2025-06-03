@@ -9,7 +9,7 @@ use crate::sync::{
         name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation,
     },
 };
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime, SubsecRound};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
     InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceStatus, InvoiceType,
@@ -493,7 +493,7 @@ impl SyncTranslation for InvoiceTranslation {
         };
 
         let entry_date = created_datetime.date();
-        let entry_time = created_datetime.time();
+        let entry_time = created_datetime.time().trunc_subsecs(0); // Remove subseconds to match legacy format
 
         log::info!(
             "Translating invoice {} created_datetime {:?} to entry_date {:?} and entry_time {:?}",
@@ -556,6 +556,12 @@ impl SyncTranslation for InvoiceTranslation {
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
+
+        log::info!(
+            "Translating invoice {} to legacy transact row: {}",
+            id,
+            json_record.to_string()
+        );
 
         Ok(PushTranslateResult::upsert(
             changelog,
