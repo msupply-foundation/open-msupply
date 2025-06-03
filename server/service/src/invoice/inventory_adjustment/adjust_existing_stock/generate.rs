@@ -108,6 +108,7 @@ pub fn generate(
         item_variant_id,
         donor_link_id,
         vvm_status_id,
+        campaign_id,
         ..
     } = stock_line.stock_line_row.clone();
 
@@ -135,11 +136,11 @@ pub fn generate(
             item_variant_id,
             donor_id: donor_link_id,
             vvm_status_id,
+            campaign_id,
             // Default
             barcode: None,
             total_before_tax: None,
             tax_percentage: None,
-            campaign_id: None,
         }),
         AdjustmentType::Reduction => InsertStockInOrOutLine::StockOut(InsertStockOutLine {
             r#type: StockOutType::InventoryReduction,
@@ -148,6 +149,7 @@ pub fn generate(
             stock_line_id,
             note,
             number_of_packs: adjustment,
+            campaign_id,
             // Default
             prescribed_quantity: None,
             total_before_tax: None,
@@ -158,7 +160,6 @@ pub fn generate(
             expiry_date: None,
             cost_price_per_pack: None,
             sell_price_per_pack: None,
-            campaign_id: None,
         }),
     };
 

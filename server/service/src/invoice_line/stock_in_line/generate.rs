@@ -43,6 +43,8 @@ pub fn generate_batch(
         item_variant_id,
         donor_link_id,
         vvm_status_id,
+        campaign_id,
+        // Ignore other fields, this might be a problem when new fields are added
         ..
     }: InvoiceLineRow,
     StockLineInput {
@@ -52,7 +54,7 @@ pub fn generate_batch(
         barcode_id,
         supplier_link_id,
         overwrite_stock_levels,
-        campaign_id,
+        campaign_id: _, // Maybe should remove this from the input?
     }: StockLineInput,
 ) -> Result<StockLineRow, RepositoryError> {
     // Generate new stock line id if not provided
