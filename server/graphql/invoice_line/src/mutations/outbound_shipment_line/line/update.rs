@@ -107,6 +107,7 @@ impl UpdateInput {
                 percentage: tax.percentage,
             }),
             note: None,
+            campaign_id: None,
         }
     }
 }

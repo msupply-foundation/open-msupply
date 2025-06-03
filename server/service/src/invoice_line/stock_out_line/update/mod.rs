@@ -26,6 +26,7 @@ pub struct UpdateStockOutLine {
     pub total_before_tax: Option<f64>,
     pub tax: Option<ShipmentTaxUpdate>,
     pub note: Option<String>,
+    pub campaign_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]

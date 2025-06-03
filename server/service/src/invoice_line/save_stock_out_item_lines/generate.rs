@@ -120,6 +120,7 @@ pub fn generate(
                 total_before_tax: None,
                 tax: None,
                 note: None,
+                campaign_id,
             },
         )
         .collect();

@@ -101,6 +101,7 @@ impl UpdateInput {
             total_before_tax: None,
             tax: None,
             note,
+            campaign_id: None,
         }
     }
 }

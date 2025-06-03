@@ -189,6 +189,7 @@ fn try_allocate_existing_line(
                 total_before_tax: None,
                 tax: None,
                 note: None,
+                campaign_id: line_row.campaign_id,
             }
         })
 }
