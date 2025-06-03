@@ -1,7 +1,8 @@
 import React from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import { UNDEFINED_STRING_VALUE } from '@common/utils';
-import { Grid, useTranslation } from 'packages/common/src';
+import { useTranslation } from '@common/intl';
+import { Grid } from '@openmsupply-client/common';
 
 interface PackagingVariant {
   id: string;
@@ -11,7 +12,7 @@ interface PackagingVariant {
   volumePerUnit?: number | null;
 }
 
-interface PartialItemVariantFragment {
+interface ItemVariant {
   name: string;
   dosesPerUnit?: number;
   vvmType?: string | null;
@@ -25,7 +26,7 @@ interface PartialItemVariantFragment {
 }
 
 interface Props {
-  variant: PartialItemVariantFragment;
+  variant: ItemVariant;
 }
 
 export const VariantPopoverDetails = ({ variant }: Props) => {

@@ -4,7 +4,7 @@ import { InfoIcon } from '@common/icons';
 import { DraftStockOutLineFragment } from 'packages/invoices/src/StockOut';
 import { VariantPopoverDetails } from './VariantPopoverDetails';
 import { PaperPopoverSection, usePaperClickPopover } from '@common/components';
-import { useTranslation } from 'packages/common/src';
+import { useTranslation } from '@common/intl';
 
 interface BatchWithVariantCellProps {
   rowData: DraftStockOutLineFragment;
