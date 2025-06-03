@@ -34,6 +34,7 @@ import {
   AllocateInOption,
   AllocateInType,
 } from '../../../StockOut';
+import { useCampaigns } from '@openmsupply-client/system/src/Manage/Campaigns/api';
 
 type AllocateFn = (
   key: string,
@@ -60,6 +61,10 @@ export const useOutboundLineEditColumns = ({
   const { store } = useAuthContext();
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+
+  const {
+    query: { data: campaigns },
+  } = useCampaigns();
 
   const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
   const pluralisedUnitName = getPlural(unit, 2);
@@ -120,6 +125,15 @@ export const useOutboundLineEditColumns = ({
       Cell: TooltipTextCell,
     });
   }
+
+  // Only show campaigns column if some are defined -- in time we should have a
+  // store pref for this
+  if (campaigns?.totalCount ?? 0 > 0)
+    columnDefinitions.push({
+      key: 'campaign',
+      label: 'label.campaign',
+      accessor: ({ rowData }) => rowData?.campaign?.name,
+    });
 
   columnDefinitions.push([
     'location',

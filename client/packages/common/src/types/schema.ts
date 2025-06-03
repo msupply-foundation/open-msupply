@@ -2372,6 +2372,7 @@ export type DraftStockOutLineNode = {
   __typename: 'DraftStockOutLineNode';
   availablePacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
+  campaign?: Maybe<CampaignNode>;
   defaultDosesPerUnit: Scalars['Int']['output'];
   donor?: Maybe<NameNode>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -5844,6 +5845,7 @@ export type OutboundInvoiceCounts = {
 };
 
 export type OutboundShipmentLineInput = {
+  campaignId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
