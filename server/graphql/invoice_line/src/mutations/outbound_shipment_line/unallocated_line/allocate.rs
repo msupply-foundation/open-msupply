@@ -369,7 +369,7 @@ mod graphql {
                         "id": "skipped_on_hold"
                     }]
                 },
-                "skippedUnusableVVMStatusLines": {
+                "skippedUnusableVvmStatusLines": {
                     "nodes": [{
                         "id": "skipped_unusable"
                     }]
