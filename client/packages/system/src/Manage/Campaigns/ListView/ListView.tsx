@@ -53,12 +53,24 @@ const CampaignsComponent = () => {
 
   const save = async () => {
     const result = await upsert();
-    if (result?.__typename === 'CampaignNode')
+    if (result?.__typename === 'CampaignNode') {
       success(t('messages.campaign-saved'))();
-    else if ('error' in result)
+      return;
+    }
+
+    if ('error' in result) {
+      if (
+        '__typename' in result.error &&
+        result.error.__typename === 'UniqueValueViolation'
+      ) {
+        error(t('messages.error-campaign-name-already-exists'))();
+        return;
+      }
+
       error(
-        `${t('messages.error-saving-campaign')} — ${result?.error?.description ?? ''}`
+        `${t('messages.error-saving-campaign')} — ${result.error.description ?? ''}`
       )();
+    }
   };
 
   const confirmAndDelete = useDeleteConfirmation({

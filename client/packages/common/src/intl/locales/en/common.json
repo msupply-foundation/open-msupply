@@ -1624,6 +1624,7 @@
   "messages.error-no-file-selected": "No file selected",
   "messages.error-not-valid-email": "Please enter a valid email address",
   "messages.error-printing-report": "Unable to print report",
+  "messages.error-campaign-name-already-exists": "A campaign with same name already exists 🥺",
   "messages.error-saving-campaign": "Error saving campaign 🥺",
   "messages.error-saving-insurances": "Error saving insurances 🥺",
   "messages.error-saving-prescription": "Error saving prescription 🥺",
