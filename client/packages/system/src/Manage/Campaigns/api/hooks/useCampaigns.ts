@@ -90,7 +90,7 @@ const useGetList = (queryParams?: ListParams) => {
       filter: filterBy,
       storeId,
     });
-    const { nodes, totalCount } = query?.centralServer.campaign.campaigns;
+    const { nodes, totalCount } = query?.campaigns;
     return { nodes, totalCount };
   };
 
