@@ -84,7 +84,24 @@ fragment DraftStockOutLine on DraftStockOutLineNode {
     description
   }
   itemVariant {
+    id
+    name
+    itemId
     dosesPerUnit
+    vvmType
+    manufacturer(storeId: $storeId) {
+      name
+    }
+    packagingVariants {
+      id
+      name
+      packSize
+      packagingLevel
+      volumePerUnit
+    }
+    item {
+      isVaccine
+    }
   }
   donor(storeId: $storeId) {
     id

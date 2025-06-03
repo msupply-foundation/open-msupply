@@ -22,6 +22,7 @@ import {
   Formatter,
   UNDEFINED_STRING_VALUE,
   TooltipTextCell,
+  BatchWithVariantCell,
 } from '@openmsupply-client/common';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import { getStockOutQuantityCellId } from '../../../utils';
@@ -93,6 +94,7 @@ export const useOutboundLineEditColumns = ({
       'batch',
       {
         accessor: ({ rowData }) => rowData.batch,
+        Cell: BatchWithVariantCell,
       },
     ],
     [

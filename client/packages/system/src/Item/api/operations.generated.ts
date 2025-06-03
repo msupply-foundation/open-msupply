@@ -63,7 +63,15 @@ export type StockLineFragment = {
   itemVariant?: {
     __typename: 'ItemVariantNode';
     id: string;
+    name: string;
+    itemId: string;
     dosesPerUnit: number;
+    vvmType?: string | null;
+    manufacturer?: { __typename: 'NameNode'; name: string } | null;
+    packagingVariants: Array<{
+      __typename: 'PackagingVariantNode';
+      id: string;
+    }>;
   } | null;
   donor?: { __typename: 'NameNode'; id: string } | null;
   vvmStatus?: {
@@ -362,7 +370,15 @@ export type ItemFragment = {
       itemVariant?: {
         __typename: 'ItemVariantNode';
         id: string;
+        name: string;
+        itemId: string;
         dosesPerUnit: number;
+        vvmType?: string | null;
+        manufacturer?: { __typename: 'NameNode'; name: string } | null;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+        }>;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
       vvmStatus?: {
@@ -558,7 +574,15 @@ export type ItemsWithStockLinesQuery = {
           itemVariant?: {
             __typename: 'ItemVariantNode';
             id: string;
+            name: string;
+            itemId: string;
             dosesPerUnit: number;
+            vvmType?: string | null;
+            manufacturer?: { __typename: 'NameNode'; name: string } | null;
+            packagingVariants: Array<{
+              __typename: 'PackagingVariantNode';
+              id: string;
+            }>;
           } | null;
           donor?: { __typename: 'NameNode'; id: string } | null;
           vvmStatus?: {
@@ -873,7 +897,15 @@ export type ItemByIdQuery = {
           itemVariant?: {
             __typename: 'ItemVariantNode';
             id: string;
+            name: string;
+            itemId: string;
             dosesPerUnit: number;
+            vvmType?: string | null;
+            manufacturer?: { __typename: 'NameNode'; name: string } | null;
+            packagingVariants: Array<{
+              __typename: 'PackagingVariantNode';
+              id: string;
+            }>;
           } | null;
           donor?: { __typename: 'NameNode'; id: string } | null;
           vvmStatus?: {
@@ -1137,7 +1169,15 @@ export type GetHistoricalStockLinesQuery = {
       itemVariant?: {
         __typename: 'ItemVariantNode';
         id: string;
+        name: string;
+        itemId: string;
         dosesPerUnit: number;
+        vvmType?: string | null;
+        manufacturer?: { __typename: 'NameNode'; name: string } | null;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+        }>;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
       vvmStatus?: {
@@ -1528,7 +1568,16 @@ export const StockLineFragmentDoc = gql`
     itemVariantId
     itemVariant {
       id
+      name
+      itemId
       dosesPerUnit
+      vvmType
+      manufacturer(storeId: $storeId) {
+        name
+      }
+      packagingVariants {
+        id
+      }
     }
     donor(storeId: $storeId) {
       id
