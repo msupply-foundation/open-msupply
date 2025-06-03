@@ -546,12 +546,6 @@ impl SyncTranslation for InvoiceTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        log::info!(
-            "Translating invoice {} to legacy transact row: {}",
-            id,
-            json_record.to_string()
-        );
-
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
