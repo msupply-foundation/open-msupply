@@ -63,4 +63,5 @@ COPY package.json .
 # Needs this for yarn to work properly
 RUN echo 'export NODE_OPTIONS="--max-old-space-size=4096"' >> ~/.bashrc
 
+WORKDIR /usr/src/omsupply/server
 EXPOSE 3003
