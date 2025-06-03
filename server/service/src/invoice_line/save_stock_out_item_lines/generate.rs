@@ -212,11 +212,13 @@ mod tests {
                 id: "newA".to_string(),
                 number_of_packs: 1.0,
                 stock_line_id: "A".to_string(),
+                campaign_id: None,
             },
             SaveStockOutInvoiceLine {
                 id: "newB".to_string(),
                 number_of_packs: 2.0,
                 stock_line_id: "B".to_string(),
+                campaign_id: None,
             },
         ];
 

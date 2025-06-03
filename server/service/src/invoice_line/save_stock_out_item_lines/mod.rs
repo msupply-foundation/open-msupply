@@ -324,7 +324,8 @@ mod test {
                         lines: vec![SaveStockOutInvoiceLine {
                             id: "new_line".to_string(),
                             number_of_packs: 1000.0,
-                            stock_line_id: mock_stock_line_vaccine_item_a().id
+                            stock_line_id: mock_stock_line_vaccine_item_a().id,
+                            campaign_id: None
                         }],
                         ..Default::default()
                     }
@@ -400,11 +401,13 @@ mod test {
                             id: "line1".to_string(), // create
                             number_of_packs: 1.0,
                             stock_line_id: mock_stock_line_b().id,
+                            campaign_id: None,
                         },
                         SaveStockOutInvoiceLine {
                             id: line_to_update().id,
                             number_of_packs: 2.0,
                             stock_line_id: mock_stock_line_a().id,
+                            campaign_id: None,
                         },
                         SaveStockOutInvoiceLine {
                             id: line_to_delete().id,

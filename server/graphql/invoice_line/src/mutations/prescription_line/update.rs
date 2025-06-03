@@ -545,6 +545,7 @@ mod test {
                     note: Some("some note".to_string()),
                     total_before_tax: None,
                     tax: None,
+                    campaign_id: None
                 }
             );
             Ok(InvoiceLine {
