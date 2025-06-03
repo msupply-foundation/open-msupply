@@ -513,12 +513,7 @@ function configureMenus(
     ],
   };
 
-  const menu = Menu.buildFromTemplate([
-    fileMenu,
-    // editMenu,
-    // viewMenu,
-    helpMenu,
-  ]);
+  const menu = Menu.buildFromTemplate([fileMenu, helpMenu]);
 
   Menu.setApplicationMenu(menu);
 }
