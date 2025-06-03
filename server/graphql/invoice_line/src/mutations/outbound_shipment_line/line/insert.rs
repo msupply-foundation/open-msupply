@@ -550,7 +550,8 @@ mod test {
                     pack_size: None,
                     expiry_date: None,
                     cost_price_per_pack: None,
-                    sell_price_per_pack: None
+                    sell_price_per_pack: None,
+                    campaign_id: None
                 }
             );
             Ok(InvoiceLine {
