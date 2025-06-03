@@ -80,8 +80,10 @@ export const useDraftRequisitionLine = (
       } else {
         setDraft(createDraftFromItem(item, data));
       }
+      setIsDirty(false);
     } else {
       setDraft(null);
+      setIsDirty(false);
     }
   }, [lines, item, data]);
 
@@ -92,12 +94,13 @@ export const useDraftRequisitionLine = (
   };
 
   const save = async () => {
-    if (draft && !isDirty) {
+    if (draft) {
       const result = await saveMutation(draft);
 
       if (draft.isCreated) {
-        setDraft(prev => (prev ? { ...prev, isCreated: false } : null));
+        setDraft(line => (line ? { ...line, isCreated: false } : null));
       }
+      setIsDirty(false);
       return result;
     }
     return null;

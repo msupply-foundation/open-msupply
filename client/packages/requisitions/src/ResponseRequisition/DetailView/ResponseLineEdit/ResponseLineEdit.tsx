@@ -38,7 +38,7 @@ interface ResponseLineEditProps {
   setRepresentation: (type: RepresentationValue) => void;
   disabled: boolean;
   isUpdateMode?: boolean;
-  showExtraFields?: boolean;
+  setIsDirty?: (isDirty: boolean) => void;
 }
 
 export const ResponseLineEdit = ({
@@ -53,6 +53,7 @@ export const ResponseLineEdit = ({
   setRepresentation,
   disabled = false,
   isUpdateMode = false,
+  setIsDirty = () => {},
 }: ResponseLineEditProps) => {
   const t = useTranslation();
   const { data: reasonOptions, isLoading } = useReasonOptions();
@@ -240,6 +241,7 @@ export const ResponseLineEdit = ({
             representation={representation}
             setRepresentation={setRepresentation}
             unitName={unitName}
+            setIsDirty={setIsDirty}
           />
           {numericInput(
             'label.remaining-to-supply',

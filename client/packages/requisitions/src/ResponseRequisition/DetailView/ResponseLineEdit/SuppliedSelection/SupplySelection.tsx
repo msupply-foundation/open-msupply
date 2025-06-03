@@ -26,6 +26,7 @@ interface SupplySelectionProps {
   representation: RepresentationValue;
   setRepresentation: (rep: RepresentationValue) => void;
   unitName: string;
+  setIsDirty?: (isDirty: boolean) => void;
 }
 
 export const SupplySelection = ({
@@ -37,6 +38,7 @@ export const SupplySelection = ({
   representation,
   setRepresentation,
   unitName,
+  setIsDirty = () => {},
 }: SupplySelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -49,8 +51,9 @@ export const SupplySelection = ({
   const [value, setValue] = useState(currentValue);
 
   const options = useMemo((): Option[] => {
-    const unitPlural = getPlural(unitName, currentValue);
-    const packPlural = getPlural(t('label.pack'), currentValue).toLowerCase();
+    const displayValue = value === 1 ? 1 : 2;
+    const unitPlural = getPlural(unitName, displayValue);
+    const packPlural = getPlural(t('label.pack'), displayValue).toLowerCase();
 
     if (!isPacksEnabled)
       return [{ label: unitName, value: Representation.UNITS }];
@@ -68,17 +71,20 @@ export const SupplySelection = ({
         defaultPackSize
       );
       update(updatedSupply);
+      setIsDirty(false);
     },
-    [representation, defaultPackSize, update]
+    [representation, defaultPackSize]
   );
 
   useEffect(() => {
     setValue(currentValue);
-  }, [currentValue, representation]);
+  }, [draft?.id, representation]);
 
-  const handleValueChange = (value?: number) => {
-    setValue(value ?? 0);
-    debouncedUpdate(value);
+  const handleValueChange = (newValue?: number) => {
+    const valueChanged = newValue !== currentValue;
+    setIsDirty(valueChanged);
+    setValue(newValue ?? 0);
+    debouncedUpdate(newValue);
   };
 
   return (

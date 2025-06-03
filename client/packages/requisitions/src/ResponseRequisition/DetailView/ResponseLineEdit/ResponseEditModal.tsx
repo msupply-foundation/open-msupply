@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  BasicSpinner,
   DialogButton,
   ModalMode,
   ModalTabs,
@@ -45,25 +46,32 @@ export const ResponseLineEditModal = ({
   const [currentItem, setCurrentItem] = useState(
     lines.find(line => line.item.id === itemId)?.item
   );
-  const [previousItemLineId, setPreviousItemLineId] = useState<string | null>(
-    null
-  );
   const [representation, setRepresentation] = useState<RepresentationValue>(
     Representation.UNITS
   );
 
-  const { draft, update, save } = useDraftRequisitionLine(currentItem);
+  const { draft, update, save, isDirty, setIsDirty, isLoading } =
+    useDraftRequisitionLine(currentItem);
   const { hasNext, next } = useNextResponseLine(currentItem);
 
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
 
+  const shouldDeleteLine = () => {
+    if (mode === ModalMode.Create && !!draft?.isCreated) return true;
+    if (!draft?.id || isDisabled) return false;
+    if (mode === ModalMode.Update) return false;
+    return false;
+  };
+
   const deletePreviousLine = () => {
-    if (previousItemLineId && !isDisabled) deleteLine(previousItemLineId);
+    if (draft?.id && shouldDeleteLine()) {
+      deleteLine(draft.id);
+    }
   };
 
   const onCancel = () => {
     if (mode === ModalMode.Create) {
-      deletePreviousLine();
+      deleteLine(draft?.id || '');
     }
     onClose();
   };
@@ -76,7 +84,7 @@ export const ResponseLineEditModal = ({
 
   const onSave = async () => {
     await save();
-    setPreviousItemLineId(null);
+    deletePreviousLine();
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(undefined);
     else onClose();
@@ -89,10 +97,8 @@ export const ResponseLineEditModal = ({
   useEffect(() => {
     if (!!draft?.isCreated) {
       save();
-    } else {
-      if (!!draft?.id) setPreviousItemLineId(draft.id);
     }
-  }, [draft, setPreviousItemLineId]);
+  }, [draft]);
 
   const { data } = useResponse.line.stats(!draft?.isCreated, draft?.id);
 
@@ -143,7 +149,7 @@ export const ResponseLineEditModal = ({
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
       nextButton={
         <DialogButton
-          disabled={nextDisabled}
+          disabled={nextDisabled || isDirty}
           variant="next-and-ok"
           onClick={onSave}
         />
@@ -151,7 +157,7 @@ export const ResponseLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentItem}
+          disabled={!currentItem || isDirty}
           onClick={async () => {
             await save();
             onClose();
@@ -161,31 +167,36 @@ export const ResponseLineEditModal = ({
       height={800}
       width={1200}
     >
-      <>
-        <ResponseLineEdit
-          store={store}
-          requisition={requisition}
-          lines={lines}
-          draft={draft}
-          currentItem={currentItem}
-          onChangeItem={onChangeItem}
-          update={update}
-          representation={representation}
-          setRepresentation={setRepresentation}
-          disabled={isDisabled}
-          isUpdateMode={mode === ModalMode.Update}
-        />
-        {!!draft && (
-          <ModalTabs
-            tabs={tabs}
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              background: theme => theme.palette.background.toolbar,
-            }}
+      {isLoading ? (
+        <BasicSpinner />
+      ) : (
+        <>
+          <ResponseLineEdit
+            store={store}
+            requisition={requisition}
+            lines={lines}
+            draft={draft}
+            currentItem={currentItem}
+            onChangeItem={onChangeItem}
+            update={update}
+            representation={representation}
+            setRepresentation={setRepresentation}
+            disabled={isDisabled}
+            isUpdateMode={mode === ModalMode.Update}
+            setIsDirty={setIsDirty}
           />
-        )}
-      </>
+          {!!draft && (
+            <ModalTabs
+              tabs={tabs}
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                background: theme => theme.palette.background.toolbar,
+              }}
+            />
+          )}
+        </>
+      )}
     </Modal>
   );
 };
