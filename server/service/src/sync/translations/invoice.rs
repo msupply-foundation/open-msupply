@@ -767,6 +767,7 @@ fn invoice_status(
         },
         // inbound
         InvoiceType::InboundShipment | InvoiceType::CustomerReturn => match data.status {
+            // sg status is only for manually created supplier invoice in OG
             LegacyTransactStatus::Sg => InvoiceStatus::New,
             // Transferred new invoices, when migrated from mSupply should be converted to shipped status
             LegacyTransactStatus::Nw if is_transfer => InvoiceStatus::Shipped,
