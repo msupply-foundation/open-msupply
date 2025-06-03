@@ -261,33 +261,52 @@ export const RequestLineEdit = ({
           ))}
       </Box>
 
-      {showContent && (
-        <Box
-          display="flex"
-          flexDirection="column"
-          justifySelf="center"
-          width={900}
-        >
-          <StockDistribution
-            availableStockOnHand={draft?.itemStats?.availableStockOnHand}
-            averageMonthlyConsumption={
-              draft?.itemStats?.averageMonthlyConsumption
-            }
-            suggestedQuantity={draft?.suggestedQuantity}
-          />
+      {line && (
+        <Box padding={'2px 16px 0 16px'}>
+          {plugins.requestRequisitionLine?.editViewInfo?.map((Info, index) => (
+            <Info key={index} line={line} requisition={requisition} />
+          ))}
         </Box>
       )}
 
-      {line && (
-        <Box>
-          <Box padding={'2px 16px 0 16px'}>
-            {plugins.requestRequisitionLine?.editViewInfo?.map(
-              (Info, index) => (
-                <Info key={index} line={line} requisition={requisition} />
-              )
-            )}
+      {showContent && line && (
+        <Box
+          sx={{
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+          }}
+        >
+          <Box
+            sx={{
+              width: '100%',
+              maxWidth: 900,
+              mx: 'auto',
+              p: '8px 16px',
+            }}
+          >
+            <StockDistribution
+              availableStockOnHand={line.itemStats?.availableStockOnHand}
+              averageMonthlyConsumption={
+                line.itemStats?.averageMonthlyConsumption
+              }
+              suggestedQuantity={line.suggestedQuantity}
+            />
           </Box>
-          <Box display="flex" sx={{ padding: 2 }} justifyContent="center">
+          <Box
+            display="flex"
+            justifyContent="center"
+            gap={2}
+            sx={{
+              padding: 2,
+              flexDirection: {
+                xs: 'column',
+                md: 'row',
+              },
+              alignItems: 'center',
+            }}
+          >
             <ConsumptionHistory id={line.id} />
             <StockEvolution id={line.id} />
           </Box>
