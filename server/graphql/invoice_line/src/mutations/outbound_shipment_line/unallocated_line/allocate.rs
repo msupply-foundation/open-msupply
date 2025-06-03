@@ -293,7 +293,7 @@ mod graphql {
                             id
                         }
                     }
-                    skippedUnusableVVMStatusLines {
+                    skippedUnusableVvmStatusLines {
                         nodes {
                             id
                         }
