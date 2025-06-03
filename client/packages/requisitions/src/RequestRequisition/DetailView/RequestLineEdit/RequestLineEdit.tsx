@@ -48,6 +48,7 @@ interface RequestLineEditProps {
   disabled?: boolean;
   isUpdateMode?: boolean;
   showExtraFields?: boolean;
+  manageVaccinesInDoses?: boolean;
 }
 
 export const RequestLineEdit = ({
@@ -63,12 +64,15 @@ export const RequestLineEdit = ({
   disabled,
   isUpdateMode,
   showExtraFields,
+  manageVaccinesInDoses,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
   const { width } = useWindowDimensions();
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
+  const displayVaccinesInDoses =
+    manageVaccinesInDoses && currentItem?.isVaccine;
   const disableItemSelection = disabled || isUpdateMode;
   const disableReasons =
     draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
@@ -226,6 +230,12 @@ export const RequestLineEdit = ({
                   value={String(currentItem?.defaultPackSize)}
                 />
               )}
+              {displayVaccinesInDoses && currentItem?.doses ? (
+                <InfoRow
+                  label={t('label.doses-per-unit')}
+                  value={String(currentItem?.doses)}
+                />
+              ) : null}
               {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
             </>
           ) : null
