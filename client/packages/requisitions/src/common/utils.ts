@@ -30,6 +30,19 @@ export const useValueInUnitsOrPacks = (
     [representation, defaultPackSize, value]
   );
 
+export const calculateValueInDoses = (
+  representation: RepresentationValue,
+  defaultPackSize: number,
+  dosesPerUnit: number,
+  value?: number | null
+): number => {
+  if (!value) return 0;
+  if (representation === Representation.PACKS) {
+    return value * defaultPackSize * dosesPerUnit;
+  }
+  return value * dosesPerUnit;
+};
+
 export const useEndAdornment = (
   t: TypedTFunction<LocaleKey>,
   getPlural: (word: string, value: number) => string,
