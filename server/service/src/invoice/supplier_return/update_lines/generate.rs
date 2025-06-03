@@ -70,6 +70,7 @@ pub fn generate(
             r#type: Some(StockOutType::SupplierReturn),
             tax: None,
             total_before_tax: None,
+            campaign_id: None,
         })
         .collect();
 
