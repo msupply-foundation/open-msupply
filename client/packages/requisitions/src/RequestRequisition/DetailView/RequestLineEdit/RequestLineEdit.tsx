@@ -24,13 +24,16 @@ import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
 import { StockEvolution } from './ItemCharts/StockEvolution';
 import { StockDistribution } from './ItemCharts/StockDistribution';
 import {
-  getLeftPanel,
-  getMiddlePanel,
   InfoRow,
   ModalContentLayout,
-  ValueInfo,
   ValueInfoRow,
+  ValueInfo,
 } from '../../../common';
+import {
+  getLeftPanel,
+  getExtraMiddlePanels,
+  getSuggestedRow,
+} from './ModalContentPanels';
 
 interface RequestLineEditProps {
   requisition: RequestFragment;
@@ -67,6 +70,8 @@ export const RequestLineEdit = ({
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
   const disableItemSelection = disabled || isUpdateMode;
+  const disableReasons =
+    draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
   const { data: reasonOptions, isLoading } = useReasonOptions();
 
   const line = useMemo(
@@ -81,11 +86,12 @@ export const RequestLineEdit = ({
   const renderValueInfoRows = useMemo(() => {
     return (info: ValueInfo[]) => (
       <>
-        {info.map(({ label, value, sx }) => (
+        {info.map(({ label, value, sx, endAdornmentOverride }) => (
           <ValueInfoRow
             key={label}
             label={label}
             value={value}
+            endAdornmentOverride={endAdornmentOverride}
             defaultPackSize={defaultPackSize}
             representation={representation}
             unitName={unitName}
@@ -96,9 +102,94 @@ export const RequestLineEdit = ({
     );
   }, [defaultPackSize, representation, unitName]);
 
+  const getMiddlePanelContent = () => {
+    if (!draft) return null;
+
+    return renderValueInfoRows(getExtraMiddlePanels(t, draft));
+  };
+
+  const getRightPanelContent = () => {
+    if (!draft) return null;
+
+    return (
+      <>
+        <Box
+          sx={{
+            background: theme => theme.palette.background.group,
+            padding: '0px 8px',
+            borderRadius: 2,
+            pb: 2,
+            pt: 0.5,
+          }}
+        >
+          {!showExtraFields && renderValueInfoRows(getSuggestedRow(t, draft))}
+          <RequestedSelection
+            disabled={disabled}
+            defaultPackSize={defaultPackSize}
+            isPacksEnabled={isPacksEnabled}
+            draft={draft}
+            update={update}
+            representation={representation}
+            setRepresentation={setRepresentation}
+            unitName={unitName}
+            showExtraFields={showExtraFields}
+          />
+          {showExtraFields && (
+            <Typography variant="body1" fontWeight="bold">
+              {t('label.reason')}:
+              <ReasonOptionsSearchInput
+                value={draft?.reason}
+                onChange={value => {
+                  update({ reason: value });
+                }}
+                width={360}
+                type={ReasonOptionNodeType.RequisitionLineVariance}
+                disabled={disableReasons}
+                reasonOptions={reasonOptions?.nodes ?? []}
+                loading={isLoading}
+                textSx={
+                  disableReasons
+                    ? {
+                        backgroundColor: theme =>
+                          theme.palette.background.toolbar,
+                      }
+                    : {
+                        backgroundColor: theme =>
+                          theme.palette.background.white,
+                      }
+                }
+              />
+            </Typography>
+          )}
+          <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
+            {t('heading.comment')}:
+          </Typography>
+          <BufferedTextArea
+            value={draft?.comment ?? ''}
+            onChange={e => update({ comment: e.target.value })}
+            slotProps={{
+              input: {
+                sx: {
+                  backgroundColor: theme =>
+                    disabled
+                      ? theme.palette.background.toolbar
+                      : theme.palette.background.white,
+                },
+              },
+            }}
+            disabled={disabled}
+            minRows={3}
+            maxRows={3}
+          />
+        </Box>
+      </>
+    );
+  };
+
   return (
     <>
       <ModalContentLayout
+        showExtraFields={showExtraFields}
         Top={
           <>
             {(disableItemSelection && (
@@ -140,67 +231,9 @@ export const RequestLineEdit = ({
           ) : null
         }
         Middle={
-          draft ? (
-            <>
-              {renderValueInfoRows(getMiddlePanel(t, draft, showExtraFields))}
-            </>
-          ) : null
+          showExtraFields ? getMiddlePanelContent() : getRightPanelContent()
         }
-        Right={
-          draft ? (
-            <>
-              <RequestedSelection
-                disabled={disabled}
-                defaultPackSize={defaultPackSize}
-                isPacksEnabled={isPacksEnabled}
-                draft={draft}
-                update={update}
-                representation={representation}
-                setRepresentation={setRepresentation}
-                unitName={unitName}
-              />
-              {showExtraFields && (
-                <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
-                  {t('label.reason')}:
-                  <ReasonOptionsSearchInput
-                    value={draft?.reason}
-                    onChange={value => {
-                      update({ reason: value });
-                    }}
-                    width={360}
-                    type={ReasonOptionNodeType.RequisitionLineVariance}
-                    isDisabled={
-                      draft?.requestedQuantity === draft?.suggestedQuantity ||
-                      disabled
-                    }
-                    reasonOptions={reasonOptions?.nodes ?? []}
-                    isLoading={isLoading}
-                  />
-                </Typography>
-              )}
-              <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
-                {t('heading.comment')}:
-              </Typography>
-              <BufferedTextArea
-                value={draft?.comment ?? ''}
-                onChange={e => update({ comment: e.target.value })}
-                slotProps={{
-                  input: {
-                    sx: {
-                      backgroundColor: theme =>
-                        disabled
-                          ? theme.palette.background.toolbar
-                          : theme.palette.background.white,
-                    },
-                  },
-                }}
-                disabled={disabled}
-                minRows={2}
-                maxRows={2}
-              />
-            </>
-          ) : null
-        }
+        Right={showExtraFields ? getRightPanelContent() : null}
       />
       <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
         {line &&

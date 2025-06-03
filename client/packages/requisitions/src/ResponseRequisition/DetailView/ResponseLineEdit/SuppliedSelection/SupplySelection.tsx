@@ -8,28 +8,28 @@ import {
   useIntlUtils,
   useTranslation,
 } from '@openmsupply-client/common';
-import { getCurrentValue, getUpdatedRequest } from './utils';
-import { DraftRequestLine } from '../hooks';
+import { getCurrentValue, getUpdatedSupply } from './utils';
 import { Representation, RepresentationValue } from '../../../../common';
+import { DraftResponseLine } from '../hooks';
 
 interface Option {
   label: string;
   value: RepresentationValue;
 }
 
-interface RequestedSelectionProps {
+interface SupplySelectionProps {
   disabled?: boolean;
   isPacksEnabled?: boolean;
   defaultPackSize?: number;
-  draft?: DraftRequestLine | null;
-  update: (patch: Partial<DraftRequestLine>) => void;
+  draft?: DraftResponseLine | null;
+  update: (patch: Partial<DraftResponseLine>) => void;
   representation: RepresentationValue;
   setRepresentation: (rep: RepresentationValue) => void;
   unitName: string;
   showExtraFields?: boolean;
 }
 
-export const RequestedSelection = ({
+export const SupplySelection = ({
   disabled,
   isPacksEnabled,
   defaultPackSize,
@@ -38,20 +38,16 @@ export const RequestedSelection = ({
   representation,
   setRepresentation,
   unitName,
-  showExtraFields,
-}: RequestedSelectionProps) => {
+  showExtraFields = false,
+}: SupplySelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
   const width = showExtraFields ? 170 : 250;
 
   const currentValue = useMemo(
     (): number =>
-      getCurrentValue(
-        representation,
-        draft?.requestedQuantity,
-        defaultPackSize
-      ),
-    [representation, draft?.requestedQuantity, defaultPackSize]
+      getCurrentValue(representation, draft?.supplyQuantity, defaultPackSize),
+    [representation, draft?.supplyQuantity, defaultPackSize]
   );
   const [value, setValue] = useState(currentValue);
 
@@ -69,13 +65,12 @@ export const RequestedSelection = ({
 
   const debouncedUpdate = useDebounceCallback(
     (value?: number) => {
-      const updatedRequest = getUpdatedRequest(
+      const updatedSupply = getUpdatedSupply(
         value,
         representation,
-        defaultPackSize,
-        draft?.suggestedQuantity
+        defaultPackSize
       );
-      update(updatedRequest);
+      update(updatedSupply);
     },
     [representation, defaultPackSize, update]
   );
@@ -90,11 +85,12 @@ export const RequestedSelection = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
+        p: 1,
         mb: 1,
       }}
     >
       <Typography variant="body1" fontWeight="bold" p={0.5}>
-        {t('label.requested')}:
+        {t('label.supply')}:
       </Typography>
       <Box gap={1} display="flex" flexDirection="row">
         <NumericTextInput
