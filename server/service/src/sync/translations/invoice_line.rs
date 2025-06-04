@@ -1,5 +1,8 @@
 use crate::sync::{
-    sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
+    sync_serde::{
+        date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
+        zero_date_as_option,
+    },
     translations::{
         currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
         item_variant::ItemVariantTranslation, location::LocationTranslation,
@@ -34,6 +37,14 @@ pub enum LegacyTransLineType {
     /// E.g. "non_stock"
     #[serde(other)]
     Others,
+}
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize)]
+pub struct TransLineRowOmsFields {
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub campaign_id: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -96,9 +107,9 @@ pub struct LegacyTransLineRow {
     #[serde(rename = "vaccine_vial_monitor_status_ID")]
     pub vvm_status_id: Option<String>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub campaign_id: Option<String>,
+    pub oms_fields: Option<TransLineRowOmsFields>,
 }
+
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -158,8 +169,9 @@ impl SyncTranslation for InvoiceLineTranslation {
             linked_invoice_id,
             donor_id,
             vvm_status_id,
-            campaign_id,
+            oms_fields,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
+
         let line_type = match to_invoice_line_type(&r#type) {
             Some(line_type) => line_type,
             None => {
@@ -293,7 +305,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             donor_link_id: donor_id,
             reason_option_id,
             vvm_status_id,
-            campaign_id,
+            campaign_id: oms_fields.and_then(|o| o.campaign_id),
         };
 
         let result = adjust_negative_values(result);
@@ -357,6 +369,8 @@ impl SyncTranslation for InvoiceLineTranslation {
             ..
         } = invoice_line;
 
+        let oms_fields = TransLineRowOmsFields { campaign_id };
+
         let legacy_row = LegacyTransLineRow {
             id: id.clone(),
             invoice_id,
@@ -383,7 +397,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             linked_invoice_id,
             donor_id: donor_link_id,
             vvm_status_id,
-            campaign_id,
+            oms_fields: Some(oms_fields),
         };
         Ok(PushTranslateResult::upsert(
             changelog,
