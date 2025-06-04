@@ -33,11 +33,14 @@ const PlaceholderCell = styled(TableCell)(({ theme }) => ({
   color: theme.palette.secondary.main,
 }));
 
-const TotalCell = styled(TableCell)({
+const TotalCell = styled(TableCell)(({ theme }) => ({
   fontSize: 14,
   padding: '4px 12px 4px 12px',
   fontWeight: 'bold',
-});
+  position: 'sticky',
+  bottom: 0,
+  background: theme.palette.background.white,
+}));
 
 const PlaceholderRow = ({
   quantity,
