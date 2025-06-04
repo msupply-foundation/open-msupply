@@ -22,8 +22,6 @@ export const usePluginData = ({
 }: PluginDataProps) => {
   const { pluginDataApi, storeId, queryClient } = usePluginDataGraphQL();
 
-  console.log('filter', filter);
-
   // Fetch pluginData rows matching filter
   const queryListFn = async () => {
     const result = await pluginDataApi.pluginData({
