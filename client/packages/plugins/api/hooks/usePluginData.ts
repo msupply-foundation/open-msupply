@@ -12,13 +12,16 @@ import { PLUGIN_DATA } from './keys';
 type PluginDataProps = {
   pluginCode: string;
   filter?: PluginDataFilterInput;
-  queryKey?: string;
+  // Because this hook is a generic one, you many need to specify additional
+  // query key elements in order to trigger a data re-fetch at the appropriate
+  // times
+  queryKey?: string[];
 };
 
 export const usePluginData = ({
   pluginCode,
   filter,
-  queryKey = '',
+  queryKey = [],
 }: PluginDataProps) => {
   const { pluginDataApi, storeId, queryClient } = usePluginDataGraphQL();
 
@@ -34,7 +37,7 @@ export const usePluginData = ({
   };
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: [PLUGIN_DATA, storeId, pluginCode, queryKey],
+    queryKey: [PLUGIN_DATA, storeId, pluginCode, ...queryKey],
     queryFn: queryListFn,
   });
 
