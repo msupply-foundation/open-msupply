@@ -29,7 +29,7 @@ export const PrescriptionLineEditView = () => {
   const isDirty = useRef(false);
   const navigate = useNavigate();
 
-  const { data: prefs } = usePreference(
+  const { data: prefs, isLoading: isLoadingPrefs } = usePreference(
     PreferenceKey.ManageVaccinesInDoses,
     PreferenceKey.SortByVvmStatusThenExpiry
   );
@@ -151,7 +151,7 @@ export const PrescriptionLineEditView = () => {
     }
   };
 
-  if (isLoading || !itemId) return <BasicSpinner />;
+  if (isLoading || !itemId || isLoadingPrefs) return <BasicSpinner />;
   if (!data) return <NothingHere />;
 
   const itemIdList = items.map(item => item.id);
