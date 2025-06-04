@@ -10,7 +10,11 @@ import { RequestFragment, useRequest } from '../../api';
 import { useDraftRequisitionLine, useNextRequestLine } from './hooks';
 import { isRequestDisabled } from '../../../utils';
 import { RequestLineEdit } from './RequestLineEdit';
-import { Representation, RepresentationValue } from '../../../common';
+import {
+  Representation,
+  RepresentationValue,
+  shouldDeleteLine,
+} from '../../../common';
 
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
 
@@ -62,15 +66,9 @@ export const RequestLineEditModal = ({
   const isProgram = !!requisition?.program;
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
 
-  const shouldDeleteLine = () => {
-    if (mode === ModalMode.Create && !draft?.requestedQuantity) return true;
-    if (!draft?.id || isDisabled) return false;
-    if (mode === ModalMode.Update) return false;
-    return false;
-  };
-
   const deletePreviousLine = () => {
-    if (draft?.id && shouldDeleteLine()) {
+    const shouldDelete = shouldDeleteLine(mode, draft?.id, isDisabled);
+    if (draft?.id && shouldDelete) {
       deleteLine(draft.id);
     }
   };

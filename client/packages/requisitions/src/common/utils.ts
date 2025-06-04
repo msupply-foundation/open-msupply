@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { LocaleKey, TypedTFunction } from '@common/intl';
 import { NumUtils } from '@common/utils';
+import { ModalMode } from '@common/hooks';
 
 export const Representation = {
   PACKS: 'packs',
@@ -67,3 +68,13 @@ export const useEndAdornment = (
       valueInUnitsOrPacks,
     ]
   );
+
+export const shouldDeleteLine = (
+  mode: ModalMode | null,
+  draftId?: string,
+  isDisabled?: boolean
+): boolean => {
+  if (mode === ModalMode.Create) return true;
+  if (!draftId || isDisabled || mode === ModalMode.Update) return false;
+  return false;
+};
