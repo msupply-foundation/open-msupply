@@ -57,7 +57,6 @@ pub fn generate(
                         StockInType::InventoryAddition => false,
                         _ => true,
                     },
-                    campaign_id: input.campaign_id.clone(),
                 },
             )?;
 

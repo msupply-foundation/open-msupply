@@ -20,7 +20,6 @@ pub struct StockLineInput {
     pub barcode_id: Option<String>,
     pub supplier_link_id: String,
     pub overwrite_stock_levels: bool,
-    pub campaign_id: Option<String>,
 }
 
 struct StockLevels {
@@ -54,7 +53,6 @@ pub fn generate_batch(
         barcode_id,
         supplier_link_id,
         overwrite_stock_levels,
-        campaign_id: _, // Maybe should remove this from the input?
     }: StockLineInput,
 ) -> Result<StockLineRow, RepositoryError> {
     // Generate new stock line id if not provided
