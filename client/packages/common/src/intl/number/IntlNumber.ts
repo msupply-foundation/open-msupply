@@ -51,8 +51,8 @@ export const useFormatNumber = () => {
         .replace(RegexUtils.escapeChars(decimalChar), '.')
         // Remove separators
         .replace(new RegExp(`\\${separator}`, 'g'), '')
-        // Remove all characters except digits, decimal point, and minus sign
-        .replace(/[^\d\.-]/g, '');
+        // Remove all other characters
+        .replace(/[^\d\.]/g, '');
 
       if (num === '') return NaN;
 
