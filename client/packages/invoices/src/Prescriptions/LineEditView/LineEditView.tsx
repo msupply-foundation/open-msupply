@@ -38,7 +38,7 @@ export const PrescriptionLineEditView = () => {
     isDirty: allocationIsDirty,
     draftLines,
     item,
-    prescribedQuantity,
+    prescribedUnits,
     note,
     allocatedQuantity,
     setIsDirty: setAllocationIsDirty,
@@ -128,7 +128,7 @@ export const PrescriptionLineEditView = () => {
       await savePrescriptionItemLineData({
         itemId: contextItemId,
         lines: draftLines,
-        prescribedQuantity: prescribedQuantity,
+        prescribedUnits,
         note,
       });
 
@@ -211,7 +211,7 @@ export const PrescriptionLineEditView = () => {
         disabled={
           !item?.id ||
           !allocationIsDirty ||
-          (allocatedQuantity === 0 && prescribedQuantity === 0)
+          (allocatedQuantity === 0 && prescribedUnits === 0)
         }
         handleSave={onSave}
         handleCancel={() =>

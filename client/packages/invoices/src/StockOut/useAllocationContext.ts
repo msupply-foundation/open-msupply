@@ -58,7 +58,7 @@ interface AllocationContext {
   allocateIn: AllocateInOption;
   item: DraftItem | null;
   placeholderUnits: number | null;
-  prescribedQuantity: number | null;
+  prescribedUnits: number | null;
   note: string | null;
 
   initialise: (params: {
@@ -72,7 +72,7 @@ interface AllocationContext {
   }) => void;
 
   setAlerts: (alerts: StockOutAlert[]) => void;
-  setPrescribedQuantity: (quantity: number | null) => void;
+  setPrescribedQuantity: (quantity: number) => void;
   setNote: (note: string | null) => void;
   setAllocateIn: (
     allocateIn: AllocateInOption,
@@ -109,7 +109,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   draftLines: [],
   nonAllocatableLines: [],
   placeholderUnits: null,
-  prescribedQuantity: null,
+  prescribedUnits: null,
   alerts: [],
   allocateIn: { type: AllocateInType.Units },
   note: null,
@@ -149,9 +149,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       nonAllocatableLines: ignoreNonAllocatableLines ? [] : nonAllocatableLines,
 
       placeholderUnits: allowPlaceholder ? (placeholderUnits ?? 0) : null,
-      prescribedQuantity: allowPrescribedQuantity
-        ? (prescribedUnits ?? 0)
-        : null,
+      prescribedUnits: allowPrescribedQuantity ? (prescribedUnits ?? 0) : null,
       alerts: [],
     });
   },
@@ -168,7 +166,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       availablePackSizes: [],
       alerts: [],
       note: null,
-      prescribedQuantity: null,
+      prescribedUnits: null,
     })),
 
   setAllocateIn: (allocateIn, format, t) => {
@@ -216,12 +214,15 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       isDirty: true,
     })),
 
-  setPrescribedQuantity: (quantity: number | null) =>
+  setPrescribedQuantity: (quantity: number) => {
+    const { allocateIn, item } = get();
+
     set(state => ({
       ...state,
-      prescribedQuantity: quantity,
+      prescribedUnits: normaliseToUnits(quantity, allocateIn, item?.doses || 1),
       isDirty: true,
-    })),
+    }));
+  },
 
   autoAllocate: (quantity, format, t, allowPartialPacks = false) => {
     const {
