@@ -6,7 +6,6 @@ import {
 } from '@openmsupply-client/system';
 import { InboundFragment } from '@openmsupply-client/invoices';
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
-import { ValueInfo } from 'packages/requisitions/src/common';
 
 export type Plugins = {
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
