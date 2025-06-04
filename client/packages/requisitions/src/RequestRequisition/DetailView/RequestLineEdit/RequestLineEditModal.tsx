@@ -62,10 +62,10 @@ export const RequestLineEditModal = ({
 
   const useConsumptionData =
     store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
-  const shouldDelete = shouldDeleteLine(mode, draft?.id, isDisabled);
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
 
   const deletePreviousLine = () => {
+    const shouldDelete = shouldDeleteLine(mode, draft?.id, isDisabled);
     if (draft?.id && shouldDelete) {
       deleteLine(draft.id);
     }
@@ -121,9 +121,6 @@ export const RequestLineEditModal = ({
           variant="ok"
           disabled={!currentItem || isDirty}
           onClick={async () => {
-            if (draft?.requestedQuantity === 0) {
-              deletePreviousLine();
-            }
             await save();
             onClose();
           }}
