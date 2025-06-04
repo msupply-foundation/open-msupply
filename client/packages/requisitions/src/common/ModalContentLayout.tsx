@@ -127,7 +127,7 @@ export const ValueInfoRow = ({
       return getPlural(t('label.pack').toLowerCase(), valueInUnitsOrPacks);
     }
     return getPlural(unitName.toLowerCase(), valueInUnitsOrPacks);
-  }, [representation, unitName, nullDisplay]);
+  }, [representation, unitName, nullDisplay, value]);
 
   const displayValue =
     value === null && nullDisplay ? nullDisplay : round(valueInUnitsOrPacks, 2);
