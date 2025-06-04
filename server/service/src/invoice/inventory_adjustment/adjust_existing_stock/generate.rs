@@ -66,9 +66,9 @@ pub fn generate(
         created_datetime: current_datetime,
         status: InvoiceStatus::New,
         original_shipment_id: None,
+        currency_rate: 1.0,
         // Default
         currency_id: None,
-        currency_rate: 1.0,
         on_hold: false,
         colour: None,
         comment: None,
