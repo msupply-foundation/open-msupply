@@ -14,3 +14,6 @@ pub use plugins::*;
 
 mod generate_typescript_types;
 pub use generate_typescript_types::*;
+
+mod load_test;
+pub use load_test::*;
