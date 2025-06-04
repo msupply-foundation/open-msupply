@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   ItemWithStatsFragment,
   ReasonOptionsSearchInput,
@@ -78,8 +78,8 @@ export const RequestLineEdit = ({
     [lines, currentItem?.id]
   );
 
-  const renderValueInfoRows = useMemo(() => {
-    return (info: ValueInfo[]) => (
+  const renderValueInfoRows = useCallback(
+    (info: ValueInfo[]) => (
       <>
         {info.map(({ label, value, sx }) => (
           <ValueInfoRow
@@ -93,8 +93,9 @@ export const RequestLineEdit = ({
           />
         ))}
       </>
-    );
-  }, [defaultPackSize, representation, unitName]);
+    ),
+    [defaultPackSize, representation, unitName]
+  );
 
   return (
     <>
@@ -136,6 +137,12 @@ export const RequestLineEdit = ({
                 />
               )}
               {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
+              {line &&
+                plugins.requestRequisitionLine?.editViewField?.map(
+                  (Field, index) => (
+                    <Field key={index} line={line} unitName={unitName} />
+                  )
+                )}
             </>
           ) : null
         }
@@ -202,13 +209,6 @@ export const RequestLineEdit = ({
           ) : null
         }
       />
-      <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
-        {line &&
-          plugins.requestRequisitionLine?.editViewField?.map((Field, index) => (
-            <Field key={index} line={line} />
-          ))}
-      </Box>
-
       {!!draft && (
         <Box
           display="flex"
