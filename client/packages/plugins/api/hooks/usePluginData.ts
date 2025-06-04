@@ -9,10 +9,20 @@ import {
 import { usePluginDataGraphQL } from '../usePluginGraphQL';
 import { PLUGIN_DATA } from './keys';
 
-type PluginDataProps = { pluginCode: string; filter?: PluginDataFilterInput };
+type PluginDataProps = {
+  pluginCode: string;
+  filter?: PluginDataFilterInput;
+  queryKey?: string;
+};
 
-export const usePluginData = ({ pluginCode, filter }: PluginDataProps) => {
+export const usePluginData = ({
+  pluginCode,
+  filter,
+  queryKey = '',
+}: PluginDataProps) => {
   const { pluginDataApi, storeId, queryClient } = usePluginDataGraphQL();
+
+  console.log('filter', filter);
 
   // Fetch pluginData rows matching filter
   const queryListFn = async () => {
@@ -26,7 +36,7 @@ export const usePluginData = ({ pluginCode, filter }: PluginDataProps) => {
   };
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: [PLUGIN_DATA, storeId, pluginCode],
+    queryKey: [PLUGIN_DATA, storeId, pluginCode, queryKey],
     queryFn: queryListFn,
   });
 
