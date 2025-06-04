@@ -101,6 +101,7 @@ interface ValueInfoRowProps extends Omit<InfoRowProps, 'value'> {
   representation: RepresentationValue;
   defaultPackSize: number;
   unitName: string;
+  nullDisplay?: string;
 }
 
 export const ValueInfoRow = ({
@@ -110,6 +111,7 @@ export const ValueInfoRow = ({
   defaultPackSize,
   unitName,
   sx,
+  nullDisplay,
 }: ValueInfoRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -120,16 +122,20 @@ export const ValueInfoRow = ({
     value
   );
   const packagingDisplay = useMemo(() => {
+    if (value === null && nullDisplay) return '';
     if (representation === Representation.PACKS) {
       return getPlural(t('label.pack').toLowerCase(), valueInUnitsOrPacks);
     }
     return getPlural(unitName.toLowerCase(), valueInUnitsOrPacks);
-  }, [representation, unitName]);
+  }, [representation, unitName, nullDisplay]);
+
+  const displayValue =
+    value === null && nullDisplay ? nullDisplay : round(valueInUnitsOrPacks, 2);
 
   return (
     <InfoRow
       label={label}
-      value={round(valueInUnitsOrPacks, 2)}
+      value={displayValue}
       packagingDisplay={packagingDisplay}
       sx={sx}
     />
