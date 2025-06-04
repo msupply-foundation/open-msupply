@@ -111,8 +111,7 @@ fn create_filtered_query(filter: Option<CampaignFilter>) -> BoxedCampaignQuery {
 
         if let Some(name_filter) = name {
             if let Some(name_to_match) = name_filter.equal_to {
-                let trimmed_name = name_to_match.trim().to_string();
-                query = query.filter(lower(campaign::name).eq(lower(trimmed_name)))
+                query = query.filter(lower(campaign::name).eq(lower(name_to_match)))
             }
         }
     }
