@@ -188,13 +188,32 @@ export const scannedBatchFilter = (
   return selectedLine.batch === scannedBatch;
 };
 
+export const normaliseToUnits = (
+  quantity: number,
+  allocateIn: AllocateInOption,
+  defaultDosesPerUnit: number
+) => {
+  switch (allocateIn.type) {
+    case AllocateInType.Doses:
+      return quantity / (defaultDosesPerUnit || 1);
+
+    case AllocateInType.Units:
+      return quantity;
+
+    case AllocateInType.Packs:
+      // If working in packs, should be whole units
+      return NumUtils.round(quantity * allocateIn.packSize);
+  }
+};
+
 export const getAllocationAlerts = (
   requestedQuantity: number,
   allocatedQuantity: number,
-  placeholderQuantity: number,
+  placeholderUnits: number,
   hasOnHold: boolean,
   allocateIn: AllocateInOption,
   draftLines: DraftStockOutLineFragment[],
+  defaultDosesPerUnit: number,
   format: (value: number, options?: Intl.NumberFormatOptions) => string,
   t: TypedTFunction<LocaleKey>
 ) => {
@@ -234,12 +253,19 @@ export const getAllocationAlerts = (
   // If we didn't have enough stock to meet the requested quantity
   if (allocatedQuantity < requestedQuantity) {
     // If we were able to create a placeholder, let the user know
-    if (placeholderQuantity > 0) {
+    if (placeholderUnits > 0) {
       alerts.push({
         message: t(
           // When issuing in packs, placeholder quantity is in units
           `messages.placeholder-allocated-${isDoses ? 'doses' : 'units'}`,
-          { placeholderQuantity: format(placeholderQuantity) }
+          {
+            requestedQuantity: format(requestedQuantity),
+            placeholderQuantity: format(
+              isDoses
+                ? placeholderUnits * defaultDosesPerUnit
+                : placeholderUnits
+            ),
+          }
         ),
         severity: 'info',
       });

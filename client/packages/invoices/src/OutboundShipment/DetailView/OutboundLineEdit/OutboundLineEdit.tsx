@@ -58,7 +58,7 @@ export const OutboundLineEdit = ({
   const {
     draftLines,
     allocatedQuantity,
-    placeholderUnits: placeholderQuantity,
+    placeholderUnits,
     alerts,
     isDirty,
     setAlerts,
@@ -75,7 +75,7 @@ export const OutboundLineEdit = ({
     await mutateAsync({
       lines: draftLines,
       itemId,
-      placeholderQuantity,
+      placeholderQuantity: placeholderUnits,
     });
 
     try {
@@ -99,7 +99,7 @@ export const OutboundLineEdit = ({
 
     try {
       await onSave();
-      if (!!placeholderQuantity) {
+      if (!!placeholderUnits) {
         const infoSnack = info(t('message.placeholder-line'));
         infoSnack();
       }

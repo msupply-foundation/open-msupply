@@ -27,6 +27,12 @@ fragment StockOutLine on InvoiceLineNode {
     doses
   }
 
+  itemVariant {
+    __typename
+    id
+    dosesPerUnit
+  }
+
   location {
     __typename
     id
@@ -115,6 +121,7 @@ query getOutboundEditLines(
         unitName
         name
         isVaccine
+        doses
         itemDirections {
           ...ItemDirection
         }
