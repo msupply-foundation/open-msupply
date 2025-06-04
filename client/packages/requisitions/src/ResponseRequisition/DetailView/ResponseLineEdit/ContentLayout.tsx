@@ -10,12 +10,14 @@ import {
   NumericTextInput,
   TypedTFunction,
   LocaleKey,
+  Typography,
 } from '@openmsupply-client/common';
 import {
   useEndAdornment,
   useValueInUnitsOrPacks,
   Representation,
   RepresentationValue,
+  calculateValueInDoses,
 } from '../../../common';
 
 export interface NumInputRowProps {
@@ -29,6 +31,8 @@ export interface NumInputRowProps {
   endAdornmentOverride?: string;
   sx?: SxProps<Theme>;
   showExtraFields?: boolean;
+  displayVaccinesInDoses?: boolean;
+  dosesPerUnit: number;
 }
 
 export const NumInputRow = ({
@@ -42,6 +46,8 @@ export const NumInputRow = ({
   endAdornmentOverride,
   sx,
   showExtraFields = false,
+  displayVaccinesInDoses = false,
+  dosesPerUnit,
 }: NumInputRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -70,6 +76,25 @@ export const NumInputRow = ({
       onChange(newValue);
     }
   };
+
+  const valueInDoses = React.useMemo(
+    () =>
+      displayVaccinesInDoses
+        ? calculateValueInDoses(
+            representation,
+            defaultPackSize,
+            dosesPerUnit,
+            valueInUnitsOrPacks
+          )
+        : undefined,
+    [
+      displayVaccinesInDoses,
+      representation,
+      defaultPackSize,
+      dosesPerUnit,
+      valueInUnitsOrPacks,
+    ]
+  );
 
   return (
     <Box
@@ -130,6 +155,15 @@ export const NumInputRow = ({
           alignItems: { xs: 'flex-start', md: 'center' },
         }}
       />
+      {displayVaccinesInDoses && !!valueInDoses && (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: 'flex', justifyContent: 'flex-end', pt: 0.3, pr: 1.3 }}
+        >
+          {valueInDoses} {t('label.doses').toLowerCase()}
+        </Typography>
+      )}
     </Box>
   );
 };
@@ -150,6 +184,8 @@ export const createNumericInput =
       unitName: string;
       disabled: boolean;
       showExtraFields?: boolean;
+      displayVaccinesInDoses?: boolean;
+      dosesPerUnit: number;
     }
   ) =>
   (
@@ -166,16 +202,18 @@ export const createNumericInput =
 
     return (
       <NumInputRow
-        label={t(label)}
-        value={value ?? 0}
-        onChange={onChange}
-        disabled={disabledOverride ?? commonProps.disabled}
         defaultPackSize={commonProps.defaultPackSize}
         representation={commonProps.representation}
         unitName={commonProps.unitName}
+        showExtraFields={commonProps.showExtraFields}
+        displayVaccinesInDoses={commonProps.displayVaccinesInDoses}
+        disabled={disabledOverride ?? commonProps.disabled}
+        label={t(label)}
+        value={value ?? 0}
+        onChange={onChange}
         endAdornmentOverride={endAdornmentOverride}
         sx={sx}
-        showExtraFields={commonProps.showExtraFields}
+        dosesPerUnit={commonProps.dosesPerUnit}
       />
     );
   };

@@ -86,6 +86,8 @@ export const ResponseLineEdit = ({
     unitName,
     disabled: isDisabled,
     showExtraFields,
+    displayVaccinesInDoses,
+    dosesPerUnit: currentItem?.doses ?? 1,
   });
 
   const getLeftPanelContent = () => {
@@ -258,6 +260,8 @@ export const ResponseLineEdit = ({
             setRepresentation={setRepresentation}
             unitName={unitName}
             setIsDirty={setIsDirty}
+            displayVaccinesInDoses={displayVaccinesInDoses}
+            dosesPerUnit={currentItem?.doses ?? 1}
           />
           {numericInput(
             'label.remaining-to-supply',

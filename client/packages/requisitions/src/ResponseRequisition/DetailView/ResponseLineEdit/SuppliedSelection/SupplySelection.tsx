@@ -9,7 +9,11 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { getCurrentValue, getUpdatedSupply } from './utils';
-import { Representation, RepresentationValue } from '../../../../common';
+import {
+  calculateValueInDoses,
+  Representation,
+  RepresentationValue,
+} from '../../../../common';
 import { DraftResponseLine } from '../hooks';
 
 interface Option {
@@ -27,6 +31,8 @@ interface SupplySelectionProps {
   setRepresentation: (rep: RepresentationValue) => void;
   unitName: string;
   setIsDirty?: (isDirty: boolean) => void;
+  displayVaccinesInDoses?: boolean;
+  dosesPerUnit: number;
 }
 
 export const SupplySelection = ({
@@ -39,6 +45,8 @@ export const SupplySelection = ({
   setRepresentation,
   unitName,
   setIsDirty = () => {},
+  displayVaccinesInDoses = false,
+  dosesPerUnit,
 }: SupplySelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -87,6 +95,22 @@ export const SupplySelection = ({
     debouncedUpdate(newValue);
   };
 
+  const valueInDoses = useMemo(() => {
+    if (!displayVaccinesInDoses) return undefined;
+    return calculateValueInDoses(
+      representation,
+      defaultPackSize || 1,
+      dosesPerUnit,
+      value
+    );
+  }, [
+    displayVaccinesInDoses,
+    representation,
+    defaultPackSize,
+    dosesPerUnit,
+    value,
+  ]);
+
   return (
     <Box
       sx={{
@@ -128,6 +152,17 @@ export const SupplySelection = ({
               },
             }}
           />
+          {displayVaccinesInDoses && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              pt={0.3}
+              pr={1.2}
+              sx={{ textAlign: 'right' }}
+            >
+              {valueInDoses} {t('label.doses').toLowerCase()}
+            </Typography>
+          )}
         </Box>
         <Box flex={1}>
           <Select
