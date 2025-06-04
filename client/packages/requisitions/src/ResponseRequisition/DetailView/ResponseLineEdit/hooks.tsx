@@ -80,7 +80,7 @@ export const useDraftRequisitionLine = (
     }
   }, [lines, item, data]);
 
-  const update = (patch?: Partial<DraftResponseLine>) => {
+  const update = (patch: Partial<DraftResponseLine>) => {
     if (draft) {
       setDraft({ ...draft, ...patch });
     }

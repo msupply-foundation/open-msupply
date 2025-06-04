@@ -68,7 +68,7 @@ const STORE_PREFERENCE_1: (&str, &str) = (
         "omSupplyUsesProgramModule": true,
         "stocktakeFrequency": 1.34,
         "keepRequisitionLinesWithZeroQuantity": true,
-        "canLinkRequistionToSupplierInvoice": false
+        "canLinkRequisitionToSupplierInvoice": false
     }
 }"#,
 );
@@ -136,7 +136,7 @@ const STORE_PREFERENCE_2: (&str, &str) = (
         "boxPercentageSpace": 0,
         "stocktakeFrequency": 1,
         "keepRequisitionLinesWithZeroQuantity": false,
-        "canLinkRequistionToSupplierInvoice": true
+        "canLinkRequisitionToSupplierInvoice": true
     }
 }"#,
 );
