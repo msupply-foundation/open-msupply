@@ -1,5 +1,4 @@
-use std::{path::PathBuf, time::Duration};
-
+use anyhow::{anyhow, Result};
 use repository::database_settings::DatabaseSettings;
 use reqwest::{Client, Error, Response};
 use serde::{Deserialize, Serialize};
@@ -9,7 +8,11 @@ use service::{
     settings::{DiscoveryMode, ServerSettings, Settings},
     sync::settings::{BatchSize, SyncSettings},
 };
-use tokio::{process::Child, time::sleep};
+use std::{
+    path::PathBuf,
+    time::{Duration, Instant},
+};
+use tokio::{process::Child, task::JoinHandle, time::sleep};
 use util::uuid::uuid;
 const TEST_API: &str = "sync/v5/test";
 
@@ -151,6 +154,24 @@ struct LatestSyncStatus {
 #[serde(rename_all = "camelCase")]
 struct SyncStatus {
     is_syncing: bool,
+}
+
+#[derive(Debug, Clone)]
+struct Metric {
+    site_id: usize,
+    start_time: Instant,
+    end_time: Instant,
+}
+
+impl Metric {
+    fn new(site_id: usize) -> Self {
+        let now = Instant::now();
+        Self {
+            site_id,
+            start_time: now,
+            end_time: now,
+        }
+    }
 }
 
 impl LoadTest {
@@ -372,12 +393,12 @@ impl LoadTest {
         for test_site in test_sites {
             let dir = self.output_dir.clone();
             let item_ids_copy = item_ids.clone();
-            let handle = tokio::spawn(async move {
+            let handle: JoinHandle<anyhow::Result<Vec<Metric>>> = tokio::spawn(async move {
                 let log = std::fs::File::create(
                     dir.join(format!("site_{}_output.log", test_site.site.site_id)),
-                )
-                .unwrap();
-                let mut child = match Command::new("cargo") // TODO: be better to run prod binary instead
+                )?;
+
+                let mut child = Command::new("cargo") // TODO: be better to run prod binary instead
                     .arg("run")
                     .arg("--")
                     .arg("--config-path")
@@ -386,23 +407,19 @@ impl LoadTest {
                     .stderr(log)
                     .env("RUST_LOG", "none")
                     .kill_on_drop(true)
-                    .spawn()
-                {
-                    Ok(child) => child,
-                    Err(e) => {
-                        println!("Failed to spawn process: {}", e);
-                        return;
-                    }
-                };
+                    .spawn()?;
+
                 sleep(Duration::from_secs(10)).await; // Let db get created, migrated and initialisation started
 
-                if test_site.wait_for_sync().await.is_err() {
+                if let Err(e) = test_site.wait_for_sync().await {
                     kill(&mut child).await;
-                    return;
+                    return Err(e);
                 }
 
                 let start = std::time::Instant::now();
+                let mut metrics = Vec::new();
                 loop {
+                    let mut metric = Metric::new(test_site.site.site_id);
                     let requisition_id = uuid();
                     let requisition_gql = json!({
                         "operationName": "InsertRequestRequisition",
@@ -422,7 +439,7 @@ impl LoadTest {
                         Err(e) => {
                             println!("insertRequestRequisition request failed: {}", e);
                             kill(&mut child).await;
-                            return;
+                            return Err(e.into());
                         }
                     };
                     let mut line_inserts: Vec<Value> = Vec::new();
@@ -459,7 +476,7 @@ impl LoadTest {
                         Err(e) => {
                             println!("insertRequestRequisitionLine request failed: {}", e);
                             kill(&mut child).await;
-                            return;
+                            return Err(e.into());
                         }
                     };
 
@@ -478,7 +495,7 @@ impl LoadTest {
                         Err(e) => {
                             println!("insertRequestRequisitionLine request failed: {}", e);
                             kill(&mut child).await;
-                            return;
+                            return Err(e.into());
                         }
                     };
 
@@ -498,7 +515,7 @@ impl LoadTest {
                         Err(e) => {
                             println!("insertRequestRequisition request failed: {}", e);
                             kill(&mut child).await;
-                            return;
+                            return Err(e.into());
                         }
                     };
 
@@ -511,29 +528,36 @@ impl LoadTest {
                         Err(e) => {
                             println!("manualSync request failed: {}", e);
                             kill(&mut child).await;
-                            return;
+                            return Err(e.into());
                         }
                     };
 
-                    if test_site.wait_for_sync().await.is_err() {
+                    if let Err(e) = test_site.wait_for_sync().await {
                         kill(&mut child).await;
-                        return;
+                        return Err(e.into());
                     }
+                    metric.end_time = std::time::Instant::now();
+                    metrics.push(metric);
 
                     if start.elapsed().as_secs() >= duration {
                         kill(&mut child).await;
                         break;
                     }
                 }
+                Ok(metrics)
             });
             handles.push(handle)
         }
 
+        let mut results: Vec<Metric> = Vec::new();
         for handle in handles {
-            if let Err(e) = handle.await {
-                println!("Error joining task: {}", e);
+            match handle.await {
+                Ok(metric) => results.append(&mut metric?),
+                Err(e) => println!("Error joining task: {}", e),
             }
         }
+
+        dbg!(results.len());
 
         println!("end");
         Ok(())
@@ -552,17 +576,18 @@ impl TestSite {
     where
         T: Serialize,
     {
-        self.client
+        Ok(self
+            .client
             .post(&self.graphql_url)
             .header("Authorization", "pretend :)")
             .body(serde_json::to_string(&body).unwrap())
             .send()
-            .await
+            .await?)
     }
 
-    async fn wait_for_sync(&self) -> Result<(), Error> {
+    async fn wait_for_sync(&self) -> Result<()> {
         loop {
-            sleep(Duration::from_secs(1)).await;
+            sleep(Duration::from_millis(1000)).await;
             let sync_gql = json!({
                 "operationName": "SyncInfo",
                 "query": SYNC_INFO_QUERY,
