@@ -63,6 +63,7 @@ pub struct AllocateLineResult {
     pub updates: Vec<InvoiceLine>,
     pub skipped_expired_stock_lines: Vec<StockLine>,
     pub skipped_on_hold_stock_lines: Vec<StockLine>,
+    pub skipped_unusable_vvm_status_lines: Vec<StockLine>,
     pub issued_expiring_soon_stock_lines: Vec<StockLine>,
 }
 
@@ -83,6 +84,7 @@ pub fn allocate_outbound_shipment_unallocated_line(
                 delete_unallocated_line,
                 skipped_expired_stock_lines,
                 skipped_on_hold_stock_lines,
+                skipped_unusable_vvm_status_lines,
                 issued_expiring_soon_stock_lines,
             } = generate(connection, &ctx.store_id, unallocated_line)?;
 
@@ -93,6 +95,7 @@ pub fn allocate_outbound_shipment_unallocated_line(
                 skipped_expired_stock_lines,
                 skipped_on_hold_stock_lines,
                 issued_expiring_soon_stock_lines,
+                skipped_unusable_vvm_status_lines,
             };
 
             for input in update_lines.into_iter() {
