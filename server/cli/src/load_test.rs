@@ -176,6 +176,7 @@ impl LoadTest {
         }
 
         println!("end");
+
         Ok(())
     }
 }
