@@ -42,9 +42,11 @@ const TotalCell = styled(TableCell)({
 const PlaceholderRow = ({
   quantity,
   extraColumnOffset,
+  dosesPerUnit,
 }: {
   quantity: number | null;
   extraColumnOffset: number;
+  dosesPerUnit?: number;
 }) => {
   const t = useTranslation();
 
@@ -54,18 +56,20 @@ const PlaceholderRow = ({
   return quantity === null ? null : (
     <tr>
       <PlaceholderCell
-        colSpan={4 + extraColumnOffset}
+        colSpan={5 + extraColumnOffset}
         sx={{ color: 'secondary.main' }}
       >
         {t('label.placeholder')}
       </PlaceholderCell>
-      <PlaceholderCell
-        style={{ textAlign: 'right', paddingRight: '14px' }}
-        colSpan={2}
-      >
+      <PlaceholderCell style={{ textAlign: 'right', paddingRight: '14px' }}>
         1
       </PlaceholderCell>
-      <PlaceholderCell colSpan={3}></PlaceholderCell>
+      {!!dosesPerUnit && (
+        <PlaceholderCell style={{ textAlign: 'right', paddingRight: '14px' }}>
+          {dosesPerUnit}
+        </PlaceholderCell>
+      )}
+      <PlaceholderCell colSpan={dosesPerUnit ? 2 : 3}></PlaceholderCell>
       <Tooltip title={quantity.toString()}>
         <PlaceholderCell style={{ textAlign: 'right' }}>
           {!!NumUtils.hasMoreThanTwoDp(quantity)
@@ -122,23 +126,30 @@ export const OutboundLineEditTable = ({
 
   const {
     draftLines,
-    placeholderUnits,
+    placeholderQuantity,
     nonAllocatableLines,
     allocateIn,
     allocatedQuantity,
     item,
     manualAllocate,
-  } = useAllocationContext(state => ({
-    ...state,
-    allocatedQuantity: getAllocatedQuantity({
-      draftLines: state.draftLines,
-      allocateIn:
-        state.allocateIn.type === AllocateInType.Doses
-          ? state.allocateIn
-          : // Even when allocating in packs, show the total in units
-            { type: AllocateInType.Units },
-    }),
-  }));
+  } = useAllocationContext(state => {
+    const { placeholderUnits, item, allocateIn } = state;
+
+    const inDoses = allocateIn.type === AllocateInType.Doses;
+    return {
+      ...state,
+      // In packs & units: we show totals in units
+      // In doses: we show totals in doses
+      allocatedQuantity: getAllocatedQuantity({
+        draftLines: state.draftLines,
+        allocateIn: inDoses ? allocateIn : { type: AllocateInType.Units },
+      }),
+      placeholderQuantity:
+        placeholderUnits !== null && inDoses
+          ? (placeholderUnits ?? 0) * (item?.doses || 1)
+          : placeholderUnits,
+    };
+  });
 
   const allocate = (
     key: string,
@@ -172,7 +183,7 @@ export const OutboundLineEditTable = ({
   }, []);
 
   // Null means we aren't using placeholder
-  if (!lines.length && placeholderUnits === null)
+  if (!lines.length && placeholderQuantity === null)
     return (
       <Box sx={{ margin: 'auto' }}>
         <Typography>{t('messages.no-stock-available')}</Typography>
@@ -191,9 +202,10 @@ export const OutboundLineEditTable = ({
     <PlaceholderRow
       // Only show a 0 placeholder if we have no stock lines to show
       quantity={
-        placeholderUnits === 0 && lines.length ? null : placeholderUnits
+        placeholderQuantity === 0 && lines.length ? null : placeholderQuantity
       }
       extraColumnOffset={extraColumnOffset}
+      dosesPerUnit={item?.doses}
       key="placeholder-row"
     />,
     <tr key="divider-row">
@@ -203,10 +215,7 @@ export const OutboundLineEditTable = ({
     </tr>,
     <TotalRow
       key="total-row"
-      allocatedQuantity={
-        // placeholder is in units (even in dose view, as placeholder doses is 1 dose per unit)
-        allocatedQuantity + (placeholderUnits ?? 0)
-      }
+      allocatedQuantity={allocatedQuantity + (placeholderQuantity ?? 0)}
       extraColumnOffset={extraColumnOffset}
     />,
   ];
