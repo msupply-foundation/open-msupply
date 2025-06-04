@@ -2,13 +2,12 @@ import {
   isEmpty,
   PreferenceNodeType,
   UpsertPreferencesInput,
-  useAuthApi,
   useMutation,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePreferencesGraphQL } from './usePreferencesGraphQL';
-import { PREFERENCE_DESCRIPTIONS } from './keys';
+import { PREFERENCES } from './keys';
 import { useAdminPrefsList } from './useAdminPrefsList';
 
 export const useEditPreferences = (
@@ -39,7 +38,6 @@ export const useEditPreferences = (
 
 const useUpsertPref = () => {
   const { api, storeId: requestStoreId, queryClient } = usePreferencesGraphQL();
-  const { keys } = useAuthApi();
 
   return useMutation(
     async (input: Partial<UpsertPreferencesInput>) => {
@@ -54,8 +52,7 @@ const useUpsertPref = () => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries(keys.preferences());
-        queryClient.invalidateQueries(PREFERENCE_DESCRIPTIONS);
+        queryClient.invalidateQueries(PREFERENCES);
       },
     }
   );

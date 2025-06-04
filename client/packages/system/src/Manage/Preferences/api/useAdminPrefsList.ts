@@ -1,6 +1,6 @@
 import { PreferenceNodeType, useQuery } from '@openmsupply-client/common';
 import { usePreferencesGraphQL } from './usePreferencesGraphQL';
-import { PREFERENCE_DESCRIPTIONS } from './keys';
+import { PREFERENCES } from './keys';
 
 export const useAdminPrefsList = (
   prefType: PreferenceNodeType,
@@ -9,7 +9,7 @@ export const useAdminPrefsList = (
   const { api, storeId: loggedInStoreId } = usePreferencesGraphQL();
 
   return useQuery({
-    queryKey: [PREFERENCE_DESCRIPTIONS, prefType, storeId],
+    queryKey: [PREFERENCES, prefType, storeId],
     queryFn: async () => {
       const result = await api.adminPreferenceList({
         storeId: loggedInStoreId,

@@ -2,14 +2,12 @@ import { gql } from 'graphql-tag';
 import {
   PreferenceKey,
   PreferencesNode,
-  useAuthContext,
   useQuery,
 } from '@openmsupply-client/common';
-import { useAuthApi } from './useAuthApi';
+import { usePreferencesGraphQL } from '@openmsupply-client/system/src/Manage/Preferences/api/usePreferencesGraphQL';
 
 export const usePreference = <T extends PreferenceKey>(...prefs: T[]) => {
-  const { keys, client } = useAuthApi();
-  const { storeId } = useAuthContext();
+  const { storeId, client, PREFERENCES } = usePreferencesGraphQL();
 
   // Custom query, rather than using generated one, so we can
   // pass in the desired preference key as a variable
@@ -29,7 +27,7 @@ export const usePreference = <T extends PreferenceKey>(...prefs: T[]) => {
   };
 
   return useQuery({
-    queryKey: [keys.preferences(), ...prefs],
+    queryKey: [PREFERENCES, ...prefs],
     queryFn: async () => {
       const result = await client.request<PreferencesQuery, undefined>(
         PreferencesDocument
