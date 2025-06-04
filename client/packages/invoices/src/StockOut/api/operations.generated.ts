@@ -89,20 +89,7 @@ export type DraftStockOutLineFragment = {
   itemVariant?: {
     __typename: 'ItemVariantNode';
     id: string;
-    name: string;
-    itemId: string;
     dosesPerUnit: number;
-    vvmType?: string | null;
-    manufacturer?: { __typename: 'NameNode'; name: string } | null;
-    packagingVariants: Array<{
-      __typename: 'PackagingVariantNode';
-      id: string;
-      name: string;
-      packSize?: number | null;
-      packagingLevel: number;
-      volumePerUnit?: number | null;
-    }>;
-    item?: { __typename: 'ItemNode'; isVaccine: boolean } | null;
   } | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
 };
@@ -167,20 +154,7 @@ export type GetOutboundEditLinesQuery = {
       itemVariant?: {
         __typename: 'ItemVariantNode';
         id: string;
-        name: string;
-        itemId: string;
         dosesPerUnit: number;
-        vvmType?: string | null;
-        manufacturer?: { __typename: 'NameNode'; name: string } | null;
-        packagingVariants: Array<{
-          __typename: 'PackagingVariantNode';
-          id: string;
-          name: string;
-          packSize?: number | null;
-          packagingLevel: number;
-          volumePerUnit?: number | null;
-        }>;
-        item?: { __typename: 'ItemNode'; isVaccine: boolean } | null;
       } | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
     }>;
@@ -273,23 +247,7 @@ export const DraftStockOutLineFragmentDoc = gql`
     }
     itemVariant {
       id
-      name
-      itemId
       dosesPerUnit
-      vvmType
-      manufacturer(storeId: $storeId) {
-        name
-      }
-      packagingVariants {
-        id
-        name
-        packSize
-        packagingLevel
-        volumePerUnit
-      }
-      item {
-        isVaccine
-      }
     }
     donor(storeId: $storeId) {
       id
