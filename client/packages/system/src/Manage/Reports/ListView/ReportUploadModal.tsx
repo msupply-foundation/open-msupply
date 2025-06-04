@@ -31,7 +31,6 @@ export const ReportUploadModal = ({
   const t = useTranslation();
   const [draft, setDraft] = useState<{ id?: string; files?: File[] }>({});
   const { error, success } = useNotification();
-  // const [errorMessage, setErrorMessage] = useState<string>(() => '');
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const { installUploadedReports } = install;
@@ -55,7 +54,6 @@ export const ReportUploadModal = ({
     // create new json file id
     const url = `${Environment.REPORT_UPLOAD_URL}`;
     try {
-      // let upsertedIds = [];
       if (draft.files) {
         for (const file of draft.files) {
           const formData = new FormData();

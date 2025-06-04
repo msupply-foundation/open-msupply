@@ -11,7 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import {  ALLREPORTVERSIONS } from './keys';
 import { ReportRowFragment } from 'packages/system/src/Report/index.js';
-import { useAllReportVersionsGraphQL as useCentralServerReportsGraphqQL } from '../api/useReportsGraphQL';
+import { useAllReportVersionsGraphQL as useCentralServerReportsGraphqQL } from '../../api/useReportsGraphQL';
 
 export type ReportListParams = {
   filterBy: ReportFilterInput | null;
@@ -25,15 +25,14 @@ export const useCentralReports = ({
 }: {
   queryParams?: ReportListParams;
 }) => {
-
     // QUERY
     const { data, isLoading, isError } = useGetList(queryParams);
 
+    
+    // INSTALL
     const installUploadedReports = async (fileId: string) => {
       return await installMutation(fileId)
     }
-
-    // INSTALL
     const {
       mutateAsync: installMutation,
       isLoading: installLoading,
@@ -47,10 +46,10 @@ export const useCentralReports = ({
 };
 
 const useGetList = (queryParams?: ReportListParams) => {
+  const t = useTranslation();
   const { reportApi, storeId } = useCentralServerReportsGraphqQL();
   const { currentLanguage: language } = useIntlUtils();
   const { error } = useNotification();
-  const t = useTranslation();
 
   const {
     filterBy,
@@ -114,7 +113,6 @@ const useGetList = (queryParams?: ReportListParams) => {
 };
 
 const useInstallUploadedReports = () => {
-  console.log('trying to install');
   const { translateServerError } = useIntlUtils();
   const {reportApi, queryClient} = useCentralServerReportsGraphqQL();
 

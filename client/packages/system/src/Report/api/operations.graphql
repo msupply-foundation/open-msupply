@@ -6,6 +6,7 @@ fragment ReportRow on ReportNode {
   code
   subContext
   isCustom
+  isActive
   argumentSchema {
     id
     type
