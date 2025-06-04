@@ -117,6 +117,7 @@ export const RepackEditForm = ({
                 width={INPUT_WIDTH}
                 value={data.newPackSize}
                 disabled={!isNew}
+                max={data?.numberOfPacks}
               />
             }
           />
