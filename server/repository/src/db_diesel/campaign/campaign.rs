@@ -1,6 +1,7 @@
 use super::campaign_row::{campaign, CampaignRow};
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    lower,
     repository_error::RepositoryError,
     DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
@@ -107,7 +108,13 @@ fn create_filtered_query(filter: Option<CampaignFilter>) -> BoxedCampaignQuery {
         let CampaignFilter { id, name } = f;
 
         apply_equal_filter!(query, id, campaign::id);
-        apply_string_filter!(query, name, campaign::name);
+
+        if let Some(name_filter) = name {
+            if let Some(name_to_match) = name_filter.equal_to {
+                let trimmed_name = name_to_match.trim().to_string();
+                query = query.filter(lower(campaign::name).eq(lower(trimmed_name)))
+            }
+        }
     }
 
     query = query.filter(campaign::deleted_datetime.is_null());

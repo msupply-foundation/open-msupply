@@ -76,7 +76,7 @@ fn validate(
     // Check for duplicate name
     let campaigns_with_duplicate_name = CampaignRepository::new(connection).query_by_filter(
         CampaignFilter::new()
-            .name(StringFilter::like(&input.name))
+            .name(StringFilter::equal_to(&input.name.clone()))
             .id(EqualFilter::not_equal_to(&input.id)),
     )?;
 
