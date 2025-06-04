@@ -58,7 +58,7 @@ export const ResponseLineEditModal = ({
 
   const { draft, update, save, isDirty, setIsDirty, isLoading } =
     useDraftRequisitionLine(currentItem);
-  const { hasNext, next } = useNextResponseLine(currentItem);
+  const { hasNext, next } = useNextResponseLine(lines, currentItem);
 
   const shouldDelete = shouldDeleteLine(mode, draft?.id, isDisabled);
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
