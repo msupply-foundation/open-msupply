@@ -48,7 +48,7 @@ use backup::*;
 use cli::{
     generate_and_install_plugin_bundle, generate_plugin_bundle, generate_report_data,
     generate_reports_recursive, generate_typescript_types, install_plugin_bundle,
-    GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
+    GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle, LoadTest,
     RefreshDatesRepository, ReportError,
 };
 
@@ -210,6 +210,8 @@ enum Action {
     },
     /// Generate TypeScript Types for backend plugins and format with Prettier
     GenerateTypeScriptTypes,
+    /// Run load test
+    LoadTest(LoadTest),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -699,6 +701,28 @@ async fn main() -> anyhow::Result<()> {
         }
         Action::GenerateTypeScriptTypes => {
             generate_typescript_types()?;
+        }
+        Action::LoadTest(LoadTest {
+            url,
+            base_port,
+            output_dir,
+            test_site_name,
+            test_site_pass,
+            sites,
+            invoice_lines,
+            duration,
+        }) => {
+            let load_test = LoadTest::new(
+                url,
+                base_port,
+                output_dir,
+                test_site_name,
+                test_site_pass,
+                sites,
+                invoice_lines,
+                duration,
+            );
+            load_test.run().await?;
         }
     }
 
