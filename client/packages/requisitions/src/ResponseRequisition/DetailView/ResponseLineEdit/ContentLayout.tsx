@@ -11,6 +11,7 @@ import {
   TypedTFunction,
   LocaleKey,
   Typography,
+  useMediaQuery,
 } from '@openmsupply-client/common';
 import {
   useEndAdornment,
@@ -51,6 +52,7 @@ export const NumInputRow = ({
 }: NumInputRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+  const isVerticalScreen = useMediaQuery('(max-width:800px)');
 
   const valueInUnitsOrPacks = useValueInUnitsOrPacks(
     representation,
@@ -149,7 +151,7 @@ export const NumInputRow = ({
         sx={{
           justifyContent: 'space-between',
           flexDirection: {
-            xs: 'column',
+            xs: isVerticalScreen ? 'column' : 'row',
             md: 'row',
           },
           alignItems: { xs: 'flex-start', md: 'center' },
