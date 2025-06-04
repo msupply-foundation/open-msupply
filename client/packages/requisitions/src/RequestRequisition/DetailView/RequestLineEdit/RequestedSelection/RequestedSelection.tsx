@@ -156,7 +156,7 @@ export const RequestedSelection = ({
               },
             }}
           />
-          {displayVaccinesInDoses && valueInDoses !== undefined && (
+          {displayVaccinesInDoses && (
             <Typography
               variant="caption"
               color="text.secondary"
