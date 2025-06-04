@@ -84,6 +84,7 @@ fragment DraftStockOutLine on DraftStockOutLineNode {
     description
   }
   itemVariant {
+    id
     dosesPerUnit
   }
   donor(storeId: $storeId) {

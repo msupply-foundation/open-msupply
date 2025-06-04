@@ -86,7 +86,11 @@ export type DraftStockOutLineFragment = {
     unusable: boolean;
     description: string;
   } | null;
-  itemVariant?: { __typename: 'ItemVariantNode'; dosesPerUnit: number } | null;
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    dosesPerUnit: number;
+  } | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; name: string; id: string } | null;
 };
@@ -150,6 +154,7 @@ export type GetOutboundEditLinesQuery = {
       } | null;
       itemVariant?: {
         __typename: 'ItemVariantNode';
+        id: string;
         dosesPerUnit: number;
       } | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
@@ -247,6 +252,7 @@ export const DraftStockOutLineFragmentDoc = gql`
       description
     }
     itemVariant {
+      id
       dosesPerUnit
     }
     donor(storeId: $storeId) {
