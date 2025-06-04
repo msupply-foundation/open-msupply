@@ -23,7 +23,10 @@ import {
   UNDEFINED_STRING_VALUE,
   TooltipTextCell,
 } from '@openmsupply-client/common';
-import { CurrencyRowFragment } from '@openmsupply-client/system';
+import {
+  CurrencyRowFragment,
+  ItemVariantInfoIcon,
+} from '@openmsupply-client/system';
 import { getStockOutQuantityCellId } from '../../../utils';
 import {
   canAutoAllocate,
@@ -98,6 +101,10 @@ export const useOutboundLineEditColumns = ({
       'batch',
       {
         accessor: ({ rowData }) => rowData.batch,
+        Cell: getBatchWithVariantCell(
+          item?.id ?? '',
+          allocateIn.type === AllocateInType.Doses
+        ),
       },
     ],
     [
@@ -343,3 +350,24 @@ const getAllocateInDosesColumns = (
     ],
   ];
 };
+
+interface BatchWithVariantCellProps {
+  rowData: DraftStockOutLineFragment;
+}
+
+const getBatchWithVariantCell =
+  (itemId: string, includeDoseColumns: boolean) =>
+  ({ rowData }: BatchWithVariantCellProps) => {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        {rowData.batch}
+        {rowData.itemVariant && (
+          <ItemVariantInfoIcon
+            includeDoseColumns={includeDoseColumns}
+            itemId={itemId}
+            itemVariantId={rowData.itemVariant.id}
+          />
+        )}
+      </div>
+    );
+  };
