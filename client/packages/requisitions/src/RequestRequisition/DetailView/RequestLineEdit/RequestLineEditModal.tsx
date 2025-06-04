@@ -59,12 +59,10 @@ export const RequestLineEditModal = ({
   const { draft, save, update, isDirty, setIsDirty, isLoading } =
     useDraftRequisitionLine(currentItem);
   const { hasNext, next } = useNextRequestLine(lines, currentItem);
-  const shouldDelete = shouldDeleteLine(mode, draft?.id, isDisabled);
 
-  const isPacksEnabled = !!currentItem?.defaultPackSize;
   const useConsumptionData =
     store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
-  const isProgram = !!requisition?.program;
+  const shouldDelete = shouldDeleteLine(mode, draft?.id, isDisabled);
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
 
   const deletePreviousLine = () => {
@@ -144,12 +142,12 @@ export const RequestLineEditModal = ({
           onChangeItem={onChangeItem}
           draft={draft}
           update={update}
-          isPacksEnabled={isPacksEnabled}
+          isPacksEnabled={!!currentItem?.defaultPackSize}
           representation={representation}
           setRepresentation={setRepresentation}
           disabled={isDisabled}
           isUpdateMode={mode === ModalMode.Update}
-          showExtraFields={useConsumptionData && isProgram}
+          showExtraFields={useConsumptionData && !!requisition?.program}
           manageVaccinesInDoses={manageVaccinesInDoses}
           setIsDirty={setIsDirty}
         />
