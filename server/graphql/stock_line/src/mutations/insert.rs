@@ -283,6 +283,7 @@ mod test {
                 supplier_name_row: None,
                 barcode_row: None,
                 item_variant_row: None,
+                vvm_status_row: None,
             })
         }));
 

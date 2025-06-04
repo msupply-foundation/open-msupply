@@ -39,6 +39,7 @@ pub struct ResponseNode {
     deletes: Vec<DeleteResponse>,
     skipped_expired_stock_lines: StockLineConnector,
     skipped_on_hold_stock_lines: StockLineConnector,
+    skipped_unusable_vvm_status_lines: StockLineConnector,
     issued_expiring_soon_stock_lines: StockLineConnector,
 }
 
@@ -106,6 +107,7 @@ impl ResponseNode {
             inserts,
             skipped_expired_stock_lines,
             skipped_on_hold_stock_lines,
+            skipped_unusable_vvm_status_lines,
             issued_expiring_soon_stock_lines,
         } = from;
         ResponseNode {
@@ -114,6 +116,9 @@ impl ResponseNode {
             inserts: InvoiceLineConnector::from_vec(inserts),
             skipped_expired_stock_lines: StockLineConnector::from_vec(skipped_expired_stock_lines),
             skipped_on_hold_stock_lines: StockLineConnector::from_vec(skipped_on_hold_stock_lines),
+            skipped_unusable_vvm_status_lines: StockLineConnector::from_vec(
+                skipped_unusable_vvm_status_lines,
+            ),
             issued_expiring_soon_stock_lines: StockLineConnector::from_vec(
                 issued_expiring_soon_stock_lines,
             ),
@@ -288,6 +293,11 @@ mod graphql {
                             id
                         }
                     }
+                    skippedUnusableVvmStatusLines {
+                        nodes {
+                            id
+                        }
+                    }
                     issuedExpiringSoonStockLines {
                         nodes {
                             id
@@ -323,6 +333,9 @@ mod graphql {
                 skipped_on_hold_stock_lines: vec![inline_init(|r: &mut StockLine| {
                     r.stock_line_row.id = "skipped_on_hold".to_string();
                 })],
+                skipped_unusable_vvm_status_lines: vec![inline_init(|r: &mut StockLine| {
+                    r.stock_line_row.id = "skipped_unusable".to_string();
+                })],
                 issued_expiring_soon_stock_lines: vec![inline_init(|r: &mut StockLine| {
                     r.stock_line_row.id = "expiring_soon".to_string();
                 })],
@@ -354,6 +367,11 @@ mod graphql {
                 "skippedOnHoldStockLines": {
                     "nodes": [{
                         "id": "skipped_on_hold"
+                    }]
+                },
+                "skippedUnusableVvmStatusLines": {
+                    "nodes": [{
+                        "id": "skipped_unusable"
                     }]
                 },
                 "issuedExpiringSoonStockLines": {
