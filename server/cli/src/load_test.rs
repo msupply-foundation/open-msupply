@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use reqwest::Client;
 use serde::Deserialize;
+use serde_json::{json, Value};
+use util::uuid::uuid;
 const TEST_API: &str = "sync/v5/test";
 
 #[derive(clap::Args)]
@@ -97,22 +99,22 @@ impl LoadTest {
         println!("Invoice Lines: {}", self.invoice_lines);
         println!("Duration: {} seconds", self.duration);
 
+        // Creating the sites on OG central
         let body = r#"{"visibleNameIds":[]}"#;
         let client = Client::new();
-        let create_site_url = url + "/create_site";
+        let test_site_name = self.test_site_name.as_ref().unwrap();
+        let test_site_pass = Some(sha256(self.test_site_pass.as_ref().unwrap()));
         let mut site_n_stores: Vec<SiteNStore> = Vec::new();
-        for _ in 0..self.sites {
+        let num_sites = if self.sites > 1 { self.sites } else { 2 };
+        for _ in 0..num_sites {
             let response = client
-                .post(create_site_url.to_owned())
+                .post(url.clone() + "/create_site")
                 .header("app-name", "load_test")
                 .header("app-version", "0")
                 .header("msupply-site-uuid", "load_test")
                 .header("sync-version", "9")
                 .header("content-length", body.len())
-                .basic_auth(
-                    self.test_site_name.as_ref().unwrap(),
-                    Some(sha256(self.test_site_pass.as_ref().unwrap().as_str())),
-                )
+                .basic_auth(test_site_name, test_site_pass.to_owned())
                 .body(body)
                 .send()
                 .await?;
@@ -120,11 +122,60 @@ impl LoadTest {
             if response.status().is_success() {
                 site_n_stores.push(response.json().await?);
             } else {
+                dbg!(&response);
                 dbg!(&response.text().await?);
+                return Ok(());
             }
         }
 
-        dbg!(site_n_stores);
+        // Creating name store joins between each site's store and the next
+        let mut name_store_joins: Vec<Value> = Vec::new();
+
+        for i in 0..site_n_stores.len() {
+            let next = if i >= site_n_stores.len() - 1 {
+                0
+            } else {
+                i + 1
+            };
+            let name_store_join1 = json!({
+                "ID": &uuid(),
+                "name_ID": site_n_stores[next].store.name_id,
+                "store_ID": site_n_stores[i].store.id,
+                "om_name_is_customer": true,
+                "om_name_is_supplier": true,
+            });
+            name_store_joins.push(name_store_join1);
+
+            let name_store_join2 = json!({
+                "ID": &uuid(),
+                "name_ID": site_n_stores[i].store.name_id,
+                "store_ID": site_n_stores[next].store.id,
+                "om_name_is_customer": true,
+                "om_name_is_supplier": true,
+            });
+            name_store_joins.push(name_store_join2);
+        }
+
+        let body = json!({"name_store_join": name_store_joins}).to_string();
+        let response = client
+            .post(url.clone() + "/upsert")
+            .header("app-name", "load_test")
+            .header("app-version", "0")
+            .header("msupply-site-uuid", "load_test")
+            .header("sync-version", "9")
+            .header("content-length", body.len())
+            .basic_auth(test_site_name, test_site_pass.to_owned())
+            .body(body)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            dbg!(&response);
+            dbg!(&response.text().await?);
+            return Ok(());
+        }
+
+        println!("end");
 
         Ok(())
     }
