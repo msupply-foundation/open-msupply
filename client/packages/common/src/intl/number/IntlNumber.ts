@@ -47,10 +47,10 @@ export const useFormatNumber = () => {
       const negative = numberString.startsWith('-') ? -1 : 1;
 
       const num = numberString
-        // Convert decimal separator to standard decimal point
-        .replace(RegexUtils.escapeChars(decimalChar), '.')
         // Remove separators
         .replace(new RegExp(`\\${separator}`, 'g'), '')
+        // Convert decimal separator to standard decimal point
+        .replace(RegexUtils.escapeChars(decimalChar), '.')
         // Remove all other characters
         .replace(/[^\d\.]/g, '');
 
