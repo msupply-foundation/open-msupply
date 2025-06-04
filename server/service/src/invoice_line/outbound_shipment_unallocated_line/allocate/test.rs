@@ -808,7 +808,7 @@ mod test {
                 item_link_id: mock_vaccine_item_a().id,
                 pack_size: 1.0,
                 available_number_of_packs: 2.0,
-                vvm_status_id: Some(mock_vvm_status_b().id), // Level 2
+                vvm_status_id: Some(mock_vvm_status_b().id), // Level 2 - allocated after level 1
                 // No expiry- in FEFO we'd allocate this last
                 expiry_date: None,
                 ..Default::default()
@@ -821,7 +821,7 @@ mod test {
                 item_link_id: mock_vaccine_item_a().id,
                 pack_size: 1.0,
                 available_number_of_packs: 2.0,
-                vvm_status_id: Some(mock_vvm_status_a().id), // Level 1 - should be allocated after
+                vvm_status_id: Some(mock_vvm_status_a().id), // Level 1 - should be allocated first
                 // Has an expiry, should be allocated before non-expiring
                 expiry_date: Some(NaiveDate::from_ymd_opt(2100, 1, 1).unwrap()),
                 ..Default::default()
@@ -834,7 +834,7 @@ mod test {
                 item_link_id: mock_vaccine_item_a().id,
                 pack_size: 1.0,
                 available_number_of_packs: 2.0,
-                vvm_status_id: Some(mock_vvm_status_a().id), // Level 1 - should be allocated after
+                vvm_status_id: Some(mock_vvm_status_a().id), // Level 1 - should be allocated first
                 // No expiry, should be allocated last
                 expiry_date: None,
                 ..Default::default()
@@ -894,44 +894,22 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_line_service;
 
-        // ------ VVM 2 first
+        // ------ VVM 1 first
         let result = service
             // Allocate placeholder for 2 packs
             .allocate_outbound_shipment_unallocated_line(&context, placeholder().id.clone())
             .unwrap();
         assert_eq!(result.inserts.len(), 1);
 
-        // Allocates the 2 packs from vvm2 line first
-        assert_eq!(
-            result.inserts[0].invoice_line_row.stock_line_id,
-            Some(vvm_2_stock_line().id)
-        );
-        // We have VVM3 (unusable) stock - check it is not used
-        assert_eq!(
-            result.skipped_unusable_vvm_status_lines[0]
-                .stock_line_row
-                .id,
-            vvm_3_unusable_stock_line().id
-        );
-
-        let repo = InvoiceLineRowRepository::new(&connection);
-
-        // ------ Next VVM 1, expiring first
-        // Insert placeholder for another 2 packs
-        repo.upsert_one(&placeholder()).unwrap();
-
-        // Allocate again
-        let result = service
-            .allocate_outbound_shipment_unallocated_line(&context, placeholder().id.clone())
-            .unwrap();
-
-        // Now uses the vvm1 expiring line first
+        // Allocates the 2 packs from vvm1 expiring line first
         assert_eq!(
             result.inserts[0].invoice_line_row.stock_line_id,
             Some(vvm_1_stock_line_expiring().id)
         );
 
-        // ------ Still VVM 1, non-expiring
+        let repo = InvoiceLineRowRepository::new(&connection);
+
+        // ------ Next VVM 1, non-expiring
         // Insert placeholder for another 2 packs
         repo.upsert_one(&placeholder()).unwrap();
 
@@ -940,10 +918,25 @@ mod test {
             .allocate_outbound_shipment_unallocated_line(&context, placeholder().id.clone())
             .unwrap();
 
-        // Now uses the vvm1 non-expiring line
+        // Now uses the vvm1 expiring line
         assert_eq!(
             result.inserts[0].invoice_line_row.stock_line_id,
             Some(vvm_1_stock_line_non_expiring().id)
+        );
+
+        // ------ Now VVM 2
+        // Insert placeholder for another 2 packs
+        repo.upsert_one(&placeholder()).unwrap();
+
+        // Allocate again
+        let result = service
+            .allocate_outbound_shipment_unallocated_line(&context, placeholder().id.clone())
+            .unwrap();
+
+        // Now uses the vvm2
+        assert_eq!(
+            result.inserts[0].invoice_line_row.stock_line_id,
+            Some(vvm_2_stock_line().id)
         );
         // ------ No VVM last
         // Insert placeholder for another 2 packs
@@ -958,6 +951,24 @@ mod test {
         assert_eq!(
             result.inserts[0].invoice_line_row.stock_line_id,
             Some(stock_line_non_expiring_no_vvm().id)
+        );
+
+        // ------ Unusable VVM - check not used
+        // Insert placeholder for another 2 packs
+        repo.upsert_one(&placeholder()).unwrap();
+
+        // Allocate again
+        let result = service
+            .allocate_outbound_shipment_unallocated_line(&context, placeholder().id.clone())
+            .unwrap();
+
+        // Now uses the no vvm non-expiring line
+        assert_eq!(result.inserts.len(), 0);
+        assert_eq!(
+            result.skipped_unusable_vvm_status_lines[0]
+                .stock_line_row
+                .id,
+            vvm_3_unusable_stock_line().id
         );
     }
 }

@@ -148,11 +148,11 @@ impl<'a> StockLineRepository<'a> {
                     // Complex sort, not using apply_sort
                     query = match sort.desc {
                         Some(true) => query
-                            .order(vvm_status::level.asc_nulls_first())
+                            .order(vvm_status::level.desc_nulls_first())
                             .then_order_by(stock_line::expiry_date.desc_nulls_first()),
                         _ => query
-                            // VVM 2 should be before VVM 1, then oldest expiry first
-                            .order(vvm_status::level.desc_nulls_last())
+                            // VVM level 1 should be before level 2, then oldest expiry first
+                            .order(vvm_status::level.asc_nulls_last())
                             .then_order_by(stock_line::expiry_date.asc_nulls_last()),
                     };
                 }
