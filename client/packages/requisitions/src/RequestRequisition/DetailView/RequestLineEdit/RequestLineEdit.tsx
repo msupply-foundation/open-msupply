@@ -12,7 +12,6 @@ import {
   Box,
   ReasonOptionNodeType,
   usePluginProvider,
-  useWindowDimensions,
   Typography,
   BufferedTextArea,
 } from '@openmsupply-client/common';
