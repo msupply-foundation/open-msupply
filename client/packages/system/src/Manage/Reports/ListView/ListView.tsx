@@ -10,7 +10,7 @@ import {
   TooltipTextCell,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
-import { useAllReportVersionsList } from '../hooks/useAllReportVersionsList';
+import { useAllReportVersionsList } from '../api/hooks/useAllReportVersionsList';
 import { ReportRowFragment } from 'packages/system/src/Report';
 
 const ReportsComponent = () => {
@@ -53,16 +53,20 @@ const ReportsComponent = () => {
         sortable: true,
       },
       {
+        label: 'label.status',
         key: 'isActive',
-        label: 'label.is_active',
-        width: 150,
-        sortable: true,
+        accessor: ({ rowData }) => {
+          const { isActive } = rowData;
+          return t(isActive ? 'label.active' : 'label.inactive');
+        },
       },
       {
-        key: 'isCustom',
         label: 'label.is_custom',
-        width: 150,
-        sortable: true,
+        key: 'isCustom',
+        accessor: ({ rowData }) => {
+          const { isCustom } = rowData;
+          return t(isCustom ? 'label.custom' : 'label.standard');
+        },
       },
     ],
     {

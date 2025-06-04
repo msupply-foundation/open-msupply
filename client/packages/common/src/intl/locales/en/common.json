@@ -894,6 +894,7 @@
   "label.in-store": "In Store (packs)",
   "label.in-store-doses": "In Store (doses)",
   "label.inactive": "Inactive",
+  "label.standard": "Standard",
   "label.inbound-not-delivered": "Inbound shipments not delivered",
   "label.inbound-shipment": "Inbound shipment",
   "label.inbound-shipment-cant-delete-reserved-line": "Batch {{batch}} (item code {{itemCode}}) is already reserved/issued",

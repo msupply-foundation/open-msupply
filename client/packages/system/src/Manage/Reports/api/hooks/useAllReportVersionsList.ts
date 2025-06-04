@@ -10,7 +10,7 @@ import {
 } from '@openmsupply-client/common';
 import {  ALLREPORTVERSIONS } from './keys';
 import { ReportRowFragment } from 'packages/system/src/Report/index.js';
-import { useAllReportVersionsGraphQL } from '../api/useReportsGraphQL';
+import { useAllReportVersionsGraphQL } from '../../api/useReportsGraphQL';
 
 export type ReportListParams = {
   filterBy: ReportFilterInput | null;
@@ -24,9 +24,7 @@ export const useAllReportVersionsList = ({
 }: {
   queryParams?: ReportListParams;
 }) => {
-
     // QUERY
-
     const { data, isLoading, isError } = useGetList(queryParams);
 
     return {
@@ -35,10 +33,10 @@ export const useAllReportVersionsList = ({
 };
 
 const useGetList = (queryParams?: ReportListParams) => {
+  const t = useTranslation();
   const { reportApi, storeId } = useAllReportVersionsGraphQL();
   const { currentLanguage: language } = useIntlUtils();
   const { error } = useNotification();
-  const t = useTranslation();
 
   const {
     filterBy,
