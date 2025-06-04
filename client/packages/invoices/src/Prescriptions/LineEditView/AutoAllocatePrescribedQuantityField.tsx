@@ -7,7 +7,7 @@ import {
   InputLabel,
 } from '@openmsupply-client/common';
 
-import { useAllocationContext } from '../../StockOut';
+import { AllocateInType, useAllocationContext } from '../../StockOut';
 
 export const AutoAllocatePrescribedQuantityField = () => {
   const t = useTranslation();
@@ -16,9 +16,10 @@ export const AutoAllocatePrescribedQuantityField = () => {
   const { autoAllocate, prescribedQuantity, setPrescribedQuantity } =
     useAllocationContext(state => ({
       autoAllocate: state.autoAllocate,
-      alerts: state.alerts,
-      prescribedQuantity: state.prescribedQuantity,
-      allocateIn: state.allocateIn,
+      prescribedQuantity:
+        state.allocateIn.type === AllocateInType.Doses
+          ? (state.prescribedUnits ?? 0) * (state.item?.doses ?? 1)
+          : state.prescribedUnits,
       setPrescribedQuantity: state.setPrescribedQuantity,
     }));
 
