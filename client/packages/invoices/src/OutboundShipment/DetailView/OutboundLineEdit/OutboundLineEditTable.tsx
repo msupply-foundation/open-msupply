@@ -110,6 +110,7 @@ const TotalRow = ({
             : formattedValue}
         </TotalCell>
       </Tooltip>
+      <TotalCell colSpan={2} />
     </tr>
   );
 };
