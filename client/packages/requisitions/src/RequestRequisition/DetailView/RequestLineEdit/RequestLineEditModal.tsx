@@ -21,7 +21,7 @@ interface RequestLineEditModalProps {
   itemId: string | null;
   isOpen: boolean;
   onClose: () => void;
-  manageVaccinesInDoses?: boolean;
+  manageVaccinesInDoses: boolean;
 }
 
 export const RequestLineEditModal = ({
@@ -31,7 +31,7 @@ export const RequestLineEditModal = ({
   itemId,
   isOpen,
   onClose,
-  manageVaccinesInDoses = false,
+  manageVaccinesInDoses,
 }: RequestLineEditModalProps) => {
   const { Modal } = useDialog({ onClose, isOpen });
   const deleteLine = useRequest.line.deleteLine();

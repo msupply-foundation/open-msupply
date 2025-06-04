@@ -13,6 +13,8 @@ import {
   useBreadcrumbs,
   useEditModal,
   useAuthContext,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
@@ -33,6 +35,8 @@ export const DetailView = () => {
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { store } = useAuthContext();
+  const { data: { manageVaccinesInDoses } = { manageVaccinesInDoses: false } } =
+    usePreference(PreferenceKey.ManageVaccinesInDoses);
   const {
     onOpen,
     onClose,
@@ -152,6 +156,7 @@ export const DetailView = () => {
             mode={mode}
             isOpen={isOpen}
             onClose={onClose}
+            manageVaccinesInDoses={manageVaccinesInDoses}
           />
         )}
       </TableProvider>

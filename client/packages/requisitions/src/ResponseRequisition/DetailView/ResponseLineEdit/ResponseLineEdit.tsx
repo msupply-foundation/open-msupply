@@ -39,6 +39,7 @@ interface ResponseLineEditProps {
   disabled: boolean;
   isUpdateMode?: boolean;
   setIsDirty?: (isDirty: boolean) => void;
+  manageVaccinesInDoses?: boolean;
 }
 
 export const ResponseLineEdit = ({
@@ -54,13 +55,16 @@ export const ResponseLineEdit = ({
   disabled = false,
   isUpdateMode = false,
   setIsDirty = () => {},
+  manageVaccinesInDoses = false,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
   const { data: reasonOptions, isLoading } = useReasonOptions();
   const hasApproval =
     requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved;
   const isPacksEnabled = !!currentItem?.defaultPackSize;
-
+  const showContent = !!draft && !!currentItem;
+  const displayVaccinesInDoses =
+    manageVaccinesInDoses && currentItem?.isVaccine;
   const showExtraFields =
     store?.preferences?.extraFieldsInRequisition && !!requisition.program;
   const isDisabled = disabled || !!requisition.linkedRequisition;
@@ -85,7 +89,7 @@ export const ResponseLineEdit = ({
   });
 
   const getLeftPanelContent = () => {
-    if (!draft) return null;
+    if (!showContent) return null;
 
     return (
       <>
@@ -95,6 +99,12 @@ export const ResponseLineEdit = ({
             value={String(currentItem?.defaultPackSize)}
           />
         )}
+        {displayVaccinesInDoses && currentItem?.doses ? (
+          <InfoRow
+            label={t('label.doses-per-unit')}
+            value={String(currentItem?.doses)}
+          />
+        ) : null}
         {showExtraFields && (
           <>
             {numericInput(
@@ -126,7 +136,7 @@ export const ResponseLineEdit = ({
   };
 
   const getMiddlePanelContent = () => {
-    if (!draft) return null;
+    if (!showContent) return null;
 
     return (
       <>
@@ -136,6 +146,12 @@ export const ResponseLineEdit = ({
             value={String(currentItem?.defaultPackSize)}
           />
         )}
+        {displayVaccinesInDoses && currentItem?.doses && !showExtraFields ? (
+          <InfoRow
+            label={t('label.doses-per-unit')}
+            value={String(currentItem?.doses)}
+          />
+        ) : null}
         <Box
           sx={{
             background: theme => theme.palette.background.group,
@@ -212,7 +228,7 @@ export const ResponseLineEdit = ({
   };
 
   const getRightPanelContent = () => {
-    if (!draft) return null;
+    if (!showContent) return null;
 
     return (
       <>

@@ -22,6 +22,7 @@ interface ResponseLineEditModalProps {
   mode: ModalMode | null;
   isOpen: boolean;
   onClose: () => void;
+  manageVaccinesInDoses: boolean;
 }
 
 export const ResponseLineEditModal = ({
@@ -31,6 +32,7 @@ export const ResponseLineEditModal = ({
   mode,
   isOpen,
   onClose,
+  manageVaccinesInDoses,
 }: ResponseLineEditModalProps) => {
   const { Modal } = useDialog({ onClose, isOpen });
   const deleteLine = useResponse.line.deleteLine();
@@ -184,6 +186,7 @@ export const ResponseLineEditModal = ({
             disabled={isDisabled}
             isUpdateMode={mode === ModalMode.Update}
             setIsDirty={setIsDirty}
+            manageVaccinesInDoses={manageVaccinesInDoses}
           />
           {!!draft && (
             <ModalTabs
