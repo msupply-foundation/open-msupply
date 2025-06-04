@@ -79,7 +79,9 @@ export const ResponseLineEditModal = ({
   };
 
   const onChangeItem = (item: ItemWithStatsFragment) => {
-    deletePreviousLine();
+    if (item.id !== currentItem?.id) {
+      deletePreviousLine();
+    }
     setRepresentation(Representation.UNITS);
     setCurrentItem(item);
   };
@@ -95,12 +97,13 @@ export const ResponseLineEditModal = ({
 
   // Effect triggered when the selected item changes:
   // 1. The draft is reset by the useDraftRequisitionLine hook
-  // 2. For newly created lines, we immediately save to enable requisition chart data
+  // 2. For newly created lines, we immediately save to enable requisition chart
+  //    data
   useEffect(() => {
     if (!!draft?.isCreated) {
       save();
     }
-  }, [draft]);
+  }, [draft?.isCreated]);
 
   const { data } = useResponse.line.stats(!draft?.isCreated, draft?.id);
 

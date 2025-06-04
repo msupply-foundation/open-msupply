@@ -80,7 +80,7 @@ export const useDraftRequisitionLine = (
     }
   }, [lines, item, data]);
 
-  const update = (patch: Partial<DraftResponseLine>) => {
+  const update = (patch?: Partial<DraftResponseLine>) => {
     if (draft) {
       setDraft({ ...draft, ...patch });
     }
@@ -89,10 +89,6 @@ export const useDraftRequisitionLine = (
   const save = async () => {
     if (draft) {
       const result = await saveMutation(draft);
-
-      if (draft.isCreated) {
-        setDraft(line => (line ? { ...line, isCreated: false } : null));
-      }
       setIsDirty(false);
       return result;
     }

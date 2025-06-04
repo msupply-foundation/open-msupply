@@ -83,7 +83,9 @@ export const RequestLineEditModal = ({
   };
 
   const onChangeItem = (item: ItemWithStatsFragment) => {
-    deletePreviousLine();
+    if (item.id !== currentItem?.id) {
+      deletePreviousLine();
+    }
     setRepresentation(Representation.UNITS);
     setCurrentItem(item);
   };
@@ -104,7 +106,7 @@ export const RequestLineEditModal = ({
     if (!!draft?.isCreated) {
       save();
     }
-  }, [draft]);
+  }, [draft?.isCreated]);
 
   return (
     <Modal
