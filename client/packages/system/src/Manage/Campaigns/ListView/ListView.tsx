@@ -14,6 +14,7 @@ import {
   useTableStore,
   useDeleteConfirmation,
   useNotification,
+  DateUtils,
 } from '@openmsupply-client/common';
 import { Footer } from './Footer';
 import { CampaignEditModal } from './CampaignEditModal';
@@ -103,6 +104,7 @@ const CampaignsComponent = () => {
         width: 150,
         format: ColumnFormat.Date,
         sortable: false,
+        accessor: ({ rowData }) => DateUtils.getNaiveDate(rowData.startDate),
       },
       {
         key: 'endDate',
@@ -110,6 +112,7 @@ const CampaignsComponent = () => {
         width: 150,
         format: ColumnFormat.Date,
         sortable: false,
+        accessor: ({ rowData }) => DateUtils.getNaiveDate(rowData.endDate),
       },
     ],
     {
