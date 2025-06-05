@@ -111,8 +111,10 @@ mod tests {
         execute_sql_with_error(
             connection,
             sql_query(&format!(
-                r#"INSERT INTO stock_line (id, item_link_id, store_id, batch, pack_size, cost_price_per_pack, sell_price_per_pack, available_number_of_packs, total_number_of_packs, on_hold)
-                VALUES ('{}', 'item_id', 'store_id', '{}', 1.0, 10.0, 15.0, 100.0, 100.0, false);"#,
+                r#"
+                    INSERT INTO stock_line (id, item_link_id, store_id, batch, pack_size, cost_price_per_pack, sell_price_per_pack, available_number_of_packs, total_number_of_packs, on_hold)
+                    VALUES ('{}', 'item_id', 'store_id', '{}', 1.0, 10.0, 15.0, 100.0, 100.0, false);
+                "#,
                 id, batch
             ))
         ).unwrap();
@@ -127,8 +129,10 @@ mod tests {
         execute_sql_with_error(
             connection,
             sql_query(&format!(
-                r#"INSERT INTO stock_line (id, item_link_id, store_id, batch, pack_size, cost_price_per_pack, sell_price_per_pack, available_number_of_packs, total_number_of_packs, on_hold, donor_link_id)
-                VALUES ('{}', 'item_id', 'store_id', '{}', 1.0, 10.0, 15.0, 100.0, 100.0, false, '{}');"#,
+                r#"
+                    INSERT INTO stock_line (id, item_link_id, store_id, batch, pack_size, cost_price_per_pack, sell_price_per_pack, available_number_of_packs, total_number_of_packs, on_hold, donor_link_id)
+                    VALUES ('{}', 'item_id', 'store_id', '{}', 1.0, 10.0, 15.0, 100.0, 100.0, false, '{}');
+                "#,
                 id, batch, donor_id
             ))
         ).unwrap();
@@ -147,8 +151,10 @@ mod tests {
         execute_sql_with_error(
             connection,
             sql_query(format!(
-                r#"INSERT INTO sync_buffer (record_id, received_datetime, table_name, action, data) 
-                   VALUES ('{}', $1, 'stock_line', 'UPSERT', '{}');"#,
+                r#"
+                    INSERT INTO sync_buffer (record_id, received_datetime, table_name, action, data) 
+                    VALUES ('{}', $1, 'stock_line', 'UPSERT', '{}');
+                "#,
                 stock_line_id, sync_data
             ))
             .bind::<Timestamp, _>(Defaults::naive_date_time()),
@@ -217,7 +223,7 @@ mod tests {
             ("stock_line_1".to_string(), Some("donor_name_id".to_string())), // Updated from sync
             ("stock_line_2".to_string(), Some("donor_name_id".to_string())), // Updated from sync
             ("stock_line_3".to_string(), None), // No sync data
-            ("stock_line_4".to_string(), Some("existing_donor".to_string())), // Donot already set
+            ("stock_line_4".to_string(), Some("existing_donor".to_string())), // Donor already set
         ];
 
         assert_eq!(stock_lines, expected);
@@ -242,8 +248,10 @@ mod tests {
         execute_sql_with_error(
             &connection,
             sql_query(
-                r#"INSERT INTO sync_buffer (record_id, received_datetime, table_name, action, data) 
-                   VALUES ('stock_line_1', $1, 'stock_line', 'UPSERT', 'invalid json');"#,
+                r#"
+                    INSERT INTO sync_buffer (record_id, received_datetime, table_name, action, data) 
+                    VALUES ('stock_line_1', $1, 'stock_line', 'UPSERT', 'invalid json');
+                "#,
             )
             .bind::<Timestamp, _>(Defaults::naive_date_time()),
         )
