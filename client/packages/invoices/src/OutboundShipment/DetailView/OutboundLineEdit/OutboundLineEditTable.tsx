@@ -196,7 +196,10 @@ export const OutboundLineEditTable = ({
     );
 
   let extraColumnOffset = 0;
-  if (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry) {
+  if (
+    item?.isVaccine &&
+    (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry)
+  ) {
     extraColumnOffset += 1;
   }
   if (prefs?.allowTrackingOfStockByDonor) {
