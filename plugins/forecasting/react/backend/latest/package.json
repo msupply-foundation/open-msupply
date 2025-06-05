@@ -1,31 +1,25 @@
 {
-    "//": "As a backend plugins, unlike frontend plugins 'types' here is important, it indicates to backend where this plugin should be called",
-    "name": "plugin_examples",
-    "omSupplyPlugin": {
-        "target": "backend",
-        "//": "Fields here must match PluginTypes in backend_plugin_row repository",
-        "types": [
-            "average_monthly_consumption",
-            "transform_request_requisition_lines",
-            "graphql_query"
-        ],
-        "variant_type": "BOA_JS"
-    },
-    "version": "1.0.0",
-    "main": "plugin.js",
-    "scripts": {
-        "build-plugin": "webpack"
-    },
-    "license": "MIT",
-    "devDependencies": {
-        "@types/lodash": "^4.17.15",
-        "ts-loader": "^9.4.4",
-        "typescript": "^5.0.2",
-        "webpack": "^5.76.2",
-        "webpack-cli": "^5.0.1"
-    },
-    "dependencies": {
-        "lodash": "^4.17.21",
-        "uuidv7": "^1.0.0"
-    }
+  "//": "As a backend plugins, unlike frontend plugins 'types' here is important, it indicates to backend where this plugin should be called",
+  "name": "forecasting_plugins",
+  "omSupplyPlugin": {
+    "target": "backend",
+    "//": "Fields here must match PluginTypes in backend_plugin_row repository",
+    "types": [
+      "transform_request_requisition_lines"
+    ],
+    "variant_type": "BOA_JS"
+  },
+  "version": "1.0.0",
+  "main": "plugin.js",
+  "scripts": {
+    "build-plugin": "webpack"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/lodash": "^4.17.15",
+    "ts-loader": "^9.4.4",
+    "typescript": "^5.0.2",
+    "webpack": "^5.76.2",
+    "webpack-cli": "^5.0.1"
+  }
 }

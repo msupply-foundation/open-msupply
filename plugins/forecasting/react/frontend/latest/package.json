@@ -1,16 +1,12 @@
 {
   "//": "This is also plugin code, and must snake case (since it's used as federation module name), and should be unique for all plugins",
-  "name": "plugin_examples",
+  "name": "forecasting_plugins",
   "//": "When plugins are bundled in production, this field of package.json is used to identify this directory",
   "//": "As a frontend plugins, unlike backend plugins 'types' here is just metadata, only used to tell user which area plugin affects",
   "omSupplyPlugin": {
     "target": "frontend",
     "types": [
-      "inboundShipmentAppBar",
-      "dashboard",
-      "stockEditForm",
-      "stockColumn",
-      "requestRequisitionColumn"
+      "prescriptionPaymentForm"
     ]
   },
   "version": "1.0.0",
