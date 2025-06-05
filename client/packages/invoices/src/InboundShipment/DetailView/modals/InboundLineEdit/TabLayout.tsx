@@ -118,7 +118,7 @@ export const TabLayout = ({
         <InboundLineEditPanel value={Tabs.Batch}>
           <Box width={'100%'}>
             {errorMessage && (
-              <Alert severity="error" style={{ marginBottom: 2 }}>
+              <Alert severity="warning" style={{ marginBottom: 2 }}>
                 {errorMessage}
               </Alert>
             )}
