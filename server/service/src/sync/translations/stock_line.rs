@@ -189,8 +189,11 @@ impl SyncTranslation for StockLineTranslation {
             ..
         } = stock_line;
 
-        let oms_fields = StockLineRowOmsFields { campaign_id };
-
+        let oms_fields = if campaign_id.is_some() {
+            Some(StockLineRowOmsFields { campaign_id })
+        } else {
+            None
+        };
         let legacy_row = LegacyStockLineRow {
             ID: id,
             store_ID: store_id,
@@ -210,7 +213,7 @@ impl SyncTranslation for StockLineTranslation {
             item_variant_id,
             donor_id: donor_link_id,
             vvm_status_id,
-            oms_fields: Some(oms_fields),
+            oms_fields,
         };
 
         Ok(PushTranslateResult::upsert(
