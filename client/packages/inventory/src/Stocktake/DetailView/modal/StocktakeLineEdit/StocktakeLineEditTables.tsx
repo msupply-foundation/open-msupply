@@ -146,15 +146,17 @@ const getInventoryAdjustmentReasonInputColumn = (
             isInventoryReduction,
             rowData.item.isVaccine
           )}
-          isError={isAdjustmentReasonError}
-          isDisabled={
+          inputProps={{
+            error: isAdjustmentReasonError,
+          }}
+          disabled={
             typeof rowData.countedNumberOfPacks !== 'number' ||
             !rowData.countThisLine ||
             rowData.snapshotNumberOfPacks == rowData.countedNumberOfPacks
           }
           initialStocktake={initialStocktake}
           reasonOptions={reasonOptions}
-          isLoading={isLoading}
+          loading={isLoading}
         />
       );
     },
@@ -216,6 +218,7 @@ export const BatchTable = ({
         cellProps: {
           getIsDisabled: (rowData: DraftStocktakeLine) => !!rowData?.stockLine,
         },
+        align: ColumnAlign.Left,
         accessor: ({ rowData }) =>
           rowData.packSize ?? rowData.item?.defaultPackSize,
         defaultHideOnMobile: true,
@@ -234,7 +237,7 @@ export const BatchTable = ({
       },
       {
         key: 'countedNumberOfPacks',
-        label: 'description.counted-num-of-packs',
+        label: 'label.counted-num-of-packs',
         width: 100,
         getIsError: rowData =>
           errorsContext.getError(rowData)?.__typename ===

@@ -34,12 +34,12 @@ const ReturnReasonCell = ({
     <ReasonOptionsSearchInput
       type={ReasonOptionNodeType.ReturnReason}
       onChange={reason => column.setter({ ...rowData, reasonOption: reason })}
-      isDisabled={isDisabled}
+      disabled={isDisabled}
       autoFocus={rowIndex === 0}
       width={INPUT_WIDTH}
       value={rowData.reasonOption}
       reasonOptions={reasonOptions?.nodes ?? []}
-      isLoading={isLoading}
+      loading={isLoading}
     />
   );
 };

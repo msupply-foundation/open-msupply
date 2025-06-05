@@ -24,7 +24,10 @@ import {
   TooltipTextCell,
   useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
-import { CurrencyRowFragment } from '@openmsupply-client/system';
+import {
+  CurrencyRowFragment,
+  ItemVariantInfoIcon,
+} from '@openmsupply-client/system';
 import { getStockOutQuantityCellId } from '../../../utils';
 import {
   canAutoAllocate,
@@ -35,6 +38,7 @@ import {
   AllocateInOption,
   AllocateInType,
 } from '../../../StockOut';
+import { useCampaigns } from '@openmsupply-client/system/src/Manage/Campaigns/api';
 
 type AllocateFn = (
   key: string,
@@ -61,6 +65,10 @@ export const useOutboundLineEditColumns = ({
   const { store } = useAuthContext();
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+
+  const {
+    query: { data: campaigns },
+  } = useCampaigns();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
   const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
@@ -96,6 +104,10 @@ export const useOutboundLineEditColumns = ({
       'batch',
       {
         accessor: ({ rowData }) => rowData.batch,
+        Cell: getBatchWithVariantCell(
+          item?.id ?? '',
+          allocateIn.type === AllocateInType.Doses
+        ),
         width: simplifiedTabletView ? 190 : 100,
       },
     ],
@@ -125,6 +137,15 @@ export const useOutboundLineEditColumns = ({
       defaultHideOnMobile: true,
     });
   }
+
+  // Only show campaigns column if some are defined -- in time we should have a
+  // store pref for this
+  if (campaigns?.totalCount ?? 0 > 0)
+    columnDefinitions.push({
+      key: 'campaign',
+      label: 'label.campaign',
+      accessor: ({ rowData }) => rowData?.campaign?.name,
+    });
 
   columnDefinitions.push([
     'location',
@@ -253,6 +274,7 @@ const getAllocateInUnitsColumns = (
         allocate(id, numberOfPacks ?? 0, {
           allocateInType: AllocateInType.Packs,
         }),
+      align: ColumnAlign.Left,
     },
   ],
   [
@@ -350,3 +372,24 @@ const getAllocateInDosesColumns = (
     ],
   ];
 };
+
+interface BatchWithVariantCellProps {
+  rowData: DraftStockOutLineFragment;
+}
+
+const getBatchWithVariantCell =
+  (itemId: string, includeDoseColumns: boolean) =>
+  ({ rowData }: BatchWithVariantCellProps) => {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        {rowData.batch}
+        {rowData.itemVariant && (
+          <ItemVariantInfoIcon
+            includeDoseColumns={includeDoseColumns}
+            itemId={itemId}
+            itemVariantId={rowData.itemVariant.id}
+          />
+        )}
+      </div>
+    );
+  };
