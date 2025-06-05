@@ -18,12 +18,16 @@ import {
 import { Footer } from './Footer';
 import { CampaignEditModal } from './CampaignEditModal';
 import { AppBarButtons } from './AppBarButtons';
-import { CampaignRowFragment, DraftCampaign, useCampaigns } from '../api';
+import {
+  CampaignRowFragment,
+  defaultDraftCampaign,
+  DraftCampaign,
+  useCampaigns,
+} from '../api';
 
 const CampaignsComponent = () => {
   const t = useTranslation();
   const {
-    // filter,
     updateSortQuery,
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset, filterBy },
@@ -53,23 +57,24 @@ const CampaignsComponent = () => {
 
   const save = async () => {
     const result = await upsert();
+
+    // Closes on success and resets the draft
     if (result?.__typename === 'CampaignNode') {
       success(t('messages.campaign-saved'))();
+      onClose();
+      updateDraft(defaultDraftCampaign);
       return;
     }
 
-    if ('error' in result) {
-      if (
+    if (result?.__typename === 'UpsertCampaignError') {
+      const isUniqueValidation =
         '__typename' in result.error &&
-        result.error.__typename === 'UniqueValueViolation'
-      ) {
-        error(t('messages.error-campaign-name-already-exists'))();
-        return;
-      }
+        result.error.__typename === 'UniqueValueViolation';
 
-      error(
-        `${t('messages.error-saving-campaign')} — ${result.error.description ?? ''}`
-      )();
+      const errorMessage = isUniqueValidation
+        ? t('messages.error-campaign-name-already-exists')
+        : `${t('messages.error-saving-campaign')} — ${result.error.description ?? ''}`;
+      error(errorMessage)();
     }
   };
 
@@ -134,15 +139,6 @@ const CampaignsComponent = () => {
   return (
     <>
       <AppBarButtons onOpen={onOpen} />
-      {isOpen && (
-        <CampaignEditModal
-          isOpen={isOpen}
-          campaign={draft}
-          onClose={onClose}
-          upsert={save}
-          updateDraft={updateDraft}
-        />
-      )}
       <DataTable
         id="campaign-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
@@ -158,6 +154,15 @@ const CampaignsComponent = () => {
         selectedRowCount={selectedRows.length}
         deleteRows={confirmAndDelete}
       />
+      {isOpen && (
+        <CampaignEditModal
+          isOpen={isOpen}
+          campaign={draft}
+          onClose={onClose}
+          upsert={save}
+          updateDraft={updateDraft}
+        />
+      )}
     </>
   );
 };
