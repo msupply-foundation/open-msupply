@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BasicSpinner,
   DialogButton,
@@ -58,6 +58,7 @@ export const RequestLineEditModal = ({
 
   const { draft, save, update, isLoading } =
     useDraftRequisitionLine(currentItem);
+  const draftIdRef = useRef<string | undefined>(draft?.id);
   const { hasNext, next } = useNextRequestLine(lines, currentItem);
 
   const useConsumptionData =
@@ -71,9 +72,13 @@ export const RequestLineEditModal = ({
     }
   };
 
+  useEffect(() => {
+    draftIdRef.current = draft?.id;
+  }, [draft?.id]);
+
   const onCancel = () => {
     if (mode === ModalMode.Create) {
-      deleteLine(draft?.id || '');
+      deleteLine(draftIdRef.current || '');
     }
     onClose();
   };

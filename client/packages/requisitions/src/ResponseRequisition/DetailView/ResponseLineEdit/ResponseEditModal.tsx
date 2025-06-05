@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BasicSpinner,
   DialogButton,
@@ -38,7 +38,6 @@ export const ResponseLineEditModal = ({
   onClose,
   manageVaccinesInDoses,
 }: ResponseLineEditModalProps) => {
-  const { Modal } = useDialog({ onClose, isOpen });
   const deleteLine = useResponse.line.deleteLine();
   const isDisabled = useResponse.utils.isDisabled();
 
@@ -58,6 +57,7 @@ export const ResponseLineEditModal = ({
 
   const { draft, update, save, isLoading } =
     useDraftRequisitionLine(currentItem);
+  const draftIdRef = useRef<string | undefined>(draft?.id);
   const { hasNext, next } = useNextResponseLine(lines, currentItem);
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
 
@@ -68,12 +68,18 @@ export const ResponseLineEditModal = ({
     }
   };
 
+  useEffect(() => {
+    draftIdRef.current = draft?.id;
+  }, [draft?.id]);
+
   const onCancel = () => {
     if (mode === ModalMode.Create) {
-      deleteLine(draft?.id || '');
+      deleteLine(draftIdRef.current || '');
     }
     onClose();
   };
+
+  const { Modal } = useDialog({ onClose: onCancel, isOpen });
 
   const onChangeItem = (item: ItemWithStatsFragment) => {
     if (item.id !== currentItem?.id) {
