@@ -148,8 +148,8 @@ export const QuantityTableComponent = ({
         } else {
           setErrorMessage?.(
             t('messages.under-allocated', {
-              receivedQuantity: format(NumUtils.round(unitToPacks, 2)), // round the display value to 2dp
-              quantity: format(roundedPacks),
+              receivedQuantity: format(NumUtils.round(unitsPerPack, 2)), // round the display value to 2dp
+              quantity: format(actualUnits),
             })
           );
         }
