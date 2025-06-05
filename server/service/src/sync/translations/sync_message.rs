@@ -15,7 +15,7 @@ use super::{to_legacy_time, PushTranslateResult};
 
 /// Message from mSupply Central Server
 #[derive(Deserialize, Serialize, Debug)]
-pub struct LegacySyncMessageRow {
+pub struct LegacyMessageRow {
     #[serde(rename = "ID")]
     pub id: String,
     #[serde(rename = "toStoreID", deserialize_with = "empty_str_as_option_string")]
@@ -64,7 +64,7 @@ impl SyncTranslation for MessageTranslation {
         _: &StorageConnection,
         sync_record: &repository::SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let LegacySyncMessageRow {
+        let LegacyMessageRow {
             id,
             to_store_id,
             from_store_id,
@@ -129,7 +129,7 @@ impl SyncTranslation for MessageTranslation {
         // "unwrap_or" here would result in a string version of body json
         let body = serde_json::from_str(&body).unwrap_or(serde_json::json!(body));
 
-        let legacy_row = LegacySyncMessageRow {
+        let legacy_row = LegacyMessageRow {
             id: id.clone(),
             to_store_id,
             from_store_id,

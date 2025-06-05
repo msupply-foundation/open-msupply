@@ -6,7 +6,7 @@ use util::inline_init;
 use crate::sync::{
     test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
     translations::{
-        sync_message::{LegacySyncMessageRow, LegacySyncMessageStatus},
+        sync_message::{LegacyMessageRow, LegacySyncMessageStatus},
         PullTranslateResult,
     },
 };
@@ -57,7 +57,7 @@ fn message_1_push_record() -> TestSyncOutgoingRecord {
     TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: MESSAGE_1.0.to_string(),
-        push_data: json!(LegacySyncMessageRow {
+        push_data: json!(LegacyMessageRow {
             id: MESSAGE_1.0.to_string(),
             to_store_id: Some("store_a".to_string()),
             from_store_id: Some("store_b".to_string()),
