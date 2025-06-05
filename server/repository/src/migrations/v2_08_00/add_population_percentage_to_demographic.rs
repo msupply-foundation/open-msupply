@@ -15,8 +15,10 @@ impl MigrationFragment for Migrate {
             "#,
         )?;
 
-        // Populate the new column with the existing values from demographic_indicator if they exist
-        // They should only exist for the central server, so this will only affect the central server
+        // Populate the new column with the existing values from
+        // demographic_indicator if they exist.
+        // They should only exist for the central server, so this will only
+        // affect the central server
         sql!(
             connection,
             r#"
