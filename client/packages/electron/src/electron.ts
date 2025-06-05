@@ -24,6 +24,11 @@ import ElectronStore from 'electron-store';
 import { KeyboardScanner } from './keyboardScanner/keyboardScanner';
 import https from 'https';
 import http from 'http';
+import defaultTranslations from '../../common/src/intl/locales/en/desktop.json';
+
+// We'll lazy load, once we have the locale available
+const importDesktopTranslations = async (locale: string) =>
+  import(`../../common/src/intl/locales/${locale}/desktop.json`);
 
 const SERVICE_TYPE = 'omsupply';
 const PROTOCOL_KEY = 'protocol';
@@ -209,6 +214,27 @@ const start = (): void => {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
   });
+
+  // Not using i18next here, as that needs more of the app to be initialised
+  // than we have available at this point. We also don't need all the translations,
+  // just the desktop ones, so we can import them directly.
+
+  const appLocale = app.getLocale();
+
+  // See if we have translations for the system language
+  importDesktopTranslations(appLocale)
+    // Some locales are in the format of 'fr-DJ', check if we have translations for the base (fr)
+    .catch(() => importDesktopTranslations(appLocale.split('-')[0] ?? ''))
+    .catch(() => {}) // swallow error, use default translations
+    .then(translations => {
+      // Merge the translations with the default translations
+      const mergedTranslations = {
+        ...defaultTranslations,
+        ...translations,
+      };
+      // Configure app menus once we have translations available
+      configureMenus(window, mergedTranslations);
+    });
 
   // and load discovery (with autoconnect=true by default)
   window.loadURL(START_URL);
@@ -412,95 +438,82 @@ app.addListener(
   }
 );
 
-const fileMenu: MenuItemConstructorOptions = {
-  label: 'File',
-  submenu: [{ role: 'quit' }],
-};
+function configureMenus(
+  window: BrowserWindow,
+  translations: Record<keyof typeof defaultTranslations, string>
+) {
+  const t = (key: keyof typeof defaultTranslations) => translations[key] || key;
 
-// const editMenu: MenuItemConstructorOptions = {
-//   label: 'Edit',
-//   submenu: [
-//     { role: 'undo' },
-//     { role: 'redo' },
-//     { type: 'separator' },
-//     { role: 'cut' },
-//     { role: 'copy' },
-//     { role: 'paste' },
-//     { role: 'delete' },
-//     { type: 'separator' },
-//     { role: 'selectAll' },
-//   ],
-// };
+  // add a context menu which shows when the user right clicks
+  window.webContents.on('context-menu', (_event, params) => {
+    // Electron _should_ localise based on the roles... alas, at least for mac os: https://github.com/electron/electron/issues/26231
+    const template: Electron.MenuItemConstructorOptions[] = [
+      { role: 'cut', label: t('cut') },
+      { role: 'copy', label: t('copy') },
+      { role: 'paste', label: t('paste') },
+      { role: 'selectAll', label: t('select-all') },
+      { type: 'separator' },
+      { role: 'reload', label: t('reload') },
+    ];
+    const menu = Menu.buildFromTemplate(template);
+    menu.popup({ window, x: params.x, y: params.y });
+  });
 
-// const viewMenu: MenuItemConstructorOptions = {
-//   label: 'View',
-//   submenu: [
-//     { role: 'reload' },
-//     { role: 'forceReload' },
-//     { role: 'toggleDevTools' },
-//     { type: 'separator' },
-//     { role: 'resetZoom' },
-//     { role: 'zoomIn' },
-//     { role: 'zoomOut' },
-//     { type: 'separator' },
-//     { role: 'togglefullscreen' },
-//   ],
-// };
+  const fileMenu: MenuItemConstructorOptions = {
+    label: t('file'),
+    submenu: [{ role: 'quit' }],
+  };
 
-const helpMenu: MenuItemConstructorOptions = {
-  role: 'help',
-  submenu: [
-    {
-      label: 'Documentation',
-      click: async () => {
-        await shell.openExternal(
-          'https://docs.msupply.foundation/docs/introduction/introduction/'
-        );
+  const helpMenu: MenuItemConstructorOptions = {
+    label: t('help'),
+    role: 'help',
+    submenu: [
+      {
+        label: t('documentation'),
+        click: async () => {
+          await shell.openExternal(
+            'https://docs.msupply.foundation/docs/introduction/introduction/'
+          );
+        },
       },
-    },
-    {
-      label: 'Clear Data',
-      click: () => {
-        dialog
-          .showMessageBox({
-            type: 'question',
-            title: 'Confirmation',
-            message:
-              'This will clear all local data and close the application. Are you sure?',
-            buttons: ['Yes', 'No'],
-          })
-          .then(result => {
-            // Bail if the user pressed "No" or escaped (ESC) from the dialog box
-            if (result.response !== 0) {
-              return;
-            }
-            store.clear();
-            const contents = webContents.getFocusedWebContents();
-            if (contents) {
-              contents.executeJavaScript(`localStorage.clear();`);
-            }
-            app.exit();
-          });
+      {
+        label: t('clear-data'),
+        click: () => {
+          dialog
+            .showMessageBox({
+              type: 'question',
+              title: t('confirmation'),
+              message: t('clear-data-confirm-message'),
+              buttons: [t('yes'), t('no')],
+            })
+            .then(result => {
+              // Bail if the user pressed "No" or escaped (ESC) from the dialog box
+              if (result.response !== 0) {
+                return;
+              }
+              store.clear();
+              const contents = webContents.getFocusedWebContents();
+              if (contents) {
+                contents.executeJavaScript(`localStorage.clear();`);
+              }
+              app.exit();
+            });
+        },
       },
-    },
-    {
-      label: 'Developer Tools',
-      click: () => {
-        const contents = webContents.getFocusedWebContents();
-        if (contents) {
-          contents.openDevTools();
-        }
+      {
+        label: t('developer-tools'),
+        click: () => {
+          const contents = webContents.getFocusedWebContents();
+          if (contents) {
+            contents.openDevTools();
+          }
+        },
       },
-    },
-    { role: 'about' },
-  ],
-};
+      { role: 'about', label: t('about-oms') },
+    ],
+  };
 
-const menu = Menu.buildFromTemplate([
-  fileMenu,
-  // editMenu,
-  // viewMenu,
-  helpMenu,
-]);
+  const menu = Menu.buildFromTemplate([fileMenu, helpMenu]);
 
-Menu.setApplicationMenu(menu);
+  Menu.setApplicationMenu(menu);
+}

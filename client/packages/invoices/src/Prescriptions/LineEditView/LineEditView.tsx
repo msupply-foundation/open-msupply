@@ -29,7 +29,7 @@ export const PrescriptionLineEditView = () => {
   const isDirty = useRef(false);
   const navigate = useNavigate();
 
-  const { data: prefs } = usePreference(
+  const { data: prefs, isLoading: isLoadingPrefs } = usePreference(
     PreferenceKey.ManageVaccinesInDoses,
     PreferenceKey.SortByVvmStatusThenExpiry
   );
@@ -38,7 +38,7 @@ export const PrescriptionLineEditView = () => {
     isDirty: allocationIsDirty,
     draftLines,
     item,
-    prescribedQuantity,
+    prescribedUnits,
     note,
     allocatedQuantity,
     setIsDirty: setAllocationIsDirty,
@@ -128,7 +128,7 @@ export const PrescriptionLineEditView = () => {
       await savePrescriptionItemLineData({
         itemId: contextItemId,
         lines: draftLines,
-        prescribedQuantity: prescribedQuantity,
+        prescribedUnits,
         note,
       });
 
@@ -151,7 +151,7 @@ export const PrescriptionLineEditView = () => {
     }
   };
 
-  if (isLoading || !itemId) return <BasicSpinner />;
+  if (isLoading || !itemId || isLoadingPrefs) return <BasicSpinner />;
   if (!data) return <NothingHere />;
 
   const itemIdList = items.map(item => item.id);
@@ -211,7 +211,7 @@ export const PrescriptionLineEditView = () => {
         disabled={
           !item?.id ||
           !allocationIsDirty ||
-          (allocatedQuantity === 0 && prescribedQuantity === 0)
+          (allocatedQuantity === 0 && prescribedUnits === 0)
         }
         handleSave={onSave}
         handleCancel={() =>
