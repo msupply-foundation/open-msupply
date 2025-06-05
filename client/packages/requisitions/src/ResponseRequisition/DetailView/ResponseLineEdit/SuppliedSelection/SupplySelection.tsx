@@ -30,7 +30,6 @@ interface SupplySelectionProps {
   representation: RepresentationValue;
   setRepresentation: (rep: RepresentationValue) => void;
   unitName: string;
-  setIsDirty?: (isDirty: boolean) => void;
   displayVaccinesInDoses?: boolean;
   dosesPerUnit: number;
 }
@@ -44,7 +43,6 @@ export const SupplySelection = ({
   representation,
   setRepresentation,
   unitName,
-  setIsDirty = () => {},
   displayVaccinesInDoses = false,
   dosesPerUnit,
 }: SupplySelectionProps) => {
@@ -79,7 +77,6 @@ export const SupplySelection = ({
         defaultPackSize
       );
       update(updatedSupply);
-      setIsDirty(false);
     },
     [representation, defaultPackSize]
   );
@@ -89,8 +86,6 @@ export const SupplySelection = ({
   }, [draft?.id, representation]);
 
   const handleValueChange = (newValue?: number) => {
-    const valueChanged = newValue !== currentValue;
-    setIsDirty(valueChanged);
     setValue(newValue ?? 0);
     debouncedUpdate(newValue);
   };

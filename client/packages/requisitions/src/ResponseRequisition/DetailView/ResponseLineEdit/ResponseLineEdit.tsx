@@ -38,7 +38,6 @@ interface ResponseLineEditProps {
   setRepresentation: (type: RepresentationValue) => void;
   disabled: boolean;
   isUpdateMode?: boolean;
-  setIsDirty?: (isDirty: boolean) => void;
   manageVaccinesInDoses?: boolean;
 }
 
@@ -54,7 +53,6 @@ export const ResponseLineEdit = ({
   setRepresentation,
   disabled = false,
   isUpdateMode = false,
-  setIsDirty = () => {},
   manageVaccinesInDoses = false,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
@@ -259,7 +257,6 @@ export const ResponseLineEdit = ({
             representation={representation}
             setRepresentation={setRepresentation}
             unitName={unitName}
-            setIsDirty={setIsDirty}
             displayVaccinesInDoses={displayVaccinesInDoses}
             dosesPerUnit={currentItem?.doses ?? 1}
           />

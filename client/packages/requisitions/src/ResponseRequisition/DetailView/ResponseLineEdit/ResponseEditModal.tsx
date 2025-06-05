@@ -56,7 +56,7 @@ export const ResponseLineEditModal = ({
     Representation.UNITS
   );
 
-  const { draft, update, save, isDirty, setIsDirty, isLoading } =
+  const { draft, update, save, isLoading } =
     useDraftRequisitionLine(currentItem);
   const { hasNext, next } = useNextResponseLine(lines, currentItem);
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
@@ -151,7 +151,7 @@ export const ResponseLineEditModal = ({
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
       nextButton={
         <DialogButton
-          disabled={nextDisabled || isDirty}
+          disabled={nextDisabled}
           variant="next-and-ok"
           onClick={onSave}
         />
@@ -159,7 +159,7 @@ export const ResponseLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentItem || isDirty}
+          disabled={!currentItem}
           onClick={async () => {
             await save();
             onClose();
@@ -185,7 +185,6 @@ export const ResponseLineEditModal = ({
             setRepresentation={setRepresentation}
             disabled={isDisabled}
             isUpdateMode={mode === ModalMode.Update}
-            setIsDirty={setIsDirty}
             manageVaccinesInDoses={manageVaccinesInDoses}
           />
           {!!draft && (

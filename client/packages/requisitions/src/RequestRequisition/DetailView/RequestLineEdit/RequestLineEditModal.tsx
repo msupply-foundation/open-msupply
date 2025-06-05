@@ -56,7 +56,7 @@ export const RequestLineEditModal = ({
     Representation.UNITS
   );
 
-  const { draft, save, update, isDirty, setIsDirty, isLoading } =
+  const { draft, save, update, isLoading } =
     useDraftRequisitionLine(currentItem);
   const { hasNext, next } = useNextRequestLine(lines, currentItem);
 
@@ -111,7 +111,7 @@ export const RequestLineEditModal = ({
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
       nextButton={
         <DialogButton
-          disabled={nextDisabled || isDirty}
+          disabled={nextDisabled}
           variant="next-and-ok"
           onClick={onNext}
         />
@@ -119,7 +119,7 @@ export const RequestLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentItem || isDirty}
+          disabled={!currentItem}
           onClick={async () => {
             await save();
             onClose();
@@ -146,7 +146,6 @@ export const RequestLineEditModal = ({
           isUpdateMode={mode === ModalMode.Update}
           showExtraFields={useConsumptionData && !!requisition?.program}
           manageVaccinesInDoses={manageVaccinesInDoses}
-          setIsDirty={setIsDirty}
         />
       )}
     </Modal>

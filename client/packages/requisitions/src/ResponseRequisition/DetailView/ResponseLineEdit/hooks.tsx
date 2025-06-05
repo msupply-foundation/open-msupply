@@ -61,7 +61,6 @@ export const useDraftRequisitionLine = (
   const { mutateAsync: saveMutation, isLoading } = useResponse.line.save();
 
   const [draft, setDraft] = useState<DraftResponseLine | null>(null);
-  const [isDirty, setIsDirty] = useState(false);
 
   useEffect(() => {
     if (lines && item && data) {
@@ -73,10 +72,8 @@ export const useDraftRequisitionLine = (
       } else {
         setDraft(createDraftFromItem(item, data));
       }
-      setIsDirty(false);
     } else {
       setDraft(null);
-      setIsDirty(false);
     }
   }, [lines, item, data]);
 
@@ -89,13 +86,12 @@ export const useDraftRequisitionLine = (
   const save = async () => {
     if (draft) {
       const result = await saveMutation(draft);
-      setIsDirty(false);
       return result;
     }
     return null;
   };
 
-  return { draft, isLoading, save, update, isDirty, setIsDirty };
+  return { draft, isLoading, save, update };
 };
 
 export const useNextResponseLine = (

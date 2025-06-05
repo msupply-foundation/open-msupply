@@ -33,7 +33,6 @@ interface RequestedSelectionProps {
   showExtraFields?: boolean;
   displayVaccinesInDoses?: boolean;
   dosesPerUnit?: number;
-  setIsDirty?: (isDirty: boolean) => void;
 }
 
 export const RequestedSelection = ({
@@ -47,7 +46,6 @@ export const RequestedSelection = ({
   unitName,
   displayVaccinesInDoses = false,
   dosesPerUnit = 1,
-  setIsDirty = () => {},
 }: RequestedSelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -89,14 +87,11 @@ export const RequestedSelection = ({
         draft?.suggestedQuantity
       );
       update(updatedRequest);
-      setIsDirty(false);
     },
     [representation, defaultPackSize, update]
   );
 
   const handleValueChange = (newValue?: number) => {
-    const valueChanged = newValue !== currentValue;
-    setIsDirty(valueChanged);
     setValue(newValue ?? 0);
     debouncedUpdate(newValue);
   };
