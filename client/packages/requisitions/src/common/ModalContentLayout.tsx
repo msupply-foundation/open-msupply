@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   Grid,
   SxProps,
@@ -9,8 +9,8 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import {
-  getValueInUnitsOrPacks,
-  Representation,
+  useEndAdornment,
+  useValueInUnitsOrPacks,
   RepresentationValue,
 } from './utils';
 
@@ -19,6 +19,7 @@ interface LayoutProps {
   Left: React.ReactElement | null;
   Middle: React.ReactElement | null;
   Right: React.ReactElement | null;
+  showExtraFields?: boolean;
 }
 
 export const ModalContentLayout = ({
@@ -26,6 +27,7 @@ export const ModalContentLayout = ({
   Left,
   Middle,
   Right,
+  showExtraFields = false,
 }: LayoutProps) => {
   return (
     <Grid
@@ -35,26 +37,14 @@ export const ModalContentLayout = ({
       bgcolor="background.toolbar"
       padding={2}
       paddingBottom={1}
-      borderRadius={2}
-      boxShadow={theme => theme.shadows[2]}
     >
       <Grid size={12} sx={{ mb: 2 }}>
         {Top}
       </Grid>
       <Grid size={12} container spacing={2}>
-        <Grid size={4}>{Left}</Grid>
-        <Grid size={4}>{Middle}</Grid>
-        <Grid
-          size={4}
-          sx={{
-            background: theme => theme.palette.background.group,
-            padding: '0px 8px',
-            borderRadius: 2,
-            paddingBottom: 1,
-          }}
-        >
-          {Right}
-        </Grid>
+        <Grid size={showExtraFields ? 4 : 6}>{Left}</Grid>
+        <Grid size={showExtraFields ? 4 : 6}>{Middle}</Grid>
+        {showExtraFields && <Grid size={4}>{Right}</Grid>}
       </Grid>
     </Grid>
   );
@@ -102,7 +92,15 @@ interface ValueInfoRowProps extends Omit<InfoRowProps, 'value'> {
   defaultPackSize: number;
   unitName: string;
   nullDisplay?: string;
+  endAdornmentOverride?: string;
 }
+
+export type ValueInfo = {
+  label: string;
+  endAdornmentOverride?: string;
+  value?: number | null;
+  sx?: SxProps<Theme>;
+};
 
 export const ValueInfoRow = ({
   label,
@@ -111,16 +109,27 @@ export const ValueInfoRow = ({
   defaultPackSize,
   unitName,
   sx,
+  endAdornmentOverride,
   nullDisplay,
 }: ValueInfoRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
   const { round } = useFormatNumber();
-  const valueInUnitsOrPacks = getValueInUnitsOrPacks(
+  const valueInUnitsOrPacks = useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     value
   );
+
+  const endAdornment = useEndAdornment(
+    t,
+    getPlural,
+    unitName,
+    representation,
+    valueInUnitsOrPacks,
+    endAdornmentOverride
+  );
+
   const packagingDisplay = useMemo(() => {
     if (value === null && nullDisplay) return '';
     if (representation === Representation.PACKS) {
@@ -136,7 +145,7 @@ export const ValueInfoRow = ({
     <InfoRow
       label={label}
       value={displayValue}
-      packagingDisplay={packagingDisplay}
+      packagingDisplay={endAdornment}
       sx={sx}
     />
   );
