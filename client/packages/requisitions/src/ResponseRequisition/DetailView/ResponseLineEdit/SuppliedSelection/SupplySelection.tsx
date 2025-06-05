@@ -60,7 +60,7 @@ export const SupplySelection = ({
 
   const options = useMemo((): Option[] => {
     const displayValue = value === 1 ? 1 : 2;
-    const unitPlural = getPlural(unitName, displayValue);
+    const unitPlural = getPlural(unitName.toLowerCase(), displayValue);
     const packPlural = getPlural(t('label.pack'), displayValue).toLowerCase();
 
     if (!isPacksEnabled)
