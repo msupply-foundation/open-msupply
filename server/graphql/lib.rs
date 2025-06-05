@@ -118,10 +118,6 @@ impl CentralServerQueryNode {
     async fn plugin(&self) -> CentralPluginQueries {
         CentralPluginQueries
     }
-
-    async fn campaign(&self) -> CampaignQueries {
-        CampaignQueries
-    }
 }
 
 #[derive(Default, Clone)]
@@ -178,6 +174,7 @@ pub struct Queries(
     pub PreferenceQueries,
     pub CentralServerQueries,
     pub VVMQueries,
+    pub CampaignQueries,
 );
 
 impl Queries {
@@ -210,6 +207,7 @@ impl Queries {
             PreferenceQueries,
             CentralServerQueries,
             VVMQueries,
+            CampaignQueries,
         )
     }
 }
