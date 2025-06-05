@@ -130,14 +130,17 @@ export const ValueInfoRow = ({
     endAdornmentOverride
   );
 
-  const displayValue =
-    value === null && nullDisplay ? nullDisplay : round(valueInUnitsOrPacks, 2);
+  const treatAsNull = value === null && nullDisplay;
+
+  const displayValue = treatAsNull
+    ? nullDisplay
+    : round(valueInUnitsOrPacks, 2);
 
   return (
     <InfoRow
       label={label}
       value={displayValue}
-      packagingDisplay={endAdornment}
+      packagingDisplay={treatAsNull ? '' : endAdornment}
       sx={sx}
     />
   );
