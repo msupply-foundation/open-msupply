@@ -11,7 +11,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::PushTranslateResult;
+use super::{to_legacy_time, PushTranslateResult};
 
 /// Message from mSupply Central Server
 #[derive(Deserialize, Serialize, Debug)]
@@ -124,7 +124,7 @@ impl SyncTranslation for MessageTranslation {
         } = message;
 
         let created_date = created_datetime.date();
-        let created_time = created_datetime.time();
+        let created_time = to_legacy_time(created_datetime);
 
         // "unwrap_or" here would result in a string version of body json
         let body = serde_json::from_str(&body).unwrap_or(serde_json::json!(body));

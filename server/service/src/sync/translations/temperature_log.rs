@@ -16,7 +16,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -130,7 +130,7 @@ impl SyncTranslation for TemperatureLogTranslation {
             location_id,
             store_id,
             date: Some(datetime.date()),
-            time: datetime.time(),
+            time: to_legacy_time(datetime),
             temperature_breach_id,
             datetime: Some(datetime),
         };

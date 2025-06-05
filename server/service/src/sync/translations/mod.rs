@@ -80,6 +80,7 @@ pub(crate) mod vaccine_course_dose;
 pub(crate) mod vaccine_course_item;
 pub(crate) mod warning;
 
+use chrono::{NaiveDateTime, NaiveTime, SubsecRound};
 use repository::*;
 use thiserror::Error;
 use topological_sort::TopologicalSort;
@@ -554,4 +555,9 @@ fn is_active_record_on_site(
     };
 
     Ok(result)
+}
+
+/// 4D only expects HH:MM:SS format, so we remove the sub-seconds
+fn to_legacy_time(datetime: NaiveDateTime) -> NaiveTime {
+    datetime.time().round_subsecs(0)
 }
