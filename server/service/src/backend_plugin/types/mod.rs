@@ -5,6 +5,14 @@ pub mod transform_request_requisition_lines;
 
 #[cfg(test)]
 mod generate_typescript_types {
+    use crate::{
+        boajs::methods::{
+            use_graphql::UseGraphqlInput,
+            use_repository::{UseRepositoryInput, UseRepositoryOutput},
+        },
+        sync::ActiveStoresOnSite,
+    };
+
     use super::*;
     use repository::{PluginDataFilter, PluginDataRow, StorePreferenceRow};
     use ts_rs::TS;
@@ -31,6 +39,9 @@ mod generate_typescript_types {
         // like for input or output of global methods
         get_store_preferences: StorePreferenceRow,
         get_plugin_data: Function<PluginDataFilter, Vec<PluginDataRow>>,
+        use_repository: Function<UseRepositoryInput, UseRepositoryOutput>,
+        use_graphql: Function<UseGraphqlInput, serde_json::Value>,
+        get_active_stores_on_site: Function<(), ActiveStoresOnSite>,
     }
 
     #[test]

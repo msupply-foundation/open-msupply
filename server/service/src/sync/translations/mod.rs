@@ -36,7 +36,6 @@ pub(crate) mod location_movement;
 pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
-pub(crate) mod message;
 pub(crate) mod name;
 pub(crate) mod name_insurance_join;
 pub(crate) mod name_oms_fields;
@@ -67,6 +66,7 @@ pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
 pub(crate) mod sync_file_reference;
+pub(crate) mod sync_message;
 pub(crate) mod system_log;
 pub(crate) mod temperature_breach;
 pub(crate) mod temperature_log;
@@ -186,7 +186,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         name_insurance_join::boxed(),
         report::boxed(),
         preference::boxed(),
-        message::boxed(),
+        sync_message::boxed(),
     ]
 }
 

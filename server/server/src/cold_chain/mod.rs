@@ -84,6 +84,7 @@ pub fn validate_access(
         service_context,
         auth_data,
         &token,
+        &None,
         &access_request,
     )?;
     Ok((validated_user.user_id, store_id))

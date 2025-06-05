@@ -13,6 +13,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 table! {
     #[sql_name = "name"]
@@ -78,7 +79,7 @@ allow_tables_to_appear_in_same_query!(name_oms_fields, master_list_name_join);
 allow_tables_to_appear_in_same_query!(name_oms_fields, master_list);
 allow_tables_to_appear_in_same_query!(name_oms_fields, program);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum GenderType {
@@ -108,7 +109,7 @@ impl GenderType {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, TS)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 #[PgType = "name_type"]
@@ -120,7 +121,8 @@ pub enum NameRowType {
     Repack,
     #[default]
     Store,
-
+    // TS complains about serde other, other was a capture for unknown types, it's safe to ignore it in type definition
+    #[ts(skip)]
     #[serde(other)]
     Others,
 }
@@ -131,7 +133,19 @@ impl NameRowType {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    Debug,
+    PartialEq,
+    Eq,
+    AsChangeset,
+    Default,
+    Serialize,
+    Deserialize,
+    TS,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = name)]
 pub struct NameRow {
