@@ -80,7 +80,7 @@ jobs:
         run: docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:slim cargo build --release --bin remote_server --bin remote_server_cli
     
       - name: Generate backend typescript types
-        run: docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:slim cargo run --bin remote_server -- generate-type-script-types
+        run: docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:slim cargo run --bin remote_server_cli -- generate-type-script-types
 
       - name: Save server executable artifacts
         uses: actions/upload-artifact@v4
