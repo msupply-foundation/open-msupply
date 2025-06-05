@@ -12,6 +12,7 @@ import {
   ButtonWithIcon,
   useAppTheme,
   useMediaQuery,
+  Alert,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
@@ -54,6 +55,7 @@ export const TabLayout = ({
   const theme = useAppTheme();
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
+  const [errorMessage, setErrorMessage] = useState<string>(() => '');
 
   if (draftLines.length === 0)
     return <Box sx={{ height: isMediumScreen ? 400 : 500 }} />;
@@ -114,14 +116,22 @@ export const TabLayout = ({
         }}
       >
         <InboundLineEditPanel value={Tabs.Batch}>
-          <QuantityTable
-            isDisabled={isDisabled}
-            lines={draftLines}
-            updateDraftLine={updateDraftLine}
-            item={item}
-            hasItemVariantsEnabled={hasItemVariantsEnabled}
-            hasVvmStatusesEnabled={hasVvmStatusesEnabled}
-          />
+          <Box width={'100%'}>
+            {errorMessage && (
+              <Alert severity="error" style={{ marginBottom: 2 }}>
+                {errorMessage}
+              </Alert>
+            )}
+            <QuantityTable
+              setErrorMessage={setErrorMessage}
+              isDisabled={isDisabled}
+              lines={draftLines}
+              updateDraftLine={updateDraftLine}
+              item={item}
+              hasItemVariantsEnabled={hasItemVariantsEnabled}
+              hasVvmStatusesEnabled={hasVvmStatusesEnabled}
+            />
+          </Box>
         </InboundLineEditPanel>
 
         <InboundLineEditPanel value={Tabs.Pricing}>
