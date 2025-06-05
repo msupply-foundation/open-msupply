@@ -64,14 +64,14 @@ const ReportsComponent = () => {
           const { isActive } = rowData;
           return t(isActive ? 'label.active' : 'label.inactive');
         },
+        width: 150,
+        sortable: false,
       },
       {
         label: 'label.is_custom',
         key: 'isCustom',
-        accessor: ({ rowData }) => {
-          const { isCustom } = rowData;
-          return t(isCustom ? 'label.custom' : 'label.standard');
-        },
+        width: 150,
+        sortable: false,
       },
     ],
     {
@@ -84,13 +84,6 @@ const ReportsComponent = () => {
   return (
     <>
       <AppBarButtons onOpen={onOpen} />
-      {isOpen && (
-        <ReportUploadModal
-          isOpen={isOpen}
-          onClose={onClose}
-          install={install}
-        />
-      )}
       <DataTable
         id="report-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
@@ -101,6 +94,13 @@ const ReportsComponent = () => {
         isError={isError}
         noDataElement={<NothingHere body={t('error.no-reports')} />}
       />
+      {isOpen && (
+        <ReportUploadModal
+          isOpen={isOpen}
+          onClose={onClose}
+          install={install}
+        />
+      )}
     </>
   );
 };

@@ -84,14 +84,7 @@ export const ReportUploadModal = ({
   return (
     <Modal
       title={t('title.upload-reports')}
-      cancelButton={
-        <DialogButton
-          variant="cancel"
-          onClick={() => {
-            onClose();
-          }}
-        />
-      }
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={<DialogButton variant="ok" onClick={onOk} />}
     >
       <DetailContainer>

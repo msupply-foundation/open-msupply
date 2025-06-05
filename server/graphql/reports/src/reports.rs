@@ -178,13 +178,6 @@ impl ReportConnector {
                 .collect(),
         }
     }
-
-    pub fn from_vec(reports: Vec<Report>) -> ReportConnector {
-        ReportConnector {
-            total_count: usize_to_u32(reports.len()),
-            nodes: reports.into_iter().map(ReportNode::from_domain).collect(),
-        }
-    }
 }
 
 pub fn report(
