@@ -83,7 +83,6 @@ const ReportsComponent = () => {
   return (
     <>
       <AppBarButtons onOpen={onOpen} />
-      {isOpen && <ReportUploadModal isOpen={isOpen} onClose={onClose} />}
       <DataTable
         id="report-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
@@ -94,6 +93,7 @@ const ReportsComponent = () => {
         isError={isError}
         noDataElement={<NothingHere body={t('error.no-reports')} />}
       />
+      {isOpen && <ReportUploadModal isOpen={isOpen} onClose={onClose} />}
     </>
   );
 };
