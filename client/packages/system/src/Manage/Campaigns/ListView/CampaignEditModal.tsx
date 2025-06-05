@@ -35,7 +35,7 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
 
   return (
     <Modal
-      title={id ? 'Edit Campaign' : 'Create Campaign'}
+      title={id ? t('title.edit-campaign') : t('title.create-campaign')}
       cancelButton={
         <DialogButton
           variant="cancel"
@@ -45,16 +45,7 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
           }}
         />
       }
-      okButton={
-        <DialogButton
-          variant="ok"
-          onClick={async () => {
-            await upsert();
-            onClose();
-            updateDraft(defaultDraftCampaign);
-          }}
-        />
-      }
+      okButton={<DialogButton variant="ok" onClick={upsert} />}
     >
       <DetailContainer>
         <Box display="flex" flexDirection="column" gap={2}>
