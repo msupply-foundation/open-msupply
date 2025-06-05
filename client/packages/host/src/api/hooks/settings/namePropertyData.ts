@@ -29,6 +29,8 @@ export type LocalisedNamePropertyConfig = Partial<
 };
 
 // English keys are fall-backs, all other languages should implement the same keys
+// NOTE: If we need to add a third language or are doing refactoring here, we should probaly use the usual t() style translation function
+// Perhaps with a different .json file to so these translations are easy to find and not accidentally removed...
 type TranslationKey = keyof typeof frTranslations;
 
 const enTranslations = {
