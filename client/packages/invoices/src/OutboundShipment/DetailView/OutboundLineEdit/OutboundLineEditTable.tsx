@@ -33,11 +33,15 @@ const PlaceholderCell = styled(TableCell)(({ theme }) => ({
   color: theme.palette.secondary.main,
 }));
 
-const TotalCell = styled(TableCell)({
+const TotalCell = styled(TableCell)(({ theme }) => ({
   fontSize: 14,
-  padding: '4px 12px 4px 12px',
+  padding: '8px 12px 4px 12px',
   fontWeight: 'bold',
-});
+  position: 'sticky',
+  bottom: 0,
+  background: theme.palette.background.white,
+  borderTop: `1px solid ${theme.palette.divider}`,
+}));
 
 const PlaceholderRow = ({
   quantity,
@@ -107,6 +111,7 @@ const TotalRow = ({
             : formattedValue}
         </TotalCell>
       </Tooltip>
+      <TotalCell colSpan={2} />
     </tr>
   );
 };
@@ -211,11 +216,6 @@ export const OutboundLineEditTable = ({
       dosesPerUnit={item?.doses}
       key="placeholder-row"
     />,
-    <tr key="divider-row">
-      <td colSpan={13}>
-        <Divider margin={10} />
-      </td>
-    </tr>,
     <TotalRow
       key="total-row"
       allocatedQuantity={allocatedQuantity + (placeholderQuantity ?? 0)}
