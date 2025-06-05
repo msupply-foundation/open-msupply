@@ -130,14 +130,6 @@ export const ValueInfoRow = ({
     endAdornmentOverride
   );
 
-  const packagingDisplay = useMemo(() => {
-    if (value === null && nullDisplay) return '';
-    if (representation === Representation.PACKS) {
-      return getPlural(t('label.pack').toLowerCase(), valueInUnitsOrPacks);
-    }
-    return getPlural(unitName.toLowerCase(), valueInUnitsOrPacks);
-  }, [representation, unitName, nullDisplay, value]);
-
   const displayValue =
     value === null && nullDisplay ? nullDisplay : round(valueInUnitsOrPacks, 2);
 
