@@ -16,7 +16,7 @@ impl MigrationFragment for Migrate {
             .filter(
                 sync_buffer::action
                     .eq(SyncAction::Upsert)
-                    .and(sync_buffer::table_name.eq("stock_line")),
+                    .and(sync_buffer::table_name.eq("item_line")),
             )
             .load::<(String, String)>(connection.lock().connection())?;
 
@@ -153,7 +153,7 @@ mod tests {
             sql_query(format!(
                 r#"
                     INSERT INTO sync_buffer (record_id, received_datetime, table_name, action, data) 
-                    VALUES ('{}', $1, 'stock_line', 'UPSERT', '{}');
+                    VALUES ('{}', $1, 'item_line', 'UPSERT', '{}');
                 "#,
                 stock_line_id, sync_data
             ))
@@ -250,7 +250,7 @@ mod tests {
             sql_query(
                 r#"
                     INSERT INTO sync_buffer (record_id, received_datetime, table_name, action, data) 
-                    VALUES ('stock_line_1', $1, 'stock_line', 'UPSERT', 'invalid json');
+                    VALUES ('stock_line_1', $1, 'item_line', 'UPSERT', 'invalid json');
                 "#,
             )
             .bind::<Timestamp, _>(Defaults::naive_date_time()),
