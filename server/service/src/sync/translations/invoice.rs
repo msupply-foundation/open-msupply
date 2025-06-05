@@ -6,7 +6,7 @@ use crate::sync::{
     translations::{
         clinician::ClinicianTranslation, currency::CurrencyTranslation,
         diagnosis::DiagnosisTranslation, name::NameTranslation,
-        name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation,
+        name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation, to_legacy_time,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -506,7 +506,7 @@ impl SyncTranslation for InvoiceTranslation {
             requisition_ID: requisition_id,
             linked_transaction_id: linked_invoice_id,
             entry_date: created_datetime.date(),
-            entry_time: created_datetime.time(),
+            entry_time: to_legacy_time(created_datetime),
             ship_date: shipped_datetime
                 .map(|shipped_datetime| date_from_date_time(&shipped_datetime)),
             arrival_date_actual: delivered_datetime
@@ -738,7 +738,7 @@ fn to_legacy_confirm_time(
 
     let date = datetime.map(|datetime| datetime.date());
     let time = datetime
-        .map(|datetime| datetime.time())
+        .map(to_legacy_time)
         .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
     (date, time)
 }
