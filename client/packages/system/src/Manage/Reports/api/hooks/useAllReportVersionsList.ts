@@ -30,9 +30,6 @@ export const useCentralReports = ({
 
     
     // INSTALL
-    const installUploadedReports = async (fileId: string) => {
-      return await installMutation(fileId)
-    }
     const {
       mutateAsync: installMutation,
       isLoading: installLoading,
@@ -41,7 +38,7 @@ export const useCentralReports = ({
 
     return {
         query: {data, isLoading, isError},
-        install: { installUploadedReports, installLoading, installError }
+        install: { installMutation, installLoading, installError }
     };
 };
 
@@ -90,9 +87,7 @@ const useGetList = (queryParams?: ReportListParams) => {
               key: query.allReportVersions.error.description,
             });
             break;
-          // TODO add never exhaustive error handling if adding more error types to QueryReportError
-          // default:
-          //   noOtherVariants(query.reports.error.__typename);
+
         }
         error(errorMessage)();
         console.error(errorMessage);
@@ -113,7 +108,6 @@ const useGetList = (queryParams?: ReportListParams) => {
 };
 
 const useInstallUploadedReports = () => {
-  const { translateServerError } = useIntlUtils();
   const {reportApi, queryClient} = useCentralServerReportsGraphqQL();
 
   const mutationFn = async (fileId: string) => {
@@ -121,9 +115,11 @@ const useInstallUploadedReports = () => {
       const result = await reportApi.installUploadedReports({ fileId });
       return result?.centralServer?.reports.installUploadedReports;
     } catch (error) {
-      return {
-        error: { description: translateServerError((error as Error)?.message) },
-      }
+      // manual error handling so I can return array of vecs from back end for simplicity
+        if (typeof error === 'object' && error !== null && 'description' in error) {
+          throw new Error((error as { description: string }).description);
+        }
+        throw error;
     }
   };
 

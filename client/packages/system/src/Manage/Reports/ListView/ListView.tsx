@@ -26,7 +26,7 @@ const ReportsComponent = () => {
   const queryParams = { sortBy, first, offset, filterBy };
   const {
     query: { data, isError, isLoading },
-    install,
+    install: { installMutation },
   } = useCentralReports({
     queryParams,
   });
@@ -98,7 +98,7 @@ const ReportsComponent = () => {
         <ReportUploadModal
           isOpen={isOpen}
           onClose={onClose}
-          install={install}
+          install={installMutation}
         />
       )}
     </>

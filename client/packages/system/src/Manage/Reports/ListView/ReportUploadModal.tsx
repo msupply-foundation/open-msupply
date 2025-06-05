@@ -9,18 +9,7 @@ import { Environment } from 'packages/config/src';
 interface ReportUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  install: {
-    installUploadedReports: (fileId: string) => Promise<
-      | string[]
-      | {
-          error: {
-            description: string;
-          };
-        }
-    >;
-    installLoading: boolean;
-    installError: unknown;
-  };
+  install: (fileId: string) => Promise<void>;
 }
 
 export const ReportUploadModal = ({
@@ -33,7 +22,6 @@ export const ReportUploadModal = ({
   const { error, success } = useNotification();
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const { installUploadedReports } = install;
 
   const removeFile = (name: string) => {
     setDraft({ files: draft.files?.filter(file => file.name !== name) });
@@ -53,8 +41,8 @@ export const ReportUploadModal = ({
 
     // create new json file id
     const url = `${Environment.REPORT_UPLOAD_URL}`;
-    try {
-      if (draft.files) {
+    if (draft.files) {
+      try {
         for (const file of draft.files) {
           const formData = new FormData();
           formData.append('files', file);
@@ -67,17 +55,14 @@ export const ReportUploadModal = ({
             body: formData,
           });
           const id = await fileId.json();
-
-          installUploadedReports(id['file-id']);
-
-          // TODO do something with fileId
+          await install(id['file-id']);
         }
+        success(t('messsages.reports-installed-successfully'))();
+        onClose();
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        error(`${t('error.unable-to-install-reports')}: ${message}`)();
       }
-      success(t('messsages.reports-installed-successfully'))();
-      onClose();
-    } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
-      error(`${t('error.unable-to-install-reports')}: ${message}`)();
     }
   };
 

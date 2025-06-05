@@ -48,6 +48,7 @@
   "button.close": "Close",
   "label.version": "Version",
   "label.is_active": "Is active",
+  "error.report-invalid-file": "Invalid file type",
   "button.install-reports": "Install Reports",
   "button.close-the-menu": "Close the menu",
   "button.configure-printers": "Configure Printers",
