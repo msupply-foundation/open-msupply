@@ -105,6 +105,7 @@ export const DetailView = () => {
           disableAddLine={
             isDisabled || !!data?.linkedRequisition || !!data?.programName
           }
+          manageVaccinesInDoses={manageVaccinesInDoses}
         />
       ),
       value: 'Details',

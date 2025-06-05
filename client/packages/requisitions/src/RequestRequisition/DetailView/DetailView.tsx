@@ -91,7 +91,13 @@ export const DetailView = () => {
 
   const tabs = [
     {
-      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
+      Component: (
+        <ContentArea
+          onRowClick={onRowClick}
+          onAddItem={onAddItem}
+          manageVaccinesInDoses={manageVaccinesInDoses}
+        />
+      ),
       value: 'Details',
     },
     {
