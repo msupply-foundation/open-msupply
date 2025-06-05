@@ -66,6 +66,7 @@ export const getExtraMiddlePanels = (
     {
       label: t('label.days-out-of-stock'),
       value: draft?.daysOutOfStock,
+      endAdornmentOverride: t('label.days'),
     },
   ];
 };
