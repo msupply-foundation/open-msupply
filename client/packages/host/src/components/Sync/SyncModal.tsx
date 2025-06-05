@@ -201,7 +201,7 @@ export const SyncModal = ({
               shouldShrink={false}
               autoFocus
               isLoading={isLoading || updateUserIsLoading}
-              startIcon={<RadioIcon sx={{ color: '#fff!important' }} />}
+              startIcon={<RadioIcon />}
               variant="contained"
               sx={theme => ({
                 [theme.breakpoints.down('sm')]: {

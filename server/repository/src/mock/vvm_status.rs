@@ -24,6 +24,22 @@ pub fn mock_vvm_status_b() -> VVMStatusRow {
     }
 }
 
+pub fn mock_vvm_status_c_level3_unusable() -> VVMStatusRow {
+    VVMStatusRow {
+        id: "vvm_status_id_c".to_string(),
+        description: "VVM Stage 3 - Unusable".to_string(),
+        code: "VVM3".to_string(),
+        level: 3,
+        is_active: false,
+        unusable: true,
+        reason_id: None,
+    }
+}
+
 pub fn mock_vvm_statuses() -> Vec<VVMStatusRow> {
-    vec![mock_vvm_status_a(), mock_vvm_status_b()]
+    vec![
+        mock_vvm_status_a(),
+        mock_vvm_status_b(),
+        mock_vvm_status_c_level3_unusable(),
+    ]
 }

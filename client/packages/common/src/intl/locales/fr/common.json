@@ -1312,7 +1312,7 @@
   "log.stocktake-status-finalised": "Finalisé",
   "log.user-logged-in": "Utilisateur connecté",
   "log.zero-quantities-for-invoice-created-before-store": "La quantité de toutes les lignes a été mise à 0 comme avant la création du dépôt.",
-  "login.body": "Que vous dirigiez un entrepôt de distribution pharmaceutique, ou que vous soyez un fabricant ayant besoin de dizaines d'utilisateurs connectés, ou un petit dispensaire, mSupply est un partenaire précieux.",
+  "login.body": "Système d'information de Gestion Logistique",
   "login.heading": "Simple. \nEfficace. \nGestion \nPharmaceutique.",
   "login.store-changed": "Bienvenue dans le dépôt {{store}}",
   "logout": "Se déconnecter",
@@ -1668,7 +1668,7 @@
   "messages.patients-found_one": "1 patient trouvé correspondant aux détails fournis",
   "messages.patients-found_other": "{{count}} patients trouvés correspondant aux détails fournis",
   "messages.period-not-available": "Aucune période disponible",
-  "messages.placeholder-allocated": "Il n'y a pas assez de stock disponible pour allouer la quantité demandée. Une ligne temporaire a été ajoutée pour {{placeholderQuantity}} unités.",
+  "messages.placeholder-allocated-units": "Il n'y a pas assez de stock disponible pour allouer la quantité demandée. Une ligne temporaire a été ajoutée pour {{placeholderQuantity}} unités.",
   "messages.prescription-created": "Prescription #{{count}} créée",
   "messages.prescription-given": "Prescrit {{amount}} {{item}} le {{date}}",
   "messages.prescription-saved": "Prescription sauvegardée 🥳",
@@ -1983,5 +1983,6 @@
   "warning.caps-lock": "Avertissement: Verrouillage majuscule activé",
   "warning.check-before-vaccinating": "La carte de vaccination éléctronique provenant d'autres sites de vaccination peuvent ne pas être à jour ! Assurez-vous d'avoir effectué une synchronisation récente et vérifiez toujours la validité de la carte de vaccination papier du patient.",
   "warning.field-not-parsed": "{{field}} non analysé",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
+  "tooltip.re-initialise-in-language": "Réinitialiser en utilisant la langue {{language}}"
 }
