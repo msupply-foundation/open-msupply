@@ -63,14 +63,14 @@ const ReportsComponent = () => {
           const { isActive } = rowData;
           return t(isActive ? 'label.active' : 'label.inactive');
         },
+        width: 150,
+        sortable: false,
       },
       {
         label: 'label.is_custom',
         key: 'isCustom',
-        accessor: ({ rowData }) => {
-          const { isCustom } = rowData;
-          return t(isCustom ? 'label.custom' : 'label.standard');
-        },
+        width: 150,
+        sortable: false,
       },
     ],
     {

@@ -12,7 +12,7 @@ import {  ALLREPORTVERSIONS } from './keys';
 import { ReportRowFragment } from 'packages/system/src/Report/index.js';
 import { useAllReportVersionsGraphQL } from '../../api/useReportsGraphQL';
 
-export type ReportListParams = {
+export interface ReportListParams {
   filterBy: ReportFilterInput | null;
   sortBy?: SortBy<ReportRowFragment>;
   first?: number;
