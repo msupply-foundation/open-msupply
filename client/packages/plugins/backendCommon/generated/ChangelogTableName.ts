@@ -62,4 +62,5 @@ export type ChangelogTableName =
   | 'Report'
   | 'FormSchema'
   | 'PluginData'
-  | 'Preference';
+  | 'Preference'
+  | 'SyncMessage';
