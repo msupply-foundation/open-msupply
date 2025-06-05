@@ -16,6 +16,9 @@ impl MigrationFragment for Migrate {
                 UPDATE demographic SET population_percentage = (
                     SELECT population_percentage FROM demographic_indicator
                     WHERE demographic_id = demographic.id
+                ) WHERE id in (
+                    SELECT demographic_id FROM demographic_indicator
+                    WHERE population_percentage IS NOT NULL
                 );
             "#,
         )?;
