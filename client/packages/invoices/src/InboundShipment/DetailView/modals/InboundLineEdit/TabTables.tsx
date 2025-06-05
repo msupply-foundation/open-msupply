@@ -216,7 +216,6 @@ export const PricingTableComponent = ({
   columnDefinitions.push(
     getColumnLookupWithOverrides('packSize', {
       label: 'label.pack-size',
-      defaultHideOnMobile: true,
     }),
     [
       'numberOfPacks',
