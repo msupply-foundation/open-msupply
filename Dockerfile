@@ -58,8 +58,6 @@ WORKDIR /usr/src/omsupply
 COPY client client
 COPY package.json .
 
-# Specify node_modules path
-
 # Needs this for yarn to work properly
 RUN echo 'export NODE_OPTIONS="--max-old-space-size=4096"' >> ~/.bashrc
 

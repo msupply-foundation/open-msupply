@@ -78,14 +78,25 @@ jobs:
           
       - name: Build server
         run: docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:slim cargo build --release --bin remote_server --bin remote_server_cli
+    
+      - name: Generate backend typescript types
+        run: docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:slim cargo run --bin remote_server -- generate-type-script-types
 
-      - name: Save artifacts
+      - name: Save server executable artifacts
         uses: actions/upload-artifact@v4
         with:
           name: server-executables
           path: | 
             server/target/release/remote_server
             server/target/release/remote_server_cli
+          retention-days: 1
+    
+      - name: Save backend plugin types artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-typescript-types
+          path: | 
+            client/packages/plugins/backendCommon/generated/
           retention-days: 1
 
   dockerise:
@@ -108,7 +119,13 @@ jobs:
         with:
           name: build-dev-client
           path: client/
-    
+
+      - name: Load server backend plugin types artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-typescript-types
+          path: client/packages/plugins/backendCommon/generated/
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
