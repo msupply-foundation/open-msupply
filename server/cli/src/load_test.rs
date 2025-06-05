@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use repository::database_settings::DatabaseSettings;
 use reqwest::{Client, Error, Response};
 use serde::{Deserialize, Serialize};
@@ -9,6 +9,7 @@ use service::{
     sync::settings::{BatchSize, SyncSettings},
 };
 use std::{
+    io::Write,
     path::PathBuf,
     time::{Duration, Instant},
 };
@@ -18,7 +19,24 @@ const TEST_API: &str = "sync/v5/test";
 
 const SYNC_INFO_QUERY: &str = r#"
 query SyncInfo {
-  latestSyncStatus { isSyncing }
+  latestSyncStatus {
+    isSyncing
+    push {
+      done
+    }
+    pushV6 {
+      done
+    }
+    pullV6 {
+      done
+    }
+    pullRemote {
+      done
+    }
+    pullCentral {
+      done
+    }
+  }
 }
 "#;
 
@@ -140,20 +158,30 @@ struct TestSite {
     config_file_path: PathBuf,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct SyncInfo {
     data: LatestSyncStatus,
 }
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct LatestSyncStatus {
     latest_sync_status: SyncStatus,
 }
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct SyncStatus {
     is_syncing: bool,
+    push: Option<SyncDone>,
+    push_v6: Option<SyncDone>,
+    pull_v6: Option<SyncDone>,
+    pull_remote: Option<SyncDone>,
+    pull_central: Option<SyncDone>,
+}
+#[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+struct SyncDone {
+    done: Option<usize>,
 }
 
 #[derive(Debug, Clone)]
@@ -161,6 +189,8 @@ struct Metric {
     site_id: usize,
     start_time: Instant,
     end_time: Instant,
+    pushed: usize,
+    pulled: usize,
 }
 
 impl Metric {
@@ -170,6 +200,8 @@ impl Metric {
             site_id,
             start_time: now,
             end_time: now,
+            pushed: 0,
+            pulled: 0,
         }
     }
 }
@@ -435,7 +467,7 @@ impl LoadTest {
                         }
                     });
                     match test_site.do_post(&requisition_gql).await {
-                        Ok(response) => dbg!(response.text().await.unwrap()),
+                        Ok(response) => response,
                         Err(e) => {
                             println!("insertRequestRequisition request failed: {}", e);
                             kill(&mut child).await;
@@ -472,7 +504,7 @@ impl LoadTest {
                     });
 
                     match test_site.do_post(&line_gql).await {
-                        Ok(response) => dbg!(response.text().await.unwrap()),
+                        Ok(response) => response,
                         Err(e) => {
                             println!("insertRequestRequisitionLine request failed: {}", e);
                             kill(&mut child).await;
@@ -491,7 +523,7 @@ impl LoadTest {
                         }
                     });
                     match test_site.do_post(&line_gql).await {
-                        Ok(response) => dbg!(response.text().await.unwrap()),
+                        Ok(response) => response,
                         Err(e) => {
                             println!("insertRequestRequisitionLine request failed: {}", e);
                             kill(&mut child).await;
@@ -511,7 +543,7 @@ impl LoadTest {
                         }
                     });
                     match test_site.do_post(&requisition_gql).await {
-                        Ok(response) => dbg!(response.text().await.unwrap()),
+                        Ok(response) => response,
                         Err(e) => {
                             println!("insertRequestRequisition request failed: {}", e);
                             kill(&mut child).await;
@@ -524,7 +556,7 @@ impl LoadTest {
                         "query": MANUAL_SYNC_QUERY,
                     });
                     match test_site.do_post(&sync_gql).await {
-                        Ok(response) => dbg!(response.text().await.unwrap()),
+                        Ok(response) => response,
                         Err(e) => {
                             println!("manualSync request failed: {}", e);
                             kill(&mut child).await;
@@ -532,11 +564,53 @@ impl LoadTest {
                         }
                     };
 
-                    if let Err(e) = test_site.wait_for_sync().await {
-                        kill(&mut child).await;
-                        return Err(e.into());
-                    }
+                    let site_info = match test_site.wait_for_sync().await {
+                        Ok(site_info) => site_info,
+                        Err(e) => {
+                            kill(&mut child).await;
+                            return Err(e.into());
+                        }
+                    };
+
                     metric.end_time = std::time::Instant::now();
+                    metric.pushed = site_info
+                        .data
+                        .latest_sync_status
+                        .push_v6
+                        .as_ref()
+                        .map_or(0, |s| s.done.unwrap_or(0))
+                        + site_info
+                            .data
+                            .latest_sync_status
+                            .push
+                            .as_ref()
+                            .map_or(0, |s| s.done.unwrap_or(0));
+                    metric.pulled = site_info
+                        .data
+                        .latest_sync_status
+                        .pull_v6
+                        .as_ref()
+                        .map_or(0, |s| s.done.unwrap_or(0))
+                        + site_info
+                            .data
+                            .latest_sync_status
+                            .pull_remote
+                            .as_ref()
+                            .map_or(0, |s| s.done.unwrap_or(0))
+                        + site_info
+                            .data
+                            .latest_sync_status
+                            .pull_central
+                            .as_ref()
+                            .map_or(0, |s| s.done.unwrap_or(0));
+                    println!(
+                        "Site {}: Pushed: {}, Pulled: {}, Duration: {:?}",
+                        test_site.site.site_id,
+                        metric.pushed,
+                        metric.pulled,
+                        metric.end_time.duration_since(metric.start_time)
+                    );
+
                     metrics.push(metric);
 
                     if start.elapsed().as_secs() >= duration {
@@ -557,7 +631,80 @@ impl LoadTest {
             }
         }
 
-        dbg!(results.len());
+        // Aggregate the results into groups of 5 seconds
+        println!("\nProcessing results...");
+
+        // Calculate memory usage of results vector
+        let size_of_metric = std::mem::size_of::<Metric>();
+        let capacity = results.capacity();
+        let len = results.len();
+        let allocated_bytes = capacity * size_of_metric;
+        let used_bytes = len * size_of_metric;
+
+        println!("\nMemory Statistics for Results Vector:");
+        println!("Size of single Metric: {} bytes", size_of_metric);
+        println!("Number of metrics: {}", len);
+        println!("Vector capacity: {}", capacity);
+        println!(
+            "Memory allocated: {} bytes ({:.2} KB)",
+            allocated_bytes,
+            allocated_bytes as f64 / 1024.0
+        );
+        println!(
+            "Memory used: {} bytes ({:.2} KB)",
+            used_bytes,
+            used_bytes as f64 / 1024.0
+        );
+
+        // Group metrics by 5-second intervals
+        if !results.is_empty() {
+            // open a file to write the results
+            // The first line of the file should be csv headers "time, records pushed, records pulled"
+            let output_file = self.output_dir.join("load_test_results.txt");
+            let mut file =
+                std::fs::File::create(output_file).expect("Failed to create output file");
+            writeln!(file, "time, records pushed, records pulled")
+                .expect("Failed to write to output file");
+
+            // Group metrics by 5-second intervals
+            let mut grouped_metrics: Vec<(u64, usize, usize)> = Vec::new();
+            // Create a map to group metrics by 5-second intervals
+            let mut interval_map: std::collections::HashMap<u64, (usize, usize)> =
+                std::collections::HashMap::new();
+
+            // Determine the first start time as the reference point
+            let first_start = results
+                .iter()
+                .map(|m| m.start_time)
+                .min()
+                .unwrap_or(Instant::now());
+
+            // Group metrics by their start time intervals
+            for metric in &results {
+                let seconds_since_start = metric.start_time.duration_since(first_start).as_secs();
+                let interval = seconds_since_start / 5;
+
+                let entry = interval_map.entry(interval).or_insert((0, 0));
+                entry.0 += metric.pushed;
+                entry.1 += metric.pulled;
+            }
+
+            // Convert the map to a sorted vector
+            let mut keys: Vec<_> = interval_map.keys().collect();
+            keys.sort();
+
+            for key in keys {
+                if let Some(&(pushed, pulled)) = interval_map.get(key) {
+                    grouped_metrics.push((*key, pushed, pulled));
+                }
+            }
+            for (interval, pushed, pulled) in grouped_metrics {
+                writeln!(file, "{}, {}, {}", (interval + 1) * 5, pushed, pulled)
+                    .expect("Failed to write to output file");
+            }
+        } else {
+            println!("No results collected during the test.");
+        }
 
         println!("end");
         Ok(())
@@ -585,9 +732,9 @@ impl TestSite {
             .await?)
     }
 
-    async fn wait_for_sync(&self) -> Result<()> {
+    async fn wait_for_sync(&self) -> Result<SyncInfo> {
         loop {
-            sleep(Duration::from_millis(1000)).await;
+            sleep(Duration::from_millis(500)).await;
             let sync_gql = json!({
                 "operationName": "SyncInfo",
                 "query": SYNC_INFO_QUERY,
@@ -599,10 +746,14 @@ impl TestSite {
             };
 
             if response.status().is_success() {
-                match response.json::<SyncInfo>().await {
+                let response_text = response.text().await?;
+                // dbg!(&response_text);
+                let response = serde_json::from_str::<SyncInfo>(&response_text);
+                match response {
                     Ok(sync_info) => {
+                        // dbg!(&sync_info);
                         if !sync_info.data.latest_sync_status.is_syncing {
-                            return Ok(());
+                            return Ok(sync_info);
                         }
                     }
                     Err(e) => println!("Error parsing SyncInfo: {}", e),
