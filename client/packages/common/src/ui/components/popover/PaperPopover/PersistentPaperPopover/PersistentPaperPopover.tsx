@@ -18,7 +18,14 @@ export function PersistentPaperPopover({
 
   return (
     <>
-      <div style={{ cursor: 'pointer' }} onClick={show}>
+      <div
+        style={{
+          cursor: 'pointer',
+          // prevents the blue highlight on click on mobile browser
+          WebkitTapHighlightColor: 'transparent',
+        }}
+        onClick={show}
+      >
         {children}
       </div>
       <Popover placement={placement}>

@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   DialogButton,
   ModalMode,
-  useBufferState,
   useDialog,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
@@ -43,12 +42,12 @@ export const RequestLineEditModal = ({
     [requisition?.lines.nodes]
   );
 
-  const [currentItem, setCurrentItem] = useBufferState(
+  const [currentItem, setCurrentItem] = useState(
     lines?.find(line => line.item.id === itemId)?.item
   );
-  const [previousItemLineId, setPreviousItemLineId] = useBufferState<
-    string | null
-  >(null);
+  const [previousItemLineId, setPreviousItemLineId] = useState<string | null>(
+    null
+  );
   const [representation, setRepresentation] = useState<RepresentationValue>(
     Representation.UNITS
   );
@@ -87,6 +86,11 @@ export const RequestLineEditModal = ({
     else onClose();
   };
 
+  // When currentItem changes, draft is reset in `useDraftRequisitionLine`
+  // If it creates a new requisition line, we save it immediately to have access
+  // to requisition charts.
+  // If user ends up cancelling the modal, or changing the item, we need to
+  // ensure the previous line is deleted (hence storing `previousItemLineId`)
   useEffect(() => {
     if (!!draft?.isCreated) {
       save();

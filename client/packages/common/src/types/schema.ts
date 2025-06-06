@@ -1013,18 +1013,6 @@ export type CampaignNode = {
   startDate?: Maybe<Scalars['NaiveDate']['output']>;
 };
 
-export type CampaignQueries = {
-  __typename: 'CampaignQueries';
-  campaigns: CampaignsResponse;
-};
-
-export type CampaignQueriesCampaignsArgs = {
-  filter?: InputMaybe<CampaignFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<CampaignSortInput>>;
-  storeId: Scalars['String']['input'];
-};
-
 export enum CampaignSortFieldInput {
   Name = 'name',
 }
@@ -1237,7 +1225,6 @@ export type CentralServerMutationNode = {
 
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
-  campaign: CampaignQueries;
   plugin: CentralPluginQueries;
 };
 
@@ -2385,6 +2372,7 @@ export type DraftStockOutLineNode = {
   __typename: 'DraftStockOutLineNode';
   availablePacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
+  campaign?: Maybe<CampaignNode>;
   defaultDosesPerUnit: Scalars['Int']['output'];
   donor?: Maybe<NameNode>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -5857,6 +5845,7 @@ export type OutboundInvoiceCounts = {
 };
 
 export type OutboundShipmentLineInput = {
+  campaignId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
@@ -6126,7 +6115,6 @@ export type PreferenceDescriptionNode = {
 
 export enum PreferenceKey {
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
-  DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   ShowContactTracing = 'showContactTracing',
@@ -6157,7 +6145,6 @@ export enum PreferenceValueNodeType {
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
-  displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
@@ -6518,6 +6505,7 @@ export type Queries = {
    */
   authToken: AuthTokenResponse;
   barcodeByGtin: BarcodeResponse;
+  campaigns: CampaignsResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
   clinicians: CliniciansResponse;
@@ -6779,6 +6767,13 @@ export type QueriesAuthTokenArgs = {
 
 export type QueriesBarcodeByGtinArgs = {
   gtin: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesCampaignsArgs = {
+  filter?: InputMaybe<CampaignFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<CampaignSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -9956,7 +9951,6 @@ export type UpsertPackVariantResponse =
 
 export type UpsertPreferencesInput = {
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
-  displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
