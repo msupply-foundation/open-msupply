@@ -6482,6 +6482,8 @@ export type Queries = {
   activeProgramEvents: ProgramEventResponse;
   activeVvmStatuses: VvmstatusesResponse;
   activityLogs: ActivityLogResponse;
+  /** Queries all reports and their respective versions */
+  allReportVersions: ReportsResponse;
   apiVersion: Scalars['String']['output'];
   assetCatalogueItem: AssetCatalogueItemResponse;
   assetCatalogueItems: AssetCatalogueItemsResponse;
@@ -6678,6 +6680,14 @@ export type QueriesActivityLogsArgs = {
   filter?: InputMaybe<ActivityLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ActivityLogSortInput>>;
+};
+
+export type QueriesAllReportVersionsArgs = {
+  filter?: InputMaybe<ReportFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ReportSortInput>>;
+  storeId: Scalars['String']['input'];
+  userLanguage: Scalars['String']['input'];
 };
 
 export type QueriesAssetCatalogueItemArgs = {
@@ -7553,13 +7563,16 @@ export type ReportNode = {
   /** Human readable name of the report */
   name: Scalars['String']['output'];
   subContext?: Maybe<Scalars['String']['output']>;
+  version: Scalars['String']['output'];
 };
 
 export type ReportResponse = QueryReportError | ReportNode;
 
 export enum ReportSortFieldInput {
+  Code = 'code',
   Id = 'id',
   Name = 'name',
+  Version = 'version',
 }
 
 export type ReportSortInput = {
