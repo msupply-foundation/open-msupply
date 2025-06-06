@@ -169,6 +169,7 @@ export type LedgerRowFragment = {
   reason?: string | null;
   stockLineId?: string | null;
   storeId: string;
+  user?: { __typename: 'UserNode'; username: string } | null;
 };
 
 export type VvmStatusLogRowFragment = {
@@ -401,6 +402,7 @@ export type LedgerQuery = {
       reason?: string | null;
       stockLineId?: string | null;
       storeId: string;
+      user?: { __typename: 'UserNode'; username: string } | null;
     }>;
   };
 };
@@ -959,6 +961,9 @@ export const LedgerRowFragmentDoc = gql`
     reason
     stockLineId
     storeId
+    user {
+      username
+    }
   }
 `;
 export const VvmStatusFragmentDoc = gql`

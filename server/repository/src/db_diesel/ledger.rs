@@ -30,6 +30,7 @@ table! {
         sell_price_per_pack -> Double,
         total_before_tax -> Nullable<Double>,
         number_of_packs -> Double,
+        user_id -> Nullable<Text>,
     }
 }
 
@@ -54,6 +55,7 @@ pub struct LedgerRow {
     pub sell_price_per_pack: f64,
     pub total_before_tax: Option<f64>,
     pub number_of_packs: f64,
+    pub user_id: Option<String>,
 }
 
 #[derive(Clone, Default)]

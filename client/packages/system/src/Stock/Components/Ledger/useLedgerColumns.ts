@@ -20,6 +20,7 @@ export enum ColumnKey {
   'Type' = 'type',
   'Reason' = 'reason',
   'Number' = 'number',
+  'User' = 'user',
 }
 
 export const useLedgerColumns = (
@@ -67,6 +68,12 @@ export const useLedgerColumns = (
       {
         key: ColumnKey.Reason,
         label: 'label.reason',
+        sortable: false,
+      },
+      {
+        key: ColumnKey.User,
+        label: 'label.user',
+        accessor: ({ rowData }) => rowData.user?.username,
         sortable: false,
       },
     ],
