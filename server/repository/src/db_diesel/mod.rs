@@ -123,7 +123,7 @@ pub mod rnr_form_row;
 pub mod sensor;
 mod sensor_row;
 pub mod stock_line;
-mod stock_line_row;
+pub mod stock_line_row;
 pub mod stock_movement;
 pub mod stock_on_hand;
 pub mod stocktake;
