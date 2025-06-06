@@ -7,7 +7,7 @@ import {
   PlusCircleIcon,
 } from '@openmsupply-client/common';
 
-export const AppBarButtonsComponent = () => {
+export const AppBarButtonsComponent = ({ onOpen }: { onOpen: () => void }) => {
   const t = useTranslation();
 
   return (
@@ -16,9 +16,7 @@ export const AppBarButtonsComponent = () => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.install-reports')}
-          onClick={() => {
-            // TODO add modal with upsert report
-          }}
+          onClick={onOpen}
         />
       </Grid>
     </AppBarButtonsPortal>
