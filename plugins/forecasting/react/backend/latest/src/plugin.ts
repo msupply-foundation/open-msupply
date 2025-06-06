@@ -72,7 +72,7 @@ const plugins: BackendPlugins = {
       })),
 
       transformed_lines: lines.map(line => {
-        const forecastUnits = forecastedQuantities[line.id].forecastTotalDoses;
+        const forecastUnits = forecastedQuantities[line.id].forecastTotalUnits;
 
         const suggested_quantity =
           forecastUnits !== null
