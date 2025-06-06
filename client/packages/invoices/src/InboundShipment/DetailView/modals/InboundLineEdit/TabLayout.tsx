@@ -55,7 +55,9 @@ export const TabLayout = ({
   const theme = useAppTheme();
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
-  const [errorMessage, setErrorMessage] = useState<string>(() => '');
+  const [packRoundingMessage, setPackRoundingMessage] = useState<string>(
+    () => ''
+  );
 
   if (draftLines.length === 0)
     return <Box sx={{ height: isMediumScreen ? 400 : 500 }} />;
@@ -117,13 +119,13 @@ export const TabLayout = ({
       >
         <InboundLineEditPanel value={Tabs.Batch}>
           <Box width={'100%'}>
-            {errorMessage && (
+            {packRoundingMessage && (
               <Alert severity="warning" style={{ marginBottom: 2 }}>
-                {errorMessage}
+                {packRoundingMessage}
               </Alert>
             )}
             <QuantityTable
-              setErrorMessage={setErrorMessage}
+              setPackRoundingMessage={setPackRoundingMessage}
               isDisabled={isDisabled}
               lines={draftLines}
               updateDraftLine={updateDraftLine}

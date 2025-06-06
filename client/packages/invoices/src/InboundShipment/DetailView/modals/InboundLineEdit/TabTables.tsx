@@ -49,7 +49,7 @@ interface TableProps {
   hasItemVariantsEnabled?: boolean;
   hasVvmStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
-  setErrorMessage?: (value: React.SetStateAction<string>) => void;
+  setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
 }
 
 export const QuantityTableComponent = ({
@@ -59,7 +59,7 @@ export const QuantityTableComponent = ({
   hasItemVariantsEnabled,
   hasVvmStatusesEnabled,
   item,
-  setErrorMessage,
+  setPackRoundingMessage,
 }: TableProps) => {
   const t = useTranslation();
   const theme = useTheme();
@@ -97,7 +97,11 @@ export const QuantityTableComponent = ({
   columnDefinitions.push(
     getColumnLookupWithOverrides('packSize', {
       Cell: PackSizeEntryCell<DraftInboundLine>,
-      setter: updateDraftLine,
+      setter: patch => {
+        // reset the rounding message
+        setPackRoundingMessage?.('');
+        updateDraftLine(patch);
+      },
       label: 'label.pack-size',
       defaultHideOnMobile: true,
       align: ColumnAlign.Left,
@@ -115,6 +119,9 @@ export const QuantityTableComponent = ({
 
           if (packSize !== undefined && numberOfPacks !== undefined) {
             const packToUnits = packSize * numberOfPacks;
+
+            // reset the rounding message
+            setPackRoundingMessage?.('');
 
             updateDraftLine({
               ...patch,
@@ -144,9 +151,9 @@ export const QuantityTableComponent = ({
         const actualUnits = roundedPacks * packSize;
 
         if (roundedPacks === unitToPacks || roundedPacks === 0) {
-          setErrorMessage?.('');
+          setPackRoundingMessage?.('');
         } else {
-          setErrorMessage?.(
+          setPackRoundingMessage?.(
             t('messages.under-allocated', {
               receivedQuantity: format(NumUtils.round(unitsPerPack, 2)), // round the display value to 2dp
               quantity: format(actualUnits),
