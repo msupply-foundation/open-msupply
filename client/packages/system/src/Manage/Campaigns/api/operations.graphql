@@ -13,23 +13,19 @@ query campaigns(
   $filter: CampaignFilterInput
   $storeId: String!
 ) {
-  centralServer {
-    campaign {
-      campaigns(
-        sort: $sort
-        page: { first: $first, offset: $offset }
-        filter: $filter
-        storeId: $storeId
-      ) {
+  campaigns(
+    sort: $sort
+    page: { first: $first, offset: $offset }
+    filter: $filter
+    storeId: $storeId
+  ) {
+    __typename
+    ... on CampaignConnector {
+      __typename
+      totalCount
+      nodes {
         __typename
-        ... on CampaignConnector {
-          __typename
-          totalCount
-          nodes {
-            __typename
-            ...CampaignRow
-          }
-        }
+        ...CampaignRow
       }
     }
   }

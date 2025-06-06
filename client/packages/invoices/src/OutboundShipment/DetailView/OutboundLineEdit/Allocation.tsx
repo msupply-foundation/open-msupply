@@ -36,6 +36,7 @@ interface AllocationProps {
   scannedBatch?: string;
   prefOptions: {
     sortByVvmStatus: boolean;
+    manageVaccinesInDoses: boolean;
   };
 }
 
@@ -44,7 +45,7 @@ export const Allocation = ({
   invoiceId,
   allowPlaceholder,
   scannedBatch,
-  prefOptions: { sortByVvmStatus },
+  prefOptions: { sortByVvmStatus, manageVaccinesInDoses },
 }: AllocationProps) => {
   const { initialise, item } = useAllocationContext(({ initialise, item }) => ({
     initialise,
@@ -68,6 +69,11 @@ export const Allocation = ({
           : AllocationStrategy.FEFO,
         allowPlaceholder,
         scannedBatch,
+        // Default to allocate in doses for vaccines if pref is on
+        allocateIn:
+          manageVaccinesInDoses && data.item.isVaccine
+            ? { type: AllocateInType.Doses }
+            : undefined,
       });
     });
     // Expect dependencies to be stable
