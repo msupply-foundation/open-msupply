@@ -13,6 +13,7 @@ import { isRequestLinePlaceholderRow } from '../../utils';
 interface ContentAreaProps {
   onAddItem: () => void;
   onRowClick: null | ((line: RequestLineFragment) => void);
+  manageVaccinesInDoses: boolean;
 }
 
 const useHighlightPlaceholderRows = (
@@ -33,9 +34,15 @@ const useHighlightPlaceholderRows = (
   }, [rows, setRowStyles]);
 };
 
-export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
+export const ContentArea = ({
+  onAddItem,
+  onRowClick,
+  manageVaccinesInDoses,
+}: ContentAreaProps) => {
   const t = useTranslation();
-  const { lines, columns, itemFilter } = useRequest.line.list();
+  const { lines, columns, itemFilter } = useRequest.line.list(
+    manageVaccinesInDoses
+  );
   const { on } = useHideOverStocked();
   const { plugins } = usePluginProvider();
   const isDisabled = useRequest.utils.isDisabled();

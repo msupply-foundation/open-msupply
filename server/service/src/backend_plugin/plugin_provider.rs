@@ -30,7 +30,7 @@ pub enum PluginInstanceVariant {
     BoaJs(Vec<u8>),
 }
 pub struct PluginInstance {
-    code: String,
+    pub code: String,
     variant: PluginInstanceVariant,
 }
 
@@ -80,29 +80,31 @@ pub struct PluginBundle {
 
 impl PluginInstance {
     pub fn get_one(r#type: PluginType) -> Option<Arc<PluginInstance>> {
-        let plugin_instance = {
-            let plugins = PLUGINS.read().unwrap();
+        let plugins = PLUGINS.read().unwrap();
 
-            let plugin = plugins.iter().find(|p| p.has_type(&r#type));
+        plugins
+            .iter()
+            .find(|p| p.has_type(&r#type))
+            .map(|p| p.instance.clone())
+    }
 
-            plugin.map(|p| p.instance.clone())
-        };
+    pub fn get_all(r#type: PluginType) -> Vec<Arc<PluginInstance>> {
+        let plugins = PLUGINS.read().unwrap();
 
-        plugin_instance
+        plugins
+            .iter()
+            .filter(|p| p.has_type(&r#type))
+            .map(|p| p.instance.clone())
+            .collect()
     }
 
     pub fn get_one_with_code(code: &str, r#type: PluginType) -> Option<Arc<PluginInstance>> {
-        let plugin_instance = {
-            let plugins = PLUGINS.read().unwrap();
+        let plugins = PLUGINS.read().unwrap();
 
-            let plugin = plugins
-                .iter()
-                .find(|p| p.has_type(&r#type) && p.instance.code == code);
-
-            plugin.map(|p| p.instance.clone())
-        };
-
-        plugin_instance
+        plugins
+            .iter()
+            .find(|p| p.has_type(&r#type) && p.instance.code == code)
+            .map(|p| p.instance.clone())
     }
 
     pub fn bind(

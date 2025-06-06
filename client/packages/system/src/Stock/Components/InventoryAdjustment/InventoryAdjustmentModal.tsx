@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   TextWithLabelRow,
   useTranslation,
@@ -21,11 +21,11 @@ interface InventoryAdjustmentModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
+export const InventoryAdjustmentModal = ({
   stockLine,
   isOpen,
   onClose,
-}) => {
+}: InventoryAdjustmentModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });

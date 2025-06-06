@@ -17,7 +17,7 @@ export const intlNumberFormat = (
 export const useFormatNumber = () => {
   const { currentLanguage } = useIntlUtils();
   const {
-    options: { decimal },
+    options: { separator, decimal },
   } = useCurrency();
 
   return {
@@ -45,13 +45,12 @@ export const useFormatNumber = () => {
     },
     parse: (numberString: string, decimalChar: string = decimal) => {
       const negative = numberString.startsWith('-') ? -1 : 1;
-      const separatorRegex = new RegExp(
-        `[${RegexUtils.escapeChars(decimalChar)}](\\d+)$`
-      );
 
       const num = numberString
-        // Convert separator to standard decimal point
-        .replace(separatorRegex, '.$1')
+        // Remove separators
+        .replace(new RegExp(`\\${separator}`, 'g'), '')
+        // Convert decimal separator to standard decimal point
+        .replace(RegexUtils.escapeChars(decimalChar), '.')
         // Remove all other characters
         .replace(/[^\d\.]/g, '');
 

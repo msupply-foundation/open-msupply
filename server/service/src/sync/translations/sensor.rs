@@ -13,7 +13,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacySensorRow {
@@ -137,7 +137,7 @@ impl SyncTranslation for SensorTranslation {
         let last_connection_date = last_connection_datetime.map(|t| t.date());
 
         let last_connection_time = last_connection_datetime
-            .map(|last_connection_datetime: NaiveDateTime| last_connection_datetime.time())
+            .map(to_legacy_time)
             .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
 
         let r#type = match r#type {

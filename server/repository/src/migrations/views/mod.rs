@@ -480,8 +480,7 @@ CREATE VIEW vaccination_course AS
     WHERE
       vc.deleted_datetime IS NULL
       AND vcd.deleted_datetime IS NULL
-      AND vci.deleted_datetime IS NULL
-      AND vc.is_active = true;
+      AND vci.deleted_datetime IS NULL;
     "#,
     )?;
 

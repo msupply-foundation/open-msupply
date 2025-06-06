@@ -40,7 +40,7 @@ pub struct InsertVaccineCourse {
     pub doses: Vec<VaccineCourseDoseInput>,
     pub demographic_id: Option<String>,
     pub coverage_rate: f64,
-    pub is_active: bool,
+    pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
 }
 
@@ -119,7 +119,7 @@ pub fn generate(
         doses: _,         // Updated in main function
         demographic_id,
         coverage_rate,
-        is_active,
+        use_in_gaps_calculations,
         wastage_rate,
     }: InsertVaccineCourse,
 ) -> VaccineCourseRow {
@@ -129,7 +129,7 @@ pub fn generate(
         program_id,
         demographic_id,
         coverage_rate,
-        is_active,
+        use_in_gaps_calculations,
         wastage_rate,
         deleted_datetime: None,
     }

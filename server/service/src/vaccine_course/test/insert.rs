@@ -36,7 +36,7 @@ mod query {
             doses: vec![],
             demographic_id: None,
             coverage_rate: 100.0,
-            is_active: true,
+            use_in_gaps_calculations: true,
             wastage_rate: 0.1,
         };
 
@@ -54,7 +54,7 @@ mod query {
             doses: vec![],
             demographic_id: None,
             coverage_rate: 100.0,
-            is_active: true,
+            use_in_gaps_calculations: true,
             wastage_rate: 0.1,
         };
 
@@ -73,7 +73,7 @@ mod query {
             doses: vec![],
             demographic_id: None,
             coverage_rate: 100.0,
-            is_active: true,
+            use_in_gaps_calculations: true,
             wastage_rate: 0.1,
         };
 
@@ -140,7 +140,7 @@ mod query {
             doses: vec![dose1.clone(), dose2.clone()],
             demographic_id: Some(mock_demographic_a().id),
             coverage_rate: 100.0,
-            is_active: true,
+            use_in_gaps_calculations: true,
             wastage_rate: 0.1,
         };
 

@@ -40,8 +40,8 @@ impl VaccineCourseNode {
         self.row().coverage_rate
     }
 
-    pub async fn is_active(&self) -> bool {
-        self.row().is_active
+    pub async fn use_in_gaps_calculations(&self) -> bool {
+        self.row().use_in_gaps_calculations
     }
 
     pub async fn wastage_rate(&self) -> f64 {

@@ -1160,6 +1160,7 @@ mod permission_tests {
             _: &ServiceContext,
             _: &AuthData,
             _: &Option<String>,
+            _: &Option<String>,
             resource_request: &ResourceAccessRequest,
         ) -> Result<ValidatedUser, AuthError> {
             let mut actual = self.actual.lock().unwrap();

@@ -69,7 +69,7 @@ pub struct UpdateVaccineCourseInput {
     pub doses: Vec<UpsertVaccineCourseDoseInput>,
     pub demographic_id: Option<String>,
     pub coverage_rate: f64,
-    pub is_active: bool,
+    pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
 }
 
@@ -82,7 +82,7 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
             doses,
             demographic_id,
             coverage_rate,
-            is_active,
+            use_in_gaps_calculations,
             wastage_rate,
         }: UpdateVaccineCourseInput,
     ) -> Self {
@@ -109,7 +109,7 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
                 .collect(),
             demographic_id,
             coverage_rate,
-            is_active,
+            use_in_gaps_calculations,
             wastage_rate,
         }
     }
