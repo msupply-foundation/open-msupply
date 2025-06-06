@@ -98,7 +98,6 @@ export const QuantityTableComponent = ({
     getColumnLookupWithOverrides('packSize', {
       Cell: PackSizeEntryCell<DraftInboundLine>,
       setter: patch => {
-        // reset the rounding message
         setPackRoundingMessage?.('');
         updateDraftLine(patch);
       },
@@ -119,8 +118,6 @@ export const QuantityTableComponent = ({
 
           if (packSize !== undefined && numberOfPacks !== undefined) {
             const packToUnits = packSize * numberOfPacks;
-
-            // reset the rounding message
             setPackRoundingMessage?.('');
 
             updateDraftLine({
@@ -139,6 +136,7 @@ export const QuantityTableComponent = ({
       unit: pluralisedUnitName,
     }),
     width: 100,
+    cellProps: { debounce: 1000 },
     Cell: NumberInputCell,
     align: ColumnAlign.Left,
     setter: patch => {
@@ -166,6 +164,7 @@ export const QuantityTableComponent = ({
           unitsPerPack: actualUnits,
           numberOfPacks: roundedPacks,
         });
+        return actualUnits;
       }
     },
 
