@@ -1978,11 +1978,11 @@
   "title.stock-on-hand": "Stock Disponible",
   "tools": "Outils",
   "tooltip.import-fridge-tag": "Importez les fichiers journaux Berlinger Fridge-tag et Q-tag. Un capteur sera créé, si nécessaire, pour chaque fichier journal importé.",
+  "tooltip.re-initialise-in-language": "Réinitialiser en utilisant la langue {{language}}",
   "warning.cannot-create-placeholder-packs": "Il y a un total de {{allocatedQuantity}} emballages disponibles. Impossible d'allouer tous les {{requestedQuantity}} emballages.",
   "warning.cannot-create-placeholder-units": "Il y a un total de {{allocatedQuantity}} unités disponibles. Impossible d'allouer toutes les {{requestedQuantity}} unités demandées.",
   "warning.caps-lock": "Avertissement: Verrouillage majuscule activé",
   "warning.check-before-vaccinating": "La carte de vaccination éléctronique provenant d'autres sites de vaccination peuvent ne pas être à jour ! Assurez-vous d'avoir effectué une synchronisation récente et vérifiez toujours la validité de la carte de vaccination papier du patient.",
   "warning.field-not-parsed": "{{field}} non analysé",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
-  "tooltip.re-initialise-in-language": "Réinitialiser en utilisant la langue {{language}}"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
 }
