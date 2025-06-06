@@ -282,6 +282,7 @@ export type AllocateOutboundShipmentUnallocatedLineNode = {
   issuedExpiringSoonStockLines: StockLineConnector;
   skippedExpiredStockLines: StockLineConnector;
   skippedOnHoldStockLines: StockLineConnector;
+  skippedUnusableVvmStatusLines: StockLineConnector;
   updates: InvoiceLineConnector;
 };
 
