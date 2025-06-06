@@ -9,7 +9,7 @@ pub fn adjust_for_residual_packs(available_packs: f64, requested_number_of_packs
     let residual_stock = available_packs - requested_number_of_packs;
     if residual_stock.abs() < LAST_PACK_THRESHOLD {
         // there is nearly enough, or almost everything requested, we'll take everything...
-        return requested_number_of_packs + residual_stock;
+        return available_packs;
     }
     requested_number_of_packs
 }
