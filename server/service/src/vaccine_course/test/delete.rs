@@ -53,7 +53,7 @@ mod delete {
             }],
             demographic_id: None,
             coverage_rate: 100.0,
-            is_active: true,
+            use_in_gaps_calculations: true,
             wastage_rate: 0.1,
         };
 
