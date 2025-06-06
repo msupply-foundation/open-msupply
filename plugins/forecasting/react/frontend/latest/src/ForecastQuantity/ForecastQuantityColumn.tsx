@@ -74,7 +74,8 @@ export const ForecastQuantityColumn: ColumnDefinition<RequestLineFragment> = {
   Cell: Column,
   key: 'forecast-quantity',
   label: 'plugin.forecasting.forecast-amount',
+  description: 'plugin.forecasting.forecast-amount-description',
   maxWidth: 150,
   sortable: false,
-  order: 111,
+  order: 110,
 };
