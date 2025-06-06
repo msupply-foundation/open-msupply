@@ -48,7 +48,8 @@ const ITEM_LINE_1: (&str, &str) = (
       "user_8_ID": "",
       "volume_per_pack": 0,
       "vvm_status_id": "",
-      "weight_per_pack": 0
+      "weight_per_pack": 0,
+      "oms_fields": null
     }"#,
 );
 fn item_line_1_pull_record() -> TestSyncIncomingRecord {
@@ -101,7 +102,7 @@ fn item_line_1_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: Some("donor_a".to_string()),
             vvm_status_id: None,
-            campaign_id: None,
+            oms_fields: None,
         }),
     }
 }
@@ -146,7 +147,8 @@ const ITEM_LINE_2: (&str, &str) = (
       "user_8_ID": "",
       "volume_per_pack": 0,
       "vvm_status_id": "",
-      "weight_per_pack": 0
+      "weight_per_pack": 0,
+      "oms_fields": null
   }"#,
 );
 fn item_line_2_pull_record() -> TestSyncIncomingRecord {
@@ -199,7 +201,7 @@ fn item_line_2_push_record() -> TestSyncOutgoingRecord {
             item_variant_id: None,
             donor_id: None,
             vvm_status_id: None,
-            campaign_id: None,
+            oms_fields: None,
         }),
     }
 }
