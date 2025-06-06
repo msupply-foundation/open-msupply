@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { LocaleKey, TypedTFunction } from '@common/intl';
+import { NumUtils } from '@common/utils';
+import { ModalMode } from '@common/hooks';
 
 export const Representation = {
   PACKS: 'packs',
@@ -30,6 +32,19 @@ export const useValueInUnitsOrPacks = (
     [representation, defaultPackSize, value]
   );
 
+export const calculateValueInDoses = (
+  representation: RepresentationValue,
+  defaultPackSize: number,
+  dosesPerUnit: number,
+  value?: number | null
+): number => {
+  if (!value) return 0;
+  if (representation === Representation.PACKS) {
+    return NumUtils.round(value * defaultPackSize * dosesPerUnit, 2);
+  }
+  return NumUtils.round(value * dosesPerUnit, 2);
+};
+
 export const useEndAdornment = (
   t: TypedTFunction<LocaleKey>,
   getPlural: (word: string, value: number) => string,
@@ -53,3 +68,13 @@ export const useEndAdornment = (
       valueInUnitsOrPacks,
     ]
   );
+
+export const shouldDeleteLine = (
+  mode: ModalMode | null,
+  draftId?: string,
+  isDisabled?: boolean
+): boolean => {
+  if (mode === ModalMode.Create) return true;
+  if (!draftId || isDisabled || mode === ModalMode.Update) return false;
+  return false;
+};

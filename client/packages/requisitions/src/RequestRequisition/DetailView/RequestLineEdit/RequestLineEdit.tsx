@@ -47,6 +47,7 @@ interface RequestLineEditProps {
   disabled?: boolean;
   isUpdateMode?: boolean;
   showExtraFields?: boolean;
+  manageVaccinesInDoses?: boolean;
 }
 
 export const RequestLineEdit = ({
@@ -62,11 +63,15 @@ export const RequestLineEdit = ({
   disabled,
   isUpdateMode,
   showExtraFields,
+  manageVaccinesInDoses = false,
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
+  const showContent = !!draft && !!currentItem;
+  const displayVaccinesInDoses =
+    manageVaccinesInDoses && currentItem?.isVaccine;
   const disableItemSelection = disabled || isUpdateMode;
   const disableReasons =
     draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
@@ -94,21 +99,29 @@ export const RequestLineEdit = ({
             representation={representation}
             unitName={unitName}
             sx={sx}
+            displayVaccinesInDoses={displayVaccinesInDoses}
+            dosesPerUnit={currentItem?.doses}
           />
         ))}
       </>
     ),
-    [defaultPackSize, representation, unitName]
+    [
+      defaultPackSize,
+      representation,
+      unitName,
+      displayVaccinesInDoses,
+      currentItem?.doses,
+    ]
   );
 
   const getMiddlePanelContent = () => {
-    if (!draft) return null;
+    if (!showContent) return null;
 
     return renderValueInfoRows(getExtraMiddlePanels(t, draft));
   };
 
   const getRightPanelContent = () => {
-    if (!draft) return null;
+    if (!showContent) return null;
 
     return (
       <>
@@ -117,8 +130,7 @@ export const RequestLineEdit = ({
             background: theme => theme.palette.background.group,
             padding: '0px 8px',
             borderRadius: 2,
-            pb: 2,
-            pt: 0.5,
+            pb: 1,
           }}
         >
           {!showExtraFields && renderValueInfoRows(getSuggestedRow(t, draft))}
@@ -131,7 +143,8 @@ export const RequestLineEdit = ({
             representation={representation}
             setRepresentation={setRepresentation}
             unitName={unitName}
-            showExtraFields={showExtraFields}
+            displayVaccinesInDoses={displayVaccinesInDoses}
+            dosesPerUnit={currentItem?.doses}
           />
           {showExtraFields && (
             <Typography variant="body1" fontWeight="bold">
@@ -141,7 +154,7 @@ export const RequestLineEdit = ({
                 onChange={value => {
                   update({ reason: value });
                 }}
-                width={360}
+                fullWidth
                 type={ReasonOptionNodeType.RequisitionLineVariance}
                 disabled={disableReasons}
                 reasonOptions={reasonOptions?.nodes ?? []}
@@ -160,7 +173,7 @@ export const RequestLineEdit = ({
               />
             </Typography>
           )}
-          <Typography variant="body1" fontWeight="bold" paddingBottom={0}>
+          <Typography variant="body1" fontWeight="bold" pb={0.5}>
             {t('heading.comment')}:
           </Typography>
           <BufferedTextArea
@@ -214,7 +227,7 @@ export const RequestLineEdit = ({
           </>
         }
         Left={
-          draft ? (
+          showContent ? (
             <>
               {currentItem?.unitName && (
                 <InfoRow label={t('label.unit')} value={unitName} />
@@ -225,6 +238,12 @@ export const RequestLineEdit = ({
                   value={String(currentItem?.defaultPackSize)}
                 />
               )}
+              {displayVaccinesInDoses && currentItem?.doses ? (
+                <InfoRow
+                  label={t('label.doses-per-unit')}
+                  value={String(currentItem?.doses)}
+                />
+              ) : null}
               {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
               {line &&
                 plugins.requestRequisitionLine?.editViewField?.map(
@@ -240,33 +259,53 @@ export const RequestLineEdit = ({
         }
         Right={showExtraFields ? getRightPanelContent() : null}
       />
-      {!!draft && (
-        <Box
-          display="flex"
-          flexDirection="column"
-          justifySelf="center"
-          width={900}
-        >
-          <StockDistribution
-            availableStockOnHand={draft?.itemStats?.availableStockOnHand}
-            averageMonthlyConsumption={
-              draft?.itemStats?.averageMonthlyConsumption
-            }
-            suggestedQuantity={draft?.suggestedQuantity}
-          />
+
+      {line && (
+        <Box padding={'2px 16px 0 16px'}>
+          {plugins.requestRequisitionLine?.editViewInfo?.map((Info, index) => (
+            <Info key={index} line={line} requisition={requisition} />
+          ))}
         </Box>
       )}
 
-      {line && (
-        <Box>
-          <Box padding={'2px 16px 0 16px'}>
-            {plugins.requestRequisitionLine?.editViewInfo?.map(
-              (Info, index) => (
-                <Info key={index} line={line} requisition={requisition} />
-              )
-            )}
+      {showContent && line && (
+        <Box
+          sx={{
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+          }}
+        >
+          <Box
+            sx={{
+              width: '100%',
+              maxWidth: 900,
+              mx: 'auto',
+              p: '8px 16px',
+            }}
+          >
+            <StockDistribution
+              availableStockOnHand={line.itemStats?.availableStockOnHand}
+              averageMonthlyConsumption={
+                line.itemStats?.averageMonthlyConsumption
+              }
+              suggestedQuantity={line.suggestedQuantity}
+            />
           </Box>
-          <Box display="flex" sx={{ padding: 2 }} justifyContent="center">
+          <Box
+            display="flex"
+            justifyContent="center"
+            gap={2}
+            sx={{
+              padding: 2,
+              flexDirection: {
+                xs: 'column',
+                md: 'row',
+              },
+              alignItems: 'center',
+            }}
+          >
             <ConsumptionHistory id={line.id} />
             <StockEvolution id={line.id} />
           </Box>
