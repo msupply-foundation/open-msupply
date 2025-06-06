@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
 use strum::EnumIter;
 use strum::IntoEnumIterator;
+use ts_rs::TS;
 use util::inline_init;
 
 use diesel_derive_enum::DbEnum;
@@ -51,7 +52,7 @@ define_sql_function!(
     fn last_insert_rowid() -> BigInt
 );
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RowActionType {
     #[default]
@@ -59,7 +60,7 @@ pub enum RowActionType {
     Delete,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter, TS)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
     BackendPlugin,
@@ -127,6 +128,7 @@ pub enum ChangelogTableName {
     Preference,
     VVMStatusLog,
     Campaign,
+    SyncMessage,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -206,6 +208,7 @@ impl ChangelogTableName {
             ChangelogTableName::Preference => ChangeLogSyncStyle::RemoteAndCentral,
             ChangelogTableName::VVMStatusLog => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Campaign => ChangeLogSyncStyle::Central,
+            ChangelogTableName::SyncMessage => ChangeLogSyncStyle::Remote,
         }
     }
 }
@@ -220,7 +223,7 @@ pub struct ChangeLogInsertRow {
     pub store_id: Option<String>,
 }
 
-#[derive(Clone, Queryable, Debug, PartialEq, Insertable)]
+#[derive(Clone, Queryable, Debug, PartialEq, Insertable, Serialize, Deserialize, TS)]
 #[diesel(table_name = changelog)]
 pub struct ChangelogRow {
     pub cursor: i64,
@@ -234,14 +237,21 @@ pub struct ChangelogRow {
     pub source_site_id: Option<i32>,
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Serialize, Deserialize, Debug, TS)]
 pub struct ChangelogFilter {
+    #[ts(optional)]
     pub table_name: Option<EqualFilter<ChangelogTableName>>,
+    #[ts(optional)]
     pub name_id: Option<EqualFilter<String>>,
+    #[ts(optional)]
     pub store_id: Option<EqualFilter<String>>,
+    #[ts(optional)]
     pub record_id: Option<EqualFilter<String>>,
+    #[ts(optional)]
     pub action: Option<EqualFilter<RowActionType>>,
+    #[ts(optional)]
     pub is_sync_update: Option<EqualFilter<bool>>,
+    #[ts(optional)]
     pub source_site_id: Option<EqualFilter<i32>>,
 }
 

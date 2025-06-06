@@ -7,7 +7,10 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
         JsString::from("log"),
         0,
         NativeFunction::from_copy_closure(move |_, args, _| {
-            info!("from js {:#?}", args);
+            for arg in args {
+                info!("from js {}", arg.display_obj(false));
+            }
+
             Ok(JsValue::null())
         }),
     )?;

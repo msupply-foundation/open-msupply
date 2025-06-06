@@ -14,7 +14,7 @@ use crate::sync::{
     },
 };
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyLocationMovementRow {
@@ -118,11 +118,11 @@ impl SyncTranslation for LocationMovementTranslation {
             location_id,
             enter_date: enter_datetime.map(|datetime| datetime.date()),
             enter_time: enter_datetime
-                .map(|datetime| datetime.time())
+                .map(to_legacy_time)
                 .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
             exit_date: exit_datetime.map(|datetime| datetime.date()),
             exit_time: exit_datetime
-                .map(|datetime| datetime.time())
+                .map(to_legacy_time)
                 .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
         };
 
