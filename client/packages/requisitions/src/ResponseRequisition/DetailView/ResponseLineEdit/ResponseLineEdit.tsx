@@ -38,7 +38,7 @@ interface ResponseLineEditProps {
   setRepresentation: (type: RepresentationValue) => void;
   disabled: boolean;
   isUpdateMode?: boolean;
-  showExtraFields?: boolean;
+  manageVaccinesInDoses?: boolean;
 }
 
 export const ResponseLineEdit = ({
@@ -53,13 +53,16 @@ export const ResponseLineEdit = ({
   setRepresentation,
   disabled = false,
   isUpdateMode = false,
+  manageVaccinesInDoses = false,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
   const { data: reasonOptions, isLoading } = useReasonOptions();
   const hasApproval =
     requisition.approvalStatus === RequisitionNodeApprovalStatus.Approved;
   const isPacksEnabled = !!currentItem?.defaultPackSize;
-
+  const showContent = !!draft && !!currentItem;
+  const displayVaccinesInDoses =
+    manageVaccinesInDoses && currentItem?.isVaccine;
   const showExtraFields =
     store?.preferences?.extraFieldsInRequisition && !!requisition.program;
   const isDisabled = disabled || !!requisition.linkedRequisition;
@@ -80,10 +83,13 @@ export const ResponseLineEdit = ({
     representation,
     unitName,
     disabled: isDisabled,
+    showExtraFields,
+    displayVaccinesInDoses,
+    dosesPerUnit: currentItem?.doses ?? 1,
   });
 
   const getLeftPanelContent = () => {
-    if (!draft) return null;
+    if (!showContent) return null;
 
     return (
       <>
@@ -93,6 +99,12 @@ export const ResponseLineEdit = ({
             value={String(currentItem?.defaultPackSize)}
           />
         )}
+        {displayVaccinesInDoses && currentItem?.doses ? (
+          <InfoRow
+            label={t('label.doses-per-unit')}
+            value={String(currentItem?.doses)}
+          />
+        ) : null}
         {showExtraFields && (
           <>
             {numericInput(
@@ -116,6 +128,7 @@ export const ResponseLineEdit = ({
             })}
             {numericInput('label.days-out-of-stock', draft?.daysOutOfStock, {
               onChange: value => update({ daysOutOfStock: value }),
+              endAdornmentOverride: t('label.days'),
             })}
           </>
         )}
@@ -124,7 +137,7 @@ export const ResponseLineEdit = ({
   };
 
   const getMiddlePanelContent = () => {
-    if (!draft) return null;
+    if (!showContent) return null;
 
     return (
       <>
@@ -134,6 +147,12 @@ export const ResponseLineEdit = ({
             value={String(currentItem?.defaultPackSize)}
           />
         )}
+        {displayVaccinesInDoses && currentItem?.doses && !showExtraFields ? (
+          <InfoRow
+            label={t('label.doses-per-unit')}
+            value={String(currentItem?.doses)}
+          />
+        ) : null}
         <Box
           sx={{
             background: theme => theme.palette.background.group,
@@ -166,7 +185,7 @@ export const ResponseLineEdit = ({
               variant="body1"
               fontWeight="bold"
               sx={{ pl: 1, pb: 0.5 }}
-              width={370}
+              width={'calc(100% - 10px)'}
             >
               {t('label.reason')}:
               <ReasonOptionsSearchInput
@@ -210,7 +229,7 @@ export const ResponseLineEdit = ({
   };
 
   const getRightPanelContent = () => {
-    if (!draft) return null;
+    if (!showContent) return null;
 
     return (
       <>
@@ -218,6 +237,7 @@ export const ResponseLineEdit = ({
           sx={{
             background: theme => theme.palette.background.group,
             borderRadius: 2,
+            p: 1,
             pb: 0.5,
           }}
         >
@@ -225,8 +245,8 @@ export const ResponseLineEdit = ({
             numericInput('label.approved', draft?.approvedQuantity, {
               disabledOverride: true,
               sx: {
-                pt: 1,
-                pl: 0,
+                px: 0,
+                mb: 0,
               },
             })}
           <SupplySelection
@@ -238,17 +258,24 @@ export const ResponseLineEdit = ({
             representation={representation}
             setRepresentation={setRepresentation}
             unitName={unitName}
-            showExtraFields={showExtraFields}
+            displayVaccinesInDoses={displayVaccinesInDoses}
+            dosesPerUnit={currentItem?.doses ?? 1}
           />
           {numericInput(
             'label.remaining-to-supply',
             draft?.remainingQuantityToSupply,
             {
               disabledOverride: true,
+              sx: {
+                px: 0,
+              },
             }
           )}
           {numericInput('label.already-issued', draft?.alreadyIssued, {
             disabledOverride: true,
+            sx: {
+              px: 0,
+            },
           })}
         </Box>
         {!!requisition.linkedRequisition || showExtraFields ? (
@@ -268,7 +295,7 @@ export const ResponseLineEdit = ({
             })}
           </>
         ) : null}
-        <Typography variant="body1" fontWeight="bold" p={0.5}>
+        <Typography variant="body1" fontWeight="bold" p={1}>
           {t('heading.comment')}:
         </Typography>
         <BufferedTextArea
