@@ -65,7 +65,13 @@ export const RequestRequisitionListView: FC = () => {
 
   const columnDefinitions: ColumnDescription<RequestRowFragment>[] = [
     GenericColumnKey.Selection,
-    [getNameAndColorColumn(), { setter: onUpdate }],
+    [
+      getNameAndColorColumn(),
+      {
+        setter: onUpdate,
+        customLinkRendering: true,
+      },
+    ],
     {
       key: 'requisitionNumber',
       label: 'label.number',

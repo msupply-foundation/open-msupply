@@ -97,6 +97,7 @@ const DataRowComponent = <T extends RecordWithId>({
       localisedText={localisedText}
       localisedDate={localisedDate}
       dense={dense}
+      rowLinkBuilder={rowLinkBuilder}
       {...column.cellProps}
     />
   );
@@ -110,8 +111,12 @@ const DataRowComponent = <T extends RecordWithId>({
   }) => {
     return (
       <Box
-        component={rowLinkBuilder ? Link : Box}
-        to={rowLinkBuilder ? rowLinkBuilder(rowData) : ''}
+        component={rowLinkBuilder && !column.customLinkRendering ? Link : Box}
+        to={
+          rowLinkBuilder && !column.customLinkRendering
+            ? rowLinkBuilder(rowData)
+            : ''
+        }
         sx={{
           display: 'flex',
           width: '100%',
