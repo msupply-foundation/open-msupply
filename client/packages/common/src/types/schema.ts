@@ -1209,6 +1209,15 @@ export type CentralPluginQueriesUploadedPluginInfoArgs = {
   fileId: Scalars['String']['input'];
 };
 
+export type CentralReportMutations = {
+  __typename: 'CentralReportMutations';
+  installUploadedReports: Array<Scalars['String']['output']>;
+};
+
+export type CentralReportMutationsInstallUploadedReportsArgs = {
+  fileId: Scalars['String']['input'];
+};
+
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   assetCatalogue: AssetCatalogueMutations;
@@ -1220,6 +1229,7 @@ export type CentralServerMutationNode = {
   logReason: AssetLogReasonMutations;
   plugins: CentralPluginMutations;
   preferences: PreferenceMutations;
+  reports: CentralReportMutations;
   vaccineCourse: VaccineCourseMutations;
 };
 
