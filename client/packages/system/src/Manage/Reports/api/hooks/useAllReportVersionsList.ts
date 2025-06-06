@@ -111,25 +111,22 @@ const useInstallUploadedReports = () => {
   const {reportApi, queryClient} = useCentralServerReportsGraphqQL();
 
   const mutationFn = async (fileId: string) => {
-    try {
       const result = await reportApi.installUploadedReports({ fileId });
-      return result?.centralServer?.reports.installUploadedReports;
-    } catch (error) {
-      // manual error handling so I can return array of vecs from back end for simplicity
-        if (typeof error === 'object' && error !== null && 'description' in error) {
-          throw new Error((error as { description: string }).description);
-        }
-        throw error;
-    }
+      const res =  result?.centralServer?.reports.installUploadedReports;
+      return res;
   };
 
-    return useMutation({
-      mutationFn,
-      onSuccess: () => {
-        queryClient.invalidateQueries([ALLREPORTVERSIONS]);
-      },
-      onError: e => {
-        console.error(e);
-      },
-    });
+  const mutation = useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries([ALLREPORTVERSIONS]);
+    },
+    onError: e => {
+      console.error(e);
+    },
+  });
+
+  return {
+    ...mutation
+  }
 }

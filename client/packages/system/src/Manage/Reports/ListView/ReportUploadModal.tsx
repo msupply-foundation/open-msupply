@@ -9,7 +9,7 @@ import { Environment } from 'packages/config/src';
 interface ReportUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  install: (fileId: string) => Promise<void>;
+  install: (fileId: string) => Promise<string[]>;
 }
 
 export const ReportUploadModal = ({
