@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   ItemWithStatsFragment,
   ReasonOptionsSearchInput,
@@ -12,7 +12,6 @@ import {
   Box,
   ReasonOptionNodeType,
   usePluginProvider,
-  useWindowDimensions,
   Typography,
   BufferedTextArea,
 } from '@openmsupply-client/common';
@@ -66,7 +65,6 @@ export const RequestLineEdit = ({
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
-  const { width } = useWindowDimensions();
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
   const disableItemSelection = disabled || isUpdateMode;
@@ -83,8 +81,8 @@ export const RequestLineEdit = ({
     [lines, currentItem?.id]
   );
 
-  const renderValueInfoRows = useMemo(() => {
-    return (info: ValueInfo[]) => (
+  const renderValueInfoRows = useCallback(
+    (info: ValueInfo[]) => (
       <>
         {info.map(({ label, value, sx, endAdornmentOverride }) => (
           <ValueInfoRow
@@ -99,8 +97,9 @@ export const RequestLineEdit = ({
           />
         ))}
       </>
-    );
-  }, [defaultPackSize, representation, unitName]);
+    ),
+    [defaultPackSize, representation, unitName]
+  );
 
   const getMiddlePanelContent = () => {
     if (!draft) return null;
@@ -227,6 +226,12 @@ export const RequestLineEdit = ({
                 />
               )}
               {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
+              {line &&
+                plugins.requestRequisitionLine?.editViewField?.map(
+                  (Field, index) => (
+                    <Field key={index} line={line} unitName={unitName} />
+                  )
+                )}
             </>
           ) : null
         }
@@ -235,13 +240,6 @@ export const RequestLineEdit = ({
         }
         Right={showExtraFields ? getRightPanelContent() : null}
       />
-      <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
-        {line &&
-          plugins.requestRequisitionLine?.editViewField?.map((Field, index) => (
-            <Field key={index} line={line} />
-          ))}
-      </Box>
-
       {!!draft && (
         <Box
           display="flex"
