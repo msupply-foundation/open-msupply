@@ -4552,6 +4552,7 @@ export type LedgerNode = {
   reason?: Maybe<Scalars['String']['output']>;
   stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
+  user?: Maybe<UserNode>;
 };
 
 export type LedgerResponse = LedgerConnector;

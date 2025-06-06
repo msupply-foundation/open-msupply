@@ -85,6 +85,9 @@ fragment LedgerRow on LedgerNode {
   reason
   stockLineId
   storeId
+  user {
+    username
+  }
 }
 
 fragment VVMStatusLogRow on VvmstatusLogNode {

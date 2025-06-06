@@ -144,6 +144,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         invoice.type AS invoice_type,
         invoice.invoice_number AS invoice_number,
         invoice.id AS invoice_id,
+        invoice.user_id AS user_id,
         reason_option.reason AS reason,
         stock_line_id,
         invoice_line_stock_movement.expiry_date AS expiry_date,
