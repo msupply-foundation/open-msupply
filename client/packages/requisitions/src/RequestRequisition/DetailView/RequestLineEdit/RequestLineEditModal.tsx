@@ -84,7 +84,7 @@ export const RequestLineEditModal = ({
   };
 
   const onChangeItem = (item: ItemWithStatsFragment) => {
-    if (item.id !== currentItem?.id) {
+    if (item.id !== currentItem?.id && draft?.requestedQuantity === 0) {
       deletePreviousLine();
     }
     setRepresentation(Representation.UNITS);
@@ -93,7 +93,9 @@ export const RequestLineEditModal = ({
 
   const onNext = async () => {
     await save();
-    deletePreviousLine();
+    if (draft?.requestedQuantity === 0) {
+      deletePreviousLine();
+    }
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(undefined);
     else onClose();

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useResponse, ResponseLineFragment, ResponseFragment } from '../../api';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { FnUtils } from '@common/utils';
@@ -77,19 +77,17 @@ export const useDraftRequisitionLine = (
     }
   }, [lines, item, data]);
 
-  const update = (patch: Partial<DraftResponseLine>) => {
-    if (draft) {
-      setDraft({ ...draft, ...patch });
-    }
-  };
+  const update = useCallback((patch: Partial<DraftResponseLine>) => {
+    setDraft(current => (current ? { ...current, ...patch } : null));
+  }, []);
 
-  const save = async () => {
+  const save = useCallback(async () => {
     if (draft) {
       const result = await saveMutation(draft);
       return result;
     }
     return null;
-  };
+  }, [draft, saveMutation]);
 
   return { draft, isLoading, save, update };
 };

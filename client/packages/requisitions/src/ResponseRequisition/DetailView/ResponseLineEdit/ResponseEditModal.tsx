@@ -73,7 +73,7 @@ export const ResponseLineEditModal = ({
   }, [draft?.id]);
 
   const onCancel = () => {
-    if (mode === ModalMode.Create) {
+    if (mode === ModalMode.Create && draft?.id) {
       deleteLine(draftIdRef.current || '');
     }
     onClose();
@@ -82,7 +82,7 @@ export const ResponseLineEditModal = ({
   const { Modal } = useDialog({ onClose: onCancel, isOpen });
 
   const onChangeItem = (item: ItemWithStatsFragment) => {
-    if (item.id !== currentItem?.id) {
+    if (item.id !== currentItem?.id && draft?.supplyQuantity === 0) {
       deletePreviousLine();
     }
     setRepresentation(Representation.UNITS);
@@ -91,7 +91,9 @@ export const ResponseLineEditModal = ({
 
   const onSave = async () => {
     await save();
-    deletePreviousLine();
+    if (draft?.supplyQuantity === 0) {
+      deletePreviousLine();
+    }
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(undefined);
     else onClose();
