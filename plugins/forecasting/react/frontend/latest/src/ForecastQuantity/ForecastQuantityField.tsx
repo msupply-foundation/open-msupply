@@ -47,6 +47,8 @@ const ForecastQuantityField: ForecastQuantityFieldPlugin = ({
           unitName={unitName ?? ''}
           defaultPackSize={1}
           nullDisplay={UNDEFINED_STRING_VALUE}
+          displayVaccinesInDoses
+          dosesPerUnit={line?.item?.doses}
         />
       </QueryClientProviderProxy>
     </ThemeProviderProxy>
