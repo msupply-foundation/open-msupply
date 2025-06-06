@@ -9,10 +9,12 @@ import {
   useTranslation,
   TooltipTextCell,
   useEditModal,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import { useCentralReports } from '../api/hooks/useAllReportVersionsList';
 import { ReportRowFragment } from 'packages/system/src/Report';
+import { ReportUploadModal } from './ReportUploadModal';
 import { ReportUploadModal } from './ReportUploadModal';
 
 const ReportsComponent = () => {
