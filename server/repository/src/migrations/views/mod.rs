@@ -463,9 +463,9 @@ CREATE VIEW vaccination_course AS
       item.unit_id AS unit_id,
       unit.name AS unit,
       unit."index" AS unit_index,
-      di.demographic_id AS demographic_id,
-      di.name AS demographic_name,
-      di.population_percentage AS population_percentage,
+      d.id AS demographic_id,
+      d.name AS demographic_name,
+      d.population_percentage AS population_percentage,
       p.id AS program_id,
       p.name AS program_name
     FROM
@@ -475,15 +475,12 @@ CREATE VIEW vaccination_course AS
       JOIN item_link il ON vci.item_link_id = il.id
       JOIN item ON item.id = il.item_id
       LEFT JOIN unit ON item.unit_id = unit.id
-      -- This assumes that there is only one demographic indicator for each 
-      -- "demographic_id", which could potentially change in the future
-      LEFT JOIN demographic_indicator di ON di.demographic_id = vc.demographic_id
+      LEFT JOIN demographic d ON d.id = vc.demographic_id
       JOIN PROGRAM p ON p.id = vc.program_id
     WHERE
       vc.deleted_datetime IS NULL
       AND vcd.deleted_datetime IS NULL
-      AND vci.deleted_datetime IS NULL
-      AND vc.is_active = true;
+      AND vci.deleted_datetime IS NULL;
     "#,
     )?;
 

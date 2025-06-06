@@ -9,7 +9,8 @@ const DEMOGRAPHIC1: (&str, &str) = (
     "test_demographic",
     r#"{
         "id":  "test_demographic",
-        "name": "test demographic"
+        "name": "test demographic",
+        "population_percentage": 10
     }"#,
 );
 
@@ -17,6 +18,7 @@ fn demographic1() -> DemographicRow {
     DemographicRow {
         id: DEMOGRAPHIC1.0.to_string(),
         name: "test demographic".to_string(),
+        population_percentage: 10.0,
     }
 }
 

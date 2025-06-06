@@ -103,6 +103,7 @@ interface ValueInfoRowProps extends Omit<InfoRowProps, 'value'> {
   representation: RepresentationValue;
   defaultPackSize: number;
   unitName: string;
+  nullDisplay?: string;
   endAdornmentOverride?: string;
   displayVaccinesInDoses?: boolean;
   dosesPerUnit?: number;
@@ -127,6 +128,7 @@ export const ValueInfoRow = ({
   endAdornmentOverride,
   displayVaccinesInDoses = false,
   dosesPerUnit = 1,
+  nullDisplay,
 }: ValueInfoRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -164,11 +166,17 @@ export const ValueInfoRow = ({
     endAdornmentOverride
   );
 
+  const treatAsNull = value === null && nullDisplay;
+
+  const displayValue = treatAsNull
+    ? nullDisplay
+    : round(valueInUnitsOrPacks, 2);
+
   return (
     <InfoRow
       label={label}
-      value={round(valueInUnitsOrPacks, 2)}
-      packagingDisplay={endAdornment}
+      value={displayValue}
+      packagingDisplay={treatAsNull ? '' : endAdornment}
       sx={sx}
       displayVaccinesInDoses={displayVaccinesInDoses}
       doses={valueInDoses}
