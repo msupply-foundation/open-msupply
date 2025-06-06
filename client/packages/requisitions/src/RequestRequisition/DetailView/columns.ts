@@ -100,6 +100,7 @@ export const useRequestColumns = () => {
     {
       key: 'targetStock',
       label: 'label.target-stock',
+      description: 'description.target-stock',
       align: ColumnAlign.Right,
       width: 150,
       Cell: PackQuantityCell,
