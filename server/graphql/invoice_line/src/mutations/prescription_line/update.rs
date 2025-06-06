@@ -101,6 +101,7 @@ impl UpdateInput {
             total_before_tax: None,
             tax: None,
             note,
+            campaign_id: None,
         }
     }
 }
@@ -108,6 +109,7 @@ impl UpdateInput {
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use ServiceError::*;
     let formatted_error = format!("{:#?}", error);
+    log::error!("Error updating prescription line: {}", formatted_error);
 
     let graphql_error = match error {
         // Structured Errors
@@ -167,7 +169,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ItemDoesNotMatchStockLine
         | NotThisInvoiceLine(_)
         | LineDoesNotReferenceStockLine => StandardGraphqlError::BadUserInput(formatted_error),
-        DatabaseError(_) | UpdatedLineDoesNotExist => {
+        AutoPickFailed(_) | DatabaseError(_) | UpdatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
         }
     };
@@ -543,6 +545,7 @@ mod test {
                     note: Some("some note".to_string()),
                     total_before_tax: None,
                     tax: None,
+                    campaign_id: None
                 }
             );
             Ok(InvoiceLine {

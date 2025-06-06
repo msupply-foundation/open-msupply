@@ -35,7 +35,7 @@ export const DeprecatedBasicTextInput = React.forwardRef<
     return (
       <Box
         display="flex"
-        justifyContent={style?.justifyContent ?? 'flex-end'}
+        justifyContent={style?.justifyContent}
         alignItems="center"
         flexBasis={style?.flexBasis}
         flex={style?.flex}

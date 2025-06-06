@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { CSSProperties } from 'react';
 import { CircularProgress, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
@@ -7,6 +7,7 @@ import { LocaleKey, useTranslation } from '@common/intl';
 interface BasicSpinnerProps {
   inline?: boolean;
   messageKey?: LocaleKey;
+  style?: CSSProperties;
 }
 
 const Container = styled(Box)({
@@ -26,13 +27,14 @@ const StyledText = styled(Typography)(({ theme }) => ({
   },
 }));
 
-export const BasicSpinner: FC<BasicSpinnerProps> = ({
+export const BasicSpinner = ({
   messageKey = 'loading',
   inline = false,
-}) => {
+  style = {},
+}: BasicSpinnerProps) => {
   const t = useTranslation();
   return (
-    <Container style={inline ? {} : { position: 'fixed' }}>
+    <Container style={inline ? style : { position: 'fixed', ...style }}>
       <CircularProgress />
       <StyledText>{t(messageKey)}</StyledText>
     </Container>

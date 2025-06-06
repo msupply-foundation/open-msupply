@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Box,
   NumericTextInput,
   Select,
   Typography,
+  useDebounceCallback,
   useIntlUtils,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -25,6 +26,7 @@ interface RequestedSelectionProps {
   representation: RepresentationValue;
   setRepresentation: (rep: RepresentationValue) => void;
   unitName: string;
+  showExtraFields?: boolean;
 }
 
 export const RequestedSelection = ({
@@ -36,9 +38,11 @@ export const RequestedSelection = ({
   representation,
   setRepresentation,
   unitName,
+  showExtraFields,
 }: RequestedSelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+  const width = showExtraFields ? 170 : 250;
 
   const currentValue = useMemo(
     (): number =>
@@ -49,6 +53,7 @@ export const RequestedSelection = ({
       ),
     [representation, draft?.requestedQuantity, defaultPackSize]
   );
+  const [value, setValue] = useState(currentValue);
 
   const options = useMemo((): Option[] => {
     const unitPlural = getPlural(unitName, currentValue);
@@ -62,14 +67,22 @@ export const RequestedSelection = ({
     ];
   }, [isPacksEnabled, unitName, currentValue]);
 
+  const debouncedUpdate = useDebounceCallback(
+    (value?: number) => {
+      const updatedRequest = getUpdatedRequest(
+        value,
+        representation,
+        defaultPackSize,
+        draft?.suggestedQuantity
+      );
+      update(updatedRequest);
+    },
+    [representation, defaultPackSize, update]
+  );
+
   const handleValueChange = (value?: number) => {
-    const updatedRequest = getUpdatedRequest(
-      value,
-      representation,
-      defaultPackSize,
-      draft?.suggestedQuantity
-    );
-    update(updatedRequest);
+    setValue(value ?? 0);
+    debouncedUpdate(value);
   };
 
   return (
@@ -80,15 +93,15 @@ export const RequestedSelection = ({
         mb: 1,
       }}
     >
-      <Typography variant="body1" fontWeight="bold">
+      <Typography variant="body1" fontWeight="bold" p={0.5}>
         {t('label.requested')}:
       </Typography>
       <Box gap={1} display="flex" flexDirection="row">
         <NumericTextInput
           autoFocus
-          width={150}
+          width={width}
           min={0}
-          value={currentValue}
+          value={value}
           disabled={disabled}
           onChange={handleValueChange}
           slotProps={{
@@ -102,6 +115,7 @@ export const RequestedSelection = ({
             },
           }}
           sx={{
+            boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
             '& .MuiInputBase-input': {
               p: '3px 4px',
               backgroundColor: theme =>
@@ -122,6 +136,7 @@ export const RequestedSelection = ({
             );
           }}
           sx={{
+            boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
             '& .MuiInputBase-input': {
               p: '3px 4px',
               backgroundColor: theme => theme.palette.background.white,
@@ -133,6 +148,7 @@ export const RequestedSelection = ({
               sx: {
                 backgroundColor: theme => theme.palette.background.white,
                 borderRadius: 2,
+                p: 0.5,
               },
             },
           }}

@@ -56,10 +56,10 @@ export const Toolbar: FC = () => {
     delete: { deleteLines },
   } = usePrescriptionLines();
 
-  const deleteAll = () => {
+  const deleteAll = async () => {
     const allRows = (items ?? []).map(({ lines }) => lines.flat()).flat() ?? [];
     if (allRows.length === 0) return;
-    deleteLines(allRows);
+    return deleteLines(allRows);
   };
 
   const getConfirmation = useConfirmationModal({

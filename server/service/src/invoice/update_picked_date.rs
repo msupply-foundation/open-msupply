@@ -1,38 +1,57 @@
-use repository::{
-    InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, RepositoryError,
-    StorageConnection,
-};
+use repository::{InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, RepositoryError};
 
-use super::common::get_invoice_status_datetime;
+use crate::service_provider::ServiceContext;
+
+use super::{
+    common::get_invoice_status_datetime, update_prescription, UpdatePrescription,
+    UpdatePrescriptionStatus,
+};
 
 const MIN_PICKED_DATE_UPDATE_INTERVAL_SECONDS: i64 = 60;
 
+pub enum UpdatePickedDateError {
+    AutoPickFailed(String),
+    RepositoryError(RepositoryError),
+}
+
+impl From<RepositoryError> for UpdatePickedDateError {
+    fn from(error: RepositoryError) -> Self {
+        UpdatePickedDateError::RepositoryError(error)
+    }
+}
+
 fn auto_pick_invoice(
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
     invoice: InvoiceRow,
-) -> Result<InvoiceRow, RepositoryError> {
+) -> Result<InvoiceRow, UpdatePickedDateError> {
     // If the invoice is a prescription and it's in the new status, we should automatically pick it
     if invoice.r#type == InvoiceType::Prescription && invoice.status == InvoiceStatus::New {
-        let update = InvoiceRow {
-            status: InvoiceStatus::Picked,
-            picked_datetime: Some(get_invoice_status_datetime(&invoice)),
-            ..invoice
-        };
-
-        // Update the invoice status to picked
-        let _result = InvoiceRowRepository::new(connection).upsert_one(&update)?;
-        return Ok(update);
+        let updated = update_prescription(
+            ctx,
+            UpdatePrescription {
+                id: invoice.id.clone(),
+                status: Some(UpdatePrescriptionStatus::Picked),
+                ..Default::default()
+            },
+        )
+        .map_err(|e| {
+            UpdatePickedDateError::AutoPickFailed(format!(
+                "Failed to auto-pick invoice {}: {:?}",
+                invoice.id, e
+            ))
+        })?;
+        return Ok(updated.invoice_row);
     }
     Ok(invoice)
 }
 
 /// This function is called when a line is updated on an invoice. It will update the picked date if appropriate.
 pub fn update_picked_date(
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
     invoice: &InvoiceRow,
-) -> Result<(), RepositoryError> {
+) -> Result<(), UpdatePickedDateError> {
     // Some invoices such as prescriptions should be automatically picked when lines are added
-    let invoice = auto_pick_invoice(connection, invoice.clone())?;
+    let invoice = auto_pick_invoice(ctx, invoice.clone())?;
 
     // We only want to update the picked date if the invoice is in the picked status
     if invoice.status != InvoiceStatus::Picked {
@@ -62,6 +81,6 @@ pub fn update_picked_date(
         ..invoice.clone()
     };
 
-    let _result = InvoiceRowRepository::new(connection).upsert_one(&update)?;
+    let _result = InvoiceRowRepository::new(&ctx.connection).upsert_one(&update)?;
     Ok(())
 }

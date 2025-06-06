@@ -1,4 +1,4 @@
 export * from './hooks';
-export * from './ResponseEditPage';
+export * from './ResponseEditModal';
 export * from './ResponseLineEdit';
 export * from './AppBarButtons';

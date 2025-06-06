@@ -23,6 +23,7 @@ pub struct OutboundShipmentLineInput {
     pub id: String,
     pub number_of_packs: f64,
     pub stock_line_id: String,
+    pub campaign_id: Option<String>,
 }
 
 pub fn save_outbound_shipment_item_lines(
@@ -76,6 +77,7 @@ impl SaveOutboundShipmentLinesInput {
                     id: line.id,
                     number_of_packs: line.number_of_packs,
                     stock_line_id: line.stock_line_id,
+                    campaign_id: line.campaign_id,
                 })
                 .collect(),
             prescribed_quantity: None, // Only used for prescription lines
