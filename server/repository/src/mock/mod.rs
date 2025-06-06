@@ -743,6 +743,11 @@ impl MockDataInserts {
         self.reason_options = true;
         self
     }
+
+    pub fn vvm_statuses(mut self) -> Self {
+        self.vvm_statuses = true;
+        self
+    }
 }
 
 #[derive(Default)]

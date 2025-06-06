@@ -37,6 +37,7 @@ pub struct SaveStockOutInvoiceLine {
     pub id: String,
     pub number_of_packs: f64,
     pub stock_line_id: String,
+    pub campaign_id: Option<String>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -76,10 +77,6 @@ pub fn save_stock_out_item_lines(
     ctx: &ServiceContext,
     input: SaveStockOutItemLines,
 ) -> Result<Invoice, SaveStockOutItemLinesError> {
-    println!(
-        "\n\n\n******\nSaving stock out item lines for invoice: {}",
-        input.invoice_id
-    );
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
@@ -327,7 +324,8 @@ mod test {
                         lines: vec![SaveStockOutInvoiceLine {
                             id: "new_line".to_string(),
                             number_of_packs: 1000.0,
-                            stock_line_id: mock_stock_line_vaccine_item_a().id
+                            stock_line_id: mock_stock_line_vaccine_item_a().id,
+                            campaign_id: None
                         }],
                         ..Default::default()
                     }
@@ -403,11 +401,13 @@ mod test {
                             id: "line1".to_string(), // create
                             number_of_packs: 1.0,
                             stock_line_id: mock_stock_line_b().id,
+                            campaign_id: None,
                         },
                         SaveStockOutInvoiceLine {
                             id: line_to_update().id,
                             number_of_packs: 2.0,
                             stock_line_id: mock_stock_line_a().id,
+                            campaign_id: None,
                         },
                         SaveStockOutInvoiceLine {
                             id: line_to_delete().id,

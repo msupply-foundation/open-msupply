@@ -7,8 +7,6 @@ import {
   ModalMode,
   useNotification,
   InvoiceNodeStatus,
-  usePreference,
-  PreferenceKey,
 } from '@openmsupply-client/common';
 import { useNextItem } from './hooks';
 import { ScannedBarcode } from '../../../types';
@@ -27,6 +25,10 @@ interface OutboundLineEditProps {
   mode: ModalMode | null;
   status: InvoiceNodeStatus;
   invoiceId: string;
+  prefOptions: {
+    sortByVvmStatus: boolean;
+    manageVaccinesInDoses: boolean;
+  };
 }
 
 export const OutboundLineEdit = ({
@@ -36,13 +38,11 @@ export const OutboundLineEdit = ({
   mode,
   status,
   invoiceId,
+  prefOptions,
 }: OutboundLineEditProps) => {
   const t = useTranslation();
   const { info, warning } = useNotification();
   const [itemId, setItemId] = useState(openedWith?.itemId);
-  const { data: prefs } = usePreference(
-    PreferenceKey.SortByVvmStatusThenExpiry
-  );
 
   const onClose = () => {
     clear();
@@ -58,7 +58,7 @@ export const OutboundLineEdit = ({
   const {
     draftLines,
     allocatedQuantity,
-    placeholderUnits: placeholderQuantity,
+    placeholderUnits,
     alerts,
     isDirty,
     setAlerts,
@@ -75,7 +75,7 @@ export const OutboundLineEdit = ({
     await mutateAsync({
       lines: draftLines,
       itemId,
-      placeholderQuantity,
+      placeholderQuantity: placeholderUnits,
     });
 
     try {
@@ -99,7 +99,7 @@ export const OutboundLineEdit = ({
 
     try {
       await onSave();
-      if (!!placeholderQuantity) {
+      if (!!placeholderUnits) {
         const infoSnack = info(t('message.placeholder-line'));
         infoSnack();
       }
@@ -164,9 +164,7 @@ export const OutboundLineEdit = ({
             invoiceId={invoiceId}
             allowPlaceholder={status === InvoiceNodeStatus.New}
             scannedBatch={asBarcodeOrNull(openedWith)?.batch}
-            prefOptions={{
-              sortByVvmStatus: prefs?.sortByVvmStatusThenExpiry ?? false,
-            }}
+            prefOptions={prefOptions}
           />
         )}
       </Grid>

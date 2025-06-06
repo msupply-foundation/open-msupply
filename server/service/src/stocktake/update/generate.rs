@@ -182,6 +182,7 @@ fn generate_stock_in_out_or_update(
             total_before_tax: None,
             tax_percentage: None,
             prescribed_quantity: None,
+            campaign_id: None,
         })
     };
 

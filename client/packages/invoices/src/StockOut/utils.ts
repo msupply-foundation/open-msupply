@@ -188,13 +188,32 @@ export const scannedBatchFilter = (
   return selectedLine.batch === scannedBatch;
 };
 
+export const normaliseToUnits = (
+  quantity: number,
+  allocateIn: AllocateInOption,
+  defaultDosesPerUnit: number
+) => {
+  switch (allocateIn.type) {
+    case AllocateInType.Doses:
+      return quantity / (defaultDosesPerUnit || 1);
+
+    case AllocateInType.Units:
+      return quantity;
+
+    case AllocateInType.Packs:
+      // If working in packs, should be whole units
+      return NumUtils.round(quantity * allocateIn.packSize);
+  }
+};
+
 export const getAllocationAlerts = (
   requestedQuantity: number,
   allocatedQuantity: number,
-  placeholderQuantity: number,
+  placeholderUnits: number,
   hasOnHold: boolean,
   allocateIn: AllocateInOption,
   draftLines: DraftStockOutLineFragment[],
+  defaultDosesPerUnit: number,
   format: (value: number, options?: Intl.NumberFormatOptions) => string,
   t: TypedTFunction<LocaleKey>
 ) => {
@@ -229,12 +248,25 @@ export const getAllocationAlerts = (
     return alerts;
   }
 
+  const isDoses = allocateIn.type === AllocateInType.Doses;
+
   // If we didn't have enough stock to meet the requested quantity
   if (allocatedQuantity < requestedQuantity) {
     // If we were able to create a placeholder, let the user know
-    if (placeholderQuantity > 0) {
+    if (placeholderUnits > 0) {
       alerts.push({
-        message: t('messages.placeholder-allocated', { placeholderQuantity }),
+        message: t(
+          // When issuing in packs, placeholder quantity is in units
+          `messages.placeholder-allocated-${isDoses ? 'doses' : 'units'}`,
+          {
+            requestedQuantity: format(requestedQuantity),
+            placeholderQuantity: format(
+              isDoses
+                ? placeholderUnits * defaultDosesPerUnit
+                : placeholderUnits
+            ),
+          }
+        ),
         severity: 'info',
       });
     } else {
@@ -275,14 +307,11 @@ export const getAllocationAlerts = (
   });
 
   if (wholePackQuantity > allocatedQuantity) {
-    const messageKey =
-      allocateIn.type === AllocateInType.Doses
-        ? 'messages.partial-pack-warning-doses'
-        : 'messages.partial-pack-warning-units';
     alerts.push({
-      message: t(messageKey, {
-        nearestAbove: wholePackQuantity,
-      }),
+      message: t(
+        `messages.partial-pack-warning-${isDoses ? 'doses' : 'units'}`,
+        { nearestAbove: wholePackQuantity }
+      ),
       severity: 'warning',
     });
   }

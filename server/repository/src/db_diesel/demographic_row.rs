@@ -12,6 +12,7 @@ table! {
     demographic(id) {
         id -> Text,
         name -> Text,
+        population_percentage -> Double
     }
 }
 
@@ -22,6 +23,7 @@ table! {
 pub struct DemographicRow {
     pub id: String,
     pub name: String,
+    pub population_percentage: f64,
 }
 
 pub struct DemographicRowRepository<'a> {

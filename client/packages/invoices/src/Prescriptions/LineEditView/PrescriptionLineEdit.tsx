@@ -116,7 +116,7 @@ export const PrescriptionLineEdit = ({
       </AccordionPanelSection>
 
       {isFetching ? (
-        <BasicSpinner />
+        <BasicSpinner inline style={{ flexGrow: 1 }} />
       ) : item ? (
         <PrescriptionLineEditForm disabled={isDisabled} isNew={isNew} />
       ) : null}

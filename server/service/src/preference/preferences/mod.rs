@@ -1,7 +1,5 @@
 pub mod show_contact_tracing;
 pub use show_contact_tracing::*;
-pub mod display_population_based_forecasting;
-pub use display_population_based_forecasting::*;
 pub mod manage_vaccines_in_doses;
 pub use manage_vaccines_in_doses::*;
 pub mod sort_by_vvm_status_then_expiry;
@@ -16,7 +14,6 @@ pub use use_simplified_mobile_ui::*;
 pub struct PreferenceProvider {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
-    pub display_population_based_forecasting: DisplayPopulationBasedForecasting,
     pub show_contact_tracing: ShowContactTracing,
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
@@ -29,7 +26,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
     PreferenceProvider {
         // Global preferences
         allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
-        display_population_based_forecasting: DisplayPopulationBasedForecasting,
         show_contact_tracing: ShowContactTracing,
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,

@@ -14,7 +14,6 @@ pub struct BoolStorePrefInput {
 pub struct UpsertPreferencesInput {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
-    pub display_population_based_forecasting: Option<bool>,
     pub show_contact_tracing: Option<bool>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
@@ -51,7 +50,6 @@ impl UpsertPreferencesInput {
             // Global preferences
             allow_tracking_of_stock_by_donor,
             show_contact_tracing,
-            display_population_based_forecasting,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -62,7 +60,6 @@ impl UpsertPreferencesInput {
         UpsertPreferences {
             // Global preferences
             allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
-            display_population_based_forecasting: *display_population_based_forecasting,
             show_contact_tracing: *show_contact_tracing,
             // Global preferences*show_contact_tracing
             manage_vaccines_in_doses: manage_vaccines_in_doses

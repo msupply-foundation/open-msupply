@@ -30,6 +30,11 @@ export type StockOutLineFragment = {
     isVaccine: boolean;
     doses: number;
   };
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    dosesPerUnit: number;
+  } | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -86,8 +91,13 @@ export type DraftStockOutLineFragment = {
     unusable: boolean;
     description: string;
   } | null;
-  itemVariant?: { __typename: 'ItemVariantNode'; dosesPerUnit: number } | null;
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    dosesPerUnit: number;
+  } | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  campaign?: { __typename: 'CampaignNode'; name: string; id: string } | null;
 };
 
 export type GetOutboundEditLinesQueryVariables = Types.Exact<{
@@ -106,6 +116,7 @@ export type GetOutboundEditLinesQuery = {
       unitName?: string | null;
       name: string;
       isVaccine: boolean;
+      doses: number;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
         directions: string;
@@ -149,9 +160,15 @@ export type GetOutboundEditLinesQuery = {
       } | null;
       itemVariant?: {
         __typename: 'ItemVariantNode';
+        id: string;
         dosesPerUnit: number;
       } | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        name: string;
+        id: string;
+      } | null;
     }>;
   };
 };
@@ -183,6 +200,11 @@ export const StockOutLineFragmentDoc = gql`
       unitName
       isVaccine
       doses
+    }
+    itemVariant {
+      __typename
+      id
+      dosesPerUnit
     }
     location {
       __typename
@@ -241,11 +263,16 @@ export const DraftStockOutLineFragmentDoc = gql`
       description
     }
     itemVariant {
+      id
       dosesPerUnit
     }
     donor(storeId: $storeId) {
       id
       name
+    }
+    campaign {
+      name
+      id
     }
   }
 `;
@@ -267,6 +294,7 @@ export const GetOutboundEditLinesDocument = gql`
           unitName
           name
           isVaccine
+          doses
           itemDirections {
             ...ItemDirection
           }

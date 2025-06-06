@@ -1,5 +1,8 @@
 use crate::{
-    db_diesel::{cold_storage_type_row::cold_storage_type, item_row::item, name_row::name},
+    db_diesel::{
+        barcode_row::barcode, cold_storage_type_row::cold_storage_type, item_row::item,
+        location_row::location, name_row::name,
+    },
     item_link, name_link, user_account, ChangeLogInsertRow, ChangelogRepository,
     ChangelogTableName, RepositoryError, RowActionType, StorageConnection, Upsert,
 };
@@ -32,6 +35,8 @@ allow_tables_to_appear_in_same_query!(item_variant, user_account);
 allow_tables_to_appear_in_same_query!(item_variant, name_link);
 allow_tables_to_appear_in_same_query!(item_variant, name);
 allow_tables_to_appear_in_same_query!(item_variant, cold_storage_type);
+allow_tables_to_appear_in_same_query!(item_variant, barcode);
+allow_tables_to_appear_in_same_query!(item_variant, location);
 
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,

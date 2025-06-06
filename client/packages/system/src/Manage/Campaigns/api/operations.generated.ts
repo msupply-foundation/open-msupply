@@ -23,22 +23,16 @@ export type CampaignsQueryVariables = Types.Exact<{
 
 export type CampaignsQuery = {
   __typename: 'Queries';
-  centralServer: {
-    __typename: 'CentralServerQueryNode';
-    campaign: {
-      __typename: 'CampaignQueries';
-      campaigns: {
-        __typename: 'CampaignConnector';
-        totalCount: number;
-        nodes: Array<{
-          __typename: 'CampaignNode';
-          id: string;
-          name: string;
-          startDate?: string | null;
-          endDate?: string | null;
-        }>;
-      };
-    };
+  campaigns: {
+    __typename: 'CampaignConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'CampaignNode';
+      id: string;
+      name: string;
+      startDate?: string | null;
+      endDate?: string | null;
+    }>;
   };
 };
 
@@ -126,23 +120,19 @@ export const CampaignsDocument = gql`
     $filter: CampaignFilterInput
     $storeId: String!
   ) {
-    centralServer {
-      campaign {
-        campaigns(
-          sort: $sort
-          page: { first: $first, offset: $offset }
-          filter: $filter
-          storeId: $storeId
-        ) {
+    campaigns(
+      sort: $sort
+      page: { first: $first, offset: $offset }
+      filter: $filter
+      storeId: $storeId
+    ) {
+      __typename
+      ... on CampaignConnector {
+        __typename
+        totalCount
+        nodes {
           __typename
-          ... on CampaignConnector {
-            __typename
-            totalCount
-            nodes {
-              __typename
-              ...CampaignRow
-            }
-          }
+          ...CampaignRow
         }
       }
     }

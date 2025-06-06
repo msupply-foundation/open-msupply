@@ -10,12 +10,12 @@ export const useSavePrescriptionItemLineData = (invoiceId: string) => {
     async ({
       itemId,
       lines,
-      prescribedQuantity,
+      prescribedUnits,
       note,
     }: {
       itemId: string;
       lines: DraftStockOutLineFragment[];
-      prescribedQuantity: number | null;
+      prescribedUnits: number | null;
       note: string | null;
     }) => {
       return await prescriptionApi.savePrescriptionItemLines({
@@ -29,7 +29,7 @@ export const useSavePrescriptionItemLineData = (invoiceId: string) => {
             stockLineId: line.stockLineId,
           })),
           prescribedQuantity:
-            (prescribedQuantity ?? 0) > 0 ? prescribedQuantity : null,
+            (prescribedUnits ?? 0) > 0 ? prescribedUnits : null,
           note,
         },
       });

@@ -35,7 +35,7 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
 
   return (
     <Modal
-      title={id ? 'Edit Campaign' : 'Create Campaign'}
+      title={id ? t('title.edit-campaign') : t('title.create-campaign')}
       cancelButton={
         <DialogButton
           variant="cancel"
@@ -45,16 +45,7 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
           }}
         />
       }
-      okButton={
-        <DialogButton
-          variant="ok"
-          onClick={async () => {
-            await upsert();
-            onClose();
-            updateDraft(defaultDraftCampaign);
-          }}
-        />
-      }
+      okButton={<DialogButton variant="ok" onClick={upsert} />}
     >
       <DetailContainer>
         <Box display="flex" flexDirection="column" gap={2}>
@@ -75,7 +66,7 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
             Input={
               <DateTimePickerInput
                 sx={{ width: 250 }}
-                value={DateUtils.getDateOrNull(startDate)}
+                value={DateUtils.getNaiveDate(startDate)}
                 onChange={startDate => updateDraft({ startDate })}
               />
             }
@@ -86,7 +77,7 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
             Input={
               <DateTimePickerInput
                 sx={{ width: 250 }}
-                value={DateUtils.getDateOrNull(endDate)}
+                value={DateUtils.getNaiveDate(endDate)}
                 onChange={endDate => updateDraft({ endDate })}
               />
             }

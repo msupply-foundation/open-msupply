@@ -12,6 +12,7 @@ export const RadioCell = <T extends RecordWithId>({
   selectedId,
   onSelected,
   groupName = '',
+  isDisabled,
 }: CellProps<T> & {
   selectedId: string | null;
   onSelected: (id: string | null) => void;
@@ -29,6 +30,7 @@ export const RadioCell = <T extends RecordWithId>({
         name={groupName}
         value={id}
         checked={checked}
+        disabled={isDisabled}
         onClick={() => {
           if (checked) {
             onSelected?.(null);

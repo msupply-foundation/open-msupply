@@ -21,7 +21,7 @@ import { PreferenceKey } from '@common/types';
 
 export const useSimplifiedTabletUI = () => {
   const theme = useAppTheme();
-  const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.md));
+  const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
 
   const { data } = usePreference(PreferenceKey.UseSimplifiedMobileUi);
 

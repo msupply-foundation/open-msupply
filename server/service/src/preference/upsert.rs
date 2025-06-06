@@ -15,7 +15,6 @@ pub struct UpsertPreferences {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub show_contact_tracing: Option<bool>,
-    pub display_population_based_forecasting: Option<bool>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,
@@ -28,7 +27,6 @@ pub fn upsert_preferences(
     UpsertPreferences {
         // Global preferences
         allow_tracking_of_stock_by_donor: allow_tracking_of_stock_by_donor_input,
-        display_population_based_forecasting: display_population_based_forecasting_input,
         show_contact_tracing: show_contact_tracing_input,
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -40,7 +38,6 @@ pub fn upsert_preferences(
     let PreferenceProvider {
         // Global preferences
         allow_tracking_of_stock_by_donor,
-        display_population_based_forecasting,
         show_contact_tracing,
         // Store preferences
         manage_vaccines_in_doses,
@@ -54,10 +51,6 @@ pub fn upsert_preferences(
             // Global preferences
             if let Some(input) = allow_tracking_of_stock_by_donor_input {
                 allow_tracking_of_stock_by_donor.upsert(connection, input, None)?;
-            }
-
-            if let Some(input) = display_population_based_forecasting_input {
-                display_population_based_forecasting.upsert(connection, input, None)?;
             }
 
             if let Some(input) = show_contact_tracing_input {
