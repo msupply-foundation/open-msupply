@@ -21,7 +21,7 @@ type PluginDataProps = {
 export const usePluginData = ({
   pluginCode,
   filter,
-  queryKey,
+  queryKey = [],
 }: PluginDataProps) => {
   const { pluginDataApi, storeId, queryClient } = usePluginDataGraphQL();
 
@@ -37,7 +37,7 @@ export const usePluginData = ({
   };
 
   const { data, isError, isLoading } = useQuery({
-    queryKey: queryKey ?? [PLUGIN_DATA, storeId, pluginCode],
+    queryKey: [PLUGIN_DATA, pluginCode, ...queryKey],
     queryFn: queryListFn,
   });
 
