@@ -8,6 +8,7 @@ use tera::{Context, Tera};
 use util::constants::{FEEDBACK_EMAIL, SUPPORT_EMAIL};
 
 use crate::{
+    cursor_controller::CursorType,
     email::{
         enqueue::{enqueue_email, EnqueueEmailData},
         EmailServiceError,
@@ -88,8 +89,8 @@ impl Processor for QueueContactEmailProcessor {
         vec![ChangelogTableName::ContactForm]
     }
 
-    fn cursor_type(&self) -> KeyType {
-        KeyType::ContactFormProcessorCursor
+    fn cursor_type(&self) -> CursorType {
+        CursorType::Standard(KeyType::ContactFormProcessorCursor)
     }
 
     // Only run on central server

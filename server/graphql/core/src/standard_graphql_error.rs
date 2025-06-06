@@ -82,6 +82,7 @@ pub fn validate_auth(
         &service_ctx,
         ctx.get_auth_data(),
         &ctx.get_auth_token(),
+        &ctx.get_override_user_id(),
         access_request,
     );
     result.map_err(|err| {
