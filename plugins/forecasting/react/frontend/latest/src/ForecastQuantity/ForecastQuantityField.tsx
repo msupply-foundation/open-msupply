@@ -5,6 +5,7 @@ import {
   QueryClientProviderProxy,
   ThemeProviderProxy,
   UNDEFINED_STRING_VALUE,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { ValueInfoRow } from '@openmsupply-client/requisitions/src/common';
 import { usePluginData } from '../../../../../api';
@@ -27,10 +28,13 @@ const ForecastQuantityField: ForecastQuantityFieldPlugin = ({
     },
     queryKey: [line.id],
   });
+  const t = useTranslation();
 
   const parsed = JSON.parse(data?.[0]?.data ?? '{}');
   const value =
-    parsed?.forecastTotal === null ? null : Math.ceil(parsed?.forecastTotal);
+    parsed?.forecastTotalUnits === null
+      ? null
+      : Math.ceil(parsed?.forecastTotalUnits);
 
   return (
     <ThemeProviderProxy>
@@ -38,9 +42,9 @@ const ForecastQuantityField: ForecastQuantityFieldPlugin = ({
         <ValueInfoRow
           key={`forecasting-plugin-field_${line.id}`}
           value={value}
-          label="Forecast Quantity"
+          label={t('plugin.forecasting.forecast-amount')}
           representation="units"
-          unitName={unitName}
+          unitName={unitName ?? ''}
           defaultPackSize={1}
           nullDisplay={UNDEFINED_STRING_VALUE}
         />

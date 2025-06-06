@@ -32,15 +32,18 @@ export const getVaccineCourseRowsByItem = (line: RequisitionLineRow) =>
       'doses',
       'demographic_name',
       'population_percentage',
+      'vaccine_doses',
     ],
     `
     SELECT id, vaccine_course_name, coverage_rate,
-      wastage_rate, demographic_name, population_percentage,
+      wastage_rate, demographic_name,
+      population_percentage, vaccine_doses,
       COUNT(DISTINCT(dose_label)) AS doses
     FROM vaccination_course
     WHERE item_link_id = '${line.item_link_id}'
     AND demographic_id IS NOT NULL
     GROUP BY id, vaccine_course_name, coverage_rate,
-      wastage_rate, demographic_name, population_percentage
+      wastage_rate, demographic_name,
+      population_percentage, vaccine_doses
       `
   );

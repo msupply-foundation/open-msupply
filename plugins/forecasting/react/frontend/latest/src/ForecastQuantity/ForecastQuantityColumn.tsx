@@ -39,6 +39,9 @@ export const StateLoader: ArrayElement<
       dataIdentifier: { equalTo: 'FORECAST_QUANTITY_INFO' },
       relatedRecordId: { equalAny: props.requestLines.map(({ id }) => id) },
     },
+    // By using the line IDs as the keys, it will cause the query to re-fetch
+    // whenever a line is added/removed
+    queryKey: props.requestLines.map(line => line.id),
   });
 
   useEffect(() => {
@@ -54,8 +57,8 @@ const ForecastColumn = ({ rowData }: CellProps<RequestLineFragment>) => {
   const { getById } = useColumnStore();
 
   const parsed = JSON.parse(getById(rowData)?.data || '{}');
-  const value = parsed?.forecastTotal
-    ? String(Math.ceil(parsed?.forecastTotal))
+  const value = parsed?.forecastTotalUnits
+    ? String(Math.ceil(parsed?.forecastTotalUnits))
     : UNDEFINED_STRING_VALUE;
 
   return <BasicCellLayout>{value}</BasicCellLayout>;

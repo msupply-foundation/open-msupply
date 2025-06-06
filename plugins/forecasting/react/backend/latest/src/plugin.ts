@@ -35,15 +35,27 @@ const plugins: BackendPlugins = {
 
     const forecastedQuantities: Record<
       string,
-      { forecastTotal: number | null; vaccineCourses: ForecastQuantityData[] }
+      {
+        forecastTotalDoses: number | null;
+        forecastTotalUnits: number | null;
+        vaccineCourses: ForecastQuantityData[];
+      }
     > = {};
     for (const line of lines) {
       const vaccineCourses = calculateForecastQuantities(storeProperties, line);
-      const forecastTotal =
+      const forecastTotalDoses =
         vaccineCourses.length > 0
-          ? vaccineCourses.reduce((acc, curr) => acc + curr.forecastQuantity, 0)
+          ? vaccineCourses.reduce((acc, curr) => acc + curr.forecastDoses, 0)
           : null;
-      forecastedQuantities[line.id] = { forecastTotal, vaccineCourses };
+      const forecastTotalUnits =
+        vaccineCourses.length > 0
+          ? vaccineCourses.reduce((acc, curr) => acc + curr.forecastUnits, 0)
+          : null;
+      forecastedQuantities[line.id] = {
+        forecastTotalDoses,
+        forecastTotalUnits,
+        vaccineCourses,
+      };
     }
 
     return {
@@ -60,11 +72,11 @@ const plugins: BackendPlugins = {
       })),
 
       transformed_lines: lines.map(line => {
-        const forecastQuantity = forecastedQuantities[line.id].forecastTotal;
+        const forecastUnits = forecastedQuantities[line.id].forecastTotalDoses;
 
         const suggested_quantity =
-          forecastQuantity !== null
-            ? Math.max(forecastQuantity - line.available_stock_on_hand, 0)
+          forecastUnits !== null
+            ? Math.max(forecastUnits - line.available_stock_on_hand, 0)
             : line.suggested_quantity;
 
         return { ...line, suggested_quantity };
@@ -75,12 +87,16 @@ const plugins: BackendPlugins = {
 
 interface ForecastQuantityData {
   courseTitle: string;
+  numberOfDoses: number;
+  coverageRate: number;
   targetPopulation: number;
   lossFactor: number;
-  annualTargetStock: number;
-  bufferStockMultiplier: number;
-  supplyPeriod: number;
-  forecastQuantity: number;
+  annualTargetDoses: number;
+  bufferStockMonths: number;
+  supplyPeriodMonths: number;
+  dosesPerUnit: number;
+  forecastDoses: number;
+  forecastUnits: number;
 }
 
 const calculateForecastQuantities = (
@@ -88,12 +104,12 @@ const calculateForecastQuantities = (
   line: RequisitionLineRow
 ) => {
   const {
-    buffer_stock,
-    supply_interval: supplyPeriod,
+    buffer_stock: bufferStockMonths = 0,
+    supply_interval: supplyPeriodMonths,
     population_served,
   } = storeProperties;
 
-  if (!buffer_stock || !supplyPeriod || !population_served) {
+  if (!supplyPeriodMonths || !population_served) {
     return [];
   }
 
@@ -103,41 +119,57 @@ const calculateForecastQuantities = (
 
   if (vaccineCourses.length === 0) return [];
 
-  const forecastValues = [];
+  const forecastValues: ForecastQuantityData[] = [];
 
   for (const course of vaccineCourses) {
     const {
       coverage_rate: coverageRate,
       vaccine_course_name,
       demographic_name,
-      doses,
+      doses: numberOfDoses,
       wastage_rate,
       population_percentage,
+      vaccine_doses,
     } = course;
 
     const targetPopulation = population_served * (population_percentage / 100);
 
     const lossFactor = 1 / (1 - wastage_rate / 100);
 
-    const annualTargetStock =
-      targetPopulation * doses * (coverageRate / 100) * lossFactor;
+    // If vaccine_doses = 0, we should use 1
+    const dosesPerUnit = vaccine_doses || 1;
 
-    const bufferStockMultiplier = buffer_stock / supplyPeriod + 1;
+    const annualTargetDoses =
+      targetPopulation * numberOfDoses * (coverageRate / 100) * lossFactor;
 
-    // TO_DO: Need to convert units to doses if applicable
-    const forecastQuantity =
-      (annualTargetStock / 12) * supplyPeriod * bufferStockMultiplier;
+    // log('buffer_stock: ' + bufferStockMonths);
+    // log('supplyPeriod: ' + supplyPeriodMonths);
+    // log('targetPopulation: ' + targetPopulation);
+    // log('doses: ' + doses);
+    // log('coverage_rate: ' + coverage_rate);
+    // log('lossFactor: ' + lossFactor);
+
+    const forecastDoses =
+      (annualTargetDoses / 12) * (supplyPeriodMonths + bufferStockMonths);
+    const forecastUnits = forecastDoses / dosesPerUnit;
+
+    // log('forecastDoses: ' + forecastDoses);
+    // log('forecastUnits: ' + forecastUnits);
 
     const courseTitle = `${vaccine_course_name} (${demographic_name})`;
 
     forecastValues.push({
       courseTitle,
+      numberOfDoses,
+      coverageRate,
       targetPopulation,
       lossFactor,
-      annualTargetStock,
-      bufferStockMultiplier,
-      supplyPeriod,
-      forecastQuantity,
+      annualTargetDoses,
+      bufferStockMonths,
+      supplyPeriodMonths,
+      dosesPerUnit,
+      forecastDoses,
+      forecastUnits,
     });
   }
 
