@@ -93,6 +93,7 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
             Input={
               <Box display="flex" width={INPUT_WIDTH}>
                 <ReasonOptionsSearchInput
+                  disabled={draft.adjustment === 0}
                   onChange={reason => setDraft(state => ({ ...state, reason }))}
                   value={draft.reason}
                   type={getReasonOptionType(
@@ -101,7 +102,7 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
                   )}
                   width={INPUT_WIDTH}
                   reasonOptions={data?.nodes ?? []}
-                  isLoading={isLoading}
+                  loading={isLoading}
                 />
               </Box>
             }

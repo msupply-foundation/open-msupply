@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   TableProvider,
   DataTable,
@@ -10,29 +10,39 @@ import {
   createQueryParamsStore,
   useUrlQueryParams,
   TooltipTextCell,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { MasterListRowFragment, useMasterLists } from '../api';
 
-const MasterListComponent: FC = () => {
+const MasterListComponent = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
+  const { store } = useAuthContext();
+
   const {
     updateSortQuery,
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset, filterBy },
-  } = useUrlQueryParams({ filters: [{ key: 'name' }] });
+  } = useUrlQueryParams({
+    filters: [{ key: 'name' }],
+  });
+
   const { data, isError, isLoading } = useMasterLists({
     queryParams: {
       first,
       offset,
       sortBy,
-      filterBy,
+      filterBy: {
+        ...filterBy,
+        existsForStoreId: { equalTo: store?.id },
+      },
     },
   });
   const pagination = { page, first, offset };
-  const navigate = useNavigate();
-  const t = useTranslation();
+
   const columns = useColumns<MasterListRowFragment>(
     [
       ['name', { width: 300, Cell: TooltipTextCell }],
@@ -64,7 +74,7 @@ const MasterListComponent: FC = () => {
   );
 };
 
-export const MasterListListView: FC = () => (
+export const MasterListListView = () => (
   <TableProvider<MasterListRowFragment>
     createStore={createTableStore}
     queryParamsStore={createQueryParamsStore<MasterListRowFragment>({

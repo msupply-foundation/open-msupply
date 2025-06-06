@@ -52,6 +52,8 @@ const getSortByVVMStatus =
     a: { vvmStatus?: { level?: number } | null; expiryDate?: string | null },
     b: { vvmStatus?: { level?: number } | null; expiryDate?: string | null }
   ) => {
+    // VVM level is the priority order of issuing (1 first)
+    // This does not match VVM Status Stage (e.g. Stage 2 should be issued first, i.e. would be level 1)
     const aLevel = a.vvmStatus?.level;
     const bLevel = b.vvmStatus?.level;
 

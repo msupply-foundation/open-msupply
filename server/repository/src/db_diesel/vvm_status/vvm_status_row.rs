@@ -1,4 +1,9 @@
 use super::vvm_status_row::vvm_status::dsl::*;
+use crate::db_diesel::{
+    barcode_row::barcode, item_link_row::item_link, item_row::item,
+    item_variant::item_variant_row::item_variant, location_row::location, name_link,
+    name_row::name, stock_line_row::stock_line,
+};
 use crate::Delete;
 use crate::RepositoryError;
 use crate::StorageConnection;
@@ -17,6 +22,15 @@ table! {
         reason_id -> Nullable<Text>,
     }
 }
+
+allow_tables_to_appear_in_same_query!(vvm_status, item_link);
+allow_tables_to_appear_in_same_query!(vvm_status, item);
+allow_tables_to_appear_in_same_query!(vvm_status, location);
+allow_tables_to_appear_in_same_query!(vvm_status, barcode);
+allow_tables_to_appear_in_same_query!(vvm_status, item_variant);
+allow_tables_to_appear_in_same_query!(vvm_status, name_link);
+allow_tables_to_appear_in_same_query!(vvm_status, name);
+allow_tables_to_appear_in_same_query!(vvm_status, stock_line);
 
 #[derive(
     Clone, Default, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
