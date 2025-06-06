@@ -254,9 +254,11 @@ const dosesSummary = (
     0
   );
 
+  const roundedDoses = NumUtils.round(totalDoses);
+
   const unitWord = t('label.doses-plural', {
-    count: NumUtils.round(totalDoses),
+    count: roundedDoses,
   });
 
-  return `${totalDoses} ${unitWord}`;
+  return `${roundedDoses} ${unitWord}`;
 };
