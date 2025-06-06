@@ -1738,6 +1738,7 @@
   "messages.period-not-available": "No available periods",
   "messages.placeholder-allocated-doses": "Not enough stock is available to allocate all {{ requestedQuantity }} doses. A placeholder has been added for {{placeholderQuantity}} doses.",
   "messages.placeholder-allocated-units": "Not enough stock is available to allocate all {{ requestedQuantity }} units. A placeholder has been added for {{placeholderQuantity}} units.",
+  "messages.under-allocated": "Due to the pack size of this batch, the unit quantity has been updated from {{receivedQuantity}} to {{quantity}}",
   "messages.prescription-created": "Prescription #{{count}} created",
   "messages.prescription-given": "Prescribed {{amount}} {{item}} on {{date}}",
   "messages.prescription-saved": "Prescription saved 🥳",
