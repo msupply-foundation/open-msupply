@@ -455,7 +455,7 @@ mutation deleteItemVariant($storeId: String!, $input: DeleteItemVariantInput!) {
 }
 
 query coldStorageTypes($storeId: String!) {
-  coldStorageTypes(storeId: $storeId) {
+  coldStorageTypes(storeId: $storeId, sort: { key: id, desc: true }) {
     ... on ColdStorageTypeConnector {
       nodes {
         ...ColdStorageType
