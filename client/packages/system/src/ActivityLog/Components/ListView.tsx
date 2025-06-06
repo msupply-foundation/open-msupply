@@ -7,6 +7,7 @@ import {
   Formatter,
   TableProvider,
   createTableStore,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { useFormatDateTime } from '@common/intl';
 
@@ -64,7 +65,7 @@ export const ActivityLogList: FC<{ recordId: string }> = ({ recordId }) => {
         data={data?.nodes}
         isLoading={isLoading}
         isError={isError}
-        noDataMessage={t('messages.no-log-entries')}
+        noDataElement={<NothingHere body={t('messages.no-log-entries')} />}
         overflowX="auto"
       />
     </TableProvider>
