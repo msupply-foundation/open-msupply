@@ -291,207 +291,207 @@ pub async fn get_loaders(
         PatientLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         ClinicianLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         ProgramEnrolmentLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         DocumentByIdLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         TemperatureBreachByIdLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         SensorByIdLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
 
     loaders.insert(DataLoader::new(
         AssetClassLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         AssetCategoryLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         AssetTypeLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         AssetCatalogueItemLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         AssetStatusLogLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
 
     loaders.insert(DataLoader::new(
         DemographicLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
 
     loaders.insert(DataLoader::new(
         VaccineCourseByProgramIdLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
 
     loaders.insert(DataLoader::new(
         VaccineCourseItemByVaccineCourseIdLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
 
     loaders.insert(DataLoader::new(
         VaccineCourseDoseByVaccineCourseIdLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
 
     loaders.insert(DataLoader::new(
         RnRFormLinesByRnRFormIdLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
 
     loaders.insert(DataLoader::new(
         VaccineCourseLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         MasterListByItemIdLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         ReasonOptionLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         ColdStorageTypeLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
 
     loaders.insert(DataLoader::new(
         ItemVariantsByItemIdLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         ItemVariantByItemVariantIdLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         PackagingVariantRowLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         BundledItemByBundledItemVariantIdLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         BundledItemByPrincipalItemVariantIdLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         ProgramByIdLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         RequisitionIndicatorInfoLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         DiagnosisLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         PreviousEncounterLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         ItemDirectionsByItemIdLoader {
             service_provider: service_provider.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         InsuranceProviderByIdLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         NameInsuranceJoinLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
         WarningLoader {
             connection_manager: connection_manager.clone(),
         },
-        async_std::task::spawn,
+        tokio::spawn,
     ));
 
     loaders

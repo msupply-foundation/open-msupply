@@ -15,6 +15,7 @@ use graphql_core::loader::{get_loaders, LoaderRegistry};
 
 use graphql::{
     attach_discovery_graphql_schema, attach_graphql_schema, GraphSchemaData, GraphqlSchema,
+    PluginExecuteGraphql,
 };
 use log::info;
 use repository::{get_storage_connection_manager, migrations::migrate};
@@ -152,16 +153,6 @@ pub async fn start_server(
             .unwrap();
     }
 
-    // PLUGIN CONTEXT
-    BoaJsContext {
-        service_provider: service_provider.clone(),
-    }
-    .bind();
-    service_provider
-        .plugin_service
-        .reload_all_plugins(&service_context)
-        .unwrap();
-
     // SET HARDWARE UUID
     info!("Getting hardware uuid..");
     #[cfg(not(target_os = "android"))]
@@ -269,7 +260,21 @@ pub async fn start_server(
             graphql_schema.clone().toggle_is_operational(true).await;
         });
     }
-    info!("Creating graphql schema..done",);
+    info!("Creating graphql schema..done");
+
+    // PLUGIN CONTEXT
+    info!("Creating plugin context and reloading plugins..");
+    BoaJsContext::new(
+        &service_provider,
+        PluginExecuteGraphql(graphql_schema.clone()),
+    )
+    .bind();
+
+    service_provider
+        .plugin_service
+        .reload_all_plugins(&service_context)
+        .unwrap();
+    info!("Creating plugin context and reloading plugins..done");
 
     // START DISCOVERY
     // Only run discovery on Mac or Windows
@@ -298,7 +303,7 @@ pub async fn start_server(
     info!("Starting discovery graphql server",);
     let closure_service_provider = service_provider.clone();
     // See attach_discovery_graphql_schema for more details
-    actix_web::rt::spawn(
+    tokio::spawn(
         HttpServer::new(move || {
             App::new()
                 .wrap(Cors::permissive())
@@ -367,7 +372,7 @@ pub async fn start_server(
         settings.server.port, version
     );
     // run server in another task so that we can handle restart/off events here
-    actix_web::rt::spawn(running_server);
+    tokio::spawn(running_server);
 
     tokio::select! {
         // TODO log error in ctrl_c and None in off_switch

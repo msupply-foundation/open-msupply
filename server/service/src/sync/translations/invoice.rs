@@ -6,7 +6,7 @@ use crate::sync::{
     translations::{
         clinician::ClinicianTranslation, currency::CurrencyTranslation,
         diagnosis::DiagnosisTranslation, name::NameTranslation,
-        name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation,
+        name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation, to_legacy_time,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -306,6 +306,8 @@ impl SyncTranslation for InvoiceTranslation {
             .pop()
             .map(|store| store.store_row.id);
 
+        let is_transfer = name_store_id.is_some();
+
         let invoice_type = match invoice_type(&data, &name) {
             Some(invoice_type) => invoice_type,
             None => {
@@ -315,7 +317,7 @@ impl SyncTranslation for InvoiceTranslation {
                 )))
             }
         };
-        let invoice_status = match invoice_status(&invoice_type, &data) {
+        let invoice_status = match invoice_status(&invoice_type, &data, is_transfer) {
             Some(invoice_status) => invoice_status,
             None => {
                 return Ok(PullTranslateResult::Ignored(format!(
@@ -325,7 +327,7 @@ impl SyncTranslation for InvoiceTranslation {
             }
         };
 
-        let mapping = map_legacy(&invoice_type, &data);
+        let mapping = map_legacy(&invoice_type, &data, is_transfer);
 
         let currency_id = match data.currency_id {
             Some(currency_id) => Some(currency_id),
@@ -504,7 +506,7 @@ impl SyncTranslation for InvoiceTranslation {
             requisition_ID: requisition_id,
             linked_transaction_id: linked_invoice_id,
             entry_date: created_datetime.date(),
-            entry_time: created_datetime.time(),
+            entry_time: to_legacy_time(created_datetime),
             ship_date: shipped_datetime
                 .map(|shipped_datetime| date_from_date_time(&shipped_datetime)),
             arrival_date_actual: delivered_datetime
@@ -611,7 +613,11 @@ struct LegacyMapping {
     colour: Option<String>,
 }
 /// Either make use of om_* fields, if present, or do a best afford mapping
-fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMapping {
+fn map_legacy(
+    invoice_type: &InvoiceType,
+    data: &LegacyTransactRow,
+    is_transfer: bool,
+) -> LegacyMapping {
     // If created_datetime (om_created_datetime) exists then the record was created in omSupply and
     // omSupply fields are used
     if let Some(created_datetime) = data.created_datetime {
@@ -630,6 +636,7 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
         };
     }
 
+    // Mapping legacy fields to om_fields
     let mut mapping = LegacyMapping {
         created_datetime: NaiveDateTime::new(data.entry_date, data.entry_time),
         picked_datetime: None,
@@ -666,8 +673,10 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
         },
         InvoiceType::InboundShipment | InvoiceType::CustomerReturn => {
             mapping.delivered_datetime = confirm_datetime;
-
             match data.status {
+                LegacyTransactStatus::Nw if is_transfer => {
+                    mapping.shipped_datetime = Some(mapping.created_datetime);
+                }
                 LegacyTransactStatus::Cn => {
                     mapping.delivered_datetime = confirm_datetime;
                 }
@@ -729,12 +738,16 @@ fn to_legacy_confirm_time(
 
     let date = datetime.map(|datetime| datetime.date());
     let time = datetime
-        .map(|datetime| datetime.time())
+        .map(to_legacy_time)
         .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
     (date, time)
 }
 
-fn invoice_status(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> Option<InvoiceStatus> {
+fn invoice_status(
+    invoice_type: &InvoiceType,
+    data: &LegacyTransactRow,
+    is_transfer: bool,
+) -> Option<InvoiceStatus> {
     let status = match invoice_type {
         // prescription
         InvoiceType::Prescription => match data.status {
@@ -754,8 +767,11 @@ fn invoice_status(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> Optio
         },
         // inbound
         InvoiceType::InboundShipment | InvoiceType::CustomerReturn => match data.status {
+            // sg status is only for manually created supplier invoice in OG
             LegacyTransactStatus::Sg => InvoiceStatus::New,
-            LegacyTransactStatus::Nw => InvoiceStatus::New,
+            // Transferred new invoices, when migrated from mSupply should be converted to shipped status
+            LegacyTransactStatus::Nw if is_transfer => InvoiceStatus::Shipped,
+            LegacyTransactStatus::Nw if !is_transfer => InvoiceStatus::New,
             LegacyTransactStatus::Cn => InvoiceStatus::Delivered,
             LegacyTransactStatus::Fn => InvoiceStatus::Verified,
             _ => return None,
