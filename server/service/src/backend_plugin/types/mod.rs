@@ -2,8 +2,9 @@ pub mod amc;
 pub mod graphql_query;
 pub mod transform_request_requisition_lines;
 
-#[cfg(test)]
-mod generate_typescript_types {
+pub mod generate_typescript_types {
+    use std::path::PathBuf;
+
     use super::*;
     use repository::{PluginDataFilter, PluginDataRow, StorePreferenceRow};
     use ts_rs::TS;
@@ -30,11 +31,8 @@ mod generate_typescript_types {
         get_store_preferences: StorePreferenceRow,
         get_plugin_data: Function<PluginDataFilter, Vec<PluginDataRow>>,
     }
-
-    #[test]
-    #[ignore]
-    fn export_plugin_typescript() {
-        PluginTypes::export_all_to("../../client/packages/plugins/backendCommon/generated")
-            .unwrap();
+    // Runs in CLI
+    pub fn export_plugin_typescript(path: PathBuf) {
+        PluginTypes::export_all_to(path).unwrap();
     }
 }

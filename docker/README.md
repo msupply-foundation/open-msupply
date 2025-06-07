@@ -40,19 +40,19 @@ This is needed when building build apple m chip version on y
 ```bash
 # Build client
 cd client && yarn && yarn build
-# Build server
+# Build server 
 cd ../ && docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:slim cargo build --release --bin remote_server --bin remote_server_cli
 # Build dev-client inside rust:slim container with yarn pre installed
-find . -name "node_modules" -type d -prune -exec rm -rf '{}' +
-docker build docker/dev-client/. -t dev-client-build
+find . -name "node_modules" -type d -prune -exec rm -rf '{}' + && \
+docker build docker/dev-client/. -t dev-client-build && \
 docker run --rm -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/client dev-client-build yarn install
 
 # Dockerise with tag
-docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64
+docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64 --target base && \
 docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64-dev --target dev
 # "docker hub" in bitwarden
 docker login
-docker push msupplyfoundation/omsupply:v2.7.3-arm64
+docker push msupplyfoundation/omsupply:v2.7.3-arm64 && \
 docker push msupplyfoundation/omsupply:v2.7.3-arm64-dev
 
 # Cleanup

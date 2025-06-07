@@ -46,8 +46,8 @@ mod backup;
 use backup::*;
 
 use cli::{
-    generate_and_install_plugin_bundle, generate_plugin_bundle, generate_report_data,
-    generate_reports_recursive, generate_typescript_types, install_plugin_bundle,
+    generate_and_install_plugin_bundle, generate_plugin_bundle, generate_plugin_typescript_types,
+    generate_report_data, generate_reports_recursive, install_plugin_bundle,
     GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
     RefreshDatesRepository, ReportError,
 };
@@ -211,7 +211,18 @@ enum Action {
         #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="enable")]
         disable: bool,
     },
-    GenerateTypeScriptTypes,
+    GeneratePluginTypescriptTypes {
+        /// Optional path to save typescript types, if not provided will save to `../client/packages/plugins/backendCommon/generated`
+        #[clap(
+            short,
+            long,
+            default_value = "../client/packages/plugins/backendCommon/generated"
+        )]
+        path: PathBuf,
+        /// Run prettier on the generated typescript files
+        #[clap(long, default_value = "true")]
+        prettify: bool,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -702,8 +713,8 @@ async fn main() -> anyhow::Result<()> {
                 );
             }
         }
-        Action::GenerateTypeScriptTypes => {
-            generate_typescript_types()?;
+        Action::GeneratePluginTypescriptTypes { path, prettify } => {
+            generate_plugin_typescript_types(path, prettify)?;
         }
     }
 

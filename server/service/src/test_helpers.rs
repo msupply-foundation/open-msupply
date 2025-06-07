@@ -48,6 +48,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             cors_origins: vec![],
             base_dir: Some("test_output".to_string()),
             machine_uid: None,
+            override_is_central_server: false,
         },
         database: db_settings,
         sync: None,
