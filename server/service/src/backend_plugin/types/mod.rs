@@ -3,7 +3,6 @@ pub mod graphql_query;
 pub mod processor;
 pub mod transform_request_requisition_lines;
 
-#[cfg(test)]
 mod generate_typescript_types {
     use crate::{
         boajs::methods::{
