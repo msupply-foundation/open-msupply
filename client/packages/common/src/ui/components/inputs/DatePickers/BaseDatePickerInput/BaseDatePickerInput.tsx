@@ -44,7 +44,7 @@ export const getFormattedDateError = (
 };
 
 export const BaseDatePickerInput: FC<
-  Omit<DatePickerProps<Date>, 'onError'> & {
+  Omit<DatePickerProps, 'onError'> & {
     error?: string | undefined;
     width?: number | string;
     label?: string;

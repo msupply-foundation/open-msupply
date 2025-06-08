@@ -15,7 +15,7 @@ const TextField = (params: TextFieldProps) => {
 };
 
 export const TimePickerInput: FC<
-  Omit<TimePickerProps<Date>, 'renderInput' | 'value'> & {
+  Omit<TimePickerProps, 'renderInput' | 'value'> & {
     onChange(date: Date): void;
     value: Date | string | null;
   }

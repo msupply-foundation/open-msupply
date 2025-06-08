@@ -1,45 +1,20 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   DateTimePicker,
   DateTimePickerProps,
   PickersActionBarAction,
 } from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
-import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
-import { DateUtils, useIntlUtils, useTranslation } from '@common/intl';
+import { useMediaQuery } from '@mui/material';
+import { DateUtils, useTranslation } from '@common/intl';
 import { getFormattedDateError } from '../BaseDatePickerInput';
 import { useBufferState } from '@common/hooks';
-import { DeprecatedBasicTextInput } from '../../TextInput';
 
-const TextField = (params: TextFieldProps) => {
-  const textInputProps: StandardTextFieldProps = {
-    ...params,
-    variant: 'standard',
-  };
-  return <DeprecatedBasicTextInput {...textInputProps} />;
-};
-
-export const DateTimePickerInput: FC<
-  Omit<DateTimePickerProps<Date>, 'onChange'> & {
-    error?: string | undefined;
-    width?: number | string;
-    label?: string;
-    onChange: (value: Date | null) => void;
-    onError?: (validationError: string, date?: Date | null) => void;
-    textFieldProps?: TextFieldProps;
-    showTime?: boolean;
-    actions?: PickersActionBarAction[];
-    dateAsEndOfDay?: boolean;
-    disableFuture?: boolean;
-    displayAs?: 'date' | 'dateTime';
-  }
-> = ({
-  error,
+export const DateTimePickerInput = ({
   onChange,
   onError,
   width,
   label,
-  textFieldProps,
   minDate,
   maxDate,
   showTime,
@@ -47,17 +22,29 @@ export const DateTimePickerInput: FC<
   dateAsEndOfDay,
   disableFuture,
   displayAs,
+  error,
   ...props
+}: Omit<DateTimePickerProps<true>, 'onChange'> & {
+  error?: string | undefined;
+  width?: number | string;
+  label?: string;
+  onChange: (value: Date | null) => void;
+  onError?: (validationError: string, date?: Date | null) => void;
+  showTime?: boolean;
+  actions?: PickersActionBarAction[];
+  dateAsEndOfDay?: boolean;
+  disableFuture?: boolean;
+  displayAs?: 'date' | 'dateTime';
 }) => {
   const theme = useAppTheme();
   const [internalError, setInternalError] = useState<string | null>(null);
   const [value, setValue] = useBufferState<Date | null>(props.value ?? null);
   const [isInitialEntry, setIsInitialEntry] = useState(true);
   const t = useTranslation();
-  const { getLocale } = useIntlUtils();
-  const dateParseOptions = { locale: getLocale() };
   const format =
     props.format === undefined ? (showTime ? 'P p' : 'P') : props.format;
+
+  const isDesktop = useMediaQuery('(pointer: fine)');
 
   const updateDate = (date: Date | null) => {
     setValue(date);
@@ -84,11 +71,10 @@ export const DateTimePickerInput: FC<
   return (
     <DateTimePicker
       format={format}
-      slots={{
-        textField: TextField,
-      }}
       onAccept={handleDateInput}
+      label={label}
       onChange={(date, context) => {
+        handleDateInput(date);
         const { validationError } = context;
 
         if (validationError) {
@@ -134,24 +120,43 @@ export const DateTimePickerInput: FC<
         textField: {
           error: !isInitialEntry && (!!error || !!internalError),
           helperText: !isInitialEntry ? (error ?? internalError ?? '') : '',
-          onBlur: e => {
-            handleDateInput(
-              DateUtils.getDateOrNull(e.target.value, format, dateParseOptions)
-            );
-            setIsInitialEntry(false);
-          },
-          label,
-          ...textFieldProps,
           sx: {
-            '& .MuiFormHelperText-root': {
-              color: 'error.main',
+            border: 'none',
+            color: 'gray',
+            '& .MuiPickersOutlinedInput-root': {
+              backgroundColor: theme.palette.background.drawer,
+              height: '36px',
+              marginTop: '16px',
+              '&.Mui-focused:not(.Mui-error)': {
+                '& .MuiPickersOutlinedInput-notchedOutline': {
+                  border: 'none',
+                  borderBottom: 'solid 2px',
+                  borderColor: `${theme.palette.secondary.light}`,
+                  borderRadius: 0,
+                },
+              },
             },
-            ...textFieldProps?.sx,
+
+            '& .MuiPickersOutlinedInput-notchedOutline': {
+              border: 'none',
+            },
+            '& .MuiPickersSectionList-root': {
+              color: 'gray.dark',
+            },
+            '& .MuiInputLabel-root': {
+              top: '6px',
+              color: 'gray.main',
+              '&.Mui-focused': {
+                color: 'gray.main',
+              },
+            },
             width,
+            minWidth: displayAs === 'dateTime' ? 200 : undefined,
           },
         },
+
         tabs: {
-          hidden: displayAs === 'dateTime' ? false : true,
+          hidden: displayAs === 'dateTime' && !isDesktop ? false : true,
         },
         ...(actions ? { actionBar: { actions } } : {}),
       }}

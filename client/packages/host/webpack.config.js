@@ -52,6 +52,7 @@ module.exports = env => {
     resolve: {
       extensions: ['.js', '.css', '.ts', '.tsx'],
       plugins: [new TsconfigPathsPlugin()],
+      conditionNames: ['require', '...'],
     },
     output: {
       publicPath: '/',

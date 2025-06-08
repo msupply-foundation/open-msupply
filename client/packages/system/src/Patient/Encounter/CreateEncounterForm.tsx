@@ -22,7 +22,7 @@ import Badge from '@mui/material/Badge';
 const LABEL_FLEX = '0 0 100px';
 
 type HighlightedDay = { datetime: Date; label?: string | null };
-type BadgePickersDayProps = PickersDayProps<Date> & {
+type BadgePickersDayProps = PickersDayProps & {
   highlightedDays: HighlightedDay[];
 };
 const BadgePickersDay = (props: BadgePickersDayProps) => {
@@ -106,7 +106,7 @@ export const CreateEncounterForm: FC<{
             }}
             error={startDateTimeError}
             slots={{
-              day: BadgePickersDay as React.FC<PickersDayProps<Date>>,
+              day: BadgePickersDay as React.FC<PickersDayProps>,
             }}
             slotProps={{
               day: {
