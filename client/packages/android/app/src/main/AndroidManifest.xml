@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- from allowNativeHeapPointerTagging see https://github.com/boa-dev/boa/issues/4275, remove when tagging is fixed -->
     <application
+        android:allowNativeHeapPointerTagging="false"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
