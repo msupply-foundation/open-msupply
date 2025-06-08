@@ -9,6 +9,7 @@ use service::{
     sync::settings::{BatchSize, SyncSettings},
 };
 use std::{
+    collections::HashMap,
     io::Write,
     path::PathBuf,
     time::{Duration, Instant},
@@ -647,8 +648,7 @@ impl LoadTest {
             // Group metrics by 5-second intervals
             let mut grouped_metrics: Vec<(u64, usize, usize)> = Vec::new();
             // Create a map to group metrics by 5-second intervals
-            let mut interval_map: std::collections::HashMap<u64, (usize, usize)> =
-                std::collections::HashMap::new();
+            let mut interval_map: HashMap<u64, (usize, usize)> = HashMap::new();
 
             // Determine the first start time as the reference point
             let first_start = results
