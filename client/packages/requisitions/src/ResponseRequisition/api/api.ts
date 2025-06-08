@@ -8,8 +8,8 @@ import {
   UpdateResponseRequisitionStatusInput,
   UpdateResponseRequisitionLineInput,
   InsertProgramResponseRequisitionInput,
-  InsertResponseRequisitionLineInput,
   UpdateIndicatorValueInput,
+  InsertResponseRequisitionLineInput,
 } from '@openmsupply-client/common';
 import {
   ResponseFragment,
@@ -87,6 +87,13 @@ const responseParser = {
     return { id: line.id };
   },
   toDeleteLine: (line: ResponseLineFragment) => ({ id: line.id }),
+  toInsertLine: (
+    line: DraftResponseLine
+  ): InsertResponseRequisitionLineInput => ({
+    id: line.id,
+    requisitionId: line.requisitionId,
+    itemId: line.itemId,
+  }),
   toUpdateLine: (
     patch: DraftResponseLine
   ): UpdateResponseRequisitionLineInput => ({
@@ -233,6 +240,51 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not delete requisitions');
   },
+  upsertLine: async (draftLine: DraftResponseLine) => {
+    let result;
+    if (draftLine.isCreated) {
+      const input = responseParser.toInsertLine(draftLine);
+      result = await sdk.insertResponseLine({
+        storeId,
+        input,
+      });
+
+      const { insertResponseRequisitionLine } = result || {};
+      if (insertResponseRequisitionLine?.__typename === 'RequisitionLineNode') {
+        return insertResponseRequisitionLine;
+      }
+    } else {
+      const input = responseParser.toUpdateLine(draftLine);
+      result = await sdk.updateResponseLine({
+        storeId,
+        input,
+      });
+
+      const { updateResponseRequisitionLine } = result || {};
+      if (updateResponseRequisitionLine?.__typename === 'RequisitionLineNode') {
+        return updateResponseRequisitionLine;
+      }
+    }
+
+    throw new Error('Unable to update requisition');
+  },
+  deleteLine: async (responseLineId: string) => {
+    const ids = [{ id: responseLineId }];
+    const result = await sdk.deleteResponseLines({ ids, storeId });
+
+    if (result.batchResponseRequisition.deleteResponseRequisitionLines) {
+      const failedLines =
+        result.batchResponseRequisition.deleteResponseRequisitionLines.filter(
+          line =>
+            line.response.__typename === 'DeleteResponseRequisitionLineError'
+        );
+      if (failedLines.length === 0) {
+        return result.batchResponseRequisition.deleteResponseRequisitionLines;
+      }
+    }
+
+    throw new Error('Could not delete requisition lines!');
+  },
   deleteLines: async (responseLines: ResponseLineFragment[]) => {
     const ids = responseLines.map(responseParser.toDeleteLine);
     const result = await sdk.deleteResponseLines({ ids, storeId });
@@ -242,28 +294,6 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not delete lines');
-  },
-  insertLine: async (input: InsertResponseRequisitionLineInput) => {
-    const result =
-      (await sdk.insertResponseLine({
-        storeId,
-        input,
-      })) || {};
-
-    if (
-      result?.insertResponseRequisitionLine.__typename === 'RequisitionLineNode'
-    ) {
-      return result.insertResponseRequisitionLine;
-    } else throw new Error('Could not insert response');
-  },
-  updateLine: async (patch: DraftResponseLine) => {
-    const result =
-      (await sdk.updateResponseLine({
-        storeId,
-        input: responseParser.toUpdateLine(patch),
-      })) || {};
-
-    return result;
   },
   createOutboundFromResponse: async (responseId: string): Promise<string> => {
     const result =
@@ -294,7 +324,10 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
   },
 
   programRequisitionSettingsByCustomer: async (customerNameId: string) => {
-    const result = await sdk.programRequisitionSettingsByCustomer({ storeId, customerNameId });
+    const result = await sdk.programRequisitionSettingsByCustomer({
+      storeId,
+      customerNameId,
+    });
     return result.programRequisitionSettingsByCustomer;
   },
   getIndicators: async (

@@ -1013,18 +1013,6 @@ export type CampaignNode = {
   startDate?: Maybe<Scalars['NaiveDate']['output']>;
 };
 
-export type CampaignQueries = {
-  __typename: 'CampaignQueries';
-  campaigns: CampaignsResponse;
-};
-
-export type CampaignQueriesCampaignsArgs = {
-  filter?: InputMaybe<CampaignFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<CampaignSortInput>>;
-  storeId: Scalars['String']['input'];
-};
-
 export enum CampaignSortFieldInput {
   Name = 'name',
 }
@@ -1237,7 +1225,6 @@ export type CentralServerMutationNode = {
 
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
-  campaign: CampaignQueries;
   plugin: CentralPluginQueries;
 };
 
@@ -2385,6 +2372,7 @@ export type DraftStockOutLineNode = {
   __typename: 'DraftStockOutLineNode';
   availablePacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
+  campaign?: Maybe<CampaignNode>;
   defaultDosesPerUnit: Scalars['Int']['output'];
   donor?: Maybe<NameNode>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -5857,6 +5845,7 @@ export type OutboundInvoiceCounts = {
 };
 
 export type OutboundShipmentLineInput = {
+  campaignId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
@@ -6126,7 +6115,6 @@ export type PreferenceDescriptionNode = {
 
 export enum PreferenceKey {
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
-  DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   ShowContactTracing = 'showContactTracing',
@@ -6157,7 +6145,6 @@ export enum PreferenceValueNodeType {
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
-  displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
@@ -6495,6 +6482,8 @@ export type Queries = {
   activeProgramEvents: ProgramEventResponse;
   activeVvmStatuses: VvmstatusesResponse;
   activityLogs: ActivityLogResponse;
+  /** Queries all reports and their respective versions */
+  allReportVersions: ReportsResponse;
   apiVersion: Scalars['String']['output'];
   assetCatalogueItem: AssetCatalogueItemResponse;
   assetCatalogueItems: AssetCatalogueItemsResponse;
@@ -6516,6 +6505,7 @@ export type Queries = {
    */
   authToken: AuthTokenResponse;
   barcodeByGtin: BarcodeResponse;
+  campaigns: CampaignsResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
   clinicians: CliniciansResponse;
@@ -6692,6 +6682,14 @@ export type QueriesActivityLogsArgs = {
   sort?: InputMaybe<Array<ActivityLogSortInput>>;
 };
 
+export type QueriesAllReportVersionsArgs = {
+  filter?: InputMaybe<ReportFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ReportSortInput>>;
+  storeId: Scalars['String']['input'];
+  userLanguage: Scalars['String']['input'];
+};
+
 export type QueriesAssetCatalogueItemArgs = {
   id: Scalars['String']['input'];
 };
@@ -6769,6 +6767,13 @@ export type QueriesAuthTokenArgs = {
 
 export type QueriesBarcodeByGtinArgs = {
   gtin: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesCampaignsArgs = {
+  filter?: InputMaybe<CampaignFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<CampaignSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -7558,13 +7563,16 @@ export type ReportNode = {
   /** Human readable name of the report */
   name: Scalars['String']['output'];
   subContext?: Maybe<Scalars['String']['output']>;
+  version: Scalars['String']['output'];
 };
 
 export type ReportResponse = QueryReportError | ReportNode;
 
 export enum ReportSortFieldInput {
+  Code = 'code',
   Id = 'id',
   Name = 'name',
+  Version = 'version',
 }
 
 export type ReportSortInput = {
@@ -9943,7 +9951,6 @@ export type UpsertPackVariantResponse =
 
 export type UpsertPreferencesInput = {
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
-  displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;

@@ -25,6 +25,7 @@ export const useSaveOutboundLines = (outboundId: string) => {
             id: line.id,
             numberOfPacks: line.numberOfPacks,
             stockLineId: line.stockLineId,
+            campaignId: line.campaign?.id,
           })),
           placeholderQuantity,
         },

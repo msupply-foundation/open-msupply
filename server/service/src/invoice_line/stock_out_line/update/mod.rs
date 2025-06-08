@@ -4,7 +4,7 @@ use repository::{
 };
 
 use crate::{
-    invoice::update_picked_date::update_picked_date,
+    invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
     invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
     service_provider::ServiceContext,
 };
@@ -26,6 +26,7 @@ pub struct UpdateStockOutLine {
     pub total_before_tax: Option<f64>,
     pub tax: Option<ShipmentTaxUpdate>,
     pub note: Option<String>,
+    pub campaign_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -48,6 +49,7 @@ pub enum UpdateStockOutLineError {
     BatchIsOnHold,
     UpdatedLineDoesNotExist,
     StockLineAlreadyExistsInInvoice(String),
+    AutoPickFailed(String),
     ReductionBelowZero {
         stock_line_id: String,
         line_id: String,
@@ -75,7 +77,12 @@ pub fn update_stock_out_line(
                 stock_line_repo.upsert_one(&previous_batch.stock_line_row)?;
             }
 
-            update_picked_date(connection, &invoice)?;
+            update_picked_date(ctx, &invoice).map_err(|e| match e {
+                UpdatePickedDateError::AutoPickFailed(msg) => OutError::AutoPickFailed(msg),
+                UpdatePickedDateError::RepositoryError(repo_error) => {
+                    OutError::DatabaseError(repo_error)
+                }
+            })?;
 
             get_invoice_line(ctx, &update_line.id)
                 .map_err(OutError::DatabaseError)?

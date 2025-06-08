@@ -4,7 +4,9 @@ mod generate;
 use generate::generate;
 
 use chrono::NaiveDate;
-use repository::{RepositoryError, StockLine, StocktakeLine, StocktakeLineRowRepository};
+use repository::{
+    RepositoryError, StockLine, StockLineRowRepository, StocktakeLine, StocktakeLineRowRepository,
+};
 
 use crate::NullableUpdate;
 use crate::{service_provider::ServiceContext, stocktake_line::query::get_stocktake_line};
@@ -61,8 +63,16 @@ pub fn insert_stocktake_line(
                 item_id,
                 item_name,
             } = validate(connection, &ctx.store_id, &input)?;
-            let new_stocktake_line = generate(stock_line, item_id, item_name, input);
+            let new_stocktake_line =
+                generate(stock_line.clone(), item_id, item_name, input.clone());
             StocktakeLineRowRepository::new(connection).upsert_one(&new_stocktake_line)?;
+
+            // Update stock line donor if provided and stock line exists
+            if let (Some(donor_id), Some(existing_stock_line)) = (&input.donor_id, &stock_line) {
+                let mut stock_line_row = existing_stock_line.stock_line_row.clone();
+                stock_line_row.donor_link_id = Some(donor_id.clone());
+                StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
+            }
 
             let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
             line.ok_or(InsertStocktakeLineError::InternalError(
@@ -84,14 +94,14 @@ mod stocktake_line_test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_item_a, mock_item_a_lines, mock_locked_stocktake,
+            mock_donor_a, mock_item_a, mock_item_a_lines, mock_locked_stocktake,
             mock_new_stock_line_for_stocktake_a, mock_stock_line_b, mock_stock_line_si_d,
             mock_stocktake_a, mock_stocktake_finalised, mock_stocktake_line_a, mock_store_a,
             program_master_list_store, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         EqualFilter, ReasonOptionRow, ReasonOptionType, StockLineFilter, StockLineRepository,
-        StockLineRow, StocktakeLineRow, StocktakeRow,
+        StockLineRow, StockLineRowRepository, StocktakeLineRow, StocktakeRow,
     };
     use util::uuid::uuid;
 
@@ -293,6 +303,70 @@ mod stocktake_line_test {
                 },
             )
             .unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn insert_stocktake_line_with_donor_id() {
+        fn mock_stock_line_for_donor_test() -> StockLineRow {
+            StockLineRow {
+                id: String::from("mock_stock_line_for_donor_test"),
+                item_link_id: String::from("item_a"),
+                location_id: None,
+                store_id: String::from("store_a"),
+                batch: Some(String::from("item_a_batch_b")),
+                available_number_of_packs: 20.0,
+                pack_size: 1.0,
+                cost_price_per_pack: 0.0,
+                sell_price_per_pack: 0.0,
+                total_number_of_packs: 30.0,
+                expiry_date: None,
+                on_hold: false,
+                note: None,
+                supplier_link_id: Some(String::from("name_store_b")),
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_stocktake_line_with_donor_id",
+            MockDataInserts::all(),
+            MockData {
+                stock_lines: vec![mock_stock_line_for_donor_test()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.stocktake_line_service;
+
+        // success with donor_id
+        let stocktake_a = mock_stocktake_a();
+        let donor_id = mock_donor_a().id;
+        let stock_line = mock_stock_line_for_donor_test();
+        service
+            .insert_stocktake_line(
+                &context,
+                InsertStocktakeLine {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id,
+                    stock_line_id: Some(stock_line.id.clone()),
+                    donor_id: Some(donor_id.clone()),
+                    counted_number_of_packs: Some(17.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // check that the donor_id was set correctly
+        let stock_line_row = StockLineRowRepository::new(&context.connection)
+            .find_one_by_id(&stock_line.id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(stock_line_row.donor_link_id, Some(donor_id));
     }
 
     #[actix_rt::test]

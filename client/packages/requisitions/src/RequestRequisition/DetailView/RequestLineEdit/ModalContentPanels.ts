@@ -1,16 +1,6 @@
-import {
-  SxProps,
-  Theme,
-  LocaleKey,
-  TypedTFunction,
-} from '@openmsupply-client/common';
-import { DraftRequestLine } from '../RequestRequisition/DetailView/RequestLineEdit';
-
-export type ValueInfo = {
-  label: string;
-  value?: number | null;
-  sx?: SxProps<Theme>;
-};
+import { LocaleKey, TypedTFunction } from '@openmsupply-client/common';
+import { DraftRequestLine } from '.';
+import { ValueInfo } from '../../../common';
 
 export const getLeftPanel = (
   t: TypedTFunction<LocaleKey>,
@@ -29,6 +19,7 @@ export const getLeftPanel = (
     {
       label: t('label.months-of-stock'),
       value: draft?.itemStats.availableMonthsOfStockOnHand,
+      endAdornmentOverride: t('label.months'),
     },
   ];
 
@@ -42,20 +33,16 @@ export const getLeftPanel = (
   return showExtraFields ? [...base, ...extraPanel] : base;
 };
 
-export const getMiddlePanel = (
+export const getExtraMiddlePanels = (
   t: TypedTFunction<LocaleKey>,
-  draft?: DraftRequestLine | null,
-  showExtraFields: boolean = false
+  draft?: DraftRequestLine | null
 ): ValueInfo[] => {
-  const base: ValueInfo[] = [
+  return [
     {
       label: t('label.suggested'),
       value: draft?.suggestedQuantity,
       sx: { background: theme => theme.palette.background.group },
     },
-  ];
-
-  const extra: ValueInfo[] = [
     {
       label: t('label.incoming-stock'),
       value: draft?.incomingUnits,
@@ -77,6 +64,22 @@ export const getMiddlePanel = (
       value: draft?.daysOutOfStock,
     },
   ];
+};
 
-  return showExtraFields ? [...base, ...extra] : base;
+export const getSuggestedRow = (
+  t: TypedTFunction<LocaleKey>,
+  draft?: DraftRequestLine | null
+): ValueInfo[] => {
+  if (!draft) return [];
+
+  return [
+    {
+      label: t('label.suggested'),
+      value: draft.suggestedQuantity,
+      sx: {
+        pl: 0,
+        pt: 0.5,
+      },
+    },
+  ];
 };
