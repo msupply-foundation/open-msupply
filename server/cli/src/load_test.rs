@@ -634,28 +634,6 @@ impl LoadTest {
         // Aggregate the results into groups of 5 seconds
         println!("\nProcessing results...");
 
-        // Calculate memory usage of results vector
-        let size_of_metric = std::mem::size_of::<Metric>();
-        let capacity = results.capacity();
-        let len = results.len();
-        let allocated_bytes = capacity * size_of_metric;
-        let used_bytes = len * size_of_metric;
-
-        println!("\nMemory Statistics for Results Vector:");
-        println!("Size of single Metric: {} bytes", size_of_metric);
-        println!("Number of metrics: {}", len);
-        println!("Vector capacity: {}", capacity);
-        println!(
-            "Memory allocated: {} bytes ({:.2} KB)",
-            allocated_bytes,
-            allocated_bytes as f64 / 1024.0
-        );
-        println!(
-            "Memory used: {} bytes ({:.2} KB)",
-            used_bytes,
-            used_bytes as f64 / 1024.0
-        );
-
         // Group metrics by 5-second intervals
         if !results.is_empty() {
             // open a file to write the results
