@@ -3,7 +3,6 @@ import { RangeObject, useUrlQuery } from '@common/hooks';
 import { DateTimePickerInput } from '@common/components';
 import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
 import { DateUtils, useFormatDateTime } from '@common/intl';
-import { FilterLabelSx } from './styleConstants';
 import { PickersActionBarAction } from '@mui/x-date-pickers';
 
 export interface DateFilterDefinition extends FilterDefinitionCommon {
@@ -67,9 +66,6 @@ export const DateFilter = ({
     value,
     width: FILTER_WIDTH,
     onChange: handleChange,
-    textFieldProps: {
-      sx: FilterLabelSx,
-    },
     actions: ['clear', 'accept'] as PickersActionBarAction[],
     displayAs,
     ...getMinMaxDates(urlValue, range, minDate, maxDate),

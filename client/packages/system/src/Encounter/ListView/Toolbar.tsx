@@ -1,13 +1,12 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useTranslation,
   AppBarContentPortal,
   FilterMenu,
-  FilterController,
   Box,
 } from '@openmsupply-client/common';
 
-export const Toolbar: FC<{ filter: FilterController }> = () => {
+export const Toolbar = () => {
   const t = useTranslation();
 
   return (
@@ -35,19 +34,17 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
             },
             {
               type: 'group',
-              name: t('label.start-datetime'),
+              name: t('label.start-date'),
               elements: [
                 {
-                  type: 'dateTime',
-                  isDefault: true,
-                  name: t('label.from-start-datetime'),
+                  type: 'date',
+                  name: t('label.from-date'),
                   urlParameter: 'startDatetime',
                   range: 'from',
                 },
                 {
-                  type: 'dateTime',
-                  isDefault: true,
-                  name: t('label.to-start-datetime'),
+                  type: 'date',
+                  name: t('label.to-date'),
                   urlParameter: 'startDatetime',
                   range: 'to',
                 },
