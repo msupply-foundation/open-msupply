@@ -10,12 +10,13 @@ import {
   useAuthContext,
   getLinesFromRow,
   usePluginProvider,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { PackQuantityCell } from '@openmsupply-client/system';
 import { useRequestRequisitionLineErrorContext } from '../context';
 
-export const useRequestColumns = () => {
+export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
   const { maxMonthsOfStock, programName } = useRequest.document.fields([
     'maxMonthsOfStock',
     'programName',
@@ -57,6 +58,21 @@ export const useRequestColumns = () => {
       sortable: false,
       defaultHideOnMobile: true,
     },
+  ];
+
+  if (manageVaccinesInDoses) {
+    columnDefinitions.push({
+      key: 'dosesPerUnit',
+      label: 'label.doses-per-unit',
+      width: 100,
+      align: ColumnAlign.Right,
+      sortable: false,
+      accessor: ({ rowData }) =>
+        rowData.item?.isVaccine ? rowData.item.doses : UNDEFINED_STRING_VALUE,
+    });
+  }
+
+  columnDefinitions.push(
     {
       key: 'defaultPackSize',
       label: 'label.dps',
@@ -93,13 +109,14 @@ export const useRequestColumns = () => {
       width: 150,
       Cell: PackQuantityCell,
       accessor: ({ rowData }) => rowData.itemStats.availableMonthsOfStockOnHand,
-    },
-  ];
+    }
+  );
 
   columnDefinitions.push(
     {
       key: 'targetStock',
       label: 'label.target-stock',
+      description: 'description.target-stock',
       align: ColumnAlign.Right,
       width: 150,
       Cell: PackQuantityCell,

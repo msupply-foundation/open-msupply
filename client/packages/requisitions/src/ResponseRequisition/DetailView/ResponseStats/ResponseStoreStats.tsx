@@ -1,5 +1,5 @@
 import React from 'react';
-import { useIntlUtils, useTranslation } from '@common/intl';
+import { useFormatNumber, useIntlUtils, useTranslation } from '@common/intl';
 import { Box, Typography, NewValueBar } from '@openmsupply-client/common';
 import { RepresentationValue, useValueInUnitsOrPacks } from '../../../common';
 import { calculatePercentage, stats } from './utils';
@@ -27,10 +27,10 @@ export const ResponseStoreStats = ({
 }: ResponseStoreStatsProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
-
+  const { round } = useFormatNumber();
   const unit = unitName || t('label.unit');
 
-  const statsDisplay = stats(t, getPlural, unit, representation);
+  const statsDisplay = stats(t, getPlural, round, unit, representation);
 
   const formattedSoh = useValueInUnitsOrPacks(
     representation,
@@ -73,11 +73,10 @@ export const ResponseStoreStats = ({
   return (
     <Box
       sx={{
-        width: 800,
-        margin: '0 auto',
-        display: 'flex',
-        flexDirection: 'column',
-        pt: 2,
+        width: '100%',
+        maxWidth: 800,
+        mx: 'auto',
+        p: '16px 16px',
       }}
     >
       <Box
@@ -87,7 +86,11 @@ export const ResponseStoreStats = ({
         }}
       >
         {formattedSoh === 0 && formattedIncoming === 0 && formattedSoo === 0 ? (
-          <Typography fontSize={14} style={{ textAlign: 'center' }}>
+          <Typography
+            fontSize={14}
+            style={{ textAlign: 'center' }}
+            justifyContent="center"
+          >
             ⓘ
             <span style={{ fontStyle: 'italic', paddingLeft: 4 }}>
               {t('messages.requisition-no-stock')}
