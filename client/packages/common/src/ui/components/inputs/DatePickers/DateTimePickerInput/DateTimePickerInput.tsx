@@ -5,7 +5,7 @@ import {
   PickersActionBarAction,
 } from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
-import { Theme, useMediaQuery } from '@mui/material';
+import { Box, Theme, Typography, useMediaQuery } from '@mui/material';
 import { DateUtils, useTranslation } from '@common/intl';
 import { getFormattedDateError } from '../BaseDatePickerInput';
 import { useBufferState } from '@common/hooks';
@@ -24,6 +24,7 @@ export const DateTimePickerInput = ({
   disableFuture,
   displayAs,
   error,
+  required,
   ...props
 }: Omit<DateTimePickerProps<true>, 'onChange'> & {
   error?: string | undefined;
@@ -39,6 +40,7 @@ export const DateTimePickerInput = ({
   dateAsEndOfDay?: boolean;
   disableFuture?: boolean;
   displayAs?: 'date' | 'dateTime';
+  required?: boolean;
 }) => {
   const theme = useAppTheme();
   const [internalError, setInternalError] = useState<string | null>(null);
@@ -73,68 +75,83 @@ export const DateTimePickerInput = ({
   };
 
   return (
-    <DateTimePicker
-      format={format}
-      onChange={(date, context) => {
-        const { validationError } = context;
+    <Box display="flex">
+      <DateTimePicker
+        format={format}
+        onChange={(date, context) => {
+          const { validationError } = context;
 
-        if (validationError) {
-          const translatedError = getFormattedDateError(t, validationError);
-          if (onError) onError(translatedError, date);
-          else setInternalError(validationError ? translatedError : null);
+          if (validationError) {
+            const translatedError = getFormattedDateError(t, validationError);
+            if (onError) onError(translatedError, date);
+            else setInternalError(validationError ? translatedError : null);
 
-          // If there is a validation error, set internal value (so user can
-          // keep typing) but not the external one via handleDateInput
-          setValue(date);
-          return;
-        }
-        if (!validationError) {
-          setIsInitialEntry(false);
-          setInternalError(null);
-        }
+            // If there is a validation error, set internal value (so user can
+            // keep typing) but not the external one via handleDateInput
+            setValue(date);
+            return;
+          }
+          if (!validationError) {
+            setIsInitialEntry(false);
+            setInternalError(null);
+          }
 
-        handleDateInput(date);
-      }}
-      label={label}
-      slotProps={{
-        popper: { sx: getPopperSx(theme) },
-        desktopPaper: { sx: getDesktopPaperSx(theme) },
-        textField: {
-          onBlur: () => {
-            // Apply max/mins on blur if present
-            if (minDate || maxDate) {
-              setIsInitialEntry(false);
-              setInternalError(null);
-              handleDateInput(value);
-            }
+          handleDateInput(date);
+        }}
+        label={label}
+        slotProps={{
+          popper: { sx: getPopperSx(theme) },
+          desktopPaper: { sx: getDesktopPaperSx(theme) },
+          textField: {
+            onBlur: () => {
+              // Apply max/mins on blur if present
+              if (minDate || maxDate) {
+                setIsInitialEntry(false);
+                setInternalError(null);
+                handleDateInput(value);
+              }
+            },
+            error: !isInitialEntry && (!!error || !!internalError),
+            helperText: !isInitialEntry ? (error ?? internalError ?? '') : '',
+            sx: {
+              ...getTextFieldSx(theme, !!label),
+              width,
+              minWidth: displayAs === 'dateTime' ? 200 : undefined,
+            },
           },
-          error: !isInitialEntry && (!!error || !!internalError),
-          helperText: !isInitialEntry ? (error ?? internalError ?? '') : '',
-          sx: {
-            ...getTextFieldSx(theme, !!label),
-            width,
-            minWidth: displayAs === 'dateTime' ? 200 : undefined,
-          },
-        },
 
-        tabs: {
-          hidden: displayAs === 'dateTime' && !isDesktop ? false : true,
-        },
-        ...(actions ? { actionBar: { actions } } : {}),
-      }}
-      views={
-        showTime
-          ? ['year', 'month', 'day', 'hours', 'minutes']
-          : ['year', 'month', 'day']
-      }
-      minDate={minDate}
-      maxDate={maxDate}
-      disableFuture={disableFuture}
-      onOpen={() => setIsOpen?.(true)}
-      onClose={() => setIsOpen?.(false)}
-      {...props}
-      value={value}
-    />
+          tabs: {
+            hidden: displayAs === 'dateTime' && !isDesktop ? false : true,
+          },
+          ...(actions ? { actionBar: { actions } } : {}),
+        }}
+        views={
+          showTime
+            ? ['year', 'month', 'day', 'hours', 'minutes']
+            : ['year', 'month', 'day']
+        }
+        minDate={minDate}
+        maxDate={maxDate}
+        disableFuture={disableFuture}
+        onOpen={() => setIsOpen?.(true)}
+        onClose={() => setIsOpen?.(false)}
+        {...props}
+        value={value}
+      />
+      {required && (
+        <Typography
+          sx={{
+            width: '0px', // Prevents asterisk from taking up space - hack but consistent with other inputs
+            color: 'primary.light',
+            fontSize: '17px',
+            marginRight: 0.5,
+            pl: 0.2,
+          }}
+        >
+          *
+        </Typography>
+      )}
+    </Box>
   );
 };
 
