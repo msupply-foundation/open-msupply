@@ -152,7 +152,7 @@ export const SupplySelection = ({
               },
             }}
           />
-          {displayVaccinesInDoses && (
+          {displayVaccinesInDoses && !!value && (
             <Typography
               variant="caption"
               color="text.secondary"
