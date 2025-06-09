@@ -7,7 +7,7 @@ import {
   PickersActionBarAction,
 } from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
-import { Box, Theme, Typography, useMediaQuery } from '@mui/material';
+import { Box, Typography, useMediaQuery } from '@mui/material';
 import {
   DateUtils,
   LocaleKey,
@@ -15,6 +15,7 @@ import {
   useTranslation,
 } from '@common/intl';
 import { useBufferState } from '@common/hooks';
+import { getActionBarSx, getPaperSx, getTextFieldSx } from '../styles';
 
 export const getFormattedDateError = (
   t: TypedTFunction<LocaleKey>,
@@ -126,8 +127,9 @@ export const DateTimePickerInput = ({
         }}
         label={label}
         slotProps={{
-          popper: { sx: getPopperSx(theme) },
-          desktopPaper: { sx: getDesktopPaperSx(theme) },
+          mobilePaper: { sx: getPaperSx(theme) },
+          desktopPaper: { sx: getPaperSx(theme) },
+          actionBar: { sx: getActionBarSx(theme) },
           textField: {
             onBlur: () => {
               // Apply max/mins on blur if present
@@ -180,72 +182,3 @@ export const DateTimePickerInput = ({
     </Box>
   );
 };
-
-const getTextFieldSx = (theme: Theme, hasLabel: boolean) => ({
-  border: 'none',
-  color: 'gray',
-  '& .MuiPickersOutlinedInput-root': {
-    backgroundColor: theme.palette.background.drawer,
-    height: '36px',
-    marginTop: hasLabel ? '16px' : 0,
-    padding: '0 8px',
-    borderRadius: '8px',
-    '&.Mui-focused:not(.Mui-error)': {
-      '& .MuiPickersOutlinedInput-notchedOutline': {
-        border: 'none',
-        borderBottom: 'solid 2px',
-        borderColor: `${theme.palette.secondary.light}`,
-        borderRadius: 0,
-      },
-    },
-    '&.Mui-error': {
-      '& .MuiPickersOutlinedInput-notchedOutline': {
-        borderWidth: '2px',
-        borderStyle: 'solid',
-      },
-    },
-  },
-  '& .MuiPickersOutlinedInput-notchedOutline': {
-    border: 'none',
-  },
-  '& .MuiInputAdornment-root': {
-    marginLeft: 0,
-  },
-  '& .MuiPickersSectionList-root': {
-    color: 'gray.dark',
-  },
-  '& .MuiInputLabel-root': {
-    top: '6px',
-    color: 'gray.main',
-    '&.Mui-focused': {
-      color: 'gray.main',
-    },
-  },
-});
-
-const getPopperSx = (theme: Theme) => ({
-  '& .MuiTypography-root.Mui-selected': {
-    backgroundColor: `${theme.palette.secondary.main}`,
-  },
-  '& .MuiTypography-root.Mui-selected:hover': {
-    backgroundColor: `${theme.palette.secondary.main}`,
-  },
-  '& .Mui-selected:focus': {
-    backgroundColor: `${theme.palette.secondary.main}`,
-  },
-  '& .MuiPickersDay-root.Mui-selected': {
-    backgroundColor: `${theme.palette.secondary.main}`,
-  },
-});
-
-const getDesktopPaperSx = (theme: Theme) => ({
-  '& .Mui-selected': {
-    backgroundColor: `${theme.palette.secondary.main}!important`,
-  },
-  '& .Mui-selected:focus': {
-    backgroundColor: `${theme.palette.secondary.main}`,
-  },
-  '& .Mui-selected:hover': {
-    backgroundColor: `${theme.palette.secondary.main}`,
-  },
-});

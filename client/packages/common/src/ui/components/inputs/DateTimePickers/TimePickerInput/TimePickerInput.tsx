@@ -1,25 +1,20 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TimePicker, TimePickerProps } from '@mui/x-date-pickers';
-import { BasicTextInput } from '../../TextInput/BasicTextInput';
-import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
 import { DateUtils } from '@common/intl';
 import { useDebounceCallback } from '@common/hooks';
+import { useAppTheme } from '@common/styles';
+import { getActionBarSx, getPaperSx, getTextFieldSx } from '../styles';
 
-const TextField = (params: TextFieldProps) => {
-  const textInputProps: StandardTextFieldProps = {
-    ...params,
-    variant: 'standard',
-    sx: { width: '150px', ...params.sx },
-  };
-  return <BasicTextInput {...textInputProps} />;
-};
-
-export const TimePickerInput: FC<
-  Omit<TimePickerProps, 'renderInput' | 'value'> & {
-    onChange(date: Date): void;
-    value: Date | string | null;
-  }
-> = ({ disabled, onChange, value, ...props }) => {
+export const TimePickerInput = ({
+  disabled,
+  onChange,
+  value,
+  ...props
+}: Omit<TimePickerProps, 'renderInput' | 'value'> & {
+  onChange(date: Date): void;
+  value: Date | string | null;
+}) => {
+  const theme = useAppTheme();
   const [internalValue, setInternalValue] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -46,13 +41,15 @@ export const TimePickerInput: FC<
     <TimePicker
       disabled={disabled}
       format="HH:mm"
-      slots={{
-        textField: TextField,
-      }}
       slotProps={{
+        desktopPaper: { sx: getPaperSx(theme) },
+        mobilePaper: { sx: getPaperSx(theme) },
+        actionBar: { sx: getActionBarSx(theme) },
+
         textField: {
           disabled: !!disabled,
           error: isInvalid(internalValue),
+          sx: getTextFieldSx(theme, !!props.label),
         },
       }}
       {...props}
