@@ -2,13 +2,39 @@ import React, { useState } from 'react';
 import {
   DateTimePicker,
   DateTimePickerProps,
+  DateTimeValidationError,
+  DateValidationError,
   PickersActionBarAction,
 } from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
 import { Box, Theme, Typography, useMediaQuery } from '@mui/material';
-import { DateUtils, useTranslation } from '@common/intl';
-import { getFormattedDateError } from '../BaseDatePickerInput';
+import {
+  DateUtils,
+  LocaleKey,
+  TypedTFunction,
+  useTranslation,
+} from '@common/intl';
 import { useBufferState } from '@common/hooks';
+
+export const getFormattedDateError = (
+  t: TypedTFunction<LocaleKey>,
+  validationError: DateValidationError | DateTimeValidationError
+) => {
+  switch (validationError) {
+    case 'invalidDate':
+      return t('error.date_invalidDate');
+    case 'minDate':
+      return t('error.date_minDate');
+    case 'maxDate':
+      return t('error.date_maxDate');
+    case 'disablePast':
+      return t('error.date_disablePast');
+    case 'disableFuture':
+      return t('error.date_disableFuture');
+    default:
+      return validationError ?? '';
+  }
+};
 
 export const DateTimePickerInput = ({
   onChange,
