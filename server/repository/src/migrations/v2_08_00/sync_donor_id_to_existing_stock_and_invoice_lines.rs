@@ -67,11 +67,10 @@ impl MigrationFragment for Migrate {
                 .get("donor_id")
                 .and_then(|value| value.as_str());
 
-            if sync_donor_id.is_none() {
-                continue;
-            }
-
             if let Some(sync_donor_id) = sync_donor_id {
+                if sync_donor_id.is_empty() {
+                    continue;
+                }
                 let current_link_donor_id = stock_line::table
                     .filter(stock_line::id.eq(&stock_line_id))
                     .select(stock_line::donor_link_id)
@@ -114,11 +113,10 @@ impl MigrationFragment for Migrate {
                 .get("donor_id")
                 .and_then(|value| value.as_str());
 
-            if sync_donor_id.is_none() {
-                continue;
-            }
-
             if let Some(sync_donor_id) = sync_donor_id {
+                if sync_donor_id.is_empty() {
+                    continue;
+                }
                 let current_link_donor_id = invoice_line::table
                     .filter(invoice_line::id.eq(&invoice_line_id))
                     .select(invoice_line::donor_link_id)
