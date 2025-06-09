@@ -143,7 +143,9 @@ const getTextFieldSx = (theme: Theme, hasLabel: boolean) => ({
       },
     },
   },
-
+  '& .MuiInputAdornment-root': {
+    marginLeft: 0,
+  },
   '& .MuiPickersOutlinedInput-notchedOutline': {
     border: 'none',
   },
