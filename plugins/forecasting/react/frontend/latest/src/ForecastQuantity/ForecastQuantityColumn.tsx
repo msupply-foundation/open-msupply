@@ -78,4 +78,5 @@ export const ForecastQuantityColumn: ColumnDefinition<RequestLineFragment> = {
   maxWidth: 150,
   sortable: false,
   order: 110,
+  defaultHideOnMobile: true,
 };
