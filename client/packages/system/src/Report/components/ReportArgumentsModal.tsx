@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
 
 import {
@@ -10,6 +10,8 @@ import {
   ProgramSearch,
   periodSearchTester,
   PeriodSearch,
+  dateRangeTester,
+  DateRange,
 } from '@openmsupply-client/programs';
 import { ReportRowFragment } from '../api';
 import { useDialog, useUrlQuery } from '@common/hooks';
@@ -27,13 +29,14 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: patientProgramSearchTester, renderer: PatientProgramSearch },
   { tester: programSearchTester, renderer: ProgramSearch },
   { tester: periodSearchTester, renderer: PeriodSearch },
+  { tester: dateRangeTester, renderer: DateRange },
 ];
 
-export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
+export const ReportArgumentsModal = ({
   report,
   onReset,
   onArgumentsSelected,
-}) => {
+}: ReportArgumentsModalProps) => {
   const { store } = useAuthContext();
   const { urlQuery } = useUrlQuery();
   const t = useTranslation();
