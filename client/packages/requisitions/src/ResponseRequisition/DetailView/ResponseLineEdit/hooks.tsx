@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useResponse, ResponseLineFragment, ResponseFragment } from '../../api';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { FnUtils } from '@common/utils';
@@ -58,7 +58,7 @@ export const useDraftRequisitionLine = (
 ) => {
   const { lines } = useResponse.line.list();
   const { data } = useResponse.document.get();
-  const { mutateAsync: save, isLoading } = useResponse.line.save();
+  const { mutateAsync: saveMutation, isLoading } = useResponse.line.save();
 
   const [draft, setDraft] = useState<DraftResponseLine | null>(null);
 
@@ -77,20 +77,28 @@ export const useDraftRequisitionLine = (
     }
   }, [lines, item, data]);
 
-  const update = (patch: Partial<DraftResponseLine>) => {
-    if (draft) {
-      setDraft({ ...draft, ...patch });
-    }
-  };
+  const update = useCallback((patch: Partial<DraftResponseLine>) => {
+    setDraft(current => (current ? { ...current, ...patch } : null));
+  }, []);
 
-  return { draft, isLoading, save: () => draft && save(draft), update };
+  const save = useCallback(async () => {
+    if (draft) {
+      const result = await saveMutation(draft);
+      return result;
+    }
+    return null;
+  }, [draft, saveMutation]);
+
+  return { draft, isLoading, save, update };
 };
 
 export const useNextResponseLine = (
+  lines: ResponseLineFragment[],
   currentItem?: ItemWithStatsFragment | null
 ) => {
-  const { lines } = useResponse.line.list();
-
+  if (!lines || !currentItem) {
+    return { hasNext: false, next: null };
+  }
   const nextState: {
     hasNext: boolean;
     next: ItemWithStatsFragment | null;
