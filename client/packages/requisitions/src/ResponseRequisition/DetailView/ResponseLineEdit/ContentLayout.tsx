@@ -12,6 +12,7 @@ import {
   LocaleKey,
   Typography,
   useMediaQuery,
+  useFormatNumber,
 } from '@openmsupply-client/common';
 import {
   useEndAdornment,
@@ -52,6 +53,7 @@ export const NumInputRow = ({
 }: NumInputRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+  const { round } = useFormatNumber();
   const isVerticalScreen = useMediaQuery('(max-width:800px)');
 
   const valueInUnitsOrPacks = useValueInUnitsOrPacks(
@@ -82,11 +84,14 @@ export const NumInputRow = ({
   const valueInDoses = React.useMemo(
     () =>
       displayVaccinesInDoses
-        ? calculateValueInDoses(
-            representation,
-            defaultPackSize,
-            dosesPerUnit,
-            valueInUnitsOrPacks
+        ? round(
+            calculateValueInDoses(
+              representation,
+              defaultPackSize,
+              dosesPerUnit,
+              valueInUnitsOrPacks
+            ),
+            2
           )
         : undefined,
     [
@@ -157,7 +162,7 @@ export const NumInputRow = ({
           alignItems: { xs: 'flex-start', md: 'center' },
         }}
       />
-      {displayVaccinesInDoses && !!valueInDoses && (
+      {displayVaccinesInDoses && !!valueInUnitsOrPacks && (
         <Typography
           variant="caption"
           color="text.secondary"

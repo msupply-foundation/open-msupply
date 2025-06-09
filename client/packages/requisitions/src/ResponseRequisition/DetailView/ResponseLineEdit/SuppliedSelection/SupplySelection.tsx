@@ -5,6 +5,7 @@ import {
   Select,
   Typography,
   useDebounceCallback,
+  useFormatNumber,
   useIntlUtils,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -48,6 +49,7 @@ export const SupplySelection = ({
 }: SupplySelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+  const { round } = useFormatNumber();
 
   const currentValue = useMemo(
     (): number =>
@@ -92,11 +94,14 @@ export const SupplySelection = ({
 
   const valueInDoses = useMemo(() => {
     if (!displayVaccinesInDoses) return undefined;
-    return calculateValueInDoses(
-      representation,
-      defaultPackSize || 1,
-      dosesPerUnit,
-      value
+    return round(
+      calculateValueInDoses(
+        representation,
+        defaultPackSize || 1,
+        dosesPerUnit,
+        value
+      ),
+      2
     );
   }, [
     displayVaccinesInDoses,
@@ -147,7 +152,7 @@ export const SupplySelection = ({
               },
             }}
           />
-          {displayVaccinesInDoses && (
+          {displayVaccinesInDoses && !!value && (
             <Typography
               variant="caption"
               color="text.secondary"
