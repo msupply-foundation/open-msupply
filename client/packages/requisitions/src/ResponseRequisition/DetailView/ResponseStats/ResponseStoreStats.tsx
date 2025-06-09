@@ -1,5 +1,5 @@
 import React from 'react';
-import { useIntlUtils, useTranslation } from '@common/intl';
+import { useFormatNumber, useIntlUtils, useTranslation } from '@common/intl';
 import { Box, Typography, NewValueBar } from '@openmsupply-client/common';
 import { RepresentationValue, useValueInUnitsOrPacks } from '../../../common';
 import { calculatePercentage, stats } from './utils';
@@ -27,10 +27,11 @@ export const ResponseStoreStats = ({
 }: ResponseStoreStatsProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+  const { round } = useFormatNumber();
 
   const unit = unitName || t('label.unit');
 
-  const statsDisplay = stats(t, getPlural, unit, representation);
+  const statsDisplay = stats(t, getPlural, round, unit, representation);
 
   const formattedSoh = useValueInUnitsOrPacks(
     representation,
