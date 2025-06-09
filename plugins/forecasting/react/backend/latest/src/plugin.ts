@@ -109,7 +109,14 @@ const calculateForecastQuantities = (
     population_served,
   } = storeProperties;
 
+  // log('bufferStockMonths' + bufferStockMonths);
+  // log('supplyPeriodMonths' + supplyPeriodMonths);
+  // log('population_served' + population_served);
+
   if (!supplyPeriodMonths || !population_served) {
+    log(
+      `Forecasting plugin: Unable to calculate quantities for ${line.item_name} due to missing Store Properties. Values:\n - Supply interval: ${supplyPeriodMonths}\n - Population served: ${population_served}`
+    );
     return [];
   }
 
@@ -117,7 +124,10 @@ const calculateForecastQuantities = (
 
   // log('vaccineCourses: ' + JSON.stringify(vaccineCourses));
 
-  if (vaccineCourses.length === 0) return [];
+  if (vaccineCourses.length === 0) {
+    log(`Forecasting plugin: No vaccine courses for ${line.item_name}`);
+    return [];
+  }
 
   const forecastValues: ForecastQuantityData[] = [];
 
@@ -142,8 +152,6 @@ const calculateForecastQuantities = (
     const annualTargetDoses =
       targetPopulation * numberOfDoses * (coverageRate / 100) * lossFactor;
 
-    // log('buffer_stock: ' + bufferStockMonths);
-    // log('supplyPeriod: ' + supplyPeriodMonths);
     // log('targetPopulation: ' + targetPopulation);
     // log('doses: ' + doses);
     // log('coverage_rate: ' + coverage_rate);
