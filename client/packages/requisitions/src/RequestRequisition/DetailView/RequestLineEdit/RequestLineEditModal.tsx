@@ -37,7 +37,6 @@ export const RequestLineEditModal = ({
   onClose,
   manageVaccinesInDoses,
 }: RequestLineEditModalProps) => {
-  const { Modal } = useDialog({ onClose, isOpen });
   const deleteLine = useRequest.line.deleteLine();
   const isDisabled = isRequestDisabled(requisition);
 
@@ -82,6 +81,8 @@ export const RequestLineEditModal = ({
     }
     onClose();
   };
+
+  const { Modal } = useDialog({ onClose: onCancel, isOpen });
 
   const onChangeItem = (item: ItemWithStatsFragment) => {
     if (item.id !== currentItem?.id && draft?.requestedQuantity === 0) {

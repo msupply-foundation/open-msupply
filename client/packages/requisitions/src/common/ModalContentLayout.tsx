@@ -57,7 +57,7 @@ interface InfoRowProps {
   packagingDisplay?: string;
   sx?: SxProps<Theme>;
   displayVaccinesInDoses?: boolean;
-  doses?: number;
+  doses?: number | string;
   dosesLabel?: string;
 }
 
@@ -179,7 +179,7 @@ export const ValueInfoRow = ({
       packagingDisplay={treatAsNull ? '' : endAdornment}
       sx={sx}
       displayVaccinesInDoses={displayVaccinesInDoses}
-      doses={valueInDoses}
+      doses={round(valueInDoses, 2)}
       dosesLabel={t('label.doses')}
     />
   );

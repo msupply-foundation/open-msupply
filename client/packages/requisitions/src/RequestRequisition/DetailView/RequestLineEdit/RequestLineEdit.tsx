@@ -14,6 +14,7 @@ import {
   usePluginProvider,
   Typography,
   BufferedTextArea,
+  useFormatNumber,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
@@ -67,8 +68,10 @@ export const RequestLineEdit = ({
 }: RequestLineEditProps) => {
   const t = useTranslation();
   const { plugins } = usePluginProvider();
+  const { round } = useFormatNumber();
   const unitName = currentItem?.unitName || t('label.unit');
   const defaultPackSize = currentItem?.defaultPackSize || 1;
+
   const showContent = !!draft && !!currentItem;
   const displayVaccinesInDoses =
     manageVaccinesInDoses && currentItem?.isVaccine;
@@ -235,13 +238,13 @@ export const RequestLineEdit = ({
               {isPacksEnabled && (
                 <InfoRow
                   label={t('label.default-pack-size')}
-                  value={String(currentItem?.defaultPackSize)}
+                  value={round(currentItem?.defaultPackSize)}
                 />
               )}
               {displayVaccinesInDoses && currentItem?.doses ? (
                 <InfoRow
                   label={t('label.doses-per-unit')}
-                  value={String(currentItem?.doses)}
+                  value={round(currentItem?.doses)}
                 />
               ) : null}
               {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}

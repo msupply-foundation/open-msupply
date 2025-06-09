@@ -73,7 +73,7 @@ export const ResponseLineEditModal = ({
   }, [draft?.id]);
 
   const onCancel = () => {
-    if (mode === ModalMode.Create && draft?.id) {
+    if (mode === ModalMode.Create) {
       deleteLine(draftIdRef.current || '');
     }
     onClose();
