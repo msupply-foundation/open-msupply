@@ -80,8 +80,13 @@ pub fn check_emergency_order_within_max_items_limit(
         .collect::<Vec<String>>();
 
     let order_type = ProgramRequisitionOrderTypeRowRepository::new(connection)
-        .find_one_by_setting_and_name(&program_settings_ids, order_type)?
-        .ok_or(OrderTypeNotFoundError::OrderTypeNotFound)?;
+        .find_one_by_setting_and_name(&program_settings_ids, order_type)?;
+    //    .ok_or(OrderTypeNotFoundError::OrderTypeNotFound)?;
+    let order_type = match order_type {
+        Some(order_type) => order_type,
+        None => return Ok((true, 0)),
+        // If no order type is found, we assume it's ok to proceed, better than blocking the confirmation unnecessarily
+    };
 
     if !order_type.is_emergency {
         return Ok((true, 0));
