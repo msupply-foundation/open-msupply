@@ -612,6 +612,7 @@
   "label.add-new-line": "Ajouter une ligne",
   "label.add-new-vaccine-course": "Ajouter un calendrier de vaccination",
   "label.add-variant": "Ajouter une variante",
+  "label.add-vvm-status": "Ajouter un statut VVM",
   "label.additional-info": "Info supplémentaire",
   "label.additions": "Ajouts",
   "label.address": "Adresse",
@@ -628,6 +629,7 @@
   "label.age-months-count_other": "{{count}} mois",
   "label.age-years_one": "{{count}} année",
   "label.age-years_other": "{{count}} années",
+  "label.all-lines": "Toutes les lignes",
   "label.allocated": "Alloué(e)",
   "label.already-issued": "Livrés",
   "label.amc": "CMM",
@@ -1984,8 +1986,5 @@
   "warning.caps-lock": "Avertissement: Verrouillage majuscule activé",
   "warning.check-before-vaccinating": "La carte de vaccination éléctronique provenant d'autres sites de vaccination peuvent ne pas être à jour ! Assurez-vous d'avoir effectué une synchronisation récente et vérifiez toujours la validité de la carte de vaccination papier du patient.",
   "warning.field-not-parsed": "{{field}} non analysé",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
-  "tooltip.re-initialise-in-language": "Réinitialiser en utilisant la langue {{language}}",
-  "label.all-lines": "Toutes les lignes",
-  "label.add-vvm-status": "Ajouter un statut VVM"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
 }
