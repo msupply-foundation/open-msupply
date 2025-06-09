@@ -178,7 +178,7 @@ export const ValueInfoRow = ({
       value={displayValue}
       packagingDisplay={treatAsNull ? '' : endAdornment}
       sx={sx}
-      displayVaccinesInDoses={displayVaccinesInDoses}
+      displayVaccinesInDoses={displayVaccinesInDoses && !!valueInUnitsOrPacks}
       doses={round(valueInDoses, 2)}
       dosesLabel={t('label.doses')}
     />
