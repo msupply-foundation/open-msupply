@@ -1697,7 +1697,7 @@
   "messages.no-lines": "Cannot change the status because there are no lines or because there are only placeholder lines",
   "messages.no-lines-selected": "No lines selected",
   "messages.no-locations": "No locations available",
-  "messages.no-log-entries": "No log entries available",
+  "messages.no-log-entries": "There are no log entries to display.",
   "messages.no-master-lists": "No master lists available",
   "messages.no-matching-patients": "No matching patients",
   "messages.no-matching-patients-for-contact-trace": "No matching patients",
