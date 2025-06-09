@@ -98,7 +98,7 @@ export const DateTimePickerInput = ({
           error: !isInitialEntry && (!!error || !!internalError),
           helperText: !isInitialEntry ? (error ?? internalError ?? '') : '',
           sx: {
-            ...getTextFieldSx(theme),
+            ...getTextFieldSx(theme, !!label),
             width,
             minWidth: displayAs === 'dateTime' ? 200 : undefined,
           },
@@ -125,13 +125,13 @@ export const DateTimePickerInput = ({
   );
 };
 
-const getTextFieldSx = (theme: Theme) => ({
+const getTextFieldSx = (theme: Theme, hasLabel: boolean) => ({
   border: 'none',
   color: 'gray',
   '& .MuiPickersOutlinedInput-root': {
     backgroundColor: theme.palette.background.drawer,
     height: '36px',
-    marginTop: '16px',
+    marginTop: hasLabel ? '16px' : 0,
     padding: '0 8px',
     borderRadius: '8px',
     '&.Mui-focused:not(.Mui-error)': {
