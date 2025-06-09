@@ -25,6 +25,7 @@ mod donor_id_to_donor_link_id;
 mod migrate_reason_option_ids;
 mod reintegrate_options_sync_buffer_records;
 mod rename_vaccine_course_is_active_to_use_in_gaps;
+mod sync_donor_id_to_existing_stock_and_invoice_lines;
 
 pub(crate) struct V2_08_00;
 
@@ -63,6 +64,7 @@ impl Migration for V2_08_00 {
             Box::new(add_campaign_id_to_invoice_line_row::Migrate),
             Box::new(add_population_percentage_to_demographic::Migrate),
             Box::new(rename_vaccine_course_is_active_to_use_in_gaps::Migrate),
+            Box::new(sync_donor_id_to_existing_stock_and_invoice_lines::Migrate),
         ]
     }
 }
