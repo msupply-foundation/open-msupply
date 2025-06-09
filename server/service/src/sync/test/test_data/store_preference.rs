@@ -67,8 +67,7 @@ const STORE_PREFERENCE_1: (&str, &str) = (
         "boxPercentageSpace": 0,
         "omSupplyUsesProgramModule": true,
         "stocktakeFrequency": 1.34,
-        "keepRequisitionLinesWithZeroQuantity": true,
-        "canLinkRequistionToSupplierInvoice": false
+        "keepRequisitionLinesWithZeroQuantity": true
     }
 }"#,
 );
@@ -105,7 +104,7 @@ const STORE_PREFERENCE_2: (&str, &str) = (
         "default_item_packsize_to_one": false,
         "shouldAuthoriseResponseRequisition": false,
         "includeRequisitionsInSuppliersRemoteAuthorisationProcesses": true,
-        "canLinkRequisitionToSupplierInvoice": false,
+        "canLinkRequisitionToSupplierInvoice": true,
         "responseRequisitionAutoFillSupplyQuantity": false,
         "useExtraFieldsForRequisitions": true,
         "CommentFieldToBeShownOnSupplierInvoiceLines": false,
@@ -135,8 +134,7 @@ const STORE_PREFERENCE_2: (&str, &str) = (
         "boxPrefix": "",
         "boxPercentageSpace": 0,
         "stocktakeFrequency": 1,
-        "keepRequisitionLinesWithZeroQuantity": false,
-        "canLinkRequistionToSupplierInvoice": true
+        "keepRequisitionLinesWithZeroQuantity": false
     }
 }"#,
 );

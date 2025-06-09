@@ -73,11 +73,10 @@ export const ResponseStoreStats = ({
   return (
     <Box
       sx={{
-        width: 800,
-        margin: '0 auto',
-        display: 'flex',
-        flexDirection: 'column',
-        pt: 2,
+        width: '100%',
+        maxWidth: 800,
+        mx: 'auto',
+        p: '16px 16px',
       }}
     >
       <Box
@@ -87,7 +86,11 @@ export const ResponseStoreStats = ({
         }}
       >
         {formattedSoh === 0 && formattedIncoming === 0 && formattedSoo === 0 ? (
-          <Typography fontSize={14} style={{ textAlign: 'center' }}>
+          <Typography
+            fontSize={14}
+            style={{ textAlign: 'center' }}
+            justifyContent="center"
+          >
             ⓘ
             <span style={{ fontStyle: 'italic', paddingLeft: 4 }}>
               {t('messages.requisition-no-stock')}

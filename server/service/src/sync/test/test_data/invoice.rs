@@ -98,121 +98,127 @@ const TRANSACT_1: (&str, &str) = (
       "om_expected_delivery_date": ""
   }"#,
 );
-fn transact_1_pull_record() -> TestSyncIncomingRecord {
-    TestSyncIncomingRecord::new_pull_upsert(
-        TABLE_NAME,
-        TRANSACT_1,
-        InvoiceRow {
-            id: TRANSACT_1.0.to_string(),
-            user_id: Some("MISSING_USER_ID".to_string()),
-            store_id: "store_b".to_string(),
-            name_link_id: "name_store_a".to_string(),
-            name_store_id: Some("store_a".to_string()),
-            invoice_number: 1,
-            r#type: InvoiceType::InboundShipment,
-            status: InvoiceStatus::Delivered,
-            on_hold: false,
-            comment: None,
-            their_reference: None,
-            transport_reference: None,
-            created_datetime: NaiveDate::from_ymd_opt(2021, 7, 30)
+
+fn transact_1_pull_row() -> InvoiceRow {
+    InvoiceRow {
+        id: TRANSACT_1.0.to_string(),
+        user_id: Some("MISSING_USER_ID".to_string()),
+        store_id: "store_b".to_string(),
+        name_link_id: "name_store_a".to_string(),
+        name_store_id: Some("store_a".to_string()),
+        invoice_number: 1,
+        r#type: InvoiceType::InboundShipment,
+        status: InvoiceStatus::Delivered,
+        on_hold: false,
+        comment: None,
+        their_reference: None,
+        transport_reference: None,
+        created_datetime: NaiveDate::from_ymd_opt(2021, 7, 30)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap()
+            + Duration::seconds(47046),
+        allocated_datetime: None,
+        picked_datetime: None,
+        shipped_datetime: None,
+        delivered_datetime: Some(
+            NaiveDate::from_ymd_opt(2021, 7, 30)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap()
                 + Duration::seconds(47046),
-            allocated_datetime: None,
-            picked_datetime: None,
-            shipped_datetime: None,
-            delivered_datetime: Some(
-                NaiveDate::from_ymd_opt(2021, 7, 30)
-                    .unwrap()
-                    .and_hms_opt(0, 0, 0)
-                    .unwrap()
-                    + Duration::seconds(47046),
-            ),
-            verified_datetime: None,
-            cancelled_datetime: None,
-            colour: None,
-            requisition_id: None,
-            linked_invoice_id: None,
-            tax_percentage: Some(0.0),
-            currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
-            currency_rate: 1.32,
-            clinician_link_id: None,
-            original_shipment_id: None,
-            backdated_datetime: None,
-            diagnosis_id: None,
-            program_id: None,
-            name_insurance_join_id: Some("NAME_INSURANCE_JOIN_1_ID".to_string()),
-            insurance_discount_amount: Some(10.0),
-            insurance_discount_percentage: Some(2.5),
-            is_cancellation: false,
-            expected_delivery_date: None,
-            default_donor_link_id: Some("donor_a".to_string()),
-        },
-    )
+        ),
+        verified_datetime: None,
+        cancelled_datetime: None,
+        colour: None,
+        requisition_id: None,
+        linked_invoice_id: None,
+        tax_percentage: Some(0.0),
+        currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
+        currency_rate: 1.32,
+        clinician_link_id: None,
+        original_shipment_id: None,
+        backdated_datetime: None,
+        diagnosis_id: None,
+        program_id: None,
+        name_insurance_join_id: Some("NAME_INSURANCE_JOIN_1_ID".to_string()),
+        insurance_discount_amount: Some(10.0),
+        insurance_discount_percentage: Some(2.5),
+        is_cancellation: false,
+        expected_delivery_date: None,
+        default_donor_link_id: Some("donor_a".to_string()),
+    }
 }
+
+fn transact_1_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, TRANSACT_1, transact_1_pull_row())
+}
+
+fn transact_1_push_legacy_row() -> LegacyTransactRow {
+    LegacyTransactRow {
+        ID: TRANSACT_1.0.to_string(),
+        user_id: Some("MISSING_USER_ID".to_string()),
+        name_ID: "name_store_a".to_string(),
+        store_ID: "store_b".to_string(),
+        invoice_num: 1,
+        _type: LegacyTransactType::Si,
+        status: LegacyTransactStatus::Cn,
+        hold: false,
+        comment: None,
+        their_ref: None,
+        transport_reference: None,
+        requisition_ID: None,
+        linked_transaction_id: None,
+        entry_date: NaiveDate::from_ymd_opt(2021, 7, 30).unwrap(),
+        entry_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
+        ship_date: None,
+        arrival_date_actual: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
+        confirm_date: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
+        confirm_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
+        mode: TransactMode::Store,
+        created_datetime: Some(
+            NaiveDate::from_ymd_opt(2021, 7, 30)
+                .unwrap()
+                .and_hms_opt(13, 4, 6)
+                .unwrap(),
+        ),
+        allocated_datetime: None,
+        picked_datetime: None,
+        shipped_datetime: None,
+        delivered_datetime: Some(
+            NaiveDate::from_ymd_opt(2021, 7, 30)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(47046),
+        ),
+        verified_datetime: None,
+        cancelled_datetime: None,
+        om_status: Some(InvoiceStatus::Delivered),
+        om_type: Some(InvoiceType::InboundShipment),
+        om_colour: None,
+        tax_percentage: Some(0.0),
+        clinician_id: None,
+        original_shipment_id: None,
+        currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
+        currency_rate: 1.32,
+        backdated_datetime: None,
+        diagnosis_id: None,
+        program_id: None,
+        name_insurance_join_id: Some("NAME_INSURANCE_JOIN_1_ID".to_string()),
+        insurance_discount_amount: Some(10.0),
+        insurance_discount_percentage: Some(2.5),
+        is_cancellation: false,
+        expected_delivery_date: None,
+        default_donor_id: Some("donor_a".to_string()),
+    }
+}
+
 fn transact_1_push_record() -> TestSyncOutgoingRecord {
     TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: TRANSACT_1.0.to_string(),
-        push_data: json!(LegacyTransactRow {
-            ID: TRANSACT_1.0.to_string(),
-            user_id: Some("MISSING_USER_ID".to_string()),
-            name_ID: "name_store_a".to_string(),
-            store_ID: "store_b".to_string(),
-            invoice_num: 1,
-            _type: LegacyTransactType::Si,
-            status: LegacyTransactStatus::Cn,
-            hold: false,
-            comment: None,
-            their_ref: None,
-            transport_reference: None,
-            requisition_ID: None,
-            linked_transaction_id: None,
-            entry_date: NaiveDate::from_ymd_opt(2021, 7, 30).unwrap(),
-            entry_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
-            ship_date: None,
-            arrival_date_actual: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
-            confirm_date: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
-            confirm_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
-            mode: TransactMode::Store,
-            created_datetime: Some(
-                NaiveDate::from_ymd_opt(2021, 7, 30)
-                    .unwrap()
-                    .and_hms_opt(13, 4, 6)
-                    .unwrap()
-            ),
-            allocated_datetime: None,
-            picked_datetime: None,
-            shipped_datetime: None,
-            delivered_datetime: Some(
-                NaiveDate::from_ymd_opt(2021, 7, 30)
-                    .unwrap()
-                    .and_hms_opt(0, 0, 0)
-                    .unwrap()
-                    + Duration::seconds(47046),
-            ),
-            verified_datetime: None,
-            cancelled_datetime: None,
-            om_status: Some(InvoiceStatus::Delivered),
-            om_type: Some(InvoiceType::InboundShipment),
-            om_colour: None,
-            tax_percentage: Some(0.0),
-            clinician_id: None,
-            original_shipment_id: None,
-            currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
-            currency_rate: 1.32,
-            backdated_datetime: None,
-            diagnosis_id: None,
-            program_id: None,
-            name_insurance_join_id: Some("NAME_INSURANCE_JOIN_1_ID".to_string()),
-            insurance_discount_amount: Some(10.0),
-            insurance_discount_percentage: Some(2.5),
-            is_cancellation: false,
-            expected_delivery_date: None,
-            default_donor_id: Some("donor_a".to_string()),
-        }),
+        push_data: json!(transact_1_push_legacy_row()),
     }
 }
 
@@ -1480,6 +1486,58 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
     }
 }
 
+// When inbound shipment is migrated to omsupply and it's new status and a transfer
+// om should consider it a shipped invoice.
+// For this test using copy of TRANSACT_1, which is in 'cn' status, delivered
+const TRANSACT_MIGRATE_OG_SI_STATUS_ID: &str = "12e889c0f12312311eb8dddb54df6d741bc";
+
+fn transact_migrate_og_si_to_shipped_pull() -> TestSyncIncomingRecord {
+    let json_body = TRANSACT_1
+        .1
+        .to_string()
+        .replace(TRANSACT_1.0, TRANSACT_MIGRATE_OG_SI_STATUS_ID)
+        .replace(r#""status": "cn""#, r#""status": "nw""#)
+        .replace(
+            r#"confirm_date": "2021-07-30"#,
+            r#"confirm_date": "0000-00-00"#,
+        )
+        .replace(r#"confirm_time": 47046"#, r#"confirm_time": 0"#);
+
+    let id_and_data = (TRANSACT_MIGRATE_OG_SI_STATUS_ID, json_body.as_str());
+
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
+        id_and_data,
+        InvoiceRow {
+            id: TRANSACT_MIGRATE_OG_SI_STATUS_ID.to_string(),
+            status: InvoiceStatus::Shipped,
+
+            shipped_datetime: transact_1_pull_row().delivered_datetime,
+            delivered_datetime: None,
+            ..transact_1_pull_row()
+        },
+    )
+}
+
+fn transact_migrate_og_si_to_shipped_push() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
+        record_id: TRANSACT_MIGRATE_OG_SI_STATUS_ID.to_string(),
+        push_data: json!(LegacyTransactRow {
+            ID: TRANSACT_MIGRATE_OG_SI_STATUS_ID.to_string(),
+            status: LegacyTransactStatus::Nw,
+            om_status: Some(InvoiceStatus::Shipped),
+            arrival_date_actual: None,
+            confirm_date: None,
+            confirm_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+            shipped_datetime: transact_1_push_legacy_row().delivered_datetime,
+            delivered_datetime: None,
+            ship_date: Some(transact_1_push_legacy_row().entry_date),
+            ..transact_1_push_legacy_row()
+        }),
+    }
+}
+
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
         transact_1_pull_record(),
@@ -1489,6 +1547,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         inventory_reduction_pull_record(),
         prescription_1_pull_record(),
         cancelled_prescription_pull_record(),
+        transact_migrate_og_si_to_shipped_pull(),
     ]
 }
 
@@ -1509,5 +1568,6 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
         inventory_reduction_push_record(),
         prescription_1_push_record(),
         cancelled_prescription_push_record(),
+        transact_migrate_og_si_to_shipped_push(),
     ]
 }
