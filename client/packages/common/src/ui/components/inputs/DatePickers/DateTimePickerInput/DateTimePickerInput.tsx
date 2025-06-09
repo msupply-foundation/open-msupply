@@ -75,26 +75,39 @@ export const DateTimePickerInput = ({
   return (
     <DateTimePicker
       format={format}
-      onAccept={handleDateInput}
-      label={label}
       onChange={(date, context) => {
-        handleDateInput(date);
         const { validationError } = context;
 
         if (validationError) {
           const translatedError = getFormattedDateError(t, validationError);
           if (onError) onError(translatedError, date);
           else setInternalError(validationError ? translatedError : null);
+
+          // If there is a validation error, set internal value (so user can
+          // keep typing) but not the external one via handleDateInput
+          setValue(date);
+          return;
         }
         if (!validationError) {
           setIsInitialEntry(false);
           setInternalError(null);
         }
+
+        handleDateInput(date);
       }}
+      label={label}
       slotProps={{
         popper: { sx: getPopperSx(theme) },
         desktopPaper: { sx: getDesktopPaperSx(theme) },
         textField: {
+          onBlur: () => {
+            // Apply max/mins on blur if present
+            if (minDate || maxDate) {
+              setIsInitialEntry(false);
+              setInternalError(null);
+              handleDateInput(value);
+            }
+          },
           error: !isInitialEntry && (!!error || !!internalError),
           helperText: !isInitialEntry ? (error ?? internalError ?? '') : '',
           sx: {
@@ -142,12 +155,18 @@ const getTextFieldSx = (theme: Theme, hasLabel: boolean) => ({
         borderRadius: 0,
       },
     },
-  },
-  '& .MuiInputAdornment-root': {
-    marginLeft: 0,
+    '&.Mui-error': {
+      '& .MuiPickersOutlinedInput-notchedOutline': {
+        borderWidth: '2px',
+        borderStyle: 'solid',
+      },
+    },
   },
   '& .MuiPickersOutlinedInput-notchedOutline': {
     border: 'none',
+  },
+  '& .MuiInputAdornment-root': {
+    marginLeft: 0,
   },
   '& .MuiPickersSectionList-root': {
     color: 'gray.dark',
