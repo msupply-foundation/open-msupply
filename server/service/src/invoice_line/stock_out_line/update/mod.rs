@@ -65,10 +65,11 @@ pub fn update_stock_out_line(
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (line, item, batch_pair, invoice) = validate(ctx, &input, &ctx.store_id)?;
+            let (line, item, batch_pair, invoice, adjusted_input) =
+                validate(ctx, input, &ctx.store_id)?;
 
             let (update_line, batch_pair) =
-                generate(input, line, item, batch_pair, invoice.clone())?;
+                generate(adjusted_input, line, item, batch_pair, invoice.clone())?;
             InvoiceLineRowRepository::new(connection).upsert_one(&update_line)?;
 
             let stock_line_repo = StockLineRowRepository::new(connection);

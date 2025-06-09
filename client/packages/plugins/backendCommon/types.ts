@@ -12,6 +12,9 @@ export type BackendPlugins = {
   graphql_query?: (
     _: PluginTypes['graphql_query']['input']
   ) => PluginTypes['graphql_query']['output'];
+  processor?: (
+    _: PluginTypes['processor']['input']
+  ) => PluginTypes['processor']['output'];
 };
 
 declare global {
@@ -24,4 +27,11 @@ declare global {
   var get_plugin_data: (
     _: PluginTypes['get_plugin_data']['input']
   ) => PluginTypes['get_plugin_data']['output'];
+  var use_repository: (
+    _: PluginTypes['use_repository']['input']
+  ) => PluginTypes['use_repository']['output'];
+  var use_graphql: (
+    _: PluginTypes['use_graphql']['input']
+  ) => PluginTypes['use_graphql']['output'];
+  var get_active_stores_on_site: () => PluginTypes['get_active_stores_on_site']['output'];
 }

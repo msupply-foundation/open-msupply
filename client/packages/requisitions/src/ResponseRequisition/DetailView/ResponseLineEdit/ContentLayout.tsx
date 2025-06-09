@@ -10,12 +10,16 @@ import {
   NumericTextInput,
   TypedTFunction,
   LocaleKey,
+  Typography,
+  useMediaQuery,
+  useFormatNumber,
 } from '@openmsupply-client/common';
 import {
   useEndAdornment,
   useValueInUnitsOrPacks,
   Representation,
   RepresentationValue,
+  calculateValueInDoses,
 } from '../../../common';
 
 export interface NumInputRowProps {
@@ -28,6 +32,9 @@ export interface NumInputRowProps {
   unitName: string;
   endAdornmentOverride?: string;
   sx?: SxProps<Theme>;
+  showExtraFields?: boolean;
+  displayVaccinesInDoses?: boolean;
+  dosesPerUnit: number;
 }
 
 export const NumInputRow = ({
@@ -40,9 +47,14 @@ export const NumInputRow = ({
   unitName,
   endAdornmentOverride,
   sx,
+  showExtraFields = false,
+  displayVaccinesInDoses = false,
+  dosesPerUnit,
 }: NumInputRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+  const { round } = useFormatNumber();
+  const isVerticalScreen = useMediaQuery('(max-width:800px)');
 
   const valueInUnitsOrPacks = useValueInUnitsOrPacks(
     representation,
@@ -69,11 +81,41 @@ export const NumInputRow = ({
     }
   };
 
+  const valueInDoses = React.useMemo(
+    () =>
+      displayVaccinesInDoses
+        ? round(
+            calculateValueInDoses(
+              representation,
+              defaultPackSize,
+              dosesPerUnit,
+              valueInUnitsOrPacks
+            ),
+            2
+          )
+        : undefined,
+    [
+      displayVaccinesInDoses,
+      representation,
+      defaultPackSize,
+      dosesPerUnit,
+      valueInUnitsOrPacks,
+    ]
+  );
+
   return (
-    <Box sx={{ marginBottom: 1, px: 1, flex: 1, ...sx }}>
+    <Box
+      sx={{
+        marginBottom: 1,
+        px: 1,
+        flex: 1,
+        ...sx,
+      }}
+    >
       <InputWithLabelRow
         Input={
           <NumericTextInput
+            fullWidth
             sx={{
               '& .MuiInputBase-input': {
                 backgroundColor: theme =>
@@ -94,7 +136,6 @@ export const NumInputRow = ({
               },
             }}
             min={0}
-            width={170}
             value={roundedValue}
             onChange={handleChange}
             disabled={disabled}
@@ -103,10 +144,33 @@ export const NumInputRow = ({
           />
         }
         label={label}
+        labelProps={{
+          sx: {
+            width: {
+              xs: '100%',
+              md: showExtraFields ? '400px' : '600px',
+              lg: showExtraFields ? '370px' : '550px',
+            },
+          },
+        }}
         sx={{
           justifyContent: 'space-between',
+          flexDirection: {
+            xs: isVerticalScreen ? 'column' : 'row',
+            md: 'row',
+          },
+          alignItems: { xs: 'flex-start', md: 'center' },
         }}
       />
+      {displayVaccinesInDoses && !!valueInUnitsOrPacks && (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: 'flex', justifyContent: 'flex-end', pt: 0.3, pr: 1.3 }}
+        >
+          {valueInDoses} {t('label.doses').toLowerCase()}
+        </Typography>
+      )}
     </Box>
   );
 };
@@ -126,6 +190,9 @@ export const createNumericInput =
       representation: RepresentationValue;
       unitName: string;
       disabled: boolean;
+      showExtraFields?: boolean;
+      displayVaccinesInDoses?: boolean;
+      dosesPerUnit: number;
     }
   ) =>
   (
@@ -142,15 +209,18 @@ export const createNumericInput =
 
     return (
       <NumInputRow
-        label={t(label)}
-        value={value ?? 0}
-        onChange={onChange}
-        disabled={disabledOverride ?? commonProps.disabled}
         defaultPackSize={commonProps.defaultPackSize}
         representation={commonProps.representation}
         unitName={commonProps.unitName}
+        showExtraFields={commonProps.showExtraFields}
+        displayVaccinesInDoses={commonProps.displayVaccinesInDoses}
+        disabled={disabledOverride ?? commonProps.disabled}
+        label={t(label)}
+        value={value ?? 0}
+        onChange={onChange}
         endAdornmentOverride={endAdornmentOverride}
         sx={sx}
+        dosesPerUnit={commonProps.dosesPerUnit}
       />
     );
   };

@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  BasicSpinner,
   DialogButton,
   ModalMode,
   ModalTabs,
@@ -10,7 +11,11 @@ import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { ResponseFragment, useResponse } from '../../api';
 import { ResponseLineEdit } from './ResponseLineEdit';
 import { useDraftRequisitionLine, useNextResponseLine } from './hooks';
-import { Representation, RepresentationValue } from '../../../common';
+import {
+  Representation,
+  RepresentationValue,
+  shouldDeleteLine,
+} from '../../../common';
 import { ResponseStoreStats } from '../ResponseStats/ResponseStoreStats';
 import { RequestStoreStats } from '../ResponseStats/RequestStoreStats';
 
@@ -21,6 +26,7 @@ interface ResponseLineEditModalProps {
   mode: ModalMode | null;
   isOpen: boolean;
   onClose: () => void;
+  manageVaccinesInDoses: boolean;
 }
 
 export const ResponseLineEditModal = ({
@@ -30,8 +36,8 @@ export const ResponseLineEditModal = ({
   mode,
   isOpen,
   onClose,
+  manageVaccinesInDoses,
 }: ResponseLineEditModalProps) => {
-  const { Modal } = useDialog({ onClose, isOpen });
   const deleteLine = useResponse.line.deleteLine();
   const isDisabled = useResponse.utils.isDisabled();
 
@@ -45,51 +51,64 @@ export const ResponseLineEditModal = ({
   const [currentItem, setCurrentItem] = useState(
     lines.find(line => line.item.id === itemId)?.item
   );
-  const [previousItemLineId, setPreviousItemLineId] = useState<string | null>(
-    null
-  );
   const [representation, setRepresentation] = useState<RepresentationValue>(
     Representation.UNITS
   );
 
-  const { draft, update, save } = useDraftRequisitionLine(currentItem);
-  const { hasNext, next } = useNextResponseLine(currentItem);
-
+  const { draft, update, save, isLoading } =
+    useDraftRequisitionLine(currentItem);
+  const draftIdRef = useRef<string | undefined>(draft?.id);
+  const { hasNext, next } = useNextResponseLine(lines, currentItem);
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
 
   const deletePreviousLine = () => {
-    if (previousItemLineId && !isDisabled) deleteLine(previousItemLineId);
+    const shouldDelete = shouldDeleteLine(mode, draft?.id, isDisabled);
+    if (draft?.id && shouldDelete) {
+      deleteLine(draft.id);
+    }
   };
+
+  useEffect(() => {
+    draftIdRef.current = draft?.id;
+  }, [draft?.id]);
 
   const onCancel = () => {
     if (mode === ModalMode.Create) {
-      deletePreviousLine();
+      deleteLine(draftIdRef.current || '');
     }
     onClose();
   };
 
+  const { Modal } = useDialog({ onClose: onCancel, isOpen });
+
   const onChangeItem = (item: ItemWithStatsFragment) => {
-    deletePreviousLine();
+    if (item.id !== currentItem?.id && draft?.supplyQuantity === 0) {
+      deletePreviousLine();
+    }
     setRepresentation(Representation.UNITS);
     setCurrentItem(item);
   };
 
   const onSave = async () => {
     await save();
-    setPreviousItemLineId(null);
+    if (draft?.supplyQuantity === 0) {
+      deletePreviousLine();
+    }
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(undefined);
     else onClose();
+    return true;
   };
 
+  // Effect triggered when the selected item changes:
+  // 1. The draft is reset by the useDraftRequisitionLine hook
+  // 2. For newly created lines, we immediately save to enable requisition chart
+  //    data
   useEffect(() => {
-    // Inserts new requisition line if it doesn't exist
     if (!!draft?.isCreated) {
       save();
-    } else {
-      if (!!draft?.id) setPreviousItemLineId(draft.id);
     }
-  }, [draft, setPreviousItemLineId]);
+  }, [draft?.isCreated]);
 
   const { data } = useResponse.line.stats(!draft?.isCreated, draft?.id);
 
@@ -158,32 +177,36 @@ export const ResponseLineEditModal = ({
       height={800}
       width={1200}
     >
-      <>
-        <ResponseLineEdit
-          store={store}
-          requisition={requisition}
-          lines={lines}
-          draft={draft}
-          currentItem={currentItem}
-          onChangeItem={onChangeItem}
-          update={update}
-          representation={representation}
-          setRepresentation={setRepresentation}
-          disabled={isDisabled}
-          isUpdateMode={mode === ModalMode.Update}
-        />
-        {!!draft && (
-          <ModalTabs
-            tabs={tabs}
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              background: theme => theme.palette.background.toolbar,
-              pt: 1,
-            }}
+      {isLoading ? (
+        <BasicSpinner />
+      ) : (
+        <>
+          <ResponseLineEdit
+            store={store}
+            requisition={requisition}
+            lines={lines}
+            draft={draft}
+            currentItem={currentItem}
+            onChangeItem={onChangeItem}
+            update={update}
+            representation={representation}
+            setRepresentation={setRepresentation}
+            disabled={isDisabled}
+            isUpdateMode={mode === ModalMode.Update}
+            manageVaccinesInDoses={manageVaccinesInDoses}
           />
-        )}
-      </>
+          {!!draft && (
+            <ModalTabs
+              tabs={tabs}
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                background: theme => theme.palette.background.toolbar,
+              }}
+            />
+          )}
+        </>
+      )}
     </Modal>
   );
 };

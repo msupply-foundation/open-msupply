@@ -9,9 +9,11 @@ use repository::{InvoiceRowRepository, RepositoryError};
 mod generate;
 use generate::generate;
 mod validate;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 use validate::validate;
 
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, TS)]
 pub struct InsertPrescription {
     pub id: String,
     pub patient_id: String,
