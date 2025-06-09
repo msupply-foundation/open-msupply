@@ -162,7 +162,7 @@ export const NumInputRow = ({
           alignItems: { xs: 'flex-start', md: 'center' },
         }}
       />
-      {displayVaccinesInDoses && !!valueInDoses && (
+      {displayVaccinesInDoses && !!valueInUnitsOrPacks && (
         <Typography
           variant="caption"
           color="text.secondary"

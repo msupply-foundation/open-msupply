@@ -156,7 +156,7 @@ export const RequestedSelection = ({
               },
             }}
           />
-          {displayVaccinesInDoses && (
+          {displayVaccinesInDoses && !!value && (
             <Typography
               variant="caption"
               color="text.secondary"
