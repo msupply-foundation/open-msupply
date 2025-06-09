@@ -102,7 +102,7 @@ export const TabLayout = ({
             color="primary"
             variant="outlined"
             onClick={() => {
-              addDraftLine;
+              addDraftLine();
               setPackRoundingMessage?.('');
             }}
             label={`${t('label.add-batch')} (+)`}
