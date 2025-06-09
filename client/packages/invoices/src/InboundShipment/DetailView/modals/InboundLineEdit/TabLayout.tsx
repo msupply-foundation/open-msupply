@@ -101,7 +101,10 @@ export const TabLayout = ({
             disabled={isDisabled}
             color="primary"
             variant="outlined"
-            onClick={addDraftLine}
+            onClick={() => {
+              addDraftLine;
+              setPackRoundingMessage?.('');
+            }}
             label={`${t('label.add-batch')} (+)`}
             Icon={<PlusCircleIcon />}
           />

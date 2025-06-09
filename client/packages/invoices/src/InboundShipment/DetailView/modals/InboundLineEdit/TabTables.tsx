@@ -136,7 +136,7 @@ export const QuantityTableComponent = ({
       unit: pluralisedUnitName,
     }),
     width: 100,
-    cellProps: { debounce: 1000 },
+    cellProps: { debounce: 500 },
     Cell: NumberInputCell,
     align: ColumnAlign.Left,
     setter: patch => {
