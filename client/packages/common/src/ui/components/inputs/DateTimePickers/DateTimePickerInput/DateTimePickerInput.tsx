@@ -7,7 +7,7 @@ import {
   PickersActionBarAction,
 } from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
-import { Box, Typography, useMediaQuery } from '@mui/material';
+import { Box, SxProps, Typography, useMediaQuery } from '@mui/material';
 import {
   DateUtils,
   LocaleKey,
@@ -52,6 +52,7 @@ export const DateTimePickerInput = ({
   displayAs,
   error,
   required,
+  textFieldSx: inputSx,
   ...props
 }: Omit<DateTimePickerProps<true>, 'onChange'> & {
   error?: string | undefined;
@@ -68,6 +69,7 @@ export const DateTimePickerInput = ({
   disableFuture?: boolean;
   displayAs?: 'date' | 'dateTime';
   required?: boolean;
+  textFieldSx?: SxProps;
 }) => {
   const theme = useAppTheme();
   const [internalError, setInternalError] = useState<string | null>(null);
@@ -145,7 +147,7 @@ export const DateTimePickerInput = ({
             error: !isInitialEntry && (!!error || !!internalError),
             helperText: !isInitialEntry ? (error ?? internalError ?? '') : '',
             sx: {
-              ...getTextFieldSx(theme, !!label),
+              ...getTextFieldSx(theme, !!label, inputSx),
               width,
               minWidth: displayAs === 'dateTime' ? 200 : undefined,
             },

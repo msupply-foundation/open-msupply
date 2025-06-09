@@ -1,6 +1,10 @@
-import { Theme } from '@mui/material';
+import { SxProps, Theme } from '@mui/material';
 
-export const getTextFieldSx = (theme: Theme, hasLabel: boolean) => ({
+export const getTextFieldSx = (
+  theme: Theme,
+  hasLabel: boolean,
+  inputSx?: SxProps
+) => ({
   border: 'none',
   color: 'gray',
   '& .MuiPickersOutlinedInput-root': {
@@ -23,6 +27,7 @@ export const getTextFieldSx = (theme: Theme, hasLabel: boolean) => ({
         borderStyle: 'solid',
       },
     },
+    ...inputSx,
   },
   '& .MuiPickersOutlinedInput-notchedOutline': {
     border: 'none',
