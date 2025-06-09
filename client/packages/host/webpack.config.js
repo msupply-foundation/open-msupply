@@ -52,6 +52,7 @@ module.exports = env => {
     resolve: {
       extensions: ['.js', '.css', '.ts', '.tsx'],
       plugins: [new TsconfigPathsPlugin()],
+      // Require condition needed for mui date pickers v8, until mui upgraded to v7
       conditionNames: ['require', '...'],
     },
     output: {
