@@ -12,6 +12,7 @@ import {
   useEndAdornment,
   useValueInUnitsOrPacks,
   RepresentationValue,
+  calculateValueInDoses,
 } from './utils';
 
 interface LayoutProps {
@@ -55,6 +56,9 @@ interface InfoRowProps {
   value?: number | string;
   packagingDisplay?: string;
   sx?: SxProps<Theme>;
+  displayVaccinesInDoses?: boolean;
+  doses?: number | string;
+  dosesLabel?: string;
 }
 
 export const InfoRow = ({
@@ -62,6 +66,9 @@ export const InfoRow = ({
   value,
   packagingDisplay,
   sx,
+  displayVaccinesInDoses = false,
+  doses,
+  dosesLabel,
 }: InfoRowProps) => {
   return (
     <Grid
@@ -72,15 +79,20 @@ export const InfoRow = ({
       borderRadius={2}
       sx={sx}
     >
-      <Grid size={6}>
+      <Grid size={8}>
         <Typography variant="body1" fontWeight={700}>
           {label}:
         </Typography>
       </Grid>
-      <Grid size={6} textAlign="right">
+      <Grid size={4} textAlign="right">
         <Typography variant="body1">
           {value} {packagingDisplay}
         </Typography>
+        {displayVaccinesInDoses && (
+          <Typography variant="caption" color="text.secondary">
+            {doses ? `(${doses} ${dosesLabel?.toLowerCase()})` : ''}
+          </Typography>
+        )}
       </Grid>
     </Grid>
   );
@@ -91,7 +103,10 @@ interface ValueInfoRowProps extends Omit<InfoRowProps, 'value'> {
   representation: RepresentationValue;
   defaultPackSize: number;
   unitName: string;
+  nullDisplay?: string;
   endAdornmentOverride?: string;
+  displayVaccinesInDoses?: boolean;
+  dosesPerUnit?: number;
 }
 
 export type ValueInfo = {
@@ -99,6 +114,8 @@ export type ValueInfo = {
   endAdornmentOverride?: string;
   value?: number | null;
   sx?: SxProps<Theme>;
+  displayVaccinesInDoses?: boolean;
+  dosesPerUnit?: number;
 };
 
 export const ValueInfoRow = ({
@@ -109,6 +126,9 @@ export const ValueInfoRow = ({
   unitName,
   sx,
   endAdornmentOverride,
+  displayVaccinesInDoses = false,
+  dosesPerUnit = 1,
+  nullDisplay,
 }: ValueInfoRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -117,6 +137,24 @@ export const ValueInfoRow = ({
     representation,
     defaultPackSize,
     value
+  );
+  const valueInDoses = React.useMemo(
+    () =>
+      displayVaccinesInDoses
+        ? calculateValueInDoses(
+            representation,
+            defaultPackSize,
+            dosesPerUnit,
+            valueInUnitsOrPacks
+          )
+        : undefined,
+    [
+      displayVaccinesInDoses,
+      representation,
+      defaultPackSize,
+      dosesPerUnit,
+      valueInUnitsOrPacks,
+    ]
   );
 
   const endAdornment = useEndAdornment(
@@ -128,12 +166,21 @@ export const ValueInfoRow = ({
     endAdornmentOverride
   );
 
+  const treatAsNull = value === null && nullDisplay;
+
+  const displayValue = treatAsNull
+    ? nullDisplay
+    : round(valueInUnitsOrPacks, 2);
+
   return (
     <InfoRow
       label={label}
-      value={round(valueInUnitsOrPacks, 2)}
-      packagingDisplay={endAdornment}
+      value={displayValue}
+      packagingDisplay={treatAsNull ? '' : endAdornment}
       sx={sx}
+      displayVaccinesInDoses={displayVaccinesInDoses}
+      doses={round(valueInDoses, 2)}
+      dosesLabel={t('label.doses')}
     />
   );
 };

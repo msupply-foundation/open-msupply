@@ -71,7 +71,6 @@ pub fn generate(
                     on_hold: false,
                     barcode_id: None,
                     overwrite_stock_levels: true,
-                    campaign_id: update_line.campaign_id.clone(),
                 },
             )?;
             update_line.stock_line_id = Some(new_batch.id.clone());

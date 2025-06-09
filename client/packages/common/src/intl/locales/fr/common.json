@@ -1984,5 +1984,8 @@
   "warning.caps-lock": "Avertissement: Verrouillage majuscule activé",
   "warning.check-before-vaccinating": "La carte de vaccination éléctronique provenant d'autres sites de vaccination peuvent ne pas être à jour ! Assurez-vous d'avoir effectué une synchronisation récente et vérifiez toujours la validité de la carte de vaccination papier du patient.",
   "warning.field-not-parsed": "{{field}} non analysé",
-  "warning.nothing-to-supply": "La quantité demandée à été fournie !"
+  "warning.nothing-to-supply": "La quantité demandée à été fournie !",
+  "tooltip.re-initialise-in-language": "Réinitialiser en utilisant la langue {{language}}",
+  "label.all-lines": "Toutes les lignes",
+  "label.add-vvm-status": "Ajouter un statut VVM"
 }
