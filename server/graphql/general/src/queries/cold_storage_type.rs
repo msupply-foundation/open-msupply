@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::EqualFilterStringInput,
+    generic_filters::{EqualFilterBigFloatingNumberInput, EqualFilterStringInput},
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -22,6 +22,7 @@ use service::{
 pub enum ColdStorageTypeSortFieldInput {
     Id,
     Name,
+    MinTemperature,
 }
 
 #[derive(InputObject)]
@@ -37,6 +38,7 @@ pub struct ColdStorageTypeSortInput {
 pub struct ColdStorageTypeFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name: Option<EqualFilterStringInput>,
+    pub min_temperature: Option<EqualFilterBigFloatingNumberInput>,
 }
 
 #[derive(SimpleObject)]
@@ -83,11 +85,16 @@ pub fn cold_storage_types(
 
 impl ColdStorageTypeFilterInput {
     pub fn to_domain(self) -> ColdStorageTypeFilter {
-        let ColdStorageTypeFilterInput { id, name } = self;
+        let ColdStorageTypeFilterInput {
+            id,
+            name,
+            min_temperature,
+        } = self;
 
         ColdStorageTypeFilter {
             id: id.map(EqualFilter::from),
             name: name.map(EqualFilter::from),
+            min_temperature: min_temperature.map(EqualFilter::from),
         }
     }
 }
@@ -99,6 +106,7 @@ impl ColdStorageTypeSortInput {
         let key = match self.key {
             from::Name => to::Name,
             from::Id => to::Id,
+            from::MinTemperature => to::MinTemperature,
         };
 
         ColdStorageTypeSort {

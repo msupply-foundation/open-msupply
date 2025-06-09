@@ -1301,6 +1301,7 @@ export type ColdStorageTypeConnector = {
 
 export type ColdStorageTypeFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
+  minTemperature?: InputMaybe<EqualFilterBigFloatingNumberInput>;
   name?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -1314,6 +1315,7 @@ export type ColdStorageTypeNode = {
 
 export enum ColdStorageTypeSortFieldInput {
   Id = 'id',
+  MinTemperature = 'minTemperature',
   Name = 'name',
 }
 

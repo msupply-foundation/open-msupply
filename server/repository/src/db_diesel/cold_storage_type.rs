@@ -20,12 +20,14 @@ pub struct ColdStorageType {
 pub struct ColdStorageTypeFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<EqualFilter<String>>,
+    pub min_temperature: Option<EqualFilter<f64>>,
 }
 
 #[derive(PartialEq, Debug)]
 pub enum ColdStorageTypeSortField {
     Id,
     Name,
+    MinTemperature,
 }
 
 pub type ColdStorageTypeSort = Sort<ColdStorageTypeSortField>;
@@ -68,6 +70,9 @@ impl<'a> ColdStorageTypeRepository<'a> {
                 ColdStorageTypeSortField::Name => {
                     apply_sort!(query, sort, cold_storage_type::name)
                 }
+                ColdStorageTypeSortField::MinTemperature => {
+                    apply_sort!(query, sort, cold_storage_type::min_temperature)
+                }
             }
         } else {
             query = query.order(cold_storage_type::name.desc())
@@ -98,10 +103,15 @@ impl<'a> ColdStorageTypeRepository<'a> {
             .and(cold_storage_type::max_temperature.eq(0.0))));
 
         if let Some(f) = filter {
-            let ColdStorageTypeFilter { id, name } = f;
+            let ColdStorageTypeFilter {
+                id,
+                name,
+                min_temperature,
+            } = f;
 
             apply_equal_filter!(query, id, cold_storage_type::id);
             apply_equal_filter!(query, name, cold_storage_type::name);
+            apply_equal_filter!(query, min_temperature, cold_storage_type::min_temperature)
         }
 
         query
