@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { FnUtils, QuantityUtils } from '@openmsupply-client/common';
 import {
   useRequest,
@@ -54,7 +54,7 @@ const createDraftFromRequestLine = (
   ...line,
   requisitionId: request.id,
   itemId: line.item.id,
-  requestedQuantity: line.requestedQuantity ?? line.suggestedQuantity,
+  requestedQuantity: line.requestedQuantity,
   suggestedQuantity: line.suggestedQuantity,
   isCreated: false,
   itemStats: line.itemStats,
@@ -65,7 +65,7 @@ export const useDraftRequisitionLine = (
 ) => {
   const { lines } = useRequest.line.list();
   const { data } = useRequest.document.get();
-  const { mutateAsync: save, isLoading } = useRequest.line.save();
+  const { mutateAsync: saveMutation, isLoading } = useRequest.line.save();
 
   const [draft, setDraft] = useState<DraftRequestLine | null>(null);
 
@@ -84,19 +84,33 @@ export const useDraftRequisitionLine = (
     }
   }, [lines, item, data]);
 
-  const update = (patch: Partial<DraftRequestLine>) => {
-    if (draft) {
-      setDraft({ ...draft, ...patch });
-    }
-  };
+  const update = useCallback((patch: Partial<DraftRequestLine>) => {
+    setDraft(current => (current ? { ...current, ...patch } : null));
+  }, []);
 
-  return { draft, isLoading, save: () => draft && save(draft), update };
+  const save = useCallback(async () => {
+    if (draft) {
+      const result = await saveMutation(draft);
+      return result;
+    }
+    return null;
+  }, [draft, saveMutation]);
+
+  return {
+    draft,
+    isLoading,
+    save,
+    update,
+  };
 };
 
 export const useNextRequestLine = (
+  lines?: RequestLineFragment[],
   currentItem?: ItemWithStatsFragment | null
 ) => {
-  const { lines } = useRequest.line.list();
+  if (!lines || !currentItem) {
+    return { hasNext: false, next: null };
+  }
 
   const nextState: {
     hasNext: boolean;
