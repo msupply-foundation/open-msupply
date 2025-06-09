@@ -22,7 +22,6 @@ export const ExpiryDateInput = ({
       disabled={disabled}
       views={['year', 'month']}
       format="dd/MM/yyyy"
-      actions={['cancel', 'accept']}
       value={value}
       onChange={d => {
         // Only set the date to last day of month if done through the picker,

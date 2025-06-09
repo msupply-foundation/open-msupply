@@ -129,7 +129,10 @@ export const DateTimePickerInput = ({
         slotProps={{
           mobilePaper: { sx: getPaperSx(theme) },
           desktopPaper: { sx: getPaperSx(theme) },
-          actionBar: { sx: getActionBarSx(theme) },
+          actionBar: {
+            actions: actions ?? ['clear', 'accept'],
+            sx: getActionBarSx(theme),
+          },
           textField: {
             onBlur: () => {
               // Apply max/mins on blur if present
@@ -151,7 +154,6 @@ export const DateTimePickerInput = ({
           tabs: {
             hidden: displayAs === 'dateTime' && !isDesktop ? false : true,
           },
-          ...(actions ? { actionBar: { actions } } : {}),
         }}
         views={
           showTime
