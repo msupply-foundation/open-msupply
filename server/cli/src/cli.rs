@@ -15,14 +15,14 @@ use repository::{
     ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
 };
 use serde::{Deserialize, Serialize};
-use server::configuration;
+use server::{configuration, logging_init};
 use service::{
     apis::login_v4::LoginUserInfoV4,
     auth_data::AuthData,
     login::{LoginInput, LoginService},
     plugin::validation::sign_plugin,
     service_provider::{ServiceContext, ServiceProvider},
-    settings::Settings,
+    settings::{Level, Settings},
     standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
         file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_status::logger::SyncLogger,
@@ -30,7 +30,6 @@ use service::{
     },
     token_bucket::TokenBucket,
 };
-use simple_log::LogConfigBuilder;
 use std::{
     env::current_dir,
     ffi::OsStr,
@@ -286,13 +285,16 @@ fn set_server_is_initialised(ctx: &ServiceContext) -> anyhow::Result<()> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    simple_log::new(LogConfigBuilder::builder().output_console().build())
-        .expect("Unable to initialise logger");
-
     let args = Args::parse();
 
     let settings: Settings =
         configuration::get_configuration(args.config_args).expect("Problem loading configurations");
+
+    let log_level = settings.logging.clone().map(|l| l.level);
+
+    // Initialise logger with default config (i.e. to console), don't want CLI errors logging to
+    // runtime log file, but respect the configured log level
+    logging_init(None, log_level);
 
     match args.action {
         Action::ExportGraphqlSchema => {
