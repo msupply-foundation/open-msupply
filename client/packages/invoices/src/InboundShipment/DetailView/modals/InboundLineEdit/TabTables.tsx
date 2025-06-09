@@ -19,6 +19,8 @@ import {
   useIntlUtils,
   NumberInputCell,
   getDosesPerUnitColumn,
+  useFormatNumber,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -47,6 +49,7 @@ interface TableProps {
   hasItemVariantsEnabled?: boolean;
   hasVvmStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
+  setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
 }
 
 export const QuantityTableComponent = ({
@@ -56,6 +59,7 @@ export const QuantityTableComponent = ({
   hasItemVariantsEnabled,
   hasVvmStatusesEnabled,
   item,
+  setPackRoundingMessage,
 }: TableProps) => {
   const t = useTranslation();
   const theme = useTheme();
@@ -63,6 +67,7 @@ export const QuantityTableComponent = ({
   const { data: preferences } = usePreference(
     PreferenceKey.ManageVaccinesInDoses
   );
+  const { format } = useFormatNumber();
 
   const displayInDoses =
     !!preferences?.manageVaccinesInDoses && !!item?.isVaccine;
@@ -70,6 +75,7 @@ export const QuantityTableComponent = ({
   const unitName = Formatter.sentenceCase(
     item?.unitName ? item.unitName : t('label.unit')
   );
+
   const pluralisedUnitName = getPlural(unitName, 2);
 
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
@@ -91,7 +97,10 @@ export const QuantityTableComponent = ({
   columnDefinitions.push(
     getColumnLookupWithOverrides('packSize', {
       Cell: PackSizeEntryCell<DraftInboundLine>,
-      setter: updateDraftLine,
+      setter: patch => {
+        setPackRoundingMessage?.('');
+        updateDraftLine(patch);
+      },
       label: 'label.pack-size',
       defaultHideOnMobile: true,
       align: ColumnAlign.Left,
@@ -101,6 +110,7 @@ export const QuantityTableComponent = ({
       {
         label: 'label.packs-received',
         Cell: NumberOfPacksCell,
+        cellProps: { decimalLimit: 0 },
         width: 100,
         align: ColumnAlign.Left,
         setter: patch => {
@@ -108,6 +118,7 @@ export const QuantityTableComponent = ({
 
           if (packSize !== undefined && numberOfPacks !== undefined) {
             const packToUnits = packSize * numberOfPacks;
+            setPackRoundingMessage?.('');
 
             updateDraftLine({
               ...patch,
@@ -125,6 +136,7 @@ export const QuantityTableComponent = ({
       unit: pluralisedUnitName,
     }),
     width: 100,
+    cellProps: { debounce: 500 },
     Cell: NumberInputCell,
     align: ColumnAlign.Left,
     setter: patch => {
@@ -133,13 +145,29 @@ export const QuantityTableComponent = ({
       if (packSize !== undefined && unitsPerPack !== undefined) {
         const unitToPacks = unitsPerPack / packSize;
 
+        const roundedPacks = Math.ceil(unitToPacks);
+        const actualUnits = roundedPacks * packSize;
+
+        if (roundedPacks === unitToPacks || roundedPacks === 0) {
+          setPackRoundingMessage?.('');
+        } else {
+          setPackRoundingMessage?.(
+            t('messages.under-allocated', {
+              receivedQuantity: format(NumUtils.round(unitsPerPack, 2)), // round the display value to 2dp
+              quantity: format(actualUnits),
+            })
+          );
+        }
+
         updateDraftLine({
           ...patch,
-          unitsPerPack,
-          numberOfPacks: unitToPacks,
+          unitsPerPack: actualUnits,
+          numberOfPacks: roundedPacks,
         });
+        return actualUnits;
       }
     },
+
     accessor: ({ rowData }) => {
       return rowData.numberOfPacks * rowData.packSize;
     },
