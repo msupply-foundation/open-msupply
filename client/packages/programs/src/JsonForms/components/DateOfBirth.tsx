@@ -112,7 +112,6 @@ const UIComponent = (props: ControlProps) => {
           width="100%"
           flexWrap="wrap"
         >
-          {/* <BaseDatePickerInput */}
           <DateTimePickerInput
             // undefined is displayed as "now" and null as unset
             value={dob}
