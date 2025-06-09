@@ -13,6 +13,7 @@ import { useBufferState } from '@common/hooks';
 export const DateTimePickerInput = ({
   onChange,
   onError,
+  setIsOpen,
   width,
   label,
   minDate,
@@ -30,6 +31,9 @@ export const DateTimePickerInput = ({
   label?: string;
   onChange: (value: Date | null) => void;
   onError?: (validationError: string, date?: Date | null) => void;
+  // This allows a calling component to know whether the date was changed via
+  // keyboard input or the picker UI
+  setIsOpen?: (open: boolean) => void;
   showTime?: boolean;
   actions?: PickersActionBarAction[];
   dateAsEndOfDay?: boolean;
@@ -113,6 +117,8 @@ export const DateTimePickerInput = ({
       minDate={minDate}
       maxDate={maxDate}
       disableFuture={disableFuture}
+      onOpen={() => setIsOpen?.(true)}
+      onClose={() => setIsOpen?.(false)}
       {...props}
       value={value}
     />
