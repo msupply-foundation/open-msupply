@@ -10,8 +10,9 @@ import {
   useIsFocused,
   useRowStyle,
 } from '../../context';
-import { Fade, Tooltip } from '@mui/material';
+import { Box, Fade, Tooltip } from '@mui/material';
 import { TypedTFunction, LocaleKey } from '@common/intl';
+import { Link } from 'react-router-dom';
 
 interface DataRowProps<T extends RecordWithId> {
   columns: Column<T>[];
@@ -26,7 +27,10 @@ interface DataRowProps<T extends RecordWithId> {
   localisedText: TypedTFunction<LocaleKey>;
   localisedDate: (date: string | number | Date) => string;
   isAnimated: boolean;
+  /** will ignore onClick if defined. Allows opening in new tab */
+  rowLinkBuilder?: (rowData: T) => string;
 }
+
 const Animation: FC<PropsWithChildren<{ isAnimated: boolean }>> = ({
   children,
   isAnimated,
@@ -52,14 +56,15 @@ const DataRowComponent = <T extends RecordWithId>({
   localisedText,
   localisedDate,
   isAnimated,
+  rowLinkBuilder,
 }: DataRowProps<T>): JSX.Element => {
-  const hasOnClick = !!onClick;
+  const hasOnClick = !!onClick || !!rowLinkBuilder;
   const { isExpanded } = useExpanded(rowData.id);
   const { isDisabled } = useIsDisabled(rowData.id);
   const { isFocused } = useIsFocused(rowData.id);
   const { rowStyle } = useRowStyle(rowData.id);
 
-  const onRowClick = () => onClick && onClick(rowData);
+  const onRowClick = () => onClick?.(rowData) || rowLinkBuilder?.(rowData);
   const paddingX = dense ? '12px' : '16px';
   const paddingY = dense ? '4px' : 0;
   const rowTitle = generateRowTooltip?.(rowData) ?? '';
@@ -67,6 +72,65 @@ const DataRowComponent = <T extends RecordWithId>({
   useEffect(() => {
     if (isFocused) onRowClick();
   }, [keyboardActivated]);
+
+  interface ColumnContentProps<T extends RecordWithId> {
+    column: Column<T>;
+    columnIndex: number;
+    isError: boolean | undefined;
+  }
+
+  const ColumnContent = ({
+    column,
+    columnIndex,
+    isError,
+  }: ColumnContentProps<T>) => (
+    <column.Cell
+      isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
+      rowData={rowData}
+      columns={columns}
+      isError={isError}
+      column={column}
+      rowKey={rowKey}
+      columnIndex={columnIndex}
+      rowIndex={rowIndex}
+      autocompleteName={column.autocompleteProvider?.(rowData)}
+      localisedText={localisedText}
+      localisedDate={localisedDate}
+      dense={dense}
+      rowLinkBuilder={rowLinkBuilder}
+      {...column.cellProps}
+    />
+  );
+
+  const ContentWrapper = ({
+    children,
+    column,
+  }: {
+    children: React.ReactNode;
+    column: Column<T>;
+  }) => {
+    return (
+      <Box
+        component={rowLinkBuilder && !column.customLinkRendering ? Link : Box}
+        to={
+          rowLinkBuilder && !column.customLinkRendering
+            ? rowLinkBuilder(rowData)
+            : ''
+        }
+        sx={{
+          display: 'flex',
+          width: '100%',
+          height: '40px',
+          textDecoration: 'none',
+          alignItems: 'center',
+          justifyContent: `${column.align}`,
+          color: 'inherit',
+        }}
+      >
+        {children}
+      </Box>
+    );
+  };
 
   return (
     <>
@@ -132,23 +196,13 @@ const DataRowComponent = <T extends RecordWithId>({
                       : {}),
                   }}
                 >
-                  {
-                    <column.Cell
-                      isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
-                      rowData={rowData}
-                      columns={columns}
-                      isError={isError}
+                  <ContentWrapper column={column}>
+                    <ColumnContent
                       column={column}
-                      rowKey={rowKey}
                       columnIndex={columnIndex}
-                      rowIndex={rowIndex}
-                      autocompleteName={column.autocompleteProvider?.(rowData)}
-                      localisedText={localisedText}
-                      localisedDate={localisedDate}
-                      dense={dense}
-                      {...column.cellProps}
+                      isError={isError}
                     />
-                  }
+                  </ContentWrapper>
                 </TableCell>
               );
             })}

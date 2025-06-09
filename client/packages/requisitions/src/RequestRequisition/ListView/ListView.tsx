@@ -1,11 +1,10 @@
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   DataTable,
   useColumns,
   TableProvider,
   createTableStore,
   getNameAndColorColumn,
-  useNavigate,
   useTranslation,
   RequisitionNodeStatus,
   useTableStore,
@@ -16,6 +15,8 @@ import {
   GenericColumnKey,
   getCommentPopoverColumn,
   useSimplifiedTabletUI,
+  RouteBuilder,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -26,6 +27,7 @@ import {
   isRequestDisabled,
 } from '../../utils';
 import { Footer } from './Footer';
+import { AppRoute } from '@openmsupply-client/config';
 
 const useDisableRequestRows = (rows?: RequestRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -36,7 +38,6 @@ const useDisableRequestRows = (rows?: RequestRowFragment[]) => {
 };
 
 export const RequestRequisitionListView: FC = () => {
-  const navigate = useNavigate();
   const t = useTranslation();
   const modalController = useToggle();
   const { data: programSettings } = useRequest.utils.programSettings();
@@ -64,7 +65,13 @@ export const RequestRequisitionListView: FC = () => {
 
   const columnDefinitions: ColumnDescription<RequestRowFragment>[] = [
     GenericColumnKey.Selection,
-    [getNameAndColorColumn(), { setter: onUpdate }],
+    [
+      getNameAndColorColumn(),
+      {
+        setter: onUpdate,
+        customLinkRendering: true,
+      },
+    ],
     {
       key: 'requisitionNumber',
       label: 'label.number',
@@ -93,6 +100,7 @@ export const RequestRequisitionListView: FC = () => {
         sortable: true,
         width: 150,
         defaultHideOnMobile: true,
+        Cell: TooltipTextCell,
       },
       {
         key: 'orderType',
@@ -141,12 +149,11 @@ export const RequestRequisitionListView: FC = () => {
     [sortBy]
   );
 
-  const onRowClick = useCallback(
-    (row: RequestRowFragment) => {
-      navigate(String(row.id));
-    },
-    [navigate]
-  );
+  const getRoute = (row: RequestRowFragment) =>
+    RouteBuilder.create(AppRoute.Replenishment)
+      .addPart(AppRoute.InternalOrder)
+      .addPart(row.id)
+      .build();
 
   return (
     <>
@@ -159,7 +166,7 @@ export const RequestRequisitionListView: FC = () => {
         onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes ?? []}
-        onRowClick={onRowClick}
+        rowLinkBuilder={getRoute}
         isError={isError}
         isLoading={isLoading}
         enableColumnSelection
