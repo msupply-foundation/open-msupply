@@ -1,6 +1,5 @@
 use crate::migrations::*;
 
-use anyhow::anyhow;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde_json::Value;
@@ -53,8 +52,16 @@ impl MigrationFragment for Migrate {
             .load::<(String, String)>(connection.lock().connection())?;
 
         for (stock_line_id, sync_data) in stock_line_sync_rows {
-            let parsed_sync_data: Value = serde_json::from_str(&sync_data)
-                .map_err(|e| anyhow!("Parse stock_line sync error: {}: {}", stock_line_id, e))?;
+            let parsed_sync_data: Value = match serde_json::from_str(&sync_data) {
+                Ok(value) => value,
+                Err(err) => {
+                    println!(
+                        "Error parsing sync data for stock line {}: {}",
+                        stock_line_id, err
+                    );
+                    continue;
+                }
+            };
 
             let sync_donor_id = parsed_sync_data
                 .get("donor_id")
@@ -88,9 +95,16 @@ impl MigrationFragment for Migrate {
             .load::<(String, String)>(connection.lock().connection())?;
 
         for (invoice_line_id, sync_data) in invoice_line_sync_rows {
-            let parsed_sync_data: Value = serde_json::from_str(&sync_data).map_err(|e| {
-                anyhow!("Parse invoice_line sync error: {}: {}", invoice_line_id, e)
-            })?;
+            let parsed_sync_data: Value = match serde_json::from_str(&sync_data) {
+                Ok(value) => value,
+                Err(err) => {
+                    println!(
+                        "Error parsing sync data for invoice line {}: {}",
+                        invoice_line_id, err
+                    );
+                    continue;
+                }
+            };
 
             let sync_donor_id = parsed_sync_data
                 .get("donor_id")
