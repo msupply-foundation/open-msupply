@@ -41,7 +41,7 @@ type Options = z.input<typeof Options>;
 export const dateOfBirthTester = rankWith(10, uiTypeIs('DateOfBirth'));
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path, uischema } = props;
+  const { data, handleChange, label, path, uischema, errors } = props;
   const [age, setAge] = React.useState<number | undefined>();
   const [dob, setDoB] = React.useState<Date | null>(null);
   const t = useTranslation();
@@ -123,7 +123,7 @@ const UIComponent = (props: ControlProps) => {
             onError={validationError =>
               setCustomError(validationError ?? undefined)
             }
-            error={customError}
+            error={customError || errors}
             actions={actions}
           />
 

@@ -144,8 +144,8 @@ export const DateTimePickerInput = ({
                 handleDateInput(value);
               }
             },
-            error: !isInitialEntry && (!!error || !!internalError),
-            helperText: !isInitialEntry ? (error ?? internalError ?? '') : '',
+            error: !!error || (!isInitialEntry && !!internalError),
+            helperText: error || (!isInitialEntry ? (internalError ?? '') : ''),
             sx: {
               ...getTextFieldSx(theme, !!label, inputSx),
               width,
