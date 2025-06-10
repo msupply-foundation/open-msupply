@@ -2088,6 +2088,7 @@
   "tooltip.import-fridge-tag": "Import Berlinger Fridge-tag and Q-tag log files. A sensor will be created, if necessary, for each log file imported.",
   "tooltip.re-initialise-in-language": "Re-initialise using {{language}} language",
   "unit": "unit",
+  "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an Internal Order.",
   "warning.cannot-create-placeholder-doses": "There is a total of {{allocatedQuantity}} doses available. Unable to allocate all {{requestedQuantity}} doses.",
   "warning.cannot-create-placeholder-packs": "There is a total of {{allocatedQuantity}} packs available. Unable to allocate all {{requestedQuantity}} packs.",
   "warning.cannot-create-placeholder-units": "There is a total of {{allocatedQuantity}} units available. Unable to allocate all {{requestedQuantity}} units.",
