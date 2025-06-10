@@ -16,7 +16,7 @@ use std::{
     time::{Duration, Instant},
 };
 use tokio::{process::Child, task::JoinHandle, time::sleep};
-use util::uuid::uuid;
+use util::{hash::sha256, uuid::uuid};
 const TEST_API: &str = "sync/v5/test";
 
 const MANUAL_SYNC_QUERY: &str = r#"
@@ -28,8 +28,12 @@ mutation ManualSync {
 #[derive(clap::Args)]
 pub struct LoadTest {
     /// Central server url including protocol (http) and port
-    #[clap(short, long)]
-    pub url: String,
+    #[clap(long)]
+    pub msupply_central_url: String,
+
+    /// The OMS central server URL including protocol (http) and port
+    #[clap(long)]
+    pub oms_central_url: String,
 
     /// The output directory for test results
     #[clap(short, long, default_value = "load_test")]
@@ -176,7 +180,8 @@ impl Metric {
 
 impl LoadTest {
     pub fn new(
-        url: String,
+        msupply_central_url: String,
+        oms_central_url: String,
         base_port: u16,
         output_dir: PathBuf,
         test_site_name: Option<String>,
@@ -186,7 +191,8 @@ impl LoadTest {
         duration: usize,
     ) -> Self {
         Self {
-            url,
+            msupply_central_url,
+            oms_central_url,
             base_port,
             output_dir,
             test_site_name,
@@ -202,28 +208,43 @@ impl LoadTest {
         use util::hash::sha256;
 
         println!("Starting load test with the following parameters:");
-        let url = format!("{}/{}", self.url, TEST_API);
-        println!("Test URL: {}", url);
+        let msupply_central_test_url = format!("{}/{}", self.msupply_central_url, TEST_API);
+        println!("Test URL: {}", msupply_central_test_url);
+        println!("OMS Central Test URL: {}", self.oms_central_url);
         println!("Base Port: {}", self.base_port);
         println!("Output Directory: {}", self.output_dir.display());
         println!("Number of Sites: {}", self.sites);
         println!("Invoice Lines: {}", self.lines);
         println!("Duration: {} seconds", self.duration);
 
-        std::fs::remove_dir_all(&self.output_dir)?;
-
-        // Creating the sites on OG central
+        let _ = std::fs::remove_dir_all(&self.output_dir);
         let client = Client::new();
         let test_site_name = self.test_site_name.as_ref().unwrap();
         let test_site_pass = Some(sha256(self.test_site_pass.as_ref().unwrap()));
+
+        // Check the OMS central server sync api is available by using the site_status endpoint
+        self.check_oms_central(&client).await?;
+
+        // Creating the sites on OG central
         let num_sites = if self.sites > 1 { self.sites } else { 2 };
-        let site_n_stores =
-            create_sites(&url, &client, test_site_name, &test_site_pass, num_sites).await?;
+        let site_n_stores = create_sites(
+            &msupply_central_test_url,
+            &client,
+            test_site_name,
+            &test_site_pass,
+            num_sites,
+        )
+        .await?;
 
         let test_sites = self.create_test_sites(site_n_stores);
 
         let item_ids = self
-            .create_items(url, client, test_site_name, test_site_pass)
+            .create_items(
+                msupply_central_test_url,
+                client,
+                test_site_name,
+                test_site_pass,
+            )
             .await?;
 
         self.create_configs(&test_sites)?;
@@ -332,6 +353,40 @@ impl LoadTest {
         self.write_results(results);
 
         println!("end");
+        Ok(())
+    }
+
+    async fn check_oms_central(&self, client: &Client) -> Result<(), anyhow::Error> {
+        let site_status_url = format!("{}/{}", self.oms_central_url, "central/sync/site_status");
+
+        let request = serde_json::json!({
+            "cursor": 0,
+            "batch_size": 512,
+            "is_initialised": true,
+            "syncV5Settings": {
+                "serverUrl": self.msupply_central_url,
+                "username": self.test_site_name.as_ref().unwrap(),
+                "passwordSha256": sha256(self.test_site_pass.as_ref().unwrap()),
+                "siteUuid": "load_test",
+                "appName": "load_test",
+                "appVersion": "0",
+                "syncVersion": "9",
+            },
+            "syncV6Version": 0
+        });
+
+        let response = client.post(&site_status_url).json(&request).send().await?;
+        if !response.status().is_success() {
+            let message = response.text().await?;
+            return Err(anyhow!(
+                "Failed to connect to OMS central server: {}",
+                message
+            ));
+        }
+        println!(
+            "Connected to OMS central server sync API at {}",
+            site_status_url
+        );
         Ok(())
     }
 
@@ -498,7 +553,7 @@ impl LoadTest {
                     init_sql: None,
                 },
                 sync: Some(SyncSettings {
-                    url: self.url.clone(),
+                    url: self.msupply_central_url.clone(),
                     username: site_n_store.site.name.clone(),
                     password_sha256: site_n_store.site.password_sha256.clone(),
                     interval_seconds: 600,
