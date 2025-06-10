@@ -145,7 +145,7 @@ jobs:
   trigger-plugin-tests:
     name: Trigger Plugin Tests
     needs: dockerise
-    uses: ./.github/workflows/trigger-plugin-tests.yml
+    uses: ./.github/workflows/trigger-plugin-tests.yaml
     with:
       image_tag: ${{ needs.dockerise.outputs.image_tag }}
     secrets:
