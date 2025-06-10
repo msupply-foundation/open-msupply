@@ -58,15 +58,14 @@ pub fn update_stocktake_line(
             StocktakeLineRowRepository::new(connection).upsert_one(&new_stocktake_line)?;
 
             // Update stock line donor and item variant if changed and stock line exists
-            if let Some(stock_line) = &existing.stock_line {
-                let mut stock_line_row = stock_line.clone();
+            if let Some(mut stock_line) = existing.stock_line.clone() {
                 if let Some(donor_id) = &input.donor_id {
-                    stock_line_row.donor_link_id = donor_id.value.clone();
+                    stock_line.donor_link_id = donor_id.value.clone();
                 }
                 if let Some(item_variant_id) = &input.item_variant_id {
-                    stock_line_row.item_variant_id = item_variant_id.value.clone();
+                    stock_line.item_variant_id = item_variant_id.value.clone();
                 }
-                StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
+                StockLineRowRepository::new(connection).upsert_one(&stock_line)?;
             }
 
             let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
