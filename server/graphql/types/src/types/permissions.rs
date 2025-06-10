@@ -60,6 +60,7 @@ pub enum UserPermission {
     NamePropertiesMutate,
     EditCentralData,
     ViewAndEditVvmStatus,
+    MutateClinician,
 }
 
 #[Object]
@@ -152,6 +153,7 @@ impl UserPermission {
             PermissionType::NamePropertiesMutate => UserPermission::NamePropertiesMutate,
             PermissionType::EditCentralData => UserPermission::EditCentralData,
             PermissionType::ViewAndEditVvmStatus => UserPermission::ViewAndEditVvmStatus,
+            PermissionType::MutateClinician => UserPermission::MutateClinician,
         }
     }
 
@@ -206,6 +208,7 @@ impl UserPermission {
             UserPermission::NamePropertiesMutate => PermissionType::NamePropertiesMutate,
             UserPermission::EditCentralData => PermissionType::EditCentralData,
             UserPermission::ViewAndEditVvmStatus => PermissionType::ViewAndEditVvmStatus,
+            UserPermission::MutateClinician => PermissionType::MutateClinician,
         }
     }
 }
