@@ -96,6 +96,7 @@ pub enum Resource {
     ServerAdmin,
     // clinician
     QueryClinician,
+    MutateClinician,
 
     // document
     QueryDocument,
@@ -460,6 +461,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
 
     map.insert(Resource::QueryClinician, PermissionDSL::HasStoreAccess);
+
+    map.insert(
+        Resource::MutateClinician,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::MutateClinician),
+        ]),
+    );
 
     // TODO add permissions from central
     map.insert(
