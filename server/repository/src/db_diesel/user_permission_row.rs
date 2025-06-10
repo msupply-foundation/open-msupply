@@ -71,6 +71,7 @@ pub enum PermissionType {
     PurchaseOrdrFinalise,
     PurchaseOrderDelete,
     PurchaseOrderPricingMutate,
+    PurchaseOrderAuthorise,
     // reporting
     Report,
     // log

@@ -50,6 +50,7 @@ pub enum UserPermission {
     PurchaseOrdrFinalise,
     PurchaseOrderDelete,
     PurchaseOrderPricingMutate,
+    PurchaseOrderAuthorise,
     Report,
     LogQuery,
     StockLineMutate,
@@ -168,6 +169,7 @@ impl UserPermission {
             PermissionType::PurchaseOrderPricingMutate => {
                 UserPermission::PurchaseOrderPricingMutate
             }
+            PermissionType::PurchaseOrderAuthorise => UserPermission::PurchaseOrderAuthorise,
         }
     }
 
@@ -231,6 +233,7 @@ impl UserPermission {
             UserPermission::PurchaseOrderPricingMutate => {
                 PermissionType::PurchaseOrderPricingMutate
             }
+            UserPermission::PurchaseOrderAuthorise => PermissionType::PurchaseOrderAuthorise,
         }
     }
 }
