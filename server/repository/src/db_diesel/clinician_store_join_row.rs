@@ -68,7 +68,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
 impl Upsert for ClinicianStoreJoinRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         ClinicianStoreJoinRowRepository::new(con).upsert_one(self)?;
-        Ok(None)
+        Ok(None) // Clinician store joins not in Changelog/not synced out
     }
 
     // Test only
@@ -85,7 +85,7 @@ pub struct ClinicianStoreJoinRowDelete(pub String);
 impl Delete for ClinicianStoreJoinRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         ClinicianStoreJoinRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Clinician deletes not in Changelog/not synced out
+        Ok(None) // Clinician store joins not in Changelog/not synced out
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
