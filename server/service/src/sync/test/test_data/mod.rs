@@ -232,6 +232,7 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut name_insurance_join::test_push_records());
     test_records.append(&mut vvm_status_log::test_push_records());
     test_records.append(&mut sync_message::test_push_records());
+    test_records.append(&mut clinician::test_push_records());
 
     test_records
 }

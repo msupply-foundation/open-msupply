@@ -8,8 +8,8 @@ const CLINICIAN_STORE_JOIN_1: (&str, &str) = (
     "CLINICIAN_STORE_JOIN_1",
     r#"{
         "ID": "CLINICIAN_STORE_JOIN_1",
-        "store_ID": "8F252B5884B74888AAB73A0D42C09E7A",
-        "prescriber_ID": "Clinician_Link_Id"
+        "store_ID": "store_a",
+        "prescriber_ID": "clinician_a"
     }"#,
 );
 
@@ -19,8 +19,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         CLINICIAN_STORE_JOIN_1,
         ClinicianStoreJoinRow {
             id: CLINICIAN_STORE_JOIN_1.0.to_owned(),
-            store_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
-            clinician_link_id: "Clinician_Link_Id".to_string(),
+            store_id: "store_a".to_string(),
+            clinician_link_id: "clinician_a".to_string(),
         },
     )]
 }

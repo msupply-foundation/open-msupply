@@ -1,6 +1,10 @@
 use repository::{ClinicianRow, GenderType};
+use serde_json::json;
 
-use crate::sync::test::TestSyncIncomingRecord;
+use crate::sync::{
+    test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
+    translations::clinician::LegacyClinicianRow,
+};
 
 const CLINICIAN_TABLE: &str = "clinician";
 
@@ -37,4 +41,24 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             ..Default::default()
         },
     )]
+}
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
+    vec![TestSyncOutgoingRecord {
+        table_name: CLINICIAN_TABLE.to_string(),
+        record_id: CLINICIAN_1.0.to_string(),
+        push_data: json!(LegacyClinicianRow {
+            id: CLINICIAN_1.0.to_string(),
+            code: "CLINICIAN_CODE".to_string(),
+            last_name: "Surname".to_string(),
+            initials: "FS".to_string(),
+            first_name: Some("First Name".to_string()),
+            address1: None,
+            address2: None,
+            phone: None,
+            mobile: None,
+            email: None,
+            is_female: true,
+            is_active: true,
+        }),
+    }]
 }

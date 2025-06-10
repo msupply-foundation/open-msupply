@@ -1,6 +1,6 @@
 use super::{clinician_link_row::clinician_link, clinician_row::clinician, StorageConnection};
 
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RowActionType};
+use crate::Delete;
 use crate::{RepositoryError, Upsert};
 
 use diesel::prelude::*;
@@ -34,30 +34,14 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         ClinicianStoreJoinRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(clinician_store_join::dsl::clinician_store_join)
             .values(row)
             .on_conflict(clinician_store_join::dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-
-        self.insert_changelog(row, RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: &ClinicianStoreJoinRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::ClinicianStoreJoin,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_link_id: None,
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+        Ok(())
     }
 
     pub fn find_one_by_id(
@@ -83,8 +67,8 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
 
 impl Upsert for ClinicianStoreJoinRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = ClinicianStoreJoinRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+        ClinicianStoreJoinRowRepository::new(con).upsert_one(self)?;
+        Ok(None)
     }
 
     // Test only

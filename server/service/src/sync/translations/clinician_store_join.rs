@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, ClinicianLinkRowRepository, ClinicianStoreJoinRow,
-    ClinicianStoreJoinRowDelete, ClinicianStoreJoinRowRepository, StorageConnection, SyncBufferRow,
+    ChangelogRow, ClinicianLinkRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowDelete,
+    ClinicianStoreJoinRowRepository, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{clinician::ClinicianTranslation, store::StoreTranslation};
@@ -36,10 +36,6 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
             StoreTranslation.table_name(),
             ClinicianTranslation.table_name(),
         ]
-    }
-
-    fn change_log_type(&self) -> Option<ChangelogTableName> {
-        Some(ChangelogTableName::ClinicianStoreJoin)
     }
 
     fn try_translate_from_upsert_sync_record(
