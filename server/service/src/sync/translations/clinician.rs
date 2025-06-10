@@ -151,14 +151,28 @@ impl SyncTranslation for ClinicianTranslation {
             serde_json::to_value(legacy_row)?,
         ))
     }
+}
 
-    // TODO should not be deleting clinicians
-    // TODO soft delete
-    fn try_translate_to_delete_sync_record(
-        &self,
-        _: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
-        Ok(PushTranslateResult::delete(changelog, self.table_name()))
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_clinician_translation() {
+        use crate::sync::test::test_data::clinician as test_data;
+        let translator = ClinicianTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_clinician_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
     }
 }
