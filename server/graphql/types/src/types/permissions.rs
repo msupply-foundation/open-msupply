@@ -43,6 +43,8 @@ pub enum UserPermission {
     CustomerReturnMutate,
     PrescriptionQuery,
     PrescriptionMutate,
+    PurchaseOrderQuery,
+    PurchaseOrderMutate,
     Report,
     LogQuery,
     StockLineMutate,
@@ -152,6 +154,8 @@ impl UserPermission {
             PermissionType::NamePropertiesMutate => UserPermission::NamePropertiesMutate,
             PermissionType::EditCentralData => UserPermission::EditCentralData,
             PermissionType::ViewAndEditVvmStatus => UserPermission::ViewAndEditVvmStatus,
+            PermissionType::PurchaseOrderQuery => UserPermission::PurchaseOrderQuery,
+            PermissionType::PurchaseOrderMutate => UserPermission::PurchaseOrderMutate,
         }
     }
 
@@ -206,6 +210,8 @@ impl UserPermission {
             UserPermission::NamePropertiesMutate => PermissionType::NamePropertiesMutate,
             UserPermission::EditCentralData => PermissionType::EditCentralData,
             UserPermission::ViewAndEditVvmStatus => PermissionType::ViewAndEditVvmStatus,
+            UserPermission::PurchaseOrderQuery => PermissionType::PurchaseOrderQuery,
+            UserPermission::PurchaseOrderMutate => PermissionType::PurchaseOrderMutate,
         }
     }
 }
