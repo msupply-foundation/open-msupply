@@ -59,9 +59,6 @@ impl MigrationFragment for Migrate {
                     original_quantity {DOUBLE},
                     adjusted_quantity {DOUBLE},
                     total_received {DOUBLE},
-                    -- stock_on_hand {DOUBLE},
-                    on_order BOOLEAN,
-                    -- price_extension TEXT,
                     requested_delivery_date {DATE},
                     expected_delivery_date {DATE}
                 );
