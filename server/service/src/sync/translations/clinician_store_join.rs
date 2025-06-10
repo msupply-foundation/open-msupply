@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use repository::{
     ChangelogRow, ChangelogTableName, ClinicianLinkRowRepository, ClinicianStoreJoinRow,
-    ClinicianStoreJoinRowRepository, StorageConnection, SyncBufferRow,
+    ClinicianStoreJoinRowDelete, ClinicianStoreJoinRowRepository, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{clinician::ClinicianTranslation, store::StoreTranslation};
@@ -99,11 +99,13 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
         ))
     }
 
-    fn try_translate_to_delete_sync_record(
+    fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, anyhow::Error> {
-        Ok(PushTranslateResult::delete(changelog, self.table_name()))
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(ClinicianStoreJoinRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 }

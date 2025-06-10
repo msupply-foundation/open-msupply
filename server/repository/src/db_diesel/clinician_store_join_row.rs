@@ -1,6 +1,6 @@
 use super::{clinician_link_row::clinician_link, clinician_row::clinician, StorageConnection};
 
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RowActionType};
 use crate::{RepositoryError, Upsert};
 
 use diesel::prelude::*;
@@ -93,5 +93,21 @@ impl Upsert for ClinicianStoreJoinRow {
             ClinicianStoreJoinRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ClinicianStoreJoinRowDelete(pub String);
+impl Delete for ClinicianStoreJoinRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ClinicianStoreJoinRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // Clinician deletes not in Changelog/not synced out
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert!(matches!(
+            ClinicianStoreJoinRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        ));
     }
 }
