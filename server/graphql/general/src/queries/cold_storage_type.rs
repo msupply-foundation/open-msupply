@@ -22,6 +22,7 @@ use service::{
 pub enum ColdStorageTypeSortFieldInput {
     Id,
     Name,
+    MinTemperature,
 }
 
 #[derive(InputObject)]
@@ -99,6 +100,7 @@ impl ColdStorageTypeSortInput {
         let key = match self.key {
             from::Name => to::Name,
             from::Id => to::Id,
+            from::MinTemperature => to::MinTemperature,
         };
 
         ColdStorageTypeSort {

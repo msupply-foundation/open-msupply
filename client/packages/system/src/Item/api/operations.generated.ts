@@ -1945,7 +1945,10 @@ export const DeleteItemVariantDocument = gql`
 `;
 export const ColdStorageTypesDocument = gql`
   query coldStorageTypes($storeId: String!) {
-    coldStorageTypes(storeId: $storeId) {
+    coldStorageTypes(
+      storeId: $storeId
+      sort: { key: minTemperature, desc: true }
+    ) {
       ... on ColdStorageTypeConnector {
         nodes {
           ...ColdStorageType
