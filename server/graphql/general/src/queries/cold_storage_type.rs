@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{EqualFilterBigFloatingNumberInput, EqualFilterStringInput},
+    generic_filters::EqualFilterStringInput,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
