@@ -444,10 +444,16 @@ impl LoadTest {
 
                 sleep(Duration::from_secs(10)).await; // Let db get created, migrated and initialisation started
 
+                info!(
+                    "Site {} started, waiting for initial sync to complete",
+                    test_site.site.site_id
+                );
                 if let Err(e) = test_site.wait_for_sync().await {
                     kill(&mut child).await;
                     return Err(e);
                 }
+
+                info!("Beginning load test for site: {}", test_site.site.site_id);
 
                 let start = std::time::Instant::now();
                 let mut metrics = Vec::new();
@@ -720,7 +726,10 @@ impl TestSite {
 
             let response = match self.do_post(&sync_gql).await {
                 Ok(response) => response,
-                Err(_) => continue, // could cause infinite loop, but is a kludge avoid early ending of test run before initialisation has started
+                Err(e) => {
+                    error!("Error fetching sync info: {}", e);
+                    continue;
+                }
             };
 
             if response.status().is_success() {

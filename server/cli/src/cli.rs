@@ -22,7 +22,7 @@ use service::{
     login::{LoginInput, LoginService},
     plugin::validation::sign_plugin,
     service_provider::{ServiceContext, ServiceProvider},
-    settings::{Level, Settings},
+    settings::Settings,
     standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
         file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_status::logger::SyncLogger,
