@@ -86,6 +86,8 @@ pub enum PermissionType {
     // Central Server
     EditCentralData,
     ViewAndEditVvmStatus,
+    // clinician
+    MutateClinician,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
