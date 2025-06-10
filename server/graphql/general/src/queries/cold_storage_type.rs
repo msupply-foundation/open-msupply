@@ -38,7 +38,6 @@ pub struct ColdStorageTypeSortInput {
 pub struct ColdStorageTypeFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name: Option<EqualFilterStringInput>,
-    pub min_temperature: Option<EqualFilterBigFloatingNumberInput>,
 }
 
 #[derive(SimpleObject)]
@@ -85,16 +84,11 @@ pub fn cold_storage_types(
 
 impl ColdStorageTypeFilterInput {
     pub fn to_domain(self) -> ColdStorageTypeFilter {
-        let ColdStorageTypeFilterInput {
-            id,
-            name,
-            min_temperature,
-        } = self;
+        let ColdStorageTypeFilterInput { id, name } = self;
 
         ColdStorageTypeFilter {
             id: id.map(EqualFilter::from),
             name: name.map(EqualFilter::from),
-            min_temperature: min_temperature.map(EqualFilter::from),
         }
     }
 }
