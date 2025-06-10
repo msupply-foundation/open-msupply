@@ -709,7 +709,8 @@ async fn main() -> anyhow::Result<()> {
         }
         #[cfg(feature = "integration_test")]
         Action::LoadTest(LoadTest {
-            url,
+            msupply_central_url,
+            oms_central_url,
             base_port,
             output_dir,
             test_site_name,
@@ -719,7 +720,8 @@ async fn main() -> anyhow::Result<()> {
             duration,
         }) => {
             let load_test = LoadTest::new(
-                url,
+                msupply_central_url,
+                oms_central_url,
                 base_port,
                 output_dir,
                 test_site_name,
