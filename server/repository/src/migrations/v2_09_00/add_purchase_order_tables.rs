@@ -36,13 +36,13 @@ impl MigrationFragment for Migrate {
                     authorising_officer_1 TEXT,
                     authorising_officer_2 TEXT,
                     additional_instructions TEXT,
-                    heading_message TEXT
-                    -- agent_commission TEXT,
-                    -- document_charge TEXT,
-                    -- communications_charge TEXT,
-                    -- insurance_charge TEXT,
-                    -- freight_charge TEXT,
-                    -- freight_conditions TEXT
+                    heading_message TEXT,
+                    agent_commission {DOUBLE},
+                    document_charge {DOUBLE},
+                    communications_charge {DOUBLE},
+                    insurance_charge {DOUBLE},
+                    freight_charge {DOUBLE},
+                    freight_conditions TEXT
                 );
             "#
         )?;
