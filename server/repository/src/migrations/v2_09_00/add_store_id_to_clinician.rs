@@ -4,17 +4,19 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "process_clinician_store_join_deletes"
+        "add_store_id_to_clinician"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // reprocess clinician visibility deletes as support now added for translating delete records
+        // reintegrate clinician sync records to apply new store id column
         sql!(
             connection,
             r#"
+                ALTER TABLE clinician ADD COLUMN store_id TEXT;
+
                 UPDATE sync_buffer
                     SET integration_datetime = NULL
-                    WHERE table_name = 'clinician_store_join';  
+                    WHERE table_name = 'clinician';  
             "#
         )?;
 
