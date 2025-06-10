@@ -45,7 +45,6 @@ export const CreateRequisitionModalComponent: FC<
     setCustomer(customer);
   };
 
-  // console.log('CreateRequisitionModal', data, isLoading);
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
 
   const InnerComponent = () => {

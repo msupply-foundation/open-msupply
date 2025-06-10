@@ -114,6 +114,12 @@ pub async fn get_loaders(
         },
         tokio::spawn,
     );
+    let name_by_name_link_id_loader = DataLoader::new(
+        NameByNameLinkIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    );
 
     let location_by_id_loader = DataLoader::new(
         LocationByIdLoader {
@@ -178,13 +184,6 @@ pub async fn get_loaders(
         tokio::spawn,
     );
 
-    let inventory_adjustment_reason_loader = DataLoader::new(
-        InventoryAdjustmentReasonByIdLoader {
-            connection_manager: connection_manager.clone(),
-        },
-        tokio::spawn,
-    );
-
     let stock_on_hand = DataLoader::new(
         ItemsStockOnHandLoader {
             service_provider: service_provider.clone(),
@@ -241,13 +240,6 @@ pub async fn get_loaders(
         tokio::spawn,
     );
 
-    let return_reason_loader = DataLoader::new(
-        ReturnReasonLoader {
-            connection_manager: connection_manager.clone(),
-        },
-        tokio::spawn,
-    );
-
     let program_indicator_value_loader = DataLoader::new(
         IndicatorValueLoader {
             service_provider: service_provider.clone(),
@@ -257,6 +249,7 @@ pub async fn get_loaders(
 
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
+    loaders.insert(name_by_name_link_id_loader);
     loaders.insert(store_by_id_loader);
     loaders.insert(invoice_by_id_loader);
     loaders.insert(invoice_by_requisition_id_loader);
@@ -276,7 +269,6 @@ pub async fn get_loaders(
     loaders.insert(requisition_line_supply_status_loader);
     loaders.insert(requisition_lines_remaining_to_supply_loader);
     loaders.insert(name_row_loader);
-    loaders.insert(inventory_adjustment_reason_loader);
     loaders.insert(stock_on_hand);
     loaders.insert(document_loader);
     loaders.insert(schema_loader);
@@ -285,7 +277,6 @@ pub async fn get_loaders(
     loaders.insert(asset_location_loader);
     loaders.insert(file_sync_reference_loader);
     loaders.insert(asset_log_reason_loader);
-    loaders.insert(return_reason_loader);
     loaders.insert(program_indicator_value_loader);
     loaders.insert(DataLoader::new(
         PatientLoader {
@@ -489,6 +480,24 @@ pub async fn get_loaders(
     ));
     loaders.insert(DataLoader::new(
         WarningLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        VVMStatusByIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        VVMStatusLogByStockLineIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        CampaignByIdLoader {
             connection_manager: connection_manager.clone(),
         },
         tokio::spawn,

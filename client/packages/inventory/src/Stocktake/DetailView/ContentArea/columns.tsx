@@ -17,8 +17,11 @@ import {
   ColumnDescription,
   UNDEFINED_STRING_VALUE,
   getCommentPopoverColumn,
+  usePreference,
+  PreferenceKey,
+  getDosesPerUnitColumn,
 } from '@openmsupply-client/common';
-import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
+import { ReasonOptionRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
 import { useStocktakeLineErrorContext } from '../../context';
@@ -38,13 +41,13 @@ const getStocktakeReasons = (
 ) => {
   if ('lines' in rowData) {
     const { lines } = rowData;
-    const inventoryAdjustmentReasons = lines
-      .map(({ inventoryAdjustmentReason }) => inventoryAdjustmentReason)
-      .filter(Boolean) as InventoryAdjustmentReasonRowFragment[];
-    if (inventoryAdjustmentReasons.length !== 0) {
+    const reasonOptions = lines
+      .map(({ reasonOption }) => reasonOption)
+      .filter(Boolean) as ReasonOptionRowFragment[];
+    if (reasonOptions.length !== 0) {
       return (
         ArrayUtils.ifTheSameElseDefault(
-          inventoryAdjustmentReasons,
+          reasonOptions,
           'reason',
           t('multiple')
         ) ?? ''
@@ -53,7 +56,23 @@ const getStocktakeReasons = (
       return '';
     }
   } else {
-    return rowData.inventoryAdjustmentReason?.reason ?? '';
+    return rowData.reasonOption?.reason ?? '';
+  }
+};
+
+const getStocktakeDonor = (
+  rowData: StocktakeLineFragment | StocktakeSummaryItem,
+  t: TypedTFunction<LocaleKey>
+) => {
+  if ('lines' in rowData) {
+    const { lines } = rowData;
+
+    return (
+      ArrayUtils.ifTheSameElseDefault(lines, 'donorName', t('multiple')) ??
+      UNDEFINED_STRING_VALUE
+    );
+  } else {
+    return rowData.donorName ?? UNDEFINED_STRING_VALUE;
   }
 };
 
@@ -63,8 +82,12 @@ export const useStocktakeColumns = ({
 }: UseStocktakeColumnOptions): Column<
   StocktakeLineFragment | StocktakeSummaryItem
 >[] => {
-  const { getError } = useStocktakeLineErrorContext();
   const t = useTranslation();
+  const { getError } = useStocktakeLineErrorContext();
+  const { data: preferences } = usePreference(
+    PreferenceKey.ManageVaccinesInDoses,
+    PreferenceKey.AllowTrackingOfStockByDonor
+  );
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const columns: ColumnDescription<
@@ -109,6 +132,7 @@ export const useStocktakeColumns = ({
             { path: ['lines', 'batch'] },
             { path: ['batch'] },
           ]),
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -119,6 +143,7 @@ export const useStocktakeColumns = ({
             { path: ['lines', 'expiryDate'] },
             { path: ['expiryDate'] },
           ]),
+        defaultHideOnMobile: true,
       },
     ],
     {
@@ -130,6 +155,7 @@ export const useStocktakeColumns = ({
           { path: ['lines', 'location', 'code'] },
           { path: ['location', 'code'] },
         ]),
+      defaultHideOnMobile: true,
     },
     [
       'itemUnit',
@@ -139,6 +165,7 @@ export const useStocktakeColumns = ({
         },
         accessor: ({ rowData }) => rowData.item?.unitName ?? '',
         sortable: false,
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -150,8 +177,19 @@ export const useStocktakeColumns = ({
             { path: ['lines', 'packSize'] },
             { path: ['packSize'] },
           ]),
+        cellProps: {
+          defaultValue: UNDEFINED_STRING_VALUE,
+        },
+        defaultHideOnMobile: true,
       },
     ],
+  ];
+
+  if (preferences?.manageVaccinesInDoses) {
+    columns.push(getDosesPerUnitColumn(t));
+  }
+
+  columns.push(
     {
       key: 'snapshotNumPacks',
       label: 'label.snapshot-num-of-packs',
@@ -209,14 +247,14 @@ export const useStocktakeColumns = ({
     {
       key: 'difference',
       label: 'label.difference',
-      Cell: props => (
-        <NumberCell {...props} defaultValue={UNDEFINED_STRING_VALUE} />
-      ),
       align: ColumnAlign.Right,
       sortable: false,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           const { lines } = rowData;
+          const displayDoses =
+            preferences?.manageVaccinesInDoses && lines[0]?.item.isVaccine;
+
           const total =
             lines.reduce(
               (total, line) =>
@@ -225,14 +263,53 @@ export const useStocktakeColumns = ({
                   (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks)),
               0
             ) ?? 0;
-          return (total < 0 ? Math.abs(total) : -total).toString();
+          const totalInDoses = displayDoses
+            ? (lines.reduce(
+                (total, line) =>
+                  total +
+                  (line.itemVariant?.dosesPerUnit ?? line.item.doses) *
+                    (line?.packSize ?? 1) *
+                    (line.snapshotNumberOfPacks -
+                      (line.countedNumberOfPacks ??
+                        line.snapshotNumberOfPacks)),
+                0
+              ) ?? 0)
+            : null;
+
+          const totalRounded = Math.round(total * 100) / 100;
+          const totalInDosesRounded = totalInDoses
+            ? Math.round(totalInDoses * 100) / 100
+            : null;
+
+          return `${totalRounded} ${
+            totalInDosesRounded
+              ? `(${totalInDosesRounded} ${t('label.doses')})`
+              : ''
+          }`;
         } else if (rowData.countedNumberOfPacks === null) {
-          return null;
+          return UNDEFINED_STRING_VALUE;
         } else {
-          return (
+          const displayDoses =
+            preferences?.manageVaccinesInDoses && rowData?.item.isVaccine;
+
+          const total =
             (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
-            rowData.snapshotNumberOfPacks
-          );
+            rowData.snapshotNumberOfPacks;
+          const totalRounded = Math.round(total * 100) / 100;
+
+          const totalInDoses = displayDoses
+            ? total *
+              (rowData.packSize ?? 1) *
+              (rowData.itemVariant?.dosesPerUnit ?? rowData.item.doses)
+            : null;
+          const totalInDosesRounded = totalInDoses
+            ? Math.round(totalInDoses * 100) / 100
+            : null;
+          const displayDosesTotal = totalInDosesRounded
+            ? `(${totalInDosesRounded} ${t('label.doses')})`
+            : '';
+
+          return `${totalRounded} ${displayDosesTotal}`;
         }
       },
     },
@@ -241,11 +318,19 @@ export const useStocktakeColumns = ({
       label: 'label.reason',
       accessor: ({ rowData }) => getStocktakeReasons(rowData, t),
       sortable: false,
-    },
+    }
+  );
+  if (preferences?.allowTrackingOfStockByDonor) {
+    columns.push({
+      key: 'donorId',
+      label: 'label.donor',
+      accessor: ({ rowData }) => getStocktakeDonor(rowData, t),
+      sortable: false,
+      defaultHideOnMobile: true,
+    });
+  }
 
-    getCommentPopoverColumn(),
-    expandColumn,
-  ];
+  columns.push(getCommentPopoverColumn(), expandColumn);
 
   return useColumns(columns, { sortBy, onChangeSortBy }, [
     sortBy,
@@ -289,8 +374,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
     {
       key: 'inventoryAdjustmentReason',
       label: 'label.reason',
-      accessor: ({ rowData }) =>
-        rowData.inventoryAdjustmentReason?.reason || '',
+      accessor: ({ rowData }) => rowData.reasonOption?.reason || '',
     },
   ]);
 };

@@ -1,101 +1,117 @@
-import { useEffect, useState } from 'react';
-import { useResponse, ResponseLineFragment } from '../../api';
-import { ItemRowFragment } from '@openmsupply-client/system';
-import { useNotification } from '@common/hooks';
+import { useCallback, useEffect, useState } from 'react';
+import { useResponse, ResponseLineFragment, ResponseFragment } from '../../api';
+import { ItemWithStatsFragment } from '@openmsupply-client/system';
+import { FnUtils } from '@common/utils';
 
-export type DraftResponseLine = Omit<ResponseLineFragment, '__typename'> & {
+export type DraftResponseLine = Omit<
+  ResponseLineFragment,
+  '__typename' | 'item'
+> & {
   requisitionId: string;
+  isCreated: boolean;
 };
 
-const createDraftLine = (
-  line: ResponseLineFragment,
-  requisitionId: string
+const createDraftFromItem = (
+  item: ItemWithStatsFragment,
+  requisition: ResponseFragment
+): DraftResponseLine => {
+  return {
+    id: FnUtils.generateUUID(),
+    itemId: item.id,
+    requisitionId: requisition.id,
+    requisitionNumber: requisition.requisitionNumber,
+    itemName: item.name,
+    requestedQuantity: 0,
+    supplyQuantity: 0,
+    initialStockOnHandUnits: 0,
+    incomingUnits: 0,
+    outgoingUnits: 0,
+    lossInUnits: 0,
+    additionInUnits: 0,
+    daysOutOfStock: 0,
+    expiringUnits: 0,
+    remainingQuantityToSupply: 0,
+    averageMonthlyConsumption: 0,
+    approvedQuantity: 0,
+    alreadyIssued: 0,
+    availableStockOnHand: 0,
+    suggestedQuantity: 0,
+    isCreated: true,
+    itemStats: {
+      __typename: 'ItemStatsNode',
+      stockOnHand: 0,
+      availableMonthsOfStockOnHand: 0,
+      averageMonthlyConsumption: 0,
+    },
+  };
+};
+
+const createDraftFromResponseLine = (
+  line: ResponseLineFragment
 ): DraftResponseLine => ({
   ...line,
-  requisitionId,
-  itemId: line.item.id,
-  requestedQuantity: line.requestedQuantity,
-  supplyQuantity: line.supplyQuantity,
+  isCreated: false,
 });
 
-export const useDraftRequisitionLine = (item?: ItemRowFragment | null) => {
-  const { id: reqId, lines } = useResponse.document.fields(['id', 'lines']);
-  const { mutateAsync: saveAction, isLoading } = useResponse.line.save();
-  const { error } = useNotification();
+export const useDraftRequisitionLine = (
+  item?: ItemWithStatsFragment | null
+) => {
+  const { lines } = useResponse.line.list();
+  const { data } = useResponse.document.get();
+  const { mutateAsync: saveMutation, isLoading } = useResponse.line.save();
 
   const [draft, setDraft] = useState<DraftResponseLine | null>(null);
 
   useEffect(() => {
-    if (lines && item && reqId) {
-      const existingLine = lines.nodes.find(
+    if (lines && item && data) {
+      const existingLine = lines.find(
         ({ item: reqItem }) => reqItem.id === item.id
       );
       if (existingLine) {
-        if (draft && draft.id === existingLine.id) {
-          setDraft(draft);
-        } else {
-          setDraft(createDraftLine(existingLine, reqId));
-        }
+        setDraft(createDraftFromResponseLine(existingLine));
+      } else {
+        setDraft(createDraftFromItem(item, data));
       }
     } else {
       setDraft(null);
     }
-  }, [lines, item, reqId, draft]);
+  }, [lines, item, data]);
 
-  const update = (patch: Partial<DraftResponseLine>) => {
-    if (draft) {
-      setDraft({ ...draft, ...patch });
-    }
-  };
+  const update = useCallback((patch: Partial<DraftResponseLine>) => {
+    setDraft(current => (current ? { ...current, ...patch } : null));
+  }, []);
 
-  const save = async () => {
+  const save = useCallback(async () => {
     if (draft) {
-      const result = await saveAction(draft);
-      if (
-        result.updateResponseRequisitionLine.__typename ===
-        'UpdateResponseRequisitionLineError'
-      ) {
-        switch (result.updateResponseRequisitionLine.error.__typename) {
-          default:
-            error(result.updateResponseRequisitionLine.error.description)();
-            break;
-        }
-      }
+      const result = await saveMutation(draft);
+      return result;
     }
-  };
+    return null;
+  }, [draft, saveMutation]);
 
   return { draft, isLoading, save, update };
 };
 
-export const usePreviousNextResponseLine = (
-  lines?: ResponseLineFragment[],
-  currentItem?: ItemRowFragment | null
+export const useNextResponseLine = (
+  lines: ResponseLineFragment[],
+  currentItem?: ItemWithStatsFragment | null
 ) => {
   if (!lines || !currentItem) {
-    return { hasNext: false, next: null, hasPrevious: false, previous: null };
+    return { hasNext: false, next: null };
   }
-
-  const state: {
-    hasPrevious: boolean;
-    previous: null | ItemRowFragment;
+  const nextState: {
     hasNext: boolean;
-    next: null | ItemRowFragment;
-  } = { hasNext: true, next: null, hasPrevious: true, previous: null };
+    next: ItemWithStatsFragment | null;
+  } = { hasNext: true, next: null };
   const idx = lines.findIndex(l => l.item.id === currentItem?.id);
-  const previous = lines[idx - 1];
   const next = lines[idx + 1];
 
-  if (!previous) {
-    state.hasPrevious = false;
-  } else {
-    state.previous = previous.item;
-  }
-
   if (!next) {
-    state.hasNext = false;
-  } else {
-    state.next = next.item;
+    nextState.hasNext = false;
+    return nextState;
   }
 
-  return state;
+  nextState.next = next.item;
+
+  return nextState;
 };

@@ -2,36 +2,25 @@ import React, { FC, useEffect } from 'react';
 import {
   DataTable,
   useTranslation,
-  MiniTable,
   useIsGrouped,
   InvoiceLineNodeType,
   useRowStyle,
   AppSxProp,
   NothingHere,
   useUrlQueryParams,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
 import { useOutboundColumns } from './columns';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
-import { useExpansionColumns } from './OutboundLineEdit/columns';
+import { Expand } from './ExpandoTable';
 
 interface ContentAreaProps {
   onAddItem: () => void;
   onRowClick?: null | ((rowData: StockOutLineFragment | StockOutItem) => void);
 }
-
-const Expand: FC<{
-  rowData: StockOutLineFragment | StockOutItem;
-}> = ({ rowData }) => {
-  const expandoColumns = useExpansionColumns();
-
-  if ('lines' in rowData && rowData.lines.length > 1) {
-    return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
-  } else {
-    return null;
-  }
-};
 
 const useHighlightPlaceholderRows = (
   rows: StockOutLineFragment[] | StockOutItem[] | undefined
@@ -84,6 +73,9 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   onRowClick,
 }) => {
   const t = useTranslation();
+  const { data: prefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
+  const displayDoseColumns = prefs?.manageVaccinesInDoses ?? false;
+
   const {
     updateSortQuery,
     queryParams: { sortBy },
@@ -93,6 +85,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   const columns = useOutboundColumns({
     onChangeSortBy: updateSortQuery,
     sortBy,
+    displayDoseColumns,
   });
   const isDisabled = useOutbound.utils.isDisabled();
   useHighlightPlaceholderRows(rows);
@@ -103,7 +96,9 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     <DataTable
       id="outbound-detail"
       onRowClick={onRowClick}
-      ExpandContent={Expand}
+      ExpandContent={props => (
+        <Expand {...props} displayDoseColumns={displayDoseColumns} />
+      )}
       columns={columns}
       data={rows}
       enableColumnSelection

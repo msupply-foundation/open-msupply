@@ -8,6 +8,7 @@ import {
   AutocompleteProps as MuiAutocompleteProps,
   PopperProps,
   SxProps,
+  Theme,
 } from '@mui/material';
 import {
   AutocompleteOption,
@@ -50,7 +51,7 @@ export interface AutocompleteProps<T>
   popperMinWidth?: number;
   inputProps?: BasicTextInputProps;
   required?: boolean;
-  textSx?: SxProps;
+  textSx?: SxProps<Theme>;
 }
 
 export function Autocomplete<T>({
@@ -84,17 +85,19 @@ export function Autocomplete<T>({
   const t = useTranslation();
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
+
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       required={required}
       {...props}
       {...inputProps}
+      error={inputProps?.error}
       autoFocus={autoFocus}
       slotProps={{
         input: {
-          disableUnderline: false,
           sx: {
-            padding: '4px !important',
+            p: '6.5px',
+            '& .MuiInputBase-input': { pb: '6.5px !important' },
             ...textSx,
           },
           ...props.InputProps,

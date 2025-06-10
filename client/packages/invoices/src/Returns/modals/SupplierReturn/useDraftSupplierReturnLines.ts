@@ -52,8 +52,15 @@ export const useDraftSupplierReturnLines = ({
   const save = async () => {
     const supplierReturnLines: SupplierReturnLineInput[] = draftLines.map(
       line => {
-        const { id, reasonId, numberOfPacksToReturn, stockLineId, note } = line;
-        return { id, stockLineId, reasonId, note, numberOfPacksToReturn };
+        const { id, reasonOption, numberOfPacksToReturn, stockLineId, note } =
+          line;
+        return {
+          id,
+          stockLineId,
+          reasonId: reasonOption?.id,
+          note,
+          numberOfPacksToReturn,
+        };
       }
     );
 

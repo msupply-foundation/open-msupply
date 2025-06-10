@@ -3,6 +3,7 @@
 use backend_plugin::plugin_provider::PluginError;
 use repository::item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository};
 use repository::location::{LocationFilter, LocationRepository};
+use repository::vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository};
 use repository::{EqualFilter, Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
 use repository::{RepositoryError, StorageConnection};
 use serde::de::DeserializeOwned;
@@ -20,6 +21,7 @@ pub mod activity_log;
 pub mod apis;
 pub mod app_data;
 pub mod boajs;
+pub mod campaign;
 
 pub mod asset;
 pub mod auth;
@@ -42,7 +44,6 @@ pub mod document;
 pub mod email;
 pub mod insurance;
 pub mod insurance_provider;
-pub mod inventory_adjustment_reason;
 pub mod invoice;
 pub mod invoice_line;
 pub mod item;
@@ -74,7 +75,6 @@ pub mod repack;
 pub mod report;
 pub mod requisition;
 pub mod requisition_line;
-pub mod return_reason;
 pub mod rnr_form;
 pub mod sensor;
 pub mod service_provider;
@@ -95,6 +95,7 @@ pub mod user_account;
 pub mod vaccination;
 pub mod vaccine_course;
 pub mod validate;
+pub mod vvm;
 pub mod warning;
 
 #[cfg(test)]
@@ -322,17 +323,12 @@ pub struct InputWithResult<I, R> {
 pub struct NullableUpdate<T> {
     pub value: Option<T>,
 }
+
 fn check_location_exists(
     connection: &StorageConnection,
     store_id: &str,
-    location_input: &Option<NullableUpdate<String>>,
+    location_id: &str,
 ) -> Result<bool, RepositoryError> {
-    let Some(NullableUpdate {
-        value: Some(location_id),
-    }) = location_input
-    else {
-        return Ok(true);
-    };
     let count = LocationRepository::new(connection).count(Some(
         LocationFilter::new()
             .id(EqualFilter::equal_to(location_id))
@@ -347,7 +343,16 @@ fn check_item_variant_exists(
 ) -> Result<Option<ItemVariantRow>, RepositoryError> {
     let variant = ItemVariantRowRepository::new(connection).find_one_by_id(item_variant_id)?;
 
-    return Ok(variant);
+    Ok(variant)
+}
+
+fn check_vvm_status_exists(
+    connection: &StorageConnection,
+    vvm_status_id: &str,
+) -> Result<Option<VVMStatusRow>, RepositoryError> {
+    let vvm_status = VVMStatusRowRepository::new(connection).find_one_by_id(vvm_status_id)?;
+
+    Ok(vvm_status)
 }
 
 #[derive(Serialize, Deserialize)]

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useTranslation,
   NothingHere,
@@ -11,17 +11,43 @@ import { usePrescriptionColumn } from './columns';
 import { StockOutItem } from '../../types';
 import { StockOutLineFragment } from '../../StockOut';
 import { useExpansionColumns } from './columns';
+import { ItemRowFragment } from 'packages/system/src';
 
 interface ContentAreaProps {
   onAddItem: () => void;
   onRowClick?: null | ((rowData: StockOutLineFragment | StockOutItem) => void);
+  item?: ItemRowFragment;
+  displayInDoses?: boolean;
 }
 
-const Expand: FC<{
+const Expand = ({
+  rowData,
+  displayInDoses,
+}: {
   rowData: StockOutLineFragment | StockOutItem;
-}> = ({ rowData }) => {
-  const expandoColumns = useExpansionColumns();
+  displayInDoses?: boolean;
+}) => {
+  if ('lines' in rowData && rowData.lines.length > 1) {
+    const isVaccineItem = rowData.lines[0]?.item.isVaccine ?? false;
+    return (
+      <ExpandoInner
+        rowData={rowData}
+        withDoseColumns={displayInDoses && isVaccineItem}
+      />
+    );
+  } else {
+    return null;
+  }
+};
 
+const ExpandoInner = ({
+  rowData,
+  withDoseColumns,
+}: {
+  rowData: StockOutLineFragment | StockOutItem;
+  withDoseColumns?: boolean;
+}) => {
+  const expandoColumns = useExpansionColumns(withDoseColumns);
   if ('lines' in rowData && rowData.lines.length > 1) {
     return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
   } else {
@@ -29,10 +55,11 @@ const Expand: FC<{
   }
 };
 
-export const ContentAreaComponent: FC<ContentAreaProps> = ({
+export const ContentAreaComponent = ({
   onAddItem,
   onRowClick,
-}) => {
+  displayInDoses,
+}: ContentAreaProps) => {
   const t = useTranslation();
   const {
     updateSortQuery,
@@ -53,7 +80,9 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
       columns={columns}
       data={rows}
       enableColumnSelection
-      ExpandContent={Expand}
+      ExpandContent={props => (
+        <Expand {...props} displayInDoses={displayInDoses} />
+      )}
       noDataElement={
         <NothingHere
           body={t('error.no-prescriptions')}

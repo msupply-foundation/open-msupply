@@ -27,6 +27,7 @@ pub struct Name {
     pub name_store_join_row: Option<NameStoreJoinRow>,
     pub store_row: Option<StoreRow>,
     pub properties: Option<String>,
+    pub name_link_row: NameLinkRow,
 }
 
 #[derive(Clone, Default, PartialEq, Debug)]
@@ -60,6 +61,7 @@ pub struct NameFilter {
     pub email: Option<StringFilter>,
 
     pub code_or_name: Option<StringFilter>,
+    pub name_link_id: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -200,6 +202,7 @@ impl<'a> NameRepository<'a> {
                 email,
                 code_or_name,
                 supplying_store_id,
+                name_link_id,
             } = f;
 
             // or filter need to be applied before and filters
@@ -210,6 +213,7 @@ impl<'a> NameRepository<'a> {
 
             apply_equal_filter!(query, id, name::id);
             apply_string_filter!(query, code, name::code);
+            apply_string_filter!(query, name_link_id, name_link::id);
 
             apply_string_filter!(query, name, name::name_);
             apply_string_filter!(query, store_code, store::code);
@@ -266,13 +270,14 @@ impl<'a> NameRepository<'a> {
 
 impl Name {
     pub fn from_join(
-        (name_row, (_name_link_row, name_store_join_row, store_row), name_oms_fields): NameAndNameStoreJoin,
+        (name_row, (name_link_row, name_store_join_row, store_row), name_oms_fields): NameAndNameStoreJoin,
     ) -> Name {
         Name {
             name_row,
             name_store_join_row,
             store_row,
             properties: name_oms_fields.properties,
+            name_link_row,
         }
     }
 
@@ -368,6 +373,11 @@ impl NameFilter {
         self.supplying_store_id = Some(filter);
         self
     }
+
+    pub fn name_link_id(mut self, filter: StringFilter) -> Self {
+        self.name_link_id = Some(filter);
+        self
+    }
 }
 
 impl Name {
@@ -383,6 +393,14 @@ impl Name {
             .as_ref()
             .map(|name_store_join_row| name_store_join_row.name_is_supplier)
             .unwrap_or(false)
+    }
+
+    pub fn is_manufacturer(&self) -> bool {
+        self.name_row.is_manufacturer
+    }
+
+    pub fn is_donor(&self) -> bool {
+        self.name_row.is_donor
     }
 
     pub fn is_visible(&self) -> bool {
@@ -426,10 +444,12 @@ mod tests {
     use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_init};
 
     use crate::{
-        mock::MockDataInserts,
-        mock::{mock_name_1, mock_test_name_query_store_1, mock_test_name_query_store_2},
-        test_db, NameFilter, NameRepository, NameRow, NameRowRepository, Pagination, StringFilter,
-        DEFAULT_PAGINATION_LIMIT,
+        mock::{
+            mock_name_1, mock_test_name_query_store_1, mock_test_name_query_store_2,
+            MockDataInserts,
+        },
+        test_db, NameFilter, NameLinkRow, NameRepository, NameRow, NameRowRepository, Pagination,
+        StringFilter, DEFAULT_PAGINATION_LIMIT,
     };
 
     use std::convert::TryFrom;
@@ -459,6 +479,10 @@ mod tests {
                 name_store_join_row: None,
                 store_row: None,
                 properties: None,
+                name_link_row: NameLinkRow {
+                    id: format!("id{:05}", index),
+                    name_id: format!("id{:05}", index),
+                },
             });
         }
         (rows, queries)

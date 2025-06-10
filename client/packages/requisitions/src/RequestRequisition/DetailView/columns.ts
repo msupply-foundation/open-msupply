@@ -1,43 +1,22 @@
 import { RequestLineFragment } from '../api';
 import {
-  useTranslation,
   ColumnAlign,
   useColumns,
   GenericColumnKey,
   getCommentPopoverColumn,
-  useFormatNumber,
   useUrlQueryParams,
   ColumnDescription,
-  ColumnDataAccessor,
   TooltipTextCell,
   useAuthContext,
   getLinesFromRow,
   usePluginProvider,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { PackQuantityCell } from '@openmsupply-client/system';
 import { useRequestRequisitionLineErrorContext } from '../context';
 
-const useStockOnHand: ColumnDataAccessor<RequestLineFragment, string> = ({
-  rowData,
-}) => {
-  const t = useTranslation();
-  const formatNumber = useFormatNumber();
-  const { itemStats } = rowData;
-  const { availableStockOnHand, availableMonthsOfStockOnHand } = itemStats;
-
-  const monthsString = availableMonthsOfStockOnHand
-    ? `(${formatNumber.round(availableMonthsOfStockOnHand, 1)} ${t(
-        'label.months',
-        {
-          count: availableMonthsOfStockOnHand,
-        }
-      )})`
-    : '';
-  return `${availableStockOnHand} ${monthsString}`;
-};
-
-export const useRequestColumns = () => {
+export const useRequestColumns = (manageVaccinesInDoses: boolean = false) => {
   const { maxMonthsOfStock, programName } = useRequest.document.fields([
     'maxMonthsOfStock',
     'programName',
@@ -77,7 +56,23 @@ export const useRequestColumns = () => {
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.item.unitName,
       sortable: false,
+      defaultHideOnMobile: true,
     },
+  ];
+
+  if (manageVaccinesInDoses) {
+    columnDefinitions.push({
+      key: 'dosesPerUnit',
+      label: 'label.doses-per-unit',
+      width: 100,
+      align: ColumnAlign.Right,
+      sortable: false,
+      accessor: ({ rowData }) =>
+        rowData.item?.isVaccine ? rowData.item.doses : UNDEFINED_STRING_VALUE,
+    });
+  }
+
+  columnDefinitions.push(
     {
       key: 'defaultPackSize',
       label: 'label.dps',
@@ -85,14 +80,15 @@ export const useRequestColumns = () => {
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.item.defaultPackSize,
       getSortValue: rowData => rowData.item.defaultPackSize,
+      defaultHideOnMobile: true,
     },
     {
       key: 'availableStockOnHand',
-      label: 'label.stock-on-hand',
-      description: 'description.stock-on-hand',
+      label: 'label.available-soh',
+      description: 'description.available-soh',
       align: ColumnAlign.Right,
       width: 200,
-      accessor: useStockOnHand,
+      accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
       getSortValue: rowData => rowData.itemStats.availableStockOnHand,
     },
     [
@@ -105,13 +101,7 @@ export const useRequestColumns = () => {
         getSortValue: rowData => rowData.itemStats.averageMonthlyConsumption,
       },
     ],
-  ];
-
-  if (
-    programName &&
-    store?.preferences.useConsumptionAndStockFromCustomersForInternalOrders
-  ) {
-    columnDefinitions.push({
+    {
       key: 'monthsOfStock',
       label: 'label.months-of-stock',
       description: 'description.available-months-of-stock',
@@ -119,13 +109,14 @@ export const useRequestColumns = () => {
       width: 150,
       Cell: PackQuantityCell,
       accessor: ({ rowData }) => rowData.itemStats.availableMonthsOfStockOnHand,
-    });
-  }
+    }
+  );
 
   columnDefinitions.push(
     {
       key: 'targetStock',
       label: 'label.target-stock',
+      description: 'description.target-stock',
       align: ColumnAlign.Right,
       width: 150,
       Cell: PackQuantityCell,
@@ -133,6 +124,7 @@ export const useRequestColumns = () => {
         rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
       getSortValue: rowData =>
         rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
+      defaultHideOnMobile: true,
     },
     {
       key: 'suggestedQuantity',

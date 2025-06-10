@@ -1,7 +1,7 @@
 use super::{
-    master_list_name_join::master_list_name_join, master_list_row::master_list,
-    name_store_join::name_store_join, program_row::program, store_row::store, NameType,
-    StorageConnection,
+    cold_storage_type_row::cold_storage_type, master_list_name_join::master_list_name_join,
+    master_list_row::master_list, name_store_join::name_store_join, program_row::program,
+    store_row::store, NameType, StorageConnection,
 };
 use crate::{
     item_link, name_link, repository_error::RepositoryError, ChangeLogInsertRow,
@@ -69,6 +69,7 @@ joinable!(name_oms_fields -> name (id));
 allow_tables_to_appear_in_same_query!(name, item_link);
 allow_tables_to_appear_in_same_query!(name, name_link);
 allow_tables_to_appear_in_same_query!(name, name_oms_fields);
+allow_tables_to_appear_in_same_query!(name, cold_storage_type);
 // for names query
 allow_tables_to_appear_in_same_query!(name_oms_fields, item_link);
 allow_tables_to_appear_in_same_query!(name_oms_fields, name_link);

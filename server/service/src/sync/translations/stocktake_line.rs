@@ -47,13 +47,17 @@ pub struct LegacyStocktakeLineRow {
     pub note: Option<String>,
     #[serde(rename = "optionID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub inventory_adjustment_reason_id: Option<String>,
-    #[serde(
-        deserialize_with = "empty_str_as_option_string",
-        default,
-        rename = "om_item_variant_id"
-    )]
+    pub reason_option_id: Option<String>,
+
+    #[serde(rename = "om_item_variant_id")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
     pub item_variant_id: Option<String>,
+
+    #[serde(rename = "donor_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
+    pub donor_id: Option<String>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -103,8 +107,9 @@ impl SyncTranslation for StocktakeLineTranslation {
             cost_price,
             sell_price,
             note,
-            inventory_adjustment_reason_id,
+            reason_option_id,
             item_variant_id,
+            donor_id,
         } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
 
         // TODO is this correct?
@@ -151,8 +156,9 @@ impl SyncTranslation for StocktakeLineTranslation {
             cost_price_per_pack: Some(cost_price),
             sell_price_per_pack: Some(sell_price),
             note,
-            inventory_adjustment_reason_id,
             item_variant_id,
+            donor_link_id: donor_id,
+            reason_option_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -191,8 +197,9 @@ impl SyncTranslation for StocktakeLineTranslation {
                     cost_price_per_pack,
                     sell_price_per_pack,
                     note,
-                    inventory_adjustment_reason_id,
                     item_variant_id,
+                    donor_link_id: donor_id,
+                    reason_option_id,
                 },
             item,
             stock_line,
@@ -217,8 +224,9 @@ impl SyncTranslation for StocktakeLineTranslation {
             cost_price: cost_price_per_pack.unwrap_or(0.0),
             sell_price: sell_price_per_pack.unwrap_or(0.0),
             note,
-            inventory_adjustment_reason_id,
+            reason_option_id,
             item_variant_id,
+            donor_id,
         };
 
         Ok(PushTranslateResult::upsert(

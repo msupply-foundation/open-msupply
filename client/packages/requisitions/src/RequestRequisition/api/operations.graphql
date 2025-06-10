@@ -26,6 +26,9 @@ fragment RequestRow on RequisitionNode {
     id
   }
   orderType
+  lines {
+    totalCount
+  }
 }
 
 fragment ConsumptionHistory on ConsumptionHistoryNode {
@@ -64,10 +67,7 @@ query requestByNumber($storeId: String!, $requisitionNumber: Int!) {
 }
 
 query requestById($storeId: String!, $requisitionId: String!) {
-  requisition(
-    id: $requisitionId
-    storeId: $storeId
-  ) {
+  requisition(id: $requisitionId, storeId: $storeId) {
     __typename
     ... on RequisitionNode {
       ...Request

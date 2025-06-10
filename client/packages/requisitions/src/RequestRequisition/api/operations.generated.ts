@@ -34,6 +34,7 @@ export type RequestRowFragment = {
     endDate: string;
   } | null;
   program?: { __typename: 'ProgramNode'; id: string } | null;
+  lines: { __typename: 'RequisitionLineConnector'; totalCount: number };
 };
 
 export type ConsumptionHistoryFragment = {
@@ -126,6 +127,8 @@ export type RequestByNumberQuery = {
               code: string;
               unitName?: string | null;
               defaultPackSize: number;
+              isVaccine: boolean;
+              doses: number;
               availableStockOnHand: number;
               stats: {
                 __typename: 'ItemStatsNode';
@@ -253,6 +256,8 @@ export type RequestByIdQuery = {
               code: string;
               unitName?: string | null;
               defaultPackSize: number;
+              isVaccine: boolean;
+              doses: number;
               availableStockOnHand: number;
               stats: {
                 __typename: 'ItemStatsNode';
@@ -393,6 +398,7 @@ export type RequestsQuery = {
         endDate: string;
       } | null;
       program?: { __typename: 'ProgramNode'; id: string } | null;
+      lines: { __typename: 'RequisitionLineConnector'; totalCount: number };
     }>;
   };
 };
@@ -922,6 +928,9 @@ export const RequestRowFragmentDoc = gql`
       id
     }
     orderType
+    lines {
+      totalCount
+    }
   }
 `;
 export const ConsumptionHistoryFragmentDoc = gql`

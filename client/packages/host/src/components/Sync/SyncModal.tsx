@@ -1,6 +1,7 @@
 import React, { PropsWithChildren, useState, useEffect } from 'react';
 
 import {
+  Breakpoints,
   CloseIcon,
   DateUtils,
   Formatter,
@@ -9,12 +10,13 @@ import {
   RadioIcon,
   Typography,
   UNDEFINED_STRING_VALUE,
+  useAppTheme,
   useAuthContext,
   useFormatDateTime,
   useNativeClient,
   useQueryClient,
   useTranslation,
-  useIsScreen,
+  useMediaQuery,
 } from '@openmsupply-client/common';
 import { useSync } from '@openmsupply-client/system';
 import { SyncProgress } from '../SyncProgress';
@@ -90,6 +92,11 @@ export const SyncModal = ({
   height = 500,
 }: SyncModalProps) => {
   const t = useTranslation();
+  const theme = useAppTheme();
+  const isExtraSmallScreen = useMediaQuery(
+    theme.breakpoints.down(Breakpoints.sm)
+  );
+
   const {
     syncStatus,
     latestSyncStart,
@@ -100,7 +107,6 @@ export const SyncModal = ({
     onManualSync,
   } = useHostSync(open);
   const { updateUserIsLoading, updateUser, setStore, store } = useAuthContext();
-  const isMobile = useIsScreen('sm');
 
   const sync = async () => {
     await updateUser();
@@ -120,8 +126,8 @@ export const SyncModal = ({
 
   return (
     <BasicModal
-      width={!isMobile ? width : 340}
-      height={!isMobile ? height : 600}
+      width={!isExtraSmallScreen ? width : 340}
+      height={!isExtraSmallScreen ? height : 600}
       open={open}
       onKeyDown={e => {
         if (e.key === 'Escape') onCancel();
@@ -165,7 +171,7 @@ export const SyncModal = ({
               maxWidth: 650,
             })}
           >
-            {!isMobile
+            {!isExtraSmallScreen
               ? t('sync-info.summary')
                   .split('\n')
                   .map((line, index) => <div key={index}>{line}</div>)
@@ -195,7 +201,7 @@ export const SyncModal = ({
               shouldShrink={false}
               autoFocus
               isLoading={isLoading || updateUserIsLoading}
-              startIcon={<RadioIcon sx={{ color: '#fff!important' }} />}
+              startIcon={<RadioIcon />}
               variant="contained"
               sx={theme => ({
                 [theme.breakpoints.down('sm')]: {
@@ -218,7 +224,7 @@ export const SyncModal = ({
           </Row>
           <ServerInfo />
         </Grid>
-        {!isMobile && (
+        {!isExtraSmallScreen && (
           <SyncProgress syncStatus={syncStatus} isOperational={true} />
         )}
       </Grid>

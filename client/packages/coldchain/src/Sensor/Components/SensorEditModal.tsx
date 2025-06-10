@@ -1,5 +1,5 @@
 import React, { FC, useState } from 'react';
-import { SensorFragment, useSensor } from '../api';
+import { SensorFragment, useSensorUpdate } from '../api';
 import { useTranslation } from '@common/intl';
 import { useDialog } from '@common/hooks';
 import { DialogButton, useConfirmationModal } from '@common/components';
@@ -21,7 +21,7 @@ export interface UseDraftSensorControl {
 
 const useDraftSensor = (seed: SensorFragment): UseDraftSensorControl => {
   const [sensor, setSensor] = useState<SensorFragment>(seed);
-  const { mutate } = useSensor.document.update();
+  const { mutate } = useSensorUpdate();
   const onUpdate = (patch: Partial<SensorFragment>) => {
     setSensor({ ...sensor, ...patch });
   };

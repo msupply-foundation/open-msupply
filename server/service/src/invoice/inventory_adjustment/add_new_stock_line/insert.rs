@@ -25,9 +25,12 @@ pub struct AddNewStockLine {
     pub batch: Option<String>,
     pub location: Option<NullableUpdate<String>>,
     pub expiry_date: Option<NaiveDate>,
-    pub inventory_adjustment_reason_id: Option<String>,
+    pub reason_option_id: Option<String>,
     pub barcode: Option<String>,
     pub item_variant_id: Option<String>,
+    pub vvm_status_id: Option<String>,
+    pub donor_id: Option<String>,
+    pub campaign_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -68,9 +71,9 @@ pub fn add_new_stock_line(
 
             // Add inventory adjustment reason to the invoice line
             let invoice_line_repo = InvoiceLineRowRepository::new(connection);
-            invoice_line_repo.update_inventory_adjustment_reason_id(
+            invoice_line_repo.update_reason_option_id(
                 &update_inventory_adjustment_reason.invoice_line_id,
-                update_inventory_adjustment_reason.reason_id,
+                update_inventory_adjustment_reason.reason_option_id,
             )?;
 
             // Set invoice to verified
@@ -121,8 +124,8 @@ mod test {
             MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentType, InvoiceFilter,
-        InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, InvoiceStatus,
+        EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository,
+        InvoiceStatus, ReasonOptionRow, ReasonOptionType,
     };
     use util::inline_edit;
 
@@ -138,19 +141,19 @@ mod test {
 
     #[actix_rt::test]
     async fn add_new_stock_line_errors() {
-        fn addition_reason() -> InventoryAdjustmentReasonRow {
-            InventoryAdjustmentReasonRow {
+        fn addition_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
                 id: "addition".to_string(),
                 reason: "test addition".to_string(),
                 is_active: true,
-                r#type: InventoryAdjustmentType::Positive,
+                r#type: ReasonOptionType::PositiveInventoryAdjustment,
             }
         }
         let (_, _, connection_manager, _) = setup_all_with_data(
             "add_new_stock_line_errors",
             MockDataInserts::all(),
             MockData {
-                inventory_adjustment_reasons: vec![addition_reason()],
+                reason_options: vec![addition_reason()],
                 ..Default::default()
             },
         )
@@ -181,7 +184,7 @@ mod test {
                 AddNewStockLine {
                     stock_line_id: "new".to_string(),
                     number_of_packs: 1.0,
-                    inventory_adjustment_reason_id: None,
+                    reason_option_id: None,
                     ..Default::default()
                 }
             ),
@@ -195,7 +198,7 @@ mod test {
                 AddNewStockLine {
                     stock_line_id: "new".to_string(),
                     number_of_packs: 2.0,
-                    inventory_adjustment_reason_id: Some("invalid".to_string()),
+                    reason_option_id: Some("invalid".to_string()),
                     ..Default::default()
                 }
             ),
@@ -220,19 +223,19 @@ mod test {
 
     #[actix_rt::test]
     async fn add_new_stock_line_success() {
-        fn addition_reason() -> InventoryAdjustmentReasonRow {
-            InventoryAdjustmentReasonRow {
+        fn addition_reason() -> ReasonOptionRow {
+            ReasonOptionRow {
                 id: "addition".to_string(),
                 reason: "test addition".to_string(),
                 is_active: true,
-                r#type: InventoryAdjustmentType::Positive,
+                r#type: ReasonOptionType::PositiveInventoryAdjustment,
             }
         }
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "add_new_stock_line_success",
             MockDataInserts::all(),
             MockData {
-                inventory_adjustment_reasons: vec![addition_reason()],
+                reason_options: vec![addition_reason()],
                 ..Default::default()
             },
         )
@@ -252,7 +255,7 @@ mod test {
                     pack_size: 1.0,
                     number_of_packs: 2.0,
                     item_id: mock_item_a().id,
-                    inventory_adjustment_reason_id: Some(addition_reason().id),
+                    reason_option_id: Some(addition_reason().id),
                     on_hold: true,
                     location: Some(NullableUpdate {
                         value: Some(mock_location_1().id),
@@ -307,7 +310,7 @@ mod test {
             invoice_line_row,
             inline_edit(&invoice_line_row, |mut u| {
                 u.number_of_packs = 2.0;
-                u.inventory_adjustment_reason_id = Some(addition_reason().id);
+                u.reason_option_id = Some(addition_reason().id);
                 u
             })
         );
@@ -334,7 +337,7 @@ mod test {
                 pack_size: 1.0,
                 number_of_packs: 2.0,
                 item_id: mock_item_a().id,
-                inventory_adjustment_reason_id: None, // Check *no* error when reasons not defined and not provided
+                reason_option_id: None, // Check *no* error when reasons not defined and not provided
                 ..Default::default()
             },
         );

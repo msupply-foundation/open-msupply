@@ -24,13 +24,14 @@ export const Search = () => {
 
   useEffect(() => {
     return () => resetSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onSearch = (value: string) => {
     setInput(value);
     // Only search when 3+ characters are entered
     if (value.length > 0) {
-      let found = search(value);
+      const found = search(value);
 
       found != -1 && scrollToIndex(found);
     } else resetSearch();
