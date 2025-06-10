@@ -309,6 +309,7 @@ mod tests {
             ("stock_line_1".to_string(), Some("donor_name_id".to_string())), // Updated from sync
             ("stock_line_2".to_string(), Some("donor_name_id".to_string())), // Updated from sync
             ("stock_line_3".to_string(), None), // No sync data
+            ("stock_line_4".to_string(), None), // Empty donor_id in sync data
         ];
         assert_eq!(stock_lines, expected);
 
