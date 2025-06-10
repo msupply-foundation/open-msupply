@@ -93,6 +93,8 @@ jobs:
     needs: [build-server, build-dev-client]
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      image_tag: ${{ env.VERSION }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -139,3 +141,12 @@ jobs:
           push: true
           tags: |
             msupplyfoundation/omsupply:${{ env.VERSION }}-dev
+
+  trigger-plugin-tests:
+    name: Trigger Plugin Tests
+    needs: dockerise
+    uses: ./.github/workflows/trigger-plugin-tests.yml
+    with:
+      image_tag: ${{ needs.dockerise.outputs.image_tag }}
+    secrets:
+      ORG_WORKFLOW_TOKEN: ${{ secrets.ORG_WORKFLOW_TOKEN }}
