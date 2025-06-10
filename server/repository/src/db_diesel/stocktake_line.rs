@@ -55,14 +55,13 @@ impl StocktakeLineFilter {
 pub enum StocktakeLineSortField {
     ItemCode,
     ItemName,
-    /// Stocktake line batch
     Batch,
-    /// Stocktake line expiry date
     ExpiryDate,
-    /// Stocktake line pack size
     PackSize,
-    /// Stocktake line item stock location code
     LocationCode,
+    SnapshotNumberOfPacks,
+    CountedNumberOfPacks,
+    ReasonOption,
 }
 
 pub type StocktakeLineSort = Sort<StocktakeLineSortField>;
@@ -144,6 +143,15 @@ impl<'a> StocktakeLineRepository<'a> {
                 }
                 StocktakeLineSortField::LocationCode => {
                     apply_sort_no_case!(query, sort, location::code);
+                }
+                StocktakeLineSortField::SnapshotNumberOfPacks => {
+                    apply_sort!(query, sort, stocktake_line::snapshot_number_of_packs);
+                }
+                StocktakeLineSortField::CountedNumberOfPacks => {
+                    apply_sort!(query, sort, stocktake_line::counted_number_of_packs);
+                }
+                StocktakeLineSortField::ReasonOption => {
+                    apply_sort_no_case!(query, sort, stocktake_line::reason_option_id);
                 }
             };
         } else {
