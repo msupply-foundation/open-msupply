@@ -16,7 +16,11 @@ import {
   MasterListSearchInput,
   MasterListRowFragment,
 } from '@openmsupply-client/system';
-import { Box, Formatter } from '@openmsupply-client/common';
+import {
+  Box,
+  Formatter,
+  StockLineFilterInput,
+} from '@openmsupply-client/common';
 import {
   CreateStocktakeInput,
   defaultCreateStocktakeInput,
@@ -48,12 +52,12 @@ export const CreateStocktakeModal = ({
     onClose,
     disableBackdrop: true,
   });
+
+  const [stockFilter, setStockFilter] = useState<StockLineFilterInput>();
   const { data: stockData, isLoading: stockIsLoading } = useStockList({
-    sortBy: {
-      key: 'expiryDate',
-      direction: 'asc',
-    },
+    filterBy: stockFilter,
   });
+
   const [createStocktakeArgs, setCreateStocktakeArgs] =
     useState<CreateStocktakeInput>(defaultCreateStocktakeInput);
   const [selectedLocation, setSelectedLocation] =
@@ -62,6 +66,58 @@ export const CreateStocktakeModal = ({
     useState<MasterListRowFragment | null>(null);
 
   const { localisedDate } = useFormatDateTime();
+
+  const handleLocationChange = (location: LocationRowFragment | null) => {
+    setSelectedLocation(location);
+    setCreateStocktakeArgs(prev => ({
+      ...prev,
+      locationId: location?.id ?? '',
+    }));
+    setStockFilter(prev => ({
+      ...prev,
+      location: {
+        id: { equalTo: location?.id },
+      },
+    }));
+  };
+
+  const handleMasterListChange = (masterList: MasterListRowFragment | null) => {
+    setSelectedMasterList(masterList);
+    setCreateStocktakeArgs(prev => ({
+      ...prev,
+      masterListId: masterList?.id ?? '',
+    }));
+    setStockFilter(prev => ({
+      ...prev,
+      masterList: {
+        id: { equalTo: masterList?.id },
+      },
+    }));
+  };
+
+  const handleItemWithStockChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setCreateStocktakeArgs(prev => ({
+      ...prev,
+      itemsHaveStock: event.target.checked,
+    }));
+    setStockFilter(prev => ({
+      ...prev,
+      hasPacksInStore: event.target.checked,
+    }));
+  };
+
+  const handleExpiresBeforeChange = (date: Date | null) => {
+    setCreateStocktakeArgs(prev => ({
+      ...prev,
+      expiresBefore: Formatter.naiveDate(date),
+    }));
+    setStockFilter(prev => ({
+      ...prev,
+      expiryDate: { beforeOrEqualTo: Formatter.naiveDate(date) },
+    }));
+  };
 
   const generateComment = () => {
     const { locationId, masterListId, itemsHaveStock, expiresBefore } =
@@ -158,13 +214,7 @@ export const CreateStocktakeModal = ({
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
                   <MasterListSearchInput
-                    onChange={masterList => {
-                      setSelectedMasterList(masterList);
-                      setCreateStocktakeArgs(prev => ({
-                        ...prev,
-                        masterListId: masterList?.id ?? '',
-                      }));
-                    }}
+                    onChange={handleMasterListChange}
                     disabled={false}
                     selectedMasterList={
                       createStocktakeArgs.masterListId
@@ -180,13 +230,7 @@ export const CreateStocktakeModal = ({
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
                   <LocationSearchInput
-                    onChange={location => {
-                      setSelectedLocation(location);
-                      setCreateStocktakeArgs(prev => ({
-                        ...prev,
-                        locationId: location?.id ?? '',
-                      }));
-                    }}
+                    onChange={handleLocationChange}
                     width={380}
                     disabled={false}
                     selectedLocation={
@@ -207,12 +251,7 @@ export const CreateStocktakeModal = ({
                     <Checkbox
                       style={{ paddingLeft: 0 }}
                       checked={!!createStocktakeArgs.itemsHaveStock}
-                      onChange={event => {
-                        setCreateStocktakeArgs(prev => ({
-                          ...prev,
-                          itemsHaveStock: event.target.checked,
-                        }));
-                      }}
+                      onChange={handleItemWithStockChange}
                     />
                   )
                 }
@@ -227,12 +266,7 @@ export const CreateStocktakeModal = ({
                         ? new Date(createStocktakeArgs.expiresBefore)
                         : null
                     }
-                    onChange={date => {
-                      setCreateStocktakeArgs(prev => ({
-                        ...prev,
-                        expiresBefore: Formatter.naiveDate(date) ?? null,
-                      }));
-                    }}
+                    onChange={handleExpiresBeforeChange}
                   />
                 }
                 label={t('label.items-expiring-before')}
