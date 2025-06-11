@@ -64,12 +64,22 @@ pub struct ClinicianRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> ClinicianRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
-        ClinicianRowRepository { connection }
+pub trait ClinicianRowRepositoryTrait {
+    fn find_one_by_id(&self, row_id: &str) -> Result<Option<ClinicianRow>, RepositoryError>;
+    fn upsert_one(&self, row: &ClinicianRow) -> Result<i64, RepositoryError>;
+    fn delete(&self, row_id: &str) -> Result<(), RepositoryError>;
+}
+
+impl<'a> ClinicianRowRepositoryTrait for ClinicianRowRepository<'a> {
+    fn find_one_by_id(&self, row_id: &str) -> Result<Option<ClinicianRow>, RepositoryError> {
+        let result = clinician::dsl::clinician
+            .filter(clinician::dsl::id.eq(row_id))
+            .first(self.connection.lock().connection())
+            .optional();
+        result.map_err(RepositoryError::from)
     }
 
-    pub fn upsert_one(&self, row: &ClinicianRow) -> Result<i64, RepositoryError> {
+    fn upsert_one(&self, row: &ClinicianRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(clinician::dsl::clinician)
             .values(row)
             .on_conflict(clinician::dsl::id)
@@ -78,6 +88,18 @@ impl<'a> ClinicianRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         insert_or_ignore_clinician_link(self.connection, row)?;
         self.insert_changelog(row, RowActionType::Upsert)
+    }
+
+    fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(clinician::dsl::clinician.filter(clinician::dsl::id.eq(row_id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+}
+
+impl<'a> ClinicianRowRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        ClinicianRowRepository { connection }
     }
 
     fn insert_changelog(
@@ -95,23 +117,6 @@ impl<'a> ClinicianRowRepository<'a> {
 
         ChangelogRepository::new(self.connection).insert(&row)
     }
-
-    pub fn find_one_by_id_option(
-        &self,
-        row_id: &str,
-    ) -> Result<Option<ClinicianRow>, RepositoryError> {
-        let result = clinician::dsl::clinician
-            .filter(clinician::dsl::id.eq(row_id))
-            .first(self.connection.lock().connection())
-            .optional();
-        result.map_err(RepositoryError::from)
-    }
-
-    pub fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(clinician::dsl::clinician.filter(clinician::dsl::id.eq(row_id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
 }
 
 pub struct ClinicianRowDelete(pub String);
@@ -125,9 +130,27 @@ impl Upsert for ClinicianRow {
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            ClinicianRowRepository::new(con).find_one_by_id_option(&self.id),
+            ClinicianRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+#[derive(Default)]
+pub struct MockClinicianRowRepository {
+    pub find_one_by_id_result: Option<ClinicianRow>,
+}
+
+impl ClinicianRowRepositoryTrait for MockClinicianRowRepository {
+    fn find_one_by_id(&self, _row_id: &str) -> Result<Option<ClinicianRow>, RepositoryError> {
+        Ok(self.find_one_by_id_result.clone())
+    }
+
+    fn upsert_one(&self, _row: &ClinicianRow) -> Result<i64, RepositoryError> {
+        Ok(0)
+    }
+
+    fn delete(&self, _row_id: &str) -> Result<(), RepositoryError> {
+        Ok(())
     }
 }
 
@@ -137,7 +160,7 @@ mod test {
 
     use crate::{
         mock::MockDataInserts, test_db::setup_all, ClinicianRow, ClinicianRowRepository,
-        RepositoryError,
+        ClinicianRowRepositoryTrait, RepositoryError,
     };
 
     #[actix_rt::test]
