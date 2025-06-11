@@ -110,10 +110,6 @@ mod test {
             ..Repositories::test_defaults()
         };
 
-        // let mock_repo = MockClinicianRowRepository {
-        //     find_one_by_id_result: Some(ClinicianRow::default()), // Simulate existing clinician
-        // };
-
         let existing_clinician = InsertClinician {
             id: "existing_id".to_string(),
             code: "TC".to_string(),

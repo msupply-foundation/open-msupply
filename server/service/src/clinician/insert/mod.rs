@@ -31,11 +31,10 @@ pub struct InsertClinician {
 
 pub fn insert_clinician(
     ctx: &ServiceContext,
-    store_id: &str,
     input: InsertClinician,
 ) -> Result<ClinicianRow, InsertClinicianError> {
     let input = input.clone();
-    let store_id = store_id.to_string();
+    let store_id = &ctx.store_id;
 
     let new_clinician = ctx
         .connection
@@ -67,5 +66,54 @@ pub fn insert_clinician(
 impl From<RepositoryError> for InsertClinicianError {
     fn from(error: RepositoryError) -> Self {
         InsertClinicianError::DatabaseError(error)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::{mock_store_a, MockDataInserts},
+        ClinicianRowRepository, ClinicianRowRepositoryTrait,
+    };
+
+    use crate::{
+        clinician::insert::InsertClinician,
+        test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+    };
+
+    #[actix_rt::test]
+    async fn insert_clinician_success() {
+        let ServiceTestContext {
+            connection,
+            service_provider,
+            ..
+        } = setup_all_and_service_provider(
+            "insert_clinician_success",
+            MockDataInserts::none().stores(),
+        )
+        .await;
+
+        let repo = ClinicianRowRepository::new(&connection);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = &service_provider.clinician_service;
+
+        let result = service.insert_clinician(
+            &context,
+            InsertClinician {
+                id: "new_id".to_owned(),
+                code: "new_code".to_owned(),
+                initials: "TC".to_string(),
+                last_name: "Clinician".to_string(),
+                ..Default::default()
+            },
+        );
+        assert!(result.is_ok());
+        let result = result.unwrap();
+
+        assert_eq!(result.id, "new_id");
+
+        assert_eq!(repo.find_one_by_id("new_id").unwrap(), Some(result));
     }
 }

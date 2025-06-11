@@ -23,10 +23,9 @@ pub trait ClinicianServiceTrait: Sync + Send {
     fn insert_clinician(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         input: InsertClinician,
     ) -> Result<ClinicianRow, InsertClinicianError> {
-        insert_clinician(ctx, store_id, input)
+        insert_clinician(ctx, input)
     }
 }
 
