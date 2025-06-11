@@ -147,6 +147,6 @@ jobs:
     needs: dockerise
     uses: ./.github/workflows/trigger-plugin-tests.yaml
     with:
-      image_tag: ${{ needs.dockerise.outputs.image_tag }}
+      image_tag: ${{ needs.dockerise.outputs.image_tag }}-dev
     secrets:
       ORG_WORKFLOW_TOKEN: ${{ secrets.ORG_WORKFLOW_TOKEN }}
