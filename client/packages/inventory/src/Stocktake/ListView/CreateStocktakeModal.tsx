@@ -32,7 +32,7 @@ interface NewStocktakeModalProps {
   description?: string;
 }
 
-// Intended behaviour is for the stocktake to generate based on one of the available argument selections only - the user cannot select multiple at once.
+// Intended behaviour is for the stocktake to generate based on multiple argument selections together with a logical AND.
 
 export const CreateStocktakeModal = ({
   open,
@@ -66,26 +66,39 @@ export const CreateStocktakeModal = ({
   const generateComment = () => {
     const { locationId, masterListId, itemsHaveStock, expiresBefore } =
       createStocktakeArgs;
+
+    const comments: string[] = [];
+
     if (masterListId && selectedMasterList) {
-      return t('stocktake.comment-list-template', {
-        list: selectedMasterList.name,
-      });
+      comments.push(
+        t('stocktake.comment-list-template', {
+          list: selectedMasterList.name,
+        })
+      );
     }
 
     if (locationId && selectedLocation) {
-      return t('stocktake.comment-location-template', {
-        location: selectedLocation.code,
-      });
+      comments.push(
+        t('stocktake.comment-location-template', {
+          location: selectedLocation.code,
+        })
+      );
     }
 
     if (itemsHaveStock) {
-      return t('stocktake-comment-items-have-stock-template');
+      comments.push(t('stocktake-comment-items-have-stock-template'));
     }
+
     if (expiresBefore) {
-      return t('stocktake.comment-expires-before-template', {
-        date: localisedDate(expiresBefore),
-      });
+      comments.push(
+        t('stocktake.comment-expires-before-template', {
+          date: localisedDate(expiresBefore),
+        })
+      );
     }
+
+    // Join all comments with AND if there are multiple filters
+    return comments.length > 0 ? comments.join(' AND ') : undefined;
   };
 
   const onSave = () => {
@@ -96,7 +109,7 @@ export const CreateStocktakeModal = ({
       locationId: locationId ? locationId : undefined,
       itemsHaveStock: itemsHaveStock ? itemsHaveStock : undefined,
       expiresBefore: expiresBefore ? expiresBefore : undefined,
-      // max of one of the above args should be defined per stocktake
+      // Allow multiple filters to be applied together with logical AND
       isInitialStocktake: false,
       description,
       comment: generateComment(),
@@ -147,10 +160,10 @@ export const CreateStocktakeModal = ({
                   <MasterListSearchInput
                     onChange={masterList => {
                       setSelectedMasterList(masterList);
-                      setCreateStocktakeArgs({
-                        ...defaultCreateStocktakeInput,
+                      setCreateStocktakeArgs(prev => ({
+                        ...prev,
                         masterListId: masterList?.id ?? '',
-                      });
+                      }));
                     }}
                     disabled={false}
                     selectedMasterList={
@@ -169,10 +182,10 @@ export const CreateStocktakeModal = ({
                   <LocationSearchInput
                     onChange={location => {
                       setSelectedLocation(location);
-                      setCreateStocktakeArgs({
-                        ...defaultCreateStocktakeInput,
+                      setCreateStocktakeArgs(prev => ({
+                        ...prev,
                         locationId: location?.id ?? '',
-                      });
+                      }));
                     }}
                     width={380}
                     disabled={false}
@@ -195,10 +208,10 @@ export const CreateStocktakeModal = ({
                       style={{ paddingLeft: 0 }}
                       checked={!!createStocktakeArgs.itemsHaveStock}
                       onChange={event => {
-                        setCreateStocktakeArgs({
-                          ...defaultCreateStocktakeInput,
+                        setCreateStocktakeArgs(prev => ({
+                          ...prev,
                           itemsHaveStock: event.target.checked,
-                        });
+                        }));
                       }}
                     />
                   )
@@ -215,10 +228,10 @@ export const CreateStocktakeModal = ({
                         : null
                     }
                     onChange={date => {
-                      setCreateStocktakeArgs({
-                        ...defaultCreateStocktakeInput,
+                      setCreateStocktakeArgs(prev => ({
+                        ...prev,
                         expiresBefore: Formatter.naiveDate(date) ?? null,
-                      });
+                      }));
                     }}
                   />
                 }
