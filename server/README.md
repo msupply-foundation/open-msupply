@@ -13,7 +13,7 @@ Remote server can use `sqlite` or `postgres`, quick start guide is for `sqlite` 
 
 ## Dependencies
 
-N.B. The version of rust used by open mSupply on 9.6.25 is 1.84, so, once you've installed rust in the guides below, set up your environment to use that version. You can do that by running `rustup install 1.84` and then `rustup default 1.84`.
+N.B. The version of rust used by open mSupply as of June 2025 is 1.84, so, once you've installed rust in the guides below, set up your environment to use that version. You can do that by running `rustup install 1.84` and then `rustup default 1.84`.
 
 ### Windows
 
