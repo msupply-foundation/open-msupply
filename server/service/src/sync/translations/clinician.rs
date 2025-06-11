@@ -39,6 +39,9 @@ pub struct LegacyClinicianRow {
     pub is_female: bool,
     #[serde(rename = "active")]
     pub is_active: bool,
+
+    #[serde(deserialize_with = "empty_str_as_option_string", rename = "store_ID")]
+    pub store_id: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -79,6 +82,7 @@ impl SyncTranslation for ClinicianTranslation {
             email,
             is_female,
             is_active,
+            store_id,
         } = serde_json::from_str::<LegacyClinicianRow>(&sync_record.data)?;
 
         let result = ClinicianRow {
@@ -98,6 +102,7 @@ impl SyncTranslation for ClinicianTranslation {
                 Some(GenderType::Male)
             },
             is_active,
+            store_id,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -120,6 +125,7 @@ impl SyncTranslation for ClinicianTranslation {
             email,
             gender,
             is_active,
+            store_id,
         } = ClinicianRowRepository::new(connection)
             .find_one_by_id_option(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -144,6 +150,7 @@ impl SyncTranslation for ClinicianTranslation {
             email,
             is_female,
             is_active,
+            store_id,
         };
         Ok(PushTranslateResult::upsert(
             changelog,
