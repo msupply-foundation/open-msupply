@@ -224,24 +224,22 @@ export const SyncModal = ({
           </Row>
           <ServerInfo />
         </Grid>
-        {!isExtraSmallScreen && (
-          <Grid
-            container
-            flexDirection="column"
-            justifyContent="flex-start"
-            sx={theme => ({
-              [theme.breakpoints.down('sm')]: {
-                minWidth: 300,
-                padding: 0,
-              },
-              px: 2,
-              minWidth: 650,
-            })}
-            flexWrap="nowrap"
-          >
-            <SyncProgress syncStatus={syncStatus} isOperational={true} />
-          </Grid>
-        )}
+        <Grid
+          container
+          flexDirection="column"
+          justifyContent="flex-start"
+          sx={theme => ({
+            [theme.breakpoints.down('sm')]: {
+              minWidth: 300,
+              padding: 0,
+            },
+            px: 2,
+            minWidth: 650,
+          })}
+          flexWrap="nowrap"
+        >
+          <SyncProgress syncStatus={syncStatus} isOperational={true} />
+        </Grid>
       </Grid>
     </BasicModal>
   );
