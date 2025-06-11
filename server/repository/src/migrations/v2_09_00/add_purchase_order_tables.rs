@@ -35,6 +35,7 @@ impl MigrationFragment for Migrate {
                     store_id TEXT REFERENCES store(id),
                     user_id TEXT,
                     supplier_name_link_id TEXT REFERENCES name_link(id),
+                    -- corresponds to OG "serial_number"
                     purchase_order_number INTEGER,
                     status {purchase_order_status} NOT NULL,
                     created_datetime {DATETIME} NOT NULL,
