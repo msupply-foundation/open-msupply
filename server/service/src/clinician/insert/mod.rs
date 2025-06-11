@@ -1,13 +1,17 @@
 use repository::{
     clinician_row::{ClinicianRow, ClinicianRowRepository},
-    ClinicianRowRepositoryTrait, GenderType, RepositoryError, StoreRowRepository, TransactionError,
+    ClinicianRowRepositoryTrait, ClinicianStoreJoinRowRepository, GenderType, RepositoryError,
+    StoreRowRepository, TransactionError,
 };
 mod generate;
 mod validate;
 use generate::{generate, GenerateInput};
 use validate::validate;
 
-use crate::{clinician::insert::validate::Repositories, service_provider::ServiceContext};
+use crate::{
+    clinician::insert::{generate::GenerateResult, validate::Repositories},
+    service_provider::ServiceContext,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum InsertClinicianError {
@@ -41,6 +45,8 @@ pub fn insert_clinician(
         .transaction_sync(|connection| {
             let clinician_repo = ClinicianRowRepository::new(connection);
             let store_repo = StoreRowRepository::new(connection);
+            let clinician_store_join_repo = ClinicianStoreJoinRowRepository::new(connection);
+
             validate(
                 Repositories {
                     clinician_row: Box::new(clinician_repo),
@@ -50,15 +56,18 @@ pub fn insert_clinician(
                 &store_id,
             )?;
 
-            let new_clinician = generate(GenerateInput {
+            let GenerateResult {
+                clinician,
+                clinician_store_join,
+            } = generate(GenerateInput {
                 store_id: store_id.to_string(),
                 insert_input: input.clone(),
             });
 
-            let clinician_repo = ClinicianRowRepository::new(connection);
-            clinician_repo.upsert_one(&new_clinician)?;
+            ClinicianRowRepository::new(connection).upsert_one(&clinician)?;
+            clinician_store_join_repo.upsert_one(&clinician_store_join)?;
 
-            Ok(new_clinician)
+            Ok(clinician)
         })
         .map_err(|error: TransactionError<InsertClinicianError>| error.to_inner_error())?;
     Ok(new_clinician)
@@ -73,7 +82,7 @@ impl From<RepositoryError> for InsertClinicianError {
 mod test {
     use repository::{
         mock::{mock_store_a, MockDataInserts},
-        ClinicianRowRepository, ClinicianRowRepositoryTrait,
+        ClinicianFilter, ClinicianRepository, EqualFilter,
     };
 
     use crate::{
@@ -93,7 +102,6 @@ mod test {
         )
         .await;
 
-        let repo = ClinicianRowRepository::new(&connection);
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
@@ -109,11 +117,16 @@ mod test {
                 ..Default::default()
             },
         );
-        assert!(result.is_ok());
         let result = result.unwrap();
 
         assert_eq!(result.id, "new_id");
 
-        assert_eq!(repo.find_one_by_id("new_id").unwrap(), Some(result));
+        let result = ClinicianRepository::new(&connection)
+            .query_by_filter(
+                &mock_store_a().id,
+                ClinicianFilter::new().id(EqualFilter::equal_to("new_id")),
+            )
+            .unwrap();
+        assert_eq!(result[0].initials, "TC");
     }
 }

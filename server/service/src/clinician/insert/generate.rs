@@ -1,4 +1,5 @@
-use repository::clinician_row::ClinicianRow;
+use repository::{clinician_row::ClinicianRow, ClinicianStoreJoinRow};
+use util::uuid::uuid;
 
 use super::InsertClinician;
 
@@ -7,12 +8,17 @@ pub struct GenerateInput {
     pub insert_input: InsertClinician,
 }
 
+pub struct GenerateResult {
+    pub clinician: ClinicianRow,
+    pub clinician_store_join: ClinicianStoreJoinRow,
+}
+
 pub fn generate(
     GenerateInput {
         store_id,
         insert_input,
     }: GenerateInput,
-) -> ClinicianRow {
+) -> GenerateResult {
     let InsertClinician {
         id,
         code,
@@ -22,9 +28,9 @@ pub fn generate(
         gender,
     } = insert_input;
 
-    ClinicianRow {
-        id,
-        store_id: Some(store_id),
+    let clinician = ClinicianRow {
+        id: id.clone(),
+        store_id: Some(store_id.clone()),
         code,
         last_name,
         initials,
@@ -38,7 +44,16 @@ pub fn generate(
         phone: None,
         mobile: None,
         email: None,
-    }
+    };
 
-    // TODO also join
+    let clinician_store_join = ClinicianStoreJoinRow {
+        id: uuid(),
+        clinician_link_id: id,
+        store_id,
+    };
+
+    GenerateResult {
+        clinician,
+        clinician_store_join,
+    }
 }
