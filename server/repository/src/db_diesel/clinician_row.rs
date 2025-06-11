@@ -64,19 +64,19 @@ pub struct ClinicianRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-pub trait ClinicianRowRepositoryTrait {
+pub trait ClinicianRowRepositoryTrait<'a> {
     fn find_one_by_id(&self, row_id: &str) -> Result<Option<ClinicianRow>, RepositoryError>;
     fn upsert_one(&self, row: &ClinicianRow) -> Result<i64, RepositoryError>;
     fn delete(&self, row_id: &str) -> Result<(), RepositoryError>;
 }
 
-impl<'a> ClinicianRowRepositoryTrait for ClinicianRowRepository<'a> {
+impl<'a> ClinicianRowRepositoryTrait<'a> for ClinicianRowRepository<'a> {
     fn find_one_by_id(&self, row_id: &str) -> Result<Option<ClinicianRow>, RepositoryError> {
         let result = clinician::dsl::clinician
             .filter(clinician::dsl::id.eq(row_id))
             .first(self.connection.lock().connection())
-            .optional();
-        result.map_err(RepositoryError::from)
+            .optional()?;
+        Ok(result)
     }
 
     fn upsert_one(&self, row: &ClinicianRow) -> Result<i64, RepositoryError> {
@@ -140,7 +140,13 @@ pub struct MockClinicianRowRepository {
     pub find_one_by_id_result: Option<ClinicianRow>,
 }
 
-impl ClinicianRowRepositoryTrait for MockClinicianRowRepository {
+impl MockClinicianRowRepository {
+    pub fn boxed() -> Box<dyn ClinicianRowRepositoryTrait<'static>> {
+        Box::new(MockClinicianRowRepository::default())
+    }
+}
+
+impl<'a> ClinicianRowRepositoryTrait<'a> for MockClinicianRowRepository {
     fn find_one_by_id(&self, _row_id: &str) -> Result<Option<ClinicianRow>, RepositoryError> {
         Ok(self.find_one_by_id_result.clone())
     }
