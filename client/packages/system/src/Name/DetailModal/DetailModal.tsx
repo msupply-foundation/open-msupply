@@ -10,6 +10,7 @@ import {
   Box,
   BasicSpinner,
   MuiLink,
+  BasicTextInput,
 } from '@openmsupply-client/common';
 import { useName } from '../api';
 import { NameRenderer } from '../Components';
@@ -105,21 +106,18 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
             />
             <DetailInputWithLabelRow
               label={t('label.address')}
-              inputProps={{
-                value: data?.address1,
-                disabled: isDisabled,
-                maxRows: 3,
-                multiline: true,
-              }}
-            />
-            <DetailInputWithLabelRow
-              label={t('label.address')}
-              inputProps={{
-                value: data?.address2,
-                disabled: isDisabled,
-                maxRows: 3,
-                multiline: true,
-              }}
+              Input={
+                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
+                  <BasicTextInput
+                    value={data?.address1}
+                    disabled={isDisabled}
+                  />
+                  <BasicTextInput
+                    value={data?.address2}
+                    disabled={isDisabled}
+                  />
+                </Box>
+              }
             />
             <DetailInputWithLabelRow
               label={t('label.country')}
