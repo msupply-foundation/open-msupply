@@ -413,8 +413,8 @@ mod test {
     use util::uuid::uuid;
 
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, CurrencyRow, CurrencyRowRepository, EqualFilter,
-        NameFilter, NameRepository, NameRow, NameRowRepository,
+        mock::MockDataInserts, test_db::setup_all, EqualFilter, NameFilter, NameRepository,
+        NameRow, NameRowRepository,
     };
 
     #[actix_rt::test]
@@ -424,17 +424,6 @@ mod test {
             MockDataInserts::none(),
         )
         .await;
-
-        let currency = CurrencyRow {
-            id: "8009D512AC0E4FD78625E3C8273B0171".to_string(),
-            code: "USD".to_string(),
-            rate: 1.0,
-            is_home_currency: true,
-            ..Default::default()
-        };
-        CurrencyRowRepository::new(&connection)
-            .upsert_one(&currency)
-            .unwrap();
 
         let row_repo = NameRowRepository::new(&connection);
 
