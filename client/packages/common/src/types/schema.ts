@@ -1301,7 +1301,6 @@ export type ColdStorageTypeConnector = {
 
 export type ColdStorageTypeFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
-  minTemperature?: InputMaybe<EqualFilterBigFloatingNumberInput>;
   name?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -6474,6 +6473,96 @@ export enum PropertyNodeValueType {
   String = 'STRING',
 }
 
+export type PurchaseOrderConnector = {
+  __typename: 'PurchaseOrderConnector';
+  nodes: Array<PurchaseOrderNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PurchaseOrderFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  status?: InputMaybe<EqualFilterStringInput>;
+  supplier?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type PurchaseOrderLineConnector = {
+  __typename: 'PurchaseOrderLineConnector';
+  nodes: Array<PurchaseOrderLineNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PurchaseOrderLineNode = {
+  __typename: 'PurchaseOrderLineNode';
+  adjustedQuantity?: Maybe<Scalars['Float']['output']>;
+  expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  itemCode: Scalars['String']['output'];
+  itemName?: Maybe<Scalars['String']['output']>;
+  numberOfPacks?: Maybe<Scalars['Float']['output']>;
+  originalQuantity?: Maybe<Scalars['Float']['output']>;
+  packSize?: Maybe<Scalars['Float']['output']>;
+  requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  totalReceived?: Maybe<Scalars['Float']['output']>;
+};
+
+export type PurchaseOrderNode = {
+  __typename: 'PurchaseOrderNode';
+  additionalInstructions?: Maybe<Scalars['String']['output']>;
+  advancePaidDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  agentCommission?: Maybe<Scalars['Float']['output']>;
+  authorisingOfficer1?: Maybe<Scalars['String']['output']>;
+  authorisingOfficer2?: Maybe<Scalars['String']['output']>;
+  comment?: Maybe<Scalars['String']['output']>;
+  communicationsCharge?: Maybe<Scalars['Float']['output']>;
+  contractSignedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  createdDatetime: Scalars['DateTime']['output'];
+  currencyId?: Maybe<Scalars['String']['output']>;
+  deliveryDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  documentCharge?: Maybe<Scalars['Float']['output']>;
+  donorLinkId?: Maybe<Scalars['String']['output']>;
+  expectedDeliveryDatetime?: Maybe<Scalars['NaiveDate']['output']>;
+  foreignExchangeRate?: Maybe<Scalars['Float']['output']>;
+  freightCharge?: Maybe<Scalars['Float']['output']>;
+  freightConditions?: Maybe<Scalars['String']['output']>;
+  headingMessage?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  insuranceCharge?: Maybe<Scalars['Float']['output']>;
+  lines: PurchaseOrderLineConnector;
+  receivedAtPortDatetime?: Maybe<Scalars['NaiveDate']['output']>;
+  reference: Scalars['String']['output'];
+  sentDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  shippingMethod?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<Scalars['String']['output']>;
+  storeId: Scalars['String']['output'];
+  supplierAgent?: Maybe<Scalars['String']['output']>;
+  supplierDiscountAmount?: Maybe<Scalars['Float']['output']>;
+  supplierDiscountPercentage?: Maybe<Scalars['Float']['output']>;
+  supplierId?: Maybe<Scalars['String']['output']>;
+  targetMonths?: Maybe<Scalars['Float']['output']>;
+};
+
+export type PurchaseOrderResponse = PurchaseOrderNode | RecordNotFound;
+
+export enum PurchaseOrderSortFieldInput {
+  ConfirmedDatetime = 'confirmedDatetime',
+  CreatedDatetime = 'createdDatetime',
+  DeliveryDate = 'deliveryDate',
+  Lines = 'lines',
+  Number = 'number',
+  Status = 'status',
+  Supplier = 'supplier',
+  TargetMonths = 'targetMonths',
+}
+
+export type PurchaseOrderSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: PurchaseOrderSortFieldInput;
+};
+
+export type PurchaseOrdersResponse = PurchaseOrderConnector;
+
 export type Queries = {
   __typename: 'Queries';
   abbreviations: Array<AbbreviationNode>;
@@ -6614,6 +6703,8 @@ export type Queries = {
   programIndicators: ProgramIndicatorResponse;
   programRequisitionSettingsByCustomer: CustomerProgramRequisitionSettingNode;
   programs: ProgramsResponse;
+  purchaseOrder: PurchaseOrderResponse;
+  purchaseOrders: PurchaseOrdersResponse;
   rAndRForm: RnRFormResponse;
   rAndRForms: RnRFormsResponse;
   reasonOptions: ReasonOptionResponse;
@@ -7133,6 +7224,18 @@ export type QueriesProgramsArgs = {
   filter?: InputMaybe<ProgramFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ProgramSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPurchaseOrderArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPurchaseOrdersArgs = {
+  filter?: InputMaybe<PurchaseOrderFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<PurchaseOrderSortInput>>;
   storeId: Scalars['String']['input'];
 };
 

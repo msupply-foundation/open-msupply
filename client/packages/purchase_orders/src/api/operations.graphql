@@ -1,0 +1,92 @@
+fragment PurchaseOrder on PurchaseOrderNode {
+  __typename
+  id
+  additionalInstructions
+  advancePaidDatetime
+  agentCommission
+  authorisingOfficer1
+  authorisingOfficer2
+  comment
+  communicationsCharge
+  contractSignedDatetime
+  createdDatetime
+  currencyId
+  deliveryDatetime
+  documentCharge
+  donorLinkId
+  foreignExchangeRate
+  expectedDeliveryDatetime
+  freightCharge
+  freightConditions
+  headingMessage
+  insuranceCharge
+  receivedAtPortDatetime
+  reference
+  lines {
+    __typename
+    nodes {
+      ...PurchaseOrderLine
+    }
+    totalCount
+  }
+  sentDatetime
+  shippingMethod
+  status
+  storeId
+  supplierAgent
+  supplierDiscountAmount
+  supplierDiscountPercentage
+  supplierId
+  targetMonths
+}
+
+fragment PurchaseOrderLine on PurchaseOrderLineNode {
+  __typename
+  id
+  adjustedQuantity
+  expectedDeliveryDate
+  itemCode
+  itemName
+  numberOfPacks
+  originalQuantity
+  packSize
+  requestedDeliveryDate
+  totalReceived
+}
+
+query purchaseOrders(
+  $first: Int
+  $offset: Int
+  $key: PurchaseOrderSortFieldInput!
+  $desc: Boolean
+  $filter: PurchaseOrderFilterInput
+  $storeId: String!
+) {
+  purchaseOrders(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on PurchaseOrderConnector {
+      __typename
+      nodes {
+        ...PurchaseOrder
+      }
+      totalCount
+    }
+  }
+}
+
+query purchaseOrderById($purchaseOrderId: String!, $storeId: String!) {
+  purchaseOrder(id: $purchaseOrderId, storeId: $storeId) {
+    __typename
+    ... on RecordNotFound {
+      __typename
+      description
+    }
+    ... on PurchaseOrderNode {
+      ...PurchaseOrder
+    }
+  }
+}
