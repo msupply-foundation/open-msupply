@@ -14,7 +14,7 @@ use repository::{
 };
 use service::auth::{Resource, ResourceAccessRequest};
 use service::report::report_service::{GetReportError, GetReportsError};
-use service::{usize_to_u32, ListResult};
+use service::ListResult;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
