@@ -220,8 +220,8 @@ enum Action {
         )]
         path: PathBuf,
         /// Run prettier on the generated typescript files
-        #[clap(long, default_value = "true")]
-        prettify: bool,
+        #[clap(long, short, default_value = "false")]
+        skip_prettify: bool,
     },
 }
 
@@ -713,8 +713,11 @@ async fn main() -> anyhow::Result<()> {
                 );
             }
         }
-        Action::GeneratePluginTypescriptTypes { path, prettify } => {
-            generate_plugin_typescript_types(path, prettify)?;
+        Action::GeneratePluginTypescriptTypes {
+            path,
+            skip_prettify,
+        } => {
+            generate_plugin_typescript_types(path, skip_prettify)?;
         }
     }
 

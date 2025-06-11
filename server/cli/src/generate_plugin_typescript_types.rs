@@ -4,14 +4,14 @@ use log::info;
 use service::backend_plugin::types::generate_typescript_types::export_plugin_typescript;
 use std::{path::PathBuf, process::Command};
 
-pub fn generate_plugin_typescript_types(path: PathBuf, prettify: bool) -> Result<()> {
+pub fn generate_plugin_typescript_types(path: PathBuf, skip_prettify: bool) -> Result<()> {
     info!("Running test to generate TypeScript types...");
 
     export_plugin_typescript(path.clone());
 
     info!("Types generated...");
 
-    if prettify {
+    if !skip_prettify {
         info!("Formatting with prettier...");
 
         run_command_with_error(Command::new("npx").current_dir(path).args([
