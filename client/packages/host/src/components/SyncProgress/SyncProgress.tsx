@@ -10,6 +10,9 @@ import {
   StepDefinition,
   StepperColour,
   useIsCentralServerApi,
+  useMediaQuery,
+  Breakpoints,
+  useAppTheme,
 } from '@openmsupply-client/common';
 import {
   FullSyncStatusFragment,
@@ -46,10 +49,16 @@ export const SyncProgress: FC<SyncProgressProps> = ({
     !!error,
     isOperational
   );
+  const theme = useAppTheme();
+  const isExtraSmallScreen = useMediaQuery(
+    theme.breakpoints.down(Breakpoints.sm)
+  );
 
   return (
     <Box display="flex" flexDirection={'column'}>
-      <HorizontalStepper steps={steps} colour={colour} />
+      {!isExtraSmallScreen && (
+        <HorizontalStepper steps={steps} colour={colour} />
+      )}
       {error && <BoxedErrorWithDetails {...error} />}
     </Box>
   );
