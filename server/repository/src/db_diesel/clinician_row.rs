@@ -22,6 +22,7 @@ table! {
     email -> Nullable<Text>,
     gender -> Nullable<crate::db_diesel::name_row::GenderTypeMapping>,
     is_active -> Bool,
+    store_id -> Nullable<Text>,
   }
 
 }
@@ -41,6 +42,7 @@ pub struct ClinicianRow {
     pub email: Option<String>,
     pub gender: Option<GenderType>,
     pub is_active: bool,
+    pub store_id: Option<String>,
 }
 
 allow_tables_to_appear_in_same_query!(clinician, clinician_link);
@@ -126,5 +128,50 @@ impl Upsert for ClinicianRow {
             ClinicianRowRepository::new(con).find_one_by_id_option(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use util::assert_matches;
+
+    use crate::{
+        mock::MockDataInserts, test_db::setup_all, ClinicianRow, ClinicianRowRepository,
+        RepositoryError,
+    };
+
+    #[actix_rt::test]
+    async fn store_id_reference_constraint() {
+        let (_, connection, _, _) = setup_all(
+            "store_id_reference_constraint",
+            MockDataInserts::none().stores(),
+        )
+        .await;
+
+        let repo = ClinicianRowRepository::new(&connection);
+
+        let clinician = ClinicianRow {
+            id: "no store".to_string(),
+            store_id: None,
+            ..Default::default()
+        };
+        let result = repo.upsert_one(&clinician);
+        assert!(result.is_ok());
+
+        let clinician = ClinicianRow {
+            id: "invalid store".to_string(),
+            store_id: Some("invalid_store".to_string()),
+            ..Default::default()
+        };
+        let result = repo.upsert_one(&clinician);
+        assert_matches!(result, Err(RepositoryError::ForeignKeyViolation(_)));
+
+        let clinician = ClinicianRow {
+            id: "valid store".to_string(),
+            store_id: Some("store_a".to_string()),
+            ..Default::default()
+        };
+        let result = repo.upsert_one(&clinician);
+        assert!(result.is_ok());
     }
 }
