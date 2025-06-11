@@ -1301,7 +1301,6 @@ export type ColdStorageTypeConnector = {
 
 export type ColdStorageTypeFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
-  minTemperature?: InputMaybe<EqualFilterBigFloatingNumberInput>;
   name?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -10032,6 +10031,7 @@ export enum UserPermission {
   ItemNamesCodesAndUnitsMutate = 'ITEM_NAMES_CODES_AND_UNITS_MUTATE',
   LocationMutate = 'LOCATION_MUTATE',
   LogQuery = 'LOG_QUERY',
+  MutateClinician = 'MUTATE_CLINICIAN',
   NamePropertiesMutate = 'NAME_PROPERTIES_MUTATE',
   OutboundShipmentMutate = 'OUTBOUND_SHIPMENT_MUTATE',
   OutboundShipmentQuery = 'OUTBOUND_SHIPMENT_QUERY',
