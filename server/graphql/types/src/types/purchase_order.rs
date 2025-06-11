@@ -1,5 +1,11 @@
-use async_graphql::{Object, SimpleObject};
+use self::dataloader::DataLoader;
+use async_graphql::*;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
+use graphql_core::loader::PurchaseOrderLinesByPurchaseOrderIdLoader;
+use graphql_core::ContextExt;
+use repository::PurchaseOrderRow;
+
+use crate::types::PurchaseOrderLineConnector;
 
 #[derive(PartialEq, Debug)]
 pub struct PurchaseOrderNode {
@@ -9,44 +15,6 @@ pub struct PurchaseOrderNode {
 pub struct PurchaseOrderConnector {
     pub total_count: u32,
     pub nodes: Vec<PurchaseOrderNode>,
-}
-
-// TODO remove dummy:
-#[derive(PartialEq, Debug, Default)]
-pub struct PurchaseOrderRow {
-    pub id: String,
-    pub created_datetime: NaiveDateTime,
-    pub confirmed_datetime: Option<NaiveDateTime>,
-    pub delivery_datetime: Option<NaiveDateTime>,
-    // pub status: crate::db_diesel::purchase_order_row::PurchaseOrderStatus,
-    pub status: Option<String>,
-    pub target_months: Option<f64>,
-    pub comment: Option<String>,
-    pub supplier_id: Option<String>,
-    pub supplier_discount_percentage: Option<f64>,
-    pub supplier_discount_amount: Option<f64>,
-    pub donor_link_id: Option<String>,
-    pub reference: String,
-    pub currency_id: Option<String>,
-    pub foreign_exchange_rate: Option<f64>,
-    pub shipping_method: Option<String>,
-    pub sent_datetime: Option<NaiveDateTime>,
-    pub contract_signed_datetime: Option<NaiveDateTime>,
-    pub advance_paid_datetime: Option<NaiveDateTime>,
-    pub received_at_port_datetime: Option<NaiveDate>,
-    pub expected_delivery_datetime: Option<NaiveDate>,
-    pub supplier_agent: Option<String>,
-    pub authorising_officer_1: Option<String>,
-    pub authorising_officer_2: Option<String>,
-    pub additional_instructions: Option<String>,
-    pub heading_message: Option<String>,
-    pub agent_commission: Option<f64>,
-    pub document_charge: Option<f64>,
-    pub communications_charge: Option<f64>,
-    pub insurance_charge: Option<f64>,
-    pub freight_charge: Option<f64>,
-    pub freight_conditions: Option<String>,
-    pub store_id: String,
 }
 
 #[Object]
@@ -145,7 +113,13 @@ impl PurchaseOrderNode {
         &self.row().store_id
     }
 
-    // TODO add lines
+    pub async fn lines(&self, ctx: &Context<'_>) -> Result<PurchaseOrderLineConnector> {
+        let loader = ctx.get_loader::<DataLoader<PurchaseOrderLinesByPurchaseOrderIdLoader>>();
+        let result_option = loader.load_one(self.row().id.clone()).await?;
+
+        let result = result_option.unwrap_or(vec![]);
+        Ok(PurchaseOrderLineConnector::from_vec(result))
+    }
 }
 
 impl PurchaseOrderNode {

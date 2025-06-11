@@ -4,8 +4,8 @@ use graphql_core::{
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
 };
-use graphql_types::types::{PurchaseOrderConnector, PurchaseOrderNode, PurchaseOrderRow};
-use repository::mock::mock_store_a;
+use graphql_types::types::{PurchaseOrderConnector, PurchaseOrderNode};
+use repository::{mock::mock_store_a, PurchaseOrderRow};
 use util::inline_init;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
