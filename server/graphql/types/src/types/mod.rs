@@ -149,6 +149,9 @@ pub use self::draft_stock_out_line::*;
 pub mod vvm_status_log;
 pub use self::vvm_status_log::*;
 
+pub mod purchase_order;
+pub use self::purchase_order::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

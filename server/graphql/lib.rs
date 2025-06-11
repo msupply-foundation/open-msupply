@@ -46,6 +46,8 @@ use graphql_plugin::{
 use graphql_preference::{PreferenceMutations, PreferenceQueries};
 use graphql_printer::{PrinterMutations, PrinterQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
+use graphql_purchase_order::PurchaseOrderQueries;
+// use graphql_purchase_order_line::PurchaseOrderLineQueries;
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
@@ -176,6 +178,8 @@ pub struct Queries(
     pub CentralServerQueries,
     pub VVMQueries,
     pub CampaignQueries,
+    pub PurchaseOrderQueries,
+    // pub PurchaseOrderLineQueries,
 );
 
 impl Queries {
@@ -209,6 +213,8 @@ impl Queries {
             CentralServerQueries,
             VVMQueries,
             CampaignQueries,
+            PurchaseOrderQueries,
+            // PurchaseOrderLineQueries,
         )
     }
 }
