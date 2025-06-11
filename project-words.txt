@@ -1,5 +1,6 @@
 actix
 anymap
+authorised
 authorising
 chrono
 clearable

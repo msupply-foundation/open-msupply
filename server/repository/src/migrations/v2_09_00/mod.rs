@@ -16,8 +16,10 @@ impl Migration for V2_09_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_purchase_order_tables::Migrate)];
-        vec![Box::new(process_clinician_store_join_deletes::Migrate)]
+        vec![
+            Box::new(add_purchase_order_tables::Migrate),
+            Box::new(process_clinician_store_join_deletes::Migrate),
+        ]
     }
 }
 

@@ -8,18 +8,40 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        let purchase_order_status = if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
+                CREATE TYPE purchase_order_status AS ENUM
+                    (
+                        'NEW',
+                        'CONFIRMED',
+                        'AUTHORISED',
+                        'FINALISED'
+                    );
+            "#
+            )?;
+
+            "purchase_order_status"
+        } else {
+            "TEXT"
+        };
+
         sql!(
             connection,
             r#"
                 CREATE TABLE purchase_order (
                     id TEXT NOT NULL PRIMARY KEY,
-                    created_datetime {DATETIME},
+                    store_id TEXT REFERENCES store(id),
+                    user_id TEXT,
+                    supplier_name_link_id TEXT REFERENCES name_link(id),
+                    purchase_order_number INTEGER,
+                    status {purchase_order_status} NOT NULL,
+                    created_datetime {DATETIME} NOT NULL,
                     confirmed_datetime {DATETIME},
-                    delivery_datetime {DATETIME},
-                    status TEXT,
+                    delivered_datetime {DATETIME},
                     target_months {DOUBLE},
                     comment TEXT,
-                    supplier_id TEXT REFERENCES name(id),
                     supplier_discount_percentage {DOUBLE},
                     supplier_discount_amount {DOUBLE},
                     donor_link_id TEXT REFERENCES name_link(id),
@@ -56,8 +78,10 @@ impl MigrationFragment for Migrate {
                     item_name TEXT,
                     number_of_packs {DOUBLE},
                     pack_size {DOUBLE},
-                    original_quantity {DOUBLE},
-                    adjusted_quantity {DOUBLE},
+                    -- corresponds to OG "original_quantity"
+                    requested_quantity {DOUBLE},
+                    -- corresponds to OG "adjusted_quantity"
+                    authorised_quantity {DOUBLE},
                     total_received {DOUBLE},
                     requested_delivery_date {DATE},
                     expected_delivery_date {DATE}
