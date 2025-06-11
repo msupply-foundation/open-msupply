@@ -120,41 +120,47 @@ export const CreateStocktakeModal = ({
   };
 
   const generateComment = () => {
-    const { locationId, masterListId, itemsHaveStock, expiresBefore } =
-      createStocktakeArgs;
+    const { itemsHaveStock, expiresBefore } = createStocktakeArgs;
 
-    const comments: string[] = [];
+    const filterComments: string[] = [];
 
-    if (masterListId && selectedMasterList) {
-      comments.push(
-        t('stocktake.comment-list-template', {
-          list: selectedMasterList.name,
+    if (!!selectedMasterList) {
+      filterComments.push(
+        t('stocktake.master-list-template', {
+          masterList: selectedMasterList.name,
         })
       );
     }
-
-    if (locationId && selectedLocation) {
-      comments.push(
-        t('stocktake.comment-location-template', {
+    if (!!selectedLocation) {
+      filterComments.push(
+        t('stocktake.location-template', {
           location: selectedLocation.code,
         })
       );
     }
 
     if (itemsHaveStock) {
-      comments.push(t('stocktake-comment-items-have-stock-template'));
+      filterComments.push(t('stocktake.items-in-stock-template'));
     }
 
     if (expiresBefore) {
-      comments.push(
-        t('stocktake.comment-expires-before-template', {
+      filterComments.push(
+        t('stocktake.expires-before-template', {
           date: localisedDate(expiresBefore),
         })
       );
     }
 
-    // Join all comments with AND if there are multiple filters
-    return comments.length > 0 ? comments.join(' AND ') : undefined;
+    if (filterComments.length === 0) return undefined;
+    if (filterComments.length === 1)
+      return t('stocktake.comment-template', { filters: filterComments[0] });
+
+    const comments = t('stocktake.comment-and-template', {
+      start: filterComments.slice(0, -1).join(', '),
+      end: filterComments[filterComments.length - 1],
+    });
+
+    return t('stocktake.comment-template', { filters: comments });
   };
 
   const onSave = () => {
