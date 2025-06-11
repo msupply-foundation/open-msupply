@@ -1,1 +1,1 @@
-export * from './ListView';
+export { PrescriptionListView } from './ListView';

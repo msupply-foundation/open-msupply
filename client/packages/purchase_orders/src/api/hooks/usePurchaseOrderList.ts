@@ -16,7 +16,7 @@ export type ListParams = {
   filterBy: FilterByWithBoolean | null;
 };
 
-export const usePrescriptionList = (queryParams: ListParams) => {
+export const usePurchaseOrderList = (queryParams: ListParams) => {
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
 
   const {
