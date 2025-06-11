@@ -7,10 +7,15 @@
           "description": "Program ID",
           "type": "string"
         },
-        "startDatetime": {
+        "after": {
+          "description": "From date",
           "format": "date-time",
-          "description": "Encounter Date",
-          "type": ["object", "null"]
+          "type": ["string", "null"]
+        },
+        "before": {
+          "description": "To date",
+          "format": "date-time",
+            "type": ["string", "null"]
         }
       },
       "required": ["programId"]

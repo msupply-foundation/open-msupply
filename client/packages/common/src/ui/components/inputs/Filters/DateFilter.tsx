@@ -1,9 +1,8 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { RangeObject, useUrlQuery } from '@common/hooks';
 import { DateTimePickerInput } from '@common/components';
 import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
 import { DateUtils, useFormatDateTime } from '@common/intl';
-import { FilterLabelSx } from './styleConstants';
 import { PickersActionBarAction } from '@mui/x-date-pickers';
 
 export interface DateFilterDefinition extends FilterDefinitionCommon {
@@ -16,8 +15,10 @@ export interface DateFilterDefinition extends FilterDefinitionCommon {
 
 export type RangeOption = 'from' | 'to';
 
-export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
+export const DateFilter = ({
   filterDefinition,
+}: {
+  filterDefinition: DateFilterDefinition;
 }) => {
   const {
     type,
@@ -31,10 +32,10 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
   const { urlQuery, updateQuery } = useUrlQuery();
   const { customDate, urlQueryDate, urlQueryDateTime } = useFormatDateTime();
 
-  const urlValue = urlQuery[urlParameter] as string;
-  const value = getDateFromUrl(urlValue, range);
-
   const dateTimeFormat = type === 'dateTime' ? urlQueryDateTime : urlQueryDate;
+
+  const urlValue = urlQuery[urlParameter] as string;
+  const value = getDateFromUrl(urlValue, range, dateTimeFormat);
 
   const handleChange = (selection: Date | null) => {
     if (range) {
@@ -65,24 +66,26 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
     value,
     width: FILTER_WIDTH,
     onChange: handleChange,
-    textFieldProps: {
-      sx: FilterLabelSx,
-    },
     actions: ['clear', 'accept'] as PickersActionBarAction[],
     displayAs,
     ...getMinMaxDates(urlValue, range, minDate, maxDate),
   };
 
-  return displayAs === 'dateTime' ? (
-    <DateTimePickerInput showTime={true} {...componentProps} />
-  ) : (
-    <DateTimePickerInput {...componentProps} />
+  return (
+    <DateTimePickerInput
+      showTime={displayAs === 'dateTime'}
+      {...componentProps}
+    />
   );
 };
 
-const getDateFromUrl = (query: string, range: RangeOption | undefined) => {
+const getDateFromUrl = (
+  query: string,
+  range: RangeOption | undefined,
+  format: string
+) => {
   const value = typeof query !== 'object' || !range ? query : query[range];
-  return DateUtils.getDateOrNull(value);
+  return DateUtils.getDateOrNull(value, format);
 };
 
 export const getMinMaxDates = (
