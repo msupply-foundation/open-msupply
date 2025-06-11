@@ -128,6 +128,7 @@ pub enum ChangelogTableName {
     VVMStatusLog,
     Campaign,
     SyncMessage,
+    PurchaseOrder,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
