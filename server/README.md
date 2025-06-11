@@ -31,7 +31,7 @@ N.B. The version of rust used by open mSupply on 9.6.25 is 1.84, so, once you've
 
 ```
 [env]
-MACOSX_DEPLOYMENT_TARGET = "10.7"
+MACOSX_DEPLOYMENT_TARGET = "10.12"
 
 [target.aarch64-apple-darwin]
 rustflags = "-L /opt/homebrew/opt/libpq/lib"
