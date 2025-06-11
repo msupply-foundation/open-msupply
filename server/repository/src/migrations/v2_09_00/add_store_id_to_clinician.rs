@@ -12,7 +12,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                ALTER TABLE clinician ADD COLUMN store_id TEXT;
+                ALTER TABLE clinician ADD COLUMN store_id TEXT REFERENCES store(id);
 
                 UPDATE sync_buffer
                     SET integration_datetime = NULL
