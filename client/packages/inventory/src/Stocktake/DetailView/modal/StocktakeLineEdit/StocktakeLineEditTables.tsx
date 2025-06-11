@@ -188,7 +188,7 @@ export const BatchTable = ({
       [
         expiryDateColumn,
         {
-          width: 150,
+          width: 160,
           setter: patch => update({ ...patch, countThisLine: true }),
         },
       ],

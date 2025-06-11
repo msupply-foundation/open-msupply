@@ -170,12 +170,19 @@ const FormComponent = ({
   const handleDefaultsAjv = createAjv({ useDefaults: true });
 
   const translateError = useCallback(
-    (error: { keyword: string; message?: string }) => {
+    (error: {
+      keyword: string;
+      parentSchema?: Record<string, Record<string, string>>;
+      message?: string;
+    }) => {
       const { keyword, message } = error;
       const localeKey = `json-forms-error.${keyword}` as LocaleKey;
       // If a specific type of error is not defined in our localisations, just
       // return the default error message
-      return t(localeKey, message);
+      return t(localeKey, {
+        defaultValue: message,
+        parentSchema: error.parentSchema,
+      });
     },
     [t]
   );

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { CacheProvider } from '@emotion/react';
 import { ThemeProviderProps } from '@mui/material/styles/ThemeProvider';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
@@ -6,8 +6,8 @@ import createCache from '@emotion/cache';
 import rtlPlugin from 'stylis-plugin-rtl';
 import { useAppTheme } from './useAppTheme';
 import { RTLProvider } from './RTLProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { PropsWithChildrenOnly } from '@common/types';
 import { createRegisteredContext } from 'react-singleton-context';
 import { useIntlUtils } from '@common/intl';
@@ -38,15 +38,15 @@ const ThemeContext = createRegisteredContext<ThemeProviderProps>('mui-theme', {
   theme: {},
 });
 
-export const ThemeProviderProxy: FC<PropsWithChildrenOnly> = ({ children }) => {
+export const ThemeProviderProxy = ({ children }: PropsWithChildrenOnly) => {
   const { theme } = React.useContext(ThemeContext);
 
   return <MuiThemeProvider theme={theme}>{children} </MuiThemeProvider>;
 };
 
-const ThemeProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
+const ThemeProvider = ({ children }: PropsWithChildrenOnly) => {
   const appTheme = useAppTheme();
-  const { getLocale } = useIntlUtils();
+  const { getLocale, getDateLocalisations } = useIntlUtils();
 
   return (
     <CacheProvider value={appTheme.direction === 'rtl' ? cacheRtl : cacheLtr}>
@@ -54,6 +54,7 @@ const ThemeProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
         <LocalizationProvider
           dateAdapter={AdapterDateFns}
           adapterLocale={getLocale()}
+          localeText={getDateLocalisations()}
         >
           <ThemeContext.Provider value={{ theme: appTheme }}>
             <ThemeProviderProxy>{children}</ThemeProviderProxy>
