@@ -15,7 +15,7 @@ import { useCreateClinician } from './useCreateClinician';
 interface NewClinicianModalProps {
   asSidePanel: boolean;
   open: boolean;
-  onClose: () => void;
+  onClose: (clinicianId?: string) => void;
 }
 
 export const NewClinicianModal = ({
@@ -37,16 +37,16 @@ export const NewClinicianModal = ({
     isSidePanelModal: asSidePanel,
   });
 
-  const handleClose = () => {
-    onClose();
+  const handleClose = (clinicianId?: string) => {
+    onClose(clinicianId);
     clear();
   };
 
   const handleSave = async () => {
     try {
-      await save();
+      const result = await save();
       success(t('messages.created-clinician'))();
-      handleClose();
+      handleClose(result.id);
     } catch (e) {
       const errorSnack = error((e as Error).message);
       errorSnack();
@@ -67,7 +67,9 @@ export const NewClinicianModal = ({
           disabled={!isValid}
         />
       }
-      cancelButton={<DialogButton variant="cancel" onClick={handleClose} />}
+      cancelButton={
+        <DialogButton variant="cancel" onClick={() => handleClose()} />
+      }
     >
       <Stack gap={2} margin="0 auto" width="500px">
         <InputWithLabelRow

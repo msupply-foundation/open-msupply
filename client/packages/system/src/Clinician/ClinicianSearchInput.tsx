@@ -3,6 +3,7 @@ import {
   Box,
   IconButton,
   PlusCircleIcon,
+  Typography,
   useIntlUtils,
   useTheme,
   useTranslation,
@@ -34,25 +35,21 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
 }) => {
   const t = useTranslation();
   const [modalOpen, setModalOpen] = useState(false);
-  const { data } = useClinicians.document.list({});
+  const { data, refetch } = useClinicians.document.list({});
   const { getLocalisedFullName } = useIntlUtils();
   const clinicians: ClinicianFragment[] = data?.nodes ?? [];
   const theme = useTheme();
 
+  const asOption = (clinician: Clinician): ClinicianAutocompleteOption => ({
+    label: getLocalisedFullName(clinician.firstName, clinician.lastName),
+    value: clinician,
+    id: clinician.id,
+  });
+
   return (
     <Box width={`${width}px`} display={'flex'} alignItems="center">
       <Autocomplete
-        value={
-          clinicianValue
-            ? {
-                label: getLocalisedFullName(
-                  clinicianValue.firstName,
-                  clinicianValue.lastName
-                ),
-                value: clinicianValue,
-              }
-            : null
-        }
+        value={clinicianValue ? asOption(clinicianValue) : null}
         isOptionEqualToValue={(option, value) =>
           option.value.id === value.value?.id
         }
@@ -60,17 +57,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
           onChange(option);
         }}
         options={clinicians.map(
-          (clinician): ClinicianAutocompleteOption => ({
-            label: getLocalisedFullName(
-              clinician.firstName,
-              clinician.lastName
-            ),
-            value: {
-              firstName: clinician.firstName ?? '',
-              lastName: clinician.lastName ?? '',
-              id: clinician.id,
-            },
-          })
+          (clinician): ClinicianAutocompleteOption => asOption(clinician)
         )}
         sx={{ width: '100%' }}
         renderOption={(props, option) => (
@@ -91,7 +78,16 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
             onClick={() => setModalOpen(true)}
           />
           <NewClinicianModal
-            onClose={() => setModalOpen(false)}
+            onClose={async clinicianId => {
+              setModalOpen(false);
+              if (clinicianId) {
+                const refreshedList = await refetch();
+                const newClinician = refreshedList.data?.nodes.find(
+                  c => c.id === clinicianId
+                );
+                onChange(newClinician ? asOption(newClinician) : null);
+              }
+            }}
             open={modalOpen}
             asSidePanel={mountCreateModalAsSidePanel}
           />

@@ -16,9 +16,11 @@ export const useCreateClinician = () => {
     !!clinician.code && !!clinician.lastName && !!clinician.initials;
 
   const save = async () => {
-    await mutateAsync(clinician);
+    const result = await mutateAsync(clinician);
 
     clear();
+
+    return result;
   };
 
   const updateDraft = (updatedFields: Partial<DraftClinician>) => {
