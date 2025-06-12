@@ -339,22 +339,25 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
 });
 
 export type ClinicianListParams = {
+  first?: number;
+  offset?: number;
   sortBy?: SortRule<ProgramEnrolmentSortFieldInput>;
   filterBy?: FilterBy;
+  pagination?: PaginationInput;
 };
 
 export const getClinicianQueries = (sdk: Sdk, storeId: string) => ({
   clinicians: async ({
     sortBy,
     filterBy,
-    // pagination,
+    pagination,
   }: ClinicianListParams): Promise<{
     nodes: ClinicianFragment[];
     totalCount: number;
   }> => {
     const result = await sdk.clinicians({
       storeId,
-      // page: pagination,
+      page: pagination,
       key:
         (sortBy?.key as ClinicianSortFieldInput) ??
         ClinicianSortFieldInput.LastName,

@@ -5,21 +5,19 @@ import {
   createTableStore,
   NothingHere,
   useTranslation,
-  // useUrlQueryParams,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useClinicianListColumns } from './columns';
-import { ClinicianFragment, useClinicians } from 'packages/programs/src';
+import { ClinicianFragment, useClinicians } from '@openmsupply-client/programs';
 
 const ClinicianListComponent = () => {
-  // const {
-  // updatePaginationQuery,
-  // queryParams: { page, first, offset },
-  // } = useUrlQueryParams();
-  // const { data, isError, isLoading } = useClinicians();
-  // {
-  // pagination: { first, offset },
-  // }
-  const { data } = useClinicians.document.list({});
+  const {
+    updatePaginationQuery,
+    queryParams: { page, first, offset },
+  } = useUrlQueryParams();
+  const { data, isError, isLoading } = useClinicians.document.list({
+    pagination: { first, offset },
+  });
   const clinicians: ClinicianFragment[] = data?.nodes ?? [];
   const columns = useClinicianListColumns();
 
@@ -28,13 +26,12 @@ const ClinicianListComponent = () => {
   return (
     <DataTable
       id="clinician-list"
-      // pagination={{ page, first, offset, total: data?.totalCount }}
-      // onChangePage={updatePaginationQuery}
+      pagination={{ page, first, offset, total: data?.totalCount }}
+      onChangePage={updatePaginationQuery}
       columns={columns}
       data={clinicians}
-      // isError={isError}
-      isLoading={false}
-      // isLoading={isLoading}
+      isError={isError}
+      isLoading={isLoading}
       noDataElement={<NothingHere body={t('error.no-clinicians')} />}
     />
   );
