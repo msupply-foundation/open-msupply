@@ -15,7 +15,7 @@ use repository::{
     ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
 };
 use serde::{Deserialize, Serialize};
-use server::configuration;
+use server::{configuration, logging_init};
 use service::{
     apis::login_v4::LoginUserInfoV4,
     auth_data::AuthData,
@@ -30,7 +30,6 @@ use service::{
     },
     token_bucket::TokenBucket,
 };
-use simple_log::LogConfigBuilder;
 use std::{
     env::current_dir,
     ffi::OsStr,
@@ -45,6 +44,8 @@ use util::inline_init;
 mod backup;
 use backup::*;
 
+#[cfg(feature = "integration_test")]
+use cli::LoadTest;
 use cli::{
     generate_and_install_plugin_bundle, generate_plugin_bundle, generate_report_data,
     generate_reports_recursive, generate_typescript_types, install_plugin_bundle,
@@ -210,6 +211,9 @@ enum Action {
     },
     /// Generate TypeScript Types for backend plugins and format with Prettier
     GenerateTypeScriptTypes,
+    /// Run load test
+    #[cfg(feature = "integration_test")]
+    LoadTest(LoadTest),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -281,13 +285,16 @@ fn set_server_is_initialised(ctx: &ServiceContext) -> anyhow::Result<()> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    simple_log::new(LogConfigBuilder::builder().output_console().build())
-        .expect("Unable to initialise logger");
-
     let args = Args::parse();
 
     let settings: Settings =
         configuration::get_configuration(args.config_args).expect("Problem loading configurations");
+
+    let log_level = settings.logging.clone().map(|l| l.level);
+
+    // Initialise logger with default config (i.e. to console), don't want CLI errors logging to
+    // runtime log file, but respect the configured log level
+    logging_init(None, log_level);
 
     match args.action {
         Action::ExportGraphqlSchema => {
@@ -699,6 +706,31 @@ async fn main() -> anyhow::Result<()> {
         }
         Action::GenerateTypeScriptTypes => {
             generate_typescript_types()?;
+        }
+        #[cfg(feature = "integration_test")]
+        Action::LoadTest(LoadTest {
+            msupply_central_url,
+            oms_central_url,
+            base_port,
+            output_dir,
+            test_site_name,
+            test_site_pass,
+            sites,
+            lines,
+            duration,
+        }) => {
+            let load_test = LoadTest::new(
+                msupply_central_url,
+                oms_central_url,
+                base_port,
+                output_dir,
+                test_site_name,
+                test_site_pass,
+                sites,
+                lines,
+                duration,
+            );
+            load_test.run().await?;
         }
     }
 

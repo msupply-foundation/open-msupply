@@ -68,6 +68,7 @@ pub enum UserPermission {
     NamePropertiesMutate,
     EditCentralData,
     ViewAndEditVvmStatus,
+    MutateClinician,
 }
 
 #[Object]
@@ -170,6 +171,7 @@ impl UserPermission {
                 UserPermission::PurchaseOrderPricingMutate
             }
             PermissionType::PurchaseOrderAuthorise => UserPermission::PurchaseOrderAuthorise,
+            PermissionType::MutateClinician => UserPermission::MutateClinician,
         }
     }
 
@@ -226,7 +228,6 @@ impl UserPermission {
             UserPermission::ViewAndEditVvmStatus => PermissionType::ViewAndEditVvmStatus,
             UserPermission::PurchaseOrderQuery => PermissionType::PurchaseOrderQuery,
             UserPermission::PurchaseOrderMutate => PermissionType::PurchaseOrderMutate,
-            UserPermission::PurchaseOrderCreate => PermissionType::PurchaseOrderCreate,
             UserPermission::PurchaseOrderConfirm => PermissionType::PurchaseOrderConfirm,
             UserPermission::PurchaseOrdrFinalise => PermissionType::PurchaseOrdrFinalise,
             UserPermission::PurchaseOrderDelete => PermissionType::PurchaseOrderDelete,
@@ -234,9 +235,8 @@ impl UserPermission {
                 PermissionType::PurchaseOrderPricingMutate
             }
             UserPermission::PurchaseOrderAuthorise => PermissionType::PurchaseOrderAuthorise,
-        }
+            UserPermission::MutateClinician => PermissionType::MutateClinician,
     }
-}
 
 impl UserStorePermissionConnector {
     pub fn from_domain(

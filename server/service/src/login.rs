@@ -536,6 +536,9 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
             Permissions::ViewAndEditVaccineVialMonitorStatus => {
                 output.insert(PermissionType::ViewAndEditVvmStatus);
             }
+            Permissions::AddEditPrescribers => {
+                output.insert(PermissionType::MutateClinician);
+            }
             _ => continue,
         }
     }
