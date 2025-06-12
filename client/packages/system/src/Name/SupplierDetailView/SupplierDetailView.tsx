@@ -3,6 +3,7 @@ import React, { ReactElement, useEffect } from 'react';
 import { Details } from '../Details';
 import { useBreadcrumbs, useParams } from '@openmsupply-client/common';
 import { useName } from '../api';
+import { PurchaseOrder } from './PurchaseOrder';
 
 enum SuppliersTabValue {
   Details = 'details',
@@ -25,7 +26,7 @@ export const SupplierDetailView = (): ReactElement => {
       value: SuppliersTabValue.Details,
     },
     {
-      Component: <>Purchase Order PlaceHolder</>,
+      Component: <PurchaseOrder />,
       value: SuppliersTabValue.PurchaseOrders,
     },
     {
