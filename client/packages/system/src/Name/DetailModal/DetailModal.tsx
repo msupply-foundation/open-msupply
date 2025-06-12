@@ -10,6 +10,7 @@ import {
   Box,
   BasicSpinner,
   MuiLink,
+  BasicTextInput,
 } from '@openmsupply-client/common';
 import { useName } from '../api';
 import { NameRenderer } from '../Components';
@@ -19,9 +20,9 @@ interface DetailModalProps {
 }
 
 export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
-  const { data, isLoading } = useName.document.get(nameId);
-  const t = useTranslation();
   const isDisabled = true;
+  const t = useTranslation();
+  const { data, isLoading } = useName.document.get(nameId);
   const { localisedDate } = useFormatDateTime();
 
   if (isLoading) return <BasicSpinner />;
@@ -45,10 +46,6 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
               inputProps={{ value: data?.chargeCode, disabled: isDisabled }}
             />
             <DetailInputWithLabelRow
-              label={t('label.country')}
-              inputProps={{ value: data?.country, disabled: isDisabled }}
-            />
-            <DetailInputWithLabelRow
               label={t('label.comment')}
               inputProps={{ value: data?.comment, disabled: isDisabled }}
             />
@@ -56,30 +53,26 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
               label={t('label.phone')}
               inputProps={{ value: data?.phone, disabled: isDisabled }}
             />
+
             <DetailInputWithLabelRow
-              label={t('label.website')}
-              inputProps={{ value: data?.website, disabled: isDisabled }}
-              inputAlignment="start"
-              DisabledInput={
-                <MuiLink
-                  href={data.website ?? undefined}
-                  target="_blank"
-                  rel="noopener"
-                  sx={{
-                    // Make it look like another disabled text input consistent with other text
-                    // input components in this modal
-                    width: '100%',
-                    minHeight: '34.13',
-                    backgroundColor: theme => theme.palette.background.toolbar,
-                    borderRadius: '8px',
-                    padding: '4px 8px',
-                    // This is to match the width of BasicTextInput (from the required *):
-                    marginRight: '2',
-                  }}
-                >
-                  {data.website}
-                </MuiLink>
-              }
+              label={t('label.hsh-code')}
+              inputProps={{ value: data?.hshCode, disabled: isDisabled }}
+            />
+            <DetailInputWithLabelRow
+              label={t('label.hsh-name')}
+              inputProps={{ value: data?.hshName, disabled: isDisabled }}
+            />
+            <DetailInputWithLabelRow
+              label={t('label.email')}
+              inputProps={{ value: data?.email, disabled: isDisabled }}
+            />
+            <DetailInputWithLabelRow
+              label={t('label.margin')}
+              inputProps={{ value: data?.margin, disabled: isDisabled }}
+            />
+            <DetailInputWithLabelRow
+              label={t('label.freight-factor')}
+              inputProps={{ value: data?.freightFactor, disabled: isDisabled }}
             />
           </DetailSection>
           <DetailSection title="">
@@ -113,14 +106,51 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
             />
             <DetailInputWithLabelRow
               label={t('label.address')}
-              inputProps={{
-                value: [data?.address1, data?.address2]
-                  .filter(a => !!a)
-                  .join(', '),
-                disabled: isDisabled,
-                maxRows: 3,
-                multiline: true,
-              }}
+              Input={
+                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
+                  <BasicTextInput
+                    value={data?.address1}
+                    disabled={isDisabled}
+                  />
+                  <BasicTextInput
+                    value={data?.address2}
+                    disabled={isDisabled}
+                  />
+                </Box>
+              }
+            />
+            <DetailInputWithLabelRow
+              label={t('label.country')}
+              inputProps={{ value: data?.country, disabled: isDisabled }}
+            />
+            <DetailInputWithLabelRow
+              label={t('label.currency')}
+              inputProps={{ value: data?.currency?.code, disabled: isDisabled }}
+            />
+            <DetailInputWithLabelRow
+              label={t('label.website')}
+              inputProps={{ value: data?.website, disabled: isDisabled }}
+              inputAlignment="start"
+              DisabledInput={
+                <MuiLink
+                  href={data.website ?? undefined}
+                  target="_blank"
+                  rel="noopener"
+                  sx={{
+                    // Make it look like another disabled text input consistent with other text
+                    // input components in this modal
+                    width: '100%',
+                    minHeight: '34.13',
+                    backgroundColor: theme => theme.palette.background.toolbar,
+                    borderRadius: '8px',
+                    padding: '4px 8px',
+                    // This is to match the width of BasicTextInput (from the required *):
+                    marginRight: '2',
+                  }}
+                >
+                  {data.website}
+                </MuiLink>
+              }
             />
           </DetailSection>
         </Grid>

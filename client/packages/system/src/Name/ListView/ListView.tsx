@@ -80,6 +80,7 @@ const NameListComponent: FC<{
         okButton={<DialogButton variant="ok" onClick={hideDialog} />}
         slideAnimation={false}
         Transition={Transition}
+        width={1000}
       >
         <DetailModal nameId={selectedId} />
       </Modal>
