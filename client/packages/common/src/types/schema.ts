@@ -3001,6 +3001,15 @@ export type InsertBarcodeInput = {
 
 export type InsertBarcodeResponse = BarcodeNode;
 
+export type InsertClinicianInput = {
+  code: Scalars['String']['input'];
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  gender?: InputMaybe<GenderType>;
+  id: Scalars['String']['input'];
+  initials: Scalars['String']['input'];
+  lastName: Scalars['String']['input'];
+};
+
 export type InsertContactFormInput = {
   body: Scalars['String']['input'];
   contactType: ContactFormNodeType;
@@ -4862,6 +4871,7 @@ export type Mutations = {
   insertAsset: InsertAssetResponse;
   insertAssetLog: InsertAssetLogResponse;
   insertBarcode: InsertBarcodeResponse;
+  insertClinician: IdResponse;
   insertContactForm: InsertContactFormResponse;
   insertContactTrace: InsertContactTraceResponse;
   insertCustomerReturn: InsertCustomerReturnResponse;
@@ -5149,6 +5159,11 @@ export type MutationsInsertAssetLogArgs = {
 
 export type MutationsInsertBarcodeArgs = {
   input: InsertBarcodeInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertClinicianArgs = {
+  input: InsertClinicianInput;
   storeId: Scalars['String']['input'];
 };
 

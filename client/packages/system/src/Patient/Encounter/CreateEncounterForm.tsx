@@ -117,9 +117,6 @@ export const CreateEncounterForm = ({
               day: {
                 highlightedDays,
               } as BadgePickersDayProps,
-              tabs: {
-                hidden: true,
-              },
             }}
           />
         }

@@ -53,6 +53,7 @@ export const DateTimePickerInput = ({
   error,
   required,
   textFieldSx: inputSx,
+  slotProps,
   ...props
 }: Omit<DateTimePickerProps<true>, 'onChange'> & {
   error?: string | undefined;
@@ -156,6 +157,7 @@ export const DateTimePickerInput = ({
           tabs: {
             hidden: displayAs === 'dateTime' && !isDesktop ? false : true,
           },
+          ...slotProps,
         }}
         views={
           showTime
