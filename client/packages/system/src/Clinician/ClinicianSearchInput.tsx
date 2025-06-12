@@ -20,6 +20,7 @@ interface ClinicianSearchInputProps {
   disabled?: boolean;
   fullWidth?: boolean;
   allowCreate?: boolean;
+  mountCreateModalAsSidePanel?: boolean;
 }
 
 export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
@@ -29,6 +30,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
   disabled,
   fullWidth,
   allowCreate,
+  mountCreateModalAsSidePanel = false,
 }) => {
   const t = useTranslation();
   const [modalOpen, setModalOpen] = useState(false);
@@ -86,6 +88,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
           <NewClinicianModal
             onClose={() => setModalOpen(false)}
             open={modalOpen}
+            asSidePanel={mountCreateModalAsSidePanel}
           />
         </>
       )}

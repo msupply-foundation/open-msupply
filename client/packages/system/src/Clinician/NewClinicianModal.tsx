@@ -13,11 +13,13 @@ import {
 import { useCreateClinician } from './useCreateClinician';
 
 interface NewClinicianModalProps {
+  asSidePanel: boolean;
   open: boolean;
   onClose: () => void;
 }
 
 export const NewClinicianModal = ({
+  asSidePanel,
   open,
   onClose,
 }: NewClinicianModalProps) => {
@@ -31,7 +33,8 @@ export const NewClinicianModal = ({
     isOpen: open,
     onClose,
     disableBackdrop: true,
-    isSidePanelModal: true,
+    disableMobileFullScreen: true, // modal not big enough to warrant full screen on mobile
+    isSidePanelModal: asSidePanel,
   });
 
   const handleClose = () => {
@@ -66,7 +69,7 @@ export const NewClinicianModal = ({
       }
       cancelButton={<DialogButton variant="cancel" onClick={handleClose} />}
     >
-      <Stack gap={2}>
+      <Stack gap={2} margin="0 auto" width="500px">
         <InputWithLabelRow
           label={t('label.code')}
           Input={

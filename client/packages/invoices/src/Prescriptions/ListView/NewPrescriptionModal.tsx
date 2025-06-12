@@ -195,6 +195,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
               clinicianValue={clinician}
               width={350}
               allowCreate
+              mountCreateModalAsSidePanel
             />
           }
         />
