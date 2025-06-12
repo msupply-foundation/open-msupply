@@ -1468,6 +1468,7 @@
   "messages.click-to-return-to-rnr-list": "Click here to return to the list of R&R Forms",
   "messages.click-to-return-to-shipments": "Unable to find a shipment with that ID. Click OK to return to the shipment list",
   "messages.click-to-view": "Click to view the patient record for {{firstName}} {{lastName}}",
+  "messages.clinician-code-already-exists": "A clinician with this code already exists. Are you sure you want to continue?",
   "messages.confirm-add-from-master-list": "Do you want to add all of the items from this master list?",
   "messages.confirm-cancel-generic": "You will lose any changes you have made to this form",
   "messages.confirm-cancel-prescription": "Cancelling this prescription cannot be undone",

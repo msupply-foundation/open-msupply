@@ -6,6 +6,7 @@ import {
   LoadingButton,
   SaveIcon,
   Stack,
+  useConfirmationModal,
   useDialog,
   useNotification,
   useTranslation,
@@ -16,12 +17,14 @@ interface NewClinicianModalProps {
   asSidePanel: boolean;
   open: boolean;
   onClose: (clinicianId?: string) => void;
+  codeExists: (code: string) => boolean;
 }
 
 export const NewClinicianModal = ({
   asSidePanel,
   open,
   onClose,
+  codeExists,
 }: NewClinicianModalProps) => {
   const t = useTranslation();
   const { error, success } = useNotification();
@@ -53,6 +56,20 @@ export const NewClinicianModal = ({
     }
   };
 
+  const confirm = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.clinician-code-already-exists'),
+    onConfirm: handleSave,
+  });
+
+  const confirmAndSave = () => {
+    if (codeExists(draft.code)) {
+      confirm();
+    } else {
+      handleSave();
+    }
+  };
+
   return (
     <Modal
       title={t('label.create-clinician')}
@@ -63,7 +80,7 @@ export const NewClinicianModal = ({
           startIcon={<SaveIcon />}
           label={t('label.create')}
           isLoading={isSaving}
-          onClick={handleSave}
+          onClick={confirmAndSave}
           disabled={!isValid}
         />
       }
