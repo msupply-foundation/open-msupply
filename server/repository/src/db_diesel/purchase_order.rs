@@ -1,6 +1,8 @@
-use crate::{PurchaseOrderRow, RepositoryError, StorageConnection};
+use crate::diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort_no_case};
+use crate::purchase_order_row::purchase_order;
+use crate::{DBType, PurchaseOrderRow, PurchaseOrderStatus, RepositoryError, StorageConnection};
 
-use crate::{EqualFilter, Pagination, Sort};
+use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct PurchaseOrder {
@@ -13,7 +15,7 @@ pub struct PurchaseOrderFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub created_datetime: Option<DatetimeFilter>,
-    // TODO add  pub status: Option<EqualFilter<EncounterStatus>>,
+    pub status: Option<EqualFilter<PurchaseOrderStatus>>,
     pub supplier_id: Option<EqualFilter<String>>,
 }
 
@@ -25,7 +27,6 @@ pub enum PurchaseOrderSortField {
     Status,
     TargetMonths,
     DeliveryDate,
-    Lines,
 }
 
 pub type PurchaseOrderSort = Sort<PurchaseOrderSortField>;
@@ -63,21 +64,30 @@ impl<'a> PurchaseOrderRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 PurchaseOrderSortField::Supplier => {
-                    apply_sort_no_case!(query, sort, purchase_order::supplier_id)
+                    apply_sort_no_case!(query, sort, purchase_order::supplier_name_link_id)
                 }
                 PurchaseOrderSortField::Number => {
-                    apply_sort_no_case!(query, sort, purchase_order::reason)
+                    apply_sort_no_case!(query, sort, purchase_order::purchase_order_number)
+                }
+                PurchaseOrderSortField::CreatedDatetime => {
+                    apply_sort_no_case!(query, sort, purchase_order::created_datetime)
+                }
+                PurchaseOrderSortField::Status => {
+                    apply_sort_no_case!(query, sort, purchase_order::status)
+                }
+                PurchaseOrderSortField::TargetMonths => {
+                    apply_sort_no_case!(query, sort, purchase_order::target_months)
+                }
+                PurchaseOrderSortField::DeliveryDate => {
+                    apply_sort_no_case!(query, sort, purchase_order::delivery_datetime)
                 }
             }
+        } else {
+            query = query.order(purchase_order::id.asc())
         }
 
-        //         Supplier,
-        // Number,
-        // CreatedDatetime,
-        // Status,
-        // TargetMonths,
-        // DeliveryDate,
-        // Lines,
+        // Debug diesel query
+        // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let result = query
             .offset(pagination.offset as i64)
@@ -95,10 +105,18 @@ fn create_filtered_query(filter: Option<PurchaseOrderFilter>) -> BoxedPurchaseOr
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, purchase_order::id);
-        apply_equal_filter!(query, filter.r#type, purchase_order::type_);
-        if let Some(value) = filter.is_active {
-            query = query.filter(purchase_order::is_active.eq(value));
-        }
+        apply_equal_filter!(query, filter.store_id, purchase_order::store_id);
+        apply_date_time_filter!(
+            query,
+            filter.created_datetime,
+            purchase_order::created_datetime
+        );
+        apply_equal_filter!(query, filter.status, purchase_order::status);
+        apply_equal_filter!(
+            query,
+            filter.supplier_id,
+            purchase_order::supplier_name_link_id
+        );
     }
 
     query

@@ -2,7 +2,8 @@ use async_graphql::*;
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
     pagination::PaginationInput,
-    simple_generic_errors::RecordNotFound,
+    simple_generic_errors::{ErrorWrapper, NodeErrorInterface, RecordNotFound},
+    standard_graphql_error::StandardGraphqlError,
 };
 use graphql_types::types::{PurchaseOrderConnector, PurchaseOrderNode};
 use repository::{mock::mock_store_a, PurchaseOrderRow};
@@ -48,50 +49,51 @@ pub enum PurchaseOrderResponse {
 }
 
 pub fn get_purchase_order(
-    _ctx: &Context<'_>,
-    _store_id: &str,
-    _id: &str,
+    ctx: &Context<'_>,
+    store_id: &str,
+    id: &str,
 ) -> Result<PurchaseOrderResponse> {
-    // TODO replace with actual service layer
-    Ok(PurchaseOrderResponse::Response(PurchaseOrderNode {
-        purchase_order: mock_purchase_order_a(),
-    }))
+    // TODO add auth validation once permissions finalised
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+
+    match service_provider
+        .purchase_order_service
+        .get_purchase_order(&contexdt, &store_id, &id)
+        .map_err(StandardGraphqlError::from_repository_error)
+    {
+        Ok(order) => {
+            let result = match puchase_order {
+                Some(purchase_order) => {
+                    PurchaseOrderResponse::Response(PurchaseOrderNode::from_domain(purchase_order))
+                }
+                None => PurchaseOrderResponse::Error(ErrorWrapper {
+                    error: NodeErrorInterface::RecordNotFound(RecordNotFound {}),
+                }),
+            };
+            Ok(result)
+        }
+        Err(err) => Err(err),
+    }
 }
 
 pub fn get_purchase_orders(
-    _ctx: &Context<'_>,
-    _store_id: &str,
-    _page: Option<PaginationInput>,
-    _filter: Option<PurchaseOrderFilterInput>,
-    _sort: Option<Vec<PurchaseOrderSortInput>>,
+    ctx: &Context<'_>,
+    store_id: &str,
+    page: Option<PaginationInput>,
+    filter: Option<PurchaseOrderFilterInput>,
+    sort: Option<Vec<PurchaseOrderSortInput>>,
 ) -> Result<PurchaseOrdersResponse> {
-    // TODO replace with actual service layer
-    Ok(PurchaseOrdersResponse::Response(PurchaseOrderConnector {
-        total_count: 2,
-        nodes: vec![
-            PurchaseOrderNode {
-                purchase_order: mock_purchase_order_a(),
-            },
-            PurchaseOrderNode {
-                purchase_order: mock_purchase_order_b(),
-            },
-        ],
-    }))
-}
+    // TODO add auth validation once permissions finalised
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-// TODO move this into mocks
-pub fn mock_purchase_order_a() -> PurchaseOrderRow {
-    inline_init(|r: &mut PurchaseOrderRow| {
-        r.id = "test_purchase_order_a".to_string();
-        r.store_id = mock_store_a().id;
-        r.status = Some("mock_status".to_string());
-    })
-}
+    let resul = service_provider
+        .purchase_order_service
+        .get_purchase_orders(&contexdt, &store_id, page, filter, sort)
+        .map_err(StandardGraphqlError::from_list_error)?;
 
-pub fn mock_purchase_order_b() -> PurchaseOrderRow {
-    inline_init(|r: &mut PurchaseOrderRow| {
-        r.id = "test_purchase_order_b".to_string();
-        r.store_id = mock_store_a().id;
-        r.status = Some("mock_status".to_string());
-    })
+    Ok(PurchaseOrdersResponse::Response(
+        PurchaseOrderConnector::from_domain(list_result),
+    ))
 }

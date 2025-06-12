@@ -123,6 +123,12 @@ impl PurchaseOrderNode {
 }
 
 impl PurchaseOrderNode {
+    pub fn from_domain(purchase_order: PurchaseOrderRow) -> PurchaseOrderNode {
+        PurchaseOrderNode { purchase_order }
+    }
+}
+
+impl PurchaseOrderNode {
     pub fn row(&self) -> &PurchaseOrderRow {
         &self.purchase_order
     }

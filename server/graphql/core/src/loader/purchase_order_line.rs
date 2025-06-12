@@ -16,8 +16,16 @@ impl Loader<String> for PurchaseOrderLinesByPurchaseOrderIdLoader {
 
     async fn load(
         &self,
-        _purchase_order_ids: &[String],
+        purchase_order_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        let service_context = self.service_provider.basic_context()?;
+
+        let filter = PurchaseOrderLineFilter::new().purchase_order_id(EqualFilter::equal_any(
+            purchase_order_ids.iter().map(String::clone).collect(),
+        ));
+
+        let result = 
+
         let mut result: HashMap<String, Vec<PurchaseOrderLineRow>> = HashMap::new();
         let list = result
             .entry("test_purchase_order_a".to_string())
@@ -26,19 +34,4 @@ impl Loader<String> for PurchaseOrderLinesByPurchaseOrderIdLoader {
         list.push(mock_purchase_order_line_b());
         Ok(result)
     }
-}
-
-// TODO move to mock data and implement proper loader
-pub fn mock_purchase_order_line_a() -> PurchaseOrderLineRow {
-    inline_init(|r: &mut PurchaseOrderLineRow| {
-        r.id = "test_purchase_order_line_a".to_string();
-        r.purchase_order_id = "test_purchase_order_a".to_string();
-    })
-}
-
-pub fn mock_purchase_order_line_b() -> PurchaseOrderLineRow {
-    inline_init(|r: &mut PurchaseOrderLineRow| {
-        r.id = "test_purchase_order_line_b".to_string();
-        r.purchase_order_id = "test_purchase_order_a".to_string();
-    })
 }

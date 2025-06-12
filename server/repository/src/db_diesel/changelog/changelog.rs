@@ -129,6 +129,7 @@ pub enum ChangelogTableName {
     Campaign,
     SyncMessage,
     PurchaseOrder,
+    PurchaseOrderLine,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -208,6 +209,8 @@ impl ChangelogTableName {
             ChangelogTableName::VVMStatusLog => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Campaign => ChangeLogSyncStyle::Central,
             ChangelogTableName::SyncMessage => ChangeLogSyncStyle::Remote,
+            ChangeLogTableName::PurchaseOrder => ChangeLogSyncStyle::Legacy,
+            ChageLogTableName::PurchaseOrderLine => ChangeLogSyncStyle::Legacy,
         }
     }
 }

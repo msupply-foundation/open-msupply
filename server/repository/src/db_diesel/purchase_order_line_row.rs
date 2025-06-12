@@ -1,9 +1,39 @@
-use chrono::NaiveDate;
+use crate::db_diesel::item_link_row::item_link;
+use crate::repository_error::RepositoryError;
+use crate::{PurchaseOrderRowRepository, StorageConnection};
+use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-// TODO to move into db_diesel layer when finalised:
-#[derive(PartialEq, Debug, Default, Clone)]
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{Delete, Upsert};
+
+use chrono::{NaiveDate, NaiveDateTime};
+
+table! {
+    purchase_order_line (id) {
+        id ->  Text,
+        purchase_order_id -> Text,
+        item_code ->  Text,
+        item_name ->  Nullable<Text>,
+        number_of_packs ->  Nullable<Double>,
+        pack_size ->  Nullable<Double>,
+        original_quantity ->  Nullable<Double>,
+        adjusted_quantity ->  Nullable<Double>,
+        total_received ->  Nullable<Double>,
+        requested_delivery_date ->  Nullable<Date>,
+        expected_delivery_date ->  Nullable<Date>,
+    }
+}
+
+#[derive(
+    TS, Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default, Serialize, Deserialize,
+)]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = purchase_order_line)]
 pub struct PurchaseOrderLineRow {
     pub id: String,
+    pub purchase_order_id: String,
     pub item_code: String,
     pub item_name: Option<String>,
     pub number_of_packs: Option<f64>,
@@ -13,5 +43,81 @@ pub struct PurchaseOrderLineRow {
     pub total_received: Option<f64>,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
-    pub purchase_order_id: String,
+}
+
+pub struct PurchaseOrderLineRowRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+impl<'a> PurchaseOrderLineRowRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        PurchaseOrderLineRowRepository { connection }
+    }
+
+    pub fn upsert_one(&self, row: &PurchaseOrderLineRow) -> Result<i64, RepositoryError> {
+        diesel::insert_into(purchase_order_line::table)
+            .values(row)
+            .on_conflict(purchase_order_line::id)
+            .do_update()
+            .set(row)
+            .execute(self.connection.lock().connection())?;
+        self.insert_changelog(row, RowActionType::Upsert)
+    }
+
+    fn insert_changelog(
+        &self,
+        row: &PurchaseOrderLineRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let PurchaseOrder = PurchaseOrderRowRepository::new(self.connection)
+            .find_one_by_id(&row.purchase_order_id)?;
+        let PurchaseOrder = match PurchaseOrder {
+            Some(PurchaseOrder) => PurchaseOrder,
+            None => return Err(RepositoryError::NotFound),
+        };
+
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::PurchaseOrderLine,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(PurchaseOrder.store_id.clone()),
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
+    }
+
+    pub fn delete(&self, purchase_order_line_id: &str) -> Result<Option<i64>, RepositoryError> {
+        let purchase_order_line = self.find_one_by_id(purchase_order_line_id)?;
+        let change_log_id = match purchase_order_line {
+            Some(purchase_order_line) => {
+                self.insert_changelog(&purchase_order_line, RowActionType::Delete)?
+            }
+            None => {
+                return Ok(None);
+            }
+        };
+
+        diesel::delete(
+            purchase_order_line::table.filter(purchase_order_line::id.eq(purchase_order_line_id)),
+        )
+        .execute(self.connection.lock().connection())?;
+        Ok(Some(change_log_id))
+    }
+
+    pub fn find_one_by_id(
+        &self,
+        id: &str,
+    ) -> Result<Option<PurchaseOrderLineRow>, RepositoryError> {
+        let result = purchase_order_line::table
+            .filter(purchase_order_line::id.eq(id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_many_by_purchase_order_ids(
+        &self,
+        
+    )
 }
