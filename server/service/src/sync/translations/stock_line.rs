@@ -1,5 +1,8 @@
 use crate::sync::{
-    sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
+    sync_serde::{
+        date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
+        zero_date_as_option,
+    },
     translations::{
         barcode::BarcodeTranslation, campaign::CampaignTranslation, item::ItemTranslation,
         item_variant::ItemVariantTranslation, location::LocationTranslation, name::NameTranslation,
@@ -62,6 +65,7 @@ pub struct LegacyStockLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub vvm_status_id: Option<String>,
     #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option")]
     pub oms_fields: Option<StockLineRowOmsFields>,
 }
 // Needs to be added to all_translators()
