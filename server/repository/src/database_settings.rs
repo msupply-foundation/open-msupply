@@ -2,6 +2,7 @@ use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
 use diesel::connection::SimpleConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
 use log::info;
+use serde::{Deserialize, Serialize};
 
 // Timeout for waiting for the SQLite lock (https://www.sqlite.org/c3ref/busy_timeout.html).
 // A locked DB results in the "SQLite database is locked" error.
@@ -11,7 +12,7 @@ const SQLITE_LOCKWAIT_MS: u32 = 30 * 1000;
 #[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
 const SQLITE_WAL_PRAGMA: &str = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct DatabaseSettings {
     pub username: String,
     pub password: String,
