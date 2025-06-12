@@ -174,11 +174,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
                   onChange={newDate => {
                     if (newDate) setDate(newDate);
                   }}
-                  slotProps={{
-                    tabs: {
-                      hidden: true,
-                    },
-                  }}
+                  width={350}
                 />
               }
             />
@@ -187,7 +183,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
               Input={
                 <BasicTextInput
                   size="small"
-                  sx={{ width: 250 }}
+                  sx={{ width: 350 }}
                   value={theirReference ?? null}
                   onChange={event => setTheirReference(event.target.value)}
                 />
@@ -201,6 +197,8 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
                 <ClinicianSearchInput
                   onChange={clinician => setClinician(clinician?.value)}
                   clinicianValue={clinician}
+                  width={350}
+                  allowCreate
                 />
               }
             />
