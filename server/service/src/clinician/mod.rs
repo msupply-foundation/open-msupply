@@ -1,4 +1,6 @@
-use insert::{insert_clinician, InsertClinician, InsertClinicianError};
+use insert::insert_clinician;
+pub use insert::{InsertClinician, InsertClinicianError};
+
 use repository::{Clinician, ClinicianFilter, ClinicianRow, ClinicianSort, PaginationOption};
 
 use crate::{service_provider::ServiceContext, ListError, ListResult};
