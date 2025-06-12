@@ -10,3 +10,11 @@ export type Clinician = Pick<
   ClinicianFragment,
   'firstName' | 'lastName' | 'id'
 >;
+
+export const isExistingCode = (
+  clinicians: ClinicianFragment[],
+  code: string
+): boolean =>
+  clinicians.some(
+    clinician => clinician.code.toUpperCase() === code.toUpperCase()
+  );

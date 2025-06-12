@@ -12,19 +12,21 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useCreateClinician } from './useCreateClinician';
+import { isExistingCode } from '.';
+import { ClinicianFragment } from '@openmsupply-client/programs';
 
 interface NewClinicianModalProps {
   asSidePanel: boolean;
   open: boolean;
+  existingClinicians: ClinicianFragment[];
   onClose: (clinicianId?: string) => void;
-  codeExists: (code: string) => boolean;
 }
 
 export const NewClinicianModal = ({
   asSidePanel,
   open,
+  existingClinicians,
   onClose,
-  codeExists,
 }: NewClinicianModalProps) => {
   const t = useTranslation();
   const { error, success } = useNotification();
@@ -63,7 +65,7 @@ export const NewClinicianModal = ({
   });
 
   const confirmAndSave = () => {
-    if (codeExists(draft.code)) {
+    if (isExistingCode(existingClinicians, draft.code)) {
       confirm();
     } else {
       handleSave();
@@ -96,7 +98,9 @@ export const NewClinicianModal = ({
               size="small"
               sx={{ width: 350 }}
               value={draft.code}
-              onChange={event => updateDraft({ code: event.target.value })}
+              onChange={event =>
+                updateDraft({ code: event.target.value.toUpperCase() })
+              }
               required
             />
           }

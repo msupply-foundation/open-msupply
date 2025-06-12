@@ -90,7 +90,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
             }}
             open={modalOpen}
             asSidePanel={mountCreateModalAsSidePanel}
-            codeExists={(code: string) => clinicians.some(c => c.code === code)}
+            existingClinicians={clinicians}
           />
         </>
       )}
