@@ -31,9 +31,9 @@ export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
           ? { ...opts, returnDetails: false }
           : { returnDetails: false, defaultValue };
 
-      return key
+      return key && i18n.exists(key, options)
         ? t(key, options)
-        : String(defaultValue || options?.defaultValue || '');
+        : String(defaultValue || options?.defaultValue || key || '');
     },
     [t]
   );
