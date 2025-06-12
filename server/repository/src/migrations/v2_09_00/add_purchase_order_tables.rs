@@ -75,7 +75,9 @@ impl MigrationFragment for Migrate {
             r#"
                 CREATE TABLE purchase_order_line (
                     id TEXT NOT NULL PRIMARY KEY,
-                    purchase_order_id TEXT REFERENCES purchase_order(id),
+                    purchase_order_id TEXT REFERENCES purchase_order(id) NOT NULL,
+                    line_number INTEGER,
+                    item_id TEXT REFERENCES item(id),
                     item_code TEXT NOT NULL,
                     item_name TEXT,
                     number_of_packs {DOUBLE},
