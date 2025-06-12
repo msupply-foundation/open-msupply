@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository, GenderType,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository,
+    ClinicianRowRepositoryTrait, GenderType, StorageConnection, SyncBufferRow,
 };
 
-use crate::sync::sync_serde::empty_str_as_option_string;
+use crate::sync::{sync_serde::empty_str_as_option_string, translations::store::StoreTranslation};
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
@@ -57,7 +57,7 @@ impl SyncTranslation for ClinicianTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![]
+        vec![StoreTranslation.table_name()]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -127,7 +127,7 @@ impl SyncTranslation for ClinicianTranslation {
             is_active,
             store_id,
         } = ClinicianRowRepository::new(connection)
-            .find_one_by_id_option(&changelog.record_id)?
+            .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
                 "Clinician row ({}) not found",
                 changelog.record_id
