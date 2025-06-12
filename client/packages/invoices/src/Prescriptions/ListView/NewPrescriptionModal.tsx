@@ -92,7 +92,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
 
   return (
     <Modal
-      title={t('button.new-prescription')}
+      title={t('label.create-prescription')}
       okButton={
         <LoadingButton
           color="secondary"

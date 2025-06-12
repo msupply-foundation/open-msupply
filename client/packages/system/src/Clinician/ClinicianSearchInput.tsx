@@ -8,9 +8,10 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { ClinicianFragment, useClinicians } from '@openmsupply-client/programs';
-import React from 'react';
+import React, { useState } from 'react';
 import { FC } from 'react';
 import { ClinicianAutocompleteOption, Clinician } from './utils';
+import { NewClinicianModal } from './NewClinicianModal';
 
 interface ClinicianSearchInputProps {
   onChange: (clinician: ClinicianAutocompleteOption | null) => void;
@@ -30,6 +31,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
   allowCreate,
 }) => {
   const t = useTranslation();
+  const [modalOpen, setModalOpen] = useState(false);
   const { data } = useClinicians.document.list({});
   const { getLocalisedFullName } = useIntlUtils();
   const clinicians: ClinicianFragment[] = data?.nodes ?? [];
@@ -74,12 +76,18 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
         fullWidth={fullWidth}
       />
       {allowCreate && (
-        <IconButton
-          icon={<PlusCircleIcon />}
-          label={t('button.add-new-clinician')}
-          color="secondary"
-          onClick={() => console.log('lets go girls')}
-        />
+        <>
+          <IconButton
+            icon={<PlusCircleIcon />}
+            label={t('button.add-new-clinician')}
+            color="secondary"
+            onClick={() => setModalOpen(true)}
+          />
+          <NewClinicianModal
+            onClose={() => setModalOpen(false)}
+            open={modalOpen}
+          />
+        </>
       )}
     </Box>
   );
