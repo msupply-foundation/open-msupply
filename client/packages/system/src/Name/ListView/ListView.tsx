@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { ReactElement, useState } from 'react';
 import {
   TableProvider,
   DataTable,
@@ -10,17 +10,23 @@ import {
   NothingHere,
   useUrlQueryParams,
   useTranslation,
+  useNavigate,
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
-import { DetailModal } from '../DetailModal';
+import { Details } from '../Details';
 import { useName, NameRowFragment } from '../api';
 import { NameRenderer } from '../Components';
 
-const NameListComponent: FC<{
+interface NameListProps {
   type: 'customer' | 'supplier';
-}> = ({ type }) => {
+}
+
+export const NameListView = ({ type }: NameListProps): ReactElement => {
   const t = useTranslation();
+  const navigate = useNavigate();
+  const { Modal, showDialog, hideDialog } = useDialog();
   const [selectedId, setSelectedId] = useState<string>('');
+
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -28,8 +34,6 @@ const NameListComponent: FC<{
   } = useUrlQueryParams();
   const { data, isError, isLoading } = useName.document.list(type);
   const pagination = { page, first, offset };
-
-  const { Modal, showDialog, hideDialog } = useDialog();
 
   const columns = useColumns<NameRowFragment>(
     [
@@ -59,8 +63,14 @@ const NameListComponent: FC<{
     ) => <Fade ref={ref} {...props} timeout={800}></Fade>
   );
 
+  const handleRowClick = (row: NameRowFragment): void => {
+    if (type === 'supplier') return navigate(row.id);
+    setSelectedId(row.id);
+    showDialog();
+  };
+
   return (
-    <>
+    <TableProvider createStore={createTableStore}>
       <DataTable
         id="name-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
@@ -69,28 +79,20 @@ const NameListComponent: FC<{
         data={data?.nodes}
         isLoading={isLoading}
         isError={isError}
-        onRowClick={row => {
-          setSelectedId(row.id);
-          showDialog();
-        }}
+        onRowClick={handleRowClick}
         noDataElement={<NothingHere body={t('error.no-items-to-display')} />}
       />
-      <Modal
-        title=""
-        okButton={<DialogButton variant="ok" onClick={hideDialog} />}
-        slideAnimation={false}
-        Transition={Transition}
-      >
-        <DetailModal nameId={selectedId} />
-      </Modal>
-    </>
+      {type === 'customer' && (
+        <Modal
+          title=""
+          okButton={<DialogButton variant="ok" onClick={hideDialog} />}
+          slideAnimation={false}
+          Transition={Transition}
+          width={700}
+        >
+          <Details nameId={selectedId} />
+        </Modal>
+      )}
+    </TableProvider>
   );
 };
-
-export const NameListView: FC<{
-  type: 'customer' | 'supplier';
-}> = ({ type }) => (
-  <TableProvider createStore={createTableStore}>
-    <NameListComponent type={type} />
-  </TableProvider>
-);

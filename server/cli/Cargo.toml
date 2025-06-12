@@ -22,7 +22,7 @@ util = { path = "../util" }
 service = { path = "../service" }
 server = { path = "../server" }
 graphql = { path = "../graphql" }
-report_builder = {path = "../report_builder"}
+report_builder = { path = "../report_builder" }
 
 
 anyhow = { workspace = true }
@@ -47,6 +47,7 @@ async-trait = "0.1.8"
 machine-uid = { version = "0.5.1" }
 copy_dir = "0.1.3"
 shellexpand = "3.1.0"
+serde_yml = "0.0.12"
 
 [dev-dependencies]
 actix-rt = { workspace = true }
@@ -55,3 +56,4 @@ actix-rt = { workspace = true }
 default = ["sqlite"]
 sqlite = ["server/sqlite"]
 postgres = ["server/postgres"]
+integration_test = []

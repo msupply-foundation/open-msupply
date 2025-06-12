@@ -44,3 +44,6 @@ report_builder/config.yaml
 
 # fridge tag imports
 sensor_*.txt
+
+# Load test artifacts
+load_test/

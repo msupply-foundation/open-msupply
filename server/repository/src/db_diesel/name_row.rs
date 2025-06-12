@@ -1,7 +1,8 @@
 use super::{
-    cold_storage_type_row::cold_storage_type, master_list_name_join::master_list_name_join,
-    master_list_row::master_list, name_store_join::name_store_join, program_row::program,
-    store_row::store, NameType, StorageConnection,
+    cold_storage_type_row::cold_storage_type, currency_row::currency,
+    master_list_name_join::master_list_name_join, master_list_row::master_list,
+    name_store_join::name_store_join, program_row::program, store_row::store, NameType,
+    StorageConnection,
 };
 use crate::{
     item_link, name_link, repository_error::RepositoryError, ChangeLogInsertRow,
@@ -26,7 +27,6 @@ table! {
         type_ -> crate::db_diesel::name_row::NameRowTypeMapping,
         is_customer -> Bool,
         is_supplier -> Bool,
-
         supplying_store_id -> Nullable<Text>,
         first_name -> Nullable<Text>,
         last_name -> Nullable<Text>,
@@ -50,8 +50,12 @@ table! {
         national_health_number -> Nullable<Text>,
         date_of_death -> Nullable<Date>,
         custom_data -> Nullable<Text>,
-
         deleted_datetime -> Nullable<Timestamp>,
+        hsh_code -> Nullable<Text>,
+        hsh_name -> Nullable<Text>,
+        margin -> Nullable<Double>,
+        freight_factor -> Nullable<Double>,
+        currency_id -> Nullable<Text>
     }
 }
 
@@ -66,10 +70,12 @@ table! {
 alias!(name_oms_fields as name_oms_fields_alias: NameOmsFields);
 
 joinable!(name_oms_fields -> name (id));
+joinable!(name -> currency (currency_id));
 allow_tables_to_appear_in_same_query!(name, item_link);
 allow_tables_to_appear_in_same_query!(name, name_link);
 allow_tables_to_appear_in_same_query!(name, name_oms_fields);
 allow_tables_to_appear_in_same_query!(name, cold_storage_type);
+allow_tables_to_appear_in_same_query!(name, currency);
 // for names query
 allow_tables_to_appear_in_same_query!(name_oms_fields, item_link);
 allow_tables_to_appear_in_same_query!(name_oms_fields, name_link);
@@ -135,17 +141,7 @@ impl NameRowType {
 }
 
 #[derive(
-    Clone,
-    Queryable,
-    Insertable,
-    Debug,
-    PartialEq,
-    Eq,
-    AsChangeset,
-    Default,
-    Serialize,
-    Deserialize,
-    TS,
+    Clone, Queryable, Insertable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize, TS,
 )]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = name)]
@@ -195,6 +191,12 @@ pub struct NameRow {
 
     // Acts as a flag for soft deletion
     pub deleted_datetime: Option<NaiveDateTime>,
+
+    pub hsh_code: Option<String>,
+    pub hsh_name: Option<String>,
+    pub margin: Option<f64>,
+    pub freight_factor: Option<f64>,
+    pub currency_id: Option<String>,
 }
 
 #[derive(

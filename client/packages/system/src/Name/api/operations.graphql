@@ -50,6 +50,14 @@ fragment Name on NameNode {
     code
   }
   properties
+  hshCode
+  hshName
+  margin
+  freightFactor
+  currency {
+    id
+    code
+  }
 }
 
 fragment Property on PropertyNode {
