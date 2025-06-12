@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_mutate_clinician_permission;
 mod add_store_id_to_clinician;
+mod extend_name_table_fields;
 mod process_clinician_store_join_deletes;
 
 pub(crate) struct V2_09_00;
@@ -21,6 +22,7 @@ impl Migration for V2_09_00 {
             Box::new(process_clinician_store_join_deletes::Migrate),
             Box::new(add_mutate_clinician_permission::Migrate),
             Box::new(add_store_id_to_clinician::Migrate),
+            Box::new(extend_name_table_fields::Migrate),
         ]
     }
 }
