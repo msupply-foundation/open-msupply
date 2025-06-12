@@ -29,6 +29,8 @@ pub enum ClinicianSortFieldInput {
     Email,
 }
 
+// Change to back-end should trigger tests action
+
 #[derive(InputObject)]
 pub struct ClinicianSortInput {
     /// Sort query result by `key`
