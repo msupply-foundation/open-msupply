@@ -78,6 +78,11 @@ const mapRoute = (route: string): RouteMapping => {
         title: 'encounter',
         docs: '/programs/program-module/#encounter',
       };
+    case inRoute(AppRoute.Clinician):
+      return {
+        title: 'clinician',
+        docs: '/programs/program-module/#clinician', // TODO add clinician page to docs
+      };
     case inRoute(AppRoute.Monitoring):
       return {
         title: 'monitoring',
