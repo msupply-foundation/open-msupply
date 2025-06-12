@@ -1,5 +1,6 @@
 use super::{
-    clinician_link_row::clinician_link, clinician_row::clinician, item_row::item, StorageConnection,
+    clinician_link_row::clinician_link, clinician_row::clinician,
+    cold_storage_type_row::cold_storage_type, item_row::item, StorageConnection,
 };
 use crate::{name_link, repository_error::RepositoryError, Upsert};
 
@@ -16,6 +17,7 @@ joinable!(item_link -> item (item_id));
 allow_tables_to_appear_in_same_query!(item_link, name_link);
 allow_tables_to_appear_in_same_query!(item_link, clinician_link);
 allow_tables_to_appear_in_same_query!(item_link, clinician);
+allow_tables_to_appear_in_same_query!(item_link, cold_storage_type);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[diesel(table_name = item_link)]

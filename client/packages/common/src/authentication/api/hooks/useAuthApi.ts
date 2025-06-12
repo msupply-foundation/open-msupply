@@ -14,8 +14,7 @@ export const useAuthApi = () => {
     isCentralServer: ['isCentralServer'] as const,
     refresh: (token: string) => ['refresh', token] as const,
     userSync: () => ['userSync'] as const,
-    preferences: () => ['preferences'] as const,
   };
 
-  return { ...queries, sdk, keys };
+  return { ...queries, sdk, keys, client };
 };

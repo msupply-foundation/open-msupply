@@ -14,6 +14,8 @@ import {
   useNotification,
   useTableStore,
   useBreadcrumbs,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
@@ -24,17 +26,23 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { useOutbound } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
-import { Draft } from '../..';
 import { StockOutLineFragment } from '../../StockOut';
-import { OutboundLineEdit } from './OutboundLineEdit';
 import { CustomerReturnEditModal } from '../../Returns';
 import { canReturnOutboundLines } from '../../utils';
+import { OutboundLineEdit, OutboundOpenedWith } from './OutboundLineEdit';
 
 const DetailViewInner = () => {
+  const t = useTranslation();
   const { info } = useNotification();
   const isDisabled = useOutbound.utils.isDisabled();
+
+  const { data: prefs } = usePreference(
+    PreferenceKey.SortByVvmStatusThenExpiry,
+    PreferenceKey.ManageVaccinesInDoses
+  );
+
   const { entity, mode, onOpen, onClose, isOpen, setMode } =
-    useEditModal<Draft>();
+    useEditModal<OutboundOpenedWith>();
   const {
     onOpen: onOpenReturns,
     onClose: onCloseReturns,
@@ -45,17 +53,16 @@ const DetailViewInner = () => {
   } = useEditModal<string[]>();
 
   const { data, isLoading } = useOutbound.document.get();
-  const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const onRowClick = useCallback(
-    (item: StockOutLineFragment | StockOutItem) => {
-      onOpen({ item: toItemRow(item) });
+    (line: StockOutLineFragment | StockOutItem) => {
+      onOpen({ itemId: toItemRow(line).id });
     },
-    [toItemRow, onOpen]
+    [onOpen]
   );
-  const onAddItem = (draft?: Draft) => {
-    onOpen(draft);
+  const onAddItem = (openWith?: OutboundOpenedWith) => {
+    onOpen(openWith);
     setMode(ModalMode.Create);
   };
   const { clearSelected } = useTableStore();
@@ -106,10 +113,16 @@ const DetailViewInner = () => {
           <AppBarButtons onAddItem={onAddItem} />
           {isOpen && (
             <OutboundLineEdit
-              draft={entity}
+              openedWith={entity}
               mode={mode}
               isOpen={isOpen}
               onClose={onClose}
+              status={data.status}
+              invoiceId={data.id}
+              prefOptions={{
+                sortByVvmStatus: prefs?.sortByVvmStatusThenExpiry ?? false,
+                manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
+              }}
             />
           )}
 

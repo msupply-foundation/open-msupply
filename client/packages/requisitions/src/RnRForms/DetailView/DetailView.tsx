@@ -15,7 +15,12 @@ import { ActivityLogList } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { ContentArea } from './ContentArea';
-import { oneTime, RnRFormQuery, useRnRForm, useRnRFormContext } from '../api';
+import {
+  useOneTime,
+  RnRFormQuery,
+  useRnRForm,
+  useRnRFormContext,
+} from '../api';
 import { SidePanel } from './SidePanel';
 import { AutoSave } from './AutoSave';
 
@@ -23,7 +28,7 @@ export const RnRFormDetailView = () => {
   const { id = '' } = useParams();
   const [isInitialising, setIsInitialising] = useState(true);
 
-  const setInitial = useRnRFormContext(oneTime(state => state.setInitial));
+  const setInitial = useRnRFormContext(useOneTime(state => state.setInitial));
 
   const {
     query: { data, isLoading },

@@ -9,12 +9,13 @@ import {
   TooltipTextCell,
   useAuthContext,
   getLinesFromRow,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from './../api';
 import { PackQuantityCell } from '@openmsupply-client/system';
 import { useResponseRequisitionLineErrorContext } from '../context';
 
-export const useResponseColumns = () => {
+export const useResponseColumns = (manageVaccinesInDoses: boolean = false) => {
   const { getError } = useResponseRequisitionLineErrorContext();
 
   const {
@@ -62,17 +63,30 @@ export const useResponseColumns = () => {
       },
       width: 130,
     },
-    [
-      'availableStockOnHand',
-      {
-        label: 'label.our-soh',
-        description: 'description.our-soh',
-        sortable: false,
-        Cell: PackQuantityCell,
-        accessor: ({ rowData }) => rowData.itemStats.stockOnHand,
-      },
-    ],
   ];
+
+  if (manageVaccinesInDoses) {
+    columnDefinitions.push({
+      key: 'dosesPerUnit',
+      label: 'label.doses-per-unit',
+      width: 100,
+      align: ColumnAlign.Right,
+      sortable: false,
+      accessor: ({ rowData }) =>
+        rowData.item?.isVaccine ? rowData.item.doses : UNDEFINED_STRING_VALUE,
+    });
+  }
+
+  columnDefinitions.push([
+    'availableStockOnHand',
+    {
+      label: 'label.our-soh',
+      description: 'description.our-soh',
+      sortable: false,
+      Cell: PackQuantityCell,
+      accessor: ({ rowData }) => rowData.itemStats.stockOnHand,
+    },
+  ]);
 
   if (!programName) {
     columnDefinitions.push({
@@ -206,7 +220,7 @@ export const useResponseColumns = () => {
   columnDefinitions.push(
     {
       key: 'suggestedQuantity',
-      label: 'label.suggested-quantity',
+      label: 'label.suggested',
       width: 150,
       align: ColumnAlign.Right,
       sortable: false,

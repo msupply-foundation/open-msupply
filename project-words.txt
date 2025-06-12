@@ -14,6 +14,7 @@ Masterlist
 msupply
 openmsupply
 parseable
+pluralised
 Popover
 reqwest
 rustls

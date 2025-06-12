@@ -1,3 +1,4 @@
+pub mod campaign;
 mod mutations;
 mod queries;
 mod sync_api_error;
@@ -276,6 +277,7 @@ impl GeneralQueries {
         response_requisition_stats(ctx, &store_id, &requisition_line_id)
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_options instead")]
     pub async fn inventory_adjustment_reasons(
         &self,
         ctx: &Context<'_>,
@@ -377,6 +379,7 @@ impl GeneralQueries {
         generate_supplier_return_lines(ctx, store_id, input)
     }
 
+    #[graphql(deprecation = "Since 2.8.0. Use reason_options instead")]
     pub async fn return_reasons(
         &self,
         ctx: &Context<'_>,

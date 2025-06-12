@@ -18,8 +18,12 @@ import {
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { importRowToCsv } from '../utils';
-import { useAssetData } from '@openmsupply-client/system';
-import { useAssetInsert } from '../api';
+import {
+  useAssetCategories,
+  useAssetClasses,
+  useAssetInsert,
+  useAssetTypes,
+} from '../api';
 
 interface AssetItemImportModalProps {
   isOpen: boolean;
@@ -88,14 +92,12 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string>(() => '');
   const [importProgress, setImportProgress] = useState(0);
   const [importErrorCount, setImportErrorCount] = useState(0);
-  const { data: assetClasses, isLoading: isLoadingClasses } =
-    useAssetData.utils.classes();
+  const { data: assetClasses, isLoading: isLoadingClasses } = useAssetClasses();
 
   const { data: assetCategories, isLoading: isLoadingCategories } =
-    useAssetData.utils.categories();
+    useAssetCategories();
 
-  const { data: assetTypes, isLoading: isLoadingTypes } =
-    useAssetData.utils.types();
+  const { data: assetTypes, isLoading: isLoadingTypes } = useAssetTypes();
 
   const { mutateAsync: create, invalidateQueries } = useAssetInsert();
 

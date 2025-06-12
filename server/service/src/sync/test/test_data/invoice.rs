@@ -35,7 +35,7 @@ const TRANSACT_1: (&str, &str) = (
       "currency_rate": 1.32,
       "custom_data": null,
       "diagnosis_ID": "",
-      "donor_default_id": "",
+      "donor_default_id": "donor_a",
       "encounter_id": "",
       "entry_date": "2021-07-30",
       "entry_time": 47046,
@@ -146,6 +146,7 @@ fn transact_1_pull_row() -> InvoiceRow {
         insurance_discount_percentage: Some(2.5),
         is_cancellation: false,
         expected_delivery_date: None,
+        default_donor_link_id: Some("donor_a".to_string()),
     }
 }
 
@@ -209,6 +210,7 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         insurance_discount_percentage: Some(2.5),
         is_cancellation: false,
         expected_delivery_date: None,
+        default_donor_id: Some("donor_a".to_string()),
     }
 }
 
@@ -344,6 +346,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: None,
+            default_donor_link_id: None,
         },
     )
 }
@@ -401,6 +404,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: None,
+            default_donor_id: None,
         }),
     }
 }
@@ -562,6 +566,7 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: None,
+            default_donor_link_id: None,
         },
     )
 }
@@ -644,6 +649,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: None,
+            default_donor_id: None,
         }),
     }
 }
@@ -787,6 +793,7 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: None,
+            default_donor_link_id: None,
         },
     )
 }
@@ -850,6 +857,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: None,
+            default_donor_id: None,
         }),
     }
 }
@@ -993,6 +1001,7 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: None,
+            default_donor_link_id: None,
         },
     )
 }
@@ -1055,6 +1064,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: None,
+            default_donor_id: None,
         }),
     }
 }
@@ -1194,6 +1204,7 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: None,
+            default_donor_link_id: None,
         },
     )
 }
@@ -1256,6 +1267,7 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: None,
+            default_donor_id: None,
         }),
     }
 }
@@ -1401,6 +1413,7 @@ fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: NaiveDate::from_ymd_opt(2021, 7, 30),
+            default_donor_link_id: None,
         },
     )
 }
@@ -1468,6 +1481,7 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: NaiveDate::from_ymd_opt(2021, 7, 30),
+            default_donor_id: None,
         }),
     }
 }

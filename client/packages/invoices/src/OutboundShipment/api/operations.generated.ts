@@ -2,7 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { StockOutLineFragmentDoc } from '../../StockOut/operations.generated';
+import { StockOutLineFragmentDoc } from '../../StockOut/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type OutboundFragment = {
   __typename: 'InvoiceNode';
@@ -64,7 +64,14 @@ export type OutboundFragment = {
         name: string;
         code: string;
         unitName?: string | null;
+        isVaccine: boolean;
+        doses: number;
       };
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        dosesPerUnit: number;
+      } | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -84,7 +91,13 @@ export type OutboundFragment = {
         costPricePerPack: number;
         packSize: number;
         expiryDate?: string | null;
-        item: { __typename: 'ItemNode'; name: string; code: string };
+        item: {
+          __typename: 'ItemNode';
+          name: string;
+          code: string;
+          isVaccine: boolean;
+          doses: number;
+        };
       } | null;
     }>;
   };
@@ -282,7 +295,14 @@ export type InvoiceQuery = {
               name: string;
               code: string;
               unitName?: string | null;
+              isVaccine: boolean;
+              doses: number;
             };
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              dosesPerUnit: number;
+            } | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -302,7 +322,13 @@ export type InvoiceQuery = {
               costPricePerPack: number;
               packSize: number;
               expiryDate?: string | null;
-              item: { __typename: 'ItemNode'; name: string; code: string };
+              item: {
+                __typename: 'ItemNode';
+                name: string;
+                code: string;
+                isVaccine: boolean;
+                doses: number;
+              };
             } | null;
           }>;
         };
@@ -415,7 +441,14 @@ export type OutboundByNumberQuery = {
               name: string;
               code: string;
               unitName?: string | null;
+              isVaccine: boolean;
+              doses: number;
             };
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              dosesPerUnit: number;
+            } | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -435,7 +468,13 @@ export type OutboundByNumberQuery = {
               costPricePerPack: number;
               packSize: number;
               expiryDate?: string | null;
-              item: { __typename: 'ItemNode'; name: string; code: string };
+              item: {
+                __typename: 'ItemNode';
+                name: string;
+                code: string;
+                isVaccine: boolean;
+                doses: number;
+              };
             } | null;
           }>;
         };
@@ -973,26 +1012,14 @@ export type AddToOutboundShipmentFromMasterListMutation = {
     | { __typename: 'InvoiceLineConnector'; totalCount: number };
 };
 
-export type ItemPriceFragment = {
-  __typename: 'ItemPriceNode';
-  defaultPricePerUnit?: number | null;
-  discountPercentage?: number | null;
-  calculatedPricePerUnit?: number | null;
-};
-
-export type GetItemPricingQueryVariables = Types.Exact<{
+export type SaveOutboundShipmentItemLinesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  input: Types.ItemPriceInput;
+  input: Types.SaveOutboundShipmentLinesInput;
 }>;
 
-export type GetItemPricingQuery = {
-  __typename: 'Queries';
-  itemPrice: {
-    __typename: 'ItemPriceNode';
-    defaultPricePerUnit?: number | null;
-    discountPercentage?: number | null;
-    calculatedPricePerUnit?: number | null;
-  };
+export type SaveOutboundShipmentItemLinesMutation = {
+  __typename: 'Mutations';
+  saveOutboundShipmentItemLines: { __typename: 'InvoiceNode'; id: string };
 };
 
 export type InsertBarcodeMutationVariables = Types.Exact<{
@@ -1138,13 +1165,6 @@ export const CannotHaveEstimatedDeliveryDateBeforeShippedDateErrorFragmentDoc = 
   fragment CannotHaveEstimatedDeliveryDateBeforeShippedDateError on CannotHaveEstimatedDeliveryDateBeforeShippedDate {
     __typename
     description
-  }
-`;
-export const ItemPriceFragmentDoc = gql`
-  fragment itemPrice on ItemPriceNode {
-    defaultPricePerUnit
-    discountPercentage
-    calculatedPricePerUnit
   }
 `;
 export const InvoicesDocument = gql`
@@ -1837,15 +1857,18 @@ export const AddToOutboundShipmentFromMasterListDocument = gql`
     }
   }
 `;
-export const GetItemPricingDocument = gql`
-  query getItemPricing($storeId: String!, $input: ItemPriceInput!) {
-    itemPrice(storeId: $storeId, input: $input) {
-      ... on ItemPriceNode {
-        ...itemPrice
+export const SaveOutboundShipmentItemLinesDocument = gql`
+  mutation saveOutboundShipmentItemLines(
+    $storeId: String!
+    $input: SaveOutboundShipmentLinesInput!
+  ) {
+    saveOutboundShipmentItemLines(input: $input, storeId: $storeId) {
+      ... on InvoiceNode {
+        __typename
+        id
       }
     }
   }
-  ${ItemPriceFragmentDoc}
 `;
 export const InsertBarcodeDocument = gql`
   mutation insertBarcode($storeId: String!, $input: InsertBarcodeInput!) {
@@ -2065,19 +2088,19 @@ export function getSdk(
         variables
       );
     },
-    getItemPricing(
-      variables: GetItemPricingQueryVariables,
+    saveOutboundShipmentItemLines(
+      variables: SaveOutboundShipmentItemLinesMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<GetItemPricingQuery> {
+    ): Promise<SaveOutboundShipmentItemLinesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GetItemPricingQuery>(
-            GetItemPricingDocument,
+          client.request<SaveOutboundShipmentItemLinesMutation>(
+            SaveOutboundShipmentItemLinesDocument,
             variables,
             { ...requestHeaders, ...wrappedRequestHeaders }
           ),
-        'getItemPricing',
-        'query',
+        'saveOutboundShipmentItemLines',
+        'mutation',
         variables
       );
     },

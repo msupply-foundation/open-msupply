@@ -3,8 +3,10 @@ pub mod mutations;
 use self::mutations::{inbound_shipment_line, outbound_shipment_line, prescription_line};
 use async_graphql::*;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
+use graphql_types::types::{DraftStockOutItemData, InvoiceNode};
 use invoice_line_queries::{
-    invoice_lines, InvoiceLineFilterInput, InvoiceLineSortInput, InvoiceLinesResponse,
+    draft_outbound_lines, invoice_lines, InvoiceLineFilterInput, InvoiceLineSortInput,
+    InvoiceLinesResponse,
 };
 
 #[derive(Default, Clone)]
@@ -22,6 +24,16 @@ impl InvoiceLineQueries {
         report_sort: Option<PrintReportSortInput>,
     ) -> Result<InvoiceLinesResponse> {
         invoice_lines(ctx, &store_id, page, filter, sort, report_sort)
+    }
+
+    pub async fn draft_stock_out_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        item_id: String,
+        invoice_id: String,
+    ) -> Result<DraftStockOutItemData> {
+        draft_outbound_lines(ctx, &store_id, &item_id, &invoice_id)
     }
 }
 
@@ -121,8 +133,27 @@ impl InvoiceLineMutations {
         outbound_shipment_line::unallocated_line::allocate::allocate(ctx, &store_id, line_id)
     }
 
-    // Inbound
+    async fn save_outbound_shipment_item_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: outbound_shipment_line::save_item_lines::SaveOutboundShipmentLinesInput,
+    ) -> Result<InvoiceNode> {
+        outbound_shipment_line::save_item_lines::save_outbound_shipment_item_lines(
+            ctx, &store_id, input,
+        )
+    }
 
+    async fn save_prescription_item_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: prescription_line::save_item_lines::SavePrescriptionLinesInput,
+    ) -> Result<InvoiceNode> {
+        prescription_line::save_item_lines::save_prescription_item_lines(ctx, &store_id, input)
+    }
+
+    // Inbound
     async fn insert_inbound_shipment_line(
         &self,
         ctx: &Context<'_>,

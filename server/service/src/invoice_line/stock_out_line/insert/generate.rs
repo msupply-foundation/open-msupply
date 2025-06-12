@@ -68,6 +68,7 @@ fn generate_batch_update(
         stock_line_id: _,
         total_before_tax: _,
         tax_percentage: _,
+        campaign_id: _,
     }: InsertStockOutLine,
     batch: StockLineRow,
     adjust_total_number_of_packs: bool,
@@ -103,6 +104,7 @@ fn generate_line(
         prescribed_quantity,
         total_before_tax,
         note,
+        campaign_id,
         tax_percentage: _,
         location_id: _,
         batch: _,
@@ -125,7 +127,9 @@ fn generate_line(
         expiry_date,
         location_id,
         item_variant_id,
+        donor_link_id,
         note: _,
+        vvm_status_id,
         ..
     }: StockLineRow,
     InvoiceRow {
@@ -169,12 +173,14 @@ fn generate_line(
         total_before_tax,
         total_after_tax,
         tax_percentage,
+        donor_link_id,
         note,
-        inventory_adjustment_reason_id: None,
-        return_reason_id: None,
         foreign_currency_price_before_tax,
         item_variant_id,
+        vvm_status_id,
+        campaign_id,
         linked_invoice_id: None,
+        reason_option_id: None,
     })
 }
 

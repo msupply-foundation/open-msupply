@@ -21,8 +21,7 @@ table! {
         invoice_type -> crate::db_diesel::invoice_row::InvoiceTypeMapping,
         invoice_number -> BigInt,
         invoice_id -> Text,
-        inventory_adjustment_reason -> Nullable<Text>,
-        return_reason ->  Nullable<Text>,
+        reason -> Nullable<Text>,
         invoice_status -> crate::db_diesel::invoice_row::InvoiceStatusMapping,
         pack_size -> Double,
         expiry_date -> Nullable<Date>,
@@ -34,7 +33,7 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Debug, PartialEq)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default)]
 pub struct LedgerRow {
     pub id: String,
     pub stock_line_id: Option<String>,
@@ -46,8 +45,7 @@ pub struct LedgerRow {
     pub invoice_type: InvoiceType,
     pub invoice_number: i64,
     pub invoice_id: String,
-    pub inventory_adjustment_reason: Option<String>,
-    pub return_reason: Option<String>,
+    pub reason: Option<String>,
     pub invoice_status: InvoiceStatus,
     pub pack_size: f64,
     pub expiry_date: Option<NaiveDate>,

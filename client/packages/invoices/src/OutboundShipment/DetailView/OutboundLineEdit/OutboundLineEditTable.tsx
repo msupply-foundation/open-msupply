@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   Divider,
   Box,
@@ -9,21 +9,21 @@ import {
   useFormatNumber,
   Tooltip,
   NumUtils,
+  Typography,
+  useTableStore,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
-import { DraftStockOutLine } from '../../../types';
-import { useOutboundLineEditRows } from './hooks';
 import { useOutboundLineEditColumns } from './columns';
-import { DraftItem } from '../../..';
-import { PackSizeController, shouldUpdatePlaceholder } from '../../../StockOut';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
+import {
+  AllocateInType,
+  useAllocationContext,
+  getAllocatedQuantity,
+} from '../../../StockOut';
+import { min } from 'lodash';
 
 export interface OutboundLineEditTableProps {
-  onChange: (key: string, value: number, packSize: number) => void;
-  packSizeController: PackSizeController;
-  rows: DraftStockOutLine[];
-  item: DraftItem | null;
-  allocatedQuantity: number;
-  batch?: string;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
 }
@@ -34,38 +34,50 @@ const PlaceholderCell = styled(TableCell)(({ theme }) => ({
   color: theme.palette.secondary.main,
 }));
 
-const TotalCell = styled(TableCell)({
+const TotalCell = styled(TableCell)(({ theme }) => ({
   fontSize: 14,
-  padding: '4px 12px 4px 12px',
+  padding: '8px 12px 4px 12px',
   fontWeight: 'bold',
-});
+  position: 'sticky',
+  bottom: 0,
+  background: theme.palette.background.white,
+  borderTop: `1px solid ${theme.palette.divider}`,
+}));
 
-const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
+const PlaceholderRow = ({
+  quantity,
+  extraColumnOffset,
+  dosesPerUnit,
+}: {
+  quantity: number | null;
+  extraColumnOffset: number;
+  dosesPerUnit?: number;
+}) => {
   const t = useTranslation();
-  const [placeholderBuffer, setPlaceholderBuffer] = useState(
-    line?.numberOfPacks ?? 0
-  );
 
-  useEffect(() => {
-    setPlaceholderBuffer(line?.numberOfPacks ?? 0);
-  }, [line?.numberOfPacks]);
-  const formattedValue = useFormatNumber().round(placeholderBuffer, 2);
+  const formattedValue = useFormatNumber().round(quantity ?? 0, 2);
 
-  return !line ? null : (
+  // TODO - maybe should be editable? Can't clear when manually allocating..
+  return quantity === null ? null : (
     <tr>
-      <PlaceholderCell colSpan={3} sx={{ color: 'secondary.main' }}>
+      <PlaceholderCell
+        colSpan={5 + extraColumnOffset}
+        sx={{ color: 'secondary.main' }}
+      >
         {t('label.placeholder')}
       </PlaceholderCell>
-      <PlaceholderCell
-        style={{ textAlign: 'right', paddingRight: '14px' }}
-        colSpan={2}
-      >
+      <PlaceholderCell style={{ textAlign: 'right', paddingRight: '14px' }}>
         1
       </PlaceholderCell>
-      <PlaceholderCell colSpan={3}></PlaceholderCell>
-      <Tooltip title={line?.numberOfPacks.toString()}>
+      {!!dosesPerUnit && (
+        <PlaceholderCell style={{ textAlign: 'right', paddingRight: '14px' }}>
+          {dosesPerUnit}
+        </PlaceholderCell>
+      )}
+      <PlaceholderCell colSpan={dosesPerUnit ? 2 : 3}></PlaceholderCell>
+      <Tooltip title={quantity.toString()}>
         <PlaceholderCell style={{ textAlign: 'right' }}>
-          {!!NumUtils.hasMoreThanTwoDp(placeholderBuffer)
+          {!!NumUtils.hasMoreThanTwoDp(quantity)
             ? `${formattedValue}...`
             : formattedValue}
         </PlaceholderCell>
@@ -74,14 +86,20 @@ const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
   );
 };
 
-const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
+const TotalRow = ({
+  allocatedQuantity,
+  extraColumnOffset,
+}: {
+  allocatedQuantity: number;
+  extraColumnOffset: number;
+}) => {
   const t = useTranslation();
   const formattedValue = useFormatNumber().round(allocatedQuantity, 2);
 
   return (
     <tr>
       <TotalCell colSpan={3}>{t('label.total-quantity')}</TotalCell>
-      <TotalCell colSpan={5}></TotalCell>
+      <TotalCell colSpan={6 + extraColumnOffset}></TotalCell>
       <Tooltip title={allocatedQuantity.toString()}>
         <TotalCell
           style={{
@@ -94,54 +112,116 @@ const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
             : formattedValue}
         </TotalCell>
       </Tooltip>
+      <TotalCell colSpan={2} />
     </tr>
   );
 };
 
-export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
-  onChange,
-  packSizeController,
-  rows,
-  item,
-  allocatedQuantity,
-  batch,
+export const OutboundLineEditTable = ({
   currency,
   isExternalSupplier,
-}) => {
+}: OutboundLineEditTableProps) => {
   const t = useTranslation();
-  const { orderedRows, placeholderRow } = useOutboundLineEditRows(
-    rows,
-    packSizeController,
-    batch
+  const { format } = useFormatNumber();
+  const tableStore = useTableStore();
+  const { data: prefs } = usePreference(
+    PreferenceKey.SortByVvmStatusThenExpiry,
+    PreferenceKey.ManageVvmStatusForStock,
+    PreferenceKey.AllowTrackingOfStockByDonor
   );
-  const onEditStockLine = (key: string, value: number, packSize: number) => {
-    const num = Number.isNaN(value) ? 0 : value;
-    onChange(key, num, packSize);
-    if (placeholderRow && shouldUpdatePlaceholder(num, placeholderRow)) {
-      // if a stock line has been allocated
-      // and the placeholder row is a generated one,
-      // remove the placeholder row
-      placeholderRow.isUpdated = true;
-      placeholderRow.numberOfPacks = 0;
-    }
-  };
-  const unit = item?.unitName ?? t('label.unit');
 
-  const columns = useOutboundLineEditColumns({
-    onChange: onEditStockLine,
-    unit,
-    currency,
-    isExternalSupplier,
+  const {
+    draftLines,
+    placeholderQuantity,
+    nonAllocatableLines,
+    allocateIn,
+    allocatedQuantity,
+    item,
+    manualAllocate,
+  } = useAllocationContext(state => {
+    const { placeholderUnits, item, allocateIn } = state;
+
+    const inDoses = allocateIn.type === AllocateInType.Doses;
+    return {
+      ...state,
+      // In packs & units: we show totals in units
+      // In doses: we show totals in doses
+      allocatedQuantity: getAllocatedQuantity({
+        draftLines: state.draftLines,
+        allocateIn: inDoses ? allocateIn : { type: AllocateInType.Units },
+      }),
+      placeholderQuantity:
+        placeholderUnits !== null && inDoses
+          ? (placeholderUnits ?? 0) * (item?.doses || 1)
+          : placeholderUnits,
+    };
   });
 
+  const allocate = (
+    key: string,
+    value: number,
+    options?: {
+      allocateInType?: AllocateInType;
+      preventPartialPacks?: boolean;
+    }
+  ) => {
+    const num = Number.isNaN(value) ? 0 : value;
+    return manualAllocate(key, num, format, t, options);
+  };
+
+  const columns = useOutboundLineEditColumns({
+    allocate,
+    item,
+    currency,
+    isExternalSupplier,
+    allocateIn: allocateIn,
+  });
+
+  // Display all stock lines to user, including non-allocatable ones at the bottom
+  const lines = useMemo(
+    () => [...draftLines, ...nonAllocatableLines],
+    [draftLines, nonAllocatableLines]
+  );
+  // But disable the non-allocatable ones
+  useEffect(() => {
+    tableStore.setDisabledRows(nonAllocatableLines.map(({ id }) => id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Null means we aren't using placeholder
+  if (!lines.length && placeholderQuantity === null)
+    return (
+      <Box sx={{ margin: 'auto' }}>
+        <Typography>{t('messages.no-stock-available')}</Typography>
+      </Box>
+    );
+
+  let extraColumnOffset = 0;
+  if (
+    item?.isVaccine &&
+    (prefs?.manageVvmStatusForStock || prefs?.sortByVvmStatusThenExpiry)
+  ) {
+    extraColumnOffset += 1;
+  }
+  if (prefs?.allowTrackingOfStockByDonor) {
+    extraColumnOffset += 1;
+  }
+
   const additionalRows = [
-    <PlaceholderRow line={placeholderRow} key="placeholder-row" />,
-    <tr key="divider-row">
-      <td colSpan={10}>
-        <Divider margin={10} />
-      </td>
-    </tr>,
-    <TotalRow key="total-row" allocatedQuantity={allocatedQuantity} />,
+    <PlaceholderRow
+      // Only show a 0 placeholder if we have no stock lines to show
+      quantity={
+        placeholderQuantity === 0 && lines.length ? null : placeholderQuantity
+      }
+      extraColumnOffset={extraColumnOffset}
+      dosesPerUnit={item?.doses}
+      key="placeholder-row"
+    />,
+    <TotalRow
+      key="total-row"
+      allocatedQuantity={allocatedQuantity + (placeholderQuantity ?? 0)}
+      extraColumnOffset={extraColumnOffset}
+    />,
   ];
 
   return (
@@ -149,22 +229,21 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
       <Divider margin={10} />
       <Box
         style={{
-          maxHeight: 325,
+          maxHeight: min([screen.height - 570, 325]),
           display: 'flex',
           flexDirection: 'column',
           overflowX: 'hidden',
           overflowY: 'auto',
         }}
       >
-        {!!orderedRows.length && (
-          <DataTable
-            id="outbound-line-edit"
-            columns={columns}
-            data={orderedRows}
-            dense
-            additionalRows={additionalRows}
-          />
-        )}
+        <DataTable
+          id="outbound-line-edit"
+          columns={columns}
+          data={lines}
+          dense
+          additionalRows={additionalRows}
+          enableColumnSelection={true}
+        />
       </Box>
     </Box>
   );

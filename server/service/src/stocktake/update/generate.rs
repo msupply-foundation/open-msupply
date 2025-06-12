@@ -59,10 +59,10 @@ struct StockLineJob {
 
 fn generate_update_inventory_adjustment_reason(
     invoice_line_id: String,
-    inventory_adjustment_reason_id: Option<String>,
+    reason_option_id: Option<String>,
 ) -> Option<UpdateInventoryAdjustmentReason> {
-    inventory_adjustment_reason_id.map(|reason_id| UpdateInventoryAdjustmentReason {
-        reason_id: Some(reason_id),
+    reason_option_id.map(|reason_id| UpdateInventoryAdjustmentReason {
+        reason_option_id: Some(reason_id),
         invoice_line_id,
     })
 }
@@ -136,7 +136,7 @@ fn generate_stock_in_out_or_update(
 
     let update_inventory_adjustment_reason = generate_update_inventory_adjustment_reason(
         invoice_line_id.clone(),
-        row.inventory_adjustment_reason_id.clone(),
+        row.reason_option_id.clone(),
     );
 
     let stock_in_or_out_line = if delta > 0.0 {
@@ -158,6 +158,9 @@ fn generate_stock_in_out_or_update(
             note: stock_line_row.note,
             item_variant_id: stock_line_row.item_variant_id,
             barcode: stock_line_row.barcode_id,
+            donor_id: stock_line_row.donor_link_id,
+            vvm_status_id: stock_line_row.vvm_status_id,
+            campaign_id: stock_line_row.campaign_id,
             // Default
             total_before_tax: None,
             tax_percentage: None,
@@ -176,6 +179,7 @@ fn generate_stock_in_out_or_update(
             expiry_date: row.expiry_date,
             cost_price_per_pack: Some(cost_price_per_pack),
             sell_price_per_pack: Some(sell_price_per_pack),
+            campaign_id: stock_line_row.campaign_id,
             total_before_tax: None,
             tax_percentage: None,
             prescribed_quantity: None,
@@ -305,10 +309,8 @@ fn generate_new_stock_line(
     let sell_price_per_pack = row.sell_price_per_pack.unwrap_or(0.0);
     let invoice_line_id = uuid();
 
-    let update_inventory_adjustment_reason = generate_update_inventory_adjustment_reason(
-        invoice_line_id.clone(),
-        row.inventory_adjustment_reason_id,
-    );
+    let update_inventory_adjustment_reason =
+        generate_update_inventory_adjustment_reason(invoice_line_id.clone(), row.reason_option_id);
 
     let stock_in_line = StockChange::StockIn(InsertStockInLine {
         r#type: StockInType::InventoryAddition,
@@ -327,12 +329,15 @@ fn generate_new_stock_line(
         stock_line_id: Some(stock_line_id.clone()),
         item_id,
         note: row.note,
+        item_variant_id: stocktake_line.line.item_variant_id.clone(),
         // Default
         stock_on_hold: false,
         barcode: None,
         total_before_tax: None,
         tax_percentage: None,
-        item_variant_id: stocktake_line.line.item_variant_id.clone(),
+        donor_id: None,
+        vvm_status_id: None,
+        campaign_id: None,
     });
 
     // If new stock line has a location, create location movement
@@ -579,6 +584,7 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
+        default_donor_link_id: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {

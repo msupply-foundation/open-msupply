@@ -17,6 +17,21 @@ fragment InboundLine on InvoiceLineNode {
   foreignCurrencyPriceBeforeTax
   itemName
   itemVariantId
+  vvmStatusId
+  donor(storeId: $storeId) {
+    id
+    name
+  }
+
+  campaign {
+    id
+    name
+  }
+
+  itemVariant {
+    id
+    dosesPerUnit
+  }
 
   item {
     __typename
@@ -25,6 +40,8 @@ fragment InboundLine on InvoiceLineNode {
     code
     unitName
     defaultPackSize
+    isVaccine
+    doses
   }
 
   location {
@@ -49,6 +66,7 @@ fragment InboundLine on InvoiceLineNode {
     totalNumberOfPacks
     onHold
     note
+    vvmStatusId
   }
 }
 
@@ -73,6 +91,10 @@ fragment Inbound on InvoiceNode {
   type
   taxPercentage
   expectedDeliveryDate
+  defaultDonor(storeId: $storeId) {
+    id
+    name
+  }
 
   linkedShipment {
     __typename

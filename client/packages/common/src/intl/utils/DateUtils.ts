@@ -86,6 +86,7 @@ const DAY = 24 * HOUR;
 
 export const DateUtils = {
   differenceInMinutes,
+  differenceInDays,
   addMinutes,
   addDays,
   addHours,

@@ -1,139 +1,125 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import {
+  BasicSpinner,
+  Grid,
   useBufferState,
-  InvoiceNodeStatus,
-  DateUtils,
+  useTranslation,
 } from '@openmsupply-client/common';
-import { useDraftPrescriptionLines } from './hooks';
 import { usePrescription } from '../api';
-import {
-  getAllocatedQuantity,
-  sumAvailableQuantity,
-  usePackSizeController,
-} from '../../StockOut';
-import { allocateQuantities } from '../api/hooks/utils';
-import { DraftPrescriptionLine } from '../../types';
 import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
-import { ItemRowWithDirectionsFragment } from '@openmsupply-client/system';
+import { StockItemSearchInput } from '@openmsupply-client/system';
+import {
+  AllocateInType,
+  AllocationStrategy,
+  useAllocationContext,
+  useOutboundLineEditData,
+} from '../../StockOut';
+import { AccordionPanelSection } from './PanelSection';
 
 interface PrescriptionLineEditProps {
-  item: ItemRowWithDirectionsFragment | null;
-  draftLines: DraftPrescriptionLine[];
-  updateLines: (lines: DraftPrescriptionLine[]) => void;
-  setIsDirty: (dirty: boolean) => void;
   programId?: string;
+  invoiceId: string;
+  itemId: string | undefined;
+  prefOptions: {
+    allocateVaccineItemsInDoses?: boolean;
+    sortByVvmStatus: boolean;
+  };
 }
 
-export const PrescriptionLineEdit: React.FC<PrescriptionLineEditProps> = ({
-  item,
-  draftLines: draftPrescriptionLines,
-  updateLines,
-  setIsDirty,
+export const PrescriptionLineEdit = ({
+  itemId,
   programId,
-}) => {
-  const isNew = item === null;
-  const [currentItem, setCurrentItem] = useBufferState(item);
-  const [isAutoAllocated, setIsAutoAllocated] = useState(false);
-  const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
-    useState(false);
-  const {
-    query: { data },
-    isDisabled,
-  } = usePrescription();
-  const { prescriptionDate } = data ?? {};
-  const { isLoading, updateQuantity, updateNotes } = useDraftPrescriptionLines(
-    currentItem,
-    draftPrescriptionLines,
-    updateLines,
-    DateUtils.getDateOrNull(prescriptionDate)
+  invoiceId,
+  prefOptions: { allocateVaccineItemsInDoses, sortByVvmStatus },
+}: PrescriptionLineEditProps) => {
+  const isNew = !itemId;
+
+  const t = useTranslation();
+
+  // Needs to update when user clicks on different item in the list, or when
+  // changing item with the selector
+  const [currentItemId, setCurrentItemId] = useBufferState(itemId);
+
+  const { isDisabled, rows: items } = usePrescription(); // TODO: how much can we strip now?
+
+  const { clear, initialise, item } = useAllocationContext(
+    ({ initialise, item, clear }) => ({
+      initialise,
+      item,
+      clear,
+    })
   );
 
-  const packSizeController = usePackSizeController(draftPrescriptionLines);
+  const { refetch: queryData, isFetching } = useOutboundLineEditData(
+    invoiceId,
+    currentItemId
+  );
 
-  const onUpdateQuantity = (batchId: string, packs: number) => {
-    updateQuantity(batchId, packs);
-    setIsAutoAllocated(false);
-    setIsDirty(true);
-  };
-
-  const onUpdateNotes = (note: string) => {
-    updateNotes(note);
-    setIsAutoAllocated(false);
-    setIsDirty(true);
-  };
-
-  const onAllocate = (
-    numPacks: number,
-    packSize: number | null,
-    autoAllocated = false,
-    prescribedQuantity: number | null
-  ) => {
-    const newAllocateQuantities = allocateQuantities(
-      // Hack - we're using shared allocateQuantities function, which supports placeholder lines in
-      // New status. Placeholder lines aren't supported for prescriptions though, so we'll just pretend
-      // we're already in pick :)
-      InvoiceNodeStatus.Picked,
-      draftPrescriptionLines
-    )(numPacks, packSize, true, prescribedQuantity);
-
-    setIsDirty(true);
-    updateLines(newAllocateQuantities ?? draftPrescriptionLines);
-    setIsAutoAllocated(autoAllocated);
-    if (showZeroQuantityConfirmation && numPacks !== 0)
-      setShowZeroQuantityConfirmation(false);
-
-    // TODO: refactor prescription view
-    // Validation should be managed against overall `draft`, and not using `isDirty`
-    if (
-      // Don't allow save if both prescribed quantity and allocated packs are zero for all lines
-      newAllocateQuantities?.every(
-        line =>
-          line.numberOfPacks === 0 &&
-          (!line.prescribedQuantity || line.prescribedQuantity === 0)
-      )
-    ) {
-      setIsDirty(false);
+  useEffect(() => {
+    if (!currentItemId) {
+      clear(); // Clear context if switched to new item
+      return;
     }
 
-    return newAllocateQuantities;
-  };
+    // Manual query for item + prescription line data,
+    // only initialise for allocation when data is available
+    queryData().then(({ data }) => {
+      if (!data) return;
 
-  const canAutoAllocate = !!(currentItem && draftPrescriptionLines.length);
-
-  const hasOnHold = draftPrescriptionLines.some(
-    ({ stockLine }) =>
-      (stockLine?.availableNumberOfPacks ?? 0) > 0 && !!stockLine?.onHold
-  );
-  const hasExpired = draftPrescriptionLines.some(
-    ({ stockLine }) =>
-      (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
-      !!stockLine?.expiryDate &&
-      DateUtils.isExpired(new Date(stockLine?.expiryDate))
-  );
+      initialise({
+        itemData: data,
+        strategy: sortByVvmStatus
+          ? AllocationStrategy.VVMStatus
+          : AllocationStrategy.FEFO,
+        allowPlaceholder: false,
+        allowPrescribedQuantity: true,
+        ignoreNonAllocatableLines: true,
+        // In prescriptions, default to allocate in doses for vaccines
+        // if pref is on
+        allocateIn:
+          allocateVaccineItemsInDoses && data.item.isVaccine
+            ? { type: AllocateInType.Doses }
+            : undefined,
+      });
+    });
+    // Expect dependencies to be stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentItemId]);
 
   return (
-    <PrescriptionLineEditForm
-      disabled={isDisabled}
-      isNew={isNew}
-      packSizeController={packSizeController}
-      onChangeItem={(item: ItemRowWithDirectionsFragment | null) => {
-        setIsAutoAllocated(false);
-        setCurrentItem(item);
-      }}
-      item={currentItem}
-      allocatedUnits={getAllocatedQuantity(draftPrescriptionLines)}
-      availableUnits={sumAvailableQuantity(draftPrescriptionLines)}
-      onChangeQuantity={onAllocate}
-      canAutoAllocate={canAutoAllocate}
-      isAutoAllocated={isAutoAllocated}
-      updateNotes={onUpdateNotes}
-      draftPrescriptionLines={draftPrescriptionLines}
-      showZeroQuantityConfirmation={showZeroQuantityConfirmation}
-      hasOnHold={hasOnHold}
-      hasExpired={hasExpired}
-      isLoading={isLoading}
-      updateQuantity={onUpdateQuantity}
-      programId={programId}
-    />
+    <Grid
+      container
+      gap="4px"
+      sx={{ minHeight: 200, display: 'flex', flexDirection: 'column' }}
+    >
+      <AccordionPanelSection
+        title={t('label.item', { count: 1 })}
+        closedSummary={item?.name}
+        defaultExpanded={isNew && !isDisabled}
+      >
+        <Grid flex={1}>
+          <StockItemSearchInput
+            autoFocus={isNew}
+            openOnFocus={isNew}
+            disabled={!isNew || isDisabled}
+            currentItemId={itemId ?? currentItemId}
+            onChange={item => setCurrentItemId(item?.id)}
+            filter={{ isVisibleOrOnHand: true }}
+            extraFilter={
+              isDisabled
+                ? undefined
+                : item => !items?.some(({ id }) => id === item.id)
+            }
+            programId={programId}
+          />
+        </Grid>
+      </AccordionPanelSection>
+
+      {isFetching ? (
+        <BasicSpinner inline style={{ flexGrow: 1 }} />
+      ) : item ? (
+        <PrescriptionLineEditForm disabled={isDisabled} isNew={isNew} />
+      ) : null}
+    </Grid>
   );
 };
