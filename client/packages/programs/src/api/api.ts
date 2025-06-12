@@ -347,12 +347,14 @@ export const getClinicianQueries = (sdk: Sdk, storeId: string) => ({
   clinicians: async ({
     sortBy,
     filterBy,
+    // pagination,
   }: ClinicianListParams): Promise<{
     nodes: ClinicianFragment[];
     totalCount: number;
   }> => {
     const result = await sdk.clinicians({
       storeId,
+      // page: pagination,
       key:
         (sortBy?.key as ClinicianSortFieldInput) ??
         ClinicianSortFieldInput.LastName,

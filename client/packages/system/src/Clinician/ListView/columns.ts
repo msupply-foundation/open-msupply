@@ -1,20 +1,12 @@
 import {
   useColumns,
   ColumnDescription,
-  GenderType,
+  // GenderType,
 } from '@openmsupply-client/common';
-
-interface DummyClinicianRowFragment {
-  id: string;
-  code: string;
-  initials: string;
-  firstName?: string;
-  lastName: string;
-  gender?: GenderType;
-}
+import { ClinicianFragment } from 'packages/programs/src';
 
 export const useClinicianListColumns = () => {
-  const columnList: ColumnDescription<DummyClinicianRowFragment>[] = [
+  const columnList: ColumnDescription<ClinicianFragment>[] = [
     {
       key: 'code',
       label: 'label.code',
@@ -42,7 +34,7 @@ export const useClinicianListColumns = () => {
     },
   ];
 
-  const columns = useColumns<DummyClinicianRowFragment>(columnList);
+  const columns = useColumns<ClinicianFragment>(columnList);
 
   return columns;
 };
