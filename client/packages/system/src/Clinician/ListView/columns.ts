@@ -1,8 +1,4 @@
-import {
-  useColumns,
-  ColumnDescription,
-  // GenderType,
-} from '@openmsupply-client/common';
+import { useColumns, ColumnDescription } from '@openmsupply-client/common';
 import { ClinicianFragment } from 'packages/programs/src';
 
 export const useClinicianListColumns = () => {
@@ -14,12 +10,12 @@ export const useClinicianListColumns = () => {
     },
     {
       key: 'firstName',
-      label: 'label.firstName',
+      label: 'label.first-name',
       accessor: ({ rowData }) => rowData?.firstName,
     },
     {
       key: 'lastName',
-      label: 'label.lastName',
+      label: 'label.last-name',
       accessor: ({ rowData }) => rowData?.lastName,
     },
     {
