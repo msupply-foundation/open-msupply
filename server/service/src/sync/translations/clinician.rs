@@ -5,7 +5,7 @@ use repository::{
     ClinicianRowRepositoryTrait, GenderType, StorageConnection, SyncBufferRow,
 };
 
-use crate::sync::sync_serde::empty_str_as_option_string;
+use crate::sync::{sync_serde::empty_str_as_option_string, translations::store::StoreTranslation};
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
@@ -57,7 +57,7 @@ impl SyncTranslation for ClinicianTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![]
+        vec![StoreTranslation.table_name()]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

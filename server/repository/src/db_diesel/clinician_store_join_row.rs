@@ -1,6 +1,6 @@
 use super::{clinician_link_row::clinician_link, clinician_row::clinician, StorageConnection};
 
-use crate::Delete;
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RowActionType};
 use crate::{RepositoryError, Upsert};
 
 use diesel::prelude::*;
@@ -41,6 +41,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
+        self.insert_changelog(row, RowActionType::Upsert)?;
         Ok(())
     }
 
@@ -62,6 +63,22 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         )
         .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    fn insert_changelog(
+        &self,
+        row: &ClinicianStoreJoinRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::ClinicianStoreJoin,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: None,
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 }
 
