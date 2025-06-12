@@ -21,7 +21,7 @@ interface DetailsProps {
 }
 
 export const Details = ({ nameId, type = 'customer' }: DetailsProps) => {
-  const isDisabled = true;
+  const disabled = true;
   const t = useTranslation();
   const { data, isLoading } = useName.document.get(nameId);
   const { localisedDate } = useFormatDateTime();
@@ -41,33 +41,33 @@ export const Details = ({ nameId, type = 'customer' }: DetailsProps) => {
             <DetailInputWithLabelRow
               label={t('label.code')}
               inputAlignment="start"
-              inputProps={{ value: data?.code, disabled: isDisabled }}
+              inputProps={{ value: data?.code, disabled }}
             />
             <DetailInputWithLabelRow
               label={t('label.chargeCode')}
-              inputProps={{ value: data?.chargeCode, disabled: isDisabled }}
+              inputProps={{ value: data?.chargeCode, disabled }}
             />
             <DetailInputWithLabelRow
               label={t('label.comment')}
-              inputProps={{ value: data?.comment, disabled: isDisabled }}
+              inputProps={{ value: data?.comment, disabled }}
             />
             <DetailInputWithLabelRow
               label={t('label.phone')}
-              inputProps={{ value: data?.phone, disabled: isDisabled }}
+              inputProps={{ value: data?.phone, disabled }}
             />
             {type === 'supplier' && (
               <>
                 <DetailInputWithLabelRow
                   label={t('label.hsh-code')}
-                  inputProps={{ value: data?.hshCode, disabled: isDisabled }}
+                  inputProps={{ value: data?.hshCode, disabled }}
                 />
                 <DetailInputWithLabelRow
                   label={t('label.hsh-name')}
-                  inputProps={{ value: data?.hshName, disabled: isDisabled }}
+                  inputProps={{ value: data?.hshName, disabled }}
                 />
                 <DetailInputWithLabelRow
                   label={t('label.email')}
-                  inputProps={{ value: data?.email, disabled: isDisabled }}
+                  inputProps={{ value: data?.email, disabled }}
                 />
               </>
             )}
@@ -79,27 +79,22 @@ export const Details = ({ nameId, type = 'customer' }: DetailsProps) => {
                 value: data?.createdDatetime
                   ? localisedDate(data?.createdDatetime)
                   : '',
-                disabled: isDisabled,
+                disabled,
               }}
             />
             <DetailInputWithLabelRow
               label={t('label.manufacturer')}
               Input={
-                <Checkbox
-                  disabled={isDisabled}
-                  checked={data?.isManufacturer}
-                />
+                <Checkbox disabled={disabled} checked={data?.isManufacturer} />
               }
             />
             <DetailInputWithLabelRow
               label={t('label.donor')}
-              Input={<Checkbox disabled={isDisabled} checked={data?.isDonor} />}
+              Input={<Checkbox disabled={disabled} checked={data?.isDonor} />}
             />
             <DetailInputWithLabelRow
               label={t('label.on-hold')}
-              Input={
-                <Checkbox disabled={isDisabled} checked={data?.isOnHold} />
-              }
+              Input={<Checkbox disabled={disabled} checked={data?.isOnHold} />}
             />
             {type === 'supplier' && (
               <>
@@ -107,18 +102,18 @@ export const Details = ({ nameId, type = 'customer' }: DetailsProps) => {
                   label={t('label.currency')}
                   inputProps={{
                     value: data?.currency?.code,
-                    disabled: isDisabled,
+                    disabled,
                   }}
                 />
                 <DetailInputWithLabelRow
                   label={t('label.margin')}
-                  inputProps={{ value: data?.margin, disabled: isDisabled }}
+                  inputProps={{ value: data?.margin, disabled }}
                 />
                 <DetailInputWithLabelRow
                   label={t('label.freight-factor')}
                   inputProps={{
                     value: data?.freightFactor,
-                    disabled: isDisabled,
+                    disabled,
                   }}
                 />
               </>
@@ -147,12 +142,12 @@ export const Details = ({ nameId, type = 'customer' }: DetailsProps) => {
               >
                 <BasicTextInput
                   value={data?.address1}
-                  disabled={isDisabled}
+                  disabled={disabled}
                   fullWidth
                 />
                 <BasicTextInput
                   value={data?.address2}
-                  disabled={isDisabled}
+                  disabled={disabled}
                   fullWidth
                 />
               </Box>
@@ -162,12 +157,12 @@ export const Details = ({ nameId, type = 'customer' }: DetailsProps) => {
           <DetailInputWithLabelRow
             label={t('label.country')}
             inputAlignment="start"
-            inputProps={{ value: data?.country, disabled: isDisabled }}
+            inputProps={{ value: data?.country, disabled }}
             labelWidthPercentage={19}
           />
           <DetailInputWithLabelRow
             label={t('label.website')}
-            inputProps={{ value: data?.website, disabled: isDisabled }}
+            inputProps={{ value: data?.website, disabled }}
             inputAlignment="start"
             DisabledInput={
               <MuiLink

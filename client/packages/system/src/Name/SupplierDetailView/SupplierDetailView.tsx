@@ -34,9 +34,5 @@ export const SupplierDetailView = (): ReactElement => {
     },
   ];
 
-  return (
-    <>
-      <DetailTabs tabs={tabs} />
-    </>
-  );
+  return <DetailTabs tabs={tabs} />;
 };
