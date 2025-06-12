@@ -9,6 +9,8 @@ use graphql_core::{
 };
 use serde::Serialize;
 
+use crate::types::CurrencyNode;
+
 use super::{patient::GenderType, StoreNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -164,6 +166,45 @@ impl NameNode {
             Some(properties) => properties.to_owned(),
             None => "{}".to_string(), // Empty JSON object
         }
+    }
+
+    pub async fn hsh_code(&self) -> &Option<String> {
+        &self.row().hsh_code
+    }
+
+    pub async fn hsh_name(&self) -> &Option<String> {
+        &self.row().hsh_name
+    }
+
+    pub async fn margin(&self) -> &Option<f64> {
+        &self.row().margin
+    }
+
+    pub async fn freight_factor(&self) -> &Option<f64> {
+        &self.row().freight_factor
+    }
+
+    pub async fn currency(&self, ctx: &Context<'_>) -> Result<Option<CurrencyNode>> {
+        let service_provider = ctx.service_provider();
+        let currency_provider = &service_provider.currency_service;
+        let service_context = &service_provider.basic_context()?;
+
+        let currency_id = if let Some(currency_id) = &self.row().currency_id {
+            currency_id
+        } else {
+            return Ok(None);
+        };
+
+        let currency = currency_provider
+            .get_currency(service_context, currency_id)
+            .map_err(|e| StandardGraphqlError::from_repository_error(e).extend())?
+            .ok_or(StandardGraphqlError::InternalError(format!(
+                "Cannot find currency ({}) for name ({})",
+                currency_id,
+                self.row().id
+            )))?;
+
+        Ok(Some(CurrencyNode::from_domain(currency)))
     }
 }
 
