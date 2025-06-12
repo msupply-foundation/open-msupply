@@ -21,6 +21,7 @@ async-graphql-actix-web = { workspace = true }
 async-trait = { workspace = true }
 chrono = { workspace = true }
 serde = { workspace = true }
+log = { workspace = true }
 
 [dev-dependencies]
 actix-rt = { workspace = true }
