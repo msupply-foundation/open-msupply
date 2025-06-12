@@ -73,6 +73,11 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
           })
         )}
         sx={{ width: '100%' }}
+        renderOption={(props, option) => (
+          <li {...props} key={option.id}>
+            <Typography>{option.label}</Typography>
+          </li>
+        )}
         textSx={{ backgroundColor: theme.palette.background.drawer }}
         disabled={disabled}
         fullWidth={fullWidth}
