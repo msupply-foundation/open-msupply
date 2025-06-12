@@ -39,18 +39,14 @@ export const NewClinicianModal = ({
 
   const handleSave = async () => {
     try {
-      save();
+      await save();
       success(t('messages.created-clinician'))();
       handleClose();
     } catch (e) {
-      const errorSnack = error(
-        t('error.failed-to-create-prescription') + (e as Error).message
-      );
+      const errorSnack = error((e as Error).message);
       errorSnack();
     }
   };
-
-  // const canSave = patient && date;
 
   return (
     <Modal

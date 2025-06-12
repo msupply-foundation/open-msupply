@@ -1,9 +1,10 @@
-import { InsertClinicianInput } from '@common/types';
 import { useState } from 'react';
-
-type DraftClinician = Omit<InsertClinicianInput, 'id'>;
+import { DraftClinician } from '.';
+import { useInsertClinician } from './api/useInsertClinician';
 
 export const useCreateClinician = () => {
+  const { mutateAsync } = useInsertClinician();
+
   const [clinician, setClinician] = useState<DraftClinician>({
     firstName: '',
     lastName: '',
@@ -14,8 +15,9 @@ export const useCreateClinician = () => {
   const isValid =
     !!clinician.code && !!clinician.lastName && !!clinician.initials;
 
-  const save = () => {
-    console.log(clinician);
+  const save = async () => {
+    await mutateAsync(clinician);
+
     setClinician({
       firstName: '',
       lastName: '',
