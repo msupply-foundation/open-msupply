@@ -24,7 +24,8 @@ export const NewClinicianModal = ({
   const t = useTranslation();
   const { error, success } = useNotification();
 
-  const { draft, updateDraft, isValid, save } = useCreateClinician();
+  const { isSaving, draft, updateDraft, isValid, save, clear } =
+    useCreateClinician();
 
   const { Modal } = useDialog({
     isOpen: open,
@@ -35,6 +36,7 @@ export const NewClinicianModal = ({
 
   const handleClose = () => {
     onClose();
+    clear();
   };
 
   const handleSave = async () => {
@@ -57,8 +59,7 @@ export const NewClinicianModal = ({
           variant="contained"
           startIcon={<SaveIcon />}
           label={t('label.create')}
-          isLoading={false} // Replace with actual loading state if needed
-          // isLoading={isCreating}
+          isLoading={isSaving}
           onClick={handleSave}
           disabled={!isValid}
         />

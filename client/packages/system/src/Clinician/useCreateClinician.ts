@@ -3,7 +3,7 @@ import { DraftClinician } from '.';
 import { useInsertClinician } from './api/useInsertClinician';
 
 export const useCreateClinician = () => {
-  const { mutateAsync } = useInsertClinician();
+  const { isLoading, mutateAsync } = useInsertClinician();
 
   const [clinician, setClinician] = useState<DraftClinician>({
     firstName: '',
@@ -18,6 +18,14 @@ export const useCreateClinician = () => {
   const save = async () => {
     await mutateAsync(clinician);
 
+    clear();
+  };
+
+  const updateDraft = (updatedFields: Partial<DraftClinician>) => {
+    setClinician(prev => ({ ...prev, ...updatedFields }));
+  };
+
+  const clear = () => {
     setClinician({
       firstName: '',
       lastName: '',
@@ -26,14 +34,12 @@ export const useCreateClinician = () => {
     });
   };
 
-  const updateDraft = (updatedFields: Partial<DraftClinician>) => {
-    setClinician(prev => ({ ...prev, ...updatedFields }));
-  };
-
   return {
     isValid,
     draft: clinician,
     updateDraft,
     save,
+    clear,
+    isSaving: isLoading,
   };
 };
