@@ -304,6 +304,7 @@ mod test {
                 location: Some(mock_location_1()),
                 item: mock_item_a(),
                 donor: None,
+                reason_option: None,
             })
         }));
 
