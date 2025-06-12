@@ -335,6 +335,7 @@
   "error.no-immunisation-programs": "No Immunization programs found",
   "error.no-inbound-items": "No items have been added to this shipment.",
   "error.no-inbound-shipments": "There are no Inbound Shipments to display.",
+  "error.no-clinicians": "There are no clinicians to display.",
   "error.no-indicators": "There are no indicators for this requisition",
   "error.no-internal-order-items": "No items have been added to this Internal Order.",
   "error.no-internal-orders": "No internal orders to display.",
