@@ -14,7 +14,7 @@ use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_asset::property::AssetPropertiesQueries;
 use graphql_batch_mutations::BatchMutations;
-use graphql_clinician::ClinicianQueries;
+use graphql_clinician::{ClinicianMutations, ClinicianQueries};
 use graphql_contact_form::ContactFormMutations;
 use graphql_core::loader::LoaderRegistry;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
@@ -243,6 +243,7 @@ pub struct Mutations(
     pub InventoryAdjustmentMutations,
     pub ContactFormMutations,
     pub VVMMutations,
+    pub ClinicianMutations,
 );
 
 impl Mutations {
@@ -270,6 +271,7 @@ impl Mutations {
             InventoryAdjustmentMutations,
             ContactFormMutations,
             VVMMutations,
+            ClinicianMutations,
         )
     }
 }
