@@ -10,6 +10,7 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
+import { useCreateClinician } from './useCreateClinician';
 
 interface NewClinicianModalProps {
   open: boolean;
@@ -21,7 +22,9 @@ export const NewClinicianModal = ({
   onClose,
 }: NewClinicianModalProps) => {
   const t = useTranslation();
-  const { error } = useNotification();
+  const { error, success } = useNotification();
+
+  const { draft, updateDraft, isValid, save } = useCreateClinician();
 
   const { Modal } = useDialog({
     isOpen: open,
@@ -36,6 +39,8 @@ export const NewClinicianModal = ({
 
   const handleSave = async () => {
     try {
+      save();
+      success(t('messages.created-clinician'))();
       handleClose();
     } catch (e) {
       const errorSnack = error(
@@ -59,7 +64,7 @@ export const NewClinicianModal = ({
           isLoading={false} // Replace with actual loading state if needed
           // isLoading={isCreating}
           onClick={handleSave}
-          // disabled={!canSave}
+          disabled={!isValid}
         />
       }
       cancelButton={<DialogButton variant="cancel" onClick={handleClose} />}
@@ -71,8 +76,8 @@ export const NewClinicianModal = ({
             <BasicTextInput
               size="small"
               sx={{ width: 350 }}
-              value={''}
-              onChange={event => console.log(event.target.value)}
+              value={draft.code}
+              onChange={event => updateDraft({ code: event.target.value })}
               required
             />
           }
@@ -83,8 +88,8 @@ export const NewClinicianModal = ({
             <BasicTextInput
               size="small"
               sx={{ width: 350 }}
-              value={''}
-              onChange={event => console.log(event.target.value)}
+              value={draft.firstName}
+              onChange={event => updateDraft({ firstName: event.target.value })}
             />
           }
         />
@@ -94,8 +99,8 @@ export const NewClinicianModal = ({
             <BasicTextInput
               size="small"
               sx={{ width: 350 }}
-              value={''}
-              onChange={event => console.log(event.target.value)}
+              value={draft.lastName}
+              onChange={event => updateDraft({ lastName: event.target.value })}
               required
             />
           }
@@ -106,8 +111,8 @@ export const NewClinicianModal = ({
             <BasicTextInput
               size="small"
               sx={{ width: 350 }}
-              value={''}
-              onChange={event => console.log(event.target.value)}
+              value={draft.initials}
+              onChange={event => updateDraft({ initials: event.target.value })}
               required
             />
           }

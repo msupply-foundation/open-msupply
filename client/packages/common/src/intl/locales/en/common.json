@@ -1568,6 +1568,7 @@
   "messages.create-outbound-from-requisition": "Are you sure you want to create an Outbound Shipment from this Customer Requisition?",
   "messages.create-stocktake-1": "You can create a stocktake based on items currently assigned to a location, items that you currently have in stock, items assigned to a master list, or items expiring before a particular date.",
   "messages.create-stocktake-2": "To create an empty stocktake, simply click OK to continue.",
+  "messages.created-clinician": "Successfully created clinician",
   "messages.created-new-vaccine-course": "Successfully created vaccine course",
   "messages.customer-requisition-created-on": "Customer requisition created on {{date}}",
   "messages.customer-return-created-verified": "Customer Return successfully created as Verified",
