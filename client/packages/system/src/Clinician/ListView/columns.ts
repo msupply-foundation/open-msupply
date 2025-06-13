@@ -4,7 +4,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { ClinicianFragment } from 'packages/programs/src';
-import { getGenderTranslationKey } from '../../Patient/PatientView';
+import { getGenderTranslationKey } from '../..';
 
 export const useClinicianListColumns = () => {
   const t = useTranslation();
