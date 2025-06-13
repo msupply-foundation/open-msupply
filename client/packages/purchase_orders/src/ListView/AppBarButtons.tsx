@@ -13,35 +13,36 @@ import {
   Platform,
   useCallbackWithPermission,
   UserPermission,
+  ToggleState,
 } from '@openmsupply-client/common';
-import { CreatePatientModal } from '@openmsupply-client/system';
+import { SupplierSearchModal } from '@openmsupply-client/system';
 import { ListParams, usePurchaseOrderList } from '../api';
 
 export const AppBarButtonsComponent: FC<{
-  // modalController: ToggleState;
+  modalController: ToggleState;
   listParams: ListParams;
-}> = ({ listParams }) => {
+}> = ({ modalController }) => {
   const t = useTranslation();
   const { success, error } = useNotification();
-  const [patientModalOpen, setPatientModalOpen] = useState(false);
 
-  const {
-    query: { data, isLoading },
-  } = usePurchaseOrderList(listParams);
+  const handleSupplierSelected = () => {
+    console.log('Selected');
+    // TO-DO: create PO
+  };
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
-          label={t('button.new-prescription')}
-          onClick={() => {}}
+          label={t('button.new-purchase-order')}
+          onClick={modalController.toggleOn}
         />
-        {/* <NewPrescriptionModal
+        <SupplierSearchModal
           open={modalController.isOn}
           onClose={modalController.toggleOff}
-          openPatientModal={onCreatePatient}
-        /> */}
+          onChange={handleSupplierSelected}
+        />
         {/* <LoadingButton
           startIcon={<DownloadIcon />}
           isLoading={isLoading}

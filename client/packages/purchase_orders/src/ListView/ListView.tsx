@@ -52,7 +52,7 @@ const ListView: FC = () => {
     filterBy,
   };
   const navigate = useNavigate();
-  // const modalController = useToggle();
+  const modalController = useToggle();
   const {
     query: { data, isError, isLoading },
   } = usePurchaseOrderList(listParams);
@@ -91,7 +91,7 @@ const ListView: FC = () => {
     <>
       <Toolbar filter={filter} />
       <AppBarButtons
-        // modalController={modalController}
+        modalController={modalController}
         listParams={listParams}
       />
       <DataTable
