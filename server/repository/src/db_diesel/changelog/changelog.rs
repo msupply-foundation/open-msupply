@@ -78,6 +78,7 @@ pub enum ChangelogTableName {
     InventoryAdjustmentReason,
     Barcode,
     Clinician,
+    ClinicianStoreJoin,
     ColdStorageType,
     Name,
     NameStoreJoin,
@@ -160,6 +161,7 @@ impl ChangelogTableName {
             ChangelogTableName::InventoryAdjustmentReason => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Barcode => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Clinician => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::ClinicianStoreJoin => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Name => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::NameStoreJoin => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Document => ChangeLogSyncStyle::Legacy,
@@ -760,7 +762,7 @@ mod test {
 
     use crate::{
         mock::MockDataInserts, test_db::setup_all, ChangelogRepository, ClinicianRow,
-        ClinicianRowRepository, RepositoryError, TransactionError,
+        ClinicianRowRepository, ClinicianRowRepositoryTrait, RepositoryError, TransactionError,
     };
 
     /// Example from with_locked_changelog_table() comment
