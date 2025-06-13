@@ -17,6 +17,7 @@ const ClinicianListComponent = () => {
   } = useUrlQueryParams();
   const { data, isError, isLoading } = useClinicians.document.list({
     pagination: { first, offset },
+    sortBy: { key: 'lastName' },
   });
   const clinicians: ClinicianFragment[] = data?.nodes ?? [];
   const columns = useClinicianListColumns();
