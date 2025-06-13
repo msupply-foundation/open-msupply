@@ -78,7 +78,7 @@ impl<'a> PurchaseOrderRepository<'a> {
                     apply_sort_no_case!(query, sort, purchase_order::target_months)
                 }
                 PurchaseOrderSortField::DeliveryDate => {
-                    apply_sort_no_case!(query, sort, purchase_order::delivery_datetime)
+                    apply_sort_no_case!(query, sort, purchase_order::delivered_datetime)
                 }
                 PurchaseOrderSortField::Lines => {}
             }
