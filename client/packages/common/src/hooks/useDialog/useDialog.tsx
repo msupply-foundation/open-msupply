@@ -56,6 +56,7 @@ export interface DialogProps {
   disableBackdrop?: boolean;
   disableEscapeKey?: boolean;
   disableMobileFullScreen?: boolean;
+  isSidePanelModal?: boolean;
 }
 
 interface DialogState {
@@ -117,7 +118,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     animationTimeout = 500,
     disableBackdrop = true,
     disableEscapeKey = false,
-    disableMobileFullScreen = false,
+    isSidePanelModal = false,
+    disableMobileFullScreen = isSidePanelModal,
   } = dialogProps ?? {};
   const [open, setOpen] = React.useState(false);
   const showDialog = useCallback(() => setOpen(true), []);
@@ -231,10 +233,22 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         onClose={handleClose}
         width={dimensions.width}
         height={dimensions.height}
-        sx={sx}
-        TransitionComponent={Transition}
+        sx={{
+          ...sx,
+          ...(isSidePanelModal
+            ? {
+                minHeight: '100vh',
+                borderRadius: 0,
+                margin: 0,
+              }
+            : {}),
+        }}
+        TransitionComponent={
+          Transition || isSidePanelModal ? SlideInTransition : undefined
+        }
         disableEscapeKeyDown={false}
         fullScreen={defaultFullscreen}
+        alignModal={isSidePanelModal ? 'end' : 'center'}
       >
         {defaultFullscreen && (
           <IconButton
@@ -302,3 +316,12 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
 
   return { hideDialog, Modal, open, showDialog };
 };
+
+const SlideInTransition = React.forwardRef(function Transition(
+  props: TransitionProps & {
+    children: React.ReactElement<any, any>;
+  },
+  ref: React.Ref<unknown>
+) {
+  return <Slide direction="left" ref={ref} {...props} />;
+});
