@@ -98,17 +98,38 @@ const frTranslations = {
   Low: 'Faible',
 };
 
-function getPopulationServedForLanguage(language: string) {
+function getForecastingPropertiesForLanguage(language: string) {
   const translations = language === 'fr' ? frTranslations : enTranslations;
-  return {
-    id: '7716cecc-7d62-4f1b-93fa-a55a275079b4',
-    propertyId: POPULATION_SERVED_KEY,
-    key: POPULATION_SERVED_KEY,
-    name: translations['POPULATION_SERVED_KEY'],
-    valueType: PropertyNodeValueType.Float,
-    allowedValues: null,
-    remoteEditable: true,
-  };
+  // These properties also included in GAPS Properties (below)
+  return [
+    {
+      id: '7716cecc-7d62-4f1b-93fa-a55a275079b4',
+      propertyId: POPULATION_SERVED_KEY,
+      key: POPULATION_SERVED_KEY,
+      name: translations['POPULATION_SERVED_KEY'],
+      valueType: PropertyNodeValueType.Float,
+      allowedValues: null,
+      remoteEditable: true,
+    },
+    {
+      id: '4396d231-ffc2-485b-9a86-5ccafed0b6d6',
+      propertyId: BUFFER_STOCK_KEY,
+      key: BUFFER_STOCK_KEY,
+      name: translations['BUFFER_STOCK_KEY'],
+      valueType: PropertyNodeValueType.Integer,
+      allowedValues: null,
+      remoteEditable: false,
+    },
+    {
+      id: 'd4d252eb-40c6-491c-bd2a-65c74534b966',
+      propertyId: SUPPLY_INTERVAL_KEY,
+      key: SUPPLY_INTERVAL_KEY,
+      name: translations['SUPPLY_INTERVAL_KEY'],
+      valueType: PropertyNodeValueType.Integer,
+      allowedValues: null,
+      remoteEditable: false,
+    },
+  ];
 }
 
 function translateAllowedValues(
@@ -189,24 +210,6 @@ function getGapsPropertiesForLanguage(
       remoteEditable: false,
     },
     {
-      id: '4396d231-ffc2-485b-9a86-5ccafed0b6d6',
-      propertyId: BUFFER_STOCK_KEY,
-      key: BUFFER_STOCK_KEY,
-      name: translations['BUFFER_STOCK_KEY'],
-      valueType: PropertyNodeValueType.Integer,
-      allowedValues: null,
-      remoteEditable: false,
-    },
-    {
-      id: 'd4d252eb-40c6-491c-bd2a-65c74534b966',
-      propertyId: SUPPLY_INTERVAL_KEY,
-      key: SUPPLY_INTERVAL_KEY,
-      name: translations['SUPPLY_INTERVAL_KEY'],
-      valueType: PropertyNodeValueType.Integer,
-      allowedValues: null,
-      remoteEditable: false,
-    },
-    {
       id: 'c5e363fc-40c9-4m1c-b29a-76d74534b077',
       propertyId: PACKAGING_LEVEL_KEY,
       key: PACKAGING_LEVEL_KEY,
@@ -218,7 +221,7 @@ function getGapsPropertiesForLanguage(
       ),
       remoteEditable: true,
     },
-    getPopulationServedForLanguage(language),
+    ...getForecastingPropertiesForLanguage(language),
     {
       id: 'd700e86a-28c9-40a9-830c-f8a9793c63a0',
       propertyId: ELECTRICITY_AVAILABILITY_KEY,
@@ -300,6 +303,6 @@ export const gapsNameProperties: LocalisedNamePropertyConfig = {
 };
 
 export const populationNameProperties: LocalisedNamePropertyConfig = {
-  en: [getPopulationServedForLanguage('en')],
-  fr: [getPopulationServedForLanguage('fr')],
+  en: getForecastingPropertiesForLanguage('en'),
+  fr: getForecastingPropertiesForLanguage('fr'),
 };
