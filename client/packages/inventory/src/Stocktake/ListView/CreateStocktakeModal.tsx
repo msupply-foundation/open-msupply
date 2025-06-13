@@ -75,9 +75,11 @@ export const CreateStocktakeModal = ({
     }));
     setStockFilter(prev => ({
       ...prev,
-      location: {
-        id: { equalTo: location?.id },
-      },
+      location: location
+        ? {
+            id: { equalTo: location.id },
+          }
+        : null,
     }));
   };
 
@@ -104,7 +106,7 @@ export const CreateStocktakeModal = ({
     }));
     setStockFilter(prev => ({
       ...prev,
-      hasPacksInStore: event.target.checked,
+      hasPacksInStore: event.target.checked || null,
     }));
   };
 
@@ -171,7 +173,6 @@ export const CreateStocktakeModal = ({
       locationId: locationId ? locationId : undefined,
       itemsHaveStock: itemsHaveStock ? itemsHaveStock : undefined,
       expiresBefore: expiresBefore ? expiresBefore : undefined,
-      // Allow multiple filters to be applied together with logical AND
       isInitialStocktake: false,
       description,
       comment: generateComment(),
@@ -249,7 +250,7 @@ export const CreateStocktakeModal = ({
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
-                  !stockData ? (
+                  stockData?.totalCount === 0 ? (
                     <Typography sx={{ color: 'gray.main' }}>
                       {t('messages.no-items-with-stock')}
                     </Typography>
