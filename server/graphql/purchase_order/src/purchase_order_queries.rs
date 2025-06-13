@@ -140,13 +140,6 @@ impl PurchaseOrderSortInput {
             from::Lines => to::Lines,
         };
 
-        //         Supplier,
-        // Number,
-        // CreatedDatetime,
-        // Status,
-        // TargetMonths,
-        // DeliveryDate,
-
         PurchaseOrderSort {
             key,
             desc: self.desc,
