@@ -9,7 +9,7 @@ import { useCliniciansGraphQL } from './useCliniciansGraphQL';
 import { CLINICIAN } from './keys';
 
 export const useInsertClinician = () => {
-  const t = useTranslation('clinician');
+  const t = useTranslation();
   const { api, storeId, queryClient } = useCliniciansGraphQL();
 
   const mutationFn = async (input: DraftClinician) => {

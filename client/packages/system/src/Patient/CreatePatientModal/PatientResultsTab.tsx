@@ -18,6 +18,7 @@ import {
   useLocation,
   useNavigate,
   useTranslation,
+  getGenderTranslationKey,
 } from '@openmsupply-client/common';
 import { PatientPanel } from './PatientPanel';
 import { FetchPatientModal } from './FetchPatientModal';
@@ -26,7 +27,6 @@ import { CentralPatientSearchResponse } from '../api/api';
 import { AppRoute } from '@openmsupply-client/config';
 import { Gender, usePatientStore } from '@openmsupply-client/programs';
 import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
-import { getGenderTranslationKey } from '../PatientView/utils';
 
 const genderToGenderType = (gender: Gender): GenderType => {
   switch (gender) {
@@ -215,7 +215,7 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
         id: FnUtils.generateUUID(),
         patientId: String(row.id),
       });
-      navigate(invoice.id ?? "");
+      navigate(invoice.id ?? '');
       return;
     }
 

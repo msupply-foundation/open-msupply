@@ -2,6 +2,7 @@ import React from 'react';
 import {
   BasicTextInput,
   DialogButton,
+  GenderInput,
   InputWithLabelRow,
   LoadingButton,
   SaveIcon,
@@ -140,10 +141,16 @@ export const NewClinicianModal = ({
             />
           }
         />
-        {/* <InputWithLabelRow
+        <InputWithLabelRow
           label={t('label.gender')}
-          Input={<Select options={GenderType.} />}
-        /> */}
+          Input={
+            <GenderInput
+              value={draft.gender}
+              onChange={value => updateDraft({ gender: value })}
+              width={350}
+            />
+          }
+        />
       </Stack>
     </Modal>
   );
