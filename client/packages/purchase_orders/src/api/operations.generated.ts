@@ -3,9 +3,23 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
+export type PurchaseOrderRowFragment = {
+  __typename: 'PurchaseOrderNode';
+  id: string;
+  number: number;
+  createdDatetime: string;
+  confirmedDatetime?: string | null;
+  status: Types.PurchaseOrderNodeStatus;
+  targetMonths?: number | null;
+  deliveredDatetime?: string | null;
+  comment?: string | null;
+  supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
+};
+
 export type PurchaseOrderFragment = {
   __typename: 'PurchaseOrderNode';
   id: string;
+  number: number;
   additionalInstructions?: string | null;
   advancePaidDatetime?: string | null;
   agentCommission?: number | null;
@@ -16,9 +30,8 @@ export type PurchaseOrderFragment = {
   contractSignedDatetime?: string | null;
   createdDatetime: string;
   currencyId?: string | null;
-  deliveryDatetime?: string | null;
+  deliveredDatetime?: string | null;
   documentCharge?: number | null;
-  donorLinkId?: string | null;
   foreignExchangeRate?: number | null;
   expectedDeliveryDatetime?: string | null;
   freightCharge?: number | null;
@@ -29,13 +42,12 @@ export type PurchaseOrderFragment = {
   reference: string;
   sentDatetime?: string | null;
   shippingMethod?: string | null;
-  status?: string | null;
-  storeId: string;
+  status: Types.PurchaseOrderNodeStatus;
   supplierAgent?: string | null;
   supplierDiscountAmount?: number | null;
   supplierDiscountPercentage?: number | null;
-  supplierId?: string | null;
   targetMonths?: number | null;
+  donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   lines: {
     __typename: 'PurchaseOrderLineConnector';
     totalCount: number;
@@ -44,15 +56,16 @@ export type PurchaseOrderFragment = {
       id: string;
       adjustedQuantity?: number | null;
       expectedDeliveryDate?: string | null;
-      itemCode: string;
-      itemName?: string | null;
       numberOfPacks?: number | null;
       originalQuantity?: number | null;
       packSize?: number | null;
       requestedDeliveryDate?: string | null;
       totalReceived?: number | null;
+      item: { __typename: 'ItemNode'; id: string; code: string; name: string };
     }>;
   };
+  store?: { __typename: 'StoreNode'; id: string } | null;
+  supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
 };
 
 export type PurchaseOrderLineFragment = {
@@ -60,13 +73,12 @@ export type PurchaseOrderLineFragment = {
   id: string;
   adjustedQuantity?: number | null;
   expectedDeliveryDate?: string | null;
-  itemCode: string;
-  itemName?: string | null;
   numberOfPacks?: number | null;
   originalQuantity?: number | null;
   packSize?: number | null;
   requestedDeliveryDate?: string | null;
   totalReceived?: number | null;
+  item: { __typename: 'ItemNode'; id: string; code: string; name: string };
 };
 
 export type PurchaseOrdersQueryVariables = Types.Exact<{
@@ -86,53 +98,14 @@ export type PurchaseOrdersQuery = {
     nodes: Array<{
       __typename: 'PurchaseOrderNode';
       id: string;
-      additionalInstructions?: string | null;
-      advancePaidDatetime?: string | null;
-      agentCommission?: number | null;
-      authorisingOfficer1?: string | null;
-      authorisingOfficer2?: string | null;
-      comment?: string | null;
-      communicationsCharge?: number | null;
-      contractSignedDatetime?: string | null;
+      number: number;
       createdDatetime: string;
-      currencyId?: string | null;
-      deliveryDatetime?: string | null;
-      documentCharge?: number | null;
-      donorLinkId?: string | null;
-      foreignExchangeRate?: number | null;
-      expectedDeliveryDatetime?: string | null;
-      freightCharge?: number | null;
-      freightConditions?: string | null;
-      headingMessage?: string | null;
-      insuranceCharge?: number | null;
-      receivedAtPortDatetime?: string | null;
-      reference: string;
-      sentDatetime?: string | null;
-      shippingMethod?: string | null;
-      status?: string | null;
-      storeId: string;
-      supplierAgent?: string | null;
-      supplierDiscountAmount?: number | null;
-      supplierDiscountPercentage?: number | null;
-      supplierId?: string | null;
+      confirmedDatetime?: string | null;
+      status: Types.PurchaseOrderNodeStatus;
       targetMonths?: number | null;
-      lines: {
-        __typename: 'PurchaseOrderLineConnector';
-        totalCount: number;
-        nodes: Array<{
-          __typename: 'PurchaseOrderLineNode';
-          id: string;
-          adjustedQuantity?: number | null;
-          expectedDeliveryDate?: string | null;
-          itemCode: string;
-          itemName?: string | null;
-          numberOfPacks?: number | null;
-          originalQuantity?: number | null;
-          packSize?: number | null;
-          requestedDeliveryDate?: string | null;
-          totalReceived?: number | null;
-        }>;
-      };
+      deliveredDatetime?: string | null;
+      comment?: string | null;
+      supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
     }>;
   };
 };
@@ -148,6 +121,7 @@ export type PurchaseOrderByIdQuery = {
     | {
         __typename: 'PurchaseOrderNode';
         id: string;
+        number: number;
         additionalInstructions?: string | null;
         advancePaidDatetime?: string | null;
         agentCommission?: number | null;
@@ -158,9 +132,8 @@ export type PurchaseOrderByIdQuery = {
         contractSignedDatetime?: string | null;
         createdDatetime: string;
         currencyId?: string | null;
-        deliveryDatetime?: string | null;
+        deliveredDatetime?: string | null;
         documentCharge?: number | null;
-        donorLinkId?: string | null;
         foreignExchangeRate?: number | null;
         expectedDeliveryDatetime?: string | null;
         freightCharge?: number | null;
@@ -171,13 +144,12 @@ export type PurchaseOrderByIdQuery = {
         reference: string;
         sentDatetime?: string | null;
         shippingMethod?: string | null;
-        status?: string | null;
-        storeId: string;
+        status: Types.PurchaseOrderNodeStatus;
         supplierAgent?: string | null;
         supplierDiscountAmount?: number | null;
         supplierDiscountPercentage?: number | null;
-        supplierId?: string | null;
         targetMonths?: number | null;
+        donor?: { __typename: 'NameNode'; id: string; name: string } | null;
         lines: {
           __typename: 'PurchaseOrderLineConnector';
           totalCount: number;
@@ -186,27 +158,53 @@ export type PurchaseOrderByIdQuery = {
             id: string;
             adjustedQuantity?: number | null;
             expectedDeliveryDate?: string | null;
-            itemCode: string;
-            itemName?: string | null;
             numberOfPacks?: number | null;
             originalQuantity?: number | null;
             packSize?: number | null;
             requestedDeliveryDate?: string | null;
             totalReceived?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              code: string;
+              name: string;
+            };
           }>;
         };
+        store?: { __typename: 'StoreNode'; id: string } | null;
+        supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       }
     | { __typename: 'RecordNotFound'; description: string };
 };
 
+export const PurchaseOrderRowFragmentDoc = gql`
+  fragment PurchaseOrderRow on PurchaseOrderNode {
+    id
+    number
+    supplier {
+      __typename
+      id
+      name
+    }
+    createdDatetime
+    confirmedDatetime
+    status
+    targetMonths
+    deliveredDatetime
+    comment
+  }
+`;
 export const PurchaseOrderLineFragmentDoc = gql`
   fragment PurchaseOrderLine on PurchaseOrderLineNode {
     __typename
     id
     adjustedQuantity
     expectedDeliveryDate
-    itemCode
-    itemName
+    item {
+      id
+      code
+      name
+    }
     numberOfPacks
     originalQuantity
     packSize
@@ -218,6 +216,7 @@ export const PurchaseOrderFragmentDoc = gql`
   fragment PurchaseOrder on PurchaseOrderNode {
     __typename
     id
+    number
     additionalInstructions
     advancePaidDatetime
     agentCommission
@@ -228,9 +227,12 @@ export const PurchaseOrderFragmentDoc = gql`
     contractSignedDatetime
     createdDatetime
     currencyId
-    deliveryDatetime
+    deliveredDatetime
     documentCharge
-    donorLinkId
+    donor {
+      id
+      name
+    }
     foreignExchangeRate
     expectedDeliveryDatetime
     freightCharge
@@ -249,11 +251,17 @@ export const PurchaseOrderFragmentDoc = gql`
     sentDatetime
     shippingMethod
     status
-    storeId
+    store {
+      id
+    }
+    supplier {
+      __typename
+      id
+      name
+    }
     supplierAgent
     supplierDiscountAmount
     supplierDiscountPercentage
-    supplierId
     targetMonths
   }
   ${PurchaseOrderLineFragmentDoc}
@@ -276,13 +284,13 @@ export const PurchaseOrdersDocument = gql`
       ... on PurchaseOrderConnector {
         __typename
         nodes {
-          ...PurchaseOrder
+          ...PurchaseOrderRow
         }
         totalCount
       }
     }
   }
-  ${PurchaseOrderFragmentDoc}
+  ${PurchaseOrderRowFragmentDoc}
 `;
 export const PurchaseOrderByIdDocument = gql`
   query purchaseOrderById($purchaseOrderId: String!, $storeId: String!) {
