@@ -66,7 +66,7 @@ const TRANS_LINE_1: (&str, &str) = (
         "volume_per_pack": 0,
         "om_item_variant_id": "",
         "donor_id": "donor_a",
-        "oms_fields": null
+        "oms_fields": ""
         }
     "#,
 );
