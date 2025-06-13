@@ -105,13 +105,7 @@ fn create_filtered_query(
     filter: Option<PurchaseOrderLineFilter>,
 ) -> Result<BoxedPurchaseOrderLineQuery, RepositoryError> {
     let mut query = purchase_order_line::table
-        .inner_join(
-            item_link::table
-                .on(purchase_order_line::item_id
-                    .nullable()
-                    .eq(item_link::id.nullable()))
-                .inner_join(item::table),
-        )
+        .inner_join(item_link::table.inner_join(item::table))
         .into_boxed();
 
     if let Some(f) = filter {

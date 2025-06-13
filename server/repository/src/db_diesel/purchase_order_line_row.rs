@@ -16,7 +16,7 @@ table! {
         id ->  Text,
         purchase_order_id -> Text,
         line_number -> Integer,
-        item_id -> Nullable<Text>,
+        item_link_id -> Nullable<Text>,
         number_of_packs ->  Nullable<Double>,
         pack_size ->  Nullable<Double>,
         original_quantity ->  Nullable<Double>,
@@ -27,7 +27,7 @@ table! {
     }
 }
 
-joinable!(purchase_order_line -> item_link (item_id));
+joinable!(purchase_order_line -> item_link (item_link_id));
 
 allow_tables_to_appear_in_same_query!(purchase_order_line, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order_line, item);
@@ -40,7 +40,7 @@ pub struct PurchaseOrderLineRow {
     pub id: String,
     pub purchase_order_id: String,
     pub line_number: i32,
-    pub item_id: Option<String>,
+    pub item_link_id: Option<String>,
     pub number_of_packs: Option<f64>,
     pub pack_size: Option<f64>,
     pub original_quantity: Option<f64>,
