@@ -1,7 +1,13 @@
-import { useColumns, ColumnDescription } from '@openmsupply-client/common';
+import {
+  useColumns,
+  ColumnDescription,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { ClinicianFragment } from 'packages/programs/src';
+import { getGenderTranslationKey } from '../../Patient/PatientView';
 
 export const useClinicianListColumns = () => {
+  const t = useTranslation();
   const columnList: ColumnDescription<ClinicianFragment>[] = [
     {
       key: 'code',
@@ -26,7 +32,8 @@ export const useClinicianListColumns = () => {
     {
       key: 'gender',
       label: 'label.gender',
-      accessor: ({ rowData }) => rowData?.gender,
+      accessor: ({ rowData }) =>
+        rowData.gender ? t(getGenderTranslationKey(rowData.gender)) : '',
     },
   ];
 
