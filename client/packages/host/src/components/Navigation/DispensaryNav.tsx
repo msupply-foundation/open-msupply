@@ -62,6 +62,14 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
               .build()}
             text={t('encounter')}
           />
+          <AppNavLink
+            visible={visible}
+            end
+            to={RouteBuilder.create(AppRoute.Dispensary)
+              .addPart(AppRoute.Clinicians)
+              .build()}
+            text={t('clinicians')}
+          />
         </List>
       </Collapse>
     </AppNavSection>

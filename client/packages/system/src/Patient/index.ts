@@ -5,3 +5,4 @@ export * from './api';
 export * from './apiModern';
 export * from './Components';
 export * from './utils';
+export { getGenderTranslationKey } from './PatientView';
