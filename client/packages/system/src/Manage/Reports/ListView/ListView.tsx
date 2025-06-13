@@ -11,7 +11,7 @@ import {
   useEditModal,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
-import { useAllReportVersionsList } from '../api/hooks/useAllReportVersionsList';
+import { useCentralReports } from '../api/hooks/useAllReportVersionsList';
 import { ReportRowFragment } from 'packages/system/src/Report';
 import { ReportUploadModal } from './ReportUploadModal';
 
@@ -26,7 +26,8 @@ const ReportsComponent = () => {
   const queryParams = { sortBy, first, offset, filterBy };
   const {
     query: { data, isError, isLoading },
-  } = useAllReportVersionsList({
+    install: { installMutation },
+  } = useCentralReports({
     queryParams,
   });
 
@@ -93,7 +94,13 @@ const ReportsComponent = () => {
         isError={isError}
         noDataElement={<NothingHere body={t('error.no-reports')} />}
       />
-      {isOpen && <ReportUploadModal isOpen={isOpen} onClose={onClose} />}
+      {isOpen && (
+        <ReportUploadModal
+          isOpen={isOpen}
+          onClose={onClose}
+          install={installMutation}
+        />
+      )}
     </>
   );
 };
