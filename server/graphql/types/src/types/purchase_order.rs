@@ -176,7 +176,6 @@ impl PurchaseOrderNode {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-/// Approval status is applicable to response requisition only
 pub enum PurchaseOrderNodeStatus {
     New,
     Confirmed,
