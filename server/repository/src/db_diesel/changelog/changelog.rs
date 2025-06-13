@@ -209,8 +209,8 @@ impl ChangelogTableName {
             ChangelogTableName::VVMStatusLog => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Campaign => ChangeLogSyncStyle::Central,
             ChangelogTableName::SyncMessage => ChangeLogSyncStyle::Remote,
-            ChangeLogTableName::PurchaseOrder => ChangeLogSyncStyle::Legacy,
-            ChageLogTableName::PurchaseOrderLine => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::PurchaseOrder => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::PurchaseOrderLine => ChangeLogSyncStyle::Legacy,
         }
     }
 }

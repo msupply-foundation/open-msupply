@@ -1,13 +1,15 @@
 use async_graphql::*;
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    map_filter,
     pagination::PaginationInput,
-    simple_generic_errors::{ErrorWrapper, NodeErrorInterface, RecordNotFound},
+    simple_generic_errors::RecordNotFound,
     standard_graphql_error::StandardGraphqlError,
+    ContextExt,
 };
-use graphql_types::types::{PurchaseOrderConnector, PurchaseOrderNode};
-use repository::{mock::mock_store_a, PurchaseOrderRow};
-use util::inline_init;
+use graphql_types::types::{PurchaseOrderConnector, PurchaseOrderNode, PurchaseOrderNodeStatus};
+use repository::{DatetimeFilter, EqualFilter, PaginationOption};
+use repository::{PurchaseOrderFilter, PurchaseOrderSort, PurchaseOrderSortField};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -15,7 +17,6 @@ pub enum PurchaseOrderSortFieldInput {
     Supplier,
     Number,
     CreatedDatetime,
-    ConfirmedDatetime,
     Status,
     TargetMonths,
     DeliveryDate,
@@ -30,11 +31,19 @@ pub struct PurchaseOrderSortInput {
 }
 
 #[derive(InputObject, Clone)]
+pub struct EqualFilterPurchaseOrderStatusInput {
+    pub equal_to: Option<PurchaseOrderNodeStatus>,
+    pub equal_any: Option<Vec<PurchaseOrderNodeStatus>>,
+    pub not_equal_to: Option<PurchaseOrderNodeStatus>,
+}
+
+#[derive(InputObject, Clone)]
 pub struct PurchaseOrderFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
-    pub status: Option<EqualFilterStringInput>,
+    pub status: Option<EqualFilterPurchaseOrderStatusInput>,
     pub supplier: Option<EqualFilterStringInput>,
+    pub store_id: Option<EqualFilterStringInput>,
 }
 
 #[derive(Union)]
@@ -55,21 +64,19 @@ pub fn get_purchase_order(
 ) -> Result<PurchaseOrderResponse> {
     // TODO add auth validation once permissions finalised
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_context = service_provider.context(store_id.to_string(), "".to_string())?;
 
     match service_provider
         .purchase_order_service
-        .get_purchase_order(&contexdt, &store_id, &id)
+        .get_purchase_order(&service_context, &store_id, id)
         .map_err(StandardGraphqlError::from_repository_error)
     {
         Ok(order) => {
-            let result = match puchase_order {
+            let result = match order {
                 Some(purchase_order) => {
                     PurchaseOrderResponse::Response(PurchaseOrderNode::from_domain(purchase_order))
                 }
-                None => PurchaseOrderResponse::Error(ErrorWrapper {
-                    error: NodeErrorInterface::RecordNotFound(RecordNotFound {}),
-                }),
+                None => PurchaseOrderResponse::Error(RecordNotFound {}),
             };
             Ok(result)
         }
@@ -86,14 +93,63 @@ pub fn get_purchase_orders(
 ) -> Result<PurchaseOrdersResponse> {
     // TODO add auth validation once permissions finalised
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_context = service_provider.context(store_id.to_string(), "".to_string())?;
 
-    let resul = service_provider
+    let result = service_provider
         .purchase_order_service
-        .get_purchase_orders(&contexdt, &store_id, page, filter, sort)
+        .get_purchase_orders(
+            &service_context,
+            &store_id,
+            page.map(PaginationOption::from),
+            filter.map(|filter| filter.to_domain()),
+            sort.and_then(|mut sort_list| sort_list.pop())
+                .map(|sort| sort.to_domain()),
+        )
         .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(PurchaseOrdersResponse::Response(
-        PurchaseOrderConnector::from_domain(list_result),
+        PurchaseOrderConnector::from_domain(result),
     ))
+}
+
+impl PurchaseOrderFilterInput {
+    pub fn to_domain(self) -> PurchaseOrderFilter {
+        PurchaseOrderFilter {
+            id: self.id.map(EqualFilter::from),
+            created_datetime: self.created_datetime.map(DatetimeFilter::from),
+            status: self
+                .status
+                .map(|t| map_filter!(t, PurchaseOrderNodeStatus::to_domain)),
+            supplier_name_link_id: self.supplier.map(EqualFilter::from),
+            store_id: self.store_id.map(EqualFilter::from),
+        }
+    }
+}
+
+impl PurchaseOrderSortInput {
+    pub fn to_domain(self) -> PurchaseOrderSort {
+        use PurchaseOrderSortField as to;
+        use PurchaseOrderSortFieldInput as from;
+        let key = match self.key {
+            from::Supplier => to::Supplier,
+            from::Number => to::Number,
+            from::TargetMonths => to::TargetMonths,
+            from::DeliveryDate => to::DeliveryDate,
+            from::Status => to::Status,
+            from::CreatedDatetime => to::CreatedDatetime,
+            from::Lines => to::Lines,
+        };
+
+        //         Supplier,
+        // Number,
+        // CreatedDatetime,
+        // Status,
+        // TargetMonths,
+        // DeliveryDate,
+
+        PurchaseOrderSort {
+            key,
+            desc: self.desc,
+        }
+    }
 }

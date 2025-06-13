@@ -1,21 +1,22 @@
 use crate::db_diesel::item_link_row::item_link;
+use crate::db_diesel::item_row::item;
+
 use crate::repository_error::RepositoryError;
-use crate::{PurchaseOrderRowRepository, StorageConnection};
+use crate::StorageConnection;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
-use crate::{Delete, Upsert};
 
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::NaiveDate;
 
 table! {
     purchase_order_line (id) {
         id ->  Text,
         purchase_order_id -> Text,
-        item_code ->  Text,
-        item_name ->  Nullable<Text>,
+        line_number -> Integer,
+        item_id -> Nullable<Text>,
         number_of_packs ->  Nullable<Double>,
         pack_size ->  Nullable<Double>,
         original_quantity ->  Nullable<Double>,
@@ -26,6 +27,10 @@ table! {
     }
 }
 
+joinable!(purchase_order_line -> item_link (item_id));
+
+allow_tables_to_appear_in_same_query!(purchase_order_line, item_link);
+allow_tables_to_appear_in_same_query!(purchase_order_line, item);
 #[derive(
     TS, Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default, Serialize, Deserialize,
 )]
@@ -34,8 +39,8 @@ table! {
 pub struct PurchaseOrderLineRow {
     pub id: String,
     pub purchase_order_id: String,
-    pub item_code: String,
-    pub item_name: Option<String>,
+    pub line_number: i32,
+    pub item_id: Option<String>,
     pub number_of_packs: Option<f64>,
     pub pack_size: Option<f64>,
     pub original_quantity: Option<f64>,
@@ -69,18 +74,12 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         row: &PurchaseOrderLineRow,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
-        let PurchaseOrder = PurchaseOrderRowRepository::new(self.connection)
-            .find_one_by_id(&row.purchase_order_id)?;
-        let PurchaseOrder = match PurchaseOrder {
-            Some(PurchaseOrder) => PurchaseOrder,
-            None => return Err(RepositoryError::NotFound),
-        };
-
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::PurchaseOrderLine,
             record_id: row.id.clone(),
             row_action: action,
-            store_id: Some(PurchaseOrder.store_id.clone()),
+            // no information on store - but this can be found on the parent purchase order record
+            store_id: None,
             name_link_id: None,
         };
 
@@ -118,6 +117,11 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
 
     pub fn find_many_by_purchase_order_ids(
         &self,
-        
-    )
+        purchase_order_ids: &[String],
+    ) -> Result<Vec<PurchaseOrderLineRow>, RepositoryError> {
+        let result = purchase_order_line::table
+            .filter(purchase_order_line::purchase_order_id.eq_any(purchase_order_ids))
+            .load::<PurchaseOrderLineRow>(self.connection.lock().connection())?;
+        Ok(result)
+    }
 }

@@ -49,7 +49,8 @@ use crate::{
         program_enrolment::{ProgramEnrolmentService, ProgramEnrolmentServiceTrait},
         program_event::{ProgramEventService, ProgramEventServiceTrait},
     },
-    purchase_order::PurchaseOrderServiceTrait,
+    purchase_order::{PurchaseOrderService, PurchaseOrderServiceTrait},
+    purchase_order_line::{PurchaseOrderLineService, PurchaseOrderLineServiceTrait},
     repack::{RepackService, RepackServiceTrait},
     report::report_service::{ReportService, ReportServiceTrait},
     requisition::{
@@ -293,8 +294,8 @@ impl ServiceProvider {
             preference_service: Box::new(PreferenceService {}),
             vvm_service: Box::new(VVMService {}),
             campaign_service: Box::new(CampaignService),
-            purchase_order_service: Box::new(PururchaseOrderService {}),
-            purchase_order_line_service: Box::new(PurchaseOrderLineService {}),
+            purchase_order_service: Box::new(PurchaseOrderService),
+            purchase_order_line_service: Box::new(PurchaseOrderLineService),
         }
     }
 

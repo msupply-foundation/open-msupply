@@ -1,4 +1,4 @@
-mod purchase_order_queries;
+pub mod purchase_order_queries;
 use async_graphql::{Context, Object, Result};
 use graphql_core::pagination::PaginationInput;
 

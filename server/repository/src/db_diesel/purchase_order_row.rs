@@ -1,13 +1,12 @@
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    StorageConnection,
 };
 
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 table! {
     purchase_order (id) {
@@ -49,7 +48,7 @@ table! {
 }
 
 #[derive(
-    TS, Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize,
+    Clone, Insertable, Queryable, Debug, AsChangeset, Serialize, Deserialize, Default, PartialEq,
 )]
 #[diesel(table_name = purchase_order)]
 #[diesel(treat_none_as_null = true)]
@@ -90,7 +89,7 @@ pub struct PurchaseOrderRow {
     pub freight_conditions: Option<String>,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum PurchaseOrderStatus {

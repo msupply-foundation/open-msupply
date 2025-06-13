@@ -1,5 +1,5 @@
 use repository::{
-    EqualFilter, PaginationOption, PurchaseOrder, PurchaseOrderFilter, PurchaseOrderRepository,
+    EqualFilter, PaginationOption, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderRow,
     PurchaseOrderSort, RepositoryError,
 };
 
@@ -16,13 +16,12 @@ pub fn get_purchase_orders(
     pagination: Option<PaginationOption>,
     filter: Option<PurchaseOrderFilter>,
     sort: Option<PurchaseOrderSort>,
-) -> Result<ListResult<PurchaseOrder>, ListError> {
+) -> Result<ListResult<PurchaseOrderRow>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = PurchaseOrderRepository::new(&ctx.connection);
 
-    let filter = filter
-        .unwrap_or_default()
-        .store_id(EqualFilter::equal_to(store_id));
+    let mut filter = filter.unwrap_or_default();
+    filter.store_id = Some(EqualFilter::equal_to(store_id));
 
     Ok(ListResult {
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
@@ -32,13 +31,11 @@ pub fn get_purchase_orders(
 
 pub fn get_purchase_order(
     ctx: &ServiceContext,
-    store_id: &str,
-    id: String,
-) -> Result<Option<PurchaseOrder>, RepositoryError> {
+    _store_id: &str,
+    id: &str,
+) -> Result<Option<PurchaseOrderRow>, RepositoryError> {
     let repository = PurchaseOrderRepository::new(&ctx.connection);
-    let filter = PurchaseOrderFilter::new()
-        .id(EqualFilter::equal_to(&id))
-        .store_id(EqualFilter::equal_to(store_id));
-
+    //TODO filter by store id?
+    let filter = PurchaseOrderFilter::new().id(EqualFilter::equal_to(id));
     Ok(repository.query_by_filter(filter)?.pop())
 }
