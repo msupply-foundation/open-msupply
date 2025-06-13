@@ -1,0 +1,148 @@
+use super::{
+    item_row::item, purchase_order_line_row::purchase_order_line, DBType, ItemLinkRow, ItemRow,
+    RepositoryError, StorageConnection,
+};
+
+use crate::{
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    item_link, EqualFilter, Pagination, PurchaseOrderLineRow, Sort,
+};
+
+use diesel::{
+    dsl::{InnerJoin, IntoBoxed},
+    prelude::*,
+};
+
+type PurchaseOrderLineJoin = (PurchaseOrderLineRow, (ItemLinkRow, ItemRow));
+
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct PurchaseOrderLine {
+    pub purchase_order_line_row: PurchaseOrderLineRow,
+    pub item_row: ItemRow,
+}
+
+// #[derive(PartialEq, Debug, Clone, Default)]
+// pub struct PurchaseOrderLine {
+//     pub purchase_order_line_row: PurchaseOrderLineRow,
+// }
+#[derive(Clone, Default)]
+pub struct PurchaseOrderLineFilter {
+    pub id: Option<EqualFilter<String>>,
+    pub purchase_order_id: Option<EqualFilter<String>>,
+}
+
+pub enum PurchaseOrderLineSortField {
+    ItemName,
+}
+
+pub type PurchaseOrderLineSort = Sort<PurchaseOrderLineSortField>;
+
+pub struct PurchaseOrderLineRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+impl<'a> PurchaseOrderLineRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        PurchaseOrderLineRepository { connection }
+    }
+
+    pub fn count(&self, filter: Option<PurchaseOrderLineFilter>) -> Result<i64, RepositoryError> {
+        let query = create_filtered_query(filter)?;
+
+        Ok(query
+            .count()
+            .get_result::<i64>(self.connection.lock().connection())?)
+    }
+
+    pub fn query_by_filter(
+        &self,
+        filter: PurchaseOrderLineFilter,
+    ) -> Result<Vec<PurchaseOrderLine>, RepositoryError> {
+        self.query(Pagination::all(), Some(filter), None)
+    }
+
+    pub fn query_one(
+        &self,
+        filter: PurchaseOrderLineFilter,
+    ) -> Result<Option<PurchaseOrderLine>, RepositoryError> {
+        Ok(self.query_by_filter(filter)?.pop())
+    }
+
+    pub fn query(
+        &self,
+        pagination: Pagination,
+        filter: Option<PurchaseOrderLineFilter>,
+        sort: Option<PurchaseOrderLineSort>,
+    ) -> Result<Vec<PurchaseOrderLine>, RepositoryError> {
+        let mut query = create_filtered_query(filter)?;
+
+        if let Some(sort) = sort {
+            match sort.key {
+                PurchaseOrderLineSortField::ItemName => {
+                    apply_sort_no_case!(query, sort, item::name);
+                }
+            }
+        }
+
+        let final_query = query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64);
+
+        let result =
+            final_query.load::<PurchaseOrderLineJoin>(self.connection.lock().connection())?;
+
+        Ok(result.into_iter().map(to_domain).collect())
+    }
+}
+
+type BoxedPurchaseOrderLineQuery = IntoBoxed<
+    'static,
+    InnerJoin<purchase_order_line::table, InnerJoin<item_link::table, item::table>>,
+    DBType,
+>;
+
+fn create_filtered_query(
+    filter: Option<PurchaseOrderLineFilter>,
+) -> Result<BoxedPurchaseOrderLineQuery, RepositoryError> {
+    let mut query = purchase_order_line::table
+        .inner_join(item_link::table.inner_join(item::table))
+        .into_boxed();
+
+    if let Some(f) = filter {
+        let PurchaseOrderLineFilter {
+            purchase_order_id,
+            id,
+        } = f;
+
+        apply_equal_filter!(
+            query,
+            purchase_order_id,
+            purchase_order_line::purchase_order_id
+        );
+        apply_equal_filter!(query, id, purchase_order_line::id)
+    }
+
+    Ok(query)
+}
+
+impl PurchaseOrderLineFilter {
+    pub fn new() -> PurchaseOrderLineFilter {
+        Self::default()
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+    pub fn purchase_order_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.purchase_order_id = Some(filter);
+        self
+    }
+}
+
+fn to_domain((purchase_order_line_row, (_, item_row)): PurchaseOrderLineJoin) -> PurchaseOrderLine {
+    PurchaseOrderLine {
+        purchase_order_line_row,
+        item_row,
+    }
+}

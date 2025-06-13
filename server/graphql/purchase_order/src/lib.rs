@@ -1,8 +1,8 @@
-mod purchase_order_queries;
-use async_graphql::{Context, Object, Result}; // Import Context, Object, and Result
+pub mod purchase_order_queries;
+use async_graphql::{Context, Object, Result};
 use graphql_core::pagination::PaginationInput;
 
-use purchase_order_queries::*; // Import your custom types
+use purchase_order_queries::*;
 
 #[derive(Default, Clone)]
 pub struct PurchaseOrderQueries;

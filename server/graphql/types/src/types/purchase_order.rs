@@ -1,11 +1,15 @@
 use self::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
-use graphql_core::loader::PurchaseOrderLinesByPurchaseOrderIdLoader;
+use graphql_core::loader::{
+    NameByIdLoader, NameByIdLoaderInput, PurchaseOrderLinesByPurchaseOrderIdLoader,
+    StoreByIdLoader, UserLoader,
+};
 use graphql_core::ContextExt;
-use repository::PurchaseOrderRow;
+use repository::{PurchaseOrderRow, PurchaseOrderStatus};
+use service::ListResult;
 
-use crate::types::PurchaseOrderLineConnector;
+use crate::types::{NameNode, PurchaseOrderLineConnector, StoreNode, UserNode};
 
 #[derive(PartialEq, Debug)]
 pub struct PurchaseOrderNode {
@@ -22,14 +26,47 @@ impl PurchaseOrderNode {
     pub async fn id(&self) -> &str {
         &self.row().id
     }
+    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
+        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
+        Ok(loader
+            .load_one(self.row().store_id.clone())
+            .await?
+            .map(StoreNode::from_domain))
+    }
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
+
+        let result = loader
+            .load_one(self.row().user_id.clone())
+            .await?
+            .map(UserNode::from_domain);
+
+        Ok(result)
+    }
+    pub async fn supplier_name_link_id(&self) -> &Option<String> {
+        &self.row().supplier_name_link_id
+    }
+    pub async fn supplier(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+
+        let result = match &self.row().supplier_name_link_id {
+            Some(id) => loader
+                .load_one(NameByIdLoaderInput::new(&store_id, id))
+                .await?
+                .map(NameNode::from_domain),
+            None => None,
+        };
+
+        Ok(result)
+    }
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
-    pub async fn delivery_datetime(&self) -> &Option<NaiveDateTime> {
-        &self.row().delivery_datetime
+    pub async fn delivered_datetime(&self) -> &Option<NaiveDateTime> {
+        &self.row().delivered_datetime
     }
-    pub async fn status(&self) -> &Option<String> {
-        &self.row().status
+    pub async fn status(&self) -> PurchaseOrderNodeStatus {
+        PurchaseOrderNodeStatus::from_domain(self.row().status.clone())
     }
     pub async fn target_months(&self) -> &Option<f64> {
         &self.row().target_months
@@ -37,17 +74,24 @@ impl PurchaseOrderNode {
     pub async fn comment(&self) -> &Option<String> {
         &self.row().comment
     }
-    pub async fn supplier_id(&self) -> &Option<String> {
-        &self.row().supplier_id
-    }
     pub async fn supplier_discount_percentage(&self) -> &Option<f64> {
         &self.row().supplier_discount_percentage
     }
     pub async fn supplier_discount_amount(&self) -> &Option<f64> {
         &self.row().supplier_discount_amount
     }
-    pub async fn donor_link_id(&self) -> &Option<String> {
-        &self.row().donor_link_id
+    pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+
+        let result = match &self.row().donor_link_id {
+            Some(id) => loader
+                .load_one(NameByIdLoaderInput::new(&store_id, id))
+                .await?
+                .map(NameNode::from_domain),
+            None => None,
+        };
+
+        Ok(result)
     }
     pub async fn reference(&self) -> &str {
         &self.row().reference
@@ -109,9 +153,6 @@ impl PurchaseOrderNode {
     pub async fn freight_conditions(&self) -> &Option<String> {
         &self.row().freight_conditions
     }
-    pub async fn store_id(&self) -> &str {
-        &self.row().store_id
-    }
 
     pub async fn lines(&self, ctx: &Context<'_>) -> Result<PurchaseOrderLineConnector> {
         let loader = ctx.get_loader::<DataLoader<PurchaseOrderLinesByPurchaseOrderIdLoader>>();
@@ -123,7 +164,56 @@ impl PurchaseOrderNode {
 }
 
 impl PurchaseOrderNode {
+    pub fn from_domain(purchase_order: PurchaseOrderRow) -> PurchaseOrderNode {
+        PurchaseOrderNode { purchase_order }
+    }
+}
+
+impl PurchaseOrderNode {
     pub fn row(&self) -> &PurchaseOrderRow {
         &self.purchase_order
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+pub enum PurchaseOrderNodeStatus {
+    New,
+    Confirmed,
+    Authorised,
+    Finalised,
+}
+
+impl PurchaseOrderNodeStatus {
+    pub fn from_domain(status: PurchaseOrderStatus) -> PurchaseOrderNodeStatus {
+        use PurchaseOrderStatus::*;
+        match status {
+            New => PurchaseOrderNodeStatus::New,
+            Confirmed => PurchaseOrderNodeStatus::Confirmed,
+            Authorised => PurchaseOrderNodeStatus::Authorised,
+            Finalised => PurchaseOrderNodeStatus::Finalised,
+        }
+    }
+
+    pub fn to_domain(self) -> PurchaseOrderStatus {
+        use PurchaseOrderNodeStatus::*;
+        match self {
+            New => PurchaseOrderStatus::New,
+            Confirmed => PurchaseOrderStatus::Confirmed,
+            Authorised => PurchaseOrderStatus::Authorised,
+            Finalised => PurchaseOrderStatus::Finalised,
+        }
+    }
+}
+
+impl PurchaseOrderConnector {
+    pub fn from_domain(purchase_orders: ListResult<PurchaseOrderRow>) -> PurchaseOrderConnector {
+        PurchaseOrderConnector {
+            total_count: purchase_orders.count,
+            nodes: purchase_orders
+                .rows
+                .into_iter()
+                .map(PurchaseOrderNode::from_domain)
+                .collect(),
+        }
     }
 }
