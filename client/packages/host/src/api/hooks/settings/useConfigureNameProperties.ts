@@ -11,7 +11,7 @@ import {
   LocalisedNamePropertyConfig,
   populationNameProperties,
 } from './namePropertyData';
-import { gapsKeys, populationKeys } from './namePropertyKeys';
+import { gapsKeys, forecastingKeys } from './namePropertyKeys';
 
 interface PropertyConfigurations {
   properties: LocalisedNamePropertyConfig;
@@ -19,13 +19,13 @@ interface PropertyConfigurations {
   keys: string[];
 }
 
-export type PropertyType = 'gaps' | 'population';
+export type PropertyType = 'gaps' | 'forecasting';
 
 export const useConfigureNameProperties = () => {
   const api = useHostApi();
   const queryClient = useQueryClient();
   const { currentLanguage } = useIntlUtils();
-  const { gapsConfigured, populationConfigured } =
+  const { gapsConfigured, forecastingConfigured: populationConfigured } =
     useCheckConfiguredProperties();
 
   const propertyConfigurations: Record<PropertyType, PropertyConfigurations> = {
@@ -34,10 +34,10 @@ export const useConfigureNameProperties = () => {
       isConfigured: gapsConfigured,
       keys: gapsKeys,
     },
-    population: {
+    forecasting: {
       properties: populationNameProperties,
       isConfigured: populationConfigured,
-      keys: populationKeys,
+      keys: forecastingKeys,
     },
   };
 
@@ -48,14 +48,7 @@ export const useConfigureNameProperties = () => {
     const primaryConfig = propertyConfigurations[propertyType];
     const primaryProperties = localiseProperties(primaryConfig.properties);
 
-    const properties = [...primaryProperties];
-
-    Object.entries(propertyConfigurations).forEach(([type, config]) => {
-      if (type !== propertyType && config.isConfigured)
-        properties.push(...localiseProperties(config.properties));
-    });
-
-    return properties;
+    return primaryProperties;
   };
 
   return useMutation(
@@ -71,7 +64,7 @@ export const useConfigureNameProperties = () => {
 
 interface NamePropertyStatus {
   gapsConfigured: boolean;
-  populationConfigured: boolean;
+  forecastingConfigured: boolean;
 }
 
 export const useCheckConfiguredProperties = (): NamePropertyStatus => {
@@ -80,17 +73,19 @@ export const useCheckConfiguredProperties = (): NamePropertyStatus => {
   const gapsConfigured =
     data?.some(nameProperty =>
       gapsKeys
-        .filter(key => key !== 'population_served') // Exclude - populationProperties can initialise with it as well
+        // Exclude the populationKeys as they'll be present if "population" has
+        // been initialised -- they are present in both types
+        .filter(key => !forecastingKeys.includes(key))
         .includes(nameProperty.property.key)
     ) ?? false;
 
-  const populationConfigured =
+  const forecastingConfigured =
     data?.some(nameProperty =>
-      populationKeys.includes(nameProperty.property.key)
+      forecastingKeys.includes(nameProperty.property.key)
     ) ?? false;
 
   return {
     gapsConfigured,
-    populationConfigured,
+    forecastingConfigured,
   };
 };
