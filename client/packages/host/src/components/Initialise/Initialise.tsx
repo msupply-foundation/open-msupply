@@ -4,7 +4,7 @@ import {
   LoadingButton,
   useHostContext,
   SaveIcon,
-  ErrorWithDetails,
+  BoxedErrorWithDetails,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout } from './InitialiseLayout';
@@ -104,7 +104,7 @@ export const Initialise = () => {
           label={isInitialising ? t('button.retry') : t('button.initialise')}
         />
       }
-      ErrorMessage={error && <ErrorWithDetails {...error} />}
+      ErrorMessage={error && <BoxedErrorWithDetails {...error} />}
       onInitialise={async () => {
         /* onInitialise from layout only happens on form key event, form is disabled when isInitialising */
         if (isValid) await onInitialise();

@@ -7,13 +7,13 @@ import {
   ChevronDownIcon,
 } from '@openmsupply-client/common';
 
-export type LoginErrorProps = {
+export type BoxedErrorWithDetailsProps = {
   error: string;
   details: string;
   hint?: string;
 };
 
-export const LoginError = ({ error, details, hint }: LoginErrorProps) => {
+export const BoxedErrorWithDetails = ({ error, details, hint }: BoxedErrorWithDetailsProps) => {
   const t = useTranslation();
   const [expand, setExpand] = useState(false);
   const hasMoreInformation = !!(details || hint);
