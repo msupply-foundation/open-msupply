@@ -4,7 +4,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { ClinicianListView } from '../ListView';
 
 export const Service: FC = () => {
-  const cliniciansRoute = RouteBuilder.create(AppRoute.Clinician).build();
+  const cliniciansRoute = RouteBuilder.create(AppRoute.Clinicians).build();
 
   return (
     <Routes>

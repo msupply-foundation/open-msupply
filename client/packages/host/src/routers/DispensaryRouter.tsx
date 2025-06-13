@@ -37,7 +37,7 @@ const fullEncountersPath = RouteBuilder.create(AppRoute.Dispensary)
   .build();
 
 const fullCliniciansPath = RouteBuilder.create(AppRoute.Dispensary)
-  .addPart(AppRoute.Clinician)
+  .addPart(AppRoute.Clinicians)
   .addWildCard()
   .build();
 
