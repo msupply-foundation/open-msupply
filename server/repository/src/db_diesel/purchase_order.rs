@@ -6,8 +6,6 @@ use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
 use diesel::query_dsl::QueryDsl;
 use diesel::{prelude::*, RunQueryDsl};
 
-// #[derive(PartialEq, Debug, Clone, Default)]
-// status, date created, supplier
 #[derive(Clone, Default)]
 pub struct PurchaseOrderFilter {
     pub id: Option<EqualFilter<String>>,

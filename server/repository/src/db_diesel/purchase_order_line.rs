@@ -21,10 +21,6 @@ pub struct PurchaseOrderLine {
     pub item_row: ItemRow,
 }
 
-// #[derive(PartialEq, Debug, Clone, Default)]
-// pub struct PurchaseOrderLine {
-//     pub purchase_order_line_row: PurchaseOrderLineRow,
-// }
 #[derive(Clone, Default)]
 pub struct PurchaseOrderLineFilter {
     pub id: Option<EqualFilter<String>>,
