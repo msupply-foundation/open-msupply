@@ -20,7 +20,7 @@ export const ConfigurationSettings = () => {
   const { currentLanguage } = useIntlUtils();
   const { mutateAsync, isLoading } = useConfigureNameProperties();
   const { isLoading: dataLoading } = useName.document.properties();
-  const { gapsConfigured, forecastingConfigured: populationConfigured } =
+  const { gapsConfigured, forecastingConfigured } =
     useCheckConfiguredProperties();
 
   const handleClick = (propertyType: PropertyType) => async () => {
@@ -57,7 +57,7 @@ export const ConfigurationSettings = () => {
               language: currentLanguage,
             })}
           >
-            {populationConfigured
+            {forecastingConfigured
               ? t('button.re-initialise')
               : t('button.initialise')}
           </BaseButton>
