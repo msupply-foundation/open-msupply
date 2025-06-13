@@ -62,7 +62,7 @@ impl PurchaseOrderNode {
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
-    pub async fn (&self) -> &Option<NaiveDateTime> {
+    pub async fn delivered_datetime(&self) -> &Option<NaiveDateTime> {
         &self.row().delivered_datetime
     }
     pub async fn status(&self) -> PurchaseOrderNodeStatus {
