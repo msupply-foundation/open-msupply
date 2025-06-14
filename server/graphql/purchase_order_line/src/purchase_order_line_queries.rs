@@ -100,6 +100,7 @@ impl PurchaseOrderLineFilterInput {
         PurchaseOrderLineFilter {
             id: self.id.map(EqualFilter::from),
             purchase_order_id: self.purchase_order_id.map(EqualFilter::from),
+            store_id: None,
         }
     }
 }

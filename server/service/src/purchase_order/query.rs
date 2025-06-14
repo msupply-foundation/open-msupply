@@ -20,8 +20,8 @@ pub fn get_purchase_orders(
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = PurchaseOrderRepository::new(&ctx.connection);
 
-    let mut filter = filter.unwrap_or_default();
-    filter.store_id = Some(EqualFilter::equal_to(store_id));
+    let mut filter: PurchaseOrderFilter = filter.unwrap_or_default();
+    filter.store_id = Some(store_id).map(EqualFilter::equal_to);
 
     Ok(ListResult {
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
@@ -31,11 +31,12 @@ pub fn get_purchase_orders(
 
 pub fn get_purchase_order(
     ctx: &ServiceContext,
-    _store_id: &str,
+    store_id: &str,
     id: &str,
 ) -> Result<Option<PurchaseOrderRow>, RepositoryError> {
     let repository = PurchaseOrderRepository::new(&ctx.connection);
-    //TODO filter by store id?
-    let filter = PurchaseOrderFilter::new().id(EqualFilter::equal_to(id));
+    let mut filter = PurchaseOrderFilter::new().id(EqualFilter::equal_to(id));
+    filter.store_id = Some(store_id).map(EqualFilter::equal_to);
+
     Ok(repository.query_by_filter(filter)?.pop())
 }

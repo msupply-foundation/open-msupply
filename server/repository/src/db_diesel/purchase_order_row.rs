@@ -1,8 +1,8 @@
+use crate::db_diesel::{item_link_row::item_link, item_row::item};
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
     StorageConnection,
 };
-
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -46,6 +46,9 @@ table! {
                     freight_conditions -> Nullable<Text>
     }
 }
+
+allow_tables_to_appear_in_same_query!(purchase_order, item_link);
+allow_tables_to_appear_in_same_query!(purchase_order, item);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, AsChangeset, Serialize, Deserialize, Default, PartialEq,
