@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_contact_table;
 mod add_mutate_clinician_permission;
 mod add_store_id_to_clinician;
 mod extend_name_table_fields;
@@ -23,6 +24,7 @@ impl Migration for V2_09_00 {
             Box::new(add_mutate_clinician_permission::Migrate),
             Box::new(add_store_id_to_clinician::Migrate),
             Box::new(extend_name_table_fields::Migrate),
+            Box::new(add_contact_table::Migrate),
         ]
     }
 }
