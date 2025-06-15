@@ -13,7 +13,14 @@ use repository::{
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum PurchaseOrderLineSortFieldInput {
-    Item,
+    ItemName,
+    NumberOfPacks,
+    LineNumber,
+    OriginalQuantity,
+    AdjustedQuantity,
+    TotalReceived,
+    RequestedDeliveryDate,
+    ExpectedDeliveryDate,
 }
 
 #[derive(InputObject)]
@@ -110,7 +117,14 @@ impl PurchaseOrderLineSortInput {
         use PurchaseOrderLineSortField as to;
         use PurchaseOrderLineSortFieldInput as from;
         let key = match self.key {
-            from::Item => to::ItemName,
+            from::ItemName => to::ItemName,
+            from::NumberOfPacks => to::NumberOfPacks,
+            from::LineNumber => to::LineNumber,
+            from::OriginalQuantity => to::OriginalQuantity,
+            from::AdjustedQuantity => to::AdjustedQuantity,
+            from::TotalReceived => to::TotalReceived,
+            from::RequestedDeliveryDate => to::RequestedDeliveryDate,
+            from::ExpectedDeliveryDate => to::ExpectedDeliveryDate,
         };
 
         PurchaseOrderLineSort {

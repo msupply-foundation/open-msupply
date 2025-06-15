@@ -20,7 +20,6 @@ pub enum PurchaseOrderSortFieldInput {
     Status,
     TargetMonths,
     DeliveryDate,
-    Lines,
 }
 
 #[derive(InputObject)]
@@ -137,7 +136,6 @@ impl PurchaseOrderSortInput {
             from::DeliveryDate => to::DeliveryDate,
             from::Status => to::Status,
             from::CreatedDatetime => to::CreatedDatetime,
-            from::Lines => to::Lines,
         };
 
         PurchaseOrderSort {

@@ -4,10 +4,9 @@ use super::{
 };
 
 use crate::{
-    db_diesel::invoice_row::invoice,
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
     item_link,
-    purchase_order_row::purchase_order::{self, table},
+    purchase_order_row::purchase_order::{self},
     EqualFilter, Pagination, PurchaseOrderLineRow, PurchaseOrderRow, Sort,
 };
 
@@ -37,6 +36,13 @@ pub struct PurchaseOrderLineFilter {
 
 pub enum PurchaseOrderLineSortField {
     ItemName,
+    NumberOfPacks,
+    LineNumber,
+    OriginalQuantity,
+    AdjustedQuantity,
+    TotalReceived,
+    RequestedDeliveryDate,
+    ExpectedDeliveryDate,
 }
 
 pub type PurchaseOrderLineSort = Sort<PurchaseOrderLineSortField>;
@@ -85,7 +91,30 @@ impl<'a> PurchaseOrderLineRepository<'a> {
                 PurchaseOrderLineSortField::ItemName => {
                     apply_sort_no_case!(query, sort, item::name);
                 }
+                PurchaseOrderLineSortField::NumberOfPacks => {
+                    apply_sort_no_case!(query, sort, purchase_order_line::number_of_packs);
+                }
+                PurchaseOrderLineSortField::LineNumber => {
+                    apply_sort_no_case!(query, sort, purchase_order_line::line_number);
+                }
+                PurchaseOrderLineSortField::OriginalQuantity => {
+                    apply_sort_no_case!(query, sort, purchase_order_line::original_quantity);
+                }
+                PurchaseOrderLineSortField::AdjustedQuantity => {
+                    apply_sort_no_case!(query, sort, purchase_order_line::adjusted_quantity);
+                }
+                PurchaseOrderLineSortField::TotalReceived => {
+                    apply_sort_no_case!(query, sort, purchase_order_line::total_received);
+                }
+                PurchaseOrderLineSortField::RequestedDeliveryDate => {
+                    apply_sort!(query, sort, purchase_order_line::requested_delivery_date);
+                }
+                PurchaseOrderLineSortField::ExpectedDeliveryDate => {
+                    apply_sort!(query, sort, purchase_order_line::expected_delivery_date);
+                }
             }
+        } else {
+            query = query.order(purchase_order_line::id.asc())
         }
 
         let final_query = query
