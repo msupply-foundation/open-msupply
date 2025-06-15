@@ -1,21 +1,19 @@
-import React, {
-  FC,
-  PropsWithChildren,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { FC, PropsWithChildren, useMemo } from 'react';
 import {
+  PrintFormat,
   ReportContext,
+  useEditModal,
   useIntlUtils,
+  useToggle,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PrinterIcon } from '@common/icons';
-import { SplitButton, SplitButtonOption } from '@common/components';
+import { LoadingButton } from '@common/components';
 import { ReportArgumentsModal } from './ReportArgumentsModal';
 import { JsonData } from '@openmsupply-client/programs';
 import { ReportListParams, useReportList } from '../api/hooks';
 import { ReportRowFragment } from '../api';
+import { ReportOption, SelectReportModal } from './SelectReportModal';
 
 interface CustomOption<T> {
   label: string;
@@ -26,7 +24,11 @@ interface CustomOption<T> {
 interface ReportSelectorProps {
   context?: ReportContext;
   subContext?: string;
-  onPrint: (report: ReportRowFragment, args: JsonData | undefined) => void;
+  onPrint: (
+    report: ReportRowFragment,
+    args: JsonData | undefined,
+    format?: PrintFormat
+  ) => Promise<void>;
   isPrinting?: boolean;
   /** Disable the whole control */
   disabled?: boolean;
@@ -34,7 +36,7 @@ interface ReportSelectorProps {
   extraArguments?: Record<string, string | number | undefined>;
   customOptions?: CustomOption<string>[];
   onPrintCustom?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
-  buttonLabel: string;
+  buttonLabel?: string;
 }
 
 export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
@@ -49,114 +51,89 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   onPrintCustom,
   buttonLabel,
 }) => {
+  const t = useTranslation();
+  const { translateDynamicKey } = useIntlUtils();
+  const modalOpen = useToggle();
+
+  const {
+    entity: reportWithArgs,
+    onOpen: onOpenArguments,
+    onClose,
+  } = useEditModal<{
+    report: ReportRowFragment;
+    format: PrintFormat;
+  }>();
+
   const { data, isLoading: initialLoading } = useReportList({
     context,
     subContext,
     queryParams,
   });
-  const t = useTranslation();
-  const { translateDynamicKey } = useIntlUtils();
 
   // Report Content
-  const onReportSelected = (
-    option: SplitButtonOption<string> | undefined,
-    e?: React.MouseEvent<HTMLButtonElement>
+  const onReportSelected = async (
+    report: ReportOption,
+    format: PrintFormat
+    // e?: React.MouseEvent<HTMLButtonElement>
   ) => {
-    if (option?.value === undefined) {
-      return;
-    }
-
-    const custom = customOptions?.map(option => ({
-      value: option.value,
-    }));
-    const selected = custom?.find(c => c.value === option.value);
+    const selected = customOptions?.find(c => c.value === report.id);
     if (onPrintCustom) {
-      selected?.value ? onPrintCustom(e) : '';
+      // selected?.value ? onPrintCustom(e) : '';
+      selected?.value ? onPrintCustom() : '';
     }
 
-    const report: ReportRowFragment | undefined = data?.nodes.find(
-      r => r.id === option.value
-    );
-    if (report) {
-      report?.argumentSchema ?? setReportWithArgs(report);
-
-      // passing timezone through as forms do not have arguments
-      const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
-      onPrint(report, { timezone, ...extraArguments });
+    if (report.argumentSchema) {
+      onOpenArguments({
+        report,
+        format,
+      });
+    } else {
+      await print(report, undefined, format);
     }
   };
 
-  const options: SplitButtonOption<string>[] = useMemo(() => {
+  const print = async (
+    report: ReportRowFragment,
+    args: Record<string, any> = {},
+    format: PrintFormat
+  ) => {
+    const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    await onPrint(report, { timezone, ...extraArguments, ...args }, format);
+  };
+
+  const options: ReportOption[] = useMemo(() => {
     const reports = data
       ? data?.nodes?.map(report => ({
-          value: report.id,
+          ...report,
           label: translateDynamicKey(`report-code.${report.code}`, report.name),
-          isDisabled: disabled,
         }))
       : [];
 
-    const allOptions = [customOptions || [], reports];
-    return allOptions.flat();
+    return reports;
+    // const allOptions = [customOptions || [], reports];
+    // return allOptions.flat();
   }, [data, disabled, customOptions]);
-
-  const handleClick = () => {
-    const oneReport = options.length === 1 ? options[0] : undefined;
-    if (oneReport) {
-      onReportSelected(oneReport);
-    }
-  };
-
-  const hasPermission = !initialLoading && data !== undefined;
-  const noReports: SplitButtonOption<string> = useMemo(() => {
-    const noReport = hasPermission
-      ? { label: t('error.no-reports-available') }
-      : { label: t('error.no-report-permission') };
-    return noReport;
-  }, [hasPermission]);
-
-  if (options.length === 0) options.push(noReports);
-
-  // updates disabled state
-  useEffect(() => {
-    setSelectedOption(options[0] || noReports);
-  }, [options, noReports]);
-
-  // selected option is at [0] for the SplitButton, however the customLabel is rendered instead
-  const [selectedOption, setSelectedOption] = useState<
-    SplitButtonOption<string>
-  >(options[0] || noReports);
-
-  const [reportWithArgs, setReportWithArgs] = useState<
-    ReportRowFragment | undefined
-  >();
-
-  const onSelectOption = (
-    option: SplitButtonOption<string>,
-    e?: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    setSelectedOption(option);
-    onReportSelected(option, e);
-  };
 
   return (
     <>
-      <SplitButton
-        color="primary"
-        openFrom={'bottom'}
-        isDisabled={initialLoading || disabled}
-        options={options}
-        selectedOption={selectedOption}
-        onSelectOption={onSelectOption}
-        Icon={<PrinterIcon />}
-        onClick={handleClick}
-        isLoading={isPrinting}
-        isLoadingType={true}
-        staticLabel={buttonLabel}
+      <LoadingButton
+        disabled={initialLoading || disabled}
+        isLoading={isPrinting || false}
+        startIcon={<PrinterIcon />}
+        onClick={modalOpen.toggleOn}
+        label={buttonLabel || t('button.export-or-print')} // buttonLabel??
       />
+      {modalOpen.isOn && (
+        <SelectReportModal
+          onSelectReport={onReportSelected}
+          reportOptions={options}
+          onClose={modalOpen.toggleOff}
+        />
+      )}
       <ReportArgumentsModal
-        key={reportWithArgs?.id}
-        report={reportWithArgs}
-        onReset={() => setReportWithArgs(undefined)}
+        report={reportWithArgs?.report}
+        printFormat={reportWithArgs?.format}
+        onReset={onClose}
         onArgumentsSelected={onPrint}
       />
     </>
