@@ -6,8 +6,6 @@ use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
 use diesel::query_dsl::QueryDsl;
 use diesel::{prelude::*, RunQueryDsl};
 
-// #[derive(PartialEq, Debug, Clone, Default)]
-// status, date created, supplier
 #[derive(Clone, Default)]
 pub struct PurchaseOrderFilter {
     pub id: Option<EqualFilter<String>>,
@@ -78,7 +76,7 @@ impl<'a> PurchaseOrderRepository<'a> {
                     apply_sort_no_case!(query, sort, purchase_order::target_months)
                 }
                 PurchaseOrderSortField::DeliveryDate => {
-                    apply_sort_no_case!(query, sort, purchase_order::delivery_datetime)
+                    apply_sort_no_case!(query, sort, purchase_order::delivered_datetime)
                 }
                 PurchaseOrderSortField::Lines => {}
             }

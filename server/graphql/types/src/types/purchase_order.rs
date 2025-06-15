@@ -59,11 +59,16 @@ impl PurchaseOrderNode {
 
         Ok(result)
     }
+    pub async fn purchase_order_number(&self) -> &i32 {
+        &self.row().purchase_order_number
+    }
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
-    pub async fn delivery_datetime(&self) -> &Option<NaiveDateTime> {
-        &self.row().delivery_datetime
+    pub async fn delivered_datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .delivered_datetime
+            .map(|dt| DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
     }
     pub async fn status(&self) -> PurchaseOrderNodeStatus {
         PurchaseOrderNodeStatus::from_domain(self.row().status.clone())
@@ -176,7 +181,6 @@ impl PurchaseOrderNode {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-/// Approval status is applicable to response requisition only
 pub enum PurchaseOrderNodeStatus {
     New,
     Confirmed,

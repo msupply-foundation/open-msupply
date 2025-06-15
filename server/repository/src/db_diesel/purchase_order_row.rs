@@ -1,8 +1,8 @@
+use crate::db_diesel::{item_link_row::item_link, item_row::item};
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
     StorageConnection,
 };
-
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -18,7 +18,7 @@ table! {
                     status -> crate::db_diesel::purchase_order_row::PurchaseOrderStatusMapping,
                     created_datetime -> Timestamp,
                     confirmed_datetime ->  Nullable<Timestamp>,
-                    delivery_datetime ->  Nullable<Timestamp>,
+                    delivered_datetime ->  Nullable<Timestamp>,
                     target_months->  Nullable<Double>,
                     comment->  Nullable<Text>,
                     supplier_discount_percentage ->  Nullable<Double>,
@@ -47,6 +47,9 @@ table! {
     }
 }
 
+allow_tables_to_appear_in_same_query!(purchase_order, item_link);
+allow_tables_to_appear_in_same_query!(purchase_order, item);
+
 #[derive(
     Clone, Insertable, Queryable, Debug, AsChangeset, Serialize, Deserialize, Default, PartialEq,
 )]
@@ -61,7 +64,7 @@ pub struct PurchaseOrderRow {
     pub status: PurchaseOrderStatus,
     pub created_datetime: NaiveDateTime,
     pub confirmed_datetime: Option<NaiveDateTime>,
-    pub delivery_datetime: Option<NaiveDateTime>,
+    pub delivered_datetime: Option<NaiveDateTime>,
     pub target_months: Option<f64>,
     pub comment: Option<String>,
     pub supplier_discount_percentage: Option<f64>,

@@ -1,5 +1,6 @@
 use crate::db_diesel::item_link_row::item_link;
 use crate::db_diesel::item_row::item;
+use crate::db_diesel::purchase_order_row::purchase_order;
 
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
@@ -28,9 +29,11 @@ table! {
 }
 
 joinable!(purchase_order_line -> item_link (item_link_id));
-
+joinable!(purchase_order_line -> purchase_order (purchase_order_id));
 allow_tables_to_appear_in_same_query!(purchase_order_line, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order_line, item);
+allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
+
 #[derive(
     TS, Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default, Serialize, Deserialize,
 )]

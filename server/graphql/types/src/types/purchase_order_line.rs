@@ -1,6 +1,6 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
-use graphql_core::{loader::ItemLoader, ContextExt};
+use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
 use repository::{ItemRow, PurchaseOrderLine, PurchaseOrderLineRow};
 use service::{usize_to_u32, ListResult};
 
@@ -29,12 +29,19 @@ impl PurchaseOrderLineNode {
     pub async fn line_number(&self) -> &i32 {
         &self.row().line_number
     }
-    pub async fn item(&self, ctx: &Context<'_>) -> Result<Option<ItemNode>> {
+    pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
 
         let result = loader.load_one(self.item.id.to_string()).await?;
 
-        Ok(result.map(ItemNode::from_domain))
+        result.map(ItemNode::from_domain).ok_or(
+            StandardGraphqlError::InternalError(format!(
+                "Cannot find item ({}) linked to purchase_order_line ({})",
+                &self.item.id,
+                &self.row().id
+            ))
+            .extend(),
+        )
     }
     pub async fn number_of_packs(&self) -> &Option<f64> {
         &self.row().number_of_packs
