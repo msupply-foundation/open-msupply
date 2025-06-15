@@ -1,5 +1,7 @@
 use super::{DBType, PurchaseOrderRow, PurchaseOrderStatus, RepositoryError, StorageConnection};
-use crate::diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort_no_case};
+use crate::diesel_macros::{
+    apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
+};
 use crate::purchase_order_row::purchase_order::{self};
 
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
@@ -63,19 +65,19 @@ impl<'a> PurchaseOrderRepository<'a> {
                     apply_sort_no_case!(query, sort, purchase_order::supplier_name_link_id)
                 }
                 PurchaseOrderSortField::Number => {
-                    apply_sort_no_case!(query, sort, purchase_order::purchase_order_number)
+                    apply_sort!(query, sort, purchase_order::purchase_order_number)
                 }
                 PurchaseOrderSortField::CreatedDatetime => {
-                    apply_sort_no_case!(query, sort, purchase_order::created_datetime)
+                    apply_sort!(query, sort, purchase_order::created_datetime)
                 }
                 PurchaseOrderSortField::Status => {
-                    apply_sort_no_case!(query, sort, purchase_order::status)
+                    apply_sort!(query, sort, purchase_order::status)
                 }
                 PurchaseOrderSortField::TargetMonths => {
-                    apply_sort_no_case!(query, sort, purchase_order::target_months)
+                    apply_sort!(query, sort, purchase_order::target_months)
                 }
                 PurchaseOrderSortField::DeliveryDate => {
-                    apply_sort_no_case!(query, sort, purchase_order::delivered_datetime)
+                    apply_sort!(query, sort, purchase_order::delivered_datetime)
                 }
             }
         }

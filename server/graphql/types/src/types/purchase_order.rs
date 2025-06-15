@@ -46,12 +46,12 @@ impl PurchaseOrderNode {
     pub async fn supplier_name_link_id(&self) -> &Option<String> {
         &self.row().supplier_name_link_id
     }
-    pub async fn supplier(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
+    pub async fn supplier(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let result = match &self.row().supplier_name_link_id {
             Some(id) => loader
-                .load_one(NameByIdLoaderInput::new(&store_id, id))
+                .load_one(NameByIdLoaderInput::new(&self.row().store_id, id))
                 .await?
                 .map(NameNode::from_domain),
             None => None,
@@ -85,12 +85,12 @@ impl PurchaseOrderNode {
     pub async fn supplier_discount_amount(&self) -> &Option<f64> {
         &self.row().supplier_discount_amount
     }
-    pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
+    pub async fn donor(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let result = match &self.row().donor_link_id {
             Some(id) => loader
-                .load_one(NameByIdLoaderInput::new(&store_id, id))
+                .load_one(NameByIdLoaderInput::new(&self.row().store_id, id))
                 .await?
                 .map(NameNode::from_domain),
             None => None,

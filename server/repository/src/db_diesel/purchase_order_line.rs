@@ -38,8 +38,8 @@ pub enum PurchaseOrderLineSortField {
     ItemName,
     NumberOfPacks,
     LineNumber,
-    OriginalQuantity,
-    AdjustedQuantity,
+    RequestedQuantity,
+    AuthorisedQuantity,
     TotalReceived,
     RequestedDeliveryDate,
     ExpectedDeliveryDate,
@@ -92,19 +92,19 @@ impl<'a> PurchaseOrderLineRepository<'a> {
                     apply_sort_no_case!(query, sort, item::name);
                 }
                 PurchaseOrderLineSortField::NumberOfPacks => {
-                    apply_sort_no_case!(query, sort, purchase_order_line::number_of_packs);
+                    apply_sort!(query, sort, purchase_order_line::number_of_packs);
                 }
                 PurchaseOrderLineSortField::LineNumber => {
-                    apply_sort_no_case!(query, sort, purchase_order_line::line_number);
+                    apply_sort!(query, sort, purchase_order_line::line_number);
                 }
-                PurchaseOrderLineSortField::OriginalQuantity => {
-                    apply_sort_no_case!(query, sort, purchase_order_line::original_quantity);
+                PurchaseOrderLineSortField::RequestedQuantity => {
+                    apply_sort!(query, sort, purchase_order_line::requested_quantity);
                 }
-                PurchaseOrderLineSortField::AdjustedQuantity => {
-                    apply_sort_no_case!(query, sort, purchase_order_line::adjusted_quantity);
+                PurchaseOrderLineSortField::AuthorisedQuantity => {
+                    apply_sort!(query, sort, purchase_order_line::authorised_quantity);
                 }
                 PurchaseOrderLineSortField::TotalReceived => {
-                    apply_sort_no_case!(query, sort, purchase_order_line::total_received);
+                    apply_sort!(query, sort, purchase_order_line::total_received);
                 }
                 PurchaseOrderLineSortField::RequestedDeliveryDate => {
                     apply_sort!(query, sort, purchase_order_line::requested_delivery_date);
