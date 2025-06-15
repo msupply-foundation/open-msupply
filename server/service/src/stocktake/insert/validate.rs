@@ -23,10 +23,6 @@ pub fn validate(
     if !check_store_exists(connection, store_id)? {
         return Err(InsertStocktakeError::InvalidStore);
     }
-    // partial validation here for multiple args at once.
-    if input.master_list_id.is_some() && input.location_id.is_some() {
-        return Err(InsertStocktakeError::InvalidArguments);
-    }
     if let Some(master_list_id) = &input.master_list_id {
         if !check_master_list_exists(connection, store_id, master_list_id)? {
             return Err(InsertStocktakeError::InvalidMasterList);
