@@ -532,6 +532,9 @@ async fn main() -> anyhow::Result<()> {
                 StandardReports::upsert_reports(reports_data, &con, overwrite)?;
             }
         }
+        // TODO fix these inputs. Should extract these fields from the report manifest
+        // also not necessarily custom / version 1.0 etc.
+        // Command currently unsafe.
         Action::UpsertReport {
             id,
             report_path,

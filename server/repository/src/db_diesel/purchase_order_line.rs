@@ -4,8 +4,10 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
-    item_link, EqualFilter, Pagination, PurchaseOrderLineRow, Sort,
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
+    item_link,
+    purchase_order_row::purchase_order::{self},
+    EqualFilter, Pagination, PurchaseOrderLineRow, PurchaseOrderRow, Sort,
 };
 
 use diesel::{
@@ -13,7 +15,11 @@ use diesel::{
     prelude::*,
 };
 
-type PurchaseOrderLineJoin = (PurchaseOrderLineRow, (ItemLinkRow, ItemRow));
+type PurchaseOrderLineJoin = (
+    PurchaseOrderLineRow,
+    (ItemLinkRow, ItemRow),
+    PurchaseOrderRow,
+);
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct PurchaseOrderLine {
@@ -21,18 +27,22 @@ pub struct PurchaseOrderLine {
     pub item_row: ItemRow,
 }
 
-// #[derive(PartialEq, Debug, Clone, Default)]
-// pub struct PurchaseOrderLine {
-//     pub purchase_order_line_row: PurchaseOrderLineRow,
-// }
 #[derive(Clone, Default)]
 pub struct PurchaseOrderLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub purchase_order_id: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
 }
 
 pub enum PurchaseOrderLineSortField {
     ItemName,
+    NumberOfPacks,
+    LineNumber,
+    RequestedQuantity,
+    AuthorisedQuantity,
+    TotalReceived,
+    RequestedDeliveryDate,
+    ExpectedDeliveryDate,
 }
 
 pub type PurchaseOrderLineSort = Sort<PurchaseOrderLineSortField>;
@@ -81,7 +91,30 @@ impl<'a> PurchaseOrderLineRepository<'a> {
                 PurchaseOrderLineSortField::ItemName => {
                     apply_sort_no_case!(query, sort, item::name);
                 }
+                PurchaseOrderLineSortField::NumberOfPacks => {
+                    apply_sort!(query, sort, purchase_order_line::number_of_packs);
+                }
+                PurchaseOrderLineSortField::LineNumber => {
+                    apply_sort!(query, sort, purchase_order_line::line_number);
+                }
+                PurchaseOrderLineSortField::RequestedQuantity => {
+                    apply_sort!(query, sort, purchase_order_line::requested_quantity);
+                }
+                PurchaseOrderLineSortField::AuthorisedQuantity => {
+                    apply_sort!(query, sort, purchase_order_line::authorised_quantity);
+                }
+                PurchaseOrderLineSortField::TotalReceived => {
+                    apply_sort!(query, sort, purchase_order_line::total_received);
+                }
+                PurchaseOrderLineSortField::RequestedDeliveryDate => {
+                    apply_sort!(query, sort, purchase_order_line::requested_delivery_date);
+                }
+                PurchaseOrderLineSortField::ExpectedDeliveryDate => {
+                    apply_sort!(query, sort, purchase_order_line::expected_delivery_date);
+                }
             }
+        } else {
+            query = query.order(purchase_order_line::id.asc())
         }
 
         let final_query = query
@@ -97,7 +130,10 @@ impl<'a> PurchaseOrderLineRepository<'a> {
 
 type BoxedPurchaseOrderLineQuery = IntoBoxed<
     'static,
-    InnerJoin<purchase_order_line::table, InnerJoin<item_link::table, item::table>>,
+    InnerJoin<
+        InnerJoin<purchase_order_line::table, InnerJoin<item_link::table, item::table>>,
+        purchase_order::table,
+    >,
     DBType,
 >;
 
@@ -106,12 +142,14 @@ fn create_filtered_query(
 ) -> Result<BoxedPurchaseOrderLineQuery, RepositoryError> {
     let mut query = purchase_order_line::table
         .inner_join(item_link::table.inner_join(item::table))
+        .inner_join(purchase_order::table)
         .into_boxed();
 
     if let Some(f) = filter {
         let PurchaseOrderLineFilter {
             purchase_order_id,
             id,
+            store_id,
         } = f;
 
         apply_equal_filter!(
@@ -119,7 +157,8 @@ fn create_filtered_query(
             purchase_order_id,
             purchase_order_line::purchase_order_id
         );
-        apply_equal_filter!(query, id, purchase_order_line::id)
+        apply_equal_filter!(query, id, purchase_order_line::id);
+        apply_equal_filter!(query, store_id, purchase_order::store_id);
     }
 
     Ok(query)
@@ -140,7 +179,9 @@ impl PurchaseOrderLineFilter {
     }
 }
 
-fn to_domain((purchase_order_line_row, (_, item_row)): PurchaseOrderLineJoin) -> PurchaseOrderLine {
+fn to_domain(
+    (purchase_order_line_row, (_, item_row), _): PurchaseOrderLineJoin,
+) -> PurchaseOrderLine {
     PurchaseOrderLine {
         purchase_order_line_row,
         item_row,
