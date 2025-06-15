@@ -1,10 +1,10 @@
 ---
 name: Refactor Suggestion
 about: Suggest a refactor
-title: ''
+title: ""
 labels: needs triage, refactor
-assignees: ''
-
+type: refactor
+assignees: ""
 ---
 
 ## The suggestion

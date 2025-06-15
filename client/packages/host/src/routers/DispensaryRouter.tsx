@@ -13,6 +13,9 @@ const PatientService = React.lazy(
 const EncounterService = React.lazy(
   () => import('@openmsupply-client/system/src/Encounter/Service')
 );
+const ClinicianService = React.lazy(
+  () => import('@openmsupply-client/system/src/Clinician/Service')
+);
 
 const ContactTraceService = React.lazy(
   () => import('@openmsupply-client/system/src/ContactTrace/Service')
@@ -33,6 +36,11 @@ const fullEncountersPath = RouteBuilder.create(AppRoute.Dispensary)
   .addWildCard()
   .build();
 
+const fullCliniciansPath = RouteBuilder.create(AppRoute.Dispensary)
+  .addPart(AppRoute.Clinicians)
+  .addWildCard()
+  .build();
+
 const fullContactTracesPath = RouteBuilder.create(AppRoute.Dispensary)
   .addPart(AppRoute.ContactTrace)
   .addWildCard()
@@ -46,6 +54,7 @@ export const DispensaryRouter: FC = () => {
   const gotoDistribution = useMatch(fullPrescriptionPath);
   const gotoPatients = useMatch(fullPatientsPath);
   const gotoEncounters = useMatch(fullEncountersPath);
+  const gotoClinicians = useMatch(fullCliniciansPath);
   const gotoContactTraces = useMatch(fullContactTracesPath);
   const gotoContactTracesList = useMatch(contactTracesListPath);
 
@@ -59,6 +68,10 @@ export const DispensaryRouter: FC = () => {
 
   if (gotoEncounters) {
     return <EncounterService />;
+  }
+
+  if (gotoClinicians) {
+    return <ClinicianService />;
   }
   if (gotoContactTracesList) {
     const patientListRoute = RouteBuilder.create(AppRoute.Dispensary)

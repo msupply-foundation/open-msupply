@@ -48,7 +48,12 @@ export type NameFragment = {
   phone?: string | null;
   website?: string | null;
   properties: string;
+  hshCode?: string | null;
+  hshName?: string | null;
+  margin?: number | null;
+  freightFactor?: number | null;
   store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  currency?: { __typename: 'CurrencyNode'; id: string; code: string } | null;
 };
 
 export type PropertyFragment = {
@@ -147,7 +152,16 @@ export type NameByIdQuery = {
       phone?: string | null;
       website?: string | null;
       properties: string;
+      hshCode?: string | null;
+      hshName?: string | null;
+      margin?: number | null;
+      freightFactor?: number | null;
       store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      currency?: {
+        __typename: 'CurrencyNode';
+        id: string;
+        code: string;
+      } | null;
     }>;
   };
 };
@@ -205,7 +219,16 @@ export type UpdateNamePropertiesMutation = {
         phone?: string | null;
         website?: string | null;
         properties: string;
+        hshCode?: string | null;
+        hshName?: string | null;
+        margin?: number | null;
+        freightFactor?: number | null;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        currency?: {
+          __typename: 'CurrencyNode';
+          id: string;
+          code: string;
+        } | null;
       }
     | {
         __typename: 'UpdateNamePropertiesError';
@@ -268,6 +291,14 @@ export const NameFragmentDoc = gql`
       code
     }
     properties
+    hshCode
+    hshName
+    margin
+    freightFactor
+    currency {
+      id
+      code
+    }
   }
 `;
 export const PropertyFragmentDoc = gql`

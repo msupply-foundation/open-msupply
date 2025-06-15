@@ -28,7 +28,6 @@ export const ResponseStoreStats = ({
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
   const { round } = useFormatNumber();
-
   const unit = unitName || t('label.unit');
 
   const statsDisplay = stats(t, getPlural, round, unit, representation);

@@ -1,5 +1,8 @@
 use crate::sync::{
-    sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
+    sync_serde::{
+        date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
+        zero_date_as_option,
+    },
     translations::{
         currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
         item_variant::ItemVariantTranslation, location::LocationTranslation,
@@ -107,6 +110,7 @@ pub struct LegacyTransLineRow {
     #[serde(rename = "vaccine_vial_monitor_status_ID")]
     pub vvm_status_id: Option<String>,
     #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option")]
     pub oms_fields: Option<TransLineRowOmsFields>,
 }
 
