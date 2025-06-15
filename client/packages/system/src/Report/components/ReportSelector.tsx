@@ -1,6 +1,7 @@
 import React, { FC, PropsWithChildren, useMemo } from 'react';
 import {
   PrintFormat,
+  PrintReportSortInput,
   ReportContext,
   useEditModal,
   useIntlUtils,
@@ -10,10 +11,10 @@ import {
 import { PrinterIcon } from '@common/icons';
 import { LoadingButton } from '@common/components';
 import { ReportArgumentsModal } from './ReportArgumentsModal';
-import { JsonData } from '@openmsupply-client/programs';
-import { ReportListParams, useReportList } from '../api/hooks';
+import { ReportListParams, usePrintReport, useReportList } from '../api/hooks';
 import { ReportRowFragment } from '../api';
 import { ReportOption, SelectReportModal } from './SelectReportModal';
+import { JsonData } from '@openmsupply-client/programs';
 
 interface CustomOption<T> {
   label: string;
@@ -24,32 +25,30 @@ interface CustomOption<T> {
 interface ReportSelectorProps {
   context?: ReportContext;
   subContext?: string;
-  onPrint: (
-    report: ReportRowFragment,
-    args: JsonData | undefined,
-    format?: PrintFormat
-  ) => Promise<void>;
-  isPrinting?: boolean;
+  dataId: string;
   /** Disable the whole control */
   disabled?: boolean;
   queryParams?: ReportListParams;
   extraArguments?: Record<string, string | number | undefined>;
   customOptions?: CustomOption<string>[];
   onPrintCustom?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
-  buttonLabel?: string;
+  loading?: boolean;
+  customLabel?: string;
+  sort?: PrintReportSortInput;
 }
 
 export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   context,
   subContext,
-  onPrint,
-  isPrinting,
   disabled = false,
   queryParams,
   extraArguments,
   customOptions,
   onPrintCustom,
-  buttonLabel,
+  loading = false,
+  customLabel,
+  dataId,
+  sort,
 }) => {
   const t = useTranslation();
   const { translateDynamicKey } = useIntlUtils();
@@ -70,7 +69,8 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
     queryParams,
   });
 
-  // Report Content
+  const { printAsync, isPrinting } = usePrintReport();
+
   const onReportSelected = async (
     report: ReportOption,
     format: PrintFormat
@@ -88,17 +88,23 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
         format,
       });
     } else {
-      await print(report, undefined, format);
+      const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+      await print(report, { timezone, ...extraArguments }, format);
     }
   };
 
   const print = async (
     report: ReportRowFragment,
-    args: Record<string, any> = {},
-    format: PrintFormat
+    args: JsonData,
+    format?: PrintFormat
   ) => {
-    const timezone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
-    await onPrint(report, { timezone, ...extraArguments, ...args }, format);
+    await printAsync({
+      reportId: report.id,
+      dataId,
+      args,
+      sort,
+      format,
+    });
   };
 
   const options: ReportOption[] = useMemo(() => {
@@ -118,10 +124,10 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
     <>
       <LoadingButton
         disabled={initialLoading || disabled}
-        isLoading={isPrinting || false}
+        isLoading={isPrinting || loading}
         startIcon={<PrinterIcon />}
         onClick={modalOpen.toggleOn}
-        label={buttonLabel || t('button.export-or-print')} // buttonLabel??
+        label={customLabel || t('button.export-or-print')}
       />
       {modalOpen.isOn && (
         <SelectReportModal
@@ -134,7 +140,8 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
         report={reportWithArgs?.report}
         printFormat={reportWithArgs?.format}
         onReset={onClose}
-        onArgumentsSelected={onPrint}
+        onArgumentsSelected={print}
+        extraArguments={extraArguments}
       />
     </>
   );

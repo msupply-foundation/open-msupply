@@ -11,12 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { Draft } from '../../StockOut';
-import {
-  ReportRowFragment,
-  ReportSelector,
-  usePrintReport,
-} from '../../../../system/src/Report';
-import { JsonData } from '@openmsupply-client/programs';
+import { ReportSelector } from '../../../../system/src/Report';
 import { usePrintLabels } from './hooks/usePrinter';
 
 interface AppBarButtonProps {
@@ -34,20 +29,11 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     query: { data: prescription },
   } = usePrescription();
   const { OpenButton } = useDetailPanel();
-  const { print: printReceipt, isPrinting: isPrintingReceipt } =
-    usePrintReport();
   const {
     printLabels: printPrescriptionLabels,
     isPrintingLabels,
     DisabledNotification,
   } = usePrintLabels();
-
-  const printReport = (
-    report: ReportRowFragment,
-    args: JsonData | undefined
-  ) => {
-    printReceipt({ reportId: report.id, dataId: prescription?.id, args });
-  };
 
   const handlePrintLabels = (e?: React.MouseEvent<HTMLButtonElement>) => {
     if (prescription) {
@@ -76,11 +62,11 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         />
         <ReportSelector
           context={ReportContext.Prescription}
-          onPrint={printReport}
-          isPrinting={isPrintingReceipt || isPrintingLabels}
+          dataId={prescription?.id ?? ''}
+          loading={isPrintingLabels}
           customOptions={extraOptions}
           onPrintCustom={e => handlePrintLabels(e)}
-          buttonLabel={t('button.print-report-options')}
+          customLabel={t('button.print-report-options')}
         />
         <ButtonWithIcon
           label={t('button.history')}
