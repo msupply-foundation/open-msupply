@@ -8,6 +8,8 @@ import {
 } from '@common/components';
 import {
   DownloadIcon,
+  EnvUtils,
+  Platform,
   PrinterIcon,
   PrintFormat,
   useAuthContext,
@@ -50,19 +52,22 @@ export const SelectReportModal = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       reportSelector={
         <>
-          <ButtonWithIcon
-            color="secondary"
-            variant="contained"
-            label={t('button.export-to-excel')}
-            Icon={<DownloadIcon />}
-            onClick={() => {
-              if (!selectedReport) return;
+          {/* We had excel disabled elsewhere, hiding here until confirmed? */}
+          {EnvUtils.platform !== Platform.Android && (
+            <ButtonWithIcon
+              color="secondary"
+              variant="contained"
+              label={t('button.export-to-excel')}
+              Icon={<DownloadIcon />}
+              onClick={() => {
+                if (!selectedReport) return;
 
-              onSelectReport(selectedReport, PrintFormat.Excel);
-              onClose();
-            }}
-            disabled={!selectedReport}
-          />
+                onSelectReport(selectedReport, PrintFormat.Excel);
+                onClose();
+              }}
+              disabled={!selectedReport}
+            />
+          )}
           <ButtonWithIcon
             color="secondary"
             variant="contained"
