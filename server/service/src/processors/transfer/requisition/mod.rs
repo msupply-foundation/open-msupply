@@ -1,6 +1,6 @@
 pub(crate) mod create_response_requisition;
 pub(crate) mod link_request_requisition;
-pub(crate) mod update_request_requisition_approved_quantities;
+pub(crate) mod update_request_requisition;
 pub(crate) mod update_request_requisition_status;
 
 #[cfg(test)]
@@ -22,7 +22,7 @@ use crate::{
             requisition::{
                 create_response_requisition::CreateResponseRequisitionProcessor,
                 link_request_requisition::LinkRequestRequisitionProcessor,
-                update_request_requisition_approved_quantities::UpdateRequestRequisitionApprovedQuantitiesProcessor,
+                update_request_requisition::UpdateRequestRequisitionApprovedQuantitiesProcessor,
                 update_request_requisition_status::UpdateRequestRequisitionStatusProcessor,
             },
         },
