@@ -40,8 +40,7 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
   ];
 
   const sortFieldMap: Record<string, PurchaseOrderSortFieldInput> = {
-    createdDateTime: PurchaseOrderSortFieldInput.CreatedDatetime,
-    confirmedDateTime: PurchaseOrderSortFieldInput.ConfirmedDatetime,
+    createdDatetime: PurchaseOrderSortFieldInput.CreatedDatetime,
     status: PurchaseOrderSortFieldInput.Status,
     number: PurchaseOrderSortFieldInput.Number,
     // Add more as required

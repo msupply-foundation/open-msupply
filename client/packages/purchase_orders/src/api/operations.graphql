@@ -1,6 +1,27 @@
+fragment PurchaseOrderRow on PurchaseOrderNode {
+  id
+  number
+  supplier {
+    __typename
+    id
+    name
+    # Add more fields here as required
+  }
+  createdDatetime
+  confirmedDatetime
+  status
+  targetMonths
+  deliveredDatetime
+  lines {
+    totalCount
+  }
+  comment
+}
+
 fragment PurchaseOrder on PurchaseOrderNode {
   __typename
   id
+  number
   additionalInstructions
   advancePaidDatetime
   agentCommission
@@ -11,9 +32,13 @@ fragment PurchaseOrder on PurchaseOrderNode {
   contractSignedDatetime
   createdDatetime
   currencyId
-  deliveryDatetime
+  deliveredDatetime
   documentCharge
-  donorLinkId
+  donor {
+    id
+    name
+    # Add as required
+  }
   foreignExchangeRate
   expectedDeliveryDatetime
   freightCharge
@@ -32,23 +57,35 @@ fragment PurchaseOrder on PurchaseOrderNode {
   sentDatetime
   shippingMethod
   status
-  storeId
+  store {
+    id
+    # name
+  }
+  supplier {
+    __typename
+    id
+    name
+    # Add more fields here as required
+  }
   supplierAgent
   supplierDiscountAmount
   supplierDiscountPercentage
-  supplierId
   targetMonths
 }
 
 fragment PurchaseOrderLine on PurchaseOrderLineNode {
   __typename
   id
-  adjustedQuantity
+  authorisedQuantity
   expectedDeliveryDate
-  itemCode
-  itemName
+  item {
+    id
+    code
+    name
+    # Add as required
+  }
   numberOfPacks
-  originalQuantity
+  requestedQuantity
   packSize
   requestedDeliveryDate
   totalReceived
@@ -71,7 +108,7 @@ query purchaseOrders(
     ... on PurchaseOrderConnector {
       __typename
       nodes {
-        ...PurchaseOrder
+        ...PurchaseOrderRow
       }
       totalCount
     }
