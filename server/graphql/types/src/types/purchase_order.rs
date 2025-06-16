@@ -62,9 +62,7 @@ impl PurchaseOrderNode {
 
         Ok(result)
     }
-    pub async fn purchase_order_number(&self) -> &i32 {
-        &self.row().purchase_order_number
-    }
+
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
