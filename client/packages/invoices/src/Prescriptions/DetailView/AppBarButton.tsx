@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   AppBarButtonsPortal,
   ButtonWithIcon,
@@ -8,6 +8,9 @@ import {
   useTranslation,
   InfoOutlineIcon,
   ReportContext,
+  SplitButton,
+  PrinterIcon,
+  SplitButtonOption,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { Draft } from '../../StockOut';
@@ -41,16 +44,20 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     }
   };
 
-  const extraOptions = prescription
-    ? [
-        {
-          value: 'Print Labels',
-          label: t('button.print-prescription-label'),
-          isDisabled: isDisabled,
-          onClick: handlePrintLabels,
-        },
-      ]
-    : [];
+  const options = [
+    {
+      value: 'export_or_print',
+      label: t('button.export-or-print'),
+    },
+    {
+      value: 'print_labels',
+      label: t('button.print-prescription-label'),
+    },
+  ];
+
+  const [selected, setSelected] = useState<SplitButtonOption<string>>(
+    options[0]!
+  );
 
   return (
     <AppBarButtonsPortal>
@@ -63,10 +70,34 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <ReportSelector
           context={ReportContext.Prescription}
           dataId={prescription?.id ?? ''}
-          loading={isPrintingLabels}
-          customOptions={extraOptions}
-          onPrintCustom={e => handlePrintLabels(e)}
-          customLabel={t('button.print-report-options')}
+          disabled={isDisabled}
+          CustomButton={({ onPrint }) => {
+            const handleClick = (
+              option: SplitButtonOption<string>,
+              e?: React.MouseEvent<HTMLButtonElement>
+            ) => {
+              if (option.value === 'print_labels') {
+                handlePrintLabels(e);
+              } else {
+                onPrint();
+              }
+            };
+            return (
+              <SplitButton
+                color="primary"
+                openFrom={'bottom'}
+                Icon={<PrinterIcon />}
+                isLoading={isPrintingLabels}
+                onClick={handleClick}
+                selectedOption={selected}
+                onSelectOption={(option, e) => {
+                  setSelected(option);
+                  handleClick(option, e);
+                }}
+                options={options}
+              />
+            );
+          }}
         />
         <ButtonWithIcon
           label={t('button.history')}

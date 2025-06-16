@@ -16,12 +16,6 @@ import { ReportRowFragment } from '../api';
 import { ReportOption, SelectReportModal } from './SelectReportModal';
 import { JsonData } from '@openmsupply-client/programs';
 
-interface CustomOption<T> {
-  label: string;
-  value?: T;
-  isDisabled?: boolean;
-  onClick: (e?: React.MouseEvent<HTMLButtonElement>) => void;
-}
 interface ReportSelectorProps {
   context?: ReportContext;
   subContext?: string;
@@ -30,11 +24,10 @@ interface ReportSelectorProps {
   disabled?: boolean;
   queryParams?: ReportListParams;
   extraArguments?: Record<string, string | number | undefined>;
-  customOptions?: CustomOption<string>[];
-  onPrintCustom?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
-  loading?: boolean;
-  customLabel?: string;
   sort?: PrintReportSortInput;
+  CustomButton?: (props: {
+    onPrint: (e?: React.MouseEvent<HTMLButtonElement>) => void;
+  }) => JSX.Element;
 }
 
 export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
@@ -43,12 +36,9 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   disabled = false,
   queryParams,
   extraArguments,
-  customOptions,
-  onPrintCustom,
-  loading = false,
-  customLabel,
   dataId,
   sort,
+  CustomButton,
 }) => {
   const t = useTranslation();
   const { translateDynamicKey } = useIntlUtils();
@@ -74,14 +64,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   const onReportSelected = async (
     report: ReportOption,
     format: PrintFormat
-    // e?: React.MouseEvent<HTMLButtonElement>
   ) => {
-    const selected = customOptions?.find(c => c.value === report.id);
-    if (onPrintCustom) {
-      // selected?.value ? onPrintCustom(e) : '';
-      selected?.value ? onPrintCustom() : '';
-    }
-
     if (report.argumentSchema) {
       onOpenArguments({
         report,
@@ -108,27 +91,27 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   };
 
   const options: ReportOption[] = useMemo(() => {
-    const reports = data
+    return data
       ? data?.nodes?.map(report => ({
           ...report,
           label: translateDynamicKey(`report-code.${report.code}`, report.name),
         }))
       : [];
-
-    return reports;
-    // const allOptions = [customOptions || [], reports];
-    // return allOptions.flat();
-  }, [data, disabled, customOptions]);
+  }, [data, disabled]);
 
   return (
     <>
-      <LoadingButton
-        disabled={initialLoading || disabled}
-        isLoading={isPrinting || loading}
-        startIcon={<PrinterIcon />}
-        onClick={modalOpen.toggleOn}
-        label={customLabel || t('button.export-or-print')}
-      />
+      {CustomButton ? (
+        <CustomButton onPrint={modalOpen.toggleOn} />
+      ) : (
+        <LoadingButton
+          disabled={initialLoading || disabled}
+          isLoading={isPrinting}
+          startIcon={<PrinterIcon />}
+          onClick={modalOpen.toggleOn}
+          label={t('button.export-or-print')}
+        />
+      )}
       {modalOpen.isOn && (
         <SelectReportModal
           onSelectReport={onReportSelected}
