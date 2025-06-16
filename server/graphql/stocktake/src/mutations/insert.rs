@@ -17,9 +17,9 @@ pub struct InsertInput {
     pub id: String,
     pub master_list_id: Option<String>,
     pub location_id: Option<String>,
-    pub items_have_stock: Option<bool>,
     pub expires_before: Option<NaiveDate>,
     pub is_initial_stocktake: Option<bool>,
+    pub create_blank_stocktake: Option<bool>,
     pub comment: Option<String>,
     pub description: Option<String>,
 }
@@ -92,8 +92,8 @@ impl InsertInput {
             id,
             location_id,
             master_list_id,
-            items_have_stock,
             expires_before,
+            create_blank_stocktake,
             is_initial_stocktake,
             comment,
             description,
@@ -104,10 +104,10 @@ impl InsertInput {
             comment,
             location_id,
             master_list_id,
-            items_have_stock,
             expires_before,
             is_initial_stocktake,
             description,
+            create_blank_stocktake,
         }
     }
 }
