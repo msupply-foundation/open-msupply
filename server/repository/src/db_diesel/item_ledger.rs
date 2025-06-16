@@ -28,7 +28,7 @@ table! {
         sell_price_per_pack -> Double,
         total_before_tax -> Nullable<Double>,
         number_of_packs -> Double,
-        type_precedence -> BigInt,
+        type_precedence -> Integer,
         running_balance -> Double,
     }
 }
@@ -53,7 +53,7 @@ pub struct ItemLedgerRow {
     pub sell_price_per_pack: f64,
     pub total_before_tax: Option<f64>,
     pub number_of_packs: f64,
-    pub type_precedence: i64,
+    pub type_precedence: i32,
     pub running_balance: f64,
 }
 
