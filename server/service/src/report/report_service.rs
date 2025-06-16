@@ -9,6 +9,7 @@ use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::{cmp::Ordering, collections::HashMap, time::SystemTime};
 use thiserror::Error;
+use umya_spreadsheet::{drawing::spreadsheet::MarkerType, Image};
 use util::{format_error, uuid::uuid};
 
 use crate::{
@@ -237,8 +238,17 @@ impl<'a> Selectors<'a> {
         Self { html }
     }
 
-    fn headers(&self) -> Vec<&str> {
-        let headers_selector = Selector::parse(".paging tbody thead tr td").unwrap();
+    fn header_rows_and_cells(&self) -> Vec<Vec<ElementRef>> {
+        let rows_selector = Selector::parse(".paging thead table tr").unwrap();
+        let cells_selector = Selector::parse("td").unwrap();
+        self.html
+            .select(&rows_selector)
+            .map(|row| row.select(&cells_selector).collect())
+            .collect()
+    }
+
+    fn data_headers(&self) -> Vec<&str> {
+        let headers_selector = Selector::parse(".paging tbody thead tr td,th").unwrap();
         self.html
             .select(&headers_selector)
             .map(inner_text)
@@ -279,17 +289,58 @@ fn print_html_report_to_excel(
 
     let selectors = Selectors::new(&fragment); // Store Html when creating
 
-    for (index, header) in selectors.headers().into_iter().enumerate() {
-        let cell = sheet.get_cell_mut((index as u32 + 1, 1));
+    let mut row_idx: u32 = 1;
+    for (_, row) in selectors.header_rows_and_cells().into_iter().enumerate() {
+        let mut cell_idx: u32 = 1;
+        for (_, cell) in row.into_iter().enumerate() {
+            let cols = cell
+                .attr("colspan")
+                .unwrap_or("1")
+                .parse::<u32>()
+                .unwrap_or(1);
+
+            let x = cell
+                .select(&Selector::parse("img").unwrap())
+                .find_map(|img| {
+                    img.attr("src").and_then(|src| {
+                        let base64_data = src.split("base64,").nth(1)?;
+                        BASE64_STANDARD.decode(base64_data).ok()
+                    })
+                });
+
+            if let Some(image_data) = x {
+                let mut marker = MarkerType::default();
+                marker.set_coordinate("A1");
+                let mut image = Image::default();
+                // TODO: dimensions....
+                image.new_image_with_dimensions(30, 30, "logo", image_data, marker);
+
+                sheet.add_image(image);
+                // TODO: can we do merge cells here?
+            } else {
+                sheet
+                    .get_cell_mut((cell_idx, row_idx))
+                    .set_value(inner_text(cell));
+            }
+
+            cell_idx += cols;
+        }
+        row_idx += 1;
+    }
+    row_idx += 1;
+
+    for (index, header) in selectors.data_headers().into_iter().enumerate() {
+        let cell = sheet.get_cell_mut((index as u32 + 1, row_idx));
 
         cell.set_value(header);
         cell.get_style_mut().get_font_mut().set_bold(true);
     }
+    row_idx += 1;
 
     for (row_index, row) in selectors.rows_and_cells().into_iter().enumerate() {
         for (cell_index, cell) in row.into_iter().enumerate() {
             sheet
-                .get_cell_mut((cell_index as u32 + 1, row_index as u32 + 2))
+                .get_cell_mut((cell_index as u32 + 1, row_index as u32 + row_idx))
                 .set_value(cell);
         }
     }
@@ -1046,7 +1097,10 @@ mod report_to_excel_test {
 
         let selectors = Selectors::new(&html);
 
-        assert_eq!(selectors.headers(), vec!["First Header", "Second Header"]);
+        assert_eq!(
+            selectors.data_headers(),
+            vec!["First Header", "Second Header"]
+        );
 
         assert_eq!(
             selectors.rows_and_cells(),
