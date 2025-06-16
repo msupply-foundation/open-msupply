@@ -63,14 +63,12 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &PurchaseOrderLineRow) -> Result<i64, RepositoryError> {
-        println!("Upserting purchase order line: {}", row.id);
         diesel::insert_into(purchase_order_line::table)
             .values(row)
             .on_conflict(purchase_order_line::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        println!("Inserted or updated purchase order line: {}", row.id);
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
