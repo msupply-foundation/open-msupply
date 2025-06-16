@@ -11,6 +11,7 @@ import {
   ColumnFormat,
   GenericColumnKey,
   PurchaseOrderNodeStatus,
+  useToggle,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderList } from '../api';
 import { PurchaseOrderRowFragment } from '../api/operations.generated';
@@ -45,7 +46,6 @@ const ListView: FC = () => {
   };
 
   const navigate = useNavigate();
-  const modalController = useToggle();
   const {
     query: { data, isError, isLoading },
   } = usePurchaseOrderList(listParams);

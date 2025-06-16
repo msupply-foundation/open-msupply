@@ -12,15 +12,16 @@ import {
   useCallbackWithPermission,
   UserPermission,
   ToggleState,
+  useNotification,
+  useToggle,
 } from '@openmsupply-client/common';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { ListParams, usePurchaseOrderList } from '../api';
 
-export const AppBarButtonsComponent: FC<{
-  modalController: ToggleState;
-  listParams: ListParams;
-}> = ({ modalController }) => {
+export const AppBarButtonsComponent: FC = () => {
   const t = useTranslation();
+  const modalController = useToggle();
+
   const { success, error } = useNotification();
 
   const handleSupplierSelected = () => {
@@ -41,14 +42,6 @@ export const AppBarButtonsComponent: FC<{
           onClose={modalController.toggleOff}
           onChange={handleSupplierSelected}
         />
-        {/* <LoadingButton
-          startIcon={<DownloadIcon />}
-          isLoading={isLoading}
-          variant="outlined"
-          onClick={csvExport}
-          disabled={EnvUtils.platform === Platform.Android}
-          label={t('button.export')}
-        /> */}
       </Grid>
     </AppBarButtonsPortal>
   );
