@@ -601,7 +601,7 @@ fn check_line(
         response_line.snapshot_datetime,
         request_line.snapshot_datetime
     );
-    assert_eq!(response_line.supply_quantity, 0.0);
+    assert_eq!(response_line.supply_quantity, request_line.supply_quantity);
 
     log::debug!(
         "{}: Finished checking line {}",

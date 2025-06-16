@@ -22,11 +22,12 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
     /// 1. Source requisition name_id is for a store that is active on current site (transfer processor driver guarantees this)
     /// 2. Source requisition is Response requisition
     /// 3. Linked requisition exists (the request requisition)
-    /// 4. Linked request requisition is not approved
-    /// 5. Source response requisition is approved
+    /// 4. Update request requisition supply_quantity from response requisition supply_quantity
+    /// 5. Linked request requisition is not approved
+    /// 6. Source response requisition is approved
     ///
     /// Only runs once:
-    /// 6. Because linked request requisition status is set to approved and `4.` will never be true again
+    /// 7. Because linked request requisition status is set to approved and `4.` will never be true again
     fn try_process_record(
         &self,
         connection: &StorageConnection,
@@ -48,20 +49,6 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
             None => return Ok(None),
         };
         // 4.
-        if let Some(approval_status) = request_requisition.requisition_row.approval_status.clone() {
-            if approval_status.is_approved() {
-                return Ok(None);
-            }
-        };
-        // 5.
-        let approval_status = match response_requisition.requisition_row.approval_status.clone() {
-            Some(approval_status) => approval_status,
-            None => return Ok(None),
-        };
-        if !approval_status.is_approved() {
-            return Ok(None);
-        }
-
         let requisition_line_repository = RequisitionLineRepository::new(connection);
         let requisition_line_row_repository = RequisitionLineRowRepository::new(connection);
 
@@ -72,6 +59,29 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
             )),
         )?;
 
+        // Update supply quantity on request requisition lines
+        for line in response_lines.iter() {
+            requisition_line_row_repository.update_supply_quantity_by_item_id(
+                &request_requisition.requisition_row.id,
+                &line.requisition_line_row.item_link_id,
+                line.requisition_line_row.supply_quantity,
+            )?;
+        }
+        // 5.
+        if let Some(approval_status) = request_requisition.requisition_row.approval_status.clone() {
+            if approval_status.is_approved() {
+                return Ok(None);
+            }
+        };
+        // 6.
+        let approval_status = match response_requisition.requisition_row.approval_status.clone() {
+            Some(approval_status) => approval_status,
+            None => return Ok(None),
+        };
+        if !approval_status.is_approved() {
+            return Ok(None);
+        }
+
         // Update approved quantities on request requisition lines
         for line in response_lines.iter() {
             requisition_line_row_repository.update_approved_quantity_by_item_id(
@@ -81,18 +91,9 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
             )?;
         }
 
-        // Update supply quantity on request requisition lines
-        for line in response_lines.iter() {
-            requisition_line_row_repository.update_supply_quantity_by_item_id(
-                &request_requisition.requisition_row.id,
-                &line.requisition_line_row.item_link_id,
-                line.requisition_line_row.supply_quantity,
-            )?;
-        }
-
         // Execute
         let updated_request_requisition = RequisitionRow {
-            // 6.
+            // 7.
             approval_status: response_requisition.requisition_row.approval_status.clone(),
             ..request_requisition.requisition_row.clone()
         };
