@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
     map_filter,
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
@@ -8,7 +8,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{PurchaseOrderConnector, PurchaseOrderNode, PurchaseOrderNodeStatus};
-use repository::{DatetimeFilter, EqualFilter, PaginationOption};
+use repository::{DatetimeFilter, EqualFilter, PaginationOption, StringFilter};
 use repository::{PurchaseOrderFilter, PurchaseOrderSort, PurchaseOrderSortField};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -20,7 +20,6 @@ pub enum PurchaseOrderSortFieldInput {
     Status,
     TargetMonths,
     DeliveryDate,
-    Lines,
 }
 
 #[derive(InputObject)]
@@ -42,7 +41,7 @@ pub struct PurchaseOrderFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub status: Option<EqualFilterPurchaseOrderStatusInput>,
-    pub supplier: Option<EqualFilterStringInput>,
+    pub supplier: Option<StringFilterInput>,
     pub store_id: Option<EqualFilterStringInput>,
 }
 
@@ -120,7 +119,7 @@ impl PurchaseOrderFilterInput {
             status: self
                 .status
                 .map(|t| map_filter!(t, PurchaseOrderNodeStatus::to_domain)),
-            supplier_name_link_id: self.supplier.map(EqualFilter::from),
+            supplier: self.supplier.map(StringFilter::from),
             store_id: self.store_id.map(EqualFilter::from),
         }
     }
@@ -137,7 +136,6 @@ impl PurchaseOrderSortInput {
             from::DeliveryDate => to::DeliveryDate,
             from::Status => to::Status,
             from::CreatedDatetime => to::CreatedDatetime,
-            from::Lines => to::Lines,
         };
 
         PurchaseOrderSort {

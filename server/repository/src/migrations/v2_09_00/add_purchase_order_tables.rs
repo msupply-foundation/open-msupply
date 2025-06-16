@@ -32,11 +32,11 @@ impl MigrationFragment for Migrate {
             r#"
                 CREATE TABLE purchase_order (
                     id TEXT NOT NULL PRIMARY KEY,
-                    store_id TEXT REFERENCES store(id),
+                    store_id TEXT NOT NULL REFERENCES store(id),
                     user_id TEXT,
                     supplier_name_link_id TEXT REFERENCES name_link(id),
                     -- corresponds to OG "serial_number"
-                    purchase_order_number INTEGER,
+                    purchase_order_number BIGINT NOT NULL,
                     status {purchase_order_status} NOT NULL,
                     created_datetime {DATETIME} NOT NULL,
                     confirmed_datetime {DATETIME},

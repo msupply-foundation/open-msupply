@@ -2,7 +2,6 @@ use util::inline_init;
 
 use crate::{db_diesel, mock::mock_store_a, PurchaseOrderRow};
 
-// TODO move this into mocks
 pub fn mock_purchase_order_a() -> PurchaseOrderRow {
     inline_init(|r: &mut PurchaseOrderRow| {
         r.id = "test_purchase_order_a".to_string();
