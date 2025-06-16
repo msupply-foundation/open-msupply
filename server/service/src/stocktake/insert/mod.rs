@@ -16,11 +16,11 @@ use super::query::get_stocktake;
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct InsertStocktake {
     pub id: String,
+    pub create_blank_stocktake: Option<bool>,
+    pub is_initial_stocktake: Option<bool>,
     pub location_id: Option<String>,
     pub master_list_id: Option<String>,
-    pub items_have_stock: Option<bool>,
     pub expires_before: Option<NaiveDate>,
-    pub is_initial_stocktake: Option<bool>,
     pub comment: Option<String>,
     pub description: Option<String>,
 }
@@ -473,7 +473,6 @@ mod test {
                     id: "stocktake_2".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    items_have_stock: Some(true),
                     ..Default::default()
                 },
             )
@@ -496,7 +495,6 @@ mod test {
                     id: "stocktake_3".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    items_have_stock: Some(false),
                     ..Default::default()
                 },
             )
