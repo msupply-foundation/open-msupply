@@ -128,3 +128,30 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         Ok(result)
     }
 }
+
+// purchase order line basic upsert and query operation test:
+#[cfg(test)]
+mod tests {
+    use crate::mock::MockDataInserts;
+    use crate::{
+        db_diesel::purchase_order_line_row::PurchaseOrderLineRowRepository, test_db::setup_all,
+        PurchaseOrderLineRow,
+    };
+    use util::inline_init;
+    #[actix_rt::test]
+    async fn purchase_order_line_upsert_and_query() {
+        let (_, connection, _, _) = setup_all("purchase order line", MockDataInserts::none()).await;
+        let repo = PurchaseOrderLineRowRepository::new(&connection);
+
+        let line = inline_init(|l: &mut PurchaseOrderLineRow| {
+            l.id = "test-line-1".to_string();
+            l.purchase_order_id = "test-po-1".to_string();
+        });
+
+        let result = repo.upsert_one(&line);
+        assert!(result.is_ok());
+
+        let line = repo.find_one_by_id(&line.id).unwrap().unwrap();
+        assert_eq!(line.id, "test-line-1".to_string());
+    }
+}

@@ -93,6 +93,7 @@ pub struct PurchaseOrderRow {
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[cfg_attr(test, derive(strum::EnumIter))]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum PurchaseOrderStatus {
@@ -170,5 +171,38 @@ impl<'a> PurchaseOrderRowRepository<'a> {
             .filter(purchase_order::id.eq(purchase_order_id))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::mock::MockDataInserts;
+    use crate::{
+        test_db::setup_all, PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
+    };
+    use strum::IntoEnumIterator;
+    use util::inline_init;
+    use util::uuid::uuid;
+
+    #[actix_rt::test]
+    async fn purchase_order_status() {
+        let (_, connection, _, _) =
+            setup_all("purchase order status", MockDataInserts::none()).await;
+
+        let repo = PurchaseOrderRowRepository::new(&connection);
+        // Try upsert all variants of PurchaseOrderStatus, confirm that diesel enums match postgres
+        for variant in PurchaseOrderStatus::iter() {
+            let id = uuid();
+            let row = inline_init(|p: &mut PurchaseOrderRow| {
+                p.id = id.clone();
+                p.status = variant;
+            });
+
+            let result = repo.upsert_one(&row);
+            assert!(result.is_ok());
+
+            let result = repo.find_one_by_id(&id).unwrap().unwrap();
+            assert_eq!(result.status, row.status);
+        }
     }
 }
