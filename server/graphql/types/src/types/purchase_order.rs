@@ -62,7 +62,6 @@ impl PurchaseOrderNode {
 
         Ok(result)
     }
-
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
@@ -102,7 +101,7 @@ impl PurchaseOrderNode {
 
         Ok(result)
     }
-    pub async fn reference(&self) -> &str {
+    pub async fn reference(&self) -> &Option<String> {
         &self.row().reference
     }
     pub async fn currency_id(&self) -> &Option<String> {
