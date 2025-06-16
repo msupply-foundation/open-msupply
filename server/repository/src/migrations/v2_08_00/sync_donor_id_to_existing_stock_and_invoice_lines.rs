@@ -68,6 +68,9 @@ impl MigrationFragment for Migrate {
                 .and_then(|value| value.as_str());
 
             if let Some(sync_donor_id) = sync_donor_id {
+                if sync_donor_id.is_empty() {
+                    continue;
+                }
                 let current_link_donor_id = stock_line::table
                     .filter(stock_line::id.eq(&stock_line_id))
                     .select(stock_line::donor_link_id)
@@ -111,6 +114,9 @@ impl MigrationFragment for Migrate {
                 .and_then(|value| value.as_str());
 
             if let Some(sync_donor_id) = sync_donor_id {
+                if sync_donor_id.is_empty() {
+                    continue;
+                }
                 let current_link_donor_id = invoice_line::table
                     .filter(invoice_line::id.eq(&invoice_line_id))
                     .select(invoice_line::donor_link_id)
@@ -266,19 +272,26 @@ mod tests {
         create_stock_line_without_donor(&connection, "stock_line_1", "BATCH1");
         create_stock_line_without_donor(&connection, "stock_line_2", "BATCH2");
         create_stock_line_without_donor(&connection, "stock_line_3", "BATCH3");
+        create_stock_line_without_donor(&connection, "stock_line_4", "BATCH4");
 
         create_invoice_line_without_donor(&connection, "invoice_line_1");
         create_invoice_line_without_donor(&connection, "invoice_line_2");
         create_invoice_line_without_donor(&connection, "invoice_line_3");
+        create_invoice_line_without_donor(&connection, "invoice_line_4");
 
         // --- Add sync buffer entries for lines that should be updated --- //
         add_item_line_sync_buffer_entry(&connection, "stock_line_1", "donor_name_id", "BATCH1");
         add_item_line_sync_buffer_entry(&connection, "stock_line_2", "donor_name_id", "BATCH2");
         // stock_line_3 has no sync data
+        // stock_line_4 has sync data but donor_id is empty
+        add_item_line_sync_buffer_entry(&connection, "stock_line_4", "", "BATCH4");
 
         add_trans_line_sync_buffer_entry(&connection, "invoice_line_1", "donor_name_id");
         add_trans_line_sync_buffer_entry(&connection, "invoice_line_2", "donor_name_id");
+
         // invoice_line_3 has no sync data
+        // Invoice line 4 has sync data but donor_id is empty
+        add_trans_line_sync_buffer_entry(&connection, "invoice_line_4", "");
 
         // --- Run migration --- //
         migrate(&connection, Some(version.clone())).unwrap();
@@ -296,6 +309,7 @@ mod tests {
             ("stock_line_1".to_string(), Some("donor_name_id".to_string())), // Updated from sync
             ("stock_line_2".to_string(), Some("donor_name_id".to_string())), // Updated from sync
             ("stock_line_3".to_string(), None), // No sync data
+            ("stock_line_4".to_string(), None), // Empty donor_id in sync data
         ];
         assert_eq!(stock_lines, expected);
 
@@ -311,6 +325,7 @@ mod tests {
             ("invoice_line_1".to_string(), Some("donor_name_id".to_string())), // Updated from sync
             ("invoice_line_2".to_string(), Some("donor_name_id".to_string())), // Updated from sync
             ("invoice_line_3".to_string(), None), // No sync data
+            ("invoice_line_4".to_string(), None), // Empty donor_id in sync data
         ];
         assert_eq!(invoice_lines, expected);
     }

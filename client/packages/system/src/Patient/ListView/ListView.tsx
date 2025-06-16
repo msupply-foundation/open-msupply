@@ -17,6 +17,7 @@ import {
   UserPermission,
   useTranslation,
   GenderType,
+  getGenderTranslationKey,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -24,7 +25,6 @@ import { Toolbar } from './Toolbar';
 import { usePatientStore } from '@openmsupply-client/programs';
 import { ChipTableCell } from '../Components';
 import { CreatePatientModal } from '../CreatePatientModal';
-import { getGenderTranslationKey } from '../PatientView/utils';
 
 export const programEnrolmentLabelAccessor: ColumnDataAccessor<
   PatientRowFragment,

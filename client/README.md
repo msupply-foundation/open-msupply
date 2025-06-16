@@ -244,25 +244,19 @@ The queries are implemented in `api.ts`. If you need to modify the shape of the 
 
 ## Localisation
 
-We're using [react-i18next](https://react.i18next.com/) for localisations. Collections of translatable items are grouped into namespaces so that we can reduce bundle sizes and keep files contained to specific areas. The namespace files are json files - kept separate from the main bundles and downloaded on demand. These are also cached locally in the browser.
+We're using [react-i18next](https://react.i18next.com/) for localisations. All main-app translations are stored in a common.json file i.e. the common namespace, though other namespaces are used for specific areas such as Electron-only desktop translations.
 
-When using translations in your code, you may need to specify the namespace to use e.g.
+To translate strings in your code:
 
 ```
 import { useTranslation } from '@openmsupply-client/common';
 
 ...
 
-const t = useTranslation('common');
+const t = useTranslation();
 
 ...
 <ModalLabel label={t('label.code')} />
-```
-
-You can also specify multiple namespaces when using the hook:
-
-```
-  const t = useTranslation(['common', 'distribution']);
 ```
 
 ## Android App

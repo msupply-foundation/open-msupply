@@ -381,6 +381,7 @@ mod test {
                 location: None,
                 item: mock_item_a(),
                 donor: None,
+                reason_option: None,
             }])
         );
 

@@ -1,5 +1,6 @@
 import { LocaleKey } from '@common/intl';
 import { GenderType } from '@common/types';
+import { noOtherVariants } from '../types';
 
 export function getGenderTranslationKey(gender: GenderType): LocaleKey {
   switch (gender) {
@@ -21,5 +22,8 @@ export function getGenderTranslationKey(gender: GenderType): LocaleKey {
       return 'gender.transgender-male';
     case GenderType.Unknown:
       return 'gender.unknown';
+
+    default:
+      return noOtherVariants(gender);
   }
 }

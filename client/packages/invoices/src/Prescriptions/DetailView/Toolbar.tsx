@@ -159,6 +159,7 @@ export const Toolbar: FC = () => {
                 });
               }}
               clinicianValue={clinicianValue}
+              allowCreate
             />
           }
         />

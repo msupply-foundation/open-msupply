@@ -65,7 +65,7 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
             label={t('label.start-date')}
             Input={
               <DateTimePickerInput
-                sx={{ width: 250 }}
+                width={250}
                 value={DateUtils.getNaiveDate(startDate)}
                 onChange={startDate => updateDraft({ startDate })}
               />
@@ -76,7 +76,7 @@ export const CampaignEditModal: FC<CampaignEditModalProps> = ({
             label={t('label.end-date')}
             Input={
               <DateTimePickerInput
-                sx={{ width: 250 }}
+                width={250}
                 value={DateUtils.getNaiveDate(endDate)}
                 onChange={endDate => updateDraft({ endDate })}
               />

@@ -17,6 +17,7 @@ export const ProgramSearchInput: FC<ProgramSearchInputProps> = ({
   programs,
   onChange,
   width = 250,
+  fullWidth = true,
   disabled,
 }) => {
   const theme = useTheme();
@@ -41,7 +42,7 @@ export const ProgramSearchInput: FC<ProgramSearchInputProps> = ({
         label: program.name,
         value: program,
       }))}
-      fullWidth
+      fullWidth={fullWidth}
       sx={{ minWidth: width }}
       textSx={{ backgroundColor: theme.palette.background.white }}
       disabled={disabled}
