@@ -2,9 +2,9 @@ import {
   useColumns,
   ColumnDescription,
   useTranslation,
+  getGenderTranslationKey,
 } from '@openmsupply-client/common';
 import { ClinicianFragment } from 'packages/programs/src';
-import { getGenderTranslationKey } from '../..';
 
 export const useClinicianListColumns = () => {
   const t = useTranslation();
