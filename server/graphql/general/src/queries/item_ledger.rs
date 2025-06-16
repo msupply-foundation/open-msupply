@@ -2,12 +2,15 @@ use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    map_filter,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 
-use graphql_types::types::{InvoiceNodeStatus, InvoiceNodeType};
+use graphql_types::types::{
+    EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput, InvoiceNodeStatus, InvoiceNodeType,
+};
 use repository::{DatetimeFilter, EqualFilter, ItemLedgerFilter, ItemLedgerRow, PaginationOption};
 
 use service::{
@@ -20,6 +23,8 @@ use service::{
 pub struct ItemLedgerFilterInput {
     pub item_id: Option<EqualFilterStringInput>,
     pub datetime: Option<DatetimeFilterInput>,
+    pub invoice_type: Option<EqualFilterInvoiceTypeInput>,
+    pub invoice_status: Option<EqualFilterInvoiceStatusInput>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -150,11 +155,18 @@ impl ItemLedgerConnector {
 
 impl ItemLedgerFilterInput {
     pub fn to_domain(self) -> ItemLedgerFilter {
-        let ItemLedgerFilterInput { datetime, item_id } = self;
+        let ItemLedgerFilterInput {
+            datetime,
+            item_id,
+            invoice_type,
+            invoice_status,
+        } = self;
 
         ItemLedgerFilter {
             item_id: item_id.map(EqualFilter::from),
             datetime: datetime.map(DatetimeFilter::from),
+            invoice_type: invoice_type.map(|t| map_filter!(t, InvoiceNodeType::to_domain)),
+            invoice_status: invoice_status.map(|s| map_filter!(s, InvoiceNodeStatus::to_domain)),
             store_id: None,
         }
     }

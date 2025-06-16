@@ -62,6 +62,8 @@ pub struct ItemLedgerFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
     pub datetime: Option<DatetimeFilter>,
+    pub invoice_type: Option<EqualFilter<InvoiceType>>,
+    pub invoice_status: Option<EqualFilter<InvoiceStatus>>,
 }
 
 impl ItemLedgerFilter {
@@ -132,11 +134,15 @@ fn create_filtered_query(filter: Option<ItemLedgerFilter>) -> ItemLedgerQuery {
             item_id,
             store_id,
             datetime,
+            invoice_type,
+            invoice_status,
         } = f;
 
         apply_equal_filter!(query, item_id, item_ledger::item_id);
         apply_equal_filter!(query, store_id, item_ledger::store_id);
         apply_date_time_filter!(query, datetime, item_ledger::datetime);
+        apply_equal_filter!(query, invoice_type, item_ledger::invoice_type);
+        apply_equal_filter!(query, invoice_status, item_ledger::invoice_status);
     }
 
     query
