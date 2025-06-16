@@ -25,6 +25,7 @@ export const AppBarButtonsComponent: FC<{
           Icon={<PlusCircleIcon />}
           label={t('button.new-purchase-order')}
           onClick={() => {
+            // eslint-disable-next-line
             console.log('TO-DO');
           }}
         />

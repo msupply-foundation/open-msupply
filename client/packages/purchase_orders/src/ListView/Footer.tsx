@@ -33,7 +33,10 @@ export const FooterComponent: FC<{ listParams: ListParams }> = ({
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
-      onClick: () => console.log('TO-DO: Delete purchase orders...'),
+      onClick: () => {
+        // eslint-disable-next-line
+        console.log('TO-DO: Delete purchase orders...');
+      },
       // onClick: confirmAndDelete,
     },
   ];
