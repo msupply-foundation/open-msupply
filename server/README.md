@@ -13,9 +13,11 @@ Remote server can use `sqlite` or `postgres`, quick start guide is for `sqlite` 
 
 ## Dependencies
 
+N.B. The version of rust used by open mSupply as of June 2025 is 1.84, so, once you've installed rust in the guides below, set up your environment to use that version. You can do that by running `rustup install 1.84` and then `rustup default 1.84`.
+
 ### Windows
 
-- [Follow this guide](https://docs.microsoft.com/en-us/windows/dev-environment/rust/setup)
+- Follow [Microsoft's Rust installation guide](https://docs.microsoft.com/en-us/windows/dev-environment/rust/setup)
 - Install [perl](https://learn.perl.org/installing/windows.html)
 - For building the windows binary, you'll need to install the [Bonjour Windows SDK](https://developer.apple.com/bonjour/) and configure the environment variable `BONJOUR_SDK_HOME` to point to the installation location. This is required for the dns-sd implementation on windows, used for server discovery.
 
@@ -29,7 +31,7 @@ Remote server can use `sqlite` or `postgres`, quick start guide is for `sqlite` 
 
 ```
 [env]
-MACOSX_DEPLOYMENT_TARGET = "10.7"
+MACOSX_DEPLOYMENT_TARGET = "10.12"
 
 [target.aarch64-apple-darwin]
 rustflags = "-L /opt/homebrew/opt/libpq/lib"
