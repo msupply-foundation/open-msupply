@@ -7,10 +7,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 
-export const AppBarButtonsComponent: FC<{
-  // modalController: ToggleState;
-  // listParams: ListParams;
-}> = () => {
+export const AppBarButtonsComponent = () => {
   const t = useTranslation();
   // const { success, error } = useNotification();
 
