@@ -49,11 +49,11 @@ impl PurchaseOrderLineNode {
     pub async fn pack_size(&self) -> &Option<f64> {
         &self.row().pack_size
     }
-    pub async fn original_quantity(&self) -> &Option<f64> {
-        &self.row().original_quantity
+    pub async fn requested_quantity(&self) -> &Option<f64> {
+        &self.row().requested_quantity
     }
-    pub async fn adjusted_quantity(&self) -> &Option<f64> {
-        &self.row().adjusted_quantity
+    pub async fn authorised_quantity(&self) -> &Option<f64> {
+        &self.row().authorised_quantity
     }
     pub async fn total_received(&self) -> &Option<f64> {
         &self.row().total_received

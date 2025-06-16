@@ -39,14 +39,13 @@ impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
 pub enum StocktakeLineSortFieldInput {
     ItemCode,
     ItemName,
-    /// Stocktake line batch
     Batch,
-    /// Stocktake line expiry date
     ExpiryDate,
-    /// Stocktake line pack size
     PackSize,
-    /// Stocktake line item stock location code
     LocationCode,
+    SnapshotNumberOfPacks,
+    CountedNumberOfPacks,
+    ReasonOption,
 }
 
 #[derive(InputObject)]
@@ -69,6 +68,9 @@ impl StocktakeLineSortInput {
             from::ExpiryDate => to::ExpiryDate,
             from::PackSize => to::PackSize,
             from::LocationCode => to::LocationCode,
+            from::SnapshotNumberOfPacks => to::SnapshotNumberOfPacks,
+            from::CountedNumberOfPacks => to::CountedNumberOfPacks,
+            from::ReasonOption => to::ReasonOption,
         };
 
         StocktakeLineSort {
