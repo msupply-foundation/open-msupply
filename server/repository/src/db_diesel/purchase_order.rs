@@ -1,10 +1,11 @@
 use super::{DBType, PurchaseOrderRow, PurchaseOrderStatus, RepositoryError, StorageConnection};
+use crate::db_diesel::name_row::name;
 use crate::diesel_macros::{
-    apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
+    apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
 };
 use crate::purchase_order_row::purchase_order::{self};
 
-use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
+use crate::{name_link, DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
 use diesel::query_dsl::QueryDsl;
 use diesel::{prelude::*, RunQueryDsl};
 
@@ -14,7 +15,7 @@ pub struct PurchaseOrderFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub created_datetime: Option<DatetimeFilter>,
     pub status: Option<EqualFilter<PurchaseOrderStatus>>,
-    pub supplier_name_link_id: Option<EqualFilter<String>>,
+    pub supplier: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -105,17 +106,21 @@ fn create_filtered_query(filter: Option<PurchaseOrderFilter>) -> BoxedPurchaseOr
             store_id,
             created_datetime,
             status,
-            supplier_name_link_id,
+            supplier,
         } = f;
         apply_equal_filter!(query, id, purchase_order::id);
         apply_equal_filter!(query, store_id, purchase_order::store_id);
         apply_date_time_filter!(query, created_datetime, purchase_order::created_datetime);
         apply_equal_filter!(query, status, purchase_order::status);
-        apply_equal_filter!(
-            query,
-            supplier_name_link_id,
-            purchase_order::supplier_name_link_id
-        );
+        if let Some(supplier_string) = supplier {
+            let mut sub_query = name_link::table
+                .inner_join(name::table)
+                .select(name_link::id.nullable())
+                .into_boxed();
+            apply_string_filter!(sub_query, Some(supplier_string), name::name_);
+
+            query = query.filter(purchase_order::supplier_name_link_id.eq_any(sub_query));
+        }
     }
 
     query
@@ -142,8 +147,8 @@ impl PurchaseOrderFilter {
         self.status = Some(filter);
         self
     }
-    pub fn supplier_name_link_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.supplier_name_link_id = Some(filter);
+    pub fn supplier(mut self, filter: StringFilter) -> Self {
+        self.supplier = Some(filter);
         self
     }
 }
