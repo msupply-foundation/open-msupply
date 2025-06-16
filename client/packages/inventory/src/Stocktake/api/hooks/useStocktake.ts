@@ -9,13 +9,13 @@ import { STOCKTAKE } from './keys';
 export type CreateStocktakeInput = Omit<InsertStocktakeInput, 'id'>;
 
 export const defaultCreateStocktakeInput: CreateStocktakeInput = {
-  masterListId: '',
-  locationId: '',
-  itemsHaveStock: false,
-  expiresBefore: null,
+  masterListId: undefined,
+  locationId: undefined,
+  createBlankStocktake: false,
+  expiresBefore: undefined,
   isInitialStocktake: false,
   comment: undefined,
-  description: '',
+  description: undefined,
 };
 
 export function useStocktake() {
@@ -44,7 +44,7 @@ const useCreate = () => {
   const mutationFn = async ({
     masterListId,
     locationId,
-    itemsHaveStock,
+    createBlankStocktake,
     expiresBefore,
     isInitialStocktake,
     comment,
@@ -56,7 +56,7 @@ const useCreate = () => {
         id: FnUtils.generateUUID(),
         masterListId,
         locationId,
-        itemsHaveStock,
+        createBlankStocktake,
         expiresBefore,
         isInitialStocktake,
         comment,
