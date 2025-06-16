@@ -177,6 +177,11 @@ impl PurchaseOrderLineFilter {
         self.purchase_order_id = Some(filter);
         self
     }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
+        self
+    }
 }
 
 fn to_domain(

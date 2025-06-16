@@ -63,12 +63,14 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &PurchaseOrderLineRow) -> Result<i64, RepositoryError> {
+        println!("Upserting purchase order line: {}", row.id);
         diesel::insert_into(purchase_order_line::table)
             .values(row)
             .on_conflict(purchase_order_line::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
+        println!("Inserted or updated purchase order line: {}", row.id);
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
@@ -132,20 +134,35 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
 // purchase order line basic upsert and query operation test:
 #[cfg(test)]
 mod tests {
-    use crate::mock::MockDataInserts;
+    use crate::mock::{mock_store_a, MockDataInserts};
     use crate::{
         db_diesel::purchase_order_line_row::PurchaseOrderLineRowRepository, test_db::setup_all,
         PurchaseOrderLineRow,
     };
+    use crate::{PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus};
     use util::inline_init;
     #[actix_rt::test]
     async fn purchase_order_line_upsert_and_query() {
-        let (_, connection, _, _) = setup_all("purchase order line", MockDataInserts::none()).await;
+        let (_, connection, _, _) = setup_all("purchase order line", MockDataInserts::all()).await;
         let repo = PurchaseOrderLineRowRepository::new(&connection);
+
+        // add purchase order
+        let purchase_order_repo = PurchaseOrderRowRepository::new(&connection);
+        let purchase_order_id = "test-po-1";
+        let row = inline_init(|p: &mut PurchaseOrderRow| {
+            p.id = purchase_order_id.to_string();
+            p.status = PurchaseOrderStatus::New;
+            p.store_id = mock_store_a().id.clone();
+            p.created_datetime = chrono::Utc::now().naive_utc();
+        });
+
+        let result = purchase_order_repo.upsert_one(&row);
+        assert!(result.is_ok());
 
         let line = inline_init(|l: &mut PurchaseOrderLineRow| {
             l.id = "test-line-1".to_string();
-            l.purchase_order_id = "test-po-1".to_string();
+            l.purchase_order_id = purchase_order_id.to_string();
+            l.line_number = 1;
         });
 
         let result = repo.upsert_one(&line);

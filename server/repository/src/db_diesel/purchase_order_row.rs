@@ -176,7 +176,7 @@ impl<'a> PurchaseOrderRowRepository<'a> {
 
 #[cfg(test)]
 mod test {
-    use crate::mock::MockDataInserts;
+    use crate::mock::{mock_store_a, MockDataInserts};
     use crate::{
         test_db::setup_all, PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
     };
@@ -187,7 +187,7 @@ mod test {
     #[actix_rt::test]
     async fn purchase_order_status() {
         let (_, connection, _, _) =
-            setup_all("purchase order status", MockDataInserts::none()).await;
+            setup_all("purchase order status", MockDataInserts::all()).await;
 
         let repo = PurchaseOrderRowRepository::new(&connection);
         // Try upsert all variants of PurchaseOrderStatus, confirm that diesel enums match postgres
@@ -196,6 +196,8 @@ mod test {
             let row = inline_init(|p: &mut PurchaseOrderRow| {
                 p.id = id.clone();
                 p.status = variant;
+                p.store_id = mock_store_a().id.clone();
+                p.created_datetime = chrono::Utc::now().naive_utc();
             });
 
             let result = repo.upsert_one(&row);
