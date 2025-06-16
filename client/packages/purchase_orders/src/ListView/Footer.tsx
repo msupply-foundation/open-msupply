@@ -5,7 +5,6 @@ import {
   DeleteIcon,
   useTranslation,
   AppFooterPortal,
-  useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { ListParams, usePurchaseOrderList } from '../api';
 
@@ -14,30 +13,28 @@ export const FooterComponent: FC<{ listParams: ListParams }> = ({
 }) => {
   const t = useTranslation();
 
-  const {
-    // delete: { deletePrescriptions },
-    selectedRows,
-  } = usePurchaseOrderList(listParams);
+  const { selectedRows } = usePurchaseOrderList(listParams);
 
-  const confirmAndDelete = useDeleteConfirmation({
-    selectedRows,
-    deleteAction: async () => {},
-    // canDelete: selectedRows.every(canDeletePrescription),
-    messages: {
-      confirmMessage: t('messages.confirm-delete-prescriptions', {
-        count: selectedRows.length,
-      }),
-      deleteSuccess: t('messages.deleted-prescriptions', {
-        count: selectedRows.length,
-      }),
-    },
-  });
+  // const confirmAndDelete = useDeleteConfirmation({
+  //   selectedRows,
+  //   deleteAction: async () => {},
+  //   // canDelete: selectedRows.every(canDeletePrescription),
+  //   messages: {
+  //     confirmMessage: t('messages.confirm-delete-prescriptions', {
+  //       count: selectedRows.length,
+  //     }),
+  //     deleteSuccess: t('messages.deleted-prescriptions', {
+  //       count: selectedRows.length,
+  //     }),
+  //   },
+  // });
 
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
-      onClick: confirmAndDelete,
+      onClick: () => console.log('TO-DO: Delete purchase orders...'),
+      // onClick: confirmAndDelete,
     },
   ];
 

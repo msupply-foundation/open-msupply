@@ -19,6 +19,8 @@ export type ListParams = {
 export const usePurchaseOrderList = (queryParams: ListParams) => {
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
 
+  console.log('queryParams', queryParams);
+
   const {
     sortBy = {
       key: 'number',
@@ -40,8 +42,7 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
   ];
 
   const sortFieldMap: Record<string, PurchaseOrderSortFieldInput> = {
-    createdDateTime: PurchaseOrderSortFieldInput.CreatedDatetime,
-    confirmedDateTime: PurchaseOrderSortFieldInput.ConfirmedDatetime,
+    createdDatetime: PurchaseOrderSortFieldInput.CreatedDatetime,
     status: PurchaseOrderSortFieldInput.Status,
     number: PurchaseOrderSortFieldInput.Number,
     // Add more as required

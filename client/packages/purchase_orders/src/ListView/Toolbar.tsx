@@ -5,7 +5,7 @@ import {
   FilterMenu,
   FilterController,
   Box,
-  InvoiceNodeStatus,
+  PurchaseOrderNodeStatus,
 } from '@openmsupply-client/common';
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
@@ -25,38 +25,29 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
           filters={[
             {
               type: 'text',
-              name: t('label.name'),
-              urlParameter: 'otherPartyName',
+              name: t('label.supplier'),
+              urlParameter: 'supplier',
               isDefault: true,
             },
             {
               type: 'enum',
               name: t('label.status'),
               options: [
-                { label: t('status.new'), value: InvoiceNodeStatus.New },
-                { label: t('label.picked'), value: InvoiceNodeStatus.Picked },
+                { label: t('label.new'), value: PurchaseOrderNodeStatus.New },
                 {
-                  label: t('label.verified'),
-                  value: InvoiceNodeStatus.Verified,
+                  label: t('label.authorised'),
+                  value: PurchaseOrderNodeStatus.Authorised,
                 },
                 {
-                  label: t('label.cancelled'),
-                  value: InvoiceNodeStatus.Cancelled,
+                  label: t('label.confirmed'),
+                  value: PurchaseOrderNodeStatus.Confirmed,
+                },
+                {
+                  label: t('label.finalised'),
+                  value: PurchaseOrderNodeStatus.Finalised,
                 },
               ],
               urlParameter: 'status',
-              isDefault: false,
-            },
-            {
-              type: 'text',
-              name: t('label.reference'),
-              urlParameter: 'theirReference',
-              isDefault: false,
-            },
-            {
-              type: 'number',
-              name: t('label.invoice-number'),
-              urlParameter: 'invoiceNumber',
               isDefault: false,
             },
             {
@@ -66,16 +57,16 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
                 {
                   type: 'date',
                   name: t('label.from-date'),
-                  urlParameter: 'createdOrBackdatedDatetime',
+                  urlParameter: 'createdDatetime',
                   range: 'from',
-                  isDefault: true,
+                  isDefault: false,
                 },
                 {
                   type: 'date',
                   name: t('label.to-date'),
-                  urlParameter: 'createdOrBackdatedDatetime',
+                  urlParameter: 'createdDatetime',
                   range: 'to',
-                  isDefault: true,
+                  isDefault: false,
                 },
               ],
             },

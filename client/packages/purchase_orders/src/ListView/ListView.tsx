@@ -1,27 +1,19 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import {
   useNavigate,
   DataTable,
   useColumns,
-  getNameAndColorColumn,
   TableProvider,
   createTableStore,
   useTranslation,
-  InvoiceNodeStatus,
-  useTableStore,
   NothingHere,
-  useToggle,
   useUrlQueryParams,
   ColumnFormat,
   GenericColumnKey,
-  getCommentPopoverColumn,
   PurchaseOrderNodeStatus,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderList } from '../api';
-import {
-  PurchaseOrderFragment,
-  PurchaseOrderRowFragment,
-} from '../api/operations.generated';
+import { PurchaseOrderRowFragment } from '../api/operations.generated';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
@@ -35,20 +27,15 @@ const ListView: FC = () => {
     filter,
     queryParams: { page, first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
-    // initialSort: { key: 'prescriptionDatetime', dir: 'desc' },
-    // filters: [
-    //   { key: 'otherPartyName' },
-    //   { key: 'theirReference' },
-    //   { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
-    //   {
-    //     key: 'createdOrBackdatedDatetime',
-    //     condition: 'between',
-    //   },
-    //   {
-    //     key: 'status',
-    //     condition: 'equalTo',
-    //   },
-    // ],
+    initialSort: { key: 'createdDatetime', dir: 'desc' },
+    filters: [
+      { key: 'supplier' },
+      { key: 'createdDatetime' },
+      {
+        key: 'status',
+        condition: 'equalTo',
+      },
+    ],
   });
   const listParams = {
     sortBy,
@@ -56,6 +43,9 @@ const ListView: FC = () => {
     offset,
     filterBy,
   };
+
+  console.log('listParams', listParams);
+
   const navigate = useNavigate();
   // const modalController = useToggle();
   const {
@@ -69,7 +59,6 @@ const ListView: FC = () => {
       {
         key: 'supplier',
         label: 'label.supplier',
-        // format: ColumnFormat.Date,
         accessor: ({ rowData }) => rowData.supplier?.name,
         sortable: true,
       },
@@ -77,7 +66,6 @@ const ListView: FC = () => {
         'invoiceNumber',
         {
           label: 'label.number',
-          // description: 'description.invoice-number',
           maxWidth: 110,
           accessor: ({ rowData }) => rowData.number,
         },
@@ -117,6 +105,13 @@ const ListView: FC = () => {
         accessor: ({ rowData }) => rowData.deliveredDatetime,
         sortable: true,
       },
+      {
+        key: 'lines',
+        label: 'label.lines',
+        accessor: ({ rowData }) => rowData.lines.totalCount,
+        maxWidth: 80,
+        // sortable: true,
+      },
       ['comment'],
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
@@ -127,11 +122,11 @@ const ListView: FC = () => {
     <>
       <Toolbar filter={filter} />
       <AppBarButtons
-        // modalController={modalController}
-        listParams={listParams}
+      // modalController={modalController}
+      // listParams={listParams}
       />
       <DataTable
-        id="prescription-list"
+        id="purchase-order-list"
         enableColumnSelection
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={updatePaginationQuery}
@@ -141,7 +136,7 @@ const ListView: FC = () => {
         isLoading={isLoading}
         noDataElement={
           <NothingHere
-            body={t('error.no-prescriptions')}
+            body={t('error.no-purchase-orders')}
             // onCreate={modalController.toggleOn}
           />
         }
