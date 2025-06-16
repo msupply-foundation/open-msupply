@@ -7,7 +7,10 @@ import {
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { LIST, PURCHASE_ORDER } from './keys';
-import { PurchaseOrderFragment } from '../operations.generated';
+import {
+  PurchaseOrderFragment,
+  PurchaseOrderRowFragment,
+} from '../operations.generated';
 
 export type ListParams = {
   first?: number;
@@ -47,7 +50,7 @@ export const usePurchaseOrderList = (queryParams: ListParams) => {
   };
 
   const queryFn = async (): Promise<{
-    nodes: PurchaseOrderFragment[];
+    nodes: PurchaseOrderRowFragment[];
     totalCount: number;
   }> => {
     const filter = {

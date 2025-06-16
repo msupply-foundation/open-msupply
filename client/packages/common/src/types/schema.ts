@@ -8543,16 +8543,15 @@ export type StocktakeLineNode = {
 };
 
 export enum StocktakeLineSortFieldInput {
-  /** Stocktake line batch */
   Batch = 'batch',
-  /** Stocktake line expiry date */
+  CountedNumberOfPacks = 'countedNumberOfPacks',
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
-  /** Stocktake line item stock location code */
   LocationCode = 'locationCode',
-  /** Stocktake line pack size */
   PackSize = 'packSize',
+  ReasonOption = 'reasonOption',
+  SnapshotNumberOfPacks = 'snapshotNumberOfPacks',
 }
 
 export type StocktakeLineSortInput = {
