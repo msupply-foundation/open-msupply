@@ -54,8 +54,9 @@ export const CreateStocktakeModal = ({
   });
 
   const [stockFilter, setStockFilter] = useState<StockLineFilterInput>();
-  const { data, isLoading: stockIsLoading } = useStockList({
-    filterBy: stockFilter,
+  const filterWithInStock = { ...stockFilter, hasPacksInStore: true };
+  const { data } = useStockList({
+    filterBy: filterWithInStock,
   });
 
   const [createStocktakeArgs, setCreateStocktakeArgs] =
@@ -105,10 +106,6 @@ export const CreateStocktakeModal = ({
     setCreateStocktakeArgs(prev => ({
       ...prev,
       createBlankStocktake: event.target.checked || null,
-    }));
-    setStockFilter(prev => ({
-      ...prev,
-      hasPacksInStore: event.target.checked || null,
     }));
   };
 
@@ -190,13 +187,7 @@ export const CreateStocktakeModal = ({
         slideAnimation={false}
         title={t('label.new-stocktake')}
         width={650}
-        cancelButton={
-          <DialogButton
-            disabled={stockIsLoading}
-            variant="cancel"
-            onClick={onClose}
-          />
-        }
+        cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
         okButton={
           <DialogButton
             disabled={isCreating}
