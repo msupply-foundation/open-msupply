@@ -32,7 +32,7 @@ const ItemLedgerTable = ({
   const {
     updateSortQuery,
     updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset, filterBy },
+    queryParams: { page, first, offset, filterBy },
   } = useUrlQueryParams();
   const pagination = { page, first, offset };
 
