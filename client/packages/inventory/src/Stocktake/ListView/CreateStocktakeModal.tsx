@@ -54,7 +54,7 @@ export const CreateStocktakeModal = ({
   });
 
   const [stockFilter, setStockFilter] = useState<StockLineFilterInput>();
-  const { data: stockData, isLoading: stockIsLoading } = useStockList({
+  const { isLoading: stockIsLoading } = useStockList({
     filterBy: stockFilter,
   });
 
@@ -87,22 +87,24 @@ export const CreateStocktakeModal = ({
     setSelectedMasterList(masterList);
     setCreateStocktakeArgs(prev => ({
       ...prev,
-      masterListId: masterList?.id ?? '',
+      masterListId: masterList?.id,
     }));
     setStockFilter(prev => ({
       ...prev,
-      masterList: {
-        id: { equalTo: masterList?.id },
-      },
+      masterList: masterList?.id
+        ? {
+            id: { equalTo: masterList?.id },
+          }
+        : null,
     }));
   };
 
-  const handleItemWithStockChange = (
+  const handleCreateBlankChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setCreateStocktakeArgs(prev => ({
       ...prev,
-      itemsHaveStock: event.target.checked,
+      createBlankStocktake: event.target.checked || null,
     }));
     setStockFilter(prev => ({
       ...prev,
@@ -111,18 +113,20 @@ export const CreateStocktakeModal = ({
   };
 
   const handleExpiresBeforeChange = (date: Date | null) => {
+    const nextDate = Formatter.naiveDate(date);
     setCreateStocktakeArgs(prev => ({
       ...prev,
-      expiresBefore: Formatter.naiveDate(date),
+      expiresBefore: nextDate,
     }));
     setStockFilter(prev => ({
       ...prev,
-      expiryDate: { beforeOrEqualTo: Formatter.naiveDate(date) },
+      expiryDate: nextDate ? { beforeOrEqualTo: nextDate } : null,
     }));
   };
 
   const generateComment = () => {
-    const { itemsHaveStock, expiresBefore } = createStocktakeArgs;
+    const { createBlankStocktake, expiresBefore } = createStocktakeArgs;
+    if (createBlankStocktake) return '';
 
     const filterComments: string[] = [];
 
@@ -139,10 +143,6 @@ export const CreateStocktakeModal = ({
           location: selectedLocation.code,
         })
       );
-    }
-
-    if (itemsHaveStock) {
-      filterComments.push(t('stocktake.items-in-stock-template'));
     }
 
     if (expiresBefore) {
@@ -166,13 +166,16 @@ export const CreateStocktakeModal = ({
   };
 
   const onSave = () => {
-    const { locationId, masterListId, itemsHaveStock, expiresBefore } =
+    const { locationId, masterListId, createBlankStocktake, expiresBefore } =
       createStocktakeArgs;
+
+    console.log(createStocktakeArgs);
+
     const args: CreateStocktakeInput = {
-      masterListId: masterListId ? masterListId : undefined,
-      locationId: locationId ? locationId : undefined,
-      itemsHaveStock: itemsHaveStock ? itemsHaveStock : undefined,
-      expiresBefore: expiresBefore ? expiresBefore : undefined,
+      masterListId,
+      locationId,
+      createBlankStocktake,
+      expiresBefore,
       isInitialStocktake: false,
       description,
       comment: generateComment(),
@@ -220,9 +223,20 @@ export const CreateStocktakeModal = ({
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
+                  <Checkbox
+                    style={{ paddingLeft: 0 }}
+                    checked={!!createStocktakeArgs.createBlankStocktake}
+                    onChange={handleCreateBlankChange}
+                  />
+                }
+                label={t('stocktake.create-blank')}
+              />
+              <InputWithLabelRow
+                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+                Input={
                   <MasterListSearchInput
+                    disabled={!!createStocktakeArgs.createBlankStocktake}
                     onChange={handleMasterListChange}
-                    disabled={false}
                     selectedMasterList={
                       createStocktakeArgs.masterListId
                         ? selectedMasterList
@@ -237,9 +251,9 @@ export const CreateStocktakeModal = ({
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
                   <LocationSearchInput
+                    disabled={!!createStocktakeArgs.createBlankStocktake}
                     onChange={handleLocationChange}
                     width={380}
-                    disabled={false}
                     selectedLocation={
                       createStocktakeArgs.locationId ? selectedLocation : null
                     }
@@ -250,24 +264,8 @@ export const CreateStocktakeModal = ({
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
-                  stockData?.totalCount === 0 ? (
-                    <Typography sx={{ color: 'gray.main' }}>
-                      {t('messages.no-items-with-stock')}
-                    </Typography>
-                  ) : (
-                    <Checkbox
-                      style={{ paddingLeft: 0 }}
-                      checked={!!createStocktakeArgs.itemsHaveStock}
-                      onChange={handleItemWithStockChange}
-                    />
-                  )
-                }
-                label={t('label.items-with-stock')}
-              />
-              <InputWithLabelRow
-                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={
                   <DateTimePickerInput
+                    disabled={!!createStocktakeArgs.createBlankStocktake}
                     value={
                       createStocktakeArgs.expiresBefore
                         ? new Date(createStocktakeArgs.expiresBefore)
