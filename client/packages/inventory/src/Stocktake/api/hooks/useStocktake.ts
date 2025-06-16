@@ -8,16 +8,6 @@ import { STOCKTAKE } from './keys';
 
 export type CreateStocktakeInput = Omit<InsertStocktakeInput, 'id'>;
 
-export const defaultCreateStocktakeInput: CreateStocktakeInput = {
-  masterListId: undefined,
-  locationId: undefined,
-  createBlankStocktake: false,
-  expiresBefore: undefined,
-  isInitialStocktake: false,
-  comment: undefined,
-  description: undefined,
-};
-
 export function useStocktake() {
   // TODO: Move get/delete/update methods here
   const {

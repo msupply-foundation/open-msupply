@@ -7,7 +7,7 @@ import {
   InputWithLabelRow,
   Typography,
 } from '@common/components';
-import { useFormatDateTime, useTranslation } from '@common/intl';
+import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import { useDialog } from '@common/hooks';
 import {
   useStockList,
@@ -21,10 +21,7 @@ import {
   Formatter,
   StockLineFilterInput,
 } from '@openmsupply-client/common';
-import {
-  CreateStocktakeInput,
-  defaultCreateStocktakeInput,
-} from '../api/hooks/useStocktake';
+import { CreateStocktakeInput } from '../api/hooks/useStocktake';
 
 const LABEL_FLEX = '0 0 150px';
 interface NewStocktakeModalProps {
@@ -36,7 +33,12 @@ interface NewStocktakeModalProps {
   description?: string;
 }
 
-// Intended behaviour is for the stocktake to generate based on multiple argument selections together with a logical AND.
+interface ModalState {
+  location: LocationRowFragment | null;
+  masterList: MasterListRowFragment | null;
+  expiryDate: Date | null;
+  createBlankStocktake: boolean;
+}
 
 export const CreateStocktakeModal = ({
   open,
@@ -52,100 +54,60 @@ export const CreateStocktakeModal = ({
     onClose,
     disableBackdrop: true,
   });
+  const [{ location, masterList, expiryDate, createBlankStocktake }, setState] =
+    useState<ModalState>({
+      location: null,
+      masterList: null,
+      expiryDate: null,
+      createBlankStocktake: false,
+    });
 
-  const [stockFilter, setStockFilter] = useState<StockLineFilterInput>();
-  const filterWithInStock = { ...stockFilter, hasPacksInStore: true };
+  const stockFilter: StockLineFilterInput = {
+    location: location
+      ? {
+          id: { equalTo: location.id },
+        }
+      : null,
+    masterList: masterList
+      ? {
+          id: { equalTo: masterList.id },
+        }
+      : null,
+    expiryDate: expiryDate
+      ? { beforeOrEqualTo: Formatter.naiveDate(expiryDate) }
+      : null,
+    hasPacksInStore: true,
+  };
+
   const { data } = useStockList({
-    filterBy: filterWithInStock,
+    filterBy: stockFilter,
   });
-
-  const [createStocktakeArgs, setCreateStocktakeArgs] =
-    useState<CreateStocktakeInput>(defaultCreateStocktakeInput);
-  const [selectedLocation, setSelectedLocation] =
-    useState<LocationRowFragment | null>(null);
-  const [selectedMasterList, setSelectedMasterList] =
-    useState<MasterListRowFragment | null>(null);
 
   const { localisedDate } = useFormatDateTime();
 
-  const handleLocationChange = (location: LocationRowFragment | null) => {
-    setSelectedLocation(location);
-    setCreateStocktakeArgs(prev => ({
-      ...prev,
-      locationId: location?.id ?? '',
-    }));
-    setStockFilter(prev => ({
-      ...prev,
-      location: location
-        ? {
-            id: { equalTo: location.id },
-          }
-        : null,
-    }));
-  };
-
-  const handleMasterListChange = (masterList: MasterListRowFragment | null) => {
-    setSelectedMasterList(masterList);
-    setCreateStocktakeArgs(prev => ({
-      ...prev,
-      masterListId: masterList?.id,
-    }));
-    setStockFilter(prev => ({
-      ...prev,
-      masterList: masterList?.id
-        ? {
-            id: { equalTo: masterList?.id },
-          }
-        : null,
-    }));
-  };
-
-  const handleCreateBlankChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setCreateStocktakeArgs(prev => ({
-      ...prev,
-      createBlankStocktake: event.target.checked || null,
-    }));
-  };
-
-  const handleExpiresBeforeChange = (date: Date | null) => {
-    const nextDate = Formatter.naiveDate(date);
-    setCreateStocktakeArgs(prev => ({
-      ...prev,
-      expiresBefore: nextDate,
-    }));
-    setStockFilter(prev => ({
-      ...prev,
-      expiryDate: nextDate ? { beforeOrEqualTo: nextDate } : null,
-    }));
-  };
-
   const generateComment = () => {
-    const { createBlankStocktake, expiresBefore } = createStocktakeArgs;
     if (createBlankStocktake) return '';
 
     const filterComments: string[] = [];
 
-    if (!!selectedMasterList) {
+    if (!!masterList) {
       filterComments.push(
         t('stocktake.master-list-template', {
-          masterList: selectedMasterList.name,
+          masterList: masterList.name,
         })
       );
     }
-    if (!!selectedLocation) {
+    if (!!location) {
       filterComments.push(
         t('stocktake.location-template', {
-          location: selectedLocation.code,
+          location: location.code,
         })
       );
     }
-
-    if (expiresBefore) {
+    if (!!expiryDate) {
       filterComments.push(
         t('stocktake.expires-before-template', {
-          date: localisedDate(expiresBefore),
+          date: localisedDate(expiryDate),
         })
       );
     }
@@ -163,13 +125,16 @@ export const CreateStocktakeModal = ({
   };
 
   const onSave = () => {
-    const { locationId, masterListId, createBlankStocktake, expiresBefore } =
-      createStocktakeArgs;
+    // Our API only has a `beforeOrEqualTo` filter, so just kludging the date back 1 day here
+    const adjustedExpiryDate = expiryDate
+      ? DateUtils.addDays(expiryDate, -1)
+      : null;
+
     const args: CreateStocktakeInput = {
-      masterListId,
-      locationId,
+      masterListId: masterList?.id,
+      locationId: location?.id,
       createBlankStocktake,
-      expiresBefore,
+      expiresBefore: Formatter.naiveDate(adjustedExpiryDate),
       isInitialStocktake: false,
       description,
       comment: generateComment(),
@@ -213,8 +178,13 @@ export const CreateStocktakeModal = ({
                 Input={
                   <Checkbox
                     style={{ paddingLeft: 0 }}
-                    checked={!!createStocktakeArgs.createBlankStocktake}
-                    onChange={handleCreateBlankChange}
+                    checked={!!createBlankStocktake}
+                    onChange={e =>
+                      setState(prev => ({
+                        ...prev,
+                        createBlankStocktake: e.target.checked,
+                      }))
+                    }
                   />
                 }
                 label={t('stocktake.create-blank')}
@@ -223,13 +193,11 @@ export const CreateStocktakeModal = ({
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
                   <MasterListSearchInput
-                    disabled={!!createStocktakeArgs.createBlankStocktake}
-                    onChange={handleMasterListChange}
-                    selectedMasterList={
-                      createStocktakeArgs.masterListId
-                        ? selectedMasterList
-                        : null
+                    disabled={!!createBlankStocktake}
+                    onChange={masterList =>
+                      setState(prev => ({ ...prev, masterList }))
                     }
+                    selectedMasterList={masterList}
                     width={380}
                   />
                 }
@@ -239,12 +207,12 @@ export const CreateStocktakeModal = ({
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
                   <LocationSearchInput
-                    disabled={!!createStocktakeArgs.createBlankStocktake}
-                    onChange={handleLocationChange}
-                    width={380}
-                    selectedLocation={
-                      createStocktakeArgs.locationId ? selectedLocation : null
+                    disabled={!!createBlankStocktake}
+                    onChange={location =>
+                      setState(prev => ({ ...prev, location }))
                     }
+                    width={380}
+                    selectedLocation={location}
                   />
                 }
                 label={t('label.location')}
@@ -253,13 +221,11 @@ export const CreateStocktakeModal = ({
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
                   <DateTimePickerInput
-                    disabled={!!createStocktakeArgs.createBlankStocktake}
-                    value={
-                      createStocktakeArgs.expiresBefore
-                        ? new Date(createStocktakeArgs.expiresBefore)
-                        : null
+                    disabled={!!createBlankStocktake}
+                    value={expiryDate}
+                    onChange={expiryDate =>
+                      setState(prev => ({ ...prev, expiryDate }))
                     }
-                    onChange={handleExpiresBeforeChange}
                   />
                 }
                 label={t('label.items-expiring-before')}
