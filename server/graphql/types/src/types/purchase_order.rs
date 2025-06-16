@@ -98,7 +98,7 @@ impl PurchaseOrderNode {
 
         Ok(result)
     }
-    pub async fn reference(&self) -> &str {
+    pub async fn reference(&self) -> &Option<String> {
         &self.row().reference
     }
     pub async fn currency_id(&self) -> &Option<String> {
