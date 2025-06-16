@@ -1373,11 +1373,9 @@ export type ItemLedgerFragment = {
 };
 
 export type ItemLedgerQueryVariables = Types.Exact<{
-  key: Types.LedgerSortFieldInput;
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
-  filter?: Types.InputMaybe<Types.LedgerFilterInput>;
+  filter?: Types.InputMaybe<Types.ItemLedgerFilterInput>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
@@ -1996,18 +1994,15 @@ export const DeleteBundledItemDocument = gql`
 `;
 export const ItemLedgerDocument = gql`
   query itemLedger(
-    $key: LedgerSortFieldInput!
     $first: Int
     $offset: Int
-    $desc: Boolean
-    $filter: LedgerFilterInput
+    $filter: ItemLedgerFilterInput
     $storeId: String!
   ) {
     itemLedger(
       storeId: $storeId
       filter: $filter
       page: { first: $first, offset: $offset }
-      sort: { key: $key, desc: $desc }
     ) {
       ... on ItemLedgerConnector {
         __typename

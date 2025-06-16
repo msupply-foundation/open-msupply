@@ -4340,6 +4340,13 @@ export type ItemLedgerConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type ItemLedgerFilterInput = {
+  datetime?: InputMaybe<DatetimeFilterInput>;
+  invoiceStatus?: InputMaybe<EqualFilterInvoiceStatusInput>;
+  invoiceType?: InputMaybe<EqualFilterInvoiceTypeInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type ItemLedgerNode = {
   __typename: 'ItemLedgerNode';
   balance: Scalars['Float']['output'];
@@ -4359,7 +4366,6 @@ export type ItemLedgerNode = {
   quantity: Scalars['Float']['output'];
   reason?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
-  stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
   totalBeforeTax?: Maybe<Scalars['Float']['output']>;
 };
@@ -7012,9 +7018,8 @@ export type QueriesItemCountsArgs = {
 };
 
 export type QueriesItemLedgerArgs = {
-  filter?: InputMaybe<LedgerFilterInput>;
+  filter?: InputMaybe<ItemLedgerFilterInput>;
   page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<LedgerSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -8381,16 +8386,15 @@ export type StocktakeLineNode = {
 };
 
 export enum StocktakeLineSortFieldInput {
-  /** Stocktake line batch */
   Batch = 'batch',
-  /** Stocktake line expiry date */
+  CountedNumberOfPacks = 'countedNumberOfPacks',
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
-  /** Stocktake line item stock location code */
   LocationCode = 'locationCode',
-  /** Stocktake line pack size */
   PackSize = 'packSize',
+  ReasonOption = 'reasonOption',
+  SnapshotNumberOfPacks = 'snapshotNumberOfPacks',
 }
 
 export type StocktakeLineSortInput = {

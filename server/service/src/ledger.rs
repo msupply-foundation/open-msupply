@@ -43,6 +43,7 @@ pub fn get_item_ledger(
     })
 }
 
+#[cfg(test)]
 mod test {
     use chrono::{Duration, Utc};
     use repository::{
