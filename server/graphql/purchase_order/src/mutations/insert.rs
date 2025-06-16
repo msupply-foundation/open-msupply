@@ -11,20 +11,14 @@ use service::purchase_order::insert::{
 #[graphql(name = "InsertPurchaseOrderInput")]
 pub struct InsertInput {
     pub id: String,
-    pub supplier_name_link_id: String,
+    pub supplier_id: String,
 }
 
 impl InsertInput {
     pub fn to_domain(self) -> ServiceInput {
-        let InsertInput {
-            id,
-            supplier_name_link_id,
-        } = self;
+        let InsertInput { id, supplier_id } = self;
 
-        ServiceInput {
-            id,
-            supplier_name_link_id,
-        }
+        ServiceInput { id, supplier_id }
     }
 }
 

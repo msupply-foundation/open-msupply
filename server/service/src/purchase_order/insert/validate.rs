@@ -15,7 +15,7 @@ pub fn validate(
     check_other_party(
         connection,
         store_id,
-        &input.supplier_name_link_id,
+        &input.supplier_id,
         CheckOtherPartyType::Supplier,
     )
     .map_err(|error| match error {

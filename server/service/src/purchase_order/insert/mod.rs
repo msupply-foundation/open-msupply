@@ -19,7 +19,7 @@ pub enum InsertPurchaseOrderError {
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct InsertPurchaseOrderInput {
     pub id: String,
-    pub supplier_name_link_id: String,
+    pub supplier_id: String,
 }
 
 pub fn insert_purchase_order(

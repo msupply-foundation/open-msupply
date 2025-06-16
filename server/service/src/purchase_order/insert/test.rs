@@ -33,7 +33,7 @@ mod insert {
                 store_id,
                 InsertPurchaseOrderInput {
                     id: "purchase_order_id".to_string(),
-                    supplier_name_link_id: "non_existent_supplier".to_string(),
+                    supplier_id: "non_existent_supplier".to_string(),
                 }
             ),
             Err(InsertPurchaseOrderError::SupplierDoesNotExist)
@@ -58,7 +58,7 @@ mod insert {
                 store_id,
                 InsertPurchaseOrderInput {
                     id: "purchase_order_id".to_string(),
-                    supplier_name_link_id: mock_name_a().id.to_string(),
+                    supplier_id: mock_name_a().id.to_string(),
                 }
             ),
             Err(InsertPurchaseOrderError::PurchaseOrderAlreadyExists)
@@ -71,7 +71,7 @@ mod insert {
                 store_id,
                 InsertPurchaseOrderInput {
                     id: "purchase_order_id_a".to_string(),
-                    supplier_name_link_id: mock_name_store_b().id.to_string(),
+                    supplier_id: mock_name_store_b().id.to_string(),
                 }
             ),
             Err(InsertPurchaseOrderError::NotASupplier)
@@ -95,7 +95,7 @@ mod insert {
                 &mock_store_a().id,
                 InsertPurchaseOrderInput {
                     id: "purchase_order_id".to_string(),
-                    supplier_name_link_id: mock_name_a().id.to_string(),
+                    supplier_id: mock_name_a().id.to_string(),
                 },
             )
             .unwrap();
