@@ -12,9 +12,9 @@ fragment PurchaseOrderRow on PurchaseOrderNode {
   status
   targetMonths
   deliveredDatetime
-  # lines {
-  #   totalCount
-  # }
+  lines {
+    totalCount
+  }
   comment
 }
 
@@ -76,7 +76,7 @@ fragment PurchaseOrder on PurchaseOrderNode {
 fragment PurchaseOrderLine on PurchaseOrderLineNode {
   __typename
   id
-  adjustedQuantity
+  authorisedQuantity
   expectedDeliveryDate
   item {
     id
@@ -85,7 +85,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     # Add as required
   }
   numberOfPacks
-  originalQuantity
+  requestedQuantity
   packSize
   requestedDeliveryDate
   totalReceived

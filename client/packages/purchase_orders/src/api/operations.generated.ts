@@ -14,6 +14,7 @@ export type PurchaseOrderRowFragment = {
   deliveredDatetime?: string | null;
   comment?: string | null;
   supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
+  lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
 };
 
 export type PurchaseOrderFragment = {
@@ -54,10 +55,10 @@ export type PurchaseOrderFragment = {
     nodes: Array<{
       __typename: 'PurchaseOrderLineNode';
       id: string;
-      adjustedQuantity?: number | null;
+      authorisedQuantity?: number | null;
       expectedDeliveryDate?: string | null;
       numberOfPacks?: number | null;
-      originalQuantity?: number | null;
+      requestedQuantity?: number | null;
       packSize?: number | null;
       requestedDeliveryDate?: string | null;
       totalReceived?: number | null;
@@ -71,10 +72,10 @@ export type PurchaseOrderFragment = {
 export type PurchaseOrderLineFragment = {
   __typename: 'PurchaseOrderLineNode';
   id: string;
-  adjustedQuantity?: number | null;
+  authorisedQuantity?: number | null;
   expectedDeliveryDate?: string | null;
   numberOfPacks?: number | null;
-  originalQuantity?: number | null;
+  requestedQuantity?: number | null;
   packSize?: number | null;
   requestedDeliveryDate?: string | null;
   totalReceived?: number | null;
@@ -106,6 +107,7 @@ export type PurchaseOrdersQuery = {
       deliveredDatetime?: string | null;
       comment?: string | null;
       supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
+      lines: { __typename: 'PurchaseOrderLineConnector'; totalCount: number };
     }>;
   };
 };
@@ -156,10 +158,10 @@ export type PurchaseOrderByIdQuery = {
           nodes: Array<{
             __typename: 'PurchaseOrderLineNode';
             id: string;
-            adjustedQuantity?: number | null;
+            authorisedQuantity?: number | null;
             expectedDeliveryDate?: string | null;
             numberOfPacks?: number | null;
-            originalQuantity?: number | null;
+            requestedQuantity?: number | null;
             packSize?: number | null;
             requestedDeliveryDate?: string | null;
             totalReceived?: number | null;
@@ -191,6 +193,9 @@ export const PurchaseOrderRowFragmentDoc = gql`
     status
     targetMonths
     deliveredDatetime
+    lines {
+      totalCount
+    }
     comment
   }
 `;
@@ -198,7 +203,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
   fragment PurchaseOrderLine on PurchaseOrderLineNode {
     __typename
     id
-    adjustedQuantity
+    authorisedQuantity
     expectedDeliveryDate
     item {
       id
@@ -206,7 +211,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
       name
     }
     numberOfPacks
-    originalQuantity
+    requestedQuantity
     packSize
     requestedDeliveryDate
     totalReceived

@@ -15,12 +15,17 @@ import {
   ColumnFormat,
   GenericColumnKey,
   getCommentPopoverColumn,
+  PurchaseOrderNodeStatus,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderList } from '../api';
-import { PurchaseOrderFragment } from '../api/operations.generated';
+import {
+  PurchaseOrderFragment,
+  PurchaseOrderRowFragment,
+} from '../api/operations.generated';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
+import { getStatusTranslator } from '../utils';
 
 const ListView: FC = () => {
   const t = useTranslation();
@@ -58,30 +63,61 @@ const ListView: FC = () => {
   } = usePurchaseOrderList(listParams);
   const pagination = { page, first, offset };
 
-  const columns = useColumns<PurchaseOrderFragment>(
+  const columns = useColumns<PurchaseOrderRowFragment>(
     [
       GenericColumnKey.Selection,
-      // [getNameAndColorColumn(), { setter: update }],
-      [
-        'status',
-        // {
-        //   formatter: status =>
-        //     getStatusTranslator(t)(status as InvoiceNodeStatus),
-        // },
-      ],
+      {
+        key: 'supplier',
+        label: 'label.supplier',
+        // format: ColumnFormat.Date,
+        accessor: ({ rowData }) => rowData.supplier?.name,
+        sortable: true,
+      },
       [
         'invoiceNumber',
-        { description: 'description.invoice-number', maxWidth: 110 },
+        {
+          label: 'label.number',
+          // description: 'description.invoice-number',
+          maxWidth: 110,
+          accessor: ({ rowData }) => rowData.number,
+        },
       ],
       {
-        key: 'prescriptionDatetime',
-        label: 'label.prescription-date',
+        key: 'createdDatetime',
+        label: 'label.created',
         format: ColumnFormat.Date,
         accessor: ({ rowData }) => rowData.createdDatetime,
         sortable: true,
       },
-      ['theirReference', { description: '', maxWidth: 110 }],
-      getCommentPopoverColumn(),
+      {
+        key: 'confirmedDatetime',
+        label: 'label.confirmed',
+        format: ColumnFormat.Date,
+        accessor: ({ rowData }) => rowData.confirmedDatetime,
+        sortable: true,
+      },
+      [
+        'status',
+        {
+          formatter: status =>
+            getStatusTranslator(t)(status as PurchaseOrderNodeStatus),
+        },
+      ],
+      {
+        key: 'targetMonths',
+        label: 'label.target-months',
+        // format: ColumnFormat.Date,
+        accessor: ({ rowData }) => rowData.targetMonths,
+        sortable: true,
+      },
+      {
+        key: 'deliveryDatetime',
+        label: 'label.delivered',
+        format: ColumnFormat.Date,
+        accessor: ({ rowData }) => rowData.deliveredDatetime,
+        sortable: true,
+      },
+      ['comment'],
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]

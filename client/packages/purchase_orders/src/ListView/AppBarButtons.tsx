@@ -34,7 +34,7 @@ export const AppBarButtonsComponent: FC<{
       <Grid container gap={1}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
-          label={t('button.new-prescription')}
+          label={t('button.new-purchase-order')}
           onClick={() => {}}
         />
         {/* <NewPrescriptionModal
