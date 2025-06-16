@@ -1,8 +1,15 @@
 import React, { FC, useEffect, useState } from 'react';
-import { Autocomplete, useTranslation } from '@openmsupply-client/common';
+import {
+  Autocomplete,
+  Box,
+  EditIcon,
+  IconButton,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { NameSearchInputProps, SearchInputPatient } from '../../utils';
 import { getPatientOptionRenderer } from '../PatientOptionRenderer';
 import { useSearchPatient } from '../utils';
+import { EditPatientModal } from '../../EditPatientModal';
 
 export const PatientSearchInput: FC<NameSearchInputProps> = ({
   autoFocus,
@@ -13,9 +20,10 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
   sx,
   NoOptionsRenderer,
 }) => {
+  const t = useTranslation();
   const PatientOptionRenderer = getPatientOptionRenderer();
   const { isLoading, patients, search } = useSearchPatient();
-  const t = useTranslation();
+  const [modalOpen, setModalOpen] = useState(false);
 
   const [input, setInput] = useState('');
 
@@ -43,43 +51,60 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
     : patients;
 
   return (
-    <Autocomplete
-      autoFocus={autoFocus}
-      options={options}
-      disabled={disabled}
-      clearable={false}
-      loading={isLoading}
-      onChange={(_, name) => {
-        if (name && !(name instanceof Array)) {
-          onChange(name);
-          setInput(name.name);
+    <Box width={`${width}px`} display={'flex'} alignItems="center">
+      <Autocomplete
+        autoFocus={autoFocus}
+        options={options}
+        disabled={disabled}
+        clearable={false}
+        loading={isLoading}
+        onChange={(_, name) => {
+          if (name && !(name instanceof Array)) {
+            onChange(name);
+            setInput(name.name);
+          }
+        }}
+        renderOption={noResults ? NoOptionsRenderer : PatientOptionRenderer}
+        getOptionLabel={(option: SearchInputPatient) => option.name}
+        isOptionEqualToValue={(option, value) => option.name === value.name}
+        width={`${width}px`}
+        popperMinWidth={width}
+        value={value}
+        inputValue={input}
+        inputProps={{
+          onChange: e => {
+            const { value } = e.target;
+            // update the input value and the search filter
+            setInput(value);
+            search(value);
+          },
+          // reset input value to previous selected patient if user clicks away
+          // without selecting a patient
+          onBlur: () => setInput(value?.name ?? ''),
+        }}
+        filterOptions={options => options}
+        sx={{ minWidth: width, ...sx }}
+        noOptionsText={
+          input.length > 0
+            ? t('messages.no-matching-patients')
+            : t('messages.type-to-search')
         }
-      }}
-      renderOption={noResults ? NoOptionsRenderer : PatientOptionRenderer}
-      getOptionLabel={(option: SearchInputPatient) => option.name}
-      isOptionEqualToValue={(option, value) => option.name === value.name}
-      width={`${width}px`}
-      popperMinWidth={width}
-      value={value}
-      inputValue={input}
-      inputProps={{
-        onChange: e => {
-          const { value } = e.target;
-          // update the input value and the search filter
-          setInput(value);
-          search(value);
-        },
-        // reset input value to previous selected patient if user clicks away
-        // without selecting a patient
-        onBlur: () => setInput(value?.name ?? ''),
-      }}
-      filterOptions={options => options}
-      sx={{ minWidth: width, ...sx }}
-      noOptionsText={
-        input.length > 0
-          ? t('messages.no-matching-patients')
-          : t('messages.type-to-search')
-      }
-    />
+      />
+      {value && (
+        <>
+          <IconButton
+            icon={<EditIcon style={{ fontSize: 16, fill: 'none' }} />}
+            label={t('label.edit')}
+            onClick={() => setModalOpen(true)}
+          />
+
+          <EditPatientModal
+            patientId={value.id}
+            onClose={() => setModalOpen(false)} // TODO add cancel confirmation
+            isOpen={modalOpen}
+          />
+        </>
+      )}
+    </Box>
   );
 };

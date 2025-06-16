@@ -1,0 +1,54 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Group",
+      "label": "heading.patient-details",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/firstName",
+          "label": "label.first-name"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/lastName",
+          "label": "label.last-name"
+        },
+        {
+          "type": "Control",
+          "label": "label.date-of-birth",
+          "scope": "#/properties/dateOfBirth",
+          "options": {
+            "disableFuture": true
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/gender",
+          "label": "label.gender",
+          "options": {
+            "show": [
+              ["MALE", "gender.male"],
+              ["FEMALE", "gender.female"],
+              ["TRANSGENDER_MALE", "gender.transgender-male"],
+              ["TRANSGENDER_FEMALE", "gender.transgender-female"],
+              ["NON_BINARY", "gender.non-binary"],
+              ["UNKNOWN", "gender.unknown"]
+            ]
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/address1",
+          "label": "label.address"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/phone",
+          "label": "label.phone"
+        }
+      ]
+    }
+  ]
+}
