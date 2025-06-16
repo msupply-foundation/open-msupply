@@ -30,7 +30,7 @@ const ListView: FC = () => {
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
-      // { key: 'supplier' }, // TO-DO: enable this when back-end fixed
+      { key: 'supplier' },
       { key: 'createdDatetime' },
       {
         key: 'status',
