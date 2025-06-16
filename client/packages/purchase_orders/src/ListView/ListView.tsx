@@ -29,7 +29,7 @@ const ListView: FC = () => {
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
-      { key: 'supplier' },
+      // { key: 'supplier' }, // TO-DO: enable this when back-end fixed
       { key: 'createdDatetime' },
       {
         key: 'status',
@@ -43,8 +43,6 @@ const ListView: FC = () => {
     offset,
     filterBy,
   };
-
-  console.log('listParams', listParams);
 
   const navigate = useNavigate();
   // const modalController = useToggle();

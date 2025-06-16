@@ -19,8 +19,6 @@ export type ListParams = {
 export const usePurchaseOrderList = (queryParams: ListParams) => {
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
 
-  console.log('queryParams', queryParams);
-
   const {
     sortBy = {
       key: 'number',
