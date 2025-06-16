@@ -6510,7 +6510,7 @@ export type PurchaseOrderFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   status?: InputMaybe<EqualFilterPurchaseOrderStatusInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
-  supplier?: InputMaybe<EqualFilterStringInput>;
+  supplier?: InputMaybe<StringFilterInput>;
 };
 
 export type PurchaseOrderLineConnector = {
@@ -6585,9 +6585,8 @@ export type PurchaseOrderNode = {
   insuranceCharge?: Maybe<Scalars['Float']['output']>;
   lines: PurchaseOrderLineConnector;
   number: Scalars['Int']['output'];
-  purchaseOrderNumber: Scalars['Int']['output'];
   receivedAtPortDatetime?: Maybe<Scalars['NaiveDate']['output']>;
-  reference: Scalars['String']['output'];
+  reference?: Maybe<Scalars['String']['output']>;
   sentDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   shippingMethod?: Maybe<Scalars['String']['output']>;
   status: PurchaseOrderNodeStatus;
