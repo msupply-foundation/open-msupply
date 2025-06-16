@@ -54,7 +54,7 @@ export const CreateStocktakeModal = ({
   });
 
   const [stockFilter, setStockFilter] = useState<StockLineFilterInput>();
-  const { isLoading: stockIsLoading } = useStockList({
+  const { data, isLoading: stockIsLoading } = useStockList({
     filterBy: stockFilter,
   });
 
@@ -275,6 +275,11 @@ export const CreateStocktakeModal = ({
                   />
                 }
                 label={t('label.items-expiring-before')}
+              />
+              <InputWithLabelRow
+                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+                Input={`${data?.totalCount}`}
+                label={t('label.stock-lines-found')}
               />
             </Box>
           ) : (
