@@ -26,7 +26,7 @@ impl PurchaseOrderNode {
     pub async fn id(&self) -> &str {
         &self.row().id
     }
-    pub async fn number(&self) -> &i32 {
+    pub async fn number(&self) -> &i64 {
         &self.row().purchase_order_number
     }
     pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
