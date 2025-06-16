@@ -1,10 +1,11 @@
 use crate::db_diesel::{item_link_row::item_link, item_row::item};
 use crate::{
+    db_diesel::{item_link_row::item_link, item_row::item},
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
     StorageConnection,
 };
 use chrono::{NaiveDate, NaiveDateTime};
-use diesel::prelude::*;
+use diesel::{dsl::max, prelude::*};
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
@@ -14,7 +15,7 @@ table! {
         store_id -> Text,
         user_id -> Nullable<Text>,
         supplier_name_link_id ->  Nullable<Text>,
-        purchase_order_number -> Integer,
+         purchase_order_number -> BigInt,
         status -> crate::db_diesel::purchase_order_row::PurchaseOrderStatusMapping,
         created_datetime -> Timestamp,
         confirmed_datetime ->  Nullable<Timestamp>,
@@ -26,11 +27,7 @@ table! {
         donor_link_id -> Nullable<Text>,
         reference -> Nullable<Text>,
         currency_id -> Nullable<Text>,
-        foreign_exchange_rate -> Nullable<Double>,
         shipping_method->  Nullable<Text>,
-        sent_datetime -> Nullable<Timestamp>,
-        contract_signed_datetime -> Nullable<Timestamp>,
-        advance_paid_datetime ->  Nullable<Timestamp>,
         received_at_port_datetime ->   Nullable<Date>,
         expected_delivery_datetime -> Nullable<Date>,
         supplier_agent ->  Nullable<Text>,
@@ -60,7 +57,7 @@ pub struct PurchaseOrderRow {
     pub store_id: String,
     pub user_id: Option<String>,
     pub supplier_name_link_id: Option<String>,
-    pub purchase_order_number: i32,
+    pub purchase_order_number: i64,
     pub status: PurchaseOrderStatus,
     pub created_datetime: NaiveDateTime,
     pub confirmed_datetime: Option<NaiveDateTime>,
@@ -170,5 +167,16 @@ impl<'a> PurchaseOrderRowRepository<'a> {
             .filter(purchase_order::id.eq(purchase_order_id))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn find_max_purchase_order_number(
+        &self,
+        store_id: &str,
+    ) -> Result<Option<i64>, RepositoryError> {
+        let result = purchase_order::table
+            .filter(purchase_order::store_id.eq(store_id))
+            .select(max(purchase_order::purchase_order_number))
+            .first(self.connection.lock().connection())?;
+        Ok(result)
     }
 }
