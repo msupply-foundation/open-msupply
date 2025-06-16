@@ -52,22 +52,19 @@ export const SelectReportModal = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       reportSelector={
         <>
-          {/* We had excel disabled elsewhere, hiding here until confirmed? */}
-          {EnvUtils.platform !== Platform.Android && (
-            <ButtonWithIcon
-              color="secondary"
-              variant="contained"
-              label={t('button.export-to-excel')}
-              Icon={<DownloadIcon />}
-              onClick={() => {
-                if (!selectedReport) return;
+          <ButtonWithIcon
+            color="secondary"
+            variant="contained"
+            label={t('button.export-to-excel')}
+            Icon={<DownloadIcon />}
+            onClick={() => {
+              if (!selectedReport) return;
 
-                onSelectReport(selectedReport, PrintFormat.Excel);
-                onClose();
-              }}
-              disabled={!selectedReport}
-            />
-          )}
+              onSelectReport(selectedReport, PrintFormat.Excel);
+              onClose();
+            }}
+            disabled={!selectedReport || EnvUtils.platform === Platform.Android}
+          />
           <ButtonWithIcon
             color="secondary"
             variant="contained"
