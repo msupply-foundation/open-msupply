@@ -44,7 +44,7 @@ mod insert {
             .upsert_one(&PurchaseOrderRow {
                 id: "purchase_order_id".to_string(),
                 store_id: store_id.to_string(),
-                user_id: mock_user_account_a().id.clone(),
+                user_id: Some(mock_user_account_a().id.clone()),
                 supplier_name_link_id: Some(mock_name_a().id.to_string()),
                 status: PurchaseOrderStatus::New,
                 ..Default::default()
