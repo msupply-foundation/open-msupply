@@ -168,9 +168,6 @@ export const CreateStocktakeModal = ({
   const onSave = () => {
     const { locationId, masterListId, createBlankStocktake, expiresBefore } =
       createStocktakeArgs;
-
-    console.log(createStocktakeArgs);
-
     const args: CreateStocktakeInput = {
       masterListId,
       locationId,
