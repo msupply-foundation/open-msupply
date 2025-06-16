@@ -59,7 +59,7 @@ impl PurchaseOrderNode {
 
         Ok(result)
     }
-    pub async fn purchase_order_number(&self) -> &i32 {
+    pub async fn purchase_order_number(&self) -> &i64 {
         &self.row().purchase_order_number
     }
     pub async fn created_datetime(&self) -> DateTime<Utc> {

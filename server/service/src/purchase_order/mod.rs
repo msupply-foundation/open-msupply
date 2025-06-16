@@ -1,11 +1,13 @@
 use self::query::{get_purchase_order, get_purchase_orders};
-pub mod query;
-use crate::service_provider::ServiceContext;
-use crate::ListError;
-use crate::ListResult;
+use crate::{service_provider::ServiceContext, ListError, ListResult};
+
+use insert::{insert_purchase_order, InsertPurchaseOrderError, InsertPurchaseOrderInput};
 use repository::{
     PaginationOption, PurchaseOrderFilter, PurchaseOrderRow, PurchaseOrderSort, RepositoryError,
 };
+
+pub mod insert;
+pub mod query;
 
 pub trait PurchaseOrderServiceTrait: Sync + Send {
     fn get_purchase_order(
@@ -26,6 +28,15 @@ pub trait PurchaseOrderServiceTrait: Sync + Send {
         sort: Option<PurchaseOrderSort>,
     ) -> Result<ListResult<PurchaseOrderRow>, ListError> {
         get_purchase_orders(ctx, store_id, pagination, filter, sort)
+    }
+
+    fn insert_purchase_order(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: InsertPurchaseOrderInput,
+    ) -> Result<PurchaseOrderRow, InsertPurchaseOrderError> {
+        insert_purchase_order(ctx, store_id, input)
     }
 }
 

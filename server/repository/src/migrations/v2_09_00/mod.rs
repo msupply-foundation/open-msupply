@@ -3,6 +3,7 @@ use crate::StorageConnection;
 
 mod add_mutate_clinician_permission;
 mod add_purchase_order_tables;
+mod add_purchase_order_to_number_type;
 mod add_store_id_to_clinician;
 mod extend_name_table_fields;
 mod process_clinician_store_join_deletes;
@@ -26,6 +27,7 @@ impl Migration for V2_09_00 {
             Box::new(add_store_id_to_clinician::Migrate),
             Box::new(add_purchase_order_tables::Migrate),
             Box::new(extend_name_table_fields::Migrate),
+            Box::new(add_purchase_order_to_number_type::Migrate),
         ]
     }
 }

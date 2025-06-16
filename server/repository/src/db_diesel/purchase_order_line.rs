@@ -4,10 +4,9 @@ use super::{
 };
 
 use crate::{
-    db_diesel::invoice_row::invoice,
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     item_link,
-    purchase_order_row::purchase_order::{self, table},
+    purchase_order_row::purchase_order::{self},
     EqualFilter, Pagination, PurchaseOrderLineRow, PurchaseOrderRow, Sort,
 };
 

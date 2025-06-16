@@ -46,7 +46,7 @@ use graphql_plugin::{
 use graphql_preference::{PreferenceMutations, PreferenceQueries};
 use graphql_printer::{PrinterMutations, PrinterQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
-use graphql_purchase_order::PurchaseOrderQueries;
+use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
 use graphql_purchase_order_line::PurchaseOrderLineQueries;
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::ReportQueries;
@@ -244,6 +244,7 @@ pub struct Mutations(
     pub ContactFormMutations,
     pub VVMMutations,
     pub ClinicianMutations,
+    pub PurchaseOrderMutations,
 );
 
 impl Mutations {
@@ -272,6 +273,7 @@ impl Mutations {
             ContactFormMutations,
             VVMMutations,
             ClinicianMutations,
+            PurchaseOrderMutations,
         )
     }
 }
