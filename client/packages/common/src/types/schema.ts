@@ -6583,7 +6583,7 @@ export type PurchaseOrderNode = {
   id: Scalars['String']['output'];
   insuranceCharge?: Maybe<Scalars['Float']['output']>;
   lines: PurchaseOrderLineConnector;
-  purchaseOrderNumber?: Maybe<Scalars['Int']['output']>;
+  purchaseOrderNumber: Scalars['Int']['output'];
   receivedAtPortDatetime?: Maybe<Scalars['NaiveDate']['output']>;
   reference?: Maybe<Scalars['String']['output']>;
   sentDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
