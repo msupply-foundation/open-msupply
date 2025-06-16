@@ -20,6 +20,7 @@ import {
   Box,
   Formatter,
   StockLineFilterInput,
+  useNavigate,
 } from '@openmsupply-client/common';
 import { CreateStocktakeInput } from '../api/hooks/useStocktake';
 
@@ -29,7 +30,6 @@ interface NewStocktakeModalProps {
   onClose: () => void;
   onCreate: (input: CreateStocktakeInput) => Promise<string | undefined>;
   isCreating?: boolean;
-  navigate: (id: string) => void;
   description?: string;
 }
 
@@ -45,9 +45,9 @@ export const CreateStocktakeModal = ({
   onClose,
   onCreate,
   isCreating,
-  navigate,
   description,
 }: NewStocktakeModalProps) => {
+  const navigate = useNavigate();
   const t = useTranslation();
   const { Modal } = useDialog({
     isOpen: open,
