@@ -8,6 +8,7 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // reprocess clinician visibility deletes as support now added for translating delete records
         sql!(
             connection,
             r#"

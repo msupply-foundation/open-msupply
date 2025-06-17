@@ -10,10 +10,8 @@ import {
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useStocktakeOld } from '../api';
-import { ReportSelector, usePrintReport } from '@openmsupply-client/system';
-import { JsonData } from '@openmsupply-client/programs';
+import { ReportSelector } from '@openmsupply-client/system';
 import { isStocktakeDisabled } from '../../utils';
-import { ReportRowFragment } from '@openmsupply-client/system';
 
 interface AppBarButtonProps {
   onAddItem: (newState: boolean) => void;
@@ -24,26 +22,12 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
 }) => {
   const { OpenButton } = useDetailPanel();
   const t = useTranslation();
-  const { print, isPrinting } = usePrintReport();
   const { data } = useStocktakeOld.document.get();
   const isDisabled = !data || isStocktakeDisabled(data);
 
   const {
     queryParams: { sortBy },
   } = useUrlQueryParams();
-
-  const printReport = (
-    report: ReportRowFragment,
-    args: JsonData | undefined
-  ) => {
-    if (!data) return;
-    print({
-      reportId: report.id,
-      dataId: data?.id,
-      args,
-      sort: { key: sortBy.key, desc: sortBy.isDesc },
-    });
-  };
 
   return (
     <AppBarButtonsPortal>
@@ -56,9 +40,8 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         />
         <ReportSelector
           context={ReportContext.Stocktake}
-          onPrint={printReport}
-          isPrinting={isPrinting}
-          buttonLabel={t('button.print')}
+          dataId={data?.id ?? ''}
+          sort={{ key: sortBy.key, desc: sortBy.isDesc }}
         />
         {OpenButton}
       </Grid>

@@ -180,6 +180,7 @@ export const StockLineForm = ({
                 onChange={date =>
                   onUpdate({ expiryDate: Formatter.naiveDate(date) })
                 }
+                width={160}
               />
             }
           />

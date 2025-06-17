@@ -49,7 +49,7 @@ const ITEM_LINE_1: (&str, &str) = (
       "volume_per_pack": 0,
       "vvm_status_id": "",
       "weight_per_pack": 0,
-      "oms_fields": null
+      "oms_fields": ""
     }"#,
 );
 fn item_line_1_pull_record() -> TestSyncIncomingRecord {
@@ -148,6 +148,7 @@ const ITEM_LINE_2: (&str, &str) = (
       "volume_per_pack": 0,
       "vvm_status_id": "",
       "weight_per_pack": 0,
+      "om_item_variant_id": "",
       "oms_fields": null
   }"#,
 );

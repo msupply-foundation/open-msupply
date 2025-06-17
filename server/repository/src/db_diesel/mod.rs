@@ -14,7 +14,7 @@ pub mod category_row;
 pub mod changelog;
 pub mod clinician;
 mod clinician_link_row;
-mod clinician_row;
+pub mod clinician_row;
 mod clinician_store_join_row;
 pub mod cold_storage_type;
 mod cold_storage_type_row;

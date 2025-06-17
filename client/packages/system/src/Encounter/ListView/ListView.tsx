@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   TableProvider,
   DataTable,
@@ -17,12 +17,11 @@ import {
 import { useEncounter } from '@openmsupply-client/programs';
 import { Toolbar } from './Toolbar';
 
-const EncounterListComponent: FC = () => {
+const EncounterListComponent = () => {
   const t = useTranslation();
   const {
     updateSortQuery,
     updatePaginationQuery,
-    filter,
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: {
@@ -62,7 +61,7 @@ const EncounterListComponent: FC = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
+      <Toolbar />
       <DataTable
         id="name-list"
         pagination={{ page, first, offset, total: data?.totalCount }}
@@ -80,7 +79,7 @@ const EncounterListComponent: FC = () => {
   );
 };
 
-export const EncounterListView: FC = () => (
+export const EncounterListView = () => (
   <TableProvider createStore={createTableStore}>
     <EncounterListComponent />
   </TableProvider>

@@ -64,7 +64,7 @@ export const QuantityReturnedTableComponent = ({
       [
         expiryInputColumn,
         {
-          width: 150,
+          width: 160,
           getIsDisabled: () => isDisabled,
           setter: l =>
             updateLine({

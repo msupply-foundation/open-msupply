@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository, GenderType,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository,
+    ClinicianRowRepositoryTrait, GenderType, StorageConnection, SyncBufferRow,
 };
 
-use crate::sync::sync_serde::empty_str_as_option_string;
+use crate::sync::{sync_serde::empty_str_as_option_string, translations::store::StoreTranslation};
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
@@ -39,6 +39,9 @@ pub struct LegacyClinicianRow {
     pub is_female: bool,
     #[serde(rename = "active")]
     pub is_active: bool,
+
+    #[serde(deserialize_with = "empty_str_as_option_string", rename = "store_ID")]
+    pub store_id: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -54,7 +57,7 @@ impl SyncTranslation for ClinicianTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![]
+        vec![StoreTranslation.table_name()]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -79,6 +82,7 @@ impl SyncTranslation for ClinicianTranslation {
             email,
             is_female,
             is_active,
+            store_id,
         } = serde_json::from_str::<LegacyClinicianRow>(&sync_record.data)?;
 
         let result = ClinicianRow {
@@ -98,6 +102,7 @@ impl SyncTranslation for ClinicianTranslation {
                 Some(GenderType::Male)
             },
             is_active,
+            store_id,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -120,8 +125,9 @@ impl SyncTranslation for ClinicianTranslation {
             email,
             gender,
             is_active,
+            store_id,
         } = ClinicianRowRepository::new(connection)
-            .find_one_by_id_option(&changelog.record_id)?
+            .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
                 "Clinician row ({}) not found",
                 changelog.record_id
@@ -144,6 +150,7 @@ impl SyncTranslation for ClinicianTranslation {
             email,
             is_female,
             is_active,
+            store_id,
         };
         Ok(PushTranslateResult::upsert(
             changelog,

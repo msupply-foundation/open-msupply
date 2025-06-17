@@ -17,6 +17,8 @@ import {
   bmiTester,
   DateOfBirth,
   dateOfBirthTester,
+  DateRange,
+  dateRangeTester,
   IdGenerator,
   idGeneratorTester,
   QuantityPrescribed,
@@ -86,6 +88,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: bloodPressureTester, renderer: BloodPressure },
   { tester: prescriptionTester, renderer: Prescription },
   { tester: patientSearchTester, renderer: PatientSearch },
+  { tester: dateRangeTester, renderer: DateRange },
 ];
 
 /**

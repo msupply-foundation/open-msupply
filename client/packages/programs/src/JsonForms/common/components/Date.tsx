@@ -4,10 +4,10 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   DetailInputWithLabelRow,
   useFormatDateTime,
-  BaseDatePickerInput,
   DateUtils,
   LocaleKey,
   useTranslation,
+  DateTimePickerInput,
 } from '@openmsupply-client/common';
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
@@ -55,8 +55,8 @@ const UIComponent = (props: ControlProps) => {
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment="start"
       Input={
-        <BaseDatePickerInput
-          sx={{ width: '100%' }}
+        <DateTimePickerInput
+          width="100%"
           // undefined is displayed as "now" and null as unset
           value={DateUtils.getNaiveDate(data)}
           onChange={e => {
@@ -70,12 +70,10 @@ const UIComponent = (props: ControlProps) => {
           disabled={!props.enabled}
           error={customError ?? props.errors ?? zErrors ?? ''}
           disableFuture={disableFuture}
-          onError={validationError => setCustomError(validationError)}
-          slotProps={{
-            actionBar: {
-              actions: ['clear'],
-            },
-          }}
+          onError={validationError =>
+            setCustomError(validationError ?? undefined)
+          }
+          actions={['clear']}
         />
       }
     />

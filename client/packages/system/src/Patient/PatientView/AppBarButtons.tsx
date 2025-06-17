@@ -2,32 +2,20 @@ import {
   AppBarButtonsPortal,
   Grid,
   ReportContext,
-  useTranslation,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { AddButton } from './AddButton';
-import {
-  ReportRowFragment,
-  ReportSelector,
-  usePrintReport,
-} from '../../Report';
+import { ReportSelector } from '../../Report';
 import { usePatient } from '../api';
-import { JsonData, useProgramEnrolments } from '@openmsupply-client/programs';
+import { useProgramEnrolments } from '@openmsupply-client/programs';
 
 export const AppBarButtons: FC<{
   disabled: boolean;
   store?: UserStoreNodeFragment;
 }> = ({ disabled, store }) => {
-  const t = useTranslation();
-  const { print, isPrinting } = usePrintReport();
   const patientId = usePatient.utils.id();
-  const printReport = (
-    report: ReportRowFragment,
-    args: JsonData | undefined
-  ) => {
-    print({ reportId: report.id, dataId: patientId, args });
-  };
+
   const { data: enrolmentData } = useProgramEnrolments.document.list({
     filterBy: {
       patientId: { equalTo: patientId },
@@ -45,10 +33,8 @@ export const AppBarButtons: FC<{
         />
         {store?.preferences.omProgramModule && (
           <ReportSelector
+            dataId={patientId}
             context={ReportContext.Patient}
-            onPrint={printReport}
-            isPrinting={isPrinting}
-            buttonLabel={t('button.print')}
             disabled={disabled}
           />
         )}

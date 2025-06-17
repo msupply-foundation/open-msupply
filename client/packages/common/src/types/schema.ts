@@ -3001,6 +3001,15 @@ export type InsertBarcodeInput = {
 
 export type InsertBarcodeResponse = BarcodeNode;
 
+export type InsertClinicianInput = {
+  code: Scalars['String']['input'];
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  gender?: InputMaybe<GenderType>;
+  id: Scalars['String']['input'];
+  initials: Scalars['String']['input'];
+  lastName: Scalars['String']['input'];
+};
+
 export type InsertContactFormInput = {
   body: Scalars['String']['input'];
   contactType: ContactFormNodeType;
@@ -4862,6 +4871,7 @@ export type Mutations = {
   insertAsset: InsertAssetResponse;
   insertAssetLog: InsertAssetLogResponse;
   insertBarcode: InsertBarcodeResponse;
+  insertClinician: IdResponse;
   insertContactForm: InsertContactFormResponse;
   insertContactTrace: InsertContactTraceResponse;
   insertCustomerReturn: InsertCustomerReturnResponse;
@@ -5149,6 +5159,11 @@ export type MutationsInsertAssetLogArgs = {
 
 export type MutationsInsertBarcodeArgs = {
   input: InsertBarcodeInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertClinicianArgs = {
+  input: InsertClinicianInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5622,11 +5637,15 @@ export type NameNode = {
   comment?: Maybe<Scalars['String']['output']>;
   country?: Maybe<Scalars['String']['output']>;
   createdDatetime?: Maybe<Scalars['DateTime']['output']>;
+  currency?: Maybe<CurrencyNode>;
   customData?: Maybe<Scalars['JSON']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
+  freightFactor?: Maybe<Scalars['Float']['output']>;
   gender?: Maybe<GenderType>;
+  hshCode?: Maybe<Scalars['String']['output']>;
+  hshName?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   isCustomer: Scalars['Boolean']['output'];
   isDonor: Scalars['Boolean']['output'];
@@ -5636,6 +5655,7 @@ export type NameNode = {
   isSystemName: Scalars['Boolean']['output'];
   isVisible: Scalars['Boolean']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
+  margin?: Maybe<Scalars['Float']['output']>;
   name: Scalars['String']['output'];
   phone?: Maybe<Scalars['String']['output']>;
   /** Returns a JSON string of the name properties e.g {"property_key": "value"} */

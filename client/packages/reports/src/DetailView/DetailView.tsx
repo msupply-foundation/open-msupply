@@ -214,7 +214,7 @@ const DetailViewInner = ({
         onReset={() => {
           setReportWithArgs(undefined);
         }}
-        onArgumentsSelected={generateReport}
+        onArgumentsSelected={(report, args) => generateReport(report, args)}
       />
       {state.s === 'loading' && (
         <BasicSpinner messageKey="messages.loading-report"></BasicSpinner>

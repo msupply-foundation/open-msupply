@@ -19,7 +19,7 @@ import { useRnRForm } from '../api';
 
 export const SidePanel = ({ rnrFormId }: { rnrFormId: string }) => {
   const { success } = useNotification();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
   const {
     query: { data },

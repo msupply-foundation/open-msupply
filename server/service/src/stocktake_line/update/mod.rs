@@ -57,13 +57,15 @@ pub fn update_stocktake_line(
             let new_stocktake_line = generate(existing.clone(), input.clone())?;
             StocktakeLineRowRepository::new(connection).upsert_one(&new_stocktake_line)?;
 
-            // Update stock line donor if changed and stock line exists
-            if let Some(stock_line) = &existing.stock_line {
+            // Update stock line donor and item variant if changed and stock line exists
+            if let Some(mut stock_line) = existing.stock_line.clone() {
                 if let Some(donor_id) = &input.donor_id {
-                    let mut stock_line_row = stock_line.clone();
-                    stock_line_row.donor_link_id = donor_id.value.clone();
-                    StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
+                    stock_line.donor_link_id = donor_id.value.clone();
                 }
+                if let Some(item_variant_id) = &input.item_variant_id {
+                    stock_line.item_variant_id = item_variant_id.value.clone();
+                }
+                StockLineRowRepository::new(connection).upsert_one(&stock_line)?;
             }
 
             let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
@@ -80,9 +82,9 @@ mod stocktake_line_test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_donor_a, mock_item_a, mock_locations, mock_locked_stocktake_line,
-            mock_stock_line_b, mock_stocktake_line_a, mock_stocktake_line_finalised, mock_store_a,
-            MockData, MockDataInserts,
+            mock_donor_a, mock_item_a, mock_item_a_variant_1, mock_locations,
+            mock_locked_stocktake_line, mock_stock_line_b, mock_stocktake_line_a,
+            mock_stocktake_line_finalised, mock_store_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         EqualFilter, InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType, ReasonOptionRow,
@@ -472,6 +474,50 @@ mod stocktake_line_test {
                 .unwrap()
                 .unwrap();
             assert_eq!(stock_line_row.donor_link_id, None);
+        }
+
+        // success with item_variant_id update
+        let stocktake_line_a = mock_stocktake_line_a();
+        let item_variant_id = mock_item_a_variant_1().id;
+        service
+            .update_stocktake_line(
+                &context,
+                inline_init(|r: &mut UpdateStocktakeLine| {
+                    r.id = stocktake_line_a.id.clone();
+                    r.item_variant_id = Some(NullableUpdate {
+                        value: Some(item_variant_id.clone()),
+                    });
+                }),
+            )
+            .unwrap();
+
+        // check that the item_variant_id was set correctly on the stock line
+        if let Some(stock_line_id) = &stocktake_line_a.stock_line_id {
+            let stock_line_row = StockLineRowRepository::new(&context.connection)
+                .find_one_by_id(stock_line_id)
+                .unwrap()
+                .unwrap();
+            assert_eq!(stock_line_row.item_variant_id, Some(item_variant_id));
+        }
+
+        // success with item_variant_id removal (set to None)
+        service
+            .update_stocktake_line(
+                &context,
+                inline_init(|r: &mut UpdateStocktakeLine| {
+                    r.id = stocktake_line_a.id.clone();
+                    r.item_variant_id = Some(NullableUpdate { value: None });
+                }),
+            )
+            .unwrap();
+
+        // check that the item_variant_id was cleared
+        if let Some(stock_line_id) = &stocktake_line_a.stock_line_id {
+            let stock_line_row = StockLineRowRepository::new(&context.connection)
+                .find_one_by_id(stock_line_id)
+                .unwrap()
+                .unwrap();
+            assert_eq!(stock_line_row.item_variant_id, None);
         }
     }
 }
