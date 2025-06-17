@@ -26,6 +26,9 @@ impl PurchaseOrderNode {
     pub async fn id(&self) -> &str {
         &self.row().id
     }
+    pub async fn number(&self) -> &i64 {
+        &self.row().purchase_order_number
+    }
     pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
         let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
         Ok(loader
@@ -36,31 +39,24 @@ impl PurchaseOrderNode {
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
         let loader = ctx.get_loader::<DataLoader<UserLoader>>();
 
-        let result = loader
-            .load_one(self.row().user_id.clone())
-            .await?
-            .map(UserNode::from_domain);
+        if let Some(user_id) = self.row().user_id.clone() {
+            return Ok(loader.load_one(user_id).await?.map(UserNode::from_domain));
+        }
 
-        Ok(result)
+        return Ok(None);
     }
     pub async fn supplier_name_link_id(&self) -> &Option<String> {
         &self.row().supplier_name_link_id
     }
     pub async fn supplier(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
-
-        let result = match &self.row().supplier_name_link_id {
-            Some(id) => loader
-                .load_one(NameByIdLoaderInput::new(&self.row().store_id, id))
+        if let Some(supplier_id) = self.row().supplier_name_link_id.clone() {
+            return Ok(loader
+                .load_one(NameByIdLoaderInput::new(&self.row().store_id, &supplier_id))
                 .await?
-                .map(NameNode::from_domain),
-            None => None,
-        };
-
-        Ok(result)
-    }
-    pub async fn purchase_order_number(&self) -> &i32 {
-        &self.row().purchase_order_number
+                .map(NameNode::from_domain));
+        }
+        return Ok(None);
     }
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
@@ -69,6 +65,9 @@ impl PurchaseOrderNode {
         self.row()
             .delivered_datetime
             .map(|dt| DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
+    }
+    pub async fn confirmed_datetime(&self) -> &Option<NaiveDateTime> {
+        &self.row().confirmed_datetime
     }
     pub async fn status(&self) -> PurchaseOrderNodeStatus {
         PurchaseOrderNodeStatus::from_domain(self.row().status.clone())
@@ -87,18 +86,15 @@ impl PurchaseOrderNode {
     }
     pub async fn donor(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
-
-        let result = match &self.row().donor_link_id {
-            Some(id) => loader
-                .load_one(NameByIdLoaderInput::new(&self.row().store_id, id))
+        if let Some(donor_id) = self.row().donor_link_id.clone() {
+            return Ok(loader
+                .load_one(NameByIdLoaderInput::new(&self.row().store_id, &donor_id))
                 .await?
-                .map(NameNode::from_domain),
-            None => None,
-        };
-
-        Ok(result)
+                .map(NameNode::from_domain));
+        }
+        return Ok(None);
     }
-    pub async fn reference(&self) -> &str {
+    pub async fn reference(&self) -> &Option<String> {
         &self.row().reference
     }
     pub async fn currency_id(&self) -> &Option<String> {

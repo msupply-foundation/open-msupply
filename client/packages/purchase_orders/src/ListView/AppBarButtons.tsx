@@ -1,0 +1,34 @@
+import React from 'react';
+import {
+  PlusCircleIcon,
+  AppBarButtonsPortal,
+  ButtonWithIcon,
+  Grid,
+  useTranslation,
+} from '@openmsupply-client/common';
+
+export const AppBarButtonsComponent = () => {
+  const t = useTranslation();
+  // const { success, error } = useNotification();
+
+  // const {
+  //   query: { data, isLoading },
+  // } = usePurchaseOrderList(listParams);
+
+  return (
+    <AppBarButtonsPortal>
+      <Grid container gap={1}>
+        <ButtonWithIcon
+          Icon={<PlusCircleIcon />}
+          label={t('button.new-purchase-order')}
+          onClick={() => {
+            // eslint-disable-next-line
+            console.log('TO-DO');
+          }}
+        />
+      </Grid>
+    </AppBarButtonsPortal>
+  );
+};
+
+export const AppBarButtons = React.memo(AppBarButtonsComponent);
