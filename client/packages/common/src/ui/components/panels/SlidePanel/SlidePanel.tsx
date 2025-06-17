@@ -40,64 +40,60 @@ export const SlidePanel = ({
   preventClickAway = true,
 }: SlidePanelProps) => {
   const panel = (
-    <Slide direction="left" in={open} mountOnEnter unmountOnExit>
-      <Paper
-        elevation={4}
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'absolute',
-          right: 0,
-          top: 0,
-          height: '100%',
-          width,
-          zIndex: 1399,
-        }}
-      >
-        <Typography
-          sx={theme => ({
-            padding: 2,
-            color: theme.typography.body1.color,
-            fontSize: theme.typography.body1.fontSize,
-            fontWeight: 'bold',
-          })}
-        >
-          {title}
-        </Typography>
-        <Box
+    <Box
+      sx={{
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        width,
+        height: '100%',
+        overflow: 'hidden',
+        zIndex: 1399,
+      }}
+    >
+      <Slide direction="left" in={open} mountOnEnter unmountOnExit>
+        <Paper
+          elevation={4}
           sx={{
-            flex: 1,
-            overflow: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            width,
+            zIndex: 1399,
           }}
         >
-          {children}
-        </Box>
-        {(okButton || cancelButton) && (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              pb: 5,
-              gap: 1,
-            }}
+          <Typography
+            sx={theme => ({
+              padding: 2,
+              color: theme.typography.body1.color,
+              fontSize: theme.typography.body1.fontSize,
+              fontWeight: 'bold',
+            })}
           >
-            {cancelButton}
-            {okButton}
-          </Box>
-        )}
-      </Paper>
-    </Slide>
+            {title}
+          </Typography>
+          <Box flex={1}>{children}</Box>
+          {(okButton || cancelButton) && (
+            <Box display="flex" justifyContent="center" pb={5} gap={1}>
+              {cancelButton}
+              {okButton}
+            </Box>
+          )}
+        </Paper>
+      </Slide>
+    </Box>
   );
 
   const content = (
     <>
-      {open && <Backdrop onClick={preventClickAway ? undefined : onClose} />}
+      {<Backdrop onClick={preventClickAway ? undefined : onClose} />}
       {panel}
     </>
   );
 
   return preventClickAway ? (
-    content
+    open && content
   ) : (
     <ClickAwayListener onClickAway={onClose}>{content}</ClickAwayListener>
   );
