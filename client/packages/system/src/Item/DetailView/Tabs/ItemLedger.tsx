@@ -105,7 +105,7 @@ const ItemLedgerTable = ({
       },
       {
         key: 'movementInUnits',
-        label: 'label.unit-quantity',
+        label: 'label.change',
         sortable: false,
         description: 'description.unit-quantity',
         accessor: ({ rowData }) => NumUtils.round(rowData.movementInUnits, 2),
