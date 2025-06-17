@@ -62,19 +62,15 @@ export const CreateStocktakeModal = ({
     });
 
   const stockFilter: StockLineFilterInput = {
-    location: location
-      ? {
-          id: { equalTo: location.id },
-        }
-      : null,
-    masterList: masterList
-      ? {
-          id: { equalTo: masterList.id },
-        }
-      : null,
-    expiryDate: expiryDate
-      ? { beforeOrEqualTo: Formatter.naiveDate(expiryDate) }
-      : null,
+    location: location && {
+      id: { equalTo: location.id },
+    },
+    masterList: masterList && {
+      id: { equalTo: masterList.id },
+    },
+    expiryDate: expiryDate && {
+      beforeOrEqualTo: Formatter.naiveDate(expiryDate),
+    },
     hasPacksInStore: true,
   };
 
