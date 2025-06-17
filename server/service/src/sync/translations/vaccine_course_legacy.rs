@@ -1,5 +1,7 @@
 use serde::Serialize;
 
+use crate::sync::CentralServerConfig;
+
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
     vaccine_course::vaccine_course_row::VaccineCourseRowRepository, ChangelogRow,
