@@ -11,20 +11,20 @@ use crate::{
 };
 
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
+    dsl::{InnerJoin, IntoBoxed, LeftJoin},
     prelude::*,
 };
 
 type PurchaseOrderLineJoin = (
     PurchaseOrderLineRow,
-    (ItemLinkRow, ItemRow),
+    Option<(ItemLinkRow, ItemRow)>,
     PurchaseOrderRow,
 );
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct PurchaseOrderLine {
     pub purchase_order_line_row: PurchaseOrderLineRow,
-    pub item_row: ItemRow,
+    pub item_row: Option<ItemRow>,
 }
 
 #[derive(Clone, Default)]
@@ -57,7 +57,7 @@ impl<'a> PurchaseOrderLineRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<PurchaseOrderLineFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter)?;
+        let query = create_filtered_query(filter);
 
         Ok(query
             .count()
@@ -84,7 +84,7 @@ impl<'a> PurchaseOrderLineRepository<'a> {
         filter: Option<PurchaseOrderLineFilter>,
         sort: Option<PurchaseOrderLineSort>,
     ) -> Result<Vec<PurchaseOrderLine>, RepositoryError> {
-        let mut query = create_filtered_query(filter)?;
+        let mut query = create_filtered_query(filter);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -121,6 +121,12 @@ impl<'a> PurchaseOrderLineRepository<'a> {
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 
+        // Debug diesel query
+        println!(
+            "{}",
+            diesel::debug_query::<DBType, _>(&final_query).to_string()
+        );
+
         let result =
             final_query.load::<PurchaseOrderLineJoin>(self.connection.lock().connection())?;
 
@@ -131,17 +137,15 @@ impl<'a> PurchaseOrderLineRepository<'a> {
 type BoxedPurchaseOrderLineQuery = IntoBoxed<
     'static,
     InnerJoin<
-        InnerJoin<purchase_order_line::table, InnerJoin<item_link::table, item::table>>,
+        LeftJoin<purchase_order_line::table, InnerJoin<item_link::table, item::table>>,
         purchase_order::table,
     >,
     DBType,
 >;
 
-fn create_filtered_query(
-    filter: Option<PurchaseOrderLineFilter>,
-) -> Result<BoxedPurchaseOrderLineQuery, RepositoryError> {
+fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurchaseOrderLineQuery {
     let mut query = purchase_order_line::table
-        .inner_join(item_link::table.inner_join(item::table))
+        .left_join(item_link::table.inner_join(item::table))
         .inner_join(purchase_order::table)
         .into_boxed();
 
@@ -152,16 +156,12 @@ fn create_filtered_query(
             store_id,
         } = f;
 
-        apply_equal_filter!(
-            query,
-            purchase_order_id,
-            purchase_order_line::purchase_order_id
-        );
+        apply_equal_filter!(query, purchase_order_id, purchase_order::id);
         apply_equal_filter!(query, id, purchase_order_line::id);
         apply_equal_filter!(query, store_id, purchase_order::store_id);
     }
 
-    Ok(query)
+    query
 }
 
 impl PurchaseOrderLineFilter {
@@ -185,8 +185,9 @@ impl PurchaseOrderLineFilter {
 }
 
 fn to_domain(
-    (purchase_order_line_row, (_, item_row), _): PurchaseOrderLineJoin,
+    (purchase_order_line_row, item_link_and_item_row_opt, _): PurchaseOrderLineJoin,
 ) -> PurchaseOrderLine {
+    let item_row = item_link_and_item_row_opt.map(|(_, item_row)| item_row);
     PurchaseOrderLine {
         purchase_order_line_row,
         item_row,

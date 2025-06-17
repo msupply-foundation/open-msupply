@@ -9,7 +9,7 @@ use crate::types::ItemNode;
 #[derive(PartialEq, Debug)]
 pub struct PurchaseOrderLineNode {
     pub purchase_order_line: PurchaseOrderLineRow,
-    pub item: ItemRow,
+    pub item: Option<ItemRow>,
 }
 
 #[derive(SimpleObject)]
@@ -29,19 +29,23 @@ impl PurchaseOrderLineNode {
     pub async fn line_number(&self) -> &i32 {
         &self.row().line_number
     }
-    pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
+    pub async fn item(&self, ctx: &Context<'_>) -> Result<Option<ItemNode>> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
 
-        let result = loader.load_one(self.item.id.to_string()).await?;
+        if let Some(item_row) = &self.item {
+            let result = loader.load_one(item_row.id.to_string()).await?;
 
-        result.map(ItemNode::from_domain).ok_or(
-            StandardGraphqlError::InternalError(format!(
-                "Cannot find item ({}) linked to purchase_order_line ({})",
-                &self.item.id,
-                &self.row().id
-            ))
-            .extend(),
-        )
+            let result = result.map(ItemNode::from_domain).ok_or(
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot find item ({}) linked to purchase_order_line ({})",
+                    &item_row.id,
+                    &self.row().id
+                ))
+                .extend(),
+            )?;
+            return Ok(Some(result));
+        }
+        return Ok(None);
     }
     pub async fn number_of_packs(&self) -> &Option<f64> {
         &self.row().number_of_packs

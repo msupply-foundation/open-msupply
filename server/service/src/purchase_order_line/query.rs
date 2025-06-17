@@ -55,7 +55,7 @@ mod test {
     async fn purchase_order_service_queries() {
         let (_, connection, connection_manager, _) = setup_all(
             "purchase order line service queries",
-            MockDataInserts::none(),
+            MockDataInserts::none().stores(),
         )
         .await;
 
@@ -70,21 +70,27 @@ mod test {
         let po = inline_init(|p: &mut PurchaseOrderRow| {
             p.id = purchase_order_id.to_string();
             p.store_id = mock_store_a().id;
+            p.created_datetime = chrono::Utc::now().naive_utc();
+            p.status = repository::PurchaseOrderStatus::New;
+            p.purchase_order_number = 1;
         });
         purchase_order_repo.upsert_one(&po).unwrap();
 
         let result = purchase_order_repo.find_all().unwrap();
-        assert!(result.is_empty());
-
-        let po = inline_init(|p: &mut PurchaseOrderLineRow| {
-            p.id = "test_po_1".to_string();
+        assert_eq!(result.len(), 1);
+        let po_line_id = "test_po_line_1";
+        let po_line = inline_init(|p: &mut PurchaseOrderLineRow| {
+            p.id = po_line_id.to_string();
             p.purchase_order_id = purchase_order_id.to_string();
+            p.line_number = 1;
+            p.item_code = "test_code".to_string();
         });
-        repo.upsert_one(&po).unwrap();
+        let result = repo.upsert_one(&po_line);
+        assert!(result.is_ok());
 
         // Test querying by ID
         let result = service
-            .get_purchase_order_line(&context, "wrong_store_id", &po.id)
+            .get_purchase_order_line(&context, "wrong_store_id", &po_line.id)
             .unwrap();
         assert!(result.is_none());
 
@@ -93,29 +99,39 @@ mod test {
             .unwrap();
         assert!(result.is_none());
 
-        let ref result = service
-            .get_purchase_order_line(&context, &mock_store_a().id, &po.id)
+        let result = service
+            .get_purchase_order_line(&context, &mock_store_a().id, po_line_id)
             .unwrap();
         assert!(result.is_some());
 
-        // Test querying with filter of store_id
-        let wrong_filter =
-            PurchaseOrderLineFilter::new().store_id(EqualFilter::equal_to("wrong_store"));
+        // Test querying with wrong store id
+        let result = service.get_purchase_order_lines(&context, "wrong_store_id", None, None, None);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().count, 0);
+
+        let result =
+            service.get_purchase_order_lines(&context, &mock_store_a().id, None, None, None);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().count, 1);
+
+        // Test querying with filter
+        let filter =
+            PurchaseOrderLineFilter::new().purchase_order_id(EqualFilter::equal_to("wrong_po_id"));
         let result = service.get_purchase_order_lines(
             &context,
-            &po.purchase_order_id,
+            &mock_store_a().id,
             None,
-            Some(wrong_filter),
+            Some(filter),
             None,
         );
         assert!(result.is_ok());
         assert_eq!(result.unwrap().count, 0);
 
-        let filter =
-            PurchaseOrderLineFilter::new().store_id(EqualFilter::equal_to(&po.purchase_order_id));
+        let filter = PurchaseOrderLineFilter::new()
+            .purchase_order_id(EqualFilter::equal_to(&purchase_order_id));
         let result = service.get_purchase_order_lines(
             &context,
-            &po.purchase_order_id,
+            &mock_store_a().id,
             None,
             Some(filter),
             None,

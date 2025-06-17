@@ -45,13 +45,18 @@ pub fn get_purchase_order(
 #[cfg(test)]
 mod test {
     use crate::service_provider::ServiceProvider;
+    use repository::mock::mock_store_a;
+
+    use repository::PurchaseOrderRowRepository;
     use repository::{db_diesel::PurchaseOrderRow, mock::MockDataInserts, test_db::setup_all};
-    use repository::{EqualFilter, PurchaseOrderFilter, PurchaseOrderRowRepository};
     use util::inline_init;
     #[actix_rt::test]
     async fn purchase_order_service_queries() {
-        let (_, connection, connection_manager, _) =
-            setup_all("purchase order service queries", MockDataInserts::none()).await;
+        let (_, connection, connection_manager, _) = setup_all(
+            "purchase order service queries",
+            MockDataInserts::none().stores(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
@@ -63,7 +68,10 @@ mod test {
 
         let po = inline_init(|p: &mut PurchaseOrderRow| {
             p.id = "test_po_1".to_string();
-            p.store_id = "test_store_1".to_string();
+            p.store_id = mock_store_a().id;
+            p.created_datetime = chrono::Utc::now().naive_utc();
+            p.status = repository::PurchaseOrderStatus::New;
+            p.purchase_order_number = 1;
         });
         repo.upsert_one(&po).unwrap();
 
@@ -79,15 +87,11 @@ mod test {
         assert!(result.is_some());
 
         // Test querying with filter
-        let wrong_filter =
-            PurchaseOrderFilter::new().store_id(EqualFilter::equal_to("wrong_store"));
-        let result =
-            service.get_purchase_orders(&context, &po.store_id, None, Some(wrong_filter), None);
+        let result = service.get_purchase_orders(&context, "wrong_store_id", None, None, None);
         assert!(result.is_ok());
         assert_eq!(result.unwrap().count, 0);
 
-        let filter = PurchaseOrderFilter::new().store_id(EqualFilter::equal_to(&po.store_id));
-        let result = service.get_purchase_orders(&context, &po.store_id, None, Some(filter), None);
+        let result = service.get_purchase_orders(&context, &po.store_id, None, None, None);
         assert!(result.is_ok());
         assert_eq!(result.unwrap().count, 1);
     }
