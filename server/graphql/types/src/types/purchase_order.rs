@@ -26,6 +26,9 @@ impl PurchaseOrderNode {
     pub async fn id(&self) -> &str {
         &self.row().id
     }
+    pub async fn number(&self) -> &i64 {
+        &self.row().purchase_order_number
+    }
     pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
         let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
         Ok(loader
@@ -55,9 +58,6 @@ impl PurchaseOrderNode {
         }
         return Ok(None);
     }
-    pub async fn purchase_order_number(&self) -> &i64 {
-        &self.row().purchase_order_number
-    }
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
@@ -65,6 +65,9 @@ impl PurchaseOrderNode {
         self.row()
             .delivered_datetime
             .map(|dt| DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
+    }
+    pub async fn confirmed_datetime(&self) -> &Option<NaiveDateTime> {
+        &self.row().confirmed_datetime
     }
     pub async fn status(&self) -> PurchaseOrderNodeStatus {
         PurchaseOrderNodeStatus::from_domain(self.row().status.clone())
