@@ -106,7 +106,7 @@ impl UpdateInput {
             vvm_status_id,
             donor_id,
             campaign_id,
-            shipped_number_of_packs,
+            shipped_number_of_packs: _,
         } = self;
 
         ServiceInput {
