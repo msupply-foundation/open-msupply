@@ -66,7 +66,7 @@ impl StringFilter {
     }
 }
 
-#[derive(Clone, PartialEq, Debug, TS, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, TS, Serialize, Deserialize, Default)]
 pub struct EqualFilter<T>
 where
     T: 'static,
@@ -106,18 +106,6 @@ impl<F> EqualFilter<F> {
             equal_any_or_null: equal_any_or_null.map(|r| r.into_iter().map(T::from).collect()),
             not_equal_all: not_equal_all.map(|r| r.into_iter().map(T::from).collect()),
             is_null,
-        }
-    }
-}
-impl<T> Default for EqualFilter<T> {
-    fn default() -> Self {
-        Self {
-            equal_to: None,
-            not_equal_to: None,
-            equal_any: None,
-            equal_any_or_null: None,
-            not_equal_all: None,
-            is_null: None,
         }
     }
 }
@@ -237,25 +225,13 @@ impl<T> NumberFilter<T> {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct DatetimeFilter {
     pub equal_to: Option<NaiveDateTime>,
     pub before_or_equal_to: Option<NaiveDateTime>,
     pub before: Option<NaiveDateTime>,
     pub after_or_equal_to: Option<NaiveDateTime>,
     pub is_null: Option<bool>,
-}
-
-impl Default for DatetimeFilter {
-    fn default() -> Self {
-        Self {
-            equal_to: None,
-            before_or_equal_to: None,
-            before: None,
-            after_or_equal_to: None,
-            is_null: None,
-        }
-    }
 }
 
 impl DatetimeFilter {
@@ -303,21 +279,11 @@ impl DatetimeFilter {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct DateFilter {
     pub equal_to: Option<NaiveDate>,
     pub before_or_equal_to: Option<NaiveDate>,
     pub after_or_equal_to: Option<NaiveDate>,
-}
-
-impl Default for DateFilter {
-    fn default() -> Self {
-        Self {
-            equal_to: None,
-            before_or_equal_to: None,
-            after_or_equal_to: None,
-        }
-    }
 }
 
 impl DateFilter {
@@ -359,7 +325,7 @@ pub struct Sort<T> {
 
 pub const DEFAULT_PAGINATION_LIMIT: u32 = 100;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct PaginationOption {
     pub limit: Option<u32>,
     pub offset: Option<u32>,
