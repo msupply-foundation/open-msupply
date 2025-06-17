@@ -2,15 +2,16 @@
 date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else
 %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} {% endmacro input %}
 
-<!-- Main form has 7 columns, so we'll work with that here -->
-<table class="header_image_section">
-  <tr>
+<!-- Main form has 7 columns, so we'll work with that here (means excel report header and 
+ data table are the same width) -->
+<table class="header_section">
+  <tr class="header_image_section">
     <td rowspan="5">
       <img class="logo" src="{{ data.store.logo }}" />
     </td>
-    <td>{{ data.store.storeName }}</td>
-    <td colspan="2"></td>
-    <td colspan="3">
+    <td colspan="2" class="bold">{{ data.store.storeName }}</td>
+    <td></td>
+    <td colspan="3" rowspan="2" class="title">
       {{ t(k="label.outbound-shipment", f="Outbound Shipment") }}
     </td>
   </tr>
@@ -29,21 +30,32 @@ date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else
     <td>{{ data.store.name.email }}</td>
   </tr>
   <tr></tr>
+</table>
+<table class="header_section">
   <tr>
     <td>{{t(k="label.customer", f="Customer")}}:</td>
-    <td colspan="4"></td>
-    <td>{{ t(k="label.number", f="Number") }}</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>{{ t(k="label.number", f="Number") }}:</td>
     <td>{{ data.invoice.invoiceNumber }}</td>
   </tr>
   <tr>
     <td>{{ data.invoice.otherPartyName }}</td>
-    <td colspan="4"></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
     <td>{{ t(k="report.their-ref", f="Their ref") }}:</td>
     <td>{{ data.invoice.theirReference }}</td>
   </tr>
   <tr>
     <td>{{ data.invoice.otherParty.code }}</td>
-    <td colspan="4"></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
     <td>{{ t(k="report.printed-date", f="Printed date") }}:</td>
     <td>{{ now() | date(format="%d/%m/%Y") }}</td>
   </tr>
@@ -53,8 +65,11 @@ date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else
       data.invoice.otherParty.address2 %}, {{data.invoice.otherParty.address2 }}
       {% endif %}
     </td>
-    <td colspan="4"></td>
-    <td>{{t(k="report.shipped-date",f="Shipped date")}}</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>{{t(k="report.shipped-date",f="Shipped date")}}:</td>
     <td>{{self::dateOrNA(datetime=data.invoice.shippedDatetime)}}</td>
   </tr>
 </table>
