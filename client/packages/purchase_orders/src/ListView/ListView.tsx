@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -11,6 +11,7 @@ import {
   ColumnFormat,
   GenericColumnKey,
   PurchaseOrderNodeStatus,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderList } from '../api';
 import { PurchaseOrderRowFragment } from '../api/operations.generated';
@@ -21,6 +22,7 @@ import { getStatusTranslator } from '../utils';
 
 const ListView: FC = () => {
   const t = useTranslation();
+  const { setDisabledRows } = useTableStore();
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -50,6 +52,13 @@ const ListView: FC = () => {
     query: { data, isError, isLoading },
   } = usePurchaseOrderList(listParams);
   const pagination = { page, first, offset };
+
+  useEffect(() => {
+    const disabledRows = (data?.nodes ?? [])
+      .filter(row => row.status !== PurchaseOrderNodeStatus.New)
+      .map(({ id }) => id);
+    setDisabledRows(disabledRows);
+  }, [data, setDisabledRows]);
 
   const columns = useColumns<PurchaseOrderRowFragment>(
     [
