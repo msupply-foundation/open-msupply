@@ -47,7 +47,6 @@ const ListView: FC = () => {
   };
 
   const navigate = useNavigate();
-  // const modalController = useToggle();
   const {
     query: { data, isError, isLoading },
   } = usePurchaseOrderList(listParams);
