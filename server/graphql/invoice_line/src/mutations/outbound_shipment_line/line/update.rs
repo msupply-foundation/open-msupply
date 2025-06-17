@@ -108,6 +108,7 @@ impl UpdateInput {
             }),
             note: None,
             campaign_id: None,
+            shipped_number_of_packs: number_of_packs,
         }
     }
 }
@@ -555,7 +556,8 @@ mod test {
                         percentage: Some(1.0),
                     }),
                     note: None,
-                    campaign_id: None
+                    campaign_id: None,
+                    shipped_number_of_packs: None,
                 }
             );
             Ok(InvoiceLine {
