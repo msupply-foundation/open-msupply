@@ -1,0 +1,31 @@
+{% macro dateOrNA(datetime) %} {% if datetime %}{{ datetime |
+date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else
+%}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} {% endmacro input %}
+
+<div
+  class="header_image_section"
+  style="
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  "
+>
+  <div>
+    <span style="font-size: 14pt; font-weight: bold"
+      >{{ data.purchaseOrder.store.name.name }}</span
+    >
+  </div>
+  <div>
+    <span style="font-size: 14pt">Purchase Order</span>
+  </div>
+  <div>
+    <span>
+      Purchase Order #: 20303330330303, Expected Delivery Date: MM/MM/MM, Date
+      Confirmed: MM/MM/MM, Date Printed: MM/MM/MM, Supplier:
+      SUPERCALIFRAGILISTICEXPEALIDOCIOUSOHYESINDEEDITISSO!,
+    </span>
+  </div>
+  <div style="align-self: end"><span>Page X of X</span></div>
+  <div><span style="font-size: 14pt; font-weight: bold">Stock Items</span></div>
+</div>

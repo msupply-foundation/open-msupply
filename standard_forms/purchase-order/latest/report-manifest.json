@@ -1,0 +1,11 @@
+{
+  "is_custom": false,
+  "version": "2.9.0",
+  "code": "purchase-order",
+  "context": "INBOUND_SHIPMENT",
+  "name": "Purchase Order",
+  "queries": {
+    "gql": "query.graphql"
+  },
+  "header": "header.html"
+}
