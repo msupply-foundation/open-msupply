@@ -130,7 +130,7 @@ impl UpdateInput {
             }),
             r#type: StockInType::InboundShipment,
             vvm_status_id,
-            note,
+            note: note.map(|note| NullableUpdate { value: note.value }),
             donor_id: donor_id.map(|donor_id| NullableUpdate {
                 value: donor_id.value,
             }),
