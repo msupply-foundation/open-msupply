@@ -507,7 +507,7 @@ fragment ItemLedger on ItemLedgerNode {
   invoiceType
   name
   packSize
-  quantity
+  movementInUnits
   reason
   sellPricePerPack
   totalBeforeTax
@@ -515,18 +515,15 @@ fragment ItemLedger on ItemLedgerNode {
 }
 
 query itemLedger(
-  $key: LedgerSortFieldInput!
   $first: Int
   $offset: Int
-  $desc: Boolean
-  $filter: LedgerFilterInput
+  $filter: ItemLedgerFilterInput
   $storeId: String!
 ) {
   itemLedger(
     storeId: $storeId
     filter: $filter
     page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
   ) {
     ... on ItemLedgerConnector {
       __typename
