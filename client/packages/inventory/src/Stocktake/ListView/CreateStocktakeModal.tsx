@@ -10,7 +10,7 @@ import {
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import { useDialog } from '@common/hooks';
 import {
-  useStockList,
+  useStockListCount,
   LocationSearchInput,
   LocationRowFragment,
   MasterListSearchInput,
@@ -79,9 +79,7 @@ export const CreateStocktakeModal = ({
     hasPacksInStore: true,
   };
 
-  const { data } = useStockList({
-    filterBy: stockFilter,
-  });
+  const { data } = useStockListCount(stockFilter);
 
   const { localisedDate } = useFormatDateTime();
 
