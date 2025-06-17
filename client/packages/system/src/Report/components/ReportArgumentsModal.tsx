@@ -16,13 +16,23 @@ import {
 import { ReportRowFragment } from '../api';
 import { useDialog, useUrlQuery } from '@common/hooks';
 import { DialogButton, Typography } from '@common/components';
-import { useAuthContext, useTranslation } from '@openmsupply-client/common';
+import {
+  PrintFormat,
+  useAuthContext,
+  useTranslation,
+} from '@openmsupply-client/common';
 
 export type ReportArgumentsModalProps = {
   /** Modal is shown if there is an argument schema present */
   report: ReportRowFragment | undefined;
+  printFormat?: PrintFormat;
+  extraArguments?: Record<string, string | number | undefined>;
   onReset: () => void;
-  onArgumentsSelected: (report: ReportRowFragment, args: JsonData) => void;
+  onArgumentsSelected: (
+    report: ReportRowFragment,
+    args: JsonData,
+    format?: PrintFormat
+  ) => void;
 };
 
 const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
@@ -34,6 +44,8 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
 
 export const ReportArgumentsModal = ({
   report,
+  printFormat,
+  extraArguments,
   onReset,
   onArgumentsSelected,
 }: ReportArgumentsModalProps) => {
@@ -55,18 +67,13 @@ export const ReportArgumentsModal = ({
     monthsUnderstock,
     monthsItemsExpire,
     timezone,
+    ...extraArguments,
     ...JSON.parse((urlQuery?.['reportArgs'] ?? '{}') as string),
   });
   const [error, setError] = useState<string | false>(false);
 
-  // clean up when modal is closed
-  const cleanUp = () => {
-    onReset();
-  };
-
   const { Modal } = useDialog({
     isOpen: !!report?.argumentSchema,
-    onClose: cleanUp,
   });
 
   if (!report?.argumentSchema) {
@@ -76,7 +83,7 @@ export const ReportArgumentsModal = ({
   return (
     <Modal
       title={t('label.report-filters')}
-      cancelButton={<DialogButton variant="cancel" onClick={cleanUp} />}
+      cancelButton={<DialogButton variant="cancel" onClick={onReset} />}
       slideAnimation={false}
       width={560}
       okButton={
@@ -84,8 +91,8 @@ export const ReportArgumentsModal = ({
           variant="ok"
           disabled={!!error}
           onClick={async () => {
-            onArgumentsSelected(report, data);
-            cleanUp();
+            onArgumentsSelected(report, data, printFormat);
+            onReset();
           }}
         />
       }
