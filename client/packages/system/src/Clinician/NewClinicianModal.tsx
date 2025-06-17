@@ -17,14 +17,12 @@ import { isExistingCode } from '.';
 import { ClinicianFragment } from '@openmsupply-client/programs';
 
 interface NewClinicianModalProps {
-  asSidePanel: boolean;
   open: boolean;
   existingClinicians: ClinicianFragment[];
   onClose: (clinicianId?: string) => void;
 }
 
 export const NewClinicianModal = ({
-  asSidePanel,
   open,
   existingClinicians,
   onClose,
@@ -40,7 +38,6 @@ export const NewClinicianModal = ({
     onClose,
     disableBackdrop: true,
     disableMobileFullScreen: true, // modal not big enough to warrant full screen on mobile
-    isSidePanelModal: asSidePanel,
   });
 
   const handleClose = (clinicianId?: string) => {
