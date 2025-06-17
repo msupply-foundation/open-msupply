@@ -14,12 +14,14 @@ import {
   BasicSpinner,
   useAuthContext,
   UserPermission,
+  TabDefinition,
+  useConfirmationModal,
+  DetailTab,
 } from '@openmsupply-client/common';
 
 import { usePatientEditForm } from './usePatientEditForm';
-import { PatientPanel } from '../CreatePatientModal/PatientPanel';
 import { useInsuranceProviders } from '../apiModern/hooks/useInsuranceProviders';
-import { PatientInsuranceTab } from './PatientInsuranceTab';
+import { InsuranceListView } from '../Insurance';
 
 enum Tabs {
   Patient = 'Patient',
@@ -38,8 +40,15 @@ export const EditPatientModal = ({
   const t = useTranslation();
   const [currentTab, setCurrentTab] = useState(Tabs.Patient);
 
-  const { JsonForm, save, isLoading, isSaving, isDirty, validationError } =
-    usePatientEditForm(patientId, onClose);
+  const {
+    JsonForm,
+    save,
+    isLoading,
+    isSaving,
+    isDirty,
+    validationError,
+    revert,
+  } = usePatientEditForm(patientId, onClose);
   const { userHasPermission } = useAuthContext();
 
   const { Modal } = useDialog({
@@ -47,9 +56,47 @@ export const EditPatientModal = ({
     isOpen,
   });
 
+  const requiresConfirmation = (tab: string) => {
+    return tab === Tabs.Patient && isDirty;
+  };
+
+  const tabs: TabDefinition[] = [
+    {
+      Component: <Box>{JsonForm}</Box>,
+      value: Tabs.Patient,
+      confirmOnLeaving: isDirty,
+    },
+  ];
+
   const {
     query: { data: insuranceProvidersData },
   } = useInsuranceProviders();
+
+  if (insuranceProvidersData.length > 0)
+    tabs.push({
+      Component: <InsuranceListView readOnly={true} patientId={patientId} />,
+      value: Tabs.Insurance,
+    });
+
+  const showConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-cancel-generic'),
+  });
+
+  const onChange = (tab: Tabs) => {
+    const tabConfirm = tabs.find(({ value }) => value === currentTab);
+
+    if (!!tabConfirm?.confirmOnLeaving && requiresConfirmation(currentTab)) {
+      showConfirmation({
+        onConfirm: () => {
+          setCurrentTab(tab);
+          revert();
+        },
+      });
+    } else {
+      setCurrentTab(tab);
+    }
+  };
 
   if (isLoading) return <BasicSpinner />;
 
@@ -78,6 +125,7 @@ export const EditPatientModal = ({
           variant="cancel"
           onClick={() => {
             onClose();
+            revert();
           }}
         />
       }
@@ -90,7 +138,7 @@ export const EditPatientModal = ({
               <TabList
                 value={currentTab}
                 centered
-                onChange={(_, v) => setCurrentTab(v)}
+                onChange={(_, tab) => onChange(tab)}
               >
                 <Tab
                   value={Tabs.Patient}
@@ -109,10 +157,11 @@ export const EditPatientModal = ({
           </DetailSection>
         </Box>
         <DetailContainer>
-          <PatientPanel value={Tabs.Patient}>{JsonForm}</PatientPanel>
-          <PatientPanel value={Tabs.Insurance}>
-            <PatientInsuranceTab />
-          </PatientPanel>
+          {tabs.map(({ Component, value }) => (
+            <DetailTab value={value} key={value}>
+              {Component}
+            </DetailTab>
+          ))}
         </DetailContainer>
       </TabContext>
     </Modal>

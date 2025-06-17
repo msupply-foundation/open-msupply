@@ -100,7 +100,7 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
 
           <EditPatientModal
             patientId={value.id}
-            onClose={() => setModalOpen(false)} // TODO add cancel confirmation
+            onClose={() => setModalOpen(false)}
             isOpen={modalOpen}
           />
         </>

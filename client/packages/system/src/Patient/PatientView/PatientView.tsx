@@ -120,7 +120,7 @@ export const PatientView = () => {
   // Display insurance tab only if insurance providers are available and the patient is saved
   if (insuranceProvidersData.length > 0)
     tabs.push({
-      Component: <InsuranceListView />,
+      Component: <InsuranceListView patientId={patientId} />,
       value: PatientTabValue.Insurance,
     });
 

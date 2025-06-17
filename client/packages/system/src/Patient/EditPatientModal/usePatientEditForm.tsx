@@ -5,6 +5,7 @@ import {
   UpdatePatientInput,
   DocumentRegistryCategoryNode,
   useNotification,
+  useQueryClient,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import {
@@ -19,8 +20,9 @@ import {
   SaveDocumentMutation,
 } from '@openmsupply-client/programs';
 
-import defaultPatientSchema from './DefaultEditPatientSchema.json';
-import defaultPatientUISchema from './DefaultEditPatientUISchema.json';
+import defaultPatientSchema from '../PatientView/DefaultPatientSchema.json';
+import defaultPatientUISchema from '../PatientView/DefaultPatientUISchema.json';
+import { PRESCRIPTION } from 'packages/invoices/src/Prescriptions/api/hooks/keys';
 
 const DEFAULT_SCHEMA: SchemaData = {
   formSchemaId: undefined,
@@ -47,6 +49,7 @@ export const usePatientEditForm = (patientId: string, onClose: () => void) => {
   const t = useTranslation();
   const { mutateAsync: updatePatient } = usePatient.document.update();
   const { error } = useNotification();
+  const queryClient = useQueryClient();
 
   const { documentName, setDocumentName } = usePatientStore();
   const { data: currentPatient, isLoading: isCurrentPatientLoading } =
@@ -141,7 +144,7 @@ export const usePatientEditForm = (patientId: string, onClose: () => void) => {
         },
       };
 
-  const { JsonForm, saveData, isSaving, isDirty, validationError } =
+  const { JsonForm, saveData, isSaving, isDirty, validationError, revert } =
     useJsonFormsHandler(
       {
         documentName: documentName,
@@ -158,7 +161,7 @@ export const usePatientEditForm = (patientId: string, onClose: () => void) => {
   const handleSave = async () => {
     try {
       const savedDocument = await saveData();
-
+      queryClient.invalidateQueries([PRESCRIPTION]);
       if (savedDocument) {
         setDocumentName(savedDocument.name);
       }
@@ -189,5 +192,7 @@ export const usePatientEditForm = (patientId: string, onClose: () => void) => {
     isSaving,
     isDirty,
     validationError,
+    currentPatient,
+    revert,
   };
 };
