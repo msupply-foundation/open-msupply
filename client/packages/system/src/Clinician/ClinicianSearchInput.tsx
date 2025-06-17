@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import {
   Autocomplete,
   Box,
@@ -9,9 +10,8 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { ClinicianFragment, useClinicians } from '@openmsupply-client/programs';
-import React, { useState } from 'react';
-import { FC } from 'react';
 import { ClinicianAutocompleteOption, Clinician } from './utils';
+import { ClinicianSlider } from './ClinicianSlider';
 import { NewClinicianModal } from './NewClinicianModal';
 
 interface ClinicianSearchInputProps {
@@ -21,19 +21,20 @@ interface ClinicianSearchInputProps {
   disabled?: boolean;
   fullWidth?: boolean;
   allowCreate?: boolean;
-  mountCreateModalAsSidePanel?: boolean;
+  mountSlidePanel?: boolean;
 }
 
-export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
+export const ClinicianSearchInput = ({
   onChange,
   width = 250,
   clinicianValue,
   disabled,
   fullWidth,
   allowCreate,
-  mountCreateModalAsSidePanel = false,
-}) => {
+  mountSlidePanel = false,
+}: ClinicianSearchInputProps) => {
   const t = useTranslation();
+  const [sliderOpen, setSliderOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const { data, refetch } = useClinicians.document.list({});
   const { getLocalisedFullName } = useIntlUtils();
@@ -75,23 +76,42 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
             icon={<PlusCircleIcon />}
             label={t('button.add-new-clinician')}
             color="secondary"
-            onClick={() => setModalOpen(true)}
+            onClick={() =>
+              mountSlidePanel ? setSliderOpen(true) : setModalOpen(true)
+            }
           />
-          <NewClinicianModal
-            onClose={async clinicianId => {
-              setModalOpen(false);
-              if (clinicianId) {
-                const refreshedList = await refetch();
-                const newClinician = refreshedList.data?.nodes.find(
-                  c => c.id === clinicianId
-                );
-                onChange(newClinician ? asOption(newClinician) : null);
-              }
-            }}
-            open={modalOpen}
-            asSidePanel={mountCreateModalAsSidePanel}
-            existingClinicians={clinicians}
-          />
+          {mountSlidePanel ? (
+            <ClinicianSlider
+              width={500}
+              open={sliderOpen}
+              onClose={async clinicianId => {
+                setSliderOpen(false);
+                if (clinicianId) {
+                  const refreshedList = await refetch();
+                  const newClinician = refreshedList.data?.nodes.find(
+                    c => c.id === clinicianId
+                  );
+                  onChange(newClinician ? asOption(newClinician) : null);
+                }
+              }}
+              existingClinicians={clinicians}
+            />
+          ) : (
+            <NewClinicianModal
+              onClose={async clinicianId => {
+                setModalOpen(false);
+                if (clinicianId) {
+                  const refreshedList = await refetch();
+                  const newClinician = refreshedList.data?.nodes.find(
+                    c => c.id === clinicianId
+                  );
+                  onChange(newClinician ? asOption(newClinician) : null);
+                }
+              }}
+              open={modalOpen}
+              existingClinicians={clinicians}
+            />
+          )}
         </>
       )}
     </Box>
