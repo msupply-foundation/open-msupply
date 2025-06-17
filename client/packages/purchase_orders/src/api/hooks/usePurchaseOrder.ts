@@ -50,7 +50,6 @@ export const usePurchaseOrder = (purchaseOrderId?: string) => {
     const id = FnUtils.generateUUID();
 
     const result = await createMutation({ id, supplierId });
-    // resetDraft();
     return result;
   };
 
