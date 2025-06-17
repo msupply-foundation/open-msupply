@@ -9,12 +9,9 @@ use graphql_core::{
     standard_graphql_error::{list_error_to_gql_err, validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_invoice::invoice_queries::{
-    EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput,
-};
 use graphql_types::types::{
-    DraftStockOutItemData, InvoiceLineConnector, InvoiceLineNodeType, InvoiceNodeStatus,
-    InvoiceNodeType,
+    DraftStockOutItemData, EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput,
+    InvoiceLineConnector, InvoiceLineNodeType, InvoiceNodeStatus, InvoiceNodeType,
 };
 use repository::{
     DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineSort, InvoiceLineSortField,
