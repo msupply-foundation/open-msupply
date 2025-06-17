@@ -36,6 +36,7 @@ pub struct UpdateInput {
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<NullableUpdateInput<String>>,
     pub campaign_id: Option<NullableUpdateInput<String>>,
+    pub shipped_number_of_packs: Option<f64>,
 }
 
 #[derive(SimpleObject)]
@@ -105,6 +106,7 @@ impl UpdateInput {
             vvm_status_id,
             donor_id,
             campaign_id,
+            shipped_number_of_packs,
         } = self;
 
         ServiceInput {
