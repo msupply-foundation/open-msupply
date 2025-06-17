@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   PlusCircleIcon,
   AppBarButtonsPortal,
@@ -18,7 +18,7 @@ import {
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { ListParams, usePurchaseOrderList } from '../api';
 
-export const AppBarButtonsComponent: FC = () => {
+export const AppBarButtonsComponent = () => {
   const t = useTranslation();
   const modalController = useToggle();
 

@@ -35,7 +35,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               options: [
                 { label: t('label.new'), value: PurchaseOrderNodeStatus.New },
                 {
-                  label: t('label.authorised'),
+                  label: t('label.authorized'),
                   value: PurchaseOrderNodeStatus.Authorised,
                 },
                 {
