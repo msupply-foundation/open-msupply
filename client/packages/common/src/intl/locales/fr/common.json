@@ -1499,8 +1499,6 @@
   "messages.could-not-save": "Sauvegarde impossible",
   "messages.create-new-asset-confirmation": "L'équipement que vous avez scanné n'est pas actuellement dans le système, mais il a fourni les données GS1 appropriées. Souhaitez-vous créer un nouvel équipement avec ces données ?",
   "messages.create-outbound-from-requisition": "Êtes-vous sûr(e) de vouloir créer un bon de livraison pour cette commande client ?",
-  "messages.create-stocktake-1": "Vous pouvez créer un inventaire pour les articles se trouvant dans un emplacement spécifique, pour les articles en stock actuellement, ou pour les articles périmant avant une date spécifique.",
-  "messages.create-stocktake-2": "pour créer un inventaire manuel, cliquez sur OK pour continuer.",
   "messages.created-new-vaccine-course": "Calendrier de vaccination créé avec succès",
   "messages.customer-requisition-created-on": "Commande client créée le {{date}}",
   "messages.customer-return-created-verified": "Le retour client a été créé avec succès comme Vérifié",

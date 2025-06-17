@@ -1558,8 +1558,6 @@
   "messages.could-not-save": "Could not Save",
   "messages.create-new-asset-confirmation": "The asset you scanned is not currently in the system, but has provided appropriate GS1 data. Would you like to create a new asset with this data?",
   "messages.create-outbound-from-requisition": "Are you sure you want to create an Outbound Shipment from this Customer Requisition?",
-  "messages.create-stocktake-1": "You can create a stocktake based on items currently assigned to a location, items that you currently have in stock, items assigned to a master list, or items expiring before a particular date.",
-  "messages.create-stocktake-2": "To create an empty stocktake, simply click OK to continue.",
   "messages.created-new-vaccine-course": "Successfully created vaccine course",
   "messages.customer-requisition-created-on": "Customer requisition created on {{date}}",
   "messages.customer-return-created-verified": "Customer Return successfully created as Verified",

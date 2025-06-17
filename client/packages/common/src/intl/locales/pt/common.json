@@ -1538,8 +1538,6 @@
   "messages.could-not-save": "Não foi possível salvar",
   "messages.create-new-asset-confirmation": "O ativo que escaneaste não está atualmente no sistema, mas a proporcionou dados GS1 adequados. Gostaria de criar um novo ativo com esses dados?",
   "messages.create-outbound-from-requisition": "Você tem certeza de que gostaria de criar um Envio a partir dessa Requisição do Cliente?",
-  "messages.create-stocktake-1": "Você pode criar um inventário baseado em items associados a uma localização, items que você tem em estoque atualmente , items alocados a uma lista mestra ou items que irão vencer antes de uma data particular.",
-  "messages.create-stocktake-2": "Para criar um inventário vazio, simplesmente clique em OK para continuar.",
   "messages.created-new-vaccine-course": "Esquema de vacinação criado com sucesso",
   "messages.customer-requisition-created-on": "Requisição do Cliente criada em {{date}}",
   "messages.customer-return-created-verified": "Retorno de Cliente criado com sucesso como Verificado",
