@@ -5,7 +5,6 @@ import {
   DateTimePickerInput,
   DialogButton,
   InputWithLabelRow,
-  Typography,
 } from '@common/components';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import { useDialog } from '@common/hooks';
@@ -165,12 +164,6 @@ export const CreateStocktakeModal = ({
         <Box flex={1} display="flex" justifyContent="center">
           {!isCreating ? (
             <Box paddingLeft={2} display="flex" flexDirection="column" gap={2}>
-              <Typography padding={1}>
-                {t('messages.create-stocktake-1')}
-              </Typography>
-              <Typography padding={1}>
-                {t('messages.create-stocktake-2')}
-              </Typography>
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
