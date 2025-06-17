@@ -81,7 +81,7 @@ export const PatientDetailView = ({
   onEdit,
 }: {
   patientId: string;
-  onEdit?: (isDirty: boolean) => void;
+  onEdit: (isDirty: boolean) => void;
 }) => {
   const t = useTranslation();
   const {
@@ -258,7 +258,7 @@ export const PatientDetailView = ({
   }, [currentPatient, documentName, setDocumentName]);
 
   useEffect(() => {
-    onEdit?.(isDirty);
+    onEdit(isDirty);
   }, [isDirty, onEdit]);
 
   const showSaveConfirmation = useConfirmationModal({

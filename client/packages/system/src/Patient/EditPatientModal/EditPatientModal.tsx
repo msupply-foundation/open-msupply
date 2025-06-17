@@ -62,7 +62,7 @@ export const EditPatientModal = ({
 
   const tabs: TabDefinition[] = [
     {
-      Component: <Box>{JsonForm}</Box>,
+      Component: <Box style={{ maxWidth: 1180, flex: 1 }}>{JsonForm}</Box>,
       value: Tabs.Patient,
       confirmOnLeaving: isDirty,
     },
@@ -103,8 +103,8 @@ export const EditPatientModal = ({
   return (
     <Modal
       title=""
-      width={950}
-      height={650}
+      width={1180}
+      height={750}
       okButton={
         <LoadingButton
           color="secondary"
