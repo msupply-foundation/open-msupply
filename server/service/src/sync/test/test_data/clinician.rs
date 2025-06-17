@@ -22,7 +22,8 @@ const CLINICIAN_1: (&str, &str) = (
             "mobile": "",
             "email": "",
             "female": true,
-            "active": true
+            "active": true,
+            "store_ID": "store_a"
     }"#,
 );
 
@@ -38,6 +39,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             first_name: Some("First Name".to_string()),
             gender: Some(GenderType::Female),
             is_active: true,
+            store_id: Some("store_a".to_string()),
             ..Default::default()
         },
     )]
@@ -59,6 +61,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
             email: None,
             is_female: true,
             is_active: true,
+            store_id: Some("store_a".to_string()),
         }),
     }]
 }

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   AppBarButtonsPortal,
   ButtonWithIcon,
@@ -8,15 +8,13 @@ import {
   useTranslation,
   InfoOutlineIcon,
   ReportContext,
+  SplitButton,
+  PrinterIcon,
+  SplitButtonOption,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { Draft } from '../../StockOut';
-import {
-  ReportRowFragment,
-  ReportSelector,
-  usePrintReport,
-} from '../../../../system/src/Report';
-import { JsonData } from '@openmsupply-client/programs';
+import { ReportSelector } from '../../../../system/src/Report';
 import { usePrintLabels } from './hooks/usePrinter';
 
 interface AppBarButtonProps {
@@ -34,20 +32,11 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     query: { data: prescription },
   } = usePrescription();
   const { OpenButton } = useDetailPanel();
-  const { print: printReceipt, isPrinting: isPrintingReceipt } =
-    usePrintReport();
   const {
     printLabels: printPrescriptionLabels,
     isPrintingLabels,
     DisabledNotification,
   } = usePrintLabels();
-
-  const printReport = (
-    report: ReportRowFragment,
-    args: JsonData | undefined
-  ) => {
-    printReceipt({ reportId: report.id, dataId: prescription?.id, args });
-  };
 
   const handlePrintLabels = (e?: React.MouseEvent<HTMLButtonElement>) => {
     if (prescription) {
@@ -55,16 +44,20 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     }
   };
 
-  const extraOptions = prescription
-    ? [
-        {
-          value: 'Print Labels',
-          label: t('button.print-prescription-label'),
-          isDisabled: isDisabled,
-          onClick: handlePrintLabels,
-        },
-      ]
-    : [];
+  const options = [
+    {
+      value: 'export_or_print',
+      label: t('button.export-or-print'),
+    },
+    {
+      value: 'print_labels',
+      label: t('button.print-prescription-label'),
+    },
+  ];
+
+  const [selected, setSelected] = useState<SplitButtonOption<string>>(
+    options[0]!
+  );
 
   return (
     <AppBarButtonsPortal>
@@ -76,11 +69,35 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         />
         <ReportSelector
           context={ReportContext.Prescription}
-          onPrint={printReport}
-          isPrinting={isPrintingReceipt || isPrintingLabels}
-          customOptions={extraOptions}
-          onPrintCustom={e => handlePrintLabels(e)}
-          buttonLabel={t('button.print-report-options')}
+          dataId={prescription?.id ?? ''}
+          disabled={isDisabled}
+          CustomButton={({ onPrint }) => {
+            const handleClick = (
+              option: SplitButtonOption<string>,
+              e?: React.MouseEvent<HTMLButtonElement>
+            ) => {
+              if (option.value === 'print_labels') {
+                handlePrintLabels(e);
+              } else {
+                onPrint();
+              }
+            };
+            return (
+              <SplitButton
+                color="primary"
+                openFrom={'bottom'}
+                Icon={<PrinterIcon />}
+                isLoading={isPrintingLabels}
+                onClick={handleClick}
+                selectedOption={selected}
+                onSelectOption={(option, e) => {
+                  setSelected(option);
+                  handleClick(option, e);
+                }}
+                options={options}
+              />
+            );
+          }}
         />
         <ButtonWithIcon
           label={t('button.history')}
