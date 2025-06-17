@@ -9,7 +9,10 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{InvoiceConnector, InvoiceNode, InvoiceNodeStatus, InvoiceNodeType};
+use graphql_types::types::{
+    EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput, InvoiceConnector, InvoiceNode,
+    InvoiceNodeStatus, InvoiceNodeType,
+};
 use repository::{
     DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceSort, InvoiceSortField, PaginationOption,
     StringFilter,
@@ -53,20 +56,6 @@ pub struct InvoiceSortInput {
     /// Sort query result is sorted descending or ascending (if not provided the default is
     /// ascending)
     desc: Option<bool>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct EqualFilterInvoiceTypeInput {
-    pub equal_to: Option<InvoiceNodeType>,
-    pub equal_any: Option<Vec<InvoiceNodeType>>,
-    pub not_equal_to: Option<InvoiceNodeType>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct EqualFilterInvoiceStatusInput {
-    pub equal_to: Option<InvoiceNodeStatus>,
-    pub equal_any: Option<Vec<InvoiceNodeStatus>>,
-    pub not_equal_to: Option<InvoiceNodeStatus>,
 }
 
 #[derive(InputObject, Clone)]

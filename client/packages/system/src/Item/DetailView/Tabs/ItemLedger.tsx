@@ -12,7 +12,6 @@ import {
   useColumns,
   createTableStore,
   Box,
-  createQueryParamsStore,
   useTranslation,
   useUrlQueryParams,
   useFormatDateTime,
@@ -33,11 +32,15 @@ const ItemLedgerTable = ({
   const {
     updateSortQuery,
     updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
+    queryParams: { page, first, offset, filterBy },
   } = useUrlQueryParams();
   const pagination = { page, first, offset };
 
-  const { data, isLoading } = useItemLedger(itemId);
+  const { data, isLoading } = useItemLedger(itemId, {
+    first,
+    offset,
+    filterBy,
+  });
   const { localisedTime } = useFormatDateTime();
 
   const columns = useColumns<ItemLedgerFragment>(
@@ -101,11 +104,11 @@ const ItemLedgerTable = ({
         label: 'label.num-packs',
       },
       {
-        key: 'quantity',
-        label: 'label.unit-quantity',
+        key: 'movementInUnits',
+        label: 'label.change',
         sortable: false,
         description: 'description.unit-quantity',
-        accessor: ({ rowData }) => NumUtils.round(rowData.quantity, 2),
+        accessor: ({ rowData }) => NumUtils.round(rowData.movementInUnits, 2),
       },
 
       {
@@ -143,9 +146,8 @@ const ItemLedgerTable = ({
     ],
     {
       onChangeSortBy: updateSortQuery,
-      sortBy,
     },
-    [updateSortQuery, sortBy]
+    [updateSortQuery]
   );
 
   if (isLoading) return <BasicSpinner />;
@@ -173,12 +175,7 @@ export const ItemLedgerTab = ({
 }) => (
   <Box justifyContent="center" display="flex" flex={1}>
     <Box flex={1} display="flex">
-      <TableProvider
-        createStore={createTableStore}
-        queryParamsStore={createQueryParamsStore({
-          initialSortBy: { key: 'datetime' },
-        })}
-      >
+      <TableProvider createStore={createTableStore}>
         <ItemLedgerTable itemId={itemId} onRowClick={onRowClick} />
       </TableProvider>
     </Box>
