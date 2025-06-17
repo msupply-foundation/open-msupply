@@ -10,13 +10,8 @@ import {
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
-import {
-  ReportRowFragment,
-  ReportSelector,
-  usePrintReport,
-} from '@openmsupply-client/system';
+import { ReportSelector } from '@openmsupply-client/system';
 import { AddFromMasterListButton } from './AddFromMasterListButton';
-import { JsonData } from '@openmsupply-client/programs';
 import { AddFromScannerButton } from './AddFromScannerButton';
 import { ScannedBarcode } from '../../types';
 
@@ -29,23 +24,9 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
   const { data } = useOutbound.document.get();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation();
-  const { print, isPrinting } = usePrintReport();
   const {
     queryParams: { sortBy },
   } = useUrlQueryParams();
-
-  const printReport = (
-    report: ReportRowFragment,
-    args: JsonData | undefined
-  ) => {
-    if (!data) return;
-    print({
-      reportId: report.id,
-      dataId: data?.id,
-      args,
-      sort: { key: sortBy.key, desc: sortBy.isDesc },
-    });
-  };
 
   return (
     <AppBarButtonsPortal>
@@ -60,9 +41,8 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
         <AddFromScannerButton onAddItem={onAddItem} />
         <ReportSelector
           context={ReportContext.OutboundShipment}
-          onPrint={printReport}
-          isPrinting={isPrinting}
-          buttonLabel={t('button.print')}
+          dataId={data?.id ?? ''}
+          sort={{ key: sortBy.key, desc: sortBy.isDesc }}
         />
         {OpenButton}
       </Grid>
