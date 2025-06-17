@@ -6569,6 +6569,7 @@ export type PurchaseOrderNode = {
   authorisingOfficer2?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   communicationsCharge?: Maybe<Scalars['Float']['output']>;
+  confirmedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   contractSignedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   currencyId?: Maybe<Scalars['String']['output']>;
@@ -6583,7 +6584,7 @@ export type PurchaseOrderNode = {
   id: Scalars['String']['output'];
   insuranceCharge?: Maybe<Scalars['Float']['output']>;
   lines: PurchaseOrderLineConnector;
-  purchaseOrderNumber: Scalars['Int']['output'];
+  number: Scalars['Int']['output'];
   receivedAtPortDatetime?: Maybe<Scalars['NaiveDate']['output']>;
   reference?: Maybe<Scalars['String']['output']>;
   sentDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
