@@ -36,6 +36,7 @@ pub struct UpdateInput {
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<NullableUpdateInput<String>>,
     pub campaign_id: Option<NullableUpdateInput<String>>,
+    pub note: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -105,6 +106,7 @@ impl UpdateInput {
             vvm_status_id,
             donor_id,
             campaign_id,
+            note,
         } = self;
 
         ServiceInput {
@@ -129,7 +131,7 @@ impl UpdateInput {
             r#type: StockInType::InboundShipment,
             vvm_status_id,
             // Default
-            note: None,
+            note,
             donor_id: donor_id.map(|donor_id| NullableUpdate {
                 value: donor_id.value,
             }),
