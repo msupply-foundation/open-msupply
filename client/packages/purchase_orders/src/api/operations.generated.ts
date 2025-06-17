@@ -177,6 +177,16 @@ export type PurchaseOrderByIdQuery = {
     | { __typename: 'RecordNotFound'; description: string };
 };
 
+export type InsertPurchaseOrderMutationVariables = Types.Exact<{
+  input: Types.InsertPurchaseOrderInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type InsertPurchaseOrderMutation = {
+  __typename: 'Mutations';
+  insertPurchaseOrder: { __typename: 'IdResponse'; id: string };
+};
+
 export const PurchaseOrderRowFragmentDoc = gql`
   fragment PurchaseOrderRow on PurchaseOrderNode {
     id
@@ -309,6 +319,18 @@ export const PurchaseOrderByIdDocument = gql`
   }
   ${PurchaseOrderFragmentDoc}
 `;
+export const InsertPurchaseOrderDocument = gql`
+  mutation insertPurchaseOrder(
+    $input: InsertPurchaseOrderInput!
+    $storeId: String!
+  ) {
+    insertPurchaseOrder(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -358,6 +380,22 @@ export function getSdk(
           ),
         'purchaseOrderById',
         'query',
+        variables
+      );
+    },
+    insertPurchaseOrder(
+      variables: InsertPurchaseOrderMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<InsertPurchaseOrderMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertPurchaseOrderMutation>(
+            InsertPurchaseOrderDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'insertPurchaseOrder',
+        'mutation',
         variables
       );
     },

@@ -280,6 +280,7 @@
   "error.facility-not-found": "Facility not found",
   "error.failed-to-create-outbound": "Failed to create Outbound Shipment",
   "error.failed-to-create-prescription": "Failed to create prescription!",
+  "error.failed-to-create-purchase-order": "Failed to create Purchase order!",
   "error.failed-to-create-requisition": "Failed to create requisition! {{message}}",
   "error.failed-to-create-return": "Failed to create return!",
   "error.failed-to-create-stocktake": "Failed to create Stocktake",

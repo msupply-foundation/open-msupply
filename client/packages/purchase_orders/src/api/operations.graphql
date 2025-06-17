@@ -127,3 +127,14 @@ query purchaseOrderById($purchaseOrderId: String!, $storeId: String!) {
     }
   }
 }
+
+mutation insertPurchaseOrder(
+  $input: InsertPurchaseOrderInput!
+  $storeId: String!
+) {
+  insertPurchaseOrder(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+  }
+}
