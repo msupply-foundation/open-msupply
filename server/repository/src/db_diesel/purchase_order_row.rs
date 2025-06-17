@@ -1,7 +1,7 @@
 use crate::{
     db_diesel::{item_link_row::item_link, item_row::item},
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection,
+    StorageConnection, Upsert,
 };
 
 use chrono::{NaiveDate, NaiveDateTime};
@@ -182,5 +182,20 @@ impl<'a> PurchaseOrderRowRepository<'a> {
             .select(max(purchase_order::purchase_order_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
+    }
+}
+
+impl Upsert for PurchaseOrderRow {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = PurchaseOrderRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            PurchaseOrderRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
