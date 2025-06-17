@@ -92,7 +92,9 @@ export const PatientView = () => {
 
   const tabs: TabDefinition[] = [
     {
-      Component: <PatientDetailView onEdit={setIsDirtyPatient} />,
+      Component: (
+        <PatientDetailView patientId={patientId} onEdit={setIsDirtyPatient} />
+      ),
       value: PatientTabValue.Details,
       confirmOnLeaving: isDirtyPatient,
     },
@@ -130,7 +132,7 @@ export const PatientView = () => {
       {!createNewPatient ? (
         <DetailTabs tabs={tabs} requiresConfirmation={requiresConfirmation} />
       ) : (
-        <PatientDetailView onEdit={setIsDirtyPatient} />
+        <PatientDetailView patientId={patientId} onEdit={setIsDirtyPatient} />
       )}
       {/* Note: unmount modals when not used because they have some internal
       state that shouldn't be reused across calls. */}
