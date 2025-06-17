@@ -22,7 +22,7 @@ import {
 
 import defaultPatientSchema from '../PatientView/DefaultPatientSchema.json';
 import defaultPatientUISchema from '../PatientView/DefaultPatientUISchema.json';
-import { PRESCRIPTION } from 'packages/invoices/src/Prescriptions/api/hooks/keys';
+import { PRESCRIPTION } from '../../../../invoices/src/Prescriptions/api/hooks/keys';
 
 const DEFAULT_SCHEMA: SchemaData = {
   formSchemaId: undefined,
