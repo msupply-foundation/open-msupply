@@ -104,11 +104,11 @@ const ItemLedgerTable = ({
         label: 'label.num-packs',
       },
       {
-        key: 'quantity',
+        key: 'movementInUnits',
         label: 'label.unit-quantity',
         sortable: false,
         description: 'description.unit-quantity',
-        accessor: ({ rowData }) => NumUtils.round(rowData.quantity, 2),
+        accessor: ({ rowData }) => NumUtils.round(rowData.movementInUnits, 2),
       },
 
       {

@@ -507,7 +507,7 @@ fragment ItemLedger on ItemLedgerNode {
   invoiceType
   name
   packSize
-  quantity
+  movementInUnits
   reason
   sellPricePerPack
   totalBeforeTax

@@ -49,8 +49,8 @@ impl ItemLedgerNode {
     pub async fn name(&self) -> &String {
         &self.item_ledger.name
     }
-    pub async fn quantity(&self) -> &f64 {
-        &self.item_ledger.quantity
+    pub async fn movement_in_units(&self) -> &f64 {
+        &self.item_ledger.movement_in_units
     }
     pub async fn invoice_type(&self) -> InvoiceNodeType {
         InvoiceNodeType::from_domain(&self.item_ledger.invoice_type)

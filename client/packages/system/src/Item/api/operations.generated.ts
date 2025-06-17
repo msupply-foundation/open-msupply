@@ -1365,7 +1365,7 @@ export type ItemLedgerFragment = {
   invoiceType: Types.InvoiceNodeType;
   name: string;
   packSize: number;
-  quantity: number;
+  movementInUnits: number;
   reason?: string | null;
   sellPricePerPack: number;
   totalBeforeTax?: number | null;
@@ -1398,7 +1398,7 @@ export type ItemLedgerQuery = {
       invoiceType: Types.InvoiceNodeType;
       name: string;
       packSize: number;
-      quantity: number;
+      movementInUnits: number;
       reason?: string | null;
       sellPricePerPack: number;
       totalBeforeTax?: number | null;
@@ -1705,7 +1705,7 @@ export const ItemLedgerFragmentDoc = gql`
     invoiceType
     name
     packSize
-    quantity
+    movementInUnits
     reason
     sellPricePerPack
     totalBeforeTax
