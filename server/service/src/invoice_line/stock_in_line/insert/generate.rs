@@ -157,6 +157,7 @@ fn generate_line(
         prescribed_quantity: None,
         reason_option_id: None,
         campaign_id,
+        shipped_number_of_packs: None,
     }
 }
 

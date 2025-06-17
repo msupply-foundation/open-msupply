@@ -121,6 +121,7 @@ pub fn generate(
                 tax: None,
                 note: None,
                 campaign_id,
+                shipped_number_of_packs: None,
             },
         )
         .collect();

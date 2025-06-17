@@ -181,6 +181,7 @@ fn generate_line(
         campaign_id,
         linked_invoice_id: None,
         reason_option_id: None,
+        shipped_number_of_packs: None,
     })
 }
 

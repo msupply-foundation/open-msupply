@@ -101,6 +101,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
+            shipped_number_of_packs: None,
         },
     )
 }
@@ -229,6 +230,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
+            shipped_number_of_packs: None,
         },
     )
 }
@@ -360,6 +362,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
+            shipped_number_of_packs: None,
         },
     )
 }
@@ -491,6 +494,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
+            shipped_number_of_packs: None,
         },
     )
 }
@@ -622,6 +626,7 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
+            shipped_number_of_packs: None,
         },
     )
 }
@@ -754,6 +759,7 @@ fn trans_line_prescribed_quantity_pull_record() -> TestSyncIncomingRecord {
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
+            shipped_number_of_packs: None,
         },
     )
 }
@@ -885,6 +891,7 @@ fn trans_line_invalid_stockline_pull_record() -> TestSyncIncomingRecord {
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
+            shipped_number_of_packs: None,
         },
     )
 }
@@ -1015,6 +1022,7 @@ fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
+            shipped_number_of_packs: None,
         },
     )
 }

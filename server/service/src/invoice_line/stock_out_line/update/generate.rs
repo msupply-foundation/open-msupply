@@ -140,6 +140,7 @@ fn generate_line(
         donor_link_id,
         reason_option_id: None,
         campaign_id,
+        shipped_number_of_packs: None,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {

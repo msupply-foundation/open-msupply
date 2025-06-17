@@ -235,6 +235,7 @@ fn try_allocate_existing_line(
                 tax: None,
                 note: None,
                 campaign_id: line_row.campaign_id,
+                shipped_number_of_packs: None,
             }
         })
 }
