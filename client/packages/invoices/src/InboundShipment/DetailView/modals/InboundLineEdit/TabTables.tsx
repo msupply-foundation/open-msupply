@@ -346,7 +346,10 @@ export const LocationTableComponent = ({
       'note',
       {
         Cell: TextInputCell,
-        setter: patch => updateDraftLine({ ...patch }),
+        setter: patch => {
+          const note = patch.note === '' ? null : patch.note;
+          updateDraftLine({ ...patch, note });
+        },
         accessor: ({ rowData }) => rowData.note,
       },
     ],
