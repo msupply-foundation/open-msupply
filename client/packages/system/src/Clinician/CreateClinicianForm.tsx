@@ -84,7 +84,7 @@ export const CreateClinicianForm = ({
           <GenderInput
             value={draft.gender}
             onChange={value => updateDraft({ gender: value })}
-            width={325}
+            width={width}
           />
         }
       />
