@@ -180,7 +180,7 @@ const ItemLedgerTable = ({
       onChangePage={updatePaginationQuery}
       isLoading={isLoading}
       onRowClick={onRowClick}
-      noDataElement={<NothingHere body={t('messages.no-ledger')} />}
+      noDataElement={<NothingHere body={t('messages.no-item-ledger')} />}
     />
   );
 };
