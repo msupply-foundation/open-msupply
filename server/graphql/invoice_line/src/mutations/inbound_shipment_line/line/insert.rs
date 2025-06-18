@@ -33,6 +33,7 @@ pub struct InsertInput {
     pub vvm_status_id: Option<String>,
     pub donor_id: Option<String>,
     pub campaign_id: Option<String>,
+    pub note: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -94,6 +95,7 @@ impl InsertInput {
             donor_id,
             vvm_status_id,
             campaign_id,
+            note,
         } = self;
 
         ServiceInput {
@@ -116,7 +118,7 @@ impl InsertInput {
             vvm_status_id,
             donor_id,
             // Default
-            note: None,
+            note,
             stock_line_id: None,
             barcode: None,
             stock_on_hold: false,
