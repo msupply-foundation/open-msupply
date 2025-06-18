@@ -43,6 +43,14 @@ pub enum UserPermission {
     CustomerReturnMutate,
     PrescriptionQuery,
     PrescriptionMutate,
+    PurchaseOrderQuery,
+    PurchaseOrderMutate,
+    PurchaseOrderCreate,
+    PurchaseOrderConfirm,
+    PurchaseOrdrFinalise,
+    PurchaseOrderDelete,
+    PurchaseOrderPricingMutate,
+    PurchaseOrderAuthorise,
     Report,
     LogQuery,
     StockLineMutate,
@@ -153,6 +161,16 @@ impl UserPermission {
             PermissionType::NamePropertiesMutate => UserPermission::NamePropertiesMutate,
             PermissionType::EditCentralData => UserPermission::EditCentralData,
             PermissionType::ViewAndEditVvmStatus => UserPermission::ViewAndEditVvmStatus,
+            PermissionType::PurchaseOrderQuery => UserPermission::PurchaseOrderQuery,
+            PermissionType::PurchaseOrderMutate => UserPermission::PurchaseOrderMutate,
+            PermissionType::PurchaseOrderCreate => UserPermission::PurchaseOrderCreate,
+            PermissionType::PurchaseOrderConfirm => UserPermission::PurchaseOrderConfirm,
+            PermissionType::PurchaseOrdrFinalise => UserPermission::PurchaseOrdrFinalise,
+            PermissionType::PurchaseOrderDelete => UserPermission::PurchaseOrderDelete,
+            PermissionType::PurchaseOrderPricingMutate => {
+                UserPermission::PurchaseOrderPricingMutate
+            }
+            PermissionType::PurchaseOrderAuthorise => UserPermission::PurchaseOrderAuthorise,
             PermissionType::MutateClinician => UserPermission::MutateClinician,
         }
     }
@@ -208,10 +226,17 @@ impl UserPermission {
             UserPermission::NamePropertiesMutate => PermissionType::NamePropertiesMutate,
             UserPermission::EditCentralData => PermissionType::EditCentralData,
             UserPermission::ViewAndEditVvmStatus => PermissionType::ViewAndEditVvmStatus,
+            UserPermission::PurchaseOrderQuery => PermissionType::PurchaseOrderQuery,
+            UserPermission::PurchaseOrderMutate => PermissionType::PurchaseOrderMutate,
+            UserPermission::PurchaseOrderConfirm => PermissionType::PurchaseOrderConfirm,
+            UserPermission::PurchaseOrdrFinalise => PermissionType::PurchaseOrdrFinalise,
+            UserPermission::PurchaseOrderDelete => PermissionType::PurchaseOrderDelete,
+            UserPermission::PurchaseOrderPricingMutate => {
+                PermissionType::PurchaseOrderPricingMutate
+            }
+            UserPermission::PurchaseOrderAuthorise => PermissionType::PurchaseOrderAuthorise,
             UserPermission::MutateClinician => PermissionType::MutateClinician,
-        }
     }
-}
 
 impl UserStorePermissionConnector {
     pub fn from_domain(
