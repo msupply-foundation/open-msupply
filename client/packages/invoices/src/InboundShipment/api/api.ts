@@ -153,7 +153,7 @@ const inboundParsers = {
     campaignId: setNullableInput('campaignId', {
       campaignId: line.campaign?.id ?? null,
     }),
-    note: line.note ?? '',
+    note: setNullableInput('note', { note: line.note ?? null }),
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
