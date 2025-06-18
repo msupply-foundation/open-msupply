@@ -127,10 +127,7 @@ const ListView: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons
-      // modalController={modalController}
-      // listParams={listParams}
-      />
+      <AppBarButtons />
       <DataTable
         id="purchase-order-list"
         enableColumnSelection
