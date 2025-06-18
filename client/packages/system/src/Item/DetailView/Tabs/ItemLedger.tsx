@@ -247,10 +247,16 @@ export const ItemLedgerTab = ({
       name: t('label.status'),
       urlParameter: 'invoiceStatus',
       options: [
-        ...Object.values(InvoiceNodeStatus).map(status => ({
-          label: t(getStatusTranslation(status)),
-          value: status,
-        })),
+        ...Object.values(InvoiceNodeStatus)
+          .filter(
+            status =>
+              status !== InvoiceNodeStatus.New &&
+              status !== InvoiceNodeStatus.Allocated
+          )
+          .map(status => ({
+            label: t(getStatusTranslation(status)),
+            value: status,
+          })),
       ],
     },
   ];
