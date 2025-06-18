@@ -26,7 +26,7 @@ impl Loader<String> for PurchaseOrderLinesByPurchaseOrderIdLoader {
             .purchase_order_line_service
             .get_purchase_order_lines(
                 &service_context,
-                "",
+                None,
                 None,
                 Some(
                     PurchaseOrderLineFilter::new()
