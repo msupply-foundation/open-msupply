@@ -66,7 +66,7 @@ impl StringFilter {
     }
 }
 
-#[derive(Clone, PartialEq, Debug, TS, Serialize, Deserialize, Default)]
+#[derive(Clone, PartialEq, Debug, TS, Serialize, Deserialize)]
 pub struct EqualFilter<T>
 where
     T: 'static,
@@ -83,6 +83,19 @@ where
     pub not_equal_all: Option<Vec<T>>,
     #[ts(optional)]
     pub is_null: Option<bool>,
+}
+
+impl<T> Default for EqualFilter<T> {
+    fn default() -> Self {
+        Self {
+            equal_to: Default::default(),
+            not_equal_to: Default::default(),
+            equal_any: Default::default(),
+            equal_any_or_null: Default::default(),
+            not_equal_all: Default::default(),
+            is_null: Default::default(),
+        }
+    }
 }
 
 impl<F> EqualFilter<F> {
