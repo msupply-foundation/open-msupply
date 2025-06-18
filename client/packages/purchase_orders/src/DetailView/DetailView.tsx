@@ -3,10 +3,10 @@ import { useParams } from '@openmsupply-client/common';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 
 export const PurchaseOrderDetailView = () => {
-  const { invoiceId = '' } = useParams();
+  const { purchaseOrderId = '' } = useParams();
   const {
     query: { data },
-  } = usePurchaseOrder(invoiceId);
+  } = usePurchaseOrder(purchaseOrderId);
 
   return <p>Purchase order to: {data?.supplier?.name}</p>;
 };
