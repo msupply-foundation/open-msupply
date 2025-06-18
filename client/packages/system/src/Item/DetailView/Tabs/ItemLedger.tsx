@@ -37,10 +37,10 @@ interface ItemLedgerTableProps {
   totalCount?: number;
   isLoading: boolean;
   onRowClick: (ledger: ItemLedgerFragment) => void;
-  queryParams?: {
-    page?: number;
-    first?: number;
-    offset?: number;
+  queryParams: {
+    page: number;
+    first: number;
+    offset: number;
   };
   updateSortQuery: (sortBy: string, dir: 'asc' | 'desc') => void;
   updatePaginationQuery: (page: number) => void;
@@ -50,16 +50,16 @@ const ItemLedgerTable = ({
   onRowClick,
   itemLedgers: { ledgers, totalCount = 0 },
   isLoading,
-  queryParams = {},
+  queryParams: { page, first, offset },
   updateSortQuery,
   updatePaginationQuery,
 }: ItemLedgerTableProps) => {
   const t = useTranslation();
   const { localisedTime } = useFormatDateTime();
   const pagination = {
-    page: queryParams.page ?? 1,
-    first: queryParams.first ?? 20,
-    offset: queryParams.offset ?? 0,
+    page,
+    first,
+    offset,
   };
 
   const columns = useColumns<ItemLedgerFragment>(
