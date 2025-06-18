@@ -32,9 +32,8 @@ import { getStatusTranslation } from '@openmsupply-client/invoices/src/utils';
 interface ItemLedgerTableProps {
   itemLedgers: {
     ledgers: ItemLedgerFragment[];
-    totalCount?: number;
+    totalCount: number;
   };
-  totalCount?: number;
   isLoading: boolean;
   onRowClick: (ledger: ItemLedgerFragment) => void;
   queryParams: {
@@ -48,7 +47,7 @@ interface ItemLedgerTableProps {
 
 const ItemLedgerTable = ({
   onRowClick,
-  itemLedgers: { ledgers, totalCount = 0 },
+  itemLedgers: { ledgers, totalCount },
   isLoading,
   queryParams: { page, first, offset },
   updateSortQuery,
