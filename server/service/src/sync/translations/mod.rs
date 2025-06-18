@@ -397,6 +397,7 @@ pub(crate) trait SyncTranslation {
     /// By default matching by table name
     /// used to determine if translation applies when remote site pulls sync records from central
     fn should_translate_from_sync_record(&self, row: &SyncBufferRow) -> bool {
+        println!("should_translate_from_sync_record: {}", row.table_name);
         self.table_names()
             .iter()
             .any(|name| name == &row.table_name)
