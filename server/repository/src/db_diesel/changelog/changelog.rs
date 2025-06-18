@@ -253,6 +253,8 @@ pub struct ChangelogFilter {
     pub is_sync_update: Option<EqualFilter<bool>>,
     #[ts(optional)]
     pub source_site_id: Option<EqualFilter<i32>>,
+    #[ts(optional)]
+    pub or: Option<Box<ChangelogFilter>>,
 }
 
 pub struct ChangelogRepository<'a> {
@@ -300,10 +302,10 @@ impl<'a> ChangelogRepository<'a> {
                 .limit(limit.into());
 
             // // Debug diesel query
-            // println!(
-            //     "{}",
-            //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-            // );
+            println!(
+                "{}",
+                diesel::debug_query::<crate::DBType, _>(&query).to_string()
+            );
 
             let result: Vec<ChangelogJoin> = query.load(locked_con.connection())?;
             Ok(result.into_iter().map(ChangelogRow::from_join).collect())
@@ -495,6 +497,7 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
             is_sync_update,
             action,
             source_site_id,
+            or,
         } = f;
 
         apply_equal_filter!(query, table_name, changelog_deduped::table_name);
@@ -504,6 +507,13 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
         apply_equal_filter!(query, action, changelog_deduped::row_action);
         apply_equal_filter!(query, is_sync_update, changelog_deduped::is_sync_update);
         apply_equal_filter!(query, source_site_id, changelog_deduped::source_site_id);
+
+        if let Some(or) = or {
+            let or = *or;
+            let or_query =
+                create_filtered_query(earliest, Some(or)).select(changelog_deduped::record_id);
+            query = query.or_filter(changelog_deduped::record_id.eq_any(or_query));
+        }
     }
 
     query
@@ -735,6 +745,11 @@ impl ChangelogFilter {
 
     pub fn source_site_id(mut self, filter: EqualFilter<i32>) -> Self {
         self.source_site_id = Some(filter);
+        self
+    }
+
+    pub fn or(mut self, filter: ChangelogFilter) -> Self {
+        self.or = Some(Box::new(filter));
         self
     }
 }

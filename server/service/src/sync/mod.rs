@@ -26,8 +26,8 @@ use std::sync::RwLock;
 
 use log::info;
 use repository::{
-    ChangelogFilter, EqualFilter, KeyValueStoreRepository, RepositoryError, StorageConnection,
-    Store, StoreFilter, StoreRepository,
+    ChangelogFilter, ChangelogRow, ChangelogTableName, EqualFilter, KeyValueStoreRepository,
+    RepositoryError, StorageConnection, Store, StoreFilter, StoreRepository,
 };
 
 use serde::{Deserialize, Serialize};
@@ -45,6 +45,25 @@ pub(crate) struct ActiveStoresOnSite {
 /// It is possible to have entries for foreign records in change log (other half of transfers)
 /// these should be filtered out in sync push operation
 pub(crate) fn get_sync_push_changelogs_filter(
+    connection: &StorageConnection,
+) -> Result<Option<ChangelogFilter>, GetActiveStoresOnSiteError> {
+    let active_stores = ActiveStoresOnSite::get(connection)?;
+
+    let remote_site_filter = ChangelogFilter::new()
+        .store_id(EqualFilter::equal_any_or_null(active_stores.store_ids()))
+        .is_sync_update(EqualFilter::equal_or_null_bool(false)); // TODO: change to `source_site_id IS NULL`
+
+    if !CentralServerConfig::is_central_server() {
+        return Ok(Some(remote_site_filter));
+    }
+
+    // Add record to pass through to mSupply Central from omSupply Central
+    Ok(Some(remote_site_filter.or(
+        ChangelogFilter::new().table_name(ChangelogTableName::Vaccination.equal_to()),
+    )))
+}
+
+pub(crate) fn get_sync_push_omsupply_changelogs_filter(
     connection: &StorageConnection,
 ) -> Result<Option<ChangelogFilter>, GetActiveStoresOnSiteError> {
     let active_stores = ActiveStoresOnSite::get(connection)?;
