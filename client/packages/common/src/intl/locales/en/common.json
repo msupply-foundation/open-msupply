@@ -1139,6 +1139,7 @@
   "label.provider-name": "Provider name",
   "label.purchase-cost-price": "Purchase cost",
   "label.purchase-orders": "Purchase Orders",
+  "label.purchase-order-number": "Purchase Order Number",
   "label.qty-item-name": "Qty/Item Name",
   "label.quantities": "Quantities",
   "label.quantity": "Quantity",

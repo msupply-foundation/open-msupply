@@ -4,25 +4,40 @@ query purchaseOrderQuery($dataId: String!, $storeId: String!) {
       id
       number
       expectedDeliveryDatetime
+      foreignExchangeRate
+      lines {
+        totalCount
+        nodes {
+          id
+          packSize
+          item {
+            name
+            unitName
+            msupplyUniversalCode
+            code
+            defaultPackSize
+            stats(storeId: $storeId) {
+              averageMonthlyConsumption
+            }
+          }
+        }
+      }
       store {
         name(storeId: $storeId) {
           name
-          email
+          address1
+          address2
           phone
+          email
         }
         logo
       }
       supplier {
+        address1
         name
+        code
       }
-      foreignExchangeRate
-      lines {
-        nodes {
-          id
-          packSize
-        }
-        totalCount
-      }
+      confirmedDatetime
     }
   }
 }

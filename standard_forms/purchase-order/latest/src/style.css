@@ -28,6 +28,7 @@ body > table {
   font-size: 8pt;
   border-bottom: 0.5px solid black;
   padding-top: 8pt;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
 }
 
 .header-space-between {

@@ -15,23 +15,20 @@
       </th>
     </tr>
   </thead>
-  {% for line in data.purchaseOrder.lines.nodes -%}
   <tr class="body_value">
-    <td>{{ line.item.code }}</td>
-    <td>{{ line.item.name }}</td>
+    <td>line.item.code</td>
+    <td>line.item.name</td>
     <td>
-      {{ line.itemStats.stockOnHand | default(value=0.00) | round(precision=2)
-      }}
+      line.itemStats.stockOnHand | default(value=0.00) | round(precision=2)
     </td>
     <td>
-      {{ line.itemStats.averageMonthlyConsumption | default(value=0.00) |
-      round(precision=2) }}
+      line.itemStats.averageMonthlyConsumption | default(value=0.00) |
+      round(precision=2)
     </td>
     <td>
-      {{ line.itemStats.monthsOfStockOnHand | default(value=0.00) |
-      round(precision=2) }}
+      line.itemStats.monthsOfStockOnHand | default(value=0.00) |
+      round(precision=2)
     </td>
-    <td>{{ line.requestedQuantity }}</td>
+    <td>line.requestedQuantity</td>
   </tr>
-  {%- endfor %}
 </table>
