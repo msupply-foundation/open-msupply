@@ -48,7 +48,7 @@ const StockListComponent: FC = () => {
   });
   const navigate = useNavigate();
   const queryParams = {
-    filterBy: filterBy ?? undefined,
+    filterBy: { ...filterBy },
     offset,
     sortBy,
     first,
