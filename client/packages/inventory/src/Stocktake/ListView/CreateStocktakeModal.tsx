@@ -219,7 +219,7 @@ export const CreateStocktakeModal = ({
               />
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={`${data?.totalCount}`}
+                Input={`${createBlankStocktake ? 0 : data?.totalCount}`}
                 label={t('label.stock-lines-found')}
               />
             </Box>
