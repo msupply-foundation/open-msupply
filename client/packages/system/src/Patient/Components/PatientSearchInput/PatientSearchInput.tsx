@@ -9,9 +9,12 @@ import {
 import { NameSearchInputProps, SearchInputPatient } from '../../utils';
 import { getPatientOptionRenderer } from '../PatientOptionRenderer';
 import { useSearchPatient } from '../utils';
-import { EditPatientModal } from '../../EditPatientModal';
 
-export const PatientSearchInput: FC<NameSearchInputProps> = ({
+interface PatientSearchInputProps extends NameSearchInputProps {
+  setEditPatientModalOpen?: (open: boolean) => void;
+}
+
+export const PatientSearchInput: FC<PatientSearchInputProps> = ({
   autoFocus,
   onChange,
   width = 250,
@@ -19,11 +22,11 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
   disabled = false,
   sx,
   NoOptionsRenderer,
+  setEditPatientModalOpen,
 }) => {
   const t = useTranslation();
   const PatientOptionRenderer = getPatientOptionRenderer();
   const { isLoading, patients, search } = useSearchPatient();
-  const [modalOpen, setModalOpen] = useState(false);
 
   const [input, setInput] = useState('');
 
@@ -95,13 +98,7 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
           <IconButton
             icon={<EditIcon style={{ fontSize: 16, fill: 'none' }} />}
             label={t('label.edit')}
-            onClick={() => setModalOpen(true)}
-          />
-
-          <EditPatientModal
-            patientId={value.id}
-            onClose={() => setModalOpen(false)}
-            isOpen={modalOpen}
+            onClick={() => setEditPatientModalOpen?.(true)}
           />
         </>
       )}

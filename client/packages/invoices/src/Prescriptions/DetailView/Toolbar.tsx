@@ -18,10 +18,15 @@ import {
   Clinician,
   ClinicianSearchInput,
   CreatePatientModal,
+  EditPatientModal,
   PatientSearchInput,
 } from '@openmsupply-client/system';
 import { ProgramSearchInput } from '@openmsupply-client/system';
-import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
+import {
+  CreateNewPatient,
+  ProgramFragment,
+  useProgramList,
+} from '@openmsupply-client/programs';
 
 import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 import { usePrescription } from '../api';
@@ -51,10 +56,12 @@ export const Toolbar: FC = () => {
       null
   );
 
-  const [patientModalOpen, setPatientModalOpen] = useState(false);
+  const [createPatientModalOpen, setCreatePatientModalOpen] = useState(false);
+  const [editPatientModalOpen, setEditPatientModalOpen] = useState(false);
   const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
     clinician ?? null
   );
+  const [newPatient, setNewPatient] = useState<CreateNewPatient | null>();
 
   const { data: programData } = useProgramList();
   const programs = programData?.nodes ?? [];
@@ -138,9 +145,12 @@ export const Toolbar: FC = () => {
   const openPatientModal = useCallbackWithPermission(
     UserPermission.PatientMutate,
     () => {
-      setPatientModalOpen(true);
+      setCreatePatientModalOpen(true);
     }
   );
+
+  // Use new patient if there is one
+  const editPatientId = newPatient?.id ?? patient?.id;
 
   return (
     <AppBarContentPortal
@@ -158,6 +168,7 @@ export const Toolbar: FC = () => {
                 onChange={async ({ id: patientId }) => {
                   await update({ id, patientId });
                 }}
+                setEditPatientModalOpen={setEditPatientModalOpen}
                 NoOptionsRenderer={props => (
                   <DefaultAutocompleteItemOption
                     {...props}
@@ -246,8 +257,25 @@ export const Toolbar: FC = () => {
           }}
         />
       </Grid>
-      {patientModalOpen && (
-        <CreatePatientModal onClose={() => setPatientModalOpen(false)} />
+      {createPatientModalOpen && (
+        <CreatePatientModal
+          onClose={() => setCreatePatientModalOpen(false)}
+          onCreatePatientForPrescription={id => {
+            setEditPatientModalOpen(true);
+            setNewPatient(id);
+          }}
+        />
+      )}
+
+      {editPatientId && editPatientModalOpen && (
+        <EditPatientModal
+          patientId={editPatientId}
+          onClose={() => {
+            setEditPatientModalOpen(false);
+            setCreatePatientModalOpen(false);
+          }}
+          isOpen={editPatientModalOpen}
+        />
       )}
     </AppBarContentPortal>
   );

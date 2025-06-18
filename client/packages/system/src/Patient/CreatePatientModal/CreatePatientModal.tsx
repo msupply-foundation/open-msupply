@@ -20,6 +20,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
 import {
+  CreateNewPatient,
   DocumentRegistryFragment,
   useDocumentRegistry,
   usePatientStore,
@@ -32,9 +33,13 @@ enum Tabs {
 
 interface CreatePatientModal {
   onClose: () => void;
+  onCreatePatientForPrescription?: (newPatient: CreateNewPatient) => void;
 }
 
-export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
+export const CreatePatientModal: FC<CreatePatientModal> = ({
+  onClose,
+  onCreatePatientForPrescription: onCreate,
+}) => {
   const { data: documentRegistryResponse, isLoading } =
     useDocumentRegistry.get.documentRegistries({
       filter: { category: { equalTo: DocumentRegistryCategoryNode.Patient } },
@@ -47,23 +52,25 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   const { Modal, showDialog, hideDialog } = useDialog({
     onClose,
   });
+  const t = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { createNewPatient, setCreateNewPatient } = usePatientStore();
-  const t = useTranslation();
 
   const onNext = useDebounceCallback(() => {
     onChangeTab(Tabs.SearchResults);
   }, []);
 
   const onOk = () => {
-    if (createNewPatient) {
-      const urlSegments = location.pathname.split('/');
+    if (!createNewPatient) return;
+    const urlSegments = location.pathname.split('/');
 
-      if (urlSegments.includes(AppRoute.Patients))
-        navigate(createNewPatient.id);
+    if (urlSegments.includes(AppRoute.Patients)) navigate(createNewPatient.id);
 
-      if (urlSegments.includes(AppRoute.Prescription))
+    if (urlSegments.includes(AppRoute.Prescription))
+      if (onCreate) {
+        onCreate(createNewPatient);
+      } else {
         navigate(
           RouteBuilder.create(AppRoute.Dispensary)
             .addPart(AppRoute.Patients)
@@ -71,7 +78,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
             .addQuery({ previousPath: AppRoute.Prescription })
             .build()
         );
-    }
+      }
   };
 
   const patientSteps = [
