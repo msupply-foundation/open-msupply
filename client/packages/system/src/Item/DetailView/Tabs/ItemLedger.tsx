@@ -21,27 +21,38 @@ import {
 } from '@openmsupply-client/common';
 import { getStatusTranslation } from '@openmsupply-client/invoices/src/utils';
 
-const ItemLedgerTable = ({
-  itemId,
-  onRowClick,
-}: {
-  itemId: string;
+interface ItemLedgerTableProps {
+  itemLedgers: {
+    ledgers: ItemLedgerFragment[];
+    totalCount?: number;
+  };
+  totalCount?: number;
+  isLoading: boolean;
   onRowClick: (ledger: ItemLedgerFragment) => void;
-}) => {
-  const t = useTranslation();
-  const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { page, first, offset, filterBy },
-  } = useUrlQueryParams();
-  const pagination = { page, first, offset };
+  queryParams?: {
+    page?: number;
+    first?: number;
+    offset?: number;
+  };
+  updateSortQuery: (sortBy: string, dir: 'asc' | 'desc') => void;
+  updatePaginationQuery: (page: number) => void;
+}
 
-  const { data, isLoading } = useItemLedger(itemId, {
-    first,
-    offset,
-    filterBy,
-  });
+const ItemLedgerTable = ({
+  onRowClick,
+  itemLedgers: { ledgers, totalCount = 0 },
+  isLoading,
+  queryParams = {},
+  updateSortQuery,
+  updatePaginationQuery,
+}: ItemLedgerTableProps) => {
+  const t = useTranslation();
   const { localisedTime } = useFormatDateTime();
+  const pagination = {
+    page: queryParams.page ?? 1,
+    first: queryParams.first ?? 20,
+    offset: queryParams.offset ?? 0,
+  };
 
   const columns = useColumns<ItemLedgerFragment>(
     [
@@ -155,9 +166,9 @@ const ItemLedgerTable = ({
   return (
     <DataTable
       id="item-ledger-table"
-      data={data?.nodes}
+      data={ledgers}
       columns={columns}
-      pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
+      pagination={{ ...pagination, total: totalCount }}
       onChangePage={updatePaginationQuery}
       isLoading={isLoading}
       onRowClick={onRowClick}
@@ -172,12 +183,32 @@ export const ItemLedgerTab = ({
 }: {
   itemId: string;
   onRowClick: (ledger: ItemLedgerFragment) => void;
-}) => (
-  <Box justifyContent="center" display="flex" flex={1}>
-    <Box flex={1} display="flex">
-      <TableProvider createStore={createTableStore}>
-        <ItemLedgerTable itemId={itemId} onRowClick={onRowClick} />
-      </TableProvider>
+}) => {
+  const {
+    updateSortQuery,
+    updatePaginationQuery,
+    queryParams: { page, first, offset, filterBy },
+  } = useUrlQueryParams();
+  const { data, isLoading } = useItemLedger(itemId, {
+    first,
+    offset,
+    filterBy,
+  });
+
+  return (
+    <Box justifyContent="center" display="flex" flex={1}>
+      <Box flex={1} display="flex">
+        <TableProvider createStore={createTableStore}>
+          <ItemLedgerTable
+            itemLedgers={data ?? { ledgers: [], totalCount: 0 }}
+            isLoading={isLoading}
+            onRowClick={onRowClick}
+            queryParams={{ page, first, offset }}
+            updateSortQuery={updateSortQuery}
+            updatePaginationQuery={updatePaginationQuery}
+          />
+        </TableProvider>
+      </Box>
     </Box>
-  </Box>
-);
+  );
+};
