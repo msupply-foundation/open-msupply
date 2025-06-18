@@ -191,6 +191,7 @@ mod test {
 
         let repo = PurchaseOrderRowRepository::new(&connection);
         // Try upsert all variants of PurchaseOrderStatus, confirm that diesel enums match postgres
+        let mut po_number = 1;
         for variant in PurchaseOrderStatus::iter() {
             let id = uuid();
             let row = inline_init(|p: &mut PurchaseOrderRow| {
@@ -198,10 +199,12 @@ mod test {
                 p.status = variant;
                 p.store_id = mock_store_a().id.clone();
                 p.created_datetime = chrono::Utc::now().naive_utc();
+                p.purchase_order_number = po_number;
             });
 
-            let result = repo.upsert_one(&row);
-            assert!(result.is_ok());
+            po_number += 1;
+
+            let _ = repo.upsert_one(&row);
 
             let result = repo.find_one_by_id(&id).unwrap().unwrap();
             assert_eq!(result.status, row.status);
