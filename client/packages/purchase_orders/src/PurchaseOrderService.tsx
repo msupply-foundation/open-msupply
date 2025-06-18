@@ -10,7 +10,7 @@ const PurchaseOrderService: FC = () => {
   ).build();
 
   const purchaseOrderRoute = RouteBuilder.create(AppRoute.PurchaseOrder)
-    .addPart(':invoiceId')
+    .addPart(':purchaseOrderId')
     .build();
 
   return (

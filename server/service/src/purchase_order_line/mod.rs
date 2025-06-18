@@ -12,21 +12,21 @@ pub trait PurchaseOrderLineServiceTrait: Sync + Send {
     fn get_purchase_order_line(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
+        store_id_option: Option<&str>,
         id: &str,
     ) -> Result<Option<PurchaseOrderLine>, RepositoryError> {
-        get_purchase_order_line(ctx, store_id, id)
+        get_purchase_order_line(ctx, store_id_option, id)
     }
 
     fn get_purchase_order_lines(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
+        store_id_option: Option<&str>,
         pagination: Option<PaginationOption>,
         filter: Option<PurchaseOrderLineFilter>,
         sort: Option<PurchaseOrderLineSort>,
     ) -> Result<ListResult<PurchaseOrderLine>, ListError> {
-        get_purchase_order_lines(ctx, store_id, pagination, filter, sort)
+        get_purchase_order_lines(ctx, store_id_option, pagination, filter, sort)
     }
 }
 
