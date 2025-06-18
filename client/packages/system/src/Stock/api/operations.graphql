@@ -150,6 +150,15 @@ query stockLine($id: String!, $storeId: String!) {
   }
 }
 
+query stockLinesCount($filter: StockLineFilterInput, $storeId: String!) {
+  stockLines(storeId: $storeId, filter: $filter) {
+    ... on StockLineConnector {
+      __typename
+      totalCount
+    }
+  }
+}
+
 query ledger(
   $key: LedgerSortFieldInput!
   $desc: Boolean
