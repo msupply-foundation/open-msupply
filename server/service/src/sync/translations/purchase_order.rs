@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository,
     PurchaseOrderRow, PurchaseOrderStatus, StorageConnection, SyncBufferRow,
@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::sync::{
     sync_serde::{
-        date_and_time_to_datetime, date_from_date_time, date_option_to_isostring,
-        date_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
+        date_option_to_isostring, datetime_option_to_isostring, empty_str_as_option,
+        empty_str_as_option_string, zero_date_as_option, zero_datetime_as_option,
     },
     translations::{
         master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
@@ -26,6 +26,39 @@ pub enum LegacyPurchaseOrderStatus {
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
+pub struct PurchaseOrderOmsFields {
+    // TODO add complete fields we want to sync
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub foreign_exchange_rate: Option<f64>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub shipping_method: Option<String>,
+    #[serde(deserialize_with = "zero_datetime_as_option")]
+    #[serde(serialize_with = "datetime_option_to_isostring")]
+    pub sent_datetime: Option<NaiveDateTime>,
+    #[serde(deserialize_with = "zero_datetime_as_option")]
+    #[serde(serialize_with = "datetime_option_to_isostring")]
+    pub contract_signed_datetime: Option<NaiveDateTime>,
+    #[serde(deserialize_with = "zero_datetime_as_option")]
+    #[serde(serialize_with = "datetime_option_to_isostring")]
+    pub advance_paid_datetime: Option<NaiveDateTime>,
+    #[serde(deserialize_with = "zero_datetime_as_option")]
+    #[serde(serialize_with = "datetime_option_to_isostring")]
+    pub delivered_datetime: Option<NaiveDateTime>,
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub received_at_port_datetime: Option<NaiveDate>,
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub expected_delivery_datetime: Option<NaiveDate>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub heading_message: Option<String>,
+}
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize)]
 pub struct LegacyPurchaseOrderRow {
     #[serde(default)]
     #[serde(rename = "name_ID")]
@@ -35,6 +68,7 @@ pub struct LegacyPurchaseOrderRow {
     pub id: String,
     #[serde(rename = "creation_date")]
     pub created_datetime: NaiveDateTime,
+    #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub target_months: Option<f64>,
     pub status: LegacyPurchaseOrderStatus,
@@ -95,6 +129,7 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub freight_charge: Option<f64>,
     // pub po_sent_date: String,
+    #[serde(deserialize_with = "empty_str_as_option")]
     pub supplier_discount_amount: Option<f64>,
     // pub Order_total_before_discount: String,
     #[serde(default)]
@@ -125,6 +160,8 @@ pub struct LegacyPurchaseOrderRow {
     // pub lookBackMonths: String,
     // pub custom_data: String,
     // pub minimumExpiryDate: String,
+    #[serde(default)]
+    pub oms_fields: Option<PurchaseOrderOmsFields>,
 }
 
 #[deny(dead_code)]
@@ -136,7 +173,7 @@ pub(super) struct PurchaseOrderTranslation;
 
 impl SyncTranslation for PurchaseOrderTranslation {
     fn table_name(&self) -> &str {
-        "requisition"
+        "purchase_order"
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
@@ -209,6 +246,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
         Ok(PullTranslateResult::upsert(result))
     }
 
+    // TODO add try_translate_from_delete_sync_record
+
     fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
@@ -256,6 +295,31 @@ impl SyncTranslation for PurchaseOrderTranslation {
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Purchase Order not found"))?;
 
+        let oms_fields = if foreign_exchange_rate.is_some()
+            || shipping_method.is_some()
+            || sent_datetime.is_some()
+            || contract_signed_datetime.is_some()
+            || advance_paid_datetime.is_some()
+            || received_at_port_datetime.is_some()
+            || expected_delivery_datetime.is_some()
+            || heading_message.is_some()
+            || delivered_datetime.is_some()
+        {
+            Some(PurchaseOrderOmsFields {
+                foreign_exchange_rate,
+                shipping_method,
+                sent_datetime,
+                contract_signed_datetime,
+                advance_paid_datetime,
+                received_at_port_datetime,
+                expected_delivery_datetime,
+                heading_message,
+                delivered_datetime,
+            })
+        } else {
+            None
+        };
+
         let legacy_row = LegacyPurchaseOrderRow {
             id,
             created_datetime,
@@ -282,6 +346,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             donor_link_id,
             purchase_order_number,
             supplier_name_link_id,
+            oms_fields,
         };
 
         Ok(PushTranslateResult::upsert(
@@ -310,4 +375,49 @@ fn to_legacy_status(status: &PurchaseOrderStatus) -> LegacyPurchaseOrderStatus {
         PurchaseOrderStatus::Finalised => LegacyPurchaseOrderStatus::Finalised,
     };
     legacy_status
+}
+
+// add translation tests for purchase order
+#[cfg(test)]
+mod tests {
+    use crate::sync::{
+        test::merge_helpers::merge_all_name_links,
+        translations::{IntegrationOperation, ToSyncRecordTranslationType},
+    };
+
+    use super::*;
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+    };
+    use serde_json::json;
+    use util::assert_variant;
+
+    #[actix_rt::test]
+    async fn test_purchase_order_translation() {
+        use crate::sync::test::test_data::purchase_order as test_data;
+        let translator = PurchaseOrderTranslation {};
+
+        let (_, connection, _, _) = setup_all(
+            "test_purchase_order_translation",
+            MockDataInserts::none().purchase_order(),
+        )
+        .await;
+
+        for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+
+        // TODO add delete translation test
+    }
+
+    // #[actix_rt::test]
+    // async fn test_purchase_order_translation_to_sync_record() {
+    //     let (mock_data, connection, _, _ ) =
+    //         setup_all("test_purchase_order_translation_to_sync_record", MockDataInserts::none().purchase_order()).await;
+    //     let translator = PurchaseOrderTranslation {};
 }

@@ -327,6 +327,8 @@ pub struct MockDataInserts {
     pub store_preferences: bool,
     pub reason_options: bool,
     pub vvm_statuses: bool,
+    pub purchase_order: bool,
+    pub purchase_order_line: bool,
 }
 
 impl MockDataInserts {
@@ -403,6 +405,8 @@ impl MockDataInserts {
             printer: true,
             store_preferences: true,
             reason_options: true,
+            purchase_order: true,
+            purchase_order_line: true,
         }
     }
 
@@ -750,6 +754,22 @@ impl MockDataInserts {
 
     pub fn vvm_statuses(mut self) -> Self {
         self.vvm_statuses = true;
+        self
+    }
+
+    pub fn purchase_order(mut self) -> Self {
+        self.names = true;
+        self.stores = true;
+        self.currencies = true;
+        self.purchase_order = true;
+        self
+    }
+    pub fn purchase_order_line(mut self) -> Self {
+        self.names = true;
+        self.stores = true;
+        self.currencies = true;
+        self.purchase_order = true;
+        self.purchase_order_line = true;
         self
     }
 }

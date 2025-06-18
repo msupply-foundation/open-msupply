@@ -30,6 +30,14 @@ pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Nai
         .and_then(|s| NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok()))
 }
 
+pub fn zero_datetime_as_option<'de, D: Deserializer<'de>>(
+    d: D,
+) -> Result<Option<NaiveDateTime>, D::Error> {
+    let s: Option<String> = Option::deserialize(d)?;
+    Ok(s.filter(|s| s != "0000-00-00 00:00:00")
+        .and_then(|s| NaiveDateTime::parse_from_str(&s, "%Y-%m-%d %H:%M:%S").ok()))
+}
+
 pub fn date_and_time_to_datetime(date: NaiveDate, seconds: i64) -> NaiveDateTime {
     NaiveDateTime::new(
         date,
@@ -55,6 +63,13 @@ where
 {
     x.map(|date| date.and_hms_opt(0, 0, 0).unwrap())
         .serialize(s)
+}
+
+pub fn datetime_option_to_isostring<S>(x: &Option<NaiveDateTime>, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    x.map(|dt| dt).serialize(s)
 }
 
 /// Currently v5 returns times in sec and v3 expects a time string when posting. To make it more
