@@ -8,10 +8,16 @@ import {
   Formatter,
   DateUtils,
   useConfirmationModal,
+  DefaultAutocompleteItemOption,
+  Box,
+  Typography,
+  useCallbackWithPermission,
+  UserPermission,
 } from '@openmsupply-client/common';
 import {
   Clinician,
   ClinicianSearchInput,
+  CreatePatientModal,
   PatientSearchInput,
 } from '@openmsupply-client/system';
 import { ProgramSearchInput } from '@openmsupply-client/system';
@@ -44,6 +50,8 @@ export const Toolbar: FC = () => {
       DateUtils.getDateOrNull(createdDatetime) ??
       null
   );
+
+  const [patientModalOpen, setPatientModalOpen] = useState(false);
   const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
     clinician ?? null
   );
@@ -127,6 +135,13 @@ export const Toolbar: FC = () => {
     });
   };
 
+  const openPatientModal = useCallbackWithPermission(
+    UserPermission.PatientMutate,
+    () => {
+      setPatientModalOpen(true);
+    }
+  );
+
   return (
     <AppBarContentPortal
       sx={{ display: 'flex', flex: 1, marginBottom: 1, gap: 4 }}
@@ -139,9 +154,44 @@ export const Toolbar: FC = () => {
               <PatientSearchInput
                 disabled={isDisabled}
                 value={patient}
+                width={300}
                 onChange={async ({ id: patientId }) => {
                   await update({ id, patientId });
                 }}
+                NoOptionsRenderer={props => (
+                  <DefaultAutocompleteItemOption
+                    {...props}
+                    key="no-options-renderer"
+                  >
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="flex-end"
+                      gap={1}
+                      height={25}
+                      width="100%"
+                    >
+                      <Typography
+                        overflow="hidden"
+                        fontWeight="bold"
+                        textOverflow="ellipsis"
+                        sx={{
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {t('messages.no-matching-patients')}
+                      </Typography>
+                      <Typography
+                        onClick={() => {
+                          openPatientModal();
+                        }}
+                        color="secondary"
+                      >
+                        {t('button.create-new-patient')}
+                      </Typography>
+                    </Box>
+                  </DefaultAutocompleteItemOption>
+                )}
               />
             }
           />
@@ -196,6 +246,9 @@ export const Toolbar: FC = () => {
           }}
         />
       </Grid>
+      {patientModalOpen && (
+        <CreatePatientModal onClose={() => setPatientModalOpen(false)} />
+      )}
     </AppBarContentPortal>
   );
 };
