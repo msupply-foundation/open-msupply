@@ -183,11 +183,9 @@ impl GeneralQueries {
         ctx: &Context<'_>,
         store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<LedgerFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<LedgerSortInput>>,
+        #[graphql(desc = "Filter option")] filter: Option<ItemLedgerFilterInput>,
     ) -> Result<ItemLedgerResponse> {
-        item_ledger(ctx, store_id, page, filter, sort)
+        item_ledger(ctx, store_id, page, filter)
     }
 
     pub async fn invoice_counts(
