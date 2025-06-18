@@ -12,7 +12,7 @@ pub const MIN_LIMIT: u32 = 1;
 
 pub fn get_purchase_order_lines(
     ctx: &ServiceContext,
-    store_id: &str,
+    store_id_option: Option<&str>,
     pagination: Option<PaginationOption>,
     filter: Option<PurchaseOrderLineFilter>,
     sort: Option<PurchaseOrderLineSort>,
@@ -21,7 +21,7 @@ pub fn get_purchase_order_lines(
     let repository = PurchaseOrderLineRepository::new(&ctx.connection);
 
     let mut filter = filter.unwrap_or_default();
-    filter.store_id = Some(store_id).map(EqualFilter::equal_to);
+    filter.store_id = store_id_option.map(EqualFilter::equal_to);
 
     Ok(ListResult {
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
@@ -31,12 +31,12 @@ pub fn get_purchase_order_lines(
 
 pub fn get_purchase_order_line(
     ctx: &ServiceContext,
-    store_id: &str,
+    store_id_option: Option<&str>,
     id: &str,
 ) -> Result<Option<PurchaseOrderLine>, RepositoryError> {
     let repository = PurchaseOrderLineRepository::new(&ctx.connection);
     let mut filter = PurchaseOrderLineFilter::new().id(EqualFilter::equal_to(id));
-    filter.store_id = Some(store_id).map(EqualFilter::equal_to);
+    filter.store_id = store_id_option.map(EqualFilter::equal_to);
 
     Ok(repository.query_by_filter(filter)?.pop())
 }

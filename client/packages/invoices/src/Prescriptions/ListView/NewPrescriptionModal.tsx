@@ -93,6 +93,8 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
   return (
     <Modal
       title={t('label.create-prescription')}
+      height={700}
+      width={900}
       okButton={
         <LoadingButton
           color="secondary"
@@ -195,7 +197,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
               clinicianValue={clinician}
               width={350}
               allowCreate
-              mountCreateModalAsSidePanel
+              mountSlidePanel
             />
           }
         />
