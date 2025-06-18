@@ -10,15 +10,14 @@ query purchaseOrderQuery($dataId: String!, $storeId: String!) {
         nodes {
           id
           packSize
+          lineNumber
+          numberOfPacks
+          requestedQuantity
           item {
             name
             unitName
             msupplyUniversalCode
             code
-            defaultPackSize
-            stats(storeId: $storeId) {
-              averageMonthlyConsumption
-            }
           }
         }
       }

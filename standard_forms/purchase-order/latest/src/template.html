@@ -5,30 +5,33 @@
 <table class="body_section">
   <thead>
     <tr class="body_column_label">
-      <th>{{ t(k="label.code", f="Code") }}</th>
-      <th>{{ t(k="report.item-name", f="Item name") }}</th>
-      <th>{{ t(k="report.stock-on-hand",f="Stock on hand") }}</th>
-      <th>{{ t(k="label.amc",f="AMC") }}</th>
-      <th>{{ t(k="label.months-of-stock", f="MOS") }}</th>
-      <th style="width: 10%">
-        {{ t(k="label.requested-quantity", f="Requested quantity") }}
-      </th>
+      <th>{{ t(k="report.line", f="Line") }}</th>
+      <th>{{ t(k="report.suppliers-code", f="Supplier's code") }}</th>
+      <th>{{ t(k="report.item-code",f="Item code") }}</th>
+      <th>{{ t(k="report.item-name",f="Item name") }}</th>
+      <th>{{ t(k="report.pack-quantity", f="Pack Quantity") }}</th>
+      <th>{{ t(k="report.pack-size", f="Pack size") }}</th>
+      <th>{{ t(k="label.unit", f="Unit") }}</th>
+      <th>{{ t(k="label.total-quantity", f="Total quantity") }}</th>
+      <th>{{ t(k="label.cost", f="Cost") }}</th>
+      <th>{{ t(k="report.line-total-cost", f="Line total cost") }}</th>
+      <th>{{ t(k="heading.comment", f="Comment") }}</th>
     </tr>
   </thead>
   <tr class="body_value">
-    <td>line.item.code</td>
-    <td>line.item.name</td>
+    <td>data.purchaseOrder.lines.nodes.lineNumber</td>
     <td>
-      line.itemStats.stockOnHand | default(value=0.00) | round(precision=2)
+      {% if data.purchaseOrder.supplier %} {{ data.purchaseOrder.supplier.code
+      }} {% endif %}
     </td>
-    <td>
-      line.itemStats.averageMonthlyConsumption | default(value=0.00) |
-      round(precision=2)
-    </td>
-    <td>
-      line.itemStats.monthsOfStockOnHand | default(value=0.00) |
-      round(precision=2)
-    </td>
-    <td>line.requestedQuantity</td>
+    <td>data.purchaseOrder.lines.nodes.item.code</td>
+    <td>data.purchaseOrder.lines.nodes.item.name</td>
+    <td>data.purchaseOrder.lines.nodes.numberOfPacks</td>
+    <td>data.purchaseOrder.lines.nodes.packSize</td>
+    <td>data.purchaseOrder.lines.nodes.item.unitName</td>
+    <td>data.purchaseOrder.lines.nodes.item.requestedQuantity</td>
+    <td>item cost</td>
+    <td>line total cost</td>
+    <td>comment</td>
   </tr>
 </table>
