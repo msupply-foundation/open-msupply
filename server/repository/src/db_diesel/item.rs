@@ -363,17 +363,11 @@ impl Item {
 
 impl ItemType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            ..Default::default()
-        }
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
 
     pub fn not_equal_to(&self) -> EqualFilter<Self> {
-        EqualFilter {
-            not_equal_to: Some(self.clone()),
-            ..Default::default()
-        }
+        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
     }
 }
 
