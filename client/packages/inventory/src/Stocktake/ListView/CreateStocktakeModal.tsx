@@ -71,7 +71,6 @@ export const CreateStocktakeModal = ({
     expiryDate: expiryDate && {
       beforeOrEqualTo: Formatter.naiveDate(expiryDate),
     },
-    hasPacksInStore: true,
   };
 
   const { data } = useStockListCount(stockFilter);

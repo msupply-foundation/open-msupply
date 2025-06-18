@@ -47,9 +47,8 @@ const StockListComponent: FC = () => {
     ],
   });
   const navigate = useNavigate();
-  const filterWithInStock = { ...filterBy, hasPacksInStore: true };
   const queryParams = {
-    filterBy: filterWithInStock,
+    filterBy: { ...filterBy },
     offset,
     sortBy,
     first,
