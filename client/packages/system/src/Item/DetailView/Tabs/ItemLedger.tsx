@@ -5,7 +5,13 @@ import {
   ItemLedgerFragment,
   useItemLedger,
 } from '@openmsupply-client/system';
-import { BasicSpinner, NothingHere } from '@common/components';
+import {
+  BasicSpinner,
+  FilterDefinition,
+  FilterMenu,
+  GroupFilterDefinition,
+  NothingHere,
+} from '@common/components';
 import {
   DataTable,
   TableProvider,
@@ -18,6 +24,8 @@ import {
   ColumnFormat,
   CurrencyCell,
   NumUtils,
+  InvoiceNodeType,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { getStatusTranslation } from '@openmsupply-client/invoices/src/utils';
 
@@ -184,19 +192,72 @@ export const ItemLedgerTab = ({
   itemId: string;
   onRowClick: (ledger: ItemLedgerFragment) => void;
 }) => {
+  const t = useTranslation();
   const {
     updateSortQuery,
     updatePaginationQuery,
     queryParams: { page, first, offset, filterBy },
-  } = useUrlQueryParams();
+  } = useUrlQueryParams({
+    filters: [
+      { key: 'datetime', condition: 'between' },
+      { key: 'invoiceType', condition: 'equalTo' },
+      { key: 'invoiceStatus', condition: 'equalTo' },
+    ],
+  });
   const { data, isLoading } = useItemLedger(itemId, {
     first,
     offset,
     filterBy,
   });
 
+  const filters: (FilterDefinition | GroupFilterDefinition)[] = [
+    {
+      type: 'group',
+      name: t('label.datetime'),
+      elements: [
+        {
+          type: 'date',
+          name: t('label.from-datetime'),
+          urlParameter: 'datetime',
+          range: 'from',
+        },
+        {
+          type: 'date',
+          name: t('label.to-datetime'),
+          urlParameter: 'datetime',
+          range: 'to',
+        },
+      ],
+    },
+    {
+      type: 'enum',
+      name: t('label.type'),
+      urlParameter: 'invoiceType',
+      options: [
+        ...Object.values(InvoiceNodeType).map(type => ({
+          label: t(getInvoiceLocalisationKey(type)),
+          value: type,
+        })),
+      ],
+    },
+    {
+      type: 'enum',
+      name: t('label.status'),
+      urlParameter: 'invoiceStatus',
+      options: [
+        ...Object.values(InvoiceNodeStatus).map(status => ({
+          label: t(getStatusTranslation(status)),
+          value: status,
+        })),
+      ],
+    },
+  ];
+
   return (
     <Box justifyContent="center" display="flex" flex={1}>
+      <Box>
+        <FilterMenu filters={filters} />
+      </Box>
       <Box flex={1} display="flex">
         <TableProvider createStore={createTableStore}>
           <ItemLedgerTable
