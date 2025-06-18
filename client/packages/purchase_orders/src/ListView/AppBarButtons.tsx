@@ -5,15 +5,41 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
+  useNotification,
+  useToggle,
+  useNavigate,
 } from '@openmsupply-client/common';
+import {
+  NameRowFragment,
+  SupplierSearchModal,
+} from '@openmsupply-client/system';
+import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
 
 export const AppBarButtonsComponent = () => {
   const t = useTranslation();
-  // const { success, error } = useNotification();
+  const modalController = useToggle();
+  const navigate = useNavigate();
 
-  // const {
-  //   query: { data, isLoading },
-  // } = usePurchaseOrderList(listParams);
+  const {
+    create: { create },
+  } = usePurchaseOrder();
+
+  const { error } = useNotification();
+
+  const handleSupplierSelected = async (selected: NameRowFragment) => {
+    try {
+      const id = await create(selected.id);
+      navigate(id);
+    } catch (e) {
+      console.error('Error creating purchase order:', e);
+      const errorSnack = error(
+        `${t('error.failed-to-create-purchase-order')} ${(e as Error).message}`
+      );
+      errorSnack();
+    }
+
+    modalController.toggleOff();
+  };
 
   return (
     <AppBarButtonsPortal>
@@ -21,10 +47,12 @@ export const AppBarButtonsComponent = () => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-purchase-order')}
-          onClick={() => {
-            // eslint-disable-next-line
-            console.log('TO-DO');
-          }}
+          onClick={modalController.toggleOn}
+        />
+        <SupplierSearchModal
+          open={modalController.isOn}
+          onClose={modalController.toggleOff}
+          onChange={handleSupplierSelected}
         />
       </Grid>
     </AppBarButtonsPortal>
