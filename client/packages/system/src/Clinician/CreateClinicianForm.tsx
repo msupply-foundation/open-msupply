@@ -27,7 +27,6 @@ export const CreateClinicianForm = ({
         label={t('label.code')}
         Input={
           <BasicTextInput
-            size="small"
             sx={{ width }}
             value={draft.code}
             onChange={event => {
@@ -41,7 +40,6 @@ export const CreateClinicianForm = ({
         label={t('label.first-name')}
         Input={
           <BasicTextInput
-            size="small"
             sx={{ width }}
             value={draft.firstName}
             onChange={event => {
@@ -54,7 +52,6 @@ export const CreateClinicianForm = ({
         label={t('label.last-name')}
         Input={
           <BasicTextInput
-            size="small"
             sx={{ width }}
             value={draft.lastName}
             onChange={event => {
@@ -68,7 +65,6 @@ export const CreateClinicianForm = ({
         label={t('label.initials')}
         Input={
           <BasicTextInput
-            size="small"
             sx={{ width }}
             value={draft.initials}
             onChange={event => {
