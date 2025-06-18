@@ -22,11 +22,7 @@ import {
   PatientSearchInput,
 } from '@openmsupply-client/system';
 import { ProgramSearchInput } from '@openmsupply-client/system';
-import {
-  CreateNewPatient,
-  ProgramFragment,
-  useProgramList,
-} from '@openmsupply-client/programs';
+import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
 
 import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 import { usePrescription } from '../api';
@@ -61,7 +57,9 @@ export const Toolbar: FC = () => {
   const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
     clinician ?? null
   );
-  const [newPatient, setNewPatient] = useState<CreateNewPatient | null>();
+  const [currentPatientId, setCurrentPatientId] = useState<string | undefined>(
+    patient?.id
+  );
 
   const { data: programData } = useProgramList();
   const programs = programData?.nodes ?? [];
@@ -148,9 +146,6 @@ export const Toolbar: FC = () => {
       setCreatePatientModalOpen(true);
     }
   );
-
-  // Use new patient if there is one
-  const editPatientId = newPatient?.id ?? patient?.id;
 
   return (
     <AppBarContentPortal
@@ -260,19 +255,20 @@ export const Toolbar: FC = () => {
       {createPatientModalOpen && (
         <CreatePatientModal
           onClose={() => setCreatePatientModalOpen(false)}
-          onCreatePatientForPrescription={id => {
+          onCreatePatientForPrescription={newPatient => {
             setEditPatientModalOpen(true);
-            setNewPatient(id);
+            setCurrentPatientId(newPatient.id);
           }}
         />
       )}
 
-      {editPatientId && editPatientModalOpen && (
+      {currentPatientId && editPatientModalOpen && (
         <EditPatientModal
-          patientId={editPatientId}
+          patientId={currentPatientId}
           onClose={() => {
             setEditPatientModalOpen(false);
             setCreatePatientModalOpen(false);
+            setCurrentPatientId(patient?.id);
           }}
           isOpen={editPatientModalOpen}
         />
