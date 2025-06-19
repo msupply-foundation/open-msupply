@@ -33,19 +33,6 @@ export const DetailViewInner = () => {
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
-  // const isDisabled = useInbound.utils.isDisabled();
-  // const { onOpen, onClose, mode, entity, isOpen } =
-  //   useEditModal<InboundLineItem>();
-  // const {
-  //   onOpen: onOpenReturns,
-  //   onClose: onCloseReturns,
-  //   isOpen: returnsIsOpen,
-  //   entity: stockLineIds,
-  //   mode: returnModalMode,
-  //   setMode: setReturnMode,
-  // } = useEditModal<string[]>();
-  // const { info, error } = useNotification();
-  // const { clearSelected } = useTableStore();
   // const { data: preference } = usePreference(
   //   PreferenceKey.ManageVaccinesInDoses
   // );
