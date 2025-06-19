@@ -58,7 +58,7 @@ httpmock = { workspace = true }
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"
 
-[target.'cfg(not(target_os = "android"))'.dependencies]
+[target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 astro-dnssd = { version = "0.3.4" }
 
 [features]

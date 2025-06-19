@@ -189,7 +189,7 @@ impl Synchroniser {
 
         let v6_sync = match CentralServerConfig::get() {
             CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
-            CentralServerConfig::IsCentralServer => None,
+            CentralServerConfig::IsCentralServer | CentralServerConfig::ForcedCentralServer => None,
             CentralServerConfig::CentralServerUrl(url) => {
                 let v6_sync =
                     SynchroniserV6::new(&url, &self.sync_v5_settings, self.sync_v6_version)?;
