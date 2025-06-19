@@ -91,7 +91,7 @@ export const usePurchaseOrderColumns = () => {
     //   accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
     //   getSortValue: rowData => rowData.itemStats.availableStockOnHand,
     // },
-    // TO-DO: How to calculate this value?
+    // TO-DO: Include all orders or just POs?
     //   {
     //   key: 'onOrder',
     //   label: 'label.on-order',
