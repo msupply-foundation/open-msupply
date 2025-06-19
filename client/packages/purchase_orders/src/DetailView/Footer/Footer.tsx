@@ -50,7 +50,7 @@ export const Footer: FC = () => {
               selectedRowCount={selectedRows.length}
             />
           )}
-          {data && selectedRows.length === 0 && (
+          {data && selectedRows.length === 0 ? (
             <Box
               gap={2}
               display="flex"
@@ -68,7 +68,7 @@ export const Footer: FC = () => {
                 {/* <StatusChangeButton /> */}
               </Box>
             </Box>
-          )}
+          ) : null}
         </>
       }
     />
