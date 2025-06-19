@@ -7,7 +7,6 @@ import {
   useTranslation,
   SearchBar,
   Tooltip,
-  useParams,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
