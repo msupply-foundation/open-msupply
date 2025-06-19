@@ -1,7 +1,5 @@
 import { useEffect, useMemo } from 'react';
 import {
-  useConfirmationModal,
-  useTranslation,
   UpdatePatientInput,
   DocumentRegistryCategoryNode,
   InsertPatientInput,
@@ -25,7 +23,7 @@ import {
 import defaultPatientSchema from '../PatientView/DefaultPatientSchema.json';
 import defaultPatientUISchema from '../PatientView/DefaultPatientUISchema.json';
 import { PRESCRIPTION } from '../../../../invoices/src/Prescriptions/api/hooks/keys';
-import { usePrescription } from '../../../../invoices/src/Prescriptions';
+import { usePrescription } from 'packages/invoices/src/Prescriptions';
 
 const DEFAULT_SCHEMA: SchemaData = {
   formSchemaId: undefined,
@@ -72,8 +70,7 @@ const useUpsertProgramPatient = (): SaveDocumentMutation => {
   };
 };
 
-export const usePatientEditForm = (patientId: string, onClose: () => void) => {
-  const t = useTranslation();
+export const usePatientEditForm = (patientId: string) => {
   const { error } = useNotification();
   const queryClient = useQueryClient();
   const { id } = useParams();
@@ -219,7 +216,7 @@ export const usePatientEditForm = (patientId: string, onClose: () => void) => {
     return () => setCreateNewPatient(undefined);
   }, [setCreateNewPatient]);
 
-  const handleSave = async () => {
+  const save = async () => {
     try {
       const savedDocument = await saveData();
       setCreateNewPatient(undefined);
@@ -231,17 +228,11 @@ export const usePatientEditForm = (patientId: string, onClose: () => void) => {
         id,
         patientId,
       });
-      onClose();
     } catch (e) {
       const errorSnack = error((e as Error).message);
       errorSnack();
     }
   };
-  const save = useConfirmationModal({
-    onConfirm: handleSave,
-    message: t('messages.confirm-save-generic'),
-    title: t('heading.are-you-sure'),
-  });
 
   useEffect(() => {
     if (!documentName && currentPatient) {
@@ -252,7 +243,6 @@ export const usePatientEditForm = (patientId: string, onClose: () => void) => {
   return {
     JsonForm,
     save,
-    onClose,
     isLoading,
     isSaving,
     isDirty,

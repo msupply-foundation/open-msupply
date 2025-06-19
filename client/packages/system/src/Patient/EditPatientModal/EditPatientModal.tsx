@@ -46,7 +46,7 @@ export const EditPatientModal = ({
     isDirty,
     validationError,
     revert,
-  } = usePatientEditForm(patientId, onClose);
+  } = usePatientEditForm(patientId);
   const { userHasPermission } = useAuthContext();
 
   const { Modal } = useDialog({
@@ -113,7 +113,10 @@ export const EditPatientModal = ({
             !userHasPermission(UserPermission.PatientMutate)
           }
           isLoading={isLoading}
-          onClick={() => save()}
+          onClick={async () => {
+            await save();
+            onClose();
+          }}
           label={t('button.save')}
           startIcon={<SaveIcon />}
         />
