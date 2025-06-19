@@ -11,7 +11,9 @@ import { getPatientOptionRenderer } from '../PatientOptionRenderer';
 import { useSearchPatient } from '../utils';
 import { EditPatientModal } from '../../EditPatientModal';
 
-export const PatientSearchInput: FC<NameSearchInputProps> = ({
+export const PatientSearchInput: FC<
+  NameSearchInputProps & { allowEdit?: boolean }
+> = ({
   autoFocus,
   onChange,
   width = 250,
@@ -19,6 +21,7 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
   disabled = false,
   sx,
   NoOptionsRenderer,
+  allowEdit = false,
 }) => {
   const t = useTranslation();
   const PatientOptionRenderer = getPatientOptionRenderer();
@@ -67,7 +70,6 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
         renderOption={noResults ? NoOptionsRenderer : PatientOptionRenderer}
         getOptionLabel={(option: SearchInputPatient) => option.name}
         isOptionEqualToValue={(option, value) => option.name === value.name}
-        width={`${width}px`}
         popperMinWidth={width}
         value={value}
         inputValue={input}
@@ -83,14 +85,14 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
           onBlur: () => setInput(value?.name ?? ''),
         }}
         filterOptions={options => options}
-        sx={{ minWidth: width, ...sx }}
+        sx={{ width: '100%', ...sx }}
         noOptionsText={
           input.length > 0
             ? t('messages.no-matching-patients')
             : t('messages.type-to-search')
         }
       />
-      {value && (
+      {allowEdit && value && (
         <>
           <IconButton
             icon={<EditIcon style={{ fontSize: 16, fill: 'none' }} />}
