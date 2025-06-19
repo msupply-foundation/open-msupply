@@ -23,6 +23,7 @@ import { InboundItem } from 'packages/invoices/src/types';
 import { ContentArea } from './ContentArea';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
+import { Footer } from './Footer';
 
 export const DetailViewInner = () => {
   const { purchaseOrderId = '' } = useParams();
@@ -81,11 +82,9 @@ export const DetailViewInner = () => {
             isDisabled={isDisabled}
             onAddItem={onOpen}
             onRowClick={!isDisabled ? onRowClick : null}
-            // onAddItem={() => onOpen()}
-            // displayInDoses={preference?.manageVaccinesInDoses}
           />
 
-          {/* <Footer onReturnLines={onReturn} /> */}
+          <Footer />
           {/* <SidePanel /> */}
 
           {/* {isOpen && (
@@ -101,19 +100,6 @@ export const DetailViewInner = () => {
               hasItemVariantsEnabled={hasItemVariantsEnabled}
             />
           )} */}
-          {/* {returnsIsOpen && (
-            <SupplierReturnEditModal
-              isOpen={returnsIsOpen}
-              onCreate={clearSelected}
-              onClose={onCloseReturns}
-              stockLineIds={stockLineIds || []}
-              supplierId={data.otherParty.id}
-              modalMode={returnModalMode}
-              inboundShipmentId={data.id}
-              isNewReturn
-            />
-          )} */}
-          {/* </InboundShipmentLineErrorProvider> */}
         </>
       ) : (
         <AlertModal
