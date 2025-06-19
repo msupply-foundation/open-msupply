@@ -28,7 +28,6 @@ mod tests {
 
     use super::*;
     use chrono::NaiveDateTime;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
     #[actix_rt::test]
     async fn test_handle_object_fields_translation() {
         // case with populated fields
