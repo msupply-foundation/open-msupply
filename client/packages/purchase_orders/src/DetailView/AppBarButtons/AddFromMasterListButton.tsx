@@ -21,6 +21,7 @@ export const AddFromMasterListButtonComponent = () => {
         onClose={modalController.toggleOff}
         onChange={masterList => {
           modalController.toggleOff();
+          // eslint-disable-next-line no-console
           console.log('TO-DO: Add from master list', masterList);
           // addFromMasterList(masterList);
         }}

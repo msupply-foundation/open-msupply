@@ -45,6 +45,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                   disabled={isDisabled || isLoading}
                   value={(supplier as NameFragment) ?? null}
                   onChange={supplier => {
+                    // eslint-disable-next-line no-console
                     console.log('TO-DO: Update supplier', supplier.name);
                     // update({ supplier });
                   }}
@@ -62,6 +63,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                   sx={{ width: 250 }}
                   value={reference ?? null}
                   onChange={e => {
+                    // eslint-disable-next-line no-console
                     console.log('TO-DO: Update reference', e.target.value);
                     // update({ reference: e.target.value });
                   }}
@@ -83,6 +85,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
             placeholder={t('placeholder.filter-items')}
             value={''}
             onChange={newValue => {
+              // eslint-disable-next-line no-console
               console.log('TO-DO: Set item filter with:', newValue);
               // setItemFilter(newValue);
             }}

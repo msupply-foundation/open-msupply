@@ -9,11 +9,10 @@ import {
   TableProvider,
   useBreadcrumbs,
   useNavigate,
-  useNotification,
+  // useNotification,
   useParams,
-  usePreference,
-  useSimplifiedTabletUI,
-  useTableStore,
+  // usePreference,
+  // useTableStore,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
@@ -56,10 +55,12 @@ export const DetailViewInner = () => {
   }, [setCustomBreadcrumbs, data?.number]);
 
   const onOpen = () => {
+    // eslint-disable-next-line no-console
     console.log('TO-DO: Show Line Edit Modal');
   };
 
   const onRowClick = (line: PurchaseOrderLineFragment) => {
+    // eslint-disable-next-line no-console
     console.log('TO-DO: Show Line Edit Modal for line:', line);
   };
 
