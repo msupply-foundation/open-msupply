@@ -132,7 +132,10 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
         currentTab === Tabs.SearchResults ? (
           <DialogButton
             variant="next"
-            onClick={onOk}
+            onClick={() => {
+              onOk();
+              onClose();
+            }}
             customLabel={t('button.create-new-patient')}
           />
         ) : undefined

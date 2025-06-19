@@ -267,7 +267,6 @@ export const Toolbar: FC = () => {
           patientId={currentPatientId}
           onClose={() => {
             setEditPatientModalOpen(false);
-            setCreatePatientModalOpen(false);
             setCurrentPatientId(patient?.id);
           }}
           isOpen={editPatientModalOpen}
