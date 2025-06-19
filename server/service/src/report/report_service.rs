@@ -9,6 +9,10 @@ use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::{cmp::Ordering, collections::HashMap, time::SystemTime};
 use thiserror::Error;
+use umya_spreadsheet::{
+    drawing::spreadsheet::MarkerType, helper::coordinate::coordinate_from_index, Cell, FontSize,
+    Image, Range,
+};
 use util::{format_error, uuid::uuid};
 
 use crate::{
@@ -237,8 +241,17 @@ impl<'a> Selectors<'a> {
         Self { html }
     }
 
-    fn headers(&self) -> Vec<&str> {
-        let headers_selector = Selector::parse(".paging tbody thead tr td").unwrap();
+    fn header_rows_and_cells(&self) -> Vec<Vec<ElementRef>> {
+        let rows_selector = Selector::parse(".paging thead table tr").unwrap();
+        let cells_selector = Selector::parse("td").unwrap();
+        self.html
+            .select(&rows_selector)
+            .map(|row| row.select(&cells_selector).collect())
+            .collect()
+    }
+
+    fn data_headers(&self) -> Vec<&str> {
+        let headers_selector = Selector::parse(".paging tbody thead tr td,th").unwrap();
         self.html
             .select(&headers_selector)
             .map(inner_text)
@@ -263,6 +276,80 @@ fn inner_text(element_ref: ElementRef) -> &str {
         .unwrap_or_default()
 }
 
+fn get_cell_coords(cell: ElementRef, col: u32, row: u32) -> (String, String) {
+    let cols = cell
+        .attr("colspan")
+        .and_then(|cols| cols.parse::<u32>().ok())
+        .unwrap_or(1);
+    let rows = cell
+        .attr("rowspan")
+        .and_then(|rows| rows.parse::<u32>().ok())
+        .unwrap_or(1);
+
+    let start_coord = coordinate_from_index(&col, &row);
+    let end_coord = coordinate_from_index(&(col + cols - 1), &(row + rows - 1));
+
+    (start_coord, end_coord)
+}
+
+fn get_image_data(cell: ElementRef) -> Option<(Option<String>, Vec<u8>)> {
+    let image_selector = Selector::parse("img").unwrap();
+    let img = cell.select(&image_selector).nth(0)?;
+
+    let img_data = img.attr("src").and_then(|src| {
+        let base64_data = src.split("base64,").nth(1)?;
+        match BASE64_STANDARD.decode(base64_data) {
+            Ok(data) => Some(data),
+            Err(e) => {
+                // Log error but then return None, just won't render the image
+                error!("Error decoding base64 image: {:?}", e);
+                return None;
+            }
+        }
+    })?;
+
+    let img_name = img.attr("alt").map(|alt| alt.to_string());
+
+    Some((img_name, img_data))
+}
+
+fn get_image(image_data: (Option<String>, Vec<u8>), coordinate: String, dimension: u32) -> Image {
+    let (img_name, base_64_img_data) = image_data;
+
+    let mut marker = MarkerType::default();
+    marker.set_coordinate(coordinate.clone());
+
+    let mut image = Image::default();
+
+    image.new_image_with_dimensions(
+        dimension,
+        dimension,
+        &img_name.unwrap_or(coordinate),
+        base_64_img_data,
+        marker,
+    );
+
+    image
+}
+
+fn apply_known_styles(cell: &mut Cell, class_name: &str) {
+    let style = cell.get_style_mut();
+
+    match class_name {
+        "title" => {
+            let mut font_size = FontSize::default();
+            font_size.set_val(16.0);
+            style.get_font_mut().set_bold(true).set_font_size(font_size);
+        }
+        "bold" => {
+            style.get_font_mut().set_bold(true);
+        }
+        _ => {
+            // Unknown class, do nothing
+        }
+    }
+}
+
 /// Converts the report to an Excel file and returns the file id
 fn print_html_report_to_excel(
     base_dir: &Option<String>,
@@ -275,25 +362,76 @@ fn print_html_report_to_excel(
     book.set_sheet_name(0, sheet_name).unwrap();
     let sheet = book.get_sheet_by_name_mut(sheet_name).unwrap();
 
-    let fragment = Html::parse_fragment(&format_html_document(document));
-
+    let formatted = format_html_document(document);
+    let fragment = Html::parse_fragment(&formatted);
     let selectors = Selectors::new(&fragment); // Store Html when creating
 
-    for (index, header) in selectors.headers().into_iter().enumerate() {
-        let cell = sheet.get_cell_mut((index as u32 + 1, 1));
+    let mut row_idx: u32 = 1;
+
+    // HEADER
+    for row in selectors.header_rows_and_cells().into_iter() {
+        let mut cell_idx: u32 = 1;
+        for cell in row.into_iter() {
+            // If the cell index is merged, we should move over and put the rest of the row content after that
+            let merged_cells = sheet.get_merge_cells();
+            merged_cells.iter().for_each(|range| {
+                cell_idx += get_num_cells_to_skip(range, cell_idx, row_idx);
+            });
+
+            let (start_coord, end_coord) = get_cell_coords(cell, cell_idx, row_idx);
+
+            if start_coord != end_coord {
+                // If the start and end coordinates are different, we merge those cells
+                sheet.add_merge_cells(&format!("{}:{}", start_coord, end_coord));
+            }
+
+            // If cell contains image, add that to the sheet cell
+            if let Some(image_data) = get_image_data(cell) {
+                // Set image width probably needs to be passed in at some - for now 60 = close to default col width
+                let image = get_image(image_data, start_coord, 60);
+
+                sheet.add_image(image);
+
+            // Otherwise set text content
+            } else {
+                let text = inner_text(cell);
+                if !text.is_empty() {
+                    let sheet_cell = sheet
+                        .get_cell_mut((cell_idx, row_idx))
+                        .set_value(inner_text(cell));
+
+                    if let Some(class) = cell.attr("class") {
+                        apply_known_styles(sheet_cell, class);
+                    };
+                }
+            }
+
+            cell_idx += 1; // Next cell
+        }
+        row_idx += 1; // Next row
+    }
+    row_idx += 1; // Leave a row before the main data table
+
+    // HEADER ROW FOR MAIN DATA
+    for (index, header) in selectors.data_headers().into_iter().enumerate() {
+        let cell = sheet.get_cell_mut((index as u32 + 1, row_idx));
 
         cell.set_value(header);
         cell.get_style_mut().get_font_mut().set_bold(true);
     }
+    row_idx += 1; // Next row
 
-    for (row_index, row) in selectors.rows_and_cells().into_iter().enumerate() {
+    // MAIN DATA
+    for row in selectors.rows_and_cells().into_iter() {
         for (cell_index, cell) in row.into_iter().enumerate() {
             sheet
-                .get_cell_mut((cell_index as u32 + 1, row_index as u32 + 2))
+                .get_cell_mut((cell_index as u32 + 1, row_idx))
                 .set_value(cell);
         }
+        row_idx += 1; // Next row
     }
 
+    // Save the file to the tmp directory
     let now: DateTime<Utc> = SystemTime::now().into();
     let file_service = StaticFileService::new(base_dir)
         .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
@@ -310,6 +448,33 @@ fn print_html_report_to_excel(
         .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
 
     Ok(reserved_file.id)
+}
+
+fn get_num_cells_to_skip(range: &Range, cell_idx: u32, row_idx: u32) -> u32 {
+    let (start_col, start_row) = match (
+        range.get_coordinate_start_col(),
+        range.get_coordinate_start_row(),
+    ) {
+        (Some(col), Some(row)) => (*col.get_num(), *row.get_num()),
+        _ => return 0, // Invalid start coordinate
+    };
+
+    if cell_idx < start_col || row_idx < start_row {
+        return 0; // Current cell is before the merged range
+    }
+
+    let (end_col, end_row) = match (
+        range.get_coordinate_end_col(),
+        range.get_coordinate_end_row(),
+    ) {
+        (Some(col), Some(row)) => (*col.get_num(), *row.get_num()),
+        _ => return 0, // Invalid end coordinate
+    };
+
+    if cell_idx > end_col || row_idx > end_row {
+        return 0; // Current cell is after the merged range
+    }
+    end_col - cell_idx + 1
 }
 
 /// Puts the document content, header and footer into a <html> template.
@@ -886,7 +1051,6 @@ mod report_service_test {
         let report_1 = ReportDefinition {
             index: ReportDefinitionIndex {
                 template: Some("template.html".to_string()),
-                header: None,
                 footer: Some("footer.html".to_string()),
                 query: vec!["query".to_string()],
                 ..Default::default()
@@ -1001,7 +1165,15 @@ mod report_to_excel_test {
       <table class="paging">
          <thead>
             <tr>
-               <td></td>
+               <td>
+                    <table>
+                        <thead>
+                           <tr>
+                              <td>Report Title</td>
+                           </tr>
+                        </thead>
+                    </table>
+               </td>
             </tr>
          </thead>
          <tbody>
@@ -1046,7 +1218,15 @@ mod report_to_excel_test {
 
         let selectors = Selectors::new(&html);
 
-        assert_eq!(selectors.headers(), vec!["First Header", "Second Header"]);
+        let header = selectors.header_rows_and_cells();
+        assert_eq!(header.len(), 1);
+        assert_eq!(header[0].len(), 1);
+        assert_eq!(inner_text(header[0][0]), "Report Title");
+
+        assert_eq!(
+            selectors.data_headers(),
+            vec!["First Header", "Second Header"]
+        );
 
         assert_eq!(
             selectors.rows_and_cells(),
@@ -1090,6 +1270,96 @@ mod report_to_excel_test {
         let cell = cells.next().unwrap();
 
         assert_eq!(inner_text(cell), "Out of Stock");
+    }
+
+    #[test]
+    fn test_get_img_src() {
+        let html = Html::parse_fragment(
+            r#"
+<html>
+   <body>
+      <table>
+         <tbody>
+            <tr>
+               <td class="status"> 
+                  <img alt="store logo" src="data:image&#x2F;png;base64,c29tZS1zcmM=" /> <!-- base64 encoded "some-src" -->
+               </td>
+            </tr>
+         </tbody>
+      </table>         
+   </body>
+</html>
+
+        "#,
+        );
+
+        let cells_selector = Selector::parse("td").unwrap();
+        let mut cells = html.select(&cells_selector);
+        let cell = cells.next().unwrap();
+
+        assert_eq!(
+            get_image_data(cell).unwrap(),
+            (
+                Some("store logo".to_string()), // alt text
+                // "some-src" as bytes
+                vec![115, 111, 109, 101, 45, 115, 114, 99]
+            )
+        );
+    }
+
+    #[test]
+    fn test_get_cell_coords() {
+        let html = Html::parse_fragment(
+            r#"
+<html>
+   <body>
+      <table>
+         <tbody>
+            <tr>
+               <td colspan="2" rowspan="3"> 
+                Some Text
+               </td>
+            </tr>
+         </tbody>
+      </table>         
+   </body>
+</html>
+
+        "#,
+        );
+
+        let cells_selector = Selector::parse("td").unwrap();
+        let mut cells = html.select(&cells_selector);
+        let cell = cells.next().unwrap();
+
+        assert_eq!(
+            get_cell_coords(cell, 2, 2),
+            ("B2".to_string(), "C4".to_string())
+        );
+    }
+
+    #[test]
+    fn test_get_num_cells_to_skip() {
+        let mut range = Range::default();
+        range.set_range("B2:D3".to_string());
+
+        // 1,1 = A1 = not within merged cell block
+        assert_eq!(get_num_cells_to_skip(&range, 1, 1), 0);
+
+        // 3,1 = C1 = not within merged cell block
+        assert_eq!(get_num_cells_to_skip(&range, 3, 1), 0);
+
+        // 1,2 = A2 = not within merged cell block
+        assert_eq!(get_num_cells_to_skip(&range, 1, 2), 0);
+
+        // 3,2 = C2 = within merged cell block
+        assert_eq!(get_num_cells_to_skip(&range, 3, 2), 2); // should get bumped 2 cells (next available column is E)
+
+        // 4,3 = D3 = within merged cell block
+        assert_eq!(get_num_cells_to_skip(&range, 4, 3), 1); // should get bumped 1 cell
+
+        // 5,4 = E4 = not within merged cell block
+        assert_eq!(get_num_cells_to_skip(&range, 5, 4), 0);
     }
 }
 

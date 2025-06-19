@@ -247,7 +247,18 @@ Other functionality, and processes used in report development are:
 
 ### Tera templating language
 
-Open mSupply reports are rendered using [Tera](https://keats.github.io/tera/docs/), an extension of HTML where values are replaced during render and simple logic can be executed.
+OMS forms and reports are rendered as HTML, and can either be printed or exported to Excel.
+
+The HTML is rendered using [Tera](https://keats.github.io/tera/docs/), an extension of HTML where values are replaced during render and simple logic can be executed.
+
+In order to support printable HTML and Excel formats, report templates use HTML <table> elements.
+
+- The `header.html` template should have a `<table>` > `<tr>` > `<td>` structure
+- The `template.html` main body template should have a `<table>`
+  - Then for row headers > `<thead>` > `<tr>` > `<th>`
+  - And for data rows > `<tbody>` > `<tr>` > `<td>`
+
+Some basic styles are applied to the the Excel table (e.g. row headers are bold, class `title` is large font and bold...) - check the `report_service.rs` file for the latest known classnames you can share between report style.css and the Excel export.
 
 ### Translating reports
 
