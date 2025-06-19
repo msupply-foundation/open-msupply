@@ -9,10 +9,7 @@ import {
   TableProvider,
   useBreadcrumbs,
   useNavigate,
-  // useNotification,
   useParams,
-  // usePreference,
-  // useTableStore,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
@@ -33,9 +30,6 @@ export const DetailViewInner = () => {
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
-  // const { data: preference } = usePreference(
-  //   PreferenceKey.ManageVaccinesInDoses
-  // );
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
