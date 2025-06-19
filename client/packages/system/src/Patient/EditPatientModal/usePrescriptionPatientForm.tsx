@@ -22,8 +22,8 @@ import {
 
 import defaultPatientSchema from '../PatientView/DefaultPatientSchema.json';
 import defaultPatientUISchema from '../PatientView/DefaultPatientUISchema.json';
-import { PRESCRIPTION } from '../../../../invoices/src/Prescriptions/api/hooks/keys';
-import { usePrescription } from 'packages/invoices/src/Prescriptions';
+import { PRESCRIPTION } from '@openmsupply-client/invoices/src/Prescriptions/api/hooks/keys';
+import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
 
 const DEFAULT_SCHEMA: SchemaData = {
   formSchemaId: undefined,
@@ -70,7 +70,7 @@ const useUpsertProgramPatient = (): SaveDocumentMutation => {
   };
 };
 
-export const usePatientEditForm = (patientId: string) => {
+export const usePrescriptionPatientForm = (patientId: string) => {
   const { error } = useNotification();
   const queryClient = useQueryClient();
   const { id } = useParams();
