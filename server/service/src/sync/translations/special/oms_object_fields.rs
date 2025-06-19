@@ -82,9 +82,7 @@ mod tests {
         const LEGACY_ROW_5: (&str, &str) = (
             "LEGACY_ROW_5",
             r#"{
-                "ID": "LEGACY_ROW_5",
-                "oms_fields": {}
-            }"#,
+                "ID": "LEGACY_ROW_5"            }"#,
         );
         let e = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_5.1);
         assert!(e.is_ok());
