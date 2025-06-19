@@ -79,9 +79,8 @@ pub struct LegacyTransLineRow {
     pub number_of_packs: f64,
     #[serde(rename = "prescribedQuantity")]
     pub prescribed_quantity: Option<f64>,
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub note: Option<String>,
-
     #[serde(rename = "om_item_code")]
     pub item_code: Option<String>,
     #[serde(rename = "om_tax")]
@@ -107,7 +106,7 @@ pub struct LegacyTransLineRow {
     #[serde(rename = "vaccine_vial_monitor_status_ID")]
     pub vvm_status_id: Option<String>,
     #[serde(default)]
-    #[serde(deserialize_with = "object_fields_as_option")]
+    #[serde(deserialize_with = "empty_str_as_option")]
     pub oms_fields: Option<TransLineRowOmsFields>,
 }
 
