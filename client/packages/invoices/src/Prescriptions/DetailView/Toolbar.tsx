@@ -159,7 +159,7 @@ export const Toolbar: FC = () => {
               <PatientSearchInput
                 disabled={isDisabled}
                 value={patient}
-                width={300}
+                allowEdit
                 onChange={async ({ id: patientId }) => {
                   await update({ id, patientId });
                 }}

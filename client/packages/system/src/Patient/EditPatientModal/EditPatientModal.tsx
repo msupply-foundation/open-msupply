@@ -1,22 +1,20 @@
 import React, { useState } from 'react';
 import {
-  DetailContainer,
   Box,
   useTranslation,
   DialogButton,
   useDialog,
   SaveIcon,
   LoadingButton,
-  DetailSection,
   TabContext,
   Tab,
-  TabList,
   BasicSpinner,
   useAuthContext,
   UserPermission,
   TabDefinition,
   useConfirmationModal,
   DetailTab,
+  ShortTabList,
 } from '@openmsupply-client/common';
 
 import { usePatientEditForm } from './usePatientEditForm';
@@ -132,37 +130,35 @@ export const EditPatientModal = ({
       slideAnimation={false}
     >
       <TabContext value={currentTab}>
-        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-          <DetailSection title="">
-            <Box flex={1}>
-              <TabList
-                value={currentTab}
-                centered
-                onChange={(_, tab) => onChange(tab)}
-              >
-                <Tab
-                  value={Tabs.Patient}
-                  label={t('label.patient-details')}
-                  tabIndex={-1}
-                />
-                {insuranceProvidersData.length > 0 && (
-                  <Tab
-                    value={Tabs.Insurance}
-                    label={t('label.insurance')}
-                    tabIndex={-1}
-                  />
-                )}
-              </TabList>
-            </Box>
-          </DetailSection>
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          gap={2}
+          maxHeight={550}
+        >
+          <ShortTabList
+            value={currentTab}
+            centered
+            onChange={(_, tab) => onChange(tab)}
+          >
+            <Tab
+              value={Tabs.Patient}
+              label={t('label.patient-details')}
+              tabIndex={-1}
+            />
+            {insuranceProvidersData.length > 0 && (
+              <Tab value={Tabs.Insurance} label={t('label.insurance')} />
+            )}
+          </ShortTabList>
+          <Box sx={{ overflowY: 'auto', width: '100%', height: '100%' }}>
+            {tabs.map(({ Component, value }) => (
+              <DetailTab value={value} key={value}>
+                {Component}
+              </DetailTab>
+            ))}
+          </Box>
         </Box>
-        <DetailContainer>
-          {tabs.map(({ Component, value }) => (
-            <DetailTab value={value} key={value}>
-              {Component}
-            </DetailTab>
-          ))}
-        </DetailContainer>
       </TabContext>
     </Modal>
   );
