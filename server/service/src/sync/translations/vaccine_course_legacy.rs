@@ -115,7 +115,11 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_vaccine_course_legacy_translation",
-            MockDataInserts::none().programs(),
+            MockDataInserts::none()
+                .programs()
+                .full_master_list()
+                .items()
+                .names(),
         )
         .await;
 
