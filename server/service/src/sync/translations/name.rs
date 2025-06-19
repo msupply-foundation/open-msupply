@@ -140,7 +140,6 @@ pub struct LegacyNameRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub date_of_death: Option<NaiveDate>,
-    #[serde(deserialize_with = "object_fields_as_option")]
     pub custom_data: Option<serde_json::Value>,
     #[serde(rename = "HSH_code")]
     #[serde(deserialize_with = "empty_str_as_option_string")]

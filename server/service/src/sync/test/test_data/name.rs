@@ -244,7 +244,7 @@ const NAME_2: (&str, &str) = (
     "license_number": "",
     "license_expiry": "0000-00-00",
     "has_current_license": false,
-    "custom_data": "",
+    "custom_data": null,
     "maximum_credit": 0,
     "nationality_ID": "",
     "created_date": "0000-00-00",
