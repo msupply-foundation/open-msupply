@@ -23,7 +23,7 @@ export interface FilterDefinitionCommon {
   isDefault?: boolean;
 }
 
-interface GroupFilterDefinition {
+export interface GroupFilterDefinition {
   type: 'group';
   name: string;
   elements: FilterDefinition[];

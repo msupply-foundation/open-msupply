@@ -14,12 +14,6 @@ export type ListParams<T> = {
   isVisible?: boolean;
 };
 
-export type ItemLedgerListParams = {
-  first: number;
-  offset: number;
-  filterBy?: FilterByWithStringAndBool | null;
-};
-
 const itemParsers = {
   toSortField: (sortBy: SortBy<ItemRowFragment>) => {
     const fields: Record<string, ItemSortFieldInput> = {
@@ -198,23 +192,5 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
 
       return items;
     },
-  },
-  itemLedger: async (itemId: string, queryParams: ItemLedgerListParams) => {
-    const filter = { itemId: { equalTo: itemId } };
-
-    const result = await sdk.itemLedger({
-      storeId,
-      first: queryParams.first,
-      offset: queryParams.offset,
-      filter,
-    });
-
-    const { itemLedger } = result;
-
-    if (itemLedger.__typename === 'ItemLedgerConnector') {
-      return itemLedger;
-    }
-
-    throw new Error('Could not fetch item ledger');
   },
 });
