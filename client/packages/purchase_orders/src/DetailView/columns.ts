@@ -3,7 +3,6 @@ import {
   ColumnDescription,
   ColumnFormat,
   GenericColumnKey,
-  getCommentPopoverColumn,
   TooltipTextCell,
   useColumns,
   useUrlQueryParams,
@@ -19,7 +18,6 @@ export const usePurchaseOrderColumns = () => {
 
   const columnDefinitions: ColumnDescription<PurchaseOrderLineFragment>[] = [
     GenericColumnKey.Selection,
-    // getCommentPopoverColumn(),
     [
       'itemCode',
       {

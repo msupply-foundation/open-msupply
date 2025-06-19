@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   AlertModal,
   createQueryParamsStore,
   createTableStore,
   DetailViewSkeleton,
+  PurchaseOrderNodeStatus,
   RouteBuilder,
   TableProvider,
   useBreadcrumbs,
@@ -20,6 +21,7 @@ import { AppRoute } from 'packages/config/src';
 import { PurchaseOrderLineFragment } from '../api';
 import { InboundItem } from 'packages/invoices/src/types';
 import { ContentArea } from './ContentArea';
+import { AppBarButtons } from './AppBarButtons';
 
 export const DetailViewInner = () => {
   const { purchaseOrderId = '' } = useParams();
@@ -41,14 +43,27 @@ export const DetailViewInner = () => {
   //   mode: returnModalMode,
   //   setMode: setReturnMode,
   // } = useEditModal<string[]>();
-  const { info, error } = useNotification();
-  const { clearSelected } = useTableStore();
+  // const { info, error } = useNotification();
+  // const { clearSelected } = useTableStore();
   // const { data: preference } = usePreference(
   //   PreferenceKey.ManageVaccinesInDoses
   // );
-  const simplifiedTabletView = useSimplifiedTabletUI();
+
+  useEffect(() => {
+    setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
+  }, [setCustomBreadcrumbs, data?.number]);
+
+  const onOpen = () => {
+    console.log('TO-DO: Show Line Edit Modal');
+  };
+
+  const onRowClick = (line: PurchaseOrderLineFragment) => {
+    console.log('TO-DO: Show Line Edit Modal for line:', line);
+  };
 
   if (isLoading) return <DetailViewSkeleton />;
+
+  const isDisabled = data?.status !== PurchaseOrderNodeStatus.New;
 
   return (
     <React.Suspense
@@ -56,17 +71,15 @@ export const DetailViewInner = () => {
     >
       {data ? (
         <>
-          {/* <InboundShipmentLineErrorProvider> */}
-          {/* <AppBarButtons
-            onAddItem={() => onOpen()}
-            simplifiedTabletView={simplifiedTabletView}
-          /> */}
+          <AppBarButtons isDisabled={!data || isDisabled} onAddItem={onOpen} />
 
           {/* <Toolbar simplifiedTabletView={simplifiedTabletView} /> */}
 
           <ContentArea
             lines={data.lines.nodes ?? []}
-            // onRowClick={!isDisabled ? onRowClick : null}
+            isDisabled={isDisabled}
+            onAddItem={onOpen}
+            onRowClick={!isDisabled ? onRowClick : null}
             // onAddItem={() => onOpen()}
             // displayInDoses={preference?.manageVaccinesInDoses}
           />
