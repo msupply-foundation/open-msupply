@@ -52,9 +52,9 @@ impl SyncTranslation for VaccineCourseDoseTranslation {
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }
             ToSyncRecordTranslationType::PushToOmSupplyCentral => {
-                // Skip translation when pushing to Central Server
-                // Vaccine courses should only be created on remote sites, not on Central
-                // (Central may have changelog records from data migrations, but we ignore them)
+                // We shouldn't ever create Vaccine Course dose rows in the central server,
+                // so we don't translate this, even when changelog records might exist
+                // This can happen due to migrations that recreate change log rows
                 false
             }
             _ => false,
