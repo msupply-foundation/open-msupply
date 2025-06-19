@@ -27,7 +27,6 @@ pub struct LegacyListMasterRow {
     #[serde(rename = "isProgram")]
     is_program: bool,
     #[serde(rename = "programSettings")]
-    #[serde(deserialize_with = "object_fields_as_option")]
     program_settings: Option<LegacyProgramSettings>,
     is_immunisation: Option<bool>,
     inactive: Option<bool>,

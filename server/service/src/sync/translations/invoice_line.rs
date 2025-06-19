@@ -1,7 +1,7 @@
 use crate::sync::{
     sync_serde::{
-        date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
-        zero_date_as_option,
+        date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
+        object_fields_as_option, zero_date_as_option,
     },
     translations::{
         currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
@@ -79,7 +79,7 @@ pub struct LegacyTransLineRow {
     pub number_of_packs: f64,
     #[serde(rename = "prescribedQuantity")]
     pub prescribed_quantity: Option<f64>,
-    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(deserialize_with = "empty_str_as_option")]
     pub note: Option<String>,
 
     #[serde(rename = "om_item_code")]
