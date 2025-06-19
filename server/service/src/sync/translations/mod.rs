@@ -78,7 +78,9 @@ pub(crate) mod utils;
 pub(crate) mod vaccination;
 pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
+pub(crate) mod vaccine_course_dose_legacy;
 pub(crate) mod vaccine_course_item;
+pub(crate) mod vaccine_course_item_legacy;
 pub(crate) mod vvm_status;
 pub(crate) mod vvm_status_log;
 pub(crate) mod warning;
@@ -173,7 +175,9 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Vaccine course
         vaccine_course::boxed(),
         vaccine_course_dose::boxed(),
+        vaccine_course_dose_legacy::boxed(),
         vaccine_course_item::boxed(),
+        vaccine_course_item_legacy::boxed(),
         demographic::boxed(),
         // Vaccination
         vaccination::boxed(),
