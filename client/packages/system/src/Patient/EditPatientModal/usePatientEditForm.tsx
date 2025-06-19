@@ -1,7 +1,5 @@
 import { useEffect, useMemo } from 'react';
 import {
-  useConfirmationModal,
-  useTranslation,
   UpdatePatientInput,
   DocumentRegistryCategoryNode,
   useNotification,
@@ -45,8 +43,7 @@ const useUpsertProgramPatient = (): SaveDocumentMutation => {
   };
 };
 
-export const usePatientEditForm = (patientId: string, onClose: () => void) => {
-  const t = useTranslation();
+export const usePatientEditForm = (patientId: string) => {
   const { mutateAsync: updatePatient } = usePatient.document.update();
   const { error } = useNotification();
   const queryClient = useQueryClient();
@@ -158,25 +155,18 @@ export const usePatientEditForm = (patientId: string, onClose: () => void) => {
     await updatePatient(input);
   };
 
-  const handleSave = async () => {
+  const save = async () => {
     try {
       const savedDocument = await saveData();
       queryClient.invalidateQueries([PRESCRIPTION]);
       if (savedDocument) {
         setDocumentName(savedDocument.name);
       }
-      onClose();
     } catch (e) {
       const errorSnack = error((e as Error).message);
       errorSnack();
     }
   };
-
-  const save = useConfirmationModal({
-    title: t('heading.are-you-sure'),
-    message: t('messages.confirm-save-generic'),
-    onConfirm: handleSave,
-  });
 
   useEffect(() => {
     if (!documentName && currentPatient) {
@@ -187,7 +177,6 @@ export const usePatientEditForm = (patientId: string, onClose: () => void) => {
   return {
     JsonForm,
     save,
-    onClose,
     isLoading,
     isSaving,
     isDirty,
