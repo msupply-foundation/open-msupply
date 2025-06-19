@@ -332,7 +332,7 @@ const TRANS_LINE_OM_FIELDS: (&str, &str) = (
         "om_item_variant_id": "5fb99f9c-03f4-47f2-965b-c9ecd083c675",
         "donor_id": "",
         "oms_fields": {
-            "campaign_id": "test_campaign_id"
+            "campaign_id": "campaign_a"
         }
     }"#,
 );
@@ -366,7 +366,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             donor_link_id: None,
             vvm_status_id: None,
             reason_option_id: None,
-            campaign_id: Some("test_campaign_id".to_string()),
+            campaign_id: Some("campaign_a".to_string()),
         },
     )
 }
@@ -401,7 +401,7 @@ fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
             donor_id: None,
             vvm_status_id: None,
             oms_fields: Some(TransLineRowOmsFields {
-                campaign_id: Some("test_campaign_id".to_string()),
+                campaign_id: Some("campaign_a".to_string()),
             }),
         }),
     }
