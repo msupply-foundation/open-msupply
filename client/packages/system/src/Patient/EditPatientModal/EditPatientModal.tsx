@@ -17,7 +17,7 @@ import {
   ShortTabList,
 } from '@openmsupply-client/common';
 
-import { usePatientEditForm } from './usePatientEditForm';
+import { usePrescriptionPatientForm } from './usePrescriptionPatientForm';
 import { useInsuranceProviders } from '../apiModern/hooks/useInsuranceProviders';
 import { InsuranceListView } from '../Insurance';
 
@@ -46,7 +46,7 @@ export const EditPatientModal = ({
     isDirty,
     validationError,
     revert,
-  } = usePatientEditForm(patientId);
+  } = usePrescriptionPatientForm(patientId);
   const { userHasPermission } = useAuthContext();
 
   const { Modal } = useDialog({
