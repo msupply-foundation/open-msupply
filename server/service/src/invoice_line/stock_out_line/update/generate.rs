@@ -1,6 +1,8 @@
 use repository::{InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StockLine, StockLineRow};
 
-use crate::invoice::common::calculate_total_after_tax;
+use crate::{
+    invoice::common::calculate_total_after_tax, invoice_line::stock_out_line::StockOutType,
+};
 
 use super::{BatchPair, UpdateStockOutLine, UpdateStockOutLineError};
 
@@ -88,6 +90,7 @@ fn generate_line(
         cost_price_per_pack: invoice_line_cost_price_per_pack,
         donor_link_id,
         campaign_id,
+        shipped_number_of_packs: _,
         ..
     }: InvoiceLineRow,
     ItemRow {
@@ -169,6 +172,10 @@ fn generate_line(
 
     if let Some(prescribed_quantity) = input.prescribed_quantity {
         update_line.prescribed_quantity = Some(prescribed_quantity);
+    }
+
+    if matches!(input.r#type, Some(StockOutType::OutboundShipment)) {
+        update_line.shipped_number_of_packs = input.number_of_packs
     }
 
     update_line.total_after_tax =

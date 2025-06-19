@@ -11,7 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                ALTER TABLE invoice_line ADD COLUMN shipped_number_of_packs REAL;
+                ALTER TABLE invoice_line ADD COLUMN shipped_number_of_packs DOUBLE PRECISION;
             "#
         )?;
 
