@@ -3712,11 +3712,11 @@ export type InsertStockLineLineResponse = InsertStockLineError | StockLineNode;
 
 export type InsertStocktakeInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
+  createBlankStocktake?: InputMaybe<Scalars['Boolean']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   expiresBefore?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   isInitialStocktake?: InputMaybe<Scalars['Boolean']['input']>;
-  itemsHaveStock?: InputMaybe<Scalars['Boolean']['input']>;
   locationId?: InputMaybe<Scalars['String']['input']>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
 };
