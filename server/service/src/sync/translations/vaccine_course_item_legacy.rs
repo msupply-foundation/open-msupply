@@ -100,11 +100,11 @@ mod tests {
     };
 
     #[actix_rt::test]
-    async fn test_vaccine_course_legacy_translation() {
+    async fn test_vaccine_course_item_legacy_translation() {
         let translator = VaccineCourseItemLegacyTranslation;
 
         let (_, connection, _, _) = setup_all(
-            "test_vaccine_course_legacy_translation",
+            "test_vaccine_course_item_legacy_translation",
             MockDataInserts::none()
                 .vaccine_courses()
                 .programs()
