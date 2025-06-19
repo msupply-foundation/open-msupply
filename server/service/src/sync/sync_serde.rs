@@ -30,6 +30,27 @@ pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Nai
         .and_then(|s| NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok()))
 }
 
+pub fn object_fields_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
+    d: D,
+) -> Result<Option<T>, D::Error> {
+    // error if cannot deserialise into a Value (which includes null, empty string or empty object)
+    let value: Value = Value::deserialize(d)?;
+    return match value {
+        Value::Null => Ok(None),
+        Value::String(s) if s.is_empty() => Ok(None),
+        // check if values as an empty object `{}`
+        Value::Sequence(ref map) if map.is_empty() => Ok(None),
+        Value::Mapping(ref map) if map.is_empty() => Ok(None),
+        _ => {
+            // if value is not null, empty string or empty object, extract struct T from value
+            let result: Result<Option<T>, D::Error> = T::deserialize(value.into_deserializer())
+                .map(Some)
+                .map_err(Error::custom);
+            result
+        }
+    };
+}
+
 pub fn date_and_time_to_datetime(date: NaiveDate, seconds: i64) -> NaiveDateTime {
     NaiveDateTime::new(
         date,
