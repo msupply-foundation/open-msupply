@@ -3,13 +3,8 @@ import {
   SortBy,
   ItemSortFieldInput,
   FilterByWithStringAndBool,
-  LedgerSortFieldInput,
 } from '@openmsupply-client/common';
-import {
-  Sdk,
-  ItemRowFragment,
-  ItemLedgerFragment,
-} from './operations.generated';
+import { Sdk, ItemRowFragment } from './operations.generated';
 
 export type ListParams<T> = {
   first: number;
@@ -17,6 +12,12 @@ export type ListParams<T> = {
   sortBy: SortBy<T>;
   filterBy?: FilterByWithStringAndBool | null;
   isVisible?: boolean;
+};
+
+export type ItemLedgerListParams = {
+  first: number;
+  offset: number;
+  filterBy?: FilterByWithStringAndBool | null;
 };
 
 const itemParsers = {
@@ -27,16 +28,6 @@ const itemParsers = {
     };
 
     return fields[sortBy.key] ?? ItemSortFieldInput.Name;
-  },
-  toLedgerSortKey: (sortBy: SortBy<ItemLedgerFragment>) => {
-    const fields: Record<string, LedgerSortFieldInput> = {
-      name: LedgerSortFieldInput.Name,
-      datetime: LedgerSortFieldInput.Datetime,
-      quantity: LedgerSortFieldInput.Quantity,
-      invoiceType: LedgerSortFieldInput.InvoiceType,
-    };
-
-    return fields[sortBy.key] ?? LedgerSortFieldInput.Datetime;
   },
 };
 
@@ -208,18 +199,13 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
       return items;
     },
   },
-  itemLedger: async (
-    itemId: string,
-    queryParams: ListParams<ItemLedgerFragment>
-  ) => {
+  itemLedger: async (itemId: string, queryParams: ItemLedgerListParams) => {
     const filter = { itemId: { equalTo: itemId } };
 
     const result = await sdk.itemLedger({
       storeId,
       first: queryParams.first,
       offset: queryParams.offset,
-      key: itemParsers.toLedgerSortKey(queryParams.sortBy),
-      desc: queryParams.sortBy.isDesc,
       filter,
     });
 

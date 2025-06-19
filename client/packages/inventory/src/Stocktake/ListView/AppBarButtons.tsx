@@ -23,13 +23,11 @@ interface AppBarButtonsProps {
   description: string;
   onCreate: (input: CreateStocktakeInput) => Promise<string | undefined>;
   isCreating: boolean;
-  navigate: (id: string) => void;
 }
 
 export const AppBarButtons = ({
   onCreate,
   isCreating,
-  navigate,
   description,
 }: AppBarButtonsProps) => {
   const t = useTranslation();
@@ -67,7 +65,6 @@ export const AppBarButtons = ({
           onClose={modalController.toggleOff}
           onCreate={onCreate}
           isCreating={isCreating}
-          navigate={navigate}
           description={description}
         />
         {!simplifiedTabletView && (
