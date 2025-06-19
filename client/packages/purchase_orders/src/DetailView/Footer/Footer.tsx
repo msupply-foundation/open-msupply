@@ -5,7 +5,6 @@ import {
   DeleteIcon,
   Action,
   ActionsFooter,
-  useParams,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
@@ -23,10 +22,9 @@ import { usePurchaseOrder } from '../../api/hooks/usePurchaseOrder';
 // };
 
 export const Footer: FC = () => {
-  const { purchaseOrderId = '' } = useParams();
   const {
     query: { data },
-  } = usePurchaseOrder(purchaseOrderId);
+  } = usePurchaseOrder();
   const t = useTranslation();
 
   const selectedRows = [];

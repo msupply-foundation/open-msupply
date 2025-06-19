@@ -9,7 +9,6 @@ import {
   TableProvider,
   useBreadcrumbs,
   useNavigate,
-  useParams,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
@@ -22,10 +21,9 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const DetailViewInner = () => {
-  const { purchaseOrderId = '' } = useParams();
   const {
     query: { data, isLoading },
-  } = usePurchaseOrder(purchaseOrderId);
+  } = usePurchaseOrder();
 
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();

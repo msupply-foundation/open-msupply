@@ -19,10 +19,9 @@ interface ToolbarProps {
 
 export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const t = useTranslation();
-  const { purchaseOrderId = '' } = useParams();
   const {
     query: { data, isLoading },
-  } = usePurchaseOrder(purchaseOrderId);
+  } = usePurchaseOrder();
 
   const { supplier, reference } = data ?? {};
 
