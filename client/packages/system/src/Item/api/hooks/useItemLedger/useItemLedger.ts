@@ -1,12 +1,13 @@
-import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
+import { useQuery } from '@openmsupply-client/common';
 import { useItemApi } from '../useItemApi';
+import { ItemLedgerListParams } from '../../api';
 
-export const useItemLedger = (itemId: string) => {
-  const { queryParams } = useUrlQueryParams({
-    initialSort: { key: 'datetime', dir: 'desc' },
-  });
+export const useItemLedger = (
+  itemId: string,
+  queryParams: ItemLedgerListParams
+) => {
   const api = useItemApi();
-  return useQuery(api.keys.paramList(queryParams), () =>
+  return useQuery(api.keys.itemLedgerParamList(itemId, queryParams), () =>
     api.itemLedger(itemId, queryParams)
   );
 };
