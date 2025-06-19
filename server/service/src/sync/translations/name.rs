@@ -1,5 +1,6 @@
 use crate::sync::sync_serde::{
-    date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
+    date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
+    object_fields_as_option, zero_date_as_option,
 };
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
@@ -136,6 +137,7 @@ pub struct LegacyNameRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub date_of_death: Option<NaiveDate>,
+    #[serde(deserialize_with = "object_fields_as_option")]
     pub custom_data: Option<serde_json::Value>,
 }
 // Needs to be added to all_translators()
