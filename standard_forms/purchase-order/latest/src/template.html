@@ -18,20 +18,18 @@
       <th>{{ t(k="heading.comment", f="Comment") }}</th>
     </tr>
   </thead>
+  {% for line in data.purchaseOrder.lines.nodes -%}
   <tr class="body_value">
-    <td>data.purchaseOrder.lines.nodes.lineNumber</td>
-    <td>
-      {% if data.purchaseOrder.supplier %} {{ data.purchaseOrder.supplier.code
-      }} {% endif %}
-    </td>
-    <td>data.purchaseOrder.lines.nodes.item.code</td>
-    <td>data.purchaseOrder.lines.nodes.item.name</td>
-    <td>data.purchaseOrder.lines.nodes.numberOfPacks</td>
-    <td>data.purchaseOrder.lines.nodes.packSize</td>
-    <td>data.purchaseOrder.lines.nodes.item.unitName</td>
-    <td>data.purchaseOrder.lines.nodes.item.requestedQuantity</td>
-    <td>item cost</td>
-    <td>line total cost</td>
-    <td>comment</td>
+    <td>{{ line.lineNumber }}</td>
+    <!-- TO DO: add missing supplier code field in the cell below, recorded in Issue 8240 https://github.com/msupply-foundation/open-msupply/issues/8240 -->
+    <td></td>
+    <td>{{line.item.code}}</td>
+    <td>{{line.item.name}}</td>
+    <td>{{line.numberOfPacks}}</td>
+    <td>{{line.packSize}}</td>
+    <td>{{line.item.unitName}}</td>
+    <td>{{line.requestedQuantity}}</td>
+    <!-- TO DO: add missing cost and authorisation fields, recorded in Issue 8240 https://github.com/msupply-foundation/open-msupply/issues/8240 -->
   </tr>
+  {%- endfor %}
 </table>
