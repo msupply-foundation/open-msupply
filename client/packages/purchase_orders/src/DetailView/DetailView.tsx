@@ -22,6 +22,7 @@ import { PurchaseOrderLineFragment } from '../api';
 import { InboundItem } from 'packages/invoices/src/types';
 import { ContentArea } from './ContentArea';
 import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
 
 export const DetailViewInner = () => {
   const { purchaseOrderId = '' } = useParams();
@@ -63,7 +64,7 @@ export const DetailViewInner = () => {
 
   if (isLoading) return <DetailViewSkeleton />;
 
-  const isDisabled = data?.status !== PurchaseOrderNodeStatus.New;
+  const isDisabled = !data || data?.status !== PurchaseOrderNodeStatus.New;
 
   return (
     <React.Suspense
@@ -71,9 +72,9 @@ export const DetailViewInner = () => {
     >
       {data ? (
         <>
-          <AppBarButtons isDisabled={!data || isDisabled} onAddItem={onOpen} />
+          <AppBarButtons isDisabled={isDisabled} onAddItem={onOpen} />
 
-          {/* <Toolbar simplifiedTabletView={simplifiedTabletView} /> */}
+          <Toolbar isDisabled={isDisabled} />
 
           <ContentArea
             lines={data.lines.nodes ?? []}

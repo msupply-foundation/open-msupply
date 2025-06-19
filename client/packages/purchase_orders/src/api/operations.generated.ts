@@ -40,6 +40,7 @@ export type PurchaseOrderFragment = {
   headingMessage?: string | null;
   insuranceCharge?: number | null;
   receivedAtPortDatetime?: string | null;
+  reference?: string | null;
   sentDatetime?: string | null;
   shippingMethod?: string | null;
   status: Types.PurchaseOrderNodeStatus;
@@ -154,6 +155,7 @@ export type PurchaseOrderByIdQuery = {
         headingMessage?: string | null;
         insuranceCharge?: number | null;
         receivedAtPortDatetime?: string | null;
+        reference?: string | null;
         sentDatetime?: string | null;
         shippingMethod?: string | null;
         status: Types.PurchaseOrderNodeStatus;
@@ -267,6 +269,7 @@ export const PurchaseOrderFragmentDoc = gql`
     headingMessage
     insuranceCharge
     receivedAtPortDatetime
+    reference
     lines {
       __typename
       nodes {
