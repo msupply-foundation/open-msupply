@@ -82,6 +82,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     id
     code
     name
+    unitName
     # Add as required
   }
   numberOfPacks

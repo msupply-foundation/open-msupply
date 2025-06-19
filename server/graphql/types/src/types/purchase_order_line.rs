@@ -43,6 +43,40 @@ impl PurchaseOrderLineNode {
             .extend(),
         )
     }
+
+    /// For request requisition: snapshot stats (when requisition was created)
+    /// For response requisition current item stats
+    // pub async fn item_stats(
+    //     &self,
+    //     ctx: &Context<'_>,
+    //     #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<f64>,
+    // ) -> Result<ItemStatsNode> {
+    //     if self.requisition_row().r#type == RequisitionType::Request {
+    //         return Ok(ItemStatsNode {
+    //             item_stats: ItemStats::from_requisition_line(&self.requisition_line),
+    //         });
+    //     }
+
+    //     let loader = ctx.get_loader::<DataLoader<ItemsStatsForItemLoader>>();
+    //     let result = loader
+    //         .load_one(ItemStatsLoaderInput::new(
+    //             &self.requisition_row().store_id,
+    //             &self.item_row().id,
+    //             amc_lookback_months,
+    //         ))
+    //         .await?
+    //         .ok_or(
+    //             StandardGraphqlError::InternalError(format!(
+    //                 "Cannot find item stats for requisition line {} and store {}",
+    //                 &self.item_row().id,
+    //                 &self.requisition_row().store_id,
+    //             ))
+    //             .extend(),
+    //         )?;
+
+    //     Ok(ItemStatsNode::from_domain(result))
+    // }
+
     pub async fn number_of_packs(&self) -> &Option<f64> {
         &self.row().number_of_packs
     }
