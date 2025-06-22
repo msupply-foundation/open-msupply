@@ -172,6 +172,15 @@ mod test {
         );
         let a = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_1.1);
         assert!(a.is_ok());
+        let fields = a.unwrap().oms_fields.unwrap();
+        assert_eq!(fields.foreign_exchange_rate, Some(1.6));
+        assert_eq!(
+            fields.contract_signed_datetime,
+            Some(
+                NaiveDateTime::parse_from_str("2021-01-22T15:16:00", "%Y-%m-%dT%H:%M:%S").unwrap()
+            )
+        );
+        assert_eq!(fields.advance_paid_datetime, None);
 
         // case with empty object
         const LEGACY_ROW_2: (&str, &str) = (
