@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
-use repository::StocktakeLine;
+use repository::{ReasonOption, StocktakeLine};
 use service::usize_to_u32;
 
 use graphql_core::{
@@ -162,15 +162,12 @@ impl StocktakeLineNode {
         Ok(result.map(ItemVariantNode::from_domain))
     }
 
-    pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
-        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
-        let reason_option_id = match &self.line.line.reason_option_id {
-            None => return Ok(None),
-            Some(reason_option_id) => reason_option_id,
-        };
-
-        let result = loader.load_one(reason_option_id.clone()).await?;
-        Ok(result.map(ReasonOptionNode::from_domain))
+    pub async fn reason_option(&self, _ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
+        Ok(self.line.reason_option.as_ref().map(|row| {
+            ReasonOptionNode::from_domain(ReasonOption {
+                reason_option_row: row.clone(),
+            })
+        }))
     }
 }
 
