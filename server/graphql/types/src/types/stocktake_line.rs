@@ -162,12 +162,12 @@ impl StocktakeLineNode {
         Ok(result.map(ItemVariantNode::from_domain))
     }
 
-    pub async fn reason_option(&self, _ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
-        Ok(self.line.reason_option.as_ref().map(|row| {
+    pub async fn reason_option(&self, _ctx: &Context<'_>) -> Option<ReasonOptionNode> {
+        self.line.reason_option.as_ref().map(|row| {
             ReasonOptionNode::from_domain(ReasonOption {
                 reason_option_row: row.clone(),
             })
-        }))
+        })
     }
 }
 
