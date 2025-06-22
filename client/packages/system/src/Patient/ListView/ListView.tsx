@@ -16,7 +16,6 @@ import {
   useCallbackWithPermission,
   UserPermission,
   useTranslation,
-  GenderType,
   getGenderTranslationKey,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
@@ -106,7 +105,8 @@ const PatientListComponent: FC = () => {
     {
       key: 'gender',
       label: 'label.gender',
-      formatter: gender => t(getGenderTranslationKey(gender as GenderType)),
+      accessor: ({ rowData }) =>
+        rowData.gender ? t(getGenderTranslationKey(rowData.gender)) : '',
     },
     {
       key: 'dateOfBirth',
