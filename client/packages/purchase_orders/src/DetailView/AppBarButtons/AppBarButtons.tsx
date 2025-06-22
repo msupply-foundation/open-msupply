@@ -4,7 +4,7 @@ import {
   ButtonWithIcon,
   PlusCircleIcon,
   Grid,
-  useDetailPanel,
+  // useDetailPanel,
   useTranslation,
 } from '@openmsupply-client/common';
 // import { AddFromMasterListButton } from './AddFromMasterListButton';
@@ -19,7 +19,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   isDisabled,
 }) => {
   const t = useTranslation();
-  const { OpenButton } = useDetailPanel();
+  // const { OpenButton } = useDetailPanel();
 
   return (
     <AppBarButtonsPortal>
@@ -33,7 +33,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
 
         {/* <AddFromMasterListButton /> */}
         {/* <UseSuggestedQuantityButton /> */}
-        {OpenButton}
+        {/* {OpenButton} */}
       </Grid>
     </AppBarButtonsPortal>
   );

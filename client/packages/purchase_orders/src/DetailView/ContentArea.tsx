@@ -49,7 +49,7 @@ export const ContentArea = ({
   return (
     <>
       <DataTable
-        id="internal-order-detail"
+        id="purchase-order-detail"
         onRowClick={onRowClick}
         columns={columns}
         data={lines}
