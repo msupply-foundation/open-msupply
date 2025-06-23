@@ -326,7 +326,7 @@ const TRANS_LINE_OM_FIELDS: (&str, &str) = (
         "om_total_after_tax": 130.5,
         "om_item_variant_id": "5fb99f9c-03f4-47f2-965b-c9ecd083c675",
         "donor_id": "",
-        "oms_fields": ""
+        "oms_fields": null
     }"#,
 );
 fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
