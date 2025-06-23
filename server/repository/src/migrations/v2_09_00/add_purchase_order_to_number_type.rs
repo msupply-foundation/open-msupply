@@ -14,6 +14,7 @@ impl MigrationFragment for Migrate {
                 r#"
                     ALTER TYPE number_type ADD VALUE 'PURCHASE_ORDER';
                     ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'purchase_order';
+                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'purchase_order_line';
                     -- Below is to be removed before merging to develop
                     ALTER TABLE purchase_order ALTER COLUMN purchase_order_number TYPE BIGINT;
                 "#
