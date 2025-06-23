@@ -68,14 +68,17 @@ export const useDraftRequisitionLine = (
   item?: ItemWithStatsFragment | null
 ) => {
   const t = useTranslation();
+  const [isReasonsError, setIsReasonsError] = useState(false);
   const { lines } = useRequest.line.list();
   const { data } = useRequest.document.get();
   const { mutateAsync: saveMutation, isLoading } = useRequest.line.save();
-  const [isReasonsError, setIsReasonsError] = useState(false);
 
   const [draft, setDraft] = useState<DraftRequestLine | null>(null);
-
   useEffect(() => {
+    if (isReasonsError) {
+      return;
+    }
+
     if (lines && item && data) {
       const existingLine = lines.find(
         ({ item: reqItem }) => reqItem.id === item.id

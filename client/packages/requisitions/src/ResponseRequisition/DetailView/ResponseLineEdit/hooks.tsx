@@ -66,6 +66,10 @@ export const useDraftRequisitionLine = (
   const [draft, setDraft] = useState<DraftResponseLine | null>(null);
 
   useEffect(() => {
+    if (isReasonsError) {
+      return;
+    }
+
     if (lines && item && data) {
       const existingLine = lines.find(
         ({ item: reqItem }) => reqItem.id === item.id
