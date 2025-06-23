@@ -25,6 +25,7 @@ jobs:
         run: |
           # Tag develop branch
           git checkout develop
+
           if [[ -z "${APP_BUILD_VERSION}" ]]; then
               PKG_VERSION=$(cat ./package.json | grep '"version":' | sed 's/.*"version": "\([^-"]*\).*/\1/')
               COMMIT_DATE=$(git log -1 --format=%cd --date=format:%m%d%H%M)
@@ -42,6 +43,7 @@ jobs:
           if [[ -n "$LATEST_RC" ]]; then
             git checkout $LATEST_RC
             unset APP_BUILD_VERSION # Reset for RC branch
+
             if [[ -z "${APP_BUILD_VERSION}" ]]; then 
               PKG_VERSION=$(cat ./package.json | grep '"version":' | sed 's/.*"version": "\([^-"]*\).*/\1/')
               COMMIT_DATE=$(git log -1 --format=%cd --date=format:%m%d%H%M)
