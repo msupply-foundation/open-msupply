@@ -60,7 +60,6 @@ pub struct LegacyPurchaseOrderRow {
     pub created_datetime: NaiveDateTime,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
-    // TODO fix will fail on not string
     pub target_months: Option<f64>,
     pub status: LegacyPurchaseOrderStatus,
     #[serde(default)]
@@ -112,38 +111,27 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub additional_instructions: Option<String>,
     // pub total_foreign_currency_expected: String,
-
     // pub total_local_currency_expected: String,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
-    // TODO fix will fail on not string
     pub agent_commission: Option<f64>,
-    // TODO fix will fail on not string
     #[serde(default)]
-    // TODO fix will fail on not string
     #[serde(deserialize_with = "empty_str_as_option")]
     pub document_charge: Option<f64>,
-    // TODO fix will fail on not string
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub communications_charge: Option<f64>,
-    // TODO fix will fail on not string
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub insurance_charge: Option<f64>,
-    // TODO fix will fail on not string
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub freight_charge: Option<f64>,
-    // TODO fix will fail on not string
-
     // pub po_sent_date: String,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub supplier_discount_amount: Option<f64>,
     // pub Order_total_before_discount: String,
-
-    // TODO fix will fail on not string
     #[serde(default)]
     #[serde(rename = "inv_discount_amount")]
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -245,29 +233,20 @@ impl SyncTranslation for PurchaseOrderTranslation {
             status: from_legacy_status(&status),
             created_datetime,
             confirmed_datetime,
-            // no direct mapping from legacy
             delivered_datetime: oms_fields.clone().and_then(|o| o.delivered_datetime),
             target_months,
             comment,
-            // no direct mapping from legacy
             supplier_discount_percentage,
             supplier_discount_amount,
             donor_link_id,
             reference,
             currency_id,
-            // no direct mapping from legacy
             foreign_exchange_rate: oms_fields.clone().and_then(|o| o.foreign_exchange_rate),
-            // no direct mapping from legacy
             shipping_method: oms_fields.clone().and_then(|o| o.shipping_method),
-            // no direct mapping from legacy
             sent_datetime: oms_fields.clone().and_then(|o| o.sent_datetime),
-            // no direct mapping from legacy
             contract_signed_datetime: oms_fields.clone().and_then(|o| o.contract_signed_datetime),
-            // no direct mapping from legacy
             advance_paid_datetime: oms_fields.clone().and_then(|o| o.advance_paid_datetime),
-            // no direct mapping from legacy
             received_at_port_datetime: oms_fields.clone().and_then(|o| o.received_at_port_datetime),
-            // no direct mapping from legacy
             expected_delivery_datetime: oms_fields
                 .clone()
                 .and_then(|o| o.expected_delivery_datetime),
@@ -275,7 +254,6 @@ impl SyncTranslation for PurchaseOrderTranslation {
             authorising_officer_1,
             authorising_officer_2,
             additional_instructions,
-            // no direct mapping from legacy
             heading_message: oms_fields.and_then(|o| o.heading_message),
             agent_commission,
             document_charge,
@@ -450,8 +428,6 @@ mod tests {
 
         // TODO add delete translation test
     }
-
-    // TODO add test for push to sync record translation
 
     #[actix_rt::test]
     async fn test_purchase_order_translation_to_sync_record() {
