@@ -7854,11 +7854,12 @@ export enum RequisitionNodeType {
   Response = 'RESPONSE',
 }
 
-export type RequisitionReasonNotProvided = {
-  __typename: 'RequisitionReasonNotProvided';
-  description: Scalars['String']['output'];
-  requisitionLine: RequisitionLineNode;
-};
+export type RequisitionReasonNotProvided =
+  UpdateRequestRequisitionLineErrorInterface & {
+    __typename: 'RequisitionReasonNotProvided';
+    description: Scalars['String']['output'];
+    requisitionLine: RequisitionLineNode;
+  };
 
 export type RequisitionReasonsNotProvided =
   UpdateRequestRequisitionErrorInterface &
