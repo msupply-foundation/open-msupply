@@ -261,11 +261,17 @@ export const ItemLedgerTab = ({
   ];
 
   return (
-    <Box display="flex" flexDirection="column" flex={1} mt={2}>
+    <Box display="flex" flexDirection="column" flex={1} mt={1}>
       <Box display="flex" ml={2} mb={1}>
         <FilterMenu filters={filters} />
       </Box>
-      <Box display="flex" flex={1}>
+      <Box
+        display="flex"
+        flex={1}
+        sx={{
+          boxShadow: theme => theme.shadows[4],
+        }}
+      >
         <TableProvider createStore={createTableStore}>
           <ItemLedgerTable
             itemLedgers={data ?? { ledgers: [], totalCount: 0 }}
