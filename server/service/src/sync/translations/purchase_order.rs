@@ -24,10 +24,7 @@ pub enum LegacyPurchaseOrderStatus {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct PurchaseOrderOmsFields {
-    // TODO add complete fields we want to sync
     #[serde(default)]
-    // TODO fix why can't this be empty string with our deseialisation pattern
-    // #[serde(deserialize_with = "empty_str_as_option")]
     pub foreign_exchange_rate: Option<f64>,
     #[serde(default)]
     pub shipping_method: Option<String>,
@@ -69,16 +66,9 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(rename = "currency_ID")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub currency_id: Option<String>,
-    // pub inv_sub_total: String,
-    // pub freight: String,
-    // pub cost_in_local_currency: String,
-    // pub curr_rate: String,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub reference: Option<String>,
-    // pub lines: String,
-    // pub requested_delivery_date: String,
-    // pub locked: String,
     #[serde(default)]
     #[serde(rename = "confirmed_date")]
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -88,14 +78,11 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(rename = "created_by")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub user_id: Option<String>,
-    // pub last_edited_by: String,
-    // pub Order_total_after_discount: String,
     #[serde(rename = "store_ID")]
     pub store_id: String,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub supplier_agent: Option<String>,
-    // pub delivery_method: String,
     #[serde(default)]
     #[serde(rename = "authorizing_officer_1")]
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -110,8 +97,6 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub additional_instructions: Option<String>,
-    // pub total_foreign_currency_expected: String,
-    // pub total_local_currency_expected: String,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub agent_commission: Option<f64>,
@@ -127,39 +112,19 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub freight_charge: Option<f64>,
-    // pub po_sent_date: String,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub supplier_discount_amount: Option<f64>,
-    // pub Order_total_before_discount: String,
     #[serde(default)]
     #[serde(rename = "inv_discount_amount")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub supplier_discount_percentage: Option<f64>,
-    // pub quote_ID: String,
-    // pub editedRemotely: String,
-    // pub heading_message: String,
-    // pub budget_period_ID: String,
-    // pub category_ID: String,
-    // pub include_in_on_order_calcs: String,
-    // pub colour: String,
-    // pub user_field_1: String,
-    // pub Date_contract_signed: String,
-    // pub Date_advance_payment: String,
-    // pub Date_goods_received_at_port: String,
-    // pub is_authorised: String,
-    // pub auth_checksum: String,
     #[serde(default)]
     #[serde(rename = "donor_id")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub donor_link_id: Option<String>,
-    // pub user_field_2: String,
     #[serde(rename = "serial_number")]
     pub purchase_order_number: i64,
-    // pub linked_transaction_ID: String,
-    // pub lookBackMonths: String,
-    // pub custom_data: String,
-    // pub minimumExpiryDate: String,
     #[serde(default)]
     #[serde(deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<PurchaseOrderOmsFields>,

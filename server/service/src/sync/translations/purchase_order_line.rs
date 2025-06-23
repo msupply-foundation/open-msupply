@@ -6,7 +6,7 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use crate::sync::{
-    sync_serde::empty_str_as_option,
+    sync_serde::{date_option_to_isostring, empty_str_as_option, zero_date_as_option},
     translations::{
         master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
         purchase_order::PurchaseOrderTranslation, store::StoreTranslation, PullTranslateResult,
@@ -51,37 +51,16 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "quan_rec_to_date")]
     pub total_received: Option<f64>,
-
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     #[serde(rename = "delivery_date_requested")]
     pub requested_delivery_date: Option<NaiveDate>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     #[serde(rename = "delivery_date_expected")]
     pub expected_delivery_date: Option<NaiveDate>,
-    // pub non_stock_name_ID: Option<String>,
-    // pub cost_from_invoice: Option<String>,
-    // pub cost_local: Option<String>,
-    // pub comment: Option<String>,
-    // pub batch: Option<String>,
-    // pub expiry: Option<String>,
-    // pub store_ID: Option<String>,
-    // pub spare_estmated_cost: Option<String>,
-    // pub pack_units: Option<String>,
-    // pub price_expected_after_discount: Option<String>,
-    // pub price_extension_expected: Option<String>,
-    // pub supplier_code: Option<String>,
-    // pub price_per_pack_before_discount: Option<String>,
-    // pub quote_line_ID: Option<String>,
-    // pub volume_per_pack: Option<String>,
-    // pub location_ID: Option<String>,
-    // pub manufacturer_ID: Option<String>,
-    // pub note: Option<String>,
-    // pub note_show_on_goods_rec: Option<String>,
-    // pub note_has_been_actioned: Option<String>,
-    // pub kit_data: Option<String>,
-    // pub suggestedQuantity: Option<String>,
 }
 
 #[deny(dead_code)]
