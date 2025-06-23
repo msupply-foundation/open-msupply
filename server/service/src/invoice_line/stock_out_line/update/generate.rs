@@ -175,7 +175,7 @@ fn generate_line(
     }
 
     if matches!(input.r#type, Some(StockOutType::OutboundShipment)) {
-        update_line.shipped_number_of_packs = input.number_of_packs
+        update_line.shipped_number_of_packs = Some(update_line.number_of_packs);
     }
 
     update_line.total_after_tax =

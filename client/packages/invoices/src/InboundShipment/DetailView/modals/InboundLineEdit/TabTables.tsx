@@ -39,6 +39,7 @@ import {
   NumberOfPacksCell,
   vvmStatusesColumn,
 } from './utils';
+import { useInbound } from '../../../api';
 
 interface TableProps {
   lines: DraftInboundLine[];
@@ -68,6 +69,8 @@ export const QuantityTableComponent = ({
     PreferenceKey.ManageVaccinesInDoses
   );
   const { format } = useFormatNumber();
+  const { data } = useInbound.document.get();
+  const isManuallyCreated = !data?.linkedShipment?.id;
 
   const displayInDoses =
     !!preferences?.manageVaccinesInDoses && !!item?.isVaccine;
@@ -126,6 +129,19 @@ export const QuantityTableComponent = ({
             });
           }
         },
+      },
+    ],
+    [
+      'shippedNumberOfPacks',
+      {
+        Cell: NumberOfPacksCell,
+        cellProps: {
+          decimalLimit: 0,
+          isDisabled: !isManuallyCreated,
+        },
+        width: 100,
+        align: ColumnAlign.Left,
+        setter: !isDisabled ? patch => updateDraftLine(patch) : undefined,
       },
     ]
   );

@@ -97,7 +97,7 @@ fn generate_line(
     connection: &StorageConnection,
     InsertStockOutLine {
         id,
-        r#type: _,
+        r#type,
         invoice_id,
         stock_line_id,
         number_of_packs,
@@ -181,7 +181,11 @@ fn generate_line(
         campaign_id,
         linked_invoice_id: None,
         reason_option_id: None,
-        shipped_number_of_packs: None,
+        shipped_number_of_packs: if r#type == StockOutType::OutboundShipment {
+            Some(number_of_packs)
+        } else {
+            None
+        },
     })
 }
 

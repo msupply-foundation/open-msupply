@@ -49,7 +49,8 @@ export type ColumnKey =
   | 'availableNumberOfPacks'
   | 'numberOfPacksToReturn'
   | 'numberOfPacksReturned'
-  | 'availableStockOnHand';
+  | 'availableStockOnHand'
+  | 'shippedNumberOfPacks';
 
 export const getColumnLookupWithOverrides = <T extends RecordWithId>(
   columnKey: ColumnKey,
@@ -308,6 +309,11 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.reason',
     key: 'returnReason',
     width: 200,
+  },
+  shippedNumberOfPacks: {
+    label: 'label.shipped-number-of-packs',
+    key: 'shippedNumberOfPacks',
+    width: 125,
   },
 });
 

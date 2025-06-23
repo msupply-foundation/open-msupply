@@ -112,7 +112,8 @@ fn generate_line(
         barcode: _,
         stock_on_hold: _,
         tax_percentage: _,
-        r#type: _,
+        r#type,
+        shipped_number_of_packs,
     }: InsertStockInLine,
     ItemRow {
         name: item_name,
@@ -157,7 +158,11 @@ fn generate_line(
         prescribed_quantity: None,
         reason_option_id: None,
         campaign_id,
-        shipped_number_of_packs: None,
+        shipped_number_of_packs: if r#type == StockInType::InboundShipment {
+            shipped_number_of_packs
+        } else {
+            None
+        },
     }
 }
 
