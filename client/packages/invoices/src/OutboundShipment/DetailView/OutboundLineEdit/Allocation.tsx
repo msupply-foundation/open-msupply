@@ -25,6 +25,7 @@ import {
   sumAvailableUnits,
   AllocateInSelector,
   useOutboundLineEditData,
+  AllocateInOption,
 } from '../../../StockOut';
 import { useOutbound } from '../../api';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
@@ -62,6 +63,23 @@ export const Allocation = ({
     queryData().then(({ data }) => {
       if (!data) return;
 
+      const packsizes = [
+        ...new Set(data.draftLines.map(line => line.packSize)),
+      ];
+
+      // if there is only one packsize, we should auto-allocate in packs for that size
+      let allocateInPacksize: AllocateInOption | undefined = undefined;
+      if (packsizes.length === 1) {
+        const packSize = packsizes[0];
+        if (packSize) {
+          // There's only one defined pack size, so set allocation to happen in packs
+          allocateInPacksize = {
+            type: AllocateInType.Packs,
+            packSize: packSize,
+          };
+        }
+      }
+
       initialise({
         itemData: data,
         strategy: sortByVvmStatus
@@ -73,7 +91,7 @@ export const Allocation = ({
         allocateIn:
           manageVaccinesInDoses && data.item.isVaccine
             ? { type: AllocateInType.Doses }
-            : undefined,
+            : allocateInPacksize,
       });
     });
     // Expect dependencies to be stable
