@@ -6,7 +6,6 @@ use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
