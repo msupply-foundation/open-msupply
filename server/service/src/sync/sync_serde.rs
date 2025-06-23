@@ -52,10 +52,16 @@ pub fn object_fields_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
         Value::Sequence(ref map) if map.is_empty() => Ok(None),
         Value::Mapping(ref map) if map.is_empty() => Ok(None),
         _ => {
+            let value_str = format!("{:?}", value);
             // if value is not null, empty string or empty object, extract struct T from value
             let result: Result<Option<T>, D::Error> = T::deserialize(value.into_deserializer())
-                .map(Some)
-                .map_err(Error::custom);
+                .map_err(|e| {
+                    Error::custom(format!(
+                        "Failed to deserialize value: {}. Error: {}",
+                        value_str,
+                        format_error(&e)
+                    ))
+                });
             result
         }
     };
