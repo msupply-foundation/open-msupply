@@ -268,8 +268,6 @@ export const BatchTable = ({
 
     return columnDefinitions;
   }, [
-    update,
-    theme,
     itemVariantsEnabled,
     errorsContext,
     reasonOptions,
