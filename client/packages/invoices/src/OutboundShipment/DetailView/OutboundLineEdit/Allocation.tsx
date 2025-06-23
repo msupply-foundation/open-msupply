@@ -68,17 +68,13 @@ export const Allocation = ({
       ];
 
       // if there is only one packsize, we should auto-allocate in packs for that size
-      let allocateInPacksize: AllocateInOption | undefined = undefined;
-      if (packsizes.length === 1) {
-        const packSize = packsizes[0];
-        if (packSize) {
-          // There's only one defined pack size, so set allocation to happen in packs
-          allocateInPacksize = {
-            type: AllocateInType.Packs,
-            packSize: packSize,
-          };
-        }
-      }
+      const allocateInPacksize: AllocateInOption | undefined =
+        packsizes.length === 1 && packsizes[0]
+          ? {
+              type: AllocateInType.Packs,
+              packSize: packsizes[0],
+            }
+          : undefined;
 
       initialise({
         itemData: data,
