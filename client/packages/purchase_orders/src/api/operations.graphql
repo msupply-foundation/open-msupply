@@ -46,7 +46,7 @@ fragment PurchaseOrder on PurchaseOrderNode {
   headingMessage
   insuranceCharge
   receivedAtPortDatetime
-  # reference
+  reference
   lines {
     __typename
     nodes {
@@ -82,6 +82,7 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     id
     code
     name
+    unitName
     # Add as required
   }
   numberOfPacks

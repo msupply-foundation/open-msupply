@@ -2,13 +2,16 @@ import {
   FnUtils,
   InsertPurchaseOrderInput,
   useMutation,
+  useParams,
   useQuery,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { LIST, PURCHASE_ORDER } from './keys';
 import { PurchaseOrderFragment } from '../operations.generated';
 
-export const usePurchaseOrder = (purchaseOrderId?: string) => {
+export const usePurchaseOrder = (pid?: string) => {
+  const { purchaseOrderId = pid } = useParams();
+
   const { purchaseOrderApi, storeId } = usePurchaseOrderGraphQL();
 
   const queryKey = [LIST, PURCHASE_ORDER, storeId, purchaseOrderId];
