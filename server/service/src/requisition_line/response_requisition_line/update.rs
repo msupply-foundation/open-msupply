@@ -41,6 +41,7 @@ pub enum UpdateResponseRequisitionLineError {
     NotAResponseRequisition,
     UpdatedRequisitionLineDoesNotExist,
     RequisitionDoesNotExist,
+    ReasonNotProvided(RequisitionLine),
     DatabaseError(RepositoryError),
 }
 
@@ -78,9 +79,9 @@ fn validate(
     store_id: &str,
     input: &UpdateResponseRequisitionLine,
 ) -> Result<(RequisitionRow, RequisitionLineRow), OutError> {
-    let requisition_line_row = check_requisition_line_exists(connection, &input.id)?
-        .ok_or(OutError::RequisitionLineDoesNotExist)?
-        .requisition_line_row;
+    let requisition_line = check_requisition_line_exists(connection, &input.id)?
+        .ok_or(OutError::RequisitionLineDoesNotExist)?;
+    let requisition_line_row = requisition_line.clone().requisition_line_row;
 
     let requisition_row =
         check_requisition_row_exists(connection, &requisition_line_row.requisition_id)?
@@ -100,6 +101,12 @@ fn validate(
 
     if requisition_row.status != RequisitionStatus::New {
         return Err(OutError::CannotEditRequisition);
+    }
+
+    if let Some(requested_qty) = input.requested_quantity {
+        if requested_qty != requisition_line_row.suggested_quantity && input.option_id.is_none() {
+            return Err(OutError::ReasonNotProvided(requisition_line.clone()));
+        }
     }
 
     Ok((requisition_row, requisition_line_row))
