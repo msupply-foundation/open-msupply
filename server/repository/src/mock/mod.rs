@@ -4,6 +4,7 @@ mod activity_log;
 pub mod asset;
 pub mod asset_log;
 mod barcode;
+mod campaign;
 mod clinician;
 pub mod common;
 mod contact_form;
@@ -73,6 +74,7 @@ mod vvm_status;
 pub use asset::*;
 pub use asset_log::*;
 pub use barcode::*;
+pub use campaign::*;
 pub use clinician::*;
 use common::*;
 pub use contact_form::*;
@@ -141,6 +143,7 @@ use crate::{
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
+    campaign_row::{CampaignRow, CampaignRowRepository},
     category_row::{CategoryRow, CategoryRowRepository},
     contact_form_row::{ContactFormRow, ContactFormRowRepository},
     item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
@@ -236,6 +239,7 @@ pub struct MockData {
     pub store_preferences: Vec<StorePreferenceRow>,
     pub reason_options: Vec<ReasonOptionRow>,
     pub vvm_statuses: Vec<VVMStatusRow>,
+    pub campaigns: Vec<CampaignRow>,
 }
 
 impl MockData {
@@ -323,6 +327,7 @@ pub struct MockDataInserts {
     pub store_preferences: bool,
     pub reason_options: bool,
     pub vvm_statuses: bool,
+    pub campaigns: bool,
 }
 
 impl MockDataInserts {
@@ -399,6 +404,7 @@ impl MockDataInserts {
             printer: true,
             store_preferences: true,
             reason_options: true,
+            campaigns: true,
         }
     }
 
@@ -843,6 +849,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             reports: mock_reports(),
             printer: mock_printers(),
             vvm_statuses: mock_vvm_statuses(),
+            campaigns: mock_campaigns(),
             ..Default::default()
         },
     );
@@ -1394,6 +1401,12 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.campaigns {
+            let repo = CampaignRowRepository::new(connection);
+            for row in &mock_data.campaigns {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1473,6 +1486,7 @@ impl MockData {
             mut store_preferences,
             mut reason_options,
             mut vvm_statuses,
+            mut campaigns,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1546,6 +1560,7 @@ impl MockData {
         self.reason_options.append(&mut reason_options);
         self.store_preferences.append(&mut store_preferences);
         self.vvm_statuses.append(&mut vvm_statuses);
+        self.campaigns.append(&mut campaigns);
         self
     }
 }
