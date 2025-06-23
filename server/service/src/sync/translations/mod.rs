@@ -316,13 +316,11 @@ impl PullTranslateResult {
     }
 }
 
-#[derive(Debug)]
 pub(crate) struct PushSyncRecord {
     pub(crate) cursor: i64,
     pub(crate) record: CommonSyncRecord,
 }
 
-#[derive(Debug)]
 pub(crate) enum PushTranslateResult {
     PushRecord(Vec<PushSyncRecord>),
     Ignored(String),
