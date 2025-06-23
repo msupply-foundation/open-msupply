@@ -267,7 +267,14 @@ export const BatchTable = ({
     );
 
     return columnDefinitions;
-  }, [itemVariantsEnabled]);
+  }, [
+    itemVariantsEnabled,
+    errorsContext,
+    reasonOptions,
+    isLoading,
+    isInitialStocktake,
+    displayInDoses,
+  ]);
 
   const columns = useColumns<DraftStocktakeLine>(columnDefinitions, {}, [
     columnDefinitions,
