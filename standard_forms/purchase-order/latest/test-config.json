@@ -1,0 +1,13 @@
+{
+  "//": "For forms it's entity id",
+  "data_id": "01979ed1-6243-7909-bc89-ce6bb1f9055d",
+  "store_id": "B9AA2F86571D438EB9E53BB5BDA678A0",
+  "//": "Login details",
+  "url": "http://localhost:2055",
+  "username": "demo",
+  "password": "pass",
+  "//": "Arguments for standard reports",
+  "arguments": {},
+  "//": "Output file name",
+  "output_filename": "report_to_show"
+}
