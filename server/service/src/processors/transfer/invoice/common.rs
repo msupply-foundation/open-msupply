@@ -48,7 +48,7 @@ pub(crate) fn generate_inbound_lines(
                  vvm_status_id,
                  campaign_id,
                  reason_option_id: _,
-                 shipped_number_of_packs: _,
+                 shipped_number_of_packs,
              }| {
                 let cost_price_per_pack = sell_price_per_pack;
 
@@ -85,11 +85,11 @@ pub(crate) fn generate_inbound_lines(
                     vvm_status_id,
                     donor_link_id,
                     campaign_id,
+                    shipped_number_of_packs,
                     // Default
                     stock_line_id: None,
                     location_id: None,
                     reason_option_id: None,
-                    shipped_number_of_packs: None,
                 }
             },
         )
