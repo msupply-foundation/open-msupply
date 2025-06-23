@@ -4,8 +4,10 @@ import {
   DialogButton,
   ModalMode,
   useDialog,
+  useNotification,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
+import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { RequestFragment, useRequest } from '../../api';
 import { useDraftRequisitionLine, useNextRequestLine } from './hooks';
 import { isRequestDisabled } from '../../../utils';
@@ -15,8 +17,6 @@ import {
   RepresentationValue,
   shouldDeleteLine,
 } from '../../../common';
-
-import { ItemWithStatsFragment } from '@openmsupply-client/system';
 
 interface RequestLineEditModalProps {
   store?: UserStoreNodeFragment;
@@ -37,6 +37,7 @@ export const RequestLineEditModal = ({
   onClose,
   manageVaccinesInDoses,
 }: RequestLineEditModalProps) => {
+  const { error } = useNotification();
   const deleteLine = useRequest.line.deleteLine();
   const isDisabled = isRequestDisabled(requisition);
 
@@ -91,9 +92,20 @@ export const RequestLineEditModal = ({
     setRepresentation(Representation.UNITS);
     setCurrentItem(item);
   };
+  const handleSave = async () => {
+    const result = await save();
+
+    if (result?.error) {
+      error(result.error)();
+      return false;
+    }
+    return true;
+  };
 
   const onNext = async () => {
-    await save();
+    const success = await handleSave();
+    if (!success) return false;
+
     if (draft?.requestedQuantity === 0) {
       deletePreviousLine();
     }
@@ -129,8 +141,8 @@ export const RequestLineEditModal = ({
           variant="ok"
           disabled={!currentItem}
           onClick={async () => {
-            await save();
-            onClose();
+            const success = await handleSave();
+            if (success) onClose();
           }}
         />
       }
