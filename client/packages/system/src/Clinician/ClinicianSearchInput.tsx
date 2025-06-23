@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Autocomplete,
   Box,
-  IconButton,
   PlusCircleIcon,
   Typography,
   useConfirmationModal,
@@ -161,9 +160,11 @@ export const ClinicianSearchInput = ({
         isOptionEqualToValue={(option, value) =>
           option.id !== 'add' && option.value.id === value.value?.id
         }
+        getOptionLabel={option => (option.id === 'add' ? '' : option.label)}
         onChange={(_, option) => {
           if (option && option.id == 'add') {
             setPopoverOpen(false);
+            onChange(null);
             mountSlidePanel ? setSliderOpen(true) : setModalOpen(true);
             return;
           }
@@ -185,44 +186,29 @@ export const ClinicianSearchInput = ({
         disabled={disabled}
         fullWidth={fullWidth}
       />
-      {allowCreate && (
-        <Box
-          sx={{
-            overflow: 'hidden',
-          }}
-        >
-          <IconButton
-            icon={<PlusCircleIcon />}
-            label={t('button.add-new-clinician')}
-            color="secondary"
-            onClick={() =>
-              mountSlidePanel ? setSliderOpen(true) : setModalOpen(true)
-            }
+      {allowCreate &&
+        (mountSlidePanel ? (
+          <CreateClinicianSlider
+            draft={draft}
+            updateDraft={updateDraft}
+            width={500}
+            open={sliderOpen}
+            onClose={handleClinicianClose}
+            confirmAndSave={confirmAndSave}
+            isSaving={isSaving}
+            isValid={isValid}
           />
-          {mountSlidePanel ? (
-            <CreateClinicianSlider
-              draft={draft}
-              updateDraft={updateDraft}
-              width={500}
-              open={sliderOpen}
-              onClose={handleClinicianClose}
-              confirmAndSave={confirmAndSave}
-              isSaving={isSaving}
-              isValid={isValid}
-            />
-          ) : (
-            <CreateClinicianModal
-              draft={draft}
-              updateDraft={updateDraft}
-              onClose={handleClinicianClose}
-              open={modalOpen}
-              confirmAndSave={confirmAndSave}
-              isSaving={isSaving}
-              isValid={isValid}
-            />
-          )}
-        </Box>
-      )}
+        ) : (
+          <CreateClinicianModal
+            draft={draft}
+            updateDraft={updateDraft}
+            onClose={handleClinicianClose}
+            open={modalOpen}
+            confirmAndSave={confirmAndSave}
+            isSaving={isSaving}
+            isValid={isValid}
+          />
+        ))}
     </Box>
   );
 };
