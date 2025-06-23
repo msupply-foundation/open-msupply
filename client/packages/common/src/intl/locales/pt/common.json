@@ -1410,7 +1410,6 @@
   "messages.cannot-delete-requisition-with-shipment": "Não é possível excluir uma requisição vinculada a um envio",
   "messages.cannot-delete-stocktake-on-hold": "Não é possível excluir inventário que está 'Em espera'",
   "messages.cannot-delete-transfer-requisition": "Não é possível excluir a requisição de transferência",
-  "messages.cannot-edit-requisition": "Não é possível editar a Requisição.",
   "messages.cannot-perform-action": "Não é possível realizar esta operação em uma ou mais linhas",
   "messages.cannot-view-vaccine-card": "Não é possível visualizar o cartão de vacinação deste paciente deste local porque foi inscrito no {{ programName }} por outra unidade de saúde",
   "messages.cant-delete-generic": "Você não pode excluir um ou mais dos itens selecionados",
