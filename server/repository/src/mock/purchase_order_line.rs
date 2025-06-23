@@ -15,3 +15,7 @@ pub fn mock_purchase_order_line_b() -> PurchaseOrderLineRow {
         r.purchase_order_id = "test_purchase_order_a".to_string();
     })
 }
+
+pub fn mock_purchase_order_lines() -> Vec<PurchaseOrderLineRow> {
+    vec![mock_purchase_order_line_a(), mock_purchase_order_line_b()]
+}

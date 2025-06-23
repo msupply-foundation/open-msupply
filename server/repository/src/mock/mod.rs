@@ -240,6 +240,8 @@ pub struct MockData {
     pub store_preferences: Vec<StorePreferenceRow>,
     pub reason_options: Vec<ReasonOptionRow>,
     pub vvm_statuses: Vec<VVMStatusRow>,
+    pub purchase_order: Vec<PurchaseOrderRow>,
+    pub purchase_order_line: Vec<PurchaseOrderLineRow>,
 }
 
 impl MockData {
@@ -867,6 +869,8 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             reports: mock_reports(),
             printer: mock_printers(),
             vvm_statuses: mock_vvm_statuses(),
+            purchase_order: mock_purchase_orders(),
+            purchase_order_line: mock_purchase_order_lines(),
             ..Default::default()
         },
     );
@@ -1418,6 +1422,18 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.purchase_order {
+            let repo = PurchaseOrderRowRepository::new(connection);
+            for row in &mock_data.purchase_order {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+        if inserts.purchase_order_line {
+            let repo = PurchaseOrderLineRowRepository::new(connection);
+            for row in &mock_data.purchase_order_line {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1497,6 +1513,8 @@ impl MockData {
             mut store_preferences,
             mut reason_options,
             mut vvm_statuses,
+            mut purchase_order,
+            mut purchase_order_line,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1570,6 +1588,8 @@ impl MockData {
         self.reason_options.append(&mut reason_options);
         self.store_preferences.append(&mut store_preferences);
         self.vvm_statuses.append(&mut vvm_statuses);
+        self.purchase_order.append(&mut purchase_order);
+        self.purchase_order_line.append(&mut purchase_order_line);
         self
     }
 }

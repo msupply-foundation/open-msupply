@@ -173,6 +173,7 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingR
     test_records.append(&mut vvm_status_log::test_pull_upsert_records());
     test_records.append(&mut sync_message::test_pull_upsert_records());
     test_records.append(&mut purchase_order::test_pull_upsert_records());
+    test_records.append(&mut purchase_order_line::test_pull_upsert_records());
 
     // Open mSupply central
     test_records.append(&mut rnr_form::test_pull_upsert_records());
@@ -238,6 +239,7 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut clinician::test_push_records());
     test_records.append(&mut clinician_store_join::test_push_records());
     test_records.append(&mut purchase_order::test_push_records());
+    test_records.append(&mut purchase_order_line::test_push_records());
 
     test_records
 }
