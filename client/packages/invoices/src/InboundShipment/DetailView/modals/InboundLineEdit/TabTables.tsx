@@ -21,6 +21,7 @@ import {
   getDosesPerUnitColumn,
   useFormatNumber,
   NumUtils,
+  TextInputCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -356,7 +357,18 @@ export const LocationTableComponent = ({
         accessor: ({ rowData }) => rowData.batch || '',
       },
     ],
-    [getLocationInputColumn(), { setter: updateDraftLine, width: 550 }],
+    [getLocationInputColumn(), { setter: updateDraftLine, width: 530 }],
+    [
+      'note',
+      {
+        Cell: TextInputCell,
+        setter: patch => {
+          const note = patch.note === '' ? null : patch.note;
+          updateDraftLine({ ...patch, note });
+        },
+        accessor: ({ rowData }) => rowData.note,
+      },
+    ],
   ];
 
   if (preferences?.allowTrackingOfStockByDonor) {

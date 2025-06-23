@@ -102,7 +102,7 @@ pub fn generate(
                 id,
                 batch,
                 expiry_date,
-                note,
+                note: Some(NullableUpdate { value: note }),
                 item_id: Some(item_id),
                 pack_size: Some(pack_size),
                 number_of_packs: Some(number_of_packs),
