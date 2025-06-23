@@ -56,7 +56,7 @@ export const RequestLineEditModal = ({
     Representation.UNITS
   );
 
-  const { draft, save, update, isLoading } =
+  const { draft, save, update, isLoading, isReasonsError } =
     useDraftRequisitionLine(currentItem);
   const draftIdRef = useRef<string | undefined>(draft?.id);
   const { hasNext, next } = useNextRequestLine(lines, currentItem);
@@ -166,6 +166,7 @@ export const RequestLineEditModal = ({
           isUpdateMode={mode === ModalMode.Update}
           showExtraFields={useConsumptionData && !!requisition?.program}
           manageVaccinesInDoses={manageVaccinesInDoses}
+          isReasonsError={isReasonsError}
         />
       )}
     </Modal>
