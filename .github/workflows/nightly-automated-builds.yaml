@@ -29,9 +29,9 @@ jobs:
           if [[ -z "${APP_BUILD_VERSION}" ]]; then
               PKG_VERSION=$(cat ./package.json | grep '"version":' | sed 's/.*"version": "\([^-"]*\).*/\1/')
               COMMIT_DATE=$(git log -1 --format=%cd --date=format:%m%d%H%M)
-              export APP_BUILD_VERSION=$PKG_VERSION.$COMMIT_DATE
+              export APP_BUILD_VERSION=$PKG_VERSION-dev-$COMMIT_DATE
           fi
-          TAG_NAME="v$APP_BUILD_VERSION-develop"
+          TAG_NAME="v$APP_BUILD_VERSION"
 
           echo "Creating tag for develop: $TAG_NAME"
           git tag $TAG_NAME
@@ -47,9 +47,9 @@ jobs:
             if [[ -z "${APP_BUILD_VERSION}" ]]; then 
               PKG_VERSION=$(cat ./package.json | grep '"version":' | sed 's/.*"version": "\([^-"]*\).*/\1/')
               COMMIT_DATE=$(git log -1 --format=%cd --date=format:%m%d%H%M)
-              export APP_BUILD_VERSION=$PKG_VERSION.$COMMIT_DATE
+              export APP_BUILD_VERSION=$PKG_VERSION-rc-$COMMIT_DATE
             fi
-            TAG_NAME="v$APP_BUILD_VERSION-RC"
+            TAG_NAME="v$APP_BUILD_VERSION"
 
             echo "Creating tag for latest RC: $TAG_NAME"
             git tag $TAG_NAME
