@@ -198,7 +198,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         sync_message::boxed(),
         // Purchase Order
         purchase_order::boxed(),
-        // purchase_order_line::boxed(),
+        purchase_order_line::boxed(),
     ]
 }
 
@@ -316,11 +316,13 @@ impl PullTranslateResult {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct PushSyncRecord {
     pub(crate) cursor: i64,
     pub(crate) record: CommonSyncRecord,
 }
 
+#[derive(Debug)]
 pub(crate) enum PushTranslateResult {
     PushRecord(Vec<PushSyncRecord>),
     Ignored(String),
@@ -397,7 +399,6 @@ pub(crate) trait SyncTranslation {
     /// By default matching by table name
     /// used to determine if translation applies when remote site pulls sync records from central
     fn should_translate_from_sync_record(&self, row: &SyncBufferRow) -> bool {
-        println!("should_translate_from_sync_record: {}", row.table_name);
         self.table_names()
             .iter()
             .any(|name| name == &row.table_name)

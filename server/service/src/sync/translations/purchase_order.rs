@@ -6,10 +6,7 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use crate::sync::{
-    sync_serde::{
-        date_option_to_isostring, datetime_option_to_isostring, empty_str_as_option,
-        empty_str_as_option_string, zero_date_as_option, zero_datetime_as_option,
-    },
+    sync_serde::{empty_str_as_option, object_fields_as_option},
     translations::{
         master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
         store::StoreTranslation, PullTranslateResult, PushTranslateResult, SyncTranslation,
@@ -25,35 +22,28 @@ pub enum LegacyPurchaseOrderStatus {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct PurchaseOrderOmsFields {
     // TODO add complete fields we want to sync
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
+    // TODO fix why can't this be empty string with our deseialisation pattern
+    // #[serde(deserialize_with = "empty_str_as_option")]
     pub foreign_exchange_rate: Option<f64>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub shipping_method: Option<String>,
-    #[serde(deserialize_with = "zero_datetime_as_option")]
-    #[serde(serialize_with = "datetime_option_to_isostring")]
+    #[serde(default)]
     pub sent_datetime: Option<NaiveDateTime>,
-    #[serde(deserialize_with = "zero_datetime_as_option")]
-    #[serde(serialize_with = "datetime_option_to_isostring")]
+    #[serde(default)]
     pub contract_signed_datetime: Option<NaiveDateTime>,
-    #[serde(deserialize_with = "zero_datetime_as_option")]
-    #[serde(serialize_with = "datetime_option_to_isostring")]
+    #[serde(default)]
     pub advance_paid_datetime: Option<NaiveDateTime>,
-    #[serde(deserialize_with = "zero_datetime_as_option")]
-    #[serde(serialize_with = "datetime_option_to_isostring")]
+    #[serde(default)]
     pub delivered_datetime: Option<NaiveDateTime>,
-    #[serde(deserialize_with = "zero_date_as_option")]
-    #[serde(serialize_with = "date_option_to_isostring")]
+    #[serde(default)]
     pub received_at_port_datetime: Option<NaiveDate>,
-    #[serde(deserialize_with = "zero_date_as_option")]
-    #[serde(serialize_with = "date_option_to_isostring")]
+    #[serde(default)]
     pub expected_delivery_datetime: Option<NaiveDate>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub heading_message: Option<String>,
 }
 
@@ -70,8 +60,10 @@ pub struct LegacyPurchaseOrderRow {
     pub created_datetime: NaiveDateTime,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
+    // TODO fix will fail on not string
     pub target_months: Option<f64>,
     pub status: LegacyPurchaseOrderStatus,
+    #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub comment: Option<String>,
     #[serde(default)]
@@ -101,6 +93,7 @@ pub struct LegacyPurchaseOrderRow {
     // pub Order_total_after_discount: String,
     #[serde(rename = "store_ID")]
     pub store_id: String,
+    #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub supplier_agent: Option<String>,
     // pub delivery_method: String,
@@ -112,26 +105,45 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(rename = "authorizing_officer_2")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub authorising_officer_2: Option<String>,
+    #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub freight_conditions: Option<String>,
+    #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub additional_instructions: Option<String>,
     // pub total_foreign_currency_expected: String,
+
     // pub total_local_currency_expected: String,
+    #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
+    // TODO fix will fail on not string
     pub agent_commission: Option<f64>,
+    // TODO fix will fail on not string
+    #[serde(default)]
+    // TODO fix will fail on not string
     #[serde(deserialize_with = "empty_str_as_option")]
     pub document_charge: Option<f64>,
+    // TODO fix will fail on not string
+    #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub communications_charge: Option<f64>,
+    // TODO fix will fail on not string
+    #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub insurance_charge: Option<f64>,
+    // TODO fix will fail on not string
+    #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub freight_charge: Option<f64>,
+    // TODO fix will fail on not string
+
     // pub po_sent_date: String,
+    #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub supplier_discount_amount: Option<f64>,
     // pub Order_total_before_discount: String,
+
+    // TODO fix will fail on not string
     #[serde(default)]
     #[serde(rename = "inv_discount_amount")]
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -161,6 +173,7 @@ pub struct LegacyPurchaseOrderRow {
     // pub custom_data: String,
     // pub minimumExpiryDate: String,
     #[serde(default)]
+    #[serde(deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<PurchaseOrderOmsFields>,
 }
 
@@ -194,54 +207,82 @@ impl SyncTranslation for PurchaseOrderTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let json_data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
-        let data = serde_json::from_value::<LegacyPurchaseOrderRow>(json_data)?;
+        let LegacyPurchaseOrderRow {
+            id,
+            user_id,
+            purchase_order_number,
+            store_id,
+            supplier_name_link_id,
+            status,
+            created_datetime,
+            confirmed_datetime,
+            target_months,
+            comment,
+            supplier_discount_percentage,
+            supplier_discount_amount,
+            donor_link_id,
+            reference,
+            currency_id,
+            supplier_agent,
+            authorising_officer_1,
+            authorising_officer_2,
+            additional_instructions,
+            agent_commission,
+            document_charge,
+            communications_charge,
+            insurance_charge,
+            freight_charge,
+            freight_conditions,
+            oms_fields,
+        } = serde_json::from_str::<LegacyPurchaseOrderRow>(&sync_record.data)?;
 
         let result = PurchaseOrderRow {
-            id: data.id,
-            user_id: data.user_id,
-            purchase_order_number: data.purchase_order_number,
-            store_id: data.store_id,
-            supplier_name_link_id: data.supplier_name_link_id,
-            status: from_legacy_status(&data.status),
-            created_datetime: data.created_datetime,
-            confirmed_datetime: data.confirmed_datetime,
+            id: id,
+            user_id,
+            purchase_order_number,
+            store_id,
+            supplier_name_link_id,
+            status: from_legacy_status(&status),
+            created_datetime,
+            confirmed_datetime,
             // no direct mapping from legacy
-            delivered_datetime: None,
-            target_months: data.target_months,
-            comment: data.comment,
+            delivered_datetime: oms_fields.clone().and_then(|o| o.delivered_datetime),
+            target_months,
+            comment,
             // no direct mapping from legacy
-            supplier_discount_percentage: data.supplier_discount_percentage,
-            supplier_discount_amount: data.supplier_discount_amount,
-            donor_link_id: data.donor_link_id,
-            reference: data.reference,
-            currency_id: data.currency_id,
+            supplier_discount_percentage,
+            supplier_discount_amount,
+            donor_link_id,
+            reference,
+            currency_id,
             // no direct mapping from legacy
-            foreign_exchange_rate: None,
+            foreign_exchange_rate: oms_fields.clone().and_then(|o| o.foreign_exchange_rate),
             // no direct mapping from legacy
-            shipping_method: None,
+            shipping_method: oms_fields.clone().and_then(|o| o.shipping_method),
             // no direct mapping from legacy
-            sent_datetime: None,
+            sent_datetime: oms_fields.clone().and_then(|o| o.sent_datetime),
             // no direct mapping from legacy
-            contract_signed_datetime: None,
+            contract_signed_datetime: oms_fields.clone().and_then(|o| o.contract_signed_datetime),
             // no direct mapping from legacy
-            advance_paid_datetime: None,
+            advance_paid_datetime: oms_fields.clone().and_then(|o| o.advance_paid_datetime),
             // no direct mapping from legacy
-            received_at_port_datetime: None,
+            received_at_port_datetime: oms_fields.clone().and_then(|o| o.received_at_port_datetime),
             // no direct mapping from legacy
-            expected_delivery_datetime: None,
-            supplier_agent: data.supplier_agent,
-            authorising_officer_1: data.authorising_officer_1,
-            authorising_officer_2: data.authorising_officer_2,
-            additional_instructions: data.additional_instructions,
+            expected_delivery_datetime: oms_fields
+                .clone()
+                .and_then(|o| o.expected_delivery_datetime),
+            supplier_agent,
+            authorising_officer_1,
+            authorising_officer_2,
+            additional_instructions,
             // no direct mapping from legacy
-            heading_message: None,
-            agent_commission: data.agent_commission,
-            document_charge: data.document_charge,
-            communications_charge: data.communications_charge,
-            insurance_charge: data.insurance_charge,
-            freight_charge: data.freight_charge,
-            freight_conditions: data.freight_conditions,
+            heading_message: oms_fields.and_then(|o| o.heading_message),
+            agent_commission,
+            document_charge,
+            communications_charge,
+            insurance_charge,
+            freight_charge,
+            freight_conditions,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -377,20 +418,15 @@ fn to_legacy_status(status: &PurchaseOrderStatus) -> LegacyPurchaseOrderStatus {
     legacy_status
 }
 
-// add translation tests for purchase order
 #[cfg(test)]
 mod tests {
-    use crate::sync::{
-        test::merge_helpers::merge_all_name_links,
-        translations::{IntegrationOperation, ToSyncRecordTranslationType},
-    };
+    use crate::sync::translations::ToSyncRecordTranslationType;
 
     use super::*;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
     };
     use serde_json::json;
-    use util::assert_variant;
 
     #[actix_rt::test]
     async fn test_purchase_order_translation() {
@@ -398,7 +434,7 @@ mod tests {
         let translator = PurchaseOrderTranslation {};
 
         let (_, connection, _, _) = setup_all(
-            "test_purchase_order_translation",
+            "test_purchase_order_line_translation",
             MockDataInserts::none().purchase_order(),
         )
         .await;
@@ -415,9 +451,46 @@ mod tests {
         // TODO add delete translation test
     }
 
-    // #[actix_rt::test]
-    // async fn test_purchase_order_translation_to_sync_record() {
-    //     let (mock_data, connection, _, _ ) =
-    //         setup_all("test_purchase_order_translation_to_sync_record", MockDataInserts::none().purchase_order()).await;
-    //     let translator = PurchaseOrderTranslation {};
+    // TODO add test for push to sync record translation
+
+    #[actix_rt::test]
+    async fn test_purchase_order_translation_to_sync_record() {
+        let (_, connection, _, _) = setup_all(
+            "test_purchase_order_line_translation_to_sync_record",
+            MockDataInserts::none().purchase_order(),
+        )
+        .await;
+
+        // let
+
+        let translator = PurchaseOrderTranslation {};
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(
+                    ChangelogFilter::new().table_name(ChangelogTableName::PurchaseOrder.equal_to()),
+                ),
+            )
+            .unwrap();
+
+        for changelog in changelogs {
+            assert!(translator.should_translate_to_sync_record(
+                &changelog,
+                &ToSyncRecordTranslationType::PushToLegacyCentral
+            ));
+            let translated = translator
+                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .unwrap();
+
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+
+            let PushTranslateResult::PushRecord(translated) = translated else {
+                panic!("Test fail, should translate")
+            };
+
+            assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
+        }
+    }
 }
