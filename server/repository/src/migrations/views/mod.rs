@@ -4,11 +4,14 @@ pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
     log::info!("Dropping database views...");
     sql!(
         connection,
+        // Drop order is important here, as some views depend on others. Please
+        // check when adding new views.
         r#"
       DROP VIEW IF EXISTS invoice_stats;
       DROP VIEW IF EXISTS consumption;
       DROP VIEW IF EXISTS replenishment;
       DROP VIEW IF EXISTS adjustments;
+      DROP VIEW IF EXISTS item_ledger;
       DROP VIEW IF EXISTS stock_movement;
       DROP VIEW IF EXISTS outbound_shipment_stock_movement;
       DROP VIEW IF EXISTS inbound_shipment_stock_movement;
@@ -29,7 +32,6 @@ pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
       DROP VIEW IF EXISTS store_items;
       DROP VIEW IF EXISTS vaccination_card;
       DROP VIEW IF EXISTS vaccination_course;
-      DROP VIEW IF EXISTS item_ledger;
     "#
     )?;
 
