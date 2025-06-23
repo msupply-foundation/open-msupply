@@ -1,4 +1,5 @@
 export * from './CreatePatientModal';
+export * from './EditPatientModal';
 export * from './ListView';
 export * from './Service';
 export * from './api';

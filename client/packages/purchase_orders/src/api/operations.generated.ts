@@ -40,6 +40,7 @@ export type PurchaseOrderFragment = {
   headingMessage?: string | null;
   insuranceCharge?: number | null;
   receivedAtPortDatetime?: string | null;
+  reference?: string | null;
   sentDatetime?: string | null;
   shippingMethod?: string | null;
   status: Types.PurchaseOrderNodeStatus;
@@ -61,7 +62,13 @@ export type PurchaseOrderFragment = {
       packSize?: number | null;
       requestedDeliveryDate?: string | null;
       totalReceived?: number | null;
-      item: { __typename: 'ItemNode'; id: string; code: string; name: string };
+      item: {
+        __typename: 'ItemNode';
+        id: string;
+        code: string;
+        name: string;
+        unitName?: string | null;
+      };
     }>;
   };
   store?: { __typename: 'StoreNode'; id: string } | null;
@@ -78,7 +85,13 @@ export type PurchaseOrderLineFragment = {
   packSize?: number | null;
   requestedDeliveryDate?: string | null;
   totalReceived?: number | null;
-  item: { __typename: 'ItemNode'; id: string; code: string; name: string };
+  item: {
+    __typename: 'ItemNode';
+    id: string;
+    code: string;
+    name: string;
+    unitName?: string | null;
+  };
 };
 
 export type PurchaseOrdersQueryVariables = Types.Exact<{
@@ -142,6 +155,7 @@ export type PurchaseOrderByIdQuery = {
         headingMessage?: string | null;
         insuranceCharge?: number | null;
         receivedAtPortDatetime?: string | null;
+        reference?: string | null;
         sentDatetime?: string | null;
         shippingMethod?: string | null;
         status: Types.PurchaseOrderNodeStatus;
@@ -168,6 +182,7 @@ export type PurchaseOrderByIdQuery = {
               id: string;
               code: string;
               name: string;
+              unitName?: string | null;
             };
           }>;
         };
@@ -175,6 +190,16 @@ export type PurchaseOrderByIdQuery = {
         supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
       }
     | { __typename: 'RecordNotFound'; description: string };
+};
+
+export type InsertPurchaseOrderMutationVariables = Types.Exact<{
+  input: Types.InsertPurchaseOrderInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type InsertPurchaseOrderMutation = {
+  __typename: 'Mutations';
+  insertPurchaseOrder: { __typename: 'IdResponse'; id: string };
 };
 
 export const PurchaseOrderRowFragmentDoc = gql`
@@ -207,6 +232,7 @@ export const PurchaseOrderLineFragmentDoc = gql`
       id
       code
       name
+      unitName
     }
     numberOfPacks
     requestedQuantity
@@ -243,6 +269,7 @@ export const PurchaseOrderFragmentDoc = gql`
     headingMessage
     insuranceCharge
     receivedAtPortDatetime
+    reference
     lines {
       __typename
       nodes {
@@ -309,6 +336,18 @@ export const PurchaseOrderByIdDocument = gql`
   }
   ${PurchaseOrderFragmentDoc}
 `;
+export const InsertPurchaseOrderDocument = gql`
+  mutation insertPurchaseOrder(
+    $input: InsertPurchaseOrderInput!
+    $storeId: String!
+  ) {
+    insertPurchaseOrder(input: $input, storeId: $storeId) {
+      ... on IdResponse {
+        id
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -358,6 +397,22 @@ export function getSdk(
           ),
         'purchaseOrderById',
         'query',
+        variables
+      );
+    },
+    insertPurchaseOrder(
+      variables: InsertPurchaseOrderMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<InsertPurchaseOrderMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertPurchaseOrderMutation>(
+            InsertPurchaseOrderDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'insertPurchaseOrder',
+        'mutation',
         variables
       );
     },

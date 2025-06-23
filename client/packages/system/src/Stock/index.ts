@@ -1,8 +1,10 @@
 export {
   StockLineRowFragment,
+  useStockListCount,
   useStockList,
   useRepack,
   useVvmStatusesEnabled,
+  StockListParams,
 } from './api';
 export * from './ListView';
 export * from './DetailView';

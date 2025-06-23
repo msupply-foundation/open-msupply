@@ -3188,6 +3188,7 @@ export type InsertInboundShipmentLineInput = {
   itemId: Scalars['String']['input'];
   itemVariantId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
+  note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
   sellPricePerPack: Scalars['Float']['input'];
@@ -3542,6 +3543,13 @@ export type InsertProgramResponseRequisitionResponse =
   | InsertProgramResponseRequisitionError
   | RequisitionNode;
 
+export type InsertPurchaseOrderInput = {
+  id: Scalars['String']['input'];
+  supplierId: Scalars['String']['input'];
+};
+
+export type InsertPurchaseOrderResponse = IdResponse;
+
 export type InsertRepackError = {
   __typename: 'InsertRepackError';
   error: InsertRepackErrorInterface;
@@ -3704,11 +3712,11 @@ export type InsertStockLineLineResponse = InsertStockLineError | StockLineNode;
 
 export type InsertStocktakeInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
+  createBlankStocktake?: InputMaybe<Scalars['Boolean']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   expiresBefore?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   isInitialStocktake?: InputMaybe<Scalars['Boolean']['input']>;
-  itemsHaveStock?: InputMaybe<Scalars['Boolean']['input']>;
   locationId?: InputMaybe<Scalars['String']['input']>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -4917,6 +4925,7 @@ export type Mutations = {
   insertProgramPatient: InsertProgramPatientResponse;
   insertProgramRequestRequisition: InsertProgramRequestRequisitionResponse;
   insertProgramResponseRequisition: InsertProgramResponseRequisitionResponse;
+  insertPurchaseOrder: InsertPurchaseOrderResponse;
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
@@ -5293,6 +5302,11 @@ export type MutationsInsertProgramRequestRequisitionArgs = {
 
 export type MutationsInsertProgramResponseRequisitionArgs = {
   input: InsertProgramResponseRequisitionInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertPurchaseOrderArgs = {
+  input: InsertPurchaseOrderInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -9252,6 +9266,7 @@ export type UpdateInboundShipmentLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
+  note?: InputMaybe<NullableStringUpdate>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
