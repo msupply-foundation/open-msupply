@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -18,10 +18,17 @@ import {
 import { PatientRowFragment, usePatient } from '../api';
 import { patientsToCsv } from '../utils';
 import { CreatePatientModal } from '../CreatePatientModal';
+import { CreateNewPatient } from 'packages/programs/src';
 
-export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
+interface AppBarButtonsComponentProps {
+  onSavePatient: (patient: CreateNewPatient) => void;
+  sortBy: SortBy<PatientRowFragment>;
+}
+
+export const AppBarButtons = ({
+  onSavePatient,
   sortBy,
-}) => {
+}: AppBarButtonsComponentProps) => {
   const { success, error } = useNotification();
   const t = useTranslation();
   const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
@@ -63,7 +70,10 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
       </Grid>
 
       {createModalOpen ? (
-        <CreatePatientModal onClose={() => setCreateModalOpen(false)} />
+        <CreatePatientModal
+          onClose={() => setCreateModalOpen(false)}
+          onCreatePatient={onSavePatient}
+        />
       ) : null}
     </AppBarButtonsPortal>
   );

@@ -255,7 +255,7 @@ export const Toolbar: FC = () => {
       {createPatientModalOpen && (
         <CreatePatientModal
           onClose={() => setCreatePatientModalOpen(false)}
-          onCreatePatientForPrescription={newPatient => {
+          onCreatePatient={newPatient => {
             setEditPatientModalOpen(true);
             setCurrentPatientId(newPatient.id);
           }}

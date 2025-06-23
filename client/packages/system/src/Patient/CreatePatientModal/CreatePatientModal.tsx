@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   DetailContainer,
   DetailSection,
@@ -7,16 +7,12 @@ import {
   TabContext,
   useTabs,
   DialogButton,
-  useNavigate,
   useDialog,
   WizardStepper,
   useTranslation,
   useDebounceCallback,
   DocumentRegistryCategoryNode,
-  useLocation,
-  RouteBuilder,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
 import {
@@ -33,13 +29,13 @@ enum Tabs {
 
 interface CreatePatientModal {
   onClose: () => void;
-  onCreatePatientForPrescription?: (newPatient: CreateNewPatient) => void;
+  onCreatePatient: (newPatient: CreateNewPatient) => void;
 }
 
-export const CreatePatientModal: FC<CreatePatientModal> = ({
+export const CreatePatientModal = ({
   onClose,
-  onCreatePatientForPrescription: onCreate,
-}) => {
+  onCreatePatient: onCreate,
+}: CreatePatientModal) => {
   const { data: documentRegistryResponse, isLoading } =
     useDocumentRegistry.get.documentRegistries({
       filter: { category: { equalTo: DocumentRegistryCategoryNode.Patient } },
@@ -53,8 +49,6 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
     onClose,
   });
   const t = useTranslation();
-  const navigate = useNavigate();
-  const location = useLocation();
   const { createNewPatient, setCreateNewPatient } = usePatientStore();
 
   const onNext = useDebounceCallback(() => {
@@ -63,22 +57,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({
 
   const onOk = () => {
     if (!createNewPatient) return;
-    const urlSegments = location.pathname.split('/');
-
-    if (urlSegments.includes(AppRoute.Patients)) navigate(createNewPatient.id);
-
-    if (urlSegments.includes(AppRoute.Prescription))
-      if (onCreate) {
-        onCreate(createNewPatient);
-      } else {
-        navigate(
-          RouteBuilder.create(AppRoute.Dispensary)
-            .addPart(AppRoute.Patients)
-            .addPart(createNewPatient.id)
-            .addQuery({ previousPath: AppRoute.Prescription })
-            .build()
-        );
-      }
+    onCreate(createNewPatient);
   };
 
   const patientSteps = [

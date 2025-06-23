@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   UpdatePatientInput,
   DocumentRegistryCategoryNode,
@@ -216,7 +216,7 @@ export const usePrescriptionPatientForm = (patientId: string) => {
     return () => setCreateNewPatient(undefined);
   }, [setCreateNewPatient]);
 
-  const save = async () => {
+  const save = useCallback(async () => {
     try {
       const savedDocument = await saveData();
       setCreateNewPatient(undefined);
@@ -232,7 +232,7 @@ export const usePrescriptionPatientForm = (patientId: string) => {
       const errorSnack = error((e as Error).message);
       errorSnack();
     }
-  };
+  }, [saveData, setCreateNewPatient, setDocumentName]);
 
   useEffect(() => {
     if (!documentName && currentPatient) {
