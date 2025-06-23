@@ -92,6 +92,7 @@ export const RequestLineEditModal = ({
     setRepresentation(Representation.UNITS);
     setCurrentItem(item);
   };
+
   const handleSave = async () => {
     const result = await save();
 
