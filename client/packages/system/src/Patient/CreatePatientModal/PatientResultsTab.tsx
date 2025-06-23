@@ -54,7 +54,7 @@ export interface PatientColumnData {
   firstName?: string | null;
   lastName?: string | null;
   dateOfBirth?: string | null;
-  gender?: string | null;
+  gender?: GenderType | null;
   isDeceased?: boolean | null;
   isOnCentral?: boolean;
 }
@@ -152,7 +152,8 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     {
       key: 'gender',
       label: 'label.gender',
-      formatter: gender => t(getGenderTranslationKey(gender as GenderType)),
+      accessor: ({ rowData }) =>
+        rowData.gender ? t(getGenderTranslationKey(rowData.gender)) : '',
     },
     {
       key: 'isDeceased',
