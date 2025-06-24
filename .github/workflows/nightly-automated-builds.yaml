@@ -2,7 +2,7 @@ name: Nightly Automated Builds
 on:
   workflow_dispatch:
   # schedule:
-  #   - cron: "0 6 * * *" #  Every day at 6AM UTC which is 6PM NZDT
+  #   - cron: "30 6 * * *" # Every day at 6:30 AM UTC which is 6:30 PM NZDT
 
 jobs:
   create-tags:
@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.PAT_WITH_WORKFLOW_SCOPE }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
         run: |
