@@ -1,9 +1,9 @@
-use std::{collections::HashMap, time::SystemTime};
+use std::{collections::HashMap, path::Path, time::SystemTime};
 
 use chrono::{DateTime, Utc};
 use scraper::{ElementRef, Html, Selector};
 use umya_spreadsheet::{
-    helper::coordinate::{column_index_from_string, index_from_coordinate},
+    helper::coordinate::{column_index_from_string, coordinate_from_index, index_from_coordinate},
     writer::xlsx,
     Cell, FontSize, Worksheet,
 };
@@ -18,13 +18,15 @@ pub fn export_html_report_to_excel(
     report: GeneratedReport,
     report_name: String,
 ) -> Result<String, ReportError> {
-    let sheet_name = "Report";
+    let sheet_name = "Stock Status";
 
-    // TODO: does report config have a book to use?
-    let mut book = umya_spreadsheet::new_file();
-    book.set_sheet_name(0, sheet_name).unwrap();
+    // toOD: - either load from db or file
+    let path = Path::new("../templates/Sample.xlsx");
+    let mut book = umya_spreadsheet::reader::xlsx::read(path).unwrap(); // TODO
+
+    // let mut book = umya_spreadsheet::new_file();
+    // book.set_sheet_name(0, sheet_name).unwrap();
     let sheet = book.get_sheet_by_name_mut(sheet_name).unwrap();
-
     // Parse HTML report and apply it to the sheet
     apply_report(sheet, report);
 
@@ -47,7 +49,7 @@ pub fn export_html_report_to_excel(
     Ok(reserved_file.id)
 }
 
-pub fn apply_report(sheet: &mut Worksheet, report: GeneratedReport) -> () {
+fn apply_report(sheet: &mut Worksheet, report: GeneratedReport) -> () {
     let mut row_idx: u32 = 1;
 
     // HEADER
@@ -110,6 +112,17 @@ pub fn apply_report(sheet: &mut Worksheet, report: GeneratedReport) -> () {
 
     // Data rows
     for row in body.rows_and_cells().into_iter() {
+        // Duplicate any formulae/formatting to the next row before populating
+        for col in 0..sheet.get_highest_column() {
+            let col = col + 1;
+
+            if let Some(cell) = sheet.get_cell((col, row_idx)) {
+                let mut cell = cell.clone();
+                cell.set_coordinate(coordinate_from_index(&col, &(row_idx + 1)));
+                sheet.set_cell(cell.clone());
+            }
+        }
+
         for (cell_index, cell) in row.into_iter().enumerate() {
             // If no custom columns, every column will be mapped, otherwise only custom columns
             if let Some(column_index) = index_to_column_index_map.get(&(cell_index as u32)).cloned()
@@ -210,101 +223,66 @@ mod report_to_excel_test {
 
     use super::*;
 
-    // TODO - better way for the footer methinks!
     #[test]
     fn test_generate_excel() {
         let report: GeneratedReport = GeneratedReport {
             document: r#"
                <table>
-              <thead>
+              <thead
                 <tr>
-                  <th class="location_code" style="width: 13%">Location</th>
-                  <th class="item_name" style="width: 38%" >
-                    Item name
-                  </th>
-                  <th class="quantity" style="width: 8%" >
-                    Quantity
-                  </th>
-                  <th class="pack" style="width: 8%">Pack size</th>
-                  <th class="batch" style="width: 8%">Batch</th>
-                  <th class="expiry" style="width: 10%">Expiry</th>
-                  <th class="cost_price" style="width: 10%">Cost p pack</th>
-                  <th class="total_extension" style="width: 10%">Total</th>
+                  <th excel-column="B">Item</th>
+                  <th>Unit</th>
+                  <th excel-column="C">Consumed</th>
                 </tr>
               </thead>
-              <tr class="body_value">
-                <td class="location_code" style="width: 80px"></td>
-
-                <td class="item_name" style="width: 250px">
-                  Bacetylsalicylic Acid 100mg tabs
-                </td>
-                <td class="quantity" style="width: 20px">3</td>
-                <td class="pack" style="width: 50px">1</td>
-                <td class="batch batch-wrap" style="width: 50px"></td>
-                <td class="expiry" style="width: 50px"></td>
-                <td class="cost_price" style="width: 80px;">15.00</td>
-                <td class="total_extension" style="width: 50px;">45</td>
+              <tbody>
+              <tr>
+                <td>Acetylsalicylic Acid 100mg tabs</td>
+                <td>Tablets</td>
+                <td>3</td>
               </tr>
+              <tr>
+                <td>Ibuprofen 200mg tabs</td>
+                <td>Tablets</td>
+                <td>3</td>
+              </tr>
+              <tr>
+                <td>Paracetamol 500mg tabs</td>
+                <td>Tablets</td>
+                <td>5</td>
+              </tr>
+            </tbody>
             </table>
-
-            
-            <table class="body_total_section" cellpadding="2" cellspacing="0">
-   <tbody>
-        <!-- Empty row between data and total - important for Excel! -->
-        <tr></tr>
-        <tr class="body_total_column_label">
-            <td class="item_code" style="width: 80px;"></td>
-            <td class="item_name" style="width: 350px;"></td>
-            <td class="quantity" style="width: 50px;"></td>
-            <td class="pack" style="width: 50px;"></td>
-            <td class="batch" style="width: 50px;"></td>
-            <td class="expiry" style="width: 80px;"></td>
-            <td class="cost_price" style="width: 80px;">{{t(k="label.total",f="Total")}}:</td>
-            <td class="total_extension" style="width: 50px;">{{ data.invoice.pricing.totalAfterTax }}</td>
-        </tr>
-    </tbody>
 </table>
         "#
             .to_string(),
             header: Some(
                 r#"
-             <table
-              class="header_image_section"
-              style="width: 100%; height: 98%"
-            >
-              <tr>
-                <th style="text-align: left; width: 10%; height: 70%">
-                  <img class="logo" src="{{ data.store.logo }}" />
-                </th>
-                <th style="text-align: left; width: 20%">
-                  <span style="font-weight: bold" excel-cell="D3"
-                    >STORE NAME</span
-                  ><br />
-                  <span style="font-size: 6pt"
-                    >{{ data.store.name.address1 }}</span
-                  ><br />
-                  <span style="font-size: 6pt"
-                    >{{ data.store.name.address2 }}</span
-                  ><br />
-                  <span style="font-size: 6pt">
-                    Telephone: {{ data.store.name.phone }} </span
-                  ><br />
-                  <span style="font-size: 6pt">
-                    Email: {{ data.store.name.email }}
-                  </span>
-                </th>
-                <th style="text-align: right; width: 70%; font-size: 28pt" excel-cell="A1" excel-type="title">
-                  Outbound Shipment<br />
-                </th>
-              </tr>
-            </table>
+                <div excel-cell="A2"></div>
             "#
                 .to_string(),
             ),
             footer: None,
         };
-        let file_id =
-            export_html_report_to_excel(&None, report, "test_report".to_string()).unwrap();
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report);
+
+        let get_value = |coord: &str| {
+            sheet
+                .get_cell(coord)
+                .map(|c| c.get_raw_value().to_string())
+                .unwrap_or_default()
+        };
+
+        assert_eq!(get_value("B4"), "Item");
+        assert_eq!(get_value("C4"), "Consumed");
+        assert_eq!(get_value("A4"), "");
+        assert_eq!(get_value("B6"), "Ibuprofen 200mg tabs");
     }
 
     #[test]
