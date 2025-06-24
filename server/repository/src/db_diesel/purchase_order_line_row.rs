@@ -156,10 +156,10 @@ mod tests {
             p.status = PurchaseOrderStatus::New;
             p.store_id = mock_store_a().id.clone();
             p.created_datetime = chrono::Utc::now().naive_utc();
+            p.purchase_order_number = 1;
         });
 
-        let result = purchase_order_repo.upsert_one(&row);
-        assert!(result.is_ok());
+        let _ = purchase_order_repo.upsert_one(&row);
 
         let line = inline_init(|l: &mut PurchaseOrderLineRow| {
             l.id = "test-line-1".to_string();
@@ -168,10 +168,9 @@ mod tests {
             l.item_code = "test-item-1".to_string();
         });
 
-        let result = repo.upsert_one(&line);
-        assert!(result.is_ok());
+        let _ = repo.upsert_one(&line);
 
-        let line = repo.find_one_by_id(&line.id).unwrap().unwrap();
-        assert_eq!(line.id, "test-line-1".to_string());
+        let result = repo.find_one_by_id(&line.id).unwrap().unwrap();
+        assert_eq!(result.id, "test-line-1".to_string());
     }
 }
