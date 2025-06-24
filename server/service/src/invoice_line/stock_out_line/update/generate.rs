@@ -90,7 +90,7 @@ fn generate_line(
         cost_price_per_pack: invoice_line_cost_price_per_pack,
         donor_link_id,
         campaign_id,
-        shipped_number_of_packs: _,
+        shipped_number_of_packs,
         ..
     }: InvoiceLineRow,
     ItemRow {
@@ -139,11 +139,11 @@ fn generate_line(
         foreign_currency_price_before_tax,
         item_variant_id,
         vvm_status_id,
-        linked_invoice_id: None,
         donor_link_id,
-        reason_option_id: None,
         campaign_id,
-        shipped_number_of_packs: None,
+        shipped_number_of_packs,
+        reason_option_id: None,
+        linked_invoice_id: None,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {
