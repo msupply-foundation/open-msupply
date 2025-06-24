@@ -144,37 +144,20 @@ impl Metric {
     }
 
     fn update_sync_metrics(&mut self, site_info: &SyncInfo) {
-        self.pushed = site_info
-            .data
-            .latest_sync_status
-            .push_v6
-            .as_ref()
-            .map_or(0, |s| s.done.unwrap_or(0))
-            + site_info
-                .data
-                .latest_sync_status
-                .push
-                .as_ref()
-                .map_or(0, |s| s.done.unwrap_or(0));
+        let SyncStatus {
+            push,
+            push_v6,
+            pull_v6,
+            pull_remote,
+            pull_central,
+            ..
+        } = &site_info.data.latest_sync_status;
+        self.pushed = push_v6.as_ref().map_or(0, |s| s.done.unwrap_or(0))
+            + push.as_ref().map_or(0, |s| s.done.unwrap_or(0));
 
-        self.pulled = site_info
-            .data
-            .latest_sync_status
-            .pull_v6
-            .as_ref()
-            .map_or(0, |s| s.done.unwrap_or(0))
-            + site_info
-                .data
-                .latest_sync_status
-                .pull_remote
-                .as_ref()
-                .map_or(0, |s| s.done.unwrap_or(0))
-            + site_info
-                .data
-                .latest_sync_status
-                .pull_central
-                .as_ref()
-                .map_or(0, |s| s.done.unwrap_or(0));
+        self.pulled = pull_v6.as_ref().map_or(0, |s| s.done.unwrap_or(0))
+            + pull_remote.as_ref().map_or(0, |s| s.done.unwrap_or(0))
+            + pull_central.as_ref().map_or(0, |s| s.done.unwrap_or(0));
     }
 }
 
