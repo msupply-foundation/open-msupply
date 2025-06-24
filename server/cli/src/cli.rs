@@ -576,7 +576,7 @@ async fn main() -> anyhow::Result<()> {
                 FormSchemaRowRepository::new(&con).upsert_one(form_schema_json)?;
             }
 
-            let excel_template = excel_template_path
+            let excel_template_buffer = excel_template_path
                 .map(|path| fs::read(&path))
                 .transpose()?;
 
@@ -592,7 +592,7 @@ async fn main() -> anyhow::Result<()> {
                 version: "1.0".to_string(),
                 code: id,
                 is_active: true,
-                excel_template,
+                excel_template_buffer,
             })?;
 
             info!("Report upserted");

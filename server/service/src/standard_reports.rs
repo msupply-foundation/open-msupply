@@ -88,7 +88,7 @@ impl StandardReports {
                     version: report.version,
                     code: report.code,
                     is_active: set_active,
-                    excel_template: report.excel_template_buffer,
+                    excel_template_buffer: report.excel_template_buffer,
                 })?;
                 num_std_reports += 1;
             }

@@ -47,7 +47,7 @@ table! {
       version -> Text,
       code -> Text,
       is_active -> Bool,
-      excel_template -> Nullable<Blob>,
+      excel_template_buffer -> Nullable<Blob>,
   }
 }
 
@@ -72,7 +72,7 @@ pub struct ReportRow {
     pub version: String,
     pub code: String,
     pub is_active: bool,
-    pub excel_template: Option<Vec<u8>>,
+    pub excel_template_buffer: Option<Vec<u8>>,
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Selectable)]
@@ -237,7 +237,7 @@ mod test {
             version: "1.0.0".to_string(),
             code: "TEST_CODE".to_string(),
             is_active: true,
-            excel_template: Some(vec![1, 2, 3, 4, 5]),
+            excel_template_buffer: Some(vec![1, 2, 3, 4, 5]),
         };
         let result = repo.upsert_one(&row);
         assert_matches!(result, Ok(_));

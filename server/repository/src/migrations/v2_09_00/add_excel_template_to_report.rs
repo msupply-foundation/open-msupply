@@ -11,7 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                ALTER TABLE report ADD COLUMN excel_template {BINARY};
+                ALTER TABLE report ADD COLUMN excel_template_buffer {BINARY};
             "#
         )?;
 

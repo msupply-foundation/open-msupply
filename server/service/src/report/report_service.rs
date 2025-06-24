@@ -495,7 +495,9 @@ fn resolve_report_definition(
     let resources = resources_from_resolved_template(&fully_loaded_report);
 
     let excel_template_buffer = match existing_report_id {
-        Some(id) => repo.find_one_by_id(&id)?.and_then(|row| row.excel_template),
+        Some(id) => repo
+            .find_one_by_id(&id)?
+            .and_then(|row| row.excel_template_buffer),
         None => None,
     };
 
@@ -876,7 +878,7 @@ mod report_service_test {
             version: "1.0".to_string(),
             code: "report_1".to_string(),
             is_active: true,
-            excel_template: None,
+            excel_template_buffer: None,
         })
         .unwrap();
 
@@ -892,7 +894,7 @@ mod report_service_test {
             version: "1.0".to_string(),
             code: "report_base_1".to_string(),
             is_active: true,
-            excel_template: None,
+            excel_template_buffer: None,
         })
         .unwrap();
 
