@@ -15,7 +15,7 @@ use std::{
     path::PathBuf,
     time::{Duration, Instant},
 };
-use tokio::{process::Child, task::JoinHandle, time::sleep};
+use tokio::{process::Child, sync::mpsc, task::JoinHandle, time::sleep};
 use util::{hash::sha256, uuid::uuid};
 const TEST_API: &str = "sync/v5/test";
 
@@ -255,10 +255,13 @@ impl LoadTest {
         let duration = self.duration as u64;
         let num_lines = self.lines;
 
+        let (metrics_tx, mut metrics_rx) = mpsc::unbounded_channel::<Metric>();
+
         for test_site in test_sites {
             let dir = self.output_dir.clone();
             let item_ids_copy = item_ids.clone();
-            let handle: JoinHandle<anyhow::Result<Vec<Metric>>> = tokio::spawn(async move {
+            let metrics_sender = metrics_tx.clone();
+            let handle: JoinHandle<anyhow::Result<()>> = tokio::spawn(async move {
                 let log = std::fs::File::create(
                     dir.join(format!("site_{}_output.log", test_site.site.site_id)),
                 )?;
@@ -279,20 +282,19 @@ impl LoadTest {
                     test_site.site.site_id
                 );
                 if let Err(e) = test_site.wait_for_sync().await {
-                    kill(&mut child).await;
+                    kill(&mut child, test_site.site.site_id).await;
                     return Err(e);
                 }
 
                 info!("Beginning load test for site: {}", test_site.site.site_id);
 
                 let start = std::time::Instant::now();
-                let mut metrics = Vec::new();
                 loop {
                     let mut metric = Metric::new(test_site.site.site_id);
                     if let Err(e) =
                         create_and_send_requisition(&test_site, num_lines, &item_ids_copy).await
                     {
-                        kill(&mut child).await;
+                        kill(&mut child, test_site.site.site_id).await;
                         return Err(e);
                     };
 
@@ -304,7 +306,7 @@ impl LoadTest {
                         Ok(response) => response,
                         Err(e) => {
                             println!("manualSync request failed: {}", e);
-                            kill(&mut child).await;
+                            kill(&mut child, test_site.site.site_id).await;
                             return Err(e.into());
                         }
                     };
@@ -312,7 +314,7 @@ impl LoadTest {
                     let site_info = match test_site.wait_for_sync().await {
                         Ok(site_info) => site_info,
                         Err(e) => {
-                            kill(&mut child).await;
+                            kill(&mut child, test_site.site.site_id).await;
                             return Err(e.into());
                         }
                     };
@@ -327,25 +329,69 @@ impl LoadTest {
                         metric.end_time.duration_since(metric.start_time)
                     );
 
-                    metrics.push(metric);
+                    // Send metric to parent process immediately
+                    if let Err(e) = metrics_sender.send(metric) {
+                        println!("Failed to send metric to parent: {}", e);
+                    }
 
                     if start.elapsed().as_secs() >= duration {
-                        kill(&mut child).await;
+                        kill(&mut child, test_site.site.site_id).await;
                         break;
                     }
                 }
-                Ok(metrics)
+                Ok(())
             });
             handles.push(handle)
         }
 
-        let mut results: Vec<Metric> = Vec::new();
-        for handle in handles {
-            match handle.await {
-                Ok(metric) => results.append(&mut metric?),
-                Err(e) => println!("Error joining task: {}", e),
+        // Drop the sender so the receiver knows when all senders are done
+        drop(metrics_tx);
+
+        // Spawn a task to collect metrics and handle timeout
+        let results_handle = tokio::spawn(async move {
+            let mut all_metrics = Vec::new();
+            while let Some(metric) = metrics_rx.recv().await {
+                all_metrics.push(metric);
+            }
+            all_metrics
+        });
+
+        // Wait for either all tasks to complete or timeout
+        let timeout_duration = Duration::from_secs(duration + 30); // Extra 30 seconds for cleanup
+
+        let handles_for_timeout = handles.iter().map(|h| h.abort_handle()).collect::<Vec<_>>();
+
+        tokio::select! {
+            _ = tokio::time::sleep(timeout_duration) => {
+                println!("Timeout reached, terminating remaining processes...");
+                // Force kill any remaining tasks
+                for abort_handle in handles_for_timeout {
+                    abort_handle.abort();
+                }
+            }
+            _ = async {
+                for handle in handles {
+                    if let Err(e) = handle.await {
+                        println!("Task failed: {}", e);
+                    }
+                }
+            } => {
+                println!("All tasks completed normally");
             }
         }
+
+        // Collect all metrics that were sent via channels
+        let results = match tokio::time::timeout(Duration::from_secs(5), results_handle).await {
+            Ok(Ok(metrics)) => metrics,
+            Ok(Err(e)) => {
+                println!("Error collecting results: {}", e);
+                Vec::new()
+            }
+            Err(_) => {
+                println!("Timeout waiting for results collection");
+                Vec::new()
+            }
+        };
 
         // Aggregate the results into groups of 5 seconds
         println!("\nProcessing results...");
@@ -393,27 +439,20 @@ impl LoadTest {
     fn write_results(&self, results: Vec<Metric>) {
         // Group metrics by 5-second intervals
         if !results.is_empty() {
-            // open a file to write the results
-            // The first line of the file should be csv headers "time, records pushed, records pulled"
             let output_file = self.output_dir.join("load_test_results.txt");
             let mut file =
                 std::fs::File::create(output_file).expect("Failed to create output file");
             writeln!(file, "time, records pushed, records pulled")
                 .expect("Failed to write to output file");
 
-            // Group metrics by 5-second intervals
             let mut grouped_metrics: Vec<(u64, usize, usize)> = Vec::new();
-            // Create a map to group metrics by 5-second intervals
             let mut interval_map: HashMap<u64, (usize, usize)> = HashMap::new();
-
-            // Determine the first start time as the reference point
             let first_start = results
                 .iter()
                 .map(|m| m.start_time)
                 .min()
                 .unwrap_or(Instant::now());
 
-            // Group metrics by their start time intervals
             for metric in &results {
                 let seconds_since_start = metric.start_time.duration_since(first_start).as_secs();
                 let interval = seconds_since_start / 5;
@@ -423,7 +462,6 @@ impl LoadTest {
                 entry.1 += metric.pulled;
             }
 
-            // Convert the map to a sorted vector
             let mut keys: Vec<_> = interval_map.keys().collect();
             keys.sort();
 
@@ -627,10 +665,10 @@ async fn create_sites(
     Ok(site_n_stores)
 }
 
-async fn kill(child: &mut Child) {
+async fn kill(child: &mut Child, site_id: usize) {
     match child.kill().await {
-        Ok(_) => println!("Child terminated successfully"),
-        Err(e) => println!("Failed to kill child: {}", e),
+        Ok(_) => println!("Child for site {} terminated successfully", site_id),
+        Err(e) => println!("Failed to kill child for site {}: {}", site_id, e),
     }
 }
 
