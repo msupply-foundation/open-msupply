@@ -132,19 +132,18 @@ export const QuantityTableComponent = ({
         },
       },
     ],
-    [
-      'shippedNumberOfPacks',
-      {
-        Cell: NumberOfPacksCell,
-        cellProps: {
-          decimalLimit: 0,
-          isDisabled: !isManuallyCreated,
-        },
-        width: 100,
-        align: ColumnAlign.Left,
-        setter: !isDisabled ? patch => updateDraftLine(patch) : undefined,
+    {
+      key: 'shippedNumberOfPacks',
+      label: 'label.shipped-number-of-packs',
+      Cell: NumberOfPacksCell,
+      cellProps: {
+        decimalLimit: 0,
       },
-    ]
+      getIsDisabled: () => !isManuallyCreated,
+      width: 100,
+      align: ColumnAlign.Left,
+      setter: patch => updateDraftLine(patch),
+    }
   );
 
   columnDefinitions.push({
