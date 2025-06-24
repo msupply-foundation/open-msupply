@@ -112,6 +112,7 @@ pub(crate) fn convert_invoice_line_to_single_pack(
             line.number_of_packs *= line.pack_size;
             line.cost_price_per_pack /= line.pack_size;
             line.pack_size = 1.0;
+            line.shipped_number_of_packs = Some(line.number_of_packs);
             line
         })
         .collect()
