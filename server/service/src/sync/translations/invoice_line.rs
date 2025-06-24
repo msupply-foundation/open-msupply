@@ -173,7 +173,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             donor_id,
             vvm_status_id,
             oms_fields,
-            shipped_number_of_packs: _,
+            shipped_number_of_packs,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
 
         let line_type = match to_invoice_line_type(&r#type) {
@@ -310,7 +310,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             reason_option_id,
             vvm_status_id,
             campaign_id: oms_fields.and_then(|o| o.campaign_id),
-            shipped_number_of_packs: None,
+            shipped_number_of_packs,
         };
 
         let result = adjust_negative_values(result);
