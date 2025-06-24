@@ -141,12 +141,11 @@ mod test {
         mock::{
             mock_full_new_response_requisition_for_update_test, mock_item_a,
             mock_request_draft_requisition_calculation_test, mock_request_program_requisition,
-            mock_sent_request_requisition_line, mock_store_a, mock_store_b, MockData,
-            MockDataInserts,
+            mock_requisition_variance_reason_option, mock_sent_request_requisition_line,
+            mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
-        test_db::{setup_all, setup_all_with_data},
-        EqualFilter, ReasonOptionRow, ReasonOptionRowRepository, ReasonOptionType,
-        RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
+        test_db::setup_all_with_data,
+        EqualFilter, RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
         RequisitionLineRowRepository, StorePreferenceRow, StorePreferenceRowRepository,
     };
 
@@ -241,15 +240,6 @@ mod test {
         StorePreferenceRowRepository::new(&connection)
             .upsert_one(&store_pref)
             .unwrap();
-        let reason = ReasonOptionRow {
-            id: "requisition_reason".to_string(),
-            r#type: ReasonOptionType::RequisitionLineVariance,
-            is_active: true,
-            reason: "Variance Reason".to_string(),
-        };
-        ReasonOptionRowRepository::new(&connection)
-            .upsert_one(&reason)
-            .unwrap();
         let requisition_lines =
             RequisitionLineRepository::new(&connection)
                 .query_by_filter(RequisitionLineFilter::new().requisition_id(
@@ -274,9 +264,13 @@ mod test {
 
     #[actix_rt::test]
     async fn update_request_requisition_line_success() {
-        let (_, connection, connection_manager, _) = setup_all(
+        let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_request_requisition_line_success",
             MockDataInserts::all(),
+            MockData {
+                requisition_lines: vec![progam_request_line()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -313,5 +307,42 @@ mod test {
                 ..test_line
             }
         );
+
+        // Success suggested != requested with reason provided
+        let store_pref = StorePreferenceRow {
+            id: mock_store_a().id.clone(),
+            use_consumption_and_stock_from_customers_for_internal_orders: true,
+            ..Default::default()
+        };
+        StorePreferenceRowRepository::new(&connection)
+            .upsert_one(&store_pref)
+            .unwrap();
+
+        let program_line_id = progam_request_line().id;
+        service
+            .update_request_requisition_line(
+                &context,
+                UpdateRequestRequisitionLine {
+                    id: program_line_id.clone(),
+                    requested_quantity: Some(15.0),
+                    option_id: Some(mock_requisition_variance_reason_option().id.clone()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let program_line = RequisitionLineRowRepository::new(&connection)
+            .find_one_by_id(&program_line_id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            program_line,
+            RequisitionLineRow {
+                requested_quantity: 15.0,
+                option_id: Some(mock_requisition_variance_reason_option().id.clone()),
+                ..progam_request_line()
+            }
+        )
     }
 }

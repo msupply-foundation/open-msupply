@@ -152,7 +152,7 @@ fn generate(
         u.supply_quantity = updated_supply_quantity.unwrap_or(u.supply_quantity);
         u.comment = updated_comment.or(u.comment);
         if existing_requisition_row.linked_requisition_id.is_none() {
-            u.available_stock_on_hand = updated_stock_on_hand.unwrap_or(0.0);
+            u.available_stock_on_hand = updated_stock_on_hand.unwrap_or(u.available_stock_on_hand);
             u.average_monthly_consumption =
                 updated_average_monthly_consumption.unwrap_or(u.average_monthly_consumption);
         }
@@ -194,13 +194,12 @@ mod test {
     use repository::{
         mock::{
             mock_finalised_request_requisition_line, mock_new_response_program_requisition,
-            mock_new_response_requisition_test, mock_reason_option,
+            mock_new_response_requisition_test, mock_requisition_variance_reason_option,
             mock_response_program_requisition, mock_sent_request_requisition_line, mock_store_a,
             mock_store_b, mock_user_account_b, MockDataInserts,
         },
         test_db::setup_all,
-        EqualFilter, ReasonOptionRow, ReasonOptionRowRepository, ReasonOptionType,
-        RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
+        EqualFilter, RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
         RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StorePreferenceRow,
         StorePreferenceRowRepository,
     };
@@ -290,15 +289,6 @@ mod test {
         StorePreferenceRowRepository::new(&connection)
             .upsert_one(&store_pref)
             .unwrap();
-        let reason = ReasonOptionRow {
-            id: "requisition_reason".to_string(),
-            r#type: ReasonOptionType::RequisitionLineVariance,
-            is_active: true,
-            reason: "Variance Reason".to_string(),
-        };
-        ReasonOptionRowRepository::new(&connection)
-            .upsert_one(&reason)
-            .unwrap();
         let requisition_lines =
             RequisitionLineRepository::new(&connection)
                 .query_by_filter(RequisitionLineFilter::new().requisition_id(
@@ -380,21 +370,41 @@ mod test {
             }
         );
 
-        // requested differs from suggested success if reason added
-        let test_line_2 = mock_new_response_program_requisition().lines[0].clone();
-        assert!(service
+        // Success suggested != requested with reason provided
+        let store_pref = StorePreferenceRow {
+            id: mock_store_a().id.clone(),
+            extra_fields_in_requisition: true,
+            ..Default::default()
+        };
+        StorePreferenceRowRepository::new(&connection)
+            .upsert_one(&store_pref)
+            .unwrap();
+
+        let program_test_line_id = mock_new_response_program_requisition().lines[0].id.clone();
+        service
             .update_response_requisition_line(
                 &context,
                 UpdateResponseRequisitionLine {
-                    id: test_line_2.id.clone(),
-                    supply_quantity: Some(99.0),
-                    comment: Some("comment".to_string()),
+                    id: program_test_line_id.clone(),
                     requested_quantity: Some(99.0),
-                    stock_on_hand: Some(99.0),
-                    option_id: Some(mock_reason_option().id),
+                    option_id: Some(mock_requisition_variance_reason_option().id),
                     ..Default::default()
                 },
             )
-            .is_ok());
+            .unwrap();
+
+        let program_line = RequisitionLineRowRepository::new(&connection)
+            .find_one_by_id(&program_test_line_id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            program_line,
+            RequisitionLineRow {
+                requested_quantity: 99.0,
+                option_id: Some(mock_requisition_variance_reason_option().id.clone()),
+                ..mock_new_response_program_requisition().lines[0].clone()
+            }
+        )
     }
 }
