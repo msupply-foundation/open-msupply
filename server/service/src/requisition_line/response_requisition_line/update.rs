@@ -107,9 +107,11 @@ fn validate(
 
     if store_preference.extra_fields_in_requisition && requisition_row.program_id.is_some() {
         let reason_options = ReasonOptionRepository::new(connection).query_by_filter(
-            ReasonOptionFilter::new().r#type(ReasonOptionType::equal_to(
-                &ReasonOptionType::RequisitionLineVariance,
-            )),
+            ReasonOptionFilter::new()
+                .r#type(ReasonOptionType::equal_to(
+                    &ReasonOptionType::RequisitionLineVariance,
+                ))
+                .is_active(true),
         )?;
 
         if !reason_options.is_empty()
