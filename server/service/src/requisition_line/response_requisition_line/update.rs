@@ -185,6 +185,12 @@ impl From<RepositoryError> for UpdateResponseRequisitionLineError {
 
 #[cfg(test)]
 mod test {
+    use crate::{
+        requisition_line::response_requisition_line::{
+            UpdateResponseRequisitionLine, UpdateResponseRequisitionLineError as ServiceError,
+        },
+        service_provider::ServiceProvider,
+    };
     use repository::{
         mock::{
             mock_finalised_request_requisition_line, mock_new_response_program_requisition,
@@ -194,16 +200,9 @@ mod test {
         },
         test_db::setup_all,
         EqualFilter, ReasonOptionRow, ReasonOptionRowRepository, ReasonOptionType,
-        RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRowRepository,
-        RequisitionRowRepository, StorePreferenceRow, StorePreferenceRowRepository,
-    };
-    use util::{inline_edit, inline_init};
-
-    use crate::{
-        requisition_line::response_requisition_line::{
-            UpdateResponseRequisitionLine, UpdateResponseRequisitionLineError as ServiceError,
-        },
-        service_provider::ServiceProvider,
+        RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
+        RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StorePreferenceRow,
+        StorePreferenceRowRepository,
     };
 
     #[actix_rt::test]
@@ -224,9 +223,10 @@ mod test {
         assert_eq!(
             service.update_response_requisition_line(
                 &context,
-                inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id = "invalid".to_string();
-                }),
+                UpdateResponseRequisitionLine {
+                    id: "invalid".to_string(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::RequisitionLineDoesNotExist)
         );
@@ -235,9 +235,10 @@ mod test {
         assert_eq!(
             service.update_response_requisition_line(
                 &context,
-                inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id = mock_finalised_request_requisition_line().id;
-                }),
+                UpdateResponseRequisitionLine {
+                    id: mock_finalised_request_requisition_line().id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::CannotEditRequisition)
         );
@@ -246,9 +247,10 @@ mod test {
         assert_eq!(
             service.update_response_requisition_line(
                 &context,
-                inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id = mock_sent_request_requisition_line().id;
-                }),
+                UpdateResponseRequisitionLine {
+                    id: mock_sent_request_requisition_line().id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotAResponseRequisition)
         );
@@ -258,21 +260,23 @@ mod test {
         assert_eq!(
             service.update_response_requisition_line(
                 &context,
-                inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id.clone_from(&mock_new_response_requisition_test().lines[0].id);
-                }),
+                UpdateResponseRequisitionLine {
+                    id: mock_new_response_requisition_test().lines[0].id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::NotThisStoreRequisition)
         );
 
-        // CannotEditRequisition (for pending requisitions)
+        // CannotEditRequisition (for pending auth requisitions)
         context.store_id = mock_store_a().id;
         assert_eq!(
             service.update_response_requisition_line(
                 &context,
-                inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id.clone_from(&mock_response_program_requisition().lines[0].id);
-                }),
+                UpdateResponseRequisitionLine {
+                    id: mock_response_program_requisition().lines[0].id.clone(),
+                    ..Default::default()
+                },
             ),
             Err(ServiceError::CannotEditRequisition)
         );
@@ -354,14 +358,13 @@ mod test {
 
         assert_eq!(
             line,
-            inline_edit(&test_line, |mut u| {
-                u.supply_quantity = 99.0;
-                u.comment = Some("comment".to_string());
-                u.requested_quantity = 5.0;
-                u.initial_stock_on_hand_units = 0.0;
-                u.available_stock_on_hand = 99.0;
-                u
-            })
+            RequisitionLineRow {
+                supply_quantity: 99.0,
+                comment: Some("comment".to_string()),
+                requested_quantity: 5.0,
+                available_stock_on_hand: 99.0,
+                ..test_line
+            }
         );
 
         let requisition = RequisitionRowRepository::new(&connection)
@@ -371,15 +374,15 @@ mod test {
 
         assert_eq!(
             requisition,
-            inline_edit(&requisition, |mut u| {
-                u.user_id = Some(mock_user_account_b().id);
-                u
-            })
+            RequisitionRow {
+                user_id: Some(mock_user_account_b().id.clone()),
+                ..requisition.clone()
+            }
         );
 
         // requested differs from suggested success if reason added
         let test_line_2 = mock_new_response_program_requisition().lines[0].clone();
-        service
+        assert!(service
             .update_response_requisition_line(
                 &context,
                 UpdateResponseRequisitionLine {
@@ -392,6 +395,6 @@ mod test {
                     ..Default::default()
                 },
             )
-            .unwrap();
+            .is_ok());
     }
 }
