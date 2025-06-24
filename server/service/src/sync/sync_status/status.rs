@@ -315,6 +315,7 @@ fn number_of_records_in_push_queue(
         get_sync_push_changelogs_filter(&ctx.connection).map_err(|error| match error {
             GetActiveStoresOnSiteError::DatabaseError(error) => Error::DatabaseError(error),
             GetActiveStoresOnSiteError::SiteIdNotSet => Error::SiteIdNotSet,
+            GetActiveStoresOnSiteError::CentralSiteIdNotSet => Error::SiteIdNotSet, // TODO: Cleanup
         })?;
 
     let change_logs_total = changelog_repo
