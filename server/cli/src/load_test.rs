@@ -124,7 +124,6 @@ struct SyncDone {
 
 #[derive(Debug, Clone)]
 struct Metric {
-    site_id: usize,
     start_time: Instant,
     end_time: Instant,
     pushed: usize,
@@ -132,10 +131,9 @@ struct Metric {
 }
 
 impl Metric {
-    fn new(site_id: usize) -> Self {
+    fn new() -> Self {
         let now = Instant::now();
         Self {
-            site_id,
             start_time: now,
             end_time: now,
             pushed: 0,
@@ -273,7 +271,7 @@ impl LoadTest {
 
                 let start = std::time::Instant::now();
                 loop {
-                    let mut metric = Metric::new(test_site.site.site_id);
+                    let mut metric = Metric::new();
                     if let Err(e) =
                         create_and_send_requisition(&test_site, num_lines, &item_ids_copy).await
                     {
