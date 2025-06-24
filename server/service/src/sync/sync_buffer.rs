@@ -65,7 +65,7 @@ impl<'a> SyncBuffer<'a> {
                     .action(action.equal_to())
                     .integration_datetime(DatetimeFilter::is_null(true))
                     .source_site_id(match source_site_id {
-                        Some(site_id) => EqualFilter::equal_to_i32(site_id),
+                        Some(site_id) => EqualFilter::equal_any_or_null_i32(vec![site_id]),
                         None => EqualFilter::i32_is_null(true),
                     }),
             )?;

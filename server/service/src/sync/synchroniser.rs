@@ -4,7 +4,9 @@ use crate::{
     sync::{sync_status::logger::SyncStep, CentralServerConfig},
 };
 use log::warn;
-use repository::{RepositoryError, StorageConnection, SyncAction};
+use repository::{
+    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncAction,
+};
 
 use std::sync::Arc;
 use thiserror::Error;
@@ -167,6 +169,20 @@ impl Synchroniser {
         let site_info = self.remote.sync_api_v5.get_site_info().await?;
         CentralServerConfig::set_central_server_config(&site_info);
 
+        let central_sync_server_id = KeyValueStoreRepository::new(&ctx.connection)
+            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
+
+        if central_sync_server_id.is_none() {
+            log::info!(
+                "Setting central sync server id to {}",
+                site_info.msupply_central_site_id
+            );
+            KeyValueStoreRepository::new(&ctx.connection).set_i32(
+                KeyType::SettingsSyncCentralServerSiteId,
+                Some(site_info.msupply_central_site_id),
+            )?;
+        }
+
         // First check sync status
 
         // Remote data was initialised
@@ -279,7 +295,7 @@ impl Synchroniser {
                 false => Some(logger),
                 true => None,
             },
-            None,
+            central_sync_server_id, // Also include OMS Central as source site_id is null, should probably be passing a vec here...
         )
         .map_err(SyncError::IntegrationError)?;
 

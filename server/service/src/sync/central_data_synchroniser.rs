@@ -40,6 +40,12 @@ impl CentralDataSynchroniser {
         let msupply_central_server_id = KeyValueStoreRepository::new(connection)
             .get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
 
+        log::info!(
+            "Pulling central data with batch size {} and msupply_central_server_id {}",
+            batch_size,
+            msupply_central_server_id.unwrap_or_default()
+        );
+
         loop {
             let start_cursor = cursor_controller.get(connection)?;
 
