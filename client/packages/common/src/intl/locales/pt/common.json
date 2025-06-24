@@ -242,7 +242,7 @@
   "error.cannot-add-pack-size-of-zero": "Não é possível adicionar uma variante com o tamanho de pacote igual a zero",
   "error.cannot-add-with-no-abbreviation-and-name": "Não é possível adicionar uma variante sem abreviação e nome",
   "error.cannot-backdate-prescription": "Stock não está disponível na data especificada",
-  "error.cannot-edit-requisition": "A requisição não é editável.",
+  "error.cannot-edit-requisition": "Não é possível editar a Requisição.",  
   "error.cant-save": "Ocorreu um problema ao salvar.",
   "error.cce-asset-number-already-used": "O número de ativo CCE já se encontra em uso, por favor utilize outro número",
   "error.code-no-match": "{{field}} não foi encontrado no catálogo",

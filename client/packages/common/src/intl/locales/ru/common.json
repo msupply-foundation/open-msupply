@@ -230,7 +230,7 @@
   "error.cannot-add-pack-size-of-zero": "Невозможно добавить вариант с нулевым объемом упаковки",
   "error.cannot-add-with-no-abbreviation-and-name": "Невозможно добавить вариант без аббревиатуры и названия",
   "error.cannot-backdate-prescription": "Запасы не доступны в указанную дату",
-  "error.cannot-edit-requisition": "Запрос на закупку не может быть отредактирован.",
+  "error.cannot-edit-requisition": "Невозможно отредактировать запрос.",
   "error.cant-save": "Возникла проблема при сохранении.",
   "error.cce-asset-number-already-used": "Номер актива холодильного оборудования уже используется, пожалуйста, используйте другой номер",
   "error.code-no-match": "{{field}} не найдено в каталоге",
