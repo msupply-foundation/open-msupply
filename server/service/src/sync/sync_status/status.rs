@@ -299,6 +299,7 @@ fn get_latest_successful_sync_status(
 pub enum NumberOfRecordsInPushQueueError {
     DatabaseError(RepositoryError),
     SiteIdNotSet,
+    CentralSiteIdNotSet,
 }
 
 fn number_of_records_in_push_queue(
@@ -315,7 +316,7 @@ fn number_of_records_in_push_queue(
         get_sync_push_changelogs_filter(&ctx.connection).map_err(|error| match error {
             GetActiveStoresOnSiteError::DatabaseError(error) => Error::DatabaseError(error),
             GetActiveStoresOnSiteError::SiteIdNotSet => Error::SiteIdNotSet,
-            GetActiveStoresOnSiteError::CentralSiteIdNotSet => Error::SiteIdNotSet, // TODO: Cleanup
+            GetActiveStoresOnSiteError::CentralSiteIdNotSet => Error::CentralSiteIdNotSet,
         })?;
 
     let change_logs_total = changelog_repo
