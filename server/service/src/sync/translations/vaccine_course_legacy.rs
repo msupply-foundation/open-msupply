@@ -99,6 +99,8 @@ impl SyncTranslation for VaccineCourseLegacyTranslation {
 #[cfg(test)]
 mod tests {
 
+    use crate::sync::test_util_set_is_central_server;
+
     use super::*;
     use repository::{
         mock::{mock_program_a, MockDataInserts},
@@ -113,7 +115,11 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_vaccine_course_legacy_translation",
-            MockDataInserts::none().programs(),
+            MockDataInserts::none()
+                .programs()
+                .full_master_list()
+                .items()
+                .names(),
         )
         .await;
 
@@ -144,6 +150,18 @@ mod tests {
             .pop()
             .unwrap();
 
+        // Shouldn't translate if not a central server
+        test_util_set_is_central_server(false);
+        assert_eq!(
+            translator.should_translate_to_sync_record(
+                &changelog_row,
+                &ToSyncRecordTranslationType::PushToLegacyCentral
+            ),
+            false
+        );
+
+        // Should translate if a central server
+        test_util_set_is_central_server(true);
         assert!(translator.should_translate_to_sync_record(
             &changelog_row,
             &ToSyncRecordTranslationType::PushToLegacyCentral
