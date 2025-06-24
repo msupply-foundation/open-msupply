@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Autocomplete,
   Box,
-  PlusCircleIcon,
   Typography,
   useConfirmationModal,
   useIntlUtils,
@@ -56,11 +55,13 @@ export const ClinicianSearchInput = ({
   const addClinicianOption = {
     id: 'add',
     label: t('label.create-clinician'),
-    value: {
-      id: 'add',
-      firstName: '',
-      lastName: '',
-    },
+    _isAddOption: true,
+  };
+
+  const handleAddClick = () => {
+    setPopoverOpen(false);
+    onChange(null);
+    mountSlidePanel ? setSliderOpen(true) : setModalOpen(true);
   };
 
   const asOption = (clinician: Clinician): ClinicianAutocompleteOption => ({
@@ -68,25 +69,6 @@ export const ClinicianSearchInput = ({
     value: clinician,
     id: clinician.id,
   });
-
-  const options = clinicians.map(
-    (clinician): ClinicianAutocompleteOption => asOption(clinician)
-  );
-  const optionsWithAdd = allowCreate
-    ? [...options, addClinicianOption]
-    : options;
-
-  const filterOptions = (
-    options: ClinicianAutocompleteOption[],
-    value: { inputValue: string }
-  ) => {
-    return options.filter(
-      option =>
-        // Always include the 'add' option
-        option.id === 'add' ||
-        option.label.toLowerCase().includes(value.inputValue.toLowerCase())
-    );
-  };
 
   const handleClinicianClose = async (clinicianId?: string) => {
     setSliderOpen(false);
@@ -127,29 +109,6 @@ export const ClinicianSearchInput = ({
     }
   };
 
-  const CreateOption = (option: ClinicianAutocompleteOption) => (
-    <Box
-      display="flex"
-      justifyContent="space-between"
-      alignItems="center"
-      gap={1}
-      height={25}
-      width="100%"
-    >
-      <Typography
-        overflow="hidden"
-        fontWeight="bold"
-        textOverflow="ellipsis"
-        sx={{
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {option.label}
-      </Typography>
-      <PlusCircleIcon color="secondary" />
-    </Box>
-  );
-
   return (
     <Box width={`${width}px`} display={'flex'} alignItems="center">
       <Autocomplete
@@ -158,33 +117,25 @@ export const ClinicianSearchInput = ({
         onClose={() => setPopoverOpen(false)}
         value={clinicianValue ? asOption(clinicianValue) : null}
         isOptionEqualToValue={(option, value) =>
-          option.id !== 'add' && option.value.id === value.value?.id
+          option.value.id === value.value?.id
         }
-        getOptionLabel={option => (option.id === 'add' ? '' : option.label)}
         onChange={(_, option) => {
-          if (option && option.id == 'add') {
-            setPopoverOpen(false);
-            onChange(null);
-            mountSlidePanel ? setSliderOpen(true) : setModalOpen(true);
-            return;
-          }
           onChange(option);
         }}
-        options={optionsWithAdd}
-        filterOptions={filterOptions}
+        options={clinicians.map(
+          (clinician): ClinicianAutocompleteOption => asOption(clinician)
+        )}
         sx={{ width: '100%' }}
         renderOption={(props, option) => (
           <li {...props} key={option.id}>
-            {option.id === 'add' ? (
-              <CreateOption {...option} />
-            ) : (
-              <Typography>{option.label}</Typography>
-            )}
+            <Typography>{option.label}</Typography>
           </li>
         )}
         textSx={{ backgroundColor: theme.palette.background.drawer }}
         disabled={disabled}
         fullWidth={fullWidth}
+        onCreateOptionClick={handleAddClick}
+        createOption={allowCreate ? addClinicianOption : undefined}
       />
       {allowCreate &&
         (mountSlidePanel ? (
