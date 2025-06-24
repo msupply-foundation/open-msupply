@@ -337,8 +337,10 @@ impl LoadTest {
             all_metrics
         });
 
-        // Wait for either all tasks to complete or timeout
-        let timeout_duration = Duration::from_secs(duration + 30); // Extra 30 seconds for cleanup
+        // Wait for either all tasks to complete or timeout. We delay by a significant amount here as the child processes don't start their timers based
+        // on duration until after they've initialised, where this timer will start essentially immediately, before the children have initialised.
+        // The more sites/children spawned, the longer we should expect initialisation to take.
+        let timeout_duration = Duration::from_secs(duration + (60 * 2 * num_sites as u64));
 
         let handles_for_timeout = handles.iter().map(|h| h.abort_handle()).collect::<Vec<_>>();
 
