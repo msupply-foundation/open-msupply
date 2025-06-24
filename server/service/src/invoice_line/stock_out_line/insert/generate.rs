@@ -181,11 +181,8 @@ fn generate_line(
         campaign_id,
         linked_invoice_id: None,
         reason_option_id: None,
-        shipped_number_of_packs: if r#type == StockOutType::OutboundShipment {
-            Some(number_of_packs)
-        } else {
-            None
-        },
+        shipped_number_of_packs: (r#type == StockOutType::OutboundShipment)
+            .then_some(number_of_packs),
     })
 }
 
