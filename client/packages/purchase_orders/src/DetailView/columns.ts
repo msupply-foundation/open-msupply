@@ -48,7 +48,6 @@ export const usePurchaseOrderColumns = () => {
       label: 'label.pack-size',
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.packSize,
-      sortable: false,
       getSortValue: rowData => rowData.packSize ?? 1,
       defaultHideOnMobile: true,
     },
