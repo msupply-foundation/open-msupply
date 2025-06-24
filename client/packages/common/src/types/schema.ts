@@ -6549,7 +6549,7 @@ export type PurchaseOrderLineNode = {
   authorisedQuantity?: Maybe<Scalars['Float']['output']>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
-  item?: Maybe<ItemNode>;
+  item: ItemNode;
   lineNumber: Scalars['Int']['output'];
   numberOfPacks?: Maybe<Scalars['Float']['output']>;
   packSize?: Maybe<Scalars['Float']['output']>;

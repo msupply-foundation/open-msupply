@@ -17,7 +17,7 @@ table! {
         id ->  Text,
         purchase_order_id -> Text,
         line_number -> Integer,
-        item_link_id -> Nullable<Text>,
+        item_link_id -> Text,
         item_code -> Text,
         item_name -> Nullable<Text>,
         number_of_packs ->  Nullable<Double>,
@@ -45,7 +45,7 @@ pub struct PurchaseOrderLineRow {
     pub id: String,
     pub purchase_order_id: String,
     pub line_number: i32,
-    pub item_link_id: Option<String>,
+    pub item_link_id: String,
     pub item_code: String,
     pub item_name: Option<String>,
     pub number_of_packs: Option<f64>,
@@ -166,6 +166,7 @@ mod tests {
             l.purchase_order_id = purchase_order_id.to_string();
             l.line_number = 1;
             l.item_code = "test-item-1".to_string();
+            l.item_link_id = "item_a".to_string();
         });
 
         let _ = repo.upsert_one(&line);

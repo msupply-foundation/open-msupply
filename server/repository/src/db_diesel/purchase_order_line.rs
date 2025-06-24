@@ -11,20 +11,20 @@ use crate::{
 };
 
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
+    dsl::{InnerJoin, IntoBoxed},
     prelude::*,
 };
 
 type PurchaseOrderLineJoin = (
     PurchaseOrderLineRow,
-    Option<(ItemLinkRow, ItemRow)>,
+    (ItemLinkRow, ItemRow),
     PurchaseOrderRow,
 );
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct PurchaseOrderLine {
     pub purchase_order_line_row: PurchaseOrderLineRow,
-    pub item_row: Option<ItemRow>,
+    pub item_row: ItemRow,
 }
 
 #[derive(Clone, Default)]
@@ -122,10 +122,10 @@ impl<'a> PurchaseOrderLineRepository<'a> {
             .limit(pagination.limit as i64);
 
         // Debug diesel query
-        println!(
-            "{}",
-            diesel::debug_query::<DBType, _>(&final_query).to_string()
-        );
+        // println!(
+        //     "{}",
+        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
+        // );
 
         let result =
             final_query.load::<PurchaseOrderLineJoin>(self.connection.lock().connection())?;
@@ -137,7 +137,7 @@ impl<'a> PurchaseOrderLineRepository<'a> {
 type BoxedPurchaseOrderLineQuery = IntoBoxed<
     'static,
     InnerJoin<
-        LeftJoin<purchase_order_line::table, InnerJoin<item_link::table, item::table>>,
+        InnerJoin<purchase_order_line::table, InnerJoin<item_link::table, item::table>>,
         purchase_order::table,
     >,
     DBType,
@@ -145,7 +145,7 @@ type BoxedPurchaseOrderLineQuery = IntoBoxed<
 
 fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurchaseOrderLineQuery {
     let mut query = purchase_order_line::table
-        .left_join(item_link::table.inner_join(item::table))
+        .inner_join(item_link::table.inner_join(item::table))
         .inner_join(purchase_order::table)
         .into_boxed();
 
@@ -185,9 +185,8 @@ impl PurchaseOrderLineFilter {
 }
 
 fn to_domain(
-    (purchase_order_line_row, item_link_and_item_row_opt, _): PurchaseOrderLineJoin,
+    (purchase_order_line_row, (_, item_row), _): PurchaseOrderLineJoin,
 ) -> PurchaseOrderLine {
-    let item_row = item_link_and_item_row_opt.map(|(_, item_row)| item_row);
     PurchaseOrderLine {
         purchase_order_line_row,
         item_row,
