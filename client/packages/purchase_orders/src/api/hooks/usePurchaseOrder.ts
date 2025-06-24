@@ -95,6 +95,7 @@ const useCreate = () => {
   });
 };
 
+// Filters by item code or name, and sorts by the selected column
 const useFilteredAndSortedLines = (
   data: PurchaseOrderFragment | undefined | void
 ) => {
