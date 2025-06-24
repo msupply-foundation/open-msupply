@@ -1,9 +1,8 @@
-on:
-  # schedule:
-  #   - cron: "0 0 * * *" # Runs daily at midnight UTC
-  workflow_dispatch: # Allows manual triggering of the workflow
-
 name: Nightly Automated Builds
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: "0 6 * * *" #  Every day at 6AM UTC which is 6PM NZDT
 
 jobs:
   create-tags:
@@ -13,8 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch all history for accurate tagging
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          token: ${{ secrets.PAT_WITH_WORKFLOW_SCOPE }}
 
       - name: Configure Git
         run: |
@@ -23,37 +22,5 @@ jobs:
 
       - name: Create tags for target branches
         run: |
-          # Tag develop branch
-          git checkout develop
-
-          if [[ -z "${APP_BUILD_VERSION}" ]]; then
-              PKG_VERSION=$(cat ./package.json | grep '"version":' | sed 's/.*"version": "\([^-"]*\).*/\1/')
-              COMMIT_DATE=$(git log -1 --format=%cd --date=format:%m%d%H%M)
-              export APP_BUILD_VERSION=$PKG_VERSION-dev-$COMMIT_DATE
-          fi
-          TAG_NAME="v$APP_BUILD_VERSION"
-
-          echo "Creating tag for develop: $TAG_NAME"
-          git tag $TAG_NAME
-          git push origin $TAG_NAME
-
-          # Tag latest RC branch
-          LATEST_RC=$(git branch -r | grep -E 'v[0-9.]+-(R|r)(C|c)' | sed 's/origin\///' | sort -V | tail -1 | xargs)
-
-          if [[ -n "$LATEST_RC" ]]; then
-            git checkout $LATEST_RC
-            unset APP_BUILD_VERSION # Reset for RC branch
-
-            if [[ -z "${APP_BUILD_VERSION}" ]]; then 
-              PKG_VERSION=$(cat ./package.json | grep '"version":' | sed 's/.*"version": "\([^-"]*\).*/\1/')
-              COMMIT_DATE=$(git log -1 --format=%cd --date=format:%m%d%H%M)
-              export APP_BUILD_VERSION=$PKG_VERSION-rc-$COMMIT_DATE
-            fi
-            TAG_NAME="v$APP_BUILD_VERSION"
-
-            echo "Creating tag for latest RC: $TAG_NAME"
-            git tag $TAG_NAME
-            git push origin $TAG_NAME
-          else
-            echo "No RC branches found"
-          fi
+          chmod +x .github/workflows/create-nightly-tags.sh
+          .github/workflows/create-nightly-tags.sh
