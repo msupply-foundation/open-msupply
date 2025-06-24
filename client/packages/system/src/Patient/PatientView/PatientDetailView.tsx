@@ -77,8 +77,10 @@ const useUpsertProgramPatient = (): SaveDocumentMutation => {
 };
 
 export const PatientDetailView = ({
+  patientId,
   onEdit,
 }: {
+  patientId: string;
   onEdit: (isDirty: boolean) => void;
 }) => {
   const t = useTranslation();
@@ -93,7 +95,6 @@ export const PatientDetailView = ({
   const { urlQuery } = useUrlQuery();
   const fromPrescription = urlQuery['previousPath'] === AppRoute.Prescription;
 
-  const patientId = usePatient.utils.id();
   const { data: currentPatient, isLoading: isCurrentPatientLoading } =
     usePatient.document.get(patientId);
   const { data: patientRegistries, isLoading: isPatientRegistryLoading } =
@@ -267,7 +268,6 @@ export const PatientDetailView = ({
   });
 
   if (isLoading) return <BasicSpinner />;
-
   return (
     <Box flex={1} display="flex" justifyContent="center">
       <Box style={{ maxWidth: 1200, flex: 1 }}>{JsonForm}</Box>

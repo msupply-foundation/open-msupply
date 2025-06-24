@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useNavigate,
   TableProvider,
@@ -15,7 +15,9 @@ import { useItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
 import { PackQuantityCell } from '../Components';
 
-const ItemListComponent: FC = () => {
+const ItemListComponent = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
   const {
     filter,
     updateSortQuery,
@@ -27,8 +29,6 @@ const ItemListComponent: FC = () => {
   });
   const { data, isError, isLoading } = useItems();
   const pagination = { page, first, offset };
-  const navigate = useNavigate();
-  const t = useTranslation();
 
   const columns = useColumns<ItemsWithStatsFragment>(
     [
@@ -105,7 +105,7 @@ const ItemListComponent: FC = () => {
   );
 };
 
-export const ItemListView: FC = () => (
+export const ItemListView = () => (
   <TableProvider createStore={createTableStore}>
     <ItemListComponent />
   </TableProvider>

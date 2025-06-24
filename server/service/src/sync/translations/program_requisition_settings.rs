@@ -10,7 +10,7 @@ use serde::Deserialize;
 use std::collections::HashMap;
 
 use crate::sync::{
-    sync_serde::{empty_str_as_option, empty_str_or_i32},
+    sync_serde::{empty_str_as_option, empty_str_or_i32, object_fields_as_option},
     translations::{name_tag::NameTagTranslation, period_schedule::PeriodScheduleTranslation},
 };
 
@@ -27,6 +27,7 @@ pub struct LegacyListMasterRow {
     #[serde(rename = "isProgram")]
     is_program: bool,
     #[serde(rename = "programSettings")]
+    #[serde(deserialize_with = "object_fields_as_option")]
     program_settings: Option<LegacyProgramSettings>,
     is_immunisation: Option<bool>,
     inactive: Option<bool>,

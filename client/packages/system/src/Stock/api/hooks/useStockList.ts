@@ -9,14 +9,14 @@ import { StockLineRowFragment } from '../operations.generated';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { LIST, STOCK } from './keys';
 
-export type ListParams = {
+export type StockListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<StockLineRowFragment>;
   filterBy?: StockLineFilterInput;
 };
 
-export const useStockList = (queryParams: ListParams) => {
+export const useStockList = (queryParams: StockListParams) => {
   const { stockApi, storeId } = useStockGraphQL();
 
   const {

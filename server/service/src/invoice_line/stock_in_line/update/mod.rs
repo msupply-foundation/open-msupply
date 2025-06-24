@@ -24,7 +24,7 @@ pub struct UpdateStockInLine {
     pub location: Option<NullableUpdate<String>>,
     pub pack_size: Option<f64>,
     pub batch: Option<String>,
-    pub note: Option<String>,
+    pub note: Option<NullableUpdate<String>>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
