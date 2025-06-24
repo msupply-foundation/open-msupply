@@ -183,6 +183,9 @@ impl EqualFilter<i32> {
     pub fn i32_is_null(value: bool) -> Self {
         inline_init(|r: &mut Self| r.is_null = Some(value))
     }
+    pub fn equal_any_or_null_i32(value: Vec<i32>) -> Self {
+        inline_init(|r: &mut Self| r.equal_any_or_null = Some(value))
+    }
 }
 
 impl EqualFilter<f64> {

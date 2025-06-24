@@ -19,7 +19,8 @@ use super::{
 
 use log::info;
 use repository::{
-    ChangelogRepository, KeyType, RepositoryError, StorageConnection, SyncBufferRowRepository,
+    ChangelogRepository, KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection,
+    SyncBufferRowRepository,
 };
 
 use thiserror::Error;
@@ -131,6 +132,15 @@ impl RemoteDataSynchroniser {
     ) -> Result<(), RemotePullError> {
         let step_progress = SyncStepProgress::PullRemote;
 
+        let msupply_central_server_id = KeyValueStoreRepository::new(connection)
+            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
+
+        log::info!(
+            "Pulling remote data with batch size {} and msupply_central_server_id {}",
+            batch_size,
+            msupply_central_server_id.unwrap_or_default()
+        );
+
         loop {
             let sync_batch = self.sync_api_v5.get_queued_records(batch_size).await?;
 
@@ -145,7 +155,7 @@ impl RemoteDataSynchroniser {
 
             let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
                 data.into_iter().map(|r| r.record).collect(),
-                None, // Everything from mSupply Central Server is considered to not have a source_site_id
+                msupply_central_server_id,
             )?;
 
             let number_of_pulled_records = sync_buffer_rows.len() as u64;
