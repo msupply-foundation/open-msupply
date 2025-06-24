@@ -1,8 +1,8 @@
 name: Nightly Automated Builds
 on:
   workflow_dispatch:
-  # schedule:
-  #   - cron: "30 6 * * *" # Every day at 6:30 AM UTC which is 6:30 PM NZDT
+  schedule:
+    - cron: "30 6 * * *" # Every day at 6:30 AM UTC which is 6:30 PM NZDT
 
 jobs:
   create-tags:
