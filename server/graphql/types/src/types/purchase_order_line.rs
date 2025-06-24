@@ -31,7 +31,6 @@ impl PurchaseOrderLineNode {
     }
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-
         let result = loader.load_one(self.item.id.to_string()).await?;
 
         result.map(ItemNode::from_domain).ok_or(
