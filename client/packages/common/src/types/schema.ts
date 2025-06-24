@@ -4065,6 +4065,7 @@ export type InvoiceLineNode = {
   itemName: Scalars['String']['output'];
   itemVariant?: Maybe<ItemVariantNode>;
   itemVariantId?: Maybe<Scalars['String']['output']>;
+  linkedInvoiceId?: Maybe<Scalars['String']['output']>;
   location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
   locationName?: Maybe<Scalars['String']['output']>;

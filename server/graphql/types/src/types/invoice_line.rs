@@ -266,6 +266,10 @@ impl InvoiceLineNode {
         let result = loader.load_one(campaign_id.clone()).await?;
         Ok(result.map(CampaignNode::from_domain))
     }
+
+    pub async fn linked_invoice_id(&self) -> &Option<String> {
+        &self.row().linked_invoice_id
+    }
 }
 
 #[derive(Union)]

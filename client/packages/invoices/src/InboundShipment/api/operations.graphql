@@ -19,6 +19,7 @@ fragment InboundLine on InvoiceLineNode {
   itemName
   itemVariantId
   vvmStatusId
+  linkedInvoiceId
   donor(storeId: $storeId) {
     id
     name
