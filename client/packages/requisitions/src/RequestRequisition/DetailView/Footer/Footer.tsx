@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Box,
   StatusCrumbs,
@@ -8,7 +9,6 @@ import {
   Action,
   ActionsFooter,
 } from '@openmsupply-client/common';
-import React from 'react';
 import { getRequisitionTranslator, requestStatuses } from '../../../utils';
 import { RequestFragment, useRequest } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
