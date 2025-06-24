@@ -47,6 +47,7 @@ impl PurchaseOrderLineNode {
         }
         return Ok(None);
     }
+
     pub async fn number_of_packs(&self) -> &Option<f64> {
         &self.row().number_of_packs
     }
