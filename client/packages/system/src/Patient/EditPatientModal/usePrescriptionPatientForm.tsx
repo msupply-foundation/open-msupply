@@ -5,7 +5,6 @@ import {
   InsertPatientInput,
   useNotification,
   useQueryClient,
-  useParams,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import {
@@ -23,7 +22,6 @@ import {
 import defaultPatientSchema from '../PatientView/DefaultPatientSchema.json';
 import defaultPatientUISchema from '../PatientView/DefaultPatientUISchema.json';
 import { PRESCRIPTION } from '@openmsupply-client/invoices/src/Prescriptions/api/hooks/keys';
-import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
 
 const DEFAULT_SCHEMA: SchemaData = {
   formSchemaId: undefined,
@@ -73,7 +71,6 @@ const useUpsertProgramPatient = (): SaveDocumentMutation => {
 export const usePrescriptionPatientForm = (patientId: string) => {
   const { error } = useNotification();
   const queryClient = useQueryClient();
-  const { id } = useParams();
 
   const {
     documentName,
@@ -89,10 +86,6 @@ export const usePrescriptionPatientForm = (patientId: string) => {
         category: { equalTo: DocumentRegistryCategoryNode.Patient },
       },
     });
-
-  const {
-    update: { update: updatePrescription },
-  } = usePrescription();
 
   const patientRegistry = patientRegistries?.nodes[0];
   const isLoading = isCurrentPatientLoading || isPatientRegistryLoading;
@@ -224,10 +217,6 @@ export const usePrescriptionPatientForm = (patientId: string) => {
       if (savedDocument) {
         setDocumentName(savedDocument.name);
       }
-      await updatePrescription({
-        id,
-        patientId,
-      });
     } catch (e) {
       const errorSnack = error((e as Error).message);
       errorSnack();
@@ -249,5 +238,6 @@ export const usePrescriptionPatientForm = (patientId: string) => {
     validationError,
     currentPatient,
     revert,
+    inputData,
   };
 };

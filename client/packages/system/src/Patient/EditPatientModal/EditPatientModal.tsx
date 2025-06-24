@@ -15,11 +15,13 @@ import {
   useConfirmationModal,
   DetailTab,
   ShortTabList,
+  useParams,
 } from '@openmsupply-client/common';
 
 import { usePrescriptionPatientForm } from './usePrescriptionPatientForm';
 import { useInsuranceProviders } from '../apiModern/hooks/useInsuranceProviders';
 import { InsuranceListView } from '../Insurance';
+import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
 
 enum Tabs {
   Patient = 'Patient',
@@ -36,8 +38,10 @@ export const EditPatientModal = ({
   onClose: (patientId?: string) => void;
 }) => {
   const t = useTranslation();
-  const [currentTab, setCurrentTab] = useState(Tabs.Patient);
-
+  const { id } = useParams();
+  const {
+    update: { update: updatePrescription },
+  } = usePrescription();
   const {
     JsonForm,
     save,
@@ -53,6 +57,8 @@ export const EditPatientModal = ({
     onClose,
     isOpen,
   });
+
+  const [currentTab, setCurrentTab] = useState(Tabs.Patient);
 
   const requiresConfirmation = (tab: string) => {
     return tab === Tabs.Patient && isDirty;
@@ -96,6 +102,15 @@ export const EditPatientModal = ({
     }
   };
 
+  const handleSave = async () => {
+    save();
+    updatePrescription({
+      id,
+      patientId,
+    });
+    onClose();
+  };
+
   if (isLoading) return <BasicSpinner />;
 
   return (
@@ -113,10 +128,7 @@ export const EditPatientModal = ({
             !userHasPermission(UserPermission.PatientMutate)
           }
           isLoading={isLoading}
-          onClick={async () => {
-            await save();
-            onClose();
-          }}
+          onClick={handleSave}
           label={t('button.save')}
           startIcon={<SaveIcon />}
         />
