@@ -109,11 +109,11 @@ fn generate_line(
         vvm_status_id,
         donor_id,
         campaign_id,
+        shipped_number_of_packs,
         barcode: _,
         stock_on_hold: _,
         tax_percentage: _,
-        r#type,
-        shipped_number_of_packs,
+        r#type: _,
     }: InsertStockInLine,
     ItemRow {
         name: item_name,
@@ -153,16 +153,12 @@ fn generate_line(
         item_variant_id,
         vvm_status_id,
         donor_link_id: donor_id,
+        campaign_id,
+        shipped_number_of_packs,
         foreign_currency_price_before_tax: None,
         linked_invoice_id: None,
         prescribed_quantity: None,
         reason_option_id: None,
-        campaign_id,
-        shipped_number_of_packs: if r#type == StockInType::InboundShipment {
-            shipped_number_of_packs
-        } else {
-            None
-        },
     }
 }
 

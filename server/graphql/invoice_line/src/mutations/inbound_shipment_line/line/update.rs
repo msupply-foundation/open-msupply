@@ -108,7 +108,7 @@ impl UpdateInput {
             donor_id,
             campaign_id,
             note,
-            shipped_number_of_packs: _,
+            shipped_number_of_packs,
         } = self;
 
         ServiceInput {
@@ -139,6 +139,7 @@ impl UpdateInput {
             campaign_id: campaign_id.map(|campaign_id| NullableUpdate {
                 value: campaign_id.value,
             }),
+            shipped_number_of_packs,
         }
     }
 }
