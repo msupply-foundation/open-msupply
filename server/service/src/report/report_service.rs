@@ -5,11 +5,9 @@ use repository::{
     migrations::Version, EqualFilter, Pagination, PaginationOption, Report, ReportFilter,
     ReportMetaData, ReportRepository, ReportRowRepository, ReportSort, RepositoryError,
 };
-use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::{cmp::Ordering, collections::HashMap, time::SystemTime};
 use thiserror::Error;
-use umya_spreadsheet::{helper::coordinate::index_from_coordinate, Cell, FontSize};
 use util::{format_error, uuid::uuid};
 
 use crate::{
@@ -22,6 +20,7 @@ use crate::{
 };
 
 use super::{
+    convert_to_excel::export_html_report_to_excel,
     default_queries::get_default_gql_query,
     definition::{
         ConvertDataType, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef,
@@ -177,7 +176,7 @@ pub trait ReportServiceTrait: Sync + Send {
                 generate_html_report_to_html(base_dir, document, report.name.clone())
             }
             Some(PrintFormat::Excel) => {
-                print_html_report_to_excel(base_dir, document, report.name.clone())
+                export_html_report_to_excel(base_dir, document, report.name.clone())
             }
             Some(PrintFormat::Pdf) | None => {
                 generate_html_report_to_pdf(base_dir, document, report.name.clone())
@@ -229,195 +228,13 @@ fn generate_html_report_to_html(
     Ok(file.id)
 }
 
-struct Selectors<'a> {
-    html: &'a Html,
-}
-
-impl<'a> Selectors<'a> {
-    fn new(html: &'a Html) -> Self {
-        Self { html }
-    }
-
-    fn header_attributed_cells(&self) -> Vec<ElementRef> {
-        let cell_selector = Selector::parse(".paging thead [excel-cell]").unwrap();
-        self.html.select(&cell_selector).collect()
-    }
-
-    fn header_rows_and_cells(&self) -> Vec<Vec<ElementRef>> {
-        let rows_selector = Selector::parse(".paging thead table tr").unwrap();
-        let cells_selector = Selector::parse("td").unwrap();
-        self.html
-            .select(&rows_selector)
-            .map(|row| row.select(&cells_selector).collect())
-            .collect()
-    }
-
-    fn data_headers(&self) -> Vec<&str> {
-        let headers_selector =
-            Selector::parse(".paging tbody thead tr td,.paging tbody thead tr th").unwrap();
-        self.html
-            .select(&headers_selector)
-            .map(inner_text)
-            .collect()
-    }
-
-    fn rows_and_cells(&self) -> Vec<Vec<&str>> {
-        let rows_selector = Selector::parse(".paging tbody tbody tr").unwrap();
-        let cells_selector = Selector::parse("td").unwrap();
-        self.html
-            .select(&rows_selector)
-            .map(|row| row.select(&cells_selector).map(inner_text).collect())
-            .collect()
-    }
-}
-
-fn inner_text(element_ref: ElementRef) -> &str {
-    element_ref
-        .text()
-        .find(|t| !t.trim().is_empty())
-        .map(|t| t.trim())
-        .unwrap_or_default()
-}
-
-fn get_col_width(cell: ElementRef) -> u32 {
-    cell.attr("colspan")
-        .and_then(|cols| cols.parse::<u32>().ok())
-        .unwrap_or(1)
-}
-
-fn apply_known_styles(cell: &mut Cell, class_name: &str) {
-    let style = cell.get_style_mut();
-
-    match class_name {
-        "title" => {
-            let mut font_size = FontSize::default();
-            font_size.set_val(16.0);
-            style.get_font_mut().set_bold(true).set_font_size(font_size);
-        }
-        "bold" => {
-            style.get_font_mut().set_bold(true);
-        }
-        _ => {
-            // Unknown class, do nothing
-        }
-    }
-}
-
-/// Converts the report to an Excel file and returns the file id
-fn print_html_report_to_excel(
-    base_dir: &Option<String>,
-    document: GeneratedReport,
-    report_name: String,
-) -> Result<String, ReportError> {
-    let sheet_name = "Report";
-
-    let mut book = umya_spreadsheet::new_file();
-    book.set_sheet_name(0, sheet_name).unwrap();
-    let sheet = book.get_sheet_by_name_mut(sheet_name).unwrap();
-
-    // TODO: does report config have a book to use?
-
-    // let formatted = format_html_document(document);
-    let formatted = std::fs::read_to_string(
-        "/Users/lache/dev/open-msupply/server/service/src/report/templates/test2.html",
-    )?;
-    let fragment = Html::parse_fragment(&formatted);
-    let selectors = Selectors::new(&fragment); // Store Html when creating
-
-    let mut row_idx: u32 = 1;
-
-    // HEADER
-    let specified_header_cells = selectors.header_attributed_cells();
-
-    if specified_header_cells.len() > 0 {
-        for el in specified_header_cells.into_iter() {
-            if let Some(coordinate) = el.attr("excel-cell") {
-                // share below, should only apply if not empty
-                let sheet_cell = sheet.get_cell_mut(coordinate).set_value(inner_text(el));
-
-                if let Some(class) = el.attr("class") {
-                    apply_known_styles(sheet_cell, class);
-                };
-
-                let (_, row, _, _) = index_from_coordinate(coordinate);
-                let row_index = row.unwrap_or(0);
-
-                // Keep track of which rows are used by the headers, data rows should be after
-                if row_idx < row_index {
-                    row_idx = row_index + 1;
-                }
-            }
-        }
-    } else {
-        for row in selectors.header_rows_and_cells().into_iter() {
-            let mut cell_idx: u32 = 1;
-            for cell in row.into_iter() {
-                // Set text content
-                let text = inner_text(cell);
-                if !text.is_empty() {
-                    let sheet_cell = sheet
-                        .get_cell_mut((cell_idx, row_idx))
-                        .set_value(inner_text(cell));
-
-                    if let Some(class) = cell.attr("class") {
-                        apply_known_styles(sheet_cell, class);
-                    };
-                }
-
-                cell_idx += get_col_width(cell); // Next cell, account for colspan
-            }
-            row_idx += 1; // Next row
-        }
-    }
-
-    row_idx += 1; // Leave a row before the main data table
-
-    // hmmm - do the same? I think - excel col on the header row... store index + col
-    // do lookup in below map?
-
-    // HEADER ROW FOR MAIN DATA
-    for (index, header) in selectors.data_headers().into_iter().enumerate() {
-        let cell = sheet.get_cell_mut((index as u32 + 1, row_idx));
-
-        cell.set_value(header);
-        cell.get_style_mut().get_font_mut().set_bold(true);
-    }
-    row_idx += 1; // Next row
-
-    // MAIN DATA
-    for row in selectors.rows_and_cells().into_iter() {
-        for (cell_index, cell) in row.into_iter().enumerate() {
-            sheet
-                .get_cell_mut((cell_index as u32 + 1, row_idx))
-                .set_value(cell);
-        }
-        row_idx += 1; // Next row
-    }
-
-    // Save the file to the tmp directory
-    let now: DateTime<Utc> = SystemTime::now().into();
-    let file_service = StaticFileService::new(base_dir)
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
-
-    let reserved_file = file_service
-        .reserve_file(
-            &format!("{}_{}.xlsx", now.format("%Y%m%d_%H%M%S"), report_name),
-            &StaticFileCategory::Temporary,
-            None,
-        )
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
-
-    umya_spreadsheet::writer::xlsx::write(&book, reserved_file.path)
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
-
-    Ok(reserved_file.id)
-}
-
 /// Puts the document content, header and footer into a <html> template.
 /// This assumes that the document contains the html body.
 fn format_html_document(document: GeneratedReport) -> String {
     // ensure that <html> is at the start of the text
     // if not, the cordova printer plugin renders as text not HTML!
+
+    // TODO: anyone know why this renders content inside a singular <td>?
     format!(
         "<html>
     <body>
@@ -977,7 +794,7 @@ mod report_service_test {
                 DefaultQuery, ReportDefinition, ReportDefinitionEntry, ReportDefinitionIndex,
                 ReportOutputType, ReportRef, TeraTemplate,
             },
-            report_service::{generate_report, PrintFormat},
+            report_service::generate_report,
         },
         service_provider::ServiceProvider,
     };
@@ -1083,144 +900,6 @@ mod report_service_test {
         )
         .unwrap();
         assert_eq!(doc.document, "Template: Hello Footer");
-
-        //TODO proper test setup
-        service
-            .generate_html_report(
-                &None,
-                &resolved_def,
-                serde_json::json!({
-                    "test": "Hello"
-                }),
-                None,
-                Some(PrintFormat::Excel),
-                translation_service,
-                None,
-            )
-            .unwrap();
-    }
-}
-
-#[cfg(test)]
-mod report_to_excel_test {
-    use scraper::Html;
-
-    use super::*;
-
-    #[test]
-    fn test_selectors() {
-        let html = Html::parse_fragment(
-            r#"
-<html>
-   <body>
-      <table class="paging">
-         <thead>
-            <tr>
-               <td>
-                    <table>
-                        <thead>
-                           <tr>
-                              <td>Report Title</td>
-                           </tr>
-                        </thead>
-                    </table>
-               </td>
-            </tr>
-         </thead>
-         <tbody>
-            <tr>
-               <td>
-                  <style>
-                  </style>
-                  <div class="container">
-                     <table>
-                        <thead>
-                           <tr class="heading">
-                              <td>First Header</td>
-                              <td>Second Header</td>
-                           </tr>
-                        </thead>
-                        <tbody>
-                           <tr>
-                              <td>Row One Cell One</td>
-                              <td>Row One Cell Two</td>
-                           </tr>
-                           <tr>
-                              <td>Row Two Cell One</td>
-                              <td>Row Two Cell Two</td>
-                           </tr>
-                        </tbody>
-                     </table>
-                  </div>
-               </td>
-            </tr>
-         </tbody>
-         <tfoot>
-            <tr>
-               <td></td>
-            </tr>
-         </tfoot>
-      </table>
-   </body>
-</html>
-
-    "#,
-        );
-
-        let selectors = Selectors::new(&html);
-
-        let header = selectors.header_rows_and_cells();
-        assert_eq!(header.len(), 1);
-        assert_eq!(header[0].len(), 1);
-        assert_eq!(inner_text(header[0][0]), "Report Title");
-
-        assert_eq!(
-            selectors.data_headers(),
-            vec!["First Header", "Second Header"]
-        );
-
-        assert_eq!(
-            selectors.rows_and_cells(),
-            vec![
-                vec!["Row One Cell One", "Row One Cell Two"],
-                vec!["Row Two Cell One", "Row Two Cell Two"]
-            ]
-        );
-    }
-
-    #[test]
-    fn test_inner_text() {
-        let html = Html::parse_fragment(
-            r#"
-<html>
-   <body>
-      <table>
-         <tbody>
-            <tr>
-               <td class="status"> 
-                  <span class="out-of-stock">Out of Stock</span>
-               </td>
-                <td class="status"> 
-                  Out of Stock
-               </td>
-            </tr>
-         </tbody>
-      </table>         
-   </body>
-</html>
-
-        "#,
-        );
-
-        let cells_selector = Selector::parse("td").unwrap();
-        let mut cells = html.select(&cells_selector);
-        let cell = cells.next().unwrap();
-
-        assert_eq!(inner_text(cell), "Out of Stock");
-
-        let cell = cells.next().unwrap();
-
-        assert_eq!(inner_text(cell), "Out of Stock");
     }
 }
 

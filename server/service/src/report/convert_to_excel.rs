@@ -1,0 +1,396 @@
+use std::{collections::HashMap, time::SystemTime};
+
+use chrono::{DateTime, Utc};
+use scraper::{ElementRef, Html, Selector};
+use umya_spreadsheet::{
+    helper::coordinate::{column_index_from_string, index_from_coordinate},
+    writer::xlsx,
+    Cell, FontSize, Worksheet,
+};
+
+use crate::static_files::{StaticFileCategory, StaticFileService};
+
+use super::report_service::{GeneratedReport, ReportError};
+
+/// Converts the report to an Excel file and returns the file id
+pub fn export_html_report_to_excel(
+    base_dir: &Option<String>,
+    report: GeneratedReport,
+    report_name: String,
+) -> Result<String, ReportError> {
+    let sheet_name = "Report";
+
+    // TODO: does report config have a book to use?
+    let mut book = umya_spreadsheet::new_file();
+    book.set_sheet_name(0, sheet_name).unwrap();
+    let sheet = book.get_sheet_by_name_mut(sheet_name).unwrap();
+
+    // Parse HTML report and apply it to the sheet
+    apply_report(sheet, report);
+
+    // Save the file to the tmp directory
+    let now: DateTime<Utc> = SystemTime::now().into();
+    let file_service = StaticFileService::new(base_dir)
+        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+
+    let reserved_file = file_service
+        .reserve_file(
+            &format!("{}_{}.xlsx", now.format("%Y%m%d_%H%M%S"), report_name),
+            &StaticFileCategory::Temporary,
+            None,
+        )
+        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+
+    xlsx::write(&book, reserved_file.path)
+        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+
+    Ok(reserved_file.id)
+}
+
+pub fn apply_report(sheet: &mut Worksheet, report: GeneratedReport) -> () {
+    let mut row_idx: u32 = 1;
+
+    // HEADER
+    let header = Selectors::new(&report.header.unwrap_or_default());
+    let header_cells = header.excel_cells();
+
+    for (coordinate, el) in header_cells.into_iter() {
+        let sheet_cell = sheet.get_cell_mut(coordinate);
+
+        sheet_cell.set_value(inner_text(el));
+
+        if let Some(cell_type) = el.attr("excel-type") {
+            apply_known_styles(sheet_cell, cell_type);
+        };
+
+        let (_, row, _, _) = index_from_coordinate(coordinate);
+        let row_index = row.unwrap_or(0);
+
+        // Keep track of which rows are used by the header section, data rows should be after
+        if row_idx < row_index {
+            row_idx = row_index + 1;
+        }
+    }
+
+    // IMPORTANT: Leave a row before the main data table
+    // Needed to support pivot tables/post processing in Excel
+    row_idx += 1;
+
+    // MAIN DATA
+    let body = Selectors::new(&report.document);
+    let mut index_to_column_index_map: HashMap<u32, u32> = HashMap::new();
+
+    // Header row
+    let data_header_row = body.data_headers();
+
+    let has_custom_columns = data_header_row
+        .iter()
+        .any(|(custom_column, _)| custom_column.is_some());
+
+    for (index, (custom_column_coord, header)) in data_header_row.into_iter().enumerate() {
+        if has_custom_columns && custom_column_coord.is_none() {
+            // If there are custom columns, we skip the default ones
+            continue;
+        }
+        let html_index = index as u32;
+
+        let column_index = custom_column_coord
+            .map(column_index_from_string)
+            .unwrap_or(html_index + 1);
+
+        // Store the mapping from HTML index to column index - used for data rows
+        index_to_column_index_map.insert(html_index, column_index);
+
+        let cell = sheet.get_cell_mut((column_index, row_idx));
+
+        cell.set_value(header);
+        cell.get_style_mut().get_font_mut().set_bold(true);
+    }
+    row_idx += 1; // Next row
+
+    // Data rows
+    for row in body.rows_and_cells().into_iter() {
+        for (cell_index, cell) in row.into_iter().enumerate() {
+            // If no custom columns, every column will be mapped, otherwise only custom columns
+            if let Some(column_index) = index_to_column_index_map.get(&(cell_index as u32)).cloned()
+            {
+                sheet.get_cell_mut((column_index, row_idx)).set_value(cell);
+            }
+        }
+        row_idx += 1; // Next row
+    }
+
+    // FOOTER
+    // Currently not implemented, but could be added later
+}
+
+struct Selectors {
+    html: Html,
+}
+
+impl Selectors {
+    fn new(html_str: &str) -> Self {
+        let formatted = format!(
+            r#"
+              <div>
+                  {}
+              </div>
+            "#,
+            html_str
+        );
+
+        let html = Html::parse_fragment(&formatted);
+
+        Self { html }
+    }
+
+    fn excel_cells(&self) -> Vec<(&str, ElementRef)> {
+        let cell_selector = Selector::parse("[excel-cell]").unwrap();
+        self.html
+            .select(&cell_selector)
+            .map(|element| {
+                let coordinate = element.attr("excel-cell").unwrap_or_default();
+                (coordinate, element)
+            })
+            .collect()
+    }
+
+    fn data_headers(&self) -> Vec<(Option<&str>, &str)> {
+        let headers_selector = Selector::parse("thead tr td,thead tr th").unwrap();
+        self.html
+            .select(&headers_selector)
+            .map(|element| {
+                let custom_column = element.attr("excel-column");
+                let header_text = inner_text(element);
+
+                (custom_column, header_text)
+            })
+            .collect()
+    }
+
+    fn rows_and_cells(&self) -> Vec<Vec<&str>> {
+        let rows_selector = Selector::parse("tbody tr").unwrap();
+        let cells_selector = Selector::parse("td").unwrap();
+        self.html
+            .select(&rows_selector)
+            .map(|row| row.select(&cells_selector).map(inner_text).collect())
+            .collect()
+    }
+}
+
+fn inner_text(element_ref: ElementRef) -> &str {
+    element_ref
+        .text()
+        .find(|t| !t.trim().is_empty())
+        .map(|t| t.trim())
+        .unwrap_or_default()
+}
+
+fn apply_known_styles(cell: &mut Cell, cell_type: &str) {
+    let style = cell.get_style_mut();
+
+    match cell_type {
+        "title" => {
+            let mut font_size = FontSize::default();
+            font_size.set_val(14.0);
+            style.get_font_mut().set_bold(true).set_font_size(font_size);
+        }
+        "bold" => {
+            style.get_font_mut().set_bold(true);
+        }
+        _ => {
+            // Unknown type, leave as is
+        }
+    }
+}
+
+#[cfg(test)]
+mod report_to_excel_test {
+    use scraper::Html;
+
+    use super::*;
+
+    // TODO - better way for the footer methinks!
+    #[test]
+    fn test_generate_excel() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+               <table>
+              <thead>
+                <tr>
+                  <th class="location_code" style="width: 13%">Location</th>
+                  <th class="item_name" style="width: 38%" >
+                    Item name
+                  </th>
+                  <th class="quantity" style="width: 8%" >
+                    Quantity
+                  </th>
+                  <th class="pack" style="width: 8%">Pack size</th>
+                  <th class="batch" style="width: 8%">Batch</th>
+                  <th class="expiry" style="width: 10%">Expiry</th>
+                  <th class="cost_price" style="width: 10%">Cost p pack</th>
+                  <th class="total_extension" style="width: 10%">Total</th>
+                </tr>
+              </thead>
+              <tr class="body_value">
+                <td class="location_code" style="width: 80px"></td>
+
+                <td class="item_name" style="width: 250px">
+                  Bacetylsalicylic Acid 100mg tabs
+                </td>
+                <td class="quantity" style="width: 20px">3</td>
+                <td class="pack" style="width: 50px">1</td>
+                <td class="batch batch-wrap" style="width: 50px"></td>
+                <td class="expiry" style="width: 50px"></td>
+                <td class="cost_price" style="width: 80px;">15.00</td>
+                <td class="total_extension" style="width: 50px;">45</td>
+              </tr>
+            </table>
+
+            
+            <table class="body_total_section" cellpadding="2" cellspacing="0">
+   <tbody>
+        <!-- Empty row between data and total - important for Excel! -->
+        <tr></tr>
+        <tr class="body_total_column_label">
+            <td class="item_code" style="width: 80px;"></td>
+            <td class="item_name" style="width: 350px;"></td>
+            <td class="quantity" style="width: 50px;"></td>
+            <td class="pack" style="width: 50px;"></td>
+            <td class="batch" style="width: 50px;"></td>
+            <td class="expiry" style="width: 80px;"></td>
+            <td class="cost_price" style="width: 80px;">{{t(k="label.total",f="Total")}}:</td>
+            <td class="total_extension" style="width: 50px;">{{ data.invoice.pricing.totalAfterTax }}</td>
+        </tr>
+    </tbody>
+</table>
+        "#
+            .to_string(),
+            header: Some(
+                r#"
+             <table
+              class="header_image_section"
+              style="width: 100%; height: 98%"
+            >
+              <tr>
+                <th style="text-align: left; width: 10%; height: 70%">
+                  <img class="logo" src="{{ data.store.logo }}" />
+                </th>
+                <th style="text-align: left; width: 20%">
+                  <span style="font-weight: bold" excel-cell="D3"
+                    >STORE NAME</span
+                  ><br />
+                  <span style="font-size: 6pt"
+                    >{{ data.store.name.address1 }}</span
+                  ><br />
+                  <span style="font-size: 6pt"
+                    >{{ data.store.name.address2 }}</span
+                  ><br />
+                  <span style="font-size: 6pt">
+                    Telephone: {{ data.store.name.phone }} </span
+                  ><br />
+                  <span style="font-size: 6pt">
+                    Email: {{ data.store.name.email }}
+                  </span>
+                </th>
+                <th style="text-align: right; width: 70%; font-size: 28pt" excel-cell="A1" excel-type="title">
+                  Outbound Shipment<br />
+                </th>
+              </tr>
+            </table>
+            "#
+                .to_string(),
+            ),
+            footer: None,
+        };
+        let file_id =
+            export_html_report_to_excel(&None, report, "test_report".to_string()).unwrap();
+    }
+
+    #[test]
+    fn test_inner_text() {
+        let html = Html::parse_fragment(
+            r#"
+               <div> 
+                  <span class="out-of-stock">Out of Stock</span>
+               </div>
+                <div> 
+                  Some other text
+               </div>
+        "#,
+        );
+
+        let divs_selector = Selector::parse("div").unwrap();
+
+        let mut divs = html.select(&divs_selector);
+        let div_with_child = divs.next().unwrap();
+
+        assert_eq!(inner_text(div_with_child), "Out of Stock");
+
+        let div = divs.next().unwrap();
+
+        assert_eq!(inner_text(div), "Some other text");
+    }
+
+    #[test]
+    fn test_excel_attribute_selector() {
+        let selectors = Selectors::new(
+            r#"
+          <span excel-cell="B2">First</span>
+          <span>Second</span>
+          <span excel-cell="A1">Third</span>
+        "#,
+        );
+
+        let cells = selectors.excel_cells();
+        assert_eq!(cells.len(), 2);
+
+        let (first_cell_coord, first_cell) = cells[0];
+        assert_eq!(first_cell_coord, "B2");
+        assert_eq!(inner_text(first_cell), "First");
+
+        let (second_cell_coord, second_cell) = cells[1];
+        assert_eq!(second_cell_coord, "A1");
+        assert_eq!(inner_text(second_cell), "Third");
+    }
+    #[test]
+    fn test_body_selectors() {
+        let html = r#"
+                  <div class="container">
+                     <table>
+                        <thead>
+                           <tr class="heading">
+                              <td>First Header</td>
+                              <td excel-column="A">Second Header</td>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           <tr>
+                              <td>Row One Cell One</td>
+                              <td>Row One Cell Two</td>
+                           </tr>
+                           <tr>
+                              <td>Row Two Cell One</td>
+                              <td>Row Two Cell Two</td>
+                           </tr>
+                        </tbody>
+                     </table>
+                  </div>
+    "#;
+
+        let selectors = Selectors::new(html);
+
+        assert_eq!(
+            selectors.data_headers(),
+            vec![(None, "First Header"), (Some("A"), "Second Header")]
+        );
+
+        assert_eq!(
+            selectors.rows_and_cells(),
+            vec![
+                vec!["Row One Cell One", "Row One Cell Two"],
+                vec!["Row Two Cell One", "Row Two Cell Two"]
+            ]
+        );
+    }
+}
