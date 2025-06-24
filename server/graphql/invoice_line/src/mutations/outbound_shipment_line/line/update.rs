@@ -108,7 +108,6 @@ impl UpdateInput {
             }),
             note: None,
             campaign_id: None,
-            shipped_number_of_packs: number_of_packs,
         }
     }
 }
@@ -557,7 +556,6 @@ mod test {
                     }),
                     note: None,
                     campaign_id: None,
-                    shipped_number_of_packs: Some(1.0),
                 }
             );
             Ok(InvoiceLine {
