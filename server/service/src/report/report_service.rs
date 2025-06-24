@@ -84,6 +84,7 @@ pub struct ResolvedReportDefinition {
     pub resources: HashMap<String, serde_json::Value>,
     pub convert_data: Option<String>,
     pub convert_data_type: ConvertDataType,
+    pub excel_template_as_buffer: Option<Vec<u8>>,
 }
 
 pub struct GeneratedReport {
@@ -175,9 +176,12 @@ pub trait ReportServiceTrait: Sync + Send {
             Some(PrintFormat::Html) => {
                 generate_html_report_to_html(base_dir, document, report.name.clone())
             }
-            Some(PrintFormat::Excel) => {
-                export_html_report_to_excel(base_dir, document, report.name.clone())
-            }
+            Some(PrintFormat::Excel) => export_html_report_to_excel(
+                base_dir,
+                document,
+                report.name.clone(),
+                &report.excel_template_as_buffer,
+            ),
             Some(PrintFormat::Pdf) | None => {
                 generate_html_report_to_pdf(base_dir, document, report.name.clone())
             }
@@ -497,6 +501,7 @@ fn resolve_report_definition(
         resources,
         convert_data: fully_loaded_report.index.convert_data,
         convert_data_type: fully_loaded_report.index.convert_data_type,
+        excel_template_as_buffer: fully_loaded_report.excel_template_as_buffer,
     })
 }
 
@@ -720,7 +725,13 @@ fn load_report_definition(
     let def = serde_json::from_str::<ReportDefinition>(&row.template).map_err(|err| {
         ReportError::InvalidReportDefinition(format!("Can't parse report: {}", err))
     })?;
-    Ok((row.name, def))
+    Ok((
+        row.name,
+        ReportDefinition {
+            excel_template_as_buffer: row.excel_template,
+            ..def
+        },
+    ))
 }
 
 fn load_template_references(
@@ -730,6 +741,7 @@ fn load_template_references(
 ) -> Result<ReportDefinition, ReportError> {
     let mut out = ReportDefinition {
         index: report.index.clone(),
+        excel_template_as_buffer: report.excel_template_as_buffer,
         entries: HashMap::new(),
     };
     for (name, entry) in report.entries {
@@ -829,6 +841,7 @@ mod report_service_test {
                     ReportDefinitionEntry::DefaultQuery(DefaultQuery::Invoice),
                 ),
             ]),
+            excel_template_as_buffer: None,
         };
         let report_base_1 = ReportDefinition {
             index: ReportDefinitionIndex {
@@ -845,6 +858,7 @@ mod report_service_test {
                     template: "{% block footer %}Footer{% endblock footer %}".to_string(),
                 }),
             )]),
+            excel_template_as_buffer: None,
         };
 
         let (_, connection, connection_manager, _) =
@@ -863,6 +877,7 @@ mod report_service_test {
             version: "1.0".to_string(),
             code: "report_1".to_string(),
             is_active: true,
+            excel_template: None,
         })
         .unwrap();
 
@@ -878,6 +893,7 @@ mod report_service_test {
             version: "1.0".to_string(),
             code: "report_base_1".to_string(),
             is_active: true,
+            excel_template: None,
         })
         .unwrap();
 

@@ -57,14 +57,18 @@ impl StandardReports {
     ) -> Result<(), anyhow::Error> {
         let mut num_std_reports = 0;
         for report in reports_data.reports {
-            let report_versions = ReportRepository::new(con).query_by_filter(
-                ReportFilter::new().code(EqualFilter::equal_to(&report.code))
-            )?;
+            let report_versions = ReportRepository::new(con)
+                .query_by_filter(ReportFilter::new().code(EqualFilter::equal_to(&report.code)))?;
 
-            let existing_report = report_versions.iter().find(|r| r.report_row.id == report.id);
+            let existing_report = report_versions
+                .iter()
+                .find(|r| r.report_row.id == report.id);
             let set_active = match &existing_report {
                 Some(report) => report.report_row.is_active,
-                None => report_versions.len() == 0 || report_versions.iter().any(|r| r.report_row.is_active),
+                None => {
+                    report_versions.len() == 0
+                        || report_versions.iter().any(|r| r.report_row.is_active)
+                }
             };
 
             if existing_report.is_none() || overwrite {
@@ -84,6 +88,7 @@ impl StandardReports {
                     version: report.version,
                     code: report.code,
                     is_active: set_active,
+                    excel_template: None,
                 })?;
                 num_std_reports += 1;
             }

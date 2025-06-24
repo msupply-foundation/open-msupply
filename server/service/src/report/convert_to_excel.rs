@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::Path, time::SystemTime};
+use std::{collections::HashMap, fs, time::SystemTime};
 
 use chrono::{DateTime, Utc};
 use scraper::{ElementRef, Html, Selector};
@@ -17,19 +17,9 @@ pub fn export_html_report_to_excel(
     base_dir: &Option<String>,
     report: GeneratedReport,
     report_name: String,
+    template_as_buffer: &Option<Vec<u8>>,
 ) -> Result<String, ReportError> {
-    let sheet_name = "Stock Status";
-
-    // toOD: - either load from db or file
-    let path = Path::new("../templates/Sample.xlsx");
-    let mut book = umya_spreadsheet::reader::xlsx::read(path).unwrap(); // TODO
-
-    // let mut book = umya_spreadsheet::new_file();
-    // book.set_sheet_name(0, sheet_name).unwrap();
-    let sheet = book.get_sheet_by_name_mut(sheet_name).unwrap();
-    // Parse HTML report and apply it to the sheet
-    apply_report(sheet, report);
-
+    let sheet_name = "Report";
     // Save the file to the tmp directory
     let now: DateTime<Utc> = SystemTime::now().into();
     let file_service = StaticFileService::new(base_dir)
@@ -42,6 +32,35 @@ pub fn export_html_report_to_excel(
             None,
         )
         .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+
+    let mut book = match template_as_buffer {
+        Some(template) => {
+            // Save a copy of the template to the reserved file path
+            fs::write(&reserved_file.path, template)
+                .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+
+            // Read the template as a mutable XLSX book
+            umya_spreadsheet::reader::xlsx::read(&reserved_file.path)
+                .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?
+        }
+        None => {
+            // Create a new xlsx file if no template is provided
+            let mut book = umya_spreadsheet::new_file();
+            book.set_sheet_name(0, sheet_name)
+                .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+            book
+        }
+    };
+
+    let sheet = book
+        .get_sheet_by_name_mut(sheet_name)
+        .ok_or(ReportError::DocGenerationError(format!(
+            "Couldn't find Excel sheet: {}",
+            sheet_name
+        )))?;
+
+    // Parse HTML report and apply it to the sheet
+    apply_report(sheet, report);
 
     xlsx::write(&book, reserved_file.path)
         .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
@@ -219,9 +238,8 @@ fn apply_known_styles(cell: &mut Cell, cell_type: &str) {
 
 #[cfg(test)]
 mod report_to_excel_test {
-    use scraper::Html;
-
     use super::*;
+    use scraper::Html;
 
     #[test]
     fn test_generate_excel() {
