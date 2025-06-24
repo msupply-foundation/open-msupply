@@ -163,7 +163,10 @@ impl EqualFilter<i32> {
         }
     }
     pub fn equal_any_or_null_i32(value: Vec<i32>) -> Self {
-        inline_init(|r: &mut Self| r.equal_any_or_null = Some(value))
+        Self {
+            equal_any_or_null: Some(value),
+            ..Default::default()
+        }
     }
 }
 
