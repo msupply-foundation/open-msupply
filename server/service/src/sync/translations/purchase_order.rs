@@ -56,7 +56,6 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(rename = "creation_date")]
     pub created_datetime: NaiveDateTime,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
     pub target_months: Option<f64>,
     pub status: LegacyPurchaseOrderStatus,
     #[serde(default)]
@@ -98,26 +97,19 @@ pub struct LegacyPurchaseOrderRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub additional_instructions: Option<String>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
     pub agent_commission: Option<f64>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
     pub document_charge: Option<f64>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
     pub communications_charge: Option<f64>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
     pub insurance_charge: Option<f64>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
     pub freight_charge: Option<f64>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
     pub supplier_discount_amount: Option<f64>,
     #[serde(default)]
     #[serde(rename = "inv_discount_amount")]
-    #[serde(deserialize_with = "empty_str_as_option")]
     pub supplier_discount_percentage: Option<f64>,
     #[serde(default)]
     #[serde(rename = "donor_id")]
