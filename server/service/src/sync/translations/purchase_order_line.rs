@@ -22,7 +22,6 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(rename = "purchase_order_ID")]
     pub purchase_order_id: String,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
     pub line_number: Option<i64>,
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -32,23 +31,18 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub item_name: Option<String>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "snapshotQuantity")]
     pub number_of_packs: Option<f64>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "packsize_ordered")]
     pub pack_size: Option<f64>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "quan_original_order")]
     pub requested_quantity: Option<f64>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "quan_adjusted_order")]
     pub authorised_quantity: Option<f64>,
     #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "quan_rec_to_date")]
     pub total_received: Option<f64>,
     #[serde(default)]
