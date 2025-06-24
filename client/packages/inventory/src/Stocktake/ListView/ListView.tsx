@@ -100,7 +100,6 @@ export const StocktakeListView = () => {
         description={description}
         onCreate={create}
         isCreating={isCreating}
-        navigate={navigate}
       />
       <DataTable
         id="stocktake-list"

@@ -139,6 +139,7 @@ export const Toolbar: FC = () => {
               <PatientSearchInput
                 disabled={isDisabled}
                 value={patient}
+                allowEdit
                 onChange={async ({ id: patientId }) => {
                   await update({ id, patientId });
                 }}
@@ -159,6 +160,7 @@ export const Toolbar: FC = () => {
                 });
               }}
               clinicianValue={clinicianValue}
+              allowCreate
             />
           }
         />

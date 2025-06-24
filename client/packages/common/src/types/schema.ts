@@ -2598,6 +2598,12 @@ export type EqualFilterNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type EqualFilterPurchaseOrderStatusInput = {
+  equalAny?: InputMaybe<Array<PurchaseOrderNodeStatus>>;
+  equalTo?: InputMaybe<PurchaseOrderNodeStatus>;
+  notEqualTo?: InputMaybe<PurchaseOrderNodeStatus>;
+};
+
 export type EqualFilterReasonOptionTypeInput = {
   equalAny?: InputMaybe<Array<ReasonOptionNodeType>>;
   equalTo?: InputMaybe<ReasonOptionNodeType>;
@@ -3001,6 +3007,15 @@ export type InsertBarcodeInput = {
 
 export type InsertBarcodeResponse = BarcodeNode;
 
+export type InsertClinicianInput = {
+  code: Scalars['String']['input'];
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  gender?: InputMaybe<GenderType>;
+  id: Scalars['String']['input'];
+  initials: Scalars['String']['input'];
+  lastName: Scalars['String']['input'];
+};
+
 export type InsertContactFormInput = {
   body: Scalars['String']['input'];
   contactType: ContactFormNodeType;
@@ -3173,6 +3188,7 @@ export type InsertInboundShipmentLineInput = {
   itemId: Scalars['String']['input'];
   itemVariantId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
+  note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
   sellPricePerPack: Scalars['Float']['input'];
@@ -3527,6 +3543,13 @@ export type InsertProgramResponseRequisitionResponse =
   | InsertProgramResponseRequisitionError
   | RequisitionNode;
 
+export type InsertPurchaseOrderInput = {
+  id: Scalars['String']['input'];
+  supplierId: Scalars['String']['input'];
+};
+
+export type InsertPurchaseOrderResponse = IdResponse;
+
 export type InsertRepackError = {
   __typename: 'InsertRepackError';
   error: InsertRepackErrorInterface;
@@ -3689,11 +3712,11 @@ export type InsertStockLineLineResponse = InsertStockLineError | StockLineNode;
 
 export type InsertStocktakeInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
+  createBlankStocktake?: InputMaybe<Scalars['Boolean']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   expiresBefore?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   isInitialStocktake?: InputMaybe<Scalars['Boolean']['input']>;
-  itemsHaveStock?: InputMaybe<Scalars['Boolean']['input']>;
   locationId?: InputMaybe<Scalars['String']['input']>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -4331,6 +4354,13 @@ export type ItemLedgerConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type ItemLedgerFilterInput = {
+  datetime?: InputMaybe<DatetimeFilterInput>;
+  invoiceStatus?: InputMaybe<EqualFilterInvoiceStatusInput>;
+  invoiceType?: InputMaybe<EqualFilterInvoiceTypeInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type ItemLedgerNode = {
   __typename: 'ItemLedgerNode';
   balance: Scalars['Float']['output'];
@@ -4344,13 +4374,12 @@ export type ItemLedgerNode = {
   invoiceStatus: InvoiceNodeStatus;
   invoiceType: InvoiceNodeType;
   itemId: Scalars['String']['output'];
+  movementInUnits: Scalars['Float']['output'];
   name: Scalars['String']['output'];
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
-  quantity: Scalars['Float']['output'];
   reason?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
-  stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
   totalBeforeTax?: Maybe<Scalars['Float']['output']>;
 };
@@ -4862,6 +4891,7 @@ export type Mutations = {
   insertAsset: InsertAssetResponse;
   insertAssetLog: InsertAssetLogResponse;
   insertBarcode: InsertBarcodeResponse;
+  insertClinician: IdResponse;
   insertContactForm: InsertContactFormResponse;
   insertContactTrace: InsertContactTraceResponse;
   insertCustomerReturn: InsertCustomerReturnResponse;
@@ -4895,6 +4925,7 @@ export type Mutations = {
   insertProgramPatient: InsertProgramPatientResponse;
   insertProgramRequestRequisition: InsertProgramRequestRequisitionResponse;
   insertProgramResponseRequisition: InsertProgramResponseRequisitionResponse;
+  insertPurchaseOrder: InsertPurchaseOrderResponse;
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
@@ -5152,6 +5183,11 @@ export type MutationsInsertBarcodeArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsInsertClinicianArgs = {
+  input: InsertClinicianInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsInsertContactFormArgs = {
   input: InsertContactFormInput;
   storeId: Scalars['String']['input'];
@@ -5266,6 +5302,11 @@ export type MutationsInsertProgramRequestRequisitionArgs = {
 
 export type MutationsInsertProgramResponseRequisitionArgs = {
   input: InsertProgramResponseRequisitionInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertPurchaseOrderArgs = {
+  input: InsertPurchaseOrderInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6478,6 +6519,133 @@ export enum PropertyNodeValueType {
   String = 'STRING',
 }
 
+export type PurchaseOrderConnector = {
+  __typename: 'PurchaseOrderConnector';
+  nodes: Array<PurchaseOrderNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PurchaseOrderFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  status?: InputMaybe<EqualFilterPurchaseOrderStatusInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+  supplier?: InputMaybe<StringFilterInput>;
+};
+
+export type PurchaseOrderLineConnector = {
+  __typename: 'PurchaseOrderLineConnector';
+  nodes: Array<PurchaseOrderLineNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PurchaseOrderLineFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type PurchaseOrderLineNode = {
+  __typename: 'PurchaseOrderLineNode';
+  authorisedQuantity?: Maybe<Scalars['Float']['output']>;
+  expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  item: ItemNode;
+  lineNumber: Scalars['Int']['output'];
+  numberOfPacks?: Maybe<Scalars['Float']['output']>;
+  packSize?: Maybe<Scalars['Float']['output']>;
+  purchaseOrderId: Scalars['String']['output'];
+  requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  requestedQuantity?: Maybe<Scalars['Float']['output']>;
+  totalReceived?: Maybe<Scalars['Float']['output']>;
+};
+
+export type PurchaseOrderLineResponse = PurchaseOrderLineNode | RecordNotFound;
+
+export enum PurchaseOrderLineSortFieldInput {
+  AuthorisedQuantity = 'authorisedQuantity',
+  ExpectedDeliveryDate = 'expectedDeliveryDate',
+  ItemName = 'itemName',
+  LineNumber = 'lineNumber',
+  NumberOfPacks = 'numberOfPacks',
+  RequestedDeliveryDate = 'requestedDeliveryDate',
+  RequestedQuantity = 'requestedQuantity',
+  TotalReceived = 'totalReceived',
+}
+
+export type PurchaseOrderLineSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: PurchaseOrderLineSortFieldInput;
+};
+
+export type PurchaseOrderLinesResponse = PurchaseOrderLineConnector;
+
+export type PurchaseOrderNode = {
+  __typename: 'PurchaseOrderNode';
+  additionalInstructions?: Maybe<Scalars['String']['output']>;
+  advancePaidDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  agentCommission?: Maybe<Scalars['Float']['output']>;
+  authorisingOfficer1?: Maybe<Scalars['String']['output']>;
+  authorisingOfficer2?: Maybe<Scalars['String']['output']>;
+  comment?: Maybe<Scalars['String']['output']>;
+  communicationsCharge?: Maybe<Scalars['Float']['output']>;
+  confirmedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  contractSignedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  createdDatetime: Scalars['DateTime']['output'];
+  currencyId?: Maybe<Scalars['String']['output']>;
+  deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
+  documentCharge?: Maybe<Scalars['Float']['output']>;
+  donor?: Maybe<NameNode>;
+  expectedDeliveryDatetime?: Maybe<Scalars['NaiveDate']['output']>;
+  foreignExchangeRate?: Maybe<Scalars['Float']['output']>;
+  freightCharge?: Maybe<Scalars['Float']['output']>;
+  freightConditions?: Maybe<Scalars['String']['output']>;
+  headingMessage?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  insuranceCharge?: Maybe<Scalars['Float']['output']>;
+  lines: PurchaseOrderLineConnector;
+  number: Scalars['Int']['output'];
+  receivedAtPortDatetime?: Maybe<Scalars['NaiveDate']['output']>;
+  reference?: Maybe<Scalars['String']['output']>;
+  sentDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  shippingMethod?: Maybe<Scalars['String']['output']>;
+  status: PurchaseOrderNodeStatus;
+  store?: Maybe<StoreNode>;
+  supplier?: Maybe<NameNode>;
+  supplierAgent?: Maybe<Scalars['String']['output']>;
+  supplierDiscountAmount?: Maybe<Scalars['Float']['output']>;
+  supplierDiscountPercentage?: Maybe<Scalars['Float']['output']>;
+  supplierNameLinkId?: Maybe<Scalars['String']['output']>;
+  targetMonths?: Maybe<Scalars['Float']['output']>;
+  user?: Maybe<UserNode>;
+};
+
+export enum PurchaseOrderNodeStatus {
+  Authorised = 'AUTHORISED',
+  Confirmed = 'CONFIRMED',
+  Finalised = 'FINALISED',
+  New = 'NEW',
+}
+
+export type PurchaseOrderResponse = PurchaseOrderNode | RecordNotFound;
+
+export enum PurchaseOrderSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
+  DeliveryDate = 'deliveryDate',
+  Number = 'number',
+  Status = 'status',
+  Supplier = 'supplier',
+  TargetMonths = 'targetMonths',
+}
+
+export type PurchaseOrderSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: PurchaseOrderSortFieldInput;
+};
+
+export type PurchaseOrdersResponse = PurchaseOrderConnector;
+
 export type Queries = {
   __typename: 'Queries';
   abbreviations: Array<AbbreviationNode>;
@@ -6618,6 +6786,10 @@ export type Queries = {
   programIndicators: ProgramIndicatorResponse;
   programRequisitionSettingsByCustomer: CustomerProgramRequisitionSettingNode;
   programs: ProgramsResponse;
+  purchaseOrder: PurchaseOrderResponse;
+  purchaseOrderLine: PurchaseOrderLineResponse;
+  purchaseOrderLines: PurchaseOrderLinesResponse;
+  purchaseOrders: PurchaseOrdersResponse;
   rAndRForm: RnRFormResponse;
   rAndRForms: RnRFormsResponse;
   reasonOptions: ReasonOptionResponse;
@@ -6997,9 +7169,8 @@ export type QueriesItemCountsArgs = {
 };
 
 export type QueriesItemLedgerArgs = {
-  filter?: InputMaybe<LedgerFilterInput>;
+  filter?: InputMaybe<ItemLedgerFilterInput>;
   page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<LedgerSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -7137,6 +7308,30 @@ export type QueriesProgramsArgs = {
   filter?: InputMaybe<ProgramFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ProgramSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPurchaseOrderArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPurchaseOrderLineArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPurchaseOrderLinesArgs = {
+  filter?: InputMaybe<PurchaseOrderLineFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<PurchaseOrderLineSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPurchaseOrdersArgs = {
+  filter?: InputMaybe<PurchaseOrderFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<PurchaseOrderSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -8366,16 +8561,15 @@ export type StocktakeLineNode = {
 };
 
 export enum StocktakeLineSortFieldInput {
-  /** Stocktake line batch */
   Batch = 'batch',
-  /** Stocktake line expiry date */
+  CountedNumberOfPacks = 'countedNumberOfPacks',
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
-  /** Stocktake line item stock location code */
   LocationCode = 'locationCode',
-  /** Stocktake line pack size */
   PackSize = 'packSize',
+  ReasonOption = 'reasonOption',
+  SnapshotNumberOfPacks = 'snapshotNumberOfPacks',
 }
 
 export type StocktakeLineSortInput = {
@@ -9072,6 +9266,7 @@ export type UpdateInboundShipmentLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   itemVariantId?: InputMaybe<NullableStringUpdate>;
   location?: InputMaybe<NullableStringUpdate>;
+  note?: InputMaybe<NullableStringUpdate>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;

@@ -92,7 +92,9 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
 
   return (
     <Modal
-      title={t('button.new-prescription')}
+      title={t('label.create-prescription')}
+      height={700}
+      width={900}
       okButton={
         <LoadingButton
           color="secondary"
@@ -106,7 +108,7 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
       }
       cancelButton={<DialogButton variant="cancel" onClick={handleClose} />}
     >
-      <Stack gap={2} flexDirection="column">
+      <Stack gap={2} flexDirection="column" width={'500px'} margin="0 auto">
         <Box
           display="flex"
           flexDirection="row"
@@ -163,61 +165,56 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
             }
           />
         </Box>
-        <Stack gap={2} flexDirection="row" width="100%" flexWrap="wrap">
-          <Box display="flex" flexDirection="column" gap={2}>
-            <InputWithLabelRow
-              label={t('label.date')}
-              Input={
-                <DateTimePickerInput
-                  value={DateUtils.getDateOrNull(date)}
-                  format="P"
-                  onChange={newDate => {
-                    if (newDate) setDate(newDate);
-                  }}
-                  slotProps={{
-                    tabs: {
-                      hidden: true,
-                    },
-                  }}
-                />
-              }
+        <InputWithLabelRow
+          label={t('label.date')}
+          Input={
+            <DateTimePickerInput
+              value={DateUtils.getDateOrNull(date)}
+              format="P"
+              onChange={newDate => {
+                if (newDate) setDate(newDate);
+              }}
+              width={350}
             />
-            <InputWithLabelRow
-              label={t('label.reference')}
-              Input={
-                <BasicTextInput
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={theirReference ?? null}
-                  onChange={event => setTheirReference(event.target.value)}
-                />
-              }
+          }
+        />
+        <InputWithLabelRow
+          label={t('label.reference')}
+          Input={
+            <BasicTextInput
+              size="small"
+              sx={{ width: 350 }}
+              value={theirReference ?? null}
+              onChange={event => setTheirReference(event.target.value)}
             />
-          </Box>
-          <Box display="flex" flexDirection="column" gap={2}>
-            <InputWithLabelRow
-              label={t('label.clinician')}
-              Input={
-                <ClinicianSearchInput
-                  onChange={clinician => setClinician(clinician?.value)}
-                  clinicianValue={clinician}
-                />
-              }
+          }
+        />
+        <InputWithLabelRow
+          label={t('label.clinician')}
+          Input={
+            <ClinicianSearchInput
+              onChange={clinician => setClinician(clinician?.value)}
+              clinicianValue={clinician}
+              width={350}
+              allowCreate
+              mountSlidePanel
             />
-            {programs.length > 0 && (
-              <InputWithLabelRow
-                label={t('label.program')}
-                Input={
-                  <ProgramSearchInput
-                    programs={programs}
-                    selectedProgram={program}
-                    onChange={newProgram => setProgram(newProgram)}
-                  />
-                }
+          }
+        />
+        {programs.length > 0 && (
+          <InputWithLabelRow
+            label={t('label.program')}
+            Input={
+              <ProgramSearchInput
+                programs={programs}
+                selectedProgram={program}
+                onChange={newProgram => setProgram(newProgram)}
+                fullWidth={false}
+                width={350}
               />
-            )}
-          </Box>
-        </Stack>
+            }
+          />
+        )}
       </Stack>
     </Modal>
   );

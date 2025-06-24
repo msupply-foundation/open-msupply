@@ -13,7 +13,14 @@ use repository::{
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum PurchaseOrderLineSortFieldInput {
-    Item,
+    ItemName,
+    NumberOfPacks,
+    LineNumber,
+    RequestedQuantity,
+    AuthorisedQuantity,
+    TotalReceived,
+    RequestedDeliveryDate,
+    ExpectedDeliveryDate,
 }
 
 #[derive(InputObject)]
@@ -51,7 +58,7 @@ pub fn get_purchase_order_line(
 
     match service_provider
         .purchase_order_line_service
-        .get_purchase_order_line(&service_context, &store_id, id)
+        .get_purchase_order_line(&service_context, Some(&store_id), id)
         .map_err(StandardGraphqlError::from_repository_error)
     {
         Ok(line) => {
@@ -82,7 +89,7 @@ pub fn get_purchase_order_lines(
         .purchase_order_line_service
         .get_purchase_order_lines(
             &service_context,
-            &store_id,
+            Some(&store_id),
             page.map(PaginationOption::from),
             filter.map(|filter| filter.to_domain()),
             sort.and_then(|mut sort_list| sort_list.pop())
@@ -110,7 +117,14 @@ impl PurchaseOrderLineSortInput {
         use PurchaseOrderLineSortField as to;
         use PurchaseOrderLineSortFieldInput as from;
         let key = match self.key {
-            from::Item => to::ItemName,
+            from::ItemName => to::ItemName,
+            from::NumberOfPacks => to::NumberOfPacks,
+            from::LineNumber => to::LineNumber,
+            from::RequestedQuantity => to::RequestedQuantity,
+            from::AuthorisedQuantity => to::AuthorisedQuantity,
+            from::TotalReceived => to::TotalReceived,
+            from::RequestedDeliveryDate => to::RequestedDeliveryDate,
+            from::ExpectedDeliveryDate => to::ExpectedDeliveryDate,
         };
 
         PurchaseOrderLineSort {

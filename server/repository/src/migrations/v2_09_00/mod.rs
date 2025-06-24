@@ -7,6 +7,8 @@ mod add_purchase_order_to_number_type;
 mod add_store_id_to_clinician;
 mod extend_name_table_fields;
 mod process_clinician_store_join_deletes;
+mod resync_existing_vaccine_course_dose_and_item;
+mod resync_existing_vaccine_course_records;
 
 pub(crate) struct V2_09_00;
 
@@ -27,6 +29,8 @@ impl Migration for V2_09_00 {
             Box::new(add_store_id_to_clinician::Migrate),
             Box::new(add_purchase_order_tables::Migrate),
             Box::new(extend_name_table_fields::Migrate),
+            Box::new(resync_existing_vaccine_course_records::Migrate),
+            Box::new(resync_existing_vaccine_course_dose_and_item::Migrate),
             Box::new(add_purchase_order_to_number_type::Migrate),
         ]
     }
