@@ -84,7 +84,7 @@ pub struct ResolvedReportDefinition {
     pub resources: HashMap<String, serde_json::Value>,
     pub convert_data: Option<String>,
     pub convert_data_type: ConvertDataType,
-    pub excel_template_as_buffer: Option<Vec<u8>>,
+    pub excel_template_buffer: Option<Vec<u8>>,
 }
 
 pub struct GeneratedReport {
@@ -147,10 +147,11 @@ pub trait ReportServiceTrait: Sync + Send {
     fn resolve_report_definition(
         &self,
         ctx: &ServiceContext,
+        report_id: Option<String>,
         name: String,
         report_definition: ReportDefinition,
     ) -> Result<ResolvedReportDefinition, ReportError> {
-        resolve_report_definition(ctx, name, report_definition)
+        resolve_report_definition(ctx, report_id, name, report_definition)
     }
 
     /// Converts a HTML report to a file for the target PrintFormat and returns file id
@@ -180,7 +181,7 @@ pub trait ReportServiceTrait: Sync + Send {
                 base_dir,
                 document,
                 report.name.clone(),
-                &report.excel_template_as_buffer,
+                &report.excel_template_buffer,
             ),
             Some(PrintFormat::Pdf) | None => {
                 generate_html_report_to_pdf(base_dir, document, report.name.clone())
@@ -429,11 +430,12 @@ fn resolve_report(
     let repo = ReportRowRepository::new(&ctx.connection);
 
     let (report_name, main) = load_report_definition(&repo, report_id)?;
-    resolve_report_definition(ctx, report_name, main)
+    resolve_report_definition(ctx, Some(report_id.to_string()), report_name, main)
 }
 
 fn resolve_report_definition(
     ctx: &ServiceContext,
+    existing_report_id: Option<String>,
     name: String,
     main: ReportDefinition,
 ) -> Result<ResolvedReportDefinition, ReportError> {
@@ -491,6 +493,12 @@ fn resolve_report_definition(
     let queries = query_from_resolved_template(query_entry)?;
 
     let resources = resources_from_resolved_template(&fully_loaded_report);
+
+    let excel_template_buffer = match existing_report_id {
+        Some(id) => repo.find_one_by_id(&id)?.and_then(|row| row.excel_template),
+        None => None,
+    };
+
     Ok(ResolvedReportDefinition {
         name,
         template,
@@ -501,7 +509,7 @@ fn resolve_report_definition(
         resources,
         convert_data: fully_loaded_report.index.convert_data,
         convert_data_type: fully_loaded_report.index.convert_data_type,
-        excel_template_as_buffer: fully_loaded_report.excel_template_as_buffer,
+        excel_template_buffer,
     })
 }
 
@@ -725,13 +733,7 @@ fn load_report_definition(
     let def = serde_json::from_str::<ReportDefinition>(&row.template).map_err(|err| {
         ReportError::InvalidReportDefinition(format!("Can't parse report: {}", err))
     })?;
-    Ok((
-        row.name,
-        ReportDefinition {
-            excel_template_as_buffer: row.excel_template,
-            ..def
-        },
-    ))
+    Ok((row.name, def))
 }
 
 fn load_template_references(
@@ -741,7 +743,6 @@ fn load_template_references(
 ) -> Result<ReportDefinition, ReportError> {
     let mut out = ReportDefinition {
         index: report.index.clone(),
-        excel_template_as_buffer: report.excel_template_as_buffer,
         entries: HashMap::new(),
     };
     for (name, entry) in report.entries {
@@ -841,7 +842,6 @@ mod report_service_test {
                     ReportDefinitionEntry::DefaultQuery(DefaultQuery::Invoice),
                 ),
             ]),
-            excel_template_as_buffer: None,
         };
         let report_base_1 = ReportDefinition {
             index: ReportDefinitionIndex {
@@ -858,7 +858,6 @@ mod report_service_test {
                     template: "{% block footer %}Footer{% endblock footer %}".to_string(),
                 }),
             )]),
-            excel_template_as_buffer: None,
         };
 
         let (_, connection, connection_manager, _) =

@@ -101,7 +101,6 @@ pub struct ReportDefinitionIndex {
 pub struct ReportDefinition {
     pub index: ReportDefinitionIndex,
     pub entries: HashMap<String, ReportDefinitionEntry>,
-    pub excel_template_as_buffer: Option<Vec<u8>>,
 }
 
 #[cfg(test)]
@@ -200,7 +199,6 @@ mod report_dsl_test {
                         })
                     )
                 ]),
-                excel_template_as_buffer: None,
             }
         )
     }

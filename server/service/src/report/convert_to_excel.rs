@@ -445,7 +445,7 @@ mod report_to_excel_test {
     fn test_excel_attribute_selector() {
         let selectors = Selectors::new(
             r#"
-          <td excel-cell="B2">First</td>
+          <span excel-cell="B2">First</span>
           <span>Second</span>
           <span excel-cell="A1">Third</span>
         "#,

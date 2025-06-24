@@ -142,6 +142,10 @@ enum Action {
         #[clap(long)]
         arguments_ui_path: Option<PathBuf>,
 
+        /// Path to the excel template
+        #[clap(long)]
+        excel_template_path: Option<PathBuf>,
+
         /// Report name
         #[clap(short, long)]
         name: String,
@@ -540,6 +544,7 @@ async fn main() -> anyhow::Result<()> {
             name,
             context,
             sub_context,
+            excel_template_path,
         } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
@@ -571,6 +576,10 @@ async fn main() -> anyhow::Result<()> {
                 FormSchemaRowRepository::new(&con).upsert_one(form_schema_json)?;
             }
 
+            let excel_template = excel_template_path
+                .map(|path| fs::read(&path))
+                .transpose()?;
+
             ReportRowRepository::new(&con).upsert_one(&ReportRow {
                 id: id.clone(),
                 name,
@@ -583,6 +592,7 @@ async fn main() -> anyhow::Result<()> {
                 version: "1.0".to_string(),
                 code: id,
                 is_active: true,
+                excel_template,
             })?;
 
             info!("Report upserted");

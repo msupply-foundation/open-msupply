@@ -88,7 +88,7 @@ impl StandardReports {
                     version: report.version,
                     code: report.code,
                     is_active: set_active,
-                    excel_template: None,
+                    excel_template: report.excel_template_buffer,
                 })?;
                 num_std_reports += 1;
             }
@@ -116,4 +116,5 @@ pub struct ReportData {
     pub version: String,
     pub code: String,
     pub form_schema: Option<FormSchemaJson>,
+    pub excel_template_buffer: Option<Vec<u8>>,
 }
