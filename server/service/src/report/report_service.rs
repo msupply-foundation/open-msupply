@@ -238,8 +238,6 @@ fn generate_html_report_to_html(
 fn format_html_document(document: GeneratedReport) -> String {
     // ensure that <html> is at the start of the text
     // if not, the cordova printer plugin renders as text not HTML!
-
-    // TODO: anyone know why this renders content inside a singular <td>?
     format!(
         "<html>
     <body>
