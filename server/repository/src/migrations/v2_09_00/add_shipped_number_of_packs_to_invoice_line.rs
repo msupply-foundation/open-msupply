@@ -15,7 +15,6 @@ table! {
     }
 }
 
-#[allow(non_snake_case, unused)]
 #[derive(Deserialize)]
 pub struct LegacyTransLineRow {
     #[serde(rename = "sentQuantity")]
