@@ -48,7 +48,6 @@ export const ClinicianSearchInput = ({
 
   const clinicians: ClinicianFragment[] = data?.nodes ?? [];
 
-  const [open, setPopoverOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [sliderOpen, setSliderOpen] = useState(false);
 
@@ -59,7 +58,6 @@ export const ClinicianSearchInput = ({
   };
 
   const handleAddClick = () => {
-    setPopoverOpen(false);
     onChange(null);
     mountSlidePanel ? setSliderOpen(true) : setModalOpen(true);
   };
@@ -112,9 +110,6 @@ export const ClinicianSearchInput = ({
   return (
     <Box width={`${width}px`} display={'flex'} alignItems="center">
       <Autocomplete
-        open={open}
-        onOpen={() => setPopoverOpen(true)}
-        onClose={() => setPopoverOpen(false)}
         value={clinicianValue ? asOption(clinicianValue) : null}
         isOptionEqualToValue={(option, value) =>
           option.value.id === value.value?.id
