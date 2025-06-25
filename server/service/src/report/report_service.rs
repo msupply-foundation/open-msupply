@@ -238,6 +238,7 @@ fn generate_html_report_to_html(
 fn format_html_document(document: GeneratedReport) -> String {
     // ensure that <html> is at the start of the text
     // if not, the cordova printer plugin renders as text not HTML!
+    // The table structure is a formatting hack to show the footer on every page
     format!(
         "<html>
     <body>
