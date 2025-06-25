@@ -212,6 +212,8 @@ enum Action {
         #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="enable")]
         disable: bool,
     },
+    #[cfg(feature = "integration_test")]
+    LoadTest(LoadTest),
     GeneratePluginTypescriptTypes {
         /// Optional path to save typescript types, if not provided will save to `../client/packages/plugins/backendCommon/generated`
         #[clap(
