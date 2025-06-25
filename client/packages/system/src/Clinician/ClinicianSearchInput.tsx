@@ -48,8 +48,7 @@ export const ClinicianSearchInput = ({
 
   const clinicians: ClinicianFragment[] = data?.nodes ?? [];
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [sliderOpen, setSliderOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   const addClinicianOption = {
     id: 'add',
@@ -59,7 +58,7 @@ export const ClinicianSearchInput = ({
 
   const handleAddClick = () => {
     onChange(null);
-    mountSlidePanel ? setSliderOpen(true) : setModalOpen(true);
+    setEditorOpen(true);
   };
 
   const asOption = (clinician: Clinician): ClinicianAutocompleteOption => ({
@@ -69,8 +68,7 @@ export const ClinicianSearchInput = ({
   });
 
   const handleClinicianClose = async (clinicianId?: string) => {
-    setSliderOpen(false);
-    setModalOpen(false);
+    setEditorOpen(false);
 
     if (clinicianId) {
       const refreshedList = await refetch();
@@ -138,7 +136,7 @@ export const ClinicianSearchInput = ({
             draft={draft}
             updateDraft={updateDraft}
             width={500}
-            open={sliderOpen}
+            open={editorOpen}
             onClose={handleClinicianClose}
             confirmAndSave={confirmAndSave}
             isSaving={isSaving}
@@ -149,7 +147,7 @@ export const ClinicianSearchInput = ({
             draft={draft}
             updateDraft={updateDraft}
             onClose={handleClinicianClose}
-            open={modalOpen}
+            open={editorOpen}
             confirmAndSave={confirmAndSave}
             isSaving={isSaving}
             isValid={isValid}
