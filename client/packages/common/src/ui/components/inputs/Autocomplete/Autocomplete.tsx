@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useMemo } from 'react';
+import React, { PropsWithChildren, useCallback, useMemo } from 'react';
 import {
   Autocomplete as MuiAutocomplete,
   AutocompleteRenderInputParams,
@@ -12,6 +12,7 @@ import {
   Box,
   Typography,
   FilterOptionsState,
+  AutocompleteRenderOptionState,
 } from '@mui/material';
 import {
   AutocompleteOption,
@@ -24,10 +25,10 @@ import { useOpenStateWithKeyboard } from './utils';
 import { useTranslation } from '@common/intl';
 import { PlusCircleIcon } from '@common/icons';
 
-export interface AddOption {
+export interface ClickableOptionConfig {
   label: string;
-  id: string;
-  _isAddOption: boolean;
+  onClick: () => void;
+  icon?: React.ReactNode;
 }
 
 export interface AutocompleteProps<T>
@@ -62,9 +63,7 @@ export interface AutocompleteProps<T>
   inputProps?: BasicTextInputProps;
   required?: boolean;
   textSx?: SxProps<Theme>;
-  /** Create Option requires both createOption and onCreateOptionClick */
-  createOption?: AddOption;
-  onCreateOptionClick?: (option: AddOption) => void;
+  clickableOption?: ClickableOptionConfig;
 }
 
 export function Autocomplete<T>({
@@ -93,33 +92,26 @@ export function Autocomplete<T>({
   inputProps,
   required,
   textSx,
-  createOption,
-  onCreateOptionClick,
+  clickableOption,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const t = useTranslation();
   const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
 
-  const isCreateOption = (option: unknown): option is AddOption => {
-    return (
-      typeof option === 'object' &&
-      option !== null &&
-      '_isAddOption' in option &&
-      (option as any)._isAddOption === true
-    );
-  };
+  const isClickableOption = useCallback(
+    (option: unknown): option is ClickableOptionConfig => {
+      return option === clickableOption;
+    },
+    [clickableOption]
+  );
 
-  const filter = useCallback(
-    (options: T[], state: FilterOptionsState<T>) => {
+  const filter = useMemo(
+    () => (options: T[], state: FilterOptionsState<T>) => {
       const filterType =
         filterOptions ?? createFilterOptions(filterOptionConfig);
-      const filtered = filterType(options, state);
-      const addOptions = options.filter(
-        option => isCreateOption(option) && !filtered.includes(option)
-      );
-      return [...filtered, ...addOptions];
+      return filterType(options, state);
     },
-    [filterOptions, filterOptionConfig, isCreateOption]
+    [filterOptions, filterOptionConfig]
   );
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
@@ -161,7 +153,7 @@ export function Autocomplete<T>({
   );
   const popper = popperMinWidth ? CustomPopper : StyledPopper;
 
-  const createOptionRenderer = (createOption: AddOption) => (
+  const clickableOptionRenderer = (clickableOption: ClickableOptionConfig) => (
     <Box
       display="flex"
       justifyContent="space-between"
@@ -178,14 +170,14 @@ export function Autocomplete<T>({
           whiteSpace: 'nowrap',
         }}
       >
-        {createOption.label}
+        {clickableOption.label}
       </Typography>
-      <PlusCircleIcon color="secondary" />
+      {clickableOption.icon || <PlusCircleIcon color="secondary" />}
     </Box>
   );
 
-  const optionsWithAdd = createOption
-    ? [...options, createOption as T]
+  const optionsWithAdd = clickableOption
+    ? [...options, clickableOption as T]
     : options;
 
   const customRenderOption = (
@@ -193,12 +185,8 @@ export function Autocomplete<T>({
     option: T,
     state: AutocompleteRenderOptionState
   ) => {
-    if (isCreateOption(option)) {
-      return (
-        <li {...props} key={option.id}>
-          {createOptionRenderer(option)}
-        </li>
-      );
+    if (isClickableOption(option)) {
+      return <li {...props}>{clickableOptionRenderer(option)}</li>;
     }
 
     if (renderOption) {
@@ -206,13 +194,11 @@ export function Autocomplete<T>({
     }
 
     return (
-      <li {...props} key={option.id}>
-        {(getOptionLabel || defaultGetOptionLabel)(option)}
-      </li>
+      <li {...props}>{(getOptionLabel || defaultGetOptionLabel)(option)}</li>
     );
   };
 
-  const shouldUseCustomRenderOption = createOption || renderOption;
+  const shouldUseCustomRenderOption = clickableOption || renderOption;
 
   return (
     <MuiAutocomplete
@@ -222,7 +208,7 @@ export function Autocomplete<T>({
       onInputChange={onInputChange}
       disabled={disabled}
       isOptionEqualToValue={(option, value) => {
-        if (isCreateOption(option) || isCreateOption(value)) {
+        if (isClickableOption(option) || isClickableOption(value)) {
           return false;
         }
         return isOptionEqualToValue
@@ -244,8 +230,8 @@ export function Autocomplete<T>({
         shouldUseCustomRenderOption ? customRenderOption : undefined
       }
       onChange={(_event, option, reason, details) => {
-        if (isCreateOption(option) && onCreateOptionClick) {
-          onCreateOptionClick(option as AddOption);
+        if (isClickableOption(option) && clickableOption?.onClick) {
+          clickableOption?.onClick();
           return;
         }
         if (onChange) onChange(_event, option, reason, details);
