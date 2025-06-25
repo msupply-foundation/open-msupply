@@ -30,11 +30,13 @@ enum Tabs {
 interface CreatePatientModal {
   onClose: () => void;
   onCreatePatient: (newPatient: CreateNewPatient) => void;
+  onSelectPatient: (selectedPatient: string) => void;
 }
 
 export const CreatePatientModal = ({
   onClose,
   onCreatePatient: onCreate,
+  onSelectPatient: onSelect,
 }: CreatePatientModal) => {
   const { data: documentRegistryResponse, isLoading } =
     useDocumentRegistry.get.documentRegistries({
@@ -159,6 +161,7 @@ export const CreatePatientModal = ({
                 value={Tabs.SearchResults}
                 patient={createNewPatient}
                 active={currentTab === Tabs.SearchResults}
+                onRowClick={selectedPatient => onSelect(selectedPatient)}
               />
             </DetailSection>
           </TabContext>

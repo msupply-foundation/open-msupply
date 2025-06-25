@@ -21,12 +21,14 @@ import { CreatePatientModal } from '../CreatePatientModal';
 import { CreateNewPatient } from 'packages/programs/src';
 
 interface AppBarButtonsComponentProps {
-  onSavePatient: (patient: CreateNewPatient) => void;
+  onCreatePatient: (newPatient: CreateNewPatient) => void;
+  onSelectPatient: (selectedPatient: string) => void;
   sortBy: SortBy<PatientRowFragment>;
 }
 
 export const AppBarButtons = ({
-  onSavePatient,
+  onCreatePatient,
+  onSelectPatient,
   sortBy,
 }: AppBarButtonsComponentProps) => {
   const { success, error } = useNotification();
@@ -46,7 +48,7 @@ export const AppBarButtons = ({
     success(t('success'))();
   };
 
-  const onCreatePatient = useCallbackWithPermission(
+  const handleClick = useCallbackWithPermission(
     UserPermission.PatientMutate,
     () => setCreateModalOpen(true)
   );
@@ -57,7 +59,7 @@ export const AppBarButtons = ({
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-patient')}
-          onClick={onCreatePatient}
+          onClick={handleClick}
         />
         <LoadingButton
           startIcon={<DownloadIcon />}
@@ -72,7 +74,8 @@ export const AppBarButtons = ({
       {createModalOpen ? (
         <CreatePatientModal
           onClose={() => setCreateModalOpen(false)}
-          onCreatePatient={onSavePatient}
+          onCreatePatient={onCreatePatient}
+          onSelectPatient={onSelectPatient}
         />
       ) : null}
     </AppBarButtonsPortal>

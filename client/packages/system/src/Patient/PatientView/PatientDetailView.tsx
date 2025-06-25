@@ -6,8 +6,8 @@ import {
   BasicSpinner,
   FnUtils,
   useNavigate,
-  useUrlQuery,
   RouteBuilder,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { usePatientStore } from '@openmsupply-client/programs';

@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   AppBarContentPortal,
   InputWithLabelRow,
@@ -27,7 +27,7 @@ import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
 import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 import { usePrescription } from '../api';
 
-export const Toolbar: FC = () => {
+export const Toolbar = () => {
   const t = useTranslation();
 
   const {
@@ -68,6 +68,10 @@ export const Toolbar: FC = () => {
   const {
     delete: { deleteLines },
   } = usePrescriptionLines();
+
+  useEffect(() => {
+    setCurrentPatientId(patient?.id);
+  }, [patient?.id]);
 
   const deleteAll = async () => {
     const allRows = (items ?? []).map(({ lines }) => lines.flat()).flat() ?? [];
@@ -146,6 +150,12 @@ export const Toolbar: FC = () => {
       setCreatePatientModalOpen(true);
     }
   );
+
+  const selectPatient = async (selectPatientId: string) => {
+    await update({ id, patientId: selectPatientId });
+    setCurrentPatientId(selectPatientId);
+    setCreatePatientModalOpen(false);
+  };
 
   return (
     <AppBarContentPortal
@@ -258,6 +268,9 @@ export const Toolbar: FC = () => {
           onCreatePatient={newPatient => {
             setEditPatientModalOpen(true);
             setCurrentPatientId(newPatient.id);
+          }}
+          onSelectPatient={selectedPatient => {
+            selectPatient(selectedPatient);
           }}
         />
       )}

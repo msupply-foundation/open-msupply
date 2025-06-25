@@ -156,10 +156,18 @@ const PatientListComponent = () => {
     navigate(newPatient.id);
   };
 
+  const onSelectPatient = (selectedPatient: string) => {
+    navigate(selectedPatient);
+  };
+
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons sortBy={sortBy} onSavePatient={onCreatePatient} />
+      <AppBarButtons
+        sortBy={sortBy}
+        onCreatePatient={onCreatePatient}
+        onSelectPatient={onSelectPatient}
+      />
       <DataTable
         id="patients"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
@@ -181,6 +189,9 @@ const PatientListComponent = () => {
           onClose={() => setCreateModalOpen(false)}
           onCreatePatient={newPatient => {
             onCreatePatient(newPatient);
+          }}
+          onSelectPatient={selectedPatient => {
+            onSelectPatient(selectedPatient);
           }}
         />
       ) : null}

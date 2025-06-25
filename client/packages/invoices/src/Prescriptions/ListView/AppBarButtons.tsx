@@ -16,11 +16,12 @@ import {
   UserPermission,
   useNavigate,
   RouteBuilder,
+  FnUtils,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { CreateNewPatient } from '@openmsupply-client/programs';
 import { CreatePatientModal } from '@openmsupply-client/system';
-import { ListParams, usePrescriptionList } from '../api';
+import { ListParams, usePrescription, usePrescriptionList } from '../api';
 import { prescriptionToCsv } from '../../utils';
 import { NewPrescriptionModal } from './NewPrescriptionModal';
 
@@ -41,6 +42,10 @@ export const AppBarButtonsComponent = ({
   const {
     query: { data, isLoading },
   } = usePrescriptionList(listParams);
+
+  const {
+    create: { create: createPrescription },
+  } = usePrescription();
 
   const handleClick = useCallbackWithPermission(
     UserPermission.PatientMutate,
@@ -67,6 +72,20 @@ export const AppBarButtonsComponent = ({
         .build()
     );
   };
+
+  const onSelectPatient = async (selectedPatient: string) => {
+    const invoice = await createPrescription({
+      id: FnUtils.generateUUID(),
+      patientId: selectedPatient,
+    });
+    navigate(
+      RouteBuilder.create(AppRoute.Dispensary)
+        .addPart(AppRoute.Prescription)
+        .addPart(invoice?.id ?? '')
+        .build()
+    );
+  };
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
@@ -92,6 +111,9 @@ export const AppBarButtonsComponent = ({
           <CreatePatientModal
             onClose={() => setPatientModalOpen(false)}
             onCreatePatient={newPatient => onCreatePatient(newPatient)}
+            onSelectPatient={selectedPatient =>
+              onSelectPatient(selectedPatient)
+            }
           />
         )}
       </Grid>

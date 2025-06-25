@@ -104,7 +104,7 @@ export const EditPatientModal = ({
 
   const handleSave = async () => {
     save();
-    updatePrescription({
+    await updatePrescription({
       id,
       patientId,
     });
