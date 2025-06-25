@@ -1,15 +1,13 @@
 {
   "//": "For forms it's entity id",
-  "data_id": "019766dd-7dfc-7391-b35d-e048b162cc25",
-  "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+  "data_id": "a109bb20-da6c-4d7a-a876-b0b06ffe9e91",
+  "store_id": "D0E298893F3945DABE80B138E25D3D15",
   "//": "Login details",
   "url": "http://localhost:8000",
   "username": "admin",
   "password": "pass",
   "//": "Arguments for standard reports",
-  "arguments": {
-    "period": "2025-01-01"
-  },
+  "arguments": {},
   "//": "Output file name",
   "output_filename": "report_to_show"
 }
