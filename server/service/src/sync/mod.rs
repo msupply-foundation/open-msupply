@@ -103,6 +103,7 @@ pub enum CentralServerConfig {
     NotConfigured,
     IsCentralServer,
     CentralServerUrl(String),
+    ForcedCentralServer,
 }
 
 static CENTRAL_SERVER_CONFIG: RwLock<CentralServerConfig> =
@@ -110,7 +111,7 @@ static CENTRAL_SERVER_CONFIG: RwLock<CentralServerConfig> =
 
 impl CentralServerConfig {
     fn inner_is_central_server(&self) -> bool {
-        matches!(self, Self::IsCentralServer)
+        matches!(self, Self::IsCentralServer | Self::ForcedCentralServer)
     }
 
     fn new(site_info: &SiteInfoV5) -> Self {
@@ -147,6 +148,12 @@ impl CentralServerConfig {
         }
 
         *CENTRAL_SERVER_CONFIG.write().unwrap() = new_config;
+    }
+
+    // Set central server on startup, subsequent sync calls can override this setting
+    pub fn set_is_central_server_on_startup() {
+        info!("Running as central from override");
+        *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::ForcedCentralServer;
     }
 }
 pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
