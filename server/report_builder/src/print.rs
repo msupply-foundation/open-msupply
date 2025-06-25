@@ -137,11 +137,6 @@ fn generate_request(
     format: Format,
     excel_template_buffer: Option<Vec<u8>>,
 ) -> anyhow::Result<String> {
-    println!(
-        "excel_template_buffer exists: {:?}",
-        excel_template_buffer.is_some()
-    );
-
     let body = serde_json::json!({
       "query": PRINT_QUERY,
       "variables": {
