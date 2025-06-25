@@ -555,7 +555,7 @@ mod test {
                         percentage: Some(1.0),
                     }),
                     note: None,
-                    campaign_id: None
+                    campaign_id: None,
                 }
             );
             Ok(InvoiceLine {
