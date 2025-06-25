@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useMemo } from 'react';
+import React, { PropsWithChildren, useCallback } from 'react';
 import {
   Autocomplete as MuiAutocomplete,
   AutocompleteRenderInputParams,
@@ -12,6 +12,7 @@ import {
   Box,
   Typography,
   FilterOptionsState,
+  AutocompleteRenderOptionState,
 } from '@mui/material';
 import {
   AutocompleteOption,
@@ -113,11 +114,9 @@ export function Autocomplete<T>({
     (options: T[], state: FilterOptionsState<T>) => {
       const filterType =
         filterOptions ?? createFilterOptions(filterOptionConfig);
-      const filtered = filterType(options, state);
-      const addOptions = options.filter(
-        option => isCreateOption(option) && !filtered.includes(option)
-      );
-      return [...filtered, ...addOptions];
+      let filtered = filterType(options, state);
+      filtered = filtered.filter(option => !isCreateOption(option));
+      return [...filtered, createOption as T];
     },
     [filterOptions, filterOptionConfig, isCreateOption]
   );
@@ -194,11 +193,7 @@ export function Autocomplete<T>({
     state: AutocompleteRenderOptionState
   ) => {
     if (isCreateOption(option)) {
-      return (
-        <li {...props} key={option.id}>
-          {createOptionRenderer(option)}
-        </li>
-      );
+      return <li {...props}>{createOptionRenderer(option)}</li>;
     }
 
     if (renderOption) {
@@ -206,9 +201,7 @@ export function Autocomplete<T>({
     }
 
     return (
-      <li {...props} key={option.id}>
-        {(getOptionLabel || defaultGetOptionLabel)(option)}
-      </li>
+      <li {...props}>{(getOptionLabel || defaultGetOptionLabel)(option)}</li>
     );
   };
 
