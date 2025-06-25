@@ -205,6 +205,17 @@ fn apply_data_rows(
         }
         row_idx += 1; // Next row
     }
+    // Add a blank row before the total row
+    row_idx += 1;
+
+    // Total row
+    for (cell_index, cell) in body.total_row().into_iter().enumerate() {
+        if let Some(column_index) = index_to_column_index_map.get(&(cell_index as u32)).cloned() {
+            let sheet_cell = sheet.get_cell_mut((column_index, row_idx));
+            sheet_cell.set_value(cell);
+            sheet_cell.get_style_mut().get_font_mut().set_bold(true);
+        }
+    }
 
     row_idx
 }
@@ -254,12 +265,17 @@ impl Selectors {
     }
 
     fn rows_and_cells(&self) -> Vec<Vec<&str>> {
-        let rows_selector = Selector::parse("tbody tr").unwrap();
+        let rows_selector = Selector::parse("tbody tr:not([excel-type=\"total-row\"])").unwrap();
         let cells_selector = Selector::parse("td").unwrap();
         self.html
             .select(&rows_selector)
             .map(|row| row.select(&cells_selector).map(inner_text).collect())
             .collect()
+    }
+
+    fn total_row(&self) -> Vec<&str> {
+        let rows_selector = Selector::parse("tbody tr[excel-type=\"total-row\"] td").unwrap();
+        self.html.select(&rows_selector).map(inner_text).collect()
     }
 }
 
@@ -303,16 +319,24 @@ mod report_to_excel_test {
               <tr>
                 <th>Item</th>
                 <th>Unit</th>
+                <th>Price</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>Acetylsalicylic Acid 100mg tabs</td>
                 <td>Tablets</td>
+                <td>10.00</td>
               </tr>
               <tr>
                 <td>Ibuprofen 200mg tabs</td>
                 <td>Tablets</td>
+                <td>15.00</td>
+              </tr>
+              <tr excel-type="total-row">
+                <td></td>
+                <td>Total:</td>
+                <td>25.00</td>
               </tr>
             </tbody>
           </table>
@@ -342,9 +366,15 @@ mod report_to_excel_test {
 
         // Header is ignored, data table headers are in the first row
         assert_eq!(get_value("A1"), "Item");
-        // both headers are in the first row, in order
+        // all headers are in the first row, in order
         assert_eq!(get_value("B1"), "Unit");
+        assert_eq!(get_value("C1"), "Price");
+        // Data rows start from the second row
+        assert_eq!(get_value("A2"), "Acetylsalicylic Acid 100mg tabs");
         assert_eq!(get_value("A3"), "Ibuprofen 200mg tabs");
+        // Blank row before the total row
+        assert_eq!(get_value("B4"), "");
+        assert_eq!(get_value("B5"), "Total:");
     }
 
     #[test]
