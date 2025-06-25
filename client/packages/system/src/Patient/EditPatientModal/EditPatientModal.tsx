@@ -18,7 +18,7 @@ import {
   useParams,
 } from '@openmsupply-client/common';
 
-import { usePrescriptionPatientForm } from './usePrescriptionPatientForm';
+import { useUpsertPatient } from './useUpsertPatient';
 import { useInsuranceProviders } from '../apiModern/hooks/useInsuranceProviders';
 import { InsuranceListView } from '../Insurance';
 import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
@@ -50,7 +50,7 @@ export const EditPatientModal = ({
     isDirty,
     validationError,
     revert,
-  } = usePrescriptionPatientForm(patientId);
+  } = useUpsertPatient(patientId);
   const { userHasPermission } = useAuthContext();
 
   const { Modal } = useDialog({

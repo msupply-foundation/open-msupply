@@ -29,7 +29,7 @@ const DEFAULT_SCHEMA: SchemaData = {
   uiSchema: defaultPatientUISchema,
 };
 
-const useUpsertPatient = (
+const usePatientUpsert = (
   create: boolean
 ): ((input: unknown) => Promise<void>) => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();
@@ -68,7 +68,7 @@ const useUpsertProgramPatient = (): SaveDocumentMutation => {
   };
 };
 
-export const usePrescriptionPatientForm = (patientId: string) => {
+export const useUpsertPatient = (patientId: string) => {
   const { error } = useNotification();
   const queryClient = useQueryClient();
 
@@ -203,7 +203,7 @@ export const usePrescriptionPatientForm = (patientId: string) => {
     );
 
   const handleProgramPatientSave = useUpsertProgramPatient();
-  const handlePatientSave = useUpsertPatient(isCreatingPatient);
+  const handlePatientSave = usePatientUpsert(isCreatingPatient);
 
   useEffect(() => {
     return () => setCreateNewPatient(undefined);

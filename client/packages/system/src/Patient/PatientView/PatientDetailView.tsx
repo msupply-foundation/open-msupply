@@ -12,7 +12,7 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { usePatientStore } from '@openmsupply-client/programs';
 import { Footer } from './Footer';
-import { usePrescriptionPatientForm } from '../EditPatientModal/usePrescriptionPatientForm';
+import { useUpsertPatient } from '../EditPatientModal/useUpsertPatient';
 import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
 
 export const PatientDetailView = ({
@@ -39,7 +39,7 @@ export const PatientDetailView = ({
     isDirty,
     validationError,
     inputData,
-  } = usePrescriptionPatientForm(patientId);
+  } = useUpsertPatient(patientId);
 
   const handleSave = async () => {
     await save();
