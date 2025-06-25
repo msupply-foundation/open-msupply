@@ -1204,6 +1204,7 @@
   "label.shipments": "Shipments",
   "label.shipped": "Shipped",
   "label.shipped-datetime": "Shipped date",
+  "label.shipped-number-of-packs": "Packs Shipped",
   "label.short-expiry": "Short expiry",
   "label.showing": "Showing",
   "label.site": "Site:",
