@@ -140,6 +140,7 @@ pub async fn generate_report_definition(
     arguments: Option<serde_json::Value>,
     format: Option<PrintFormat>,
     current_language: Option<String>,
+    excel_template_buffer: Option<Vec<u8>>,
 ) -> Result<PrintReportResponse> {
     let user = validate_auth(
         ctx,
@@ -159,9 +160,9 @@ pub async fn generate_report_definition(
         .map_err(|err| StandardGraphqlError::BadUserInput(format!("{}", err)).extend())?;
     let resolved_report = match service.resolve_report_definition(
         &service_context,
-        None,
         name.unwrap_or("report".to_string()),
         report_definition,
+        excel_template_buffer,
     ) {
         Ok(resolved_report) => resolved_report,
         Err(err) => {

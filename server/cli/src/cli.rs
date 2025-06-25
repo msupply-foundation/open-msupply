@@ -194,6 +194,9 @@ enum Action {
         /// Path to dir containing test-config.json file
         #[clap(short, long)]
         config: Option<PathBuf>,
+        /// Output format
+        #[clap(long)]
+        format: Option<Format>,
     },
     /// Enable or disable a report in the database.
     ToggleReport {
@@ -618,7 +621,11 @@ async fn main() -> anyhow::Result<()> {
         Action::GenerateAndInstallPluginBundle(arguments) => {
             generate_and_install_plugin_bundle(arguments).await?;
         }
-        Action::ShowReport { path, config } => {
+        Action::ShowReport {
+            path,
+            config,
+            format,
+        } => {
             let report_data: ReportData = generate_report_data(&path)?;
 
             let report_json =
@@ -645,7 +652,17 @@ async fn main() -> anyhow::Result<()> {
                 password: test_config.password,
             };
 
-            let output_name = format!("{}.html", test_config.output_filename.clone());
+            let output_name = match &format {
+                Some(Format::Html) | None => {
+                    format!("{}.html", test_config.output_filename.clone())
+                }
+                Some(Format::Excel) => format!("{}.xlsx", test_config.output_filename.clone()),
+                Some(_) => {
+                    return Err(anyhow::Error::msg(
+                        "Format not supported, use html or excel",
+                    ));
+                }
+            };
 
             let report_generate_data = ReportGenerateData {
                 report: report_json,
@@ -653,9 +670,10 @@ async fn main() -> anyhow::Result<()> {
                 store_id: Some(test_config.store_id),
                 store_name: None,
                 output_filename: Some(output_name.clone()),
-                format: Format::Html,
+                format: format.unwrap_or(Format::Html),
                 data_id: Some(test_config.data_id),
                 arguments: Some(test_config.arguments),
+                excel_template_buffer: report_data.excel_template_buffer,
             };
 
             // spawn blocking used to prevent the following error: "Cannot drop a runtime in a context where blocking is not allowed"

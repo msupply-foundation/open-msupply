@@ -211,7 +211,7 @@ This command is used to update standard reports to the current branch in databas
 
 ### Show Report
 
-`show-report --path <path-to-report-dir-containing-report-manifest.json> --config <optional-path-to-dir-containing-test-config.json>`
+`show-report --path <path-to-report-dir-containing-report-manifest.json> --config <optional-path-to-dir-containing-test-config.json> --format <optional[html|excel]>`
 
 Show report replaces previously used print.sh and show.sh bash commands on the OMS reports repo.
 

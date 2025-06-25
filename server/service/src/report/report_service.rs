@@ -147,11 +147,11 @@ pub trait ReportServiceTrait: Sync + Send {
     fn resolve_report_definition(
         &self,
         ctx: &ServiceContext,
-        report_id: Option<String>,
         name: String,
         report_definition: ReportDefinition,
+        excel_template_buffer: Option<Vec<u8>>,
     ) -> Result<ResolvedReportDefinition, ReportError> {
-        resolve_report_definition(ctx, report_id, name, report_definition)
+        resolve_report_definition(ctx, name, report_definition, excel_template_buffer)
     }
 
     /// Converts a HTML report to a file for the target PrintFormat and returns file id
@@ -429,15 +429,15 @@ fn resolve_report(
 ) -> Result<ResolvedReportDefinition, ReportError> {
     let repo = ReportRowRepository::new(&ctx.connection);
 
-    let (report_name, main) = load_report_definition(&repo, report_id)?;
-    resolve_report_definition(ctx, Some(report_id.to_string()), report_name, main)
+    let (report_name, main, excel_template_buffer) = load_report_definition(&repo, report_id)?;
+    resolve_report_definition(ctx, report_name, main, excel_template_buffer)
 }
 
 fn resolve_report_definition(
     ctx: &ServiceContext,
-    existing_report_id: Option<String>,
     name: String,
     main: ReportDefinition,
+    excel_template_buffer: Option<Vec<u8>>,
 ) -> Result<ResolvedReportDefinition, ReportError> {
     let repo = ReportRowRepository::new(&ctx.connection);
     let fully_loaded_report = load_template_references(&repo, &ctx.store_id, main)?;
@@ -493,13 +493,6 @@ fn resolve_report_definition(
     let queries = query_from_resolved_template(query_entry)?;
 
     let resources = resources_from_resolved_template(&fully_loaded_report);
-
-    let excel_template_buffer = match existing_report_id {
-        Some(id) => repo
-            .find_one_by_id(&id)?
-            .and_then(|row| row.excel_template_buffer),
-        None => None,
-    };
 
     Ok(ResolvedReportDefinition {
         name,
@@ -722,7 +715,14 @@ fn resources_from_resolved_template(
 fn load_report_definition(
     repo: &ReportRowRepository,
     report_id: &str,
-) -> Result<(String, ReportDefinition), ReportError> {
+) -> Result<
+    (
+        String,
+        ReportDefinition,
+        Option<Vec<u8>>, /* excel template */
+    ),
+    ReportError,
+> {
     let row = match repo.find_one_by_id(report_id)? {
         Some(row) => row,
         None => {
@@ -735,7 +735,7 @@ fn load_report_definition(
     let def = serde_json::from_str::<ReportDefinition>(&row.template).map_err(|err| {
         ReportError::InvalidReportDefinition(format!("Can't parse report: {}", err))
     })?;
-    Ok((row.name, def))
+    Ok((row.name, def, row.excel_template_buffer))
 }
 
 fn load_template_references(
