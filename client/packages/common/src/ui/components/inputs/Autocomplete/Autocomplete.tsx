@@ -109,16 +109,18 @@ export function Autocomplete<T>({
     );
   };
 
-  const filter = useMemo(() => {
-    const filterType = filterOptions ?? createFilterOptions(filterOptionConfig);
-    return (options: T[], state: FilterOptionsState<T>) => {
+  const filter = useCallback(
+    (options: T[], state: FilterOptionsState<T>) => {
+      const filterType =
+        filterOptions ?? createFilterOptions(filterOptionConfig);
       const filtered = filterType(options, state);
       const addOptions = options.filter(
         option => isCreateOption(option) && !filtered.includes(option)
       );
       return [...filtered, ...addOptions];
-    };
-  }, [filterOptions, filterOptionConfig]);
+    },
+    [filterOptions, filterOptionConfig, isCreateOption]
+  );
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
