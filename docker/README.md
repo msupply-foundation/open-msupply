@@ -26,7 +26,7 @@ Docker hub credentials need to be setup as secrets for `DOCKER_USERNAME' and `DO
 * Build server in rust:slim image container (uses build client)
 * Build client in rust:slim image container with yarn pre installed 
 * Build docker
-   * copy bins
+   * copy binaries
    * set hardware id
    * copy client
    * copy entrypoint
