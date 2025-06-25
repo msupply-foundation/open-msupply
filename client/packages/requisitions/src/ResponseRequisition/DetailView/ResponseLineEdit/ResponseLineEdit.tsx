@@ -40,6 +40,7 @@ interface ResponseLineEditProps {
   disabled: boolean;
   isUpdateMode?: boolean;
   manageVaccinesInDoses?: boolean;
+  isReasonsError: boolean;
 }
 
 export const ResponseLineEdit = ({
@@ -52,6 +53,7 @@ export const ResponseLineEdit = ({
   update,
   representation,
   setRepresentation,
+  isReasonsError,
   disabled = false,
   isUpdateMode = false,
   manageVaccinesInDoses = false,
@@ -200,6 +202,9 @@ export const ResponseLineEdit = ({
                 disabled={disableReasons}
                 reasonOptions={reasonOptions?.nodes ?? []}
                 loading={isLoading}
+                inputProps={{
+                  error: isReasonsError,
+                }}
                 textSx={
                   disableReasons
                     ? {
