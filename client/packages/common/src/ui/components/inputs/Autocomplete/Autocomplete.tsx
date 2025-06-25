@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useCallback } from 'react';
+import React, { PropsWithChildren } from 'react';
 import {
   Autocomplete as MuiAutocomplete,
   AutocompleteRenderInputParams,
@@ -98,12 +98,11 @@ export function Autocomplete<T>({
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
   const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
 
-  const isClickableOption = useCallback(
-    (option: unknown): option is ClickableOptionConfig => {
-      return option === clickableOption;
-    },
-    [clickableOption]
-  );
+  const isClickableOption = (
+    option: unknown
+  ): option is ClickableOptionConfig => {
+    return option === clickableOption;
+  };
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
