@@ -188,11 +188,15 @@ export function Autocomplete<T>({
     ? [...options, createOption as T]
     : options;
 
-  const customRenderOption = (props: any, option: any, state: any) => {
+  const customRenderOption = (
+    props: React.HTMLAttributes<HTMLLIElement>,
+    option: T,
+    state: AutocompleteRenderOptionState
+  ) => {
     if (isCreateOption(option)) {
       return (
         <li {...props} key={option.id}>
-          {createOptionRenderer(option as AddOption)}
+          {createOptionRenderer(option)}
         </li>
       );
     }
