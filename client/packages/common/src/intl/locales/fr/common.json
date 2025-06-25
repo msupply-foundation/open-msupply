@@ -247,7 +247,7 @@
   "error.cannot-add-pack-size-of-zero": "Impossible d'ajouter une variante avec une taille d'emballage égale à zéro",
   "error.cannot-add-with-no-abbreviation-and-name": "Impossible d'ajouter une variante sans abréviation ni nom",
   "error.cannot-backdate-prescription": "Le stock n'est pas disponible à la date spécifiée",
-  "error.cannot-edit-requisition": "Impossible de modifier la réquisition.",  
+  "error.cannot-edit-requisition": "Impossible de modifier la réquisition.",
   "error.cant-save": "Problème rencontré lors de la sauvegarde.",
   "error.cce-asset-number-already-used": "Numéro d'actif ECF déjà utilisé",
   "error.code-no-match": "{{field}} non trouvé dans le catalogue",
