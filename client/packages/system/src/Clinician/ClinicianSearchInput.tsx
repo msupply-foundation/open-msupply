@@ -50,13 +50,7 @@ export const ClinicianSearchInput = ({
 
   const [editorOpen, setEditorOpen] = useState(false);
 
-  const addClinicianOption = {
-    id: 'add',
-    label: t('label.create-clinician'),
-    _isAddOption: true,
-  };
-
-  const handleAddClick = () => {
+  const handleCreateClick = () => {
     onChange(null);
     setEditorOpen(true);
   };
@@ -127,8 +121,14 @@ export const ClinicianSearchInput = ({
         textSx={{ backgroundColor: theme.palette.background.drawer }}
         disabled={disabled}
         fullWidth={fullWidth}
-        onCreateOptionClick={handleAddClick}
-        createOption={allowCreate ? addClinicianOption : undefined}
+        clickableOption={
+          allowCreate
+            ? {
+                label: t('label.create-clinician'),
+                onClick: handleCreateClick,
+              }
+            : undefined
+        }
       />
       {allowCreate &&
         (mountSlidePanel ? (

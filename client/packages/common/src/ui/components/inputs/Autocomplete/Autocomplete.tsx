@@ -25,10 +25,10 @@ import { useOpenStateWithKeyboard } from './utils';
 import { useTranslation } from '@common/intl';
 import { PlusCircleIcon } from '@common/icons';
 
-export interface AddOption {
+export interface ClickableOptionConfig {
   label: string;
-  id: string;
-  _isAddOption: boolean;
+  onClick: () => void;
+  icon?: React.ReactNode;
 }
 
 export interface AutocompleteProps<T>
@@ -63,9 +63,7 @@ export interface AutocompleteProps<T>
   inputProps?: BasicTextInputProps;
   required?: boolean;
   textSx?: SxProps<Theme>;
-  /** Create Option requires both createOption and onCreateOptionClick */
-  createOption?: AddOption;
-  onCreateOptionClick?: (option: AddOption) => void;
+  clickableOption?: ClickableOptionConfig;
 }
 
 export function Autocomplete<T>({
@@ -94,22 +92,26 @@ export function Autocomplete<T>({
   inputProps,
   required,
   textSx,
-  createOption,
-  onCreateOptionClick,
+  clickableOption,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const t = useTranslation();
   const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
 
-  const isCreateOption = (option: unknown): option is AddOption => {
-    return option === createOption;
+  const isClickableOption = (
+    option: unknown
+  ): option is ClickableOptionConfig => {
+    return option === clickableOption;
   };
 
   const filterType = filterOptions ?? createFilterOptions(filterOptionConfig);
   const filter = (options: T[], state: FilterOptionsState<T>) => {
     const filtered = filterType(options, state);
-    if (createOption && !filtered.some(option => isCreateOption(option))) {
-      return [...filtered, createOption as T];
+    if (
+      clickableOption &&
+      !filtered.some(option => isClickableOption(option))
+    ) {
+      return [...filtered, clickableOption as T];
     }
     return filtered;
   };
@@ -153,7 +155,7 @@ export function Autocomplete<T>({
   );
   const popper = popperMinWidth ? CustomPopper : StyledPopper;
 
-  const createOptionRenderer = (createOption: AddOption) => (
+  const clickableOptionRenderer = (clickableOption: ClickableOptionConfig) => (
     <Box
       display="flex"
       justifyContent="space-between"
@@ -170,14 +172,14 @@ export function Autocomplete<T>({
           whiteSpace: 'nowrap',
         }}
       >
-        {createOption.label}
+        {clickableOption.label}
       </Typography>
       <PlusCircleIcon color="secondary" />
     </Box>
   );
 
-  const optionsWithAdd = createOption
-    ? [...options, createOption as T]
+  const optionsWithAdd = clickableOption
+    ? [...options, clickableOption as T]
     : options;
 
   const customRenderOption = (
@@ -185,8 +187,8 @@ export function Autocomplete<T>({
     option: T,
     state: AutocompleteRenderOptionState
   ) => {
-    if (isCreateOption(option)) {
-      return <li {...props}>{createOptionRenderer(option)}</li>;
+    if (isClickableOption(option)) {
+      return <li {...props}>{clickableOptionRenderer(option)}</li>;
     }
 
     if (renderOption) {
@@ -198,7 +200,7 @@ export function Autocomplete<T>({
     );
   };
 
-  const shouldUseCustomRenderOption = createOption || renderOption;
+  const shouldUseCustomRenderOption = clickableOption || renderOption;
 
   return (
     <MuiAutocomplete
@@ -208,7 +210,7 @@ export function Autocomplete<T>({
       onInputChange={onInputChange}
       disabled={disabled}
       isOptionEqualToValue={(option, value) => {
-        if (isCreateOption(option) || isCreateOption(value)) {
+        if (isClickableOption(option) || isClickableOption(value)) {
           return false;
         }
         return isOptionEqualToValue
@@ -230,8 +232,8 @@ export function Autocomplete<T>({
         shouldUseCustomRenderOption ? customRenderOption : undefined
       }
       onChange={(_event, option, reason, details) => {
-        if (isCreateOption(option) && onCreateOptionClick) {
-          onCreateOptionClick(option as AddOption);
+        if (isClickableOption(option) && clickableOption?.onClick) {
+          clickableOption?.onClick();
           return;
         }
         if (onChange) onChange(_event, option, reason, details);
