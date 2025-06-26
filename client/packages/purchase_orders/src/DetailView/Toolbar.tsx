@@ -20,6 +20,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const t = useTranslation();
   const {
     query: { data, isLoading },
+    lines: { itemFilter, setItemFilter },
   } = usePurchaseOrder();
 
   const { supplier, reference } = data ?? {};
@@ -70,26 +71,12 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
             }
           />
         </Grid>
-      </Grid>
-      <Grid
-        display="flex"
-        gap={1}
-        alignItems="flex-end"
-        justifyContent="flex-end"
-        sx={{ marginTop: 1, flexWrap: 'wrap' }}
-      >
-        <Grid display="flex" gap={1} alignItems="flex-end">
-          <SearchBar
-            placeholder={t('placeholder.filter-items')}
-            value={''}
-            onChange={newValue => {
-              // eslint-disable-next-line no-console
-              console.log('TO-DO: Set item filter with:', newValue);
-              // setItemFilter(newValue);
-            }}
-            debounceTime={0}
-          />
-        </Grid>
+        <SearchBar
+          placeholder={t('placeholder.filter-items')}
+          value={itemFilter ?? ''}
+          onChange={newValue => setItemFilter(newValue)}
+          debounceTime={0}
+        />
       </Grid>
     </AppBarContentPortal>
   );
