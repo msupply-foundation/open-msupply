@@ -1,11 +1,16 @@
-import { DialogButton, UploadFile } from '@common/components';
-import { useDialog, useNotification } from '@common/hooks';
-import { useTranslation } from '@common/intl';
-import { Box, DetailContainer } from 'packages/common/src';
 import React, { useState } from 'react';
 import { FileList } from '../../../../../coldchain/src/Equipment/Components';
 import { Environment } from 'packages/config/src';
-
+import {
+  useTranslation,
+  Box,
+  DialogButton,
+  Typography,
+  useDialog,
+  useNotification,
+  DetailContainer,
+  UploadFile,
+} from '@openmsupply-client/common';
 interface ReportUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -57,11 +62,11 @@ export const ReportUploadModal = ({
           const id = await fileId.json();
           await install(id['file-id']);
         }
-        success(t('messsages.reports-installed-successfully'))();
+        success(t('messsages.reports-uploaded-successfully'))();
         onClose();
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
-        error(`${t('error.unable-to-install-reports')}: ${message}`)();
+        error(`${t('error.unable-to-upload-reports')}: ${message}`)();
       }
     }
   };
@@ -73,6 +78,9 @@ export const ReportUploadModal = ({
       okButton={<DialogButton variant="ok" onClick={onOk} />}
     >
       <DetailContainer>
+        <Box flex={1} display="flex" alignItems="flex-end">
+          <Typography>{t('messages.report-upload-helper')}</Typography>
+        </Box>
         <Box
           sx={{
             display: 'flex',

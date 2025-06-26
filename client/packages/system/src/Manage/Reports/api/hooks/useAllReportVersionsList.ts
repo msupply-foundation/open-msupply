@@ -126,7 +126,5 @@ const useInstallUploadedReports = () => {
     },
   });
 
-  return {
-    ...mutation
-  }
+  return mutation
 }

@@ -9,6 +9,8 @@ import {
   useTranslation,
   TooltipTextCell,
   useEditModal,
+  ColumnAlign,
+  DotCell,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import { useCentralReports } from '../api/hooks/useAllReportVersionsList';
@@ -67,11 +69,14 @@ const ReportsComponent = () => {
         width: 150,
         sortable: false,
       },
+
       {
-        label: 'label.is_custom',
         key: 'isCustom',
-        width: 150,
+        label: 'label.custom-column',
+        align: ColumnAlign.Center,
+        Cell: DotCell,
         sortable: false,
+        width: 150,
       },
     ],
     {
