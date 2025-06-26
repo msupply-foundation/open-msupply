@@ -205,7 +205,7 @@ impl UpdateInboundShipmentStatusInput {
     pub fn to_domain(&self) -> UpdateInboundShipmentStatus {
         use UpdateInboundShipmentStatus::*;
         match self {
-            UpdateInboundShipmentStatusInput::Delivered => Delivered,
+            UpdateInboundShipmentStatusInput::Delivered => Received,
             UpdateInboundShipmentStatusInput::Verified => Verified,
         }
     }

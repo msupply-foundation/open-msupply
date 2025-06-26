@@ -181,7 +181,7 @@ pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment
         (
             // From New/Picked/Shipped to Delivered/Verified
             InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateInboundShipmentStatus::Delivered | UpdateInboundShipmentStatus::Verified,
+            UpdateInboundShipmentStatus::Received | UpdateInboundShipmentStatus::Verified,
         ) => true,
         _ => false,
     }
@@ -289,19 +289,32 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipme
         ) => {
             invoice.delivered_datetime = Some(current_datetime);
         }
-
+        // From New/Picked/Shipped to Received
+        (
+            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
+            UpdateInboundShipmentStatus::Received,
+        ) => {
+            invoice.delivered_datetime = Some(current_datetime);
+            invoice.received_datetime = Some(current_datetime);
+        }
+        // From Delivered to Received
+        (InvoiceStatus::Delivered, UpdateInboundShipmentStatus::Received) => {
+            invoice.received_datetime = Some(current_datetime);
+        }
         // From New/Picked/Shipped to Verified
         (
             InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
             UpdateInboundShipmentStatus::Verified,
         ) => {
             invoice.delivered_datetime = Some(current_datetime);
+            invoice.received_datetime = Some(current_datetime);
             invoice.verified_datetime = Some(current_datetime);
         }
-        // From Delivered to Verified
-        (InvoiceStatus::Delivered, UpdateInboundShipmentStatus::Verified) => {
+        // From Received to Verified
+        (InvoiceStatus::Received, UpdateInboundShipmentStatus::Verified) => {
             invoice.verified_datetime = Some(current_datetime);
         }
+
         _ => {}
     }
 }

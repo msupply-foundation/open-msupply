@@ -69,7 +69,7 @@ fn validate(
         return Err(OutError::NotThisStoreShipment);
     }
     if invoice_row.status == InvoiceStatus::Shipped
-        || invoice_row.status == InvoiceStatus::Delivered
+        || invoice_row.status == InvoiceStatus::Received
         || invoice_row.status == InvoiceStatus::Verified
     {
         return Err(OutError::CannotEditShipment);

@@ -336,7 +336,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         apply_equal_filter!(query, stock_line_id, stock_line::id);
         apply_equal_filter!(query, reason_option, reason_option::reason);
         apply_date_time_filter!(query, picked_datetime, invoice::picked_datetime);
-        apply_date_time_filter!(query, delivered_datetime, invoice::delivered_datetime);
+        apply_date_time_filter!(query, delivered_datetime, invoice::received_datetime);
         apply_date_time_filter!(query, verified_datetime, invoice::verified_datetime);
         if let Some(has_prescribed_quantity) = has_prescribed_quantity {
             if has_prescribed_quantity {
