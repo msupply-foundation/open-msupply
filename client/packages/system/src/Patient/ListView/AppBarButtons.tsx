@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -18,10 +18,19 @@ import {
 import { PatientRowFragment, usePatient } from '../api';
 import { patientsToCsv } from '../utils';
 import { CreatePatientModal } from '../CreatePatientModal';
+import { CreateNewPatient } from 'packages/programs/src';
 
-export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
+interface AppBarButtonsComponentProps {
+  onCreatePatient: (newPatient: CreateNewPatient) => void;
+  onSelectPatient: (selectedPatient: string) => void;
+  sortBy: SortBy<PatientRowFragment>;
+}
+
+export const AppBarButtons = ({
+  onCreatePatient,
+  onSelectPatient,
   sortBy,
-}) => {
+}: AppBarButtonsComponentProps) => {
   const { success, error } = useNotification();
   const t = useTranslation();
   const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
@@ -39,7 +48,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
     success(t('success'))();
   };
 
-  const onCreatePatient = useCallbackWithPermission(
+  const handleClick = useCallbackWithPermission(
     UserPermission.PatientMutate,
     () => setCreateModalOpen(true)
   );
@@ -50,7 +59,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-patient')}
-          onClick={onCreatePatient}
+          onClick={handleClick}
         />
         <LoadingButton
           startIcon={<DownloadIcon />}
@@ -63,7 +72,11 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
       </Grid>
 
       {createModalOpen ? (
-        <CreatePatientModal onClose={() => setCreateModalOpen(false)} />
+        <CreatePatientModal
+          onClose={() => setCreateModalOpen(false)}
+          onCreatePatient={onCreatePatient}
+          onSelectPatient={onSelectPatient}
+        />
       ) : null}
     </AppBarButtonsPortal>
   );
