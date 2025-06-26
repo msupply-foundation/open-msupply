@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.TELEGRAM_PERSONAL_ACCESS_TOKEN }}
 
       - name: Configure Git
         run: |
@@ -45,5 +45,5 @@ jobs:
           CREATED_TAGS: ${{ needs.create-tags.outputs.CREATED_TAGS }}
           AFFECTED_BRANCHES: ${{ needs.create-tags.outputs.AFFECTED_BRANCHES }}
         run: |
-          chmod +x .github/workflows/send-telegram-release-notification.sh
-          .github/workflows/send-telegram-release-notification.sh
+          chmod +x .github/workflows/send-telegram-notification.sh
+          .github/workflows/send-telegram-notification.sh
