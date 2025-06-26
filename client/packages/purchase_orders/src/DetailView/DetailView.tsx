@@ -23,6 +23,7 @@ import { Footer } from './Footer';
 export const DetailViewInner = () => {
   const {
     query: { data, isLoading },
+    lines: { sortedAndFilteredLines },
   } = usePurchaseOrder();
 
   const t = useTranslation();
@@ -58,7 +59,7 @@ export const DetailViewInner = () => {
           <Toolbar isDisabled={isDisabled} />
 
           <ContentArea
-            lines={data.lines.nodes ?? []}
+            lines={sortedAndFilteredLines}
             isDisabled={isDisabled}
             onAddItem={onOpen}
             onRowClick={!isDisabled ? onRowClick : null}
