@@ -233,7 +233,7 @@ export function Autocomplete<T>({
       }
       onChange={(_event, option, reason, details) => {
         if (isClickableOption(option) && clickableOption?.onClick) {
-          clickableOption?.onClick();
+          clickableOption.onClick();
           return;
         }
         if (onChange) onChange(_event, option, reason, details);
