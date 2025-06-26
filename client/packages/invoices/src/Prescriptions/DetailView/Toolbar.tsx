@@ -171,7 +171,7 @@ export const Toolbar = () => {
                   await update({ id, patientId });
                 }}
                 setEditPatientModalOpen={setEditPatientModalOpen}
-                // allowCreate
+                allowCreate
                 setCreatePatientModalOpen={openPatientModal}
               />
             }
