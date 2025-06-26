@@ -369,7 +369,7 @@ mod tests {
         let translator = PurchaseOrderTranslation {};
 
         let (_, connection, _, _) = setup_all(
-            "test_purchase_order_line_translation",
+            "test_purchase_order_translation",
             MockDataInserts::none().purchase_order(),
         )
         .await;
@@ -389,7 +389,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_purchase_order_translation_to_sync_record() {
         let (_, connection, _, _) = setup_all(
-            "test_purchase_order_line_translation_to_sync_record",
+            "test_purchase_order_translation_to_sync_record",
             MockDataInserts::none().purchase_order(),
         )
         .await;
