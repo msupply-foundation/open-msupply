@@ -1064,6 +1064,7 @@ export type CliniciansQueryVariables = Types.Exact<{
   key: Types.ClinicianSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.ClinicianFilterInput>;
+  page?: Types.InputMaybe<Types.PaginationInput>;
 }>;
 
 export type CliniciansQuery = {
@@ -1398,7 +1399,7 @@ export type VaccineCourseFragment = {
   demographicId?: string | null;
   coverageRate: number;
   wastageRate: number;
-  isActive: boolean;
+  useInGapsCalculations: boolean;
   demographic?: {
     __typename: 'DemographicNode';
     name: string;
@@ -1442,7 +1443,7 @@ export type VaccineCoursesQuery = {
       demographicId?: string | null;
       coverageRate: number;
       wastageRate: number;
-      isActive: boolean;
+      useInGapsCalculations: boolean;
       demographic?: {
         __typename: 'DemographicNode';
         name: string;
@@ -1496,7 +1497,7 @@ export type InsertVaccineCourseMutation = {
             demographicId?: string | null;
             coverageRate: number;
             wastageRate: number;
-            isActive: boolean;
+            useInGapsCalculations: boolean;
             demographic?: {
               __typename: 'DemographicNode';
               name: string;
@@ -1551,7 +1552,7 @@ export type UpdateVaccineCourseMutation = {
             demographicId?: string | null;
             coverageRate: number;
             wastageRate: number;
-            isActive: boolean;
+            useInGapsCalculations: boolean;
             demographic?: {
               __typename: 'DemographicNode';
               name: string;
@@ -1875,7 +1876,7 @@ export const VaccineCourseFragmentDoc = gql`
     demographicId
     coverageRate
     wastageRate
-    isActive
+    useInGapsCalculations
     demographic {
       name
       id
@@ -2237,11 +2238,13 @@ export const CliniciansDocument = gql`
     $key: ClinicianSortFieldInput!
     $desc: Boolean
     $filter: ClinicianFilterInput
+    $page: PaginationInput
   ) {
     clinicians(
       storeId: $storeId
       sort: { key: $key, desc: $desc }
       filter: $filter
+      page: $page
     ) {
       ... on ClinicianConnector {
         __typename

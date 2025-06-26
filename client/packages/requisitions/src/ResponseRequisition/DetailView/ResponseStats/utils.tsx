@@ -10,6 +10,7 @@ import { RepresentationValue, useEndAdornment } from '../../../common';
 type StatsInfoProps = {
   t: TypedTFunction<LocaleKey>;
   getPlural: (word: string, value: number) => string;
+  round: (value?: number, dp?: number) => string;
   unit: string;
   representation: RepresentationValue;
   label: LocaleKey;
@@ -20,6 +21,7 @@ type StatsInfoProps = {
 const StatsInfoValue = ({
   t,
   getPlural,
+  round,
   unit,
   representation,
   label,
@@ -47,7 +49,7 @@ const StatsInfoValue = ({
         alignItems: 'center',
       }}
     >
-      {value}
+      {round(value, 2)}
       &nbsp;
       {useEndAdornment(t, getPlural, unit, representation, value)}
     </Typography>
@@ -58,6 +60,7 @@ export const stats =
   (
     t: TypedTFunction<LocaleKey>,
     getPlural: (word: string, value: number) => string,
+    round: (value?: number, dp?: number) => string,
     unit: string,
     representation: RepresentationValue
   ) =>
@@ -72,6 +75,7 @@ export const stats =
       <StatsInfoValue
         t={t}
         getPlural={getPlural}
+        round={round}
         unit={unit}
         representation={representation}
         label={label}

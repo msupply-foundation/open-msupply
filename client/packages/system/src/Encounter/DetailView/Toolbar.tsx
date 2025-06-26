@@ -24,7 +24,6 @@ import {
   ClinicianAutocompleteOption,
   ClinicianSearchInput,
 } from '../../Clinician';
-import { Clinician } from '../../Clinician/utils';
 import { DateTimePickerInput } from '@common/components';
 
 const Row = ({
@@ -83,13 +82,16 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   useEffect(() => {
     setStartDatetime(encounter.startDatetime);
     setEndDatetime(encounter.endDatetime);
-    setClinician({
-      label: getLocalisedFullName(
-        encounter.clinician?.firstName,
-        encounter.clinician?.lastName
-      ),
-      value: encounter.clinician as Clinician,
-    });
+    if (encounter.clinician) {
+      setClinician({
+        id: encounter.clinician.id,
+        label: getLocalisedFullName(
+          encounter.clinician.firstName,
+          encounter.clinician.lastName
+        ),
+        value: encounter.clinician,
+      });
+    }
   }, [encounter, getLocalisedFullName]);
 
   const { patient } = encounter;

@@ -15,7 +15,7 @@ use repository::{
     ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
 };
 use serde::{Deserialize, Serialize};
-use server::configuration;
+use server::{configuration, logging_init};
 use service::{
     apis::login_v4::LoginUserInfoV4,
     auth_data::AuthData,
@@ -30,7 +30,6 @@ use service::{
     },
     token_bucket::TokenBucket,
 };
-use simple_log::LogConfigBuilder;
 use std::{
     env::current_dir,
     ffi::OsStr,
@@ -45,9 +44,11 @@ use util::inline_init;
 mod backup;
 use backup::*;
 
+#[cfg(feature = "integration_test")]
+use cli::LoadTest;
 use cli::{
-    generate_and_install_plugin_bundle, generate_plugin_bundle, generate_report_data,
-    generate_reports_recursive, generate_typescript_types, install_plugin_bundle,
+    generate_and_install_plugin_bundle, generate_plugin_bundle, generate_plugin_typescript_types,
+    generate_report_data, generate_reports_recursive, install_plugin_bundle,
     GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
     RefreshDatesRepository, ReportError,
 };
@@ -68,7 +69,10 @@ struct Args {
 #[derive(clap::Subcommand)]
 enum Action {
     /// Export graphql schema
-    ExportGraphqlSchema,
+    ExportGraphqlSchema {
+        #[clap(short, long)]
+        path: Option<PathBuf>,
+    },
     /// Initialise empty database (existing database will be dropped, and new one created and migrated)
     InitialiseDatabase,
     /// Initialise from running mSupply server (uses configuration/.*yaml for sync credentials), drops existing database, creates new database with latest schema and initialises (syncs) initial data from central server (including users)
@@ -208,8 +212,20 @@ enum Action {
         #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="enable")]
         disable: bool,
     },
-    /// Generate TypeScript Types for backend plugins and format with Prettier
-    GenerateTypeScriptTypes,
+    #[cfg(feature = "integration_test")]
+    LoadTest(LoadTest),
+    GeneratePluginTypescriptTypes {
+        /// Optional path to save typescript types, if not provided will save to `../client/packages/plugins/backendCommon/generated`
+        #[clap(
+            short,
+            long,
+            default_value = "../client/packages/plugins/backendCommon/generated"
+        )]
+        path: PathBuf,
+        /// Run prettier on the generated typescript files
+        #[clap(long, short, default_value = "false")]
+        skip_prettify: bool,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -281,21 +297,27 @@ fn set_server_is_initialised(ctx: &ServiceContext) -> anyhow::Result<()> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    simple_log::new(LogConfigBuilder::builder().output_console().build())
-        .expect("Unable to initialise logger");
-
     let args = Args::parse();
 
     let settings: Settings =
         configuration::get_configuration(args.config_args).expect("Problem loading configurations");
 
+    let log_level = settings.logging.clone().map(|l| l.level);
+
+    // Initialise logger with default config (i.e. to console), don't want CLI errors logging to
+    // runtime log file, but respect the configured log level
+    logging_init(None, log_level);
+
     match args.action {
-        Action::ExportGraphqlSchema => {
+        Action::ExportGraphqlSchema { path } => {
             info!("Exporting graphql schema");
             let schema =
                 OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
                     .finish();
-            fs::write("schema.graphql", schema.sdl())?;
+            fs::write(
+                path.unwrap_or(PathBuf::from("schema.graphql")),
+                schema.sdl(),
+            )?;
             info!("Schema exported in schema.graphql");
         }
         Action::InitialiseDatabase => {
@@ -697,8 +719,36 @@ async fn main() -> anyhow::Result<()> {
                 );
             }
         }
-        Action::GenerateTypeScriptTypes => {
-            generate_typescript_types()?;
+        Action::GeneratePluginTypescriptTypes {
+            path,
+            skip_prettify,
+        } => {
+            generate_plugin_typescript_types(path, skip_prettify)?;
+        }
+        #[cfg(feature = "integration_test")]
+        Action::LoadTest(LoadTest {
+            msupply_central_url,
+            oms_central_url,
+            base_port,
+            output_dir,
+            test_site_name,
+            test_site_pass,
+            sites,
+            lines,
+            duration,
+        }) => {
+            let load_test = LoadTest::new(
+                msupply_central_url,
+                oms_central_url,
+                base_port,
+                output_dir,
+                test_site_name,
+                test_site_pass,
+                sites,
+                lines,
+                duration,
+            );
+            load_test.run().await?;
         }
     }
 

@@ -97,13 +97,14 @@ fn generate_line(
     connection: &StorageConnection,
     InsertStockOutLine {
         id,
-        r#type: _,
+        r#type,
         invoice_id,
         stock_line_id,
         number_of_packs,
         prescribed_quantity,
         total_before_tax,
         note,
+        campaign_id,
         tax_percentage: _,
         location_id: _,
         batch: _,
@@ -111,7 +112,6 @@ fn generate_line(
         expiry_date: _,
         cost_price_per_pack: _,
         sell_price_per_pack: _,
-        campaign_id,
     }: InsertStockOutLine,
     ItemRow {
         id: item_id,
@@ -178,9 +178,11 @@ fn generate_line(
         foreign_currency_price_before_tax,
         item_variant_id,
         vvm_status_id,
+        campaign_id,
         linked_invoice_id: None,
         reason_option_id: None,
-        campaign_id,
+        shipped_number_of_packs: (r#type == StockOutType::OutboundShipment)
+            .then_some(number_of_packs),
     })
 }
 

@@ -105,7 +105,7 @@ const CalculationError = ({
   const message = `${t('error.unable-to-calculate')}${detail}`;
 
   return (
-    <Box display="flex" padding={2} gap={1}>
+    <Box display="flex" padding={2} gap={1} justifyContent="center">
       <AlertIcon color="primary" fontSize="small" />
       <Typography variant="body1" fontSize={12} sx={{ color: 'error.main' }}>
         {message}
@@ -165,11 +165,10 @@ export const RequestStoreStats = ({
   return (
     <Box
       sx={{
-        width: 800,
-        margin: '0 auto',
-        display: 'flex',
-        flexDirection: 'column',
-        pt: 2,
+        width: '100%',
+        maxWidth: 800,
+        mx: 'auto',
+        p: '16px 16px',
       }}
     >
       <Typography variant="body1" fontWeight={700} fontSize={12}>

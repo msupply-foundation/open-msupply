@@ -10,9 +10,12 @@ import {
   Switch,
   useIsGrouped,
   Tooltip,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
+import { AppRoute } from 'packages/config/src';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
@@ -26,6 +29,7 @@ export const Toolbar: FC = () => {
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
   const [theirReferenceBuffer, setTheirReferenceBuffer] =
     useBufferState(theirReference);
+  const navigate = useNavigate();
   const { mutateAsync: updateName } = useOutbound.document.updateName();
 
   const isDisabled = useOutbound.utils.isDisabled();
@@ -50,7 +54,17 @@ export const Toolbar: FC = () => {
                     disabled={isDisabled || !!requisition}
                     value={otherParty}
                     onChange={async ({ id: otherPartyId }) => {
-                      await updateName({ id, otherPartyId });
+                      const newId = await updateName({ id, otherPartyId });
+                      // When changing customer name, the whole invoice is
+                      // deleted and re-created, so we'll need to re-direct to
+                      // the new ID
+                      navigate(
+                        RouteBuilder.create(AppRoute.Distribution)
+                          .addPart(AppRoute.OutboundShipment)
+                          .addPart(newId)
+                          .build(),
+                        { replace: true }
+                      );
                     }}
                   />
                 }
