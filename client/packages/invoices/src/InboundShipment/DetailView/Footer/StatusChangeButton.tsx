@@ -22,6 +22,7 @@ const getStatusOptions = (
     SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
+    SplitButtonOption<InvoiceNodeStatus>,
   ] = [
     {
       value: InvoiceNodeStatus.New,
@@ -44,6 +45,11 @@ const getStatusOptions = (
       isDisabled: true,
     },
     {
+      value: InvoiceNodeStatus.Received,
+      label: getButtonLabel(InvoiceNodeStatus.Received),
+      isDisabled: true,
+    },
+    {
       value: InvoiceNodeStatus.Verified,
       label: getButtonLabel(InvoiceNodeStatus.Verified),
       isDisabled: true,
@@ -57,9 +63,14 @@ const getStatusOptions = (
     options[4].isDisabled = false;
   }
 
-  // When the status is delivered, only verified is available to select.
+  // When the status is Delivered, only verified & Delivered  is available to select.
   if (currentStatus === InvoiceNodeStatus.Delivered) {
+    options[5].isDisabled = false;
+  }
+  // When the status is received, only verified is available to select.
+  if (currentStatus === InvoiceNodeStatus.Received) {
     options[4].isDisabled = false;
+    options[5].isDisabled = false;
   }
 
   return options;

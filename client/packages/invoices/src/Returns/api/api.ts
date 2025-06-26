@@ -99,7 +99,9 @@ const customerParsers = {
       case undefined:
         return;
       case InvoiceNodeStatus.Delivered:
-        return UpdateCustomerReturnStatusInput.Delivered;
+        return UpdateCustomerReturnStatusInput.Received; // TODO double check... How do we skip this status better...
+      case InvoiceNodeStatus.Received:
+        return UpdateCustomerReturnStatusInput.Received;
       case InvoiceNodeStatus.Verified:
         return UpdateCustomerReturnStatusInput.Verified;
       default:
