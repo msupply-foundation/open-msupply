@@ -3,24 +3,17 @@ import {
   DetailContainer,
   DetailSection,
   Box,
-  FnUtils,
   TabContext,
-  useTabs,
   DialogButton,
   useDialog,
   WizardStepper,
   useTranslation,
-  useDebounceCallback,
-  DocumentRegistryCategoryNode,
+  BasicSpinner,
 } from '@openmsupply-client/common';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
-import {
-  CreateNewPatient,
-  DocumentRegistryFragment,
-  useDocumentRegistry,
-  usePatientStore,
-} from '@openmsupply-client/programs';
+import { CreateNewPatient } from '@openmsupply-client/programs';
+import { useCreatePatientForm } from './useCreatePatientForm';
 
 enum Tabs {
   Form = 'Form',
@@ -38,29 +31,23 @@ export const CreatePatientModal = ({
   onCreatePatient: onCreate,
   onSelectPatient: onSelect,
 }: CreatePatientModal) => {
-  const { data: documentRegistryResponse, isLoading } =
-    useDocumentRegistry.get.documentRegistries({
-      filter: { category: { equalTo: DocumentRegistryCategoryNode.Patient } },
-    });
-  const [hasError, setHasError] = useState(false);
-  const [, setDocumentRegistry] = useState<
-    DocumentRegistryFragment | undefined
-  >();
-  const { currentTab, onChangeTab } = useTabs(Tabs.Form);
+  const t = useTranslation();
   const { Modal, showDialog, hideDialog } = useDialog({
     onClose,
   });
-  const t = useTranslation();
-  const { createNewPatient, setCreateNewPatient } = usePatientStore();
+  const [hasError, setHasError] = useState(false);
 
-  const onNext = useDebounceCallback(() => {
-    onChangeTab(Tabs.SearchResults);
-  }, []);
+  const {
+    currentTab,
+    onNext,
+    onChangeTab,
+    clear,
 
-  const onOk = () => {
-    if (!createNewPatient) return;
-    onCreate(createNewPatient);
-  };
+    isLoading,
+    createNewPatient,
+
+    onOk,
+  } = useCreatePatientForm(onCreate, Tabs);
 
   const patientSteps = [
     {
@@ -81,12 +68,6 @@ export const CreatePatientModal = ({
   };
 
   useEffect(() => {
-    if (documentRegistryResponse?.nodes?.[0]) {
-      setDocumentRegistry(documentRegistryResponse.nodes?.[0]);
-    }
-  }, [documentRegistryResponse]);
-
-  useEffect(() => {
     // always show the dialog when we are mounted
     showDialog();
     // clean up when we are unmounting
@@ -96,15 +77,8 @@ export const CreatePatientModal = ({
     };
   }, [hideDialog, onChangeTab, showDialog]);
 
-  useEffect(() => {
-    setCreateNewPatient({
-      id: FnUtils.generateUUID(),
-    });
-  }, [setCreateNewPatient]);
+  if (isLoading) return <BasicSpinner />;
 
-  if (isLoading) {
-    return null;
-  }
   return (
     <Modal
       title=""
@@ -134,7 +108,7 @@ export const CreatePatientModal = ({
         <DialogButton
           variant="cancel"
           onClick={() => {
-            setCreateNewPatient(undefined);
+            clear();
             onClose();
           }}
         />
