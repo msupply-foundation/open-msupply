@@ -505,6 +505,7 @@ const TRANSACT_OM_FIELDS: (&str, &str) = (
         "om_allocated_datetime": "2022-08-25T10:33:00",
         "om_picked_datetime": "2022-08-26T11:33:00",
         "om_shipped_datetime": "2022-08-27T12:33:00",
+        "om_received_datetime": "2022-08-28T13:33:00",
         "om_delivered_datetime": "2022-08-28T13:33:00",
         "om_verified_datetime": "2022-08-29T14:33:00",
         "om_status": "SHIPPED",
@@ -553,6 +554,12 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
                     .and_hms_opt(12, 33, 0)
                     .unwrap(),
             ),
+            delivered_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 28)
+                    .unwrap()
+                    .and_hms_opt(13, 33, 0)
+                    .unwrap(),
+            ),
             received_datetime: Some(
                 NaiveDate::from_ymd_opt(2022, 8, 28)
                     .unwrap()
@@ -583,7 +590,6 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             is_cancellation: false,
             expected_delivery_date: None,
             default_donor_link_id: None,
-            delivered_datetime: None,
         },
     )
 }

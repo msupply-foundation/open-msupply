@@ -358,7 +358,7 @@ mod test {
             .find_many_by_record_id(&invoice_id)
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == ActivityLogType::InvoiceStatusDelivered);
+            .find(|l| l.r#type == ActivityLogType::InvoiceStatusReceived);
 
         assert!(log.is_some());
 
