@@ -8,9 +8,6 @@ import {
   Formatter,
   DateUtils,
   useConfirmationModal,
-  DefaultAutocompleteItemOption,
-  Box,
-  Typography,
   useCallbackWithPermission,
   UserPermission,
 } from '@openmsupply-client/common';
@@ -174,40 +171,8 @@ export const Toolbar = () => {
                   await update({ id, patientId });
                 }}
                 setEditPatientModalOpen={setEditPatientModalOpen}
-                NoOptionsRenderer={props => (
-                  <DefaultAutocompleteItemOption
-                    {...props}
-                    key="no-options-renderer"
-                  >
-                    <Box
-                      display="flex"
-                      justifyContent="space-between"
-                      alignItems="flex-end"
-                      gap={1}
-                      height={25}
-                      width="100%"
-                    >
-                      <Typography
-                        overflow="hidden"
-                        fontWeight="bold"
-                        textOverflow="ellipsis"
-                        sx={{
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {t('messages.no-matching-patients')}
-                      </Typography>
-                      <Typography
-                        onClick={() => {
-                          openPatientModal();
-                        }}
-                        color="secondary"
-                      >
-                        {t('button.create-new-patient')}
-                      </Typography>
-                    </Box>
-                  </DefaultAutocompleteItemOption>
-                )}
+                // allowCreate
+                setCreatePatientModalOpen={openPatientModal}
               />
             }
           />
