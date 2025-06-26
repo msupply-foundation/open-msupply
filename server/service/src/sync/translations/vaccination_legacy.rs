@@ -5,6 +5,7 @@ use crate::sync::CentralServerConfig;
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
     vaccination_row::VaccinationRowRepository, ChangelogRow, ChangelogTableName, StorageConnection,
+    VaccinationRow,
 };
 
 /*
@@ -17,19 +18,19 @@ use repository::{
 pub struct LegacyVaccinationRow {
     pub ID: String,
     pub created_datetime: String,
-    pub user_id: String,
-    pub vaccine_course_dose_id: String,
-    pub store_id: String,
-    pub clinician_link_id: Option<String>,
-    pub invoice_id: Option<String>,
-    pub stock_line_id: Option<String>,
+    pub user_ID: String,
+    pub vaccine_course_dose_ID: String,
+    pub store_ID: String,
+    pub prescriber_ID: Option<String>,
+    pub transact_ID: Option<String>,
+    pub item_line_ID: Option<String>,
     pub vaccination_date: String,
     pub given: bool,
     pub not_given_reason: Option<String>,
     pub comment: Option<String>,
-    pub facility_name_link_id: Option<String>,
-    pub patient_link_id: String,
-    pub item_link_id: Option<String>,
+    pub patient_ID: String,
+    pub facility_ID: Option<String>,
+    pub item_ID: Option<String>,
 }
 
 const LEGACY_VACCINATION_TABLE_NAME: &str = "om_vaccination";
@@ -74,7 +75,27 @@ impl SyncTranslation for VaccinationLegacyTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = VaccinationRowRepository::new(connection)
+        let VaccinationRow {
+            id,
+            store_id,
+            given_store_id: _,
+            program_enrolment_id: _,
+            encounter_id: _,
+            patient_link_id,
+            user_id,
+            vaccine_course_dose_id,
+            created_datetime,
+            facility_name_link_id,
+            facility_free_text: _,
+            invoice_id,
+            stock_line_id,
+            item_link_id,
+            clinician_link_id,
+            vaccination_date,
+            given,
+            not_given_reason,
+            comment,
+        } = VaccinationRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
                 "Vaccination row ({}) not found",
@@ -82,21 +103,21 @@ impl SyncTranslation for VaccinationLegacyTranslation {
             )))?;
 
         let legacy_row = LegacyVaccinationRow {
-            ID: row.id.clone(),
-            created_datetime: row.created_datetime.and_utc().to_rfc3339(),
-            user_id: row.user_id.clone(),
-            vaccine_course_dose_id: row.vaccine_course_dose_id.clone(),
-            store_id: row.store_id.clone(),
-            clinician_link_id: row.clinician_link_id.clone(),
-            invoice_id: row.invoice_id.clone(),
-            stock_line_id: row.stock_line_id.clone(),
-            vaccination_date: row.vaccination_date.format("%Y-%m-%d").to_string(),
-            given: row.given,
-            not_given_reason: row.not_given_reason.clone(),
-            comment: row.comment.clone(),
-            facility_name_link_id: row.facility_name_link_id.clone(),
-            patient_link_id: row.patient_link_id.clone(),
-            item_link_id: row.item_link_id.clone(),
+            ID: id,
+            created_datetime: created_datetime.and_utc().to_rfc3339(),
+            user_ID: user_id,
+            vaccine_course_dose_ID: vaccine_course_dose_id,
+            store_ID: store_id,
+            prescriber_ID: clinician_link_id,
+            transact_ID: invoice_id,
+            item_line_ID: stock_line_id,
+            vaccination_date: vaccination_date.format("%Y-%m-%d").to_string(),
+            given,
+            not_given_reason,
+            comment,
+            patient_ID: patient_link_id,
+            facility_ID: facility_name_link_id,
+            item_ID: item_link_id,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
