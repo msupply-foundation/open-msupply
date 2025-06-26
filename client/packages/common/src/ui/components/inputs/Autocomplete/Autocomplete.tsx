@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useCallback } from 'react';
+import React, { PropsWithChildren } from 'react';
 import {
   Autocomplete as MuiAutocomplete,
   AutocompleteRenderInputParams,
@@ -102,24 +102,17 @@ export function Autocomplete<T>({
   const openOverrides = useOpenStateWithKeyboard(restOfAutocompleteProps);
 
   const isCreateOption = (option: unknown): option is AddOption => {
-    return (
-      typeof option === 'object' &&
-      option !== null &&
-      '_isAddOption' in option &&
-      (option as any)._isAddOption === true
-    );
+    return option === createOption;
   };
 
-  const filter = useCallback(
-    (options: T[], state: FilterOptionsState<T>) => {
-      const filterType =
-        filterOptions ?? createFilterOptions(filterOptionConfig);
-      let filtered = filterType(options, state);
-      filtered = filtered.filter(option => !isCreateOption(option));
+  const filterType = filterOptions ?? createFilterOptions(filterOptionConfig);
+  const filter = (options: T[], state: FilterOptionsState<T>) => {
+    const filtered = filterType(options, state);
+    if (createOption && !filtered.some(option => isCreateOption(option))) {
       return [...filtered, createOption as T];
-    },
-    [filterOptions, filterOptionConfig, isCreateOption]
-  );
+    }
+    return filtered;
+  };
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
