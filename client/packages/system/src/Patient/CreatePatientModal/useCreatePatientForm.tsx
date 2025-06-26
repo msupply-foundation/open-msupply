@@ -57,7 +57,6 @@ export const useCreatePatientForm = (
     currentTab,
     onNext,
     clear,
-
     createNewPatient,
     Tabs,
     onChangeTab,

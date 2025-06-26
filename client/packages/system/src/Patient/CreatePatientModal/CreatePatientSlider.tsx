@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   DetailContainer,
   DetailSection,
   Box,
   TabContext,
   DialogButton,
-  useDialog,
   WizardStepper,
   useTranslation,
   BasicSpinner,
+  SlidePanel,
 } from '@openmsupply-client/common';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
@@ -20,21 +20,21 @@ enum Tabs {
   SearchResults = 'SearchResults',
 }
 
-interface CreatePatientModal {
+interface CreatePatientSliderProps {
+  open: boolean;
   onClose: () => void;
   onCreatePatient: (newPatient: CreateNewPatient) => void;
   onSelectPatient: (selectedPatient: string) => void;
 }
 
-export const CreatePatientModal = ({
+export const CreatePatientSlider = ({
+  open,
   onClose,
   onCreatePatient: onCreate,
   onSelectPatient: onSelect,
-}: CreatePatientModal) => {
+}: CreatePatientSliderProps) => {
   const t = useTranslation();
-  const { Modal, showDialog, hideDialog } = useDialog({
-    onClose,
-  });
+
   const [hasError, setHasError] = useState(false);
 
   const {
@@ -65,20 +65,10 @@ export const CreatePatientModal = ({
     return step ? patientSteps.indexOf(step) : 0;
   };
 
-  useEffect(() => {
-    // always show the dialog when we are mounted
-    showDialog();
-    // clean up when we are unmounting
-    return () => {
-      hideDialog();
-      onChangeTab(Tabs.Form);
-    };
-  }, [hideDialog, onChangeTab, showDialog]);
-
   if (isLoading) return <BasicSpinner />;
 
   return (
-    <Modal
+    <SlidePanel
       title=""
       width={950}
       okButton={
@@ -91,16 +81,13 @@ export const CreatePatientModal = ({
             }}
             customLabel={t('button.create-new-patient')}
           />
-        ) : undefined
-      }
-      nextButton={
-        currentTab !== Tabs.SearchResults ? (
+        ) : (
           <DialogButton
             variant="next-and-ok"
             onClick={onNext}
             disabled={hasError}
           />
-        ) : undefined
+        )
       }
       cancelButton={
         <DialogButton
@@ -111,7 +98,10 @@ export const CreatePatientModal = ({
           }}
         />
       }
-      slideAnimation={false}
+      open={open}
+      onClose={() => {
+        onClose(), onChangeTab(Tabs.Form);
+      }}
     >
       <DetailContainer>
         <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
@@ -139,6 +129,6 @@ export const CreatePatientModal = ({
           </TabContext>
         </Box>
       </DetailContainer>
-    </Modal>
+    </SlidePanel>
   );
 };
