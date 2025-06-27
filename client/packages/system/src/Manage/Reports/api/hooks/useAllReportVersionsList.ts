@@ -112,18 +112,13 @@ const useInstallUploadedReports = () => {
 
   const mutationFn = async (fileId: string) => {
       const result = await reportApi.installUploadedReports({ fileId });
-      const res =  result?.centralServer?.reports.installUploadedReports;
-      return res;
+      return result?.centralServer?.reports.installUploadedReports;
   };
 
   const mutation = useMutation({
     mutationFn,
-    onSuccess: () => {
-      queryClient.invalidateQueries([ALLREPORTVERSIONS]);
-    },
-    onError: e => {
-      console.error(e);
-    },
+    onSuccess: () => queryClient.invalidateQueries([ALLREPORTVERSIONS]),
+    onError: e => console.error(e),
   });
 
   return mutation
