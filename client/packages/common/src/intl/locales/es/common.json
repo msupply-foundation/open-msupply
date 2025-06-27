@@ -1836,5 +1836,6 @@
   "error.geolocation-not-supported": "Tu navegador no soporta geolocalización.",
   "error.no-asset-create-scan-permission": "No tienes permisos para crear un nuevo activo medainte escaneo de la matriz de datos.",
   "error.failed-to-save-donor-charges": "Error al guardar el donante",
-  "error.no-asset-import-permission": "No tienes permisos para importar activos"
+  "error.no-asset-import-permission": "No tienes permisos para importar activos",
+  "error.plugin-payment-amount-outstanding": "El monto pagado es menor al monto pendiente"
 }
