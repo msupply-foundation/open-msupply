@@ -249,7 +249,7 @@
   "error.cannot-add-pack-size-of-zero": "No se puede agregar una variante con un tamaño de paquete de cero",
   "error.cannot-add-with-no-abbreviation-and-name": "No se puede agregar una variante sin abreviatura y nombre",
   "error.cannot-backdate-prescription": "El inventario no está disponible en la fecha especificada",
-  "error.cannot-edit-requisition": "La Requisición no es editable.",
+  "error.cannot-edit-requisition": "No se puede editar la Requisición.",
   "error.cant-save": "Hubo un problema al guardar.",
   "error.cce-asset-number-already-used": "El número del ativo CCE ya se encuentra en uso, por favor, use otro número",
   "error.code-no-match": "{{field}} no encontrado in el catálogo",
@@ -1817,5 +1817,12 @@
   "warning.cannot-create-placeholder-units": "Hay un total de {{allocatedQuantity}} unidades disponibles. No se pueden asignar las {{requestedQuantity}} unidades en su totalidad.",
   "warning.caps-lock": "Advertencia: Bloq Mayús está activado",
   "warning.field-not-parsed": "{{field}} no analizado",
-  "warning.nothing-to-supply": "¡No queda nada por suministrar!"
+  "warning.nothing-to-supply": "¡No queda nada por suministrar!",
+  "error.dose-configuration-not-allowed": "No se puede establecer dosis para este artículo porque no es una vacuna.",
+  "button.add-printer": "Agregar Impresora",
+  "button.add-new-stock": "Agregar Nuevo Inventario",
+  "error.cannot-add-from-masterlist-if-not-new": "Solo se puede agregar desde una lista maestra en factura 'Nueva'",
+  "error.dose-max-lower-than-min": "La dosis {{doseIndex}} debe tener una edad máxima más alta que la edad mínima",
+  "description.used-in-auto-allocation": "Se usará en la asignación automática",
+  "button.add-new-clinician": "Agregar Nuevo Clínico"
 }
