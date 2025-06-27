@@ -379,6 +379,7 @@
   "error.photo-error": "Error al tomar foto",
   "error.plugin": "Hubo un error cargando el plugin {{name}}",
   "error.plugin-unavailable": "Plugin no disponible",
+  "error.plugin-payment-amount-outstanding": "El monto pagado es menor al monto pendiente",
   "error.prescription-not-found": "Prescripción no encontrada.",
   "error.printing-label": "Error al imprimir la etiqueta de activo.",
   "error.problem-saving": "Ocurrió un error: hubo un problema al guardar los datos.",
