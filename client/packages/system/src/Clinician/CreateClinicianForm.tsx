@@ -81,7 +81,8 @@ export const CreateClinicianForm = ({
             sx={{ width }}
             value={draft.mobile}
             onChange={event => {
-              updateDraft({ mobile: event.target.value });
+              const numericValue = event.target.value.replace(/[^0-9]/g, '');
+              updateDraft({ mobile: numericValue });
             }}
           />
         }
