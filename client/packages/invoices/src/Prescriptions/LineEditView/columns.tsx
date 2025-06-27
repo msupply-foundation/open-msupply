@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import {
   CellProps,
   ColumnAlign,
@@ -6,9 +6,8 @@ import {
   ExpiryDateCell,
   Formatter,
   NumberCell,
-  NumericTextInput,
+  NumberInputCell,
   PreferenceKey,
-  useBufferState,
   useColumns,
   useIntlUtils,
   usePreference,
@@ -148,31 +147,13 @@ export const usePrescriptionLineEditColumns = ({
   return useColumns(columnDefinitions, {}, [allocate]);
 };
 
-const UnitQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => {
-  const { rowData, column } = props;
-  const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
-
-  const handleChange = (num: number | undefined) => {
-    setBuffer(num ?? 0);
-  };
-
-  const handleBlur = useCallback(() => {
-    const resetValue = column.setter({ ...rowData, [column.key]: buffer });
-    if (resetValue !== undefined) setBuffer(resetValue);
-  }, [buffer, column, rowData, setBuffer]);
-
-  return (
-    <NumericTextInput
-      value={buffer as number | undefined}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      min={0}
-      max={rowData.availablePacks * rowData.packSize}
-      decimalLimit={2}
-      slotProps={{
-        input: { sx: { '& .MuiInput-input': { textAlign: 'right' } } },
-        htmlInput: { sx: { backgroundColor: 'white' } },
-      }}
-    />
-  );
-};
+const UnitQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
+  <NumberInputCell
+    {...props}
+    max={props.rowData.availablePacks * props.rowData.packSize}
+    decimalLimit={2}
+    min={0}
+    debounce={1000}
+    slotProps={{ htmlInput: { sx: { backgroundColor: 'white' } } }}
+  />
+);
