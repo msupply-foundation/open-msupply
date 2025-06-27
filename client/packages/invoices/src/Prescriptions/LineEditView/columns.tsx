@@ -150,9 +150,10 @@ export const usePrescriptionLineEditColumns = ({
 const UnitQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
   <NumberInputCell
     {...props}
-    max={props.rowData.availablePacks}
+    max={props.rowData.availablePacks * props.rowData.packSize}
     decimalLimit={2}
     min={0}
+    debounce={1000}
     slotProps={{ htmlInput: { sx: { backgroundColor: 'white' } } }}
   />
 );
