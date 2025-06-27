@@ -87,7 +87,7 @@ export const ColumnPicker = <T extends RecordWithId>({
                 control={
                   <Checkbox onClick={() => toggleColumn(String(column.key))} />
                 }
-                label={t(column.label as LocaleKey)}
+                label={t(column.label as LocaleKey, column.labelProps)}
               />
             ))}
           <Button
