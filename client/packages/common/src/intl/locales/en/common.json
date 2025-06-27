@@ -999,6 +999,7 @@
   "label.min": "Min",
   "label.min-interval": "Min interval (days)",
   "label.min-months-of-stock": "Reorder threshold MOS",
+  "label.mobile": "Mobile",
   "label.mode": "Mode",
   "label.model": "Model",
   "label.modified-datetime": "Modified date / time",

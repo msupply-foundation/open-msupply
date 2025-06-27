@@ -7,8 +7,8 @@ pub struct Repositories<'a> {
     pub store_row: Box<dyn StoreRowRepositoryTrait<'a> + 'a>,
 }
 
-pub fn validate<'a>(
-    repos: Repositories<'a>,
+pub fn validate(
+    repos: Repositories<'_>,
     input: &InsertClinician,
     store_id: &str,
 ) -> Result<(), InsertClinicianError> {
@@ -28,7 +28,7 @@ pub fn validate<'a>(
         return Err(InsertClinicianError::ClinicianAlreadyExists);
     }
 
-    let store = repos.store_row.find_one_by_id(&store_id)?;
+    let store = repos.store_row.find_one_by_id(store_id)?;
 
     if store.is_none() {
         return Err(InsertClinicianError::InvalidStore);
@@ -105,7 +105,6 @@ mod test {
         let mock_repos = Repositories {
             clinician_row: Box::new(MockClinicianRowRepository {
                 find_one_by_id_result: Some(ClinicianRow::default()), // Simulate existing clinician,
-                ..Default::default()
             }),
             ..Repositories::test_defaults()
         };
@@ -129,7 +128,6 @@ mod test {
         let mock_repos = Repositories {
             store_row: Box::new(MockStoreRowRepository {
                 find_one_by_id_result: None, // Mock no matching store found,
-                ..Default::default()
             }),
             ..Repositories::test_defaults()
         };
@@ -153,7 +151,6 @@ mod test {
         let mock_repos = Repositories {
             store_row: Box::new(MockStoreRowRepository {
                 find_one_by_id_result: Some(StoreRow::default()), // Mock store found,
-                ..Default::default()
             }),
             ..Repositories::test_defaults()
         };
@@ -165,6 +162,7 @@ mod test {
             last_name: "Clinician".to_string(),
             first_name: Some("First".to_string()),
             gender: None,
+            mobile: None,
         };
         assert_eq!(validate(mock_repos, &valid_clinician, "store_id"), Ok(()));
     }

@@ -10,6 +10,7 @@ export const useCreateClinician = () => {
     lastName: '',
     code: '',
     initials: '',
+    mobile: '',
   });
 
   const isValid =
@@ -33,6 +34,7 @@ export const useCreateClinician = () => {
       lastName: '',
       code: '',
       initials: '',
+      mobile: '',
     });
   };
 

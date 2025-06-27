@@ -26,6 +26,10 @@ export const useClinicianListColumns = () => {
       label: 'label.initials',
     },
     {
+      key: 'mobile',
+      label: 'label.mobile',
+    },
+    {
       key: 'gender',
       label: 'label.gender',
       accessor: ({ rowData }) =>
