@@ -74,10 +74,12 @@ export const NumInputRow = ({
 
   const handleChange = (newValue?: number) => {
     if (!onChange || newValue === roundedValue) return;
-    if (representation === Representation.PACKS && newValue !== undefined) {
-      onChange(newValue * defaultPackSize);
+
+    const value = newValue === undefined ? 0 : newValue;
+    if (representation === Representation.PACKS) {
+      onChange(value * defaultPackSize);
     } else {
-      onChange(newValue);
+      onChange(value);
     }
   };
 

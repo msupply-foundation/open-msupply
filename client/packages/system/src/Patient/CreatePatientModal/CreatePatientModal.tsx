@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   DetailContainer,
   DetailSection,
@@ -7,19 +7,16 @@ import {
   TabContext,
   useTabs,
   DialogButton,
-  useNavigate,
   useDialog,
   WizardStepper,
   useTranslation,
   useDebounceCallback,
   DocumentRegistryCategoryNode,
-  useLocation,
-  RouteBuilder,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
 import {
+  CreateNewPatient,
   DocumentRegistryFragment,
   useDocumentRegistry,
   usePatientStore,
@@ -32,9 +29,15 @@ enum Tabs {
 
 interface CreatePatientModal {
   onClose: () => void;
+  onCreatePatient: (newPatient: CreateNewPatient) => void;
+  onSelectPatient: (selectedPatient: string) => void;
 }
 
-export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
+export const CreatePatientModal = ({
+  onClose,
+  onCreatePatient: onCreate,
+  onSelectPatient: onSelect,
+}: CreatePatientModal) => {
   const { data: documentRegistryResponse, isLoading } =
     useDocumentRegistry.get.documentRegistries({
       filter: { category: { equalTo: DocumentRegistryCategoryNode.Patient } },
@@ -47,31 +50,16 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   const { Modal, showDialog, hideDialog } = useDialog({
     onClose,
   });
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { createNewPatient, setCreateNewPatient } = usePatientStore();
   const t = useTranslation();
+  const { createNewPatient, setCreateNewPatient } = usePatientStore();
 
   const onNext = useDebounceCallback(() => {
     onChangeTab(Tabs.SearchResults);
   }, []);
 
   const onOk = () => {
-    if (createNewPatient) {
-      const urlSegments = location.pathname.split('/');
-
-      if (urlSegments.includes(AppRoute.Patients))
-        navigate(createNewPatient.id);
-
-      if (urlSegments.includes(AppRoute.Prescription))
-        navigate(
-          RouteBuilder.create(AppRoute.Dispensary)
-            .addPart(AppRoute.Patients)
-            .addPart(createNewPatient.id)
-            .addQuery({ previousPath: AppRoute.Prescription })
-            .build()
-        );
-    }
+    if (!createNewPatient) return;
+    onCreate(createNewPatient);
   };
 
   const patientSteps = [
@@ -125,7 +113,10 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
         currentTab === Tabs.SearchResults ? (
           <DialogButton
             variant="next"
-            onClick={onOk}
+            onClick={() => {
+              onOk();
+              onClose();
+            }}
             customLabel={t('button.create-new-patient')}
           />
         ) : undefined
@@ -170,6 +161,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
                 value={Tabs.SearchResults}
                 patient={createNewPatient}
                 active={currentTab === Tabs.SearchResults}
+                onRowClick={selectedPatient => onSelect(selectedPatient)}
               />
             </DetailSection>
           </TabContext>

@@ -115,6 +115,7 @@ pub fn generate(
         donor_id,
         vvm_status_id,
         campaign_id,
+        shipped_number_of_packs: None,
     };
 
     let update_inventory_adjustment_reason = UpdateInventoryAdjustmentReason {
