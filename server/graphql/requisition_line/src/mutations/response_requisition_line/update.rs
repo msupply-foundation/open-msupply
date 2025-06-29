@@ -4,7 +4,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::RequisitionLineNode;
+use graphql_types::{generic_errors::RequisitionReasonNotProvided, types::RequisitionLineNode};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     requisition_line::response_requisition_line::{
@@ -39,6 +39,7 @@ pub struct UpdateInput {
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
     RequisitionDoesNotExist(ForeignKeyError),
+    ReasonNotProvided(RequisitionReasonNotProvided),
     CannotEditRequisition(CannotEditRequisition),
 }
 
@@ -137,6 +138,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             return Ok(UpdateErrorInterface::CannotEditRequisition(
                 CannotEditRequisition {},
             ))
+        }
+        ServiceError::ReasonNotProvided(line) => {
+            return Ok(UpdateErrorInterface::ReasonNotProvided(
+                RequisitionReasonNotProvided::from_domain(line),
+            ));
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreRequisition => BadUserInput(formatted_error),
