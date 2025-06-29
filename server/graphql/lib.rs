@@ -49,7 +49,7 @@ use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
 use graphql_purchase_order_line::PurchaseOrderLineQueries;
 use graphql_repack::{RepackMutations, RepackQueries};
-use graphql_reports::ReportQueries;
+use graphql_reports::{CentralReportMutations, ReportQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
@@ -111,6 +111,10 @@ impl CentralServerMutationNode {
 
     async fn campaign(&self) -> CampaignMutations {
         CampaignMutations
+    }
+
+    async fn reports(&self) -> CentralReportMutations {
+        CentralReportMutations
     }
 }
 

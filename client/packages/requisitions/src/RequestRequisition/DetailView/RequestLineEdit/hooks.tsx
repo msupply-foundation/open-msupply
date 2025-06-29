@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { FnUtils, QuantityUtils } from '@openmsupply-client/common';
+import {
+  FnUtils,
+  QuantityUtils,
+  useTranslation,
+} from '@openmsupply-client/common';
 import {
   useRequest,
   RequestLineFragment,
@@ -63,13 +67,18 @@ const createDraftFromRequestLine = (
 export const useDraftRequisitionLine = (
   item?: ItemWithStatsFragment | null
 ) => {
+  const t = useTranslation();
+  const [isReasonsError, setIsReasonsError] = useState(false);
   const { lines } = useRequest.line.list();
   const { data } = useRequest.document.get();
   const { mutateAsync: saveMutation, isLoading } = useRequest.line.save();
 
   const [draft, setDraft] = useState<DraftRequestLine | null>(null);
-
   useEffect(() => {
+    if (isReasonsError) {
+      return;
+    }
+
     if (lines && item && data) {
       const existingLine = lines.find(
         ({ item: reqItem }) => reqItem.id === item.id
@@ -91,8 +100,34 @@ export const useDraftRequisitionLine = (
   const save = useCallback(async () => {
     if (draft) {
       const result = await saveMutation(draft);
-      return result;
+
+      setIsReasonsError(false);
+      if (result?.__typename === 'UpdateRequestRequisitionLineError') {
+        let errorMessage: string;
+
+        switch (result.error.__typename) {
+          case 'RequisitionReasonNotProvided':
+            setIsReasonsError(true);
+            errorMessage = t('error.provide-reason-requisition');
+            break;
+          case 'CannotEditRequisition':
+            errorMessage = t('error.cannot-edit-requisition');
+            break;
+          default:
+            errorMessage = t('error.database-error');
+            break;
+        }
+
+        return {
+          error: errorMessage,
+        };
+      }
+
+      return {
+        data: result,
+      };
     }
+
     return null;
   }, [draft, saveMutation]);
 
@@ -101,6 +136,7 @@ export const useDraftRequisitionLine = (
     isLoading,
     save,
     update,
+    isReasonsError,
   };
 };
 
