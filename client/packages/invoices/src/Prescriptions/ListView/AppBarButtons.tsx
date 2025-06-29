@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -14,25 +14,40 @@ import {
   Platform,
   useCallbackWithPermission,
   UserPermission,
+  useNavigate,
+  RouteBuilder,
+  FnUtils,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
+import { CreateNewPatient } from '@openmsupply-client/programs';
 import { CreatePatientModal } from '@openmsupply-client/system';
-import { ListParams, usePrescriptionList } from '../api';
+import { ListParams, usePrescription, usePrescriptionList } from '../api';
 import { prescriptionToCsv } from '../../utils';
 import { NewPrescriptionModal } from './NewPrescriptionModal';
 
-export const AppBarButtonsComponent: FC<{
+interface AppBarButtonsComponentProps {
   modalController: ToggleState;
   listParams: ListParams;
-}> = ({ modalController, listParams }) => {
+}
+
+export const AppBarButtonsComponent = ({
+  modalController,
+  listParams,
+}: AppBarButtonsComponentProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
   const [patientModalOpen, setPatientModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const {
     query: { data, isLoading },
   } = usePrescriptionList(listParams);
 
-  const onCreatePatient = useCallbackWithPermission(
+  const {
+    create: { create: createPrescription },
+  } = usePrescription();
+
+  const handleClick = useCallbackWithPermission(
     UserPermission.PatientMutate,
     () => setPatientModalOpen(true)
   );
@@ -48,6 +63,29 @@ export const AppBarButtonsComponent: FC<{
     success(t('success'))();
   };
 
+  const onCreatePatient = (newPatient: CreateNewPatient) => {
+    navigate(
+      RouteBuilder.create(AppRoute.Dispensary)
+        .addPart(AppRoute.Patients)
+        .addPart(newPatient.id)
+        .addQuery({ previousPath: AppRoute.Prescription })
+        .build()
+    );
+  };
+
+  const onSelectPatient = async (selectedPatient: string) => {
+    const invoice = await createPrescription({
+      id: FnUtils.generateUUID(),
+      patientId: selectedPatient,
+    });
+    navigate(
+      RouteBuilder.create(AppRoute.Dispensary)
+        .addPart(AppRoute.Prescription)
+        .addPart(invoice?.id ?? '')
+        .build()
+    );
+  };
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
@@ -59,7 +97,7 @@ export const AppBarButtonsComponent: FC<{
         <NewPrescriptionModal
           open={modalController.isOn}
           onClose={modalController.toggleOff}
-          openPatientModal={onCreatePatient}
+          openPatientModal={handleClick}
         />
         <LoadingButton
           startIcon={<DownloadIcon />}
@@ -70,7 +108,13 @@ export const AppBarButtonsComponent: FC<{
           label={t('button.export')}
         />
         {patientModalOpen && (
-          <CreatePatientModal onClose={() => setPatientModalOpen(false)} />
+          <CreatePatientModal
+            onClose={() => setPatientModalOpen(false)}
+            onCreatePatient={newPatient => onCreatePatient(newPatient)}
+            onSelectPatient={selectedPatient =>
+              onSelectPatient(selectedPatient)
+            }
+          />
         )}
       </Grid>
     </AppBarButtonsPortal>

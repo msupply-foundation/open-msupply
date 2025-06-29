@@ -131,15 +131,16 @@ fn generate_line(
         number_of_packs,
         note,
         location,
-        id: _,
-        item_id: _,
         total_before_tax,
         tax_percentage,
-        r#type: _,
         item_variant_id,
         vvm_status_id,
         donor_id,
         campaign_id,
+        shipped_number_of_packs,
+        id: _,
+        item_id: _,
+        r#type: _,
     }: UpdateStockInLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -197,6 +198,9 @@ fn generate_line(
     update_line.campaign_id = campaign_id
         .map(|c| c.value)
         .unwrap_or(update_line.campaign_id);
+
+    update_line.shipped_number_of_packs =
+        shipped_number_of_packs.or(update_line.shipped_number_of_packs);
 
     Ok(update_line)
 }
