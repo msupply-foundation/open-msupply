@@ -7,10 +7,11 @@ import {
   useTranslation,
   useNotification,
   LIST_KEY,
+  useMutation,
 } from '@openmsupply-client/common';
 import {  ALLREPORTVERSIONS } from './keys';
 import { ReportRowFragment } from 'packages/system/src/Report/index.js';
-import { useAllReportVersionsGraphQL } from '../../api/useReportsGraphQL';
+import { useAllReportVersionsGraphQL as useCentralServerReportsGraphqQL } from '../../api/useReportsGraphQL';
 
 export interface ReportListParams {
   filterBy: ReportFilterInput | null;
@@ -19,7 +20,7 @@ export interface ReportListParams {
   offset?: number;
 };
 
-export const useAllReportVersionsList = ({
+export const useCentralReports = ({
   queryParams,
 }: {
   queryParams?: ReportListParams;
@@ -27,14 +28,23 @@ export const useAllReportVersionsList = ({
     // QUERY
     const { data, isLoading, isError } = useGetList(queryParams);
 
+    
+    // INSTALL
+    const {
+      mutateAsync: installMutation,
+      isLoading: installLoading,
+      error: installError
+    } = useInstallUploadedReports();
+
     return {
         query: {data, isLoading, isError},
+        install: { installMutation, installLoading, installError }
     };
 };
 
 const useGetList = (queryParams?: ReportListParams) => {
   const t = useTranslation();
-  const { reportApi, storeId } = useAllReportVersionsGraphQL();
+  const { reportApi, storeId } = useCentralServerReportsGraphqQL();
   const { currentLanguage: language } = useIntlUtils();
   const { error } = useNotification();
 
@@ -77,9 +87,7 @@ const useGetList = (queryParams?: ReportListParams) => {
               key: query.allReportVersions.error.description,
             });
             break;
-          // TODO add never exhaustive error handling if adding more error types to QueryReportError
-          // default:
-          //   noOtherVariants(query.reports.error.__typename);
+
         }
         error(errorMessage)();
         console.error(errorMessage);
@@ -98,3 +106,20 @@ const useGetList = (queryParams?: ReportListParams) => {
     },
   });
 };
+
+const useInstallUploadedReports = () => {
+  const {reportApi, queryClient} = useCentralServerReportsGraphqQL();
+
+  const mutationFn = async (fileId: string) => {
+      const result = await reportApi.installUploadedReports({ fileId });
+      return result?.centralServer?.reports.installUploadedReports;
+  };
+
+  const mutation = useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries([ALLREPORTVERSIONS]),
+    onError: e => console.error(e),
+  });
+
+  return mutation
+}

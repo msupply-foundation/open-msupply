@@ -15,7 +15,7 @@ export const AppBarButtonsComponent = ({ onOpen }: { onOpen: () => void }) => {
       <Grid container gap={1}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
-          label={t('button.install-reports')}
+          label={t('button.upload-reports')}
           onClick={onOpen}
         />
       </Grid>
