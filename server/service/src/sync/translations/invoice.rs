@@ -847,7 +847,7 @@ fn legacy_invoice_status(t: &InvoiceType, status: &InvoiceStatus) -> Option<Lega
             InvoiceStatus::Picked => LegacyTransactStatus::Nw,
             InvoiceStatus::Shipped => LegacyTransactStatus::Nw,
             InvoiceStatus::Delivered => LegacyTransactStatus::Sg,
-            InvoiceStatus::Received => LegacyTransactStatus::Fn,
+            InvoiceStatus::Received => LegacyTransactStatus::Cn,
             InvoiceStatus::Verified => LegacyTransactStatus::Fn,
             InvoiceStatus::Cancelled => LegacyTransactStatus::Fn,
         },

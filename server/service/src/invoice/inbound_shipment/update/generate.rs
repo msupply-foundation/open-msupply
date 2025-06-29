@@ -281,41 +281,19 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipme
     };
 
     let current_datetime = Utc::now().naive_utc();
-    match (&invoice.status, new_status) {
-        // From New/Picked/Shipped to Delivered
-        (
-            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateInboundShipmentStatus::Delivered,
-        ) => {
+    match new_status {
+        UpdateInboundShipmentStatus::Delivered => {
             invoice.delivered_datetime = Some(current_datetime);
         }
-        // From New/Picked/Shipped to Received
-        (
-            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateInboundShipmentStatus::Received,
-        ) => {
-            invoice.delivered_datetime = Some(current_datetime);
+        UpdateInboundShipmentStatus::Received => {
+            invoice.delivered_datetime = invoice.delivered_datetime.or(Some(current_datetime));
             invoice.received_datetime = Some(current_datetime);
         }
-        // From Delivered to Received
-        (InvoiceStatus::Delivered, UpdateInboundShipmentStatus::Received) => {
-            invoice.received_datetime = Some(current_datetime);
-        }
-        // From New/Picked/Shipped to Verified
-        (
-            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateInboundShipmentStatus::Verified,
-        ) => {
-            invoice.delivered_datetime = Some(current_datetime);
-            invoice.received_datetime = Some(current_datetime);
+        UpdateInboundShipmentStatus::Verified => {
+            invoice.delivered_datetime = invoice.delivered_datetime.or(Some(current_datetime));
+            invoice.received_datetime = invoice.received_datetime.or(Some(current_datetime));
             invoice.verified_datetime = Some(current_datetime);
         }
-        // From Received to Verified
-        (InvoiceStatus::Received, UpdateInboundShipmentStatus::Verified) => {
-            invoice.verified_datetime = Some(current_datetime);
-        }
-
-        _ => {}
     }
 }
 

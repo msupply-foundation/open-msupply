@@ -62,6 +62,7 @@ pub fn update_inbound_shipment(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
+            println!("update_inbound_shipment: {:?}", patch);
             let (invoice, other_party, status_changed) =
                 validate(connection, &ctx.store_id, &patch)?;
             let GenerateResult {
@@ -804,7 +805,7 @@ mod test {
         // Check no logs exist before update
         assert_eq!(vvm_status_log, None);
 
-        // Test updating to Delivered generates Activity logs and VVM status logs
+        // Test updating to Received generates Activity logs and VVM status logs
         service
             .update_inbound_shipment(
                 &context,
@@ -823,7 +824,7 @@ mod test {
             .find_many_by_record_id(&mock_inbound_shipment_c().id)
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == ActivityLogType::InvoiceStatusDelivered)
+            .find(|l| l.r#type == ActivityLogType::InvoiceStatusReceived)
             .unwrap();
         let vvm_status_log = VVMStatusLogRepository::new(&connection)
             .query_by_filter(vvm_log_filter.clone())
@@ -834,7 +835,7 @@ mod test {
         assert_eq!(invoice.verified_datetime, None);
         assert!(invoice.received_datetime.unwrap() > now);
         assert!(invoice.received_datetime.unwrap() < end_time);
-        assert_eq!(activity_log.r#type, ActivityLogType::InvoiceStatusDelivered);
+        assert_eq!(activity_log.r#type, ActivityLogType::InvoiceStatusReceived);
         assert_eq!(vvm_status_log, Some(mock_vvm_status_a().id));
 
         let filter =
@@ -872,9 +873,9 @@ mod test {
             .find_many_by_record_id(&mock_inbound_shipment_c().id)
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == ActivityLogType::InvoiceStatusDelivered)
+            .find(|l| l.r#type == ActivityLogType::InvoiceStatusReceived)
             .unwrap();
-        assert_eq!(log.r#type, ActivityLogType::InvoiceStatusDelivered);
+        assert_eq!(log.r#type, ActivityLogType::InvoiceStatusReceived);
 
         //Test success name_store_id linked to store
         service

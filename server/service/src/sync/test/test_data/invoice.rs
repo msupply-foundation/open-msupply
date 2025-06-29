@@ -642,6 +642,12 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
                     .and_hms_opt(12, 33, 0)
                     .unwrap()
             ),
+            received_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 28)
+                    .unwrap()
+                    .and_hms_opt(13, 33, 0)
+                    .unwrap()
+            ),
             delivered_datetime: Some(
                 NaiveDate::from_ymd_opt(2022, 8, 28)
                     .unwrap()
@@ -672,7 +678,6 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             is_cancellation: false,
             expected_delivery_date: None,
             default_donor_id: None,
-            received_datetime: None
         }),
     }
 }
