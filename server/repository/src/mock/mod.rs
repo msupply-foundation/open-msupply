@@ -244,6 +244,8 @@ pub struct MockData {
     pub reason_options: Vec<ReasonOptionRow>,
     pub vvm_statuses: Vec<VVMStatusRow>,
     pub campaigns: Vec<CampaignRow>,
+    pub purchase_order: Vec<PurchaseOrderRow>,
+    pub purchase_order_line: Vec<PurchaseOrderLineRow>,
 }
 
 impl MockData {
@@ -332,6 +334,8 @@ pub struct MockDataInserts {
     pub reason_options: bool,
     pub vvm_statuses: bool,
     pub campaigns: bool,
+    pub purchase_order: bool,
+    pub purchase_order_line: bool,
 }
 
 impl MockDataInserts {
@@ -409,6 +413,8 @@ impl MockDataInserts {
             store_preferences: true,
             reason_options: true,
             campaigns: true,
+            purchase_order: true,
+            purchase_order_line: true,
         }
     }
 
@@ -758,6 +764,22 @@ impl MockDataInserts {
         self.vvm_statuses = true;
         self
     }
+
+    pub fn purchase_order(mut self) -> Self {
+        self.names = true;
+        self.stores = true;
+        self.currencies = true;
+        self.purchase_order = true;
+        self
+    }
+    pub fn purchase_order_line(mut self) -> Self {
+        self.names = true;
+        self.stores = true;
+        self.currencies = true;
+        self.purchase_order = true;
+        self.purchase_order_line = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -854,6 +876,8 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             printer: mock_printers(),
             vvm_statuses: mock_vvm_statuses(),
             campaigns: mock_campaigns(),
+            purchase_order: mock_purchase_orders(),
+            purchase_order_line: mock_purchase_order_lines(),
             ..Default::default()
         },
     );
@@ -1411,6 +1435,18 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.purchase_order {
+            let repo = PurchaseOrderRowRepository::new(connection);
+            for row in &mock_data.purchase_order {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+        if inserts.purchase_order_line {
+            let repo = PurchaseOrderLineRowRepository::new(connection);
+            for row in &mock_data.purchase_order_line {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1491,6 +1527,8 @@ impl MockData {
             mut reason_options,
             mut vvm_statuses,
             mut campaigns,
+            mut purchase_order,
+            mut purchase_order_line,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1565,6 +1603,8 @@ impl MockData {
         self.store_preferences.append(&mut store_preferences);
         self.vvm_statuses.append(&mut vvm_statuses);
         self.campaigns.append(&mut campaigns);
+        self.purchase_order.append(&mut purchase_order);
+        self.purchase_order_line.append(&mut purchase_order_line);
         self
     }
 }
