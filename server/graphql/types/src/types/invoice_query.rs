@@ -181,6 +181,12 @@ impl InvoiceNode {
 
     pub async fn delivered_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
+            .delivered_datetime
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    }
+
+    pub async fn received_datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
             .received_datetime
             .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }

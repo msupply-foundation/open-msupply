@@ -57,19 +57,20 @@ const getStatusOptions = (
   ];
 
   if (currentStatus === InvoiceNodeStatus.Shipped) {
-    // When the status is shipped, delivered and verified are available to
+    // When the status is shipped, delivered, received and verified are available to
     // select.
     options[3].isDisabled = false;
     options[4].isDisabled = false;
+    options[5].isDisabled = false;
   }
 
-  // When the status is Delivered, only verified & Delivered  is available to select.
+  // When the status is Delivered, only verified & Delivered re available to select.
   if (currentStatus === InvoiceNodeStatus.Delivered) {
+    options[4].isDisabled = false;
     options[5].isDisabled = false;
   }
   // When the status is received, only verified is available to select.
   if (currentStatus === InvoiceNodeStatus.Received) {
-    options[4].isDisabled = false;
     options[5].isDisabled = false;
   }
 
@@ -81,6 +82,7 @@ const getManualStatusOptions = (
   getButtonLabel: (status: InvoiceNodeStatus) => string
 ): SplitButtonOption<InvoiceNodeStatus>[] => {
   const options: [
+    SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
@@ -96,6 +98,11 @@ const getManualStatusOptions = (
       isDisabled: true,
     },
     {
+      value: InvoiceNodeStatus.Received,
+      label: getButtonLabel(InvoiceNodeStatus.Received),
+      isDisabled: true,
+    },
+    {
       value: InvoiceNodeStatus.Verified,
       label: getButtonLabel(InvoiceNodeStatus.Verified),
       isDisabled: true,
@@ -107,11 +114,18 @@ const getManualStatusOptions = (
     // select.
     options[1].isDisabled = false;
     options[2].isDisabled = false;
+    options[3].isDisabled = false;
   }
 
   // When the status is delivered, only verified is available to select.
   if (currentStatus === InvoiceNodeStatus.Delivered) {
     options[2].isDisabled = false;
+    options[3].isDisabled = false;
+  }
+
+  // When the status is delivered, only verified is available to select.
+  if (currentStatus === InvoiceNodeStatus.Received) {
+    options[3].isDisabled = false;
   }
 
   return options;
@@ -125,6 +139,12 @@ const getNextStatusOption = (
 
   const nextStatus = getNextInboundStatus(status);
   const nextStatusOption = options.find(o => o.value === nextStatus);
+
+  if (!nextStatusOption) {
+    console.warn(
+      `No status option found for status: ${nextStatus} for status: ${status}`
+    );
+  }
   return nextStatusOption || null;
 };
 
