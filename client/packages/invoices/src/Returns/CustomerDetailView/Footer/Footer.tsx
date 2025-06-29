@@ -45,7 +45,7 @@ const createStatusLog = (invoice: CustomerReturnFragment) => {
     statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
   }
   if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Received] = invoice.deliveredDatetime; // TODO: Add receivedDatetime to backend graphql
+    statusLog[InvoiceNodeStatus.Received] = invoice.received_datetime;
   }
   if (statusIdx >= 5) {
     statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;

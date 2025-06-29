@@ -30,6 +30,7 @@ export type CustomerReturnRowFragment = {
   colour?: string | null;
   createdDatetime: string;
   deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   comment?: string | null;
   theirReference?: string | null;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
@@ -216,6 +217,7 @@ export type CustomerReturnsQuery = {
       colour?: string | null;
       createdDatetime: string;
       deliveredDatetime?: string | null;
+      receivedDatetime?: string | null;
       comment?: string | null;
       theirReference?: string | null;
       linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
@@ -815,6 +817,7 @@ export const CustomerReturnRowFragmentDoc = gql`
     colour
     createdDatetime
     deliveredDatetime
+    receivedDatetime
     comment
     theirReference
     linkedShipment {
