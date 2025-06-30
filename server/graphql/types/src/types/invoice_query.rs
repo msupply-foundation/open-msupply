@@ -72,7 +72,7 @@ pub enum InvoiceNodeStatus {
     Delivered,
     /// General description: Received inbound Shipment has arrived, not counted or verified yet
     /// Outbound Shipment: Status is updated based on corresponding inbound Shipment
-    /// Inbound Shipment: Status update, doesn't affect stock levels or restrict accesss to edite
+    /// Inbound Shipment: Status update, doesn't affect stock levels or restrict access to edit
     Received,
     /// General description: Received inbound Shipment was counted and verified
     /// Outbound Shipment: Status is updated based on corresponding inbound Shipment
