@@ -3018,6 +3018,7 @@ export type InsertClinicianInput = {
   id: Scalars['String']['input'];
   initials: Scalars['String']['input'];
   lastName: Scalars['String']['input'];
+  mobile?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertContactFormInput = {
