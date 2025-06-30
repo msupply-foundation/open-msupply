@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   TableProvider,
   DataTable,
@@ -16,13 +16,15 @@ import {
   useCallbackWithPermission,
   UserPermission,
   useTranslation,
-  GenderType,
   getGenderTranslationKey,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
-import { usePatientStore } from '@openmsupply-client/programs';
+import {
+  CreateNewPatient,
+  usePatientStore,
+} from '@openmsupply-client/programs';
 import { ChipTableCell } from '../Components';
 import { CreatePatientModal } from '../CreatePatientModal';
 
@@ -38,7 +40,7 @@ export const programEnrolmentLabelAccessor: ColumnDataAccessor<
   });
 };
 
-const PatientListComponent: FC = () => {
+const PatientListComponent = () => {
   const t = useTranslation();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const {
@@ -72,7 +74,7 @@ const PatientListComponent: FC = () => {
     sortBy,
   };
 
-  const onCreatePatient = useCallbackWithPermission(
+  const handleClick = useCallbackWithPermission(
     UserPermission.PatientMutate,
     () => setCreateModalOpen(true)
   );
@@ -106,7 +108,8 @@ const PatientListComponent: FC = () => {
     {
       key: 'gender',
       label: 'label.gender',
-      formatter: gender => t(getGenderTranslationKey(gender as GenderType)),
+      accessor: ({ rowData }) =>
+        rowData.gender ? t(getGenderTranslationKey(rowData.gender)) : '',
     },
     {
       key: 'dateOfBirth',
@@ -149,10 +152,22 @@ const PatientListComponent: FC = () => {
     [updateSortQuery, sortBy]
   );
 
+  const onCreatePatient = (newPatient: CreateNewPatient) => {
+    navigate(newPatient.id);
+  };
+
+  const onSelectPatient = (selectedPatient: string) => {
+    navigate(selectedPatient);
+  };
+
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons sortBy={sortBy} />
+      <AppBarButtons
+        sortBy={sortBy}
+        onCreatePatient={onCreatePatient}
+        onSelectPatient={onSelectPatient}
+      />
       <DataTable
         id="patients"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
@@ -166,20 +181,25 @@ const PatientListComponent: FC = () => {
           navigate(String(row.id));
         }}
         noDataElement={
-          <NothingHere
-            body={t('error.no-patients')}
-            onCreate={onCreatePatient}
-          />
+          <NothingHere body={t('error.no-patients')} onCreate={handleClick} />
         }
       />
       {createModalOpen ? (
-        <CreatePatientModal onClose={() => setCreateModalOpen(false)} />
+        <CreatePatientModal
+          onClose={() => setCreateModalOpen(false)}
+          onCreatePatient={newPatient => {
+            onCreatePatient(newPatient);
+          }}
+          onSelectPatient={selectedPatient => {
+            onSelectPatient(selectedPatient);
+          }}
+        />
       ) : null}
     </>
   );
 };
 
-export const PatientListView: FC = () => (
+export const PatientListView = () => (
   <TableProvider createStore={createTableStore}>
     <PatientListComponent />
   </TableProvider>

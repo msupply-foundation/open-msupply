@@ -1,5 +1,7 @@
 use async_graphql::*;
+mod mutations;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
+use mutations::install::install_uploaded_reports;
 use print::{generate_report, generate_report_definition, PrintReportResponse};
 use reports::{
     all_report_versions, report, reports, ReportFilterInput, ReportResponse, ReportSortInput,
@@ -132,5 +134,20 @@ impl PrintFormat {
             PrintFormat::Html => ServicePrintFormat::Html,
             PrintFormat::Excel => ServicePrintFormat::Excel,
         }
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct CentralReportMutations;
+
+#[Object]
+impl CentralReportMutations {
+    pub async fn install_uploaded_reports(
+        &self,
+        ctx: &Context<'_>,
+        file_id: String,
+    ) -> Result<Vec<String>> {
+        let ids = install_uploaded_reports(ctx, file_id)?;
+        Ok(ids)
     }
 }
