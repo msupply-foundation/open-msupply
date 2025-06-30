@@ -18,6 +18,7 @@ module.exports = ({ pluginName, distDir }) => ({
   resolve: {
     extensions: ['.js', '.css', '.ts', '.tsx'],
     plugins: [new TsconfigPathsPlugin()],
+    fullySpecified: false,
   },
   module: {
     rules: [
@@ -32,6 +33,12 @@ module.exports = ({ pluginName, distDir }) => ({
       {
         test: /\.(png|svg|jpg|jpeg|gif)$/i,
         type: 'asset/resource',
+      },
+      {
+        test: /\.m?js$/,
+        resolve: {
+          fullySpecified: false,
+        },
       },
     ],
   },
