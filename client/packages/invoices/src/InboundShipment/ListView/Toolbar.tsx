@@ -88,7 +88,7 @@ export const Toolbar = ({ filter, simplifiedTabletView }: ToolbarProps) => {
                     value: InvoiceNodeStatus.Shipped,
                   },
                   {
-                    label: t('label.inbound-received'),
+                    label: t('label.received'),
                     value: InvoiceNodeStatus.Received,
                   },
                   {
