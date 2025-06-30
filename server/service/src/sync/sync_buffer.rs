@@ -93,7 +93,7 @@ mod test {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "1".to_string();
             r.table_name = "transact".to_string();
-            r.delivered_datetime = Defaults::naive_date_time();
+            r.received_datetime = Defaults::naive_date_time();
         })
     }
 
@@ -101,7 +101,7 @@ mod test {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "2".to_string();
             r.table_name = "trans_line".to_string();
-            r.delivered_datetime = Defaults::naive_date_time();
+            r.received_datetime = Defaults::naive_date_time();
         })
     }
 
@@ -109,7 +109,7 @@ mod test {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "3".to_string();
             r.table_name = "store".to_string();
-            r.delivered_datetime = Defaults::naive_date_time();
+            r.received_datetime = Defaults::naive_date_time();
         })
     }
 
@@ -117,7 +117,7 @@ mod test {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "4".to_string();
             r.table_name = "name".to_string();
-            r.delivered_datetime = Defaults::naive_date_time();
+            r.received_datetime = Defaults::naive_date_time();
         })
     }
 
@@ -125,7 +125,7 @@ mod test {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "5".to_string();
             r.table_name = "list_master".to_string();
-            r.delivered_datetime = Defaults::naive_date_time();
+            r.received_datetime = Defaults::naive_date_time();
             r.action = SyncAction::Delete;
         })
     }
@@ -134,7 +134,7 @@ mod test {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "6".to_string();
             r.table_name = "list_master_line".to_string();
-            r.delivered_datetime = Defaults::naive_date_time();
+            r.received_datetime = Defaults::naive_date_time();
             r.action = SyncAction::Delete;
         })
     }
@@ -142,7 +142,7 @@ mod test {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "1-1".to_string();
             r.table_name = "list_master".to_string();
-            r.delivered_datetime = Defaults::naive_date_time();
+            r.received_datetime = Defaults::naive_date_time();
             r.action = SyncAction::Delete;
             r.source_site_id = Some(1);
         })
@@ -152,7 +152,7 @@ mod test {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "1-2".to_string();
             r.table_name = "list_master_line".to_string();
-            r.delivered_datetime = Defaults::naive_date_time();
+            r.received_datetime = Defaults::naive_date_time();
             r.action = SyncAction::Delete;
             r.source_site_id = Some(1);
         })
