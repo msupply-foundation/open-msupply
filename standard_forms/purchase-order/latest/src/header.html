@@ -73,7 +73,7 @@ date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else
   </div>
   <div class="header-space-between">
     <span>
-      {% if data.purchaseOrder.supplier %} data.requisition.supplier.address1 {%
+      {% if data.purchaseOrder.supplier %} data.purchaseOrder.supplier.address1 {%
       if data.purchaseOrder.supplier.address2 %},
       {{ data.purchaseOrder.supplier.address2 }} {% endif %} {% endif %}
     </span>
