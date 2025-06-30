@@ -47,6 +47,21 @@ export type AllReportVersionsQuery = {
       };
 };
 
+export type InstallUploadedReportsMutationVariables = Types.Exact<{
+  fileId: Types.Scalars['String']['input'];
+}>;
+
+export type InstallUploadedReportsMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    reports: {
+      __typename: 'CentralReportMutations';
+      installUploadedReports: Array<string>;
+    };
+  };
+};
+
 export const ReportWithVersionRowFragmentDoc = gql`
   fragment ReportWithVersionRow on ReportNode {
     __typename
@@ -96,6 +111,15 @@ export const AllReportVersionsDocument = gql`
   }
   ${ReportWithVersionRowFragmentDoc}
 `;
+export const InstallUploadedReportsDocument = gql`
+  mutation installUploadedReports($fileId: String!) {
+    centralServer {
+      reports {
+        installUploadedReports(fileId: $fileId)
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -129,6 +153,22 @@ export function getSdk(
           ),
         'allReportVersions',
         'query',
+        variables
+      );
+    },
+    installUploadedReports(
+      variables: InstallUploadedReportsMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<InstallUploadedReportsMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InstallUploadedReportsMutation>(
+            InstallUploadedReportsDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'installUploadedReports',
+        'mutation',
         variables
       );
     },

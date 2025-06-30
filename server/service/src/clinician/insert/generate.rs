@@ -26,6 +26,7 @@ pub fn generate(
         last_name,
         first_name,
         gender,
+        mobile,
     } = insert_input;
 
     let clinician = ClinicianRow {
@@ -37,12 +38,12 @@ pub fn generate(
         first_name,
         gender,
         is_active: true,
+        mobile,
 
         // Defaults for now
         address1: None,
         address2: None,
         phone: None,
-        mobile: None,
         email: None,
     };
 
