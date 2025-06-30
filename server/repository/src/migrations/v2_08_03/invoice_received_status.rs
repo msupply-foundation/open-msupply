@@ -56,8 +56,8 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                INSERT INTO changelog (record_id, row_action, store_id)
-                SELECT id, 'UPSERT', store_id
+                INSERT INTO changelog (record_id, table_name, row_action, store_id)
+                SELECT id,'invoice', 'UPSERT', store_id
                 FROM invoice
                 WHERE received_datetime IS NOT NULL
                 AND store_id in (SELECT store_id FROM store WHERE site_id in (SELECT value_int FROM key_value_store WHERE id = 'SETTINGS_SYNC_SITE_ID'))
