@@ -209,7 +209,7 @@ mod test {
             }))
             .join(inline_edit(&stock_movement_point(), |mut u| {
                 u.invoices[0].r#type = InvoiceType::InboundShipment;
-                u.invoices[0].delivered_datetime = Some(
+                u.invoices[0].received_datetime = Some(
                     NaiveDate::from_ymd_opt(2020, 12, 15)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
@@ -222,7 +222,7 @@ mod test {
             .join(inline_edit(&stock_movement_point(), |mut u| {
                 u.invoices[0].r#type = InvoiceType::InboundShipment;
                 // Should not be counted
-                u.invoices[0].delivered_datetime = None;
+                u.invoices[0].received_datetime = None;
                 u.invoice_lines[0].r#type = InvoiceLineType::StockIn;
                 u.invoice_lines[0].number_of_packs = 20.0;
                 u

@@ -108,7 +108,7 @@ fn transact_1_pull_row() -> InvoiceRow {
         name_store_id: Some("store_a".to_string()),
         invoice_number: 1,
         r#type: InvoiceType::InboundShipment,
-        status: InvoiceStatus::Delivered,
+        status: InvoiceStatus::Received,
         on_hold: false,
         comment: None,
         their_reference: None,
@@ -122,6 +122,13 @@ fn transact_1_pull_row() -> InvoiceRow {
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: Some(
+            NaiveDate::from_ymd_opt(2021, 7, 30)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(47046),
+        ),
+        received_datetime: Some(
             NaiveDate::from_ymd_opt(2021, 7, 30)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -185,6 +192,13 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         allocated_datetime: None,
         picked_datetime: None,
         shipped_datetime: None,
+        received_datetime: Some(
+            NaiveDate::from_ymd_opt(2021, 7, 30)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(47046),
+        ),
         delivered_datetime: Some(
             NaiveDate::from_ymd_opt(2021, 7, 30)
                 .unwrap()
@@ -194,7 +208,7 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         ),
         verified_datetime: None,
         cancelled_datetime: None,
-        om_status: Some(InvoiceStatus::Delivered),
+        om_status: Some(InvoiceStatus::Received),
         om_type: Some(InvoiceType::InboundShipment),
         om_colour: None,
         tax_percentage: Some(0.0),
@@ -328,6 +342,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             picked_datetime: None,
             shipped_datetime: None,
             delivered_datetime: None,
+            received_datetime: None,
             verified_datetime: None,
             cancelled_datetime: None,
             colour: None,
@@ -386,6 +401,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             picked_datetime: None,
             shipped_datetime: None,
             delivered_datetime: None,
+            received_datetime: None,
             verified_datetime: None,
             cancelled_datetime: None,
             om_status: Some(InvoiceStatus::Shipped),
@@ -489,6 +505,7 @@ const TRANSACT_OM_FIELDS: (&str, &str) = (
         "om_allocated_datetime": "2022-08-25T10:33:00",
         "om_picked_datetime": "2022-08-26T11:33:00",
         "om_shipped_datetime": "2022-08-27T12:33:00",
+        "om_received_datetime": "2022-08-28T13:33:00",
         "om_delivered_datetime": "2022-08-28T13:33:00",
         "om_verified_datetime": "2022-08-29T14:33:00",
         "om_status": "SHIPPED",
@@ -538,6 +555,12 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
                     .unwrap(),
             ),
             delivered_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 28)
+                    .unwrap()
+                    .and_hms_opt(13, 33, 0)
+                    .unwrap(),
+            ),
+            received_datetime: Some(
                 NaiveDate::from_ymd_opt(2022, 8, 28)
                     .unwrap()
                     .and_hms_opt(13, 33, 0)
@@ -595,7 +618,6 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             confirm_date: Some(NaiveDate::from_ymd_opt(2022, 8, 29).unwrap()),
             confirm_time: NaiveTime::from_hms_opt(14, 33, 0).unwrap(),
             mode: TransactMode::Store,
-
             created_datetime: Some(
                 NaiveDate::from_ymd_opt(2022, 8, 24)
                     .unwrap()
@@ -618,6 +640,12 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
                 NaiveDate::from_ymd_opt(2022, 8, 27)
                     .unwrap()
                     .and_hms_opt(12, 33, 0)
+                    .unwrap()
+            ),
+            received_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 8, 28)
+                    .unwrap()
+                    .and_hms_opt(13, 33, 0)
                     .unwrap()
             ),
             delivered_datetime: Some(
@@ -777,6 +805,7 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             picked_datetime: None,
             shipped_datetime: None,
             delivered_datetime: None,
+            received_datetime: None,
             cancelled_datetime: None,
             requisition_id: None,
             linked_invoice_id: None,
@@ -838,6 +867,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             picked_datetime: None,
             shipped_datetime: None,
             delivered_datetime: None,
+            received_datetime: None,
             om_colour: None,
             ship_date: None,
             hold: false,
@@ -985,6 +1015,7 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             picked_datetime: None,
             shipped_datetime: None,
             delivered_datetime: None,
+            received_datetime: None,
             requisition_id: None,
             cancelled_datetime: None,
             linked_invoice_id: None,
@@ -1045,6 +1076,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             picked_datetime: None,
             shipped_datetime: None,
             delivered_datetime: None,
+            received_datetime: None,
             om_colour: None,
             ship_date: None,
             hold: false,
@@ -1186,6 +1218,7 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             ),
             shipped_datetime: None,
             delivered_datetime: None,
+            received_datetime: None,
             verified_datetime: None,
             cancelled_datetime: None,
             colour: None,
@@ -1249,6 +1282,7 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             ),
             shipped_datetime: None,
             delivered_datetime: None,
+            received_datetime: None,
             verified_datetime: None,
             cancelled_datetime: None,
             om_status: Some(InvoiceStatus::Picked),
@@ -1390,6 +1424,7 @@ fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
             ),
             shipped_datetime: None,
             delivered_datetime: None,
+            received_datetime: None,
             verified_datetime: None,
             cancelled_datetime: Some(
                 NaiveDate::from_ymd_opt(2022, 8, 24)
@@ -1458,6 +1493,7 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             ),
             shipped_datetime: None,
             delivered_datetime: None,
+            received_datetime: None,
             verified_datetime: None,
             cancelled_datetime: Some(
                 NaiveDate::from_ymd_opt(2022, 8, 24)
@@ -1512,8 +1548,9 @@ fn transact_migrate_og_si_to_shipped_pull() -> TestSyncIncomingRecord {
             id: TRANSACT_MIGRATE_OG_SI_STATUS_ID.to_string(),
             status: InvoiceStatus::Shipped,
 
-            shipped_datetime: transact_1_pull_row().delivered_datetime,
+            shipped_datetime: transact_1_pull_row().received_datetime,
             delivered_datetime: None,
+            received_datetime: None,
             ..transact_1_pull_row()
         },
     )
@@ -1532,6 +1569,7 @@ fn transact_migrate_og_si_to_shipped_push() -> TestSyncOutgoingRecord {
             confirm_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             shipped_datetime: transact_1_push_legacy_row().delivered_datetime,
             delivered_datetime: None,
+            received_datetime: None,
             ship_date: Some(transact_1_push_legacy_row().entry_date),
             ..transact_1_push_legacy_row()
         }),
