@@ -56,6 +56,9 @@ const getStatusOptions = (
     },
   ];
 
+  // User can only go forward through the statuses, so we enable the ones that are later in the order
+  // Should be refactored to make this easier to maintain, for some examples the next available status might not be as simple as this...
+
   if (currentStatus === InvoiceNodeStatus.Shipped) {
     // When the status is shipped the user can select from delivered, received and verified options
     options[3].isDisabled = false;
