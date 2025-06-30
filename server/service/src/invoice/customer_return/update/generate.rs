@@ -114,7 +114,10 @@ fn set_new_status_datetime(customer_return: &mut InvoiceRow, patch: &UpdateCusto
     match (&customer_return.status, new_status) {
         // From New/Picked/Shipped to Received (Always skip Delivered for Customer Returns)
         (
-            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
+            InvoiceStatus::New
+            | InvoiceStatus::Picked
+            | InvoiceStatus::Shipped
+            | InvoiceStatus::Delivered,
             UpdateCustomerReturnStatus::Received,
         ) => {
             customer_return.delivered_datetime = Some(current_datetime);
