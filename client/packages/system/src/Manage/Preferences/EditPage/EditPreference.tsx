@@ -53,7 +53,7 @@ export const EditPreference = ({
       // because there are no editPreference inputs that accept a number
       return <>To be implemented</>;
 
-    case PreferenceValueNodeType.Enums: {
+    case PreferenceValueNodeType.Enums:
       if (!Array.isArray(value)) {
         return t('error.something-wrong');
       }
@@ -70,7 +70,6 @@ export const EditPreference = ({
           }}
         />
       );
-    }
 
     default:
       noOtherVariants(preference.valueType);

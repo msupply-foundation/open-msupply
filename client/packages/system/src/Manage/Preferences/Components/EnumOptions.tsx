@@ -36,12 +36,7 @@ export const EnumOptions = <T extends string>({
   };
 
   return (
-    <Box
-      display="grid"
-      gridTemplateColumns="repeat(2, 1fr)"
-      gap={1}
-      width="100%"
-    >
+    <Box display="grid" gridTemplateColumns="1fr 1fr" width="100%">
       {options.map(option => (
         <InputWithLabelRow
           key={option.value}
@@ -54,11 +49,14 @@ export const EnumOptions = <T extends string>({
               onChange={e => handleChange(option.value, e.target.checked)}
             />
           }
-          labelWidth={'200px'}
+          labelWidth={'180px'}
           labelProps={{
             sx: {
               fontWeight: 'normal',
             },
+          }}
+          sx={{
+            gap: 0,
           }}
         />
       ))}
