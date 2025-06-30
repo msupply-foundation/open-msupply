@@ -23,6 +23,9 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
         GenderType.Male,
         GenderType.NonBinary,
         GenderType.Unknown,
+        GenderType.Transgender,
+        GenderType.TransgenderFemale,
+        GenderType.TransgenderMale,
       ],
     },
   } = usePreference(PreferenceKey.GenderOptions);
