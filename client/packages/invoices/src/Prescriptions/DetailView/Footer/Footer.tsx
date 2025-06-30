@@ -33,7 +33,7 @@ const createStatusLog = (invoice: PrescriptionRowFragment) => {
     [InvoiceNodeStatus.Picked]: null,
     [InvoiceNodeStatus.Verified]: null,
     [InvoiceNodeStatus.Cancelled]: null,
-    // placeholder not used in prescriptions
+    // Not used in prescriptions
     [InvoiceNodeStatus.Allocated]: null,
     [InvoiceNodeStatus.Shipped]: null,
     [InvoiceNodeStatus.Delivered]: null,
