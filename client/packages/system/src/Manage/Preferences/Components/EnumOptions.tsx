@@ -1,0 +1,58 @@
+import React from 'react';
+import { Box, Checkbox, InputWithLabelRow } from '@openmsupply-client/common';
+
+interface EnumOption<T extends string> {
+  value: T;
+  label: string;
+}
+
+interface EnumOptionsProps<T extends string> {
+  options: EnumOption<T>[];
+  value: T[];
+  onChange: (newValues: T[]) => void;
+  disabled?: boolean;
+}
+
+export const EnumOptions = <T extends string>({
+  value,
+  onChange,
+  disabled,
+  options,
+}: EnumOptionsProps<T>) => {
+  const handleChange = (optionValue: T, checked: boolean) => {
+    const newValue = checked
+      ? [...value, optionValue]
+      : value.filter(v => v !== optionValue);
+    onChange(newValue);
+  };
+
+  return (
+    <Box
+      display="grid"
+      gridTemplateColumns="repeat(2, 1fr)"
+      gap={1}
+      width="100%"
+    >
+      {options.map(option => (
+        <InputWithLabelRow
+          key={option.value}
+          label={option.label}
+          labelRight
+          Input={
+            <Checkbox
+              disabled={disabled}
+              checked={value.includes(option.value)}
+              onChange={e => handleChange(option.value, e.target.checked)}
+            />
+          }
+          labelWidth={'200px'}
+          labelProps={{
+            sx: {
+              fontWeight: 'normal',
+            },
+          }}
+        />
+      ))}
+    </Box>
+  );
+};
