@@ -75,6 +75,19 @@ export const CreateClinicianForm = ({
         }
       />
       <InputWithLabelRow
+        label={t('label.mobile')}
+        Input={
+          <BasicTextInput
+            sx={{ width }}
+            value={draft.mobile}
+            onChange={event => {
+              const numericValue = event.target.value.replace(/[^0-9]/g, '');
+              updateDraft({ mobile: numericValue });
+            }}
+          />
+        }
+      />
+      <InputWithLabelRow
         label={t('label.gender')}
         Input={
           <GenderInput
