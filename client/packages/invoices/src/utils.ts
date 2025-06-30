@@ -88,7 +88,7 @@ const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   PICKED: 'label.picked',
   SHIPPED: 'label.shipped',
   DELIVERED: 'label.delivered',
-  RECEIVED: 'label.invoice-received',
+  RECEIVED: 'label.inbound-received',
   NEW: 'label.new',
   VERIFIED: 'label.verified',
   CANCELLED: 'label.cancelled',
