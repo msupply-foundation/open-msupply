@@ -51,7 +51,7 @@ const createStatusLog = (invoice: InboundFragment) => {
     statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
   }
   if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Received] = invoice.deliveredDatetime;
+    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
   }
   if (statusIdx >= 5) {
     statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
