@@ -29,6 +29,9 @@ export const GenderInput = ({
         GenderType.Male,
         GenderType.NonBinary,
         GenderType.Unknown,
+        GenderType.Transgender,
+        GenderType.TransgenderFemale,
+        GenderType.TransgenderMale,
       ],
     },
   } = usePreference(PreferenceKey.GenderOptions);
