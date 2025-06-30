@@ -89,6 +89,7 @@ export type CustomerReturnFragment = {
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
   deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   verifiedDatetime?: string | null;
   otherPartyId: string;
   otherPartyName: string;
@@ -521,6 +522,7 @@ export type CustomerReturnByNumberQuery = {
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyId: string;
         otherPartyName: string;
@@ -596,6 +598,7 @@ export type CustomerReturnByIdQuery = {
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyId: string;
         otherPartyName: string;
@@ -885,6 +888,7 @@ export const CustomerReturnFragmentDoc = gql`
     pickedDatetime
     shippedDatetime
     deliveredDatetime
+    receivedDatetime
     verifiedDatetime
     otherPartyId
     otherPartyName
