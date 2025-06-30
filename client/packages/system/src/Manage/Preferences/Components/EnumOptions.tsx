@@ -1,5 +1,14 @@
 import React from 'react';
-import { Box, Checkbox, InputWithLabelRow } from '@openmsupply-client/common';
+import {
+  Box,
+  Checkbox,
+  GenderType,
+  getGenderTranslationKey,
+  InputWithLabelRow,
+  LocaleKey,
+  PreferenceKey,
+  TypedTFunction,
+} from '@openmsupply-client/common';
 
 interface EnumOption<T extends string> {
   value: T;
@@ -55,4 +64,24 @@ export const EnumOptions = <T extends string>({
       ))}
     </Box>
   );
+};
+
+export const getEnumPreferenceOptions = (
+  t: TypedTFunction<LocaleKey>,
+  key: PreferenceKey
+) => {
+  switch (key) {
+    case PreferenceKey.GenderOptions:
+      return Object.values(GenderType)
+        .filter(
+          gender => !gender.includes('HORMONE') && !gender.includes('SURGICAL')
+        )
+        .map(gender => ({
+          value: gender,
+          label: t(getGenderTranslationKey(gender)),
+        }));
+
+    default:
+      return [];
+  }
 };
