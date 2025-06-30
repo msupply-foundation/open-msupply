@@ -62,7 +62,6 @@ pub fn update_inbound_shipment(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            println!("update_inbound_shipment: {:?}", patch);
             let (invoice, other_party, status_changed) =
                 validate(connection, &ctx.store_id, &patch)?;
             let GenerateResult {
@@ -75,8 +74,6 @@ pub fn update_inbound_shipment(
                 vvm_status_logs_to_update,
                 update_donor,
             } = generate(ctx, invoice, other_party, patch.clone())?;
-
-            println!("batches to update: {:?}", batches_to_update);
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
             let invoice_line_repository = InvoiceLineRowRepository::new(connection);
@@ -509,7 +506,6 @@ mod test {
         .unwrap();
 
         for line in invoice_lines.rows {
-            println!("initial {:?}", line);
             assert_eq!(line.stock_line_option, None)
         }
 
@@ -555,7 +551,6 @@ mod test {
 
         // There shouldn't be any stock lines saved yet As just in delivered status
         for line in invoice_lines.rows {
-            println!("delivered {:?}", line);
             assert_eq!(line.stock_line_option, None)
         }
 
