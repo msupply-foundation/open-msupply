@@ -7,7 +7,7 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "invoice_received_status"
+        "invoice_received_status2"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
