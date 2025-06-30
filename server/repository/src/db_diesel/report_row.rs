@@ -31,7 +31,8 @@ pub enum ContextType {
     InboundReturn,
     Report,
     Prescription,
-    InternalOrder
+    InternalOrder,
+    PurchaseOrder,
 }
 
 table! {
