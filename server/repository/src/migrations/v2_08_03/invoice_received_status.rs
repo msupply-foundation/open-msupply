@@ -27,8 +27,8 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                -- Add delivered_datetime column to invoice table
-                ALTER TABLE invoice ADD COLUMN delivered_datetime {DATETIME};
+                -- Add delivered_no_stock_datetime column to invoice table
+                ALTER TABLE invoice ADD COLUMN delivered_no_stock_datetime {DATETIME};
             "#
         )?;
 
