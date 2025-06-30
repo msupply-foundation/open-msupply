@@ -21,6 +21,7 @@ import {
   getDosesPerUnitColumn,
   useFormatNumber,
   NumUtils,
+  TextInputCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -64,18 +65,16 @@ export const QuantityTableComponent = ({
   const t = useTranslation();
   const theme = useTheme();
   const { getPlural } = useIntlUtils();
+  const { format } = useFormatNumber();
   const { data: preferences } = usePreference(
     PreferenceKey.ManageVaccinesInDoses
   );
-  const { format } = useFormatNumber();
 
   const displayInDoses =
     !!preferences?.manageVaccinesInDoses && !!item?.isVaccine;
-
   const unitName = Formatter.sentenceCase(
     item?.unitName ? item.unitName : t('label.unit')
   );
-
   const pluralisedUnitName = getPlural(unitName, 2);
 
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
@@ -127,7 +126,19 @@ export const QuantityTableComponent = ({
           }
         },
       },
-    ]
+    ],
+    {
+      key: 'shippedNumberOfPacks',
+      label: 'label.shipped-number-of-packs',
+      Cell: NumberOfPacksCell,
+      cellProps: {
+        decimalLimit: 0,
+      },
+      getIsDisabled: rowData => !!rowData.linkedInvoiceId,
+      width: 100,
+      align: ColumnAlign.Left,
+      setter: patch => updateDraftLine(patch),
+    }
   );
 
   columnDefinitions.push({
@@ -340,7 +351,18 @@ export const LocationTableComponent = ({
         accessor: ({ rowData }) => rowData.batch || '',
       },
     ],
-    [getLocationInputColumn(), { setter: updateDraftLine, width: 550 }],
+    [getLocationInputColumn(), { setter: updateDraftLine, width: 530 }],
+    [
+      'note',
+      {
+        Cell: TextInputCell,
+        setter: patch => {
+          const note = patch.note === '' ? null : patch.note;
+          updateDraftLine({ ...patch, note });
+        },
+        accessor: ({ rowData }) => rowData.note,
+      },
+    ],
   ];
 
   if (preferences?.allowTrackingOfStockByDonor) {

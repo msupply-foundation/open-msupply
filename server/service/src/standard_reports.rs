@@ -1,6 +1,6 @@
 use repository::{
     ContextType, EqualFilter, FormSchemaJson, FormSchemaRowRepository, ReportFilter,
-    ReportRepository, ReportRow, ReportRowRepository, StorageConnection,
+    ReportMetaDataRow, ReportRepository, ReportRow, ReportRowRepository, StorageConnection,
 };
 use rust_embed::RustEmbed;
 use thiserror::Error;
@@ -54,8 +54,8 @@ impl StandardReports {
         reports_data: ReportsData,
         con: &StorageConnection,
         overwrite: bool,
-    ) -> Result<(), anyhow::Error> {
-        let mut num_std_reports = 0;
+    ) -> Result<Vec<ReportMetaDataRow>, anyhow::Error> {
+        let mut upserted_reports: Vec<ReportMetaDataRow> = vec![];
         for report in reports_data.reports {
             let report_versions = ReportRepository::new(con)
                 .query_by_filter(ReportFilter::new().code(EqualFilter::equal_to(&report.code)))?;
@@ -77,7 +77,7 @@ impl StandardReports {
                     FormSchemaRowRepository::new(con).upsert_one(form_schema_json)?;
                 }
                 ReportRowRepository::new(con).upsert_one(&ReportRow {
-                    id: report.id,
+                    id: report.id.clone(),
                     name: report.name,
                     template: serde_json::to_string_pretty(&report.template)?,
                     context: report.context,
@@ -85,16 +85,23 @@ impl StandardReports {
                     argument_schema_id: report.argument_schema_id,
                     comment: report.comment,
                     is_custom: report.is_custom,
-                    version: report.version,
-                    code: report.code,
+                    version: report.version.clone(),
+                    code: report.code.clone(),
                     is_active: set_active,
                     excel_template_buffer: report.excel_template_buffer,
                 })?;
-                num_std_reports += 1;
+                upserted_reports.push(ReportMetaDataRow {
+                    id: report.id,
+                    is_custom: report.is_custom,
+                    version: report.version,
+                    code: report.code,
+                    is_active: true,
+                });
             }
         }
-        info!("Upserted {} reports", num_std_reports);
-        Ok(())
+        info!("Upserted {} reports", upserted_reports.len());
+
+        Ok(upserted_reports)
     }
 }
 

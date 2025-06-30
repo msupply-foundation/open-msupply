@@ -1,18 +1,23 @@
+import React, { useState } from 'react';
 import {
   Autocomplete,
   Box,
-  IconButton,
-  PlusCircleIcon,
   Typography,
+  useConfirmationModal,
   useIntlUtils,
+  useNotification,
   useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
 import { ClinicianFragment, useClinicians } from '@openmsupply-client/programs';
-import React, { useState } from 'react';
-import { FC } from 'react';
-import { ClinicianAutocompleteOption, Clinician } from './utils';
-import { NewClinicianModal } from './NewClinicianModal';
+import {
+  ClinicianAutocompleteOption,
+  Clinician,
+  isExistingCode,
+} from './utils';
+import { CreateClinicianSlider } from './CreateClinicianSlider';
+import { CreateClinicianModal } from './CreateClinicianModal';
+import { useCreateClinician } from './useCreateClinician';
 
 interface ClinicianSearchInputProps {
   onChange: (clinician: ClinicianAutocompleteOption | null) => void;
@@ -21,30 +26,78 @@ interface ClinicianSearchInputProps {
   disabled?: boolean;
   fullWidth?: boolean;
   allowCreate?: boolean;
-  mountCreateModalAsSidePanel?: boolean;
+  mountSlidePanel?: boolean;
 }
 
-export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
+export const ClinicianSearchInput = ({
   onChange,
   width = 250,
   clinicianValue,
   disabled,
   fullWidth,
   allowCreate,
-  mountCreateModalAsSidePanel = false,
-}) => {
+  mountSlidePanel = false,
+}: ClinicianSearchInputProps) => {
   const t = useTranslation();
-  const [modalOpen, setModalOpen] = useState(false);
-  const { data, refetch } = useClinicians.document.list({});
-  const { getLocalisedFullName } = useIntlUtils();
-  const clinicians: ClinicianFragment[] = data?.nodes ?? [];
   const theme = useTheme();
+  const { getLocalisedFullName } = useIntlUtils();
+  const { error, success } = useNotification();
+  const { data, refetch } = useClinicians.document.list({});
+  const { isSaving, draft, updateDraft, isValid, save, clear } =
+    useCreateClinician();
+
+  const clinicians: ClinicianFragment[] = data?.nodes ?? [];
+
+  const [editorOpen, setEditorOpen] = useState(false);
+
+  const handleCreateClick = () => {
+    onChange(null);
+    setEditorOpen(true);
+  };
 
   const asOption = (clinician: Clinician): ClinicianAutocompleteOption => ({
     label: getLocalisedFullName(clinician.firstName, clinician.lastName),
     value: clinician,
     id: clinician.id,
   });
+
+  const handleClinicianClose = async (clinicianId?: string) => {
+    setEditorOpen(false);
+
+    if (clinicianId) {
+      const refreshedList = await refetch();
+      const newClinician = refreshedList.data?.nodes.find(
+        c => c.id === clinicianId
+      );
+      onChange(newClinician ? asOption(newClinician) : null);
+    }
+    clear();
+  };
+
+  const handleSave = async () => {
+    try {
+      const result = await save();
+      success(t('messages.created-clinician'))();
+      handleClinicianClose(result.id);
+    } catch (e) {
+      const errorSnack = error((e as Error).message);
+      errorSnack();
+    }
+  };
+
+  const confirm = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.clinician-code-already-exists'),
+    onConfirm: handleSave,
+  });
+
+  const confirmAndSave = () => {
+    if (isExistingCode(clinicians, draft.code)) {
+      confirm();
+    } else {
+      handleSave();
+    }
+  };
 
   return (
     <Box width={`${width}px`} display={'flex'} alignItems="center">
@@ -68,32 +121,38 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
         textSx={{ backgroundColor: theme.palette.background.drawer }}
         disabled={disabled}
         fullWidth={fullWidth}
-      />
-      {allowCreate && (
-        <>
-          <IconButton
-            icon={<PlusCircleIcon />}
-            label={t('button.add-new-clinician')}
-            color="secondary"
-            onClick={() => setModalOpen(true)}
-          />
-          <NewClinicianModal
-            onClose={async clinicianId => {
-              setModalOpen(false);
-              if (clinicianId) {
-                const refreshedList = await refetch();
-                const newClinician = refreshedList.data?.nodes.find(
-                  c => c.id === clinicianId
-                );
-                onChange(newClinician ? asOption(newClinician) : null);
+        clickableOption={
+          allowCreate
+            ? {
+                label: t('label.create-clinician'),
+                onClick: handleCreateClick,
               }
-            }}
-            open={modalOpen}
-            asSidePanel={mountCreateModalAsSidePanel}
-            existingClinicians={clinicians}
+            : undefined
+        }
+      />
+      {allowCreate &&
+        (mountSlidePanel ? (
+          <CreateClinicianSlider
+            draft={draft}
+            updateDraft={updateDraft}
+            width={500}
+            open={editorOpen}
+            onClose={handleClinicianClose}
+            confirmAndSave={confirmAndSave}
+            isSaving={isSaving}
+            isValid={isValid}
           />
-        </>
-      )}
+        ) : (
+          <CreateClinicianModal
+            draft={draft}
+            updateDraft={updateDraft}
+            onClose={handleClinicianClose}
+            open={editorOpen}
+            confirmAndSave={confirmAndSave}
+            isSaving={isSaving}
+            isValid={isValid}
+          />
+        ))}
     </Box>
   );
 };

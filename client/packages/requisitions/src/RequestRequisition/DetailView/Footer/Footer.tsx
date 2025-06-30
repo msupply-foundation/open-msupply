@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Box,
   StatusCrumbs,
@@ -8,7 +9,6 @@ import {
   Action,
   ActionsFooter,
 } from '@openmsupply-client/common';
-import React, { FC } from 'react';
 import { getRequisitionTranslator, requestStatuses } from '../../../utils';
 import { RequestFragment, useRequest } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
@@ -25,7 +25,7 @@ export const createStatusLog = (requisition: RequestFragment) => {
   return statusLog;
 };
 
-export const Footer: FC = () => {
+export const Footer = () => {
   const { data } = useRequest.document.get();
   const t = useTranslation();
   const { selectedRows, confirmAndDelete } = useRequest.line.delete();

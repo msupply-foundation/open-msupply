@@ -1,4 +1,4 @@
-use chrono::{NaiveDateTime, Utc};
+use chrono::{Duration, NaiveDateTime, Utc};
 use repository::{
     EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository,
     InvoiceRow, InvoiceRowRepository, InvoiceStatus, RepositoryError, StockLineRowRepository,
@@ -118,7 +118,11 @@ pub fn create_reverse_prescription(
     new_invoice.id = uuid();
     new_invoice.linked_invoice_id = Some(orig_invoice.id.clone());
     new_invoice.is_cancellation = true;
-    new_invoice.verified_datetime = Some(Utc::now().naive_utc());
+    new_invoice.created_datetime = orig_invoice.created_datetime + Duration::seconds(10);
+    new_invoice.picked_datetime = orig_invoice
+        .picked_datetime
+        .map(|dt| dt + Duration::seconds(10));
+    new_invoice.verified_datetime = Some(Utc::now().naive_utc() + Duration::seconds(10));
     new_invoice.status = InvoiceStatus::Verified;
     InvoiceRowRepository::new(connection).upsert_one(&new_invoice)?;
 
@@ -143,8 +147,7 @@ pub fn create_reverse_prescription(
         if let Some(stock_line_id) = &line.invoice_line_row.stock_line_id {
             let stock_line_repo = StockLineRowRepository::new(connection);
             let mut stock_line = stock_line_repo
-                .find_one_by_id(stock_line_id)
-                .map_err(RepositoryError::from)?
+                .find_one_by_id(stock_line_id)?
                 .ok_or(RepositoryError::NotFound)?;
 
             stock_line.total_number_of_packs += line.invoice_line_row.number_of_packs;
@@ -462,6 +465,7 @@ mod test {
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
+            shipped_number_of_packs: None,
         };
 
         invoice_line_row_repo.upsert_one(&invoice_line).unwrap();

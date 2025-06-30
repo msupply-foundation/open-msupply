@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   MasterListRowFragment,
   useMasterLists,
@@ -46,9 +46,9 @@ const MasterListsTable = ({ itemId }: { itemId?: string }) => {
   );
 };
 
-export const MasterListsTab: FC<{ itemId?: string }> = ({ itemId }) => (
-  <Box justifyContent="center" display="flex" flex={1} paddingTop={3}>
-    <Box flex={1} display="flex" maxWidth={1000}>
+export const MasterListsTab = ({ itemId }: { itemId?: string }) => (
+  <Box justifyContent="center" display="flex" flex={1}>
+    <Box flex={1} display="flex">
       <TableProvider
         createStore={createTableStore}
         queryParamsStore={createQueryParamsStore({

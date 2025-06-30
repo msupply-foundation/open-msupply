@@ -1,10 +1,22 @@
 import React, { FC, useEffect, useState } from 'react';
-import { Autocomplete, useTranslation } from '@openmsupply-client/common';
+import {
+  Autocomplete,
+  Box,
+  EditIcon,
+  IconButton,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { NameSearchInputProps, SearchInputPatient } from '../../utils';
 import { getPatientOptionRenderer } from '../PatientOptionRenderer';
 import { useSearchPatient } from '../utils';
 
-export const PatientSearchInput: FC<NameSearchInputProps> = ({
+interface PatientSearchInputProps extends NameSearchInputProps {
+  setEditPatientModalOpen?: (open: boolean) => void;
+}
+
+export const PatientSearchInput: FC<
+  PatientSearchInputProps & { allowEdit?: boolean }
+> = ({
   autoFocus,
   onChange,
   width = 250,
@@ -12,10 +24,12 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
   disabled = false,
   sx,
   NoOptionsRenderer,
+  setEditPatientModalOpen,
+  allowEdit = false,
 }) => {
+  const t = useTranslation();
   const PatientOptionRenderer = getPatientOptionRenderer();
   const { isLoading, patients, search } = useSearchPatient();
-  const t = useTranslation();
 
   const [input, setInput] = useState('');
 
@@ -43,43 +57,53 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
     : patients;
 
   return (
-    <Autocomplete
-      autoFocus={autoFocus}
-      options={options}
-      disabled={disabled}
-      clearable={false}
-      loading={isLoading}
-      onChange={(_, name) => {
-        if (name && !(name instanceof Array)) {
-          onChange(name);
-          setInput(name.name);
+    <Box width={`${width}px`} display={'flex'} alignItems="center">
+      <Autocomplete
+        autoFocus={autoFocus}
+        options={options}
+        disabled={disabled}
+        clearable={false}
+        loading={isLoading}
+        onChange={(_, name) => {
+          if (name && !(name instanceof Array)) {
+            onChange(name);
+            setInput(name.name);
+          }
+        }}
+        renderOption={noResults ? NoOptionsRenderer : PatientOptionRenderer}
+        getOptionLabel={(option: SearchInputPatient) => option.name}
+        isOptionEqualToValue={(option, value) => option.name === value.name}
+        popperMinWidth={width}
+        value={value}
+        inputValue={input}
+        inputProps={{
+          onChange: e => {
+            const { value } = e.target;
+            // update the input value and the search filter
+            setInput(value);
+            search(value);
+          },
+          // reset input value to previous selected patient if user clicks away
+          // without selecting a patient
+          onBlur: () => setInput(value?.name ?? ''),
+        }}
+        filterOptions={options => options}
+        sx={{ width: '100%', ...sx }}
+        noOptionsText={
+          input.length > 0
+            ? t('messages.no-matching-patients')
+            : t('messages.type-to-search')
         }
-      }}
-      renderOption={noResults ? NoOptionsRenderer : PatientOptionRenderer}
-      getOptionLabel={(option: SearchInputPatient) => option.name}
-      isOptionEqualToValue={(option, value) => option.name === value.name}
-      width={`${width}px`}
-      popperMinWidth={width}
-      value={value}
-      inputValue={input}
-      inputProps={{
-        onChange: e => {
-          const { value } = e.target;
-          // update the input value and the search filter
-          setInput(value);
-          search(value);
-        },
-        // reset input value to previous selected patient if user clicks away
-        // without selecting a patient
-        onBlur: () => setInput(value?.name ?? ''),
-      }}
-      filterOptions={options => options}
-      sx={{ minWidth: width, ...sx }}
-      noOptionsText={
-        input.length > 0
-          ? t('messages.no-matching-patients')
-          : t('messages.type-to-search')
-      }
-    />
+      />
+      {allowEdit && value && (
+        <>
+          <IconButton
+            icon={<EditIcon style={{ fontSize: 16, fill: 'none' }} />}
+            label={t('label.edit')}
+            onClick={() => setEditPatientModalOpen?.(true)}
+          />
+        </>
+      )}
+    </Box>
   );
 };
