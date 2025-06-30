@@ -54,7 +54,7 @@ fn check_outbound_shipment_is_returnable(outbound_shipment: &InvoiceRow) -> bool
         outbound_shipment.status,
         InvoiceStatus::Shipped
             | InvoiceStatus::DeliveredNoStock
-            | InvoiceStatus::Received
+            | InvoiceStatus::Delivered
             | InvoiceStatus::Verified
     )
 }

@@ -139,7 +139,7 @@ fn set_new_status_datetime(customer_return: &mut InvoiceRow, patch: &UpdateCusto
             customer_return.verified_datetime = Some(current_datetime);
         }
         // From Received to Verified
-        (InvoiceStatus::Received, UpdateCustomerReturnStatus::Verified) => {
+        (InvoiceStatus::Delivered, UpdateCustomerReturnStatus::Verified) => {
             customer_return.verified_datetime = Some(current_datetime);
         }
         _ => {}

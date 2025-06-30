@@ -124,7 +124,7 @@ where
 impl UpdateCustomerReturnStatus {
     pub fn as_invoice_row_status(&self) -> InvoiceStatus {
         match self {
-            UpdateCustomerReturnStatus::Received => InvoiceStatus::Received,
+            UpdateCustomerReturnStatus::Received => InvoiceStatus::Delivered,
             UpdateCustomerReturnStatus::Verified => InvoiceStatus::Verified,
         }
     }
@@ -325,7 +325,7 @@ mod test {
 
         let return_row = updated_return.invoice_row;
         // Status has been updated
-        assert_eq!(return_row.status, InvoiceStatus::Received);
+        assert_eq!(return_row.status, InvoiceStatus::Delivered);
         assert!(return_row.delivered_datetime.is_some());
         assert!(return_row.received_datetime.is_some());
         assert!(return_row.verified_datetime.is_none());

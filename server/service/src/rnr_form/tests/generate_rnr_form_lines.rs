@@ -526,7 +526,7 @@ mod generate_rnr_form_lines {
             name_link_id: "name_store_b".to_string(),
             store_id: mock_store_a().id,
             r#type: InvoiceType::InboundShipment,
-            status: InvoiceStatus::Received,
+            status: InvoiceStatus::Delivered,
             // During the rnr period
             received_datetime: NaiveDate::from_ymd_opt(2024, 1, 17)
                 .unwrap()

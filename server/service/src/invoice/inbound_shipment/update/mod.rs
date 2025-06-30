@@ -200,7 +200,7 @@ impl UpdateInboundShipmentStatus {
     pub fn full_status(&self) -> InvoiceStatus {
         match self {
             UpdateInboundShipmentStatus::Delivered => InvoiceStatus::DeliveredNoStock,
-            UpdateInboundShipmentStatus::Received => InvoiceStatus::Received,
+            UpdateInboundShipmentStatus::Received => InvoiceStatus::Delivered,
             UpdateInboundShipmentStatus::Verified => InvoiceStatus::Verified,
         }
     }
@@ -576,7 +576,7 @@ mod test {
             inline_edit(&invoice, |mut u| {
                 u.tax_percentage = Some(10.0);
                 u.user_id = Some(mock_user_account_a().id);
-                u.status = InvoiceStatus::Received;
+                u.status = InvoiceStatus::Delivered;
                 u
             })
         );
@@ -740,7 +740,7 @@ mod test {
                 u.currency_id = Some("currency_a".to_string());
                 u.currency_rate = 1.0;
                 u.user_id = Some(mock_user_account_a().id);
-                u.status = InvoiceStatus::Received;
+                u.status = InvoiceStatus::Delivered;
                 u
             })
         );

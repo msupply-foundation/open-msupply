@@ -616,7 +616,7 @@ impl InvoiceNodeStatus {
             Picked => InvoiceStatus::Picked,
             Shipped => InvoiceStatus::Shipped,
             Delivered => InvoiceStatus::DeliveredNoStock,
-            Received => InvoiceStatus::Received,
+            Received => InvoiceStatus::Delivered,
             Verified => InvoiceStatus::Verified,
             Cancelled => InvoiceStatus::Cancelled,
         }
@@ -630,7 +630,7 @@ impl InvoiceNodeStatus {
             Picked => InvoiceNodeStatus::Picked,
             Shipped => InvoiceNodeStatus::Shipped,
             DeliveredNoStock => InvoiceNodeStatus::Delivered,
-            Received => InvoiceNodeStatus::Received,
+            Delivered => InvoiceNodeStatus::Received,
             Verified => InvoiceNodeStatus::Verified,
             Cancelled => InvoiceNodeStatus::Cancelled,
         }

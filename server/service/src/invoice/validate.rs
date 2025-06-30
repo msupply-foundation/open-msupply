@@ -41,7 +41,7 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
                 InvoiceStatus::New
                     | InvoiceStatus::Shipped
                     | InvoiceStatus::DeliveredNoStock
-                    | InvoiceStatus::Received
+                    | InvoiceStatus::Delivered
             )
         }
         InvoiceType::Prescription => {
