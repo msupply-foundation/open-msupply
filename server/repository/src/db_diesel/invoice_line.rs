@@ -86,7 +86,7 @@ pub struct InvoiceLineFilter {
     pub invoice_status: Option<EqualFilter<InvoiceStatus>>,
     pub stock_line_id: Option<EqualFilter<String>>,
     pub picked_datetime: Option<DatetimeFilter>,
-    pub delivered_datetime: Option<DatetimeFilter>,
+    pub delivered_no_stock_datetime: Option<DatetimeFilter>,
     pub verified_datetime: Option<DatetimeFilter>,
     pub reason_option: Option<EqualFilter<String>>,
     pub has_prescribed_quantity: Option<bool>,
@@ -163,8 +163,8 @@ impl InvoiceLineFilter {
         self
     }
 
-    pub fn delivered_datetime(mut self, filter: DatetimeFilter) -> Self {
-        self.delivered_datetime = Some(filter);
+    pub fn delivered_no_stock_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.delivered_no_stock_datetime = Some(filter);
         self
     }
 
@@ -316,7 +316,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
             invoice_status,
             stock_line_id,
             picked_datetime,
-            delivered_datetime,
+            delivered_no_stock_datetime,
             verified_datetime,
             reason_option,
             has_prescribed_quantity,
@@ -336,7 +336,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         apply_equal_filter!(query, stock_line_id, stock_line::id);
         apply_equal_filter!(query, reason_option, reason_option::reason);
         apply_date_time_filter!(query, picked_datetime, invoice::picked_datetime);
-        apply_date_time_filter!(query, delivered_datetime, invoice::delivered_datetime);
+        apply_date_time_filter!(query, delivered_no_stock_datetime, invoice::delivered_no_stock_datetime);
         apply_date_time_filter!(query, verified_datetime, invoice::verified_datetime);
         if let Some(has_prescribed_quantity) = has_prescribed_quantity {
             if has_prescribed_quantity {

@@ -15,7 +15,7 @@ export type SupplierReturnRowFragment = {
   createdDatetime: string;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
-  deliveredDatetime?: string | null;
+  deliveredNoStockDatetime?: string | null;
   verifiedDatetime?: string | null;
   comment?: string | null;
   theirReference?: string | null;
@@ -29,8 +29,8 @@ export type CustomerReturnRowFragment = {
   invoiceNumber: number;
   colour?: string | null;
   createdDatetime: string;
+  deliveredNoStockDatetime?: string | null;
   deliveredDatetime?: string | null;
-  receivedDatetime?: string | null;
   comment?: string | null;
   theirReference?: string | null;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
@@ -47,7 +47,7 @@ export type SupplierReturnFragment = {
   createdDatetime: string;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
-  deliveredDatetime?: string | null;
+  deliveredNoStockDatetime?: string | null;
   verifiedDatetime?: string | null;
   otherPartyName: string;
   otherPartyId: string;
@@ -88,8 +88,8 @@ export type CustomerReturnFragment = {
   createdDatetime: string;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
+  deliveredNoStockDatetime?: string | null;
   deliveredDatetime?: string | null;
-  receivedDatetime?: string | null;
   verifiedDatetime?: string | null;
   otherPartyId: string;
   otherPartyName: string;
@@ -187,7 +187,7 @@ export type SupplierReturnsQuery = {
       createdDatetime: string;
       pickedDatetime?: string | null;
       shippedDatetime?: string | null;
-      deliveredDatetime?: string | null;
+      deliveredNoStockDatetime?: string | null;
       verifiedDatetime?: string | null;
       comment?: string | null;
       theirReference?: string | null;
@@ -217,8 +217,8 @@ export type CustomerReturnsQuery = {
       invoiceNumber: number;
       colour?: string | null;
       createdDatetime: string;
+      deliveredNoStockDatetime?: string | null;
       deliveredDatetime?: string | null;
-      receivedDatetime?: string | null;
       comment?: string | null;
       theirReference?: string | null;
       linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
@@ -373,7 +373,7 @@ export type SupplierReturnByNumberQuery = {
         createdDatetime: string;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
-        deliveredDatetime?: string | null;
+        deliveredNoStockDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyName: string;
         otherPartyId: string;
@@ -447,7 +447,7 @@ export type SupplierReturnByIdQuery = {
         createdDatetime: string;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
-        deliveredDatetime?: string | null;
+        deliveredNoStockDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyName: string;
         otherPartyId: string;
@@ -521,8 +521,8 @@ export type CustomerReturnByNumberQuery = {
         createdDatetime: string;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
+        deliveredNoStockDatetime?: string | null;
         deliveredDatetime?: string | null;
-        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyId: string;
         otherPartyName: string;
@@ -597,8 +597,8 @@ export type CustomerReturnByIdQuery = {
         createdDatetime: string;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
+        deliveredNoStockDatetime?: string | null;
         deliveredDatetime?: string | null;
-        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyId: string;
         otherPartyName: string;
@@ -804,7 +804,7 @@ export const SupplierReturnRowFragmentDoc = gql`
     createdDatetime
     pickedDatetime
     shippedDatetime
-    deliveredDatetime
+    deliveredNoStockDatetime
     verifiedDatetime
     comment
     theirReference
@@ -819,8 +819,8 @@ export const CustomerReturnRowFragmentDoc = gql`
     invoiceNumber
     colour
     createdDatetime
+    deliveredNoStockDatetime
     deliveredDatetime
-    receivedDatetime
     comment
     theirReference
     linkedShipment {
@@ -841,7 +841,7 @@ export const SupplierReturnFragmentDoc = gql`
     createdDatetime
     pickedDatetime
     shippedDatetime
-    deliveredDatetime
+    deliveredNoStockDatetime
     verifiedDatetime
     otherPartyName
     otherPartyId
@@ -887,8 +887,8 @@ export const CustomerReturnFragmentDoc = gql`
     createdDatetime
     pickedDatetime
     shippedDatetime
+    deliveredNoStockDatetime
     deliveredDatetime
-    receivedDatetime
     verifiedDatetime
     otherPartyId
     otherPartyName

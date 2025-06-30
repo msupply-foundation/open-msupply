@@ -4,7 +4,7 @@ fragment Outbound on InvoiceNode {
   comment
   createdDatetime
   allocatedDatetime
-  deliveredDatetime
+  deliveredNoStockDatetime
   pickedDatetime
   shippedDatetime
   verifiedDatetime
@@ -87,7 +87,7 @@ fragment OutboundRow on InvoiceNode {
   comment
   createdDatetime
   allocatedDatetime
-  deliveredDatetime
+  deliveredNoStockDatetime
   pickedDatetime
   shippedDatetime
   verifiedDatetime

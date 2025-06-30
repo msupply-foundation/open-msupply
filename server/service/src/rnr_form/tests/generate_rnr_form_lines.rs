@@ -528,7 +528,7 @@ mod generate_rnr_form_lines {
             r#type: InvoiceType::InboundShipment,
             status: InvoiceStatus::Delivered,
             // During the rnr period
-            received_datetime: NaiveDate::from_ymd_opt(2024, 1, 17)
+            delivered_datetime: NaiveDate::from_ymd_opt(2024, 1, 17)
                 .unwrap()
                 .and_hms_opt(10, 0, 0),
             ..Default::default()

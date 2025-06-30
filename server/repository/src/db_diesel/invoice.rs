@@ -47,8 +47,8 @@ pub struct InvoiceFilter {
     pub allocated_datetime: Option<DatetimeFilter>,
     pub picked_datetime: Option<DatetimeFilter>,
     pub shipped_datetime: Option<DatetimeFilter>,
+    pub delivered_no_stock_datetime: Option<DatetimeFilter>,
     pub delivered_datetime: Option<DatetimeFilter>,
-    pub received_datetime: Option<DatetimeFilter>,
     pub verified_datetime: Option<DatetimeFilter>,
     pub created_or_backdated_datetime: Option<DatetimeFilter>,
     pub colour: Option<EqualFilter<String>>,
@@ -243,8 +243,8 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
             allocated_datetime,
             picked_datetime,
             shipped_datetime,
+            delivered_no_stock_datetime,
             delivered_datetime,
-            received_datetime,
             verified_datetime,
             created_or_backdated_datetime,
             colour,
@@ -279,8 +279,12 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
         apply_date_time_filter!(query, allocated_datetime, invoice::allocated_datetime);
         apply_date_time_filter!(query, picked_datetime, invoice::picked_datetime);
         apply_date_time_filter!(query, shipped_datetime, invoice::shipped_datetime);
+        apply_date_time_filter!(
+            query,
+            delivered_no_stock_datetime,
+            invoice::delivered_no_stock_datetime
+        );
         apply_date_time_filter!(query, delivered_datetime, invoice::delivered_datetime);
-        apply_date_time_filter!(query, received_datetime, invoice::received_datetime);
         apply_date_time_filter!(query, verified_datetime, invoice::verified_datetime);
         apply_date_time_filter!(
             query,
@@ -395,12 +399,12 @@ impl InvoiceFilter {
         self
     }
 
-    pub fn delivered_datetime(mut self, filter: DatetimeFilter) -> Self {
-        self.delivered_datetime = Some(filter);
+    pub fn delivered_no_stock_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.delivered_no_stock_datetime = Some(filter);
         self
     }
-    pub fn received_datetime(mut self, filter: DatetimeFilter) -> Self {
-        self.received_datetime = Some(filter);
+    pub fn delivered_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.delivered_datetime = Some(filter);
         self
     }
 

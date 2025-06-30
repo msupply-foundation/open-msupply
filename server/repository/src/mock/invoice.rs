@@ -246,7 +246,7 @@ pub fn mock_inbound_shipment_a() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(20, 30, 0, 0)
             .unwrap();
-        r.received_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
+        r.delivered_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0);
     })
@@ -272,7 +272,7 @@ pub fn mock_inbound_shipment_b() -> InvoiceRow {
                 .and_hms_milli_opt(21, 30, 0, 0)
                 .unwrap(),
         );
-        r.received_datetime = Some(Utc::now().naive_utc());
+        r.delivered_datetime = Some(Utc::now().naive_utc());
         r.verified_datetime = Some(Utc::now().naive_utc());
     })
 }
@@ -309,7 +309,7 @@ pub fn mock_inbound_shipment_d() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
-        r.received_datetime = Some(
+        r.delivered_datetime = Some(
             NaiveDate::from_ymd_opt(1970, 1, 4)
                 .unwrap()
                 .and_hms_milli_opt(21, 30, 0, 0)
@@ -401,7 +401,7 @@ pub fn mock_transferred_inbound_shipment_a() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(20, 30, 0, 0)
             .unwrap();
-        r.received_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
+        r.delivered_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0);
         r.linked_invoice_id = Some(String::from("store_a"));
@@ -530,7 +530,7 @@ pub fn mock_customer_return_a() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
-        r.received_datetime = Some(Utc::now().naive_utc());
+        r.delivered_datetime = Some(Utc::now().naive_utc());
     })
 }
 

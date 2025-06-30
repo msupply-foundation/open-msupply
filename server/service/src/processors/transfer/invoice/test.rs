@@ -1305,7 +1305,7 @@ fn check_invoice_status(invoice1: &InvoiceRow, invoice2: &InvoiceRow) {
     assert_eq!(invoice1.picked_datetime, invoice2.picked_datetime);
     assert_eq!(invoice1.shipped_datetime, invoice2.shipped_datetime);
     assert_eq!(invoice1.verified_datetime, invoice2.verified_datetime);
-    assert_eq!(invoice1.received_datetime, invoice2.received_datetime);
+    assert_eq!(invoice1.delivered_datetime, invoice2.delivered_datetime);
 }
 
 /// Line uniqueness is checked in caller method where invoice line count is checked

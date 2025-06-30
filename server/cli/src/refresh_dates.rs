@@ -31,10 +31,10 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("invoice", "shipped_datetime"),
         ("invoice", "allocated_datetime"),
         ("invoice", "picked_datetime"),
-        ("invoice", "delivered_datetime"),
+        ("invoice", "delivered_no_stock_datetime"),
         ("invoice", "verified_datetime"),
         ("invoice", "cancelled_datetime"),
-        ("invoice", "received_datetime"),
+        ("invoice", "delivered_datetime"),
         ("location_movement", "enter_datetime"),
         ("location_movement", "exit_datetime"),
         ("requisition", "created_datetime"),
@@ -71,7 +71,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
 #[cfg(feature = "postgres")]
 fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
     vec![
-        ("sync_buffer", "received_datetime"),
+        ("sync_buffer", "delivered_datetime"),
         ("sync_buffer", "integration_datetime"),
         ("sync_log", "started_datetime"),
         ("sync_log", "finished_datetime"),

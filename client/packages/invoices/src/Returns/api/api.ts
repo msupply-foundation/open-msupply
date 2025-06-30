@@ -76,8 +76,8 @@ const customerParsers = {
       case 'createdDatetime': {
         return InvoiceSortFieldInput.CreatedDatetime;
       }
-      case 'deliveredDatetime': {
-        return InvoiceSortFieldInput.DeliveredDatetime;
+      case 'DeliveredNoStockDatetime': {
+        return InvoiceSortFieldInput.DeliveredNoStockDatetime;
       }
       case 'otherPartyName': {
         return InvoiceSortFieldInput.OtherPartyName;

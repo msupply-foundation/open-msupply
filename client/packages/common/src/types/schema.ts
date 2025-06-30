@@ -3984,6 +3984,7 @@ export type InvoiceFilterInput = {
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   createdOrBackdatedDatetime?: InputMaybe<DatetimeFilterInput>;
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
+  deliveredNoStockDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3993,7 +3994,6 @@ export type InvoiceFilterInput = {
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<StringFilterInput>;
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
-  receivedDatetime?: InputMaybe<DatetimeFilterInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterInvoiceStatusInput>;
@@ -4127,6 +4127,7 @@ export type InvoiceNode = {
   currencyRate: Scalars['Float']['output'];
   defaultDonor?: Maybe<NameNode>;
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
+  deliveredNoStockDatetime?: Maybe<Scalars['DateTime']['output']>;
   diagnosis?: Maybe<DiagnosisNode>;
   diagnosisId?: Maybe<Scalars['String']['output']>;
   expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -4154,7 +4155,6 @@ export type InvoiceNode = {
   pricing: PricingNode;
   program?: Maybe<ProgramNode>;
   programId?: Maybe<Scalars['String']['output']>;
-  receivedDatetime?: Maybe<Scalars['DateTime']['output']>;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
    * Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)

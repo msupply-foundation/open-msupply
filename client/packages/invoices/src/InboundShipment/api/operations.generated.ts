@@ -70,8 +70,8 @@ export type InboundFragment = {
   comment?: string | null;
   createdDatetime: string;
   allocatedDatetime?: string | null;
+  deliveredNoStockDatetime?: string | null;
   deliveredDatetime?: string | null;
-  receivedDatetime?: string | null;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
   verifiedDatetime?: string | null;
@@ -203,8 +203,8 @@ export type InboundRowFragment = {
   __typename: 'InvoiceNode';
   comment?: string | null;
   createdDatetime: string;
+  deliveredNoStockDatetime?: string | null;
   deliveredDatetime?: string | null;
-  receivedDatetime?: string | null;
   id: string;
   invoiceNumber: number;
   otherPartyName: string;
@@ -248,8 +248,8 @@ export type InvoicesQuery = {
       __typename: 'InvoiceNode';
       comment?: string | null;
       createdDatetime: string;
+      deliveredNoStockDatetime?: string | null;
       deliveredDatetime?: string | null;
-      receivedDatetime?: string | null;
       id: string;
       invoiceNumber: number;
       otherPartyName: string;
@@ -291,8 +291,8 @@ export type InvoiceQuery = {
         comment?: string | null;
         createdDatetime: string;
         allocatedDatetime?: string | null;
+        deliveredNoStockDatetime?: string | null;
         deliveredDatetime?: string | null;
-        receivedDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
@@ -449,8 +449,8 @@ export type InboundByNumberQuery = {
         comment?: string | null;
         createdDatetime: string;
         allocatedDatetime?: string | null;
+        deliveredNoStockDatetime?: string | null;
         deliveredDatetime?: string | null;
-        receivedDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
@@ -1092,8 +1092,8 @@ export const InboundFragmentDoc = gql`
     comment
     createdDatetime
     allocatedDatetime
+    deliveredNoStockDatetime
     deliveredDatetime
-    receivedDatetime
     pickedDatetime
     shippedDatetime
     verifiedDatetime
@@ -1177,8 +1177,8 @@ export const InboundRowFragmentDoc = gql`
     __typename
     comment
     createdDatetime
+    deliveredNoStockDatetime
     deliveredDatetime
-    receivedDatetime
     id
     invoiceNumber
     otherPartyName

@@ -509,7 +509,7 @@ mod test {
             store_id: context.store_id.clone(),
             created_datetime: datetime.clone(),
             picked_datetime: Some(datetime.clone()),
-            received_datetime: Some(datetime.clone()),
+            delivered_datetime: Some(datetime.clone()),
             verified_datetime: Some(datetime.clone()),
             status: InvoiceStatus::Verified,
             ..Default::default()
@@ -527,7 +527,7 @@ mod test {
             store_id: context.store_id.clone(),
             created_datetime: datetime.clone(),
             picked_datetime: Some(datetime.clone()),
-            received_datetime: Some(datetime.clone()),
+            delivered_datetime: Some(datetime.clone()),
             verified_datetime: Some(datetime.clone()),
             status: InvoiceStatus::Verified,
             ..Default::default()
@@ -595,7 +595,7 @@ mod test {
             allocated_datetime: Some(datetime.clone()),       // Backdated to 2 days ago
             picked_datetime: Some(datetime.clone()),
             backdated_datetime: Some(datetime.clone()),
-            received_datetime: None,
+            delivered_datetime: None,
             verified_datetime: None,
             status: InvoiceStatus::Picked,
             ..Default::default()

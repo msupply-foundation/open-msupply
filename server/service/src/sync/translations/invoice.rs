@@ -170,14 +170,14 @@ pub struct LegacyTransactRow {
     pub shipped_datetime: Option<NaiveDateTime>,
 
     #[serde(default)]
+    #[serde(rename = "om_delivered_no_stock_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub delivered_no_stock_datetime: Option<NaiveDateTime>,
+
+    #[serde(default)]
     #[serde(rename = "om_delivered_datetime")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub delivered_datetime: Option<NaiveDateTime>,
-
-    #[serde(default)]
-    #[serde(rename = "om_received_datetime")]
-    #[serde(deserialize_with = "empty_str_as_option")]
-    pub received_datetime: Option<NaiveDateTime>,
 
     #[serde(default)]
     #[serde(rename = "om_verified_datetime")]
@@ -372,8 +372,8 @@ impl SyncTranslation for InvoiceTranslation {
             allocated_datetime: mapping.allocated_datetime,
             picked_datetime: mapping.picked_datetime,
             shipped_datetime: mapping.shipped_datetime,
-            received_datetime: mapping.received_datetime,
             delivered_datetime: mapping.delivered_datetime,
+            delivered_no_stock_datetime: mapping.delivered_no_stock_datetime,
             verified_datetime: mapping.verified_datetime,
             // Cancelled datetime handled in processor (To-DO)
             cancelled_datetime: data.cancelled_datetime,
@@ -456,8 +456,8 @@ impl SyncTranslation for InvoiceTranslation {
                     allocated_datetime,
                     picked_datetime,
                     shipped_datetime,
-                    received_datetime,
                     delivered_datetime,
+                    delivered_no_stock_datetime,
                     verified_datetime,
                     cancelled_datetime,
                     colour,
@@ -536,8 +536,8 @@ impl SyncTranslation for InvoiceTranslation {
             allocated_datetime,
             picked_datetime,
             shipped_datetime,
-            received_datetime,
             delivered_datetime,
+            delivered_no_stock_datetime,
             verified_datetime,
             cancelled_datetime,
             om_status: Some(status),
@@ -619,8 +619,8 @@ fn map_backdated_datetime(
 struct LegacyMapping {
     created_datetime: NaiveDateTime,
     picked_datetime: Option<NaiveDateTime>,
+    delivered_no_stock_datetime: Option<NaiveDateTime>,
     delivered_datetime: Option<NaiveDateTime>,
-    received_datetime: Option<NaiveDateTime>,
     allocated_datetime: Option<NaiveDateTime>,
     shipped_datetime: Option<NaiveDateTime>,
     verified_datetime: Option<NaiveDateTime>,
@@ -639,8 +639,8 @@ fn map_legacy(
         return LegacyMapping {
             created_datetime,
             picked_datetime: data.picked_datetime,
-            received_datetime: data.received_datetime,
             delivered_datetime: data.delivered_datetime,
+            delivered_no_stock_datetime: data.delivered_no_stock_datetime,
             allocated_datetime: data.allocated_datetime,
             shipped_datetime: data.shipped_datetime,
             verified_datetime: data.verified_datetime,
@@ -656,13 +656,13 @@ fn map_legacy(
     let mut mapping = LegacyMapping {
         created_datetime: NaiveDateTime::new(data.entry_date, data.entry_time),
         picked_datetime: None,
-        delivered_datetime: None,
+        delivered_no_stock_datetime: None,
         allocated_datetime: None,
         shipped_datetime: None,
         verified_datetime: None,
         backdated_datetime: None,
         colour: None,
-        received_datetime: None,
+        delivered_datetime: None,
     };
 
     let confirm_datetime = data
@@ -689,19 +689,19 @@ fn map_legacy(
             _ => {}
         },
         InvoiceType::InboundShipment | InvoiceType::CustomerReturn => {
-            mapping.received_datetime = confirm_datetime;
             mapping.delivered_datetime = confirm_datetime;
+            mapping.delivered_no_stock_datetime = confirm_datetime;
             match data.status {
                 LegacyTransactStatus::Nw if is_transfer => {
                     mapping.shipped_datetime = Some(mapping.created_datetime);
                 }
                 LegacyTransactStatus::Cn => {
-                    mapping.received_datetime = confirm_datetime;
                     mapping.delivered_datetime = confirm_datetime;
+                    mapping.delivered_no_stock_datetime = confirm_datetime;
                 }
                 LegacyTransactStatus::Fn => {
-                    mapping.received_datetime = confirm_datetime;
                     mapping.delivered_datetime = confirm_datetime;
+                    mapping.delivered_no_stock_datetime = confirm_datetime;
                     mapping.verified_datetime = confirm_datetime;
                 }
                 _ => {}
@@ -739,7 +739,7 @@ fn to_legacy_confirm_time(
     InvoiceRow {
         r#type,
         picked_datetime,
-        received_datetime: delivered_datetime,
+        delivered_datetime,
         verified_datetime,
         ..
     }: &InvoiceRow,

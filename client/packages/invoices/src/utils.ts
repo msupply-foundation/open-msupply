@@ -392,7 +392,7 @@ export const customerReturnsToCsv = (
     node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
-    Formatter.csvDateTimeString(node.deliveredDatetime),
+    Formatter.csvDateTimeString(node.deliveredNoStockDatetime),
   ]);
   return Formatter.csv({ fields, data });
 };
@@ -418,7 +418,7 @@ export const inboundsToCsv = (
     node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
-    Formatter.csvDateTimeString(node.deliveredDatetime),
+    Formatter.csvDateTimeString(node.deliveredNoStockDatetime),
     node.comment,
     node.pricing.totalAfterTax,
   ]);

@@ -76,8 +76,8 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
         let updated_outbound_invoice = InvoiceRow {
             // 7.
             status: inbound_invoice.invoice_row.status.clone(),
+            delivered_no_stock_datetime: inbound_invoice.invoice_row.delivered_no_stock_datetime,
             delivered_datetime: inbound_invoice.invoice_row.delivered_datetime,
-            received_datetime: inbound_invoice.invoice_row.received_datetime,
             verified_datetime: inbound_invoice.invoice_row.verified_datetime,
             ..outbound_invoice.invoice_row.clone()
         };

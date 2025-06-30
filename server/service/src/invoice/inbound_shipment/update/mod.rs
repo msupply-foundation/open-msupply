@@ -866,8 +866,8 @@ mod test {
             .map(|log| log.status_id.clone());
 
         assert_eq!(invoice.verified_datetime, None);
-        assert!(invoice.received_datetime.unwrap() > now);
-        assert!(invoice.received_datetime.unwrap() < end_time);
+        assert!(invoice.delivered_datetime.unwrap() > now);
+        assert!(invoice.delivered_datetime.unwrap() < end_time);
         assert_eq!(activity_log.r#type, ActivityLogType::InvoiceStatusReceived);
         assert_eq!(vvm_status_log, Some(mock_vvm_status_a().id));
 
@@ -987,8 +987,8 @@ mod test {
 
         // Ensure delivered time not updated by status change to verified
         assert_eq!(
-            invoice.received_datetime,
-            mock_inbound_shipment_a().received_datetime
+            invoice.delivered_datetime,
+            mock_inbound_shipment_a().delivered_datetime
         );
 
         assert!(invoice.verified_datetime.unwrap() > now);

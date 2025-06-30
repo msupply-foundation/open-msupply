@@ -56,7 +56,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             allocated_datetime: None,
             picked_datetime: None,
             shipped_datetime: None,
-            delivered_datetime: None,
+            delivered_no_stock_datetime: None,
             verified_datetime: None,
             colour: None,
             requisition_id: None,
@@ -246,7 +246,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             d.shipped_datetime = NaiveDate::from_ymd_opt(2022, 03, 26)
                 .unwrap()
                 .and_hms_opt(11, 35, 15);
-            d.delivered_datetime = NaiveDate::from_ymd_opt(2022, 03, 27)
+            d.delivered_no_stock_datetime = NaiveDate::from_ymd_opt(2022, 03, 27)
                 .unwrap()
                 .and_hms_opt(11, 35, 15);
             d.verified_datetime = NaiveDate::from_ymd_opt(2022, 03, 28)

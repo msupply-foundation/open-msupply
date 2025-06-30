@@ -10,7 +10,7 @@ export type OutboundFragment = {
   comment?: string | null;
   createdDatetime: string;
   allocatedDatetime?: string | null;
-  deliveredDatetime?: string | null;
+  deliveredNoStockDatetime?: string | null;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
   verifiedDatetime?: string | null;
@@ -136,7 +136,7 @@ export type OutboundRowFragment = {
   comment?: string | null;
   createdDatetime: string;
   allocatedDatetime?: string | null;
-  deliveredDatetime?: string | null;
+  deliveredNoStockDatetime?: string | null;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
   verifiedDatetime?: string | null;
@@ -194,7 +194,7 @@ export type InvoicesQuery = {
       comment?: string | null;
       createdDatetime: string;
       allocatedDatetime?: string | null;
-      deliveredDatetime?: string | null;
+      deliveredNoStockDatetime?: string | null;
       pickedDatetime?: string | null;
       shippedDatetime?: string | null;
       verifiedDatetime?: string | null;
@@ -241,7 +241,7 @@ export type InvoiceQuery = {
         comment?: string | null;
         createdDatetime: string;
         allocatedDatetime?: string | null;
-        deliveredDatetime?: string | null;
+        deliveredNoStockDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
@@ -387,7 +387,7 @@ export type OutboundByNumberQuery = {
         comment?: string | null;
         createdDatetime: string;
         allocatedDatetime?: string | null;
-        deliveredDatetime?: string | null;
+        deliveredNoStockDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
@@ -1045,7 +1045,7 @@ export const OutboundFragmentDoc = gql`
     comment
     createdDatetime
     allocatedDatetime
-    deliveredDatetime
+    deliveredNoStockDatetime
     pickedDatetime
     shippedDatetime
     verifiedDatetime
@@ -1122,7 +1122,7 @@ export const OutboundRowFragmentDoc = gql`
     comment
     createdDatetime
     allocatedDatetime
-    deliveredDatetime
+    deliveredNoStockDatetime
     pickedDatetime
     shippedDatetime
     verifiedDatetime

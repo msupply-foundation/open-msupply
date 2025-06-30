@@ -88,8 +88,8 @@ pub struct InvoiceFilterInput {
     pub allocated_datetime: Option<DatetimeFilterInput>,
     pub picked_datetime: Option<DatetimeFilterInput>,
     pub shipped_datetime: Option<DatetimeFilterInput>,
+    pub delivered_no_stock_datetime: Option<DatetimeFilterInput>,
     pub delivered_datetime: Option<DatetimeFilterInput>,
-    pub received_datetime: Option<DatetimeFilterInput>,
     pub verified_datetime: Option<DatetimeFilterInput>,
     pub created_or_backdated_datetime: Option<DatetimeFilterInput>,
     pub colour: Option<EqualFilterStringInput>,
@@ -222,8 +222,8 @@ impl InvoiceFilterInput {
             allocated_datetime: self.allocated_datetime.map(DatetimeFilter::from),
             picked_datetime: self.picked_datetime.map(DatetimeFilter::from),
             shipped_datetime: self.shipped_datetime.map(DatetimeFilter::from),
+            delivered_no_stock_datetime: self.delivered_no_stock_datetime.map(DatetimeFilter::from),
             delivered_datetime: self.delivered_datetime.map(DatetimeFilter::from),
-            received_datetime: self.received_datetime.map(DatetimeFilter::from),
             verified_datetime: self.verified_datetime.map(DatetimeFilter::from),
             created_or_backdated_datetime: self
                 .created_or_backdated_datetime
