@@ -34,7 +34,7 @@ impl MigrationFragment for Migrate {
                 UPDATE invoice
                 SET status = 'RECEIVED',
                 received_datetime = delivered_datetime
-                WHERE delivered_datetime is not null
+                WHERE delivered_datetime is not null;
 
                 -- Set all existing invoices for this site that were Delivered to Received
                 UPDATE invoice
