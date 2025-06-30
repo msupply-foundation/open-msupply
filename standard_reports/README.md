@@ -292,14 +292,37 @@ would map to:
 | 1   | <span style="font-size: 18px">**Report Title**</span> |     |           |
 | 2   |                                                       |     | **Date**: | 1/1/26 |
 
-Main data rows would be rendered starting 1 row after the lowest used row - in this case we'd start from row 4.
+One blank row will be left, and then the main data table will begin. So in this case we'd start from row 4.
 
 Note that footers are currently not supported for Excel.
 
 ##### Data rows
 
-- `excel-type="total-row"` - If your report includes a total row, add this attribute to the `<tr>` element of the total row. This ensures that the total row is rendered correctly in Excel (in bold, and after a blank row to allow for pivot tables).
+- `excel-table-start-row="9"` - You may have a custom header. To define where the main data table starts, add this attribute to the `<tr>` containing the table header row.
 - `excel-column="A"` - To customise which columns are shown, and in which order, use the `excel-column` attribute on the `<th>` elements. This will map the data to the specified column in the Excel worksheet.
+  - Note that once any columns have this attribute, all other columns will be excluded from the Excel export. If no columns have this attribute, all columns will be included.
+- `excel-type="total-row"` - If your report includes a total row, add this attribute to the `<tr>` element of the total row. This ensures that the total row is rendered correctly in Excel (in bold, and after a blank row to allow for pivot tables).
+
+e.g.
+
+```html
+<table>
+  <thead>
+    <tr excel-table-start-row="9">
+      <th excel-column="B">Name</th>
+      <th excel-column="A">Cost</th>
+      <th>Total</th>
+    </tr>
+    <tr>
+      <td>Ibuprofen</td>
+      <td>$10.00</td>
+      <td>$100.00</td>
+    </tr>
+  </thead>
+</table>
+```
+
+In this case, the header row would start on row 9, and only include the Cost and Name columns (swapped around for... some reason 😁).
 
 #### Excel template
 

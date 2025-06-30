@@ -87,19 +87,25 @@ fn apply_report(sheet: &mut Worksheet, report: GeneratedReport) -> () {
     let mut row_idx: u32 = 1;
 
     // HEADER
-    if let Some(header_html) = &report.header {
-        let rows_used = apply_header(sheet, header_html);
-
-        if rows_used > 0 {
-            // If there is header content, adjust the row index
-            // IMPORTANT: +1 is to leave a row before the main data table
-            // which is needed to support pivot tables/post processing in Excel
-            row_idx += rows_used + 1;
-        }
-    }
+    let header_rows_used = report.header.as_ref().map_or(0, |h| {
+        // If header is present, apply it and return the number of rows used
+        apply_header(sheet, h)
+    });
 
     // MAIN DATA
     let body = Selectors::new(&report.document);
+
+    if let Some(start_row) = body.table_start_row() {
+        // If the table start row is specified, use it
+        row_idx = start_row;
+    } else {
+        // Otherwise, we start after the header rows
+        if header_rows_used > 0 {
+            // IMPORTANT: add a row before the main data table
+            // needed to support pivot tables/post processing in Excel
+            row_idx += header_rows_used + 1;
+        }
+    }
 
     // Table headers
     let index_to_column_map = apply_data_table_headers(&body, sheet, row_idx);
@@ -249,6 +255,15 @@ impl Selectors {
                 (coordinate, element)
             })
             .collect()
+    }
+
+    fn table_start_row(&self) -> Option<u32> {
+        let cell_selector = Selector::parse("[excel-table-start-row]").unwrap();
+        self.html.select(&cell_selector).next().map(|element| {
+            element
+                .attr("excel-table-start-row")
+                .and_then(|val| val.parse::<u32>().ok())
+        })?
     }
 
     fn data_headers(&self) -> Vec<(Option<&str>, &str)> {
