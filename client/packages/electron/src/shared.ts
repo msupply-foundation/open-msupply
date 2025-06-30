@@ -17,4 +17,5 @@ export const IPC_MESSAGES = {
   GET_SCANNER_TYPE: 'get-scanner-type',
   SAVE_DATABASE: 'save-database',
   SAVE_FILE: 'save-file',
+  PRINT: 'print',
 };

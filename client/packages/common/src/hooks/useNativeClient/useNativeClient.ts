@@ -172,6 +172,11 @@ export const useNativeClient = ({
       .catch(e => handleConnectionResult({ success: false, error: e.message }));
   };
 
+  const printElectron = (htmlContent: string) => {
+    const result = nativeAPI?.print(htmlContent);
+    return result;
+  };
+
   useEffect(() => {
     if (!state.isDiscovering) return;
 
@@ -238,6 +243,7 @@ export const useNativeClient = ({
     saveFile,
     saveDatabase,
     setServerMode,
+    printElectron,
   };
 };
 

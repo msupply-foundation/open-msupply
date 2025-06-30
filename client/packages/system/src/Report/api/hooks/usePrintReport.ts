@@ -6,6 +6,7 @@ import {
   PrintReportSortInput,
   useIntlUtils,
   useMutation,
+  useNativeClient,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -28,7 +29,7 @@ const setClose = (frame: HTMLIFrameElement) => () => {
 
 const print = (frame: HTMLIFrameElement) => {
   const { contentWindow } = frame;
-  if (contentWindow) {
+  if (contentWindow)  {
     contentWindow.onbeforeunload = setClose(frame);
     contentWindow.onafterprint = setClose(frame);
     contentWindow.focus(); // Required for IE
@@ -42,7 +43,7 @@ const printPage = (url: string) => {
 
     if (EnvUtils.platform === Platform.Android) {
       Printer.print({ content: html });
-    } else {
+    } else  {
       const frame = document.createElement('iframe');
       frame.hidden = true;
       frame.onload = () => {
@@ -55,7 +56,19 @@ const printPage = (url: string) => {
         // Note, while developing, even a timeout of 0ms worked but it has been raised o 30ms to
         // have some buffer.
         setTimeout(() => {
-          print(frame);
+          if (EnvUtils.platform === Platform.Desktop) {
+            const { printElectron } = useNativeClient();
+      
+            const htmlContent = frame.contentDocument?.documentElement.outerHTML || '';
+            try {
+              printElectron(htmlContent);
+            } catch (error) {
+              console.error('Error printing HTML content via electron:', error);
+              print(frame);
+            } 
+          } else {
+            print(frame);
+          }
         }, 30);
       };
       document.body.appendChild(frame);

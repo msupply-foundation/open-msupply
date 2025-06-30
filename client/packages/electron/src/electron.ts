@@ -289,6 +289,13 @@ const start = (): void => {
   ipcMain.handle(IPC_MESSAGES.GET_SCANNER_TYPE, async () =>
     store.get(SCANNER_TYPE, 'usb_serial')
   );
+  ipcMain.handle(IPC_MESSAGES.PRINT, async (_event, htmlContent: string) => {
+    const win = BrowserWindow.getFocusedWindow();
+    if (win) {
+      await win?.loadURL(`data:text/html,${encodeURIComponent(htmlContent)}`);
+      await win.webContents.print({ silent: true, printBackground: true, deviceName: '' });
+    }
+  });
 
   // not currently implemented in the desktop implementation
   ipcMain.on(IPC_MESSAGES.READ_LOG, () => 'Not implemented');
