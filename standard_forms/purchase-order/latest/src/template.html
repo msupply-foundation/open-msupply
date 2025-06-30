@@ -22,14 +22,18 @@
   <tr class="body_value">
     <td>{{ line.lineNumber }}</td>
     <!-- TO DO: add missing supplier code field in the cell below, recorded in Issue 8240 https://github.com/msupply-foundation/open-msupply/issues/8240 -->
-    <td></td>
+    <td>Placeholder for supplier code</td>
     <td>{{line.item.code}}</td>
     <td>{{line.item.name}}</td>
     <td>{{line.numberOfPacks}}</td>
     <td>{{line.packSize}}</td>
     <td>{{line.item.unitName}}</td>
     <td>{{line.requestedQuantity}}</td>
-    <!-- TO DO: add missing cost and authorisation fields, recorded in Issue 8240 https://github.com/msupply-foundation/open-msupply/issues/8240 -->
+    <!-- TO DO: add missing cost, line total cost, and comment fields, recorded in Issue 8240 https://github.com/msupply-foundation/open-msupply/issues/8240 -->
+    <td>Placeholder for cost</td>
+    <td>Placeholder for line total cost</td>
+    <td>Placeholder for comment</td>
   </tr>
   {%- endfor %}
 </table>
+<!-- TO DO: add missing authorisation field, recorded in Issue 8240 https://github.com/msupply-foundation/open-msupply/issues/8240 -->
