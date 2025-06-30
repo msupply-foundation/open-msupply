@@ -8,11 +8,24 @@ import {
   GenderType,
   FilterDefinition,
   useAuthContext,
+  usePreference,
+  PreferenceKey,
+  getGenderTranslationKey,
 } from '@openmsupply-client/common';
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
   const t = useTranslation();
   const { store } = useAuthContext();
+  const {
+    data: { genderOptions } = {
+      genderOptions: [
+        GenderType.Female,
+        GenderType.Male,
+        GenderType.NonBinary,
+        GenderType.Unknown,
+      ],
+    },
+  } = usePreference(PreferenceKey.GenderOptions);
 
   const filters: FilterDefinition[] = [
     {
@@ -45,10 +58,10 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
       type: 'enum',
       name: t('label.gender'),
       urlParameter: 'gender',
-      options: [
-        { label: t('gender.male'), value: GenderType.Male },
-        { label: t('gender.female'), value: GenderType.Female },
-      ],
+      options: genderOptions.map(gender => ({
+        value: gender,
+        label: t(getGenderTranslationKey(gender)),
+      })),
     },
     {
       type: 'text',
