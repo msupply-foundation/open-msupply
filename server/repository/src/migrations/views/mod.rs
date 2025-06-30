@@ -135,7 +135,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         ) THEN picked_datetime
                     WHEN invoice.type IN (
             'INBOUND_SHIPMENT', 'CUSTOMER_RETURN'
-        ) THEN received_datetime -- TODO: received_datetime for Customer returns?
+        ) THEN received_datetime
                     WHEN invoice.type IN (
             'INVENTORY_ADDITION', 'INVENTORY_REDUCTION', 'REPACK'
         ) THEN verified_datetime
