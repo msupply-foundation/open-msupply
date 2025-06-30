@@ -1,11 +1,10 @@
+use crate::types::patient::GenderType;
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{
     preferences::PreferenceProvider, PrefKey, Preference, PreferenceDescription, PreferenceType,
     PreferenceValueType,
 };
-
-use crate::types::patient::GenderType;
 
 pub struct PreferencesNode {
     pub connection: StorageConnection,

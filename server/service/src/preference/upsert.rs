@@ -1,8 +1,6 @@
-use repository::{GenderType, TransactionError};
-
-use crate::service_provider::ServiceContext;
-
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
+use crate::service_provider::ServiceContext;
+use repository::{GenderType, TransactionError};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct StorePrefUpdate<T> {
