@@ -41,12 +41,7 @@ impl MigrationFragment for Migrate {
                 SET status = 'RECEIVED'
                 WHERE status = 'DELIVERED';
 
-                --Create changelogs to resync all the invoices that were Delivered before and are for this sync site
-                INSERT INTO changelog (record_id, table_name, row_action, store_id)
-                SELECT id,'invoice', 'UPSERT', store_id
-                FROM invoice
-                WHERE received_datetime IS NOT NULL
-                AND store_id in (SELECT store_id FROM store WHERE site_id in (SELECT value_int FROM key_value_store WHERE id = 'SETTINGS_SYNC_SITE_ID'))
+                -- We don't need to create changelogs for these changes as we're mapping these to legacy statuses in translations
             "#
         )?;
 
