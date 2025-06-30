@@ -24,38 +24,24 @@ impl MigrationFragment for Migrate {
             )?;
         }
 
-        // Add received_datetime column to invoice table
         sql!(
             connection,
             r#"
+                -- Add received_datetime column to invoice table
                 ALTER TABLE invoice ADD COLUMN received_datetime {DATETIME};
-            "#
-        )?;
-        // Set a received_datetime for all existing invoices that were Delivered before (have a delivered_datetime)
-        sql!(
-            connection,
-            r#"
+
+                -- Set a received_datetime for all existing invoices that were Delivered before (have a delivered_datetime)
                 UPDATE invoice
                 SET status = 'RECEIVED',
                 received_datetime = delivered_datetime
                 WHERE delivered_datetime is not null
-            "#
-        )?;
 
-        // Set all existing invoices for this site that were Delivered to Received
-        sql!(
-            connection,
-            r#"
+                -- Set all existing invoices for this site that were Delivered to Received
                 UPDATE invoice
                 SET status = 'RECEIVED'
                 WHERE status = 'DELIVERED';
-            "#
-        )?;
 
-        // Create changelogs to resync all the invoices that were Delivered before and are for this sync site
-        sql!(
-            connection,
-            r#"
+                --Create changelogs to resync all the invoices that were Delivered before and are for this sync site
                 INSERT INTO changelog (record_id, table_name, row_action, store_id)
                 SELECT id,'invoice', 'UPSERT', store_id
                 FROM invoice
