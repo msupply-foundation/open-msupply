@@ -34,7 +34,7 @@ export const ReportUploadModal = ({
 
   const onUpload = (files: File[]) => {
     if (files.filter(f => !f.name.endsWith('json')).length > 0) {
-      error('error.report-invalid-file')();
+      error(t('error.report-invalid-file'))();
     } else {
       setDraft({ files });
     }
