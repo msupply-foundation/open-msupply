@@ -57,20 +57,19 @@ const getStatusOptions = (
   ];
 
   if (currentStatus === InvoiceNodeStatus.Shipped) {
-    // When the status is shipped, delivered, received and verified are available to
-    // select.
+    // When the status is shipped the user can select from delivered, received and verified options
     options[3].isDisabled = false;
     options[4].isDisabled = false;
     options[5].isDisabled = false;
   }
 
-  // When the status is Delivered, only verified & Delivered are available to select.
   if (currentStatus === InvoiceNodeStatus.Delivered) {
-    options[4].isDisabled = false;
+    // When the status is Delivered, the user can select from received and verified options
     options[5].isDisabled = false;
   }
-  // When the status is received, only verified is available to select.
+
   if (currentStatus === InvoiceNodeStatus.Received) {
+    // When the status is Received, the user can only select verified option
     options[5].isDisabled = false;
   }
 
