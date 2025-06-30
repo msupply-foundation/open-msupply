@@ -71,66 +71,8 @@ const DataRowComponent = <T extends RecordWithId>({
 
   useEffect(() => {
     if (isFocused) onRowClick();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keyboardActivated]);
-
-  interface ColumnContentProps<T extends RecordWithId> {
-    column: Column<T>;
-    columnIndex: number;
-    isError: boolean | undefined;
-  }
-
-  const ColumnContent = ({
-    column,
-    columnIndex,
-    isError,
-  }: ColumnContentProps<T>) => (
-    <column.Cell
-      isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
-      rowData={rowData}
-      columns={columns}
-      isError={isError}
-      column={column}
-      rowKey={rowKey}
-      columnIndex={columnIndex}
-      rowIndex={rowIndex}
-      autocompleteName={column.autocompleteProvider?.(rowData)}
-      localisedText={localisedText}
-      localisedDate={localisedDate}
-      dense={dense}
-      rowLinkBuilder={rowLinkBuilder}
-      {...column.cellProps}
-    />
-  );
-
-  const ContentWrapper = ({
-    children,
-    column,
-  }: {
-    children: React.ReactNode;
-    column: Column<T>;
-  }) => {
-    return (
-      <Box
-        component={rowLinkBuilder && !column.customLinkRendering ? Link : Box}
-        to={
-          rowLinkBuilder && !column.customLinkRendering
-            ? rowLinkBuilder(rowData)
-            : ''
-        }
-        sx={{
-          display: 'flex',
-          width: '100%',
-          height: '40px',
-          textDecoration: 'none',
-          alignItems: 'center',
-          justifyContent: `${column.align}`,
-          color: 'inherit',
-        }}
-      >
-        {children}
-      </Box>
-    );
-  };
 
   return (
     <>
@@ -196,11 +138,24 @@ const DataRowComponent = <T extends RecordWithId>({
                       : {}),
                   }}
                 >
-                  <ContentWrapper column={column}>
+                  <ContentWrapper
+                    column={column}
+                    rowData={rowData}
+                    rowLinkBuilder={rowLinkBuilder}
+                  >
                     <ColumnContent
                       column={column}
                       columnIndex={columnIndex}
                       isError={isError}
+                      isDisabled={isDisabled}
+                      rowData={rowData}
+                      rowKey={rowKey}
+                      rowIndex={rowIndex}
+                      localisedDate={localisedDate}
+                      localisedText={localisedText}
+                      dense={dense}
+                      columns={columns}
+                      {...column.cellProps}
                     />
                   </ContentWrapper>
                 </TableCell>
@@ -221,3 +176,86 @@ const DataRowComponent = <T extends RecordWithId>({
 };
 
 export const DataRow = React.memo(DataRowComponent) as typeof DataRowComponent;
+
+interface ColumnContentProps<T extends RecordWithId> {
+  columns: Column<T>[];
+  column: Column<T>;
+  columnIndex: number;
+  isError: boolean | undefined;
+  isDisabled?: boolean;
+  rowData: T;
+  rowKey: string;
+  dense?: boolean;
+  rowIndex: number;
+  localisedText: TypedTFunction<LocaleKey>;
+  localisedDate: (date: string | number | Date) => string;
+  rowLinkBuilder?: (rowData: T) => string;
+}
+
+const ColumnContent = <T extends RecordWithId>({
+  columns,
+  column,
+  columnIndex,
+  isError,
+  isDisabled,
+  rowData,
+  rowKey,
+  rowIndex,
+  rowLinkBuilder,
+  localisedDate,
+  localisedText,
+  dense,
+}: ColumnContentProps<T>) => (
+  <column.Cell
+    isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
+    rowData={rowData}
+    columns={columns}
+    isError={isError}
+    column={column}
+    rowKey={rowKey}
+    columnIndex={columnIndex}
+    rowIndex={rowIndex}
+    autocompleteName={column.autocompleteProvider?.(rowData)}
+    localisedText={localisedText}
+    localisedDate={localisedDate}
+    dense={dense}
+    rowLinkBuilder={rowLinkBuilder}
+    {...column.cellProps}
+  />
+);
+
+interface ContentWrapperProps<T extends RecordWithId> {
+  children: React.ReactNode;
+  column: Column<T>;
+  rowData: T;
+  rowLinkBuilder?: (rowData: T) => string;
+}
+
+const ContentWrapper = <T extends RecordWithId>({
+  children,
+  column,
+  rowData,
+  rowLinkBuilder,
+}: ContentWrapperProps<T>) => {
+  return (
+    <Box
+      component={rowLinkBuilder && !column.customLinkRendering ? Link : Box}
+      to={
+        rowLinkBuilder && !column.customLinkRendering
+          ? rowLinkBuilder(rowData)
+          : ''
+      }
+      sx={{
+        display: 'flex',
+        width: '100%',
+        height: '40px',
+        textDecoration: 'none',
+        alignItems: 'center',
+        justifyContent: `${column.align}`,
+        color: 'inherit',
+      }}
+    >
+      {children}
+    </Box>
+  );
+};
