@@ -1,66 +1,112 @@
-import { useEffect, useState } from 'react';
-import {
-  FnUtils,
-  useTabs,
-  useDebounceCallback,
-  DocumentRegistryCategoryNode,
-} from '@openmsupply-client/common';
-import {
-  CreateNewPatient,
-  DocumentRegistryFragment,
-  useDocumentRegistry,
-  usePatientStore,
-} from '@openmsupply-client/programs';
+import React, { useState } from 'react';
+import { TabDefinition, useTranslation } from '@openmsupply-client/common';
+import { PatientFormTab } from './PatientFormTab';
+import { PatientColumnData, PatientResultsTab } from './PatientResultsTab';
+import { usePatientStore } from 'packages/programs/src';
+import { useUpsertPatient } from '../EditPatientModal/useUpsertPatient';
+import { PatientPanel } from './PatientPanel';
+
+export enum Tabs {
+  Form = 'Form',
+  SearchResults = 'SearchResults',
+  Patient = 'Patient',
+}
 
 export const useCreatePatientForm = (
-  onCreate: (newPatient: CreateNewPatient) => void,
-  Tabs: { Form: string; SearchResults: string }
+  onSelect: (selectedPatient: PatientColumnData) => void
 ) => {
-  const { data: documentRegistryResponse, isLoading } =
-    useDocumentRegistry.get.documentRegistries({
-      filter: { category: { equalTo: DocumentRegistryCategoryNode.Patient } },
-    });
-
-  const [, setDocumentRegistry] = useState<
-    DocumentRegistryFragment | undefined
-  >();
-  const { currentTab, onChangeTab } = useTabs(Tabs.Form);
-
+  const t = useTranslation();
   const { createNewPatient, setCreateNewPatient } = usePatientStore();
+  const [hasError, setHasError] = useState(false);
+  const [currentTab, setCurrentTab] = useState(Tabs.Form);
 
-  const onNext = useDebounceCallback(() => {
-    onChangeTab(Tabs.SearchResults);
-  }, []);
+  const { JsonForm, save, isSaving, isLoading } = useUpsertPatient(
+    createNewPatient?.id ?? ''
+  );
 
-  useEffect(() => {
-    if (documentRegistryResponse?.nodes?.[0]) {
-      setDocumentRegistry(documentRegistryResponse.nodes?.[0]);
-    }
-  }, [documentRegistryResponse]);
-
-  useEffect(() => {
-    setCreateNewPatient({
-      id: FnUtils.generateUUID(),
-    });
-  }, [setCreateNewPatient]);
-
-  const onOk = () => {
-    if (!createNewPatient) return;
-    onCreate(createNewPatient);
+  const handleSave = () => {
+    save();
+    setCurrentTab(Tabs.Form);
   };
 
-  const clear = () => {
-    setCreateNewPatient(undefined);
+  const patientSteps = [
+    {
+      description: '',
+      label: t('label.patient-details'),
+      tab: Tabs.Form,
+    },
+    {
+      description: '',
+      label: t('label.search-results'),
+      tab: Tabs.SearchResults,
+    },
+    {
+      description: '',
+      label: t('label.patient-details'),
+      tab: Tabs.Patient,
+    },
+  ];
+
+  const getActiveStep = () => {
+    const step = patientSteps.find(step => step.tab === currentTab);
+    return step ? patientSteps.indexOf(step) : 0;
+  };
+
+  const tabs: TabDefinition[] = [
+    {
+      Component: (
+        <PatientFormTab
+          value={Tabs.Form}
+          patient={createNewPatient}
+          onChange={errors => {
+            setHasError((errors.errors?.length ?? 0) > 0);
+          }}
+        />
+      ),
+      value: Tabs.Form,
+    },
+    {
+      Component: (
+        <PatientResultsTab
+          value={Tabs.SearchResults}
+          patient={createNewPatient}
+          active={currentTab === Tabs.SearchResults}
+          onRowClick={selectedPatient => {
+            setCurrentTab(Tabs.Form);
+            onSelect(selectedPatient);
+          }}
+        />
+      ),
+      value: Tabs.SearchResults,
+    },
+    {
+      Component: (
+        <PatientPanel value={Tabs.Patient} patient={createNewPatient}>
+          {JsonForm}
+        </PatientPanel>
+      ),
+      value: Tabs.Patient,
+    },
+  ];
+
+  const onNext = (tabs: TabDefinition[]) => {
+    const currentIndex = tabs.findIndex(tab => tab.value === currentTab);
+    const nextTab = tabs[currentIndex + 1]?.value ?? currentTab;
+    setCurrentTab(nextTab as Tabs);
   };
 
   return {
-    currentTab,
     onNext,
-    clear,
-    createNewPatient,
+    tabs,
     Tabs,
-    onChangeTab,
+    currentTab,
+    isSaving,
+    hasError,
+    setCurrentTab,
+    setCreateNewPatient,
+    patientSteps,
+    getActiveStep,
     isLoading,
-    onOk,
+    handleSave,
   };
 };

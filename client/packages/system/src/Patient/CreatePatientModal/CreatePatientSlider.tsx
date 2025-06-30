@@ -1,90 +1,72 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   DetailContainer,
-  DetailSection,
   Box,
   TabContext,
   DialogButton,
-  WizardStepper,
   useTranslation,
   BasicSpinner,
   SlidePanel,
+  DetailTab,
+  LoadingButton,
+  SaveIcon,
+  WizardStepper,
 } from '@openmsupply-client/common';
-import { PatientFormTab } from './PatientFormTab';
-import { PatientResultsTab } from './PatientResultsTab';
-import { CreateNewPatient } from '@openmsupply-client/programs';
-import { useCreatePatientForm } from './useCreatePatientForm';
-
-enum Tabs {
-  Form = 'Form',
-  SearchResults = 'SearchResults',
-}
+import { Tabs, useCreatePatientForm } from './useCreatePatientForm';
+import { PatientColumnData } from './PatientResultsTab';
 
 interface CreatePatientSliderProps {
   open: boolean;
   onClose: () => void;
-  onCreatePatient: (newPatient: CreateNewPatient) => void;
-  onSelectPatient: (selectedPatient: string) => void;
+  onCreate: () => void;
+  onSelectPatient: (selectedPatient: PatientColumnData) => void;
 }
 
 export const CreatePatientSlider = ({
   open,
   onClose,
-  onCreatePatient: onCreate,
+  onCreate,
   onSelectPatient: onSelect,
 }: CreatePatientSliderProps) => {
   const t = useTranslation();
 
-  const [hasError, setHasError] = useState(false);
-
   const {
-    currentTab,
     onNext,
-    onChangeTab,
-    clear,
+    tabs,
+    currentTab,
+    isSaving,
+    hasError,
+    setCurrentTab,
+    setCreateNewPatient,
+    patientSteps,
+    getActiveStep,
     isLoading,
-    createNewPatient,
-    onOk,
-  } = useCreatePatientForm(onCreate, Tabs);
-
-  const patientSteps = [
-    {
-      description: '',
-      label: t('label.patient-details'),
-      tab: Tabs.Form,
-    },
-    {
-      description: '',
-      label: t('label.search-results'),
-      tab: Tabs.SearchResults,
-    },
-  ];
-
-  const getActiveStep = () => {
-    const step = patientSteps.find(step => step.tab === currentTab);
-    return step ? patientSteps.indexOf(step) : 0;
-  };
+    handleSave,
+  } = useCreatePatientForm(onSelect);
 
   if (isLoading) return <BasicSpinner />;
 
   return (
     <SlidePanel
       title=""
-      width={950}
+      width={1180}
+      open={open}
       okButton={
-        currentTab === Tabs.SearchResults ? (
-          <DialogButton
-            variant="next"
+        currentTab === Tabs.Patient ? (
+          <LoadingButton
+            color="secondary"
+            label={t('button.save')}
+            startIcon={<SaveIcon />}
             onClick={() => {
-              onOk();
-              onClose();
+              handleSave();
+              onCreate();
             }}
-            customLabel={t('button.create-new-patient')}
+            isLoading={isSaving}
           />
         ) : (
           <DialogButton
             variant="next-and-ok"
-            onClick={onNext}
+            onClick={() => onNext(tabs)}
             disabled={hasError}
           />
         )
@@ -93,14 +75,14 @@ export const CreatePatientSlider = ({
         <DialogButton
           variant="cancel"
           onClick={() => {
-            clear();
+            setCurrentTab(Tabs.Form);
+            setCreateNewPatient(undefined);
             onClose();
           }}
         />
       }
-      open={open}
       onClose={() => {
-        onClose(), onChangeTab(Tabs.Form);
+        onClose(), setCurrentTab(Tabs.Form);
       }}
     >
       <DetailContainer>
@@ -111,21 +93,11 @@ export const CreatePatientSlider = ({
             nowrap
           />
           <TabContext value={currentTab}>
-            <DetailSection title="">
-              <PatientFormTab
-                value={Tabs.Form}
-                patient={createNewPatient}
-                onChange={errors => {
-                  setHasError((errors.errors?.length ?? 0) > 0);
-                }}
-              />
-              <PatientResultsTab
-                value={Tabs.SearchResults}
-                patient={createNewPatient}
-                active={currentTab === Tabs.SearchResults}
-                onRowClick={selectedPatient => onSelect(selectedPatient)}
-              />
-            </DetailSection>
+            {tabs.map(({ Component, value }) => (
+              <DetailTab value={value} key={value}>
+                {Component}
+              </DetailTab>
+            ))}
           </TabContext>
         </Box>
       </DetailContainer>

@@ -72,7 +72,7 @@ const isConnectionError = (
 export const PatientResultsTab: FC<
   PatientPanel & {
     active: boolean;
-    onRowClick: (selectedPatient: string) => void;
+    onRowClick: (selectedPatient: PatientColumnData) => void;
   }
 > = ({ patient, value, active, onRowClick }) => {
   const t = useTranslation();
@@ -198,7 +198,7 @@ export const PatientResultsTab: FC<
       return;
     }
     setCreateNewPatient(undefined);
-    onRowClick(row.id);
+    onRowClick(row);
   };
 
   if (!active) {
