@@ -32,6 +32,7 @@ pub enum ContextType {
     Report,
     Prescription,
     InternalOrder,
+    PurchaseOrder,
 }
 
 table! {
