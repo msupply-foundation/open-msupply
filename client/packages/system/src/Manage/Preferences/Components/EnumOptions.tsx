@@ -49,14 +49,14 @@ export const EnumOptions = <T extends string>({
               onChange={e => handleChange(option.value, e.target.checked)}
             />
           }
-          labelWidth={'180px'}
+          labelWidth={'150px'}
           labelProps={{
             sx: {
               fontWeight: 'normal',
             },
           }}
           sx={{
-            gap: 0,
+            gap: 0.5,
           }}
         />
       ))}
