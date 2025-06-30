@@ -47,6 +47,7 @@ pub mod android {
                 cors_origins: vec!["http://localhost".to_string()],
                 base_dir: Some(files_dir.to_str().unwrap().to_string()),
                 machine_uid: Some(android_id),
+                override_is_central_server: false,
             },
             database: DatabaseSettings {
                 username: "n/a".to_string(),

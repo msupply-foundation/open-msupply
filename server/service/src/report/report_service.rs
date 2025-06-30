@@ -2,8 +2,9 @@ use base64::prelude::*;
 use chrono::{DateTime, Utc};
 use log::error;
 use repository::{
-    migrations::Version, EqualFilter, Pagination, PaginationOption, Report, ReportFilter,
-    ReportMetaData, ReportRepository, ReportRowRepository, ReportSort, RepositoryError,
+    get_storage_connection_manager, migrations::Version, EqualFilter, Pagination, PaginationOption,
+    Report, ReportFilter, ReportMetaData, ReportRepository, ReportRowRepository, ReportSort,
+    RepositoryError,
 };
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
@@ -16,8 +17,10 @@ use crate::{
     get_default_pagination, i64_to_u32,
     localisations::{Localisations, TranslationError},
     service_provider::ServiceContext,
+    settings::Settings,
+    standard_reports::{ReportsData, StandardReports},
     static_files::{StaticFileCategory, StaticFileService},
-    ListError, ListResult,
+    ListError, ListResult, UploadedFile,
 };
 
 use super::{
@@ -58,6 +61,16 @@ pub enum ReportError {
     HTMLToPDFError(String),
     TranslationError,
     ConvertDataError(ConvertDataError),
+}
+
+#[derive(Debug, Error)]
+pub enum InstallReportError {
+    #[error(transparent)]
+    RepositoryError(RepositoryError),
+    #[error("Invalid file")]
+    InvalidFile,
+    #[error("File not found")]
+    FileNotFound,
 }
 
 #[derive(Debug, Clone)]
@@ -182,6 +195,33 @@ pub trait ReportServiceTrait: Sync + Send {
                 generate_html_report_to_pdf(base_dir, document, report.name.clone())
             }
         }
+    }
+
+    fn install_uploaded_reports(
+        &self,
+        settings: &Settings,
+        uploaded_file: UploadedFile,
+    ) -> Result<Vec<String>, InstallReportError> {
+        // TODO generalise plugin errors to be compatible with reports also
+        let report_json: ReportsData = uploaded_file
+            .as_json_file(settings)
+            .map_err(|_| InstallReportError::InvalidFile)?;
+        let connection_manager = get_storage_connection_manager(&settings.database);
+        let con = connection_manager
+            .connection()
+            .map_err(|error| InstallReportError::RepositoryError(error))?;
+
+        // default overwrite as true
+        // TODO add user input to customise overwrite
+        let reports =
+            StandardReports::upsert_reports(report_json, &con, true).map_err(|_error| {
+                InstallReportError::RepositoryError(RepositoryError::DBError {
+                    msg: String::from("Failed to upsert report"),
+                    extra: String::new(),
+                })
+            })?;
+
+        Ok(reports.iter().map(|r| r.id.clone()).collect())
     }
 }
 
