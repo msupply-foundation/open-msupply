@@ -64,7 +64,7 @@ const getStatusOptions = (
     options[5].isDisabled = false;
   }
 
-  // When the status is Delivered, only verified & Delivered re available to select.
+  // When the status is Delivered, only verified & Delivered are available to select.
   if (currentStatus === InvoiceNodeStatus.Delivered) {
     options[4].isDisabled = false;
     options[5].isDisabled = false;
