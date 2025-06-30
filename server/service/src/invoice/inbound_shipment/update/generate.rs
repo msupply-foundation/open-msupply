@@ -184,7 +184,7 @@ pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment
             InvoiceStatus::New
             | InvoiceStatus::Picked
             | InvoiceStatus::Shipped
-            | InvoiceStatus::Delivered,
+            | InvoiceStatus::DeliveredNoStock,
             UpdateInboundShipmentStatus::Received | UpdateInboundShipmentStatus::Verified,
         ) => true,
         _ => false,

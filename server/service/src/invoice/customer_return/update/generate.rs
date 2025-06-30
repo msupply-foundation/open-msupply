@@ -117,7 +117,7 @@ fn set_new_status_datetime(customer_return: &mut InvoiceRow, patch: &UpdateCusto
             InvoiceStatus::New
             | InvoiceStatus::Picked
             | InvoiceStatus::Shipped
-            | InvoiceStatus::Delivered,
+            | InvoiceStatus::DeliveredNoStock,
             UpdateCustomerReturnStatus::Received,
         ) => {
             customer_return.delivered_datetime = Some(current_datetime);
@@ -134,7 +134,7 @@ fn set_new_status_datetime(customer_return: &mut InvoiceRow, patch: &UpdateCusto
             customer_return.verified_datetime = Some(current_datetime);
         }
         // From Delivered to Verified (Skipping Received)
-        (InvoiceStatus::Delivered, UpdateCustomerReturnStatus::Verified) => {
+        (InvoiceStatus::DeliveredNoStock, UpdateCustomerReturnStatus::Verified) => {
             customer_return.received_datetime = Some(current_datetime);
             customer_return.verified_datetime = Some(current_datetime);
         }

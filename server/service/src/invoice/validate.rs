@@ -40,7 +40,7 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
                 status,
                 InvoiceStatus::New
                     | InvoiceStatus::Shipped
-                    | InvoiceStatus::Delivered
+                    | InvoiceStatus::DeliveredNoStock
                     | InvoiceStatus::Received
             )
         }

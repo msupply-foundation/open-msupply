@@ -95,7 +95,7 @@ pub enum InvoiceStatus {
     Picked,
     Shipped,
     Received,
-    Delivered,
+    DeliveredNoStock,
     Verified,
     Cancelled,
 }

@@ -470,7 +470,7 @@ impl InvoiceStatus {
             InvoiceStatus::Allocated => 2,
             InvoiceStatus::Picked => 3,
             InvoiceStatus::Shipped => 4,
-            InvoiceStatus::Delivered => 5,
+            InvoiceStatus::DeliveredNoStock => 5,
             InvoiceStatus::Received => 6,
             InvoiceStatus::Verified => 7,
             InvoiceStatus::Cancelled => 8,

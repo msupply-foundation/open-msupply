@@ -115,7 +115,7 @@ pub fn log_type_from_invoice_status(status: &InvoiceStatus, prescription: bool) 
         from::Picked if prescription => to::PrescriptionStatusPicked,
         from::Picked => to::InvoiceStatusPicked,
         from::Shipped => to::InvoiceStatusShipped,
-        from::Delivered => to::InvoiceStatusDelivered,
+        from::DeliveredNoStock => to::InvoiceStatusDelivered,
         from::Received => to::InvoiceStatusReceived,
         from::Verified if prescription => to::PrescriptionStatusVerified,
         from::Verified => to::InvoiceStatusVerified,

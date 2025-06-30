@@ -199,7 +199,7 @@ where
 impl UpdateInboundShipmentStatus {
     pub fn full_status(&self) -> InvoiceStatus {
         match self {
-            UpdateInboundShipmentStatus::Delivered => InvoiceStatus::Delivered,
+            UpdateInboundShipmentStatus::Delivered => InvoiceStatus::DeliveredNoStock,
             UpdateInboundShipmentStatus::Received => InvoiceStatus::Received,
             UpdateInboundShipmentStatus::Verified => InvoiceStatus::Verified,
         }
@@ -533,7 +533,7 @@ mod test {
             inline_edit(&invoice, |mut u| {
                 u.tax_percentage = Some(10.0);
                 u.user_id = Some(mock_user_account_a().id);
-                u.status = InvoiceStatus::Delivered;
+                u.status = InvoiceStatus::DeliveredNoStock;
                 u
             })
         );

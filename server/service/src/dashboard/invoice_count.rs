@@ -117,7 +117,7 @@ fn invoices_count(
         }
         InvoiceStatus::Picked => invoice_filter = invoice_filter.picked_datetime(datetime_filter),
         InvoiceStatus::Shipped => invoice_filter = invoice_filter.shipped_datetime(datetime_filter),
-        InvoiceStatus::Delivered => {
+        InvoiceStatus::DeliveredNoStock => {
             invoice_filter = invoice_filter.delivered_datetime(datetime_filter)
         }
         InvoiceStatus::Received => {
