@@ -76,6 +76,8 @@ pub fn update_inbound_shipment(
                 update_donor,
             } = generate(ctx, invoice, other_party, patch.clone())?;
 
+            println!("batches to update: {:?}", batches_to_update);
+
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
             let invoice_line_repository = InvoiceLineRowRepository::new(connection);
 
@@ -507,29 +509,65 @@ mod test {
         .unwrap();
 
         for line in invoice_lines.rows {
+            println!("initial {:?}", line);
             assert_eq!(line.stock_line_option, None)
         }
 
         // Test delivered status change with tax
-        let updated_line = InvoiceLineRow {
-            stock_line_id: Some(mock_stock_line_a().id),
-            ..invoice_line_for_test()
-        };
-
-        InvoiceLineRowRepository::new(&connection)
-            .upsert_one(&updated_line)
-            .unwrap();
-
         service
             .update_inbound_shipment(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = invoice_test().id;
-                    r.status = Some(UpdateInboundShipmentStatus::Received);
+                    r.status = Some(UpdateInboundShipmentStatus::Delivered);
                     r.tax = Some(ShipmentTaxUpdate {
                         percentage: Some(10.0),
                     });
                 }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&invoice_test().id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            invoice,
+            inline_edit(&invoice, |mut u| {
+                u.tax_percentage = Some(10.0);
+                u.user_id = Some(mock_user_account_a().id);
+                u.status = InvoiceStatus::Delivered;
+                u
+            })
+        );
+
+        let filter =
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.clone().id]));
+        let invoice_lines = get_invoice_lines(
+            &context,
+            &invoice.clone().store_id,
+            None,
+            Some(filter),
+            None,
+        )
+        .unwrap();
+
+        // There shouldn't be any stock lines saved yet As just in delivered status
+        for line in invoice_lines.rows {
+            println!("delivered {:?}", line);
+            assert_eq!(line.stock_line_option, None)
+        }
+
+        // NEXT: Test updating to received status, and make sure we update stock at this stage
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_test().id,
+                    status: Some(UpdateInboundShipmentStatus::Received),
+                    ..Default::default()
+                },
             )
             .unwrap();
 
@@ -558,7 +596,7 @@ mod test {
             None,
         )
         .unwrap();
-        let mut stock_lines_delivered = Vec::new();
+        let mut stock_lines_received = Vec::new();
 
         for lines in invoice_lines.rows {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
@@ -566,7 +604,7 @@ mod test {
                 .find_one_by_id(&stock_line_id)
                 .unwrap()
                 .unwrap();
-            stock_lines_delivered.push(stock_line.clone());
+            stock_lines_received.push(stock_line.clone());
             assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
         }
 
@@ -609,7 +647,7 @@ mod test {
             stock_lines_verified.push(stock_line.clone());
         }
 
-        assert_eq!(stock_lines_delivered, stock_lines_verified);
+        assert_eq!(stock_lines_received, stock_lines_verified);
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_inbound_shipment_success_currency",

@@ -22,6 +22,7 @@ use super::{
     UpdateInboundShipmentStatus,
 };
 
+#[derive(Debug)]
 pub struct LineAndStockLine {
     pub line: InvoiceLineRow,
     pub stock_line: Option<StockLineRow>,
@@ -179,8 +180,11 @@ pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment
 
     match (existing_status, new_status) {
         (
-            // From New/Picked/Shipped to Delivered/Verified
-            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
+            // From New/Picked/Shipped/Delivered to Received/Verified
+            InvoiceStatus::New
+            | InvoiceStatus::Picked
+            | InvoiceStatus::Shipped
+            | InvoiceStatus::Delivered,
             UpdateInboundShipmentStatus::Received | UpdateInboundShipmentStatus::Verified,
         ) => true,
         _ => false,
