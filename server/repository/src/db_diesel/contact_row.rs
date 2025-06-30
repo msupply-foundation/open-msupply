@@ -26,8 +26,7 @@ table! {
 }
 
 joinable!(contact -> name (name_id));
-allow_tables_to_appear_in_same_query!(contact, name); // Question: do I need to allow it to appear with any other queries?
-
+allow_tables_to_appear_in_same_query!(contact, name);
 #[derive(
     Clone, Default, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
 )]
