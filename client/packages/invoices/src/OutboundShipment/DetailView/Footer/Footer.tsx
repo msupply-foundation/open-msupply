@@ -16,18 +16,14 @@ import {
   useConfirmationModal,
   InvoiceLineNodeType,
 } from '@openmsupply-client/common';
-import {
-  getStatusTranslator,
-  allStatuses,
-  outboundStatuses,
-} from '../../../utils';
+import { getStatusTranslator, outboundStatuses } from '../../../utils';
 import { useOutbound, OutboundFragment } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 import { StockOutLineFragment } from 'packages/invoices/src/StockOut';
 
 const createStatusLog = (invoice: OutboundFragment) => {
-  const statusIdx = allStatuses.findIndex(s => invoice.status === s);
+  const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
 
   const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
     [InvoiceNodeStatus.New]: null,
@@ -56,7 +52,9 @@ const createStatusLog = (invoice: OutboundFragment) => {
   if (statusIdx >= 4) {
     statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
   }
-  // Skipping received
+  if (statusIdx >= 5) {
+    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
+  }
   if (statusIdx >= 6) {
     statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
   }

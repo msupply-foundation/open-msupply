@@ -15,24 +15,24 @@ import {
 import {
   getStatusTranslator,
   supplierReturnStatuses,
-  allStatuses,
+  outboundStatuses,
 } from '../../../utils';
 import { SupplierReturnRowFragment, useReturns } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 
 const createStatusLog = (invoice: SupplierReturnRowFragment) => {
-  const statusIdx = allStatuses.findIndex(s => invoice.status === s);
+  const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
   const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
     [InvoiceNodeStatus.New]: null,
     [InvoiceNodeStatus.Picked]: null,
     [InvoiceNodeStatus.Shipped]: null,
     [InvoiceNodeStatus.Verified]: null,
+    [InvoiceNodeStatus.Received]: null,
     // Not used for Supplier return
     [InvoiceNodeStatus.Delivered]: null,
     [InvoiceNodeStatus.Allocated]: null,
     [InvoiceNodeStatus.Cancelled]: null,
-    [InvoiceNodeStatus.Received]: null,
   };
   if (statusIdx >= 0) {
     statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
@@ -44,8 +44,9 @@ const createStatusLog = (invoice: SupplierReturnRowFragment) => {
   if (statusIdx >= 3) {
     statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
   }
-  if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
+  // Skipping Delivered
+  if (statusIdx >= 5) {
+    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
   }
   // Skipping received
   if (statusIdx >= 6) {
