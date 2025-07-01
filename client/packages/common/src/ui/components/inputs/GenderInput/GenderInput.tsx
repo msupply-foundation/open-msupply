@@ -24,15 +24,7 @@ export const GenderInput = ({
   const t = useTranslation();
   const {
     data: { genderOptions } = {
-      genderOptions: [
-        GenderType.Female,
-        GenderType.Male,
-        GenderType.NonBinary,
-        GenderType.Unknown,
-        GenderType.Transgender,
-        GenderType.TransgenderFemale,
-        GenderType.TransgenderMale,
-      ],
+      genderOptions: [],
     },
   } = usePreference(PreferenceKey.GenderOptions);
 

@@ -5,7 +5,6 @@ import {
   FilterMenu,
   FilterController,
   Box,
-  GenderType,
   FilterDefinition,
   useAuthContext,
   usePreference,
@@ -18,15 +17,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
   const { store } = useAuthContext();
   const {
     data: { genderOptions } = {
-      genderOptions: [
-        GenderType.Female,
-        GenderType.Male,
-        GenderType.NonBinary,
-        GenderType.Unknown,
-        GenderType.Transgender,
-        GenderType.TransgenderFemale,
-        GenderType.TransgenderMale,
-      ],
+      genderOptions: [],
     },
   } = usePreference(PreferenceKey.GenderOptions);
 
