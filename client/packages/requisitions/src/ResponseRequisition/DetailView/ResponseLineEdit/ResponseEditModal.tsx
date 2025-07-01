@@ -122,7 +122,7 @@ export const ResponseLineEditModal = ({
     }
   }, [draft?.isCreated]);
 
-  const { data } = useResponse.line.stats(draft?.id);
+  const { data } = useResponse.line.stats(!draft?.isCreated, draft?.id);
 
   const tabs = [
     {
