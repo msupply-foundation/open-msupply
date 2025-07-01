@@ -6,7 +6,7 @@ use crate::{
     invoice_line::{
         stock_in_line::{
             convert_invoice_line_to_single_pack, generate_batch, get_existing_vvm_status_log_id,
-            StockLineInput,
+            should_update_stock, StockLineInput,
         },
         StockInType,
     },
@@ -14,7 +14,7 @@ use crate::{
 };
 use repository::{
     vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLine, InvoiceLineRow, InvoiceRow,
-    InvoiceStatus, ItemRow, RepositoryError, StockLineRow, StorageConnection,
+    ItemRow, RepositoryError, StockLineRow, StorageConnection,
 };
 
 use super::UpdateStockInLine;
@@ -103,18 +103,6 @@ pub fn generate(
         batch_to_delete_id,
         vvm_status_log_option,
     })
-}
-
-fn should_update_stock(invoice: &InvoiceRow) -> bool {
-    match invoice.status {
-        InvoiceStatus::New | InvoiceStatus::Delivered => false,
-        InvoiceStatus::Allocated
-        | InvoiceStatus::Picked
-        | InvoiceStatus::Shipped
-        | InvoiceStatus::Cancelled
-        | InvoiceStatus::Received
-        | InvoiceStatus::Verified => true,
-    }
 }
 
 fn get_batch_to_delete_id(
