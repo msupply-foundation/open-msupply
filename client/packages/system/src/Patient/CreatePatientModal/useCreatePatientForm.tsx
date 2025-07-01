@@ -33,7 +33,7 @@ export const useCreatePatientForm = (
   const patientSteps = [
     {
       description: '',
-      label: t('label.patient-details'),
+      label: t('label.create-patient'),
       tab: Tabs.Form,
     },
     {

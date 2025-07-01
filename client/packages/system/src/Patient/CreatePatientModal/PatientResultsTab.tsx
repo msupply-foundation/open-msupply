@@ -16,6 +16,7 @@ import {
   useFormatDateTime,
   useTranslation,
   getGenderTranslationKey,
+  Alert,
 } from '@openmsupply-client/common';
 import { PatientPanel } from './PatientPanel';
 import { FetchPatientModal } from './FetchPatientModal';
@@ -248,9 +249,9 @@ export const PatientResultsTab: FC<
         </Box>
       </>
 
-      <Typography component="div" fontSize={12}>
+      <Alert severity="info" style={{ marginBottom: 2 }}>
         {t('messages.patients-create', { count })}
-      </Typography>
+      </Alert>
       <DataTable
         dense
         id="create-patient-duplicates"
