@@ -15,7 +15,7 @@ impl Preference for GenderOptions {
     }
 
     fn value_type(&self) -> PreferenceValueType {
-        PreferenceValueType::Enums
+        PreferenceValueType::MultiChoice
     }
 
     fn default_value(&self) -> Self::Value {

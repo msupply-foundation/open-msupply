@@ -6182,8 +6182,8 @@ export enum PreferenceNodeType {
 
 export enum PreferenceValueNodeType {
   Boolean = 'BOOLEAN',
-  Enums = 'ENUMS',
   Integer = 'INTEGER',
+  MultiChoice = 'MULTI_CHOICE',
 }
 
 export type PreferencesNode = {

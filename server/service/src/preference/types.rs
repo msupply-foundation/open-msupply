@@ -34,7 +34,7 @@ pub enum PreferenceType {
 pub enum PreferenceValueType {
     Boolean,
     Integer,
-    Enums,
+    MultiChoice,
     // String,
     // MultilineString,
     // Add scalar or custom value types here - mapped to frontend renderers

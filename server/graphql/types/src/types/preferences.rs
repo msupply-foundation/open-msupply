@@ -137,7 +137,7 @@ impl PreferenceNodeType {
 pub enum PreferenceValueNodeType {
     Boolean,
     Integer,
-    Enums,
+    MultiChoice,
 }
 
 impl PreferenceValueNodeType {
@@ -145,7 +145,7 @@ impl PreferenceValueNodeType {
         match domain_type {
             PreferenceValueType::Boolean => PreferenceValueNodeType::Boolean,
             PreferenceValueType::Integer => PreferenceValueNodeType::Integer,
-            PreferenceValueType::Enums => PreferenceValueNodeType::Enums,
+            PreferenceValueType::MultiChoice => PreferenceValueNodeType::MultiChoice,
         }
     }
 }

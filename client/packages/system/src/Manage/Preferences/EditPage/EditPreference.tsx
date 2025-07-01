@@ -53,7 +53,7 @@ export const EditPreference = ({
       // because there are no editPreference inputs that accept a number
       return <>To be implemented</>;
 
-    case PreferenceValueNodeType.Enums:
+    case PreferenceValueNodeType.MultiChoice:
       if (!Array.isArray(value)) {
         return t('error.something-wrong');
       }
