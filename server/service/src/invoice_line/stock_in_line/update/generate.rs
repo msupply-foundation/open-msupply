@@ -107,11 +107,10 @@ pub fn generate(
 
 fn should_update_stock(invoice: &InvoiceRow) -> bool {
     match invoice.status {
-        InvoiceStatus::New
+        InvoiceStatus::New | InvoiceStatus::Delivered => false,
+        InvoiceStatus::Allocated
         | InvoiceStatus::Picked
         | InvoiceStatus::Shipped
-        | InvoiceStatus::Delivered => false,
-        InvoiceStatus::Allocated
         | InvoiceStatus::Cancelled
         | InvoiceStatus::Received
         | InvoiceStatus::Verified => true,
