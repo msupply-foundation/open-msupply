@@ -30,6 +30,8 @@ export const AppBarButtonsComponent = ({
 }: AppBarButtonsProps) => {
   const t = useTranslation();
 
+  console.log('test dev tools console log');
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>

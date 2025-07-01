@@ -61,6 +61,7 @@ const printPage = (url: string) => {
       
             const htmlContent = frame.contentDocument?.documentElement.outerHTML || '';
             try {
+              console.error('test');
               printElectron(htmlContent);
             } catch (error) {
               console.error('Error printing HTML content via electron:', error);
@@ -81,6 +82,11 @@ export const usePrintReport = () => {
   const { reportApi, storeId } = useReportGraphQL();
   const { error } = useNotification();
   const { currentLanguage } = useIntlUtils();
+
+    // Test multiple logging methods
+  console.log('Print function called');
+  console.error('This is an error log');
+  console.warn('This is a warning log');
 
   const mutationFn = async (params: GenerateReportParams) => {
     const {
