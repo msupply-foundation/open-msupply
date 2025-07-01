@@ -82,8 +82,8 @@ const getManualStatusOptions = (
       isDisabled: true,
     },
     {
-      value: InvoiceNodeStatus.Delivered,
-      label: getButtonLabel(InvoiceNodeStatus.Delivered),
+      value: InvoiceNodeStatus.Received,
+      label: getButtonLabel(InvoiceNodeStatus.Received),
       isDisabled: true,
     },
     {
@@ -94,14 +94,14 @@ const getManualStatusOptions = (
   ];
 
   if (currentStatus === InvoiceNodeStatus.New) {
-    // When the status is new, delivered and verified are available to
+    // When the status is new, received and verified are available to
     // select.
     options[1].isDisabled = false;
     options[2].isDisabled = false;
   }
 
-  // When the status is delivered, only verified is available to select.
-  if (currentStatus === InvoiceNodeStatus.Delivered) {
+  // When the status is received, only verified is available to select.
+  if (currentStatus === InvoiceNodeStatus.Received) {
     options[2].isDisabled = false;
   }
 
