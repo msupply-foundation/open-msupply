@@ -15,7 +15,7 @@ export type SupplierReturnRowFragment = {
   createdDatetime: string;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
-  deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   verifiedDatetime?: string | null;
   comment?: string | null;
   theirReference?: string | null;
@@ -187,7 +187,7 @@ export type SupplierReturnsQuery = {
       createdDatetime: string;
       pickedDatetime?: string | null;
       shippedDatetime?: string | null;
-      deliveredDatetime?: string | null;
+      receivedDatetime?: string | null;
       verifiedDatetime?: string | null;
       comment?: string | null;
       theirReference?: string | null;
@@ -804,7 +804,7 @@ export const SupplierReturnRowFragmentDoc = gql`
     createdDatetime
     pickedDatetime
     shippedDatetime
-    deliveredDatetime
+    receivedDatetime
     verifiedDatetime
     comment
     theirReference
