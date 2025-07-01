@@ -55,6 +55,14 @@ export const nextStatusMap: { [k in InvoiceNodeStatus]?: InvoiceNodeStatus } = {
   [InvoiceNodeStatus.Received]: InvoiceNodeStatus.Verified,
 };
 
+export const nextStatusMapCustomerReturn: {
+  [k in InvoiceNodeStatus]?: InvoiceNodeStatus;
+} = {
+  [InvoiceNodeStatus.New]: InvoiceNodeStatus.Received,
+  [InvoiceNodeStatus.Shipped]: InvoiceNodeStatus.Received,
+  [InvoiceNodeStatus.Received]: InvoiceNodeStatus.Verified,
+};
+
 export const prescriptionStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Picked,
@@ -128,7 +136,8 @@ export const getNextInboundStatus = (
 export const getNextCustomerReturnStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus | null => {
-  return getNextInboundStatus(currentStatus);
+  const nextStatus = nextStatusMapCustomerReturn[currentStatus];
+  return nextStatus ?? null;
 };
 
 export const getNextPrescriptionStatus = (
