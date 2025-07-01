@@ -164,6 +164,7 @@ fn should_upsert_batch(stock_in_type: &StockInType, existing_invoice_row: &Invoi
     match stock_in_type {
         StockInType::InboundShipment | StockInType::CustomerReturn => {
             existing_invoice_row.status != InvoiceStatus::New
+                && existing_invoice_row.status != InvoiceStatus::Delivered
         }
         StockInType::InventoryAddition => true,
     }
