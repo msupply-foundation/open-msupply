@@ -53,6 +53,7 @@ export const ReasonOptionsSearchInput = ({
             }
           : null
       }
+      required={isRequired && !disabled}
       inputProps={{
         ...restProps.inputProps,
       }}
