@@ -5,7 +5,8 @@ import {
   FileOpener,
   FileOpenerOptions,
 } from '@capacitor-community/file-opener';
-import { Formatter } from '..';
+import { EnvUtils, Formatter, Platform } from '..';
+import { getNativeAPI } from '@common/hooks';
 
 const exportFile = (data: string, type: string, title?: string) => {
   let extension = 'txt';
@@ -130,9 +131,20 @@ const openAndroidFile = async (file: {
   }
 };
 
+const exportCSV = async (data: string, title: string) => {
+  if (EnvUtils.platform === Platform.Android) {
+    await getNativeAPI()?.saveFile({
+      content: data,
+      filename: `${title}.csv`,
+      mimeType: 'text/csv',
+    });
+  } else {
+    exportFile(data, 'text/csv', title);
+  }
+};
+
 export const FileUtils = {
-  exportCSV: (data: string, title: string) =>
-    exportFile(data, 'text/csv', title),
+  exportCSV,
   downloadFile,
   openAndroidFile,
 };

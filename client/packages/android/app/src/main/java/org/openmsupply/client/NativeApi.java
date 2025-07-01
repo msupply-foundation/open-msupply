@@ -544,13 +544,14 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
         String filename = data.getString("filename", LOG_FILE_NAME);
         String content = data.getString("content");
+        String mimeType = data.getString("mimeType", "text/plain");
 
         if (content == null) {
             response.put("error", "No content");
             response.put("success", false);
         } else {
             MainActivity mainActivity = (MainActivity) getActivity();
-            mainActivity.SaveFile(filename, content);
+            mainActivity.SaveFile(filename, content, mimeType);
             response.put("success", true);
         }
 

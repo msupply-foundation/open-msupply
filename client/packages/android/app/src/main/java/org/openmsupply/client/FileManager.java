@@ -40,10 +40,10 @@ public class FileManager {
 
     }
 
-    public void Save(String filename, String content) {
+    public void Save(String filename, String content, String mimeType) {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("text/plain");
+        intent.setType(mimeType);
         intent.putExtra(Intent.EXTRA_TITLE, filename);
         // This was a neat idea, but only works with small amounts of text!
         // With a few hundred KB the file chooser closes immediately on open

@@ -22,6 +22,7 @@ export type ConnectionResult = {
 };
 export type FileInfo = {
   content: string;
+  mimeType?: string;
   filename?: string;
 };
 
