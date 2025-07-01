@@ -16,22 +16,22 @@ import {
   getStatusTranslator,
   customerReturnStatuses,
   manualCustomerReturnStatuses,
-  outboundStatuses,
+  inboundStatuses,
 } from '../../../utils';
 import { CustomerReturnFragment, useReturns } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 
 const createStatusLog = (invoice: CustomerReturnFragment) => {
-  const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
+  const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
   const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
     [InvoiceNodeStatus.New]: null,
     [InvoiceNodeStatus.Picked]: null,
     [InvoiceNodeStatus.Shipped]: null,
-    [InvoiceNodeStatus.Delivered]: null,
     [InvoiceNodeStatus.Received]: null,
     [InvoiceNodeStatus.Verified]: null,
     // Not used for returns
+    [InvoiceNodeStatus.Delivered]: null,
     [InvoiceNodeStatus.Allocated]: null,
     [InvoiceNodeStatus.Cancelled]: null,
   };
