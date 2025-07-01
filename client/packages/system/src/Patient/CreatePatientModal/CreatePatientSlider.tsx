@@ -26,7 +26,7 @@ interface CreatePatientSliderProps {
 
 export const CreatePatientSlider = ({
   open,
-  hasEditTab,
+  hasEditTab = false,
   onClose,
   onCreate,
   onSelectPatient: onSelect,

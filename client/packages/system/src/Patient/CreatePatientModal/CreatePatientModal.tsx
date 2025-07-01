@@ -26,12 +26,14 @@ interface CreatePatientModal {
 
 export const CreatePatientModal = ({
   open,
-  hasEditTab,
+  hasEditTab = false,
   onClose,
   onCreate,
   onSelectPatient: onSelect,
 }: CreatePatientModal) => {
   const t = useTranslation();
+
+  const { Modal } = useDialog({ isOpen: open, onClose });
 
   const {
     onNext,
@@ -47,13 +49,17 @@ export const CreatePatientModal = ({
     handleSave,
   } = useCreatePatientForm(onSelect, hasEditTab);
 
-  const { Modal } = useDialog({ isOpen: open, onClose });
-
   const handleNextClick = () => {
     if (currentTab === Tabs.SearchResults) {
-      hasEditTab ? () => onNext(tabs) : () => onCreate();
+      if (hasEditTab) {
+        onNext(tabs);
+      } else {
+        onCreate();
+        onClose();
+      }
+    } else {
+      onNext(tabs);
     }
-    onNext(tabs);
   };
 
   useEffect(() => {
