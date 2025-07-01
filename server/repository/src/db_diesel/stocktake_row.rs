@@ -26,6 +26,7 @@ table! {
         program_id -> Nullable<Text>,
         counted_by -> Nullable<Text>,
         verified_by -> Nullable<Text>,
+        is_initial_stocktake -> Bool,
     }
 }
 
@@ -59,6 +60,7 @@ pub struct StocktakeRow {
     pub program_id: Option<String>,
     pub counted_by: Option<String>,
     pub verified_by: Option<String>,
+    pub is_initial_stocktake: bool,
 }
 
 pub struct StocktakeRowRepository<'a> {

@@ -107,6 +107,7 @@ impl UpdateInput {
                 percentage: tax.percentage,
             }),
             note: None,
+            campaign_id: None,
         }
     }
 }
@@ -114,6 +115,7 @@ impl UpdateInput {
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use ServiceError::*;
     let formatted_error = format!("{:#?}", error);
+    log::error!("Error updating outbound shipment line: {}", formatted_error);
 
     let graphql_error = match error {
         // Structured Errors
@@ -173,7 +175,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ItemDoesNotMatchStockLine
         | NotThisInvoiceLine(_)
         | LineDoesNotReferenceStockLine => StandardGraphqlError::BadUserInput(formatted_error),
-        DatabaseError(_) | UpdatedLineDoesNotExist => {
+        AutoPickFailed(_) | DatabaseError(_) | UpdatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
         }
     };
@@ -553,6 +555,7 @@ mod test {
                         percentage: Some(1.0),
                     }),
                     note: None,
+                    campaign_id: None
                 }
             );
             Ok(InvoiceLine {

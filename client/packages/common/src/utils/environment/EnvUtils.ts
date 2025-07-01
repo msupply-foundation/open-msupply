@@ -87,13 +87,15 @@ const mapRoute = (route: string): RouteMapping => {
       return { title: 'sensors', docs: '/coldchain/sensors/' };
     case inRoute(AppRoute.Equipment):
       return { title: 'equipment', docs: '/coldchain/equipment/' };
-    case inRoute(AppRoute.Facilities):
-      return { title: 'facilities', docs: '/manage/facilities/' };
+    case inRoute(AppRoute.Stores):
+      return { title: 'stores', docs: '/manage/facilities/' };
     case inRoute(AppRoute.IndicatorsDemographics):
       return {
         title: 'indicators-demographics',
         docs: '/manage/demographics/',
       };
+    case inRoute(AppRoute.Campaigns):
+      return { title: 'campaigns', docs: '/manage/campaigns/' };
     case inRoute(AppRoute.ImmunisationPrograms):
       return { title: 'immunisations', docs: '/programs/immunizations/' };
     case inRoute(AppRoute.RnRForms):

@@ -10,6 +10,7 @@ pub(crate) mod asset_property;
 pub(crate) mod asset_type;
 pub(crate) mod backend_plugin;
 pub(crate) mod barcode;
+pub(crate) mod campaign;
 pub(crate) mod category;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
@@ -78,6 +79,8 @@ pub(crate) mod vaccination;
 pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
 pub(crate) mod vaccine_course_item;
+pub(crate) mod vvm_status;
+pub(crate) mod vvm_status_log;
 pub(crate) mod warning;
 
 use chrono::{NaiveDateTime, NaiveTime, SubsecRound};
@@ -120,6 +123,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         property::boxed(),
         name_property::boxed(),
         cold_storage_type::boxed(),
+        campaign::boxed(),
         // Remote
         location::boxed(),
         location_movement::boxed(),
@@ -173,6 +177,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         demographic::boxed(),
         // Vaccination
         vaccination::boxed(),
+        vvm_status::boxed(),
+        vvm_status_log::boxed(),
         // Item Variant
         item_variant::boxed(),
         packaging_variant::boxed(),

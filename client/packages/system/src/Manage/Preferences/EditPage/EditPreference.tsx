@@ -1,58 +1,55 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  BasicSpinner,
-  Box,
-  DetailPanelSection,
-  NothingHere,
+  noOtherVariants,
+  PreferenceValueNodeType,
+  Switch,
+  isBoolean,
+  isNumber,
+  UpsertPreferencesInput,
   PreferenceDescriptionNode,
-  PreferencesNode,
-  usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
-import { EditField } from './EditField';
-import { useEditPreference } from '../api/useEditPreference';
 
 export const EditPreference = ({
-  selected,
+  preference,
+  update,
+  disabled = false,
 }: {
-  selected: PreferenceDescriptionNode;
+  preference: PreferenceDescriptionNode;
+  update: (input: UpsertPreferencesInput[keyof UpsertPreferencesInput]) => void;
+  disabled?: boolean;
 }) => {
   const t = useTranslation();
 
-  const { data: prefs, isLoading } = usePreferences();
-  const { mutateAsync: update } = useEditPreference(selected.key);
+  // The preference.value only updates after mutation completes and cache
+  // is invalidated - use local state for fast UI change
+  const [value, setValue] = useState(preference.value);
 
-  if (isLoading) {
-    return <BasicSpinner />;
+  switch (preference.valueType) {
+    case PreferenceValueNodeType.Boolean:
+      if (!isBoolean(value)) {
+        return t('error.something-wrong');
+      }
+      return (
+        <Switch
+          disabled={disabled}
+          checked={value}
+          onChange={(_, checked) => {
+            setValue(checked);
+            update(checked);
+          }}
+        />
+      );
+
+    case PreferenceValueNodeType.Integer:
+      if (!isNumber(preference.value)) {
+        return t('error.something-wrong');
+      }
+      // Adding NumericTextInput here would currently get a type error,
+      // because there are no editPreference inputs that accept a number
+      return <>To be implemented</>;
+
+    default:
+      noOtherVariants(preference.valueType);
   }
-
-  const prefKey = getPrefKey(selected.key);
-  if (!prefs || !prefKey) {
-    return <NothingHere />;
-  }
-
-  const value = prefs[prefKey];
-
-  return (
-    <Box>
-      <DetailPanelSection title={t('label.global-preference')}>
-        <Box sx={{ backgroundColor: 'white', padding: 1, borderRadius: 1 }}>
-          <EditField
-            value={value}
-            config={selected}
-            // TODO: backend would generate IDs, just send the value
-            onChange={value => update({ value, id: `${selected.key}_global` })}
-          />
-        </Box>
-      </DetailPanelSection>
-      <Box sx={{ height: 10 }} />
-    </Box>
-  );
 };
-
-function getPrefKey(key: string): keyof PreferencesNode | undefined {
-  switch (key) {
-    case 'show_contact_tracing':
-      return 'showContactTracing';
-  }
-}

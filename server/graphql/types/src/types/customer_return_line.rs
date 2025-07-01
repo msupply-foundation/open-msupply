@@ -1,10 +1,14 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
-use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
+use graphql_core::{
+    loader::{ItemLoader, ReasonOptionLoader},
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
+};
 use repository::ItemRow;
 use service::{invoice::customer_return::generate_lines::CustomerReturnLine, ListResult};
 
-use super::ItemNode;
+use super::{ItemNode, ReasonOptionNode};
 
 #[derive(SimpleObject)]
 pub struct GeneratedCustomerReturnLineConnector {
@@ -104,5 +108,16 @@ impl CustomerReturnLineNode {
         )?;
 
         Ok(ItemNode::from_domain(item))
+    }
+
+    pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
+        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
+        let reason_option_id = match &self.return_line.reason_id {
+            None => return Ok(None),
+            Some(reason_option_id) => reason_option_id,
+        };
+
+        let result = loader.load_one(reason_option_id.clone()).await?;
+        Ok(result.map(ReasonOptionNode::from_domain))
     }
 }

@@ -15,6 +15,7 @@ import {
   EnvUtils,
   useNavigate,
   RouteBuilder,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { requestsToCsv } from '../../utils';
@@ -35,6 +36,7 @@ export const AppBarButtons: FC<{
     direction: 'desc',
     isDesc: true,
   });
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -56,14 +58,16 @@ export const AppBarButtons: FC<{
           label={t('label.new-internal-order')}
           onClick={modalController.toggleOn}
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          variant="outlined"
-          isLoading={isLoading}
-          onClick={csvExport}
-          disabled={EnvUtils.platform === Platform.Android}
-          label={t('button.export')}
-        />
+        {!simplifiedTabletView && (
+          <LoadingButton
+            startIcon={<DownloadIcon />}
+            variant="outlined"
+            isLoading={isLoading}
+            onClick={csvExport}
+            disabled={EnvUtils.platform === Platform.Android}
+            label={t('button.export')}
+          />
+        )}
       </Grid>
       <CreateRequisitionModal
         isOpen={modalController.isOn}

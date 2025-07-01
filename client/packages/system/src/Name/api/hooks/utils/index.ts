@@ -1,7 +1,7 @@
 import { useNameApi } from './useNameApi';
-import { useNextFacilityId } from './useNextFacilityId';
+import { useNextStoreId } from './useNextStoreId';
 
 export const Utils = {
   useNameApi,
-  useNextFacilityId,
+  useNextStoreId,
 };

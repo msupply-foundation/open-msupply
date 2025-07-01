@@ -1,7 +1,7 @@
 use repository::{
     property::{PropertyFilter, PropertyRepository},
-    EqualFilter, Name, NameFilter, NameRepository, Patient, PatientFilter, PatientRepository,
-    RepositoryError, StorageConnection, StoreRowRepository, StringFilter,
+    EqualFilter, Name, NameFilter, NameLinkRow, NameRepository, Patient, PatientFilter,
+    PatientRepository, RepositoryError, StorageConnection, StoreRowRepository, StringFilter,
 };
 
 pub fn check_store_id_matches(store_id_a: &str, store_id_b: &str) -> bool {
@@ -28,6 +28,8 @@ pub enum OtherPartyErrors {
 pub enum CheckOtherPartyType {
     Customer,
     Supplier,
+    Manufacturer,
+    Donor,
     Patient,
 }
 
@@ -64,6 +66,10 @@ pub fn check_other_party(
 
         return Ok(Name {
             name_row: patient,
+            name_link_row: NameLinkRow {
+                id: other_party_id.to_string(),
+                name_id: other_party_id.to_string(),
+            },
             name_store_join_row: None,
             store_row: None,
             properties: None,
@@ -86,6 +92,16 @@ pub fn check_other_party(
 
         CheckOtherPartyType::Supplier => {
             if !other_party.is_supplier() {
+                return Err(OtherPartyErrors::TypeMismatched);
+            }
+        }
+        CheckOtherPartyType::Manufacturer => {
+            if !other_party.is_manufacturer() {
+                return Err(OtherPartyErrors::TypeMismatched);
+            }
+        }
+        CheckOtherPartyType::Donor => {
+            if !other_party.is_donor() {
                 return Err(OtherPartyErrors::TypeMismatched);
             }
         }

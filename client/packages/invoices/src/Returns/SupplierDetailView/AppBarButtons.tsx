@@ -16,7 +16,7 @@ import {
   usePrintReport,
 } from '@openmsupply-client/system';
 import { JsonData } from '@openmsupply-client/programs';
-import { Draft } from '../..';
+import { Draft } from '../../StockOut';
 
 interface AppBarButtonProps {
   onAddItem: (draft?: Draft) => void;

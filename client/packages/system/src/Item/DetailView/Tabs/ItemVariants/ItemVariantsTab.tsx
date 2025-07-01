@@ -7,6 +7,8 @@ import {
   FlatButton,
   InputWithLabelRow,
   NothingHere,
+  NumericTextInput,
+  Tooltip,
   Typography,
 } from '@common/components';
 import {
@@ -18,15 +20,19 @@ import {
   useEditModal,
 } from '@openmsupply-client/common';
 import { ItemPackagingVariantsTable } from './ItemPackagingVariantsTable';
-import { ItemVariantFragment, useDeleteItemVariant } from '../../../api';
+import {
+  ItemRowFragment,
+  ItemVariantFragment,
+  useDeleteItemVariant,
+} from '../../../api';
 import { ItemVariantModal } from './ItemVariantModal';
 import { BundledItemVariants } from './BundledItemVariants';
 
 export const ItemVariantsTab = ({
-  itemId,
+  item,
   itemVariants,
 }: {
-  itemId: string;
+  item: ItemRowFragment;
   itemVariants: ItemVariantFragment[];
 }) => {
   const t = useTranslation();
@@ -37,7 +43,7 @@ export const ItemVariantsTab = ({
   return (
     <>
       {isOpen && (
-        <ItemVariantModal onClose={onClose} itemId={itemId} variant={entity} />
+        <ItemVariantModal onClose={onClose} item={item} variant={entity} />
       )}
       <AppBarButtonsPortal>
         <ButtonWithIcon
@@ -58,7 +64,7 @@ export const ItemVariantsTab = ({
               key={v.id}
               variant={v}
               onOpen={onOpen}
-              itemId={itemId}
+              itemId={item.id}
             />
           ))
         )}
@@ -85,14 +91,26 @@ const ItemVariant = ({
         minTemperature: variant.coldStorageType.minTemperature,
         maxTemperature: variant.coldStorageType.maxTemperature,
       })
-    : null;
+    : '';
 
   return (
     <Box maxWidth="1000px" margin="25px auto" paddingBottom={6}>
       <Box display="flex" justifyContent="space-between" alignItems="end">
-        <Typography variant="h6" fontWeight="bold" color="black">
-          {variant.name}
-        </Typography>
+        <Tooltip title={variant?.name ?? ''}>
+          <Typography
+            variant="h6"
+            fontWeight="bold"
+            color="black"
+            sx={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: 800,
+            }}
+            title={variant.name}
+          >
+            {variant.name}
+          </Typography>
+        </Tooltip>
         <Box display="flex" gap={2}>
           <FlatButton
             label={t('label.edit')}
@@ -141,6 +159,32 @@ const ItemVariant = ({
               />
             }
           />
+          {variant.item?.isVaccine && (
+            <>
+              <InputWithLabelRow
+                label={t('label.doses-per-unit')}
+                labelWidth="200"
+                Input={
+                  <NumericTextInput
+                    value={variant.dosesPerUnit}
+                    disabled
+                    fullWidth
+                  />
+                }
+              />
+              <InputWithLabelRow
+                label={t('label.vvm-type')}
+                labelWidth="200"
+                Input={
+                  <BasicTextInput
+                    value={variant.vvmType ?? ''}
+                    disabled
+                    fullWidth
+                  />
+                }
+              />
+            </>
+          )}
         </Box>
         <Box flex={1}>
           <Typography fontWeight="bold">{t('title.packaging')}</Typography>

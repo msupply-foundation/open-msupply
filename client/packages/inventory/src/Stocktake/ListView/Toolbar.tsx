@@ -8,6 +8,7 @@ import {
   AutocompleteOnChange,
   InputLabel,
   Box,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 
 type StatusOption = {
@@ -19,6 +20,7 @@ export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
   const t = useTranslation();
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const onFilterChange: AutocompleteOnChange<StatusOption> = (_, option) => {
     if (!option) {
@@ -28,7 +30,7 @@ export const Toolbar: FC<{
     filter.onChangeStringFilterRule('status', 'equalTo', option.value);
   };
 
-  return (
+  return simplifiedTabletView ? null : (
     <AppBarContentPortal
       sx={{
         paddingBottom: '16px',

@@ -6,6 +6,7 @@ import {
   TextField,
 } from '@mui/material';
 import { useTranslation } from '@common/intl';
+import { merge } from '@common/utils';
 
 export type Option = {
   label: string;
@@ -44,20 +45,24 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
         select
         variant="standard"
         size="small"
-        slotProps={{
-          input: {
-            ...slotProps?.input,
-            color: 'secondary',
-            sx: {
-              backgroundColor: theme =>
-                props.disabled
-                  ? theme.palette.background.toolbar
-                  : theme.palette.background.menu,
-              borderRadius: 1,
-              padding: '4px 8px',
+        slotProps={merge(
+          {
+            input: {
+              color: 'secondary',
+              sx: {
+                backgroundColor: props.disabled
+                  ? 'background.toolbar'
+                  : 'background.menu',
+                borderRadius: 1,
+                padding: '4px 8px',
+              },
+            },
+            inputLabel: {
+              color: 'secondary',
             },
           },
-        }}
+          slotProps
+        )}
         {...props}
       >
         {options.map(renderOption || defaultRenderOption)}

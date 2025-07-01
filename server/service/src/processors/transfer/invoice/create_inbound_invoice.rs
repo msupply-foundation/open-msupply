@@ -246,6 +246,7 @@ fn generate_inbound_invoice(
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
         is_cancellation: false,
+        default_donor_link_id: None,
     };
 
     Ok(result)

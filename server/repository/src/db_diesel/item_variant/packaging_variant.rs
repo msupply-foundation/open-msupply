@@ -125,6 +125,8 @@ fn create_filtered_query(filter: Option<PackagingVariantFilter>) -> BoxedPackagi
 
 #[cfg(test)]
 mod tests {
+    use chrono::NaiveDate;
+
     use crate::{
         item_variant::{
             item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
@@ -159,6 +161,13 @@ mod tests {
                 cold_storage_type_id: None,
                 manufacturer_link_id: None,
                 deleted_datetime: None,
+                doses_per_unit: 0,
+                vvm_type: None,
+                created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                created_by: None,
             })
             .unwrap();
 

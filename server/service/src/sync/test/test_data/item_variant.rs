@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use repository::item_variant::item_variant_row::ItemVariantRow;
 use serde_json::json;
 
@@ -12,7 +13,8 @@ const ITEM_VARIANT1: (&str, &str) = (
         "name": "Item Variant 1",
         "item_link_id": "8F252B5884B74888AAB73A0D42C09E7A",
         "cold_storage_type_id": null,
-        "manufacturer_link_id": null
+        "manufacturer_link_id": null,
+        "created_datetime": "2023-01-01T00:00:00"
     }"#,
 );
 
@@ -24,6 +26,13 @@ fn item_variant1() -> ItemVariantRow {
         cold_storage_type_id: None,
         manufacturer_link_id: None,
         deleted_datetime: None,
+        doses_per_unit: 0,
+        vvm_type: None,
+        created_datetime: NaiveDate::from_ymd_opt(2023, 1, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
+        created_by: None,
     }
 }
 
@@ -34,7 +43,10 @@ const ITEM_VARIANT2: (&str, &str) = (
         "name": "Item Variant 2",
         "item_link_id": "8F252B5884B74888AAB73A0D42C09E7A",
         "cold_storage_type_id": null,
-        "manufacturer_link_id": "1FB32324AF8049248D929CFB35F255BA"
+        "manufacturer_link_id": "1FB32324AF8049248D929CFB35F255BA",
+        "doses_per_unit": 1,
+        "vvm_type": "VVM 1",
+        "created_datetime": "2023-01-01T00:00:00"
     }"#,
 );
 
@@ -46,6 +58,13 @@ fn item_variant2() -> ItemVariantRow {
         cold_storage_type_id: None, //TODO: Add cold storage type when sync is implemented
         manufacturer_link_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()), // NAME_1.0 (currently marked as manufacturer)
         deleted_datetime: None,
+        doses_per_unit: 1,
+        vvm_type: Some("VVM 1".to_string()),
+        created_datetime: NaiveDate::from_ymd_opt(2023, 1, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
+        created_by: None,
     }
 }
 

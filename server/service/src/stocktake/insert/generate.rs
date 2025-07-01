@@ -1,13 +1,13 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    DateFilter, EqualFilter, ItemRowRepository, ItemType, MasterListLineFilter,
-    MasterListLineRepository, NumberRowType, ProgramRowRepository, RepositoryError,
-    StockLineFilter, StockLineRepository, StockLineRow, StocktakeLineRow, StocktakeRow,
-    StocktakeStatus, StorageConnection,
+    DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow, ItemRowRepository, ItemType,
+    MasterListLineFilter, MasterListLineRepository, NumberRowType, ProgramRowRepository,
+    RepositoryError, StockLineFilter, StockLineRepository, StockLineRow, StocktakeLineRow,
+    StocktakeRow, StocktakeStatus, StorageConnection,
 };
 use util::uuid::uuid;
 
-use crate::{number::next_number, NullableUpdate};
+use crate::number::next_number;
 
 use super::InsertStocktake;
 
@@ -15,75 +15,34 @@ pub fn generate(
     connection: &StorageConnection,
     store_id: &str,
     user_id: &str,
-    InsertStocktake {
-        id,
-        comment,
-        description,
-        stocktake_date,
-        is_locked,
-        location,
-        master_list_id,
-        items_have_stock,
-        expires_before,
-    }: InsertStocktake,
+    input: InsertStocktake,
 ) -> Result<(StocktakeRow, Vec<StocktakeLineRow>), RepositoryError> {
     let stocktake_number = next_number(connection, &NumberRowType::Stocktake, store_id)?;
-    let mut program_id = None;
+    let id = input.id.clone();
+    let lines = generate_stocktake_lines(connection, store_id, &id, input.clone())?;
 
-    let master_list_lines = match master_list_id {
-        Some(master_list_id) => {
-            program_id = ProgramRowRepository::new(connection)
-                .find_one_by_id(&master_list_id)?
-                .map(|r| r.id);
-            generate_lines_from_master_list(connection, store_id, &id, &master_list_id)?
-        }
-        None => Vec::new(),
+    let program_id = match input.master_list_id {
+        Some(master_list_id) => ProgramRowRepository::new(connection)
+            .find_one_by_id(&master_list_id)?
+            .map(|r| r.id),
+        None => None,
     };
-    let location_lines = match location {
-        Some(NullableUpdate {
-            value: Some(location_id),
-            ..
-        }) => generate_lines_from_location(connection, store_id, &id, &location_id)?,
-        _ => Vec::new(),
-    };
-    let items_have_stock_lines = match items_have_stock {
-        Some(_) => generate_lines_with_stock(connection, store_id, &id)?,
-        None => Vec::new(),
-    };
-    let expiring_items_lines = match expires_before {
-        Some(expires_before) => {
-            generate_lines_expiring_before(connection, store_id, &id, &expires_before)?
-        }
-        None => Vec::new(),
-    };
-    let lines = [
-        master_list_lines,
-        location_lines,
-        items_have_stock_lines,
-        expiring_items_lines,
-    ]
-    .concat();
 
     Ok((
         StocktakeRow {
             id,
             stocktake_number,
-            comment,
-            description,
-            // TODO: Changing this to be same as created datetime for now since function is disabled in frontend
-            // but will need to remove this later when functionality is
-            stocktake_date: if stocktake_date.is_some() {
-                stocktake_date
-            } else {
-                Some(Utc::now().naive_utc().date())
-            },
+            comment: input.comment,
+            stocktake_date: Some(Utc::now().naive_utc().date()),
             status: StocktakeStatus::New,
             created_datetime: Utc::now().naive_utc(),
             user_id: user_id.to_string(),
             store_id: store_id.to_string(),
-            is_locked: is_locked.unwrap_or(false),
+            is_initial_stocktake: input.is_initial_stocktake.unwrap_or(false),
+            description: input.description,
             program_id,
             // Default
+            is_locked: false,
             finalised_datetime: None,
             inventory_addition_id: None,
             inventory_reduction_id: None,
@@ -92,6 +51,56 @@ pub fn generate(
         },
         lines,
     ))
+}
+
+fn generate_stocktake_lines(
+    connection: &StorageConnection,
+    store_id: &str,
+    id: &str,
+    InsertStocktake {
+        id: _,
+        master_list_id,
+        location_id,
+        items_have_stock,
+        expires_before,
+        is_initial_stocktake,
+        comment: _,
+        description: _,
+    }: InsertStocktake,
+) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
+    if let Some(true) = is_initial_stocktake {
+        return generate_lines_initial_stocktake(connection, store_id, id);
+    }
+    let master_list_lines = match master_list_id {
+        Some(master_list_id) => {
+            generate_lines_from_master_list(connection, store_id, id, &master_list_id)?
+        }
+        None => Vec::new(),
+    };
+    let location_lines = match location_id {
+        Some(location_id) => generate_lines_from_location(connection, store_id, id, &location_id)?,
+        None => Vec::new(),
+    };
+    let items_have_stock_lines = match items_have_stock {
+        Some(true) => generate_lines_with_stock(connection, store_id, id)?,
+        Some(false) | None => Vec::new(),
+    };
+    let expiring_items_lines = match expires_before {
+        Some(expires_before) => {
+            generate_lines_expiring_before(connection, store_id, id, &expires_before)?
+        }
+        None => Vec::new(),
+    };
+
+    let lines = [
+        master_list_lines,
+        location_lines,
+        items_have_stock_lines,
+        expiring_items_lines,
+    ]
+    .concat();
+
+    Ok(lines)
 }
 
 pub fn generate_lines_from_master_list(
@@ -145,8 +154,9 @@ pub fn generate_lines_from_master_list(
                 sell_price_per_pack: None,
                 comment: None,
                 counted_number_of_packs: None,
-                inventory_adjustment_reason_id: None,
                 item_variant_id: None,
+                donor_link_id: None,
+                reason_option_id: None,
             });
         } else {
             stock_lines.into_iter().for_each(|line| {
@@ -167,6 +177,9 @@ pub fn generate_lines_from_master_list(
                     available_number_of_packs: _,
                     barcode_id: _,
                     item_variant_id,
+                    donor_link_id,
+                    vvm_status_id: _,
+                    campaign_id: _,
                 } = line.stock_line_row;
 
                 result.push(StocktakeLineRow {
@@ -185,8 +198,9 @@ pub fn generate_lines_from_master_list(
                     sell_price_per_pack: Some(sell_price_per_pack),
                     comment: None,
                     counted_number_of_packs: None,
-                    inventory_adjustment_reason_id: None,
                     item_variant_id,
+                    donor_link_id,
+                    reason_option_id: None,
                 });
             });
         }
@@ -229,6 +243,9 @@ pub fn generate_lines_from_location(
                 available_number_of_packs: _,
                 barcode_id: _,
                 item_variant_id,
+                donor_link_id,
+                vvm_status_id: _,
+                campaign_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {
@@ -247,11 +264,56 @@ pub fn generate_lines_from_location(
                 sell_price_per_pack: Some(sell_price_per_pack),
                 comment: None,
                 counted_number_of_packs: None,
-                inventory_adjustment_reason_id: None,
                 item_variant_id,
+                donor_link_id,
+                reason_option_id: None,
             }
         })
         .collect();
+    Ok(result)
+}
+
+pub fn generate_lines_initial_stocktake(
+    connection: &StorageConnection,
+    store_id: &str,
+    stocktake_id: &str,
+) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
+    let item_rows: Vec<ItemRow> = ItemRepository::new(connection)
+        .query_by_filter(
+            ItemFilter::new()
+                .is_visible(true)
+                .r#type(ItemType::Stock.equal_to()),
+            Some(store_id.to_string()),
+        )?
+        .into_iter()
+        .map(|r| r.item_row)
+        .collect();
+
+    let result = item_rows
+        .into_iter()
+        .map(|item| StocktakeLineRow {
+            id: uuid(),
+            stocktake_id: stocktake_id.to_string(),
+            item_link_id: item.id,
+            item_name: item.name,
+            // Defaults
+            snapshot_number_of_packs: 0.0,
+            location_id: None,
+            batch: None,
+            expiry_date: None,
+            note: None,
+            stock_line_id: None,
+            pack_size: None,
+            cost_price_per_pack: None,
+            sell_price_per_pack: None,
+            comment: None,
+            counted_number_of_packs: None,
+            item_variant_id: None,
+            donor_link_id: None,
+            reason_option_id: None,
+        })
+        .collect();
+
     Ok(result)
 }
 
@@ -287,6 +349,9 @@ pub fn generate_lines_with_stock(
                 available_number_of_packs: _,
                 barcode_id: _,
                 item_variant_id,
+                donor_link_id,
+                vvm_status_id: _,
+                campaign_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {
@@ -305,8 +370,9 @@ pub fn generate_lines_with_stock(
                 sell_price_per_pack: Some(sell_price_per_pack),
                 comment: None,
                 counted_number_of_packs: None,
-                inventory_adjustment_reason_id: None,
                 item_variant_id,
+                donor_link_id,
+                reason_option_id: None,
             }
         })
         .collect();
@@ -346,6 +412,9 @@ pub fn generate_lines_expiring_before(
                 available_number_of_packs: _,
                 barcode_id: _,
                 item_variant_id,
+                donor_link_id,
+                vvm_status_id: _,
+                campaign_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {
@@ -363,9 +432,10 @@ pub fn generate_lines_expiring_before(
                 sell_price_per_pack: Some(sell_price_per_pack),
                 comment: None,
                 counted_number_of_packs: None,
-                inventory_adjustment_reason_id: None,
                 item_name: line.item_row.name,
                 item_variant_id,
+                donor_link_id,
+                reason_option_id: None,
             }
         })
         .collect();

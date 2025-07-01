@@ -118,12 +118,19 @@ fragment PrescriptionLine on InvoiceLineNode {
     name
     code
     unitName
+    isVaccine
+    doses
     itemDirections {
       ...ItemDirection
     }
     warnings {
       ...Warning
     }
+    isVaccine
+  }
+  itemVariant {
+    id
+    dosesPerUnit
   }
 
   location {
@@ -149,12 +156,22 @@ fragment PrescriptionLine on InvoiceLineNode {
     item {
       name
       code
+      isVaccine
+      doses
       itemDirections {
         ...ItemDirection
       }
       warnings {
         ...Warning
       }
+      isVaccine
+    }
+    vvmStatus {
+      __typename
+      id
+      level
+      unusable
+      description
     }
   }
 }
@@ -189,12 +206,19 @@ fragment PartialPrescriptionLine on StockLineNode {
   item {
     name
     code
+    isVaccine
+    doses
     itemDirections {
       ...ItemDirection
     }
     warnings {
       ...Warning
     }
+    isVaccine
+  }
+  itemVariant {
+    id
+    dosesPerUnit
   }
   location {
     __typename
@@ -548,6 +572,8 @@ fragment historicalStockLine on StockLineNode {
   item {
     name
     code
+    isVaccine
+    doses
     itemDirections {
       ...ItemDirection
     }
@@ -588,5 +614,17 @@ query labelPrinterSettings {
     labelHeight
     labelWidth
     port
+  }
+}
+
+mutation savePrescriptionItemLines(
+  $storeId: String!
+  $input: SavePrescriptionLinesInput!
+) {
+  savePrescriptionItemLines(input: $input, storeId: $storeId) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
   }
 }

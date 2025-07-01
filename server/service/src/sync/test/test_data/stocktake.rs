@@ -31,7 +31,8 @@ const STOCKTAKE_1: (&str, &str) = (
       "type": "",
       "om_created_datetime": "",
       "om_counted_by": "",
-      "om_verified_by": ""
+      "om_verified_by": "",
+      "om_is_initial_stocktake": false
     }"#,
 );
 fn stocktake_pull_record() -> TestSyncIncomingRecord {
@@ -58,6 +59,7 @@ fn stocktake_pull_record() -> TestSyncIncomingRecord {
             program_id: None,
             counted_by: None,
             verified_by: None,
+            is_initial_stocktake: false,
         },
     )
 }
@@ -87,6 +89,7 @@ fn stocktake_push_record() -> TestSyncOutgoingRecord {
             program_id: None,
             counted_by: None,
             verified_by: None,
+            is_initial_stocktake: false,
         }),
     }
 }
@@ -113,7 +116,8 @@ const STOCKTAKE_OM_FIELD: (&str, &str) = (
       "om_created_datetime": "2021-07-30T15:15:15",
       "om_finalised_datetime": "2021-07-31T15:15:15",
       "om_counted_by": "testuser1",
-      "om_verified_by": "testuser2"
+      "om_verified_by": "testuser2",
+      "om_is_initial_stocktake": false
     }"#,
 );
 fn stocktake_om_field_pull_record() -> TestSyncIncomingRecord {
@@ -145,6 +149,7 @@ fn stocktake_om_field_pull_record() -> TestSyncIncomingRecord {
             program_id: None,
             counted_by: Some("testuser1".to_string()),
             verified_by: Some("testuser2".to_string()),
+            is_initial_stocktake: false,
         },
     )
 }
@@ -181,14 +186,107 @@ fn stocktake_om_field_push_record() -> TestSyncOutgoingRecord {
             program_id: None,
             counted_by: Some("testuser1".to_string()),
             verified_by: Some("testuser2".to_string()),
+            is_initial_stocktake: false,
+        }),
+    }
+}
+
+const STOCKTAKE_INITIAL: (&str, &str) = (
+    "8dddb54df6d741bc0a375950f0d211eb",
+    r#"{
+      "Description": "Test",
+      "ID": "8dddb54df6d741bc0a375950f0d211eb",
+      "Locked": false,
+      "comment": "",
+      "created_by_ID": "",
+      "finalised_by_ID": "0763E2E3053D4C478E1E6B6B03FEC207",
+      "invad_additions_ID": "inbound_shipment_a",
+      "invad_reductions_ID": "inbound_shipment_b",
+      "programID": "",
+      "serial_number": 3,
+      "status": "fn",
+      "stock_take_created_date": "2021-07-30",
+      "stock_take_date": "2021-07-30",
+      "stock_take_time": 47061,
+      "store_ID": "store_a",
+      "type": "",
+      "om_created_datetime": "",
+      "om_counted_by": "",
+      "om_verified_by": "",
+      "om_is_initial_stocktake": true
+    }"#,
+);
+fn stocktake_initial_pull_record() -> TestSyncIncomingRecord {
+    let created_datetime = NaiveDate::from_ymd_opt(2021, 7, 30)
+        .unwrap()
+        .and_time(NaiveTime::from_num_seconds_from_midnight_opt(47061, 0).unwrap());
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
+        STOCKTAKE_INITIAL,
+        StocktakeRow {
+            id: STOCKTAKE_INITIAL.0.to_string(),
+            user_id: "".to_string(),
+            store_id: "store_a".to_string(),
+            stocktake_number: 3,
+            comment: None,
+            description: Some("Test".to_string()),
+            status: StocktakeStatus::Finalised,
+            created_datetime,
+            finalised_datetime: Some(created_datetime),
+            inventory_addition_id: Some("inbound_shipment_a".to_string()),
+            inventory_reduction_id: Some("inbound_shipment_b".to_string()),
+            is_locked: false,
+            stocktake_date: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
+            program_id: None,
+            counted_by: None,
+            verified_by: None,
+            is_initial_stocktake: true,
+        },
+    )
+}
+fn stocktake_initial_push_record() -> TestSyncOutgoingRecord {
+    let created_datetime = NaiveDate::from_ymd_opt(2021, 7, 30)
+        .unwrap()
+        .and_time(NaiveTime::from_num_seconds_from_midnight_opt(47061, 0).unwrap());
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
+        record_id: STOCKTAKE_INITIAL.0.to_string(),
+        push_data: json!(LegacyStocktakeRow {
+            ID: STOCKTAKE_INITIAL.0.to_string(),
+            user_id: "".to_string(),
+            store_ID: "store_a".to_string(),
+            status: LegacyStocktakeStatus::Fn,
+            Description: Some("Test".to_string()),
+            comment: None,
+            inventory_addition_id: Some("inbound_shipment_a".to_string()),
+            inventory_reduction_id: Some("inbound_shipment_b".to_string()),
+            serial_number: 3,
+            stock_take_created_date: NaiveDate::from_ymd_opt(2021, 7, 30).unwrap(),
+            is_locked: false,
+            stocktake_date: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
+            stock_take_time: NaiveTime::from_num_seconds_from_midnight_opt(47061, 0).unwrap(),
+            created_datetime: Some(created_datetime),
+            finalised_datetime: Some(created_datetime),
+            program_id: None,
+            counted_by: None,
+            verified_by: None,
+            is_initial_stocktake: true,
         }),
     }
 }
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
-    vec![stocktake_pull_record(), stocktake_om_field_pull_record()]
+    vec![
+        stocktake_pull_record(),
+        stocktake_om_field_pull_record(),
+        stocktake_initial_pull_record(),
+    ]
 }
 
 pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
-    vec![stocktake_push_record(), stocktake_om_field_push_record()]
+    vec![
+        stocktake_push_record(),
+        stocktake_om_field_push_record(),
+        stocktake_initial_push_record(),
+    ]
 }

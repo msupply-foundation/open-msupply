@@ -11,8 +11,12 @@ import {
   DetailTabs,
   useRowHighlight,
   useBreadcrumbs,
+  PreferenceKey,
+  usePreference,
+  useSimplifiedTabletUI,
+  Box,
 } from '@openmsupply-client/common';
-import { ItemRowFragment, ActivityLogList } from '@openmsupply-client/system';
+import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -21,7 +25,11 @@ import { StocktakeSummaryItem } from '../../types';
 import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
-import { StocktakeFragment, StocktakeLineFragment, useStocktake } from '../api';
+import {
+  StocktakeFragment,
+  StocktakeLineFragment,
+  useStocktakeOld,
+} from '../api';
 import { StocktakeLineErrorProvider } from '../context';
 import { isStocktakeDisabled } from '../../utils';
 
@@ -29,18 +37,13 @@ const StocktakeTabs = ({
   id,
   isDisabled,
   onOpen,
+  onRowClick,
 }: {
   id: string | undefined;
   isDisabled: boolean;
-  onOpen: (item?: ItemRowFragment | null | undefined) => void;
+  onOpen: (item?: StocktakeLineFragment['item'] | null | undefined) => void;
+  onRowClick: (item: StocktakeLineFragment | StocktakeSummaryItem) => void;
 }) => {
-  const onRowClick = useCallback(
-    (item: StocktakeLineFragment | StocktakeSummaryItem) => {
-      if (item.item) onOpen(item.item);
-    },
-    [onOpen]
-  );
-
   const tabs = [
     {
       Component: (
@@ -66,9 +69,17 @@ const DetailViewComponent = ({
 }: {
   stocktake: StocktakeFragment;
   isDisabled: boolean;
-  onOpen: () => void;
+  onOpen: (item?: StocktakeLineFragment['item'] | null | undefined) => void;
 }) => {
   const { HighlightStyles } = useRowHighlight();
+  const simplifiedTabletView = useSimplifiedTabletUI();
+
+  const onRowClick = useCallback(
+    (item: StocktakeLineFragment | StocktakeSummaryItem) => {
+      if (item.item) onOpen(item.item);
+    },
+    [onOpen]
+  );
 
   return (
     <>
@@ -79,25 +90,44 @@ const DetailViewComponent = ({
       <SidePanel />
 
       <Toolbar />
-
-      <StocktakeTabs
-        id={stocktake?.id}
-        onOpen={onOpen}
-        isDisabled={isDisabled}
-      />
+      {simplifiedTabletView ? (
+        <Box
+          sx={{
+            display: 'flex',
+            flex: 1,
+            justifyContent: 'center',
+          }}
+        >
+          <ContentArea
+            onRowClick={!isDisabled ? onRowClick : null}
+            onAddItem={() => onOpen()}
+          />
+        </Box>
+      ) : (
+        <StocktakeTabs
+          id={stocktake?.id}
+          onOpen={onOpen}
+          onRowClick={onRowClick}
+          isDisabled={isDisabled}
+        />
+      )}
     </>
   );
 };
 
 export const DetailView = () => {
-  const { data: stocktake, isLoading } = useStocktake.document.get();
+  const { data: stocktake, isLoading } = useStocktakeOld.document.get();
+  const { data: preferences } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor
+  );
+
   const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
 
   const navigate = useNavigate();
   const { isOpen, entity, onOpen, onClose, mode } =
-    useEditModal<ItemRowFragment>();
+    useEditModal<StocktakeLineFragment['item']>();
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: stocktake?.stocktakeNumber.toString() ?? '' });
@@ -121,8 +151,6 @@ export const DetailView = () => {
       />
     );
 
-
-
   return (
     <StocktakeLineErrorProvider>
       <TableProvider createStore={createTableStore}>
@@ -137,6 +165,10 @@ export const DetailView = () => {
             onClose={onClose}
             mode={mode}
             item={entity}
+            isInitialStocktake={stocktake.isInitialStocktake}
+            enableDonorTracking={
+              preferences?.[PreferenceKey.AllowTrackingOfStockByDonor] ?? false
+            }
           />
         )}
       </TableProvider>

@@ -1,25 +1,27 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   BasicSpinner,
   InvoiceNodeStatus,
-  isEqual,
   NothingHere,
+  PreferenceKey,
   RouteBuilder,
   useBreadcrumbs,
   useConfirmOnLeaving,
   useNavigate,
   useParams,
+  usePreference,
 } from '@openmsupply-client/common';
 
 import { ItemRowFragment, ListItems } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PageLayout } from './PageLayout';
-import { usePrescription, usePrescriptionLines } from '../api';
+import { usePrescription } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { PrescriptionLineEdit } from './PrescriptionLineEdit';
-import { DraftPrescriptionLine } from '../../types';
 import { Footer } from './Footer';
 import { NavBar } from './NavBar';
+import { getAllocatedQuantity, useAllocationContext } from '../../StockOut';
+import { useSavePrescriptionItemLineData } from '../api/hooks/useSavePrescriptionItemLineData';
 
 export const PrescriptionLineEditView = () => {
   const { invoiceId = '', itemId } = useParams();
@@ -27,17 +29,33 @@ export const PrescriptionLineEditView = () => {
   const isDirty = useRef(false);
   const navigate = useNavigate();
 
+  const { data: prefs, isLoading: isLoadingPrefs } = usePreference(
+    PreferenceKey.ManageVaccinesInDoses,
+    PreferenceKey.SortByVvmStatusThenExpiry
+  );
+
+  const {
+    isDirty: allocationIsDirty,
+    draftLines,
+    item,
+    prescribedUnits,
+    note,
+    allocatedQuantity,
+    setIsDirty: setAllocationIsDirty,
+  } = useAllocationContext(state => ({
+    ...state,
+    allocatedQuantity: getAllocatedQuantity(state),
+  }));
+
+  const {
+    mutateAsync: savePrescriptionItemLineData,
+    isLoading: isSavingLines,
+  } = useSavePrescriptionItemLineData(invoiceId);
+
   const {
     query: { data, loading: isLoading },
     isDisabled,
   } = usePrescription();
-
-  const {
-    save: { saveLines, isSavingLines },
-    // delete: { deleteLines },
-  } = usePrescriptionLines(data?.id);
-
-  const newItemId = useRef<string>();
 
   // This ref is attached to the currently selected list item, and is used to
   // "scroll into view" when the Previous/Next buttons are clicked in the NavBar
@@ -52,23 +70,21 @@ export const PrescriptionLineEditView = () => {
 
   const status = data?.status;
 
-  const [allDraftLines, setAllDraftLines] = useState<
-    Record<string, DraftPrescriptionLine[]>
-  >({});
-
-  const currentItem = lines.find(line => line.item.id === itemId)?.item;
-
+  // Future TODO: expose on Prescription/Invoice query - items, and whether they have
+  // any packs allocated or not!
   const items = useMemo(() => {
     const itemSet = new Set();
     const items: ItemRowFragment[] = [];
-    lines.forEach(line => {
-      if (!itemSet.has(line.item.id)) {
-        items.push(line.item);
-        itemSet.add(line.item.id);
-      }
-    });
+    (data?.lines.nodes ?? [])
+      .sort((a, b) => a.item.name.localeCompare(b.item.name))
+      .forEach(line => {
+        if (!itemSet.has(line.item.id)) {
+          items.push(line.item);
+          itemSet.add(line.item.id);
+        }
+      });
     return items;
-  }, [lines]);
+  }, [data]);
 
   const enteredLineIds = lines
     .filter(line => line.numberOfPacks !== 0)
@@ -77,9 +93,9 @@ export const PrescriptionLineEditView = () => {
   useEffect(() => {
     setCustomBreadcrumbs({
       1: data?.invoiceNumber.toString() ?? '',
-      2: currentItem?.name || '',
+      2: item?.name || '',
     });
-  }, [currentItem, data?.invoiceNumber, itemId]);
+  }, [item, data?.invoiceNumber, itemId]);
 
   useConfirmOnLeaving(
     'prescription-line-edit',
@@ -87,74 +103,55 @@ export const PrescriptionLineEditView = () => {
     // switching to a different item within this page
     {
       customCheck: {
-        navigate: (current, next) => {
-          if (!isDirty.current) return false;
-
-          const currentPathParts = current.pathname.split('/');
-          const nextPathParts = next.pathname.split('/');
-          // Compare URLS, but don't include the last part, which is the ItemID
-          currentPathParts.pop();
-          nextPathParts.pop();
-          return !isEqual(currentPathParts, nextPathParts);
-        },
+        navigate: () => isDirty.current,
         refresh: () => isDirty.current,
       },
     }
   );
 
-  const updateAllLines = (lines: DraftPrescriptionLine[]) => {
-    if (itemId === 'new') {
-      newItemId.current = lines[0]?.item.id;
-    }
-
-    if (typeof itemId === 'string')
-      setAllDraftLines({ ...allDraftLines, [itemId]: lines });
-  };
+  // TODO: We need a better solution for this long term!
+  useEffect(() => {
+    // Using useAllocationContext isDirty for rest of form, need to sync it with
+    // the isDirty state for confirm on leaving
+    isDirty.current = allocationIsDirty;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allocationIsDirty]);
 
   const onSave = async () => {
-    if (!isDirty.current) return;
+    // Save should only be enabled if we have an item anyway...
+    const contextItemId = item?.id ?? itemId;
+    if (!contextItemId) {
+      return;
+    }
 
-    const flattenedLines = Object.values(allDraftLines).flat();
+    if (allocationIsDirty) {
+      await savePrescriptionItemLineData({
+        itemId: contextItemId,
+        lines: draftLines,
+        prescribedUnits,
+        note,
+      });
 
-    // needed since placeholders aren't being created for prescriptions yet, but
-    // still adding to array
-    const isOnHold = flattenedLines.some(
-      ({ stockLine, location }) => stockLine?.onHold || location?.onHold
-    );
+      setAllocationIsDirty(false);
+      // Need to reset explicitly here, as state is not updated before the useConfirmOnLeaving
+      // hook checks for unsaved changes
+      // TODO: solution to consolidate the two...
+      isDirty.current = false;
+    }
 
-    const patch =
-      status !== InvoiceNodeStatus.Picked &&
-      flattenedLines.length >= 1 &&
-      !isOnHold
-        ? {
-            id: invoiceId,
-            status: InvoiceNodeStatus.Picked,
-          }
-        : undefined;
-
-    await saveLines({
-      draftPrescriptionLines: flattenedLines,
-      patch,
-    });
-
-    // For "NEW" items, navigate to newly-created item page
-    if (newItemId.current) {
-      const itemId = newItemId.current;
-      newItemId.current = undefined;
+    if (itemId === 'new') {
       navigate(
         RouteBuilder.create(AppRoute.Dispensary)
           .addPart(AppRoute.Prescription)
           .addPart(invoiceId)
-          .addPart(itemId)
+          .addPart(contextItemId)
           .build(),
         { replace: true }
       );
     }
-    isDirty.current = false;
-    setAllDraftLines({});
   };
 
-  if (isLoading || !itemId) return <BasicSpinner />;
+  if (isLoading || !itemId || isLoadingPrefs) return <BasicSpinner />;
   if (!data) return <NothingHere />;
 
   const itemIdList = items.map(item => item.id);
@@ -181,13 +178,16 @@ export const PrescriptionLineEditView = () => {
         Right={
           <>
             <PrescriptionLineEdit
-              item={currentItem ?? null}
-              draftLines={allDraftLines[itemId] ?? []}
-              updateLines={updateAllLines}
-              setIsDirty={dirty => {
-                isDirty.current = dirty;
-              }}
+              // Key resets all component state when itemId changes
+              key={itemId}
+              itemId={itemId === 'new' ? undefined : itemId}
               programId={data?.programId ?? undefined}
+              invoiceId={invoiceId}
+              prefOptions={{
+                allocateVaccineItemsInDoses:
+                  prefs?.manageVaccinesInDoses ?? false,
+                sortByVvmStatus: prefs?.sortByVvmStatusThenExpiry ?? false,
+              }}
             />
             <NavBar
               items={itemIdList}
@@ -208,7 +208,11 @@ export const PrescriptionLineEditView = () => {
       />
       <Footer
         isSaving={isSavingLines}
-        isDirty={isDirty.current}
+        disabled={
+          !item?.id ||
+          !allocationIsDirty ||
+          (allocatedQuantity === 0 && prescribedUnits === 0)
+        }
         handleSave={onSave}
         handleCancel={() =>
           navigate(

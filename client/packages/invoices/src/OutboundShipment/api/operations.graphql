@@ -802,16 +802,14 @@ mutation addToOutboundShipmentFromMasterList(
   }
 }
 
-fragment itemPrice on ItemPriceNode {
-  defaultPricePerUnit
-  discountPercentage
-  calculatedPricePerUnit
-}
-
-query getItemPricing($storeId: String!, $input: ItemPriceInput!) {
-  itemPrice(storeId: $storeId, input: $input) {
-    ... on ItemPriceNode {
-      ...itemPrice
+mutation saveOutboundShipmentItemLines(
+  $storeId: String!
+  $input: SaveOutboundShipmentLinesInput!
+) {
+  saveOutboundShipmentItemLines(input: $input, storeId: $storeId) {
+    ... on InvoiceNode {
+      __typename
+      id
     }
   }
 }

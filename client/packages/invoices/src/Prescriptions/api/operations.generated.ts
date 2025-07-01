@@ -67,6 +67,8 @@ export type PrescriptionRowFragment = {
         name: string;
         code: string;
         unitName?: string | null;
+        isVaccine: boolean;
+        doses: number;
         itemDirections: Array<{
           __typename: 'ItemDirectionNode';
           directions: string;
@@ -83,6 +85,11 @@ export type PrescriptionRowFragment = {
           code: string;
         }>;
       };
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        dosesPerUnit: number;
+      } | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -106,6 +113,8 @@ export type PrescriptionRowFragment = {
           __typename: 'ItemNode';
           name: string;
           code: string;
+          isVaccine: boolean;
+          doses: number;
           itemDirections: Array<{
             __typename: 'ItemDirectionNode';
             directions: string;
@@ -122,6 +131,13 @@ export type PrescriptionRowFragment = {
             code: string;
           }>;
         };
+        vvmStatus?: {
+          __typename: 'VvmstatusNode';
+          id: string;
+          level: number;
+          unusable: boolean;
+          description: string;
+        } | null;
       } | null;
     }>;
   };
@@ -187,6 +203,8 @@ export type PrescriptionLineFragment = {
     name: string;
     code: string;
     unitName?: string | null;
+    isVaccine: boolean;
+    doses: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -203,6 +221,11 @@ export type PrescriptionLineFragment = {
       code: string;
     }>;
   };
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    dosesPerUnit: number;
+  } | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -226,6 +249,8 @@ export type PrescriptionLineFragment = {
       __typename: 'ItemNode';
       name: string;
       code: string;
+      isVaccine: boolean;
+      doses: number;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
         directions: string;
@@ -242,6 +267,13 @@ export type PrescriptionLineFragment = {
         code: string;
       }>;
     };
+    vvmStatus?: {
+      __typename: 'VvmstatusNode';
+      id: string;
+      level: number;
+      unusable: boolean;
+      description: string;
+    } | null;
   } | null;
 };
 
@@ -277,6 +309,8 @@ export type PartialPrescriptionLineFragment = {
     __typename: 'ItemNode';
     name: string;
     code: string;
+    isVaccine: boolean;
+    doses: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -293,6 +327,11 @@ export type PartialPrescriptionLineFragment = {
       code: string;
     }>;
   };
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    dosesPerUnit: number;
+  } | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -380,6 +419,8 @@ export type PrescriptionsQuery = {
             name: string;
             code: string;
             unitName?: string | null;
+            isVaccine: boolean;
+            doses: number;
             itemDirections: Array<{
               __typename: 'ItemDirectionNode';
               directions: string;
@@ -396,6 +437,11 @@ export type PrescriptionsQuery = {
               code: string;
             }>;
           };
+          itemVariant?: {
+            __typename: 'ItemVariantNode';
+            id: string;
+            dosesPerUnit: number;
+          } | null;
           location?: {
             __typename: 'LocationNode';
             id: string;
@@ -419,6 +465,8 @@ export type PrescriptionsQuery = {
               __typename: 'ItemNode';
               name: string;
               code: string;
+              isVaccine: boolean;
+              doses: number;
               itemDirections: Array<{
                 __typename: 'ItemDirectionNode';
                 directions: string;
@@ -435,6 +483,13 @@ export type PrescriptionsQuery = {
                 code: string;
               }>;
             };
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              id: string;
+              level: number;
+              unusable: boolean;
+              description: string;
+            } | null;
           } | null;
         }>;
       };
@@ -551,6 +606,8 @@ export type PrescriptionByNumberQuery = {
               name: string;
               code: string;
               unitName?: string | null;
+              isVaccine: boolean;
+              doses: number;
               itemDirections: Array<{
                 __typename: 'ItemDirectionNode';
                 directions: string;
@@ -567,6 +624,11 @@ export type PrescriptionByNumberQuery = {
                 code: string;
               }>;
             };
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              dosesPerUnit: number;
+            } | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -590,6 +652,8 @@ export type PrescriptionByNumberQuery = {
                 __typename: 'ItemNode';
                 name: string;
                 code: string;
+                isVaccine: boolean;
+                doses: number;
                 itemDirections: Array<{
                   __typename: 'ItemDirectionNode';
                   directions: string;
@@ -606,6 +670,13 @@ export type PrescriptionByNumberQuery = {
                   code: string;
                 }>;
               };
+              vvmStatus?: {
+                __typename: 'VvmstatusNode';
+                id: string;
+                level: number;
+                unusable: boolean;
+                description: string;
+              } | null;
             } | null;
           }>;
         };
@@ -731,6 +802,8 @@ export type PrescriptionByIdQuery = {
               name: string;
               code: string;
               unitName?: string | null;
+              isVaccine: boolean;
+              doses: number;
               itemDirections: Array<{
                 __typename: 'ItemDirectionNode';
                 directions: string;
@@ -747,6 +820,11 @@ export type PrescriptionByIdQuery = {
                 code: string;
               }>;
             };
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              dosesPerUnit: number;
+            } | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -770,6 +848,8 @@ export type PrescriptionByIdQuery = {
                 __typename: 'ItemNode';
                 name: string;
                 code: string;
+                isVaccine: boolean;
+                doses: number;
                 itemDirections: Array<{
                   __typename: 'ItemDirectionNode';
                   directions: string;
@@ -786,6 +866,13 @@ export type PrescriptionByIdQuery = {
                   code: string;
                 }>;
               };
+              vvmStatus?: {
+                __typename: 'VvmstatusNode';
+                id: string;
+                level: number;
+                unusable: boolean;
+                description: string;
+              } | null;
             } | null;
           }>;
         };
@@ -1079,6 +1166,8 @@ export type HistoricalStockLineFragment = {
     __typename: 'ItemNode';
     name: string;
     code: string;
+    isVaccine: boolean;
+    doses: number;
     itemDirections: Array<{
       __typename: 'ItemDirectionNode';
       directions: string;
@@ -1146,6 +1235,16 @@ export type LabelPrinterSettingsQuery = {
   } | null;
 };
 
+export type SavePrescriptionItemLinesMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.SavePrescriptionLinesInput;
+}>;
+
+export type SavePrescriptionItemLinesMutation = {
+  __typename: 'Mutations';
+  savePrescriptionItemLines: { __typename: 'InvoiceNode'; id: string };
+};
+
 export const ItemDirectionFragmentDoc = gql`
   fragment ItemDirection on ItemDirectionNode {
     __typename
@@ -1190,12 +1289,19 @@ export const PrescriptionLineFragmentDoc = gql`
       name
       code
       unitName
+      isVaccine
+      doses
       itemDirections {
         ...ItemDirection
       }
       warnings {
         ...Warning
       }
+      isVaccine
+    }
+    itemVariant {
+      id
+      dosesPerUnit
     }
     location {
       __typename
@@ -1219,12 +1325,22 @@ export const PrescriptionLineFragmentDoc = gql`
       item {
         name
         code
+        isVaccine
+        doses
         itemDirections {
           ...ItemDirection
         }
         warnings {
           ...Warning
         }
+        isVaccine
+      }
+      vvmStatus {
+        __typename
+        id
+        level
+        unusable
+        description
       }
     }
   }
@@ -1331,12 +1447,19 @@ export const PartialPrescriptionLineFragmentDoc = gql`
     item {
       name
       code
+      isVaccine
+      doses
       itemDirections {
         ...ItemDirection
       }
       warnings {
         ...Warning
       }
+      isVaccine
+    }
+    itemVariant {
+      id
+      dosesPerUnit
     }
     location {
       __typename
@@ -1357,6 +1480,8 @@ export const HistoricalStockLineFragmentDoc = gql`
     item {
       name
       code
+      isVaccine
+      doses
       itemDirections {
         ...ItemDirection
       }
@@ -1754,6 +1879,19 @@ export const LabelPrinterSettingsDocument = gql`
     }
   }
 `;
+export const SavePrescriptionItemLinesDocument = gql`
+  mutation savePrescriptionItemLines(
+    $storeId: String!
+    $input: SavePrescriptionLinesInput!
+  ) {
+    savePrescriptionItemLines(input: $input, storeId: $storeId) {
+      ... on InvoiceNode {
+        __typename
+        id
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -1929,6 +2067,22 @@ export function getSdk(
           ),
         'labelPrinterSettings',
         'query',
+        variables
+      );
+    },
+    savePrescriptionItemLines(
+      variables: SavePrescriptionItemLinesMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders
+    ): Promise<SavePrescriptionItemLinesMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SavePrescriptionItemLinesMutation>(
+            SavePrescriptionItemLinesDocument,
+            variables,
+            { ...requestHeaders, ...wrappedRequestHeaders }
+          ),
+        'savePrescriptionItemLines',
+        'mutation',
         variables
       );
     },

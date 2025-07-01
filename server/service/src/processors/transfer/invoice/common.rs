@@ -41,11 +41,13 @@ pub(crate) fn generate_inbound_lines(
                  total_after_tax: _,
                  total_before_tax,
                  tax_percentage,
-                 inventory_adjustment_reason_id: _,
-                 return_reason_id,
                  foreign_currency_price_before_tax,
                  item_variant_id,
                  linked_invoice_id: _,
+                 donor_link_id,
+                 vvm_status_id,
+                 campaign_id,
+                 reason_option_id: _,
              }| {
                 let cost_price_per_pack = sell_price_per_pack;
 
@@ -77,13 +79,15 @@ pub(crate) fn generate_inbound_lines(
                     note,
                     tax_percentage,
                     foreign_currency_price_before_tax,
-                    return_reason_id,
                     item_variant_id,
                     linked_invoice_id: Some(source_invoice.invoice_row.id.to_string()),
+                    vvm_status_id,
+                    donor_link_id,
+                    campaign_id,
                     // Default
                     stock_line_id: None,
                     location_id: None,
-                    inventory_adjustment_reason_id: None,
+                    reason_option_id: None,
                 }
             },
         )

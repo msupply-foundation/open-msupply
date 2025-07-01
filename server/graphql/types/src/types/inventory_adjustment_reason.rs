@@ -1,13 +1,9 @@
 use async_graphql::*;
-use repository::{
-    inventory_adjustment_reason::InventoryAdjustmentReason, InventoryAdjustmentReasonRow,
-    InventoryAdjustmentType,
-};
+use repository::{ReasonOption, ReasonOptionRow, ReasonOptionType};
 use service::ListResult;
-
 #[derive(PartialEq, Debug)]
 pub struct InventoryAdjustmentReasonNode {
-    inventory_adjustment_reason: InventoryAdjustmentReason,
+    inventory_adjustment_reason: ReasonOption,
 }
 
 #[derive(SimpleObject)]
@@ -28,7 +24,7 @@ impl InventoryAdjustmentReasonNode {
         &self.row().id
     }
 
-    pub async fn r#type(&self) -> InventoryAdjustmentReasonNodeType {
+    pub async fn r#type(&self) -> Result<InventoryAdjustmentReasonNodeType> {
         InventoryAdjustmentReasonNodeType::from_domain(&self.row().r#type)
     }
 
@@ -42,44 +38,46 @@ impl InventoryAdjustmentReasonNode {
 }
 
 impl InventoryAdjustmentReasonNode {
-    pub fn from_domain(inventory_adjustment_reason: InventoryAdjustmentReason) -> Self {
+    pub fn from_domain(inventory_adjustment_reason: ReasonOption) -> Self {
         InventoryAdjustmentReasonNode {
             inventory_adjustment_reason,
         }
     }
 
-    pub fn row(&self) -> &InventoryAdjustmentReasonRow {
-        &self
-            .inventory_adjustment_reason
-            .inventory_adjustment_reason_row
+    pub fn row(&self) -> &ReasonOptionRow {
+        &self.inventory_adjustment_reason.reason_option_row
     }
 }
 
 impl InventoryAdjustmentReasonNodeType {
-    pub fn from_domain(from: &InventoryAdjustmentType) -> InventoryAdjustmentReasonNodeType {
+    pub fn from_domain(from: &ReasonOptionType) -> Result<InventoryAdjustmentReasonNodeType> {
         use InventoryAdjustmentReasonNodeType as to;
-        use InventoryAdjustmentType as from;
+        use ReasonOptionType as from;
 
         match from {
-            from::Positive => to::Positive,
-            from::Negative => to::Negative,
+            from::PositiveInventoryAdjustment => Ok(to::Positive),
+            from::NegativeInventoryAdjustment => Ok(to::Negative),
+            _ => Err(Error::new(format!(
+                "Invalid inventory adjustment reason type: {:?}",
+                from,
+            ))),
         }
     }
 
-    pub fn to_domain(self) -> InventoryAdjustmentType {
+    pub fn to_domain(self) -> ReasonOptionType {
         use InventoryAdjustmentReasonNodeType as from;
-        use InventoryAdjustmentType as to;
+        use ReasonOptionType as to;
 
         match self {
-            from::Positive => to::Positive,
-            from::Negative => to::Negative,
+            from::Positive => to::PositiveInventoryAdjustment,
+            from::Negative => to::NegativeInventoryAdjustment,
         }
     }
 }
 
 impl InventoryAdjustmentReasonConnector {
     pub fn from_domain(
-        inventory_adjustment_reasons: ListResult<InventoryAdjustmentReason>,
+        inventory_adjustment_reasons: ListResult<ReasonOption>,
     ) -> InventoryAdjustmentReasonConnector {
         InventoryAdjustmentReasonConnector {
             total_count: inventory_adjustment_reasons.count,

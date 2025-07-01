@@ -1,28 +1,41 @@
 #[cfg(test)]
 mod query {
+    use repository::activity_log::ActivityLogFilter;
     use repository::item_variant::bundled_item::BundledItemFilter;
     use repository::item_variant::item_variant::ItemVariantFilter;
-    use repository::mock::{mock_item_a, mock_item_b, MockDataInserts};
+    use repository::mock::{
+        mock_item_a, mock_item_b, mock_name_c, mock_name_store_b, mock_store_a,
+        mock_user_account_a, MockDataInserts,
+    };
     use repository::test_db::setup_all;
-    use repository::{EqualFilter, StringFilter};
+    use repository::{ActivityLogType, EqualFilter, StringFilter};
     use util::uuid::uuid;
 
+    use crate::activity_log::get_activity_logs;
     use crate::item::bundled_item::UpsertBundledItem;
     use crate::item::item_variant::{
         DeleteItemVariant, UpsertItemVariantError, UpsertItemVariantWithPackaging,
     };
     use crate::service_provider::ServiceProvider;
+    use crate::NullableUpdate;
 
     #[actix_rt::test]
     async fn create_edit_delete_item_variant() {
         let (_, _, connection_manager, _) = setup_all(
             "create_edit_delete_item_variant",
-            MockDataInserts::none().items(),
+            MockDataInserts::none()
+                .items()
+                .user_accounts()
+                .names()
+                .stores()
+                .name_store_joins(),
         )
         .await;
 
-        let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider.basic_context().unwrap();
+        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.item_service;
 
         let test_item_a_variant_id = "test_item_variant_id";
@@ -40,6 +53,15 @@ mod query {
             )
             .unwrap();
 
+        // Log created
+        assert_eq!(
+            get_activity_logs(&connection_manager, None, None, None)
+                .unwrap()
+                .rows
+                .len(),
+            1
+        );
+
         // Create another item variant for item_a
         let _item_a_variant_b = service
             .upsert_item_variant(
@@ -48,6 +70,9 @@ mod query {
                     id: uuid(),
                     item_id: mock_item_a().id,
                     name: "item_a_variant_b".to_string(),
+                    manufacturer_id: Some(NullableUpdate {
+                        value: Some(mock_name_store_b().id),
+                    }),
                     ..Default::default()
                 },
             )
@@ -109,6 +134,28 @@ mod query {
                 },
             )
             .unwrap();
+
+        // Name update log
+        let name_update_log = get_activity_logs(
+            &connection_manager,
+            None,
+            Some(
+                ActivityLogFilter::new()
+                    .r#type(ActivityLogType::ItemVariantUpdatedName.equal_to())
+                    .record_id(EqualFilter::equal_to(test_item_a_variant_id)),
+            ),
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(
+            name_update_log.rows[0].activity_log_row.changed_from,
+            Some("item_a_variant_a".to_string())
+        );
+        assert_eq!(
+            name_update_log.rows[0].activity_log_row.changed_to,
+            Some("updated_name".to_string())
+        );
 
         // Query the item variant by name
         let item_variant = service
@@ -172,7 +219,7 @@ mod query {
                 None,
                 Some(
                     BundledItemFilter::new()
-                        .principal_item_variant_id(EqualFilter::equal_to(&test_item_b_variant_id)),
+                        .principal_item_variant_id(EqualFilter::equal_to(test_item_b_variant_id)),
                 ),
             )
             .unwrap();
@@ -181,13 +228,22 @@ mod query {
 
     #[actix_rt::test]
     async fn validate_item_variant() {
-        let (_, _, connection_manager, _) =
-            setup_all("validate_item_variant", MockDataInserts::none().items()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "validate_item_variant",
+            MockDataInserts::none()
+                .items()
+                .user_accounts()
+                .names()
+                .stores()
+                .name_store_joins(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider.basic_context().unwrap();
+        let context = service_provider
+            .context("".to_string(), mock_user_account_a().id)
+            .unwrap();
         let service = service_provider.item_service;
-
         let test_item_a_variant_id = "test_item_variant_id";
 
         // Test that we can't create a record with an item_id that doesn't exist
@@ -200,7 +256,6 @@ mod query {
                 ..Default::default()
             },
         );
-
         assert_eq!(
             result.unwrap_err(),
             UpsertItemVariantError::ItemDoesNotExist
@@ -231,7 +286,6 @@ mod query {
                 ..Default::default()
             },
         );
-
         assert_eq!(result.unwrap_err(), UpsertItemVariantError::CantChangeItem);
 
         // Test that we can't create/update a record with an invalid cold_storage_id
@@ -241,11 +295,12 @@ mod query {
                 id: test_item_a_variant_id.to_string(),
                 item_id: mock_item_a().id,
                 name: "Variant 1".to_string(),
-                cold_storage_type_id: Some(uuid()),
+                cold_storage_type_id: Some(NullableUpdate {
+                    value: Some(uuid()),
+                }),
                 ..Default::default()
             },
         );
-
         assert_eq!(
             result.unwrap_err(),
             UpsertItemVariantError::ColdStorageTypeDoesNotExist
@@ -263,7 +318,24 @@ mod query {
                 ..Default::default()
             },
         );
-
         assert_eq!(result.unwrap_err(), UpsertItemVariantError::DuplicateName);
+
+        // Test manufacturer not visible
+        let result = service.upsert_item_variant(
+            &context,
+            UpsertItemVariantWithPackaging {
+                id: uuid(),
+                item_id: mock_item_a().id,
+                name: "OtherPartyNotVisible".to_string(),
+                manufacturer_id: Some(NullableUpdate {
+                    value: Some(mock_name_c().id),
+                }),
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            result.unwrap_err(),
+            UpsertItemVariantError::OtherPartyNotVisible
+        );
     }
 }

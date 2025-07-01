@@ -14,21 +14,23 @@ import {
   ColumnDescription,
   NumUtils,
   useAuthContext,
+  usePreference,
+  PreferenceKey,
+  getDosesPerUnitColumn,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
+import { getDosesQuantityColumn } from '../../DoseQtyColumn';
 
 interface UsePrescriptionColumnOptions {
   sortBy: SortBy<StockOutLineFragment | StockOutItem>;
   onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
 }
 
-const expansionColumn = getRowExpandColumn<
-  StockOutLineFragment | StockOutItem
->();
-
-export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
-  useColumns([
+export const useExpansionColumns = (
+  withDoseColumns?: boolean
+): Column<StockOutLineFragment>[] => {
+  const columns: ColumnDescription<StockOutLineFragment>[] = [
     'batch',
     'expiryDate',
     [
@@ -55,7 +57,14 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
           ),
       },
     ],
-  ]);
+  ];
+
+  if (withDoseColumns) {
+    columns.push(getDosesQuantityColumn());
+  }
+
+  return useColumns(columns, {}, []);
+};
 
 export const usePrescriptionColumn = ({
   sortBy,
@@ -65,7 +74,7 @@ export const usePrescriptionColumn = ({
 >[] => {
   const t = useTranslation();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
-
+  const { data: OMSPrefs } = usePreference(PreferenceKey.ManageVaccinesInDoses);
   const { store: { preferences } = {} } = useAuthContext();
   const hasPrescribedQty = preferences?.editPrescribedQuantityOnPrescription;
 
@@ -202,28 +211,37 @@ export const usePrescriptionColumn = ({
           ]),
       },
     ],
-    [
-      'unitQuantity',
-      {
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.getUnitQuantity(lines);
-          } else {
-            return rowData.packSize * rowData.numberOfPacks;
-          }
-        },
-        getSortValue: rowData => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.getUnitQuantity(lines);
-          } else {
-            return rowData.packSize * rowData.numberOfPacks;
-          }
-        },
-      },
-    ],
   ];
+
+  if (OMSPrefs?.manageVaccinesInDoses) {
+    columns.push(getDosesPerUnitColumn(t));
+  }
+
+  columns.push([
+    'unitQuantity',
+    {
+      accessor: ({ rowData }) => {
+        if ('lines' in rowData) {
+          const { lines } = rowData;
+          return ArrayUtils.getUnitQuantity(lines);
+        } else {
+          return rowData.packSize * rowData.numberOfPacks;
+        }
+      },
+      getSortValue: rowData => {
+        if ('lines' in rowData) {
+          const { lines } = rowData;
+          return ArrayUtils.getUnitQuantity(lines);
+        } else {
+          return rowData.packSize * rowData.numberOfPacks;
+        }
+      },
+    },
+  ]);
+
+  if (OMSPrefs?.manageVaccinesInDoses) {
+    columns.push(getDosesQuantityColumn());
+  }
 
   if (hasPrescribedQty) {
     columns.push({
@@ -305,7 +323,6 @@ export const usePrescriptionColumn = ({
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           // Multiple lines, so we need to calculate the average price per unit
-
           let totalSellPrice = 0;
           let totalUnits = 0;
 
@@ -332,7 +349,6 @@ export const usePrescriptionColumn = ({
         }
       },
     },
-
     {
       label: 'label.line-total',
       key: 'lineTotal',
@@ -391,7 +407,7 @@ export const usePrescriptionColumn = ({
         }
       },
     },
-    expansionColumn
+    getRowExpandColumn()
   );
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);

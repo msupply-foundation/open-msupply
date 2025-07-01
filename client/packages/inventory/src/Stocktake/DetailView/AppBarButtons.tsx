@@ -9,7 +9,7 @@ import {
   ReportContext,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
-import { useStocktake } from '../api';
+import { useStocktakeOld } from '../api';
 import { ReportSelector, usePrintReport } from '@openmsupply-client/system';
 import { JsonData } from '@openmsupply-client/programs';
 import { isStocktakeDisabled } from '../../utils';
@@ -25,7 +25,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const { OpenButton } = useDetailPanel();
   const t = useTranslation();
   const { print, isPrinting } = usePrintReport();
-  const { data } = useStocktake.document.get();
+  const { data } = useStocktakeOld.document.get();
   const isDisabled = !data || isStocktakeDisabled(data);
 
   const {

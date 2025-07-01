@@ -15,7 +15,7 @@ import {
 export enum Tabs {
   Batch = 'Batch',
   Pricing = 'Pricing',
-  Location = 'Location',
+  Other = 'Other',
 }
 
 export const StyledTabPanel = styled(TabPanel)({
@@ -40,7 +40,7 @@ export const StocktakeLineEditTabs: FC<
   return (
     <TabContext value={currentTab}>
       <TabKeybindings
-        tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Location]}
+        tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Other]}
         onAdd={onAddLine}
         setCurrentTab={setCurrentTab}
       />
@@ -54,10 +54,7 @@ export const StocktakeLineEditTabs: FC<
         >
           <Tab value={Tabs.Batch} label={`${t('label.batch')} (Ctrl+1)`} />
           <Tab value={Tabs.Pricing} label={`${t('label.pricing')} (Ctrl+2)`} />
-          <Tab
-            value={Tabs.Location}
-            label={`${t('label.location')} (Ctrl+3)`}
-          />
+          <Tab value={Tabs.Other} label={`${t('heading.other')} (Ctrl+3)`} />
         </TabList>
         <Box flex={1} justifyContent="flex-end" display="flex">
           <ButtonWithIcon

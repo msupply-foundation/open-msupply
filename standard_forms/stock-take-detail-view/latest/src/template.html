@@ -50,7 +50,7 @@
             -
             {% endif %}
         </td>
-        <td>{{ line.inventoryAdjustmentReason.reason | default(value='') }}</td>
+        <td>{{ line.reasonOption.reason | default(value='') }}</td>
     </tr>
     {%- endfor %}
 </table>

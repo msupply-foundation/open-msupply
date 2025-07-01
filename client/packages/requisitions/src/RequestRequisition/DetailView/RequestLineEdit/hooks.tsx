@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { FnUtils, QuantityUtils } from '@openmsupply-client/common';
 import {
   useRequest,
@@ -13,7 +13,6 @@ export type DraftRequestLine = Omit<
 > & {
   isCreated: boolean;
   requisitionId: string;
-  defaultPackSize: number;
 };
 
 const createDraftFromItem = (
@@ -45,7 +44,6 @@ const createDraftFromItem = (
     additionInUnits: 0,
     daysOutOfStock: 0,
     expiringUnits: 0,
-    defaultPackSize: item.defaultPackSize,
   };
 };
 
@@ -56,11 +54,10 @@ const createDraftFromRequestLine = (
   ...line,
   requisitionId: request.id,
   itemId: line.item.id,
-  requestedQuantity: line.requestedQuantity ?? line.suggestedQuantity,
+  requestedQuantity: line.requestedQuantity,
   suggestedQuantity: line.suggestedQuantity,
   isCreated: false,
   itemStats: line.itemStats,
-  defaultPackSize: line.item.defaultPackSize,
 });
 
 export const useDraftRequisitionLine = (
@@ -68,7 +65,7 @@ export const useDraftRequisitionLine = (
 ) => {
   const { lines } = useRequest.line.list();
   const { data } = useRequest.document.get();
-  const { mutateAsync: save, isLoading } = useRequest.line.save();
+  const { mutateAsync: saveMutation, isLoading } = useRequest.line.save();
 
   const [draft, setDraft] = useState<DraftRequestLine | null>(null);
 
@@ -87,44 +84,47 @@ export const useDraftRequisitionLine = (
     }
   }, [lines, item, data]);
 
-  const update = (patch: Partial<DraftRequestLine>) => {
-    if (draft) {
-      setDraft({ ...draft, ...patch });
-    }
-  };
+  const update = useCallback((patch: Partial<DraftRequestLine>) => {
+    setDraft(current => (current ? { ...current, ...patch } : null));
+  }, []);
 
-  return { draft, isLoading, save: () => draft && save(draft), update };
+  const save = useCallback(async () => {
+    if (draft) {
+      const result = await saveMutation(draft);
+      return result;
+    }
+    return null;
+  }, [draft, saveMutation]);
+
+  return {
+    draft,
+    isLoading,
+    save,
+    update,
+  };
 };
 
-export const usePreviousNextRequestLine = (
+export const useNextRequestLine = (
   lines?: RequestLineFragment[],
   currentItem?: ItemWithStatsFragment | null
 ) => {
   if (!lines || !currentItem) {
-    return { hasNext: false, next: null, hasPrevious: false, previous: null };
+    return { hasNext: false, next: null };
   }
 
-  const state: {
-    hasPrevious: boolean;
-    previous: null | ItemWithStatsFragment;
+  const nextState: {
     hasNext: boolean;
     next: null | ItemWithStatsFragment;
-  } = { hasNext: true, next: null, hasPrevious: true, previous: null };
+  } = { hasNext: true, next: null };
   const idx = lines.findIndex(l => l.item.id === currentItem?.id);
-  const previous = lines[idx - 1];
   const next = lines[idx + 1];
 
-  if (!previous) {
-    state.hasPrevious = false;
-  } else {
-    state.previous = previous.item;
-  }
-
   if (!next) {
-    state.hasNext = false;
-  } else {
-    state.next = next.item;
+    nextState.hasNext = false;
+    return nextState;
   }
 
-  return state;
+  nextState.next = next.item;
+
+  return nextState;
 };

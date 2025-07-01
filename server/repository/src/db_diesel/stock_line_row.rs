@@ -1,9 +1,12 @@
 use super::{
-    item_link_row::item_link, location_row::location, name_link_row::name_link, store_row::store,
-    StorageConnection,
+    campaign_row::campaign, item_link_row::item_link, item_variant::item_variant_row::item_variant,
+    location_row::location, name_link_row::name_link, store_row::store, StorageConnection,
 };
 
-use crate::{db_diesel::barcode_row::barcode, repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    db_diesel::barcode_row::barcode, db_diesel::vvm_status::vvm_status_row::vvm_status,
+    repository_error::RepositoryError, Delete, Upsert,
+};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
@@ -28,16 +31,24 @@ table! {
         supplier_link_id -> Nullable<Text>,
         barcode_id -> Nullable<Text>,
         item_variant_id -> Nullable<Text>,
+        donor_link_id -> Nullable<Text>,
+        vvm_status_id -> Nullable<Text>,
+        campaign_id -> Nullable<Text>,
     }
 }
 
 joinable!(stock_line -> item_link (item_link_id));
+joinable!(stock_line -> item_variant (item_variant_id));
 joinable!(stock_line -> store (store_id));
 joinable!(stock_line -> location (location_id));
-joinable!(stock_line -> name_link (supplier_link_id));
 joinable!(stock_line -> barcode (barcode_id));
+joinable!(stock_line -> vvm_status (vvm_status_id));
+joinable!(stock_line -> campaign (campaign_id));
 allow_tables_to_appear_in_same_query!(stock_line, item_link);
+// NOTE: both supplier_link_id and donor_link_id are foreign keys to name_link
+// so not defining a default joinable here, so as not to accidentally join on the wrong one
 allow_tables_to_appear_in_same_query!(stock_line, name_link);
+allow_tables_to_appear_in_same_query!(stock_line, item_variant);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(treat_none_as_null = true)]
@@ -59,6 +70,9 @@ pub struct StockLineRow {
     pub supplier_link_id: Option<String>,
     pub barcode_id: Option<String>,
     pub item_variant_id: Option<String>,
+    pub donor_link_id: Option<String>,
+    pub vvm_status_id: Option<String>,
+    pub campaign_id: Option<String>,
 }
 
 pub struct StockLineRowRepository<'a> {

@@ -20,8 +20,9 @@ pub fn generate(
         cost_price_per_pack,
         sell_price_per_pack,
         note,
-        inventory_adjustment_reason_id,
         item_variant_id,
+        donor_id,
+        reason_option_id,
     }: InsertStocktakeLine,
 ) -> StocktakeLineRow {
     let snapshot_number_of_packs = if let Some(stock_line) = stock_line.clone() {
@@ -56,7 +57,8 @@ pub fn generate(
         cost_price_per_pack,
         sell_price_per_pack,
         note,
-        inventory_adjustment_reason_id,
         item_variant_id,
+        donor_link_id: donor_id,
+        reason_option_id,
     }
 }

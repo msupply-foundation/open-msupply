@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Checkbox,
   Grid,
@@ -21,12 +21,19 @@ import {
   usePluginProvider,
   UsePluginEvents,
   useRegisterActions,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
-import { ItemVariantSearchInput } from '../..';
+import { DonorSearchInput } from '../..';
 import { StyledInputRow } from './StyledInputRow';
-import { PackSizeNumberInput, useIsItemVariantsEnabled } from '../../Item';
+import {
+  ItemVariantInput,
+  PackSizeNumberInput,
+  useIsItemVariantsEnabled,
+} from '../../Item';
+import { CampaignSelector } from './Campaign';
 
 interface StockLineFormProps {
   draft: StockLineRowFragment;
@@ -36,16 +43,23 @@ interface StockLineFormProps {
   packEditable?: boolean;
   isInModal?: boolean;
 }
-export const StockLineForm: FC<StockLineFormProps> = ({
+export const StockLineForm = ({
   draft,
   loading,
   onUpdate,
   pluginEvents,
   packEditable,
   isInModal = false,
-}) => {
+}: StockLineFormProps) => {
   const t = useTranslation();
   const { error } = useNotification();
+
+  const { data: preferences } = usePreference(
+    PreferenceKey.AllowTrackingOfStockByDonor,
+    PreferenceKey.ManageVaccinesInDoses,
+    PreferenceKey.ManageVvmStatusForStock
+  );
+
   const { isConnected, isEnabled, isScanning, startScan } =
     useBarcodeScannerContext();
   const showItemVariantsInput = useIsItemVariantsEnabled();
@@ -182,11 +196,16 @@ export const StockLineForm: FC<StockLineFormProps> = ({
             <StyledInputRow
               label={t('label.item-variant')}
               Input={
-                <ItemVariantSearchInput
+                <ItemVariantInput
                   itemId={draft.itemId}
                   selectedId={draft.itemVariantId ?? null}
                   width={160}
-                  onChange={id => onUpdate({ itemVariantId: id })}
+                  onChange={variant => onUpdate({ itemVariantId: variant?.id })}
+                  displayDoseColumns={
+                    (draft.item.isVaccine &&
+                      preferences?.manageVaccinesInDoses) ??
+                    false
+                  }
                 />
               }
             />
@@ -274,6 +293,39 @@ export const StockLineForm: FC<StockLineFormProps> = ({
             label={t('label.supplier')}
             text={String(supplierName)}
             textProps={{ textAlign: 'end' }}
+          />
+          {draft?.item?.isVaccine && preferences?.manageVvmStatusForStock && (
+            <StyledInputRow
+              label={t('label.vvm-status')}
+              Input={
+                <BufferedTextInput
+                  disabled
+                  value={draft.vvmStatus?.description ?? ''}
+                />
+              }
+            />
+          )}
+          {preferences?.allowTrackingOfStockByDonor && (
+            <StyledInputRow
+              label={t('label.donor')}
+              Input={
+                <DonorSearchInput
+                  donorId={draft.donor?.id ?? null}
+                  width={160}
+                  onChange={donor => onUpdate({ donor })}
+                  clearable
+                />
+              }
+            />
+          )}
+          <StyledInputRow
+            label={t('label.campaign')}
+            Input={
+              <CampaignSelector
+                campaignId={draft.campaign?.id}
+                onChange={campaign => onUpdate({ campaign })}
+              />
+            }
           />
         </Grid>
       </Grid>

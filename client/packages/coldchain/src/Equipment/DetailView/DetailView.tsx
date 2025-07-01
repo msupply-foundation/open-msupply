@@ -27,7 +27,7 @@ import { Documents } from './Tabs/Documents';
 import {
   ActivityLogList,
   LocationRowFragment,
-  useLocation,
+  useLocationList,
 } from '@openmsupply-client/system';
 import { DraftAsset } from '../types';
 import { Details } from './Tabs/Details';
@@ -38,14 +38,15 @@ export const useEquipmentDetailView = () => {
   const { data, isLoading } = useAssets.document.get();
   const { mutateAsync: update, isLoading: isSaving } =
     useAssets.document.update();
-  const { data: locationData, isLoading: isLoadingLocations } =
-    useLocation.document.list({
-      sortBy: {
-        key: 'name',
-        direction: 'asc',
-      },
-      filterBy: { assignedToAsset: false, storeId: { equalTo: data?.storeId } },
-    });
+  const {
+    query: { data: locationData, isLoading: isLoadingLocations },
+  } = useLocationList({
+    sortBy: {
+      key: 'name',
+      direction: 'asc',
+    },
+    filterBy: { assignedToAsset: false, storeId: { equalTo: data?.storeId } },
+  });
   const navigate = useNavigate();
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();

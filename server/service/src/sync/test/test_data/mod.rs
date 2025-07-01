@@ -14,6 +14,7 @@ pub(crate) mod asset_property;
 pub(crate) mod asset_type;
 pub(crate) mod backend_plugin;
 pub(crate) mod barcode;
+pub(crate) mod campaign;
 pub(crate) mod cold_storage_type;
 pub(crate) mod contact_form;
 pub(crate) mod currency;
@@ -76,6 +77,8 @@ pub(crate) mod vaccination;
 pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
 pub(crate) mod vaccine_course_item;
+pub(crate) mod vvm_status;
+pub(crate) mod vvm_status_log;
 pub(crate) mod warning;
 
 pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncomingRecord> {
@@ -122,6 +125,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut vaccine_course::test_pull_upsert_records());
     test_records.append(&mut vaccine_course_dose::test_pull_upsert_records());
     test_records.append(&mut vaccine_course_item::test_pull_upsert_records());
+    test_records.append(&mut vvm_status::test_pull_upsert_records());
     test_records.append(&mut program_indicator::test_pull_upsert_records());
     test_records.append(&mut indicator_attribute::test_pull_upsert_records());
     test_records.append(&mut item_variant::test_pull_upsert_records());
@@ -133,6 +137,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut om_form_schema::test_pull_upsert_records());
     test_records.append(&mut frontend_plugin::test_pull_upsert_records());
     test_records.append(&mut plugin_data::test_pull_upsert_records());
+    test_records.append(&mut campaign::test_pull_upsert_records());
 
     test_records
 }
@@ -159,6 +164,7 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingR
     test_records.append(&mut currency::test_pull_upsert_records());
     test_records.append(&mut indicator_value::test_pull_upsert_records());
     test_records.append(&mut name_insurance_join::test_pull_upsert_records());
+    test_records.append(&mut vvm_status_log::test_pull_upsert_records());
     test_records.append(&mut sync_message::test_pull_upsert_records());
 
     // Open mSupply central
@@ -219,6 +225,7 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut name_store_join::test_push_upsert());
     test_records.append(&mut name_to_name_store_join::test_push_records());
     test_records.append(&mut name_insurance_join::test_push_records());
+    test_records.append(&mut vvm_status_log::test_push_records());
     test_records.append(&mut sync_message::test_push_records());
 
     test_records
@@ -243,6 +250,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut om_form_schema::test_v6_central_push_records());
     test_records.append(&mut frontend_plugin::test_v6_push_records());
     test_records.append(&mut preference::test_v6_central_push_records());
+    test_records.append(&mut campaign::test_v6_central_push_records());
 
     // Remote
     test_records.append(&mut asset::test_v6_records());

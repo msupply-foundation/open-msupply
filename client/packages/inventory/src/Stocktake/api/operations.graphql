@@ -9,6 +9,7 @@ fragment StocktakeRow on StocktakeNode {
   stocktakeNumber
   status
   isLocked
+  isInitialStocktake
 }
 
 fragment StocktakeLine on StocktakeLineNode {
@@ -25,6 +26,10 @@ fragment StocktakeLine on StocktakeLineNode {
   sellPricePerPack
   costPricePerPack
   comment
+  itemVariantId
+
+  donorId
+  donorName
 
   location {
     __typename
@@ -45,14 +50,21 @@ fragment StocktakeLine on StocktakeLineNode {
     code
     name
     unitName
+    isVaccine
+    doses
+    defaultPackSize
   }
 
-  itemVariantId
-
-  inventoryAdjustmentReason {
-    __typename
+  itemVariant {
     id
+    dosesPerUnit
+  }
+
+  reasonOption {
     reason
+    type
+    isActive
+    id
   }
 }
 
@@ -69,6 +81,7 @@ fragment Stocktake on StocktakeNode {
   isLocked
   countedBy
   verifiedBy
+  isInitialStocktake
 
   user {
     __typename

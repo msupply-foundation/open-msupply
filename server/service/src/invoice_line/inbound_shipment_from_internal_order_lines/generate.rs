@@ -85,9 +85,11 @@ fn generate_line(
         expiry_date: None,
         item_variant_id: None,
         location_id: None,
-        inventory_adjustment_reason_id: None,
-        return_reason_id: None,
         foreign_currency_price_before_tax: None,
         linked_invoice_id: None,
+        donor_link_id: None,
+        vvm_status_id: None,
+        reason_option_id: None,
+        campaign_id: None,
     }
 }

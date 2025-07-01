@@ -1,36 +1,50 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
+  Box,
+  InputWithLabelRow,
   LocaleKey,
-  useBreadcrumbs,
-  useParams,
+  NothingHere,
+  PreferenceNodeType,
   useTranslation,
 } from '@openmsupply-client/common';
-import { LineEditBase } from './LineEditBase';
-import { useAvailablePreferences } from '../api';
 import { EditPreference } from './EditPreference';
+import { useEditPreferences } from '../api/useEditPreference';
 
 export const EditPreferencesPage = () => {
   const t = useTranslation();
-  const { key } = useParams();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
 
-  const { data } = useAvailablePreferences();
+  const { update, preferences } = useEditPreferences(PreferenceNodeType.Global);
 
-  useEffect(() => {
-    if (key)
-      setCustomBreadcrumbs({
-        1: t(`preference.${key}` as LocaleKey),
-      });
-  }, [key]);
-
-  const selectedPref = data?.find(d => key === d.key);
+  if (!preferences.length) return <NothingHere />;
 
   return (
-    // TODO: Consider alternative UI - more explicit than JSON forms?
-    <LineEditBase currentKey={key ?? ''} prefs={data ?? []}>
-      {selectedPref && (
-        <EditPreference key={selectedPref.key} selected={selectedPref} />
-      )}
-    </LineEditBase>
+    <Box display="flex" justifyContent="center" width="100%" marginTop={2}>
+      <Box width="600px">
+        {preferences.map(pref => {
+          const isLast = preferences[preferences?.length - 1]?.key === pref.key;
+
+          return (
+            <InputWithLabelRow
+              key={pref.key}
+              labelRight
+              labelWidth={'100%'}
+              label={t(`preference.${pref.key}` as LocaleKey)}
+              Input={
+                <EditPreference
+                  preference={pref}
+                  update={value => update({ [pref.key]: value })}
+                />
+              }
+              sx={{
+                justifyContent: 'center',
+                borderBottom: isLast ? 'none' : '1px dashed',
+                borderColor: 'gray.main',
+                padding: 1,
+              }}
+            />
+          );
+        })}
+      </Box>
+    </Box>
   );
 };

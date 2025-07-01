@@ -13,7 +13,8 @@ use graphql_invoice::invoice_queries::{
     EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput,
 };
 use graphql_types::types::{
-    InvoiceLineConnector, InvoiceLineNodeType, InvoiceNodeStatus, InvoiceNodeType,
+    DraftStockOutItemData, InvoiceLineConnector, InvoiceLineNodeType, InvoiceNodeStatus,
+    InvoiceNodeType,
 };
 use repository::{
     DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineSort, InvoiceLineSortField,
@@ -44,36 +45,10 @@ pub struct InvoiceLineFilterInput {
     pub invoice_type: Option<EqualFilterInvoiceTypeInput>,
     pub invoice_status: Option<EqualFilterInvoiceStatusInput>,
     pub stock_line_id: Option<EqualFilterStringInput>,
+    pub reason_option: Option<EqualFilterStringInput>,
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option")]
     pub inventory_adjustment_reason: Option<EqualFilterStringInput>,
     pub verified_datetime: Option<DatetimeFilterInput>,
-}
-
-impl InvoiceLineFilterInput {
-    pub fn to_domain(self) -> InvoiceLineFilter {
-        InvoiceLineFilter {
-            id: self.id.map(EqualFilter::from),
-            store_id: self.store_id.map(EqualFilter::from),
-            invoice_id: self.invoice_id.map(EqualFilter::from),
-            location_id: self.location_id.map(EqualFilter::from),
-            item_id: self.item_id.map(EqualFilter::from),
-            r#type: self
-                .r#type
-                .map(|t| map_filter!(t, InvoiceLineNodeType::to_domain)),
-            requisition_id: self.requisition_id.map(EqualFilter::from),
-            number_of_packs: self.number_of_packs.map(|t| map_filter!(t, f64::from)),
-            invoice_type: self
-                .invoice_type
-                .map(|t| map_filter!(t, InvoiceNodeType::to_domain)),
-            invoice_status: self
-                .invoice_status
-                .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
-            stock_line_id: self.stock_line_id.map(EqualFilter::from),
-            inventory_adjustment_reason: self.inventory_adjustment_reason.map(EqualFilter::from),
-            verified_datetime: self.verified_datetime.map(DatetimeFilter::from),
-            picked_datetime: None,
-            delivered_datetime: None,
-        }
-    }
 }
 
 impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
@@ -97,9 +72,14 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
                 .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
             stock_line_id: f.stock_line_id.map(EqualFilter::from),
             verified_datetime: f.verified_datetime.map(DatetimeFilter::from),
-            inventory_adjustment_reason: f.inventory_adjustment_reason.map(EqualFilter::from),
+            reason_option: f
+                .reason_option
+                .map(EqualFilter::from)
+                .or(f.inventory_adjustment_reason.map(EqualFilter::from)),
             picked_datetime: None,
             delivered_datetime: None,
+            has_prescribed_quantity: None,
+            has_note: None,
         }
     }
 }
@@ -204,5 +184,40 @@ pub fn invoice_lines(
             GetInvoiceLinesError::ListError(err) => return Err(list_error_to_gql_err(err)),
         };
         Err(graphql_error.extend())
+    }
+}
+
+pub fn draft_outbound_lines(
+    ctx: &Context<'_>,
+    store_id: &str,
+    item_id: &str,
+    invoice_id: &str,
+) -> Result<DraftStockOutItemData> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateOutboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service = &service_provider.invoice_line_service;
+
+    let result = service.get_draft_stock_out_lines(&service_ctx, store_id, item_id, invoice_id);
+
+    if let Ok((draft_lines, item_data)) = result {
+        Ok(DraftStockOutItemData {
+            lines: draft_lines,
+            placeholder_quantity: item_data.placeholder_quantity,
+            prescribed_quantity: item_data.prescribed_quantity,
+            note: item_data.note,
+        })
+    } else {
+        let err = result.unwrap_err();
+        let formatted_error = format!("{:#?}", err);
+        log::error!("Draft outbound lines generation error: {}", formatted_error);
+        Err(list_error_to_gql_err(err))
     }
 }

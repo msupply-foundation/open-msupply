@@ -1,14 +1,17 @@
 use crate::{
     barcode::{self, BarcodeInput},
-    invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
+    invoice::common::{
+        calculate_total_after_tax, generate_invoice_user_id_update, generate_vvm_status_log,
+        GenerateVVMStatusLogInput,
+    },
     invoice_line::stock_in_line::{
         convert_invoice_line_to_single_pack, generate_batch, StockInType, StockLineInput,
     },
     store_preference::get_store_preferences,
 };
 use repository::{
-    BarcodeRow, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, ItemRow,
-    RepositoryError, StockLineRow, StorageConnection,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow, BarcodeRow, InvoiceLineRow, InvoiceLineType,
+    InvoiceRow, InvoiceStatus, ItemRow, RepositoryError, StockLineRow, StorageConnection,
 };
 
 use super::InsertStockInLine;
@@ -18,6 +21,7 @@ pub struct GenerateResult {
     pub invoice_line: InvoiceLineRow,
     pub stock_line: Option<StockLineRow>,
     pub barcode: Option<BarcodeRow>,
+    pub vvm_status_log: Option<VVMStatusLogRow>,
 }
 
 pub fn generate(
@@ -29,7 +33,7 @@ pub fn generate(
 ) -> Result<GenerateResult, RepositoryError> {
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
 
-    let mut new_line = generate_line(input.clone(), item_row, existing_invoice_row.clone());
+    let mut new_line = generate_line(input.clone(), item_row, existing_invoice_row.clone()); // include vvm status here
 
     if StockInType::InventoryAddition != input.r#type && store_preferences.pack_to_one {
         new_line = convert_invoice_line_to_single_pack(new_line);
@@ -37,36 +41,52 @@ pub fn generate(
 
     let barcode_option = generate_barcode(&input, connection)?;
 
-    let batch_option = if should_upsert_batch(&input.r#type, &existing_invoice_row) {
-        let batch = generate_batch(
-            connection,
-            new_line.clone(),
-            StockLineInput {
-                stock_line_id: input.stock_line_id.clone(),
-                store_id: existing_invoice_row.store_id.clone(),
-                supplier_link_id: existing_invoice_row.name_link_id.clone(),
-                on_hold: input.stock_on_hold,
-                barcode_id: barcode_option.clone().map(|b| b.id.clone()),
-                overwrite_stock_levels: match &input.r#type {
-                    // adjusting existing stock, we want to add to existing stock levels
-                    StockInType::InventoryAddition => false,
-                    _ => true,
+    let (batch_option, vvm_status_log) =
+        if should_upsert_batch(&input.r#type, &existing_invoice_row) {
+            let batch = generate_batch(
+                connection,
+                new_line.clone(),
+                StockLineInput {
+                    stock_line_id: input.stock_line_id.clone(),
+                    store_id: existing_invoice_row.store_id.clone(),
+                    supplier_link_id: existing_invoice_row.name_link_id.clone(),
+                    on_hold: input.stock_on_hold,
+                    barcode_id: barcode_option.clone().map(|b| b.id.clone()),
+                    overwrite_stock_levels: match &input.r#type {
+                        // adjusting existing stock, we want to add to existing stock levels
+                        StockInType::InventoryAddition => false,
+                        _ => true,
+                    },
                 },
-            },
-        )?;
-        // If a new stock line has been created, update the stock_line_id on the invoice line
-        new_line.stock_line_id = Some(batch.id.clone());
+            )?;
 
-        Some(batch)
-    } else {
-        None
-    };
+            // If a new stock line has been created, update the stock_line_id on the invoice line
+            new_line.stock_line_id = Some(batch.id.clone());
+
+            let vvm_status_log = if let Some(vvm_status_id) = input.vvm_status_id {
+                Some(generate_vvm_status_log(GenerateVVMStatusLogInput {
+                    id: None,
+                    store_id: existing_invoice_row.store_id.clone(),
+                    created_by: user_id.to_string(),
+                    vvm_status_id,
+                    stock_line_id: batch.id.clone(),
+                    invoice_line_id: new_line.id.clone(),
+                }))
+            } else {
+                None
+            };
+
+            (Some(batch), vvm_status_log)
+        } else {
+            (None, None)
+        };
 
     Ok(GenerateResult {
         invoice: generate_invoice_user_id_update(user_id, existing_invoice_row),
         invoice_line: new_line,
         stock_line: batch_option,
         barcode: barcode_option,
+        vvm_status_log,
     })
 }
 
@@ -86,6 +106,9 @@ fn generate_line(
         note,
         stock_line_id,
         item_variant_id,
+        vvm_status_id,
+        donor_id,
+        campaign_id,
         barcode: _,
         stock_on_hold: _,
         tax_percentage: _,
@@ -96,10 +119,17 @@ fn generate_line(
         code: item_code,
         ..
     }: ItemRow,
-    InvoiceRow { tax_percentage, .. }: InvoiceRow,
+    InvoiceRow {
+        tax_percentage,
+        default_donor_link_id: default_donor_id,
+        ..
+    }: InvoiceRow,
 ) -> InvoiceLineRow {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax_percentage);
+    // default to invoice_row donor_id if none supplied on insert
+    let donor_id = donor_id.or(default_donor_id);
+
     InvoiceLineRow {
         id,
         invoice_id,
@@ -112,7 +142,6 @@ fn generate_line(
         cost_price_per_pack,
         r#type: InvoiceLineType::StockIn,
         number_of_packs,
-        prescribed_quantity: None,
         item_name,
         item_code,
         stock_line_id,
@@ -121,10 +150,13 @@ fn generate_line(
         tax_percentage,
         note,
         item_variant_id,
-        inventory_adjustment_reason_id: None,
-        return_reason_id: None,
+        vvm_status_id,
+        donor_link_id: donor_id,
         foreign_currency_price_before_tax: None,
         linked_invoice_id: None,
+        prescribed_quantity: None,
+        reason_option_id: None,
+        campaign_id,
     }
 }
 

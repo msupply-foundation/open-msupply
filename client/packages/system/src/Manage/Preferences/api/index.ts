@@ -1,1 +1,2 @@
-export * from './useAvailablePreferences';
+export * from './useAdminPrefsList';
+export * from './useEditPreference';

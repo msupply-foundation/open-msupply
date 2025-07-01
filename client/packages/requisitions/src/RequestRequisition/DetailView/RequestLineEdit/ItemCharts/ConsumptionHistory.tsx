@@ -41,9 +41,7 @@ export interface ConsumptionHistoryProps {
   id: string;
 }
 
-export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
-  id,
-}) => {
+export const ConsumptionHistory = ({ id }: ConsumptionHistoryProps) => {
   const t = useTranslation();
   const theme = useTheme();
   const { dayMonthShort } = useFormatDateTime();

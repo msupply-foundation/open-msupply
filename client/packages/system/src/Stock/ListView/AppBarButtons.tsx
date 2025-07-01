@@ -12,6 +12,7 @@ import {
   PlusCircleIcon,
   ButtonWithIcon,
   useEditModal,
+  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { stockLinesToCsv } from '../../utils';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
@@ -21,6 +22,7 @@ export const AppBarButtonsComponent = () => {
   const { success, error } = useNotification();
   const t = useTranslation();
   const { fetchAllStock, isLoading } = useExportStockList();
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   const { isOpen, onClose, onOpen } = useEditModal();
 
@@ -46,14 +48,16 @@ export const AppBarButtonsComponent = () => {
           label={t('button.new-stock')}
           onClick={onOpen}
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          isLoading={isLoading}
-          variant="outlined"
-          onClick={csvExport}
-          disabled={EnvUtils.platform === Platform.Android}
-          label={t('button.export')}
-        />
+        {!simplifiedTabletView && (
+          <LoadingButton
+            startIcon={<DownloadIcon />}
+            isLoading={isLoading}
+            variant="outlined"
+            onClick={csvExport}
+            disabled={EnvUtils.platform === Platform.Android}
+            label={t('button.export')}
+          />
+        )}
       </Grid>
     </AppBarButtonsPortal>
   );

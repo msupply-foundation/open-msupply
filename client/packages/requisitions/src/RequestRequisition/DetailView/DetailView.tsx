@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -11,7 +11,9 @@ import {
   DetailTabs,
   useAuthContext,
   useBreadcrumbs,
-  useParams,
+  useEditModal,
+  PreferenceKey,
+  usePreference,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { RequestLineFragment, useRequest } from '../api';
@@ -23,15 +25,25 @@ import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
 import { RequestRequisitionLineErrorProvider } from '../context';
 import { IndicatorsTab } from './IndicatorsTab';
-import { buildIndicatorEditRoute, buildItemEditRoute } from './utils';
+import { buildIndicatorEditRoute } from './utils';
+import { RequestLineEditModal } from './RequestLineEdit';
 
-export const DetailView: FC = () => {
+export const DetailView = () => {
   const t = useTranslation();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
-  const { data, isLoading } = useRequest.document.get();
-  const { requisitionId = '' } = useParams();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { store } = useAuthContext();
+  const { data: { manageVaccinesInDoses } = { manageVaccinesInDoses: false } } =
+    usePreference(PreferenceKey.ManageVaccinesInDoses);
+  const {
+    onOpen,
+    onClose,
+    mode,
+    entity: itemId,
+    isOpen,
+  } = useEditModal<string | null>();
+
+  const { data, isLoading } = useRequest.document.get();
   const isDisabled = useRequest.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useRequest.document.indicators(
@@ -41,9 +53,12 @@ export const DetailView: FC = () => {
       !!data
     );
 
-  const onRowClick = useCallback((line: RequestLineFragment) => {
-    navigate(buildItemEditRoute(requisitionId, line.item.id));
-  }, []);
+  const onRowClick = useCallback(
+    (line: RequestLineFragment) => {
+      onOpen(line.item.id);
+    },
+    [onOpen]
+  );
 
   const onProgramIndicatorClick = useCallback(
     (
@@ -64,7 +79,6 @@ export const DetailView: FC = () => {
     []
   );
 
-
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.requisitionNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.requisitionNumber]);
@@ -72,11 +86,18 @@ export const DetailView: FC = () => {
   if (isLoading) return <DetailViewSkeleton />;
 
   const onAddItem = () => {
-    navigate(buildItemEditRoute(data?.id, 'new'));
+    onOpen();
   };
+
   const tabs = [
     {
-      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
+      Component: (
+        <ContentArea
+          onRowClick={onRowClick}
+          onAddItem={onAddItem}
+          manageVaccinesInDoses={manageVaccinesInDoses}
+        />
+      ),
       value: 'Details',
     },
     {
@@ -124,6 +145,17 @@ export const DetailView: FC = () => {
 
         <Footer />
         <SidePanel />
+        {isOpen && (
+          <RequestLineEditModal
+            requisition={data}
+            itemId={itemId}
+            isOpen={isOpen}
+            onClose={onClose}
+            mode={mode}
+            store={store}
+            manageVaccinesInDoses={manageVaccinesInDoses}
+          />
+        )}
       </TableProvider>
     </RequestRequisitionLineErrorProvider>
   ) : (

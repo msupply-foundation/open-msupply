@@ -1,452 +1,319 @@
-import React from 'react';
-import { useTranslation } from '@common/intl';
+import React, { useCallback, useMemo } from 'react';
 import {
-  ItemRowFragment,
+  ItemWithStatsFragment,
   ReasonOptionsSearchInput,
-  StockItemSearchInput,
+  RequestFragment,
+  StockItemSearchInputWithStats,
+  useReasonOptions,
 } from '@openmsupply-client/system';
 import {
-  BarIcon,
+  useTranslation,
+  BasicTextInput,
   Box,
-  FnUtils,
-  InputWithLabelRow,
-  InsertRequestRequisitionLineInput,
-  NumericTextInput,
-  NumUtils,
-  Popover,
   ReasonOptionNodeType,
-  Switch,
-  TextArea,
-  useAuthContext,
-  useNavigate,
   usePluginProvider,
-  useTheme,
-  useToggle,
-  useWindowDimensions,
+  Typography,
+  BufferedTextArea,
+  useFormatNumber,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './hooks';
-import { Footer } from './Footer';
-import { RequestStats } from './ItemCharts/RequestStats';
-import { RequestFragment, RequestLineFragment } from '../../api';
-import { buildItemEditRoute } from '../utils';
-
-const INPUT_WIDTH = 100;
-const LABEL_WIDTH = '150px';
+import { RequestLineFragment } from '../../api';
+import { RequestedSelection } from './RequestedSelection';
+import { RepresentationValue } from '../../../common';
+import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
+import { StockEvolution } from './ItemCharts/StockEvolution';
+import { StockDistribution } from './ItemCharts/StockDistribution';
+import {
+  InfoRow,
+  ModalContentLayout,
+  ValueInfoRow,
+  ValueInfo,
+} from '../../../common';
+import {
+  getLeftPanel,
+  getExtraMiddlePanels,
+  getSuggestedRow,
+} from './ModalContentPanels';
 
 interface RequestLineEditProps {
-  item?: ItemRowFragment | null;
+  requisition: RequestFragment;
+  lines: RequestLineFragment[];
+  currentItem?: ItemWithStatsFragment;
+  onChangeItem: (item: ItemWithStatsFragment) => void;
   draft?: DraftRequestLine | null;
   update: (patch: Partial<DraftRequestLine>) => void;
-  save?: () => void;
-  hasNext: boolean;
-  next: ItemRowFragment | null;
-  hasPrevious: boolean;
-  previous: ItemRowFragment | null;
-  isProgram: boolean;
   isPacksEnabled: boolean;
-  isPacks: boolean;
-  setIsPacks: (isPacks: boolean) => void;
-  lines: RequestLineFragment[];
-  requisition: RequestFragment;
-  insert: (patch: InsertRequestRequisitionLineInput) => void;
-  scrollIntoView: () => void;
+  representation: RepresentationValue;
+  setRepresentation: (type: RepresentationValue) => void;
   disabled?: boolean;
+  isUpdateMode?: boolean;
+  showExtraFields?: boolean;
+  manageVaccinesInDoses?: boolean;
 }
 
 export const RequestLineEdit = ({
-  draft,
-  update,
-  save,
-  hasNext,
-  next,
-  hasPrevious,
-  previous,
-  isProgram,
-  isPacksEnabled,
-  isPacks,
-  setIsPacks,
-  lines,
   requisition,
-  insert,
-  scrollIntoView,
-  disabled: isSent,
+  lines,
+  draft,
+  currentItem,
+  onChangeItem,
+  update,
+  isPacksEnabled,
+  representation,
+  setRepresentation,
+  disabled,
+  isUpdateMode,
+  showExtraFields,
+  manageVaccinesInDoses = false,
 }: RequestLineEditProps) => {
   const t = useTranslation();
-  const navigate = useNavigate();
   const { plugins } = usePluginProvider();
-  const { isOn, toggle } = useToggle();
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const { store } = useAuthContext();
-  const useConsumptionData =
-    store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
-  const isNew = !draft?.id;
+  const { round } = useFormatNumber();
+  const unitName = currentItem?.unitName || t('label.unit');
+  const defaultPackSize = currentItem?.defaultPackSize || 1;
 
-  const line = lines.find(line => line.id === draft?.id);
-  const { width } = useWindowDimensions();
-  const { id: requisitionId } = requisition;
-  const theme = useTheme();
+  const showContent = !!draft && !!currentItem;
+  const displayVaccinesInDoses =
+    manageVaccinesInDoses && currentItem?.isVaccine;
+  const disableItemSelection = disabled || isUpdateMode;
+  const disableReasons =
+    draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
+  const { data: reasonOptions, isLoading } = useReasonOptions();
+
+  const line = useMemo(
+    () => lines.find(line => line.id === draft?.id),
+    [lines, draft?.id]
+  );
+  const originalItemName = useMemo(
+    () => lines?.find(({ item }) => item.id === currentItem?.id)?.itemName,
+    [lines, currentItem?.id]
+  );
+
+  const renderValueInfoRows = useCallback(
+    (info: ValueInfo[]) => (
+      <>
+        {info.map(({ label, value, sx, endAdornmentOverride }) => (
+          <ValueInfoRow
+            key={label}
+            label={label}
+            value={value}
+            endAdornmentOverride={endAdornmentOverride}
+            defaultPackSize={defaultPackSize}
+            representation={representation}
+            unitName={unitName}
+            sx={sx}
+            displayVaccinesInDoses={displayVaccinesInDoses}
+            dosesPerUnit={currentItem?.doses}
+          />
+        ))}
+      </>
+    ),
+    [
+      defaultPackSize,
+      representation,
+      unitName,
+      displayVaccinesInDoses,
+      currentItem?.doses,
+    ]
+  );
+
+  const getMiddlePanelContent = () => {
+    if (!showContent) return null;
+
+    return renderValueInfoRows(getExtraMiddlePanels(t, draft));
+  };
+
+  const getRightPanelContent = () => {
+    if (!showContent) return null;
+
+    return (
+      <>
+        <Box
+          sx={{
+            background: theme => theme.palette.background.group,
+            padding: '0px 8px',
+            borderRadius: 2,
+            pb: 1,
+          }}
+        >
+          {!showExtraFields && renderValueInfoRows(getSuggestedRow(t, draft))}
+          <RequestedSelection
+            disabled={disabled}
+            defaultPackSize={defaultPackSize}
+            isPacksEnabled={isPacksEnabled}
+            draft={draft}
+            update={update}
+            representation={representation}
+            setRepresentation={setRepresentation}
+            unitName={unitName}
+            displayVaccinesInDoses={displayVaccinesInDoses}
+            dosesPerUnit={currentItem?.doses}
+          />
+          {showExtraFields && (
+            <Typography variant="body1" fontWeight="bold">
+              {t('label.reason')}:
+              <ReasonOptionsSearchInput
+                value={draft?.reason}
+                onChange={value => {
+                  update({ reason: value });
+                }}
+                fullWidth
+                type={ReasonOptionNodeType.RequisitionLineVariance}
+                disabled={disableReasons}
+                reasonOptions={reasonOptions?.nodes ?? []}
+                loading={isLoading}
+                textSx={
+                  disableReasons
+                    ? {
+                        backgroundColor: theme =>
+                          theme.palette.background.toolbar,
+                      }
+                    : {
+                        backgroundColor: theme =>
+                          theme.palette.background.white,
+                      }
+                }
+              />
+            </Typography>
+          )}
+          <Typography variant="body1" fontWeight="bold" pb={0.5}>
+            {t('heading.comment')}:
+          </Typography>
+          <BufferedTextArea
+            value={draft?.comment ?? ''}
+            onChange={e => update({ comment: e.target.value })}
+            slotProps={{
+              input: {
+                sx: {
+                  backgroundColor: theme =>
+                    disabled
+                      ? theme.palette.background.toolbar
+                      : theme.palette.background.white,
+                },
+              },
+            }}
+            disabled={disabled}
+            minRows={3}
+            maxRows={3}
+          />
+        </Box>
+      </>
+    );
+  };
 
   return (
-    <Box display="flex" flexDirection="column" padding={2}>
-      <Box display="flex" justifyContent="space-between">
-        {isNew ? (
-          <Box width="100%">
-            <StockItemSearchInput
-              onChange={(newItem: ItemRowFragment | null) => {
-                if (newItem) {
-                  insert({
-                    id: FnUtils.generateUUID(),
-                    requisitionId: requisitionId,
-                    itemId: newItem.id,
-                  });
-                  navigate(buildItemEditRoute(requisitionId, newItem.id), {
-                    replace: true,
-                  });
-                }
-              }}
-              openOnFocus={true}
-              extraFilter={item =>
-                !lines.some(line => line.item.id === item.id)
-              }
-            />
-          </Box>
-        ) : (
+    <>
+      <ModalContentLayout
+        showExtraFields={showExtraFields}
+        Top={
           <>
-            <Box paddingLeft={4} paddingRight={7}>
-              {/* Left column content */}
-              <InputWithLabelRow
-                Input={
-                  <NumericTextInput
-                    width={INPUT_WIDTH}
-                    value={draft?.itemStats.availableStockOnHand}
-                    disabled
-                  />
-                }
-                labelWidth={LABEL_WIDTH}
-                label={t('label.our-soh')}
-                sx={{ marginBottom: 1 }}
+            {(disableItemSelection && (
+              <BasicTextInput
+                value={`${currentItem?.code}     ${originalItemName}`}
+                disabled
+                fullWidth
               />
-              {isProgram && useConsumptionData && (
-                <>
-                  <InputWithLabelRow
-                    Input={
-                      <NumericTextInput
-                        width={INPUT_WIDTH}
-                        value={draft?.incomingUnits}
-                        disabled
-                      />
-                    }
-                    labelWidth={LABEL_WIDTH}
-                    label={t('label.incoming-stock')}
-                    sx={{ marginBottom: 1 }}
-                  />
-                  <InputWithLabelRow
-                    Input={
-                      <NumericTextInput
-                        width={INPUT_WIDTH}
-                        value={draft?.outgoingUnits}
-                        disabled
-                      />
-                    }
-                    labelWidth={LABEL_WIDTH}
-                    label={t('label.outgoing')}
-                    sx={{ marginBottom: 1 }}
-                  />
-                  <InputWithLabelRow
-                    Input={
-                      <NumericTextInput
-                        width={INPUT_WIDTH}
-                        value={draft?.lossInUnits}
-                        disabled
-                      />
-                    }
-                    labelWidth={LABEL_WIDTH}
-                    label={t('label.losses')}
-                    sx={{ marginBottom: 1 }}
-                  />
-                  <InputWithLabelRow
-                    Input={
-                      <NumericTextInput
-                        width={INPUT_WIDTH}
-                        value={draft?.additionInUnits}
-                        disabled
-                      />
-                    }
-                    labelWidth={LABEL_WIDTH}
-                    label={t('label.additions')}
-                    sx={{ marginBottom: 1 }}
-                  />
-                  <InputWithLabelRow
-                    Input={
-                      <NumericTextInput
-                        width={INPUT_WIDTH}
-                        value={draft?.expiringUnits}
-                        disabled
-                      />
-                    }
-                    labelWidth={LABEL_WIDTH}
-                    label={t('label.short-expiry')}
-                    sx={{ marginBottom: 1 }}
-                  />
-                  <InputWithLabelRow
-                    Input={
-                      <NumericTextInput
-                        width={INPUT_WIDTH}
-                        value={draft?.daysOutOfStock}
-                        disabled
-                      />
-                    }
-                    labelWidth={LABEL_WIDTH}
-                    label={t('label.days-out-of-stock')}
-                    sx={{ marginBottom: 1 }}
-                  />
-                </>
-              )}
-              <InputWithLabelRow
-                Input={
-                  <NumericTextInput
-                    width={INPUT_WIDTH}
-                    value={NumUtils.round(
-                      draft?.itemStats.averageMonthlyConsumption ?? 0,
-                      2
-                    )}
-                    decimalLimit={2}
-                    disabled
-                  />
+            )) || (
+              <StockItemSearchInputWithStats
+                autoFocus={!currentItem}
+                openOnFocus={!currentItem}
+                disabled={disabled}
+                currentItemId={currentItem?.id}
+                onChange={(newItem: ItemWithStatsFragment | null) =>
+                  newItem && onChangeItem(newItem)
                 }
-                labelWidth={LABEL_WIDTH}
-                label={t('label.amc')}
-                sx={{ marginBottom: 1 }}
+                extraFilter={item =>
+                  !lines.some(line => line.item.id === item.id)
+                }
               />
-              {line &&
-                plugins.requestRequisitionLine?.editViewField?.map(
-                  (Field, index) => <Field key={index} line={line} />
-                )}
-              {isProgram && useConsumptionData && (
-                <InputWithLabelRow
-                  Input={
-                    <NumericTextInput
-                      width={INPUT_WIDTH}
-                      value={draft?.itemStats.availableMonthsOfStockOnHand ?? 0}
-                      disabled
-                      decimalLimit={2}
-                      sx={{ marginBottom: 1 }}
-                    />
-                  }
-                  labelWidth={LABEL_WIDTH}
-                  label={t('label.months-of-stock')}
-                />
+            )}
+          </>
+        }
+        Left={
+          showContent ? (
+            <>
+              {currentItem?.unitName && (
+                <InfoRow label={t('label.unit')} value={unitName} />
               )}
-            </Box>
-            <Box>
-              {/* Right column content */}
-              <Box
-                display="flex"
-                flexDirection="row"
-                justifyContent="flex-end"
-                paddingBottom={1}
-                paddingRight={2.5}
-              >
-                {isPacksEnabled && (
-                  <Box display="flex">
-                    <Switch
-                      label={t('label.units')}
-                      checked={isPacks}
-                      onChange={(_event, checked) => setIsPacks(checked)}
-                      size="small"
-                      disabled={isSent}
-                    />
-                    <Box
-                      paddingLeft={2}
-                      paddingRight={2}
-                      sx={{
-                        color: isSent ? theme.palette.text.disabled : '',
-                      }}
-                    >
-                      {t('label.packs')}
-                    </Box>
-                  </Box>
-                )}
-              </Box>
-
-              <Box display="flex" flexDirection="row">
-                <InputWithLabelRow
-                  Input={
-                    <NumericTextInput
-                      width={INPUT_WIDTH}
-                      value={Math.ceil(draft?.requestedQuantity)}
-                      disabled={isPacks || isSent}
-                      onChange={value => {
-                        const newValue = isNaN(Number(value)) ? 0 : value;
-                        if (draft?.suggestedQuantity === newValue) {
-                          update({
-                            requestedQuantity: newValue,
-                            reason: null,
-                          });
-                        } else {
-                          update({ requestedQuantity: newValue });
-                        }
-                      }}
-                      onBlur={save}
-                    />
-                  }
-                  labelWidth={LABEL_WIDTH}
-                  label={t('label.requested-quantity')}
-                  sx={{ marginBottom: 1 }}
-                />
-                <Box
-                  paddingLeft={1}
-                  paddingTop={0.5}
-                  onClick={e => {
-                    toggle();
-                    setAnchorEl(e?.currentTarget);
-                  }}
-                  sx={{ cursor: 'pointer' }}
-                >
-                  <BarIcon
-                    sx={{
-                      color: 'primary.main',
-                      backgroundColor: 'background.drawer',
-                      borderRadius: '30%',
-                      padding: '2px',
-                    }}
-                  />
-                  {isOn && (
-                    <Popover
-                      anchorOrigin={{ vertical: 'center', horizontal: 'left' }}
-                      anchorEl={anchorEl}
-                      open={isOn}
-                    >
-                      <RequestStats draft={draft} />
-                    </Popover>
-                  )}
-                </Box>
-              </Box>
-              <Box display="flex" flexDirection="row">
-                {isPacksEnabled && (
-                  <InputWithLabelRow
-                    Input={
-                      <NumericTextInput
-                        disabled={!isPacks || isSent}
-                        value={NumUtils.round(
-                          (draft?.requestedQuantity ?? 0) /
-                          (draft?.defaultPackSize ?? 1),
-                          2
-                        )}
-                        decimalLimit={2}
-                        width={100}
-                        onChange={value => {
-                          const newValue =
-                            (value ?? 0) * (draft?.defaultPackSize ?? 0);
-                          if (draft?.suggestedQuantity === newValue) {
-                            update({
-                              requestedQuantity: newValue,
-                              reason: null,
-                            });
-                          } else {
-                            update({ requestedQuantity: newValue });
-                          }
-                        }}
-                        onBlur={save}
-                      />
-                    }
-                    labelWidth={LABEL_WIDTH}
-                    sx={{ marginBottom: 1 }}
-                    label={t('label.requested-packs')}
-                  />
-                )}
-              </Box>
-              {isPacksEnabled ? (
-                <InputWithLabelRow
-                  Input={
-                    <NumericTextInput
-                      width={INPUT_WIDTH}
-                      value={draft?.defaultPackSize}
-                      disabled
-                    />
-                  }
-                  labelWidth={LABEL_WIDTH}
+              {isPacksEnabled && (
+                <InfoRow
                   label={t('label.default-pack-size')}
-                  sx={{ marginBottom: 1 }}
+                  value={round(currentItem?.defaultPackSize)}
+                />
+              )}
+              {displayVaccinesInDoses && currentItem?.doses ? (
+                <InfoRow
+                  label={t('label.doses-per-unit')}
+                  value={round(currentItem?.doses)}
                 />
               ) : null}
-              <InputWithLabelRow
-                Input={
-                  <NumericTextInput
-                    width={INPUT_WIDTH}
-                    value={NumUtils.round(draft?.suggestedQuantity, 2)}
-                    disabled
-                  />
-                }
-                labelWidth={LABEL_WIDTH}
-                label={t('label.suggested-quantity')}
-                sx={{ marginBottom: 1 }}
-              />
-              {isProgram && useConsumptionData && (
-                <InputWithLabelRow
-                  Input={
-                    <ReasonOptionsSearchInput
-                      value={draft?.reason}
-                      onChange={value => {
-                        update({ reason: value });
-                      }}
-                      width={200}
-                      type={ReasonOptionNodeType.RequisitionLineVariance}
-                      isDisabled={
-                        draft?.requestedQuantity === draft?.suggestedQuantity ||
-                        isSent
-                      }
-                      onBlur={save}
-                    />
-                  }
-                  labelWidth={'66px'}
-                  label={t('label.reason')}
-                  sx={{ marginBottom: 1 }}
-                />
-              )}
-              <InputWithLabelRow
-                Input={
-                  <TextArea
-                    value={draft?.comment ?? ''}
-                    onChange={e => update({ comment: e.target.value })}
-                    slotProps={{
-                      input: {
-                        sx: {
-                          backgroundColor: theme =>
-                            theme.palette.background.menu,
-                        },
-                      },
-                    }}
-                    onBlur={save}
-                    disabled={isSent}
-                  />
-                }
-                sx={{ width: 275 }}
-                labelWidth={LABEL_WIDTH}
-                label={t('label.comment')}
-              />
-            </Box>
-          </>
-        )}
-      </Box>
+              {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
+              {line &&
+                plugins.requestRequisitionLine?.editViewField?.map(
+                  (Field, index) => (
+                    <Field key={index} line={line} unitName={unitName} />
+                  )
+                )}
+            </>
+          ) : null
+        }
+        Middle={
+          showExtraFields ? getMiddlePanelContent() : getRightPanelContent()
+        }
+        Right={showExtraFields ? getRightPanelContent() : null}
+      />
 
-      <Box paddingTop={1} maxHeight={200} width={width * 0.48} display="flex">
-        {line &&
-          plugins.requestRequisitionLine?.editViewInfo?.map((Info, index) => (
+      {line && (
+        <Box padding={'2px 16px 0 16px'}>
+          {plugins.requestRequisitionLine?.editViewInfo?.map((Info, index) => (
             <Info key={index} line={line} requisition={requisition} />
           ))}
-      </Box>
+        </Box>
+      )}
 
-      <Box>
-        <Footer
-          hasNext={hasNext}
-          next={next}
-          hasPrevious={hasPrevious}
-          previous={previous}
-          requisitionId={draft?.requisitionId}
-          scrollIntoView={scrollIntoView}
-        />
-      </Box>
-    </Box>
+      {showContent && line && (
+        <Box
+          sx={{
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+          }}
+        >
+          <Box
+            sx={{
+              width: '100%',
+              maxWidth: 900,
+              mx: 'auto',
+              p: '8px 16px',
+            }}
+          >
+            <StockDistribution
+              availableStockOnHand={line.itemStats?.availableStockOnHand}
+              averageMonthlyConsumption={
+                line.itemStats?.averageMonthlyConsumption
+              }
+              suggestedQuantity={line.suggestedQuantity}
+            />
+          </Box>
+          <Box
+            display="flex"
+            justifyContent="center"
+            gap={2}
+            sx={{
+              padding: 2,
+              flexDirection: {
+                xs: 'column',
+                md: 'row',
+              },
+              alignItems: 'center',
+            }}
+          >
+            <ConsumptionHistory id={line.id} />
+            <StockEvolution id={line.id} />
+          </Box>
+        </Box>
+      )}
+    </>
   );
 };

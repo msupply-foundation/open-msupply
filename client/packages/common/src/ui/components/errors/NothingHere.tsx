@@ -22,7 +22,10 @@ export const NothingHere: React.FC<NothingHereProps> = ({
 
   const CreateButton = !!onCreate ? (
     <Button
-      sx={{ textTransform: 'none', color: 'secondary.main' }}
+      sx={{
+        textTransform: 'none',
+        color: 'secondary.main',
+      }}
       onClick={() => onCreate()}
     >
       {createButtonText}
@@ -30,25 +33,26 @@ export const NothingHere: React.FC<NothingHereProps> = ({
   ) : undefined;
 
   const Body = !!body ? (
-    <Typography
-      fontSize={14}
-      sx={{ color: 'gray.main' }}
-      display="flex"
-      alignItems="center"
-    >
+    <Typography fontSize={14} sx={{ color: 'gray.main' }} display="inline">
       {body}
     </Typography>
   ) : undefined;
 
   return (
-    <Stack flex={1} justifyContent="center" alignItems="center" height="100%">
+    <Stack
+      flex={1}
+      justifyContent="center"
+      alignItems="center"
+      height="100%"
+      padding={1}
+    >
       <NothingHereIcon sx={{ fontSize: 120 }} />
       <Box justifyContent="center">
         <Typography fontSize={24} fontWeight={700} sx={{ color: 'gray.light' }}>
           {heading}
         </Typography>
       </Box>
-      <Box display="flex" alignContent="center">
+      <Box display="inline">
         {Body}
         {CreateButton}
       </Box>

@@ -10,15 +10,18 @@ use dataloader::DataLoader;
 
 use graphql_core::loader::{
     ClinicianLoader, ClinicianLoaderInput, DiagnosisLoader, InvoiceByIdLoader,
-    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameInsuranceJoinLoader, PatientLoader,
-    ProgramByIdLoader, StoreByIdLoader, UserLoader,
+    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameByNameLinkIdLoader,
+    NameByNameLinkIdLoaderInput, NameInsuranceJoinLoader, PatientLoader, ProgramByIdLoader,
+    StoreByIdLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{ClinicianRow, InvoiceRow, InvoiceStatus, InvoiceType, Name, NameRow, PricingRow};
+use repository::{
+    ClinicianRow, InvoiceRow, InvoiceStatus, InvoiceType, Name, NameLinkRow, NameRow, PricingRow,
+};
 
 use repository::Invoice;
 use serde::Serialize;
@@ -282,11 +285,18 @@ impl InvoiceNode {
             None => patient_loader
                 .load_one(self.name_row().id.clone())
                 .await?
-                .map(|name_row| Name {
-                    name_row,
-                    name_store_join_row: None,
-                    store_row: None,
-                    properties: None,
+                .map(|name_row| {
+                    let name_id = name_row.id.clone();
+                    Name {
+                        name_row,
+                        name_link_row: NameLinkRow {
+                            id: name_id.clone(),
+                            name_id,
+                        },
+                        name_store_join_row: None,
+                        store_row: None,
+                        properties: None,
+                    }
                 }),
         };
 
@@ -454,6 +464,23 @@ impl InvoiceNode {
 
     pub async fn expected_delivery_date(&self) -> &Option<NaiveDate> {
         &self.row().expected_delivery_date
+    }
+
+    pub async fn default_donor(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<NameNode>> {
+        let donor_link_id = match &self.row().default_donor_link_id {
+            None => return Ok(None),
+            Some(donor_link_id) => donor_link_id,
+        };
+        let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
+        let result = loader
+            .load_one(NameByNameLinkIdLoaderInput::new(&store_id, donor_link_id))
+            .await?;
+
+        Ok(result.map(NameNode::from_domain))
     }
 }
 

@@ -9,10 +9,10 @@ import {
   useDebouncedValueCallback,
   FilterOptionsState,
   RegexUtils,
+  ItemFilterInput,
 } from '@openmsupply-client/common';
 import {
   ItemStockOnHandFragment,
-  StockOnHandFilter,
   useItemById,
   useItemStockOnHandInfinite,
 } from '../../api';
@@ -30,10 +30,14 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   width,
   autoFocus = false,
   openOnFocus,
-  includeNonVisibleWithStockOnHand = false,
+  filter: apiFilter = { isVisible: true },
   itemCategoryName,
   programId,
 }) => {
+  const t = useTranslation();
+  const formatNumber = useFormatNumber();
+  const selectControl = useToggle();
+
   const { filter, onFilter } = useStringFilter('codeOrName');
   const [search, setSearch] = useState('');
 
@@ -45,7 +49,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
     DEBOUNCE_TIMEOUT
   );
 
-  const fullFilter: StockOnHandFilter = { ...filter };
+  const fullFilter: ItemFilterInput = { ...filter, ...apiFilter };
   if (itemCategoryName) fullFilter['categoryName'] = itemCategoryName;
   // For now, we are filtering items by "master_list", as they have the same ID
   // as their equivalent program. In the future, this may change, so we can add
@@ -56,7 +60,6 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
     useItemStockOnHandInfinite({
       rowsPerPage: ROWS_PER_PAGE,
       filter: fullFilter,
-      includeNonVisibleWithStockOnHand,
     });
   // changed from useStockLines even though that is more appropriate
   // when viewing a stocktake, you may have a stocktake line which has no stock lines.
@@ -65,10 +68,6 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const { data: currentItem } = useItemById(currentItemId ?? undefined);
 
   const pageNumber = data?.pages[data?.pages.length - 1]?.pageNumber ?? 0;
-
-  const t = useTranslation();
-  const formatNumber = useFormatNumber();
-  const selectControl = useToggle();
 
   const filterOptions = useCallback(
     (

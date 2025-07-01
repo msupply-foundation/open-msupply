@@ -1,14 +1,11 @@
 import { useState } from 'react';
 import { AdjustmentTypeInput, useMutation } from '@openmsupply-client/common';
-import {
-  InventoryAdjustmentReasonRowFragment,
-  StockLineRowFragment,
-} from '../../..';
+import { ReasonOptionRowFragment, StockLineRowFragment } from '../../..';
 import { STOCK_LINE } from './keys';
 import { useStockGraphQL } from '../useStockGraphQL';
 
 type DraftInventoryAdjustment = {
-  reason: InventoryAdjustmentReasonRowFragment | null;
+  reason: ReasonOptionRowFragment | null;
   adjustment: number;
   adjustmentType: AdjustmentTypeInput;
 };
@@ -68,7 +65,7 @@ const useCreate = (stockLineId: string) => {
           adjustment,
           adjustmentType,
           stockLineId,
-          inventoryAdjustmentReasonId: reason?.id,
+          reasonOptionId: reason?.id,
         },
       });
     },

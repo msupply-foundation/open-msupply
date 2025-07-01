@@ -5,18 +5,21 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { Box, Portal, Theme, Typography, styled } from '@mui/material';
 import {
-  useDetailPanelStore,
-  useHostContext,
-  useIsLargeScreen,
-} from '@common/hooks';
+  Box,
+  Portal,
+  Theme,
+  Typography,
+  styled,
+  useMediaQuery,
+} from '@mui/material';
+import { useDetailPanelStore, useHostContext } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { FlatButton } from '../../buttons';
 import { CloseIcon } from '@common/icons';
 import { Divider } from '../../divider/Divider';
 import { LocalStorage } from '../../../../localStorage';
-import { Grid } from '@openmsupply-client/common';
+import { Breakpoints, Grid, useAppTheme } from '@openmsupply-client/common';
 
 export interface DetailPanelPortalProps {
   Actions?: ReactNode;
@@ -67,9 +70,10 @@ export const DetailPanelPortal: FC<
   PropsWithChildren<DetailPanelPortalProps>
 > = ({ Actions, children }) => {
   const t = useTranslation();
+  const theme = useAppTheme();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.xl));
   const { detailPanelRef } = useHostContext();
   const { hasUserSet, isOpen, close } = useDetailPanelStore();
-  const isLargeScreen = useIsLargeScreen();
 
   const setIsOpen = (isOpen: boolean) =>
     useDetailPanelStore.setState(state => ({

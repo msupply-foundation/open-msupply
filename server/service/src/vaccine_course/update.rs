@@ -79,7 +79,7 @@ pub struct UpdateVaccineCourse {
     pub doses: Vec<VaccineCourseDoseInput>,
     pub demographic_id: Option<String>,
     pub coverage_rate: f64,
-    pub is_active: bool,
+    pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
 }
 
@@ -198,7 +198,7 @@ fn generate(
         doses,
         demographic_id,
         coverage_rate,
-        is_active,
+        use_in_gaps_calculations,
         wastage_rate,
     }: UpdateVaccineCourse,
 ) -> Result<GenerateResult, RepositoryError> {
@@ -208,7 +208,7 @@ fn generate(
         program_id: old_row.program_id,
         demographic_id: demographic_id,
         coverage_rate,
-        is_active,
+        use_in_gaps_calculations,
         wastage_rate,
         deleted_datetime: None,
     };

@@ -1,6 +1,7 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
+  Breakpoints,
   Tab,
   TableContainer,
   PlusCircleIcon,
@@ -9,12 +10,17 @@ import {
   TabKeybindings,
   TabList,
   ButtonWithIcon,
-  useIsMediumScreen,
+  useAppTheme,
+  useMediaQuery,
+  Alert,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
 import { QuantityTable, PricingTable, LocationTable } from './TabTables';
-import { CurrencyRowFragment } from '@openmsupply-client/system';
+import {
+  CurrencyRowFragment,
+  ItemRowFragment,
+} from '@openmsupply-client/system';
 
 interface TabLayoutProps {
   addDraftLine: () => void;
@@ -23,25 +29,35 @@ interface TabLayoutProps {
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
+  item: ItemRowFragment | null;
+  hasItemVariantsEnabled?: boolean;
+  hasVvmStatusesEnabled?: boolean;
 }
 
 enum Tabs {
   Batch = 'Batch',
   Pricing = 'Pricing',
-  Location = 'Location',
+  Other = 'Other',
 }
 
-export const TabLayout: FC<TabLayoutProps> = ({
+export const TabLayout = ({
   addDraftLine,
   draftLines,
   isDisabled,
   updateDraftLine,
   currency,
   isExternalSupplier,
-}) => {
-  const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
-  const isMediumScreen = useIsMediumScreen();
+  hasItemVariantsEnabled,
+  hasVvmStatusesEnabled,
+  item,
+}: TabLayoutProps) => {
   const t = useTranslation();
+  const theme = useAppTheme();
+  const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
+  const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
+  const [packRoundingMessage, setPackRoundingMessage] = useState<string>(
+    () => ''
+  );
 
   if (draftLines.length === 0)
     return <Box sx={{ height: isMediumScreen ? 400 : 500 }} />;
@@ -49,7 +65,7 @@ export const TabLayout: FC<TabLayoutProps> = ({
   return (
     <TabContext value={currentTab}>
       <TabKeybindings
-        tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Location]}
+        tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Other]}
         onAdd={addDraftLine}
         setCurrentTab={setCurrentTab}
         dependencies={[draftLines]}
@@ -74,8 +90,8 @@ export const TabLayout: FC<TabLayoutProps> = ({
               tabIndex={-1}
             />
             <Tab
-              value={Tabs.Location}
-              label={`${t('label.location')} (Ctrl+3)`}
+              value={Tabs.Other}
+              label={`${t('heading.other')} (Ctrl+3)`}
               tabIndex={-1}
             />
           </TabList>
@@ -85,7 +101,10 @@ export const TabLayout: FC<TabLayoutProps> = ({
             disabled={isDisabled}
             color="primary"
             variant="outlined"
-            onClick={addDraftLine}
+            onClick={() => {
+              addDraftLine();
+              setPackRoundingMessage?.('');
+            }}
             label={`${t('label.add-batch')} (+)`}
             Icon={<PlusCircleIcon />}
           />
@@ -102,11 +121,22 @@ export const TabLayout: FC<TabLayoutProps> = ({
         }}
       >
         <InboundLineEditPanel value={Tabs.Batch}>
-          <QuantityTable
-            isDisabled={isDisabled}
-            lines={draftLines}
-            updateDraftLine={updateDraftLine}
-          />
+          <Box width={'100%'}>
+            {packRoundingMessage && (
+              <Alert severity="warning" style={{ marginBottom: 2 }}>
+                {packRoundingMessage}
+              </Alert>
+            )}
+            <QuantityTable
+              setPackRoundingMessage={setPackRoundingMessage}
+              isDisabled={isDisabled}
+              lines={draftLines}
+              updateDraftLine={updateDraftLine}
+              item={item}
+              hasItemVariantsEnabled={hasItemVariantsEnabled}
+              hasVvmStatusesEnabled={hasVvmStatusesEnabled}
+            />
+          </Box>
         </InboundLineEditPanel>
 
         <InboundLineEditPanel value={Tabs.Pricing}>
@@ -119,7 +149,7 @@ export const TabLayout: FC<TabLayoutProps> = ({
           />
         </InboundLineEditPanel>
 
-        <InboundLineEditPanel value={Tabs.Location}>
+        <InboundLineEditPanel value={Tabs.Other}>
           <LocationTable
             isDisabled={isDisabled}
             lines={draftLines}

@@ -84,19 +84,27 @@ const StockListComponent: FC = () => {
     //   width: 150,
     //   accessor: ({ rowData }) => rowData.item.masterLists.map(m => m.name),
     // },
-    { key: 'batch', label: 'label.batch', Cell: TooltipTextCell, width: 100 },
+    {
+      key: 'batch',
+      label: 'label.batch',
+      Cell: TooltipTextCell,
+      width: 100,
+      defaultHideOnMobile: true,
+    },
     {
       key: 'expiryDate',
       label: 'label.expiry',
       accessor: ({ rowData }) => DateUtils.getNaiveDate(rowData.expiryDate),
       Cell: ExpiryDateCell,
-      width: 110,
+      width: 120,
+      defaultHideOnMobile: true,
     },
     {
       key: 'location',
       label: 'label.location',
       Cell: TooltipTextCell,
       width: 100,
+      defaultHideOnMobile: true,
       accessor: ({ rowData }) => rowData.location?.code,
     },
     {
@@ -106,12 +114,14 @@ const StockListComponent: FC = () => {
       sortable: false,
       Cell: TooltipTextCell,
       width: 75,
+      defaultHideOnMobile: true,
     },
     {
       key: 'packSize',
       label: 'label.pack-size',
       Cell: TooltipTextCell,
       width: 125,
+      defaultHideOnMobile: true,
     },
     [
       'numberOfPacks',
@@ -127,6 +137,7 @@ const StockListComponent: FC = () => {
           (rowData.totalNumberOfPacks * rowData.packSize).toFixed(2),
         sortable: false,
         width: 125,
+        defaultHideOnMobile: true,
       },
     ],
     [
@@ -138,6 +149,7 @@ const StockListComponent: FC = () => {
           (rowData.availableNumberOfPacks * rowData.packSize).toFixed(2),
         sortable: false,
         width: 125,
+        defaultHideOnMobile: true,
       },
     ],
     {
@@ -146,6 +158,7 @@ const StockListComponent: FC = () => {
       description: 'description.pack-cost',
       Cell: CurrencyCell,
       width: 125,
+      defaultHideOnMobile: true,
     },
     {
       key: 'totalValue',
@@ -155,6 +168,7 @@ const StockListComponent: FC = () => {
       Cell: CurrencyCell,
       description: 'description.total-cost',
       width: 125,
+      defaultHideOnMobile: true,
     },
     {
       key: 'supplierName',
@@ -163,6 +177,7 @@ const StockListComponent: FC = () => {
         rowData.supplierName ? rowData.supplierName : t('message.no-supplier'),
       Cell: TooltipTextCell,
       width: 190,
+      defaultHideOnMobile: true,
     },
     ...(plugins.stockLine?.tableColumn || []),
   ];

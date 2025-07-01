@@ -1,4 +1,4 @@
-import React, { FC, memo, useEffect, useRef } from 'react';
+import React, { memo } from 'react';
 import {
   Action,
   ActionsFooter,
@@ -6,66 +6,39 @@ import {
   useTranslation,
   AppFooterPortal,
   useNotification,
-  useTableStore,
   useConfirmationModal,
   AlertModal,
 } from '@openmsupply-client/common';
-import { LocationRowFragment, useLocation } from '../api';
+import { DeleteError, LocationRowFragment, useLocation } from '../api';
 
-type DeleteError = {
-  locationName: string;
-  message: string;
-};
-
-export const FooterComponent: FC<{ data: LocationRowFragment[] }> = ({
-  data,
-}) => {
+export const FooterComponent = ({ data }: { data: LocationRowFragment[] }) => {
   const t = useTranslation();
+  const {
+    delete: { delete: deleteLocation, selectedRows },
+  } = useLocation(data);
 
-  const { mutateAsync: deleteLocation } = useLocation.document.delete();
-  const { error, success, info } = useNotification();
+  const { error, success } = useNotification();
   const [deleteErrors, setDeleteErrors] = React.useState<DeleteError[]>([]);
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => data?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as LocationRowFragment[],
-  }));
 
-  const deleteAction = () => {
-    const numberSelected = selectedRows.length;
-    if (selectedRows && numberSelected > 0) {
-      const errors: DeleteError[] = [];
-      Promise.all(
-        selectedRows.map(async location => {
-          await deleteLocation(location).then(data => {
-            if (data?.deleteLocation?.__typename === 'DeleteLocationError') {
-              errors.push({
-                locationName: location.name,
-                message: data?.deleteLocation?.error?.description ?? '',
-              });
-            }
-          });
-        })
-      )
-        .then(() => {
-          setDeleteErrors(errors);
-          if (errors.length === 0) {
-            const deletedMessage = t('messages.deleted-locations', {
-              count: numberSelected,
-            });
-            const successSnack = success(deletedMessage);
-            successSnack();
-          }
-        })
-        .catch(_ =>
-          error(
-            t('messages.error-deleting-locations', { count: numberSelected })
-          )()
-        );
-    } else {
-      const selectRowsSnack = info(t('messages.select-rows-to-delete'));
-      selectRowsSnack();
+  const deleteAction = async () => {
+    if (selectedRows) {
+      try {
+        const result = await deleteLocation();
+        if (result) {
+          setDeleteErrors(result);
+        }
+        if (deleteErrors.length === 0) {
+          success(
+            t('messages.deleted-locations', {
+              count: selectedRows.length,
+            })
+          )();
+        }
+      } catch (err) {
+        error(
+          t('messages.error-deleting-locations', { count: selectedRows.length })
+        )();
+      }
     }
   };
 
@@ -76,12 +49,6 @@ export const FooterComponent: FC<{ data: LocationRowFragment[] }> = ({
     }),
     title: t('heading.are-you-sure'),
   });
-
-  const ref = useRef(deleteAction);
-
-  useEffect(() => {
-    ref.current = deleteAction;
-  }, [selectedRows]);
 
   const actions: Action[] = [
     {
@@ -95,28 +62,30 @@ export const FooterComponent: FC<{ data: LocationRowFragment[] }> = ({
     <AppFooterPortal
       Content={
         <>
-          {selectedRows.length !== 0 && (
+          {selectedRows.length > 0 && (
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
             />
           )}
-          <AlertModal
-            message={
-              <ul>
-                {deleteErrors.map(({ locationName, message }) => (
-                  <li key={locationName}>
-                    {locationName}: {message}
-                  </li>
-                ))}
-              </ul>
-            }
-            title={t('messages.error-deleting-locations', {
-              count: deleteErrors.length,
-            })}
-            open={deleteErrors.length > 0}
-            onOk={() => setDeleteErrors([])}
-          />
+          {deleteErrors.length > 0 && (
+            <AlertModal
+              message={
+                <ul>
+                  {deleteErrors.map(({ locationName, message }) => (
+                    <li key={locationName}>
+                      {locationName}: {message}
+                    </li>
+                  ))}
+                </ul>
+              }
+              title={t('messages.error-deleting-locations', {
+                count: deleteErrors.length,
+              })}
+              open
+              onOk={() => setDeleteErrors([])}
+            />
+          )}
         </>
       }
     />

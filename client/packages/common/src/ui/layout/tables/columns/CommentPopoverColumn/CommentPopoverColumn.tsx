@@ -19,7 +19,6 @@ export const getCommentPopoverColumn = <T extends RecordWithId>(
   Cell: ({ column, rowData }) => {
     const t = useTranslation();
     const value = column.accessor({ rowData });
-
     return value ? (
       <PaperHoverPopover
         width={400}
@@ -33,4 +32,5 @@ export const getCommentPopoverColumn = <T extends RecordWithId>(
       </PaperHoverPopover>
     ) : null;
   },
+  defaultHideOnMobile: true,
 });

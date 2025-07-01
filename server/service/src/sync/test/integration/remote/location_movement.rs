@@ -40,6 +40,7 @@ impl SyncRecordTester for LocationMovementRecordTester {
             supplier_link_id: Some(new_site_properties.name_id.clone()),
             barcode_id: None,
             item_variant_id: None,
+            donor_link_id: None,
         };
 
         let location_movement_row = LocationMovementRow {

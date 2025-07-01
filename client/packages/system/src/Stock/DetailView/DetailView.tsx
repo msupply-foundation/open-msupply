@@ -14,6 +14,10 @@ import {
   useCallbackWithPermission,
   UserPermission,
   usePluginEvents,
+  useConfirmOnLeaving,
+  useSimplifiedTabletUI,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButtons';
@@ -23,8 +27,10 @@ import { LedgerTable } from '../Components/Ledger';
 import { Footer } from './Footer';
 import { RepackModal } from '../Components';
 import { InventoryAdjustmentModal } from '../Components';
+import { StatusHistory } from '../Components/StatusHistory';
 
 export const StockLineDetailView: React.FC = () => {
+  const t = useTranslation();
   const { id } = useParams();
   const {
     query: { data, isLoading },
@@ -39,9 +45,9 @@ export const StockLineDetailView: React.FC = () => {
     urlQuery: { tab },
   } = useUrlQuery();
   const { success, error } = useNotification();
-  const t = useTranslation();
   const { setCustomBreadcrumbs, navigateUpOne } = useBreadcrumbs();
 
+  const simplifiedTabletView = useSimplifiedTabletUI();
   const repackModalController = useToggle();
   const adjustmentModalController = useToggle();
 
@@ -77,10 +83,25 @@ export const StockLineDetailView: React.FC = () => {
     title: t('heading.are-you-sure'),
   });
 
+  const { setIsDirty } = useConfirmOnLeaving('view-stock');
+
+  useEffect(() => {
+    // Getting isDirty from 'draftStockLine' rather than from 'useConfirmOnLeaving' hook
+    // so need to update it manually to sync external isDirty state with hook's isDirty state
+    setIsDirty(isDirty);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDirty]);
+
   const openInventoryAdjustmentModal = useCallbackWithPermission(
     UserPermission.InventoryAdjustmentMutate,
     adjustmentModalController.toggleOn
   );
+
+  const isVaccine = draft?.item?.isVaccine ?? false;
+  const { data: preferences } = usePreference(
+    PreferenceKey.ManageVvmStatusForStock
+  );
+
   const tabs = [
     {
       Component: (
@@ -93,6 +114,14 @@ export const StockLineDetailView: React.FC = () => {
       ),
       value: t('label.details'),
     },
+    ...(isVaccine && preferences?.manageVvmStatusForStock
+      ? [
+          {
+            Component: <StatusHistory draft={draft} isLoading={isLoading} />,
+            value: t('label.statushistory'),
+          },
+        ]
+      : []),
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: t('label.log'),
@@ -132,8 +161,23 @@ export const StockLineDetailView: React.FC = () => {
         openAdjust={openInventoryAdjustmentModal}
       />
       <TableProvider createStore={createTableStore}>
-        <DetailTabs tabs={tabs} />
-        {(tab === t('label.details') || !tab) && <Footer {...footerProps} />}
+        {simplifiedTabletView ? (
+          <>
+            <StockLineForm
+              loading={isLoading}
+              draft={draft}
+              onUpdate={updatePatch}
+              pluginEvents={pluginEvents}
+            />
+          </>
+        ) : (
+          <>
+            <DetailTabs tabs={tabs} />
+          </>
+        )}
+        {(tab === t('label.details') || !tab || simplifiedTabletView) && (
+          <Footer {...footerProps} />
+        )}
       </TableProvider>
     </>
   );

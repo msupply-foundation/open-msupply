@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 #[cfg(test)]
 mod tests;
 
@@ -18,6 +20,7 @@ use graphql_core::loader::LoaderRegistry;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
+use graphql_general::campaign::{CampaignMutations, CampaignQueries};
 use graphql_general::{
     CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
     InitialisationMutations, InitialisationQueries,
@@ -52,6 +55,7 @@ use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
 
 use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
+use graphql_vvm::{VVMMutations, VVMQueries};
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::boajs::utils::{ExecuteGraphQlError, ExecuteGraphql};
@@ -101,6 +105,10 @@ impl CentralServerMutationNode {
 
     async fn preferences(&self) -> PreferenceMutations {
         PreferenceMutations
+    }
+
+    async fn campaign(&self) -> CampaignMutations {
+        CampaignMutations
     }
 }
 
@@ -166,6 +174,8 @@ pub struct Queries(
     pub ItemVariantQueries,
     pub PreferenceQueries,
     pub CentralServerQueries,
+    pub VVMQueries,
+    pub CampaignQueries,
 );
 
 impl Queries {
@@ -197,6 +207,8 @@ impl Queries {
             ItemVariantQueries,
             PreferenceQueries,
             CentralServerQueries,
+            VVMQueries,
+            CampaignQueries,
         )
     }
 }
@@ -224,6 +236,7 @@ pub struct Mutations(
     pub AssetLogMutations,
     pub InventoryAdjustmentMutations,
     pub ContactFormMutations,
+    pub VVMMutations,
 );
 
 impl Mutations {
@@ -250,6 +263,7 @@ impl Mutations {
             AssetLogMutations,
             InventoryAdjustmentMutations,
             ContactFormMutations,
+            VVMMutations,
         )
     }
 }

@@ -43,10 +43,12 @@ pub struct ItemFilter {
     pub r#type: Option<EqualFilter<ItemType>>,
     pub category_id: Option<String>,
     pub category_name: Option<String>,
-    /// If true it only returns ItemAndMasterList that have a name join row (void if is_visible_or_on_hand is true!)
+    /// If true it only returns ItemAndMasterList that have a name join row (ignored if is_visible_or_on_hand is true!)
     pub is_visible: Option<bool>,
-    /// If true it returns ItemAndMasterList that have a name join row, or items with stock on hand
+    /// If true it returns ItemAndMasterList that have a name join row (including items with no stock), or items with stock on hand
     pub is_visible_or_on_hand: Option<bool>,
+    /// Return items with stock on hand, including non-visible items (ignored if is_visible_or_on_hand is true!)
+    pub has_stock_on_hand: Option<bool>,
     pub code_or_name: Option<StringFilter>,
     pub is_active: Option<bool>,
     pub is_vaccine: Option<bool>,
@@ -109,6 +111,11 @@ impl ItemFilter {
     }
 
     pub fn has_stock_on_hand(mut self, value: bool) -> Self {
+        self.has_stock_on_hand = Some(value);
+        self
+    }
+
+    pub fn visible_or_on_hand(mut self, value: bool) -> Self {
         self.is_visible_or_on_hand = Some(value);
         self
     }
@@ -216,6 +223,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             code_or_name,
             is_active,
             is_vaccine,
+            has_stock_on_hand,
             is_visible_or_on_hand,
             master_list_id,
         } = f;
@@ -276,8 +284,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
                     .eq(master_list_name_join::name_link_id)
                     .and(store::id.eq(store_id.clone()))),
             )
-            .filter(store::id.eq(store_id.clone()))
-            .into_boxed();
+            .filter(store::id.eq(store_id.clone()));
 
         let item_ids_with_stock_on_hand = item_link::table
             .select(item_link::item_id)
@@ -287,21 +294,42 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
                     .gt(0.0)
                     .and(stock_on_hand::store_id.eq(store_id.clone())),
             )
-            .group_by(item_link::item_id)
-            .into_boxed();
+            .group_by(item_link::item_id);
+
+        query = match (is_visible_or_on_hand, has_stock_on_hand) {
+            // visible items AND non-visible items with stock on hand
+            (Some(true), _) => query.filter(
+                item::id
+                    .eq_any(visible_item_ids.clone().into_boxed())
+                    .or(item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed())),
+            ),
+            // Not handling Some(false) of is_visible_or_on_hand here - no use case for returning non-visible items
+            // Items with stock on hand
+            (_, Some(true)) => {
+                query.filter(item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed()))
+            }
+
+            // Items with no stock on hand
+            (_, Some(false)) => {
+                query.filter(item::id.ne_all(item_ids_with_stock_on_hand.clone().into_boxed()))
+            }
+
+            // no stock_on_hand filters
+            (_, _) => query,
+        };
 
         query = match (is_visible_or_on_hand, is_visible) {
             // visible items AND non-visible items with stock on hand
             (Some(true), _) => query.filter(
                 item::id
-                    .eq_any(visible_item_ids)
-                    .or(item::id.eq_any(item_ids_with_stock_on_hand)),
+                    .eq_any(visible_item_ids.into_boxed())
+                    .or(item::id.eq_any(item_ids_with_stock_on_hand.into_boxed())),
             ),
             // visible items
-            (_, Some(true)) => query.filter(item::id.eq_any(visible_item_ids)),
+            (_, Some(true)) => query.filter(item::id.eq_any(visible_item_ids.into_boxed())),
 
             // invisible items
-            (_, Some(false)) => query.filter(item::id.ne_all(visible_item_ids)),
+            (_, Some(false)) => query.filter(item::id.ne_all(visible_item_ids.into_boxed())),
 
             // no visibility filters
             (_, _) => query,
@@ -736,7 +764,7 @@ mod tests {
         let results = ItemRepository::new(&storage_connection)
             .query(
                 Pagination::new(),
-                Some(ItemFilter::new().is_visible(true).has_stock_on_hand(true)),
+                Some(ItemFilter::new().is_visible(true).visible_or_on_hand(true)),
                 None,
                 Some("name1_store".to_string()),
             )
@@ -755,7 +783,7 @@ mod tests {
         let results = ItemRepository::new(&storage_connection)
             .query(
                 Pagination::new(),
-                Some(ItemFilter::new().has_stock_on_hand(true)),
+                Some(ItemFilter::new().visible_or_on_hand(true)),
                 None,
                 Some("some other store".to_string()),
             )

@@ -26,10 +26,15 @@ pub struct InsertInput {
     pub batch: Option<String>,
     pub location: Option<NullableUpdateInput<String>>,
     pub expiry_date: Option<NaiveDate>,
+    #[graphql(deprecation = "Since 2.8.0. Use reason_option_id")]
     pub inventory_adjustment_reason_id: Option<String>,
+    pub reason_option_id: Option<String>,
     /// Empty barcode will unlink barcode from StockLine
     pub barcode: Option<String>,
     pub item_variant_id: Option<String>,
+    pub vvm_status_id: Option<String>,
+    pub donor_id: Option<String>,
+    pub campaign_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -96,7 +101,11 @@ impl InsertInput {
             number_of_packs,
             pack_size,
             inventory_adjustment_reason_id,
+            reason_option_id,
             item_variant_id,
+            vvm_status_id,
+            donor_id,
+            campaign_id,
         } = self;
 
         AddNewStockLine {
@@ -113,8 +122,11 @@ impl InsertInput {
             item_id,
             number_of_packs,
             pack_size,
-            inventory_adjustment_reason_id,
+            reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
             item_variant_id,
+            vvm_status_id,
+            donor_id,
+            campaign_id,
         }
     }
 }
@@ -270,6 +282,8 @@ mod test {
                 location_row: None,
                 supplier_name_row: None,
                 barcode_row: None,
+                item_variant_row: None,
+                vvm_status_row: None,
             })
         }));
 

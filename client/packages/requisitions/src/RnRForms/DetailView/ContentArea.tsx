@@ -15,7 +15,7 @@ import {
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { RnRFormLine } from './RnRFormLine';
 import { Search } from './Search';
-import { oneTime, useRnRFormContext } from '../api';
+import { useOneTime, useRnRFormContext } from '../api';
 
 interface ContentAreaProps {
   data: RnRFormLineFragment[];
@@ -58,7 +58,7 @@ export const ContentArea = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<ViewportListRef>(null);
   const { setListRef } = useRnRFormContext(
-    oneTime(({ setListRef }) => ({
+    useOneTime(({ setListRef }) => ({
       setListRef,
     }))
   );

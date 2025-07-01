@@ -59,6 +59,7 @@ pub enum UserPermission {
     AssetCatalogueItemMutate,
     NamePropertiesMutate,
     EditCentralData,
+    ViewAndEditVvmStatus,
 }
 
 #[Object]
@@ -150,6 +151,7 @@ impl UserPermission {
             PermissionType::AssetCatalogueItemMutate => UserPermission::AssetCatalogueItemMutate,
             PermissionType::NamePropertiesMutate => UserPermission::NamePropertiesMutate,
             PermissionType::EditCentralData => UserPermission::EditCentralData,
+            PermissionType::ViewAndEditVvmStatus => UserPermission::ViewAndEditVvmStatus,
         }
     }
 
@@ -203,6 +205,7 @@ impl UserPermission {
             UserPermission::AssetCatalogueItemMutate => PermissionType::AssetCatalogueItemMutate,
             UserPermission::NamePropertiesMutate => PermissionType::NamePropertiesMutate,
             UserPermission::EditCentralData => PermissionType::EditCentralData,
+            UserPermission::ViewAndEditVvmStatus => PermissionType::ViewAndEditVvmStatus,
         }
     }
 }

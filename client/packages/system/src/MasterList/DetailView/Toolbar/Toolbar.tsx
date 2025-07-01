@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarContentPortal,
   InputWithLabelRow,
@@ -6,12 +6,9 @@ import {
   Grid,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useMasterList } from '../../api';
 
-export const Toolbar: FC = () => {
+export const Toolbar = ({ description }: { description: string }) => {
   const t = useTranslation();
-
-  const { description } = useMasterList.document.fields();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
