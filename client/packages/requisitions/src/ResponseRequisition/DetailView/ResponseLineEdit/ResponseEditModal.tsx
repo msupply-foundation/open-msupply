@@ -206,6 +206,7 @@ export const ResponseLineEditModal = ({
             disabled={isDisabled}
             isUpdateMode={mode === ModalMode.Update}
             manageVaccinesInDoses={manageVaccinesInDoses}
+            isReasonsError={isReasonsError}
             setIsEditingSupply={setIsEditingSupply}
           />
           {!!draft && (
