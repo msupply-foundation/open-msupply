@@ -1550,7 +1550,7 @@ fn transact_migrate_og_si_to_shipped_pull() -> TestSyncIncomingRecord {
 
             shipped_datetime: transact_1_pull_row().received_datetime,
             delivered_datetime: None,
-            // received_datetime: None
+            received_datetime: None,
             ..transact_1_pull_row()
         },
     )
