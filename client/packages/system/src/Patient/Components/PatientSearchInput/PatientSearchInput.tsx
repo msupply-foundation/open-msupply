@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Autocomplete,
   Box,
@@ -9,24 +9,29 @@ import {
 import { NameSearchInputProps, SearchInputPatient } from '../../utils';
 import { getPatientOptionRenderer } from '../PatientOptionRenderer';
 import { useSearchPatient } from '../utils';
-import { EditPatientModal } from '../../EditPatientModal';
 
-export const PatientSearchInput: FC<
-  NameSearchInputProps & { allowEdit?: boolean }
-> = ({
+interface PatientSearchInputProps extends NameSearchInputProps {
+  setCreatePatientModalOpen?: (open: boolean) => void;
+  setEditPatientModalOpen?: (open: boolean) => void;
+  allowCreate?: boolean;
+  allowEdit?: boolean;
+}
+
+export const PatientSearchInput = ({
   autoFocus,
   onChange,
   width = 250,
   value,
   disabled = false,
   sx,
-  NoOptionsRenderer,
+  setCreatePatientModalOpen,
+  setEditPatientModalOpen,
+  allowCreate = false,
   allowEdit = false,
-}) => {
+}: PatientSearchInputProps) => {
   const t = useTranslation();
   const PatientOptionRenderer = getPatientOptionRenderer();
   const { isLoading, patients, search } = useSearchPatient();
-  const [modalOpen, setModalOpen] = useState(false);
 
   const [input, setInput] = useState('');
 
@@ -37,21 +42,10 @@ export const PatientSearchInput: FC<
     }
   }, [value]);
 
-  const noResults =
-    NoOptionsRenderer && patients.length === 0 && input !== '' && !isLoading;
+  const showCreate =
+    allowCreate && patients.length === 0 && input !== '' && !isLoading;
 
-  const options = noResults
-    ? // This is a bit of hack to allow us to render a component inside the
-      // Autocomplete when there are no options/results. Normally, only "text"
-      // can be defined for "No Options", so we create this "dummy" option to
-      // prevent the "No Options" behaviour, and then we specify a custom
-      // renderer which (should) have a static component (e.g. a "Create new
-      // patient" link) The type of this dummy value doesn't matter as it's
-      // values never get rendered/referenced.
-      // If a "NoOptionsRenderer" isn't specified, the component will behave as
-      // normal (i.e. show the "noOptionsText" when no results are found)
-      ([{ name: 'Dummy', value: '_' }] as unknown as SearchInputPatient[])
-    : patients;
+  const options = patients as SearchInputPatient[];
 
   return (
     <Box width={`${width}px`} display={'flex'} alignItems="center">
@@ -67,7 +61,7 @@ export const PatientSearchInput: FC<
             setInput(name.name);
           }
         }}
-        renderOption={noResults ? NoOptionsRenderer : PatientOptionRenderer}
+        renderOption={PatientOptionRenderer}
         getOptionLabel={(option: SearchInputPatient) => option.name}
         isOptionEqualToValue={(option, value) => option.name === value.name}
         popperMinWidth={width}
@@ -91,19 +85,21 @@ export const PatientSearchInput: FC<
             ? t('messages.no-matching-patients')
             : t('messages.type-to-search')
         }
+        clickableOption={
+          showCreate && setCreatePatientModalOpen
+            ? {
+                label: t('label.new-patient'),
+                onClick: () => setCreatePatientModalOpen(true),
+              }
+            : undefined
+        }
       />
       {allowEdit && value && (
         <>
           <IconButton
             icon={<EditIcon style={{ fontSize: 16, fill: 'none' }} />}
             label={t('label.edit')}
-            onClick={() => setModalOpen(true)}
-          />
-
-          <EditPatientModal
-            patientId={value.id}
-            onClose={() => setModalOpen(false)}
-            isOpen={modalOpen}
+            onClick={() => setEditPatientModalOpen?.(true)}
           />
         </>
       )}
