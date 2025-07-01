@@ -19,7 +19,7 @@ impl MigrationFragment for Migrate {
                 ALTER TYPE invoice_status ADD VALUE IF NOT EXISTS 'RECEIVED';
                 ALTER TYPE activity_log_type
                 ADD VALUE IF NOT EXISTS
-                    'PRESCRIPTION_STATUS_RECEIVED';
+                    'INVOICE_STATUS_RECEIVED';
                 "#,
             )?;
         }
