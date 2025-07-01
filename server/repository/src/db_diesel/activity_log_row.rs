@@ -37,6 +37,7 @@ pub enum ActivityLogType {
     InvoiceStatusPicked,
     InvoiceStatusShipped,
     InvoiceStatusDelivered,
+    InvoiceStatusReceived,
     InvoiceStatusVerified,
     InvoiceStatusCancelled,
     InventoryAdjustment,

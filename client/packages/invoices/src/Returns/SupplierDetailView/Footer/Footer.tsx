@@ -27,25 +27,29 @@ const createStatusLog = (invoice: SupplierReturnRowFragment) => {
     [InvoiceNodeStatus.New]: null,
     [InvoiceNodeStatus.Picked]: null,
     [InvoiceNodeStatus.Shipped]: null,
-    [InvoiceNodeStatus.Delivered]: null,
     [InvoiceNodeStatus.Verified]: null,
+    [InvoiceNodeStatus.Received]: null,
     // Not used for Supplier return
+    [InvoiceNodeStatus.Delivered]: null,
     [InvoiceNodeStatus.Allocated]: null,
     [InvoiceNodeStatus.Cancelled]: null,
   };
   if (statusIdx >= 0) {
     statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
   }
+  // Skipping Allocated
   if (statusIdx >= 2) {
     statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
   }
   if (statusIdx >= 3) {
     statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
   }
-  if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
-  }
+  // Skipping Delivered
   if (statusIdx >= 5) {
+    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
+  }
+  // Skipping received
+  if (statusIdx >= 6) {
     statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
   }
   return statusLog;

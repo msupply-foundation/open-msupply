@@ -10,6 +10,7 @@ Source files for each report are located in their own directory and have the fol
 2. [src dir](#src-dir)
 3. (optional) [convert_data_js dir](#convert_data_js-dir)
 4. (optional) [argument_schemas dir](#argument_schemas-dir)
+5. (optional) [excel template](#excel)
 
 A full tree diagram of the report source file structure can be viewed [here](#source-file-structure-diagram)
 
@@ -65,7 +66,10 @@ Optional fields in the manifest json are marked as '// optional'
   "header": "header.html",
   // optional
   // name of tera html footer template of the report found within the src dir
-  "footer": "footer.html"
+  "footer": "footer.html",
+  // optional
+  // location of Excel template file relative to the version dir
+  "excel_template": "demo_template.xlsx"
 }
 ```
 
@@ -143,6 +147,7 @@ These files must be compliant with JSON forms.
    |   ├── SQL queries (optional, and possibly multiple)
    |   ├── GraphQL query (optional)
    |   └── template.html
+   ├── excel_template.xlsx (optional)
    └── report-manifest.json
 ```
 
@@ -211,11 +216,11 @@ This command is used to update standard reports to the current branch in databas
 
 ### Show Report
 
-`show-report --path <path-to-report-dir-containing-report-manifest.json> --config <optional-path-to-dir-containing-test-config.json>`
+`show-report --path <path-to-report-dir-containing-report-manifest.json> --config <optional-path-to-dir-containing-test-config.json> --format <optional[html|excel]>`
 
 Show report replaces previously used print.sh and show.sh bash commands on the OMS reports repo.
 
-Running this command will generate and open an html file of the report.
+By default, running this command will generate and open an html file of the report. A `format` argument can be passed to generate an excel file instead.
 
 This command uses a `test-config.json` file located in the reports dir containing all arguments used to generate the report.
 
@@ -247,7 +252,81 @@ Other functionality, and processes used in report development are:
 
 ### Tera templating language
 
-Open mSupply reports are rendered using [Tera](https://keats.github.io/tera/docs/), an extension of HTML where values are replaced during render and simple logic can be executed.
+OMS forms and reports are rendered as HTML using [Tera](https://keats.github.io/tera/docs/), an extension of HTML where values are replaced during render and simple logic can be executed.
+
+### Excel
+
+Reports & forms are also exportable to Excel format. This is done by parsing the HTML template and converting it to an Excel worksheet.
+
+#### Parsable HTML templates
+
+By default, only the main body of the report (i.e. `template.html`) is parsed to create the Excel worksheet. To be converted to Excel, this template must use HTML <table> elements.
+
+- The `template.html` main body template should have a `<table>`
+  - Then for row headers > `<thead>` > `<tr>` > `<th>`
+  - And for data rows > `<tbody>` > `<tr>` > `<td>`
+
+#### Customising the Excel export
+
+##### Header section
+
+The `header.html` template often includes important info (report title, date, customer etc.). Map these to the Excel sheet by using the `excel-cell` attribute.
+
+`excel-type="title"` and `excel-type="bold"` are available for simple styling.
+
+```html
+<div>
+  <h1 excel-cell="A1" excel-type="title">Report Title</h1>
+  <div>
+    <span excel-cell="C2" excel-type="bold">Date:</span>
+    <span excel-cell="D2">{{ current_date }}</span>
+  </div>
+  <div>Unrelated for Excel</div>
+</div>
+```
+
+would map to:
+
+|     | A                                                     | B   | C         | D      |
+| --- | ----------------------------------------------------- | --- | --------- | ------ |
+| 1   | <span style="font-size: 18px">**Report Title**</span> |     |           |
+| 2   |                                                       |     | **Date**: | 1/1/26 |
+
+One blank row will be left, and then the main data table will begin. So in this case we'd start from row 4.
+
+Note that footers are currently not supported for Excel.
+
+##### Data rows
+
+- `excel-table-start-row="9"` - You may have a custom header. To define where the main data table starts, add this attribute to the `<tr>` containing the table header row.
+- `excel-column="A"` - To customise which columns are shown, and in which order, use the `excel-column` attribute on the `<th>` elements. This will map the data to the specified column in the Excel worksheet.
+  - Note that once any columns have this attribute, all other columns will be excluded from the Excel export. If no columns have this attribute, all columns will be included.
+- `excel-type="total-row"` - If your report includes a total row, add this attribute to the `<tr>` element of the total row. This ensures that the total row is rendered correctly in Excel (in bold, and after a blank row to allow for pivot tables).
+
+e.g.
+
+```html
+<table>
+  <thead>
+    <tr excel-table-start-row="9">
+      <th excel-column="B">Name</th>
+      <th excel-column="A">Cost</th>
+      <th>Total</th>
+    </tr>
+    <tr>
+      <td>Ibuprofen</td>
+      <td>$10.00</td>
+      <td>$100.00</td>
+    </tr>
+  </thead>
+</table>
+```
+
+In this case, the header row would start on row 9, and only include the Cost and Name columns (swapped around for... some reason 😁).
+
+#### Excel template
+
+You can also include an optional Excel template file, allowing for more complex formatting, styling and formulae to be included in the Excel export. After specifying the `excel_template` in your `report-manifest.json`, use the attributes as above to map data from the HTML template to the correct areas in the Excel template.
 
 ### Translating reports
 

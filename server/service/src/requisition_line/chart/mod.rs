@@ -563,7 +563,7 @@ mod test {
             })
             .join(inline_edit(&consumption_point(), |mut u| {
                 // + 10 (Inbound Shipment)
-                u.invoices[0].delivered_datetime = Some(
+                u.invoices[0].received_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 1, 2)
                         .unwrap()
                         .and_hms_opt(10, 0, 0)
@@ -600,7 +600,7 @@ mod test {
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
                 // + 7 (Inbound Shipment)
-                u.invoices[0].delivered_datetime = Some(
+                u.invoices[0].received_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 1, 1)
                         .unwrap()
                         .and_hms_opt(2, 0, 0)
@@ -626,7 +626,7 @@ mod test {
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
                 // Not Counted
-                u.invoices[0].delivered_datetime = Some(
+                u.invoices[0].received_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 1, 3)
                         .unwrap()
                         .and_hms_opt(2, 0, 0)

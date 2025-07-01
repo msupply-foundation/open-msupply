@@ -25,6 +25,7 @@ pub enum FinaliseRnRFormError {
     RnRFormDoesNotExist,
     RnRFormDoesNotBelongToStore,
     RnRFormAlreadyFinalised,
+    ContainsNegativeLines,
     FinalisedRnRFormDoesNotExist,
 }
 
@@ -93,6 +94,15 @@ fn validate(
     if rnr_form.rnr_form_row.status == RnRFormStatus::Finalised {
         return Err(FinaliseRnRFormError::RnRFormAlreadyFinalised);
     };
+
+    let lines = RnRFormLineRepository::new(connection)
+        .query_by_filter(RnRFormLineFilter::new().rnr_form_id(EqualFilter::equal_to(&input.id)))?;
+
+    if lines.iter().any(|line| {
+        line.rnr_form_line_row.initial_balance < 0.0 || line.rnr_form_line_row.final_balance < 0.0
+    }) {
+        return Err(FinaliseRnRFormError::ContainsNegativeLines);
+    }
 
     Ok(rnr_form)
 }

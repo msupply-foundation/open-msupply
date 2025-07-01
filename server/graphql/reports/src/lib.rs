@@ -112,6 +112,7 @@ impl ReportQueries {
         arguments: Option<serde_json::Value>,
         format: Option<PrintFormat>,
         current_language: Option<String>,
+        excel_template_buffer: Option<Vec<u8>>,
     ) -> Result<PrintReportResponse> {
         generate_report_definition(
             ctx,
@@ -122,6 +123,7 @@ impl ReportQueries {
             arguments,
             format,
             current_language,
+            excel_template_buffer,
         )
         .await
     }

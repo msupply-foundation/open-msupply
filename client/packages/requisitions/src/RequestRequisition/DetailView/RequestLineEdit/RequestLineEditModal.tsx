@@ -60,10 +60,14 @@ export const RequestLineEditModal = ({
     useDraftRequisitionLine(currentItem);
   const draftIdRef = useRef<string | undefined>(draft?.id);
   const { hasNext, next } = useNextRequestLine(lines, currentItem);
+  const [isEditingRequested, setIsEditingRequested] = useState(false);
 
   const useConsumptionData =
     store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
-  const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
+  const nextDisabled =
+    (!hasNext && mode === ModalMode.Update) ||
+    !currentItem ||
+    isEditingRequested;
 
   const deletePreviousLine = () => {
     const shouldDelete = shouldDeleteLine(mode, draft?.id, isDisabled);
@@ -86,7 +90,7 @@ export const RequestLineEditModal = ({
   const { Modal } = useDialog({ onClose: onCancel, isOpen });
 
   const onChangeItem = (item: ItemWithStatsFragment) => {
-    if (item.id !== currentItem?.id && draft?.requestedQuantity === 0) {
+    if (mode === ModalMode.Create) {
       deletePreviousLine();
     }
     setRepresentation(Representation.UNITS);
@@ -106,10 +110,6 @@ export const RequestLineEditModal = ({
   const onNext = async () => {
     const success = await handleSave();
     if (!success) return false;
-
-    if (draft?.requestedQuantity === 0) {
-      deletePreviousLine();
-    }
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(undefined);
     else onClose();
@@ -140,7 +140,7 @@ export const RequestLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentItem}
+          disabled={!currentItem || isEditingRequested}
           onClick={async () => {
             const success = await handleSave();
             if (success) onClose();
@@ -168,6 +168,7 @@ export const RequestLineEditModal = ({
           showExtraFields={useConsumptionData && !!requisition?.program}
           manageVaccinesInDoses={manageVaccinesInDoses}
           isReasonsError={isReasonsError}
+          setIsEditingRequested={setIsEditingRequested}
         />
       )}
     </Modal>

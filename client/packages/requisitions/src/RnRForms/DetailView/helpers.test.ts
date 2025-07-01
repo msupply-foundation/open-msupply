@@ -1,5 +1,5 @@
 import { LowStockStatus } from '@common/types';
-import { getLowStockStatus, getAmc } from './helpers';
+import { getLowStockStatus, getAmc, isLineError } from './helpers';
 
 describe('getAmc', () => {
   it('should return the average monthly consumption', () => {
@@ -43,5 +43,27 @@ describe('getLowStockStatus', () => {
     const result = getLowStockStatus(finalBalance, maximumQuantity);
 
     expect(result).toBe(LowStockStatus.Ok);
+  });
+});
+
+describe('isLineError', () => {
+  it('returns true if initial balance is less than 0', () => {
+    const line = { initialBalance: -1, finalBalance: 10 };
+    expect(isLineError(line)).toBe(true);
+  });
+
+  it('returns true if final balance is less than 0', () => {
+    const line = { initialBalance: 10, finalBalance: -1 };
+    expect(isLineError(line)).toBe(true);
+  });
+
+  it('returns false if both balances are non-negative', () => {
+    const line = { initialBalance: 10, finalBalance: 20 };
+    expect(isLineError(line)).toBe(false);
+  });
+
+  it('returns false when balances are undefined', () => {
+    const line = { initialBalance: undefined, finalBalance: undefined };
+    expect(isLineError(line)).toBe(false);
   });
 });

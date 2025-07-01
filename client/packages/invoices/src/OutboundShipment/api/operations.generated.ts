@@ -11,6 +11,7 @@ export type OutboundFragment = {
   createdDatetime: string;
   allocatedDatetime?: string | null;
   deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
   verifiedDatetime?: string | null;
@@ -242,6 +243,7 @@ export type InvoiceQuery = {
         createdDatetime: string;
         allocatedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
@@ -388,6 +390,7 @@ export type OutboundByNumberQuery = {
         createdDatetime: string;
         allocatedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
@@ -1046,6 +1049,7 @@ export const OutboundFragmentDoc = gql`
     createdDatetime
     allocatedDatetime
     deliveredDatetime
+    receivedDatetime
     pickedDatetime
     shippedDatetime
     verifiedDatetime

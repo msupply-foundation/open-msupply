@@ -28,7 +28,7 @@ pub struct UpdateInput {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum UpdateCustomerReturnStatusInput {
-    Delivered,
+    Received,
     Verified,
 }
 
@@ -139,7 +139,7 @@ impl UpdateCustomerReturnStatusInput {
     pub fn to_domain(&self) -> UpdateCustomerReturnStatus {
         use UpdateCustomerReturnStatus::*;
         match self {
-            UpdateCustomerReturnStatusInput::Delivered => Delivered,
+            UpdateCustomerReturnStatusInput::Received => Received,
             UpdateCustomerReturnStatusInput::Verified => Verified,
         }
     }
