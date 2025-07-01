@@ -21,10 +21,6 @@ const config: ForgeConfig = {
     new MakerDMG({ name: 'omSupply', icon: 'src/public/oms.png' }, ['darwin']),
   ],
   plugins: [
-    {
-      name: '@electron-forge/plugin-auto-unpack-natives',
-      config: {},
-    },
     new WebpackPlugin({
       mainConfig,
       // needed for api requests during discovery
