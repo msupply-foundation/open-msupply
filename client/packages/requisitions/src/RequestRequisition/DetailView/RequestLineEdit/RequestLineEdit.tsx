@@ -268,13 +268,10 @@ export const RequestLineEdit = ({
         Right={showExtraFields ? getRightPanelContent() : null}
       />
 
-      {line && (
-        <Box padding={'2px 16px 0 16px'}>
-          {plugins.requestRequisitionLine?.editViewInfo?.map((Info, index) => (
-            <Info key={index} line={line} requisition={requisition} />
-          ))}
-        </Box>
-      )}
+      {line &&
+        plugins.requestRequisitionLine?.editViewInfo?.map((Info, index) => (
+          <Info key={index} line={line} requisition={requisition} />
+        ))}
 
       {showContent && line && (
         <Box
