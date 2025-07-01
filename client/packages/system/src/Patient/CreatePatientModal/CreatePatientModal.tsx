@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   DetailContainer,
   Box,
@@ -11,6 +11,7 @@ import {
   SaveIcon,
   LoadingButton,
   WizardStepper,
+  FnUtils,
 } from '@openmsupply-client/common';
 import { PatientColumnData } from './PatientResultsTab';
 import { Tabs, useCreatePatientForm } from './useCreatePatientForm';
@@ -54,6 +55,14 @@ export const CreatePatientModal = ({
     }
     onNext(tabs);
   };
+
+  useEffect(() => {
+    if (open) {
+      setCreateNewPatient({
+        id: FnUtils.generateUUID(),
+      });
+    }
+  }, [open, setCreateNewPatient]);
 
   if (isLoading) return <BasicSpinner />;
 

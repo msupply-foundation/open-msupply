@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   DetailContainer,
   Box,
@@ -11,6 +11,7 @@ import {
   LoadingButton,
   SaveIcon,
   WizardStepper,
+  FnUtils,
 } from '@openmsupply-client/common';
 import { Tabs, useCreatePatientForm } from './useCreatePatientForm';
 import { PatientColumnData } from './PatientResultsTab';
@@ -45,6 +46,14 @@ export const CreatePatientSlider = ({
     isLoading,
     handleSave,
   } = useCreatePatientForm(onSelect, hasEditTab);
+
+  useEffect(() => {
+    if (open) {
+      setCreateNewPatient({
+        id: FnUtils.generateUUID(),
+      });
+    }
+  }, [open, setCreateNewPatient]);
 
   if (isLoading) return <BasicSpinner />;
 

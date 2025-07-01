@@ -3,7 +3,6 @@ import {
   Autocomplete,
   Box,
   EditIcon,
-  FnUtils,
   IconButton,
   useIntlUtils,
   useTranslation,
@@ -38,7 +37,7 @@ export const PatientSearchInput = ({
   const t = useTranslation();
   const PatientOptionRenderer = getPatientOptionRenderer();
   const { isLoading, patients, search } = useSearchPatient();
-  const { createNewPatient, setCreateNewPatient } = usePatientStore();
+  const { createNewPatient } = usePatientStore();
   const { getLocalisedFullName } = useIntlUtils();
 
   const [input, setInput] = useState('');
@@ -119,11 +118,6 @@ export const PatientSearchInput = ({
             ? {
                 label: t('label.new-patient'),
                 onClick: () => {
-                  // new ID on open modal = ensure there is always an id for useUpsertPatient
-                  setCreateNewPatient({
-                    id: FnUtils.generateUUID(),
-                  });
-
                   setCreatePatientOpen(true);
                 },
               }
