@@ -1,7 +1,7 @@
 use crate::sync::{
     test::TestSyncIncomingRecord,
     translations::invoice::{
-        LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode,
+        LegacyOmStatus, LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode,
     },
 };
 use chrono::{Duration, NaiveDate, NaiveTime};
@@ -192,13 +192,13 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         allocated_datetime: None,
         picked_datetime: None,
         shipped_datetime: None,
-        received_datetime: Some(
-            NaiveDate::from_ymd_opt(2021, 7, 30)
-                .unwrap()
-                .and_hms_opt(0, 0, 0)
-                .unwrap()
-                + Duration::seconds(47046),
-        ),
+        // received_datetime: Some(
+        //     NaiveDate::from_ymd_opt(2021, 7, 30)
+        //         .unwrap()
+        //         .and_hms_opt(0, 0, 0)
+        //         .unwrap()
+        //         + Duration::seconds(47046),
+        // ),
         delivered_datetime: Some(
             NaiveDate::from_ymd_opt(2021, 7, 30)
                 .unwrap()
@@ -208,7 +208,7 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         ),
         verified_datetime: None,
         cancelled_datetime: None,
-        om_status: Some(InvoiceStatus::Received),
+        om_status: Some(LegacyOmStatus::Delivered),
         om_type: Some(InvoiceType::InboundShipment),
         om_colour: None,
         tax_percentage: Some(0.0),
@@ -401,10 +401,10 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             picked_datetime: None,
             shipped_datetime: None,
             delivered_datetime: None,
-            received_datetime: None,
+            // received_datetime: None
             verified_datetime: None,
             cancelled_datetime: None,
-            om_status: Some(InvoiceStatus::Shipped),
+            om_status: Some(LegacyOmStatus::Shipped),
             om_type: Some(InvoiceType::OutboundShipment),
             om_colour: None,
             tax_percentage: Some(0.0),
@@ -642,12 +642,12 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
                     .and_hms_opt(12, 33, 0)
                     .unwrap()
             ),
-            received_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 8, 28)
-                    .unwrap()
-                    .and_hms_opt(13, 33, 0)
-                    .unwrap()
-            ),
+            // received_datetime: Some(
+            //     NaiveDate::from_ymd_opt(2022, 8, 28)
+            //         .unwrap()
+            //         .and_hms_opt(13, 33, 0)
+            //         .unwrap()
+            // ),
             delivered_datetime: Some(
                 NaiveDate::from_ymd_opt(2022, 8, 28)
                     .unwrap()
@@ -661,7 +661,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
                     .unwrap()
             ),
             cancelled_datetime: None,
-            om_status: Some(InvoiceStatus::Shipped),
+            om_status: Some(LegacyOmStatus::Shipped),
             om_type: Some(InvoiceType::InventoryAddition),
             om_colour: Some("SomeColour".to_string()),
             tax_percentage: Some(0.0),
@@ -840,7 +840,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             _type: LegacyTransactType::Si,
             status: LegacyTransactStatus::Fn,
             tax_percentage: Some(0.0),
-            om_status: Some(InvoiceStatus::Verified),
+            om_status: Some(LegacyOmStatus::Verified),
             om_type: Some(InvoiceType::InventoryAddition),
             entry_date: NaiveDate::from_ymd_opt(2023, 1, 16).unwrap(),
             entry_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
@@ -867,7 +867,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             picked_datetime: None,
             shipped_datetime: None,
             delivered_datetime: None,
-            received_datetime: None,
+            // received_datetime: None
             om_colour: None,
             ship_date: None,
             hold: false,
@@ -1050,7 +1050,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             _type: LegacyTransactType::Sc,
             status: LegacyTransactStatus::Fn,
             tax_percentage: Some(0.0),
-            om_status: Some(InvoiceStatus::Verified),
+            om_status: Some(LegacyOmStatus::Verified),
             om_type: Some(InvoiceType::InventoryReduction),
             entry_date: NaiveDate::from_ymd_opt(2023, 1, 16).unwrap(),
             entry_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
@@ -1076,7 +1076,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             picked_datetime: None,
             shipped_datetime: None,
             delivered_datetime: None,
-            received_datetime: None,
+            // received_datetime: None
             om_colour: None,
             ship_date: None,
             hold: false,
@@ -1282,10 +1282,10 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             ),
             shipped_datetime: None,
             delivered_datetime: None,
-            received_datetime: None,
+            // received_datetime: None
             verified_datetime: None,
             cancelled_datetime: None,
-            om_status: Some(InvoiceStatus::Picked),
+            om_status: Some(LegacyOmStatus::Picked),
             om_type: Some(InvoiceType::Prescription),
             om_colour: None,
             tax_percentage: Some(0.0),
@@ -1493,7 +1493,7 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             ),
             shipped_datetime: None,
             delivered_datetime: None,
-            received_datetime: None,
+            // received_datetime: None
             verified_datetime: None,
             cancelled_datetime: Some(
                 NaiveDate::from_ymd_opt(2022, 8, 24)
@@ -1501,7 +1501,7 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
                     .and_hms_opt(9, 33, 0)
                     .unwrap(),
             ),
-            om_status: Some(InvoiceStatus::Picked),
+            om_status: Some(LegacyOmStatus::Picked),
             om_type: Some(InvoiceType::Prescription),
             om_colour: None,
             tax_percentage: Some(0.0),
@@ -1550,7 +1550,7 @@ fn transact_migrate_og_si_to_shipped_pull() -> TestSyncIncomingRecord {
 
             shipped_datetime: transact_1_pull_row().received_datetime,
             delivered_datetime: None,
-            received_datetime: None,
+            // received_datetime: None
             ..transact_1_pull_row()
         },
     )
@@ -1563,13 +1563,13 @@ fn transact_migrate_og_si_to_shipped_push() -> TestSyncOutgoingRecord {
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_MIGRATE_OG_SI_STATUS_ID.to_string(),
             status: LegacyTransactStatus::Nw,
-            om_status: Some(InvoiceStatus::Shipped),
+            om_status: Some(LegacyOmStatus::Shipped),
             arrival_date_actual: None,
             confirm_date: None,
             confirm_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             shipped_datetime: transact_1_push_legacy_row().delivered_datetime,
             delivered_datetime: None,
-            received_datetime: None,
+            // received_datetime: None
             ship_date: Some(transact_1_push_legacy_row().entry_date),
             ..transact_1_push_legacy_row()
         }),
