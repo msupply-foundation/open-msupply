@@ -23,6 +23,16 @@ import {
   SupplierReturnRowFragment,
 } from './Returns';
 
+export const allStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Allocated,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Received,
+  InvoiceNodeStatus.Verified,
+];
+
 export const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Allocated,
@@ -109,10 +119,10 @@ export const getStatusTranslation = (status: InvoiceNodeStatus): LocaleKey => {
 export const getNextOutboundStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus | null => {
-  const currentStatusIdx = outboundStatuses.findIndex(
+  const currentStatusIdx = allStatuses.findIndex(
     status => currentStatus === status
   );
-  const nextStatus = outboundStatuses[currentStatusIdx + 1];
+  const nextStatus = allStatuses[currentStatusIdx + 1];
   return nextStatus ?? null;
 };
 
@@ -182,11 +192,20 @@ export const getStatusTranslator =
 export const isOutboundDisabled = (
   outbound: OutboundRowFragment | SupplierReturnRowFragment
 ): boolean => {
-  return (
-    outbound.status === InvoiceNodeStatus.Shipped ||
-    outbound.status === InvoiceNodeStatus.Verified ||
-    outbound.status === InvoiceNodeStatus.Delivered
-  );
+  switch (outbound.status) {
+    case InvoiceNodeStatus.New:
+    case InvoiceNodeStatus.Allocated:
+    case InvoiceNodeStatus.Picked:
+      return false;
+    case InvoiceNodeStatus.Delivered:
+    case InvoiceNodeStatus.Received:
+    case InvoiceNodeStatus.Verified:
+    case InvoiceNodeStatus.Cancelled:
+    case InvoiceNodeStatus.Shipped:
+      return true;
+    default:
+      return noOtherVariants(outbound.status);
+  }
 };
 
 /** Returns true if the inbound shipment cannot be edited */
@@ -197,11 +216,11 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
   }
   switch (inbound.status) {
     case InvoiceNodeStatus.New:
-    case InvoiceNodeStatus.Allocated:
     case InvoiceNodeStatus.Delivered:
     // Inbound shipments can be edited when having been received (Note: was previous known as Delivered)
     case InvoiceNodeStatus.Received:
       return false;
+    case InvoiceNodeStatus.Allocated:
     case InvoiceNodeStatus.Picked:
     case InvoiceNodeStatus.Shipped:
     case InvoiceNodeStatus.Verified:
