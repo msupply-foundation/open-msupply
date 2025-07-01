@@ -1,6 +1,7 @@
 use super::contact_row::contact::dsl::*;
 use crate::db_diesel::name_row::name;
 use crate::RepositoryError;
+use crate::Sort;
 use crate::StorageConnection;
 use diesel::prelude::*;
 
@@ -28,7 +29,18 @@ table! {
 joinable!(contact -> name (name_id));
 allow_tables_to_appear_in_same_query!(contact, name);
 #[derive(
-    Clone, Default, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
+    Clone,
+    Default,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    AsChangeset,
+    Eq,
+    Serialize,
+    Deserialize,
+    Ord,
+    PartialOrd,
 )]
 #[diesel(table_name = contact)]
 #[diesel(treat_none_as_null = true)]
@@ -48,6 +60,15 @@ pub struct ContactRow {
     pub address_2: Option<String>,
     pub country: Option<String>,
 }
+
+pub enum ContactRowSortField {
+    Id,
+    NameId,
+    FirstName,
+    LastName,
+}
+
+pub type ContactRowSort = Sort<ContactRowSortField>;
 pub struct ContactRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -57,11 +78,40 @@ impl<'a> ContactRowRepository<'a> {
         ContactRowRepository { connection }
     }
 
-    pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<ContactRow>, RepositoryError> {
-        contact::table
+    pub fn find_many_by_ids(
+        &self,
+        ids: &[String],
+        sort: Option<ContactRowSort>,
+    ) -> Result<Vec<ContactRow>, RepositoryError> {
+        let result = contact::table
             .filter(id.eq_any(ids))
             .load(self.connection.lock().connection())
-            .map_err(RepositoryError::from)
+            .map_err(RepositoryError::from);
+        if let Some(sort) = sort {
+            match sort.key {
+                ContactRowSortField::Id => {
+                    result?.sort_by(|a: &ContactRow, b: ContactRow| {
+                        a.id.to_lowercase().cmp(&b.id.to_lowercase())
+                    });
+                }
+                ContactRowSortField::NameId => {
+                    result?.sort_by(|a, b| a.name_id.to_lowercase().cmp(&b.name_id.to_lowercase()));
+                }
+                ContactRowSortField::FirstName => {
+                    result?.sort_by(|a, b| {
+                        a.first_name
+                            .to_lowercase()
+                            .cmp(&b.first_name.to_lowercase())
+                    });
+                }
+                ContactRowSortField::LastName => {
+                    result?.sort_by(|a, b| {
+                        a.last_name.to_lowercase().cmp(&b.last_name.to_lowercase())
+                    });
+                }
+            }
+        };
+        Ok(result?)
     }
 
     pub fn find_one_by_id(&self, contact_id: &str) -> Result<Option<ContactRow>, RepositoryError> {
