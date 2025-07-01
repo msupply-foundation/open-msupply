@@ -1,3 +1,4 @@
+use crate::types::patient::GenderType;
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{
@@ -37,6 +38,12 @@ impl PreferencesNode {
 
     pub async fn use_simplified_mobile_ui(&self) -> Result<bool> {
         self.load_preference(&self.preferences.use_simplified_mobile_ui)
+    }
+
+    pub async fn gender_options(&self) -> Result<Vec<GenderType>> {
+        let domain_genders = self.load_preference(&self.preferences.gender_options)?;
+        let genders = domain_genders.iter().map(GenderType::from_domain).collect();
+        Ok(genders)
     }
 }
 
@@ -87,6 +94,7 @@ pub enum PreferenceKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
     ShowContactTracing,
+    GenderOptions,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -100,6 +108,7 @@ impl PreferenceKey {
             // Global preferences
             PrefKey::AllowTrackingOfStockByDonor => PreferenceKey::AllowTrackingOfStockByDonor,
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
+            PrefKey::GenderOptions => PreferenceKey::GenderOptions,
             // Store preferences
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
@@ -128,6 +137,7 @@ impl PreferenceNodeType {
 pub enum PreferenceValueNodeType {
     Boolean,
     Integer,
+    MultiChoice,
 }
 
 impl PreferenceValueNodeType {
@@ -135,6 +145,7 @@ impl PreferenceValueNodeType {
         match domain_type {
             PreferenceValueType::Boolean => PreferenceValueNodeType::Boolean,
             PreferenceValueType::Integer => PreferenceValueNodeType::Integer,
+            PreferenceValueType::MultiChoice => PreferenceValueNodeType::MultiChoice,
         }
     }
 }
