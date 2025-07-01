@@ -6158,6 +6158,7 @@ export type PreferenceDescriptionNode = {
 
 export enum PreferenceKey {
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
+  GenderOptions = 'genderOptions',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   ShowContactTracing = 'showContactTracing',
@@ -6183,11 +6184,13 @@ export enum PreferenceNodeType {
 export enum PreferenceValueNodeType {
   Boolean = 'BOOLEAN',
   Integer = 'INTEGER',
+  MultiChoice = 'MULTI_CHOICE',
 }
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
+  genderOptions: Array<GenderType>;
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
@@ -9996,6 +9999,7 @@ export type UpsertPackVariantResponse =
 
 export type UpsertPreferencesInput = {
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
+  genderOptions?: InputMaybe<Array<GenderType>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
