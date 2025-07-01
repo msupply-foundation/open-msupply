@@ -10,7 +10,7 @@ import {
   ReportContext,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
-import { Draft } from '../..';
+import { Draft } from '../../StockOut';
 import {
   ReportRowFragment,
   ReportSelector,

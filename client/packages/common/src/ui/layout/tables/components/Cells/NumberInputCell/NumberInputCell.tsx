@@ -1,5 +1,5 @@
 import React from 'react';
-import { CellProps } from '../../../columns';
+import { CellProps, ColumnDataSetter } from '../../../columns';
 import {
   NumericInputProps,
   NumericTextInput,
@@ -30,17 +30,37 @@ export const NumberInputCell = <T extends RecordWithId>({
   endAdornment,
   error,
   slotProps,
+  debounce = 250,
 }: CellProps<T> &
   NumericInputProps & {
     id?: string;
     TextInputProps?: StandardTextFieldProps;
     endAdornment?: string;
     error?: boolean;
-  } & Pick<StandardTextFieldProps, 'slotProps'>): React.ReactElement<
-  CellProps<T>
-> => {
+  } & Pick<StandardTextFieldProps, 'slotProps'> & {
+    debounce?: number;
+  }): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
-  const updater = useDebounceCallback(column.setter, [column.setter], 250);
+  const updater = useDebounceCallback<ColumnDataSetter<T>>(
+    row => {
+      const resetValue = column.setter(row);
+
+      // There is a use case, where setter logic could change the value to
+      // something other than inputted.
+      // E.g. input to issue 6 units, but setter rounds up to 10 (based on pack size).
+      // buffer will update, as column.accessor now returns 10.
+      // But now I try change the value to 7, and setter rounds up to 10 again.
+      // As far as accessor is concerned, the external value hasn't changed (still 10)
+      // but buffer is still 7.
+      // In this case, can return the correct value from the setter and we
+      // force an update here.
+      if (resetValue !== undefined) {
+        setBuffer(resetValue);
+      }
+    },
+    [column.setter],
+    debounce
+  );
 
   const autoFocus = rowIndex === 0 && columnIndex === 0;
 

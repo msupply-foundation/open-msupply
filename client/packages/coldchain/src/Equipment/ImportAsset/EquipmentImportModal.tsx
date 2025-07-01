@@ -27,8 +27,8 @@ import { importEquipmentToCsvWithErrors } from '../utils';
 import {
   AssetCatalogueItemFragment,
   StoreRowFragment,
-  useAssetData,
   useAssetList,
+  useAssetProperties,
 } from '@openmsupply-client/system';
 import { DraftAsset } from '../types';
 
@@ -141,7 +141,7 @@ export const EquipmentImportModal = ({
   const {
     query: { data: catalogueItemData, isLoading },
   } = useAssetList();
-  const { data: properties } = useAssetData.utils.properties();
+  const { data: properties } = useAssetProperties();
   const { mutateAsync: insertAssets } = useAssets.document.insert();
   const { insertLog, invalidateQueries } = useAssets.log.insert();
   const isCentralServer = useIsCentralServerApi();

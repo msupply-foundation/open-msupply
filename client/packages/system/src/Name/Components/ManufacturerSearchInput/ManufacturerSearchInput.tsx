@@ -8,7 +8,7 @@ import { useName } from '../../api';
 import {
   basicFilterOptions,
   filterByNameAndCode,
-  NameSearchInputProps,
+  NullableNameSearchInputProps,
 } from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
 
@@ -17,7 +17,7 @@ export const ManufacturerSearchInput = ({
   width = 250,
   value,
   disabled = false,
-}: NameSearchInputProps) => {
+}: NullableNameSearchInputProps) => {
   const { data, isLoading } = useName.document.manufacturers();
   const [buffer, setBuffer] = useBufferState(value);
   const t = useTranslation();
@@ -26,14 +26,13 @@ export const ManufacturerSearchInput = ({
   return (
     <Autocomplete
       disabled={disabled}
-      clearable={false}
       value={buffer && { ...buffer, label: buffer.name }}
       filterOptionConfig={basicFilterOptions}
       filterOptions={filterByNameAndCode}
       loading={isLoading}
       onChange={(_, name) => {
         setBuffer(name);
-        name && onChange(name);
+        onChange(name);
       }}
       options={data?.nodes ?? []}
       renderOption={NameOptionRenderer}

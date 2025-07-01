@@ -1,8 +1,12 @@
 use crate::sync::{
-    sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
+    sync_serde::{
+        date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
+        zero_date_as_option,
+    },
     translations::{
-        barcode::BarcodeTranslation, item::ItemTranslation, item_variant::ItemVariantTranslation,
-        location::LocationTranslation, name::NameTranslation, store::StoreTranslation,
+        barcode::BarcodeTranslation, campaign::CampaignTranslation, item::ItemTranslation,
+        item_variant::ItemVariantTranslation, location::LocationTranslation, name::NameTranslation,
+        store::StoreTranslation, vvm_status::VVMStatusTranslation,
     },
 };
 use chrono::NaiveDate;
@@ -16,6 +20,14 @@ use super::{
     utils::{clear_invalid_barcode_id, clear_invalid_location_id},
     PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize)]
+pub struct StockLineRowOmsFields {
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub campaign_id: Option<String>,
+}
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -47,6 +59,14 @@ pub struct LegacyStockLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
     pub item_variant_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub donor_id: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub vvm_status_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "object_fields_as_option")]
+    pub oms_fields: Option<StockLineRowOmsFields>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -68,6 +88,8 @@ impl SyncTranslation for StockLineTranslation {
             StoreTranslation.table_name(),
             LocationTranslation.table_name(),
             BarcodeTranslation.table_name(),
+            VVMStatusTranslation.table_name(),
+            CampaignTranslation.table_name(),
         ]
     }
 
@@ -97,6 +119,9 @@ impl SyncTranslation for StockLineTranslation {
             supplier_id,
             barcode_id,
             item_variant_id,
+            donor_id,
+            vvm_status_id,
+            oms_fields,
         } = serde_json::from_str::<LegacyStockLineRow>(&sync_record.data)?;
 
         let barcode_id = clear_invalid_barcode_id(connection, barcode_id)?;
@@ -118,6 +143,9 @@ impl SyncTranslation for StockLineTranslation {
             supplier_link_id: supplier_id,
             barcode_id,
             item_variant_id,
+            donor_link_id: donor_id,
+            vvm_status_id,
+            campaign_id: oms_fields.and_then(|o| o.campaign_id),
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -157,12 +185,20 @@ impl SyncTranslation for StockLineTranslation {
                     supplier_link_id: _,
                     barcode_id,
                     item_variant_id,
+                    donor_link_id,
+                    vvm_status_id,
+                    campaign_id,
                 },
             item_row,
             supplier_name_row,
             ..
         } = stock_line;
 
+        let oms_fields = if campaign_id.is_some() {
+            Some(StockLineRowOmsFields { campaign_id })
+        } else {
+            None
+        };
         let legacy_row = LegacyStockLineRow {
             ID: id,
             store_ID: store_id,
@@ -180,6 +216,9 @@ impl SyncTranslation for StockLineTranslation {
             supplier_id: supplier_name_row.map(|supplier| supplier.id),
             barcode_id,
             item_variant_id,
+            donor_id: donor_link_id,
+            vvm_status_id,
+            oms_fields,
         };
 
         Ok(PushTranslateResult::upsert(

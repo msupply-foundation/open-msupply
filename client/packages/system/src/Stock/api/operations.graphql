@@ -7,6 +7,7 @@ fragment StockLineRow on StockLineNode {
   itemId
   locationId
   itemVariantId
+  vvmStatusId
   locationName
   onHold
   packSize
@@ -24,8 +25,25 @@ fragment StockLineRow on StockLineNode {
     masterLists(storeId: $storeId) {
       name
     }
+    isVaccine
   }
   barcode
+  vvmStatusLogs {
+    nodes {
+      ...VVMStatusLogRow
+    }
+  }
+  vvmStatus {
+    id
+    description
+  }
+  donor(storeId: $storeId) {
+    id
+  }
+  campaign {
+    id
+    name
+  }
 }
 
 fragment RepackStockLine on RepackStockLineNode {
@@ -74,6 +92,24 @@ fragment LedgerRow on LedgerNode {
   reason
   stockLineId
   storeId
+}
+
+fragment VVMStatusLogRow on VvmstatusLogNode {
+  id
+  createdDatetime
+  user {
+    firstName
+    lastName
+    username
+  }
+  status {
+    id
+    description
+    code
+    level
+  }
+  createdDatetime
+  comment
 }
 
 query stockLines(
@@ -166,6 +202,18 @@ query repacksByStockLine($stockLineId: String!, $storeId: String!) {
   }
 }
 
+query vvmStatus($storeId: String!) {
+  activeVvmStatuses(storeId: $storeId) {
+    ... on VvmstatusConnector {
+      __typename
+      nodes {
+        __typename
+        ...VVMStatus
+      }
+    }
+  }
+}
+
 mutation insertRepack($input: InsertRepackInput!, $storeId: String!) {
   insertRepack(input: $input, storeId: $storeId) {
     ... on InvoiceNode {
@@ -231,6 +279,54 @@ mutation insertStockLine($input: InsertStockLineInput!, $storeId: String!) {
           __typename
         }
       }
+    }
+  }
+}
+
+fragment VVMStatus on VvmstatusNode {
+  __typename
+  code
+  description
+  id
+  isActive
+  level
+  reasonId
+  unusable
+}
+
+query activeVvmStatuses($storeId: String!) {
+  activeVvmStatuses(storeId: $storeId) {
+    ... on VvmstatusConnector {
+      __typename
+      nodes {
+        ...VVMStatus
+      }
+    }
+  }
+}
+
+mutation insertVvmStatusLog(
+  $input: InsertVVMStatusLogInput!
+  $storeId: String!
+) {
+  insertVvmStatusLog(input: $input, storeId: $storeId) {
+    ... on VvmstatusLogNode {
+      id
+      status {
+        id
+        code
+      }
+    }
+  }
+}
+
+mutation updateVvmStatusLog(
+  $input: UpdateVVMStatusLogInput!
+  $storeId: String!
+) {
+  updateVvmStatusLog(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
     }
   }
 }

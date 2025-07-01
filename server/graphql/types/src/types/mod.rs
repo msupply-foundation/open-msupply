@@ -139,6 +139,16 @@ pub use self::insurance_provider::*;
 pub mod warning;
 pub use self::warning::*;
 
+pub mod vvm_status;
+pub use self::vvm_status::*;
+
+mod campaign;
+pub mod draft_stock_out_line;
+pub use self::draft_stock_out_line::*;
+
+pub mod vvm_status_log;
+pub use self::vvm_status_log::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]
@@ -155,3 +165,13 @@ impl IdResponse {
         &self.0
     }
 }
+
+pub struct OkResponse;
+#[Object]
+impl OkResponse {
+    pub async fn ok(&self) -> bool {
+        true
+    }
+}
+
+pub use campaign::*;

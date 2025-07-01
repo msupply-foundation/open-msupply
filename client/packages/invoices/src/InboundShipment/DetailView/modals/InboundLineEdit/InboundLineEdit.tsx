@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import {
   Divider,
   useTranslation,
@@ -11,6 +11,10 @@ import {
   TableProvider,
   createTableStore,
   createQueryParamsStore,
+  useSimplifiedTabletUI,
+  Box,
+  ButtonWithIcon,
+  PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import { InboundLineFragment, useInbound } from '../../../api';
@@ -18,6 +22,7 @@ import { DraftInboundLine } from '../../../../types';
 import { CreateDraft } from '../utils';
 import { TabLayout } from './TabLayout';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
+import { QuantityTable } from './TabTables';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
@@ -28,6 +33,8 @@ interface InboundLineEditProps {
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
+  hasVvmStatusesEnabled?: boolean;
+  hasItemVariantsEnabled?: boolean;
 }
 
 const useDraftInboundLines = (item: InboundLineItem | null) => {
@@ -111,7 +118,7 @@ const useDraftInboundLines = (item: InboundLineItem | null) => {
   };
 };
 
-export const InboundLineEdit: FC<InboundLineEditProps> = ({
+export const InboundLineEdit = ({
   item,
   mode,
   isOpen,
@@ -119,23 +126,62 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   isDisabled = false,
   currency,
   isExternalSupplier,
-}) => {
+  hasVvmStatusesEnabled = false,
+  hasItemVariantsEnabled = false,
+}: InboundLineEditProps) => {
   const t = useTranslation();
   const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState<InboundLineItem | null>(item);
   const { next: nextItem, disabled: nextDisabled } = useInbound.document.next(
     currentItem?.id ?? ''
   );
+
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const { draftLines, addDraftLine, updateDraftLine, isLoading, saveLines } =
     useDraftInboundLines(currentItem);
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
   const zeroNumberOfPacks = draftLines.some(line => line.numberOfPacks === 0);
+  const simplifiedTabletView = useSimplifiedTabletUI();
 
   useEffect(() => {
     setCurrentItem(item);
   }, [item]);
+
+  const tableContent = simplifiedTabletView ? (
+    <>
+      <QuantityTable
+        isDisabled={isDisabled}
+        lines={draftLines}
+        updateDraftLine={updateDraftLine}
+        item={currentItem}
+        hasItemVariantsEnabled={hasItemVariantsEnabled}
+        hasVvmStatusesEnabled={hasVvmStatusesEnabled}
+      />
+      <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
+        <ButtonWithIcon
+          disabled={isDisabled}
+          color="primary"
+          variant="outlined"
+          onClick={addDraftLine}
+          label={`${t('label.add-batch')} (+)`}
+          Icon={<PlusCircleIcon />}
+        />
+      </Box>
+    </>
+  ) : (
+    <TabLayout
+      draftLines={draftLines}
+      addDraftLine={addDraftLine}
+      updateDraftLine={updateDraftLine}
+      isDisabled={isDisabled}
+      currency={currency}
+      isExternalSupplier={isExternalSupplier}
+      item={currentItem}
+      hasItemVariantsEnabled={hasItemVariantsEnabled}
+      hasVvmStatusesEnabled={!!hasVvmStatusesEnabled}
+    />
+  );
 
   return (
     <TableProvider
@@ -180,8 +226,8 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
             }}
           />
         }
-        height={600}
-        width={1024}
+        height={700}
+        width={1200}
         enableAutocomplete /* Required for previously entered batches to be remembered and suggested in future shipments */
       >
         {isLoading ? (
@@ -194,14 +240,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
               onChangeItem={setCurrentItem}
             />
             <Divider margin={5} />
-            <TabLayout
-              draftLines={draftLines}
-              addDraftLine={addDraftLine}
-              updateDraftLine={updateDraftLine}
-              isDisabled={isDisabled}
-              currency={currency}
-              isExternalSupplier={isExternalSupplier}
-            />
+            {tableContent}
           </>
         )}
       </Modal>

@@ -47,7 +47,6 @@ export interface ModalProps {
   deleteButton?: JSX.Element;
   disableOkKeyBinding?: boolean;
   enableAutocomplete?: boolean;
-  fullscreen?: boolean;
 }
 
 export interface DialogProps {
@@ -142,7 +141,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     setOpen(true);
   };
 
-  const ModalComponent: React.FC<ModalProps> = ({
+  const ModalComponent = ({
     cancelButton,
     children,
     height,
@@ -160,8 +159,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     enableAutocomplete,
     sx = {},
     deleteButton,
-    fullscreen = false,
-  }) => {
+  }: ModalProps) => {
+    const t = useTranslation();
     // The slide animation is triggered by cloning the next button and wrapping the passed
     // on click with a trigger to slide.
     const { slideConfig, onTriggerSlide } = useSlideAnimation(
@@ -170,7 +169,6 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     );
     const { keyboardIsOpen } = useKeyboard();
     const isSmallerScreen = useMediaQuery('(max-height: 850px)');
-    const t = useTranslation();
 
     const defaultPreventedOnClick =
       (onClick: (e?: OkClickEvent) => Promise<boolean>) =>
@@ -236,7 +234,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         sx={sx}
         TransitionComponent={Transition}
         disableEscapeKeyDown={false}
-        fullScreen={fullscreen ?? defaultFullscreen}
+        fullScreen={defaultFullscreen}
       >
         {defaultFullscreen && (
           <IconButton
@@ -246,7 +244,13 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
               onClose && onClose();
               hideDialog();
             }}
-            sx={{ position: 'absolute', right: 0, top: 0, padding: 2 }}
+            sx={{
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              padding: 2,
+              zIndex: 1,
+            }}
             label={t('button.close')}
           />
         )}
@@ -257,7 +261,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
             flexDirection: 'column',
             flex: '1 1 auto',
             overflow: 'auto',
-            width: dimensions.width,
+            width: defaultFullscreen ? '100%' : dimensions.width,
             margin: '0 auto',
           }}
           {...formProps}

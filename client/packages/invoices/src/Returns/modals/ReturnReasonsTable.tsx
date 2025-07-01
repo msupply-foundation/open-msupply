@@ -1,10 +1,16 @@
 import {
   CellProps,
   DataTable,
+  ReasonOptionNodeType,
   TextInputCell,
   useColumns,
 } from '@openmsupply-client/common';
-import { ReturnReasonSearchInput } from '@openmsupply-client/system';
+import {
+  ReasonOptionRowFragment,
+  ReasonOptionsSearchInput,
+  INPUT_WIDTH,
+  useReasonOptions,
+} from '@openmsupply-client/system';
 import React from 'react';
 
 interface ReturnWithReason {
@@ -14,7 +20,7 @@ interface ReturnWithReason {
   expiryDate?: string | null;
   batch?: string | null;
   note?: string | null;
-  reasonId?: string | null;
+  reasonOption?: ReasonOptionRowFragment | null;
 }
 
 const ReturnReasonCell = ({
@@ -22,14 +28,21 @@ const ReturnReasonCell = ({
   rowIndex,
   column,
   isDisabled,
-}: CellProps<ReturnWithReason>): JSX.Element => (
-  <ReturnReasonSearchInput
-    autoFocus={rowIndex === 0}
-    selectedReasonId={rowData.reasonId ?? null}
-    onChange={id => column.setter({ ...rowData, reasonId: id })}
-    isDisabled={isDisabled}
-  />
-);
+}: CellProps<ReturnWithReason>): JSX.Element => {
+  const { data: reasonOptions, isLoading } = useReasonOptions();
+  return (
+    <ReasonOptionsSearchInput
+      type={ReasonOptionNodeType.ReturnReason}
+      onChange={reason => column.setter({ ...rowData, reasonOption: reason })}
+      disabled={isDisabled}
+      autoFocus={rowIndex === 0}
+      width={INPUT_WIDTH}
+      value={rowData.reasonOption}
+      reasonOptions={reasonOptions?.nodes ?? []}
+      loading={isLoading}
+    />
+  );
+};
 
 export const ReturnReasonsComponent = ({
   lines,

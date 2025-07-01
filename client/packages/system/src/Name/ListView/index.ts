@@ -1,2 +1,2 @@
 export * from './ListView';
-export * from './Facilities/FacilityEditModal';
+export * from './Stores/StoreEditModal';

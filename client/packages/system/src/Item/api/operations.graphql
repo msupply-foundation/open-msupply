@@ -4,6 +4,8 @@ fragment ServiceItemRow on ItemNode {
   code
   name
   unitName
+  isVaccine
+  doses
 }
 
 fragment StockLine on StockLineNode {
@@ -22,7 +24,9 @@ fragment StockLine on StockLineNode {
     name
     code
     unitName
+    defaultPackSize
     doses
+    isVaccine
     itemDirections {
       ...ItemDirection
     }
@@ -38,6 +42,22 @@ fragment StockLine on StockLineNode {
   storeId
   totalNumberOfPacks
   itemVariantId
+
+  itemVariant {
+    id
+    dosesPerUnit
+  }
+
+  donor(storeId: $storeId) {
+    id
+  }
+  vvmStatus {
+    __typename
+    id
+    level
+    unusable
+    description
+  }
 }
 
 fragment ItemRow on ItemNode {
@@ -46,13 +66,8 @@ fragment ItemRow on ItemNode {
   code
   name
   unitName
-}
-
-fragment ItemRowWithDirections on ItemNode {
-  ...ItemRow
-  itemDirections {
-    ...ItemDirection
-  }
+  isVaccine
+  doses
 }
 
 fragment ItemDirection on ItemDirectionNode {
@@ -86,7 +101,7 @@ fragment ItemWithPackSize on ItemNode {
 fragment ItemStockOnHand on ItemNode {
   ...ItemWithPackSize
   availableStockOnHand(storeId: $storeId)
-  ...ItemRowWithDirections
+  ...ItemRow
 }
 fragment ItemRowWithStats on ItemNode {
   ...ItemStockOnHand
@@ -142,6 +157,11 @@ fragment ItemVariant on ItemVariantNode {
   id
   name
   itemId
+  item {
+    id
+    name
+    isVaccine
+  }
   manufacturerId
   manufacturer(storeId: $storeId) {
     ...NameRow
@@ -159,6 +179,8 @@ fragment ItemVariant on ItemVariantNode {
   bundlesWith {
     ...BundledItem
   }
+  dosesPerUnit
+  vvmType
 }
 
 fragment Item on ItemNode {
@@ -286,6 +308,8 @@ fragment ItemsWithStats on ItemNode {
   name
   unitName
   defaultPackSize
+  isVaccine
+  doses
   availableStockOnHand(storeId: $storeId)
   stats(storeId: $storeId) {
     __typename
@@ -350,16 +374,6 @@ query itemById($storeId: String!, $itemId: String!) {
   }
 }
 
-fragment ItemVariantOption on ItemVariantNode {
-  __typename
-  id
-  label: name
-  # To determine if the variant already has other variants bundled to it
-  bundledItemVariants {
-    id
-  }
-}
-
 query itemVariantsConfigured($storeId: String!) {
   itemVariantsConfigured(storeId: $storeId)
 }
@@ -374,7 +388,7 @@ query itemVariants($storeId: String!, $itemId: String!) {
       nodes {
         __typename
         variants {
-          ...ItemVariantOption
+          ...ItemVariant
         }
       }
     }
@@ -415,6 +429,9 @@ mutation upsertItemVariant($storeId: String!, $input: UpsertItemVariantInput!) {
             ... on UniqueValueViolation {
               description
               field
+            }
+            ... on DoseConfigurationNotAllowed {
+              description
             }
           }
         }

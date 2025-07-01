@@ -9,31 +9,25 @@ import {
   LoadingButton,
   EnvUtils,
   Platform,
-  useAuthContext,
 } from '@openmsupply-client/common';
-import { useMasterList } from '../api/hooks';
 import { masterListsToCsv } from '../../utils';
+import { MasterListRowFragment } from '../api';
 
-export const AppBarButtons = () => {
-  const { success, error } = useNotification();
+export const AppBarButtons = ({
+  data,
+}: {
+  data?: MasterListRowFragment[] | null;
+}) => {
   const t = useTranslation();
-  const { storeId } = useAuthContext();
-  const { isLoading, fetchAsync } = useMasterList.document.listAll(
-    {
-      key: 'name',
-      direction: 'asc',
-    },
-    { existsForStoreId: { equalTo: storeId } }
-  );
+  const { success, error } = useNotification();
 
   const csvExport = async () => {
-    const data = await fetchAsync();
-    if (!data || !data?.nodes.length) {
+    if (!data || !data?.length) {
       error(t('error.no-data'))();
       return;
     }
 
-    const csv = masterListsToCsv(data.nodes, t);
+    const csv = masterListsToCsv(data, t);
     FileUtils.exportCSV(csv, t('filename.master-lists'));
     success(t('success'))();
   };
@@ -45,7 +39,7 @@ export const AppBarButtons = () => {
           disabled={EnvUtils.platform === Platform.Android}
           startIcon={<DownloadIcon />}
           variant="outlined"
-          isLoading={isLoading}
+          isLoading={false}
           onClick={csvExport}
           label={t('button.export')}
         />

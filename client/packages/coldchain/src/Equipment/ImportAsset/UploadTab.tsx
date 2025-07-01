@@ -27,8 +27,8 @@ import { importEquipmentToCsv, parseStatusFromString } from '../utils';
 import {
   AssetCatalogueItemFragment,
   processProperties,
+  useAssetProperties,
   useStore,
-  useAssetData,
 } from '@openmsupply-client/system';
 
 interface EquipmentUploadTabProps {
@@ -210,7 +210,7 @@ export const EquipmentUploadTab = ({
   const { error, info } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const EquipmentBuffer: EquipmentImportModal.ImportRow[] = [];
-  const { data: properties } = useAssetData.utils.properties();
+  const { data: properties } = useAssetProperties();
 
   const csvExample = async () => {
     if (EnvUtils.platform === Platform.Android) {

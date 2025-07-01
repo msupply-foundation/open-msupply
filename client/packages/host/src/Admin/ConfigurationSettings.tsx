@@ -1,37 +1,68 @@
 import React from 'react';
 
-import { BaseButton, useTranslation } from '@openmsupply-client/common';
+import {
+  BaseButton,
+  useIntlUtils,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { useName } from '@openmsupply-client/system';
 
 import { Setting } from './Setting';
 
-import { useConfigureNameProperties } from '../api/hooks/settings/useConfigureNameProperties';
+import {
+  useConfigureNameProperties,
+  useCheckConfiguredProperties,
+  PropertyType,
+} from '../api/hooks/settings/useConfigureNameProperties';
 
 export const ConfigurationSettings = () => {
-  const { mutateAsync, isLoading } = useConfigureNameProperties();
   const t = useTranslation();
+  const { currentLanguage } = useIntlUtils();
+  const { mutateAsync, isLoading } = useConfigureNameProperties();
+  const { isLoading: dataLoading } = useName.document.properties();
+  const { gapsConfigured, forecastingConfigured } =
+    useCheckConfiguredProperties();
 
-  const configure = async () => {
-    await mutateAsync();
+  const handleClick = (propertyType: PropertyType) => async () => {
+    await mutateAsync(propertyType);
   };
 
-  const { data, isLoading: dataLoading } = useName.document.properties();
-
-  const propertiesAlreadyConfigured = !!data?.length;
-
   return (
-    <Setting
-      title={t('label.initialise-store-properties')}
-      component={
-        <BaseButton
-          onClick={configure}
-          disabled={dataLoading || isLoading || propertiesAlreadyConfigured}
-        >
-          {propertiesAlreadyConfigured
-            ? t('label.initialised')
-            : t('button.initialise')}
-        </BaseButton>
-      }
-    />
+    <>
+      <Setting
+        title={t('label.initialise-store-properties-gaps')}
+        component={
+          <BaseButton
+            onClick={handleClick('gaps')}
+            disabled={dataLoading || isLoading}
+            title={t('tooltip.re-initialise-in-language', {
+              language: currentLanguage,
+            })}
+          >
+            {gapsConfigured
+              ? t('button.re-initialise')
+              : t('button.initialise')}
+          </BaseButton>
+        }
+      />
+      <Setting
+        title={t(
+          'label.initialise-store-properties-population-based-forecasting'
+        )}
+        component={
+          <BaseButton
+            onClick={handleClick('forecasting')}
+            disabled={dataLoading || isLoading}
+            title={t('tooltip.re-initialise-in-language', {
+              language: currentLanguage,
+            })}
+          >
+            {forecastingConfigured
+              ? t('button.re-initialise')
+              : t('button.initialise')}
+          </BaseButton>
+        }
+      />
+    </>
   );
 };

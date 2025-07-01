@@ -30,6 +30,27 @@ pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Nai
         .and_then(|s| NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok()))
 }
 
+pub fn object_fields_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
+    d: D,
+) -> Result<Option<T>, D::Error> {
+    // error if cannot deserialise into a Value (which includes null, empty string or empty object)
+    let value: Value = Value::deserialize(d)?;
+    return match value {
+        Value::Null => Ok(None),
+        Value::String(s) if s.is_empty() => Ok(None),
+        // check if values as an empty object `{}`
+        Value::Sequence(ref map) if map.is_empty() => Ok(None),
+        Value::Mapping(ref map) if map.is_empty() => Ok(None),
+        _ => {
+            // if value is not null, empty string or empty object, extract struct T from value
+            let result: Result<Option<T>, D::Error> = T::deserialize(value.into_deserializer())
+                .map(Some)
+                .map_err(Error::custom);
+            result
+        }
+    };
+}
+
 pub fn date_and_time_to_datetime(date: NaiveDate, seconds: i64) -> NaiveDateTime {
     NaiveDateTime::new(
         date,
@@ -104,5 +125,103 @@ pub fn zero_f64_as_none<'de, D: Deserializer<'de>>(d: D) -> Result<Option<f64>, 
         _ => Err(Error::custom(
             "zero_f64_as_none Expected a string or number",
         )),
+    }
+}
+
+#[cfg(test)]
+mod test {
+
+    use serde::{Deserialize, Serialize};
+
+    use crate::sync::sync_serde::object_fields_as_option;
+
+    #[allow(non_snake_case)]
+    #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+    pub struct OmsFields {
+        #[serde(default)]
+        pub foreign_exchange_rate: Option<f64>,
+        #[serde(default)]
+        pub contract_signed_datetime: Option<NaiveDateTime>,
+        #[serde(default)]
+        pub advance_paid_datetime: Option<NaiveDateTime>,
+    }
+
+    #[allow(non_snake_case)]
+    #[derive(Deserialize, Serialize, Debug, PartialEq)]
+    pub struct LegacyRowWithOmsObjectField {
+        #[serde(rename = "ID")]
+        pub id: String,
+        #[serde(default)]
+        #[serde(deserialize_with = "object_fields_as_option")]
+        pub oms_fields: Option<OmsFields>,
+    }
+
+    use chrono::NaiveDateTime;
+    #[test]
+    fn test_handle_object_fields_translation() {
+        // case with populated fields
+        const LEGACY_ROW_1: (&str, &str) = (
+            "LEGACY_ROW_1",
+            r#"{
+                "ID": "LEGACY_ROW_1",
+                "oms_fields": {
+                    "foreign_exchange_rate": 1.6,
+                    "contract_signed_datetime": "2021-01-22T15:16:00"
+                }
+            }"#,
+        );
+        let a = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_1.1);
+        assert!(a.is_ok());
+        let fields = a.unwrap().oms_fields.unwrap();
+        assert_eq!(fields.foreign_exchange_rate, Some(1.6));
+        assert_eq!(
+            fields.contract_signed_datetime,
+            Some(
+                NaiveDateTime::parse_from_str("2021-01-22T15:16:00", "%Y-%m-%dT%H:%M:%S").unwrap()
+            )
+        );
+        assert_eq!(fields.advance_paid_datetime, None);
+
+        // case with empty object
+        const LEGACY_ROW_2: (&str, &str) = (
+            "LEGACY_ROW_2",
+            r#"{
+                "ID": "LEGACY_ROW_2",
+                "oms_fields": {}
+            }"#,
+        );
+        let b = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_2.1);
+        assert!(b.is_ok());
+
+        // case with empty string
+        const LEGACY_ROW_3: (&str, &str) = (
+            "LEGACY_ROW_3",
+            r#"{
+                "ID": "LEGACY_ROW_3",
+                "oms_fields": ""
+            }"#,
+        );
+        let c = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_3.1).unwrap();
+        assert_eq!(c.oms_fields, None);
+
+        // case with null
+        const LEGACY_ROW_4: (&str, &str) = (
+            "LEGACY_ROW_4",
+            r#"{
+                "ID": "LEGACY_ROW_4",
+                "oms_fields": null
+            }"#,
+        );
+        let d = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_4.1);
+        assert!(d.is_ok());
+
+        // case with no value
+        const LEGACY_ROW_5: (&str, &str) = (
+            "LEGACY_ROW_5",
+            r#"{
+                "ID": "LEGACY_ROW_5"            }"#,
+        );
+        let e = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_5.1);
+        assert!(e.is_ok());
     }
 }

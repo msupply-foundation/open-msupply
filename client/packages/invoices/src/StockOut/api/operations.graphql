@@ -1,0 +1,147 @@
+fragment StockOutLine on InvoiceLineNode {
+  __typename
+  id
+  type
+  batch
+  expiryDate
+  numberOfPacks
+  prescribedQuantity
+  packSize
+  invoiceId
+  costPricePerPack
+  sellPricePerPack
+  note
+  totalBeforeTax
+  totalAfterTax
+  taxPercentage
+  note
+  itemName
+
+  item {
+    __typename
+    id
+    name
+    code
+    unitName
+    isVaccine
+    doses
+  }
+
+  itemVariant {
+    __typename
+    id
+    dosesPerUnit
+  }
+
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+  }
+
+  stockLine {
+    __typename
+    id
+    itemId
+    batch
+    availableNumberOfPacks
+    totalNumberOfPacks
+    onHold
+    sellPricePerPack
+    costPricePerPack
+    packSize
+    expiryDate
+    item {
+      name
+      code
+      isVaccine
+      doses
+    }
+  }
+}
+
+fragment DraftStockOutLine on DraftStockOutLineNode {
+  __typename
+  id
+  stockLineId
+  numberOfPacks
+  packSize
+  batch
+  expiryDate
+  sellPricePerPack
+  inStorePacks
+  availablePacks
+  stockLineOnHold
+  defaultDosesPerUnit
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+  }
+  vvmStatus {
+    __typename
+    id
+    level
+    unusable
+    description
+  }
+  itemVariant {
+    id
+    dosesPerUnit
+  }
+  donor(storeId: $storeId) {
+    id
+    name
+  }
+  campaign {
+    name
+    id
+  }
+}
+
+query getOutboundEditLines(
+  $storeId: String!
+  $itemId: String!
+  $invoiceId: String!
+) {
+  # Base item info
+  items(
+    storeId: $storeId
+    filter: { id: { equalTo: $itemId }, isActive: true }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        __typename
+        id
+        unitName
+        name
+        isVaccine
+        doses
+        itemDirections {
+          ...ItemDirection
+        }
+      }
+    }
+  }
+
+  # The draft lines
+  draftStockOutLines(
+    storeId: $storeId
+    itemId: $itemId
+    invoiceId: $invoiceId
+  ) {
+    ... on DraftStockOutItemData {
+      placeholderQuantity
+      prescribedQuantity
+      note
+      draftLines {
+        ...DraftStockOutLine
+      }
+    }
+  }
+}

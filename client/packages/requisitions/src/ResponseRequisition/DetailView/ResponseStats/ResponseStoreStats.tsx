@@ -1,10 +1,13 @@
 import React from 'react';
-import { useTranslation } from '@common/intl';
+import { useFormatNumber, useIntlUtils, useTranslation } from '@common/intl';
 import { Box, Typography, NewValueBar } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
+import { RepresentationValue, useValueInUnitsOrPacks } from '../../../common';
+import { calculatePercentage, stats } from './utils';
 
 export interface ResponseStoreStatsProps {
-  item?: ItemRowFragment;
+  representation: RepresentationValue;
+  defaultPackSize: number;
+  unitName?: string | null;
   stockOnHand: number;
   incomingStock: number;
   stockOnOrder: number;
@@ -12,65 +15,83 @@ export interface ResponseStoreStatsProps {
   otherRequestedQuantity: number;
 }
 
-export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
-  item,
+export const ResponseStoreStats = ({
+  representation,
+  defaultPackSize,
+  unitName,
   stockOnHand,
   incomingStock,
   stockOnOrder,
   requestedQuantity,
   otherRequestedQuantity,
-}) => {
+}: ResponseStoreStatsProps) => {
   const t = useTranslation();
-  const predictedStockLevels = stockOnHand + incomingStock + stockOnOrder;
-  const totalRequested = requestedQuantity + otherRequestedQuantity;
+  const { getPlural } = useIntlUtils();
+  const { round } = useFormatNumber();
 
-  const predictedStockPercent =
-    predictedStockLevels < totalRequested
-      ? `${Math.round(
-          (100 * predictedStockLevels) / totalRequested
-        ).toString()}%`
-      : '100%';
-  const requestedPercent =
-    totalRequested < predictedStockLevels
-      ? Math.round((100 * totalRequested) / predictedStockLevels).toString() +
-        '%'
-      : '100%';
+  const unit = unitName || t('label.unit');
+
+  const statsDisplay = stats(t, getPlural, round, unit, representation);
+
+  const formattedSoh = useValueInUnitsOrPacks(
+    representation,
+    defaultPackSize,
+    stockOnHand
+  );
+  const formattedIncoming = useValueInUnitsOrPacks(
+    representation,
+    defaultPackSize,
+    incomingStock
+  );
+  const formattedSoo = useValueInUnitsOrPacks(
+    representation,
+    defaultPackSize,
+    stockOnOrder
+  );
+  const formattedRequested = useValueInUnitsOrPacks(
+    representation,
+    defaultPackSize,
+    requestedQuantity
+  );
+  const formattedOtherRequested = useValueInUnitsOrPacks(
+    representation,
+    defaultPackSize,
+    otherRequestedQuantity
+  );
+
+  const predictedStockLevels = formattedSoh + formattedIncoming + formattedSoo;
+  const totalRequested = formattedRequested + formattedOtherRequested;
+
+  const predictedStockPercent = calculatePercentage(
+    predictedStockLevels,
+    totalRequested
+  );
+  const requestedPercent = calculatePercentage(
+    totalRequested,
+    predictedStockLevels
+  );
 
   return (
-    <Box sx={{ minHeight: 200, maxHeight: 400, width: 400 }}>
-      <Box display="flex" flexDirection="column" paddingTop={2} paddingLeft={4}>
-        <Box display="flex">
-          <Typography fontSize={12} fontWeight={700}>
-            {t('label.name')}:&nbsp;
-          </Typography>
-          <Typography fontSize={12}>{item?.name ?? ''}</Typography>
-        </Box>
-        <Box display="flex" gap={5}>
-          <Box display="flex">
-            <Typography fontSize={12} fontWeight={700}>
-              {t('label.code')}:&nbsp;
-            </Typography>
-            <Typography fontSize={12}>{item?.code ?? ''}</Typography>
-          </Box>
-          <Box display="flex">
-            <Typography fontSize={12} fontWeight={700}>
-              {t('label.unit')}:&nbsp;
-            </Typography>
-            <Typography fontSize={12}>{item?.unitName ?? ''}</Typography>
-          </Box>
-        </Box>
-      </Box>
+    <Box
+      sx={{
+        width: '100%',
+        maxWidth: 800,
+        mx: 'auto',
+        p: '16px 16px',
+      }}
+    >
       <Box
         flex={1}
         sx={{
-          paddingLeft: 4,
-          paddingRight: 4,
-          paddingTop: 2,
-          paddingBottom: 2,
+          p: '4px 8px',
         }}
       >
-        {stockOnHand === 0 && incomingStock === 0 && stockOnOrder === 0 ? (
-          <Typography fontSize={14} style={{ textAlign: 'center' }}>
+        {formattedSoh === 0 && formattedIncoming === 0 && formattedSoo === 0 ? (
+          <Typography
+            fontSize={14}
+            style={{ textAlign: 'center' }}
+            justifyContent="center"
+          >
             ⓘ
             <span style={{ fontStyle: 'italic', paddingLeft: 4 }}>
               {t('messages.requisition-no-stock')}
@@ -79,7 +100,7 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
         ) : (
           <>
             <Box>
-              <Typography fontSize={12} style={{ textAlign: 'start' }}>
+              <Typography variant="h6" style={{ textAlign: 'start' }}>
                 {t('label.our-stock')}
               </Typography>
             </Box>
@@ -87,95 +108,44 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
               display="flex"
               alignItems="flex-start"
               flexDirection="column"
-              width={predictedStockPercent}
+              width={`${predictedStockPercent}%`}
             >
               <Box display="flex" width="100%">
                 <NewValueBar
-                  value={stockOnHand}
+                  value={formattedSoh}
                   total={predictedStockLevels}
                   colour="gray.dark"
                 />
                 <NewValueBar
-                  value={incomingStock}
+                  value={formattedIncoming}
                   total={predictedStockLevels}
                   colour="gray.main"
                 />
                 <NewValueBar
-                  value={stockOnOrder}
+                  value={formattedSoo}
                   total={predictedStockLevels}
                   colour="gray.light"
                 />
               </Box>
               <Box paddingTop={1}>
-                {!!stockOnHand && (
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Box
-                      sx={{
-                        backgroundColor: 'gray.dark',
-                        height: 10,
-                        width: 10,
-                        minWidth: 10,
-                        minHeight: 10,
-                      }}
-                    />
-                    <Typography
-                      width={150}
-                      fontSize={12}
-                      style={{ textAlign: 'start' }}
-                    >
-                      {t('label.stock-on-hand')}
-                    </Typography>
-                    <Typography fontWeight={800} fontSize={12}>
-                      {stockOnHand}
-                    </Typography>
-                  </Box>
-                )}
-                {!!incomingStock && (
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Box
-                      sx={{
-                        backgroundColor: 'gray.main',
-                        height: 10,
-                        width: 10,
-                        minWidth: 10,
-                        minHeight: 10,
-                      }}
-                    />
-                    <Typography
-                      width={150}
-                      fontSize={12}
-                      style={{ textAlign: 'start' }}
-                    >
-                      {t('label.incoming-stock')}
-                    </Typography>
-                    <Typography fontWeight={800} fontSize={12}>
-                      {incomingStock}
-                    </Typography>
-                  </Box>
-                )}
-                {!!stockOnOrder && (
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Box
-                      sx={{
-                        backgroundColor: 'gray.light',
-                        height: 10,
-                        width: 10,
-                        minWidth: 10,
-                        minHeight: 10,
-                      }}
-                    />
-                    <Typography
-                      width={150}
-                      fontSize={12}
-                      style={{ textAlign: 'start' }}
-                    >
-                      {t('label.stock-on-order')}
-                    </Typography>
-                    <Typography fontWeight={800} fontSize={12}>
-                      {stockOnOrder}
-                    </Typography>
-                  </Box>
-                )}
+                {!!formattedSoh &&
+                  statsDisplay(
+                    'label.stock-on-hand',
+                    formattedSoh,
+                    'gray.dark'
+                  )}
+                {!!formattedIncoming &&
+                  statsDisplay(
+                    'label.incoming-stock',
+                    formattedIncoming,
+                    'gray.main'
+                  )}
+                {!!formattedSoo &&
+                  statsDisplay(
+                    'label.stock-on-order',
+                    formattedSoo,
+                    'gray.light'
+                  )}
               </Box>
             </Box>
           </>
@@ -183,84 +153,45 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
       </Box>
       <Box
         sx={{
-          paddingLeft: 4,
-          paddingRight: 4,
-          paddingTop: 2,
-          paddingBottom: 2,
+          p: '4px 8px',
         }}
       >
-        {(!!requestedQuantity || !!otherRequestedQuantity) && (
+        {(!!formattedRequested || !!formattedOtherRequested) && (
           <>
-            <Box>
-              <Typography fontSize={12} style={{ textAlign: 'start' }}>
-                {t('label.requested')}
-              </Typography>
-            </Box>
+            <Typography style={{ textAlign: 'start' }} variant="h6">
+              {t('label.requested')}
+            </Typography>
             <Box
               display="flex"
               alignItems="flex-start"
               flexDirection="column"
-              width={requestedPercent}
+              width={`${requestedPercent}%`}
             >
               <Box display="flex" width="100%">
                 <NewValueBar
-                  value={requestedQuantity}
+                  value={formattedRequested}
                   total={totalRequested}
                   colour="primary.main"
                 />
                 <NewValueBar
-                  value={otherRequestedQuantity}
+                  value={formattedOtherRequested}
                   total={totalRequested}
                   colour="primary.light"
                 />
               </Box>
               <Box paddingTop={1}>
-                {!!requestedQuantity && (
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Box
-                      sx={{
-                        backgroundColor: 'primary.main',
-                        height: 10,
-                        width: 10,
-                        minWidth: 10,
-                        minHeight: 10,
-                      }}
-                    />
-                    <Typography
-                      width={150}
-                      fontSize={12}
-                      style={{ textAlign: 'start' }}
-                    >
-                      {t('label.requested')}
-                    </Typography>
-                    <Typography fontWeight={800} fontSize={12}>
-                      {requestedQuantity}
-                    </Typography>
-                  </Box>
-                )}
-                {!!otherRequestedQuantity && (
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Box
-                      sx={{
-                        backgroundColor: 'primary.light',
-                        height: 10,
-                        width: 10,
-                        minWidth: 10,
-                        minHeight: 10,
-                      }}
-                    />
-                    <Typography
-                      width={150}
-                      fontSize={12}
-                      style={{ textAlign: 'start' }}
-                    >
-                      {t('label.other-requested-quantity')}
-                    </Typography>
-                    <Typography fontWeight={800} fontSize={12}>
-                      {otherRequestedQuantity}
-                    </Typography>
-                  </Box>
-                )}
+                {!!formattedRequested &&
+                  statsDisplay(
+                    'label.requested-quantity',
+                    formattedRequested,
+                    'primary.main'
+                  )}
+                {!!formattedOtherRequested &&
+                  statsDisplay(
+                    'label.other-requested-quantity',
+                    formattedOtherRequested,
+                    'primary.light'
+                  )}
               </Box>
             </Box>
           </>

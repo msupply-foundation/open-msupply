@@ -113,7 +113,7 @@ export const useRnRFormContext = create<RnRFormContext>((set, get) => ({
   resetSearch: () => set(state => ({ ...state, foundIds: {} })),
   search: term => {
     let numberOfMatches = 0;
-    let found = Object.values(get().baseLines).filter(l => {
+    const found = Object.values(get().baseLines).filter(l => {
       if (numberOfMatches > 10) return false;
 
       if (itemMatchesSearch(term, l.item)) {
@@ -156,7 +156,7 @@ export const useRnRDraft = (id: string) => {
   };
 };
 
-export function oneTime<S, U>(selector: (state: S) => U): (state: S) => U {
+export function useOneTime<S, U>(selector: (state: S) => U): (state: S) => U {
   const once = React.useRef<U | undefined>(undefined);
   return state => {
     const next = selector(state);
