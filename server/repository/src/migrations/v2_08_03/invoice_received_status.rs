@@ -32,7 +32,6 @@ impl MigrationFragment for Migrate {
 
                 -- Set a received_datetime for all existing invoices that were Delivered before (have a delivered_datetime)
                 UPDATE invoice
-                SET status = 'RECEIVED',
                 received_datetime = delivered_datetime
                 WHERE delivered_datetime is not null;
 
