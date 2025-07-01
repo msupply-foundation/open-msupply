@@ -50,6 +50,7 @@ pub fn generate(
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
+        received_datetime: None,
         verified_datetime: None,
         cancelled_datetime: None,
         colour: None,

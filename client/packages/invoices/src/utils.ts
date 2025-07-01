@@ -37,19 +37,22 @@ export const inboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Picked,
   InvoiceNodeStatus.Shipped,
   InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
 ];
 
 export const manualInboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
 ];
 
 export const nextStatusMap: { [k in InvoiceNodeStatus]?: InvoiceNodeStatus } = {
   [InvoiceNodeStatus.New]: InvoiceNodeStatus.Delivered,
   [InvoiceNodeStatus.Shipped]: InvoiceNodeStatus.Delivered,
-  [InvoiceNodeStatus.Delivered]: InvoiceNodeStatus.Verified,
+  [InvoiceNodeStatus.Delivered]: InvoiceNodeStatus.Received,
+  [InvoiceNodeStatus.Received]: InvoiceNodeStatus.Verified,
 };
 
 export const prescriptionStatuses: InvoiceNodeStatus[] = [
@@ -71,12 +74,12 @@ export const customerReturnStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Picked,
   InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
 ];
 export const manualCustomerReturnStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
 ];
 
@@ -85,6 +88,7 @@ const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   PICKED: 'label.picked',
   SHIPPED: 'label.shipped',
   DELIVERED: 'label.delivered',
+  RECEIVED: 'label.received',
   NEW: 'label.new',
   VERIFIED: 'label.verified',
   CANCELLED: 'label.cancelled',
@@ -185,8 +189,9 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
   switch (inbound.status) {
     case InvoiceNodeStatus.New:
     case InvoiceNodeStatus.Allocated:
-    // Inbound shipments can be edited when having been delivered
     case InvoiceNodeStatus.Delivered:
+    // Inbound shipments can be edited when having been received (Note: was previous known as Delivered)
+    case InvoiceNodeStatus.Received:
       return false;
     case InvoiceNodeStatus.Picked:
     case InvoiceNodeStatus.Shipped:

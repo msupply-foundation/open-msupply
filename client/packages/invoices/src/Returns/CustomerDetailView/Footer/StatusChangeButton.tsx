@@ -42,8 +42,8 @@ const getStatusOptions = (
       isDisabled: true,
     },
     {
-      value: InvoiceNodeStatus.Delivered,
-      label: getButtonLabel(InvoiceNodeStatus.Delivered),
+      value: InvoiceNodeStatus.Received,
+      label: getButtonLabel(InvoiceNodeStatus.Received),
       isDisabled: true,
     },
     {
@@ -59,8 +59,8 @@ const getStatusOptions = (
     options[4].isDisabled = false;
   }
 
-  if (currentStatus === InvoiceNodeStatus.Delivered) {
-    // When delivered, can change to verified
+  if (currentStatus === InvoiceNodeStatus.Received) {
+    // When received, can change to verified
     options[4].isDisabled = false;
   }
 

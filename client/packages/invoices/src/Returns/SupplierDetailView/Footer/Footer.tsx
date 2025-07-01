@@ -27,9 +27,10 @@ const createStatusLog = (invoice: SupplierReturnRowFragment) => {
     [InvoiceNodeStatus.New]: null,
     [InvoiceNodeStatus.Picked]: null,
     [InvoiceNodeStatus.Shipped]: null,
-    [InvoiceNodeStatus.Delivered]: null,
+    [InvoiceNodeStatus.Received]: null,
     [InvoiceNodeStatus.Verified]: null,
     // Not used for Supplier return
+    [InvoiceNodeStatus.Delivered]: null,
     [InvoiceNodeStatus.Allocated]: null,
     [InvoiceNodeStatus.Cancelled]: null,
   };
