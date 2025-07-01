@@ -682,12 +682,14 @@ fn map_legacy(
     // If created_datetime (om_created_datetime) exists then the record was created in omSupply and
     // omSupply fields are used
 
-    let received_datetime = match data.om_status {
-        Some(LegacyOmStatus::DeliveredNoStock) => None, // DeliveredNoStock status means we haven't updated stock and therefore haven't got a received_datetime
-        _ => data.delivered_datetime, // When we have oms_fields we'll get the status from there...
-    };
-
     if let Some(created_datetime) = data.created_datetime {
+        let received_datetime = match data.om_status {
+            Some(LegacyOmStatus::DeliveredNoStock) => None, // DeliveredNoStock status means we haven't updated stock and therefore haven't got a received_datetime
+            Some(LegacyOmStatus::Delivered) | Some(LegacyOmStatus::Verified) => {
+                data.delivered_datetime
+            }
+            _ => data.delivered_datetime,
+        };
         return LegacyMapping {
             created_datetime,
             picked_datetime: data.picked_datetime,
