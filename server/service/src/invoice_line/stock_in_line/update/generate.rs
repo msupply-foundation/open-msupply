@@ -52,49 +52,49 @@ pub fn generate(
         update_line = convert_invoice_line_to_single_pack(update_line);
     }
 
-    let (upsert_batch_option, vvm_status_log_option) =
-        if existing_invoice_row.status != InvoiceStatus::New {
-            // There will be a batch_to_delete_id if the item has changed
-            // If item has changed, we want a new stock line, otherwise keep existing
-            let stock_line_id = match batch_to_delete_id {
-                Some(_) => None, // will generate new stock line
-                None => update_line.stock_line_id.clone(),
-            };
-
-            let new_batch = generate_batch(
-                connection,
-                update_line.clone(),
-                StockLineInput {
-                    stock_line_id,
-                    store_id: existing_invoice_row.store_id.clone(),
-                    supplier_link_id: existing_invoice_row.name_link_id.clone(),
-                    on_hold: false,
-                    barcode_id: None,
-                    overwrite_stock_levels: true,
-                },
-            )?;
-            update_line.stock_line_id = Some(new_batch.id.clone());
-
-            let vvm_status_log_option = if let Some(vvm_status_id) = input.vvm_status_id {
-                let existing_log_id =
-                    get_existing_vvm_status_log_id(connection, &new_batch.id, &update_line.id)?;
-
-                Some(generate_vvm_status_log(GenerateVVMStatusLogInput {
-                    id: existing_log_id,
-                    store_id: existing_invoice_row.store_id.clone(),
-                    created_by: user_id.to_string(),
-                    vvm_status_id,
-                    stock_line_id: new_batch.id.clone(),
-                    invoice_line_id: update_line.id.clone(),
-                }))
-            } else {
-                None
-            };
-
-            (Some(new_batch), vvm_status_log_option)
-        } else {
-            (None, None)
+    let (upsert_batch_option, vvm_status_log_option) = if should_update_stock(&existing_invoice_row)
+    {
+        // There will be a batch_to_delete_id if the item has changed
+        // If item has changed, we want a new stock line, otherwise keep existing
+        let stock_line_id = match batch_to_delete_id {
+            Some(_) => None, // will generate new stock line
+            None => update_line.stock_line_id.clone(),
         };
+
+        let new_batch = generate_batch(
+            connection,
+            update_line.clone(),
+            StockLineInput {
+                stock_line_id,
+                store_id: existing_invoice_row.store_id.clone(),
+                supplier_link_id: existing_invoice_row.name_link_id.clone(),
+                on_hold: false,
+                barcode_id: None,
+                overwrite_stock_levels: true,
+            },
+        )?;
+        update_line.stock_line_id = Some(new_batch.id.clone());
+
+        let vvm_status_log_option = if let Some(vvm_status_id) = input.vvm_status_id {
+            let existing_log_id =
+                get_existing_vvm_status_log_id(connection, &new_batch.id, &update_line.id)?;
+
+            Some(generate_vvm_status_log(GenerateVVMStatusLogInput {
+                id: existing_log_id,
+                store_id: existing_invoice_row.store_id.clone(),
+                created_by: user_id.to_string(),
+                vvm_status_id,
+                stock_line_id: new_batch.id.clone(),
+                invoice_line_id: update_line.id.clone(),
+            }))
+        } else {
+            None
+        };
+
+        (Some(new_batch), vvm_status_log_option)
+    } else {
+        (None, None)
+    };
 
     Ok(GenerateResult {
         invoice_row_option: generate_invoice_user_id_update(user_id, existing_invoice_row),
@@ -103,6 +103,19 @@ pub fn generate(
         batch_to_delete_id,
         vvm_status_log_option,
     })
+}
+
+fn should_update_stock(invoice: &InvoiceRow) -> bool {
+    match invoice.status {
+        InvoiceStatus::New
+        | InvoiceStatus::Picked
+        | InvoiceStatus::Shipped
+        | InvoiceStatus::Delivered => false,
+        InvoiceStatus::Allocated
+        | InvoiceStatus::Cancelled
+        | InvoiceStatus::Received
+        | InvoiceStatus::Verified => true,
+    }
 }
 
 fn get_batch_to_delete_id(
