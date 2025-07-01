@@ -29,6 +29,7 @@ export const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Picked,
   InvoiceNodeStatus.Shipped,
   InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
 ];
 
@@ -74,7 +75,7 @@ export const supplierReturnStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Picked,
   InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Received,
   InvoiceNodeStatus.Verified,
 ];
 
@@ -182,11 +183,20 @@ export const getStatusTranslator =
 export const isOutboundDisabled = (
   outbound: OutboundRowFragment | SupplierReturnRowFragment
 ): boolean => {
-  return (
-    outbound.status === InvoiceNodeStatus.Shipped ||
-    outbound.status === InvoiceNodeStatus.Verified ||
-    outbound.status === InvoiceNodeStatus.Delivered
-  );
+  switch (outbound.status) {
+    case InvoiceNodeStatus.New:
+    case InvoiceNodeStatus.Allocated:
+    case InvoiceNodeStatus.Picked:
+      return false;
+    case InvoiceNodeStatus.Shipped:
+    case InvoiceNodeStatus.Delivered:
+    case InvoiceNodeStatus.Received:
+    case InvoiceNodeStatus.Verified:
+    case InvoiceNodeStatus.Cancelled:
+      return true;
+    default:
+      return noOtherVariants(outbound.status);
+  }
 };
 
 /** Returns true if the inbound shipment cannot be edited */
@@ -197,14 +207,14 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
   }
   switch (inbound.status) {
     case InvoiceNodeStatus.New:
-    case InvoiceNodeStatus.Allocated:
     case InvoiceNodeStatus.Delivered:
     // Inbound shipments can be edited when having been received (Note: was previous known as Delivered)
     case InvoiceNodeStatus.Received:
       return false;
+    case InvoiceNodeStatus.Verified:
+    case InvoiceNodeStatus.Allocated:
     case InvoiceNodeStatus.Picked:
     case InvoiceNodeStatus.Shipped:
-    case InvoiceNodeStatus.Verified:
     case InvoiceNodeStatus.Cancelled:
       return true;
     default:

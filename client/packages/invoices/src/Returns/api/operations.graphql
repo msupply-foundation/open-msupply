@@ -10,7 +10,7 @@ fragment SupplierReturnRow on InvoiceNode {
   createdDatetime
   pickedDatetime
   shippedDatetime
-  deliveredDatetime
+  receivedDatetime
   verifiedDatetime
   comment
   theirReference
