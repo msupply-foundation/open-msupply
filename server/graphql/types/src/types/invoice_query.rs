@@ -64,12 +64,16 @@ pub enum InvoiceNodeStatus {
     /// Outbound Shipment: Becomes not editable
     /// Inbound Shipment: For inter store stock transfers an inbound Shipment
     /// becomes editable when this status is set as a result of corresponding
-    /// outbound Shipment being chagned to shipped (this is similar to New status)
+    /// outbound Shipment being changed to shipped (this is similar to New status)
     Shipped,
     /// General description: Inbound Shipment was received
     /// Outbound Shipment: Status is updated based on corresponding inbound Shipment
     /// Inbound Shipment: Stock is introduced and can be issued
     Delivered,
+    /// General description: Received inbound Shipment has arrived, not counted or verified yet
+    /// Outbound Shipment: Status is updated based on corresponding inbound Shipment
+    /// Inbound Shipment: Status update, doesn't affect stock levels or restrict access to edit
+    Received,
     /// General description: Received inbound Shipment was counted and verified
     /// Outbound Shipment: Status is updated based on corresponding inbound Shipment
     /// Inbound Shipment: Becomes not editable
@@ -178,6 +182,12 @@ impl InvoiceNode {
     pub async fn delivered_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .delivered_datetime
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    }
+
+    pub async fn received_datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .received_datetime
             .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
@@ -606,6 +616,7 @@ impl InvoiceNodeStatus {
             Picked => InvoiceStatus::Picked,
             Shipped => InvoiceStatus::Shipped,
             Delivered => InvoiceStatus::Delivered,
+            Received => InvoiceStatus::Received,
             Verified => InvoiceStatus::Verified,
             Cancelled => InvoiceStatus::Cancelled,
         }
@@ -619,6 +630,7 @@ impl InvoiceNodeStatus {
             Picked => InvoiceNodeStatus::Picked,
             Shipped => InvoiceNodeStatus::Shipped,
             Delivered => InvoiceNodeStatus::Delivered,
+            Received => InvoiceNodeStatus::Received,
             Verified => InvoiceNodeStatus::Verified,
             Cancelled => InvoiceNodeStatus::Cancelled,
         }

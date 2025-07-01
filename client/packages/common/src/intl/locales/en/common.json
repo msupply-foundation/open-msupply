@@ -1429,7 +1429,7 @@
   "messages.cant-delete-transferred": "You cannot delete items that have been transferred from another store. Please reduce those lines to zero instead.",
   "messages.cant-download-android": "File cannot be downloaded on this device",
   "messages.cant-return-shipment": "Cannot process return of lines until the status is 'Shipped'",
-  "messages.cant-return-shipment-replenishment": "Cannot return lines until the status is 'Delivered'",
+  "messages.cant-return-shipment-replenishment": "Cannot return lines until the status is 'Received'",
   "messages.cant-send-order": "Cannot send Internal Order because there are no lines or because all lines have a requested quantity of 0",
   "messages.catalogue-property": "This property is defined in the catalogue",
   "messages.cce-created": "CCE created successfully",
@@ -2087,5 +2087,6 @@
   "warning.check-before-vaccinating": "Vaccination records from other stores may not be up to date. Ensure you have synced recently, and always confirm against the patient's physical vaccination card first.",
   "warning.field-not-parsed": "{{field}} not parsed",
   "warning.nothing-to-supply": "Nothing left to supply!",
+  "label.received": "Received",
   "tooltip.re-initialise-in-language": "Re-initialise using {{language}} language"
 }

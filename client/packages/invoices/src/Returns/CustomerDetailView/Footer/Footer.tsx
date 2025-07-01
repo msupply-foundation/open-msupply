@@ -29,6 +29,7 @@ const createStatusLog = (invoice: CustomerReturnFragment) => {
     [InvoiceNodeStatus.Picked]: null,
     [InvoiceNodeStatus.Shipped]: null,
     [InvoiceNodeStatus.Delivered]: null,
+    [InvoiceNodeStatus.Received]: null,
     [InvoiceNodeStatus.Verified]: null,
     // Not used for returns
     [InvoiceNodeStatus.Allocated]: null,
@@ -44,7 +45,7 @@ const createStatusLog = (invoice: CustomerReturnFragment) => {
     statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
   }
   if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
+    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
   }
   if (statusIdx >= 5) {
     statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;

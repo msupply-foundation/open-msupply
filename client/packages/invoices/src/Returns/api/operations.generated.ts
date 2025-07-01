@@ -30,6 +30,7 @@ export type CustomerReturnRowFragment = {
   colour?: string | null;
   createdDatetime: string;
   deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   comment?: string | null;
   theirReference?: string | null;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
@@ -88,6 +89,7 @@ export type CustomerReturnFragment = {
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
   deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   verifiedDatetime?: string | null;
   otherPartyId: string;
   otherPartyName: string;
@@ -216,6 +218,7 @@ export type CustomerReturnsQuery = {
       colour?: string | null;
       createdDatetime: string;
       deliveredDatetime?: string | null;
+      receivedDatetime?: string | null;
       comment?: string | null;
       theirReference?: string | null;
       linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
@@ -519,6 +522,7 @@ export type CustomerReturnByNumberQuery = {
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyId: string;
         otherPartyName: string;
@@ -594,6 +598,7 @@ export type CustomerReturnByIdQuery = {
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyId: string;
         otherPartyName: string;
@@ -815,6 +820,7 @@ export const CustomerReturnRowFragmentDoc = gql`
     colour
     createdDatetime
     deliveredDatetime
+    receivedDatetime
     comment
     theirReference
     linkedShipment {
@@ -882,6 +888,7 @@ export const CustomerReturnFragmentDoc = gql`
     pickedDatetime
     shippedDatetime
     deliveredDatetime
+    receivedDatetime
     verifiedDatetime
     otherPartyId
     otherPartyName

@@ -48,6 +48,8 @@ const inboundParsers = {
         return UpdateInboundShipmentStatusInput.Verified;
       case InvoiceNodeStatus.Delivered:
         return UpdateInboundShipmentStatusInput.Delivered;
+      case InvoiceNodeStatus.Received:
+        return UpdateInboundShipmentStatusInput.Received;
       default:
         return undefined;
     }
