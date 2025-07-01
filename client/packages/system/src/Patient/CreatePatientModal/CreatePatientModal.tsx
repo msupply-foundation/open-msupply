@@ -20,10 +20,12 @@ interface CreatePatientModal {
   onClose: () => void;
   onCreate: () => void;
   onSelectPatient: (selectedPatient: PatientColumnData) => void;
+  hasEditTab?: boolean;
 }
 
 export const CreatePatientModal = ({
   open,
+  hasEditTab,
   onClose,
   onCreate,
   onSelectPatient: onSelect,
@@ -42,9 +44,16 @@ export const CreatePatientModal = ({
     patientSteps,
     getActiveStep,
     handleSave,
-  } = useCreatePatientForm(onSelect);
+  } = useCreatePatientForm(onSelect, hasEditTab);
 
   const { Modal } = useDialog({ isOpen: open, onClose });
+
+  const handleNextClick = () => {
+    if (currentTab === Tabs.SearchResults) {
+      hasEditTab ? () => onNext(tabs) : () => onCreate();
+    }
+    onNext(tabs);
+  };
 
   if (isLoading) return <BasicSpinner />;
 
@@ -67,7 +76,7 @@ export const CreatePatientModal = ({
         ) : (
           <DialogButton
             variant="next-and-ok"
-            onClick={() => onNext(tabs)}
+            onClick={handleNextClick}
             disabled={hasError}
           />
         )

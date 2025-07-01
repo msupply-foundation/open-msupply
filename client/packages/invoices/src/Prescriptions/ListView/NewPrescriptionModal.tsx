@@ -14,6 +14,7 @@ import {
   useDialog,
   useNavigate,
   useNotification,
+  UserPermission,
   useTranslation,
 } from '@openmsupply-client/common';
 import {
@@ -29,13 +30,13 @@ import { usePrescription } from '../api';
 interface NewPrescriptionModalProps {
   open: boolean;
   onClose: () => void;
-  openPatientModal: () => void;
+  // openPatientModal: () => void;
 }
 
 export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
   open,
   onClose,
-  openPatientModal,
+  // openPatientModal,
 }) => {
   const t = useTranslation();
   const { data: programData } = useProgramList();
@@ -55,6 +56,8 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
   const [date, setDate] = useState<Date>(new Date());
 
   const programs = programData?.nodes ?? [];
+
+  const hasPermission = UserPermission.PatientMutate;
 
   const handleClose = () => {
     // Reset all state so it doesn't persist for next opening
@@ -91,8 +94,8 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
   return (
     <Modal
       title={t('label.create-prescription')}
-      height={700}
-      width={900}
+      height={800}
+      width={1180}
       okButton={
         <LoadingButton
           color="secondary"
@@ -124,8 +127,8 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
                   setPatient(result);
                 }}
                 width={350}
-                allowCreate
-                setCreatePatientModalOpen={openPatientModal}
+                allowCreate={hasPermission ? true : false}
+                mountSlidePanel
               />
             }
           />

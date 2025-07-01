@@ -20,10 +20,12 @@ interface CreatePatientSliderProps {
   onClose: () => void;
   onCreate: () => void;
   onSelectPatient: (selectedPatient: PatientColumnData) => void;
+  hasEditTab?: boolean;
 }
 
 export const CreatePatientSlider = ({
   open,
+  hasEditTab,
   onClose,
   onCreate,
   onSelectPatient: onSelect,
@@ -42,7 +44,7 @@ export const CreatePatientSlider = ({
     getActiveStep,
     isLoading,
     handleSave,
-  } = useCreatePatientForm(onSelect);
+  } = useCreatePatientForm(onSelect, hasEditTab);
 
   if (isLoading) return <BasicSpinner />;
 
