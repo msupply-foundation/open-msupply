@@ -7,6 +7,7 @@ use crate::{
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
     cold_chain::{ColdChainService, ColdChainServiceTrait},
+    contact::{ContactService, ContactServiceTrait},
     contact_form::{ContactFormService, ContactFormServiceTrait},
     currency::{CurrencyService, CurrencyServiceTrait},
     dashboard::{
