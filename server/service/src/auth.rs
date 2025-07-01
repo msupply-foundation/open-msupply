@@ -59,6 +59,8 @@ pub enum Resource {
     QueryStockLine,
     MutateStockLine,
     CreateRepack,
+    // contact
+    QueryContact,
     // stocktake
     QueryStocktake,
     MutateStocktake,
