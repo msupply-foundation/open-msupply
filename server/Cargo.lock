@@ -4130,6 +4130,7 @@ dependencies = [
  "chrono",
  "graphql_core",
  "graphql_types",
+ "log",
  "repository",
  "serde",
  "serde_json",
