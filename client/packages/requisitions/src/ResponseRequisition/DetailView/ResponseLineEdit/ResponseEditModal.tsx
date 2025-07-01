@@ -54,12 +54,14 @@ export const ResponseLineEditModal = ({
   const [representation, setRepresentation] = useState<RepresentationValue>(
     Representation.UNITS
   );
+  const [isEditingSupply, setIsEditingSupply] = useState(false);
 
   const { draft, update, save, isLoading } =
     useDraftRequisitionLine(currentItem);
   const draftIdRef = useRef<string | undefined>(draft?.id);
   const { hasNext, next } = useNextResponseLine(lines, currentItem);
-  const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
+  const nextDisabled =
+    (!hasNext && mode === ModalMode.Update) || !currentItem || isEditingSupply;
 
   const deletePreviousLine = () => {
     const shouldDelete = shouldDeleteLine(mode, draft?.id, isDisabled);
@@ -167,7 +169,7 @@ export const ResponseLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentItem}
+          disabled={!currentItem || isEditingSupply}
           onClick={async () => {
             await save();
             onClose();
@@ -194,6 +196,7 @@ export const ResponseLineEditModal = ({
             disabled={isDisabled}
             isUpdateMode={mode === ModalMode.Update}
             manageVaccinesInDoses={manageVaccinesInDoses}
+            setIsEditingSupply={setIsEditingSupply}
           />
           {!!draft && (
             <ModalTabs

@@ -59,10 +59,14 @@ export const RequestLineEditModal = ({
     useDraftRequisitionLine(currentItem);
   const draftIdRef = useRef<string | undefined>(draft?.id);
   const { hasNext, next } = useNextRequestLine(lines, currentItem);
+  const [isEditingRequested, setIsEditingRequested] = useState(false);
 
   const useConsumptionData =
     store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
-  const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
+  const nextDisabled =
+    (!hasNext && mode === ModalMode.Update) ||
+    !currentItem ||
+    isEditingRequested;
 
   const deletePreviousLine = () => {
     const shouldDelete = shouldDeleteLine(mode, draft?.id, isDisabled);
@@ -127,7 +131,7 @@ export const RequestLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentItem}
+          disabled={!currentItem || isEditingRequested}
           onClick={async () => {
             await save();
             onClose();
@@ -154,6 +158,7 @@ export const RequestLineEditModal = ({
           isUpdateMode={mode === ModalMode.Update}
           showExtraFields={useConsumptionData && !!requisition?.program}
           manageVaccinesInDoses={manageVaccinesInDoses}
+          setIsEditingRequested={setIsEditingRequested}
         />
       )}
     </Modal>
