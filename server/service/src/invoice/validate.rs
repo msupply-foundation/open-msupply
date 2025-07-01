@@ -38,7 +38,10 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
         InvoiceType::InboundShipment | InvoiceType::CustomerReturn => {
             matches!(
                 status,
-                InvoiceStatus::New | InvoiceStatus::Shipped | InvoiceStatus::Delivered
+                InvoiceStatus::New
+                    | InvoiceStatus::Shipped
+                    | InvoiceStatus::Delivered
+                    | InvoiceStatus::Received
             )
         }
         InvoiceType::Prescription => {
