@@ -8,7 +8,12 @@ import { mainConfig } from './webpack.main.config';
 import { rendererConfig } from './webpack.renderer.config';
 
 const config: ForgeConfig = {
-  packagerConfig: { icon: './src/public/oms' },
+  packagerConfig: {
+    icon: './src/public/oms',
+    asar: {
+      unpack: '**/*.node',
+    },
+  },
   rebuildConfig: {},
   makers: [
     new MakerSquirrel({ name: 'omSupply' }),
@@ -16,6 +21,10 @@ const config: ForgeConfig = {
     new MakerDMG({ name: 'omSupply', icon: 'src/public/oms.png' }, ['darwin']),
   ],
   plugins: [
+    {
+      name: '@electron-forge/plugin-auto-unpack-natives',
+      config: {},
+    },
     new WebpackPlugin({
       mainConfig,
       // needed for api requests during discovery
