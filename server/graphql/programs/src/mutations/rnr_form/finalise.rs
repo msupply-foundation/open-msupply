@@ -59,10 +59,12 @@ pub fn finalise_rnr_form(
 fn map_error(error: ServiceError) -> Result<FinaliseRnRFormResponse> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
+    log::error!("Error finalising RnR form: {}", formatted_error);
 
     let graphql_error = match error {
         ServiceError::RnRFormDoesNotExist
         | ServiceError::RnRFormDoesNotBelongToStore
+        | ServiceError::ContainsNegativeLines
         | ServiceError::RnRFormAlreadyFinalised => BadUserInput(formatted_error),
 
         ServiceError::InternalError(_)
