@@ -38,12 +38,13 @@ const createStatusLog = (invoice: CustomerReturnFragment) => {
   if (statusIdx >= 0) {
     statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
   }
-  if (statusIdx >= 2) {
+  if (statusIdx >= 1) {
     statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
   }
-  if (statusIdx >= 3) {
+  if (statusIdx >= 2) {
     statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
   }
+  // Skipping delivered
   if (statusIdx >= 4) {
     statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
   }
