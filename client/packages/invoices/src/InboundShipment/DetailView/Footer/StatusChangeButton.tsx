@@ -68,6 +68,7 @@ const getStatusOptions = (
 
   if (currentStatus === InvoiceNodeStatus.Delivered) {
     // When the status is Delivered, the user can select from received and verified options
+    options[4].isDisabled = false;
     options[5].isDisabled = false;
   }
 
