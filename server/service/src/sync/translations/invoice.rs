@@ -22,6 +22,7 @@ use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum LegacyOmStatus {
     New,
     Allocated,
