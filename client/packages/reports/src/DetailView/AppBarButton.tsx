@@ -61,8 +61,7 @@ export const AppBarButtonsComponent = ({
           onClick={() => printReport()}
         />
         <ButtonWithIcon
-          // i-frame download not supported - TODO!
-          disabled={isPrinting || EnvUtils.platform === Platform.Android}
+          disabled={isPrinting}
           label={t('button.export')}
           Icon={<DownloadIcon />}
           onClick={() => exportReport()}
