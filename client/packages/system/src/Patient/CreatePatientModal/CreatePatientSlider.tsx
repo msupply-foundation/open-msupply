@@ -60,7 +60,7 @@ export const CreatePatientSlider = ({
   return (
     <SlidePanel
       title=""
-      width={1180}
+      width={1000}
       open={open}
       okButton={
         currentTab === Tabs.Patient ? (
