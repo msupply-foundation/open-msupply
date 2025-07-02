@@ -1466,7 +1466,6 @@
   "messages.cant-delete-generic": "Você não pode excluir um ou mais dos itens selecionados",
   "messages.cant-delete-requisitions": "Só é possível excluir requisições com o status 'Rascunho'",
   "messages.cant-delete-transferred": "Não é possível excluir itens que tenham sido transferido de outra unidade de saúde. Por favor, reduza essas linhas para zero.",
-  "messages.cant-download-android": "O ficheiro não pôde ser descarregado neste dispositivo",
   "messages.cant-return-shipment": "Não é possível devolver as linahs com o estado 'Entregado'",
   "messages.cant-return-shipment-replenishment": "Não é possível retornar as linhas até que o estado seja 'Entregado'",
   "messages.cant-send-order": "Não é possível enviar o Pedido Interno porque todas as linhas tem a quantidade requisitada igual a 0",

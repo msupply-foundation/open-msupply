@@ -5,10 +5,7 @@ import {
   AppBarButtonsPortal,
   Grid,
   useTranslation,
-  FileUtils,
   LoadingButton,
-  EnvUtils,
-  Platform,
   ButtonWithIcon,
   PlusCircleIcon,
   ToggleState,
@@ -16,6 +13,7 @@ import {
   UserPermission,
   useCallbackWithPermission,
   useIsCentralServerApi,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { assetsToCsv } from '../utils';
@@ -33,7 +31,9 @@ export const AppBarButtonsComponent = ({
 }: AppBarButtonsComponentProps) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
-  const { success, error } = useNotification();
+  const { error } = useNotification();
+
+  const exportCSV = useExportCSV();
   const { fetchAsync, isLoading } = useAssets.document.listAll();
   const { data: properties } = useAssetProperties();
 
@@ -62,8 +62,7 @@ export const AppBarButtonsComponent = ({
       properties?.map(p => p.key) ?? [],
       isCentralServer
     );
-    FileUtils.exportCSV(csv, t('filename.cold-chain-equipment'));
-    success(t('success'))();
+    exportCSV(csv, t('filename.cold-chain-equipment'));
   };
 
   return (
@@ -85,7 +84,6 @@ export const AppBarButtonsComponent = ({
           isLoading={isLoading}
           variant="outlined"
           onClick={handleCsvExportClick}
-          disabled={EnvUtils.platform === Platform.Android}
           label={t('button.export')}
         />
       </Grid>
