@@ -7,11 +7,9 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
-  FileUtils,
   LoadingButton,
   ToggleState,
-  EnvUtils,
-  Platform,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { ListParams, usePrescriptionList } from '../api';
 import { prescriptionToCsv } from '../../utils';
@@ -27,7 +25,8 @@ export const AppBarButtonsComponent = ({
   listParams,
 }: AppBarButtonsComponentProps) => {
   const t = useTranslation();
-  const { success, error } = useNotification();
+  const { error } = useNotification();
+  const exportCSV = useExportCSV();
 
   const {
     query: { data, isLoading },
@@ -40,8 +39,7 @@ export const AppBarButtonsComponent = ({
     }
 
     const csv = prescriptionToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, t('filename.prescriptions'));
-    success(t('success'))();
+    exportCSV(csv, t('filename.prescriptions'));
   };
 
   return (
@@ -61,7 +59,6 @@ export const AppBarButtonsComponent = ({
           isLoading={isLoading}
           variant="outlined"
           onClick={csvExport}
-          disabled={EnvUtils.platform === Platform.Android}
           label={t('button.export')}
         />
       </Grid>
