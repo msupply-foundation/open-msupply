@@ -16,14 +16,21 @@ create_tag_for_branch() {
     
     git checkout "$branch_name"
     
+    if [[ "$branch_name" =~ (R|r)(C|c) ]]; then
+        BRANCH_TYPE="RC"
+    else
+        BRANCH_TYPE="develop"
+    fi
+
     PKG_VERSION=$(cat ./package.json | grep 'version":' | sed 's/.*"version":[ \t]*"\([^"]*\)".*/\1/')
+    CLEAN_VERSION=$(echo "$PKG_VERSION" | sed -E 's/-(develop|rc|RC|rC|Rc)$//')
     COMMIT_DATE=$(git log -1 --format=%cd --date=format:%m%d%H%M)
     
-    if [[ -n "$PKG_VERSION" && -n "$COMMIT_DATE" ]]; then
-        if [[ "$PKG_VERSION" == v* ]]; then
-            TAG_NAME="$PKG_VERSION-$COMMIT_DATE"
+    if [[ -n "$CLEAN_VERSION" && -n "$COMMIT_DATE" ]]; then
+        if [[ "$CLEAN_VERSION" == v* ]]; then
+            TAG_NAME="$CLEAN_VERSION-$BRANCH_TYPE-$COMMIT_DATE"
         else
-            TAG_NAME="v$PKG_VERSION-$COMMIT_DATE"
+            TAG_NAME="v$CLEAN_VERSION-$BRANCH_TYPE-$COMMIT_DATE"
         fi
 
         if git ls-remote --tags origin | grep -q "refs/tags/${TAG_NAME}$"; then
