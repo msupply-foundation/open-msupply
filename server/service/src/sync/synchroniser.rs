@@ -1,7 +1,7 @@
 use crate::{
     processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::{sync_buffer::SyncBufferRecordType, sync_status::logger::SyncStep, CentralServerConfig},
+    sync::{sync_buffer::SyncBufferSource, sync_status::logger::SyncStep, CentralServerConfig},
 };
 use log::warn;
 use repository::{
@@ -311,7 +311,7 @@ impl Synchroniser {
                 false => Some(logger),
                 true => None,
             },
-            SyncBufferRecordType::Central(central_sync_server_id),
+            SyncBufferSource::Central(central_sync_server_id),
         )
         .map_err(SyncError::IntegrationError)?;
 
@@ -355,7 +355,7 @@ impl Synchroniser {
 pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
     logger: Option<&mut SyncLogger<'_>>,
-    record_type: SyncBufferRecordType,
+    record_type: SyncBufferSource,
 ) -> Result<
     (
         TranslationAndIntegrationResults,
