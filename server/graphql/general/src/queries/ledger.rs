@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    generic_filters::EqualFilterStringInput,
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -9,7 +9,7 @@ use graphql_core::{
 use graphql_types::types::InvoiceNodeType;
 use repository::{
     ledger::{LedgerFilter, LedgerRow, LedgerSort, LedgerSortField},
-    EqualFilter,
+    DatetimeFilter, EqualFilter,
 };
 
 use service::{
@@ -42,6 +42,7 @@ pub struct LedgerSortInput {
 pub struct LedgerFilterInput {
     pub stock_line_id: Option<EqualFilterStringInput>,
     pub item_id: Option<EqualFilterStringInput>,
+    pub datetime: Option<DatetimeFilterInput>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -113,7 +114,7 @@ pub fn ledger(
     let ledger = get_ledger(
         connection_manager,
         None,
-        filter.map(|filter| filter.to_domain()),
+        filter.map(|filter| filter.to_domain(&store_id)),
         // Currently only one sort option is supported, use the first from the list.
         sort.and_then(|mut sort_list| sort_list.pop())
             .map(|sort| sort.to_domain()),
@@ -138,17 +139,18 @@ impl LedgerConnector {
     }
 }
 impl LedgerFilterInput {
-    pub fn to_domain(self) -> LedgerFilter {
+    pub fn to_domain(self, store_id: &str) -> LedgerFilter {
         let LedgerFilterInput {
             stock_line_id,
             item_id,
+            datetime,
         } = self;
 
         LedgerFilter {
             stock_line_id: stock_line_id.map(EqualFilter::from),
             item_id: item_id.map(EqualFilter::from),
-            store_id: None,
-            datetime: None,
+            store_id: Some(EqualFilter::equal_to(store_id)),
+            datetime: datetime.map(DatetimeFilter::from),
         }
     }
 }
