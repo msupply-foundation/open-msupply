@@ -6,7 +6,7 @@ use repository::{
 use util::inline_edit;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SyncBufferRecordType {
+pub enum SyncBufferSource {
     Central(i32), // Central site ID (Includes all records with no source site ID)
     Remote(i32),  // Remote site ID
 }
@@ -51,7 +51,7 @@ impl<'a> SyncBuffer<'a> {
         &self,
         action: SyncAction,
         ordered_table_names: &[&str],
-        record_type: SyncBufferRecordType,
+        record_type: SyncBufferSource,
     ) -> Result<Vec<SyncBufferRow>, RepositoryError> {
         let ordered_table_names = ordered_table_names.iter().copied();
         // Get ordered table names, for  upsert we sort in referential constraint order
@@ -71,10 +71,10 @@ impl<'a> SyncBuffer<'a> {
                     .action(action.equal_to())
                     .integration_datetime(DatetimeFilter::is_null(true))
                     .source_site_id(match record_type {
-                        SyncBufferRecordType::Central(source_site_id) => {
+                        SyncBufferSource::Central(source_site_id) => {
                             EqualFilter::equal_any_or_null_i32(vec![source_site_id])
                         } // Includes all records with no source site ID (OMS Cetntral) + the site passed in
-                        SyncBufferRecordType::Remote(source_site_id) => {
+                        SyncBufferSource::Remote(source_site_id) => {
                             EqualFilter::equal_to_i32(source_site_id)
                         }
                     }),
@@ -96,7 +96,7 @@ mod test {
     use util::{inline_init, Defaults};
 
     use crate::sync::{
-        sync_buffer::SyncBufferRecordType,
+        sync_buffer::SyncBufferSource,
         translations::{all_translators, pull_integration_order},
     };
 
@@ -201,7 +201,7 @@ mod test {
             .get_ordered_sync_buffer_records(
                 repository::SyncAction::Upsert,
                 &table_order,
-                SyncBufferRecordType::Central(0),
+                SyncBufferSource::Central(0),
             )
             .unwrap();
 
@@ -214,7 +214,7 @@ mod test {
             .get_ordered_sync_buffer_records(
                 repository::SyncAction::Delete,
                 &table_order,
-                SyncBufferRecordType::Central(0),
+                SyncBufferSource::Central(0),
             )
             .unwrap();
 
@@ -232,7 +232,7 @@ mod test {
             .get_ordered_sync_buffer_records(
                 repository::SyncAction::Upsert,
                 &table_order,
-                SyncBufferRecordType::Central(0),
+                SyncBufferSource::Central(0),
             )
             .unwrap();
 
@@ -252,7 +252,7 @@ mod test {
             .get_ordered_sync_buffer_records(
                 repository::SyncAction::Upsert,
                 &table_order,
-                SyncBufferRecordType::Central(0),
+                SyncBufferSource::Central(0),
             )
             .unwrap();
 
@@ -264,7 +264,7 @@ mod test {
             .get_ordered_sync_buffer_records(
                 repository::SyncAction::Upsert,
                 &table_order,
-                SyncBufferRecordType::Central(0),
+                SyncBufferSource::Central(0),
             )
             .unwrap();
 
@@ -276,7 +276,7 @@ mod test {
             .get_ordered_sync_buffer_records(
                 repository::SyncAction::Delete,
                 &table_order,
-                SyncBufferRecordType::Remote(remote_site_id),
+                SyncBufferSource::Remote(remote_site_id),
             )
             .unwrap();
 

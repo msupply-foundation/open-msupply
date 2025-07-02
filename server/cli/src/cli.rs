@@ -25,9 +25,9 @@ use service::{
     settings::Settings,
     standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
-        file_sync_driver::FileSyncDriver, settings::SyncSettings,
-        sync_buffer::SyncBufferRecordType, sync_status::logger::SyncLogger,
-        synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
+        file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_buffer::SyncBufferSource,
+        sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
+        synchroniser_driver::SynchroniserDriver,
     },
     token_bucket::TokenBucket,
 };
@@ -423,7 +423,7 @@ async fn main() -> anyhow::Result<()> {
             integrate_and_translate_sync_buffer(
                 &ctx.connection,
                 Some(&mut logger),
-                SyncBufferRecordType::Central(0),
+                SyncBufferSource::Central(0),
             )?;
 
             info!("Initialising users");
