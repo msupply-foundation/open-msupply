@@ -58,15 +58,13 @@ mod test {
                     "initialisationStatus": "new",
                     "isOmSupplyCentralServer": false,
                     "omSupplyCentralServerUrl": "http://localhost:2000",
-                    "msupplyCentralSiteId": 1
+                    "mSupplyCentralSiteId": 1
                 }"#,
             );
         });
 
         let result = create_api(&url, "", "").get_site_info().await;
-
         mock.assert();
-
         assert!(result.is_ok());
 
         assert_eq!(
