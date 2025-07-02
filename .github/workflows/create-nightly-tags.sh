@@ -4,6 +4,13 @@ set -e
 CREATED_TAGS=()
 AFFECTED_BRANCHES=()
 
+# Create tags for RC and Develop branches
+# - Grab package version from package.json
+# - Get latest commit hash and its date
+# - Prepend 'v' to the package version if it doesn't exist
+# - Format tag as: v<package_version>-<commit_date>
+# Example: v1.2.3-20250702
+
 create_tag_for_branch() {
     local branch_name=$1
     
@@ -13,7 +20,11 @@ create_tag_for_branch() {
     COMMIT_DATE=$(git log -1 --format=%cd --date=format:%m%d%H%M)
     
     if [[ -n "$PKG_VERSION" && -n "$COMMIT_DATE" ]]; then
-        TAG_NAME="$PKG_VERSION-$COMMIT_DATE"
+        if [[ "$PKG_VERSION" == v* ]]; then
+            TAG_NAME="$PKG_VERSION-$COMMIT_DATE"
+        else
+            TAG_NAME="v$PKG_VERSION-$COMMIT_DATE"
+        fi
 
         if git ls-remote --tags origin | grep -q "refs/tags/${TAG_NAME}$"; then
             echo "Tag $TAG_NAME already exists for branch $branch_name (version: $PKG_VERSION, latest commit date: $COMMIT_DATE), skipping..."
@@ -24,7 +35,6 @@ create_tag_for_branch() {
         git tag "$TAG_NAME"
         git push origin "$TAG_NAME"
 
-        # Store created tags and branches
         CREATED_TAGS+=("$TAG_NAME")
         AFFECTED_BRANCHES+=("$branch_name")
     else

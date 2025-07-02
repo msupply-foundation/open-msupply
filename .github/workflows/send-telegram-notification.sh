@@ -27,7 +27,6 @@ def send_telegram_notification(chat_id, message, bot_key):
 
 # -- Determines which channel to use based on tag pattern -- #
 def get_channel_for_tag(tag):
-    """Determine which channel to use based on tag pattern"""
     dev_chat_id = os.getenv("TELEGRAM_DEV_RELEASE_CHAT_ID")
     rc_chat_id = os.getenv("TELEGRAM_RC_RELEASE_CHAT_ID")
     
