@@ -8,6 +8,9 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // This migration effectively only runs from the central server.
+        // The source_site_id IS NOT NULL check ensures that we only sync records that were created on remote sites.
+        // NOTE: This will miss any vaccination records that were created on the central server.
         sql!(
             connection,
             r#"
