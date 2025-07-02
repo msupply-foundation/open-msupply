@@ -169,35 +169,12 @@ impl Synchroniser {
         let site_info = self.remote.sync_api_v5.get_site_info().await?;
         CentralServerConfig::set_central_server_config(&site_info);
 
-        let central_sync_server_id = match KeyValueStoreRepository::new(&ctx.connection)
-            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
-        {
-            Some(id) => {
-                if id != site_info.msupply_central_site_id {
-                    log::error!(
-                        "Central sync server id {} does not match site info {} - this may cause issues!!!",
-                        id,
-                        site_info.msupply_central_site_id
-                    );
-                    KeyValueStoreRepository::new(&ctx.connection).set_i32(
-                        KeyType::SettingsSyncCentralServerSiteId,
-                        Some(site_info.msupply_central_site_id),
-                    )?;
-                }
-                id
-            }
-            None => {
-                log::info!(
-                    "Setting central sync server id to {}",
-                    site_info.msupply_central_site_id
-                );
-                KeyValueStoreRepository::new(&ctx.connection).set_i32(
-                    KeyType::SettingsSyncCentralServerSiteId,
-                    Some(site_info.msupply_central_site_id),
-                )?;
-                site_info.msupply_central_site_id
-            }
-        };
+        let central_sync_server_id = site_info.msupply_central_site_id;
+        // Set central server site id in key value store, so it can be used by other code which hasn't called the get_site_info api
+        KeyValueStoreRepository::new(&ctx.connection).set_i32(
+            KeyType::SettingsSyncCentralServerSiteId,
+            Some(site_info.msupply_central_site_id),
+        )?;
 
         // First check sync status
 
