@@ -4,8 +4,10 @@ import {
   DialogButton,
   ModalMode,
   useDialog,
+  useNotification,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
+import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { RequestFragment, useRequest } from '../../api';
 import { useDraftRequisitionLine, useNextRequestLine } from './hooks';
 import { isRequestDisabled } from '../../../utils';
@@ -15,8 +17,6 @@ import {
   RepresentationValue,
   shouldDeleteLine,
 } from '../../../common';
-
-import { ItemWithStatsFragment } from '@openmsupply-client/system';
 
 interface RequestLineEditModalProps {
   store?: UserStoreNodeFragment;
@@ -37,6 +37,7 @@ export const RequestLineEditModal = ({
   onClose,
   manageVaccinesInDoses,
 }: RequestLineEditModalProps) => {
+  const { error } = useNotification();
   const deleteLine = useRequest.line.deleteLine();
   const isDisabled = isRequestDisabled(requisition);
 
@@ -55,14 +56,18 @@ export const RequestLineEditModal = ({
     Representation.UNITS
   );
 
-  const { draft, save, update, isLoading } =
+  const { draft, save, update, isLoading, isReasonsError } =
     useDraftRequisitionLine(currentItem);
   const draftIdRef = useRef<string | undefined>(draft?.id);
   const { hasNext, next } = useNextRequestLine(lines, currentItem);
+  const [isEditingRequested, setIsEditingRequested] = useState(false);
 
   const useConsumptionData =
     store?.preferences?.useConsumptionAndStockFromCustomersForInternalOrders;
-  const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
+  const nextDisabled =
+    (!hasNext && mode === ModalMode.Update) ||
+    !currentItem ||
+    isEditingRequested;
 
   const deletePreviousLine = () => {
     const shouldDelete = shouldDeleteLine(mode, draft?.id, isDisabled);
@@ -85,18 +90,26 @@ export const RequestLineEditModal = ({
   const { Modal } = useDialog({ onClose: onCancel, isOpen });
 
   const onChangeItem = (item: ItemWithStatsFragment) => {
-    if (item.id !== currentItem?.id && draft?.requestedQuantity === 0) {
+    if (mode === ModalMode.Create) {
       deletePreviousLine();
     }
     setRepresentation(Representation.UNITS);
     setCurrentItem(item);
   };
 
-  const onNext = async () => {
-    await save();
-    if (draft?.requestedQuantity === 0) {
-      deletePreviousLine();
+  const handleSave = async () => {
+    const result = await save();
+
+    if (result?.error) {
+      error(result.error)();
+      return false;
     }
+    return true;
+  };
+
+  const onNext = async () => {
+    const success = await handleSave();
+    if (!success) return false;
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(undefined);
     else onClose();
@@ -127,10 +140,10 @@ export const RequestLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentItem}
+          disabled={!currentItem || isEditingRequested}
           onClick={async () => {
-            await save();
-            onClose();
+            const success = await handleSave();
+            if (success) onClose();
           }}
         />
       }
@@ -154,6 +167,8 @@ export const RequestLineEditModal = ({
           isUpdateMode={mode === ModalMode.Update}
           showExtraFields={useConsumptionData && !!requisition?.program}
           manageVaccinesInDoses={manageVaccinesInDoses}
+          isReasonsError={isReasonsError}
+          setIsEditingRequested={setIsEditingRequested}
         />
       )}
     </Modal>

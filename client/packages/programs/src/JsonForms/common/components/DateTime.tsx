@@ -12,14 +12,13 @@ import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
-import { PickersActionBarAction } from '@mui/x-date-pickers';
+import { DateOrTimeView, PickersActionBarAction } from '@mui/x-date-pickers';
 
 const Options = z
   .object({
-    /**
-     *
-     */
+    // Use when you need a date-time result, but only selecting the date
     dateOnly: z.boolean().optional(),
+    monthOnly: z.boolean().optional(),
     dateAsEndOfDay: z.boolean().optional(),
     disableFuture: z.boolean().optional(),
   })
@@ -58,7 +57,10 @@ const UIComponent = (props: ControlProps) => {
 
     try {
       setError(undefined);
-      if (e) handleChange(path, e.toISOString());
+      if (e) {
+        const date = options?.monthOnly ? DateUtils.startOfMonth(e) : e;
+        handleChange(path, date.toISOString());
+      }
     } catch (err) {
       setError((err as Error).message);
     }
@@ -74,6 +76,13 @@ const UIComponent = (props: ControlProps) => {
     actions: ['clear', 'today', 'accept'] as PickersActionBarAction[],
     dateAsEndOfDay: !!props.uischema.options?.['dateAsEndOfDay'],
     disableFuture: !!props.uischema.options?.['disableFuture'],
+    ...(options?.monthOnly
+      ? {
+          views: ['year', 'month'] as DateOrTimeView[],
+          format: 'MMM yyyy',
+          actions: ['clear', 'accept'] as PickersActionBarAction[],
+        }
+      : {}),
   };
 
   return (

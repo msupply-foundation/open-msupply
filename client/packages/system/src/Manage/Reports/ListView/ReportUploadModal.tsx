@@ -1,19 +1,26 @@
-import { DialogButton, UploadFile } from '@common/components';
-import { useDialog, useNotification } from '@common/hooks';
-import { useTranslation } from '@common/intl';
-import { Box, DetailContainer } from 'packages/common/src';
 import React, { useState } from 'react';
 import { FileList } from '../../../../../coldchain/src/Equipment/Components';
 import { Environment } from 'packages/config/src';
-
+import {
+  useTranslation,
+  Box,
+  DialogButton,
+  Typography,
+  useDialog,
+  useNotification,
+  DetailContainer,
+  UploadFile,
+} from '@openmsupply-client/common';
 interface ReportUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
+  install: (fileId: string) => Promise<string[]>;
 }
 
 export const ReportUploadModal = ({
   isOpen,
   onClose,
+  install,
 }: ReportUploadModalProps) => {
   const t = useTranslation();
   const [draft, setDraft] = useState<{ id?: string; files?: File[] }>({});
@@ -27,7 +34,7 @@ export const ReportUploadModal = ({
 
   const onUpload = (files: File[]) => {
     if (files.filter(f => !f.name.endsWith('json')).length > 0) {
-      error('error.report-invalid-file')();
+      error(t('error.report-invalid-file'))();
     } else {
       setDraft({ files });
     }
@@ -39,8 +46,8 @@ export const ReportUploadModal = ({
 
     // create new json file id
     const url = `${Environment.REPORT_UPLOAD_URL}`;
-    try {
-      if (draft.files) {
+    if (draft.files) {
+      try {
         for (const file of draft.files) {
           const formData = new FormData();
           formData.append('files', file);
@@ -52,17 +59,15 @@ export const ReportUploadModal = ({
             credentials: 'include',
             body: formData,
           });
-          if (!fileId) {
-            throw error;
-          }
-          // TODO do something with fileId
+          const id = await fileId.json();
+          await install(id['file-id']);
         }
+        success(t('messsages.reports-uploaded-successfully'))();
+        onClose();
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        error(`${t('error.unable-to-upload-reports')}: ${message}`)();
       }
-      success(t('messsages.reports-installed-successfully'))();
-      onClose();
-    } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
-      error(`${t('error.unable-to-install-reports')}: ${message}`)();
     }
   };
 
@@ -73,6 +78,9 @@ export const ReportUploadModal = ({
       okButton={<DialogButton variant="ok" onClick={onOk} />}
     >
       <DetailContainer>
+        <Box flex={1} display="flex" alignItems="flex-end">
+          <Typography>{t('messages.report-upload-helper')}</Typography>
+        </Box>
         <Box
           sx={{
             display: 'flex',

@@ -16,6 +16,7 @@ pub struct InsertClinicianInput {
     pub last_name: String,
     pub first_name: Option<String>,
     pub gender: Option<GenderType>,
+    pub mobile: Option<String>,
 }
 
 pub fn insert_clinician(
@@ -53,6 +54,7 @@ impl InsertClinicianInput {
             last_name,
             first_name,
             gender,
+            mobile,
         } = self;
 
         InsertClinician {
@@ -62,6 +64,7 @@ impl InsertClinicianInput {
             last_name,
             first_name,
             gender: gender.map(|g| g.to_domain()),
+            mobile,
         }
     }
 }

@@ -715,7 +715,8 @@ export type UpdateResponseLineMutation = {
               description: string;
               key: Types.ForeignKey;
             }
-          | { __typename: 'RecordNotFound'; description: string };
+          | { __typename: 'RecordNotFound'; description: string }
+          | { __typename: 'RequisitionReasonNotProvided'; description: string };
       };
 };
 
@@ -1425,6 +1426,10 @@ export const UpdateResponseLineDocument = gql`
             key
           }
           ... on RecordNotFound {
+            __typename
+            description
+          }
+          ... on RequisitionReasonNotProvided {
             __typename
             description
           }

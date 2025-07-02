@@ -31,7 +31,7 @@ pub enum ContextType {
     InboundReturn,
     Report,
     Prescription,
-    InternalOrder
+    InternalOrder,
 }
 
 table! {
@@ -47,6 +47,7 @@ table! {
       version -> Text,
       code -> Text,
       is_active -> Bool,
+      excel_template_buffer -> Nullable<Blob>,
   }
 }
 
@@ -71,6 +72,7 @@ pub struct ReportRow {
     pub version: String,
     pub code: String,
     pub is_active: bool,
+    pub excel_template_buffer: Option<Vec<u8>>,
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Selectable)]
@@ -177,7 +179,9 @@ mod test {
     use strum::IntoEnumIterator;
     use util::assert_matches;
 
-    use crate::{mock::MockDataInserts, test_db::setup_all};
+    use crate::{
+        mock::MockDataInserts, test_db::setup_all, FormSchemaJson, FormSchemaRowRepository,
+    };
 
     #[actix_rt::test]
     async fn report_context_enum_postgres() {
@@ -204,5 +208,40 @@ mod test {
                 }))
             );
         }
+    }
+
+    #[actix_rt::test]
+    async fn report_can_upsert_all_fields() {
+        let (_, connection, _, _) = setup_all("report_can_upsert", MockDataInserts::none()).await;
+
+        // For FK constraint
+        FormSchemaRowRepository::new(&connection)
+            .upsert_one(&FormSchemaJson {
+                id: "test_schema".to_string(),
+                r#type: "test_type".to_string(),
+                json_schema: serde_json::json!({}),
+                ui_schema: serde_json::json!({}),
+            })
+            .unwrap();
+
+        let repo = ReportRowRepository::new(&connection);
+        let row = ReportRow {
+            id: "test_report".to_string(),
+            name: "Test Report".to_string(),
+            template: "test_template".to_string(),
+            context: ContextType::Asset,
+            comment: Some("Test comment".to_string()),
+            sub_context: Some("Test sub context".to_string()),
+            argument_schema_id: Some("test_schema".to_string()),
+            is_custom: true,
+            version: "1.0.0".to_string(),
+            code: "TEST_CODE".to_string(),
+            is_active: true,
+            excel_template_buffer: Some(vec![1, 2, 3, 4, 5]),
+        };
+        let result = repo.upsert_one(&row);
+        assert_matches!(result, Ok(_));
+
+        assert_eq!(repo.find_one_by_id(&row.id), Ok(Some(row)));
     }
 }

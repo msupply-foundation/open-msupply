@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   AppBarContentPortal,
   InputWithLabelRow,
@@ -8,10 +8,14 @@ import {
   Formatter,
   DateUtils,
   useConfirmationModal,
+  useCallbackWithPermission,
+  UserPermission,
 } from '@openmsupply-client/common';
 import {
   Clinician,
   ClinicianSearchInput,
+  CreatePatientModal,
+  EditPatientModal,
   PatientSearchInput,
 } from '@openmsupply-client/system';
 import { ProgramSearchInput } from '@openmsupply-client/system';
@@ -20,7 +24,7 @@ import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
 import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 import { usePrescription } from '../api';
 
-export const Toolbar: FC = () => {
+export const Toolbar = () => {
   const t = useTranslation();
 
   const {
@@ -44,8 +48,14 @@ export const Toolbar: FC = () => {
       DateUtils.getDateOrNull(createdDatetime) ??
       null
   );
+
+  const [createPatientModalOpen, setCreatePatientModalOpen] = useState(false);
+  const [editPatientModalOpen, setEditPatientModalOpen] = useState(false);
   const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
     clinician ?? null
+  );
+  const [currentPatientId, setCurrentPatientId] = useState<string | undefined>(
+    patient?.id
   );
 
   const { data: programData } = useProgramList();
@@ -55,6 +65,10 @@ export const Toolbar: FC = () => {
   const {
     delete: { deleteLines },
   } = usePrescriptionLines();
+
+  useEffect(() => {
+    setCurrentPatientId(patient?.id);
+  }, [patient?.id]);
 
   const deleteAll = async () => {
     const allRows = (items ?? []).map(({ lines }) => lines.flat()).flat() ?? [];
@@ -127,6 +141,19 @@ export const Toolbar: FC = () => {
     });
   };
 
+  const openPatientModal = useCallbackWithPermission(
+    UserPermission.PatientMutate,
+    () => {
+      setCreatePatientModalOpen(true);
+    }
+  );
+
+  const selectPatient = async (selectPatientId: string) => {
+    await update({ id, patientId: selectPatientId });
+    setCurrentPatientId(selectPatientId);
+    setCreatePatientModalOpen(false);
+  };
+
   return (
     <AppBarContentPortal
       sx={{ display: 'flex', flex: 1, marginBottom: 1, gap: 4 }}
@@ -143,6 +170,9 @@ export const Toolbar: FC = () => {
                 onChange={async ({ id: patientId }) => {
                   await update({ id, patientId });
                 }}
+                setEditPatientModalOpen={setEditPatientModalOpen}
+                allowCreate
+                setCreatePatientModalOpen={openPatientModal}
               />
             }
           />
@@ -197,6 +227,29 @@ export const Toolbar: FC = () => {
           }}
         />
       </Grid>
+      {createPatientModalOpen && (
+        <CreatePatientModal
+          onClose={() => setCreatePatientModalOpen(false)}
+          onCreatePatient={newPatient => {
+            setEditPatientModalOpen(true);
+            setCurrentPatientId(newPatient.id);
+          }}
+          onSelectPatient={selectedPatient => {
+            selectPatient(selectedPatient);
+          }}
+        />
+      )}
+
+      {currentPatientId && editPatientModalOpen && (
+        <EditPatientModal
+          patientId={currentPatientId}
+          onClose={() => {
+            setEditPatientModalOpen(false);
+            setCurrentPatientId(patient?.id);
+          }}
+          isOpen={editPatientModalOpen}
+        />
+      )}
     </AppBarContentPortal>
   );
 };

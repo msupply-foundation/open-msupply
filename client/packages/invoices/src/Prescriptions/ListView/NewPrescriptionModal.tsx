@@ -4,7 +4,6 @@ import {
   Box,
   DateTimePickerInput,
   DateUtils,
-  DefaultAutocompleteItemOption,
   DialogButton,
   FnUtils,
   Formatter,
@@ -12,7 +11,6 @@ import {
   LoadingButton,
   SaveIcon,
   Stack,
-  Typography,
   useDialog,
   useNavigate,
   useNotification,
@@ -126,41 +124,8 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
                   setPatient(result);
                 }}
                 width={350}
-                NoOptionsRenderer={props => (
-                  <DefaultAutocompleteItemOption
-                    {...props}
-                    key="no-options-renderer"
-                  >
-                    <Box
-                      display="flex"
-                      justifyContent="space-between"
-                      alignItems="flex-end"
-                      gap={1}
-                      height={25}
-                      width="100%"
-                    >
-                      <Typography
-                        overflow="hidden"
-                        fontWeight="bold"
-                        textOverflow="ellipsis"
-                        sx={{
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {t('messages.no-matching-patients')}
-                      </Typography>
-                      <Typography
-                        onClick={() => {
-                          openPatientModal();
-                          handleClose();
-                        }}
-                        color="secondary"
-                      >
-                        {t('button.create-new-patient')}
-                      </Typography>
-                    </Box>
-                  </DefaultAutocompleteItemOption>
-                )}
+                allowCreate
+                setCreatePatientModalOpen={openPatientModal}
               />
             }
           />

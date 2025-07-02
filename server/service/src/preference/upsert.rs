@@ -1,8 +1,6 @@
-use repository::TransactionError;
-
-use crate::service_provider::ServiceContext;
-
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
+use crate::service_provider::ServiceContext;
+use repository::{GenderType, TransactionError};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct StorePrefUpdate<T> {
@@ -15,6 +13,7 @@ pub struct UpsertPreferences {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub show_contact_tracing: Option<bool>,
+    pub gender_options: Option<Vec<GenderType>>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,
@@ -28,6 +27,7 @@ pub fn upsert_preferences(
         // Global preferences
         allow_tracking_of_stock_by_donor: allow_tracking_of_stock_by_donor_input,
         show_contact_tracing: show_contact_tracing_input,
+        gender_options: gender_options_input,
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
         manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
@@ -39,6 +39,7 @@ pub fn upsert_preferences(
         // Global preferences
         allow_tracking_of_stock_by_donor,
         show_contact_tracing,
+        gender_options,
         // Store preferences
         manage_vaccines_in_doses,
         manage_vvm_status_for_stock,
@@ -55,6 +56,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = show_contact_tracing_input {
                 show_contact_tracing.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = gender_options_input {
+                gender_options.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...
