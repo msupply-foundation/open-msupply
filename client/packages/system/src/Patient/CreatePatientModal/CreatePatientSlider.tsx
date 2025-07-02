@@ -43,6 +43,8 @@ export const CreatePatientSlider = ({
     getActiveStep,
     isLoading,
     handleSave,
+    isDirty,
+    validationError,
   } = useCreatePatientForm(onSelect);
 
   useEffect(() => {
@@ -71,12 +73,18 @@ export const CreatePatientSlider = ({
               onCreate();
             }}
             isLoading={isSaving}
+            disabled={!isDirty || isSaving || !!validationError}
           />
         ) : (
           <DialogButton
             variant="next-and-ok"
             onClick={() => onNext(tabs)}
             disabled={hasError}
+            customLabel={
+              currentTab === Tabs.SearchResults
+                ? t('button.create-new-patient')
+                : t('messages.search')
+            }
           />
         )
       }

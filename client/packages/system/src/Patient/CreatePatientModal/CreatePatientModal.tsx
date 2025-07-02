@@ -45,6 +45,8 @@ export const CreatePatientModal = ({
     patientSteps,
     getActiveStep,
     handleSave,
+    isDirty,
+    validationError,
   } = useCreatePatientForm(onSelect);
 
   useEffect(() => {
@@ -60,7 +62,7 @@ export const CreatePatientModal = ({
   return (
     <Modal
       title=""
-      width={950}
+      width={1180}
       okButton={
         currentTab === Tabs.Patient ? (
           <LoadingButton
@@ -72,12 +74,18 @@ export const CreatePatientModal = ({
               onCreate();
             }}
             isLoading={isSaving}
+            disabled={!isDirty || isSaving || !!validationError}
           />
         ) : (
           <DialogButton
             variant="next-and-ok"
             onClick={() => onNext(tabs)}
             disabled={hasError}
+            customLabel={
+              currentTab === Tabs.SearchResults
+                ? t('button.create-new-patient')
+                : t('messages.search')
+            }
           />
         )
       }

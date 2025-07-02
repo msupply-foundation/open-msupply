@@ -10,7 +10,6 @@ import {
   HomeIcon,
   InfoTooltipIcon,
   LoadingButton,
-  Typography,
   noOtherVariants,
   useColumns,
   useFormatDateTime,
@@ -223,13 +222,9 @@ export const PatientResultsTab: FC<
           marginBottom={0.5}
         >
           {count > 0 && (
-            <Typography
-              component="div"
-              style={{ fontWeight: 700 }}
-              alignSelf="center"
-            >
+            <Alert severity="success">
               {t('messages.patients-found', { count })}
-            </Typography>
+            </Alert>
           )}
           <Box display="flex" flexDirection="row" marginLeft="auto">
             {isCentralConnectionFailure ? (
