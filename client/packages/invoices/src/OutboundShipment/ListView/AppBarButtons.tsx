@@ -42,7 +42,7 @@ export const AppBarButtonsComponent: FC<{
     }
 
     const csv = outboundsToCsv(data.nodes, t);
-    exportCSV(csv, t('filename.cce-failed-uploads'));
+    exportCSV(csv, t('filename.outbounds'));
   };
 
   return (
