@@ -64,7 +64,7 @@ impl<'a> SyncBuffer<'a> {
                     .table_name(EqualFilter::equal_to(legacy_table_name))
                     .action(action.equal_to())
                     .integration_datetime(DatetimeFilter::is_null(true))
-                    .source_site_id(match source_site_ids {
+                    .source_site_id(match source_site_ids.clone() {
                         Some(source_site_ids) => {
                             EqualFilter::equal_any_or_null_i32(source_site_ids)
                         }
