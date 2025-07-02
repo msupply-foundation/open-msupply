@@ -105,12 +105,12 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         quantity_movement as quantity,
         item_id,
         store_id,
-        delivered_datetime as datetime
+        received_datetime as datetime
     FROM invoice_line_stock_movement 
     JOIN invoice
         ON invoice_line_stock_movement.invoice_id = invoice.id
     WHERE invoice.type = 'INBOUND_SHIPMENT' 
-        AND delivered_datetime IS NOT NULL;
+        AND received_datetime IS NOT NULL;
                     
   CREATE VIEW inventory_adjustment_stock_movement AS
     SELECT
@@ -138,7 +138,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         ) THEN picked_datetime
                     WHEN invoice.type IN (
             'INBOUND_SHIPMENT', 'CUSTOMER_RETURN'
-        ) THEN delivered_datetime
+        ) THEN received_datetime
                     WHEN invoice.type IN (
             'INVENTORY_ADDITION', 'INVENTORY_REDUCTION', 'REPACK'
         ) THEN verified_datetime

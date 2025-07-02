@@ -52,7 +52,7 @@ export const SlidePanel = ({
         zIndex: 1399,
       }}
     >
-      <Slide direction="left" in={open} mountOnEnter unmountOnExit>
+      <Slide direction="right" in={open} mountOnEnter unmountOnExit>
         <Paper
           elevation={4}
           sx={{

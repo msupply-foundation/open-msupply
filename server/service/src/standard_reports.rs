@@ -88,6 +88,7 @@ impl StandardReports {
                     version: report.version.clone(),
                     code: report.code.clone(),
                     is_active: set_active,
+                    excel_template_buffer: report.excel_template_buffer,
                 })?;
                 upserted_reports.push(ReportMetaDataRow {
                     id: report.id,
@@ -122,4 +123,5 @@ pub struct ReportData {
     pub version: String,
     pub code: String,
     pub form_schema: Option<FormSchemaJson>,
+    pub excel_template_buffer: Option<Vec<u8>>,
 }
