@@ -47,8 +47,8 @@ use backup::*;
 #[cfg(feature = "integration_test")]
 use cli::LoadTest;
 use cli::{
-    generate_and_install_plugin_bundle, generate_plugin_bundle, generate_report_data,
-    generate_reports_recursive, generate_typescript_types, install_plugin_bundle,
+    generate_and_install_plugin_bundle, generate_plugin_bundle, generate_plugin_typescript_types,
+    generate_report_data, generate_reports_recursive, install_plugin_bundle,
     GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
     RefreshDatesRepository, ReportError,
 };
@@ -69,7 +69,10 @@ struct Args {
 #[derive(clap::Subcommand)]
 enum Action {
     /// Export graphql schema
-    ExportGraphqlSchema,
+    ExportGraphqlSchema {
+        #[clap(short, long)]
+        path: Option<PathBuf>,
+    },
     /// Initialise empty database (existing database will be dropped, and new one created and migrated)
     InitialiseDatabase,
     /// Initialise from running mSupply server (uses configuration/.*yaml for sync credentials), drops existing database, creates new database with latest schema and initialises (syncs) initial data from central server (including users)
@@ -142,6 +145,10 @@ enum Action {
         #[clap(long)]
         arguments_ui_path: Option<PathBuf>,
 
+        /// Path to the excel template
+        #[clap(long)]
+        excel_template_path: Option<PathBuf>,
+
         /// Report name
         #[clap(short, long)]
         name: String,
@@ -190,6 +197,9 @@ enum Action {
         /// Path to dir containing test-config.json file
         #[clap(short, long)]
         config: Option<PathBuf>,
+        /// Output format
+        #[clap(long)]
+        format: Option<Format>,
     },
     /// Enable or disable a report in the database.
     ToggleReport {
@@ -209,11 +219,20 @@ enum Action {
         #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="enable")]
         disable: bool,
     },
-    /// Generate TypeScript Types for backend plugins and format with Prettier
-    GenerateTypeScriptTypes,
-    /// Run load test
     #[cfg(feature = "integration_test")]
     LoadTest(LoadTest),
+    GeneratePluginTypescriptTypes {
+        /// Optional path to save typescript types, if not provided will save to `../client/packages/plugins/backendCommon/generated`
+        #[clap(
+            short,
+            long,
+            default_value = "../client/packages/plugins/backendCommon/generated"
+        )]
+        path: PathBuf,
+        /// Run prettier on the generated typescript files
+        #[clap(long, short, default_value = "false")]
+        skip_prettify: bool,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -297,12 +316,15 @@ async fn main() -> anyhow::Result<()> {
     logging_init(None, log_level);
 
     match args.action {
-        Action::ExportGraphqlSchema => {
+        Action::ExportGraphqlSchema { path } => {
             info!("Exporting graphql schema");
             let schema =
                 OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
                     .finish();
-            fs::write("schema.graphql", schema.sdl())?;
+            fs::write(
+                path.unwrap_or(PathBuf::from("schema.graphql")),
+                schema.sdl(),
+            )?;
             info!("Schema exported in schema.graphql");
         }
         Action::InitialiseDatabase => {
@@ -540,6 +562,7 @@ async fn main() -> anyhow::Result<()> {
             name,
             context,
             sub_context,
+            excel_template_path,
         } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
@@ -571,6 +594,10 @@ async fn main() -> anyhow::Result<()> {
                 FormSchemaRowRepository::new(&con).upsert_one(form_schema_json)?;
             }
 
+            let excel_template_buffer = excel_template_path
+                .map(|path| fs::read(&path))
+                .transpose()?;
+
             ReportRowRepository::new(&con).upsert_one(&ReportRow {
                 id: id.clone(),
                 name,
@@ -583,6 +610,7 @@ async fn main() -> anyhow::Result<()> {
                 version: "1.0".to_string(),
                 code: id,
                 is_active: true,
+                excel_template_buffer,
             })?;
 
             info!("Report upserted");
@@ -608,7 +636,11 @@ async fn main() -> anyhow::Result<()> {
         Action::GenerateAndInstallPluginBundle(arguments) => {
             generate_and_install_plugin_bundle(arguments).await?;
         }
-        Action::ShowReport { path, config } => {
+        Action::ShowReport {
+            path,
+            config,
+            format,
+        } => {
             let report_data: ReportData = generate_report_data(&path)?;
 
             let report_json =
@@ -635,7 +667,17 @@ async fn main() -> anyhow::Result<()> {
                 password: test_config.password,
             };
 
-            let output_name = format!("{}.html", test_config.output_filename.clone());
+            let output_name = match &format {
+                Some(Format::Html) | None => {
+                    format!("{}.html", test_config.output_filename.clone())
+                }
+                Some(Format::Excel) => format!("{}.xlsx", test_config.output_filename.clone()),
+                Some(_) => {
+                    return Err(anyhow::Error::msg(
+                        "Format not supported, use html or excel",
+                    ));
+                }
+            };
 
             let report_generate_data = ReportGenerateData {
                 report: report_json,
@@ -643,9 +685,10 @@ async fn main() -> anyhow::Result<()> {
                 store_id: Some(test_config.store_id),
                 store_name: None,
                 output_filename: Some(output_name.clone()),
-                format: Format::Html,
+                format: format.unwrap_or(Format::Html),
                 data_id: Some(test_config.data_id),
                 arguments: Some(test_config.arguments),
+                excel_template_buffer: report_data.excel_template_buffer,
             };
 
             // spawn blocking used to prevent the following error: "Cannot drop a runtime in a context where blocking is not allowed"
@@ -704,8 +747,11 @@ async fn main() -> anyhow::Result<()> {
                 );
             }
         }
-        Action::GenerateTypeScriptTypes => {
-            generate_typescript_types()?;
+        Action::GeneratePluginTypescriptTypes {
+            path,
+            skip_prettify,
+        } => {
+            generate_plugin_typescript_types(path, skip_prettify)?;
         }
         #[cfg(feature = "integration_test")]
         Action::LoadTest(LoadTest {

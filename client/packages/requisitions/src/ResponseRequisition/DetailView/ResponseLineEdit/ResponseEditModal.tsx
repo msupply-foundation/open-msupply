@@ -5,6 +5,7 @@ import {
   ModalMode,
   ModalTabs,
   useDialog,
+  useNotification,
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
@@ -38,6 +39,7 @@ export const ResponseLineEditModal = ({
   onClose,
   manageVaccinesInDoses,
 }: ResponseLineEditModalProps) => {
+  const { error } = useNotification();
   const deleteLine = useResponse.line.deleteLine();
   const isDisabled = useResponse.utils.isDisabled();
 
@@ -54,12 +56,14 @@ export const ResponseLineEditModal = ({
   const [representation, setRepresentation] = useState<RepresentationValue>(
     Representation.UNITS
   );
+  const [isEditingSupply, setIsEditingSupply] = useState(false);
 
-  const { draft, update, save, isLoading } =
+  const { draft, update, save, isLoading, isReasonsError } =
     useDraftRequisitionLine(currentItem);
   const draftIdRef = useRef<string | undefined>(draft?.id);
   const { hasNext, next } = useNextResponseLine(lines, currentItem);
-  const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
+  const nextDisabled =
+    (!hasNext && mode === ModalMode.Update) || !currentItem || isEditingSupply;
 
   const deletePreviousLine = () => {
     const shouldDelete = shouldDeleteLine(mode, draft?.id, isDisabled);
@@ -82,18 +86,26 @@ export const ResponseLineEditModal = ({
   const { Modal } = useDialog({ onClose: onCancel, isOpen });
 
   const onChangeItem = (item: ItemWithStatsFragment) => {
-    if (item.id !== currentItem?.id && draft?.supplyQuantity === 0) {
+    if (mode === ModalMode.Create) {
       deletePreviousLine();
     }
     setRepresentation(Representation.UNITS);
     setCurrentItem(item);
   };
 
-  const onSave = async () => {
-    await save();
-    if (draft?.supplyQuantity === 0) {
-      deletePreviousLine();
+  const handleSave = async () => {
+    const result = await save();
+
+    if (result?.error) {
+      error(result.error)();
+      return false;
     }
+    return true;
+  };
+
+  const onSave = async () => {
+    const success = await handleSave();
+    if (!success) return false;
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(undefined);
     else onClose();
@@ -167,10 +179,10 @@ export const ResponseLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentItem}
+          disabled={!currentItem || isEditingSupply}
           onClick={async () => {
-            await save();
-            onClose();
+            const success = await handleSave();
+            if (success) onClose();
           }}
         />
       }
@@ -194,6 +206,8 @@ export const ResponseLineEditModal = ({
             disabled={isDisabled}
             isUpdateMode={mode === ModalMode.Update}
             manageVaccinesInDoses={manageVaccinesInDoses}
+            isReasonsError={isReasonsError}
+            setIsEditingSupply={setIsEditingSupply}
           />
           {!!draft && (
             <ModalTabs

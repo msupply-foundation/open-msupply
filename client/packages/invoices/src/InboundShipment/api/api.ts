@@ -48,6 +48,8 @@ const inboundParsers = {
         return UpdateInboundShipmentStatusInput.Verified;
       case InvoiceNodeStatus.Delivered:
         return UpdateInboundShipmentStatusInput.Delivered;
+      case InvoiceNodeStatus.Received:
+        return UpdateInboundShipmentStatusInput.Received;
       default:
         return undefined;
     }
@@ -122,6 +124,7 @@ const inboundParsers = {
       donorId: line.donor?.id,
       campaignId: line.campaign?.id,
       note: line.note,
+      shippedNumberOfPacks: line.shippedNumberOfPacks,
     };
   },
   toInsertLineFromInternalOrder: (line: {
@@ -154,6 +157,7 @@ const inboundParsers = {
       campaignId: line.campaign?.id ?? null,
     }),
     note: setNullableInput('note', { note: line.note ?? null }),
+    shippedNumberOfPacks: line.shippedNumberOfPacks ?? null,
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
