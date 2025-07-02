@@ -57,9 +57,6 @@ const useExportFile = () => {
   };
 };
 
-// toDO does it?
-// TODO this causes electron app to navigate to this url (at the same time as opening dialog box)
-// however for temp files, this causes Static file not found error as the temp file is delete after first request
 export const useDownloadFile = () => {
   const exportFile = useExportFile();
 
