@@ -13,7 +13,6 @@ static PROGRESS_STEP_LEN: usize = 100;
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
     sync_buffer: &'a SyncBuffer<'a>,
-    source_site_id: Option<i32>,
 }
 
 #[derive(Default, Debug)]
@@ -29,12 +28,10 @@ impl<'a> TranslationAndIntegration<'a> {
     pub(crate) fn new(
         connection: &'a StorageConnection,
         sync_buffer: &'a SyncBuffer,
-        source_site_id: Option<i32>,
     ) -> TranslationAndIntegration<'a> {
         TranslationAndIntegration {
             connection,
             sync_buffer,
-            source_site_id,
         }
     }
 
