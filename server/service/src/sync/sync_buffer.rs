@@ -45,7 +45,7 @@ impl<'a> SyncBuffer<'a> {
         &self,
         action: SyncAction,
         ordered_table_names: &[&str],
-        source_site_id: Option<i32>,
+        source_site_ids: Option<Vec<i32>>,
     ) -> Result<Vec<SyncBufferRow>, RepositoryError> {
         let ordered_table_names = ordered_table_names.iter().copied();
         // Get ordered table names, for  upsert we sort in referential constraint order
@@ -64,8 +64,10 @@ impl<'a> SyncBuffer<'a> {
                     .table_name(EqualFilter::equal_to(legacy_table_name))
                     .action(action.equal_to())
                     .integration_datetime(DatetimeFilter::is_null(true))
-                    .source_site_id(match source_site_id {
-                        Some(site_id) => EqualFilter::equal_any_or_null_i32(vec![site_id]),
+                    .source_site_id(match source_site_ids {
+                        Some(source_site_ids) => {
+                            EqualFilter::equal_any_or_null_i32(source_site_ids)
+                        }
                         None => EqualFilter::i32_is_null(true),
                     }),
             )?;
@@ -243,7 +245,7 @@ mod test {
             .get_ordered_sync_buffer_records(
                 repository::SyncAction::Delete,
                 &table_order,
-                Some(remote_site_id),
+                Some(vec![remote_site_id]),
             )
             .unwrap();
 
