@@ -7,16 +7,14 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
-  FileUtils,
   LoadingButton,
   ToggleState,
-  EnvUtils,
-  Platform,
   useCallbackWithPermission,
   UserPermission,
   useNavigate,
   RouteBuilder,
   FnUtils,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { CreateNewPatient } from '@openmsupply-client/programs';
@@ -35,9 +33,10 @@ export const AppBarButtonsComponent = ({
   listParams,
 }: AppBarButtonsComponentProps) => {
   const t = useTranslation();
-  const { success, error } = useNotification();
+  const { error } = useNotification();
   const [patientModalOpen, setPatientModalOpen] = useState(false);
   const navigate = useNavigate();
+  const exportCSV = useExportCSV();
 
   const {
     query: { data, isLoading },
@@ -59,8 +58,7 @@ export const AppBarButtonsComponent = ({
     }
 
     const csv = prescriptionToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, t('filename.prescriptions'));
-    success(t('success'))();
+    exportCSV(csv, t('filename.prescriptions'));
   };
 
   const onCreatePatient = (newPatient: CreateNewPatient) => {
@@ -104,7 +102,6 @@ export const AppBarButtonsComponent = ({
           isLoading={isLoading}
           variant="outlined"
           onClick={csvExport}
-          disabled={EnvUtils.platform === Platform.Android}
           label={t('button.export')}
         />
         {patientModalOpen && (
