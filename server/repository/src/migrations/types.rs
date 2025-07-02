@@ -18,3 +18,7 @@ pub(crate) const DEFAULT_TIMESTAMP: &str = "0";
 pub(crate) const JSON: &str = "TEXT"; // Should be JSONB Ideally, but difficult to use with diesel
 #[cfg(not(feature = "postgres"))]
 pub(crate) const JSON: &str = "TEXT";
+#[cfg(feature = "postgres")]
+pub(crate) const BINARY: &str = "BYTEA";
+#[cfg(not(feature = "postgres"))]
+pub(crate) const BINARY: &str = "BLOB";
