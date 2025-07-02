@@ -30,13 +30,11 @@ import { usePrescription } from '../api';
 interface NewPrescriptionModalProps {
   open: boolean;
   onClose: () => void;
-  // openPatientModal: () => void;
 }
 
 export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
   open,
   onClose,
-  // openPatientModal,
 }) => {
   const t = useTranslation();
   const { data: programData } = useProgramList();
