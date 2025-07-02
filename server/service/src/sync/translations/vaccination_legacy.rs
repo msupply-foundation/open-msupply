@@ -4,8 +4,8 @@ use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
-    vaccination_row::VaccinationRowRepository, ChangelogRow, ChangelogTableName, StorageConnection,
-    VaccinationRow,
+    vaccination_row::VaccinationRowRepository, ChangelogRow, ChangelogTableName,
+    ItemLinkRowRepository, NameLinkRowRepository, StorageConnection, VaccinationRow,
 };
 
 /*
@@ -28,7 +28,7 @@ pub struct LegacyVaccinationRow {
     pub given: bool,
     pub not_given_reason: Option<String>,
     pub comment: Option<String>,
-    pub patient_ID: String,
+    pub name_ID: String,
     pub facility_ID: Option<String>,
     pub item_ID: Option<String>,
 }
@@ -102,6 +102,35 @@ impl SyncTranslation for VaccinationLegacyTranslation {
                 changelog.record_id
             )))?;
 
+        let name_link_repo = NameLinkRowRepository::new(connection);
+
+        let patient_name_id = name_link_repo
+            .find_one_by_id(&patient_link_id)?
+            .ok_or(anyhow::Error::msg(format!(
+                "Patient name link ({}) not found",
+                patient_link_id
+            )))?
+            .id;
+
+        // If the facility name link is not set, or not found, we use None
+        let facility_name_id = match facility_name_link_id {
+            Some(facility_name_link_id) => name_link_repo
+                .find_one_by_id(&facility_name_link_id)?
+                .map(|name_link| name_link.id),
+            None => None,
+        };
+
+        // Look up item link ID, if it exists
+
+        let item_link_repo = ItemLinkRowRepository::new(connection);
+
+        let item_id = match item_link_id {
+            Some(item_link_id) => item_link_repo
+                .find_one_by_id(&item_link_id)?
+                .map(|item_link| item_link.id),
+            None => None,
+        };
+
         let legacy_row = LegacyVaccinationRow {
             ID: id,
             created_datetime: created_datetime.and_utc().to_rfc3339(),
@@ -115,9 +144,9 @@ impl SyncTranslation for VaccinationLegacyTranslation {
             given,
             not_given_reason,
             comment,
-            patient_ID: patient_link_id,
-            facility_ID: facility_name_link_id,
-            item_ID: item_link_id,
+            name_ID: patient_name_id,
+            facility_ID: facility_name_id,
+            item_ID: item_id,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
