@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.TELEGRAM_RELEASE_NOTIFICATION }}
+          token: ${{ secrets.NIGHTLY_BUILD_GITHUB_PAT }}
 
       - name: Configure Git
         run: |
