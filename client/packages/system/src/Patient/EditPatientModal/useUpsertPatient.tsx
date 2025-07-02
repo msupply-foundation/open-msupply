@@ -68,7 +68,10 @@ const useUpsertProgramPatient = (): SaveDocumentMutation => {
   };
 };
 
-export const useUpsertPatient = (patientId: string) => {
+export const useUpsertPatient = (
+  patientId: string,
+  confirmOnLeaving: boolean
+) => {
   const { error } = useNotification();
   const queryClient = useQueryClient();
 
@@ -199,7 +202,8 @@ export const useUpsertPatient = (patientId: string) => {
         documentName: createNewPatient ? undefined : documentName,
         patientId: patientId,
       },
-      accessor
+      accessor,
+      confirmOnLeaving
     );
 
   const handleProgramPatientSave = useUpsertProgramPatient();

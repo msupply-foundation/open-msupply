@@ -21,8 +21,11 @@ export const useCreatePatientForm = (
   const [hasError, setHasError] = useState(false);
   const [currentTab, setCurrentTab] = useState(Tabs.Form);
 
+  const confirmOnLeaving = false;
+
   const { JsonForm, save, isSaving, isLoading } = useUpsertPatient(
-    createNewPatient?.id ?? ''
+    createNewPatient?.id ?? '',
+    confirmOnLeaving
   );
 
   const handleSave = () => {
