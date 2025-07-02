@@ -16,12 +16,15 @@ import {
   DetailTab,
   ShortTabList,
   useParams,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 
 import { useUpsertPatient } from './useUpsertPatient';
 import { useInsuranceProviders } from '../apiModern/hooks/useInsuranceProviders';
 import { InsuranceListView } from '../Insurance';
 import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
+import { AppRoute } from 'packages/config/src';
 
 enum Tabs {
   Patient = 'Patient',
@@ -52,6 +55,7 @@ export const EditPatientModal = ({
     revert,
   } = useUpsertPatient(patientId);
   const { userHasPermission } = useAuthContext();
+  const navigate = useNavigate();
 
   const { Modal } = useDialog({
     onClose,
@@ -131,6 +135,20 @@ export const EditPatientModal = ({
           onClick={handleSave}
           label={t('button.save')}
           startIcon={<SaveIcon />}
+        />
+      }
+      deleteButton={
+        <DialogButton
+          variant="next"
+          customLabel={t('button.view-patient')}
+          onClick={() =>
+            navigate(
+              RouteBuilder.create(AppRoute.Dispensary)
+                .addPart(AppRoute.Patients)
+                .addPart(patientId)
+                .build()
+            )
+          }
         />
       }
       cancelButton={
