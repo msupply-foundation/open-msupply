@@ -1769,7 +1769,7 @@
   "messages.patients-found_many": "{{count}} patients found matching the supplied details",
   "messages.patients-found_one": "1 patient found matching the supplied details",
   "messages.patients-found_other": "{{count}} patients found matching the supplied details",
-  "messages.patients-search": "We'll pre-fill the patient name for the search. Please complete the required fields",
+  "messages.patients-search": "Please enter the required patient details to check if the patient is already within the mSupply system.",
   "messages.period-not-available": "No available periods",
   "messages.placeholder-allocated-doses": "Not enough stock is available to allocate all {{ requestedQuantity }} doses. A placeholder has been added for {{placeholderQuantity}} doses.",
   "messages.placeholder-allocated-units": "Not enough stock is available to allocate all {{ requestedQuantity }} units. A placeholder has been added for {{placeholderQuantity}} units.",
