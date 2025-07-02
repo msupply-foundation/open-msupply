@@ -56,6 +56,7 @@ export interface NativeAPI {
   ) => Promise<{ success: boolean; error?: string }>;
   saveDatabase: () => Promise<{ success: boolean; error?: string }>;
   print: (htmlContent: string) => Promise<void>;
+  printPreview: (htmlContent: string) => Promise<void>;
 }
 
 export enum NativeMode {

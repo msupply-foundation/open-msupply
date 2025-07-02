@@ -10,6 +10,7 @@ import {
   PrinterIcon,
   SwipeIcon,
   Typography,
+  useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
 
@@ -29,8 +30,7 @@ export const AppBarButtonsComponent = ({
   isPrinting,
 }: AppBarButtonsProps) => {
   const t = useTranslation();
-
-  console.log('test dev tools console log');
+  const { error } = useNotification();
 
   return (
     <AppBarButtonsPortal>
@@ -60,7 +60,10 @@ export const AppBarButtonsComponent = ({
           disabled={isPrinting}
           label={t('button.print')}
           Icon={<PrinterIcon />}
-          onClick={() => printReport()}
+          onClick={() => {
+            error('test error on click')();
+            printReport();
+          }}
         />
         <ButtonWithIcon
           disabled={isPrinting || EnvUtils.platform === Platform.Android}

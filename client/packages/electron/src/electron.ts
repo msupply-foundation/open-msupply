@@ -190,6 +190,7 @@ const tryToConnectToServer = (window: BrowserWindow, server: FrontEndHost) => {
   });
 };
 
+
 const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
   // translate loopback addresses to allow for clients, such as CCA to connect
   // to the API by IP address
@@ -289,19 +290,68 @@ const start = (): void => {
   ipcMain.handle(IPC_MESSAGES.GET_SCANNER_TYPE, async () =>
     store.get(SCANNER_TYPE, 'usb_serial')
   );
-  ipcMain.handle(IPC_MESSAGES.PRINT, async (_event, htmlContent: string) => {
-    const win = BrowserWindow.getFocusedWindow();
-    if (win) {
-      await win?.loadURL(`data:text/html,${encodeURIComponent(htmlContent)}`);
-      await win.webContents.print({ silent: true, printBackground: true, deviceName: '' });
-    }
-  });
+  // ipcMain.handle(IPC_MESSAGES.PRINT, async (_event, htmlContent: string) => {
+  //   const win = BrowserWindow.getFocusedWindow();
+  //   if (win) {
+  //     await win?.loadURL(`data:text/html,${encodeURIComponent(htmlContent)}`);
+  //     await win.webContents.print({ silent: true, printBackground: true, deviceName: '' });
+  //   }
+  // });
+  // ipcMain.handle(IPC_MESSAGES.PRINT_PREVIEW, async (_event, htmlContent: string) => {
+  // //   let win: BrowserWindow | null = new BrowserWindow({title: 'Preview', show: false, autoHideMenuBar: true});
+    
+  // //   const log = (something: string | object) => {
+  // //     try {
+  // //       const js =
+  // //       typeof something === 'object'
+  // //       ? `console.info(${JSON.stringify(something, null, ' ')});`
+  // //       : `console.info('${something.replace("'", "\\'")}');`;
+  // //       win?.webContents.executeJavaScript(js);
+  // //     } catch (e) {
+  // //       console.error(e);
+  // //     }
+  // //   };
+    
+  // //   log('logging within electron');
+  // //   win.webContents.once("did-finish-load", () => {
+  // //     win?.webContents.printToPDF({printBackground: true}).then((data) => {
+  // //       const buf = Buffer.from(data);
+  // //       const dataString = buf.toString("base64");
+  // //       const url = "data:application/pdf;base64," + dataString;
+
+  // //       win?.on("ready-to-show", () => {
+  // //         win?.once("page-title-updated", (e) => e.preventDefault());
+  // //         win?.show();
+  // //       });
+
+  // //       win?.on("closed", () => win = null);
+  // //       win?.loadURL(url);
+  // //     }).catch((error) => {
+  // //     console.error(error);
+  // //   });
+  // // });
+  // //   await win?.loadURL(`data:text/html,${encodeURIComponent(htmlContent)}`);
+  //   const win = BrowserWindow.getFocusedWindow();
+  //   if (win) {
+  //     await win?.loadURL(`data:text/html,${encodeURIComponent(htmlContent)}`);
+  //     await win.webContents.print({ silent: true, printBackground: true, deviceName: '' });
+  //   }
+  // });
 
   // not currently implemented in the desktop implementation
   ipcMain.on(IPC_MESSAGES.READ_LOG, () => 'Not implemented');
   ipcMain.handle(IPC_MESSAGES.SAVE_FILE, async () => ({
     success: false,
     error: 'Not implemented',
+  }));
+
+  ipcMain.handle(IPC_MESSAGES.PRINT, async (_event, _htmlContent: string) => ({
+    success: false,
+    error: 'Not implemented print',
+  }));
+    ipcMain.handle(IPC_MESSAGES.PRINT_PREVIEW, async (_event, _htmlContent: string) => ({
+    success: false,
+    error: 'Not implemented print',
   }));
 
   discovery.on('serviceUp', function ({ type, port, addresses, txt }) {

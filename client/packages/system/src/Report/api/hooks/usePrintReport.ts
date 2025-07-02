@@ -37,11 +37,13 @@ const print = (frame: HTMLIFrameElement) => {
   }
 };
 
-const printPage = (url: string) => {
+const printPage = (url: string, error: any) => {
   fetch(url).then(async response => {
     const html = await response.text();
 
     if (EnvUtils.platform === Platform.Android) {
+      error("is android")();
+
       Printer.print({ content: html });
     } else  {
       const frame = document.createElement('iframe');
@@ -57,18 +59,23 @@ const printPage = (url: string) => {
         // have some buffer.
         setTimeout(() => {
           if (EnvUtils.platform === Platform.Desktop) {
-            const { printElectron } = useNativeClient();
+            error("is desktop")();
+            
+            const {  printPreviewElectron } = useNativeClient();
       
             const htmlContent = frame.contentDocument?.documentElement.outerHTML || '';
             try {
+              error('successfully navigating to electronPrint:' )();
               console.error('test');
-              printElectron(htmlContent);
-            } catch (error) {
-              console.error('Error printing HTML content via electron:', error);
+              printPreviewElectron(htmlContent);
+            } catch (_e) {
+              error('Error printing HTML content via electron:' )();
               print(frame);
             } 
           } else {
-            print(frame);
+            error("is not desktop desktop")();
+            console.error('error not desktop');
+            // print(frame);
           }
         }, 30);
       };
@@ -84,9 +91,6 @@ export const usePrintReport = () => {
   const { currentLanguage } = useIntlUtils();
 
     // Test multiple logging methods
-  console.log('Print function called');
-  console.error('This is an error log');
-  console.warn('This is a warning log');
 
   const mutationFn = async (params: GenerateReportParams) => {
     const {
@@ -119,7 +123,7 @@ export const usePrintReport = () => {
       if (!fileId) throw new Error(t('messages.error-printing-report'));
       const url = `${Environment.FILE_URL}${fileId}`;
       if (format === PrintFormat.Html) {
-        printPage(url);
+        printPage(url, error);
       } else {
         FileUtils.downloadFile(url);
       }

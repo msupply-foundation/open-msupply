@@ -177,6 +177,11 @@ export const useNativeClient = ({
     return result;
   };
 
+  const printPreviewElectron = (htmlContent: string) => {
+    const result = nativeAPI?.printPreview(htmlContent);
+    return result;
+  }
+
   useEffect(() => {
     if (!state.isDiscovering) return;
 
@@ -244,6 +249,7 @@ export const useNativeClient = ({
     saveDatabase,
     setServerMode,
     printElectron,
+    printPreviewElectron,
   };
 };
 

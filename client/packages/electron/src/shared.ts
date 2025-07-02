@@ -18,4 +18,5 @@ export const IPC_MESSAGES = {
   SAVE_DATABASE: 'save-database',
   SAVE_FILE: 'save-file',
   PRINT: 'print',
+  PRINT_PREVIEW: 'print-preview',
 };

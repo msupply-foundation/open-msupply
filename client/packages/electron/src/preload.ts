@@ -31,6 +31,7 @@ const electronNativeAPI: NativeAPI = {
     ipcRenderer.invoke(IPC_MESSAGES.SAVE_FILE, fileInfo),
   saveDatabase: () => ipcRenderer.invoke(IPC_MESSAGES.SAVE_DATABASE),
   print: (htmlContent: string) => ipcRenderer.invoke(IPC_MESSAGES.PRINT, htmlContent),
+  printPreview: (htmlContent: string) => ipcRenderer.invoke(IPC_MESSAGES.PRINT_PREVIEW, htmlContent),
 };
 
 contextBridge.exposeInMainWorld('electronNativeAPI', electronNativeAPI);
