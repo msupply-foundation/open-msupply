@@ -171,5 +171,6 @@ mod tests {
             }
             _ => panic!("Expected Upsert result"),
         }
+        test_util_set_is_central_server(false);
     }
 }

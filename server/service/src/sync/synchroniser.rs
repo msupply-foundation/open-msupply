@@ -5,7 +5,7 @@ use crate::{
 };
 use log::warn;
 use repository::{
-    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncAction,
+    EqualFilter, KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncAction,
 };
 
 use std::sync::Arc;
@@ -169,19 +169,12 @@ impl Synchroniser {
         let site_info = self.remote.sync_api_v5.get_site_info().await?;
         CentralServerConfig::set_central_server_config(&site_info);
 
-        let central_sync_server_id = KeyValueStoreRepository::new(&ctx.connection)
-            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
-
-        if central_sync_server_id.is_none() {
-            log::info!(
-                "Setting central sync server id to {}",
-                site_info.msupply_central_site_id
-            );
-            KeyValueStoreRepository::new(&ctx.connection).set_i32(
-                KeyType::SettingsSyncCentralServerSiteId,
-                Some(site_info.msupply_central_site_id),
-            )?;
-        }
+        // Set mSupply central server sync site id
+        let central_sync_server_id = site_info.msupply_central_site_id;
+        KeyValueStoreRepository::new(&ctx.connection).set_i32(
+            KeyType::SettingsSyncCentralServerSiteId,
+            Some(central_sync_server_id),
+        )?;
 
         // First check sync status
 
@@ -288,6 +281,10 @@ impl Synchroniser {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
+        // Also include OMS Central as source site_id is null, should probably be passing a vec here...
+        let source_site_id_filter =
+            EqualFilter::equal_any_or_null_i32(vec![central_sync_server_id]);
+
         let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
             &ctx.connection,
             // Only pass in logger during initialisation
@@ -295,7 +292,7 @@ impl Synchroniser {
                 false => Some(logger),
                 true => None,
             },
-            central_sync_server_id, // Also include OMS Central as source site_id is null, should probably be passing a vec here...
+            Some(source_site_id_filter),
         )
         .map_err(SyncError::IntegrationError)?;
 
@@ -339,7 +336,7 @@ impl Synchroniser {
 pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
     logger: Option<&mut SyncLogger<'_>>,
-    source_site_id: Option<i32>,
+    source_site_id_filter: Option<EqualFilter<i32>>,
 ) -> Result<
     (
         TranslationAndIntegrationResults,
@@ -375,14 +372,14 @@ pub fn integrate_and_translate_sync_buffer(
         let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Upsert,
             &table_order,
-            source_site_id,
+            &source_site_id_filter,
         )?;
 
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
         let delete_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Delete,
             &table_order,
-            source_site_id,
+            &source_site_id_filter,
         )?;
 
         let upsert_integration_result = translation_and_integration
@@ -403,7 +400,7 @@ pub fn integrate_and_translate_sync_buffer(
         let merge_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Merge,
             &table_order,
-            source_site_id,
+            &source_site_id_filter,
         )?;
 
         let merge_integration_result: TranslationAndIntegrationResults =

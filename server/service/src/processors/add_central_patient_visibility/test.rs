@@ -108,6 +108,7 @@ async fn requests_link_patient_to_oms_central_store() {
     );
 
     assert!(error_message.contains(&expected_error));
+    test_util_set_is_central_server(false);
 }
 
 fn is_patient_visible_on_central(

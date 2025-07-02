@@ -22,13 +22,12 @@ pub(crate) mod translation_and_integration;
 pub(crate) mod translations;
 
 use crate::service_provider::ServiceProvider;
-use std::sync::RwLock;
-
 use log::info;
 use repository::{
     ChangelogFilter, EqualFilter, KeyValueStoreRepository, RepositoryError, StorageConnection,
     Store, StoreFilter, StoreRepository,
 };
+use std::sync::RwLock;
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -41,18 +40,27 @@ pub(crate) struct ActiveStoresOnSite {
     stores: Vec<Store>,
 }
 
+#[derive(Error, Debug)]
+pub enum SyncChangelogError {
+    #[error(transparent)]
+    DatabaseError(#[from] RepositoryError),
+    #[error("Failed to get active stores on site")]
+    GetActiveStoresOnSiteError(#[from] GetActiveStoresOnSiteError),
+    #[error("mSupply Central site id is not set in database")]
+    CentralSiteIdNotSet,
+}
+
 /// Returns changelog filter to filter out records that are not active on site
 /// It is possible to have entries for foreign records in change log (other half of transfers)
 /// these should be filtered out in sync push operation
 pub(crate) fn get_sync_push_changelogs_filter(
     connection: &StorageConnection,
-) -> Result<Option<ChangelogFilter>, GetActiveStoresOnSiteError> {
+) -> Result<Option<ChangelogFilter>, SyncChangelogError> {
     if CentralServerConfig::is_central_server() {
         // If this is a central server, we want to send everything that that wasn't from legacy site
         let msupply_central_server_id = KeyValueStoreRepository::new(connection)
-            .get_i32(repository::KeyType::SettingsSyncCentralServerSiteId)
-            .map_err(|_| GetActiveStoresOnSiteError::CentralSiteIdNotSet)?
-            .ok_or(GetActiveStoresOnSiteError::CentralSiteIdNotSet)?;
+            .get_i32(repository::KeyType::SettingsSyncCentralServerSiteId)?
+            .ok_or(SyncChangelogError::CentralSiteIdNotSet)?;
 
         return Ok(Some(ChangelogFilter::new().source_site_id(
             EqualFilter::not_equal_to_i32(msupply_central_server_id),
@@ -70,12 +78,10 @@ pub(crate) fn get_sync_push_changelogs_filter(
 
 #[derive(Error, Debug)]
 pub enum GetActiveStoresOnSiteError {
-    #[error("Database error while getting active store on site")]
-    DatabaseError(RepositoryError),
+    #[error(transparent)]
+    DatabaseError(#[from] RepositoryError),
     #[error("Site id is not set in database")]
     SiteIdNotSet,
-    #[error("mSupply Central site id is not set in database")]
-    CentralSiteIdNotSet,
 }
 
 impl ActiveStoresOnSite {
@@ -85,13 +91,11 @@ impl ActiveStoresOnSite {
         use GetActiveStoresOnSiteError as Error;
 
         let site_id = KeyValueStoreRepository::new(connection)
-            .get_i32(repository::KeyType::SettingsSyncSiteId)
-            .map_err(Error::DatabaseError)?
+            .get_i32(repository::KeyType::SettingsSyncSiteId)?
             .ok_or(Error::SiteIdNotSet)?;
 
         let stores = StoreRepository::new(connection)
-            .query_by_filter(StoreFilter::new().site_id(EqualFilter::equal_to_i32(site_id)))
-            .map_err(Error::DatabaseError)?;
+            .query_by_filter(StoreFilter::new().site_id(EqualFilter::equal_to_i32(site_id)))?;
 
         Ok(ActiveStoresOnSite { stores })
     }

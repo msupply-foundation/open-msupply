@@ -33,7 +33,7 @@ use crate::{
 
 use super::status::FullSyncStatus;
 
-const PORT: u16 = 12345;
+const PORT: u16 = 12347;
 
 macro_rules! assert_between {
     ($compare: expr, $from: expr, $to: expr) => {
