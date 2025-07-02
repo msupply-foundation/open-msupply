@@ -53,6 +53,9 @@ export const useBlockNavigation = () => {
 
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
     for (const b of blockers) {
+      if (b.options?.disabled) {
+        return false;
+      }
       // If there is a custom check on one of the registered blockers, use that
       if (b.options?.customCheck) {
         setActiveBlocker(b);
@@ -111,6 +114,10 @@ interface BlockerOptions {
    * Will block when navigating away from the page, but not when refreshing
    */
   allowRefresh?: boolean;
+  /**
+   * Disable all blocking if true
+   */
+  disabled?: boolean;
 }
 
 interface BlockingState {

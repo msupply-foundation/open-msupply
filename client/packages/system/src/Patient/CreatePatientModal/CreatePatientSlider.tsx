@@ -4,34 +4,32 @@ import {
   Box,
   TabContext,
   DialogButton,
-  useDialog,
   useTranslation,
   BasicSpinner,
+  SlidePanel,
   DetailTab,
-  SaveIcon,
   LoadingButton,
+  SaveIcon,
   WizardStepper,
   FnUtils,
 } from '@openmsupply-client/common';
-import { PatientColumnData } from './PatientResultsTab';
 import { Tabs, useCreatePatientForm } from './useCreatePatientForm';
+import { PatientColumnData } from './PatientResultsTab';
 
-interface CreatePatientModal {
+interface CreatePatientSliderProps {
   open: boolean;
   onClose: () => void;
   onCreate: () => void;
   onSelectPatient: (selectedPatient: PatientColumnData) => void;
 }
 
-export const CreatePatientModal = ({
+export const CreatePatientSlider = ({
   open,
   onClose,
   onCreate,
   onSelectPatient: onSelect,
-}: CreatePatientModal) => {
+}: CreatePatientSliderProps) => {
   const t = useTranslation();
-
-  const { Modal } = useDialog({ isOpen: open, onClose });
 
   const {
     onNext,
@@ -60,9 +58,10 @@ export const CreatePatientModal = ({
   if (isLoading) return <BasicSpinner />;
 
   return (
-    <Modal
+    <SlidePanel
       title=""
-      width={1180}
+      width={1000}
+      open={open}
       okButton={
         currentTab === Tabs.Patient ? (
           <LoadingButton
@@ -99,7 +98,9 @@ export const CreatePatientModal = ({
           }}
         />
       }
-      slideAnimation={false}
+      onClose={() => {
+        onClose(), setCurrentTab(Tabs.Form);
+      }}
     >
       <DetailContainer>
         <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
@@ -117,6 +118,6 @@ export const CreatePatientModal = ({
           </TabContext>
         </Box>
       </DetailContainer>
-    </Modal>
+    </SlidePanel>
   );
 };
