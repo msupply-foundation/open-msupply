@@ -20,7 +20,6 @@ interface PatientSearchInputProps extends NameSearchInputProps {
   allowCreate?: boolean;
   allowEdit?: boolean;
   mountSlidePanel?: boolean;
-  hasEditTab?: boolean;
 }
 
 export const PatientSearchInput = ({
@@ -144,7 +143,6 @@ export const PatientSearchInput = ({
             onSelectPatient={patient => {
               handlePatientClose(patient);
             }}
-            hasEditTab
           />
         ) : (
           <CreatePatientModal
@@ -156,7 +154,6 @@ export const PatientSearchInput = ({
             onSelectPatient={patient => {
               handlePatientClose(patient);
             }}
-            hasEditTab
           />
         ))}
       {value && editPatientModalOpen && (

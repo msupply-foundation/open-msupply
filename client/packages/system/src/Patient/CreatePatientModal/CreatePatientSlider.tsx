@@ -21,12 +21,10 @@ interface CreatePatientSliderProps {
   onClose: () => void;
   onCreate: () => void;
   onSelectPatient: (selectedPatient: PatientColumnData) => void;
-  hasEditTab?: boolean;
 }
 
 export const CreatePatientSlider = ({
   open,
-  hasEditTab = false,
   onClose,
   onCreate,
   onSelectPatient: onSelect,
@@ -45,7 +43,7 @@ export const CreatePatientSlider = ({
     getActiveStep,
     isLoading,
     handleSave,
-  } = useCreatePatientForm(onSelect, hasEditTab);
+  } = useCreatePatientForm(onSelect);
 
   useEffect(() => {
     if (open) {

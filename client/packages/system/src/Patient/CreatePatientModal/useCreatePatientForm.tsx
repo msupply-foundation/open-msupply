@@ -13,8 +13,7 @@ export enum Tabs {
 }
 
 export const useCreatePatientForm = (
-  onSelect: (selectedPatient: PatientColumnData) => void,
-  hasEditTab: boolean = false
+  onSelect: (selectedPatient: PatientColumnData) => void
 ) => {
   const t = useTranslation();
   const { createNewPatient, setCreateNewPatient } = usePatientStore();
@@ -44,15 +43,8 @@ export const useCreatePatientForm = (
       label: t('label.search-results'),
       tab: Tabs.SearchResults,
     },
+    { description: '', label: t('label.patient-details'), tab: Tabs.Patient },
   ];
-
-  if (hasEditTab) {
-    patientSteps.push({
-      description: '',
-      label: t('label.patient-details'),
-      tab: Tabs.Patient,
-    });
-  }
 
   const getActiveStep = () => {
     const step = patientSteps.find(step => step.tab === currentTab);
@@ -86,18 +78,15 @@ export const useCreatePatientForm = (
       ),
       value: Tabs.SearchResults,
     },
-  ];
-
-  if (hasEditTab) {
-    tabs.push({
+    {
       Component: (
         <PatientPanel value={Tabs.Patient} patient={createNewPatient}>
           {JsonForm}
         </PatientPanel>
       ),
       value: Tabs.Patient,
-    });
-  }
+    },
+  ];
 
   const onNext = (tabs: TabDefinition[]) => {
     const currentIndex = tabs.findIndex(tab => tab.value === currentTab);
