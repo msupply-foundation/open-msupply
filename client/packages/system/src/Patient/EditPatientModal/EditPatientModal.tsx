@@ -137,7 +137,7 @@ export const EditPatientModal = ({
           startIcon={<SaveIcon />}
         />
       }
-      deleteButton={
+      nextButton={
         <DialogButton
           variant="next"
           customLabel={t('button.view-patient')}
