@@ -24,7 +24,7 @@ import { useUpsertPatient } from './useUpsertPatient';
 import { useInsuranceProviders } from '../apiModern/hooks/useInsuranceProviders';
 import { InsuranceListView } from '../Insurance';
 import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 
 enum Tabs {
   Patient = 'Patient',
