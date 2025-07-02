@@ -33,17 +33,17 @@ export const CreatePatientSlider = ({
 
   const {
     onNext,
-    tabs,
-    currentTab,
-    isSaving,
-    hasError,
     setCurrentTab,
     setCreateNewPatient,
-    patientSteps,
     getActiveStep,
-    isLoading,
     handleSave,
+    tabs,
+    currentTab,
+    patientSteps,
+    isSaving,
+    isLoading,
     isDirty,
+    hasError,
     validationError,
   } = useCreatePatientForm(onSelect);
 

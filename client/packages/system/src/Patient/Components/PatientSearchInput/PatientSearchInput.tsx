@@ -12,7 +12,10 @@ import { getPatientOptionRenderer } from '../PatientOptionRenderer';
 import { useSearchPatient } from '../utils';
 import { CreatePatientSlider } from '../../CreatePatientModal/CreatePatientSlider';
 import { EditPatientModal } from '../../EditPatientModal';
-import { CreateNewPatient, usePatientStore } from 'packages/programs/src';
+import {
+  CreateNewPatient,
+  usePatientStore,
+} from '@openmsupply-client/programs/src';
 import { PatientColumnData } from '../../CreatePatientModal/PatientResultsTab';
 import { CreatePatientModal } from '../../CreatePatientModal';
 

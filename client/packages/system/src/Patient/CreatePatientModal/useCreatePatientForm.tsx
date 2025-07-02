@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TabDefinition, useTranslation } from '@openmsupply-client/common';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientColumnData, PatientResultsTab } from './PatientResultsTab';
-import { usePatientStore } from 'packages/programs/src';
+import { usePatientStore } from '@openmsupply-client/programs/src';
 import { useUpsertPatient } from '../EditPatientModal/useUpsertPatient';
 import { PatientPanel } from './PatientPanel';
 
@@ -22,10 +22,8 @@ export const useCreatePatientForm = (
 
   const confirmOnLeaving = false;
 
-  const { JsonForm, save, isSaving, isLoading } = useUpsertPatient(
-    createNewPatient?.id ?? '',
-    confirmOnLeaving
-  );
+  const { JsonForm, save, isSaving, isLoading, validationError, isDirty } =
+    useUpsertPatient(createNewPatient?.id ?? '', confirmOnLeaving);
 
   const handleSave = () => {
     save();
@@ -96,16 +94,17 @@ export const useCreatePatientForm = (
 
   return {
     onNext,
-    tabs,
-    Tabs,
-    currentTab,
-    isSaving,
-    hasError,
     setCurrentTab,
     setCreateNewPatient,
-    patientSteps,
     getActiveStep,
-    isLoading,
     handleSave,
+    tabs,
+    currentTab,
+    patientSteps,
+    isSaving,
+    isLoading,
+    isDirty,
+    hasError,
+    validationError,
   };
 };

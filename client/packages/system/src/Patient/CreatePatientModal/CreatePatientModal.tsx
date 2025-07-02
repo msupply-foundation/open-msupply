@@ -35,17 +35,17 @@ export const CreatePatientModal = ({
 
   const {
     onNext,
-    tabs,
-    currentTab,
-    isSaving,
-    hasError,
     setCurrentTab,
     setCreateNewPatient,
-    isLoading,
-    patientSteps,
     getActiveStep,
     handleSave,
+    tabs,
+    currentTab,
+    patientSteps,
+    isSaving,
+    isLoading,
     isDirty,
+    hasError,
     validationError,
   } = useCreatePatientForm(onSelect);
 

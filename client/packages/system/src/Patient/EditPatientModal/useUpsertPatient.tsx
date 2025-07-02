@@ -70,7 +70,7 @@ const useUpsertProgramPatient = (): SaveDocumentMutation => {
 
 export const useUpsertPatient = (
   patientId: string,
-  confirmOnLeaving: boolean
+  confirmOnLeaving?: boolean
 ) => {
   const { error } = useNotification();
   const queryClient = useQueryClient();
