@@ -16,11 +16,11 @@ import {
 import { PatientRowFragment, usePatient } from '../api';
 import { patientsToCsv } from '../utils';
 import { CreatePatientModal } from '../CreatePatientModal';
-import { CreateNewPatient } from 'packages/programs/src';
+import { PatientColumnData } from '../CreatePatientModal/PatientResultsTab';
 
 interface AppBarButtonsComponentProps {
-  onCreatePatient: (newPatient: CreateNewPatient) => void;
-  onSelectPatient: (selectedPatient: string) => void;
+  onCreatePatient: () => void;
+  onSelectPatient: (selectedPatient: PatientColumnData) => void;
   sortBy: SortBy<PatientRowFragment>;
 }
 
@@ -70,8 +70,9 @@ export const AppBarButtons = ({
 
       {createModalOpen ? (
         <CreatePatientModal
+          open={createModalOpen}
           onClose={() => setCreateModalOpen(false)}
-          onCreatePatient={onCreatePatient}
+          onCreate={onCreatePatient}
           onSelectPatient={onSelectPatient}
         />
       ) : null}
