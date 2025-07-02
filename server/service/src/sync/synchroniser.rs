@@ -1,7 +1,7 @@
 use crate::{
     processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::{sync_status::logger::SyncStep, CentralServerConfig},
+    sync::{sync_buffer::SyncBufferRecordType, sync_status::logger::SyncStep, CentralServerConfig},
 };
 use log::warn;
 use repository::{
@@ -169,19 +169,35 @@ impl Synchroniser {
         let site_info = self.remote.sync_api_v5.get_site_info().await?;
         CentralServerConfig::set_central_server_config(&site_info);
 
-        let central_sync_server_id = KeyValueStoreRepository::new(&ctx.connection)
-            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
-
-        if central_sync_server_id.is_none() {
-            log::info!(
-                "Setting central sync server id to {}",
+        let central_sync_server_id = match KeyValueStoreRepository::new(&ctx.connection)
+            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
+        {
+            Some(id) => {
+                if id != site_info.msupply_central_site_id {
+                    log::error!(
+                        "Central sync server id {} does not match site info {} - this may cause issues!!!",
+                        id,
+                        site_info.msupply_central_site_id
+                    );
+                    KeyValueStoreRepository::new(&ctx.connection).set_i32(
+                        KeyType::SettingsSyncCentralServerSiteId,
+                        Some(site_info.msupply_central_site_id),
+                    )?;
+                }
+                id
+            }
+            None => {
+                log::info!(
+                    "Setting central sync server id to {}",
+                    site_info.msupply_central_site_id
+                );
+                KeyValueStoreRepository::new(&ctx.connection).set_i32(
+                    KeyType::SettingsSyncCentralServerSiteId,
+                    Some(site_info.msupply_central_site_id),
+                )?;
                 site_info.msupply_central_site_id
-            );
-            KeyValueStoreRepository::new(&ctx.connection).set_i32(
-                KeyType::SettingsSyncCentralServerSiteId,
-                Some(site_info.msupply_central_site_id),
-            )?;
-        }
+            }
+        };
 
         // First check sync status
 
@@ -295,7 +311,7 @@ impl Synchroniser {
                 false => Some(logger),
                 true => None,
             },
-            central_sync_server_id, // Also include OMS Central as source site_id is null, should probably be passing a vec here...
+            SyncBufferRecordType::Central(central_sync_server_id),
         )
         .map_err(SyncError::IntegrationError)?;
 
@@ -339,7 +355,7 @@ impl Synchroniser {
 pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
     logger: Option<&mut SyncLogger<'_>>,
-    source_site_id: Option<i32>,
+    record_type: SyncBufferRecordType,
 ) -> Result<
     (
         TranslationAndIntegrationResults,
@@ -375,14 +391,14 @@ pub fn integrate_and_translate_sync_buffer(
         let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Upsert,
             &table_order,
-            source_site_id,
+            record_type.clone(),
         )?;
 
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
         let delete_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Delete,
             &table_order,
-            source_site_id,
+            record_type.clone(),
         )?;
 
         let upsert_integration_result = translation_and_integration
@@ -403,7 +419,7 @@ pub fn integrate_and_translate_sync_buffer(
         let merge_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Merge,
             &table_order,
-            source_site_id,
+            record_type.clone(),
         )?;
 
         let merge_integration_result: TranslationAndIntegrationResults =
