@@ -1,3 +1,4 @@
+mod convert_to_excel;
 pub mod default_queries;
 pub mod definition;
 mod html_printing;

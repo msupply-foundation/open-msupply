@@ -16,8 +16,4 @@ impl Preference for UseSimplifiedMobileUi {
     fn value_type(&self) -> PreferenceValueType {
         PreferenceValueType::Boolean
     }
-
-    fn default_value(&self) -> Self::Value {
-        true
-    }
 }
