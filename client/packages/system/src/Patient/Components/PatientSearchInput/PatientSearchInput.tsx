@@ -75,6 +75,10 @@ export const PatientSearchInput = ({
   const showCreate =
     allowCreate && patients.length === 0 && input !== '' && !isLoading;
 
+  const CreatePatient = mountSlidePanel
+    ? CreatePatientSlider
+    : CreatePatientModal;
+
   const options = patients as SearchInputPatient[];
 
   return (
@@ -135,30 +139,18 @@ export const PatientSearchInput = ({
           />
         </>
       )}
-      {allowCreate &&
-        (mountSlidePanel ? (
-          <CreatePatientSlider
-            open={createPatientOpen}
-            onClose={() => setCreatePatientOpen(false)}
-            onCreate={() => {
-              handlePatientClose();
-            }}
-            onSelectPatient={patient => {
-              handlePatientClose(patient);
-            }}
-          />
-        ) : (
-          <CreatePatientModal
-            open={createPatientOpen}
-            onClose={() => setCreatePatientOpen(false)}
-            onCreate={() => {
-              handlePatientClose();
-            }}
-            onSelectPatient={patient => {
-              handlePatientClose(patient);
-            }}
-          />
-        ))}
+      {allowCreate && (
+        <CreatePatient
+          open={createPatientOpen}
+          onClose={() => setCreatePatientOpen(false)}
+          onCreate={() => {
+            handlePatientClose();
+          }}
+          onSelectPatient={patient => {
+            handlePatientClose(patient);
+          }}
+        />
+      )}
       {value && editPatientModalOpen && (
         <EditPatientModal
           patientId={value.id}
