@@ -50,6 +50,7 @@ export const StockItemSearchInputWithStats = ({
 
   useEffect(() => {
     if (currentItem && search === '') setSearch(getOptionLabel(currentItem));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentItem]);
 
   useEffect(() => {
