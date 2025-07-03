@@ -172,7 +172,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
     ORDER BY datetime, type_precedence
     )
     SELECT *,
-      SUM(movement_in_units) OVER (
+      SUM(quantity) OVER (
         PARTITION BY store_id, stock_line_id
         ORDER BY datetime, type_precedence
         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
