@@ -1,0 +1,38 @@
+query purchaseOrderQuery($dataId: String!, $storeId: String!) {
+  purchaseOrder(storeId: $storeId, id: $dataId) {
+    ... on PurchaseOrderNode {
+      number
+      expectedDeliveryDatetime
+      confirmedDatetime
+      lines {
+        nodes {
+          packSize
+          lineNumber
+          numberOfPacks
+          requestedQuantity
+          item {
+            name
+            unitName
+            code
+          }
+        }
+      }
+      store {
+        name(storeId: $storeId) {
+          name
+          address1
+          address2
+          phone
+          email
+        }
+        logo
+      }
+      supplier {
+        address1
+        address2
+        name
+        code
+      }
+    }
+  }
+}
