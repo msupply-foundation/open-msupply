@@ -61,7 +61,7 @@ export const AppBarButtonsComponent = ({
           onClick={() => printReport()}
         />
         <ButtonWithIcon
-          disabled={isPrinting || EnvUtils.platform === Platform.Android}
+          disabled={isPrinting}
           label={t('button.export')}
           Icon={<DownloadIcon />}
           onClick={() => exportReport()}

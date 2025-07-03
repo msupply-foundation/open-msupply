@@ -131,6 +131,7 @@ export enum ActivityLogNodeType {
   InvoiceStatusCancelled = 'INVOICE_STATUS_CANCELLED',
   InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
+  InvoiceStatusReceived = 'INVOICE_STATUS_RECEIVED',
   InvoiceStatusShipped = 'INVOICE_STATUS_SHIPPED',
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
   ItemVariantCreated = 'ITEM_VARIANT_CREATED',
@@ -2608,6 +2609,12 @@ export type EqualFilterNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type EqualFilterPurchaseOrderStatusInput = {
+  equalAny?: InputMaybe<Array<PurchaseOrderNodeStatus>>;
+  equalTo?: InputMaybe<PurchaseOrderNodeStatus>;
+  notEqualTo?: InputMaybe<PurchaseOrderNodeStatus>;
+};
+
 export type EqualFilterReasonOptionTypeInput = {
   equalAny?: InputMaybe<Array<ReasonOptionNodeType>>;
   equalTo?: InputMaybe<ReasonOptionNodeType>;
@@ -3018,6 +3025,7 @@ export type InsertClinicianInput = {
   id: Scalars['String']['input'];
   initials: Scalars['String']['input'];
   lastName: Scalars['String']['input'];
+  mobile?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertContactFormInput = {
@@ -3548,6 +3556,13 @@ export type InsertProgramResponseRequisitionResponse =
   | InsertProgramResponseRequisitionError
   | RequisitionNode;
 
+export type InsertPurchaseOrderInput = {
+  id: Scalars['String']['input'];
+  supplierId: Scalars['String']['input'];
+};
+
+export type InsertPurchaseOrderResponse = IdResponse;
+
 export type InsertRepackError = {
   __typename: 'InsertRepackError';
   error: InsertRepackErrorInterface;
@@ -4014,6 +4029,7 @@ export type InvoiceFilterInput = {
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<StringFilterInput>;
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
+  receivedDatetime?: InputMaybe<DatetimeFilterInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterInvoiceStatusInput>;
@@ -4176,6 +4192,7 @@ export type InvoiceNode = {
   pricing: PricingNode;
   program?: Maybe<ProgramNode>;
   programId?: Maybe<Scalars['String']['output']>;
+  receivedDatetime?: Maybe<Scalars['DateTime']['output']>;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
    * Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
@@ -4237,11 +4254,17 @@ export enum InvoiceNodeStatus {
    */
   Picked = 'PICKED',
   /**
+   * General description: Received inbound Shipment has arrived, not counted or verified yet
+   * Outbound Shipment: Status is updated based on corresponding inbound Shipment
+   * Inbound Shipment: Status update, doesn't affect stock levels or restrict access to edit
+   */
+  Received = 'RECEIVED',
+  /**
    * General description: Outbound Shipment is sent out for delivery
    * Outbound Shipment: Becomes not editable
    * Inbound Shipment: For inter store stock transfers an inbound Shipment
    * becomes editable when this status is set as a result of corresponding
-   * outbound Shipment being chagned to shipped (this is similar to New status)
+   * outbound Shipment being changed to shipped (this is similar to New status)
    */
   Shipped = 'SHIPPED',
   /**
@@ -4925,6 +4948,7 @@ export type Mutations = {
   insertProgramPatient: InsertProgramPatientResponse;
   insertProgramRequestRequisition: InsertProgramRequestRequisitionResponse;
   insertProgramResponseRequisition: InsertProgramResponseRequisitionResponse;
+  insertPurchaseOrder: InsertPurchaseOrderResponse;
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
@@ -5301,6 +5325,11 @@ export type MutationsInsertProgramRequestRequisitionArgs = {
 
 export type MutationsInsertProgramResponseRequisitionArgs = {
   input: InsertProgramResponseRequisitionInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertPurchaseOrderArgs = {
+  input: InsertPurchaseOrderInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6157,6 +6186,7 @@ export type PreferenceDescriptionNode = {
 
 export enum PreferenceKey {
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
+  GenderOptions = 'genderOptions',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   ShowContactTracing = 'showContactTracing',
@@ -6182,11 +6212,13 @@ export enum PreferenceNodeType {
 export enum PreferenceValueNodeType {
   Boolean = 'BOOLEAN',
   Integer = 'INTEGER',
+  MultiChoice = 'MULTI_CHOICE',
 }
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
+  genderOptions: Array<GenderType>;
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
@@ -6513,6 +6545,133 @@ export enum PropertyNodeValueType {
   String = 'STRING',
 }
 
+export type PurchaseOrderConnector = {
+  __typename: 'PurchaseOrderConnector';
+  nodes: Array<PurchaseOrderNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PurchaseOrderFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  status?: InputMaybe<EqualFilterPurchaseOrderStatusInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+  supplier?: InputMaybe<StringFilterInput>;
+};
+
+export type PurchaseOrderLineConnector = {
+  __typename: 'PurchaseOrderLineConnector';
+  nodes: Array<PurchaseOrderLineNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PurchaseOrderLineFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type PurchaseOrderLineNode = {
+  __typename: 'PurchaseOrderLineNode';
+  authorisedQuantity?: Maybe<Scalars['Float']['output']>;
+  expectedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  item: ItemNode;
+  lineNumber: Scalars['Int']['output'];
+  numberOfPacks?: Maybe<Scalars['Float']['output']>;
+  packSize?: Maybe<Scalars['Float']['output']>;
+  purchaseOrderId: Scalars['String']['output'];
+  requestedDeliveryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  requestedQuantity?: Maybe<Scalars['Float']['output']>;
+  totalReceived?: Maybe<Scalars['Float']['output']>;
+};
+
+export type PurchaseOrderLineResponse = PurchaseOrderLineNode | RecordNotFound;
+
+export enum PurchaseOrderLineSortFieldInput {
+  AuthorisedQuantity = 'authorisedQuantity',
+  ExpectedDeliveryDate = 'expectedDeliveryDate',
+  ItemName = 'itemName',
+  LineNumber = 'lineNumber',
+  NumberOfPacks = 'numberOfPacks',
+  RequestedDeliveryDate = 'requestedDeliveryDate',
+  RequestedQuantity = 'requestedQuantity',
+  TotalReceived = 'totalReceived',
+}
+
+export type PurchaseOrderLineSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: PurchaseOrderLineSortFieldInput;
+};
+
+export type PurchaseOrderLinesResponse = PurchaseOrderLineConnector;
+
+export type PurchaseOrderNode = {
+  __typename: 'PurchaseOrderNode';
+  additionalInstructions?: Maybe<Scalars['String']['output']>;
+  advancePaidDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  agentCommission?: Maybe<Scalars['Float']['output']>;
+  authorisingOfficer1?: Maybe<Scalars['String']['output']>;
+  authorisingOfficer2?: Maybe<Scalars['String']['output']>;
+  comment?: Maybe<Scalars['String']['output']>;
+  communicationsCharge?: Maybe<Scalars['Float']['output']>;
+  confirmedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  contractSignedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  createdDatetime: Scalars['DateTime']['output'];
+  currencyId?: Maybe<Scalars['String']['output']>;
+  deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
+  documentCharge?: Maybe<Scalars['Float']['output']>;
+  donor?: Maybe<NameNode>;
+  expectedDeliveryDatetime?: Maybe<Scalars['NaiveDate']['output']>;
+  foreignExchangeRate?: Maybe<Scalars['Float']['output']>;
+  freightCharge?: Maybe<Scalars['Float']['output']>;
+  freightConditions?: Maybe<Scalars['String']['output']>;
+  headingMessage?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  insuranceCharge?: Maybe<Scalars['Float']['output']>;
+  lines: PurchaseOrderLineConnector;
+  number: Scalars['Int']['output'];
+  receivedAtPortDatetime?: Maybe<Scalars['NaiveDate']['output']>;
+  reference?: Maybe<Scalars['String']['output']>;
+  sentDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  shippingMethod?: Maybe<Scalars['String']['output']>;
+  status: PurchaseOrderNodeStatus;
+  store?: Maybe<StoreNode>;
+  supplier?: Maybe<NameNode>;
+  supplierAgent?: Maybe<Scalars['String']['output']>;
+  supplierDiscountAmount?: Maybe<Scalars['Float']['output']>;
+  supplierDiscountPercentage?: Maybe<Scalars['Float']['output']>;
+  supplierNameLinkId?: Maybe<Scalars['String']['output']>;
+  targetMonths?: Maybe<Scalars['Float']['output']>;
+  user?: Maybe<UserNode>;
+};
+
+export enum PurchaseOrderNodeStatus {
+  Authorised = 'AUTHORISED',
+  Confirmed = 'CONFIRMED',
+  Finalised = 'FINALISED',
+  New = 'NEW',
+}
+
+export type PurchaseOrderResponse = PurchaseOrderNode | RecordNotFound;
+
+export enum PurchaseOrderSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
+  DeliveryDate = 'deliveryDate',
+  Number = 'number',
+  Status = 'status',
+  Supplier = 'supplier',
+  TargetMonths = 'targetMonths',
+}
+
+export type PurchaseOrderSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: PurchaseOrderSortFieldInput;
+};
+
+export type PurchaseOrdersResponse = PurchaseOrderConnector;
+
 export type Queries = {
   __typename: 'Queries';
   abbreviations: Array<AbbreviationNode>;
@@ -6653,6 +6812,10 @@ export type Queries = {
   programIndicators: ProgramIndicatorResponse;
   programRequisitionSettingsByCustomer: CustomerProgramRequisitionSettingNode;
   programs: ProgramsResponse;
+  purchaseOrder: PurchaseOrderResponse;
+  purchaseOrderLine: PurchaseOrderLineResponse;
+  purchaseOrderLines: PurchaseOrderLinesResponse;
+  purchaseOrders: PurchaseOrdersResponse;
   rAndRForm: RnRFormResponse;
   rAndRForms: RnRFormsResponse;
   reasonOptions: ReasonOptionResponse;
@@ -7171,6 +7334,30 @@ export type QueriesProgramsArgs = {
   filter?: InputMaybe<ProgramFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ProgramSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPurchaseOrderArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPurchaseOrderLineArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPurchaseOrderLinesArgs = {
+  filter?: InputMaybe<PurchaseOrderLineFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<PurchaseOrderLineSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPurchaseOrdersArgs = {
+  filter?: InputMaybe<PurchaseOrderFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<PurchaseOrderSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -8981,7 +9168,7 @@ export type UpdateCustomerReturnResponse =
   | UpdateCustomerReturnError;
 
 export enum UpdateCustomerReturnStatusInput {
-  Delivered = 'DELIVERED',
+  Received = 'RECEIVED',
   Verified = 'VERIFIED',
 }
 
@@ -9167,6 +9354,7 @@ export type UpdateInboundShipmentServiceLineResponseWithId = {
 
 export enum UpdateInboundShipmentStatusInput {
   Delivered = 'DELIVERED',
+  Received = 'RECEIVED',
   Verified = 'VERIFIED',
 }
 
@@ -9995,6 +10183,7 @@ export type UpsertPackVariantResponse =
 
 export type UpsertPreferencesInput = {
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
+  genderOptions?: InputMaybe<Array<GenderType>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;

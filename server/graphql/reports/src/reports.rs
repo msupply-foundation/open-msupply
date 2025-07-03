@@ -51,6 +51,7 @@ pub enum ReportContext {
     Report,
     Prescription,
     InternalOrder,
+    PurchaseOrder,
 }
 
 #[derive(InputObject, Clone)]
@@ -330,6 +331,7 @@ impl ReportContext {
             ReportContext::Report => ReportContextDomain::Report,
             ReportContext::Prescription => ReportContextDomain::Prescription,
             ReportContext::InternalOrder => ReportContextDomain::InternalOrder,
+            ReportContext::PurchaseOrder => ReportContextDomain::PurchaseOrder,
         }
     }
 
@@ -349,6 +351,7 @@ impl ReportContext {
             ReportContextDomain::Report => ReportContext::Report,
             ReportContextDomain::Prescription => ReportContext::Prescription,
             ReportContextDomain::InternalOrder => ReportContext::InternalOrder,
+            ReportContextDomain::PurchaseOrder => ReportContext::PurchaseOrder,
         }
     }
 }

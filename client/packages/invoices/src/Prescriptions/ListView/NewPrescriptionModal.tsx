@@ -4,7 +4,6 @@ import {
   Box,
   DateTimePickerInput,
   DateUtils,
-  DefaultAutocompleteItemOption,
   DialogButton,
   FnUtils,
   Formatter,
@@ -12,10 +11,10 @@ import {
   LoadingButton,
   SaveIcon,
   Stack,
-  Typography,
   useDialog,
   useNavigate,
   useNotification,
+  UserPermission,
   useTranslation,
 } from '@openmsupply-client/common';
 import {
@@ -31,13 +30,11 @@ import { usePrescription } from '../api';
 interface NewPrescriptionModalProps {
   open: boolean;
   onClose: () => void;
-  openPatientModal: () => void;
 }
 
 export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
   open,
   onClose,
-  openPatientModal,
 }) => {
   const t = useTranslation();
   const { data: programData } = useProgramList();
@@ -57,6 +54,8 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
   const [date, setDate] = useState<Date>(new Date());
 
   const programs = programData?.nodes ?? [];
+
+  const hasPermission = UserPermission.PatientMutate;
 
   const handleClose = () => {
     // Reset all state so it doesn't persist for next opening
@@ -93,8 +92,8 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
   return (
     <Modal
       title={t('label.create-prescription')}
-      height={700}
-      width={900}
+      height={800}
+      width={1180}
       okButton={
         <LoadingButton
           color="secondary"
@@ -126,41 +125,8 @@ export const NewPrescriptionModal: FC<NewPrescriptionModalProps> = ({
                   setPatient(result);
                 }}
                 width={350}
-                NoOptionsRenderer={props => (
-                  <DefaultAutocompleteItemOption
-                    {...props}
-                    key="no-options-renderer"
-                  >
-                    <Box
-                      display="flex"
-                      justifyContent="space-between"
-                      alignItems="flex-end"
-                      gap={1}
-                      height={25}
-                      width="100%"
-                    >
-                      <Typography
-                        overflow="hidden"
-                        fontWeight="bold"
-                        textOverflow="ellipsis"
-                        sx={{
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {t('messages.no-matching-patients')}
-                      </Typography>
-                      <Typography
-                        onClick={() => {
-                          openPatientModal();
-                          handleClose();
-                        }}
-                        color="secondary"
-                      >
-                        {t('button.create-new-patient')}
-                      </Typography>
-                    </Box>
-                  </DefaultAutocompleteItemOption>
-                )}
+                allowCreate={hasPermission ? true : false}
+                mountSlidePanel
               />
             }
           />

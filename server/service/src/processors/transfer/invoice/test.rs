@@ -986,7 +986,7 @@ impl InvoiceTransferTester {
                 &ctx,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = self.inbound_shipment.clone().map(|r| r.id).unwrap();
-                    r.status = Some(UpdateInboundShipmentStatus::Delivered);
+                    r.status = Some(UpdateInboundShipmentStatus::Received);
                 }),
             )
             .unwrap();
@@ -1254,7 +1254,7 @@ impl InvoiceTransferTester {
                 &ctx,
                 inline_init(|r: &mut UpdateCustomerReturn| {
                     r.id = self.customer_return.clone().map(|r| r.id).unwrap();
-                    r.status = Some(UpdateCustomerReturnStatus::Delivered);
+                    r.status = Some(UpdateCustomerReturnStatus::Received);
                 }),
             )
             .unwrap();
@@ -1305,7 +1305,7 @@ fn check_invoice_status(invoice1: &InvoiceRow, invoice2: &InvoiceRow) {
     assert_eq!(invoice1.picked_datetime, invoice2.picked_datetime);
     assert_eq!(invoice1.shipped_datetime, invoice2.shipped_datetime);
     assert_eq!(invoice1.verified_datetime, invoice2.verified_datetime);
-    assert_eq!(invoice1.delivered_datetime, invoice2.delivered_datetime);
+    assert_eq!(invoice1.received_datetime, invoice2.received_datetime);
 }
 
 /// Line uniqueness is checked in caller method where invoice line count is checked
