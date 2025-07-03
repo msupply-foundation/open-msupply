@@ -38,10 +38,28 @@ pub fn get_other_party(
     store_id: &str,
     other_party_id: &str,
 ) -> Result<Option<Name>, RepositoryError> {
-    NameRepository::new(connection).query_one(
+    let other_parties = NameRepository::new(connection).query_by_filter(
         store_id,
         NameFilter::new().id(EqualFilter::equal_to(other_party_id)),
-    )
+    )?;
+
+    if other_parties.is_empty() {
+        return Ok(None);
+    }
+
+    // If more than one party is found, we return the first one that's visible.
+    // If no visible party is found, we return the first one.
+    // This is because with store merging it's possible to return multiple parties for the same ID, if there's only one visible, that's the one we want.
+    let other_party = other_parties
+        .clone()
+        .into_iter()
+        .find(|party| party.is_visible());
+
+    if let Some(other_party) = other_party {
+        Ok(Some(other_party))
+    } else {
+        Ok(other_parties.first().cloned())
+    }
 }
 
 pub fn check_patient_exists(
