@@ -93,6 +93,10 @@ jobs:
           file_path: ./client/packages/android/app/build/outputs/apk/arm64/release/*.apk
           remote_path: "android/"
 
+      - name: Install Python dependencies
+        if: always()
+        run: pip3 install requests
+
       - name: Send build completion notification
         if: always()
         env:
