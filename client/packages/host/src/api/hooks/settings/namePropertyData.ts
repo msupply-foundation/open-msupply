@@ -57,7 +57,7 @@ const frTranslations = {
   LATITUDE_KEY: 'Latitude',
   LONGITUDE_KEY: 'Longitude',
   SUPPLY_LEVEL_KEY: "Niveau d'approvisionnement",
-  FACILITY_TYPE_KEY: "Type d'etablissement",
+  FACILITY_TYPE_KEY: "Type d'établissement",
   OWNERSHIP_TYPE_KEY: 'Type de propriété',
   BUFFER_STOCK_KEY: 'Marge de sécurité des stocks (mois)',
   SUPPLY_INTERVAL_KEY:

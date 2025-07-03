@@ -135,6 +135,10 @@ impl PurchaseOrderFilter {
         self.id = Some(filter);
         self
     }
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
+        self
+    }
     pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
         self.created_datetime = Some(filter);
         self

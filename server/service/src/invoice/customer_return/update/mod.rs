@@ -16,7 +16,7 @@ use self::generate::LineAndStockLine;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateCustomerReturnStatus {
-    Delivered,
+    Received,
     Verified,
 }
 
@@ -124,7 +124,7 @@ where
 impl UpdateCustomerReturnStatus {
     pub fn as_invoice_row_status(&self) -> InvoiceStatus {
         match self {
-            UpdateCustomerReturnStatus::Delivered => InvoiceStatus::Delivered,
+            UpdateCustomerReturnStatus::Received => InvoiceStatus::Received,
             UpdateCustomerReturnStatus::Verified => InvoiceStatus::Verified,
         }
     }
@@ -276,7 +276,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateCustomerReturn| {
                     r.id = on_hold_return().id;
-                    r.status = Some(UpdateCustomerReturnStatus::Delivered);
+                    r.status = Some(UpdateCustomerReturnStatus::Received);
                 })
             ),
             Err(ServiceError::CannotChangeStatusOfInvoiceOnHold)
@@ -297,7 +297,7 @@ mod test {
         let invoice_id = mock_customer_return_b().id;
 
         /* -------
-         * Setting NEW customer return to DELIVERED
+         * Setting NEW customer return to RECEIVED
          */
         let return_line_filter = InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&mock_customer_return_b().id));
@@ -318,15 +318,16 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateCustomerReturn| {
                     r.id.clone_from(&invoice_id);
-                    r.status = Some(UpdateCustomerReturnStatus::Delivered);
+                    r.status = Some(UpdateCustomerReturnStatus::Received);
                 }),
             )
             .unwrap();
 
         let return_row = updated_return.invoice_row;
         // Status has been updated
-        assert_eq!(return_row.status, InvoiceStatus::Delivered);
+        assert_eq!(return_row.status, InvoiceStatus::Received);
         assert!(return_row.delivered_datetime.is_some());
+        assert!(return_row.received_datetime.is_some());
         assert!(return_row.verified_datetime.is_none());
 
         let invoice_lines = invoice_line_repo
@@ -357,12 +358,12 @@ mod test {
             .find_many_by_record_id(&invoice_id)
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == ActivityLogType::InvoiceStatusDelivered);
+            .find(|l| l.r#type == ActivityLogType::InvoiceStatusReceived);
 
         assert!(log.is_some());
 
         /* -------
-         * Setting DELIVERED customer return to VERIFIED
+         * Setting RECEIVED customer return to VERIFIED
          */
 
         let updated_return = service

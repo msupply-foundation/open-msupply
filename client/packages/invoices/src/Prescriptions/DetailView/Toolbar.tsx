@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import {
   AppBarContentPortal,
   InputWithLabelRow,
@@ -20,7 +20,7 @@ import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
 import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 import { usePrescription } from '../api';
 
-export const Toolbar: FC = () => {
+export const Toolbar = () => {
   const t = useTranslation();
 
   const {
@@ -44,6 +44,7 @@ export const Toolbar: FC = () => {
       DateUtils.getDateOrNull(createdDatetime) ??
       null
   );
+
   const [clinicianValue, setClinicianValue] = useState<Clinician | null>(
     clinician ?? null
   );
@@ -139,10 +140,11 @@ export const Toolbar: FC = () => {
               <PatientSearchInput
                 disabled={isDisabled}
                 value={patient}
-                allowEdit
                 onChange={async ({ id: patientId }) => {
                   await update({ id, patientId });
                 }}
+                allowCreate
+                allowEdit
               />
             }
           />

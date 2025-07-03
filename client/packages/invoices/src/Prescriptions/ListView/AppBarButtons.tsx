@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React from 'react';
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -7,35 +7,30 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
-  FileUtils,
   LoadingButton,
   ToggleState,
-  EnvUtils,
-  Platform,
-  useCallbackWithPermission,
-  UserPermission,
+  useExportCSV,
 } from '@openmsupply-client/common';
-import { CreatePatientModal } from '@openmsupply-client/system';
 import { ListParams, usePrescriptionList } from '../api';
 import { prescriptionToCsv } from '../../utils';
 import { NewPrescriptionModal } from './NewPrescriptionModal';
 
-export const AppBarButtonsComponent: FC<{
+interface AppBarButtonsComponentProps {
   modalController: ToggleState;
   listParams: ListParams;
-}> = ({ modalController, listParams }) => {
+}
+
+export const AppBarButtonsComponent = ({
+  modalController,
+  listParams,
+}: AppBarButtonsComponentProps) => {
   const t = useTranslation();
-  const { success, error } = useNotification();
-  const [patientModalOpen, setPatientModalOpen] = useState(false);
+  const { error } = useNotification();
+  const exportCSV = useExportCSV();
 
   const {
     query: { data, isLoading },
   } = usePrescriptionList(listParams);
-
-  const onCreatePatient = useCallbackWithPermission(
-    UserPermission.PatientMutate,
-    () => setPatientModalOpen(true)
-  );
 
   const csvExport = async () => {
     if (!data || !data?.nodes.length) {
@@ -44,8 +39,7 @@ export const AppBarButtonsComponent: FC<{
     }
 
     const csv = prescriptionToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, t('filename.prescriptions'));
-    success(t('success'))();
+    exportCSV(csv, t('filename.prescriptions'));
   };
 
   return (
@@ -59,19 +53,14 @@ export const AppBarButtonsComponent: FC<{
         <NewPrescriptionModal
           open={modalController.isOn}
           onClose={modalController.toggleOff}
-          openPatientModal={onCreatePatient}
         />
         <LoadingButton
           startIcon={<DownloadIcon />}
           isLoading={isLoading}
           variant="outlined"
           onClick={csvExport}
-          disabled={EnvUtils.platform === Platform.Android}
           label={t('button.export')}
         />
-        {patientModalOpen && (
-          <CreatePatientModal onClose={() => setPatientModalOpen(false)} />
-        )}
       </Grid>
     </AppBarButtonsPortal>
   );

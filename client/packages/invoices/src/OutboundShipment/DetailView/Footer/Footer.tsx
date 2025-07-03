@@ -32,7 +32,9 @@ const createStatusLog = (invoice: OutboundFragment) => {
     [InvoiceNodeStatus.Shipped]: null,
     [InvoiceNodeStatus.Delivered]: null,
     [InvoiceNodeStatus.Verified]: null,
+    // Not used in outbound shipments
     [InvoiceNodeStatus.Cancelled]: null,
+    [InvoiceNodeStatus.Received]: null,
   };
 
   if (statusIdx >= 0) {
@@ -51,6 +53,9 @@ const createStatusLog = (invoice: OutboundFragment) => {
     statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
   }
   if (statusIdx >= 5) {
+    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
+  }
+  if (statusIdx >= 6) {
     statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
   }
 

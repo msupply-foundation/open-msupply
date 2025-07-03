@@ -15,11 +15,16 @@ import {
   useConfirmationModal,
   DetailTab,
   ShortTabList,
+  useParams,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 
-import { usePatientEditForm } from './usePatientEditForm';
+import { useUpsertPatient } from './useUpsertPatient';
 import { useInsuranceProviders } from '../apiModern/hooks/useInsuranceProviders';
 import { InsuranceListView } from '../Insurance';
+import { usePrescription } from '@openmsupply-client/invoices/src/Prescriptions';
+import { AppRoute } from '@openmsupply-client/config';
 
 enum Tabs {
   Patient = 'Patient',
@@ -36,8 +41,10 @@ export const EditPatientModal = ({
   onClose: (patientId?: string) => void;
 }) => {
   const t = useTranslation();
-  const [currentTab, setCurrentTab] = useState(Tabs.Patient);
-
+  const { id } = useParams();
+  const {
+    update: { update: updatePrescription },
+  } = usePrescription();
   const {
     JsonForm,
     save,
@@ -46,13 +53,16 @@ export const EditPatientModal = ({
     isDirty,
     validationError,
     revert,
-  } = usePatientEditForm(patientId);
+  } = useUpsertPatient(patientId);
   const { userHasPermission } = useAuthContext();
+  const navigate = useNavigate();
 
   const { Modal } = useDialog({
     onClose,
     isOpen,
   });
+
+  const [currentTab, setCurrentTab] = useState(Tabs.Patient);
 
   const requiresConfirmation = (tab: string) => {
     return tab === Tabs.Patient && isDirty;
@@ -96,6 +106,15 @@ export const EditPatientModal = ({
     }
   };
 
+  const handleSave = async () => {
+    save();
+    await updatePrescription({
+      id,
+      patientId,
+    });
+    onClose();
+  };
+
   if (isLoading) return <BasicSpinner />;
 
   return (
@@ -113,12 +132,23 @@ export const EditPatientModal = ({
             !userHasPermission(UserPermission.PatientMutate)
           }
           isLoading={isLoading}
-          onClick={async () => {
-            await save();
-            onClose();
-          }}
+          onClick={handleSave}
           label={t('button.save')}
           startIcon={<SaveIcon />}
+        />
+      }
+      nextButton={
+        <DialogButton
+          variant="next"
+          customLabel={t('button.view-patient')}
+          onClick={() =>
+            navigate(
+              RouteBuilder.create(AppRoute.Dispensary)
+                .addPart(AppRoute.Patients)
+                .addPart(patientId)
+                .build()
+            )
+          }
         />
       }
       cancelButton={

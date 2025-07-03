@@ -131,6 +131,7 @@ export enum ActivityLogNodeType {
   InvoiceStatusCancelled = 'INVOICE_STATUS_CANCELLED',
   InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
+  InvoiceStatusReceived = 'INVOICE_STATUS_RECEIVED',
   InvoiceStatusShipped = 'INVOICE_STATUS_SHIPPED',
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
   ItemVariantCreated = 'ITEM_VARIANT_CREATED',
@@ -1210,6 +1211,15 @@ export type CentralPluginQueriesUploadedPluginInfoArgs = {
   fileId: Scalars['String']['input'];
 };
 
+export type CentralReportMutations = {
+  __typename: 'CentralReportMutations';
+  installUploadedReports: Array<Scalars['String']['output']>;
+};
+
+export type CentralReportMutationsInstallUploadedReportsArgs = {
+  fileId: Scalars['String']['input'];
+};
+
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   assetCatalogue: AssetCatalogueMutations;
@@ -1221,6 +1231,7 @@ export type CentralServerMutationNode = {
   logReason: AssetLogReasonMutations;
   plugins: CentralPluginMutations;
   preferences: PreferenceMutations;
+  reports: CentralReportMutations;
   vaccineCourse: VaccineCourseMutations;
 };
 
@@ -3014,6 +3025,7 @@ export type InsertClinicianInput = {
   id: Scalars['String']['input'];
   initials: Scalars['String']['input'];
   lastName: Scalars['String']['input'];
+  mobile?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertContactFormInput = {
@@ -3192,6 +3204,7 @@ export type InsertInboundShipmentLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Float']['input'];
   sellPricePerPack: Scalars['Float']['input'];
+  shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
@@ -4016,6 +4029,7 @@ export type InvoiceFilterInput = {
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<StringFilterInput>;
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
+  receivedDatetime?: InputMaybe<DatetimeFilterInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterInvoiceStatusInput>;
@@ -4077,6 +4091,7 @@ export type InvoiceLineNode = {
   itemName: Scalars['String']['output'];
   itemVariant?: Maybe<ItemVariantNode>;
   itemVariantId?: Maybe<Scalars['String']['output']>;
+  linkedInvoiceId?: Maybe<Scalars['String']['output']>;
   location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
   locationName?: Maybe<Scalars['String']['output']>;
@@ -4091,6 +4106,7 @@ export type InvoiceLineNode = {
   /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReasonId?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
+  shippedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
   stockLine?: Maybe<StockLineNode>;
   taxPercentage?: Maybe<Scalars['Float']['output']>;
   totalAfterTax: Scalars['Float']['output'];
@@ -4176,6 +4192,7 @@ export type InvoiceNode = {
   pricing: PricingNode;
   program?: Maybe<ProgramNode>;
   programId?: Maybe<Scalars['String']['output']>;
+  receivedDatetime?: Maybe<Scalars['DateTime']['output']>;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
    * Or Request Requisition for Inbound Shipment that Originated from Outbound Shipment (linked through Response Requisition)
@@ -4237,11 +4254,17 @@ export enum InvoiceNodeStatus {
    */
   Picked = 'PICKED',
   /**
+   * General description: Received inbound Shipment has arrived, not counted or verified yet
+   * Outbound Shipment: Status is updated based on corresponding inbound Shipment
+   * Inbound Shipment: Status update, doesn't affect stock levels or restrict access to edit
+   */
+  Received = 'RECEIVED',
+  /**
    * General description: Outbound Shipment is sent out for delivery
    * Outbound Shipment: Becomes not editable
    * Inbound Shipment: For inter store stock transfers an inbound Shipment
    * becomes editable when this status is set as a result of corresponding
-   * outbound Shipment being chagned to shipped (this is similar to New status)
+   * outbound Shipment being changed to shipped (this is similar to New status)
    */
   Shipped = 'SHIPPED',
   /**
@@ -6163,6 +6186,7 @@ export type PreferenceDescriptionNode = {
 
 export enum PreferenceKey {
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
+  GenderOptions = 'genderOptions',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   ShowContactTracing = 'showContactTracing',
@@ -6188,11 +6212,13 @@ export enum PreferenceNodeType {
 export enum PreferenceValueNodeType {
   Boolean = 'BOOLEAN',
   Integer = 'INTEGER',
+  MultiChoice = 'MULTI_CHOICE',
 }
 
 export type PreferencesNode = {
   __typename: 'PreferencesNode';
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
+  genderOptions: Array<GenderType>;
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
@@ -8028,11 +8054,13 @@ export enum RequisitionNodeType {
   Response = 'RESPONSE',
 }
 
-export type RequisitionReasonNotProvided = {
-  __typename: 'RequisitionReasonNotProvided';
-  description: Scalars['String']['output'];
-  requisitionLine: RequisitionLineNode;
-};
+export type RequisitionReasonNotProvided =
+  UpdateRequestRequisitionLineErrorInterface &
+    UpdateResponseRequisitionLineErrorInterface & {
+      __typename: 'RequisitionReasonNotProvided';
+      description: Scalars['String']['output'];
+      requisitionLine: RequisitionLineNode;
+    };
 
 export type RequisitionReasonsNotProvided =
   UpdateRequestRequisitionErrorInterface &
@@ -9140,7 +9168,7 @@ export type UpdateCustomerReturnResponse =
   | UpdateCustomerReturnError;
 
 export enum UpdateCustomerReturnStatusInput {
-  Delivered = 'DELIVERED',
+  Received = 'RECEIVED',
   Verified = 'VERIFIED',
 }
 
@@ -9270,6 +9298,7 @@ export type UpdateInboundShipmentLineInput = {
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
+  shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
@@ -9325,6 +9354,7 @@ export type UpdateInboundShipmentServiceLineResponseWithId = {
 
 export enum UpdateInboundShipmentStatusInput {
   Delivered = 'DELIVERED',
+  Received = 'RECEIVED',
   Verified = 'VERIFIED',
 }
 
@@ -10153,6 +10183,7 @@ export type UpsertPackVariantResponse =
 
 export type UpsertPreferencesInput = {
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
+  genderOptions?: InputMaybe<Array<GenderType>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
