@@ -12,7 +12,6 @@ import {
   TabContext,
   TabPanel,
   NamePropertyNode,
-  useIsGapsStoreOnly,
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
 import { NameRenderer } from '../..';
@@ -150,10 +149,7 @@ const ModalTabs = ({
   updateProperty,
 }: ModalTabProps) => {
   const t = useTranslation();
-  const isGapsMobileStore = useIsGapsStoreOnly();
-  const [currentTab, setCurrentTab] = useState(
-    storeId && !isGapsMobileStore ? Tabs.Preferences : Tabs.Properties
-  );
+  const [currentTab, setCurrentTab] = useState(Tabs.Properties);
 
   return (
     <TabContext value={currentTab}>
@@ -162,16 +158,11 @@ const ModalTabs = ({
         centered
         onChange={(_, v) => setCurrentTab(v)}
       >
+        <Tab value={Tabs.Properties} label={t('label.properties')} />
         {storeId && (
           <Tab value={Tabs.Preferences} label={t('label.preferences')} />
         )}
-        <Tab value={Tabs.Properties} label={t('label.properties')} />
       </TabList>
-      {storeId && (
-        <TabPanel value={Tabs.Preferences}>
-          <EditStorePreferences storeId={storeId} />
-        </TabPanel>
-      )}
       <TabPanel value={Tabs.Properties}>
         <StoreProperties
           propertyConfigs={propertyConfigs}
@@ -179,6 +170,11 @@ const ModalTabs = ({
           updateProperty={updateProperty}
         />
       </TabPanel>
+      {storeId && (
+        <TabPanel value={Tabs.Preferences}>
+          <EditStorePreferences storeId={storeId} />
+        </TabPanel>
+      )}
     </TabContext>
   );
 };
