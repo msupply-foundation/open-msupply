@@ -15,7 +15,7 @@ impl MigrationFragment for Migrate {
                 ALTER TABLE name ADD COLUMN next_of_kin_id TEXT;
             "#
         )?;
-
+        // TODO fix
         // Reset translate all names on the next sync
         sql!(
             connection,
