@@ -5,13 +5,13 @@ import {
   Grid,
   Stack,
   Link,
-  FileUtils,
   PropertyNode,
   useNotification,
   NamePropertyNode,
   UploadFile,
   InlineProgress,
   Typography,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { ImportPanel } from './ImportPanel';
 import { ImportRow } from './PropertiesImportModal';
@@ -52,6 +52,7 @@ export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const { data: facilitiesData } = useName.document.storesAll();
+  const exportCSV = useExportCSV();
 
   const FacilityPropertyBuffer: ImportRow[] = [];
   const propertyNodes: PropertyNode[] | undefined = properties
@@ -78,7 +79,7 @@ export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
       t,
       propertyNodes ? propertyNodes?.map(p => p.key) : []
     );
-    FileUtils.exportCSV(csv, t('filename.facilities-properties'));
+    exportCSV(csv, t('filename.facilities-properties'));
   };
 
   const csvImport = <T extends File>(files: T[]) => {
