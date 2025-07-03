@@ -17,7 +17,7 @@ use crate::{
         },
         stock_out_line::{InsertStockOutLine, StockOutType, UpdateStockOutLine},
     },
-    preference::{ManageVaccinesInDoses, Preference, SortByVvmStatusThenExpiry},
+    preference::{Preference, SortByVvmStatusThenExpiry},
 };
 
 use super::AllocateOutboundShipmentUnallocatedLineError;
@@ -41,18 +41,11 @@ pub fn generate(
 ) -> Result<GenerateOutput, AllocateOutboundShipmentUnallocatedLineError> {
     let mut result = GenerateOutput::default();
 
-    let vaccines_in_doses = ManageVaccinesInDoses
-        .load(connection, Some(store_id.to_string()))
-        .map_err(|e| {
-            AllocateOutboundShipmentUnallocatedLineError::PreferenceError(e.to_string())
-        })?;
     let sort_by_vvm = SortByVvmStatusThenExpiry
         .load(connection, Some(store_id.to_string()))
         .map_err(|e| {
             AllocateOutboundShipmentUnallocatedLineError::PreferenceError(e.to_string())
         })?;
-
-    let should_allocate_in_doses = vaccines_in_doses && unallocated_line.item_row.is_vaccine;
 
     let allocated_lines = get_allocated_lines(connection, &unallocated_line)?;
     // Assume pack_size 1 for unallocated line
@@ -100,10 +93,8 @@ pub fn generate(
             continue;
         }
 
-        let doses_per_unit = get_item_doses_per_unit_factor(should_allocate_in_doses, &stock_line);
-
         let packs_to_allocate =
-            packs_to_allocate_from_stock_line(remaining_to_allocate * doses_per_unit, &stock_line);
+            packs_to_allocate_from_stock_line(remaining_to_allocate, &stock_line);
 
         // Add to existing allocated line or create new
         match try_allocate_existing_line(
@@ -119,15 +110,14 @@ pub fn generate(
             )),
         }
 
-        remaining_to_allocate -=
-            stock_line.stock_line_row.pack_size * (packs_to_allocate / doses_per_unit); // factor should never be 0, should be safe
+        remaining_to_allocate -= stock_line.stock_line_row.pack_size * packs_to_allocate;
 
         if remaining_to_allocate <= 0.0 {
             break;
         }
     }
 
-    // If nothing remaining to alloacted just remove the line, otherwise update
+    // If nothing remaining to allocated just remove the line, otherwise update
     if remaining_to_allocate <= 0.0 {
         result.delete_unallocated_line = Some(DeleteOutboundShipmentUnallocatedLine {
             id: unallocated_line.invoice_line_row.id,
@@ -282,16 +272,4 @@ fn get_allocated_lines(
             ))
             .r#type(InvoiceLineType::StockOut.equal_to()),
     )
-}
-
-fn get_item_doses_per_unit_factor(should_allocate_in_doses: bool, stock_line: &StockLine) -> f64 {
-    if !stock_line.item_row.is_vaccine || !should_allocate_in_doses {
-        // Should only be working in units, don't need to consider variants
-        return 1.0;
-    }
-
-    // Use vaccine_doses from the item, but never less than 1.0
-    let doses_per_unit = f64::max(f64::from(stock_line.item_row.vaccine_doses), 1.0);
-
-    doses_per_unit
 }
