@@ -100,19 +100,10 @@ pub fn generate(
             continue;
         }
 
-        // When allocating in doses, we assume doses per unit is the default doses per unit for the item
-        // Individual stock lines may have different doses per unit, so we need to adjust the allocation accordingly
+        let doses_per_unit = get_item_doses_per_unit_factor(should_allocate_in_doses, &stock_line);
 
-        // e.g. placeholder remaining is for 8 units, at default of 5 doses per unit = 40 doses
-        // this stock line is of variant with 10 doses per unit
-        // therefore, should allocate 4 units (x 10 doses per unit = 40 doses)
-        let item_variant_doses_per_unit_factor =
-            get_item_variant_doses_per_unit_factor(should_allocate_in_doses, &stock_line);
-
-        let packs_to_allocate = packs_to_allocate_from_stock_line(
-            remaining_to_allocate * item_variant_doses_per_unit_factor,
-            &stock_line,
-        );
+        let packs_to_allocate =
+            packs_to_allocate_from_stock_line(remaining_to_allocate * doses_per_unit, &stock_line);
 
         // Add to existing allocated line or create new
         match try_allocate_existing_line(
@@ -128,8 +119,8 @@ pub fn generate(
             )),
         }
 
-        remaining_to_allocate -= stock_line.stock_line_row.pack_size
-            * (packs_to_allocate / item_variant_doses_per_unit_factor); // factor should never be 0, should be safe
+        remaining_to_allocate -=
+            stock_line.stock_line_row.pack_size * (packs_to_allocate / doses_per_unit); // factor should never be 0, should be safe
 
         if remaining_to_allocate <= 0.0 {
             break;
@@ -293,29 +284,14 @@ fn get_allocated_lines(
     )
 }
 
-fn get_item_variant_doses_per_unit_factor(
-    should_allocate_in_doses: bool,
-    stock_line: &StockLine,
-) -> f64 {
+fn get_item_doses_per_unit_factor(should_allocate_in_doses: bool, stock_line: &StockLine) -> f64 {
     if !stock_line.item_row.is_vaccine || !should_allocate_in_doses {
         // Should only be working in units, don't need to consider variants
         return 1.0;
     }
 
-    let doses_per_unit = f64::from(stock_line.item_row.vaccine_doses);
+    // Use vaccine_doses from the item, but never less than 1.0
+    let doses_per_unit = f64::max(f64::from(stock_line.item_row.vaccine_doses), 1.0);
 
-    let doses_per_unit = stock_line
-        .item_variant_row
-        .as_ref()
-        // If the stock line has an item variant, use its doses per unit
-        .map(|variant| f64::from(variant.doses_per_unit))
-        // Otherwise use default doses per unit from item
-        .unwrap_or(doses_per_unit);
-
-    let item_variant_doses_per_unit_factor =
-                // f64::max defaults 0.0 to 1.0 (to avoid division by zero)
-                f64::max(
-                    doses_per_unit, 1.0) / f64::max(doses_per_unit, 1.0);
-
-    item_variant_doses_per_unit_factor
+    doses_per_unit
 }

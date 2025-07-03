@@ -752,6 +752,10 @@ mod test {
             .allocate_outbound_shipment_unallocated_line(&context, line().id.clone())
             .unwrap();
 
+        println!("inserts {:?} ", result.inserts);
+        println!("deletes {:?} ", result.deletes);
+        println!("updates {:?} ", result.updates);
+
         assert_eq!(result.inserts.len(), 2);
         assert_eq!(result.deletes.len(), 1);
         assert_eq!(result.updates.len(), 0);
