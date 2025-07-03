@@ -171,6 +171,13 @@ pub fn mock_merged_patient_name_link() -> NameLinkRow {
     }
 }
 
+pub fn mock_store_b_name_link() -> NameLinkRow {
+    NameLinkRow {
+        id: mock_name_store_b().id,
+        name_id: mock_name_store_b().id,
+    }
+}
+
 pub fn mock_names() -> Vec<NameRow> {
     vec![
         mock_name_a(),
@@ -193,5 +200,5 @@ pub fn mock_names() -> Vec<NameRow> {
 }
 
 pub fn mock_name_links() -> Vec<NameLinkRow> {
-    vec![mock_merged_patient_name_link()]
+    vec![mock_merged_patient_name_link(), mock_store_b_name_link()]
 }
