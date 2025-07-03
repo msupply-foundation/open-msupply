@@ -4576,6 +4576,7 @@ export type LedgerConnector = {
 };
 
 export type LedgerFilterInput = {
+  datetime?: InputMaybe<DatetimeFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -6960,6 +6961,7 @@ export type QueriesGenerateReportDefinitionArgs = {
   arguments?: InputMaybe<Scalars['JSON']['input']>;
   currentLanguage?: InputMaybe<Scalars['String']['input']>;
   dataId?: InputMaybe<Scalars['String']['input']>;
+  excelTemplateBuffer?: InputMaybe<Array<Scalars['Int']['input']>>;
   format?: InputMaybe<PrintFormat>;
   name?: InputMaybe<Scalars['String']['input']>;
   report: Scalars['JSON']['input'];
