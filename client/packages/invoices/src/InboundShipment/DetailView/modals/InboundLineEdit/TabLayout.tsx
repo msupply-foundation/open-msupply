@@ -28,7 +28,7 @@ interface TabLayoutProps {
   draftLines: DraftInboundLine[];
   isDisabled: boolean;
   updateDraftLine: (patch: PatchDraftLineInput) => void;
-  removeDraftLine?: (id: string) => void;
+  removeDraftLine: (id: string) => void;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
   item: ItemRowFragment | null;

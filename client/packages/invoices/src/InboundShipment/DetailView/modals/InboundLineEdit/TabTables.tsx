@@ -47,7 +47,6 @@ import { PatchDraftLineInput } from '../../../api';
 interface TableProps {
   lines: DraftInboundLine[];
   updateDraftLine: (patch: PatchDraftLineInput) => void;
-  removeDraftLine?: (id: string) => void;
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
@@ -55,6 +54,10 @@ interface TableProps {
   hasVvmStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
   setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
+}
+
+interface QuantityTableProps extends TableProps {
+  removeDraftLine: (id: string) => void;
 }
 
 export const QuantityTableComponent = ({
@@ -66,7 +69,7 @@ export const QuantityTableComponent = ({
   hasVvmStatusesEnabled,
   item,
   setPackRoundingMessage,
-}: TableProps) => {
+}: QuantityTableProps) => {
   const t = useTranslation();
   const theme = useTheme();
   const { getPlural } = useIntlUtils();
@@ -200,7 +203,7 @@ export const QuantityTableComponent = ({
     Cell: ({ rowData }) => (
       <IconButton
         label="Delete"
-        onClick={() => removeDraftLine && removeDraftLine(rowData.id)}
+        onClick={() => removeDraftLine(rowData.id)}
         icon={<DeleteIcon fontSize="small" />}
       />
     ),
