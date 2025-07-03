@@ -162,6 +162,12 @@ impl EqualFilter<i32> {
             ..Default::default()
         }
     }
+    pub fn equal_any_or_null_i32(value: Vec<i32>) -> Self {
+        Self {
+            equal_any_or_null: Some(value),
+            ..Default::default()
+        }
+    }
 }
 
 impl EqualFilter<f64> {
