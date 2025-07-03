@@ -30,11 +30,6 @@ fragment InboundLine on InvoiceLineNode {
     name
   }
 
-  itemVariant {
-    id
-    dosesPerUnit
-  }
-
   item {
     __typename
     id

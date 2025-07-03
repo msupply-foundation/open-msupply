@@ -60,11 +60,6 @@ export type StockLineFragment = {
       code: string;
     }>;
   };
-  itemVariant?: {
-    __typename: 'ItemVariantNode';
-    id: string;
-    dosesPerUnit: number;
-  } | null;
   donor?: { __typename: 'NameNode'; id: string } | null;
   vvmStatus?: {
     __typename: 'VvmstatusNode';
@@ -359,11 +354,6 @@ export type ItemFragment = {
           code: string;
         }>;
       };
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        dosesPerUnit: number;
-      } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
@@ -555,11 +545,6 @@ export type ItemsWithStockLinesQuery = {
               code: string;
             }>;
           };
-          itemVariant?: {
-            __typename: 'ItemVariantNode';
-            id: string;
-            dosesPerUnit: number;
-          } | null;
           donor?: { __typename: 'NameNode'; id: string } | null;
           vvmStatus?: {
             __typename: 'VvmstatusNode';
@@ -870,11 +855,6 @@ export type ItemByIdQuery = {
               code: string;
             }>;
           };
-          itemVariant?: {
-            __typename: 'ItemVariantNode';
-            id: string;
-            dosesPerUnit: number;
-          } | null;
           donor?: { __typename: 'NameNode'; id: string } | null;
           vvmStatus?: {
             __typename: 'VvmstatusNode';
@@ -1134,11 +1114,6 @@ export type GetHistoricalStockLinesQuery = {
           code: string;
         }>;
       };
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        dosesPerUnit: number;
-      } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
@@ -1524,10 +1499,6 @@ export const StockLineFragmentDoc = gql`
     storeId
     totalNumberOfPacks
     itemVariantId
-    itemVariant {
-      id
-      dosesPerUnit
-    }
     donor(storeId: $storeId) {
       id
     }

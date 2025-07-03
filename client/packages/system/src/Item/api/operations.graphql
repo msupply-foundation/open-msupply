@@ -43,11 +43,6 @@ fragment StockLine on StockLineNode {
   totalNumberOfPacks
   itemVariantId
 
-  itemVariant {
-    id
-    dosesPerUnit
-  }
-
   donor(storeId: $storeId) {
     id
   }

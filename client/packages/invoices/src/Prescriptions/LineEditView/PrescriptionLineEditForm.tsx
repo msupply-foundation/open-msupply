@@ -246,11 +246,8 @@ const dosesSummary = (
   lines: DraftStockOutLineFragment[]
 ) => {
   const totalDoses = lines.reduce(
-    (sum, { packSize, numberOfPacks, defaultDosesPerUnit, itemVariant }) =>
-      sum +
-      packSize *
-        numberOfPacks *
-        (itemVariant?.dosesPerUnit ?? defaultDosesPerUnit),
+    (sum, { packSize, numberOfPacks, defaultDosesPerUnit }) =>
+      sum + packSize * numberOfPacks * defaultDosesPerUnit,
     0
   );
 
