@@ -75,6 +75,24 @@ jobs:
           path: ./client/packages/android/app/build/outputs/apk/arm64/release/*.apk
           retention-days: 3
 
+      - name: Upload Universal APK to Backblaze B2
+        uses: yamatt/backblaze-b2-upload-action@v7
+        with:
+          key_id: ${{ secrets.B2_KEY_ID }}
+          application_key: ${{ secrets.B2_APPLICATION_KEY }}
+          bucket_name: ${{ secrets.B2_BUCKET_NAME }}
+          file_path: ./client/packages/android/app/build/outputs/apk/universal/release/*.apk
+          remote_path: "android/"
+
+      - name: Upload Arm64 APK to Backblaze B2
+        uses: yamatt/backblaze-b2-upload-action@v7
+        with:
+          key_id: ${{ secrets.B2_KEY_ID }}
+          application_key: ${{ secrets.B2_APPLICATION_KEY }}
+          bucket_name: ${{ secrets.B2_BUCKET_NAME }}
+          file_path: ./client/packages/android/app/build/outputs/apk/arm64/release/*.apk
+          remote_path: "android/"
+
       - name: Send build completion notification
         if: always()
         env:
