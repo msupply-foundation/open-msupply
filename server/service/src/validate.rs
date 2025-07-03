@@ -51,14 +51,14 @@ pub fn get_other_party(
     // If no visible party is found, we return the first one.
     // This is because with store merging it's possible to return multiple parties for the same ID, if there's only one visible, that's the one we want.
     let other_party = other_parties
-        .clone()
-        .into_iter()
-        .find(|party| party.is_visible());
+        .iter()
+        .find(|party| party.is_visible())
+        .cloned();
 
     if let Some(other_party) = other_party {
         Ok(Some(other_party))
     } else {
-        Ok(other_parties.first().cloned())
+        Ok(other_parties.into_iter().next())
     }
 }
 
