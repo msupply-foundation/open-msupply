@@ -31,6 +31,7 @@ const createStatusLog = (invoice: InboundFragment) => {
     [InvoiceNodeStatus.Picked]: null,
     [InvoiceNodeStatus.Shipped]: null,
     [InvoiceNodeStatus.Delivered]: null,
+    [InvoiceNodeStatus.Received]: null,
     [InvoiceNodeStatus.Verified]: null,
     // Placeholder for typescript, not used in inbounds
     [InvoiceNodeStatus.Allocated]: null,
@@ -50,6 +51,9 @@ const createStatusLog = (invoice: InboundFragment) => {
     statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
   }
   if (statusIdx >= 4) {
+    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
+  }
+  if (statusIdx >= 5) {
     statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
   }
 

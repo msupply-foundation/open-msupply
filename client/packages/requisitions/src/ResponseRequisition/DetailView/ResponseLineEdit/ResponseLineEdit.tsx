@@ -41,6 +41,7 @@ interface ResponseLineEditProps {
   isUpdateMode?: boolean;
   manageVaccinesInDoses?: boolean;
   isReasonsError: boolean;
+  setIsEditingSupply: (isEditingSupply: boolean) => void;
 }
 
 export const ResponseLineEdit = ({
@@ -57,6 +58,7 @@ export const ResponseLineEdit = ({
   disabled = false,
   isUpdateMode = false,
   manageVaccinesInDoses = false,
+  setIsEditingSupply,
 }: ResponseLineEditProps) => {
   const t = useTranslation();
   const { data: reasonOptions, isLoading } = useReasonOptions();
@@ -268,6 +270,7 @@ export const ResponseLineEdit = ({
             unitName={unitName}
             displayVaccinesInDoses={displayVaccinesInDoses}
             dosesPerUnit={currentItem?.doses ?? 1}
+            setIsEditingSupply={setIsEditingSupply}
           />
           {numericInput(
             'label.remaining-to-supply',

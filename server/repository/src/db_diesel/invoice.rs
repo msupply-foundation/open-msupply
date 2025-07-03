@@ -48,6 +48,7 @@ pub struct InvoiceFilter {
     pub picked_datetime: Option<DatetimeFilter>,
     pub shipped_datetime: Option<DatetimeFilter>,
     pub delivered_datetime: Option<DatetimeFilter>,
+    pub received_datetime: Option<DatetimeFilter>,
     pub verified_datetime: Option<DatetimeFilter>,
     pub created_or_backdated_datetime: Option<DatetimeFilter>,
     pub colour: Option<EqualFilter<String>>,
@@ -243,6 +244,7 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
             picked_datetime,
             shipped_datetime,
             delivered_datetime,
+            received_datetime,
             verified_datetime,
             created_or_backdated_datetime,
             colour,
@@ -278,6 +280,7 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
         apply_date_time_filter!(query, picked_datetime, invoice::picked_datetime);
         apply_date_time_filter!(query, shipped_datetime, invoice::shipped_datetime);
         apply_date_time_filter!(query, delivered_datetime, invoice::delivered_datetime);
+        apply_date_time_filter!(query, received_datetime, invoice::received_datetime);
         apply_date_time_filter!(query, verified_datetime, invoice::verified_datetime);
         apply_date_time_filter!(
             query,
@@ -396,6 +399,10 @@ impl InvoiceFilter {
         self.delivered_datetime = Some(filter);
         self
     }
+    pub fn received_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.received_datetime = Some(filter);
+        self
+    }
 
     pub fn verified_datetime(mut self, filter: DatetimeFilter) -> Self {
         self.verified_datetime = Some(filter);
@@ -464,8 +471,9 @@ impl InvoiceStatus {
             InvoiceStatus::Picked => 3,
             InvoiceStatus::Shipped => 4,
             InvoiceStatus::Delivered => 5,
-            InvoiceStatus::Verified => 6,
-            InvoiceStatus::Cancelled => 7,
+            InvoiceStatus::Received => 6,
+            InvoiceStatus::Verified => 7,
+            InvoiceStatus::Cancelled => 8,
         }
     }
 }

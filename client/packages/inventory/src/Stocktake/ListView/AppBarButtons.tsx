@@ -4,14 +4,12 @@ import {
   useNotification,
   AppBarButtonsPortal,
   Grid,
-  FileUtils,
   LoadingButton,
-  EnvUtils,
-  Platform,
   ButtonWithIcon,
   PlusCircleIcon,
   useToggle,
   useSimplifiedTabletUI,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { useStocktakeOld } from '../api';
@@ -32,13 +30,14 @@ export const AppBarButtons = ({
 }: AppBarButtonsProps) => {
   const t = useTranslation();
   const modalController = useToggle();
-  const { success, error } = useNotification();
+  const { error } = useNotification();
   const { isLoading, fetchAsync } = useStocktakeOld.document.listAll({
     key: 'createdDatetime',
     direction: 'desc',
     isDesc: true,
   });
   const simplifiedTabletView = useSimplifiedTabletUI();
+  const exportCSV = useExportCSV();
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -48,8 +47,7 @@ export const AppBarButtons = ({
     }
 
     const csv = stocktakesToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, t('filename.stocktakes'));
-    success(t('success'))();
+    exportCSV(csv, t('filename.stocktakes'));
   };
 
   return (
@@ -73,7 +71,6 @@ export const AppBarButtons = ({
             variant="outlined"
             isLoading={isLoading}
             onClick={csvExport}
-            disabled={EnvUtils.platform === Platform.Android}
             label={t('button.export')}
           />
         )}

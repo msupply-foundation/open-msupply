@@ -509,7 +509,7 @@ mod test {
             store_id: context.store_id.clone(),
             created_datetime: datetime,
             picked_datetime: Some(datetime),
-            delivered_datetime: Some(datetime),
+            received_datetime: Some(datetime),
             verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
@@ -527,7 +527,7 @@ mod test {
             store_id: context.store_id.clone(),
             created_datetime: datetime,
             picked_datetime: Some(datetime),
-            delivered_datetime: Some(datetime),
+            received_datetime: Some(datetime),
             verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()

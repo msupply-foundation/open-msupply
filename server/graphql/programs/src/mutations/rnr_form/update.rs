@@ -85,6 +85,7 @@ pub fn update_rnr_form(
 fn map_error(error: ServiceError) -> Result<UpdateRnRFormResponse> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
+    log::error!("Error updating RnR form: {}", formatted_error);
 
     let graphql_error = match error {
         ServiceError::RnRFormDoesNotExist

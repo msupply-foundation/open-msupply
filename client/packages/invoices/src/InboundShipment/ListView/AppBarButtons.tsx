@@ -9,14 +9,12 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
-  FileUtils,
   LoadingButton,
   ToggleState,
-  Platform,
-  EnvUtils,
   useNavigate,
   RouteBuilder,
   useAuthContext,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import {
   NameRowFragment,
@@ -37,9 +35,11 @@ export const AppBarButtons = ({
 }) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { success, error } = useNotification();
+  const { error } = useNotification();
   const { store } = useAuthContext();
   const [name, setName] = useState<NameRowFragment | null>(null);
+
+  const exportCsv = useExportCSV();
   const { mutateAsync: onCreate } = useInbound.document.insert();
   const { isLoading, fetchAsync } = useInbound.document.listAll({
     key: 'createdDateTime',
@@ -59,8 +59,7 @@ export const AppBarButtons = ({
     }
 
     const csv = inboundsToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, t('filename.inbounds'));
-    success(t('success'))();
+    await exportCsv(csv, t('filename.inbounds'));
   };
 
   const createInvoice = async (nameId: string, requisitionId?: string) => {
@@ -111,7 +110,6 @@ export const AppBarButtons = ({
             variant="outlined"
             onClick={csvExport}
             isLoading={isLoading}
-            disabled={EnvUtils.platform === Platform.Android}
             label={t('button.export')}
           />
         )}

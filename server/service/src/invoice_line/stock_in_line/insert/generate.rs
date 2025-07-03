@@ -5,13 +5,14 @@ use crate::{
         GenerateVVMStatusLogInput,
     },
     invoice_line::stock_in_line::{
-        convert_invoice_line_to_single_pack, generate_batch, StockInType, StockLineInput,
+        convert_invoice_line_to_single_pack, generate_batch, should_update_stock, StockInType,
+        StockLineInput,
     },
     store_preference::get_store_preferences,
 };
 use repository::{
     vvm_status::vvm_status_log_row::VVMStatusLogRow, BarcodeRow, InvoiceLineRow, InvoiceLineType,
-    InvoiceRow, InvoiceStatus, ItemRow, RepositoryError, StockLineRow, StorageConnection,
+    InvoiceRow, ItemRow, RepositoryError, StockLineRow, StorageConnection,
 };
 
 use super::InsertStockInLine;
@@ -165,7 +166,7 @@ fn generate_line(
 fn should_upsert_batch(stock_in_type: &StockInType, existing_invoice_row: &InvoiceRow) -> bool {
     match stock_in_type {
         StockInType::InboundShipment | StockInType::CustomerReturn => {
-            existing_invoice_row.status != InvoiceStatus::New
+            should_update_stock(&existing_invoice_row)
         }
         StockInType::InventoryAddition => true,
     }

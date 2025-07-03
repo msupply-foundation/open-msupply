@@ -1,7 +1,6 @@
+use crate::types::patient::GenderType;
 use async_graphql::*;
 use repository::{Clinician, ClinicianRow};
-
-use crate::types::patient::GenderType;
 
 #[derive(PartialEq, Debug)]
 pub struct ClinicianNode {
