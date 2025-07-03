@@ -82,6 +82,9 @@ impl LedgerNode {
     pub async fn reason(&self) -> &Option<String> {
         &self.ledger.reason
     }
+    pub async fn running_balance(&self) -> &f64 {
+        &self.ledger.running_balance
+    }
 }
 
 #[derive(SimpleObject)]
