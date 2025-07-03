@@ -8,7 +8,6 @@ import { ItemRowFragment } from '@openmsupply-client/system';
 import { ColumnAlign, ColumnDefinition } from '../types';
 type VaccineItemRow = {
   item?: ItemRowFragment | null;
-  itemVariant?: { dosesPerUnit: number } | null;
 };
 
 export const getDosesPerUnitColumn = <

@@ -78,9 +78,7 @@ export const packsToDoses = (
   line: DraftStockOutLineFragment
 ) => {
   return NumUtils.round(
-    numPacks *
-      line.packSize *
-      ((line.itemVariant?.dosesPerUnit ?? line.defaultDosesPerUnit) || 1)
+    numPacks * line.packSize * (line.defaultDosesPerUnit || 1)
   );
 };
 
@@ -89,11 +87,7 @@ export const dosesToPacks = (
   doses: number,
   line: DraftStockOutLineFragment
 ) => {
-  return (
-    doses /
-    line.packSize /
-    ((line.itemVariant?.dosesPerUnit ?? line.defaultDosesPerUnit) || 1)
-  );
+  return doses / line.packSize / (line.defaultDosesPerUnit || 1);
 };
 
 /** Converts a number of packs to quantity based on allocation unit of measure */
