@@ -52,7 +52,7 @@ const UIComponent = (props: ControlProps) => {
   const inputFormat = !dateOnly ? 'P p' : 'P';
 
   const onChange = (e: Date | null) => {
-    if (!e) handleChange(path, null);
+    if (!e) handleChange(path, undefined);
     setCustomError(undefined);
 
     try {
@@ -90,6 +90,10 @@ const UIComponent = (props: ControlProps) => {
       sx={{
         ...DefaultFormRowSx,
         gap: 2,
+        '& .MuiFormHelperText-root': {
+          whiteSpace: 'normal',
+          width: dateOnly ? '200px' : '100%',
+        },
       }}
       label={t(label as LocaleKey)}
       labelWidthPercentage={FORM_LABEL_WIDTH}
