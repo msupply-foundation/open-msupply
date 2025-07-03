@@ -302,7 +302,7 @@ fn get_item_variant_doses_per_unit_factor(
         return 1.0;
     }
 
-    let default_doses_per_unit = f64::from(stock_line.item_row.vaccine_doses);
+    let doses_per_unit = f64::from(stock_line.item_row.vaccine_doses);
 
     let doses_per_unit = stock_line
         .item_variant_row
@@ -310,11 +310,12 @@ fn get_item_variant_doses_per_unit_factor(
         // If the stock line has an item variant, use its doses per unit
         .map(|variant| f64::from(variant.doses_per_unit))
         // Otherwise use default doses per unit from item
-        .unwrap_or(default_doses_per_unit);
+        .unwrap_or(doses_per_unit);
 
     let item_variant_doses_per_unit_factor =
                 // f64::max defaults 0.0 to 1.0 (to avoid division by zero)
-                f64::max(default_doses_per_unit, 1.0) / f64::max(doses_per_unit, 1.0);
+                f64::max(
+                    doses_per_unit, 1.0) / f64::max(doses_per_unit, 1.0);
 
     item_variant_doses_per_unit_factor
 }

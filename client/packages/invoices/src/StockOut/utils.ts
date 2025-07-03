@@ -77,9 +77,7 @@ export const packsToDoses = (
   numPacks: number,
   line: DraftStockOutLineFragment
 ) => {
-  return NumUtils.round(
-    numPacks * line.packSize * (line.defaultDosesPerUnit || 1)
-  );
+  return NumUtils.round(numPacks * line.packSize * (line.dosesPerUnit || 1));
 };
 
 /** Converts a dose quantity to number of packs */
@@ -87,7 +85,7 @@ export const dosesToPacks = (
   doses: number,
   line: DraftStockOutLineFragment
 ) => {
-  return doses / line.packSize / (line.defaultDosesPerUnit || 1);
+  return doses / line.packSize / (line.dosesPerUnit || 1);
 };
 
 /** Converts a number of packs to quantity based on allocation unit of measure */
@@ -185,11 +183,11 @@ export const scannedBatchFilter = (
 export const normaliseToUnits = (
   quantity: number,
   allocateIn: AllocateInOption,
-  defaultDosesPerUnit: number
+  dosesPerUnit: number
 ) => {
   switch (allocateIn.type) {
     case AllocateInType.Doses:
-      return quantity / (defaultDosesPerUnit || 1);
+      return quantity / (dosesPerUnit || 1);
 
     case AllocateInType.Units:
       return quantity;
@@ -207,7 +205,7 @@ export const getAllocationAlerts = (
   hasOnHold: boolean,
   allocateIn: AllocateInOption,
   draftLines: DraftStockOutLineFragment[],
-  defaultDosesPerUnit: number,
+  dosesPerUnit: number,
   format: (value: number, options?: Intl.NumberFormatOptions) => string,
   t: TypedTFunction<LocaleKey>
 ) => {
@@ -255,9 +253,7 @@ export const getAllocationAlerts = (
           {
             requestedQuantity: format(requestedQuantity),
             placeholderQuantity: format(
-              isDoses
-                ? placeholderUnits * defaultDosesPerUnit
-                : placeholderUnits
+              isDoses ? placeholderUnits * dosesPerUnit : placeholderUnits
             ),
           }
         ),
