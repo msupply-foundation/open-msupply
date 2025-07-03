@@ -11,7 +11,6 @@ interface ItemVariantInputProps {
   itemId: string;
   selectedId: string | null;
   onChange: (itemVariant: ItemVariantFragment | null) => void;
-  displayDoseColumns: boolean;
   width?: number | string;
   disabled?: boolean;
 }
@@ -19,13 +18,12 @@ interface ItemVariantInputProps {
 export const ItemVariantInput = ({
   selectedId,
   itemId,
-  displayDoseColumns,
   disabled,
   width,
   onChange,
   ...props
 }: ItemVariantInputProps & ButtonProps) => {
-  const { data, isLoading } = useItemVariants(itemId);
+  const { data, isLoading } = useItemVariants(itemId); // TODO access item isVaccine here
   const selected = data?.find(variant => variant.id === selectedId);
 
   const onVariantSelected = (itemVariantId: string | null) => {
@@ -48,7 +46,6 @@ export const ItemVariantInput = ({
     <ItemVariantSelector
       selectedId={selectedId}
       onVariantSelected={onVariantSelected}
-      displayInDoses={displayDoseColumns}
       isLoading={isLoading}
       variants={data ?? []}
     >

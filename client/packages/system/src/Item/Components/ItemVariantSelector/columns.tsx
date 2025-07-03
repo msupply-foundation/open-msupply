@@ -10,13 +10,11 @@ import { ItemVariantFragment } from '../../api';
 interface ItemVariantSelectorColumnProps {
   selectedId: string | null;
   onVariantSelected: (itemVariantId: string | null) => void;
-  displayInDoses: boolean;
 }
 
 export const useItemVariantSelectorColumns = ({
   selectedId,
   onVariantSelected,
-  displayInDoses,
 }: ItemVariantSelectorColumnProps) => {
   const columnDefinition: ColumnDescription<ItemVariantFragment>[] = [
     {
@@ -41,14 +39,6 @@ export const useItemVariantSelectorColumns = ({
     ],
   ];
 
-  if (displayInDoses) {
-    columnDefinition.push({
-      key: 'dosesPerUnit',
-      label: 'label.doses',
-      width: 80,
-    });
-  }
-
   columnDefinition.push({
     key: 'manufacturer',
     label: 'label.manufacturer',
@@ -57,16 +47,13 @@ export const useItemVariantSelectorColumns = ({
     accessor: ({ rowData }) => rowData.manufacturer?.name,
   });
 
-  if (displayInDoses) {
+  // TODO what is this conditional on? show on all vaccine items or vvm pref?
+  if (true) {
     columnDefinition.push({
       key: 'vvmType',
       label: 'label.vvm-type',
     });
   }
 
-  return useColumns(columnDefinition, {}, [
-    selectedId,
-    onVariantSelected,
-    displayInDoses,
-  ]);
+  return useColumns(columnDefinition, {}, [selectedId, onVariantSelected]);
 };
