@@ -29,6 +29,7 @@ impl PurchaseOrderLineNode {
     pub async fn line_number(&self) -> &i32 {
         &self.row().line_number
     }
+    // TODO should item be optional?
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
 
