@@ -45,6 +45,10 @@ export const getTextFieldSx = (
       color: 'gray.main',
     },
   },
+  '& .MuiFormHelperText-root': {
+    width: '200px',
+    textWrap: 'wrap',
+  },
 });
 
 export const getPaperSx = (theme: Theme) => ({
