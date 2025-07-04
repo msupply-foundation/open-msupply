@@ -21,6 +21,8 @@ const Options = z
     monthOnly: z.boolean().optional(),
     dateAsEndOfDay: z.boolean().optional(),
     disableFuture: z.boolean().optional(),
+    max: z.string().optional(),
+    min: z.string().optional(),
   })
   .strict()
   .optional();
@@ -83,6 +85,8 @@ const UIComponent = (props: ControlProps) => {
           actions: ['clear', 'accept'] as PickersActionBarAction[],
         }
       : {}),
+    minDate: DateUtils.getDateOrNull(options?.min) ?? undefined,
+    maxDate: DateUtils.getDateOrNull(options?.max) ?? undefined,
   };
 
   return (
