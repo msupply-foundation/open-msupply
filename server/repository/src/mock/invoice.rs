@@ -239,14 +239,14 @@ pub fn mock_inbound_shipment_a() -> InvoiceRow {
         r.store_id = String::from("store_a");
         r.invoice_number = 4;
         r.r#type = InvoiceType::InboundShipment;
-        r.status = InvoiceStatus::Delivered;
+        r.status = InvoiceStatus::Received;
         r.comment = Some("Sort comment test Ac".to_owned());
         r.their_reference = Some(String::from(""));
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
             .unwrap()
             .and_hms_milli_opt(20, 30, 0, 0)
             .unwrap();
-        r.delivered_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
+        r.received_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0);
     })
@@ -272,7 +272,7 @@ pub fn mock_inbound_shipment_b() -> InvoiceRow {
                 .and_hms_milli_opt(21, 30, 0, 0)
                 .unwrap(),
         );
-        r.delivered_datetime = Some(Utc::now().naive_utc());
+        r.received_datetime = Some(Utc::now().naive_utc());
         r.verified_datetime = Some(Utc::now().naive_utc());
     })
 }
@@ -302,14 +302,14 @@ pub fn mock_inbound_shipment_d() -> InvoiceRow {
         r.store_id = String::from("store_a");
         r.invoice_number = 7;
         r.r#type = InvoiceType::InboundShipment;
-        r.status = InvoiceStatus::Delivered;
+        r.status = InvoiceStatus::Received;
         r.comment = Some("Sort comment test Ca".to_owned());
         r.their_reference = Some(String::from(""));
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 4)
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
-        r.delivered_datetime = Some(
+        r.received_datetime = Some(
             NaiveDate::from_ymd_opt(1970, 1, 4)
                 .unwrap()
                 .and_hms_milli_opt(21, 30, 0, 0)
@@ -343,7 +343,7 @@ pub fn mock_inbound_shipment_f() -> InvoiceRow {
         r.store_id = String::from("store_a");
         r.invoice_number = 8;
         r.r#type = InvoiceType::InboundShipment;
-        r.status = InvoiceStatus::Delivered;
+        r.status = InvoiceStatus::Received;
         r.on_hold = true;
         r.comment = Some("Sort comment test".to_owned());
         r.their_reference = Some(String::from(""));
@@ -394,14 +394,14 @@ pub fn mock_transferred_inbound_shipment_a() -> InvoiceRow {
         r.store_id = String::from("store_b");
         r.invoice_number = 9;
         r.r#type = InvoiceType::InboundShipment;
-        r.status = InvoiceStatus::Delivered;
+        r.status = InvoiceStatus::Received;
         r.comment = Some("Sort comment test Ac".to_owned());
         r.their_reference = Some(String::from(""));
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
             .unwrap()
             .and_hms_milli_opt(20, 30, 0, 0)
             .unwrap();
-        r.delivered_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
+        r.received_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0);
         r.linked_invoice_id = Some(String::from("store_a"));
@@ -525,12 +525,12 @@ pub fn mock_customer_return_a() -> InvoiceRow {
         r.store_id = String::from("store_b");
         r.invoice_number = 1;
         r.r#type = InvoiceType::CustomerReturn;
-        r.status = InvoiceStatus::Delivered;
+        r.status = InvoiceStatus::Received;
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
             .unwrap()
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
-        r.delivered_datetime = Some(Utc::now().naive_utc());
+        r.received_datetime = Some(Utc::now().naive_utc());
     })
 }
 

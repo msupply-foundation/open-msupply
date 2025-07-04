@@ -1,9 +1,9 @@
 import {
   EnvUtils,
-  FileUtils,
   Platform,
   PrintFormat,
   PrintReportSortInput,
+  useDownloadFile,
   useIntlUtils,
   useMutation,
   useNotification,
@@ -68,6 +68,7 @@ export const usePrintReport = () => {
   const { reportApi, storeId } = useReportGraphQL();
   const { error } = useNotification();
   const { currentLanguage } = useIntlUtils();
+  const downloadFile = useDownloadFile();
 
   const mutationFn = async (params: GenerateReportParams) => {
     const {
@@ -102,7 +103,7 @@ export const usePrintReport = () => {
       if (format === PrintFormat.Html) {
         printPage(url);
       } else {
-        FileUtils.downloadFile(url);
+        downloadFile(url);
       }
     },
     onError: (e: Error) => {

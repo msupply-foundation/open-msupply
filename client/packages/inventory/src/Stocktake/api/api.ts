@@ -60,7 +60,7 @@ const stocktakeParser = {
     toUpdate: (line: DraftStocktakeLine): UpdateStocktakeLineInput => ({
       location: setNullableInput('id', line.location),
       batch: line.batch ?? '',
-      packSize: line.packSize ?? 1,
+      packSize: line.packSize ?? line.item.defaultPackSize,
       costPricePerPack: line.costPricePerPack,
       countedNumberOfPacks: line.countedNumberOfPacks,
       sellPricePerPack: line.sellPricePerPack,
@@ -76,7 +76,7 @@ const stocktakeParser = {
     toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => ({
       location: setNullableInput('id', line.location),
       batch: line.batch ?? '',
-      packSize: line.packSize ?? 1,
+      packSize: line.packSize ?? line.item.defaultPackSize,
       costPricePerPack: line.costPricePerPack,
       countedNumberOfPacks: line.countedNumberOfPacks,
       id: line.id,

@@ -3,11 +3,12 @@ strip = true
 
 [workspace.dependencies]
 # dependencies used in graphql crates:
+# Warning don't add anything above this lines as auto patch is applied during docker build
+async-graphql = { version = "7.0.13", features = ["dataloader", "chrono"] }
+async-graphql-actix-web = "7.0.13"
 actix-web = { version = "4.9.0", default-features = false, features = ["macros", "rustls"] }
 actix-multipart = "0.7.2"
 anymap = "0.12.1"
-async-graphql = { version = "7.0.13", features = ["dataloader", "chrono"] }
-async-graphql-actix-web = "7.0.13"
 async-trait = "0.1.85"
 chrono = { version = "0.4.39", features = ["serde"] }
 clap = { version = "4.5.7", features = ["derive"] }
