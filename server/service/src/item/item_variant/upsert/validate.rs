@@ -1,5 +1,6 @@
 use super::UpsertItemVariantWithPackaging;
 use crate::{
+    invoice_line::validate::check_item_exists,
     item::item_variant::UpsertItemVariantError,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
@@ -19,6 +20,10 @@ pub fn validate(
 
     let existing_item_variant = ItemVariantRepository::new(connection)
         .query_one(ItemVariantFilter::new().id(EqualFilter::equal_to(&input.id)))?;
+
+    if check_item_exists(connection, &input.item_id)?.is_none() {
+        return Err(UpsertItemVariantError::ItemDoesNotExist);
+    }
 
     if let Some(existing_item_variant) = existing_item_variant.clone() {
         // Query Item Link to check if the item_id is the same

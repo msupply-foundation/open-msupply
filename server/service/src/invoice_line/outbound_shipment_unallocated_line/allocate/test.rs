@@ -246,7 +246,7 @@ mod test {
             .unwrap()
             .unwrap();
 
-        pretty_assertions::assert_eq!(
+        assert_eq!(
             new_line1,
             InvoiceLineRow {
                 stock_line_id: Some("first_expiring".to_string()),
@@ -261,7 +261,7 @@ mod test {
             .unwrap()
             .unwrap();
 
-        pretty_assertions::assert_eq!(
+        assert_eq!(
             new_line2,
             InvoiceLineRow {
                 stock_line_id: Some("second_expiring".to_string()),
@@ -276,7 +276,7 @@ mod test {
             .unwrap()
             .unwrap();
 
-        pretty_assertions::assert_eq!(
+        assert_eq!(
             new_line3,
             InvoiceLineRow {
                 stock_line_id: Some("non_expiring".to_string()),
