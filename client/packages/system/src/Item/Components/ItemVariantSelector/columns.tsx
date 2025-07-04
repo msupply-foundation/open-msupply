@@ -1,21 +1,27 @@
 import React from 'react';
 import {
   ColumnDescription,
+  PreferenceKey,
   RadioCell,
   TooltipTextCell,
   useColumns,
+  usePreference,
 } from '@openmsupply-client/common';
 import { ItemVariantFragment } from '../../api';
 
 interface ItemVariantSelectorColumnProps {
   selectedId: string | null;
   onVariantSelected: (itemVariantId: string | null) => void;
+  isVaccine?: boolean;
 }
 
 export const useItemVariantSelectorColumns = ({
   selectedId,
   onVariantSelected,
+  isVaccine,
 }: ItemVariantSelectorColumnProps) => {
+  const { data: prefs } = usePreference(PreferenceKey.ManageVvmStatusForStock);
+
   const columnDefinition: ColumnDescription<ItemVariantFragment>[] = [
     {
       key: 'itemVariantSelector',
@@ -47,8 +53,7 @@ export const useItemVariantSelectorColumns = ({
     accessor: ({ rowData }) => rowData.manufacturer?.name,
   });
 
-  // TODO what is this conditional on? show on all vaccine items or vvm pref?
-  if (true) {
+  if (isVaccine && prefs?.manageVvmStatusForStock) {
     columnDefinition.push({
       key: 'vvmType',
       label: 'label.vvm-type',

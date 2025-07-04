@@ -18,7 +18,7 @@ export const ItemVariantInfoIcon = ({
   return (
     <ItemVariantSelector
       selectedId={itemVariantId}
-      variants={data ?? []}
+      variants={data?.variants ?? []}
       disabled
       onVariantSelected={() => {}}
     >

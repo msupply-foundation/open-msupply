@@ -17,6 +17,7 @@ interface ItemVariantSelectorProps {
   isLoading?: boolean;
   onVariantSelected: (itemVariantId: string | null) => void;
   disabled?: boolean;
+  isVaccine?: boolean;
 }
 
 export const ItemVariantSelector = ({
@@ -26,11 +27,13 @@ export const ItemVariantSelector = ({
   isLoading = false,
   disabled = false,
   onVariantSelected,
+  isVaccine,
 }: ItemVariantSelectorProps & PropsWithChildren) => {
   const t = useTranslation();
   const columns = useItemVariantSelectorColumns({
     selectedId,
     onVariantSelected,
+    isVaccine,
   });
 
   return (

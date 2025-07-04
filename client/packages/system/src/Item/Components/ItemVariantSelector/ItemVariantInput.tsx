@@ -23,11 +23,13 @@ export const ItemVariantInput = ({
   onChange,
   ...props
 }: ItemVariantInputProps & ButtonProps) => {
-  const { data, isLoading } = useItemVariants(itemId); // TODO access item isVaccine here
-  const selected = data?.find(variant => variant.id === selectedId);
+  const { data, isLoading } = useItemVariants(itemId);
+  const selected = data?.variants.find(variant => variant.id === selectedId);
 
   const onVariantSelected = (itemVariantId: string | null) => {
-    const selectedVariant = data?.find(variant => variant.id === itemVariantId);
+    const selectedVariant = data?.variants.find(
+      variant => variant.id === itemVariantId
+    );
     onChange(selectedVariant ?? null);
   };
 
@@ -47,7 +49,8 @@ export const ItemVariantInput = ({
       selectedId={selectedId}
       onVariantSelected={onVariantSelected}
       isLoading={isLoading}
-      variants={data ?? []}
+      variants={data?.variants ?? []}
+      isVaccine={data?.isVaccine}
     >
       {ItemVariantButton}
     </ItemVariantSelector>
