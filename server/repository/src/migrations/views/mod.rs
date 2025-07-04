@@ -13,6 +13,7 @@ pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
       DROP VIEW IF EXISTS adjustments;
       DROP VIEW IF EXISTS item_ledger;
       DROP VIEW IF EXISTS stock_movement;
+      DROP VIEW IF EXISTS stock_ledger;
       DROP VIEW IF EXISTS outbound_shipment_stock_movement;
       DROP VIEW IF EXISTS inbound_shipment_stock_movement;
       DROP VIEW IF EXISTS inventory_adjustment_stock_movement;
@@ -171,14 +172,20 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         JOIN name ON name_link.name_id = name.id
     ORDER BY datetime, type_precedence
     )
+    SELECT * FROM all_movements
+    WHERE datetime IS NOT NULL;
+
+
+  -- Separate view for stock ledger, so the running balance window function is only executed when required
+  CREATE VIEW stock_ledger AS
     SELECT *,
       SUM(quantity) OVER (
         PARTITION BY store_id, stock_line_id
         ORDER BY datetime, type_precedence
         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
       ) AS running_balance
-     FROM all_movements
-    WHERE datetime IS NOT NULL;
+    FROM stock_movement
+    WHERE stock_line_id IS NOT NULL;
 
   CREATE VIEW item_ledger AS
     WITH all_movements AS (

@@ -9,7 +9,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 
 table! {
-    #[sql_name = "stock_movement"]
+    #[sql_name = "stock_ledger"]
     ledger (id) {
         id -> Text,
         stock_line_id -> Nullable<Text>,
