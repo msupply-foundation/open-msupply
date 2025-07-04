@@ -16,19 +16,6 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
-        // When OMS Central is on 2.9+ doses per unit column has been removed
-        // When remote is on 2.8 doses per unit is a required field
-        // This would have resulted in sync errors because expected field is not found
-        // Let's reintegrate item variant now that remote site is on 2.9
-        sql!(
-            connection,
-            r#"
-                 UPDATE sync_buffer
-                    SET integration_datetime = NULL
-                    WHERE table_name = 'item_variant';  
-            "#
-        )?;
-
         Ok(())
     }
 }
