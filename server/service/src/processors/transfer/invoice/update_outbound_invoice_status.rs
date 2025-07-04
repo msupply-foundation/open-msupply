@@ -77,6 +77,7 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
             // 7.
             status: inbound_invoice.invoice_row.status.clone(),
             delivered_datetime: inbound_invoice.invoice_row.delivered_datetime,
+            received_datetime: inbound_invoice.invoice_row.received_datetime,
             verified_datetime: inbound_invoice.invoice_row.verified_datetime,
             ..outbound_invoice.invoice_row.clone()
         };

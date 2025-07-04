@@ -15,11 +15,11 @@ import {
   Grid,
   Alert,
   ClickableStepper,
-  FileUtils,
   AssetLogStatusInput,
   FnUtils,
   useIsCentralServerApi,
   StatusType,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { useAssets } from '../api';
@@ -138,6 +138,8 @@ export const EquipmentImportModal = ({
 
   const [importProgress, setImportProgress] = useState(0);
   const [importErrorCount, setImportErrorCount] = useState(0);
+
+  const exportCSV = useExportCSV();
   const {
     query: { data: catalogueItemData, isLoading },
   } = useAssetList();
@@ -159,9 +161,9 @@ export const EquipmentImportModal = ({
       isCentralServer,
       properties?.map(p => p.key) ?? []
     );
-    FileUtils.exportCSV(csv, t('filename.cce-failed-uploads'));
-    success(t('success'))();
+    exportCSV(csv, t('filename.cce-failed-uploads'));
   };
+
   const importErrorRows: ImportRow[] = [];
   const insertAsset = async (row: ImportRow) => {
     try {

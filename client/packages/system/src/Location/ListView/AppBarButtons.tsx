@@ -7,10 +7,8 @@ import {
   ButtonWithIcon,
   Grid,
   useTranslation,
-  FileUtils,
   LoadingButton,
-  EnvUtils,
-  Platform,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { LocationRowFragment } from '..';
 import { locationsToCsv } from '../../utils';
@@ -26,8 +24,9 @@ export const AppBarButtons = ({
   locations,
   reportIsLoading,
 }: AppBarButtonsProps) => {
-  const { success, error } = useNotification();
+  const { error } = useNotification();
   const t = useTranslation();
+  const exportCSV = useExportCSV();
 
   const csvExport = async () => {
     if (!locations) {
@@ -36,8 +35,7 @@ export const AppBarButtons = ({
     }
 
     const csv = locationsToCsv(locations, t);
-    FileUtils.exportCSV(csv, t('filename.locations'));
-    success(t('success'))();
+    exportCSV(csv, t('filename.locations'));
   };
 
   return (
@@ -49,7 +47,6 @@ export const AppBarButtons = ({
           onClick={onCreate}
         />
         <LoadingButton
-          disabled={EnvUtils.platform === Platform.Android}
           startIcon={<DownloadIcon />}
           variant="outlined"
           onClick={csvExport}

@@ -1,7 +1,9 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_excel_template_to_report;
 mod add_mutate_clinician_permission;
+mod add_purchase_order_report_context;
 mod add_purchase_order_tables;
 mod add_purchase_order_to_number_type;
 mod add_shipped_number_of_packs_to_invoice_line;
@@ -34,6 +36,8 @@ impl Migration for V2_09_00 {
             Box::new(resync_existing_vaccine_course_dose_and_item::Migrate),
             Box::new(add_purchase_order_to_number_type::Migrate),
             Box::new(add_shipped_number_of_packs_to_invoice_line::Migrate),
+            Box::new(add_excel_template_to_report::Migrate),
+            Box::new(add_purchase_order_report_context::Migrate),
         ]
     }
 }

@@ -10,12 +10,12 @@ import {
   HomeIcon,
   InfoTooltipIcon,
   LoadingButton,
-  Typography,
   noOtherVariants,
   useColumns,
   useFormatDateTime,
   useTranslation,
   getGenderTranslationKey,
+  Alert,
 } from '@openmsupply-client/common';
 import { PatientPanel } from './PatientPanel';
 import { FetchPatientModal } from './FetchPatientModal';
@@ -72,7 +72,7 @@ const isConnectionError = (
 export const PatientResultsTab: FC<
   PatientPanel & {
     active: boolean;
-    onRowClick: (selectedPatient: string) => void;
+    onRowClick: (selectedPatient: PatientColumnData) => void;
   }
 > = ({ patient, value, active, onRowClick }) => {
   const t = useTranslation();
@@ -198,7 +198,7 @@ export const PatientResultsTab: FC<
       return;
     }
     setCreateNewPatient(undefined);
-    onRowClick(row.id);
+    onRowClick(row);
   };
 
   if (!active) {
@@ -222,13 +222,9 @@ export const PatientResultsTab: FC<
           marginBottom={0.5}
         >
           {count > 0 && (
-            <Typography
-              component="div"
-              style={{ fontWeight: 700 }}
-              alignSelf="center"
-            >
+            <Alert severity="success">
               {t('messages.patients-found', { count })}
-            </Typography>
+            </Alert>
           )}
           <Box display="flex" flexDirection="row" marginLeft="auto">
             {isCentralConnectionFailure ? (
@@ -248,9 +244,9 @@ export const PatientResultsTab: FC<
         </Box>
       </>
 
-      <Typography component="div" fontSize={12}>
+      <Alert severity="info" style={{ marginBottom: 2 }}>
         {t('messages.patients-create', { count })}
-      </Typography>
+      </Alert>
       <DataTable
         dense
         id="create-patient-duplicates"

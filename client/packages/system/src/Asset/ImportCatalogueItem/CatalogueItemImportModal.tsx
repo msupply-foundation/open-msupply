@@ -10,11 +10,11 @@ import {
   Grid,
   Alert,
   ClickableStepper,
-  FileUtils,
   FnUtils,
   noOtherVariants,
   UniqueCombinationKey,
   InsertAssetCatalogueItemInput,
+  useExportCSV,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { importRowToCsv } from '../utils';
@@ -92,6 +92,8 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string>(() => '');
   const [importProgress, setImportProgress] = useState(0);
   const [importErrorCount, setImportErrorCount] = useState(0);
+
+  const exportCSV = useExportCSV();
   const { data: assetClasses, isLoading: isLoadingClasses } = useAssetClasses();
 
   const { data: assetCategories, isLoading: isLoadingCategories } =
@@ -112,8 +114,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
       ),
       t
     );
-    FileUtils.exportCSV(csv, t('filename.failed-import-rows'));
-    success(t('success'))();
+    exportCSV(csv, t('filename.failed-import-rows'));
   };
 
   const mapStructuredErrors = (

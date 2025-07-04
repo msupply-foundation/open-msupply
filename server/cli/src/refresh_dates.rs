@@ -34,6 +34,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("invoice", "delivered_datetime"),
         ("invoice", "verified_datetime"),
         ("invoice", "cancelled_datetime"),
+        ("invoice", "received_datetime"),
         ("location_movement", "enter_datetime"),
         ("location_movement", "exit_datetime"),
         ("requisition", "created_datetime"),

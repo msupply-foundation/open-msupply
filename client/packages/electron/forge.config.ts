@@ -8,7 +8,12 @@ import { mainConfig } from './webpack.main.config';
 import { rendererConfig } from './webpack.renderer.config';
 
 const config: ForgeConfig = {
-  packagerConfig: { icon: './src/public/oms' },
+  packagerConfig: {
+    icon: './src/public/oms',
+    asar: {
+      unpack: '**/*.node',
+    },
+  },
   rebuildConfig: {},
   makers: [
     new MakerSquirrel({ name: 'omSupply' }),
