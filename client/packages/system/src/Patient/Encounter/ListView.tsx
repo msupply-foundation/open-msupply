@@ -22,6 +22,7 @@ import {
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
+import { PatientTabValue } from '../PatientView/PatientView';
 
 const EncounterListComponent: FC = () => {
   const t = useTranslation();
@@ -68,6 +69,7 @@ const EncounterListComponent: FC = () => {
           RouteBuilder.create(AppRoute.Dispensary)
             .addPart(AppRoute.Encounter)
             .addPart(row.id)
+            .addQuery({ tab: PatientTabValue.Encounters })
             .build()
         );
       }}
