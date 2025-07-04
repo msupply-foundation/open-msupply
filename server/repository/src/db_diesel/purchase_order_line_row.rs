@@ -17,7 +17,9 @@ table! {
         id ->  Text,
         purchase_order_id -> Text,
         line_number -> Integer,
-        item_link_id -> Nullable<Text>,
+        item_link_id -> Text,
+        item_code -> Text,
+        item_name -> Nullable<Text>,
         number_of_packs ->  Nullable<Double>,
         pack_size ->  Nullable<Double>,
         requested_quantity ->  Nullable<Double>,
@@ -43,7 +45,9 @@ pub struct PurchaseOrderLineRow {
     pub id: String,
     pub purchase_order_id: String,
     pub line_number: i32,
-    pub item_link_id: Option<String>,
+    pub item_link_id: String,
+    pub item_code: String,
+    pub item_name: Option<String>,
     pub number_of_packs: Option<f64>,
     pub pack_size: Option<f64>,
     pub requested_quantity: Option<f64>,
@@ -126,5 +130,49 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
             .filter(purchase_order_line::purchase_order_id.eq_any(purchase_order_ids))
             .load::<PurchaseOrderLineRow>(self.connection.lock().connection())?;
         Ok(result)
+    }
+}
+
+// purchase order line basic upsert and query operation test:
+#[cfg(test)]
+mod tests {
+    use crate::mock::{mock_store_a, MockDataInserts};
+    use crate::{
+        db_diesel::purchase_order_line_row::PurchaseOrderLineRowRepository, test_db::setup_all,
+        PurchaseOrderLineRow,
+    };
+    use crate::{PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus};
+    #[actix_rt::test]
+    async fn purchase_order_line_upsert_and_query() {
+        let (_, connection, _, _) = setup_all("purchase order line", MockDataInserts::all()).await;
+        let repo = PurchaseOrderLineRowRepository::new(&connection);
+
+        // add purchase order
+        let purchase_order_repo = PurchaseOrderRowRepository::new(&connection);
+        let purchase_order_id = "test-po-1";
+        let row = PurchaseOrderRow {
+            id: purchase_order_id.to_string(),
+            status: PurchaseOrderStatus::New,
+            store_id: mock_store_a().id.clone(),
+            created_datetime: chrono::Utc::now().naive_utc(),
+            purchase_order_number: 1,
+            ..Default::default()
+        };
+
+        let _ = purchase_order_repo.upsert_one(&row);
+
+        let line = PurchaseOrderLineRow {
+            id: "test-line-1".to_string(),
+            purchase_order_id: purchase_order_id.to_string(),
+            line_number: 1,
+            item_code: "test-item-1".to_string(),
+            item_link_id: "item_a".to_string(),
+            ..Default::default()
+        };
+
+        let _ = repo.upsert_one(&line);
+
+        let result = repo.find_one_by_id(&line.id).unwrap().unwrap();
+        assert_eq!(result.id, "test-line-1".to_string());
     }
 }

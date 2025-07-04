@@ -95,6 +95,7 @@ pub struct PurchaseOrderRow {
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum PurchaseOrderStatus {
     #[default]
@@ -182,5 +183,43 @@ impl<'a> PurchaseOrderRowRepository<'a> {
             .select(max(purchase_order::purchase_order_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::mock::{mock_store_a, MockDataInserts};
+    use crate::{
+        test_db::setup_all, PurchaseOrderRow, PurchaseOrderRowRepository, PurchaseOrderStatus,
+    };
+    use strum::IntoEnumIterator;
+    use util::uuid::uuid;
+
+    #[actix_rt::test]
+    async fn purchase_order_status() {
+        let (_, connection, _, _) =
+            setup_all("purchase order status", MockDataInserts::all()).await;
+
+        let repo = PurchaseOrderRowRepository::new(&connection);
+        // Try upsert all variants of PurchaseOrderStatus, confirm that diesel enums match postgres
+        let mut po_number = 1;
+        for variant in PurchaseOrderStatus::iter() {
+            let id = uuid();
+            let row = PurchaseOrderRow {
+                id: id.clone(),
+                status: variant,
+                store_id: mock_store_a().id.clone(),
+                created_datetime: chrono::Utc::now().naive_utc(),
+                purchase_order_number: po_number,
+                ..Default::default()
+            };
+
+            po_number += 1;
+
+            let _ = repo.upsert_one(&row);
+
+            let result = repo.find_one_by_id(&id).unwrap().unwrap();
+            assert_eq!(result.status, row.status);
+        }
     }
 }
