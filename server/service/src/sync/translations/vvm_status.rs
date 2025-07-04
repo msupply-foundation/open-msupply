@@ -1,9 +1,9 @@
-use crate::sync::sync_serde::empty_str_as_option_string;
 use repository::{
     vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowDelete},
     StorageConnection, SyncBufferRow,
 };
 use serde::Deserialize;
+use util::sync_serde::empty_str_as_option_string;
 
 use super::{PullTranslateResult, SyncTranslation};
 

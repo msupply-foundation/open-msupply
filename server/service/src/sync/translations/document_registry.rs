@@ -1,10 +1,11 @@
-use crate::sync::{
-    sync_serde::empty_str_as_option_string,
-    translations::{form_schema::FormSchemaTranslation, master_list::MasterListTranslation},
+use crate::sync::translations::{
+    form_schema::FormSchemaTranslation, master_list::MasterListTranslation,
 };
+
 use repository::{DocumentRegistryCategory, DocumentRegistryRow, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 use serde_json::Value;
+use util::sync_serde::empty_str_as_option_string;
 
 use super::{PullTranslateResult, SyncTranslation};
 
@@ -17,7 +18,7 @@ enum LegacyDocumentCategory {
     ContactTrace,
     Custom,
     #[serde(other)]
-    Others
+    Others,
 }
 
 #[allow(non_snake_case)]

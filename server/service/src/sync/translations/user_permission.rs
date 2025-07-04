@@ -4,10 +4,9 @@ use repository::{
     PermissionType, StorageConnection, SyncBufferRow, UserPermissionRow, UserPermissionRowDelete,
 };
 
-use crate::sync::{
-    sync_serde::empty_str_as_option_string,
-    translations::{master_list::MasterListTranslation, store::StoreTranslation},
-};
+use crate::sync::translations::{master_list::MasterListTranslation, store::StoreTranslation};
+
+use util::sync_serde::empty_str_as_option_string;
 
 use super::{PullTranslateResult, SyncTranslation};
 

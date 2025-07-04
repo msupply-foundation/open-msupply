@@ -1,10 +1,8 @@
-use crate::sync::{
-    sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
-    translations::{
-        item::ItemTranslation, location::LocationTranslation, reason::ReasonTranslation,
-        stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
-    },
+use crate::sync::translations::{
+    item::ItemTranslation, location::LocationTranslation, reason::ReasonTranslation,
+    stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
 };
+
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, StockLineRowRepository, StocktakeLine,
@@ -12,6 +10,7 @@ use repository::{
     SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
+use util::sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option};
 
 use super::{
     utils::clear_invalid_location_id, PullTranslateResult, PushTranslateResult, SyncTranslation,
