@@ -117,10 +117,6 @@ impl ItemVariantNode {
         Ok(BundledItemNode::from_vec(result))
     }
 
-    pub async fn doses_per_unit(&self) -> i32 {
-        self.item_variant.doses_per_unit
-    }
-
     pub async fn vvm_type(&self) -> &Option<String> {
         &self.item_variant.vvm_type
     }

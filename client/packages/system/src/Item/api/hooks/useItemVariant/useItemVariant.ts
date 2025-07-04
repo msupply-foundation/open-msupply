@@ -62,7 +62,6 @@ export function useItemVariant({
       },
       bundledItemVariants: [],
       bundlesWith: [],
-      dosesPerUnit: 0,
       vvmType: null,
     }
   );
@@ -106,7 +105,6 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
           packSize: pv.packSize,
           volumePerUnit: pv.volumePerUnit,
         })),
-        dosesPerUnit: input.dosesPerUnit,
         vvmType: setNullableInput('vvmType', input),
       },
     });
@@ -119,9 +117,6 @@ const useUpsert = ({ itemId }: { itemId: string }) => {
       if (result.__typename === 'UpsertItemVariantError') {
         if (result.error.__typename === 'UniqueValueViolation') {
           throw new Error(t('error.duplicate-item-variant-name'));
-        }
-        if (result.error.__typename === 'DoseConfigurationNotAllowed') {
-          throw new Error(t('error.dose-configuration-not-allowed'));
         }
       }
     }

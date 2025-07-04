@@ -1,4 +1,5 @@
 import {
+  ArrayUtils,
   ColumnAlign,
   ColumnDefinition,
   RecordWithId,
@@ -10,7 +11,6 @@ type VaccineItemRow = {
   item: ItemRowFragment;
   numberOfPacks: number;
   packSize: number;
-  itemVariant?: { dosesPerUnit: number } | null;
 };
 
 export const getDosesQuantityColumn = <
@@ -25,38 +25,29 @@ export const getDosesQuantityColumn = <
       const { lines } = rowData;
 
       const isVaccine = lines[0]?.item?.isVaccine ?? false;
-      const totalDoses = lines.reduce(
-        (sum, { packSize, numberOfPacks, item, itemVariant }) =>
-          sum +
-          packSize * numberOfPacks * (itemVariant?.dosesPerUnit ?? item.doses),
-        0
-      );
-
-      return isVaccine ? totalDoses : UNDEFINED_STRING_VALUE;
+      const unitQuantity = ArrayUtils.getUnitQuantity(lines);
+      return isVaccine
+        ? unitQuantity * (lines[0]?.item?.doses ?? 1)
+        : UNDEFINED_STRING_VALUE;
     } else {
-      const unitQty = rowData.numberOfPacks * rowData.packSize;
+      const unitQty = (rowData?.numberOfPacks ?? 0) * (rowData?.packSize ?? 1);
       return rowData.item && rowData.item.isVaccine
-        ? unitQty * (rowData.itemVariant?.dosesPerUnit ?? rowData.item.doses)
+        ? unitQty * (rowData.item.doses ?? 1)
         : UNDEFINED_STRING_VALUE;
     }
   },
+
   getSortValue: rowData => {
     if ('lines' in rowData) {
       const { lines } = rowData;
 
       const isVaccine = lines[0]?.item?.isVaccine ?? false;
-      const totalDoses = lines.reduce(
-        (sum, { packSize, numberOfPacks, item, itemVariant }) =>
-          sum +
-          packSize * numberOfPacks * (itemVariant?.dosesPerUnit ?? item.doses),
-        0
-      );
-
-      return isVaccine ? totalDoses : 0;
+      const unitQuantity = ArrayUtils.getUnitQuantity(lines);
+      return isVaccine ? unitQuantity * (lines[0]?.item?.doses ?? 1) : 0;
     } else {
-      const unitQty = rowData.numberOfPacks * rowData.packSize;
+      const unitQty = (rowData?.numberOfPacks ?? 0) * (rowData?.packSize ?? 1);
       return rowData.item && rowData.item.isVaccine
-        ? unitQty * (rowData.itemVariant?.dosesPerUnit ?? rowData.item.doses)
+        ? unitQty * (rowData.item.doses ?? 1)
         : 0;
     }
   },
