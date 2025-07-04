@@ -75,6 +75,9 @@ jobs:
           path: ./client/packages/android/app/build/outputs/apk/arm64/release/*.apk
           retention-days: 3
 
+      - name: Upload Universal APK to Backblaze B2
+        run: bash .github/workflows/mac_backblaze_upload.sh
+
       - name: Send build completion notification
         if: always()
         env:
