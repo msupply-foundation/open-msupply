@@ -78,7 +78,9 @@ const UIComponent = (props: ControlProps) => {
             onChange={date => updateDate('afterOrEqualTo', date)}
             disabled={!props.enabled}
             actions={actions}
-            maxDate={DateUtils.getDateOrNull(data?.to) ?? undefined}
+            maxDate={
+              DateUtils.getDateOrNull(data?.beforeOrEqualTo) ?? undefined
+            }
           />
         }
       />
@@ -94,7 +96,7 @@ const UIComponent = (props: ControlProps) => {
             disabled={!props.enabled}
             actions={actions}
             dateAsEndOfDay
-            minDate={DateUtils.getDateOrNull(data?.from) ?? undefined}
+            minDate={DateUtils.getDateOrNull(data?.afterOrEqualTo) ?? undefined}
           />
         }
       />
