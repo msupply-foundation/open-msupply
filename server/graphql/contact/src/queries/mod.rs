@@ -1,1 +1,1 @@
-pub mod contact_rows;
+pub mod contacts;

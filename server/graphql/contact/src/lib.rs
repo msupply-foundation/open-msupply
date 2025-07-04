@@ -2,15 +2,20 @@ pub mod queries;
 pub mod types;
 
 use async_graphql::*;
-use queries::contact_rows::contacts;
-use types::contact_row::ContactRowsResponse;
+use queries::contacts::contacts;
+use types::contact::ContactsResponse;
 
 #[derive(Default, Clone)]
 pub struct ContactQueries;
 
 #[Object]
 impl ContactQueries {
-    pub async fn contact_rows(&self, ctx: &Context<'_>) -> Result<ContactRowsResponse> {
-        contacts(ctx)
+    pub async fn contacts(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        name_id: String,
+    ) -> Result<ContactsResponse> {
+        contacts(ctx, store_id, &name_id)
     }
 }

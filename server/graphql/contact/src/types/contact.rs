@@ -3,16 +3,13 @@ use repository::contact_row::ContactRow;
 
 #[derive(PartialEq, Debug)]
 pub struct ContactNode {
-    contact_row: ContactRow,
+    contact: ContactRow,
 }
 
 #[Object]
 impl ContactNode {
     pub async fn id(&self) -> &str {
         &self.row().id
-    }
-    pub async fn name_id(&self) -> &str {
-        &self.row().name_id
     }
     pub async fn first_name(&self) -> &str {
         &self.row().first_name
@@ -53,32 +50,29 @@ impl ContactNode {
 }
 
 impl ContactNode {
-    pub fn from_domain(contact_row: ContactRow) -> ContactNode {
-        ContactNode { contact_row }
+    pub fn from_domain(contact: ContactRow) -> ContactNode {
+        ContactNode { contact }
     }
 
     pub fn row(&self) -> &ContactRow {
-        &self.contact_row
+        &self.contact
     }
 }
 
 #[derive(SimpleObject)]
-pub struct ContactRowConnector {
+pub struct ContactConnector {
     nodes: Vec<ContactNode>,
 }
 
-impl ContactRowConnector {
-    pub fn from_domain(contact_rows: Vec<ContactRow>) -> ContactRowConnector {
-        ContactRowConnector {
-            nodes: contact_rows
-                .into_iter()
-                .map(ContactNode::from_domain)
-                .collect(),
+impl ContactConnector {
+    pub fn from_domain(contacts: Vec<ContactRow>) -> ContactConnector {
+        ContactConnector {
+            nodes: contacts.into_iter().map(ContactNode::from_domain).collect(),
         }
     }
 }
 
 #[derive(Union)]
-pub enum ContactRowsResponse {
-    Response(ContactRowConnector),
+pub enum ContactsResponse {
+    Response(ContactConnector),
 }

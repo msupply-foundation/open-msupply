@@ -69,6 +69,7 @@ export const ContactsDocument = gql`
   query contacts($nameId: String!, $storeId: String!) {
     contacts(nameId: $nameId, storeId: $storeId) {
       ... on ContactConnector {
+        __typename
         nodes {
           ...Contact
         }
