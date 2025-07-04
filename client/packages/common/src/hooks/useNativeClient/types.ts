@@ -22,7 +22,9 @@ export type ConnectionResult = {
 };
 export type FileInfo = {
   content: string;
+  mimeType?: string;
   filename?: string;
+  successMessage?: string;
 };
 
 export interface NativeAPI {

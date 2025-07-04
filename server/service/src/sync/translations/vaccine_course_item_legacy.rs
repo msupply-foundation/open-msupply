@@ -171,5 +171,7 @@ mod tests {
             }
             _ => panic!("Expected Upsert result"),
         }
+        // Reset the central server flag back to false to avoid side effects in other tests
+        test_util_set_is_central_server(false);
     }
 }
