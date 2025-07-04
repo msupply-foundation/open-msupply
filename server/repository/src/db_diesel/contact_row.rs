@@ -1,7 +1,10 @@
 use super::contact_row::contact::dsl::*;
 use crate::db_diesel::name_row::name;
+use crate::name_link;
+use crate::Delete;
 use crate::RepositoryError;
 use crate::StorageConnection;
+use crate::Upsert;
 use diesel::prelude::*;
 
 use serde::{Deserialize, Serialize};
@@ -9,7 +12,7 @@ use serde::{Deserialize, Serialize};
 table! {
     contact (id) {
         id -> Text,
-        name_id -> Text,
+        name_link_id -> Text,
         first_name -> Text,
         position -> Nullable<Text>,
         comment -> Nullable<Text>,
@@ -25,7 +28,7 @@ table! {
     }
 }
 
-joinable!(contact -> name (name_id));
+joinable!(contact -> name_link (name_link_id));
 allow_tables_to_appear_in_same_query!(contact, name);
 #[derive(
     Clone,
@@ -45,7 +48,7 @@ allow_tables_to_appear_in_same_query!(contact, name);
 #[diesel(treat_none_as_null = true)]
 pub struct ContactRow {
     pub id: String,
-    pub name_id: String,
+    pub name_link_id: String,
     pub first_name: String,
     pub position: Option<String>,
     pub comment: Option<String>,
@@ -66,8 +69,8 @@ pub struct ContactRow {
 //     FirstName,
 //     LastName,
 // }
-
 // pub type ContactRowSort = Sort<ContactRowSortField>;
+
 pub struct ContactRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -77,9 +80,48 @@ impl<'a> ContactRowRepository<'a> {
         ContactRowRepository { connection }
     }
 
+    pub fn upsert_one(&self, row: &ContactRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(contact)
+            .values(row)
+            .on_conflict(id)
+            .do_update()
+            .set(row)
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn find_all(&self) -> Result<Vec<ContactRow>, RepositoryError> {
         let result = contact.load(self.connection.lock().connection())?;
         Ok(result)
+    }
+
+    pub fn find_one_by_id(&self, contact_id: &str) -> Result<Option<ContactRow>, RepositoryError> {
+        let result = contact
+            .filter(id.eq(contact_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_all_by_name_id(
+        &self,
+        input_name_id: &str,
+    ) -> Result<Vec<ContactRow>, RepositoryError> {
+        let subquery = name_link::table
+            .select(name_link::id)
+            .filter(name_link::name_id.eq(input_name_id))
+            .into_boxed();
+        let result = contact::table
+            .filter(contact::name_link_id.eq_any(subquery))
+            .load(self.connection.lock().connection())
+            .map_err(RepositoryError::from)?;
+        Ok(result)
+    }
+
+    pub fn delete(&self, contact_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(contact.filter(id.eq(contact_id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
     // pub fn find_many_by_ids(
@@ -117,12 +159,35 @@ impl<'a> ContactRowRepository<'a> {
     //     };
     //     Ok(result?)
     // }
+}
 
-    // pub fn find_one_by_id(&self, contact_id: &str) -> Result<Option<ContactRow>, RepositoryError> {
-    //     let result = contact
-    //         .filter(id.eq(contact_id))
-    //         .first(self.connection.lock().connection())
-    //         .optional()?;
-    //     Ok(result)
-    // }
+impl Upsert for ContactRow {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ContactRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ContactRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+}
+#[derive(Debug)]
+pub struct ContactRowDelete(pub String);
+impl Delete for ContactRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ContactRowRepository::new(con).delete(&self.0)?;
+        Ok(None)
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ContactRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
 }
