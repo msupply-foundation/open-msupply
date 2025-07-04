@@ -9,7 +9,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 
 table! {
-    #[sql_name = "stock_movement"]
+    #[sql_name = "stock_ledger"]
     ledger (id) {
         id -> Text,
         stock_line_id -> Nullable<Text>,
@@ -30,6 +30,7 @@ table! {
         sell_price_per_pack -> Double,
         total_before_tax -> Nullable<Double>,
         number_of_packs -> Double,
+        running_balance -> Double,
     }
 }
 
@@ -54,6 +55,7 @@ pub struct LedgerRow {
     pub sell_price_per_pack: f64,
     pub total_before_tax: Option<f64>,
     pub number_of_packs: f64,
+    pub running_balance: f64,
 }
 
 #[derive(Clone, Default)]

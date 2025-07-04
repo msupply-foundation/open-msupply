@@ -92,6 +92,7 @@ fragment LedgerRow on LedgerNode {
   reason
   stockLineId
   storeId
+  runningBalance
 }
 
 fragment VVMStatusLogRow on VvmstatusLogNode {
