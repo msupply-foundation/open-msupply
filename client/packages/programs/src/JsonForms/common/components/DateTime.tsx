@@ -22,6 +22,7 @@ const Options = z
     monthOnly: z.boolean().optional(),
     dateAsEndOfDay: z.boolean().optional(),
     disableFuture: z.boolean().optional(),
+    // Max and min are paths to the data object
     max: z.string().optional(),
     min: z.string().optional(),
   })
