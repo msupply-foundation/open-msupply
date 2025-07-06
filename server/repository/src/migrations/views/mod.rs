@@ -173,19 +173,23 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
   -- Separate views for stock & item ledger, so the running balance window functions are only executed when required
 
   CREATE VIEW stock_ledger AS
+    WITH movements_with_precedence AS (
+      SELECT *,
+        CASE
+          WHEN invoice_type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
+          WHEN invoice_type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
+          ELSE 3
+        END AS type_precedence
+      FROM stock_movement
+      WHERE stock_line_id IS NOT NULL
+    )
     SELECT *,
-      CASE
-        WHEN invoice_type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
-        WHEN invoice_type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
-        ELSE 3
-      END AS type_precedence,
       SUM(quantity) OVER (
         PARTITION BY store_id, stock_line_id
         ORDER BY datetime, type_precedence
         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
       ) AS running_balance
-    FROM stock_movement
-    WHERE stock_line_id IS NOT NULL
+    FROM movements_with_precedence
     ORDER BY datetime, type_precedence;
 
   CREATE VIEW item_ledger AS
