@@ -2090,6 +2090,6 @@
   "warning.caps-lock": "Avertissement: Verrouillage majuscule activé",
   "warning.check-before-vaccinating": "La carte de vaccination éléctronique provenant d'autres sites de vaccination peuvent ne pas être à jour ! Assurez-vous d'avoir effectué une synchronisation récente et vérifiez toujours la validité de la carte de vaccination papier du patient.",
   "warning.field-not-parsed": "{{field}} non analysé",
-  "warning.manual-store-requisition": "Saisir une réquisition pour ce dépôt peut  donner lieu à un doublon si le dépôt crée également une commande interne.",
+  "warning.manual-store-requisition": "Attention - La saisie d'une réquisition client pour un dépôt peut entraîner des doublons si ce dépôt soumet aussi une commande interne.",
   "warning.nothing-to-supply": "La quantité demandée à été fournie !"
 }
