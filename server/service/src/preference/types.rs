@@ -17,6 +17,7 @@ pub enum PrefKey {
     ManageVaccinesInDoses,
     ShowContactTracing,
     GenderOptions,
+    UseCampaigns,
     // Store preferences
     ManageVvmStatusForStock,
     SortByVvmStatusThenExpiry,
