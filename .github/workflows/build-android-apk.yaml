@@ -81,6 +81,8 @@ jobs:
       - name: Send build completion notification
         if: always()
         env:
+          B2_APPLICATION_KEY_ID: ${{ secrets.B2_KEY_ID }}
+          B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
           TELEGRAM_RELEASE_BOT_KEY: ${{ secrets.TELEGRAM_RELEASE_BOT_KEY }}
           TELEGRAM_DEV_RELEASE_CHAT_ID: ${{ secrets.TELEGRAM_DEV_RELEASE_CHAT_ID }}
           TELEGRAM_RC_RELEASE_CHAT_ID: ${{ secrets.TELEGRAM_RC_RELEASE_CHAT_ID }}
