@@ -157,12 +157,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         invoice.status AS invoice_status,
         invoice_line_stock_movement.total_before_tax AS total_before_tax,
         invoice_line_stock_movement.pack_size as pack_size,
-        invoice_line_stock_movement.number_of_packs as number_of_packs,
-        CASE
-          WHEN invoice.type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
-          WHEN invoice.type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
-          ELSE 3
-        END AS type_precedence
+        invoice_line_stock_movement.number_of_packs as number_of_packs
     FROM
         invoice_line_stock_movement
         LEFT JOIN reason_option ON invoice_line_stock_movement.reason_option_id = reason_option.id
@@ -170,21 +165,27 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
         JOIN name_link ON invoice.name_link_id = name_link.id
         JOIN name ON name_link.name_id = name.id
-    ORDER BY datetime, type_precedence
     )
     SELECT * FROM all_movements
     WHERE datetime IS NOT NULL;
 
 
-  -- Separate view for stock ledger, so the running balance window function is only executed when required
+  -- Separate views for stock & item ledger, so the running balance window functions are only executed when required
+
   CREATE VIEW stock_ledger AS
     SELECT *,
+      CASE
+        WHEN invoice_type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
+        WHEN invoice_type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2
+        ELSE 3
+      END AS type_precedence,
       SUM(quantity) OVER (
         PARTITION BY store_id, stock_line_id
         ORDER BY datetime, type_precedence
         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
       ) AS running_balance
     FROM stock_movement
+    ORDER BY datetime, type_precedence
     WHERE stock_line_id IS NOT NULL;
 
   CREATE VIEW item_ledger AS
