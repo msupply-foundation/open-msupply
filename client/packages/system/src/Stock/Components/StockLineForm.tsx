@@ -23,11 +23,16 @@ import {
   useRegisterActions,
   usePreference,
   PreferenceKey,
+  ReasonOptionNodeType,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment } from '../api';
+import { DraftStockLine } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
-import { DonorSearchInput } from '../..';
-import { StyledInputRow } from './StyledInputRow';
+import {
+  DonorSearchInput,
+  ReasonOptionRowFragment,
+  ReasonOptionsSearchInput,
+} from '../..';
+import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
 import {
   ItemVariantInput,
   PackSizeNumberInput,
@@ -36,12 +41,13 @@ import {
 import { CampaignSelector } from './Campaign';
 
 interface StockLineFormProps {
-  draft: StockLineRowFragment;
+  draft: DraftStockLine;
   loading: boolean;
-  onUpdate: (patch: Partial<StockLineRowFragment>) => void;
+  onUpdate: (patch: Partial<DraftStockLine>) => void;
   pluginEvents: UsePluginEvents<{ isDirty: boolean }>;
   packEditable?: boolean;
   isInModal?: boolean;
+  reasonOptions?: ReasonOptionRowFragment[];
 }
 export const StockLineForm = ({
   draft,
@@ -50,6 +56,7 @@ export const StockLineForm = ({
   pluginEvents,
   packEditable,
   isInModal = false,
+  reasonOptions,
 }: StockLineFormProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -190,6 +197,20 @@ export const StockLineForm = ({
               <BufferedTextInput
                 value={draft.batch ?? ''}
                 onChange={e => onUpdate({ batch: e.target.value })}
+              />
+            }
+          />
+          <StyledInputRow
+            label={t('label.reason')}
+            Input={
+              <ReasonOptionsSearchInput
+                width={INPUT_WIDTH}
+                type={ReasonOptionNodeType.PositiveInventoryAdjustment}
+                value={draft.reasonOption}
+                onChange={reason => onUpdate({ reasonOption: reason })}
+                reasonOptions={reasonOptions ?? []}
+                loading={loading}
+                disabled={draft?.totalNumberOfPacks === 0}
               />
             }
           />

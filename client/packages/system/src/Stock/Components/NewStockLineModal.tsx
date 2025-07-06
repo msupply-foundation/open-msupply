@@ -7,22 +7,15 @@ import {
   ModalRow,
   ModalLabel,
   Divider,
-  Box,
   useNotification,
   useNavigate,
   RouteBuilder,
   usePluginEvents,
   noOtherVariants,
-  ReasonOptionNodeType,
 } from '@openmsupply-client/common';
 import { useStockLine } from '../api';
 import { StockLineForm } from './StockLineForm';
-import {
-  ReasonOptionsSearchInput,
-  StockItemSearchInput,
-  useReasonOptions,
-} from '../..';
-import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
+import { StockItemSearchInput, useReasonOptions } from '../..';
 import { AppRoute } from '@openmsupply-client/config';
 
 interface NewStockLineModalProps {
@@ -151,25 +144,8 @@ export const NewStockLineModal = ({
               packEditable
               isInModal
               pluginEvents={pluginEvents}
+              reasonOptions={reasonOptions?.nodes}
             />
-            <Grid width={'50%'}>
-              <StyledInputRow
-                label={t('label.reason')}
-                Input={
-                  <Box display="flex" width={INPUT_WIDTH}>
-                    <ReasonOptionsSearchInput
-                      width={INPUT_WIDTH}
-                      type={ReasonOptionNodeType.PositiveInventoryAdjustment}
-                      value={draft.reasonOption}
-                      onChange={reason => updatePatch({ reasonOption: reason })}
-                      reasonOptions={reasonOptions?.nodes ?? []}
-                      loading={isLoading}
-                      disabled={draft?.totalNumberOfPacks === 0}
-                    />
-                  </Box>
-                }
-              />
-            </Grid>
           </Grid>
         )}
       </Grid>
