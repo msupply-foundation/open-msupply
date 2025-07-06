@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useTranslation,
   Grid,
@@ -30,10 +30,10 @@ interface NewStockLineModalProps {
   onClose: () => void;
 }
 
-export const NewStockLineModal: FC<NewStockLineModalProps> = ({
+export const NewStockLineModal = ({
   isOpen,
   onClose,
-}) => {
+}: NewStockLineModalProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { success, error } = useNotification();
@@ -42,7 +42,11 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   });
   const { data: reasonOptions } = useReasonOptions();
 
-  const { Modal } = useDialog({ isOpen, onClose });
+  const { Modal } = useDialog({
+    isOpen,
+    onClose,
+    disableMobileFullScreen: true,
+  });
 
   const {
     query: { isLoading },
