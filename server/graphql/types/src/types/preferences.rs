@@ -23,6 +23,10 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.show_contact_tracing)
     }
 
+    pub async fn use_campaigns(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.use_campaigns)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -95,6 +99,7 @@ pub enum PreferenceKey {
     AllowTrackingOfStockByDonor,
     ShowContactTracing,
     GenderOptions,
+    UseCampaigns,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -105,15 +110,14 @@ pub enum PreferenceKey {
 impl PreferenceKey {
     pub fn from_domain(pref_key: &PrefKey) -> Self {
         match pref_key {
-            // Global preferences
             PrefKey::AllowTrackingOfStockByDonor => PreferenceKey::AllowTrackingOfStockByDonor,
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
             PrefKey::GenderOptions => PreferenceKey::GenderOptions,
-            // Store preferences
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
             PrefKey::SortByVvmStatusThenExpiry => PreferenceKey::SortByVvmStatusThenExpiry,
             PrefKey::UseSimplifiedMobileUi => PreferenceKey::UseSimplifiedMobileUi,
+            PrefKey::UseCampaigns => PreferenceKey::UseCampaigns,
         }
     }
 }
