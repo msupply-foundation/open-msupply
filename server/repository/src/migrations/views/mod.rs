@@ -185,8 +185,8 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
       ) AS running_balance
     FROM stock_movement
-    ORDER BY datetime, type_precedence
-    WHERE stock_line_id IS NOT NULL;
+    WHERE stock_line_id IS NOT NULL
+    ORDER BY datetime, type_precedence;
 
   CREATE VIEW item_ledger AS
     WITH all_movements AS (
