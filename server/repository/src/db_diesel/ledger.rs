@@ -55,6 +55,7 @@ pub struct LedgerRow {
     pub sell_price_per_pack: f64,
     pub total_before_tax: Option<f64>,
     pub number_of_packs: f64,
+    /// The running balance for the stock line at the time of this ledger entry
     pub running_balance: f64,
 }
 
