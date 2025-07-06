@@ -38,7 +38,6 @@ import {
   AllocateInOption,
   AllocateInType,
 } from '../../../StockOut';
-import { useCampaigns } from '@openmsupply-client/system/src/Manage/Campaigns/api';
 
 type AllocateFn = (
   key: string,
@@ -66,9 +65,6 @@ export const useOutboundLineEditColumns = ({
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
 
-  const {
-    query: { data: campaigns },
-  } = useCampaigns();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
   const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
@@ -77,7 +73,8 @@ export const useOutboundLineEditColumns = ({
   const { data: prefs } = usePreference(
     PreferenceKey.SortByVvmStatusThenExpiry,
     PreferenceKey.ManageVvmStatusForStock,
-    PreferenceKey.AllowTrackingOfStockByDonor
+    PreferenceKey.AllowTrackingOfStockByDonor,
+    PreferenceKey.UseCampaigns
   );
 
   const packSize =
@@ -138,9 +135,7 @@ export const useOutboundLineEditColumns = ({
     });
   }
 
-  // Only show campaigns column if some are defined -- in time we should have a
-  // store pref for this
-  if (campaigns?.totalCount ?? 0 > 0)
+  if (prefs?.useCampaigns)
     columnDefinitions.push({
       key: 'campaign',
       label: 'label.campaign',
