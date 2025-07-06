@@ -1095,7 +1095,7 @@
   "label.patient-type": "Type de patient",
   "label.patients": "Patients",
   "label.payment-amount-outstanding": "Montant restant à payer",
-  "label.payment-amount-paid": "Montant payé",
+  "label.payment-amount-paid": "Montant reçu",
   "label.payment-amount-to-be-paid": "Montant à payer",
   "label.payment-change": "Monnaie à rendre",
   "label.payment-type": "Type de paiement",
@@ -2090,5 +2090,6 @@
   "warning.caps-lock": "Avertissement: Verrouillage majuscule activé",
   "warning.check-before-vaccinating": "La carte de vaccination éléctronique provenant d'autres sites de vaccination peuvent ne pas être à jour ! Assurez-vous d'avoir effectué une synchronisation récente et vérifiez toujours la validité de la carte de vaccination papier du patient.",
   "warning.field-not-parsed": "{{field}} non analysé",
+  "warning.manual-store-requisition": "Attention - La saisie d'une réquisition client pour un dépôt peut entraîner des doublons si ce dépôt soumet aussi une commande interne.",
   "warning.nothing-to-supply": "La quantité demandée à été fournie !"
 }
