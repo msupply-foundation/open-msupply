@@ -9,7 +9,10 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{InvoiceConnector, InvoiceNode, InvoiceNodeStatus, InvoiceNodeType};
+use graphql_types::types::{
+    EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput, InvoiceConnector, InvoiceNode,
+    InvoiceNodeStatus, InvoiceNodeType,
+};
 use repository::{
     DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceSort, InvoiceSortField, PaginationOption,
     StringFilter,
@@ -56,20 +59,6 @@ pub struct InvoiceSortInput {
 }
 
 #[derive(InputObject, Clone)]
-pub struct EqualFilterInvoiceTypeInput {
-    pub equal_to: Option<InvoiceNodeType>,
-    pub equal_any: Option<Vec<InvoiceNodeType>>,
-    pub not_equal_to: Option<InvoiceNodeType>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct EqualFilterInvoiceStatusInput {
-    pub equal_to: Option<InvoiceNodeStatus>,
-    pub equal_any: Option<Vec<InvoiceNodeStatus>>,
-    pub not_equal_to: Option<InvoiceNodeStatus>,
-}
-
-#[derive(InputObject, Clone)]
 pub struct InvoiceFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name_id: Option<EqualFilterStringInput>,
@@ -89,6 +78,7 @@ pub struct InvoiceFilterInput {
     pub picked_datetime: Option<DatetimeFilterInput>,
     pub shipped_datetime: Option<DatetimeFilterInput>,
     pub delivered_datetime: Option<DatetimeFilterInput>,
+    pub received_datetime: Option<DatetimeFilterInput>,
     pub verified_datetime: Option<DatetimeFilterInput>,
     pub created_or_backdated_datetime: Option<DatetimeFilterInput>,
     pub colour: Option<EqualFilterStringInput>,
@@ -222,6 +212,7 @@ impl InvoiceFilterInput {
             picked_datetime: self.picked_datetime.map(DatetimeFilter::from),
             shipped_datetime: self.shipped_datetime.map(DatetimeFilter::from),
             delivered_datetime: self.delivered_datetime.map(DatetimeFilter::from),
+            received_datetime: self.received_datetime.map(DatetimeFilter::from),
             verified_datetime: self.verified_datetime.map(DatetimeFilter::from),
             created_or_backdated_datetime: self
                 .created_or_backdated_datetime

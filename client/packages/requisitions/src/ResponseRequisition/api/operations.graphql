@@ -65,6 +65,7 @@ mutation deleteResponse(
 fragment ResponseLine on RequisitionLineNode {
   id
   itemId
+  itemName
   requestedQuantity
   supplyQuantity
   remainingQuantityToSupply
@@ -91,7 +92,7 @@ fragment ResponseLine on RequisitionLineNode {
     averageMonthlyConsumption
   }
   item {
-    ...ItemRow
+    ...ItemWithStats
   }
   approvedQuantity
   approvalComment
@@ -360,6 +361,10 @@ mutation updateResponseLine(
           key
         }
         ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on RequisitionReasonNotProvided {
           __typename
           description
         }

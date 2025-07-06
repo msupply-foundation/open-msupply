@@ -1,7 +1,8 @@
-use chrono::{NaiveDateTime, Utc};
+use chrono::{Duration, NaiveDateTime, Utc};
 use repository::{
-    Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
-    RepositoryError, StockLineRowRepository, StorageConnection,
+    EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository,
+    InvoiceRow, InvoiceRowRepository, InvoiceStatus, RepositoryError, StockLineRowRepository,
+    StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -117,23 +118,46 @@ pub fn create_reverse_prescription(
     new_invoice.id = uuid();
     new_invoice.linked_invoice_id = Some(orig_invoice.id.clone());
     new_invoice.is_cancellation = true;
-    new_invoice.verified_datetime = Some(Utc::now().naive_utc());
+    new_invoice.created_datetime = orig_invoice.created_datetime + Duration::seconds(10);
+    new_invoice.picked_datetime = orig_invoice
+        .picked_datetime
+        .map(|dt| dt + Duration::seconds(10));
+    new_invoice.verified_datetime = Some(Utc::now().naive_utc() + Duration::seconds(10));
     new_invoice.status = InvoiceStatus::Verified;
     InvoiceRowRepository::new(connection).upsert_one(&new_invoice)?;
 
     // Fetch lines from original invoice
-    let line_repo = InvoiceLineRowRepository::new(connection);
-    let lines = line_repo.find_many_by_invoice_id(&orig_invoice.id)?;
+    let line_repo = InvoiceLineRepository::new(connection);
+    let line_row_repo = InvoiceLineRowRepository::new(connection);
+    let lines = line_repo.query_by_filter(
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&orig_invoice.id)),
+    )?;
 
     // Reverse the stock direction of each line and update DB
     for mut line in lines {
-        line.id = uuid();
-        line.invoice_id = new_invoice.id.clone();
-        line.r#type = match line.r#type {
+        line.invoice_line_row.id = uuid();
+        line.invoice_line_row.invoice_id = new_invoice.id.clone();
+        line.invoice_line_row.r#type = match line.invoice_line_row.r#type {
             repository::InvoiceLineType::StockOut => repository::InvoiceLineType::StockIn,
-            _ => line.r#type,
+            _ => line.invoice_line_row.r#type,
         };
-        line_repo.upsert_one(&line)?;
+        line_row_repo.upsert_one(&line.invoice_line_row)?;
+
+        // Add the stock back to the stock line
+        if let Some(stock_line_id) = &line.invoice_line_row.stock_line_id {
+            let stock_line_repo = StockLineRowRepository::new(connection);
+            let mut stock_line = stock_line_repo
+                .find_one_by_id(stock_line_id)?
+                .ok_or(RepositoryError::NotFound)?;
+
+            stock_line.total_number_of_packs += line.invoice_line_row.number_of_packs;
+            stock_line.available_number_of_packs += line.invoice_line_row.number_of_packs;
+            stock_line_repo.upsert_one(&stock_line)?;
+        } else {
+            return Err(UpdatePrescriptionError::InvoiceLineHasNoStockLine(
+                line.invoice_line_row.id.clone(),
+            ));
+        }
     }
 
     Ok(())
@@ -171,7 +195,8 @@ mod test {
     use repository::{
         mock::{
             mock_inbound_shipment_a, mock_patient, mock_patient_b, mock_prescription_a,
-            mock_prescription_verified, mock_store_a, mock_store_b, MockData, MockDataInserts,
+            mock_prescription_verified, mock_stock_line_a, mock_store_a, mock_store_b, MockData,
+            MockDataInserts,
         },
         test_db::setup_all_with_data,
         ActivityLogRowRepository, ActivityLogType, ClinicianRow, ClinicianStoreJoinRow,
@@ -411,6 +436,40 @@ mod test {
             })
         );
 
+        // add a an invoice line to the prescription
+        let invoice_line_row_repo = InvoiceLineRowRepository::new(&connection);
+        let invoice_line = InvoiceLineRow {
+            id: "test_invoice_line".to_string(),
+            invoice_id: prescription().id.clone(),
+            item_link_id: mock_stock_line_a().item_link_id.clone(),
+            item_name: "Test Item".to_string(),
+            item_code: "test_item_code".to_string(),
+            batch: mock_stock_line_a().batch.clone(),
+            r#type: InvoiceLineType::StockOut,
+            number_of_packs: 2.0,
+            stock_line_id: Some(mock_stock_line_a().id.clone()),
+            location_id: None,
+            expiry_date: None,
+            pack_size: 0.0,
+            cost_price_per_pack: 0.0,
+            sell_price_per_pack: 0.0,
+            total_before_tax: 0.0,
+            total_after_tax: 0.0,
+            tax_percentage: None,
+            prescribed_quantity: None,
+            note: None,
+            foreign_currency_price_before_tax: None,
+            item_variant_id: None,
+            linked_invoice_id: None,
+            donor_link_id: None,
+            vvm_status_id: None,
+            reason_option_id: None,
+            campaign_id: None,
+            shipped_number_of_packs: None,
+        };
+
+        invoice_line_row_repo.upsert_one(&invoice_line).unwrap();
+
         // helpers to compare totals
         let stock_lines_for_invoice_lines = |invoice_lines: &Vec<InvoiceLineRow>| {
             let stock_line_ids: Vec<String> = invoice_lines
@@ -421,8 +480,9 @@ mod test {
                 .find_many_by_ids(&stock_line_ids)
                 .unwrap()
         };
+
         // calculates the expected stock line total for every invoice line row
-        let expected_stock_line_totals = |invoice_lines: &Vec<InvoiceLineRow>| {
+        let calculate_expected_stock_line_totals = |invoice_lines: &Vec<InvoiceLineRow>| {
             let stock_lines = stock_lines_for_invoice_lines(invoice_lines);
             let expected_stock_line_totals: Vec<(StockLineRow, f64)> = stock_lines
                 .into_iter()
@@ -453,7 +513,7 @@ mod test {
         let invoice_lines = InvoiceLineRowRepository::new(&connection)
             .find_many_by_invoice_id(&invoice.id)
             .unwrap();
-        let expected_stock_line_totals = expected_stock_line_totals(&invoice_lines);
+        let expected_stock_line_totals = calculate_expected_stock_line_totals(&invoice_lines);
 
         service
             .update_prescription(
@@ -475,6 +535,9 @@ mod test {
         assert_eq!(log.r#type, ActivityLogType::PrescriptionStatusPicked);
 
         // Test that cancellation of prescription generates reverse invoice
+
+        // Capture the current stockline totals before cancellation
+        let stock_lines_before_cancellation = stock_lines_for_invoice_lines(&invoice_lines);
 
         // Should only be able to set Status to "Cancelled" from "Verified".
         // This is not currently enforced on server, but doing it here to
@@ -506,7 +569,43 @@ mod test {
         assert_eq!(reverse_prescription.is_cancellation, true);
 
         let reverse_lines = InvoiceLineRowRepository::new(&connection)
-            .find_many_by_invoice_id(&reverse_prescription.id);
+            .find_many_by_invoice_id(&reverse_prescription.id)
+            .unwrap();
         assert_eq!(reverse_lines.iter().len(), 1);
+
+        let stock_lines_after_cancellation = stock_lines_for_invoice_lines(&invoice_lines);
+        // Check that the stock lines have been updated correctly
+        for pre_cancel_stock_line in stock_lines_before_cancellation {
+            let post_cancel_stock_line = stock_lines_after_cancellation
+                .iter()
+                .find(|l| l.id == pre_cancel_stock_line.id)
+                .unwrap();
+            // Check we have more stock than before cancellation
+            assert!(
+                post_cancel_stock_line.available_number_of_packs
+                    >= pre_cancel_stock_line.available_number_of_packs
+            );
+            assert!(
+                post_cancel_stock_line.total_number_of_packs
+                    >= pre_cancel_stock_line.total_number_of_packs
+            );
+
+            // Calculate the expected stock line total after cancellation
+            let line_movement = reverse_lines
+                .iter()
+                .find(|il| il.stock_line_id == Some(pre_cancel_stock_line.id.clone()))
+                .unwrap();
+
+            let expected_total =
+                pre_cancel_stock_line.total_number_of_packs + line_movement.number_of_packs;
+            assert_eq!(post_cancel_stock_line.total_number_of_packs, expected_total);
+
+            let expected_available =
+                pre_cancel_stock_line.available_number_of_packs + line_movement.number_of_packs;
+            assert_eq!(
+                post_cancel_stock_line.available_number_of_packs,
+                expected_available
+            );
+        }
     }
 }

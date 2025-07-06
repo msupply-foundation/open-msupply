@@ -1,6 +1,8 @@
 use crate::{
-    invoice::update_picked_date::update_picked_date, invoice_line::query::get_invoice_line,
-    service_provider::ServiceContext, WithDBError,
+    invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
+    invoice_line::query::get_invoice_line,
+    service_provider::ServiceContext,
+    WithDBError,
 };
 use chrono::NaiveDate;
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
@@ -29,6 +31,7 @@ pub struct InsertStockOutLine {
     pub expiry_date: Option<NaiveDate>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
+    pub campaign_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -44,6 +47,7 @@ pub enum InsertStockOutLineError {
     LocationIsOnHold,
     LocationNotFound,
     StockLineAlreadyExistsInInvoice(String),
+    AutoPickFailed(String),
     NewlyCreatedLineDoesNotExist,
     BatchIsOnHold,
     ReductionBelowZero { stock_line_id: String },
@@ -76,11 +80,20 @@ pub fn insert_stock_out_line(
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item, invoice, batch) = validate(&connection, &input, &ctx.store_id)?;
-            let (new_line, update_batch) = generate(ctx, input, item, batch, invoice.clone())?;
+            let (item, invoice, batch, adjusted_input) =
+                validate(connection, input, &ctx.store_id)?;
+            let (new_line, update_batch) =
+                generate(ctx, adjusted_input, item, batch, invoice.clone())?;
             InvoiceLineRowRepository::new(connection).upsert_one(&new_line)?;
             StockLineRowRepository::new(connection).upsert_one(&update_batch)?;
-            update_picked_date(&connection, &invoice)?;
+
+            update_picked_date(ctx, &invoice).map_err(|e| match e {
+                UpdatePickedDateError::AutoPickFailed(msg) => OutError::AutoPickFailed(msg),
+                UpdatePickedDateError::RepositoryError(repo_error) => {
+                    OutError::DatabaseError(repo_error)
+                }
+            })?;
+
             get_invoice_line(ctx, &new_line.id)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedLineDoesNotExist)
@@ -494,10 +507,10 @@ mod test {
             name_link_id: mock_name_store_a().id,
             r#type: InvoiceType::InboundShipment,
             store_id: context.store_id.clone(),
-            created_datetime: datetime.clone(),
-            picked_datetime: Some(datetime.clone()),
-            delivered_datetime: Some(datetime.clone()),
-            verified_datetime: Some(datetime.clone()),
+            created_datetime: datetime,
+            picked_datetime: Some(datetime),
+            received_datetime: Some(datetime),
+            verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
         };
@@ -512,10 +525,10 @@ mod test {
             name_link_id: mock_name_store_a().id,
             r#type: InvoiceType::InboundShipment,
             store_id: context.store_id.clone(),
-            created_datetime: datetime.clone(),
-            picked_datetime: Some(datetime.clone()),
-            delivered_datetime: Some(datetime.clone()),
-            verified_datetime: Some(datetime.clone()),
+            created_datetime: datetime,
+            picked_datetime: Some(datetime),
+            received_datetime: Some(datetime),
+            verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
         };
@@ -579,9 +592,9 @@ mod test {
             r#type: InvoiceType::Prescription,
             store_id: context.store_id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(), // Created now
-            allocated_datetime: Some(datetime.clone()),       // Backdated to 2 days ago
-            picked_datetime: Some(datetime.clone()),
-            backdated_datetime: Some(datetime.clone()),
+            allocated_datetime: Some(datetime),               // Backdated to 2 days ago
+            picked_datetime: Some(datetime),
+            backdated_datetime: Some(datetime),
             delivered_datetime: None,
             verified_datetime: None,
             status: InvoiceStatus::Picked,

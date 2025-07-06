@@ -11,6 +11,7 @@ export type OutboundFragment = {
   createdDatetime: string;
   allocatedDatetime?: string | null;
   deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
   verifiedDatetime?: string | null;
@@ -67,6 +68,11 @@ export type OutboundFragment = {
         isVaccine: boolean;
         doses: number;
       };
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        dosesPerUnit: number;
+      } | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -237,6 +243,7 @@ export type InvoiceQuery = {
         createdDatetime: string;
         allocatedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
@@ -293,6 +300,11 @@ export type InvoiceQuery = {
               isVaccine: boolean;
               doses: number;
             };
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              dosesPerUnit: number;
+            } | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -378,6 +390,7 @@ export type OutboundByNumberQuery = {
         createdDatetime: string;
         allocatedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
@@ -434,6 +447,11 @@ export type OutboundByNumberQuery = {
               isVaccine: boolean;
               doses: number;
             };
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              dosesPerUnit: number;
+            } | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -1031,6 +1049,7 @@ export const OutboundFragmentDoc = gql`
     createdDatetime
     allocatedDatetime
     deliveredDatetime
+    receivedDatetime
     pickedDatetime
     shippedDatetime
     verifiedDatetime

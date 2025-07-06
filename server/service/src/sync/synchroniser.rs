@@ -189,7 +189,7 @@ impl Synchroniser {
 
         let v6_sync = match CentralServerConfig::get() {
             CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
-            CentralServerConfig::IsCentralServer => None,
+            CentralServerConfig::IsCentralServer | CentralServerConfig::ForcedCentralServer => None,
             CentralServerConfig::CentralServerUrl(url) => {
                 let v6_sync =
                     SynchroniserV6::new(&url, &self.sync_v5_settings, self.sync_v6_version)?;
@@ -304,11 +304,16 @@ impl Synchroniser {
         ctx.processors_trigger
             .trigger_processor(ProcessorType::ContactFormEmail);
 
+        // This should be before plugin processor below, in case there is a processor error, need to be able
+        // to sync new plugin version to avoid bricking the app
         ctx.processors_trigger
             .trigger_processor(ProcessorType::LoadPlugin);
 
         ctx.processors_trigger
             .trigger_processor(ProcessorType::AssignRequisitionNumber);
+
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::Plugins);
 
         Ok(())
     }

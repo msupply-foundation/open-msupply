@@ -61,6 +61,7 @@ pub fn generate(
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
+        received_datetime: None,
         verified_datetime: None,
         cancelled_datetime: None,
         linked_invoice_id: None,
@@ -101,6 +102,7 @@ pub fn generate(
             expiry_date: None,
             cost_price_per_pack: None,
             sell_price_per_pack: None,
+            campaign_id: None,
         })
         .collect();
 

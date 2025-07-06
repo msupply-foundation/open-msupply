@@ -1,3 +1,4 @@
+use crate::types::patient::GenderType;
 use async_graphql::*;
 use repository::StorageConnection;
 use service::preference::{
@@ -16,10 +17,6 @@ impl PreferencesNode {
     // Global preferences
     pub async fn allow_tracking_of_stock_by_donor(&self) -> Result<bool> {
         self.load_preference(&self.preferences.allow_tracking_of_stock_by_donor)
-    }
-
-    pub async fn display_population_based_forecasting(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.display_population_based_forecasting)
     }
 
     pub async fn show_contact_tracing(&self) -> Result<bool> {
@@ -41,6 +38,12 @@ impl PreferencesNode {
 
     pub async fn use_simplified_mobile_ui(&self) -> Result<bool> {
         self.load_preference(&self.preferences.use_simplified_mobile_ui)
+    }
+
+    pub async fn gender_options(&self) -> Result<Vec<GenderType>> {
+        let domain_genders = self.load_preference(&self.preferences.gender_options)?;
+        let genders = domain_genders.iter().map(GenderType::from_domain).collect();
+        Ok(genders)
     }
 }
 
@@ -90,8 +93,8 @@ impl PreferenceDescriptionNode {
 pub enum PreferenceKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
-    DisplayPopulationBasedForecasting,
     ShowContactTracing,
+    GenderOptions,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -105,9 +108,7 @@ impl PreferenceKey {
             // Global preferences
             PrefKey::AllowTrackingOfStockByDonor => PreferenceKey::AllowTrackingOfStockByDonor,
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
-            PrefKey::DisplayPopulationBasedForecasting => {
-                PreferenceKey::DisplayPopulationBasedForecasting
-            }
+            PrefKey::GenderOptions => PreferenceKey::GenderOptions,
             // Store preferences
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
@@ -136,6 +137,7 @@ impl PreferenceNodeType {
 pub enum PreferenceValueNodeType {
     Boolean,
     Integer,
+    MultiChoice,
 }
 
 impl PreferenceValueNodeType {
@@ -143,6 +145,7 @@ impl PreferenceValueNodeType {
         match domain_type {
             PreferenceValueType::Boolean => PreferenceValueNodeType::Boolean,
             PreferenceValueType::Integer => PreferenceValueNodeType::Integer,
+            PreferenceValueType::MultiChoice => PreferenceValueNodeType::MultiChoice,
         }
     }
 }

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   TextWithLabelRow,
   useTranslation,
@@ -10,6 +10,7 @@ import {
   useDialog,
   useFormatNumber,
   getReasonOptionType,
+  Checkbox,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
 import { ReasonOptionsSearchInput, useReasonOptions } from '../../..';
@@ -21,11 +22,11 @@ interface InventoryAdjustmentModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
+export const InventoryAdjustmentModal = ({
   stockLine,
   isOpen,
   onClose,
-}) => {
+}: InventoryAdjustmentModalProps) => {
   const t = useTranslation();
   const { success, error } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
@@ -35,7 +36,7 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
   const { data, isLoading } = useReasonOptions();
 
   const packUnit = String(stockLine.packSize);
-  const saveDisabled = draft.adjustment === 0;
+  const saveDisabled = draft.adjustment === 0 || stockLine.onHold;
   const isInventoryReduction =
     draft.adjustmentType === AdjustmentTypeInput.Reduction;
 
@@ -93,6 +94,7 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
             Input={
               <Box display="flex" width={INPUT_WIDTH}>
                 <ReasonOptionsSearchInput
+                  disabled={draft.adjustment === 0}
                   onChange={reason => setDraft(state => ({ ...state, reason }))}
                   value={draft.reason}
                   type={getReasonOptionType(
@@ -101,10 +103,14 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
                   )}
                   width={INPUT_WIDTH}
                   reasonOptions={data?.nodes ?? []}
-                  isLoading={isLoading}
+                  loading={isLoading}
                 />
               </Box>
             }
+          />
+          <StyledInputRow
+            label={t('label.on-hold')}
+            Input={<Checkbox checked={stockLine.onHold} disabled />}
           />
         </Box>
         <Box

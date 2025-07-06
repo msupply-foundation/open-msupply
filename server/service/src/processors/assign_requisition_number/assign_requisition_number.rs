@@ -5,6 +5,7 @@ use repository::{
 };
 
 use crate::{
+    cursor_controller::CursorType,
     number::next_number,
     processors::general_processor::{Processor, ProcessorError},
     service_provider::{ServiceContext, ServiceProvider},
@@ -80,7 +81,7 @@ impl Processor for AssignRequisitionNumber {
         Ok(filter)
     }
 
-    fn cursor_type(&self) -> KeyType {
-        KeyType::AssignRequisitionNumberProcessorCursor
+    fn cursor_type(&self) -> CursorType {
+        CursorType::Standard(KeyType::AssignRequisitionNumberProcessorCursor)
     }
 }

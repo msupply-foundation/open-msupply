@@ -33,7 +33,7 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Debug, PartialEq)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default)]
 pub struct LedgerRow {
     pub id: String,
     pub stock_line_id: Option<String>,

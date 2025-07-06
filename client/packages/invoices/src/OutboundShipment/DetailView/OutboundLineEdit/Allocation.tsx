@@ -25,6 +25,7 @@ import {
   sumAvailableUnits,
   AllocateInSelector,
   useOutboundLineEditData,
+  AllocateInOption,
 } from '../../../StockOut';
 import { useOutbound } from '../../api';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
@@ -36,6 +37,7 @@ interface AllocationProps {
   scannedBatch?: string;
   prefOptions: {
     sortByVvmStatus: boolean;
+    manageVaccinesInDoses: boolean;
   };
 }
 
@@ -44,7 +46,7 @@ export const Allocation = ({
   invoiceId,
   allowPlaceholder,
   scannedBatch,
-  prefOptions: { sortByVvmStatus },
+  prefOptions: { sortByVvmStatus, manageVaccinesInDoses },
 }: AllocationProps) => {
   const { initialise, item } = useAllocationContext(({ initialise, item }) => ({
     initialise,
@@ -61,6 +63,19 @@ export const Allocation = ({
     queryData().then(({ data }) => {
       if (!data) return;
 
+      const packsizes = [
+        ...new Set(data.draftLines.map(line => line.packSize)),
+      ];
+
+      // if there is only one packsize, we should auto-allocate in packs for that size
+      const allocateInPacksize: AllocateInOption | undefined =
+        packsizes.length === 1 && packsizes[0]
+          ? {
+              type: AllocateInType.Packs,
+              packSize: packsizes[0],
+            }
+          : undefined;
+
       initialise({
         itemData: data,
         strategy: sortByVvmStatus
@@ -68,6 +83,11 @@ export const Allocation = ({
           : AllocationStrategy.FEFO,
         allowPlaceholder,
         scannedBatch,
+        // Default to allocate in doses for vaccines if pref is on
+        allocateIn:
+          manageVaccinesInDoses && data.item.isVaccine
+            ? { type: AllocateInType.Doses }
+            : allocateInPacksize,
       });
     });
     // Expect dependencies to be stable

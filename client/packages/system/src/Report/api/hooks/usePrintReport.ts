@@ -1,9 +1,9 @@
 import {
   EnvUtils,
-  FileUtils,
   Platform,
   PrintFormat,
   PrintReportSortInput,
+  useDownloadFile,
   useIntlUtils,
   useMutation,
   useNotification,
@@ -68,6 +68,7 @@ export const usePrintReport = () => {
   const { reportApi, storeId } = useReportGraphQL();
   const { error } = useNotification();
   const { currentLanguage } = useIntlUtils();
+  const downloadFile = useDownloadFile();
 
   const mutationFn = async (params: GenerateReportParams) => {
     const {
@@ -94,7 +95,7 @@ export const usePrintReport = () => {
     throw new Error(t('messages.error-printing-report'));
   };
 
-  const { mutate, isLoading } = useMutation({
+  const { mutate, mutateAsync, isLoading } = useMutation({
     mutationFn,
     onSuccess: (fileId, { format = EnvUtils.printFormat }) => {
       if (!fileId) throw new Error(t('messages.error-printing-report'));
@@ -102,7 +103,7 @@ export const usePrintReport = () => {
       if (format === PrintFormat.Html) {
         printPage(url);
       } else {
-        FileUtils.downloadFile(url);
+        downloadFile(url);
       }
     },
     onError: (e: Error) => {
@@ -110,5 +111,5 @@ export const usePrintReport = () => {
     },
   });
 
-  return { print: mutate, isPrinting: isLoading };
+  return { print: mutate, printAsync: mutateAsync, isPrinting: isLoading };
 };

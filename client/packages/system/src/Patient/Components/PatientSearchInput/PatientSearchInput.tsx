@@ -1,23 +1,50 @@
-import React, { FC, useEffect, useState } from 'react';
-import { Autocomplete, useTranslation } from '@openmsupply-client/common';
+import React, { useEffect, useState } from 'react';
+import {
+  Autocomplete,
+  Box,
+  EditIcon,
+  IconButton,
+  useIntlUtils,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { NameSearchInputProps, SearchInputPatient } from '../../utils';
 import { getPatientOptionRenderer } from '../PatientOptionRenderer';
 import { useSearchPatient } from '../utils';
+import { CreatePatientSlider } from '../../CreatePatientModal/CreatePatientSlider';
+import { EditPatientModal } from '../../EditPatientModal';
+import {
+  CreateNewPatient,
+  usePatientStore,
+} from '@openmsupply-client/programs/src';
+import { PatientColumnData } from '../../CreatePatientModal/PatientResultsTab';
+import { CreatePatientModal } from '../../CreatePatientModal';
 
-export const PatientSearchInput: FC<NameSearchInputProps> = ({
+interface PatientSearchInputProps extends NameSearchInputProps {
+  allowCreate?: boolean;
+  allowEdit?: boolean;
+  mountSlidePanel?: boolean;
+}
+
+export const PatientSearchInput = ({
   autoFocus,
   onChange,
   width = 250,
   value,
   disabled = false,
   sx,
-  NoOptionsRenderer,
-}) => {
+  allowCreate = false,
+  allowEdit = false,
+  mountSlidePanel = false,
+}: PatientSearchInputProps) => {
+  const t = useTranslation();
   const PatientOptionRenderer = getPatientOptionRenderer();
   const { isLoading, patients, search } = useSearchPatient();
-  const t = useTranslation();
+  const { createNewPatient } = usePatientStore();
+  const { getLocalisedFullName } = useIntlUtils();
 
   const [input, setInput] = useState('');
+  const [createPatientOpen, setCreatePatientOpen] = useState(false);
+  const [editPatientModalOpen, setEditPatientModalOpen] = useState(false);
 
   useEffect(() => {
     if (value) {
@@ -26,60 +53,113 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
     }
   }, [value]);
 
-  const noResults =
-    NoOptionsRenderer && patients.length === 0 && input !== '' && !isLoading;
+  const asOption = (
+    patient: CreateNewPatient | PatientColumnData
+  ): SearchInputPatient => ({
+    ...patient,
+    name: getLocalisedFullName(patient.firstName, patient.lastName),
+    code: patient.code ?? '',
+    isDeceased: patient.isDeceased ?? false,
+  });
 
-  const options = noResults
-    ? // This is a bit of hack to allow us to render a component inside the
-      // Autocomplete when there are no options/results. Normally, only "text"
-      // can be defined for "No Options", so we create this "dummy" option to
-      // prevent the "No Options" behaviour, and then we specify a custom
-      // renderer which (should) have a static component (e.g. a "Create new
-      // patient" link) The type of this dummy value doesn't matter as it's
-      // values never get rendered/referenced.
-      // If a "NoOptionsRenderer" isn't specified, the component will behave as
-      // normal (i.e. show the "noOptionsText" when no results are found)
-      ([{ name: 'Dummy', value: '_' }] as unknown as SearchInputPatient[])
-    : patients;
+  const handlePatientClose = (selectedPatient?: PatientColumnData) => {
+    setCreatePatientOpen(false);
+    if (selectedPatient) {
+      onChange(asOption(selectedPatient));
+    } else if (createNewPatient) {
+      onChange(asOption(createNewPatient));
+    } else return;
+    setInput('');
+  };
+
+  const showCreate =
+    allowCreate && patients.length === 0 && input !== '' && !isLoading;
+
+  const CreatePatient = mountSlidePanel
+    ? CreatePatientSlider
+    : CreatePatientModal;
+
+  const options = patients as SearchInputPatient[];
 
   return (
-    <Autocomplete
-      autoFocus={autoFocus}
-      options={options}
-      disabled={disabled}
-      clearable={false}
-      loading={isLoading}
-      onChange={(_, name) => {
-        if (name && !(name instanceof Array)) {
-          onChange(name);
-          setInput(name.name);
+    <Box width={`${width}px`} display={'flex'} alignItems="center">
+      <Autocomplete
+        autoFocus={autoFocus}
+        options={options}
+        disabled={disabled}
+        clearable={false}
+        loading={isLoading}
+        onChange={(_, name) => {
+          if (name && !(name instanceof Array)) {
+            onChange(name);
+            setInput(name.name);
+          }
+        }}
+        renderOption={PatientOptionRenderer}
+        getOptionLabel={(option: SearchInputPatient) => option.name}
+        isOptionEqualToValue={(option, value) => option.name === value.name}
+        popperMinWidth={width}
+        value={value}
+        inputValue={input}
+        inputProps={{
+          onChange: e => {
+            const { value } = e.target;
+            // update the input value and the search filter
+            setInput(value);
+            search(value);
+          },
+          // reset input value to previous selected patient if user clicks away
+          // without selecting a patient
+          onBlur: () => setInput(value?.name ?? ''),
+        }}
+        filterOptions={options => options}
+        sx={{ width: '100%', ...sx }}
+        noOptionsText={
+          input.length > 0
+            ? t('messages.no-matching-patients')
+            : t('messages.type-to-search')
         }
-      }}
-      renderOption={noResults ? NoOptionsRenderer : PatientOptionRenderer}
-      getOptionLabel={(option: SearchInputPatient) => option.name}
-      isOptionEqualToValue={(option, value) => option.name === value.name}
-      width={`${width}px`}
-      popperMinWidth={width}
-      value={value}
-      inputValue={input}
-      inputProps={{
-        onChange: e => {
-          const { value } = e.target;
-          // update the input value and the search filter
-          setInput(value);
-          search(value);
-        },
-        // reset input value to previous selected patient if user clicks away
-        // without selecting a patient
-        onBlur: () => setInput(value?.name ?? ''),
-      }}
-      filterOptions={options => options}
-      sx={{ minWidth: width, ...sx }}
-      noOptionsText={
-        input.length > 0
-          ? t('messages.no-matching-patients')
-          : t('messages.type-to-search')
-      }
-    />
+        clickableOption={
+          showCreate && setCreatePatientOpen
+            ? {
+                label: t('label.new-patient'),
+                onClick: () => {
+                  setCreatePatientOpen(true);
+                },
+              }
+            : undefined
+        }
+      />
+      {allowEdit && value && (
+        <>
+          <IconButton
+            icon={<EditIcon style={{ fontSize: 16, fill: 'none' }} />}
+            label={t('label.edit')}
+            onClick={() => setEditPatientModalOpen?.(true)}
+          />
+        </>
+      )}
+      {allowCreate && (
+        <CreatePatient
+          open={createPatientOpen}
+          onClose={() => setCreatePatientOpen(false)}
+          onCreate={() => {
+            handlePatientClose();
+          }}
+          onSelectPatient={patient => {
+            handlePatientClose(patient);
+          }}
+        />
+      )}
+      {value && editPatientModalOpen && (
+        <EditPatientModal
+          patientId={value.id}
+          onClose={() => {
+            setEditPatientModalOpen(false);
+          }}
+          isOpen={editPatientModalOpen}
+        />
+      )}
+    </Box>
   );
 };

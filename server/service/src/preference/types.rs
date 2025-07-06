@@ -16,8 +16,8 @@ pub enum PrefKey {
     AllowTrackingOfStockByDonor,
     ManageVaccinesInDoses,
     ShowContactTracing,
+    GenderOptions,
     // Store preferences
-    DisplayPopulationBasedForecasting,
     ManageVvmStatusForStock,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
@@ -34,6 +34,7 @@ pub enum PreferenceType {
 pub enum PreferenceValueType {
     Boolean,
     Integer,
+    MultiChoice,
     // String,
     // MultilineString,
     // Add scalar or custom value types here - mapped to frontend renderers

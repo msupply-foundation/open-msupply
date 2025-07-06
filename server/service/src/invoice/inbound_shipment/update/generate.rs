@@ -22,6 +22,7 @@ use super::{
     UpdateInboundShipmentStatus,
 };
 
+#[derive(Debug)]
 pub struct LineAndStockLine {
     pub line: InvoiceLineRow,
     pub stock_line: Option<StockLineRow>,
@@ -179,9 +180,12 @@ pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment
 
     match (existing_status, new_status) {
         (
-            // From New/Picked/Shipped to Delivered/Verified
-            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateInboundShipmentStatus::Delivered | UpdateInboundShipmentStatus::Verified,
+            // From New/Picked/Shipped/Delivered to Received/Verified
+            InvoiceStatus::New
+            | InvoiceStatus::Picked
+            | InvoiceStatus::Shipped
+            | InvoiceStatus::Delivered,
+            UpdateInboundShipmentStatus::Received | UpdateInboundShipmentStatus::Verified,
         ) => true,
         _ => false,
     }
@@ -281,28 +285,19 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipme
     };
 
     let current_datetime = Utc::now().naive_utc();
-    match (&invoice.status, new_status) {
-        // From New/Picked/Shipped to Delivered
-        (
-            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateInboundShipmentStatus::Delivered,
-        ) => {
+    match new_status {
+        UpdateInboundShipmentStatus::Delivered => {
             invoice.delivered_datetime = Some(current_datetime);
         }
-
-        // From New/Picked/Shipped to Verified
-        (
-            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateInboundShipmentStatus::Verified,
-        ) => {
-            invoice.delivered_datetime = Some(current_datetime);
+        UpdateInboundShipmentStatus::Received => {
+            invoice.delivered_datetime = invoice.delivered_datetime.or(Some(current_datetime));
+            invoice.received_datetime = Some(current_datetime);
+        }
+        UpdateInboundShipmentStatus::Verified => {
+            invoice.delivered_datetime = invoice.delivered_datetime.or(Some(current_datetime));
+            invoice.received_datetime = invoice.received_datetime.or(Some(current_datetime));
             invoice.verified_datetime = Some(current_datetime);
         }
-        // From Delivered to Verified
-        (InvoiceStatus::Delivered, UpdateInboundShipmentStatus::Verified) => {
-            invoice.verified_datetime = Some(current_datetime);
-        }
-        _ => {}
     }
 }
 
@@ -375,6 +370,7 @@ pub fn generate_lines_and_stock_lines(
             donor_link_id,
             note,
             vvm_status_id,
+            campaign_id,
             reason_option_id: _,
             ..
         }: InvoiceLineRow = invoice_line;
@@ -399,7 +395,7 @@ pub fn generate_lines_and_stock_lines(
                 item_variant_id,
                 donor_link_id,
                 vvm_status_id,
-                campaign_id: None,
+                campaign_id,
             };
             result.push(LineAndStockLine {
                 line,

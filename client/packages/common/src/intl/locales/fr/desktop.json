@@ -1,0 +1,18 @@
+{
+  "about-oms": "À propos d'Open mSupply",
+  "clear-data": "Effacer les données",
+  "clear-data-confirm-message": "Cela effacera toutes les données locales et fermera l'application. Êtes-vous sûr ?",
+  "confirmation": "Confirmation",
+  "copy": "Copier",
+  "cut": "Couper",
+  "developer-tools": "Outils de développement",
+  "documentation": "Documentation",
+  "file": "Fichier",
+  "help": "Aide",
+  "no": "Non",
+  "paste": "Coller",
+  "quit": "Quitter",
+  "reload": "Recharger",
+  "select-all": "Tout sélectionner",
+  "yes": "Oui"
+}

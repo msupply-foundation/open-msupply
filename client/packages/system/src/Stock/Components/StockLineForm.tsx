@@ -26,9 +26,13 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
-import { DonorSearchInput, ItemVariantSearchInput } from '../..';
+import { DonorSearchInput } from '../..';
 import { StyledInputRow } from './StyledInputRow';
-import { PackSizeNumberInput, useIsItemVariantsEnabled } from '../../Item';
+import {
+  ItemVariantInput,
+  PackSizeNumberInput,
+  useIsItemVariantsEnabled,
+} from '../../Item';
 import { CampaignSelector } from './Campaign';
 
 interface StockLineFormProps {
@@ -51,7 +55,9 @@ export const StockLineForm = ({
   const { error } = useNotification();
 
   const { data: preferences } = usePreference(
-    PreferenceKey.AllowTrackingOfStockByDonor
+    PreferenceKey.AllowTrackingOfStockByDonor,
+    PreferenceKey.ManageVaccinesInDoses,
+    PreferenceKey.ManageVvmStatusForStock
   );
 
   const { isConnected, isEnabled, isScanning, startScan } =
@@ -174,6 +180,7 @@ export const StockLineForm = ({
                 onChange={date =>
                   onUpdate({ expiryDate: Formatter.naiveDate(date) })
                 }
+                width={160}
               />
             }
           />
@@ -190,11 +197,16 @@ export const StockLineForm = ({
             <StyledInputRow
               label={t('label.item-variant')}
               Input={
-                <ItemVariantSearchInput
+                <ItemVariantInput
                   itemId={draft.itemId}
                   selectedId={draft.itemVariantId ?? null}
                   width={160}
                   onChange={variant => onUpdate({ itemVariantId: variant?.id })}
+                  displayDoseColumns={
+                    (draft.item.isVaccine &&
+                      preferences?.manageVaccinesInDoses) ??
+                    false
+                  }
                 />
               }
             />
@@ -283,7 +295,7 @@ export const StockLineForm = ({
             text={String(supplierName)}
             textProps={{ textAlign: 'end' }}
           />
-          {draft?.item?.isVaccine && (
+          {draft?.item?.isVaccine && preferences?.manageVvmStatusForStock && (
             <StyledInputRow
               label={t('label.vvm-status')}
               Input={

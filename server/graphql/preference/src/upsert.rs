@@ -1,5 +1,6 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_types::types::patient::GenderType;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{StorePrefUpdate, UpsertPreferences},
@@ -14,8 +15,8 @@ pub struct BoolStorePrefInput {
 pub struct UpsertPreferencesInput {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
-    pub display_population_based_forecasting: Option<bool>,
     pub show_contact_tracing: Option<bool>,
+    pub gender_options: Option<Vec<GenderType>>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
@@ -51,7 +52,7 @@ impl UpsertPreferencesInput {
             // Global preferences
             allow_tracking_of_stock_by_donor,
             show_contact_tracing,
-            display_population_based_forecasting,
+            gender_options,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -62,8 +63,10 @@ impl UpsertPreferencesInput {
         UpsertPreferences {
             // Global preferences
             allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
-            display_population_based_forecasting: *display_population_based_forecasting,
             show_contact_tracing: *show_contact_tracing,
+            gender_options: gender_options
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             // Global preferences*show_contact_tracing
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()

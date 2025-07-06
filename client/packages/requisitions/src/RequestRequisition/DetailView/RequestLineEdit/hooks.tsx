@@ -1,5 +1,9 @@
-import { useState, useEffect } from 'react';
-import { FnUtils, QuantityUtils } from '@openmsupply-client/common';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  FnUtils,
+  QuantityUtils,
+  useTranslation,
+} from '@openmsupply-client/common';
 import {
   useRequest,
   RequestLineFragment,
@@ -54,7 +58,7 @@ const createDraftFromRequestLine = (
   ...line,
   requisitionId: request.id,
   itemId: line.item.id,
-  requestedQuantity: line.requestedQuantity ?? line.suggestedQuantity,
+  requestedQuantity: line.requestedQuantity,
   suggestedQuantity: line.suggestedQuantity,
   isCreated: false,
   itemStats: line.itemStats,
@@ -63,13 +67,18 @@ const createDraftFromRequestLine = (
 export const useDraftRequisitionLine = (
   item?: ItemWithStatsFragment | null
 ) => {
+  const t = useTranslation();
+  const [isReasonsError, setIsReasonsError] = useState(false);
   const { lines } = useRequest.line.list();
   const { data } = useRequest.document.get();
-  const { mutateAsync: save, isLoading } = useRequest.line.save();
+  const { mutateAsync: saveMutation, isLoading } = useRequest.line.save();
 
   const [draft, setDraft] = useState<DraftRequestLine | null>(null);
-
   useEffect(() => {
+    if (isReasonsError) {
+      return;
+    }
+
     if (lines && item && data) {
       const existingLine = lines.find(
         ({ item: reqItem }) => reqItem.id === item.id
@@ -84,19 +93,60 @@ export const useDraftRequisitionLine = (
     }
   }, [lines, item, data]);
 
-  const update = (patch: Partial<DraftRequestLine>) => {
-    if (draft) {
-      setDraft({ ...draft, ...patch });
-    }
-  };
+  const update = useCallback((patch: Partial<DraftRequestLine>) => {
+    setDraft(current => (current ? { ...current, ...patch } : null));
+  }, []);
 
-  return { draft, isLoading, save: () => draft && save(draft), update };
+  const save = useCallback(async () => {
+    if (draft) {
+      const result = await saveMutation(draft);
+
+      setIsReasonsError(false);
+      if (result?.__typename === 'UpdateRequestRequisitionLineError') {
+        let errorMessage: string;
+
+        switch (result.error.__typename) {
+          case 'RequisitionReasonNotProvided':
+            setIsReasonsError(true);
+            errorMessage = t('error.provide-reason-requisition');
+            break;
+          case 'CannotEditRequisition':
+            errorMessage = t('error.cannot-edit-requisition');
+            break;
+          default:
+            errorMessage = t('error.database-error');
+            break;
+        }
+
+        return {
+          error: errorMessage,
+        };
+      }
+
+      return {
+        data: result,
+      };
+    }
+
+    return null;
+  }, [draft, saveMutation]);
+
+  return {
+    draft,
+    isLoading,
+    save,
+    update,
+    isReasonsError,
+  };
 };
 
 export const useNextRequestLine = (
+  lines?: RequestLineFragment[],
   currentItem?: ItemWithStatsFragment | null
 ) => {
-  const { lines } = useRequest.line.list();
+  if (!lines || !currentItem) {
+    return { hasNext: false, next: null };
+  }
 
   const nextState: {
     hasNext: boolean;

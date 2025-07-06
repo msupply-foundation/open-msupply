@@ -27,7 +27,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             // Global preferences
             allow_tracking_of_stock_by_donor,
             show_contact_tracing,
-            display_population_based_forecasting,
+            gender_options,
 
             // Store preferences
             manage_vaccines_in_doses,
@@ -46,8 +46,8 @@ pub trait PreferenceServiceTrait: Sync + Send {
 
         // Global preferences
         append_if_type(allow_tracking_of_stock_by_donor, &mut prefs, &input)?;
-        append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
         append_if_type(show_contact_tracing, &mut prefs, &input)?;
+        append_if_type(gender_options, &mut prefs, &input)?;
         // Store preferences
         append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
         append_if_type(manage_vvm_status_for_stock, &mut prefs, &input)?;

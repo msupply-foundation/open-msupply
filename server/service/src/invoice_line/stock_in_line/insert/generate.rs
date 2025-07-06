@@ -5,13 +5,14 @@ use crate::{
         GenerateVVMStatusLogInput,
     },
     invoice_line::stock_in_line::{
-        convert_invoice_line_to_single_pack, generate_batch, StockInType, StockLineInput,
+        convert_invoice_line_to_single_pack, generate_batch, should_update_stock, StockInType,
+        StockLineInput,
     },
     store_preference::get_store_preferences,
 };
 use repository::{
     vvm_status::vvm_status_log_row::VVMStatusLogRow, BarcodeRow, InvoiceLineRow, InvoiceLineType,
-    InvoiceRow, InvoiceStatus, ItemRow, RepositoryError, StockLineRow, StorageConnection,
+    InvoiceRow, ItemRow, RepositoryError, StockLineRow, StorageConnection,
 };
 
 use super::InsertStockInLine;
@@ -57,7 +58,6 @@ pub fn generate(
                         StockInType::InventoryAddition => false,
                         _ => true,
                     },
-                    campaign_id: input.campaign_id.clone(),
                 },
             )?;
 
@@ -108,12 +108,13 @@ fn generate_line(
         stock_line_id,
         item_variant_id,
         vvm_status_id,
+        donor_id,
+        campaign_id,
+        shipped_number_of_packs,
         barcode: _,
         stock_on_hold: _,
         tax_percentage: _,
-        donor_id,
         r#type: _,
-        campaign_id,
     }: InsertStockInLine,
     ItemRow {
         name: item_name,
@@ -153,18 +154,19 @@ fn generate_line(
         item_variant_id,
         vvm_status_id,
         donor_link_id: donor_id,
+        campaign_id,
+        shipped_number_of_packs,
         foreign_currency_price_before_tax: None,
         linked_invoice_id: None,
         prescribed_quantity: None,
         reason_option_id: None,
-        campaign_id,
     }
 }
 
 fn should_upsert_batch(stock_in_type: &StockInType, existing_invoice_row: &InvoiceRow) -> bool {
     match stock_in_type {
         StockInType::InboundShipment | StockInType::CustomerReturn => {
-            existing_invoice_row.status != InvoiceStatus::New
+            should_update_stock(&existing_invoice_row)
         }
         StockInType::InventoryAddition => true,
     }

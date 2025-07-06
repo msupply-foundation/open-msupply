@@ -19,6 +19,9 @@ import {
   useIntlUtils,
   NumberInputCell,
   getDosesPerUnitColumn,
+  useFormatNumber,
+  NumUtils,
+  TextInputCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -47,6 +50,7 @@ interface TableProps {
   hasItemVariantsEnabled?: boolean;
   hasVvmStatusesEnabled?: boolean;
   item?: ItemRowFragment | null;
+  setPackRoundingMessage?: (value: React.SetStateAction<string>) => void;
 }
 
 export const QuantityTableComponent = ({
@@ -56,17 +60,18 @@ export const QuantityTableComponent = ({
   hasItemVariantsEnabled,
   hasVvmStatusesEnabled,
   item,
+  setPackRoundingMessage,
 }: TableProps) => {
   const t = useTranslation();
   const theme = useTheme();
   const { getPlural } = useIntlUtils();
+  const { format } = useFormatNumber();
   const { data: preferences } = usePreference(
     PreferenceKey.ManageVaccinesInDoses
   );
 
   const displayInDoses =
     !!preferences?.manageVaccinesInDoses && !!item?.isVaccine;
-
   const unitName = Formatter.sentenceCase(
     item?.unitName ? item.unitName : t('label.unit')
   );
@@ -91,21 +96,28 @@ export const QuantityTableComponent = ({
   columnDefinitions.push(
     getColumnLookupWithOverrides('packSize', {
       Cell: PackSizeEntryCell<DraftInboundLine>,
-      setter: updateDraftLine,
+      setter: patch => {
+        setPackRoundingMessage?.('');
+        updateDraftLine(patch);
+      },
       label: 'label.pack-size',
       defaultHideOnMobile: true,
+      align: ColumnAlign.Left,
     }),
     [
       'numberOfPacks',
       {
         label: 'label.packs-received',
         Cell: NumberOfPacksCell,
+        cellProps: { decimalLimit: 0 },
         width: 100,
+        align: ColumnAlign.Left,
         setter: patch => {
           const { packSize, numberOfPacks } = patch;
 
           if (packSize !== undefined && numberOfPacks !== undefined) {
             const packToUnits = packSize * numberOfPacks;
+            setPackRoundingMessage?.('');
 
             updateDraftLine({
               ...patch,
@@ -114,7 +126,19 @@ export const QuantityTableComponent = ({
           }
         },
       },
-    ]
+    ],
+    {
+      key: 'shippedNumberOfPacks',
+      label: 'label.shipped-number-of-packs',
+      Cell: NumberOfPacksCell,
+      cellProps: {
+        decimalLimit: 0,
+      },
+      getIsDisabled: rowData => !!rowData.linkedInvoiceId,
+      width: 100,
+      align: ColumnAlign.Left,
+      setter: patch => updateDraftLine(patch),
+    }
   );
 
   columnDefinitions.push({
@@ -123,21 +147,38 @@ export const QuantityTableComponent = ({
       unit: pluralisedUnitName,
     }),
     width: 100,
+    cellProps: { debounce: 500 },
     Cell: NumberInputCell,
-    align: ColumnAlign.Right,
+    align: ColumnAlign.Left,
     setter: patch => {
       const { unitsPerPack, packSize } = patch;
 
       if (packSize !== undefined && unitsPerPack !== undefined) {
         const unitToPacks = unitsPerPack / packSize;
 
+        const roundedPacks = Math.ceil(unitToPacks);
+        const actualUnits = roundedPacks * packSize;
+
+        if (roundedPacks === unitToPacks || roundedPacks === 0) {
+          setPackRoundingMessage?.('');
+        } else {
+          setPackRoundingMessage?.(
+            t('messages.under-allocated', {
+              receivedQuantity: format(NumUtils.round(unitsPerPack, 2)), // round the display value to 2dp
+              quantity: format(actualUnits),
+            })
+          );
+        }
+
         updateDraftLine({
           ...patch,
-          unitsPerPack,
-          numberOfPacks: unitToPacks,
+          unitsPerPack: actualUnits,
+          numberOfPacks: roundedPacks,
         });
+        return actualUnits;
       }
     },
+
     accessor: ({ rowData }) => {
       return rowData.numberOfPacks * rowData.packSize;
     },
@@ -310,7 +351,18 @@ export const LocationTableComponent = ({
         accessor: ({ rowData }) => rowData.batch || '',
       },
     ],
-    [getLocationInputColumn(), { setter: updateDraftLine, width: 550 }],
+    [getLocationInputColumn(), { setter: updateDraftLine, width: 530 }],
+    [
+      'note',
+      {
+        Cell: TextInputCell,
+        setter: patch => {
+          const note = patch.note === '' ? null : patch.note;
+          updateDraftLine({ ...patch, note });
+        },
+        accessor: ({ rowData }) => rowData.note,
+      },
+    ],
   ];
 
   if (preferences?.allowTrackingOfStockByDonor) {

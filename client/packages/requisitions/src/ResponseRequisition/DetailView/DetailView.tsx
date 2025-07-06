@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -11,6 +11,10 @@ import {
   DetailTabs,
   IndicatorLineRowNode,
   useBreadcrumbs,
+  useEditModal,
+  useAuthContext,
+  usePreference,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
@@ -22,13 +26,25 @@ import { ContentArea } from './ContentArea';
 import { useResponse, ResponseLineFragment, ResponseFragment } from '../api';
 import { IndicatorsTab } from './IndicatorsTab';
 import { ResponseRequisitionLineErrorProvider } from '../context';
-import { buildItemEditRoute } from '../utils';
 import { ProgramIndicatorFragment } from '../../RequestRequisition/api';
+import { buildIndicatorEditRoute } from './utils';
+import { ResponseLineEditModal } from './ResponseLineEdit';
 
-export const DetailView: FC = () => {
+export const DetailView = () => {
   const t = useTranslation();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const { store } = useAuthContext();
+  const { data: { manageVaccinesInDoses } = { manageVaccinesInDoses: false } } =
+    usePreference(PreferenceKey.ManageVaccinesInDoses);
+  const {
+    onOpen,
+    onClose,
+    mode,
+    entity: itemId,
+    isOpen,
+  } = useEditModal<string | null>();
+
   const { data, isLoading } = useResponse.document.get();
   const isDisabled = useResponse.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
@@ -39,9 +55,12 @@ export const DetailView: FC = () => {
       !!data
     );
 
-  const onRowClick = useCallback((line: ResponseLineFragment) => {
-    navigate(buildItemEditRoute(line.requisitionId, line.item.id));
-  }, []);
+  const onRowClick = useCallback(
+    (line: ResponseLineFragment) => {
+      onOpen(line.item.id);
+    },
+    [onOpen]
+  );
 
   const onProgramIndicatorClick = useCallback(
     (
@@ -51,20 +70,18 @@ export const DetailView: FC = () => {
     ) => {
       if (!response || !indicatorLine) return;
       navigate(
-        RouteBuilder.create(AppRoute.Distribution)
-          .addPart(AppRoute.CustomerRequisition)
-          .addPart(String(response.id))
-          .addPart(AppRoute.Indicators)
-          .addPart(String(programIndicator?.code))
-          .addPart(String(indicatorLine.id))
-          .build()
+        buildIndicatorEditRoute(
+          response.id,
+          String(programIndicator?.code),
+          indicatorLine.id
+        )
       );
     },
     []
   );
 
   const onAddItem = () => {
-    navigate(buildItemEditRoute(data?.id, 'new'));
+    onOpen();
   };
 
   useEffect(() => {
@@ -88,6 +105,7 @@ export const DetailView: FC = () => {
           disableAddLine={
             isDisabled || !!data?.linkedRequisition || !!data?.programName
           }
+          manageVaccinesInDoses={manageVaccinesInDoses}
         />
       ),
       value: 'Details',
@@ -131,6 +149,17 @@ export const DetailView: FC = () => {
 
         <Footer />
         <SidePanel />
+        {isOpen && (
+          <ResponseLineEditModal
+            requisition={data}
+            itemId={itemId}
+            store={store}
+            mode={mode}
+            isOpen={isOpen}
+            onClose={onClose}
+            manageVaccinesInDoses={manageVaccinesInDoses}
+          />
+        )}
       </TableProvider>
     </ResponseRequisitionLineErrorProvider>
   ) : (

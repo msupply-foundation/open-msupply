@@ -17,6 +17,8 @@ import {
   bmiTester,
   DateOfBirth,
   dateOfBirthTester,
+  DateRange,
+  dateRangeTester,
   IdGenerator,
   idGeneratorTester,
   QuantityPrescribed,
@@ -86,6 +88,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: bloodPressureTester, renderer: BloodPressure },
   { tester: prescriptionTester, renderer: Prescription },
   { tester: patientSearchTester, renderer: PatientSearch },
+  { tester: dateRangeTester, renderer: DateRange },
 ];
 
 /**
@@ -117,7 +120,8 @@ export type JsonFormData<R> = {
  */
 export const useJsonFormsHandler = <R,>(
   config: JsonFormsConfig,
-  jsonFormData: JsonFormData<R>
+  jsonFormData: JsonFormData<R>,
+  confirmOnLeaving: boolean = true
 ) => {
   const { loadedData, isLoading, error, save, isCreating } = jsonFormData;
   const [initialData, setInitialData] = useState<JsonData | undefined>(
@@ -133,7 +137,9 @@ export const useJsonFormsHandler = <R,>(
   const [validationError, setValidationError] = useState<string | false>(false);
   const { success, error: errorNotification } = useNotification();
 
-  const { isDirty, setIsDirty } = useConfirmOnLeaving('json-forms');
+  const { isDirty, setIsDirty } = useConfirmOnLeaving('json-forms', {
+    disabled: !confirmOnLeaving,
+  });
   const formActions = useFormActions(setIsDirty);
 
   // returns the document name

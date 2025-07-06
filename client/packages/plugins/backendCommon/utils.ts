@@ -45,3 +45,8 @@ export const fromSqlDateTime = (datetime: string) => {
   const withoutMillisecods = datetime.split('.')[0] || datetime;
   return new Date(`${withoutMillisecods.split(' ').join('T')}Z`);
 };
+
+export const toNaiveDateTime = (date: Date) => {
+  // Removing 'Z' from end of iso date string for naive date time to be recognised
+  return date.toISOString().replace('Z', '');
+};

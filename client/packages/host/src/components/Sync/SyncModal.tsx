@@ -133,7 +133,7 @@ export const SyncModal = ({
         if (e.key === 'Escape') onCancel();
       }}
     >
-      <Grid sx={{ padding: 2, paddingBottom: 5 }} justifyContent="center">
+      <Grid sx={{ padding: 2 }} justifyContent="center">
         <IconButton
           icon={<CloseIcon />}
           color="primary"
@@ -141,7 +141,6 @@ export const SyncModal = ({
           sx={{ position: 'absolute', right: 0, top: 0, padding: 2 }}
           label={t('button.close')}
         />
-
         <Grid
           container
           flexDirection="column"
@@ -149,11 +148,9 @@ export const SyncModal = ({
           sx={theme => ({
             [theme.breakpoints.down('sm')]: {
               minWidth: 300,
-              padding: 0,
-              marginTop: '50px',
+              padding: '2 0 0 0',
             },
             padding: 2,
-            paddingBottom: 6,
             minWidth: 650,
           })}
           flexWrap="nowrap"
@@ -196,20 +193,29 @@ export const SyncModal = ({
           <Row title={t('sync-info.last-successful-sync')}>
             <FormattedSyncDate date={latestSuccessfulSyncDate} />
           </Row>
-          <Row>
+          <Grid
+            sx={theme => ({
+              [theme.breakpoints.down('sm')]: {
+                flexDirection: 'column',
+                padding: '0em .5em 1em 0em',
+              },
+              padding: 1,
+            })}
+          >
+            <ServerInfo />
+          </Grid>
+          <Grid display="flex" justifyContent="center">
             <LoadingButton
               shouldShrink={false}
               autoFocus
               isLoading={isLoading || updateUserIsLoading}
-              startIcon={<RadioIcon sx={{ color: '#fff!important' }} />}
+              startIcon={<RadioIcon />}
               variant="contained"
               sx={theme => ({
                 [theme.breakpoints.down('sm')]: {
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  margin: '1em',
+                  margin: '0em .5em 1em 0em',
                 },
+                margin: 1,
                 color: theme.palette.common.white,
                 fontSize: '12px',
               })}
@@ -221,12 +227,24 @@ export const SyncModal = ({
               isSyncing={isLoading}
               isUpdatingUser={updateUserIsLoading}
             />
-          </Row>
-          <ServerInfo />
+          </Grid>
         </Grid>
-        {!isExtraSmallScreen && (
+        <Grid
+          container
+          flexDirection="column"
+          justifyContent="flex-start"
+          sx={theme => ({
+            [theme.breakpoints.down('sm')]: {
+              minWidth: 300,
+              padding: '0 0 0 2',
+            },
+            padding: '0 2 2 2',
+            minWidth: 650,
+          })}
+          flexWrap="nowrap"
+        >
           <SyncProgress syncStatus={syncStatus} isOperational={true} />
-        )}
+        </Grid>
       </Grid>
     </BasicModal>
   );

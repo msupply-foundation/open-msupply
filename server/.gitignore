@@ -40,7 +40,13 @@ app_data/
 
 # report builder server credentials
 report_builder/config.yaml
+
+# report builder outputs
 /*.html
+/*.xlsx
 
 # fridge tag imports
 sensor_*.txt
+
+# Load test artifacts
+load_test/

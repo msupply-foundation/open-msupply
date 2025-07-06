@@ -76,6 +76,7 @@ pub fn generate(
                 stock_on_hold: false,
                 donor_id: None,
                 campaign_id: None,
+                shipped_number_of_packs: None,
             },
         )
         .collect();
@@ -101,7 +102,7 @@ pub fn generate(
                 id,
                 batch,
                 expiry_date,
-                note,
+                note: Some(NullableUpdate { value: note }),
                 item_id: Some(item_id),
                 pack_size: Some(pack_size),
                 number_of_packs: Some(number_of_packs),
@@ -118,6 +119,7 @@ pub fn generate(
                 total_before_tax: None,
                 donor_id: None,
                 campaign_id: None,
+                shipped_number_of_packs: None,
             },
         )
         .collect();

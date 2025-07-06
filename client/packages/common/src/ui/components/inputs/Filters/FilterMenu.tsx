@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CloseIcon, SearchIcon } from '@common/icons';
 import { useUrlQuery } from '@common/hooks';
 import { InlineSpinner } from '../../loading';
@@ -23,7 +23,7 @@ export interface FilterDefinitionCommon {
   isDefault?: boolean;
 }
 
-interface GroupFilterDefinition {
+export interface GroupFilterDefinition {
   type: 'group';
   name: string;
   elements: FilterDefinition[];
@@ -44,7 +44,7 @@ interface FilterDefinitions {
 const RESET_KEYWORD = 'RESET';
 export const FILTER_WIDTH = 180;
 
-export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
+export const FilterMenu = ({ filters }: FilterDefinitions) => {
   const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
   const [activeFilters, setActiveFilters] = useState<FilterDefinition[]>([]);
@@ -133,9 +133,12 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
   );
 };
 
-const FilterMenuItem: FC<{ onClick: () => void; label: string }> = ({
+const FilterMenuItem = ({
   onClick,
   label,
+}: {
+  onClick: () => void;
+  label: string;
 }) => (
   <DropdownMenuItem onClick={onClick} sx={{ fontSize: 14 }}>
     {label}
@@ -241,11 +244,15 @@ const getFilterComponent = (
   }
 };
 
-export const EndAdornment: FC<{
+export const EndAdornment = ({
+  isLoading,
+  hasValue,
+  onClear,
+}: {
   isLoading: boolean;
   hasValue: boolean;
   onClear: () => void;
-}> = ({ hasValue, isLoading, onClear }) => {
+}) => {
   const t = useTranslation();
   if (isLoading) return <InlineSpinner />;
 

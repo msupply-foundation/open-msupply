@@ -6,7 +6,7 @@ import {
   RequisitionReasonsNotProvidedErrorFragmentDoc,
   ProgramIndicatorFragmentDoc,
 } from '../../RequestRequisition/api/operations.generated';
-import { ItemRowFragmentDoc } from '../../../../system/src/Item/api/operations.generated';
+import { ItemWithStatsFragmentDoc } from '../../../../system/src/RequestRequisitionLine/operations.generated';
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type UpdateResponseMutationVariables = Types.Exact<{
@@ -74,6 +74,7 @@ export type ResponseLineFragment = {
   __typename: 'RequisitionLineNode';
   id: string;
   itemId: string;
+  itemName: string;
   requestedQuantity: number;
   supplyQuantity: number;
   remainingQuantityToSupply: number;
@@ -103,11 +104,22 @@ export type ResponseLineFragment = {
   item: {
     __typename: 'ItemNode';
     id: string;
-    code: string;
     name: string;
+    code: string;
     unitName?: string | null;
+    defaultPackSize: number;
     isVaccine: boolean;
     doses: number;
+    availableStockOnHand: number;
+    stats: {
+      __typename: 'ItemStatsNode';
+      averageMonthlyConsumption: number;
+      availableStockOnHand: number;
+      availableMonthsOfStockOnHand?: number | null;
+      totalConsumption: number;
+      stockOnHand: number;
+      monthsOfStockOnHand?: number | null;
+    };
   };
   linkedRequisitionLine?: {
     __typename: 'RequisitionLineNode';
@@ -174,6 +186,7 @@ export type ResponseFragment = {
       __typename: 'RequisitionLineNode';
       id: string;
       itemId: string;
+      itemName: string;
       requestedQuantity: number;
       supplyQuantity: number;
       remainingQuantityToSupply: number;
@@ -203,11 +216,22 @@ export type ResponseFragment = {
       item: {
         __typename: 'ItemNode';
         id: string;
-        code: string;
         name: string;
+        code: string;
         unitName?: string | null;
+        defaultPackSize: number;
         isVaccine: boolean;
         doses: number;
+        availableStockOnHand: number;
+        stats: {
+          __typename: 'ItemStatsNode';
+          averageMonthlyConsumption: number;
+          availableStockOnHand: number;
+          availableMonthsOfStockOnHand?: number | null;
+          totalConsumption: number;
+          stockOnHand: number;
+          monthsOfStockOnHand?: number | null;
+        };
       };
       linkedRequisitionLine?: {
         __typename: 'RequisitionLineNode';
@@ -304,6 +328,7 @@ export type ResponseByNumberQuery = {
             __typename: 'RequisitionLineNode';
             id: string;
             itemId: string;
+            itemName: string;
             requestedQuantity: number;
             supplyQuantity: number;
             remainingQuantityToSupply: number;
@@ -333,11 +358,22 @@ export type ResponseByNumberQuery = {
             item: {
               __typename: 'ItemNode';
               id: string;
-              code: string;
               name: string;
+              code: string;
               unitName?: string | null;
+              defaultPackSize: number;
               isVaccine: boolean;
               doses: number;
+              availableStockOnHand: number;
+              stats: {
+                __typename: 'ItemStatsNode';
+                averageMonthlyConsumption: number;
+                availableStockOnHand: number;
+                availableMonthsOfStockOnHand?: number | null;
+                totalConsumption: number;
+                stockOnHand: number;
+                monthsOfStockOnHand?: number | null;
+              };
             };
             linkedRequisitionLine?: {
               __typename: 'RequisitionLineNode';
@@ -442,6 +478,7 @@ export type ResponseByIdQuery = {
             __typename: 'RequisitionLineNode';
             id: string;
             itemId: string;
+            itemName: string;
             requestedQuantity: number;
             supplyQuantity: number;
             remainingQuantityToSupply: number;
@@ -471,11 +508,22 @@ export type ResponseByIdQuery = {
             item: {
               __typename: 'ItemNode';
               id: string;
-              code: string;
               name: string;
+              code: string;
               unitName?: string | null;
+              defaultPackSize: number;
               isVaccine: boolean;
               doses: number;
+              availableStockOnHand: number;
+              stats: {
+                __typename: 'ItemStatsNode';
+                averageMonthlyConsumption: number;
+                availableStockOnHand: number;
+                availableMonthsOfStockOnHand?: number | null;
+                totalConsumption: number;
+                stockOnHand: number;
+                monthsOfStockOnHand?: number | null;
+              };
             };
             linkedRequisitionLine?: {
               __typename: 'RequisitionLineNode';
@@ -667,7 +715,8 @@ export type UpdateResponseLineMutation = {
               description: string;
               key: Types.ForeignKey;
             }
-          | { __typename: 'RecordNotFound'; description: string };
+          | { __typename: 'RecordNotFound'; description: string }
+          | { __typename: 'RequisitionReasonNotProvided'; description: string };
       };
 };
 
@@ -956,6 +1005,7 @@ export const ResponseLineFragmentDoc = gql`
   fragment ResponseLine on RequisitionLineNode {
     id
     itemId
+    itemName
     requestedQuantity
     supplyQuantity
     remainingQuantityToSupply
@@ -982,7 +1032,7 @@ export const ResponseLineFragmentDoc = gql`
       averageMonthlyConsumption
     }
     item {
-      ...ItemRow
+      ...ItemWithStats
     }
     approvedQuantity
     approvalComment
@@ -997,7 +1047,7 @@ export const ResponseLineFragmentDoc = gql`
       ...ReasonOptionRow
     }
   }
-  ${ItemRowFragmentDoc}
+  ${ItemWithStatsFragmentDoc}
   ${ReasonOptionRowFragmentDoc}
 `;
 export const ResponseFragmentDoc = gql`
@@ -1376,6 +1426,10 @@ export const UpdateResponseLineDocument = gql`
             key
           }
           ... on RecordNotFound {
+            __typename
+            description
+          }
+          ... on RequisitionReasonNotProvided {
             __typename
             description
           }

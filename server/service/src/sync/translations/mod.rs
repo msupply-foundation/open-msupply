@@ -67,6 +67,7 @@ pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
 pub(crate) mod sync_file_reference;
+pub(crate) mod sync_message;
 pub(crate) mod system_log;
 pub(crate) mod temperature_breach;
 pub(crate) mod temperature_log;
@@ -77,11 +78,15 @@ pub(crate) mod utils;
 pub(crate) mod vaccination;
 pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
+pub(crate) mod vaccine_course_dose_legacy;
 pub(crate) mod vaccine_course_item;
+pub(crate) mod vaccine_course_item_legacy;
+pub(crate) mod vaccine_course_legacy;
 pub(crate) mod vvm_status;
 pub(crate) mod vvm_status_log;
 pub(crate) mod warning;
 
+use chrono::{NaiveDateTime, NaiveTime, SubsecRound};
 use repository::*;
 use thiserror::Error;
 use topological_sort::TopologicalSort;
@@ -170,8 +175,11 @@ pub(crate) fn all_translators() -> SyncTranslators {
         rnr_form_line::boxed(),
         // Vaccine course
         vaccine_course::boxed(),
+        vaccine_course_legacy::boxed(),
         vaccine_course_dose::boxed(),
+        vaccine_course_dose_legacy::boxed(),
         vaccine_course_item::boxed(),
+        vaccine_course_item_legacy::boxed(),
         demographic::boxed(),
         // Vaccination
         vaccination::boxed(),
@@ -191,6 +199,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         name_insurance_join::boxed(),
         report::boxed(),
         preference::boxed(),
+        sync_message::boxed(),
     ]
 }
 
@@ -558,4 +567,9 @@ fn is_active_record_on_site(
     };
 
     Ok(result)
+}
+
+/// 4D only expects HH:MM:SS format, so we remove the sub-seconds
+fn to_legacy_time(datetime: NaiveDateTime) -> NaiveTime {
+    datetime.time().round_subsecs(0)
 }

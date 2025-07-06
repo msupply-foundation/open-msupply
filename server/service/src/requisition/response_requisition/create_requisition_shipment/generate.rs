@@ -39,6 +39,7 @@ pub fn generate(
         created_datetime: Utc::now().naive_utc(),
         requisition_id: Some(requisition_row.id),
         their_reference: requisition_row.their_reference,
+        program_id: requisition_row.program_id,
 
         // Default
         currency_id: Some(currency.currency_row.id),
@@ -50,6 +51,7 @@ pub fn generate(
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
+        received_datetime: None,
         verified_datetime: None,
         cancelled_datetime: None,
         colour: None,
@@ -59,7 +61,6 @@ pub fn generate(
         original_shipment_id: None,
         backdated_datetime: None,
         diagnosis_id: None,
-        program_id: None,
         name_insurance_join_id: None,
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
@@ -113,6 +114,7 @@ pub fn generate_invoice_lines(
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
+            shipped_number_of_packs: None,
         });
     }
 
