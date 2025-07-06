@@ -38,6 +38,7 @@ impl Migration for V2_09_00 {
             Box::new(add_shipped_number_of_packs_to_invoice_line::Migrate),
             Box::new(add_excel_template_to_report::Migrate),
             Box::new(add_purchase_order_report_context::Migrate),
+            Box::new(add_purchase_order_to_number_type::Migrate),
         ]
     }
 }
