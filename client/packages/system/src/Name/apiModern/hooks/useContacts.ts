@@ -17,7 +17,5 @@ export const useContacts = (nameId: string) => {
     queryFn,
   });
 
-  return {
-    query: { data: data?.nodes ?? [], isLoading, isError },
-  };
+  return { data: data?.nodes ?? [], isLoading, isError };
 };

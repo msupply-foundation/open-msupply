@@ -6,7 +6,6 @@ impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
         "add_contact_table"
     }
-    //TODO: change name_id to name_link_id and reference name_link table not name table. also update in other layers
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,

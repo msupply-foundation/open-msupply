@@ -25,20 +25,12 @@ pub struct LegacyContactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     email: Option<String>,
     first: String,
-    // #[serde(deserialize_with = "empty_str_as_option_string")]
-    // is_active_web_user: Option<String>,
     last: String,
     name_ID: String,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     phone: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     position: Option<String>,
-    // #[serde(deserialize_with = "empty_str_as_option_string")]
-    // spare: Option<String>,
-    // #[serde(deserialize_with = "empty_str_as_option_string")]
-    // web_password: Option<String>,
-    // #[serde(deserialize_with = "empty_str_as_option_string")]
-    // web_username: Option<String>,
 }
 
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {

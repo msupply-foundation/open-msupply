@@ -83,7 +83,7 @@ impl<'a> VVMStatusRowRepository<'a> {
     pub fn find_one_by_id(
         &self,
         vvm_status_id: &str,
-   ) -> Result<Option<VVMStatusRow>, RepositoryError> {
+    ) -> Result<Option<VVMStatusRow>, RepositoryError> {
         let result = vvm_status
             .filter(id.eq(vvm_status_id))
             .first(self.connection.lock().connection())

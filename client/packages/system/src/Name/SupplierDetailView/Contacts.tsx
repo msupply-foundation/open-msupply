@@ -22,9 +22,7 @@ interface ContactsProps {
 
 export const Contacts = ({ nameId }: ContactsProps): ReactElement => {
   const t = useTranslation();
-  const {
-    query: { data },
-  } = useContacts(nameId);
+  const { data } = useContacts(nameId);
 
   const columnDefinitions: ColumnDefinition<ContactFragment>[] = [
     {
@@ -89,34 +87,6 @@ export const Contacts = ({ nameId }: ContactsProps): ReactElement => {
     },
   ];
 
-  // [
-  //   {
-  //     key: 'firstName',
-  //     label: 'First Name',
-  //   },
-  //   {
-  //     key: 'lastName',
-  //     label: 'Last Name',
-  //   },
-  //   {
-  //     key: 'position',
-  //     label: 'Position',
-  //   },
-  //   {
-  //     key: 'email',
-  //     label: 'Email',
-  //   },
-  //   {
-  //     key: 'phone',
-  //     label: 'Phone',
-  //   },
-  //   {
-  //     key: 'category',
-  //     label: 'Category',
-  //   },
-  // ],
-
-  // TODO change key and direction to real values
   const columns = useColumns(columnDefinitions);
 
   return (
