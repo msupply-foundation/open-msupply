@@ -32,8 +32,8 @@ pub fn mock_ledger_data() -> (
         store_id: "store_a".to_string(),
         ..Default::default()
     };
-    let stock_line_a_item_b = StockLineRow {
-        id: "ledger_stock_line_a_item_b".to_string(),
+    let stock_line_c_item_b = StockLineRow {
+        id: "ledger_stock_line_c_item_b".to_string(),
         item_link_id: ledger_test_item_b.id.clone(),
         store_id: "store_a".to_string(),
         ..Default::default()
@@ -49,7 +49,7 @@ pub fn mock_ledger_data() -> (
         item_link_id: "ledger_test_item".to_string(),
         stock_line_id: Some(stock_line_a.id.clone()),
         number_of_packs: 10.0,
-        pack_size: 1.0,
+        pack_size: 5.0,
         ..Default::default()
     };
 
@@ -90,9 +90,10 @@ pub fn mock_ledger_data() -> (
         r#type: InvoiceType::InboundShipment,
         ..default_invoice.clone()
     };
-    let verified_inbound_line = InvoiceLineRow {
-        id: "verified_inbound_line".to_string(),
+    let verified_inbound_line_stock_line_b = InvoiceLineRow {
+        id: "verified_inbound_line_stock_line_b".to_string(),
         invoice_id: "verified_inbound".to_string(),
+        stock_line_id: Some(stock_line_b.id.clone()),
         ..default_invoice_line.clone()
     };
 
@@ -170,13 +171,13 @@ pub fn mock_ledger_data() -> (
         id: "verified_inventory_adjustment_b_line".to_string(),
         invoice_id: "verified_inventory_adjustment_b".to_string(),
         item_link_id: ledger_test_item_b.id.clone(),
-        stock_line_id: Some(stock_line_a_item_b.id.clone()),
+        stock_line_id: Some(stock_line_c_item_b.id.clone()),
         ..default_invoice_line.clone()
     };
 
     (
         vec![ledger_test_item_a, ledger_test_item_b],
-        vec![stock_line_a, stock_line_b, stock_line_a_item_b],
+        vec![stock_line_a, stock_line_b, stock_line_c_item_b],
         vec![
             delivered_inbound,
             received_inbound,
@@ -190,7 +191,7 @@ pub fn mock_ledger_data() -> (
         vec![
             delivered_inbound_line,
             received_inbound_line,
-            verified_inbound_line,
+            verified_inbound_line_stock_line_b,
             new_outbound_line,
             picked_outbound_line,
             picked_outbound_line_stock_line_b,

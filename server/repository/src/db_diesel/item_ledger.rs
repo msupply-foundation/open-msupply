@@ -201,7 +201,7 @@ mod tests {
         assert_eq!(result[0].id, "verified_inventory_adjustment_line");
         assert_eq!(result[1].id, "picked_outbound_line_stock_line_b");
         assert_eq!(result[2].id, "picked_outbound_line");
-        assert_eq!(result[3].id, "verified_inbound_line");
+        assert_eq!(result[3].id, "verified_inbound_line_stock_line_b");
         assert_eq!(result[4].id, "received_inbound_line");
 
         // There is a ledger entry for another item, check it is not included
@@ -215,10 +215,10 @@ mod tests {
         assert_eq!(result[4].datetime, get_test_ledger_datetime(2));
 
         // Check the running balance (reverse chronological)
-        assert_eq!(result[0].running_balance, 10.0); // verified inventory addition
-        assert_eq!(result[1].running_balance, 0.0); // picked outbound
-        assert_eq!(result[2].running_balance, 10.0); // picked outbound
-        assert_eq!(result[3].running_balance, 20.0); // received inbound
-        assert_eq!(result[4].running_balance, 10.0); // received inbound
+        assert_eq!(result[4].running_balance, 50.0); // received first inbound
+        assert_eq!(result[3].running_balance, 100.0); // received another inbound
+        assert_eq!(result[2].running_balance, 50.0); // picked outbound
+        assert_eq!(result[1].running_balance, 0.0); // picked outbound second line
+        assert_eq!(result[0].running_balance, 50.0); // verified inventory addition
     }
 }
