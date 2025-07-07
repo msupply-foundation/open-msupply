@@ -16,7 +16,7 @@ import {
   VenCategoryType,
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
-import { getLowStockStatus, getAmc } from './helpers';
+import { getLowStockStatus, getAmc, isLineError } from './helpers';
 import { useCachedRnRDraftLine, useRnRFormContext } from '../api';
 
 export const RnRFormLine = ({
@@ -117,14 +117,14 @@ export const RnRFormLine = ({
     padding: '5px',
     color: textColor,
   };
+
   const itemDetailStyle = {
     ...readOnlyColumn,
-    backgroundColor:
-      line.finalBalance < 0
-        ? errorColour
-        : highlight
-          ? highlightColour
-          : readOnlyBackgroundColor,
+    backgroundColor: isLineError(line)
+      ? errorColour
+      : highlight
+        ? highlightColour
+        : readOnlyBackgroundColor,
   };
 
   return (
@@ -145,6 +145,7 @@ export const RnRFormLine = ({
 
       {/* Enterable consumption data */}
       <RnRNumberCell
+        backgroundColor={line.initialBalance < 0 ? errorColour : undefined}
         value={line.initialBalance}
         onChange={val => updateDraft({ initialBalance: val })}
         textColor={textColor}

@@ -21,12 +21,10 @@ import {
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
-import {
-  CreateNewPatient,
-  usePatientStore,
-} from '@openmsupply-client/programs';
+import { usePatientStore } from '@openmsupply-client/programs';
 import { ChipTableCell } from '../Components';
 import { CreatePatientModal } from '../CreatePatientModal';
+import { PatientColumnData } from '../CreatePatientModal/PatientResultsTab';
 
 export const programEnrolmentLabelAccessor: ColumnDataAccessor<
   PatientRowFragment,
@@ -79,7 +77,7 @@ const PatientListComponent = () => {
     () => setCreateModalOpen(true)
   );
 
-  const { setDocumentName } = usePatientStore();
+  const { setDocumentName, createNewPatient } = usePatientStore();
 
   const { data, isError, isLoading } = usePatient.document.list(queryParams);
   const pagination = { page, first, offset };
@@ -152,12 +150,14 @@ const PatientListComponent = () => {
     [updateSortQuery, sortBy]
   );
 
-  const onCreatePatient = (newPatient: CreateNewPatient) => {
-    navigate(newPatient.id);
+  const onCreatePatient = () => {
+    setCreateModalOpen(false);
+    if (!createNewPatient) return;
+    navigate(createNewPatient?.id);
   };
 
-  const onSelectPatient = (selectedPatient: string) => {
-    navigate(selectedPatient);
+  const onSelectPatient = (selectedPatient: PatientColumnData) => {
+    navigate(selectedPatient.id);
   };
 
   return (
@@ -186,10 +186,9 @@ const PatientListComponent = () => {
       />
       {createModalOpen ? (
         <CreatePatientModal
+          open={createModalOpen}
           onClose={() => setCreateModalOpen(false)}
-          onCreatePatient={newPatient => {
-            onCreatePatient(newPatient);
-          }}
+          onCreate={onCreatePatient}
           onSelectPatient={selectedPatient => {
             onSelectPatient(selectedPatient);
           }}
