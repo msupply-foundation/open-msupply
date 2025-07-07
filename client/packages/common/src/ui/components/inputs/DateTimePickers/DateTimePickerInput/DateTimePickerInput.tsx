@@ -80,6 +80,7 @@ export const DateTimePickerInput = ({
   const t = useTranslation();
   const format =
     props.format === undefined ? (showTime ? 'P p' : 'P') : props.format;
+  const displayDt = displayAs === 'date';
 
   const isDesktop = useMediaQuery('(pointer: fine)');
 
@@ -149,14 +150,14 @@ export const DateTimePickerInput = ({
             error: !!error || (!isInitialEntry && !!internalError),
             helperText: error || (!isInitialEntry ? (internalError ?? '') : ''),
             sx: {
-              ...getTextFieldSx(theme, !!label, inputSx),
+              ...getTextFieldSx(theme, !!label, !displayDt, inputSx, width),
               width,
-              minWidth: displayAs === 'dateTime' ? 200 : undefined,
+              minWidth: displayDt ? 200 : undefined,
             },
           },
 
           tabs: {
-            hidden: displayAs === 'dateTime' && !isDesktop ? false : true,
+            hidden: displayDt && !isDesktop ? false : true,
           },
           ...slotProps,
         }}
