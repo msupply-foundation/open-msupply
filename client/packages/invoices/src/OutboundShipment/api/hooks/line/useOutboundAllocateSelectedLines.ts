@@ -32,10 +32,11 @@ export const useOutboundAllocateLines = () => {
 export const useOutboundAllocateSelectedLines = (): {
   onAllocate: () => Promise<void>;
 } => {
+  const t = useTranslation();
   const { success, info, warning, error } = useNotification();
   const { items, lines } = useOutboundRows();
   const { mutateAsync } = useOutboundAllocateLines();
-  const t = useTranslation();
+  const { clearSelected } = useTableStore();
 
   const selectedRows =
     useTableStore(state => {
@@ -43,9 +44,9 @@ export const useOutboundAllocateSelectedLines = (): {
 
       return isGrouped
         ? items
-          ?.filter(({ id }) => state.rowState[id]?.isSelected)
-          .map(({ lines }) => lines.flat())
-          .flat()
+            ?.filter(({ id }) => state.rowState[id]?.isSelected)
+            .map(({ lines }) => lines.flat())
+            .flat()
         : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
     }) ?? [];
 
@@ -104,6 +105,9 @@ export const useOutboundAllocateSelectedLines = (): {
       }
       if (count.failed > 0) {
         error(t('messages.allocated-lines-failed', { count: count.failed }))();
+      }
+      if (count.failed == 0) {
+        clearSelected();
       }
     }
   };
