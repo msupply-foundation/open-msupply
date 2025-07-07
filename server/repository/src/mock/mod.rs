@@ -24,6 +24,7 @@ mod invoice;
 mod invoice_line;
 mod item;
 mod item_variant;
+pub mod ledger;
 mod location;
 mod name;
 mod name_store_join;
