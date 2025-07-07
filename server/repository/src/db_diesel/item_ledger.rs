@@ -195,20 +195,30 @@ mod tests {
 
         let result = repo.query(Pagination::all(), Some(filter)).unwrap();
 
-        // PICKED+ outbounds, RECEIVED+ inbounds, VERIFIED adjustments
+        // Validate the results based on the mock_ledger_data
+        // PICKED+ outbounds, RECEIVED+ inbounds, VERIFIED adjustments should be included
+
+        assert_eq!(result[0].id, "verified_inventory_adjustment_line");
+        assert_eq!(result[1].id, "picked_outbound_line_stock_line_b");
+        assert_eq!(result[2].id, "picked_outbound_line");
+        assert_eq!(result[3].id, "verified_inbound_line");
+        assert_eq!(result[4].id, "received_inbound_line");
+
+        // There is a ledger entry for another item, check it is not included
+        assert_eq!(result.len(), 5);
 
         // Check that the results are in the expected order (reverse chronological)
-        assert_eq!(result[0].id, "verified_inventory_adjustment_line");
         assert_eq!(result[0].datetime, get_test_ledger_datetime(5));
-        assert_eq!(result[2].id, "picked_outbound_line");
-        assert_eq!(result[1].id, "picked_outbound_line_stock_line_b");
+        assert_eq!(result[1].datetime, get_test_ledger_datetime(4));
         assert_eq!(result[2].datetime, get_test_ledger_datetime(4));
-        assert_eq!(result[3].id, "verified_inbound_line");
         assert_eq!(result[3].datetime, get_test_ledger_datetime(3)); // the received time of the verified inbound
-        assert_eq!(result[4].id, "received_inbound_line");
         assert_eq!(result[4].datetime, get_test_ledger_datetime(2));
 
-        // other item filtered out
-        assert_eq!(result.len(), 5);
+        // Check the running balance (reverse chronological)
+        assert_eq!(result[0].running_balance, 10.0); // verified inventory addition
+        assert_eq!(result[1].running_balance, 0.0); // picked outbound
+        assert_eq!(result[2].running_balance, 10.0); // picked outbound
+        assert_eq!(result[3].running_balance, 20.0); // received inbound
+        assert_eq!(result[4].running_balance, 10.0); // received inbound
     }
 }

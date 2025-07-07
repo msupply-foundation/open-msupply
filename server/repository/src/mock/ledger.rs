@@ -1,8 +1,8 @@
 use chrono::{NaiveDate, NaiveDateTime};
 
 use crate::{
-    mock::mock_name_store_b, InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType, ItemRow,
-    StockLineRow,
+    mock::mock_name_store_b, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus,
+    InvoiceType, ItemRow, StockLineRow,
 };
 
 // Mock ledger data, across 2 items, varying stock lines, invoice types and statuses
@@ -106,6 +106,7 @@ pub fn mock_ledger_data() -> (
     let new_outbound_line = InvoiceLineRow {
         id: "new_outbound_line".to_string(),
         invoice_id: "new_outbound".to_string(),
+        r#type: InvoiceLineType::StockOut,
         ..default_invoice_line.clone()
     };
 
@@ -120,12 +121,14 @@ pub fn mock_ledger_data() -> (
     let picked_outbound_line = InvoiceLineRow {
         id: "picked_outbound_line".to_string(),
         invoice_id: "picked_outbound".to_string(),
+        r#type: InvoiceLineType::StockOut,
         ..default_invoice_line.clone()
     };
     let picked_outbound_line_stock_line_b = InvoiceLineRow {
         id: "picked_outbound_line_stock_line_b".to_string(),
         invoice_id: "picked_outbound".to_string(),
         stock_line_id: Some(stock_line_b.id.clone()),
+        r#type: InvoiceLineType::StockOut,
         ..default_invoice_line.clone()
     };
 
