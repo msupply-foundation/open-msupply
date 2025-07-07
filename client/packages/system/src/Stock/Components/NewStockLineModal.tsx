@@ -142,7 +142,7 @@ export const NewStockLineModal = ({
               loading={isLoading}
               onUpdate={updatePatch}
               packEditable
-              isInModal
+              isNewModal
               pluginEvents={pluginEvents}
               reasonOptions={reasonOptions?.nodes}
             />

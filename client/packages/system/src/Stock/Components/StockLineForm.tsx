@@ -42,7 +42,7 @@ interface StockLineFormProps {
   onUpdate: (patch: Partial<DraftStockLine>) => void;
   pluginEvents: UsePluginEvents<{ isDirty: boolean }>;
   packEditable?: boolean;
-  isInModal?: boolean;
+  isNewModal?: boolean;
   reasonOptions?: ReasonOptionRowFragment[];
 }
 export const StockLineForm = ({
@@ -51,7 +51,7 @@ export const StockLineForm = ({
   onUpdate,
   pluginEvents,
   packEditable,
-  isInModal = false,
+  isNewModal = false,
   reasonOptions,
 }: StockLineFormProps) => {
   const t = useTranslation();
@@ -115,7 +115,7 @@ export const StockLineForm = ({
         width="100%"
         flexWrap="nowrap"
         maxWidth={900}
-        gap={isInModal ? undefined : 10}
+        gap={isNewModal ? undefined : 10}
       >
         <Grid container flex={1} flexBasis="50%" flexDirection="column" gap={1}>
           <StyledInputRow
@@ -196,20 +196,22 @@ export const StockLineForm = ({
               />
             }
           />
-          <StyledInputRow
-            label={t('label.reason')}
-            Input={
-              <ReasonOptionsSearchInput
-                width={INPUT_WIDTH}
-                type={ReasonOptionNodeType.PositiveInventoryAdjustment}
-                value={draft.reasonOption}
-                onChange={reason => onUpdate({ reasonOption: reason })}
-                reasonOptions={reasonOptions ?? []}
-                loading={loading}
-                disabled={draft?.totalNumberOfPacks === 0}
-              />
-            }
-          />
+          {isNewModal && (
+            <StyledInputRow
+              label={t('label.reason')}
+              Input={
+                <ReasonOptionsSearchInput
+                  width={INPUT_WIDTH}
+                  type={ReasonOptionNodeType.PositiveInventoryAdjustment}
+                  value={draft.reasonOption}
+                  onChange={reason => onUpdate({ reasonOption: reason })}
+                  reasonOptions={reasonOptions ?? []}
+                  loading={loading}
+                  disabled={draft?.totalNumberOfPacks === 0}
+                />
+              }
+            />
+          )}
           {showItemVariantsInput && (
             <StyledInputRow
               label={t('label.item-variant')}
