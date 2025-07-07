@@ -33,11 +33,7 @@ import {
   ReasonOptionsSearchInput,
 } from '../..';
 import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
-import {
-  ItemVariantInput,
-  PackSizeNumberInput,
-  useIsItemVariantsEnabled,
-} from '../../Item';
+import { ItemVariantInput, useIsItemVariantsEnabled } from '../../Item';
 import { CampaignSelector } from './Campaign';
 
 interface StockLineFormProps {
@@ -241,11 +237,10 @@ export const StockLineForm = ({
             <StyledInputRow
               label={t('label.pack-size')}
               Input={
-                <PackSizeNumberInput
-                  isDisabled={!packEditable}
-                  packSize={draft.packSize}
-                  itemId={draft.itemId}
-                  unitName={draft.item.unitName ?? null}
+                <NumericTextInput
+                  disabled={!packEditable}
+                  width={160}
+                  value={draft.packSize ?? 1}
                   onChange={packSize => onUpdate({ packSize })}
                 />
               }
