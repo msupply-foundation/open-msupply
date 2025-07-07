@@ -75,7 +75,7 @@ export const usePrescriptionLineEditColumns = ({
       accessor: ({ rowData }) => {
         if (!rowData.vvmStatus) return '';
         // TODO: Show unusable VVM status somehow?
-        return `${rowData.vvmStatus?.description}`;
+        return rowData.vvmStatus?.description;
       },
       width: 85,
     });
