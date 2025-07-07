@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_can_cancel_finalised_invoices_user_permission;
 mod add_excel_template_to_report;
 mod add_contact_table;
 mod add_mutate_clinician_permission;
@@ -40,6 +41,7 @@ impl Migration for V2_09_00 {
             Box::new(add_excel_template_to_report::Migrate),
             Box::new(add_purchase_order_report_context::Migrate),
             Box::new(resync_existing_vaccination_records::Migrate),
+            Box::new(add_can_cancel_finalised_invoices_user_permission::Migrate),
             Box::new(add_contact_table::Migrate),
         ]
     }
