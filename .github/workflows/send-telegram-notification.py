@@ -55,9 +55,6 @@ def handle_android_build_notification(filenames):
 
     BASE_URL = os.getenv("https://f002.backblazeb2.com/file/msupply-releases/")
 
-
-
-
     # Create message based on build status
     status_mapping = {
         "success": ("✅", "Completed Successfully"),

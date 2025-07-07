@@ -3,4 +3,4 @@ set -e
 
 ARM64_FILENAME=$(ls ./client/packages/android/app/build/outputs/apk/arm64/release/*.apk);
 UNIVERSAL_FILENAME=$(ls ./client/packages/android/app/build/outputs/apk/arm64/release/*.apk);
-python3 .github/workflows/send-telegram-notification.py
+python3 .github/workflows/send-telegram-notification.py $ARM64_FILENAME $UNIVERSAL_FILENAME
