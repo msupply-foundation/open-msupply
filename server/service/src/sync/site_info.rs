@@ -76,6 +76,10 @@ impl SiteInfoTrait for SiteInfoService {
 
         repo.set_string(KeyType::SettingsSyncSiteUuid, Some(site_info.id.clone()))?;
         repo.set_i32(KeyType::SettingsSyncSiteId, Some(site_info.site_id))?;
+        repo.set_i32(
+            KeyType::SettingsSyncCentralServerSiteId,
+            Some(site_info.site_id),
+        )?;
 
         info!("Received site info");
 

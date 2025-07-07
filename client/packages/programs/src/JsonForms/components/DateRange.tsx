@@ -74,11 +74,13 @@ const UIComponent = (props: ControlProps) => {
         inputAlignment={'start'}
         Input={
           <DateTimePickerInput
-            value={DateUtils.getDateOrNull(data?.from)}
+            value={DateUtils.getDateOrNull(data?.afterOrEqualTo)}
             onChange={date => updateDate('afterOrEqualTo', date)}
             disabled={!props.enabled}
             actions={actions}
-            maxDate={DateUtils.getDateOrNull(data?.to) ?? undefined}
+            maxDate={
+              DateUtils.getDateOrNull(data?.beforeOrEqualTo) ?? undefined
+            }
           />
         }
       />
@@ -89,12 +91,12 @@ const UIComponent = (props: ControlProps) => {
         inputAlignment={'start'}
         Input={
           <DateTimePickerInput
-            value={DateUtils.getDateOrNull(data?.to)}
+            value={DateUtils.getDateOrNull(data?.beforeOrEqualTo)}
             onChange={date => updateDate('beforeOrEqualTo', date)}
             disabled={!props.enabled}
             actions={actions}
             dateAsEndOfDay
-            minDate={DateUtils.getDateOrNull(data?.from) ?? undefined}
+            minDate={DateUtils.getDateOrNull(data?.afterOrEqualTo) ?? undefined}
           />
         }
       />
