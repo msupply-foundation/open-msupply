@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_can_cancel_finalised_invoices_user_permission;
 mod add_excel_template_to_report;
 mod add_mutate_clinician_permission;
 mod add_purchase_order_report_context;
@@ -38,6 +39,7 @@ impl Migration for V2_09_00 {
             Box::new(add_shipped_number_of_packs_to_invoice_line::Migrate),
             Box::new(add_excel_template_to_report::Migrate),
             Box::new(add_purchase_order_report_context::Migrate),
+            Box::new(add_can_cancel_finalised_invoices_user_permission::Migrate),
         ]
     }
 }
