@@ -16,11 +16,11 @@ echo "GITHUB_REF = ${GITHUB_REF_NAME}"
 ARM64_FILE_PATH=$(ls ./client/packages/android/app/build/outputs/apk/arm64/release/*.apk)
 ARM64_FILENAME=$(basename "$ARM64_FILE_PATH")
 echo "Found file $ARM64_FILENAME to upload"
-$B2_PATH --no-progress file upload $B2_BUCKET_NAME "$ARM64_FILE_PATH" "${GITHUB_REF_NAME}/${ARM64_FILENAME}"
+$B2_PATH file upload --no-progress $B2_BUCKET_NAME "$ARM64_FILE_PATH" "${GITHUB_REF_NAME}/${ARM64_FILENAME}"
 
 UNIVERSAL_FILE_PATH=$(ls ./client/packages/android/app/build/outputs/apk/universal/release/*.apk)
 UNIVERSAL_FILENAME=$(basename "$UNIVERSAL_FILE_PATH")
 echo "Found file $UNIVERSAL_FILENAME to upload"
-$B2_PATH --no-progress file upload $B2_BUCKET_NAME "$UNIVERSAL_FILE_PATH" "${GITHUB_REF_NAME}/${UNIVERSAL_FILENAME}"
+$B2_PATH file upload --no-progress $B2_BUCKET_NAME "$UNIVERSAL_FILE_PATH" "${GITHUB_REF_NAME}/${UNIVERSAL_FILENAME}"
 
 python3 ./send-telegram-notification.py "$ARM64_FILENAME" "$UNIVERSAL_FILENAME"
