@@ -336,6 +336,6 @@ function createTestLine({
     availablePacks,
     expiryDate,
     stockLineOnHold: onHold,
-    defaultDosesPerUnit: dosesPerUnit,
+    dosesPerUnit,
   };
 }

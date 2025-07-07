@@ -33,7 +33,7 @@ pub struct DraftStockOutLine {
     pub available_packs: f64,
     pub stock_line_on_hold: bool,
     pub vvm_status_id: Option<String>,
-    pub default_doses_per_unit: i32,
+    pub doses_per_unit: i32,
     pub item_variant_id: Option<String>,
     pub donor_link_id: Option<String>,
     pub campaign_id: Option<String>,
@@ -280,7 +280,7 @@ impl DraftStockOutLine {
             stock_line_on_hold: on_hold,
             number_of_packs: 0.0,
             vvm_status_id: line.stock_line_row.vvm_status_id,
-            default_doses_per_unit: line.item_row.vaccine_doses,
+            doses_per_unit: line.item_row.vaccine_doses,
             campaign_id: line.stock_line_row.campaign_id,
         }
     }
@@ -340,7 +340,7 @@ impl DraftStockOutLine {
             },
             stock_line_on_hold: on_hold,
             vvm_status_id,
-            default_doses_per_unit: line.item_row.vaccine_doses,
+            doses_per_unit: line.item_row.vaccine_doses,
             campaign_id,
         })
     }

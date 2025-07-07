@@ -91,8 +91,7 @@ export const usePrescriptionLineEditColumns = ({
         : 'label.doses-per-unit',
       width: 80,
       align: ColumnAlign.Right,
-      accessor: ({ rowData }) =>
-        rowData?.itemVariant?.dosesPerUnit ?? rowData.defaultDosesPerUnit,
+      accessor: ({ rowData }) => rowData.dosesPerUnit,
     });
   } else {
     columnDefinitions.push(['packSize', { width: 90 }]);
