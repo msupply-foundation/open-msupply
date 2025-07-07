@@ -22,7 +22,7 @@ stock ledger page, and potentially reports.
 */
 
 table! {
-    #[sql_name = "stock_ledger"]
+    #[sql_name = "stock_line_ledger"]
     ledger (id) {
         id -> Text,
         stock_line_id -> Nullable<Text>,
@@ -222,11 +222,11 @@ mod tests {
     use super::*;
 
     #[actix_rt::test]
-    async fn stock_ledger_repository() {
+    async fn stock_line_ledger_repository() {
         // Prepare
         let (items, stock_lines, invoices, invoice_lines) = mock_ledger_data();
         let (_, storage_connection, _, _) = test_db::setup_all_with_data(
-            "stock_ledger_repository",
+            "stock_line_ledger_repository",
             MockDataInserts::all(),
             MockData {
                 items,
