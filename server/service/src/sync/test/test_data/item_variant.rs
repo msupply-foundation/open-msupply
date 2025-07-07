@@ -26,7 +26,6 @@ fn item_variant1() -> ItemVariantRow {
         cold_storage_type_id: None,
         manufacturer_link_id: None,
         deleted_datetime: None,
-        doses_per_unit: 0,
         vvm_type: None,
         created_datetime: NaiveDate::from_ymd_opt(2023, 1, 1)
             .unwrap()
@@ -58,7 +57,6 @@ fn item_variant2() -> ItemVariantRow {
         cold_storage_type_id: None, //TODO: Add cold storage type when sync is implemented
         manufacturer_link_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()), // NAME_1.0 (currently marked as manufacturer)
         deleted_datetime: None,
-        doses_per_unit: 1,
         vvm_type: Some("VVM 1".to_string()),
         created_datetime: NaiveDate::from_ymd_opt(2023, 1, 1)
             .unwrap()

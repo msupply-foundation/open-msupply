@@ -24,7 +24,7 @@ export const ItemVariantSearchInput = ({
 
   if (!data) return null;
 
-  const selected = data.find(variant => variant.id === selectedId);
+  const selected = data.variants.find(variant => variant.id === selectedId);
 
   return (
     <Autocomplete
@@ -35,7 +35,7 @@ export const ItemVariantSearchInput = ({
       loading={isLoading}
       onChange={(_, option) => onChange(option)}
       getOptionLabel={getOptionLabel}
-      options={data}
+      options={data.variants}
       noOptionsText={t('messages.no-item-variants')}
       isOptionEqualToValue={(option, value) => option.id === value?.id}
       clearable
