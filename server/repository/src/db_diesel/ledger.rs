@@ -8,6 +8,19 @@ use super::{DBType, DatetimeFilter, InvoiceStatus, StorageConnection};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 
+/*
+-- Stock Ledger --
+
+View over all movements for particular stock line in a store.
+
+This is a separate repository/view from stock_movement or item_ledger
+as it calculates the running balance of total stock on hand for each STOCK LINE.
+
+A window function is used to calculated the running balance, which can be expensive to run.
+Therefore, we only use this repository when we need that stock line running balance, for the
+stock ledger page, and potentially reports.
+*/
+
 table! {
     #[sql_name = "stock_ledger"]
     ledger (id) {
