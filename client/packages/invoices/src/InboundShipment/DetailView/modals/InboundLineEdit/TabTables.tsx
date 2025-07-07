@@ -90,7 +90,7 @@ export const QuantityTableComponent = ({
   ];
 
   if (hasItemVariantsEnabled) {
-    columnDefinitions.push(itemVariantColumn(updateDraftLine, displayInDoses));
+    columnDefinitions.push(itemVariantColumn(updateDraftLine));
   }
 
   if (displayInDoses) {
