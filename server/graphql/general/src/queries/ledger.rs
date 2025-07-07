@@ -8,7 +8,9 @@ use graphql_core::{
 
 use graphql_types::types::InvoiceNodeType;
 use repository::{
-    ledger::{LedgerFilter, LedgerRow, LedgerSort, LedgerSortField},
+    stock_line_ledger::{
+        StockLineLedgerFilter, StockLineLedgerRow, StockLineLedgerSort, StockLineLedgerSortField,
+    },
     DatetimeFilter, EqualFilter,
 };
 
@@ -47,7 +49,7 @@ pub struct LedgerFilterInput {
 
 #[derive(PartialEq, Debug)]
 pub struct LedgerNode {
-    ledger: LedgerRow,
+    ledger: StockLineLedgerRow,
 }
 
 #[Object]
@@ -130,7 +132,7 @@ pub fn ledger(
 }
 
 impl LedgerConnector {
-    pub fn from_domain(rows: ListResult<LedgerRow>) -> LedgerConnector {
+    pub fn from_domain(rows: ListResult<StockLineLedgerRow>) -> LedgerConnector {
         LedgerConnector {
             total_count: rows.count,
             nodes: rows
@@ -142,14 +144,14 @@ impl LedgerConnector {
     }
 }
 impl LedgerFilterInput {
-    pub fn to_domain(self, store_id: &str) -> LedgerFilter {
+    pub fn to_domain(self, store_id: &str) -> StockLineLedgerFilter {
         let LedgerFilterInput {
             stock_line_id,
             item_id,
             datetime,
         } = self;
 
-        LedgerFilter {
+        StockLineLedgerFilter {
             stock_line_id: stock_line_id.map(EqualFilter::from),
             item_id: item_id.map(EqualFilter::from),
             store_id: Some(EqualFilter::equal_to(store_id)),
@@ -159,9 +161,9 @@ impl LedgerFilterInput {
 }
 
 impl LedgerSortInput {
-    pub fn to_domain(self) -> LedgerSort {
-        use LedgerSortField as to;
+    pub fn to_domain(self) -> StockLineLedgerSort {
         use LedgerSortFieldInput as from;
+        use StockLineLedgerSortField as to;
         let key = match self.key {
             from::Datetime => to::Datetime,
             from::Name => to::Name,
@@ -171,7 +173,7 @@ impl LedgerSortInput {
             from::ItemId => to::ItemId,
         };
 
-        LedgerSort {
+        StockLineLedgerSort {
             key,
             desc: self.desc,
         }

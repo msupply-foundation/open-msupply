@@ -9,7 +9,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 
 /*
--- Stock Ledger --
+-- Stock Line Ledger --
 
 View over all movements for particular stock line in a store.
 
@@ -22,8 +22,7 @@ stock ledger page, and potentially reports.
 */
 
 table! {
-    #[sql_name = "stock_line_ledger"]
-    ledger (id) {
+    stock_line_ledger (id) {
         id -> Text,
         stock_line_id -> Nullable<Text>,
         name -> Text,
@@ -48,7 +47,7 @@ table! {
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Default)]
-pub struct LedgerRow {
+pub struct StockLineLedgerRow {
     pub id: String,
     pub stock_line_id: Option<String>,
     pub name: String,
@@ -73,7 +72,7 @@ pub struct LedgerRow {
 }
 
 #[derive(Clone, Default)]
-pub struct LedgerFilter {
+pub struct StockLineLedgerFilter {
     pub stock_line_id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
@@ -81,7 +80,7 @@ pub struct LedgerFilter {
 }
 
 #[derive(PartialEq, Debug)]
-pub enum LedgerSortField {
+pub enum StockLineLedgerSortField {
     Id,
     Datetime,
     Name,
@@ -91,9 +90,9 @@ pub enum LedgerSortField {
     ItemId,
 }
 
-pub type LedgerSort = Sort<LedgerSortField>;
+pub type StockLineLedgerSort = Sort<StockLineLedgerSortField>;
 
-impl LedgerFilter {
+impl StockLineLedgerFilter {
     pub fn new() -> Self {
         Self::default()
     }
@@ -119,16 +118,16 @@ impl LedgerFilter {
     }
 }
 
-pub struct LedgerRepository<'a> {
+pub struct StockLineLedgerRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> LedgerRepository<'a> {
+impl<'a> StockLineLedgerRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        LedgerRepository { connection }
+        StockLineLedgerRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<LedgerFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<StockLineLedgerFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
         Ok(query
             .count()
@@ -138,33 +137,33 @@ impl<'a> LedgerRepository<'a> {
     pub fn query(
         &self,
         pagination: Pagination,
-        filter: Option<LedgerFilter>,
-        sort: Option<LedgerSort>,
-    ) -> Result<Vec<LedgerRow>, RepositoryError> {
+        filter: Option<StockLineLedgerFilter>,
+        sort: Option<StockLineLedgerSort>,
+    ) -> Result<Vec<StockLineLedgerRow>, RepositoryError> {
         let mut query = create_filtered_query(filter);
 
         if let Some(sort) = sort {
             match sort.key {
-                LedgerSortField::Id => {
-                    apply_sort!(query, sort, ledger::id);
+                StockLineLedgerSortField::Id => {
+                    apply_sort!(query, sort, stock_line_ledger::id);
                 }
-                LedgerSortField::Datetime => {
-                    apply_sort!(query, sort, ledger::datetime);
+                StockLineLedgerSortField::Datetime => {
+                    apply_sort!(query, sort, stock_line_ledger::datetime);
                 }
-                LedgerSortField::Name => {
-                    apply_sort_no_case!(query, sort, ledger::name);
+                StockLineLedgerSortField::Name => {
+                    apply_sort_no_case!(query, sort, stock_line_ledger::name);
                 }
-                LedgerSortField::InvoiceType => {
-                    apply_sort!(query, sort, ledger::invoice_type);
+                StockLineLedgerSortField::InvoiceType => {
+                    apply_sort!(query, sort, stock_line_ledger::invoice_type);
                 }
-                LedgerSortField::StockLineId => {
-                    apply_sort!(query, sort, ledger::stock_line_id);
+                StockLineLedgerSortField::StockLineId => {
+                    apply_sort!(query, sort, stock_line_ledger::stock_line_id);
                 }
-                LedgerSortField::Quantity => {
-                    apply_sort!(query, sort, ledger::quantity);
+                StockLineLedgerSortField::Quantity => {
+                    apply_sort!(query, sort, stock_line_ledger::quantity);
                 }
-                LedgerSortField::ItemId => {
-                    apply_sort!(query, sort, ledger::item_id);
+                StockLineLedgerSortField::ItemId => {
+                    apply_sort!(query, sort, stock_line_ledger::item_id);
                 }
             }
         }
@@ -180,30 +179,30 @@ impl<'a> LedgerRepository<'a> {
         let result = final_query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<LedgerRow>(self.connection.lock().connection())?;
+            .load::<StockLineLedgerRow>(self.connection.lock().connection())?;
 
         Ok(result)
     }
 }
 
-type BoxedLedgerQuery = ledger::BoxedQuery<'static, DBType>;
+type BoxedLedgerQuery = stock_line_ledger::BoxedQuery<'static, DBType>;
 
-fn create_filtered_query(filter: Option<LedgerFilter>) -> BoxedLedgerQuery {
-    let mut query = ledger::table.into_boxed();
-    query = query.filter(ledger::datetime.is_not_null());
+fn create_filtered_query(filter: Option<StockLineLedgerFilter>) -> BoxedLedgerQuery {
+    let mut query = stock_line_ledger::table.into_boxed();
+    query = query.filter(stock_line_ledger::datetime.is_not_null());
 
     if let Some(f) = filter {
-        let LedgerFilter {
+        let StockLineLedgerFilter {
             stock_line_id,
             item_id,
             store_id,
             datetime,
         } = f;
 
-        apply_equal_filter!(query, stock_line_id, ledger::stock_line_id);
-        apply_equal_filter!(query, item_id, ledger::item_id);
-        apply_equal_filter!(query, store_id, ledger::store_id);
-        apply_date_time_filter!(query, datetime, ledger::datetime);
+        apply_equal_filter!(query, stock_line_id, stock_line_ledger::stock_line_id);
+        apply_equal_filter!(query, item_id, stock_line_ledger::item_id);
+        apply_equal_filter!(query, store_id, stock_line_ledger::store_id);
+        apply_date_time_filter!(query, datetime, stock_line_ledger::datetime);
     }
 
     query
@@ -238,11 +237,11 @@ mod tests {
         )
         .await;
 
-        let repo = LedgerRepository::new(&storage_connection);
-        let filter =
-            LedgerFilter::new().stock_line_id(EqualFilter::equal_to("ledger_stock_line_a"));
-        let sort = LedgerSort {
-            key: LedgerSortField::Datetime,
+        let repo = StockLineLedgerRepository::new(&storage_connection);
+        let filter = StockLineLedgerFilter::new()
+            .stock_line_id(EqualFilter::equal_to("ledger_stock_line_a"));
+        let sort = StockLineLedgerSort {
+            key: StockLineLedgerSortField::Datetime,
             desc: Some(true),
         };
         // Check deserialization (into rust types)
