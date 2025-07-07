@@ -1460,6 +1460,7 @@
   "messages.bundled-item-saved": "Bundled item saved successfully",
   "messages.by-user": "by {{username}}",
   "messages.campaign-saved": "Campaign saved successfully",
+  "messages.cancel-prescription-not-allowed": "You don't have permission to cancel this prescription",
   "messages.cannot-add-directions": "Add a quantity to add directions.",
   "messages.cannot-bundle": "You can't bundle other item variants with this one, as this variant is already bundled with other items",
   "messages.cannot-delete-finalised-requisition": "Cannot delete finalised requisition",
