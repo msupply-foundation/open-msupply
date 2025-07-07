@@ -63,14 +63,6 @@ pub struct ContactRow {
     pub country: Option<String>,
 }
 
-// pub enum ContactRowSortField {
-//     Id,
-//     NameId,
-//     FirstName,
-//     LastName,
-// }
-// pub type ContactRowSort = Sort<ContactRowSortField>;
-
 pub struct ContactRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -123,42 +115,6 @@ impl<'a> ContactRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
-
-    // pub fn find_many_by_ids(
-    //     &self,
-    //     ids: &[String],
-    //     sort: Option<ContactRowSort>,
-    // ) -> Result<Vec<ContactRow>, RepositoryError> {
-    //     let result = contact::table
-    //         .filter(id.eq_any(ids))
-    //         .load(self.connection.lock().connection())
-    //         .map_err(RepositoryError::from);
-    //     if let Some(sort) = sort {
-    //         match sort.key {
-    //             ContactRowSortField::Id => {
-    //                 result?.sort_by(|a: &ContactRow, b: ContactRow| {
-    //                     a.id.to_lowercase().cmp(&b.id.to_lowercase())
-    //                 });
-    //             }
-    //             ContactRowSortField::NameId => {
-    //                 result?.sort_by(|a, b| a.name_id.to_lowercase().cmp(&b.name_id.to_lowercase()));
-    //             }
-    //             ContactRowSortField::FirstName => {
-    //                 result?.sort_by(|a, b| {
-    //                     a.first_name
-    //                         .to_lowercase()
-    //                         .cmp(&b.first_name.to_lowercase())
-    //                 });
-    //             }
-    //             ContactRowSortField::LastName => {
-    //                 result?.sort_by(|a, b| {
-    //                     a.last_name.to_lowercase().cmp(&b.last_name.to_lowercase())
-    //                 });
-    //             }
-    //         }
-    //     };
-    //     Ok(result?)
-    // }
 }
 
 impl Upsert for ContactRow {

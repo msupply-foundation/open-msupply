@@ -7,7 +7,7 @@ const TABLE_NAME: &str = "contact";
 const CONTACT_1: (&str, &str) = (
     "CONTACT_1",
     r#"{
-        "ID": "1",
+        "ID": "CONTACT_1",
         "address1": "test address1",
         "address2": "test address2",
         "category": "test category",
@@ -31,7 +31,7 @@ const CONTACT_1: (&str, &str) = (
 const CONTACT_2: (&str, &str) = (
     "CONTACT_2",
     r#"{
-        "ID": "2",
+        "ID": "CONTACT_2",
         "address1": "second test address1",
         "address2": "second test address2",
         "category": "second test category",
@@ -58,7 +58,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             TABLE_NAME,
             CONTACT_1,
             ContactRow {
-                id: "1".to_owned(),
+                id: "CONTACT_1".to_owned(),
                 name_link_id: "test name_ID".to_owned(),
                 first_name: "test first".to_owned(),
                 position: Some("test position".to_owned()),
@@ -78,7 +78,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             TABLE_NAME,
             CONTACT_2,
             ContactRow {
-                id: "2".to_owned(),
+                id: "CONTACT_2".to_owned(),
                 name_link_id: "second test name_ID".to_owned(),
                 first_name: "second test first".to_owned(),
                 position: Some("second test position".to_owned()),
