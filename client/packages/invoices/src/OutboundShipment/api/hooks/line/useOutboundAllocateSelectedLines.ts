@@ -106,7 +106,7 @@ export const useOutboundAllocateSelectedLines = (): {
       if (count.failed > 0) {
         error(t('messages.allocated-lines-failed', { count: count.failed }))();
       }
-      if (count.failed == 0) {
+      if (count.failed === 0) {
         clearSelected();
       }
     }
