@@ -130,7 +130,7 @@ export const useOutboundLineEditColumns = ({
       accessor: ({ rowData }) => {
         if (!rowData.vvmStatus) return '';
         // TODO: Show unusable VVM status somehow?
-        return `${rowData.vvmStatus?.description} (${rowData.vvmStatus?.level})`;
+        return `${rowData.vvmStatus?.description}`;
       },
       width: 85,
       Cell: TooltipTextCell,
