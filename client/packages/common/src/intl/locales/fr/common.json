@@ -1095,7 +1095,7 @@
   "label.patient-type": "Type de patient",
   "label.patients": "Patients",
   "label.payment-amount-outstanding": "Montant restant à payer",
-  "label.payment-amount-paid": "Montant payé",
+  "label.payment-amount-paid": "Montant reçu",
   "label.payment-amount-to-be-paid": "Montant à payer",
   "label.payment-change": "Monnaie à rendre",
   "label.payment-type": "Type de paiement",
@@ -1444,7 +1444,6 @@
   "messages.cant-delete-generic": "Vous ne pouvez pas supprimer le ou les articles sélectionnés",
   "messages.cant-delete-requisitions": "Vous pouvez uniquement supprimer les réquisitions avec un statut 'Brouillon'",
   "messages.cant-delete-transferred": "Vous ne pouvez pas supprimer des articles ayant été transférés d'un autre dépôt",
-  "messages.cant-download-android": "Le fichier ne peut pas être téléchargé sur cet appareil",
   "messages.cant-return-shipment": "Impossible de traiter un retour tant que le statut n'est pas \"Expédié(e)\"",
   "messages.cant-return-shipment-replenishment": "Impossible d'effectuer un retour tant que le statut n'est pas \"Livré(e)\"",
   "messages.cant-send-order": "Impossible d'envoyer une commande interne car il n'y a pas de lignes ou parce que toutes les lignes ont une quantité demandée de 0",
@@ -2091,5 +2090,6 @@
   "warning.caps-lock": "Avertissement: Verrouillage majuscule activé",
   "warning.check-before-vaccinating": "La carte de vaccination éléctronique provenant d'autres sites de vaccination peuvent ne pas être à jour ! Assurez-vous d'avoir effectué une synchronisation récente et vérifiez toujours la validité de la carte de vaccination papier du patient.",
   "warning.field-not-parsed": "{{field}} non analysé",
+  "warning.manual-store-requisition": "Attention - La saisie d'une réquisition client pour un dépôt peut entraîner des doublons si ce dépôt soumet aussi une commande interne.",
   "warning.nothing-to-supply": "La quantité demandée à été fournie !"
 }
