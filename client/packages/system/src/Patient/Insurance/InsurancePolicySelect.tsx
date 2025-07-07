@@ -41,7 +41,6 @@ export const InsurancePolicySelect: FC<InsurancePolicySelectProps> = ({
       Input={
         <Autocomplete
           clearable={false}
-          required
           options={options}
           value={defaultValue}
           onChange={(_, option) => {

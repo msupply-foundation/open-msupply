@@ -42,7 +42,6 @@ export const InsuranceProvidersSelect: FC<InsuranceProvidersSelectProps> = ({
       Input={
         <Autocomplete
           clearable={false}
-          required
           options={options}
           getOptionLabel={option => option.label}
           value={{

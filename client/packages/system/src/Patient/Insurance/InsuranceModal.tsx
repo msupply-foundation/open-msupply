@@ -67,10 +67,6 @@ export const InsuranceModal = (): ReactElement => {
 
   const handleInsuranceInsert = async (): Promise<void> => {
     try {
-      // Temp hotfix for when both policy number fields are empty. Will be
-      // improved with new Error State handler
-      if (draft.policyNumberFamily === '' && draft.policyNumberPerson === '')
-        throw new Error('missing policy numbers');
       const result = await create();
       if (result != null) setModal(undefined);
       success(t('messages.insurance-created'))();
@@ -83,7 +79,7 @@ export const InsuranceModal = (): ReactElement => {
 
   const handleSave = async (): Promise<void> => {
     if (hasErrors()) {
-      console.log("Errors, can't submit");
+      // console.log("Errors, can't submit");
       return;
     }
     if (insuranceId !== undefined) await handleInsuranceUpdate();
@@ -103,7 +99,11 @@ export const InsuranceModal = (): ReactElement => {
       }
       okButton={<DialogButton variant="save" onClick={handleSave} />}
       sx={{
-        '& .MuiDialogContent-root': { display: 'flex', alignItems: 'center' },
+        '& .MuiDialogContent-root': {
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
       }}
     >
       <>
@@ -118,9 +118,7 @@ export const InsuranceModal = (): ReactElement => {
                     value: draft.policyNumberFamily,
                     required: !draft.policyNumberPerson,
                   })}
-                  required={draft.policyNumberPerson === ''}
                   disabled={haveInsuranceId}
-                  // value={draft.policyNumberFamily}
                   onChange={event => {
                     updatePatch({
                       policyNumberFamily: event.target.value,
@@ -141,9 +139,7 @@ export const InsuranceModal = (): ReactElement => {
                     customErrorMessage:
                       'That is the devils number and is not allowed',
                   })}
-                  required={draft.policyNumberFamily === ''}
                   disabled={haveInsuranceId}
-                  // value={draft.policyNumberPerson}
                   onChange={event => {
                     updatePatch({
                       policyNumberPerson: event.target.value,
@@ -187,7 +183,6 @@ export const InsuranceModal = (): ReactElement => {
                     value: DateUtils.getNaiveDate(draft.expiryDate),
                     required: true,
                   })}
-                  required
                   value={DateUtils.getNaiveDate(draft.expiryDate)}
                   onChange={date => {
                     if (date)
@@ -230,7 +225,6 @@ export const InsuranceModal = (): ReactElement => {
                   min={0}
                   max={100}
                   decimalLimit={2}
-                  value={draft.discountPercentage ?? 0}
                   onChange={value => {
                     if (value) {
                       updatePatch({

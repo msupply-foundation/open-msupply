@@ -383,6 +383,8 @@
   "error.no-vaccine-courses": "No vaccine courses to display.",
   "error.not-editable": "Stocktake is not editable.",
   "error.not-most-recent-given-dose": "This is not the most recent vaccination. Please edit the most recent vaccination if a dose has not been given.",
+  "error.numeric-input-error-too-big": "Value is too big",
+  "error.numeric-input-error-too-small": "Value is too small",
   "error.order-not-found": "Internal Order not found",
   "error.ordering-too-many-items_one": "You cannot finalise an emergency order with more than {{ count }} item. Reduce the number of items and try again.",
   "error.ordering-too-many-items_other": "You cannot finalise an emergency order with more than {{ count }} items. Reduce the number of items and try again.",

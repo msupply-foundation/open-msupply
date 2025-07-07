@@ -165,6 +165,11 @@ export interface NumericInputProps {
   noFormatting?: boolean;
 
   /**
+   * Error message to display in the form Error Handler
+   */
+  setError?: (error: string | null) => void;
+
+  /**
    * This component can also take any props used by `BasicTextInput`, or its
    * child, Mui's `TextField` -- they will be passed through unmodified.
    */
@@ -174,7 +179,6 @@ export type NumericTextInputProps = NumericInputProps &
   Omit<BasicTextInputProps, 'onChange'> & {
     onChange?: (value: number | undefined) => void;
     endAdornment?: string;
-    setError?: (error: string | null) => void;
   };
 
 export const DEFAULT_NUMERIC_TEXT_INPUT_WIDTH = 75;
@@ -252,9 +256,9 @@ export const NumericTextInput = React.forwardRef<
         return;
       }
       if (value > max && setError)
-        setError(t('messages.numeric-input-error-too-big'));
+        setError(t('error.numeric-input-error-too-big'));
       else if (value < min && setError)
-        setError(t('messages.numeric-input-error-too-small'));
+        setError(t('error.numeric-input-error-too-small'));
       else if (error) setError(null);
     };
 

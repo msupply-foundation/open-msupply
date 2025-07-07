@@ -93,7 +93,7 @@ export function Autocomplete<T>({
   popperMinWidth,
   inputProps,
   error,
-  setError,
+  // setError,
   required,
   textSx,
   clickableOption,
@@ -123,9 +123,9 @@ export function Autocomplete<T>({
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       required={required}
+      error={error}
       {...props}
       {...inputProps}
-      error={inputProps?.error}
       autoFocus={autoFocus}
       slotProps={{
         input: {
@@ -142,8 +142,6 @@ export function Autocomplete<T>({
         },
       }}
       sx={{ minWidth: width }}
-      error={error}
-      required={required}
     />
   );
   const defaultGetOptionLabel = (option: T): string => {

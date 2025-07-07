@@ -7,7 +7,6 @@ import {
   useAuthContext,
   ContactTraceSortFieldInput,
   TabDefinition,
-  usePreferences,
   FormErrorProvider,
   usePreference,
   PreferenceKey,

@@ -26,7 +26,6 @@ export const BasicTextInput = React.forwardRef<
       style,
       slotProps,
       error,
-      errorMessage,
       required,
       textAlign,
       focusOnRender,
