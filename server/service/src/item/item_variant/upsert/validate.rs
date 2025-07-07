@@ -18,9 +18,7 @@ pub fn validate(
 ) -> Result<Option<ItemVariant>, UpsertItemVariantError> {
     use UpsertItemVariantError::*;
 
-    if check_item_exists(connection, &input.item_id)?.is_none() {
-        return Err(UpsertItemVariantError::ItemDoesNotExist);
-    }
+    check_item_exists(connection, &input.item_id)?.ok_or(ItemDoesNotExist)?;
 
     let existing_item_variant = ItemVariantRepository::new(connection)
         .query_one(ItemVariantFilter::new().id(EqualFilter::equal_to(&input.id)))?;
