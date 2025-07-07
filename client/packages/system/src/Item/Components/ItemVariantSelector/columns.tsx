@@ -1,11 +1,9 @@
 import React from 'react';
 import {
   ColumnDescription,
-  PreferenceKey,
   RadioCell,
   TooltipTextCell,
   useColumns,
-  usePreference,
 } from '@openmsupply-client/common';
 import { ItemVariantFragment } from '../../api';
 
@@ -20,8 +18,6 @@ export const useItemVariantSelectorColumns = ({
   onVariantSelected,
   isVaccine,
 }: ItemVariantSelectorColumnProps) => {
-  const { data: prefs } = usePreference(PreferenceKey.ManageVvmStatusForStock);
-
   const columnDefinition: ColumnDescription<ItemVariantFragment>[] = [
     {
       key: 'itemVariantSelector',
@@ -53,7 +49,7 @@ export const useItemVariantSelectorColumns = ({
     accessor: ({ rowData }) => rowData.manufacturer?.name,
   });
 
-  if (isVaccine && prefs?.manageVvmStatusForStock) {
+  if (isVaccine) {
     columnDefinition.push({
       key: 'vvmType',
       label: 'label.vvm-type',

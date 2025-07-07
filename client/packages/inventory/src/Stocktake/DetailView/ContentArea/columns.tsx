@@ -267,7 +267,7 @@ export const useStocktakeColumns = ({
             ? (lines.reduce(
                 (total, line) =>
                   total +
-                  (line.item?.doses ?? 0) *
+                  (line.item?.doses ?? 1) *
                     (line?.packSize ?? 1) *
                     (line.snapshotNumberOfPacks -
                       (line.countedNumberOfPacks ??
