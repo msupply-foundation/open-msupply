@@ -2134,5 +2134,7 @@
   "warning.check-before-vaccinating": "Os registros de vacinação de outras unidades de saúde podem não estar atualizados. Certifique-se de que você sincronizou recentemente e sempre confirme primeiro com o cartão de vacinação físico do paciente.",
   "warning.field-not-parsed": "{{field}} não analisado",
   "warning.manual-store-requisition": "Inserir uma requisição para esta loja pode resultar em duplicados se a loja também enviar um Pedido Interno.",
-  "warning.nothing-to-supply": "Nada para fornecer!"
+  "warning.nothing-to-supply": "Nada para fornecer!",
+  "button.upload-reports": "Carregar relárorios",
+  "button.new-purchase-order": "Nova Ordem de Compra"
 }
