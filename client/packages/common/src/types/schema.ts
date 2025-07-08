@@ -2392,11 +2392,6 @@ export type DocumentSortInput = {
   key: DocumentSortFieldInput;
 };
 
-export type DoseConfigurationNotAllowed = UpsertItemVariantErrorInterface & {
-  __typename: 'DoseConfigurationNotAllowed';
-  description: Scalars['String']['output'];
-};
-
 export type DraftStockOutItemData = {
   __typename: 'DraftStockOutItemData';
   draftLines: Array<DraftStockOutLineNode>;
@@ -2410,12 +2405,13 @@ export type DraftStockOutLineNode = {
   availablePacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
   campaign?: Maybe<CampaignNode>;
-  defaultDosesPerUnit: Scalars['Int']['output'];
   donor?: Maybe<NameNode>;
+  dosesPerUnit: Scalars['Int']['output'];
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   inStorePacks: Scalars['Float']['output'];
   itemVariant?: Maybe<ItemVariantNode>;
+  itemVariantId?: Maybe<Scalars['String']['output']>;
   location?: Maybe<LocationNode>;
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
@@ -4551,7 +4547,6 @@ export type ItemVariantNode = {
   bundlesWith: Array<BundledItemNode>;
   coldStorageType?: Maybe<ColdStorageTypeNode>;
   coldStorageTypeId?: Maybe<Scalars['String']['output']>;
-  dosesPerUnit: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   item?: Maybe<ItemNode>;
   itemId: Scalars['String']['output'];
@@ -4613,6 +4608,7 @@ export type LedgerConnector = {
 };
 
 export type LedgerFilterInput = {
+  datetime?: InputMaybe<DatetimeFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -4627,6 +4623,7 @@ export type LedgerNode = {
   name: Scalars['String']['output'];
   quantity: Scalars['Float']['output'];
   reason?: Maybe<Scalars['String']['output']>;
+  runningBalance: Scalars['Float']['output'];
   stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
 };
@@ -10191,7 +10188,6 @@ export type UpsertItemVariantErrorInterface = {
 
 export type UpsertItemVariantInput = {
   coldStorageTypeId?: InputMaybe<NullableStringUpdate>;
-  dosesPerUnit: Scalars['Int']['input'];
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   manufacturerId?: InputMaybe<NullableStringUpdate>;
