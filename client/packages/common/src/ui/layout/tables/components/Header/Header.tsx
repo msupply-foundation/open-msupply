@@ -102,7 +102,17 @@ export const HeaderCell = <T extends RecordWithId>({
         flexDirection: 'column',
       }}
     >
-      <Header column={column} />
+      <div
+        style={{
+          display: 'block',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          maxHeight: '3em',
+          lineHeight: '1.5em',
+        }}
+      >
+        <Header column={column} />
+      </div>
       {infoIcon && (
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           {infoIcon}
