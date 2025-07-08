@@ -37,21 +37,18 @@ export const StoreEditModal = ({
   setNextStore,
 }: StoreEditModalProps) => {
   const t = useTranslation();
+  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const { data: properties, isLoading: propertiesLoading } =
     useName.document.properties();
-
   const { data, isLoading } = useName.document.get(nameId);
-
   const { mutateAsync } = useName.document.updateProperties(nameId);
-
-  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
+  const nextId = useName.utils.nextStoreId(nameId);
 
   const { draftProperties, setDraftProperties } = useDraftStoreProperties(
     data?.properties
   );
-
-  const nextId = useName.utils.nextStoreId(nameId);
+  const [currentTab, setCurrentTab] = useState(Tabs.Properties);
 
   const save = async () => {
     mutateAsync({
@@ -65,7 +62,11 @@ export const StoreEditModal = ({
   return !!data ? (
     <Modal
       title=""
-      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      cancelButton={
+        currentTab !== Tabs.Preferences ? (
+          <DialogButton variant="cancel" onClick={onClose} />
+        ) : undefined
+      }
       okButton={
         <DialogButton
           variant="ok"
@@ -123,6 +124,8 @@ export const StoreEditModal = ({
             updateProperty={patch =>
               setDraftProperties({ ...draftProperties, ...patch })
             }
+            currentTab={currentTab}
+            setCurrentTab={setCurrentTab}
           />
         </Box>
       </DetailContainer>
@@ -140,6 +143,8 @@ interface ModalTabProps {
   propertyConfigs: NamePropertyNode[];
   draftProperties: DraftProperties;
   updateProperty: (update: DraftProperties) => void;
+  currentTab: Tabs;
+  setCurrentTab: (tab: Tabs) => void;
 }
 
 const ModalTabs = ({
@@ -147,9 +152,10 @@ const ModalTabs = ({
   propertyConfigs,
   draftProperties,
   updateProperty,
+  currentTab,
+  setCurrentTab,
 }: ModalTabProps) => {
   const t = useTranslation();
-  const [currentTab, setCurrentTab] = useState(Tabs.Properties);
 
   return (
     <TabContext value={currentTab}>
