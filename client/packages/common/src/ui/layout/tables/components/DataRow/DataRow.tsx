@@ -1,4 +1,10 @@
-import React, { FC, PropsWithChildren, ReactElement, useEffect } from 'react';
+import React, {
+  FC,
+  PropsWithChildren,
+  ReactElement,
+  useEffect,
+  useMemo,
+} from 'react';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import { alpha } from '@mui/material/styles';
@@ -13,6 +19,7 @@ import {
 import { Fade, Tooltip } from '@mui/material';
 import { TypedTFunction, LocaleKey } from '@common/intl';
 import { CellContentWrapper } from './CellContentWrapper';
+import { GetErrorFunction, GetErrorPropsInput } from '@common/hooks';
 
 const Animation: FC<PropsWithChildren<{ isAnimated: boolean }>> = ({
   children,
@@ -41,6 +48,7 @@ interface DataRowProps<T extends RecordWithId> {
   isAnimated: boolean;
   /** will ignore onClick if defined. Allows opening in new tab */
   rowLinkBuilder?: (rowData: T) => string;
+  getErrorProps?: GetErrorFunction<T>;
 }
 
 const DataRowComponent = <T extends RecordWithId>({
@@ -57,6 +65,7 @@ const DataRowComponent = <T extends RecordWithId>({
   localisedDate,
   isAnimated,
   rowLinkBuilder,
+  getErrorProps,
 }: DataRowProps<T>): JSX.Element => {
   const hasOnClick = !!onClick || !!rowLinkBuilder;
   const { isExpanded } = useExpanded(rowData.id);
@@ -111,7 +120,20 @@ const DataRowComponent = <T extends RecordWithId>({
             onClick={handleRowClick}
           >
             {columns.map((column, columnIndex) => {
-              const isError = column.getIsError?.(rowData);
+              const {
+                error: isError,
+                setError,
+                required,
+              } = useMemo(() => {
+                if (!getErrorProps)
+                  return { error: column.getIsError?.(rowData) };
+                return getErrorProps({
+                  code: `${column.label} row ${rowIndex + 1}`,
+                  value: rowData[column.key],
+                  required: false,
+                  customValidation: () => column.getIsError?.(rowData) ?? true,
+                });
+              }, [rowKey, column.key, rowData]);
               return (
                 <TableCell
                   key={`${rowKey}${String(column.key)}`}

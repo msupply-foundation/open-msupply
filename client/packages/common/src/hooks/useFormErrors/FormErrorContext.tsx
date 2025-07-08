@@ -14,12 +14,20 @@ type Code = string;
 type ErrorState = Record<Code, string | null>;
 type RequiredState = Record<Code, boolean>;
 
-type GetErrorPropsInput<T> = {
+export type GetErrorPropsInput<T> = {
   code: string;
   value: T;
   required?: boolean;
   customValidation?: () => boolean;
   customErrorMessage?: string;
+};
+
+export type GetErrorFunction<T> = (input: GetErrorPropsInput<T>) => {
+  error: boolean;
+  errorMessage?: string;
+  setError: (error: string | null) => void;
+  required?: boolean;
+  value: T;
 };
 
 export interface FormErrorContextState {
@@ -29,6 +37,7 @@ export interface FormErrorContextState {
   getError: (code: Code) => string | null;
   hasErrors: () => boolean;
   clearErrors: () => void;
+  setError: (code: Code, error: string | null) => void;
   setRequiredErrors: () => boolean;
   resetRequiredErrors: () => void;
   getErrorProps: <T>(input: GetErrorPropsInput<T>) => {
@@ -165,7 +174,7 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
   return (
     <FormErrorContext.Provider
       value={{
-        // These first three primarily used by Form components:
+        // These first three primarily used by individual Form components:
         getErrorProps,
         hasErrors,
         resetRequiredErrors,
@@ -174,6 +183,8 @@ export const FormErrorProvider: React.FC<FormErrorContextProps> = ({
         errorState,
         requiredState,
         includeRequiredInErrorState,
+
+        setError,
 
         // Currently not used outside this Context, but could be useful:
         getError,

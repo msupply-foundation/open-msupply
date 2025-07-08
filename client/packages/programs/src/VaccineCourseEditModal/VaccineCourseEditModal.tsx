@@ -28,6 +28,8 @@ import {
   useDialog,
   useNotification,
   useTranslation,
+  useFormErrors,
+  ErrorDisplay,
 } from '@openmsupply-client/common';
 import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
@@ -108,6 +110,14 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   } = useVaccineCourse(vaccineCourse?.id ?? undefined);
   const doses = draft.vaccineCourseDoses ?? [];
 
+  const {
+    resetRequiredErrors,
+    getErrorProps,
+    hasErrors,
+    setError,
+    errorState,
+  } = useFormErrors();
+
   const { data: demographicData } = useDemographicData.demographics.list();
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
@@ -117,28 +127,37 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     [demographicData]
   );
 
+  console.log('errorState', errorState);
+
   const defaultValue = {
     value: draft.demographic?.name ?? '',
     label: draft.demographic?.name ?? '',
   };
-  const save = async () => {
+  const handleSave = async () => {
     const agesAreInOrder = doses.every((dose, index, doses) => {
       const prevDoseAge = doses[index - 1]?.minAgeMonths ?? -0.01;
       return dose.minAgeMonths > prevDoseAge;
     });
 
     if (!agesAreInOrder) {
-      error(t('error.dose-ages-out-of-order'))();
+      setError('TEST', t('error.dose-ages-out-of-order'));
+      // error(t('error.dose-ages-out-of-order'))();
       return;
     }
 
     for (const dose of doses) {
       if (dose.minAgeMonths > dose.maxAgeMonths) {
-        error(
+        setError(
+          'TEST',
           t('error.dose-max-lower-than-min', {
             doseIndex: doseIndex(doses, dose),
           })
-        )();
+        );
+        // error(
+        //   t('error.dose-max-lower-than-min', {
+        //     doseIndex: doseIndex(doses, dose),
+        //   })
+        // )();
         return;
       }
     }
@@ -174,6 +193,11 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
       <Container>
         <Row label={t('label.immunisation-name')}>
           <BasicTextInput
+            {...getErrorProps({
+              code: t('label.immunisation-name'),
+              value: draft?.name ?? '',
+              required: true,
+            })}
             value={draft?.name ?? ''}
             fullWidth
             onChange={e => updatePatch({ name: e.target.value })}
@@ -195,7 +219,13 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         </Row>
         <Row label={t('label.coverage-rate')}>
           <NumericTextInput
-            value={draft?.coverageRate ?? 1}
+            {...getErrorProps({
+              code: t('label.coverage-rate'),
+              value: draft.coverageRate,
+              required: true,
+            })}
+            max={100}
+            // value={draft?.coverageRate ?? 1}
             fullWidth
             onChange={value => updatePatch({ coverageRate: value })}
             endAdornment="%"
@@ -204,7 +234,12 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         </Row>
         <Row label={t('label.wastage-rate')}>
           <NumericTextInput
-            value={draft?.wastageRate ?? 1}
+            {...getErrorProps({
+              code: t('label.wastage-rate'),
+              value: draft.wastageRate,
+              required: true,
+            })}
+            // value={draft?.wastageRate ?? 1}
             fullWidth
             onChange={value => updatePatch({ wastageRate: value })}
             endAdornment="%"
@@ -227,6 +262,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
           doses={doses}
           updatePatch={updatePatch}
         />
+        <ErrorDisplay />
       </Container>
     </Box>
   );
@@ -243,7 +279,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         <DialogButton
           disabled={!isDirty || !programId || !isValid}
           variant="ok"
-          onClick={save}
+          onClick={handleSave}
         />
       }
       height={900}
@@ -265,6 +301,8 @@ const VaccineCourseDoseTable = ({
   updatePatch: (newData: Partial<DraftVaccineCourse>) => void;
 }) => {
   const t = useTranslation();
+
+  const { resetRequiredErrors, getErrorProps, hasErrors } = useFormErrors();
 
   const addDose = () => {
     const previousDose = doses[doses.length - 1];
@@ -377,6 +415,7 @@ const VaccineCourseDoseTable = ({
           data={doses}
           noDataMessage={t('message.add-a-dose')}
           dense
+          getErrorProps={getErrorProps}
         />
       </TableProvider>
     </>

@@ -1,6 +1,6 @@
 import { ReactNode, FC } from 'react';
 import { RecordWithId } from '@common/types';
-import { Pagination, SortRule } from '@common/hooks';
+import { GetErrorPropsInput, Pagination, SortRule } from '@common/hooks';
 import { Column } from './columns/types';
 
 export interface QueryProps<D> {
@@ -44,4 +44,5 @@ export interface TableProps<T extends RecordWithId> {
   additionalRows?: JSX.Element[];
   /** will ignore onRowClick if defined*/
   rowLinkBuilder?: (row: T) => string;
+  getErrorProps?: GetErrorPropsInput<T>;
 }

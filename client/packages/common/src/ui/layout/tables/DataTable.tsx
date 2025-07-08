@@ -14,6 +14,7 @@ import {
 import {
   BasicSpinner,
   Column,
+  GetErrorPropsInput,
   useRegisterActions,
 } from '@openmsupply-client/common';
 
@@ -39,6 +40,7 @@ interface RenderRowsProps<T extends RecordWithId> {
   additionalRows?: JSX.Element[];
   /** will ignore onRowClick if defined. Allows opening in new tab */
   rowLinkBuilder?: (row: T) => string;
+  getErrorProps?: GetErrorPropsInput<T>;
 }
 const RenderRows = <T extends RecordWithId>({
   mRef,
@@ -52,6 +54,7 @@ const RenderRows = <T extends RecordWithId>({
   isRowAnimated,
   additionalRows,
   rowLinkBuilder,
+  getErrorProps,
 }: RenderRowsProps<T>) => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
@@ -75,6 +78,7 @@ const RenderRows = <T extends RecordWithId>({
             localisedDate={localisedDate}
             isAnimated={isRowAnimated}
             rowLinkBuilder={rowLinkBuilder}
+            getErrorProps={getErrorProps}
           />
         ))}
         {additionalRows}
@@ -106,6 +110,7 @@ const RenderRows = <T extends RecordWithId>({
             localisedDate={localisedDate}
             isAnimated={isRowAnimated}
             rowLinkBuilder={rowLinkBuilder}
+            getErrorProps={getErrorProps}
           />
         )}
       </ViewportList>
@@ -135,6 +140,7 @@ const DataTableComponent = <T extends RecordWithId>({
   additionalRows,
   width = '100%',
   rowLinkBuilder,
+  getErrorProps,
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation();
   const { setRows, setDisabledRows, setFocus } = useTableStore();
@@ -278,6 +284,7 @@ const DataTableComponent = <T extends RecordWithId>({
             isRowAnimated={isRowAnimated}
             additionalRows={additionalRows}
             rowLinkBuilder={rowLinkBuilder}
+            getErrorProps={getErrorProps}
           />
         </TableBody>
       </MuiTable>

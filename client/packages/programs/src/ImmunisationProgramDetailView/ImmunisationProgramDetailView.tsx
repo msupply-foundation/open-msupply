@@ -21,6 +21,7 @@ import {
   ActionsFooter,
   Action,
   DeleteIcon,
+  FormErrorProvider,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -112,13 +113,15 @@ export const ProgramComponent: FC = () => {
   ) : (
     <>
       {isOpen && (
-        <VaccineCourseEditModal
-          isOpen={isOpen}
-          onClose={onClose}
-          programId={id}
-          vaccineCourse={vaccineCourse}
-          mode={mode}
-        />
+        <FormErrorProvider>
+          <VaccineCourseEditModal
+            isOpen={isOpen}
+            onClose={onClose}
+            programId={id}
+            vaccineCourse={vaccineCourse}
+            mode={mode}
+          />
+        </FormErrorProvider>
       )}
       <Toolbar />
       <AppBarButtons onCreate={onOpen} />
