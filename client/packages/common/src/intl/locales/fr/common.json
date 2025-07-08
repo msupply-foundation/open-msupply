@@ -640,7 +640,7 @@
   "label.age-months-and_other": "{{count}} mois, ",
   "label.age-months-count_one": "{{count}} mois",
   "label.age-months-count_other": "{{count}} mois",
-  "label.age-years_one": "{{count}} année",
+  "label.age-years_one": "{{count}} an",
   "label.age-years_other": "{{count}} ans",
   "label.all-lines": "Toutes les lignes",
   "label.allocated": "Alloué(e)",
