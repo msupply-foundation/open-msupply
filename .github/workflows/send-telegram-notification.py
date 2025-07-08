@@ -3,6 +3,18 @@ import sys
 import re
 import requests
 
+def escape_markdown_v2(text):
+    """
+    Escape special characters for Telegram MarkdownV2 format.
+    Characters that need escaping: _ * [ ] ( ) ~ ` > # + - = | { } . !
+    """
+    # Characters that need to be escaped in MarkdownV2
+    escape_chars = r'\_\*\[\]\(\)\~\`\>\#\+\-\=\|\{\}\.\!'
+    return re.sub(f'([{escape_chars}])', r'\\\1', text)
+
+
+
+
 # -- Scripts to send Telegram notifications based on build status or tag creation -- #
 def send_telegram_notification(chat_id, message, bot_key):
     url = f"https://api.telegram.org/bot{bot_key}/sendMessage"
@@ -73,8 +85,10 @@ def handle_android_build_notification(filenames):
         # Construct the full URL for the APK file
         file_url = f"{BASE_URL}/{tag}/{filename}"
         print(f"📦 File URL: {file_url}")
-        message += f"\n\n [Download {filename}]({file_url})"
+        escaped_filename = escape_markdown_v2(filename)
+        message += f"\n\n [Download {escaped_filename}]({file_url})"
 
+    print(f"Sending Message:\n {message}")
     if send_telegram_notification(chat_id, message, bot_key):
         print(f"✅ Android build notification sent to {channel_type} chat {chat_id}")
 
