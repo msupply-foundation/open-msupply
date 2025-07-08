@@ -53,7 +53,7 @@ def handle_android_build_notification(filenames):
         print(f"❌ No chat ID configured for {channel_type} channel.")
         sys.exit(1)
 
-    BASE_URL = os.getenv("https://f002.backblazeb2.com/file/msupply-releases/")
+    BASE_URL = "https://f002.backblazeb2.com/file/msupply-releases"
 
     # Create message based on build status
     status_mapping = {
@@ -71,9 +71,9 @@ def handle_android_build_notification(filenames):
 
     for filename in filenames:
         # Construct the full URL for the APK file
-        file_url = f"{BASE_URL}{tag}/{filename}"
+        file_url = f"{BASE_URL}/{tag}/{filename}"
         print(f"📦 File URL: {file_url}")
-        message += f"\n\n[Download {filename}]({file_url})"
+        message += f"\n\n [Download {filename}]({file_url})"
 
     if send_telegram_notification(chat_id, message, bot_key):
         print(f"✅ Android build notification sent to {channel_type} chat {chat_id}")
