@@ -110,14 +110,16 @@ pub enum PreferenceKey {
 impl PreferenceKey {
     pub fn from_domain(pref_key: &PrefKey) -> Self {
         match pref_key {
+            // Global preferences
             PrefKey::AllowTrackingOfStockByDonor => PreferenceKey::AllowTrackingOfStockByDonor,
             PrefKey::ShowContactTracing => PreferenceKey::ShowContactTracing,
             PrefKey::GenderOptions => PreferenceKey::GenderOptions,
+            PrefKey::UseCampaigns => PreferenceKey::UseCampaigns,
+            // Store preferences
             PrefKey::ManageVaccinesInDoses => PreferenceKey::ManageVaccinesInDoses,
             PrefKey::ManageVvmStatusForStock => PreferenceKey::ManageVvmStatusForStock,
             PrefKey::SortByVvmStatusThenExpiry => PreferenceKey::SortByVvmStatusThenExpiry,
             PrefKey::UseSimplifiedMobileUi => PreferenceKey::UseSimplifiedMobileUi,
-            PrefKey::UseCampaigns => PreferenceKey::UseCampaigns,
         }
     }
 }
