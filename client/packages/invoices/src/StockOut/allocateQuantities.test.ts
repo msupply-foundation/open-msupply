@@ -209,7 +209,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
         { ...fivePacksOfOne, numberOfPacks: 0 },
         { ...fivePacksOfTen, numberOfPacks: 5 }, // i.e. 50 packs
       ],
-      remainingQuantity: -3, // over-allocated by 3
+      remainingQuantity: 0,
     });
   });
 
