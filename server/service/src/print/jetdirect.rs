@@ -35,7 +35,10 @@ impl Jetdirect {
         mode: Mode,
         timeout: Duration,
     ) -> Result<String> {
+        log::debug!("Sending jetdirect command: {}", payload);
         handle.write(payload.as_bytes())?;
+        log::debug!("Command sent, awaiting response...");
+
         // As far as I can tell, there's no way to detect the end of an SGD command response.
         // There can be any number of double-quotes; there's no terminating control character, newline, etc.
         // Only thing we can really do is print lines as we get them, and wait for a timeout.
@@ -44,8 +47,10 @@ impl Jetdirect {
             let event = handle.read_timeout(timeout)?;
             match event {
                 Event::Data(data) => {
+                    let resp_part = String::from_utf8_lossy(&data);
+                    log::debug!("Jetdirect response part received: {}", resp_part);
+
                     if mode == Mode::Sgd {
-                        let resp_part = String::from_utf8_lossy(&data);
                         response.push_str(&resp_part);
                         std::io::stdout().flush()?;
                         if return_early(&data) {
@@ -55,6 +60,7 @@ impl Jetdirect {
                 }
                 Event::TimedOut => {
                     // We don't get the line break at the end of a response, usually
+                    log::debug!("Jetdirect command timeout reached");
                     break;
                 }
                 _ => {
