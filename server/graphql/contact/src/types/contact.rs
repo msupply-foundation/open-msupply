@@ -14,38 +14,38 @@ impl ContactNode {
     pub async fn first_name(&self) -> &str {
         &self.row().first_name
     }
-    pub async fn position(&self) -> Option<&str> {
-        self.row().position.as_deref()
+    pub async fn position(&self) -> &Option<String> {
+        &self.row().position
     }
-    pub async fn comment(&self) -> Option<&str> {
-        self.row().comment.as_deref()
+    pub async fn comment(&self) -> &Option<String> {
+        &self.row().comment
     }
     pub async fn last_name(&self) -> &str {
         &self.row().last_name
     }
-    pub async fn phone(&self) -> Option<&str> {
-        self.row().phone.as_deref()
+    pub async fn phone(&self) -> &Option<String> {
+        &self.row().phone
     }
-    pub async fn email(&self) -> Option<&str> {
-        self.row().email.as_deref()
+    pub async fn email(&self) -> &Option<String> {
+        &self.row().email
     }
-    pub async fn category_1(&self) -> Option<&str> {
-        self.row().category_1.as_deref()
+    pub async fn category_1(&self) -> &Option<String> {
+        &self.row().category_1
     }
-    pub async fn category_2(&self) -> Option<&str> {
-        self.row().category_2.as_deref()
+    pub async fn category_2(&self) -> &Option<String> {
+        &self.row().category_2
     }
-    pub async fn category_3(&self) -> Option<&str> {
-        self.row().category_3.as_deref()
+    pub async fn category_3(&self) -> &Option<String> {
+        &self.row().category_3
     }
-    pub async fn address_1(&self) -> Option<&str> {
-        self.row().address_1.as_deref()
+    pub async fn address_1(&self) -> &Option<String> {
+        &self.row().address_1
     }
-    pub async fn address_2(&self) -> Option<&str> {
-        self.row().address_2.as_deref()
+    pub async fn address_2(&self) -> &Option<String> {
+        &self.row().address_2
     }
-    pub async fn country(&self) -> Option<&str> {
-        self.row().country.as_deref()
+    pub async fn country(&self) -> &Option<String> {
+        &self.row().country
     }
 }
 

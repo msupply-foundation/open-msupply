@@ -7,9 +7,8 @@ export const useContacts = (nameId: string) => {
 
   const queryFn = async () => {
     const result = await contactApi.contacts({ nameId, storeId });
-    if (result.contacts.__typename === 'ContactConnector') {
+    if (result.contacts.__typename === 'ContactConnector')
       return result.contacts;
-    }
   };
 
   const { data, isLoading, isError } = useQuery({

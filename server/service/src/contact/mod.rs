@@ -1,4 +1,7 @@
-use repository::{ContactRow, ContactRowRepository, RepositoryError, StorageConnection};
+use query::contacts;
+use repository::{ContactRow, RepositoryError, StorageConnection};
+
+pub mod query;
 
 pub trait ContactServiceTrait: Sync + Send {
     fn contacts(
@@ -9,14 +12,6 @@ pub trait ContactServiceTrait: Sync + Send {
         contacts(connection, name_id)
     }
 }
+
 pub struct ContactService {}
 impl ContactServiceTrait for ContactService {}
-
-
-pub fn contacts(
-    connection: &StorageConnection,
-    name_id: &str,
-) -> Result<Vec<ContactRow>, RepositoryError> {
-    let result = ContactRowRepository::new(connection).find_all_by_name_id(name_id)?;
-    Ok(result)
-}

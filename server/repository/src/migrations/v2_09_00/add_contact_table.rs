@@ -6,6 +6,7 @@ impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
         "add_contact_table"
     }
+
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,

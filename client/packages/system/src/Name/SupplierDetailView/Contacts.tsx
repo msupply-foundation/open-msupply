@@ -12,10 +12,6 @@ import {
 import { useContacts } from '../apiModern/hooks';
 import { ContactFragment } from '../apiModern/operations.generated';
 
-// TODO:
-// Column definitions and data are placeholders
-// Labels are placeholders and should be replaced with actual translations
-
 interface ContactsProps {
   nameId: string;
 }
@@ -51,39 +47,9 @@ export const Contacts = ({ nameId }: ContactsProps): ReactElement => {
       accessor: ({ rowData }) => rowData.phone ?? '',
     },
     {
-      key: 'address1',
-      label: 'label.address-1',
-      accessor: ({ rowData }) => rowData.address1 ?? '',
-    },
-    {
-      key: 'address2',
-      label: 'label.address-2',
-      accessor: ({ rowData }) => rowData.address2 ?? '',
-    },
-    {
-      key: 'country',
-      label: 'label.country',
-      accessor: ({ rowData }) => rowData.country ?? '',
-    },
-    {
       key: 'category1',
       label: 'label.category-1',
       accessor: ({ rowData }) => rowData.category1 ?? '',
-    },
-    {
-      key: 'category2',
-      label: 'label.category-2',
-      accessor: ({ rowData }) => rowData.category2 ?? '',
-    },
-    {
-      key: 'category3',
-      label: 'label.category-3',
-      accessor: ({ rowData }) => rowData.category3 ?? '',
-    },
-    {
-      key: 'comment',
-      label: 'label.comment',
-      accessor: ({ rowData }) => rowData.comment ?? '',
     },
   ];
 

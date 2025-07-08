@@ -1,8 +1,8 @@
-pub mod queries;
+pub mod query;
 pub mod types;
 
 use async_graphql::*;
-use queries::contacts::contacts;
+use query::contacts;
 use types::contact::ContactsResponse;
 
 #[derive(Default, Clone)]

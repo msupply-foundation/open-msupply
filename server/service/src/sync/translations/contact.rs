@@ -36,6 +36,7 @@ pub struct LegacyContactRow {
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(ContactTranslation)
 }
+
 pub(super) struct ContactTranslation;
 impl SyncTranslation for ContactTranslation {
     fn table_name(&self) -> &str {
