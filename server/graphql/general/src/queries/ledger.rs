@@ -165,6 +165,7 @@ impl LedgerFilterInput {
             stock_line_id,
             item_id,
             datetime,
+            master_list_id,
         } = self;
 
         StockLineLedgerFilter {
@@ -172,6 +173,7 @@ impl LedgerFilterInput {
             item_id: item_id.map(EqualFilter::from),
             store_id: Some(EqualFilter::equal_to(store_id)),
             datetime: datetime.map(DatetimeFilter::from),
+            master_list_id: master_list_id.map(EqualFilter::from),
         }
     }
 }
