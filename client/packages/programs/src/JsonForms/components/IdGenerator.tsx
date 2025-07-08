@@ -303,10 +303,11 @@ const useUniqueProgramPatientCodeValidation = () => {
 
 const UIComponent = (props: ControlProps) => {
   const t = useTranslation();
-  const config: JsonFormsConfig = props.config;
+  const { core } = useJsonForms();
 
   const { label, errors, path, data, visible, handleChange, uischema } = props;
-  const { core } = useJsonForms();
+  const config: JsonFormsConfig = props.config;
+
   const { mutateAsync: mutateGenerateId } = useMutation(
     async (input: GenerateIdInput): Promise<string> => generateId(input)
   );
@@ -316,7 +317,6 @@ const UIComponent = (props: ControlProps) => {
     path,
     'UIGenerator'
   );
-
   const { errors: zErrors, options } = useZodOptionsValidation(
     GeneratorOptions,
     uischema.options
