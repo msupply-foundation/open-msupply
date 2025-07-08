@@ -302,17 +302,16 @@ const useUniqueProgramPatientCodeValidation = () => {
 };
 
 const UIComponent = (props: ControlProps) => {
-  const { label, errors, path, data, visible, handleChange, uischema } = props;
-  const config: JsonFormsConfig = props.config;
   const t = useTranslation();
+  const config: JsonFormsConfig = props.config;
+
+  const { label, errors, path, data, visible, handleChange, uischema } = props;
   const { core } = useJsonForms();
   const { mutateAsync: mutateGenerateId } = useMutation(
     async (input: GenerateIdInput): Promise<string> => generateId(input)
   );
   const { mutateAsync: allocateNumber } = useDocument.utils.allocateNumber();
-  const validateUniqueProgramEnrolmentId =
-    useUniqueProgramEnrolmentIdValidation();
-  const validateUniquePatientCode = useUniqueProgramPatientCodeValidation();
+
   const { customError, setCustomError } = useJSONFormsCustomError(
     path,
     'UIGenerator'
@@ -322,11 +321,6 @@ const UIComponent = (props: ControlProps) => {
     GeneratorOptions,
     uischema.options
   );
-
-  const savedDataField = extractProperty(config.initialData ?? {}, path);
-  const requireConfirmation = !options?.confirmRegenerate
-    ? false
-    : !!savedDataField;
 
   const validationError = useMemo(() => {
     if (!options || !core?.data) {
@@ -350,6 +344,11 @@ const UIComponent = (props: ControlProps) => {
   );
 
   const { text, onChange } = useDebouncedTextInput(data, manualUpdate);
+  const requireConfirmation = !options?.confirmRegenerate ? false : !!text;
+
+  const validateUniqueProgramEnrolmentId =
+    useUniqueProgramEnrolmentIdValidation();
+  const validateUniquePatientCode = useUniqueProgramPatientCodeValidation();
 
   const validateId = async (
     options: GeneratorOptions,
