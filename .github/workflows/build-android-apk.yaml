@@ -81,6 +81,8 @@ jobs:
           TELEGRAM_DEV_RELEASE_CHAT_ID: ${{ secrets.TELEGRAM_DEV_RELEASE_CHAT_ID }}
           TELEGRAM_RC_RELEASE_CHAT_ID: ${{ secrets.TELEGRAM_RC_RELEASE_CHAT_ID }}
           NOTIFICATION_TYPE: "android_build"
+          BUILD_STATUS: ${{ job.status }}
+          TAG_NAME: ${{ github.ref_name }}
           B2_APPLICATION_KEY_ID: ${{ secrets.B2_KEY_ID }}
           B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
         run: bash .github/workflows/mac_backblaze_upload.sh
