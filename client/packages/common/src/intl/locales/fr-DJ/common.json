@@ -272,5 +272,7 @@
   "supplier-return": "Retour au fournisseur",
   "supplier-returns": "Retour au Fournisseur",
   "title.packaging": "Boite",
-  "warning.cannot-create-placeholder-packs": "Il y a un total de {{allocatedQuantity}} boites disponibles. Impossible d'allouer toutes les {{requestedQuantity}} boites."
+  "warning.cannot-create-placeholder-packs": "Il y a un total de {{allocatedQuantity}} boites disponibles. Impossible d'allouer toutes les {{requestedQuantity}} boites.",
+  "report-code.inbound": "Bon de livraison",
+  "report.inbound-form": "Bon de livraison"
 }
