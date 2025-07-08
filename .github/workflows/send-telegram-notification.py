@@ -12,9 +12,6 @@ def escape_markdown_v2(text):
     escape_chars = r'\_\*\[\]\(\)\~\`\>\#\+\-\=\|\{\}\.\!'
     return re.sub(f'([{escape_chars}])', r'\\\1', text)
 
-
-
-
 # -- Scripts to send Telegram notifications based on build status or tag creation -- #
 def send_telegram_notification(chat_id, message, bot_key):
     url = f"https://api.telegram.org/bot{bot_key}/sendMessage"
@@ -138,12 +135,10 @@ def handle_tag_notification():
 def main():
     notification_type = os.getenv("NOTIFICATION_TYPE", "tag_creation")
 
-
     if notification_type == "android_build":
         handle_android_build_notification(sys.argv[1:])
     else:
         handle_tag_notification()
-
 
 if __name__ == "__main__":
     main()
