@@ -191,6 +191,9 @@ fn apply_data_rows(
     let mut row_idx = row_index;
 
     for row in body.rows_and_cells().into_iter() {
+        // Insert new row below (leave any footer from the excel template in place)
+        sheet.insert_new_row(&(row_idx + 1), &1);
+
         // Duplicate any formulae/formatting to the next row before populating
         for col in 0..sheet.get_highest_column() {
             let col = col + 1;
