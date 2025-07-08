@@ -86,7 +86,7 @@ def handle_android_build_notification(filenames):
         file_url = f"{BASE_URL}/{tag}/{filename}"
         print(f"📦 File URL: {file_url}")
         escaped_filename = escape_markdown_v2(filename)
-        message += f"\n\n [Download {escaped_filename}]({file_url})"
+        message += f"\n\n Download: [{escaped_filename}]({file_url})"
 
     print(f"Sending Message:\n {message}")
     if send_telegram_notification(chat_id, message, bot_key):
