@@ -14,7 +14,7 @@ impl MigrationFragment for Migrate {
             ALTER TABLE invoice ADD COLUMN diagnosis_id TEXT REFERENCES diagnosis(id);
         "#
         )?;
-
+// We don't re-translate existing invoices here, as they could have been changed since the sync buffer record and could be overwritten
         Ok(())
     }
 }
