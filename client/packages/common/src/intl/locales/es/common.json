@@ -378,6 +378,7 @@
   "error.permission-denied": "Permiso para acceder a la ubicación denegado.",
   "error.photo-error": "Error al tomar foto",
   "error.plugin": "Hubo un error cargando el plugin {{name}}",
+  "error.plugin-payment-amount-outstanding": "El monto pagado es menor al monto pendiente",
   "error.plugin-unavailable": "Plugin no disponible",
   "error.prescription-not-found": "Prescripción no encontrada.",
   "error.printing-label": "Error al imprimir la etiqueta de activo.",

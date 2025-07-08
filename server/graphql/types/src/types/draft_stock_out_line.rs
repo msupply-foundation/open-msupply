@@ -92,8 +92,12 @@ impl DraftStockOutLineNode {
         &self.shipment_line.stock_line_on_hold
     }
 
-    pub async fn default_doses_per_unit(&self) -> i32 {
-        self.shipment_line.default_doses_per_unit
+    pub async fn doses_per_unit(&self) -> i32 {
+        self.shipment_line.doses_per_unit
+    }
+
+    pub async fn item_variant_id(&self) -> &Option<String> {
+        &self.shipment_line.item_variant_id
     }
 
     pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
