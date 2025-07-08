@@ -125,7 +125,8 @@ export const allocateQuantities = (
 
   return {
     allocatedLines: newDraftLines,
-    remainingQuantity: quantityToAllocate,
+    // If we over-allocated, remainingQuantity should still be considered 0
+    remainingQuantity: quantityToAllocate < 0 ? 0 : quantityToAllocate,
   };
 };
 
