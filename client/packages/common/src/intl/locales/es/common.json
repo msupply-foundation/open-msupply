@@ -249,7 +249,7 @@
   "error.asset-not-found": "Activo no encontrado",
   "error.authentication-error": "El servidor ha devuelto un error",
   "error.batch-is-reserved": "Este lote ya está reservado/enviado",
-  "error.cannot-add-from-masterlist-if-not-new": "Solo se puede agregar desde una lista maestra en factura 'Nueva'",
+  "error.cannot-add-from-masterlist": "Solo se puede agregar desde una lista maestra en factura 'Nueva'",
   "error.cannot-add-pack-size-of-zero": "No se puede agregar una variante con un tamaño de paquete de cero",
   "error.cannot-add-with-no-abbreviation-and-name": "No se puede agregar una variante sin abreviatura y nombre",
   "error.cannot-backdate-prescription": "El inventario no está disponible en la fecha especificada",
