@@ -47,20 +47,20 @@ impl Jetdirect {
             let event = handle.read_timeout(timeout)?;
             match event {
                 Event::Data(data) => {
-                    let resp_part = String::from_utf8_lossy(&data);
-                    log::debug!("Jetdirect response part received: {}", resp_part);
-
+                    // Print mode only receives the command, doesn't respond
                     if mode == Mode::Sgd {
+                        let resp_part = String::from_utf8_lossy(&data);
                         response.push_str(&resp_part);
                         std::io::stdout().flush()?;
                         if return_early(&data) {
+                            log::debug!("Jetdirect response complete");
                             break;
                         }
                     }
                 }
                 Event::TimedOut => {
                     // We don't get the line break at the end of a response, usually
-                    log::debug!("Jetdirect command timeout reached");
+                    log::debug!("Jetdirect command timeout reached, ending request");
                     break;
                 }
                 _ => {
@@ -74,7 +74,9 @@ impl Jetdirect {
     pub fn send_string(&self, data: String, mode: Mode) -> Result<String> {
         let ip_addr = IpAddr::from_str(&self.addr)?;
         let socket = SocketAddr::new(ip_addr, self.port);
+        log::debug!("Connecting to jetdirect printer at {}", socket);
         let mut telnet = Telnet::connect_timeout(&socket, 512, PRINTER_CONNECTION_TIMEOUT)?;
+        log::debug!("Connected to printer");
         self.send_command(data, &mut telnet, mode, PRINTER_COMMAND_TIMEOUT)
     }
 }
