@@ -5,7 +5,7 @@ use std::time::Duration;
 use std::{io::Write, net::SocketAddr};
 use telnet::{Event, Telnet};
 
-const PRINTER_COMMAND_TIMEOUT: Duration = Duration::new(1, 500);
+const PRINTER_COMMAND_TIMEOUT: Duration = Duration::new(2, 500);
 const PRINTER_CONNECTION_TIMEOUT: Duration = Duration::new(5, 0);
 
 // Note: this file is mostly taken from https://github.com/fearful-symmetry/zebrasend/blob/main/src/cmd/jetdirect.rs
@@ -77,6 +77,7 @@ impl Jetdirect {
         log::debug!("Connecting to jetdirect printer at {}", socket);
         let mut telnet = Telnet::connect_timeout(&socket, 512, PRINTER_CONNECTION_TIMEOUT)?;
         log::debug!("Connected to printer");
+
         self.send_command(data, &mut telnet, mode, PRINTER_COMMAND_TIMEOUT)
     }
 }
