@@ -18,6 +18,10 @@ export const OrderInfoSection = () => {
   ]);
   const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
 
+  if (!usesRemoteAuthorisation) {
+    return null;
+  }
+
   return (
     <DetailPanelSection title={t('heading.order-info')}>
       <Grid container gap={0.5} key="order-info">
