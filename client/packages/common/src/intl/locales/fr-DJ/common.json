@@ -261,9 +261,11 @@
   "outbound-shipment": "Sorties de stock",
   "outbound-shipments": "Sorties de stock",
   "patients": "Patient(e)s",
+  "report-code.inbound": "Bon de livraison",
   "report-code.pending-encounters": "Suivi des visites",
   "report.cost-price-per-pack": "Prix d'achat par boite",
   "report.counted-packs": "Boites comptées",
+  "report.inbound-form": "Bon de livraison",
   "report.pack-quantity": "Quantité (boite)",
   "report.pack-size": "Conditionnement",
   "report.pending-encounters": "Rapport des visites",
@@ -272,7 +274,5 @@
   "supplier-return": "Retour au fournisseur",
   "supplier-returns": "Retour au Fournisseur",
   "title.packaging": "Boite",
-  "warning.cannot-create-placeholder-packs": "Il y a un total de {{allocatedQuantity}} boites disponibles. Impossible d'allouer toutes les {{requestedQuantity}} boites.",
-  "report-code.inbound": "Bon de livraison",
-  "report.inbound-form": "Bon de livraison"
+  "warning.cannot-create-placeholder-packs": "Il y a un total de {{allocatedQuantity}} boites disponibles. Impossible d'allouer toutes les {{requestedQuantity}} boites."
 }
