@@ -18,7 +18,6 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "gql-codegen": "graphql-codegen --config codegen.yml",
-    "//": "This command runs graphql-codegen twice, as running once is causing import path errors for shared fragments in the generated files (but running twice resolves them??) See issue here: https://github.com/msupply-foundation/open-msupply/issues/2812",
     "generate": "cd ../server && cargo run --bin remote_server_cli -- export-graphql-schema && cd ../client && yarn gql-codegen",
     "android:run": "npx cap run android",
     "android:build:server": "yarn build && lerna run --scope @openmsupply-client/android build:server --stream",
