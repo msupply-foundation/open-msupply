@@ -1,4 +1,5 @@
-use super::{location_row::location, LocationRow, StorageConnection};
+use super::{LocationRow, StorageConnection};
+use crate::database_schema::location;
 
 use crate::{
     asset_internal_location_row::asset_internal_location,

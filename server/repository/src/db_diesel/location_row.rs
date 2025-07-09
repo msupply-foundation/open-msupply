@@ -2,20 +2,10 @@ use super::{
     assets::asset_internal_location_row::asset_internal_location, item_link_row::item_link,
     name_link_row::name_link, store_row::store, RepositoryError, StorageConnection,
 };
+pub use crate::database_schema::location;
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{Delete, Upsert};
 use diesel::prelude::*;
-
-table! {
-    location (id) {
-        id -> Text,
-        name -> Text,
-        code -> Text,
-        on_hold -> Bool,
-        store_id -> Text,
-        cold_storage_type_id -> Nullable<Text>
-    }
-}
 
 joinable!(location -> store (store_id));
 allow_tables_to_appear_in_same_query!(location, item_link);

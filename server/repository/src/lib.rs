@@ -4,6 +4,7 @@ use diesel_migrations::{
     embed_migrations, EmbeddedMigrations, HarnessWithOutput, MigrationHarness,
 };
 
+pub mod database_schema;
 pub mod database_settings;
 pub mod db_diesel;
 pub mod diesel_extensions;
