@@ -74,6 +74,7 @@ impl Jetdirect {
     pub fn send_string(&self, data: String, mode: Mode) -> Result<String> {
         let ip_addr = IpAddr::from_str(&self.addr)?;
         let socket = SocketAddr::new(ip_addr, self.port);
+
         log::debug!("Connecting to jetdirect printer at {}", socket);
         let mut telnet = Telnet::connect_timeout(&socket, 512, PRINTER_CONNECTION_TIMEOUT)?;
         log::debug!("Connected to printer");
