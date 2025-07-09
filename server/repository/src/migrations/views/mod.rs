@@ -12,8 +12,8 @@ pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
       DROP VIEW IF EXISTS replenishment;
       DROP VIEW IF EXISTS adjustments;
       DROP VIEW IF EXISTS item_ledger;
-      DROP VIEW IF EXISTS stock_movement;
       DROP VIEW IF EXISTS stock_line_ledger;
+      DROP VIEW IF EXISTS stock_movement;
       DROP VIEW IF EXISTS outbound_shipment_stock_movement;
       DROP VIEW IF EXISTS inbound_shipment_stock_movement;
       DROP VIEW IF EXISTS inventory_adjustment_stock_movement;
