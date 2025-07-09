@@ -1,5 +1,6 @@
 import {
   ColumnFormat,
+  NumberCell,
   SortBy,
   useColumns,
   useFormatDateTime,
@@ -57,6 +58,7 @@ export const useLedgerColumns = (
         accessor: ({ rowData }) => format(rowData.quantity),
         sortable: false,
         description: 'description.unit-quantity',
+        Cell: NumberCell,
       },
       {
         key: ColumnKey.Balance,

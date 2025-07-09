@@ -248,6 +248,9 @@ export const useStocktakeColumns = ({
       key: 'difference',
       label: 'label.difference',
       align: ColumnAlign.Right,
+      Cell: props => (
+        <NumberCell {...props} defaultValue={UNDEFINED_STRING_VALUE} />
+      ),
       sortable: false,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
@@ -286,8 +289,6 @@ export const useStocktakeColumns = ({
               ? `(${totalInDosesRounded} ${t('label.doses')})`
               : ''
           }`;
-        } else if (rowData.countedNumberOfPacks === null) {
-          return UNDEFINED_STRING_VALUE;
         } else {
           const displayDoses =
             preferences?.manageVaccinesInDoses && rowData?.item.isVaccine;
