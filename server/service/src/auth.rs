@@ -59,6 +59,8 @@ pub enum Resource {
     QueryStockLine,
     MutateStockLine,
     CreateRepack,
+    // contact
+    QueryContact,
     // stocktake
     QueryStocktake,
     MutateStocktake,
@@ -279,6 +281,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::CreateRepack),
         ]),
+    );
+    // contact
+    map.insert(
+        Resource::QueryContact,
+        PermissionDSL::And(vec![PermissionDSL::HasStoreAccess]),
     );
     // stocktake
     map.insert(
