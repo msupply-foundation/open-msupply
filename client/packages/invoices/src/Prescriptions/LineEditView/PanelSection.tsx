@@ -9,9 +9,11 @@ import {
   AccordionSummary,
   Box,
   styled,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { ChevronDownIcon } from '@common/icons';
+import { NumUtils } from '@common/utils';
 
 const BORDER_RADIUS = 10;
 
@@ -44,7 +46,7 @@ const StyledAccordion = styled(Accordion)(({ theme }) => ({
 export interface DetailPanelSectionProps {
   backgroundColor?: string;
   title?: string;
-  closedSummary?: string;
+  closedSummary?: { qty?: number; text: string; tooltip?: number }[];
   defaultExpanded?: boolean;
 }
 
@@ -70,9 +72,22 @@ export const AccordionPanelSection: React.FC<
             <strong>{title}</strong>
           </Typography>
           {!open && (
-            <Typography sx={{ whiteSpace: 'pre-wrap' }}>
-              {closedSummary}
-            </Typography>
+            <Box>
+              {closedSummary?.map(summary => (
+                <Box key={1} sx={{ display: 'flex', flexDirection: 'row' }}>
+                  <Tooltip key={summary.text} title={summary?.tooltip}>
+                    <Typography sx={{ whiteSpace: 'pre-wrap' }}>
+                      {!!NumUtils.hasMoreThanTwoDp(summary?.tooltip ?? 0)
+                        ? `${summary.qty}...`
+                        : summary.qty}
+                    </Typography>
+                  </Tooltip>
+                  <Typography sx={{ whiteSpace: 'pre-wrap' }}>
+                    {summary.text}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
           )}
         </Box>
       </AccordionSummary>

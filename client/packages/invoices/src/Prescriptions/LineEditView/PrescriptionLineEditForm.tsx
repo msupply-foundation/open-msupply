@@ -85,7 +85,7 @@ export const PrescriptionLineEditForm = ({
           title={t('label.quantity')}
           closedSummary={
             displayInDoses
-              ? dosesSummary(t, draftLines)
+              ? [dosesSummary(t, draftLines)]
               : summarise(
                   t,
                   item.unitName ?? t('label.unit'),
@@ -108,7 +108,7 @@ export const PrescriptionLineEditForm = ({
         </AccordionPanelSection>
         <AccordionPanelSection
           title={t('label.directions')}
-          closedSummary={isDirectionsDisabled ? '' : (note ?? '')}
+          closedSummary={[{ text: isDirectionsDisabled ? '' : (note ?? '') }]}
           defaultExpanded={(isNew || !note) && !disabled}
         >
           {isDirectionsDisabled ? (
@@ -214,31 +214,31 @@ const summarise = (
   });
 
   // Summarise counts in words
-  const summary: string[] = [];
+  const summary: { qty: number; text: string; tooltip: number }[] = [];
   Object.entries(counts).forEach(([size, { unitName, count: numUnits }]) => {
     const packSize = Number(size);
     if (packSize > 1) {
-      const numPacks = NumUtils.round(numUnits / packSize, 3);
+      const numPacks = NumUtils.round(numUnits / packSize, 2);
       const packWord = t('label.packs-of', { count: numPacks }); // pack or packs
       const unitWord = t('label.units-plural', { count: numUnits }); // unit or units
       const unitType = getPlural(unitName, packSize);
-      summary.push(
-        t('label.packs-of-size', {
-          numPacks,
-          numUnits,
-          packSize,
-          unitType,
-          packWord,
-          unitWord,
-        })
-      );
+      const text = t('label.packs-of-size', {
+        numUnits,
+        packSize,
+        unitType,
+        packWord,
+        unitWord,
+      });
+      const tooltip = numUnits / packSize;
+      summary.push({ qty: numPacks, text, tooltip });
     } else {
       const unitType = getPlural(unitName, numUnits);
-      summary.push(t('label.packs-of-1', { numUnits, unitType }));
+      const text = t('label.packs-of-1', { numUnits, unitType });
+      const tooltip = numUnits;
+      summary.push({ qty: numUnits, text, tooltip });
     }
   });
-
-  return summary.join('\n');
+  return summary;
 };
 
 const dosesSummary = (
@@ -256,6 +256,7 @@ const dosesSummary = (
   const unitWord = t('label.doses-plural', {
     count: roundedDoses,
   });
-
-  return `${roundedDoses} ${unitWord}`;
+  const text = `${roundedDoses} ${unitWord}`;
+  const tooltip = totalDoses;
+  return { text, tooltip };
 };
