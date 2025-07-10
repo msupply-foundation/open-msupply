@@ -167,33 +167,33 @@ export const Toolbar = () => {
               />
             }
           />
-        </Grid>
-      </Grid>
-      <Grid
-        display="flex"
-        gap={1}
-        alignItems="flex-end"
-        justifyContent="flex-end"
-      >
-        <Grid>
-          <Switch
-            label={t('label.hide-stock-over-minimum')}
-            onChange={toggle}
-            checked={on}
-            color="secondary"
-            size="small"
-            labelSx={{ margin: '5px 0' }}
-          />
-        </Grid>
-        <Grid>
-          <SearchBar
-            placeholder={t('placeholder.filter-items')}
-            value={itemFilter}
-            onChange={newValue => {
-              setItemFilter(newValue);
-            }}
-            debounceTime={0}
-          />
+          <Grid
+            display="flex"
+            gap={1}
+            alignItems="flex-end"
+            justifyContent="flex-end"
+          >
+            <Grid>
+              <Switch
+                label={t('label.hide-stock-over-minimum')}
+                onChange={toggle}
+                checked={on}
+                color="secondary"
+                size="small"
+                labelSx={{ margin: '5px 0' }}
+              />
+            </Grid>
+            <Grid>
+              <SearchBar
+                placeholder={t('placeholder.filter-items')}
+                value={itemFilter}
+                onChange={newValue => {
+                  setItemFilter(newValue);
+                }}
+                debounceTime={0}
+              />
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
     </AppBarContentPortal>
