@@ -29,11 +29,9 @@ export const Toolbar = () => {
     theirReference,
     update,
     otherParty,
-    programName,
   } = useRequest.document.fields([
     'theirReference',
     'otherParty',
-    'programName',
     'minMonthsOfStock',
     'maxMonthsOfStock',
   ]);
@@ -89,7 +87,7 @@ export const Toolbar = () => {
               </Tooltip>
             }
           />
-          {programName && (
+          {isProgram && (
             <Alert severity="info" sx={{ maxWidth: 1000 }}>
               {t('info.cannot-edit-program-requisition')}
             </Alert>
