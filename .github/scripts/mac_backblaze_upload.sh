@@ -23,4 +23,4 @@ UNIVERSAL_FILENAME=$(basename "$UNIVERSAL_FILE_PATH")
 echo "Found file $UNIVERSAL_FILENAME to upload"
 $B2_PATH file upload --no-progress $B2_BUCKET_NAME "$UNIVERSAL_FILE_PATH" "${GITHUB_REF_NAME}/${UNIVERSAL_FILENAME}"
 
-python3 .github/workflows/send-telegram-notification.py $ARM64_FILENAME $UNIVERSAL_FILENAME
+python3 .github/scripts/send-telegram-notification.py $ARM64_FILENAME $UNIVERSAL_FILENAME

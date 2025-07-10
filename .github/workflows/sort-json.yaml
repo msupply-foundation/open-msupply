@@ -5,7 +5,7 @@ on:
     branches:
       - develop
     paths:
-      - 'client/**'
+      - "client/**"
   workflow_dispatch:
 
 jobs:
@@ -21,9 +21,9 @@ jobs:
           token: ${{ secrets.JSON_SORT_PAT }}
       - name: Sort files
         run: |
-          chmod +x .github/workflows/sort-json.sh 
-          .github/workflows/sort-json.sh
+          chmod +x .github/scripts/sort-json.sh 
+          .github/scripts/sort-json.sh
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'Sorted JSON translation files'
-          commit_options: '--no-verify'
+          commit_message: "Sorted JSON translation files"
+          commit_options: "--no-verify"
