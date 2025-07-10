@@ -1,0 +1,44 @@
+name: Nightly Automated Builds
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 6 * * *" # Every day at 06:30 AM UTC - equivalent to 06:30 PM NZST (or 07:30 PM NZDT)
+
+jobs:
+  create-tags:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      CREATED_TAGS: ${{ steps.create_tags.outputs.CREATED_TAGS }}
+      AFFECTED_BRANCHES: ${{ steps.create_tags.outputs.AFFECTED_BRANCHES }}
+      HAS_TAGS: ${{ steps.create_tags.outputs.HAS_TAGS }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.NIGHTLY_BUILD_GITHUB_PAT }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create tags for target branches
+        id: create_tags
+        run: bash .github/workflows/create-nightly-tags.sh
+
+  send-notifications:
+    needs: create-tags
+    if: needs.create-tags.outputs.HAS_TAGS == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Send telegram notifications
+        env:
+          TELEGRAM_RELEASE_BOT_KEY: ${{ secrets.TELEGRAM_RELEASE_BOT_KEY }}
+          TELEGRAM_DEV_RELEASE_CHAT_ID: ${{ secrets.TELEGRAM_DEV_RELEASE_CHAT_ID }}
+          TELEGRAM_RC_RELEASE_CHAT_ID: ${{ secrets.TELEGRAM_RC_RELEASE_CHAT_ID }}
+          CREATED_TAGS: ${{ needs.create-tags.outputs.CREATED_TAGS }}
+          AFFECTED_BRANCHES: ${{ needs.create-tags.outputs.AFFECTED_BRANCHES }}
+        run: bash .github/workflows/send-telegram-notification.sh

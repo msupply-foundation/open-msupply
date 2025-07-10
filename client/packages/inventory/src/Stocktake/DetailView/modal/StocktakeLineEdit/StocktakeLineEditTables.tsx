@@ -199,13 +199,7 @@ export const BatchTable = ({
         label: 'label.item-variant',
         width: 170,
         Cell: props => (
-          <ItemVariantInputCell
-            displayInDoses={
-              (displayInDoses && props.rowData.item.isVaccine) ?? false
-            }
-            {...props}
-            itemId={props.rowData.item.id}
-          />
+          <ItemVariantInputCell {...props} itemId={props.rowData.item.id} />
         ),
         setter: patch => update({ ...patch }),
       });
@@ -267,7 +261,14 @@ export const BatchTable = ({
     );
 
     return columnDefinitions;
-  }, [itemVariantsEnabled]);
+  }, [
+    itemVariantsEnabled,
+    errorsContext,
+    reasonOptions,
+    isLoading,
+    isInitialStocktake,
+    displayInDoses,
+  ]);
 
   const columns = useColumns<DraftStocktakeLine>(columnDefinitions, {}, [
     columnDefinitions,

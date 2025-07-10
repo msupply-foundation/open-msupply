@@ -8,8 +8,6 @@ import {
 } from '@common/components';
 import {
   DownloadIcon,
-  EnvUtils,
-  Platform,
   PrinterIcon,
   PrintFormat,
   useAuthContext,
@@ -63,8 +61,7 @@ export const SelectReportModal = ({
               onSelectReport(selectedReport, PrintFormat.Excel);
               onClose();
             }}
-            // Android doesn't get file dialog popup, so for now, export on android not supported
-            disabled={!selectedReport || EnvUtils.platform === Platform.Android}
+            disabled={!selectedReport}
           />
           <ButtonWithIcon
             color="secondary"

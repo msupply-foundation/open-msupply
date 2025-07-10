@@ -26,11 +26,6 @@ export type InboundLineFragment = {
   linkedInvoiceId?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
-  itemVariant?: {
-    __typename: 'ItemVariantNode';
-    id: string;
-    dosesPerUnit: number;
-  } | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -73,6 +68,7 @@ export type InboundFragment = {
   createdDatetime: string;
   allocatedDatetime?: string | null;
   deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
   verifiedDatetime?: string | null;
@@ -131,11 +127,6 @@ export type InboundFragment = {
         __typename: 'CampaignNode';
         id: string;
         name: string;
-      } | null;
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        dosesPerUnit: number;
       } | null;
       item: {
         __typename: 'ItemNode';
@@ -207,6 +198,7 @@ export type InboundRowFragment = {
   comment?: string | null;
   createdDatetime: string;
   deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   id: string;
   invoiceNumber: number;
   otherPartyName: string;
@@ -251,6 +243,7 @@ export type InvoicesQuery = {
       comment?: string | null;
       createdDatetime: string;
       deliveredDatetime?: string | null;
+      receivedDatetime?: string | null;
       id: string;
       invoiceNumber: number;
       otherPartyName: string;
@@ -293,6 +286,7 @@ export type InvoiceQuery = {
         createdDatetime: string;
         allocatedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
@@ -355,11 +349,6 @@ export type InvoiceQuery = {
               __typename: 'CampaignNode';
               id: string;
               name: string;
-            } | null;
-            itemVariant?: {
-              __typename: 'ItemVariantNode';
-              id: string;
-              dosesPerUnit: number;
             } | null;
             item: {
               __typename: 'ItemNode';
@@ -452,6 +441,7 @@ export type InboundByNumberQuery = {
         createdDatetime: string;
         allocatedDatetime?: string | null;
         deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
@@ -514,11 +504,6 @@ export type InboundByNumberQuery = {
               __typename: 'CampaignNode';
               id: string;
               name: string;
-            } | null;
-            itemVariant?: {
-              __typename: 'ItemVariantNode';
-              id: string;
-              dosesPerUnit: number;
             } | null;
             item: {
               __typename: 'ItemNode';
@@ -1051,10 +1036,6 @@ export const InboundLineFragmentDoc = gql`
       id
       name
     }
-    itemVariant {
-      id
-      dosesPerUnit
-    }
     item {
       __typename
       id
@@ -1098,6 +1079,7 @@ export const InboundFragmentDoc = gql`
     createdDatetime
     allocatedDatetime
     deliveredDatetime
+    receivedDatetime
     pickedDatetime
     shippedDatetime
     verifiedDatetime
@@ -1182,6 +1164,7 @@ export const InboundRowFragmentDoc = gql`
     comment
     createdDatetime
     deliveredDatetime
+    receivedDatetime
     id
     invoiceNumber
     otherPartyName

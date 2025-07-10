@@ -2,6 +2,9 @@ import { Document } from './document';
 import { Lines } from './line';
 import { Utils } from './utils';
 
+export * from './useDraftInboundLines';
+export type { PatchDraftLineInput } from './useDraftInboundLines';
+
 export const useInbound = {
   document: {
     get: Document.useInbound,

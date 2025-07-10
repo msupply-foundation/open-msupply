@@ -10,7 +10,7 @@ fragment SupplierReturnRow on InvoiceNode {
   createdDatetime
   pickedDatetime
   shippedDatetime
-  deliveredDatetime
+  receivedDatetime
   verifiedDatetime
   comment
   theirReference
@@ -25,6 +25,7 @@ fragment CustomerReturnRow on InvoiceNode {
   colour
   createdDatetime
   deliveredDatetime
+  receivedDatetime
   comment
   theirReference
   linkedShipment {
@@ -97,6 +98,7 @@ fragment CustomerReturn on InvoiceNode {
   pickedDatetime
   shippedDatetime
   deliveredDatetime
+  receivedDatetime
   verifiedDatetime
 
   otherPartyId

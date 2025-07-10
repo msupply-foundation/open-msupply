@@ -8,6 +8,18 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use util::Defaults;
 
+/*
+-- Stock movement --
+
+View over all stock movements in a store.
+
+This is a separate repository/view from the item and stock ledgers,
+as it does not include a running balance.
+
+This makes it a less expensive repository to query, when the balance
+is not needed or is calculated elsewhere.
+ */
+
 table! {
     stock_movement (id) {
         id -> Text,
@@ -209,7 +221,7 @@ mod test {
             }))
             .join(inline_edit(&stock_movement_point(), |mut u| {
                 u.invoices[0].r#type = InvoiceType::InboundShipment;
-                u.invoices[0].delivered_datetime = Some(
+                u.invoices[0].received_datetime = Some(
                     NaiveDate::from_ymd_opt(2020, 12, 15)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
@@ -222,7 +234,7 @@ mod test {
             .join(inline_edit(&stock_movement_point(), |mut u| {
                 u.invoices[0].r#type = InvoiceType::InboundShipment;
                 // Should not be counted
-                u.invoices[0].delivered_datetime = None;
+                u.invoices[0].received_datetime = None;
                 u.invoice_lines[0].r#type = InvoiceLineType::StockIn;
                 u.invoice_lines[0].number_of_packs = 20.0;
                 u
