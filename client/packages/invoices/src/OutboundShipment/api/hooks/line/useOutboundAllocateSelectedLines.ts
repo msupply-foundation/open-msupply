@@ -65,6 +65,7 @@ export const useOutboundAllocateSelectedLines = (): {
     if (selectedUnallocatedLines.length === 0) {
       const infoSnack = info(t('label.no-unallocated-rows-selected'));
       infoSnack();
+      clearSelected();
       return;
     }
 
@@ -106,7 +107,7 @@ export const useOutboundAllocateSelectedLines = (): {
       if (count.failed > 0) {
         error(t('messages.allocated-lines-failed', { count: count.failed }))();
       }
-      if (count.failed === 0) {
+      if (count.failed === 0 && count.partial === 0) {
         clearSelected();
       }
     }
