@@ -42,6 +42,30 @@ const StyledAccordion = styled(Accordion)(({ theme }) => ({
   },
   height: 'fit-content',
 }));
+interface ClosedSummaryProps {
+  closedSummary?: { qty?: number; text: string; tooltip?: number }[];
+}
+
+const ClosedSummary = ({ closedSummary }: ClosedSummaryProps) => {
+  return (
+    <Box>
+      {closedSummary?.map((summary, i) => (
+        <Box key={i} sx={{ display: 'flex', flexDirection: 'row' }}>
+          <Tooltip title={summary?.tooltip}>
+            <Typography>
+              {!!NumUtils.hasMoreThanTwoDp(summary?.tooltip ?? 0)
+                ? `${summary.qty}...`
+                : summary.qty}
+            </Typography>
+          </Tooltip>
+          <Typography sx={{ whiteSpace: 'pre-wrap' }}>
+            {summary.text}
+          </Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+};
 
 export interface DetailPanelSectionProps {
   backgroundColor?: string;
@@ -71,24 +95,7 @@ export const AccordionPanelSection: React.FC<
           <Typography>
             <strong>{title}</strong>
           </Typography>
-          {!open && (
-            <Box>
-              {closedSummary?.map(summary => (
-                <Box key={1} sx={{ display: 'flex', flexDirection: 'row' }}>
-                  <Tooltip key={summary.text} title={summary?.tooltip}>
-                    <Typography sx={{ whiteSpace: 'pre-wrap' }}>
-                      {!!NumUtils.hasMoreThanTwoDp(summary?.tooltip ?? 0)
-                        ? `${summary.qty}...`
-                        : summary.qty}
-                    </Typography>
-                  </Tooltip>
-                  <Typography sx={{ whiteSpace: 'pre-wrap' }}>
-                    {summary.text}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-          )}
+          {!open && <ClosedSummary closedSummary={closedSummary} />}
         </Box>
       </AccordionSummary>
       <AccordionDetails>{children}</AccordionDetails>
