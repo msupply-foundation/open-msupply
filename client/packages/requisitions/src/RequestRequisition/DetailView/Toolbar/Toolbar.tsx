@@ -58,11 +58,10 @@ export const Toolbar = () => {
       sx={{
         display: 'flex',
         flex: 1,
-        marginBottom: 1,
         flexDirection: 'column',
       }}
     >
-      <Grid container gap={2} flexWrap="nowrap">
+      <Grid container flexWrap="nowrap">
         <Grid display="flex" flex={1} flexDirection="column" gap={1}>
           {otherParty && (
             <InputWithLabelRow
@@ -77,7 +76,29 @@ export const Toolbar = () => {
             />
           )}
           <InputWithLabelRow
+            label={t('label.supplier-ref')}
+            Input={
+              <Tooltip title={theirReference} placement="bottom-start">
+                <BufferedTextInput
+                  disabled={isDisabled}
+                  size="small"
+                  sx={{ width: 250 }}
+                  value={theirReference ?? null}
+                  onChange={e => update({ theirReference: e.target.value })}
+                />
+              </Tooltip>
+            }
+          />
+          {programName && (
+            <Alert severity="info" sx={{ maxWidth: 1000 }}>
+              {t('info.cannot-edit-program-requisition')}
+            </Alert>
+          )}
+        </Grid>
+        <Grid>
+          <InputWithLabelRow
             label={t('label.min-months-of-stock')}
+            labelWidth={'350px'}
             Input={
               <Autocomplete
                 disabled={isDisabled || isProgram}
@@ -93,7 +114,7 @@ export const Toolbar = () => {
                         value: minMonthsOfStock,
                       }
                 }
-                width="150px"
+                width="200px"
                 options={[
                   { label: t('label.not-set'), value: 0 },
                   ...MONTHS.map(numberOfMonths => ({
@@ -121,6 +142,7 @@ export const Toolbar = () => {
           />
           <InputWithLabelRow
             label={t('label.max-months-of-stock')}
+            labelWidth={'350px'}
             Input={
               <Autocomplete
                 disabled={isDisabled || isProgram}
@@ -130,7 +152,7 @@ export const Toolbar = () => {
                   label: t('label.number-months', { count: maxMonthsOfStock }),
                   value: maxMonthsOfStock,
                 }}
-                width="150px"
+                width="200px"
                 options={MONTHS.map(numberOfMonths => ({
                   label: t('label.number-months', { count: numberOfMonths }),
                   value: numberOfMonths,
@@ -145,27 +167,6 @@ export const Toolbar = () => {
               />
             }
           />
-          <InputWithLabelRow
-            label={t('label.supplier-ref')}
-            Input={
-              <Tooltip title={theirReference} placement="bottom-start">
-                <BufferedTextInput
-                  disabled={isDisabled}
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={theirReference ?? null}
-                  onChange={e => update({ theirReference: e.target.value })}
-                />
-              </Tooltip>
-            }
-          />
-        </Grid>
-        <Grid>
-          {programName && (
-            <Alert severity="info" sx={{ marginTop: 1, maxWidth: '378px' }}>
-              {t('info.cannot-edit-program-requisition')}
-            </Alert>
-          )}
         </Grid>
       </Grid>
       <Grid
@@ -173,7 +174,6 @@ export const Toolbar = () => {
         gap={1}
         alignItems="flex-end"
         justifyContent="flex-end"
-        sx={{ marginTop: 1, flexWrap: 'wrap' }}
       >
         <Grid>
           <Switch
@@ -185,7 +185,7 @@ export const Toolbar = () => {
             labelSx={{ margin: '5px 0' }}
           />
         </Grid>
-        <Grid display="flex" gap={1} alignItems="flex-end">
+        <Grid>
           <SearchBar
             placeholder={t('placeholder.filter-items')}
             value={itemFilter}
