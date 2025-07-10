@@ -50,7 +50,8 @@ describe('allocateQuantities - standard behaviour.', () => {
     });
 
     expect(allocated?.allocatedLines).toEqual(expected);
-    expect(allocated?.remainingQuantity).toEqual(-5); // over-allocated
+    // even though we over-allocated, remaining quantity should still be 0
+    expect(allocated?.remainingQuantity).toEqual(0);
   });
 
   it('returns remaining quantity when not enough available', () => {
@@ -208,7 +209,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
         { ...fivePacksOfOne, numberOfPacks: 0 },
         { ...fivePacksOfTen, numberOfPacks: 5 }, // i.e. 50 packs
       ],
-      remainingQuantity: -3, // over-allocated by 3
+      remainingQuantity: 0,
     });
   });
 
