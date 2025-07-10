@@ -104,6 +104,8 @@ for RC_BRANCH in $RC_BRANCHES; do
 
     if branch_exists "$MERGE_BRANCH" && [[ -z "$EXISTING_PR" ]]; then
         echo "Merge branch $MERGE_BRANCH already exists, but no PR found. Will create PR."
+        git checkout "$MERGE_BRANCH"
+        update_version_number
     else
         create_merge_branch "$RC_BRANCH" "$MERGE_BRANCH"
         update_version_number
