@@ -3628,6 +3628,8 @@ dependencies = [
  "graphql_types",
  "graphql_vaccine_course",
  "graphql_vvm",
+ "log",
+ "rand 0.8.5",
  "repository",
  "serde",
  "serde_json",
