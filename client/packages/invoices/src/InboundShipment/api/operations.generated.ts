@@ -26,11 +26,6 @@ export type InboundLineFragment = {
   linkedInvoiceId?: string | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
-  itemVariant?: {
-    __typename: 'ItemVariantNode';
-    id: string;
-    dosesPerUnit: number;
-  } | null;
   item: {
     __typename: 'ItemNode';
     id: string;
@@ -132,11 +127,6 @@ export type InboundFragment = {
         __typename: 'CampaignNode';
         id: string;
         name: string;
-      } | null;
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        dosesPerUnit: number;
       } | null;
       item: {
         __typename: 'ItemNode';
@@ -360,11 +350,6 @@ export type InvoiceQuery = {
               id: string;
               name: string;
             } | null;
-            itemVariant?: {
-              __typename: 'ItemVariantNode';
-              id: string;
-              dosesPerUnit: number;
-            } | null;
             item: {
               __typename: 'ItemNode';
               id: string;
@@ -519,11 +504,6 @@ export type InboundByNumberQuery = {
               __typename: 'CampaignNode';
               id: string;
               name: string;
-            } | null;
-            itemVariant?: {
-              __typename: 'ItemVariantNode';
-              id: string;
-              dosesPerUnit: number;
             } | null;
             item: {
               __typename: 'ItemNode';
@@ -1055,10 +1035,6 @@ export const InboundLineFragmentDoc = gql`
     campaign {
       id
       name
-    }
-    itemVariant {
-      id
-      dosesPerUnit
     }
     item {
       __typename

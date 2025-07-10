@@ -65,6 +65,7 @@ pub enum PermissionType {
     // Prescription
     PrescriptionQuery,
     PrescriptionMutate,
+    CancelFinalisedInvoices,
     // reporting
     Report,
     // log

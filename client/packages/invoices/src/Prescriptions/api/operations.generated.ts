@@ -85,11 +85,6 @@ export type PrescriptionRowFragment = {
           code: string;
         }>;
       };
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        dosesPerUnit: number;
-      } | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -221,11 +216,6 @@ export type PrescriptionLineFragment = {
       code: string;
     }>;
   };
-  itemVariant?: {
-    __typename: 'ItemVariantNode';
-    id: string;
-    dosesPerUnit: number;
-  } | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -327,11 +317,6 @@ export type PartialPrescriptionLineFragment = {
       code: string;
     }>;
   };
-  itemVariant?: {
-    __typename: 'ItemVariantNode';
-    id: string;
-    dosesPerUnit: number;
-  } | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -437,11 +422,6 @@ export type PrescriptionsQuery = {
               code: string;
             }>;
           };
-          itemVariant?: {
-            __typename: 'ItemVariantNode';
-            id: string;
-            dosesPerUnit: number;
-          } | null;
           location?: {
             __typename: 'LocationNode';
             id: string;
@@ -624,11 +604,6 @@ export type PrescriptionByNumberQuery = {
                 code: string;
               }>;
             };
-            itemVariant?: {
-              __typename: 'ItemVariantNode';
-              id: string;
-              dosesPerUnit: number;
-            } | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -820,11 +795,6 @@ export type PrescriptionByIdQuery = {
                 code: string;
               }>;
             };
-            itemVariant?: {
-              __typename: 'ItemVariantNode';
-              id: string;
-              dosesPerUnit: number;
-            } | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -1299,10 +1269,6 @@ export const PrescriptionLineFragmentDoc = gql`
       }
       isVaccine
     }
-    itemVariant {
-      id
-      dosesPerUnit
-    }
     location {
       __typename
       id
@@ -1456,10 +1422,6 @@ export const PartialPrescriptionLineFragmentDoc = gql`
         ...Warning
       }
       isVaccine
-    }
-    itemVariant {
-      id
-      dosesPerUnit
     }
     location {
       __typename
