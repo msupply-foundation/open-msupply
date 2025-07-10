@@ -9,8 +9,9 @@ pub fn compress() -> actix_web::middleware::Compress {
 
 pub fn logger() -> actix_web::middleware::Logger {
     actix_web::middleware::Logger::new(r#""%r" FROM: "%{Referer}i" STATUS: %s"#)
-        .log_level(Level::Debug)
+        .log_level(Level::Info)
         .log_target("request_log")
+        .exclude("/graphql")
 }
 
 pub(crate) fn central_server_only() -> central_server_only::CentralServerOnly {
