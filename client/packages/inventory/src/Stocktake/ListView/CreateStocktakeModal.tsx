@@ -37,6 +37,7 @@ interface ModalState {
   masterList: MasterListRowFragment | null;
   expiryDate: Date | null;
   createBlankStocktake: boolean;
+  includeAllMasterListItems: boolean;
 }
 
 export const CreateStocktakeModal = ({
@@ -53,13 +54,22 @@ export const CreateStocktakeModal = ({
     onClose,
     disableBackdrop: true,
   });
-  const [{ location, masterList, expiryDate, createBlankStocktake }, setState] =
-    useState<ModalState>({
-      location: null,
-      masterList: null,
-      expiryDate: null,
-      createBlankStocktake: false,
-    });
+  const [
+    {
+      location,
+      masterList,
+      expiryDate,
+      createBlankStocktake,
+      includeAllMasterListItems,
+    },
+    setState,
+  ] = useState<ModalState>({
+    location: null,
+    masterList: null,
+    expiryDate: null,
+    createBlankStocktake: false,
+    includeAllMasterListItems: false,
+  });
 
   const stockFilter: StockLineFilterInput = {
     location: location && {
@@ -128,6 +138,7 @@ export const CreateStocktakeModal = ({
       createBlankStocktake,
       expiresBefore: Formatter.naiveDate(adjustedExpiryDate),
       isInitialStocktake: false,
+      includeAllMasterListItems,
       description,
       comment: generateComment(),
     };
@@ -192,8 +203,27 @@ export const CreateStocktakeModal = ({
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
+                  <Checkbox
+                    style={{ paddingLeft: 0 }}
+                    disabled={!masterList || createBlankStocktake}
+                    checked={!!includeAllMasterListItems}
+                    onChange={e =>
+                      setState(prev => ({
+                        ...prev,
+                        includeAllMasterListItems: e.target.checked,
+                      }))
+                    }
+                  />
+                }
+                label={t('stocktake.all-master-list-items')}
+              />
+              <InputWithLabelRow
+                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+                Input={
                   <LocationSearchInput
-                    disabled={!!createBlankStocktake}
+                    disabled={
+                      !!createBlankStocktake || includeAllMasterListItems
+                    }
                     onChange={location =>
                       setState(prev => ({ ...prev, location }))
                     }
@@ -207,7 +237,9 @@ export const CreateStocktakeModal = ({
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
                   <DateTimePickerInput
-                    disabled={!!createBlankStocktake}
+                    disabled={
+                      !!createBlankStocktake || includeAllMasterListItems
+                    }
                     value={expiryDate}
                     onChange={expiryDate =>
                       setState(prev => ({ ...prev, expiryDate }))
