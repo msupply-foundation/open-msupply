@@ -23,6 +23,7 @@ jobs:
     timeout-minutes: 25
     env:
       CARGO_TARGET_DIR: /tmp/target/sqlite
+      APP__DATABASE__DATABASE_NAME: validate_views
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -32,16 +33,25 @@ jobs:
         run: |
           git checkout ${{ github.base_ref }}
           echo "Checked out base branch: ${{ github.base_ref }}"
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
       - name: Initialize database with base branch code
+        uses: actions-rs/cargo@v1
         working-directory: server
-        run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli -- initialise-database
+        with:
+          command: run
+          args: --bin remote_server_cli -- initialise-database
       - name: Check out PR branch
         run: |
           git checkout ${{ github.head_ref }}
           echo "Checked out PR branch: ${{ github.head_ref }}"
       - name: Run migrations & drop/recreate views
+        uses: actions-rs/cargo@v1
         working-directory: server
-        run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli -- migrate
+        with:
+          command: run
+          args: --bin remote_server_cli -- migrate
 
   test-migration-pg:
     name: Test Database Migration (Postgres)
@@ -49,6 +59,7 @@ jobs:
     timeout-minutes: 25
     env:
       CARGO_TARGET_DIR: /tmp/target/postgres
+      APP__DATABASE__DATABASE_NAME: validate_views
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -58,13 +69,22 @@ jobs:
         run: |
           git checkout ${{ github.base_ref }}
           echo "Checked out base branch: ${{ github.base_ref }}"
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
       - name: Initialize database with base branch code
+        uses: actions-rs/cargo@v1
         working-directory: server
-        run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli --features postgres -- initialise-database
+        with:
+          command: run
+          args: --bin remote_server_cli --features postgres -- initialise-database
       - name: Check out PR branch
         run: |
           git checkout ${{ github.head_ref }}
           echo "Checked out PR branch: ${{ github.head_ref }}"
       - name: Run migrations & drop/recreate views
+        uses: actions-rs/cargo@v1
         working-directory: server
-        run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli --features postgres -- migrate
+        with:
+          command: run
+          args: --bin remote_server_cli --features postgres -- migrate
