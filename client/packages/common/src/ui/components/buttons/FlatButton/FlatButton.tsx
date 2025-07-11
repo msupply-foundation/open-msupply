@@ -1,5 +1,11 @@
 import React from 'react';
-import { Button as MuiButton, styled, SxProps, Theme } from '@mui/material';
+import {
+  CircularProgress,
+  Button as MuiButton,
+  styled,
+  SxProps,
+  Theme,
+} from '@mui/material';
 import { Property } from 'csstype';
 import { useIntlUtils } from '@common/intl';
 import { useAppTheme, useMediaQuery } from '@common/styles';
@@ -14,6 +20,7 @@ interface ButtonProps {
   name?: string;
   shouldShrink?: boolean;
   shrinkThreshold?: 'sm' | 'md' | 'lg' | 'xl';
+  loading?: boolean;
 }
 
 const StyledButton = styled(MuiButton, {
@@ -50,6 +57,7 @@ export const FlatButton: React.FC<ButtonProps> = ({
   disabled = false,
   shouldShrink = false,
   shrinkThreshold = 'md',
+  loading = false,
 }) => {
   const { isRtl } = useIntlUtils();
   const theme = useAppTheme();
@@ -66,16 +74,18 @@ export const FlatButton: React.FC<ButtonProps> = ({
 
   return (
     <StyledButton
-      disabled={disabled}
       shrink={shrink}
       onClick={onClick}
       endIcon={endIcon}
-      startIcon={regularIcon}
       variant="text"
       color={color}
       isRtl={isRtl}
       sx={sx}
       name={name}
+      disabled={loading || disabled}
+      startIcon={
+        loading ? <CircularProgress size={20} sx={{ color }} /> : regularIcon
+      }
     >
       {centredIcon}
       {text}

@@ -118,7 +118,8 @@ export const FooterComponent: FC = () => {
       label: t('button.print-prescription-label'),
       icon: <PrinterIcon />,
       onClick: handlePrintLabels,
-      disabled: isDisabled || isPrintingLabels,
+      disabled: isDisabled,
+      loading: isPrintingLabels,
     },
   ];
 
