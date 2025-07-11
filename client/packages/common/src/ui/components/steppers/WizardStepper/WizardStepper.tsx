@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import Typography from '@mui/material/Typography';
 import { HorizontalStepper, StepDefinition } from '../HorizontalStepper';
 
@@ -12,11 +12,7 @@ interface StepperProps {
   nowrap?: boolean;
 }
 
-export const WizardStepper: FC<StepperProps> = ({
-  activeStep,
-  nowrap,
-  steps,
-}) => {
+export const WizardStepper = ({ activeStep, nowrap, steps }: StepperProps) => {
   const wizardSteps = steps.map((step, index) => {
     const active = index === activeStep;
     const completed = index <= activeStep;
