@@ -8,10 +8,11 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use crate::sync::{
-    sync_serde::empty_str_as_option_string,
     translations::{category::CategoryTranslation, unit::UnitTranslation},
     CentralServerConfig,
 };
+
+use util::sync_serde::empty_str_as_option_string;
 
 use super::{IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
