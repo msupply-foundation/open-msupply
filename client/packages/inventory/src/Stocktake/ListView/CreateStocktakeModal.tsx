@@ -201,7 +201,8 @@ export const CreateStocktakeModal = ({
                 label={t('label.master-list')}
               />
               <InputWithLabelRow
-                labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+                labelProps={{ sx: { flex: `0 0 250px` } }}
+                sx={{ paddingLeft: '160px' }}
                 Input={
                   <Checkbox
                     style={{ paddingLeft: 0 }}
@@ -216,6 +217,7 @@ export const CreateStocktakeModal = ({
                   />
                 }
                 label={t('stocktake.all-master-list-items')}
+                labelRight={true}
               />
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}

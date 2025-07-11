@@ -2060,7 +2060,7 @@
   "stocktake.expires-before-template": "that expire before {{date}}",
   "stocktake.location-template": "in location {{location}}",
   "stocktake.master-list-template": "in master list {{masterList}}",
-  "stocktake.all-master-list-items": "Include all master list items",
+  "stocktake.all-master-list-items": "Include out of stock items",
   "stocktakes": "Stocktakes",
   "store-details": "Store code: {{code}}",
   "stores": "Stores",
