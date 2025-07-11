@@ -20,6 +20,7 @@ pub struct InsertStocktake {
     pub is_initial_stocktake: Option<bool>,
     pub location_id: Option<String>,
     pub master_list_id: Option<String>,
+    pub include_all_master_list_items: Option<bool>,
     pub expires_before: Option<NaiveDate>,
     pub comment: Option<String>,
     pub description: Option<String>,
