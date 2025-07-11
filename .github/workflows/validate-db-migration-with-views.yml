@@ -38,7 +38,6 @@ jobs:
           toolchain: stable
       - name: Initialize database with base branch code
         uses: actions-rs/cargo@v1
-        working-directory: server
         with:
           command: run
           args: --bin remote_server_cli -- initialise-database
@@ -48,7 +47,6 @@ jobs:
           echo "Checked out PR branch: ${{ github.head_ref }}"
       - name: Run migrations & drop/recreate views
         uses: actions-rs/cargo@v1
-        working-directory: server
         with:
           command: run
           args: --bin remote_server_cli -- migrate
@@ -74,7 +72,6 @@ jobs:
           toolchain: stable
       - name: Initialize database with base branch code
         uses: actions-rs/cargo@v1
-        working-directory: server
         with:
           command: run
           args: --bin remote_server_cli --features postgres -- initialise-database
@@ -84,7 +81,6 @@ jobs:
           echo "Checked out PR branch: ${{ github.head_ref }}"
       - name: Run migrations & drop/recreate views
         uses: actions-rs/cargo@v1
-        working-directory: server
         with:
           command: run
           args: --bin remote_server_cli --features postgres -- migrate
