@@ -64,7 +64,7 @@ pub(crate) fn get_sync_push_changelogs_filter(
             .ok_or(SyncChangelogError::CentralSiteIdNotSet)?;
 
         return Ok(Some(ChangelogFilter::new().source_site_id(
-            EqualFilter::not_equal_to_i32(msupply_central_server_id),
+            EqualFilter::not_equal_to_or_null_i32(msupply_central_server_id),
         )));
     }
 
