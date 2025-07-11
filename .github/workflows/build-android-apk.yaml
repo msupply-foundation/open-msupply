@@ -85,7 +85,7 @@ jobs:
           TAG_NAME: ${{ github.ref_name }}
           B2_APPLICATION_KEY_ID: ${{ secrets.B2_KEY_ID }}
           B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
-        run: bash .github/workflows/mac_backblaze_upload.sh
+        run: bash .github/scripts/mac_backblaze_upload.sh
 
       - name: Send build completion notification
         if: ${{ failure() }}
@@ -96,4 +96,4 @@ jobs:
           NOTIFICATION_TYPE: "android_build"
           BUILD_STATUS: ${{ job.status }}
           TAG_NAME: ${{ github.ref_name }}
-        run: bash .github/workflows/send-telegram-notification.sh
+        run: bash .github/scripts/send-telegram-notification.sh

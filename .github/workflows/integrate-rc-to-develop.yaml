@@ -1,0 +1,28 @@
+name: RC to Develop Integration
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 7 * * *" # Every day at 07:30 AM UTC - equivalent to 07:30 PM NZST (or 08:30 PM NZDT)
+
+jobs:
+  integrate-rc-to-develop:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.NIGHTLY_BUILD_GITHUB_PAT }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Integrate RC to Develop
+        env:
+          GITHUB_TOKEN: ${{ secrets.NIGHTLY_BUILD_GITHUB_PAT }}
+        run: bash .github/scripts/integrate-rc-to-develop.sh
