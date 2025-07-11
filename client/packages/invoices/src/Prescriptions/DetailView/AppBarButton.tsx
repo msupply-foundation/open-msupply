@@ -70,7 +70,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <ReportSelector
           context={ReportContext.Prescription}
           dataId={prescription?.id ?? ''}
-          disabled={isDisabled}
           CustomButton={({ onPrint }) => {
             const handleClick = (
               option: SplitButtonOption<string>,
