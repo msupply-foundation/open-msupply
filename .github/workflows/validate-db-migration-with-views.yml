@@ -17,38 +17,54 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test-migration:
-    name: Test Database Migration
-    runs-on: ubuntu-latest
-
+  test-migration-sqlite:
+    name: Test Database Migration (SQLite)
+    runs-on: self-hosted
+    timeout-minutes: 25
+    env:
+      CARGO_TARGET_DIR: /tmp/target/sqlite
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
       - name: Check out base branch
         run: |
           git checkout ${{ github.base_ref }}
           echo "Checked out base branch: ${{ github.base_ref }}"
-
-      - name: Initialize SQLITE database with base branch code
+      - name: Initialize database with base branch code
         working-directory: server
         run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli -- initialise-database
-
-      - name: Initialize POSTGRES database with base branch code
-        working-directory: server
-        run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli --features postgres -- initialise-database
-
       - name: Check out PR branch
         run: |
           git checkout ${{ github.head_ref }}
           echo "Checked out PR branch: ${{ github.head_ref }}"
-
-      - name: SQLITE - Run migrations & drop/recreate views
+      - name: Run migrations & drop/recreate views
         working-directory: server
         run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli -- migrate
 
-      - name: POSTGRES - Run migrations & drop/recreate views
+  test-migration-pg:
+    name: Test Database Migration (Postgres)
+    runs-on: self-hosted
+    timeout-minutes: 25
+    env:
+      CARGO_TARGET_DIR: /tmp/target/postgres
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Check out base branch
+        run: |
+          git checkout ${{ github.base_ref }}
+          echo "Checked out base branch: ${{ github.base_ref }}"
+      - name: Initialize database with base branch code
+        working-directory: server
+        run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli --features postgres -- initialise-database
+      - name: Check out PR branch
+        run: |
+          git checkout ${{ github.head_ref }}
+          echo "Checked out PR branch: ${{ github.head_ref }}"
+      - name: Run migrations & drop/recreate views
         working-directory: server
         run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli --features postgres -- migrate
