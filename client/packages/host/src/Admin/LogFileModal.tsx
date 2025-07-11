@@ -9,7 +9,7 @@ import {
   Box,
   useDialog,
   useNotification,
-  useWebClient,
+  useExportLog,
 } from '@openmsupply-client/common';
 import { useLog } from '@openmsupply-client/system';
 import { LogTextDisplay } from './LogTextDisplay';
@@ -44,7 +44,7 @@ export const LogDisplay = ({
   ) : null;
 };
 
-export const WebAppLogFileModal = ({
+export const LogFileModal = ({
   isOpen,
   onClose,
 }: {
@@ -56,7 +56,8 @@ export const WebAppLogFileModal = ({
   const [logToRender, setLogToRender] = useState('');
   const [logContent, setLogContent] = useState<string[]>([]);
   const { Modal } = useDialog({ isOpen, onClose });
-  const { saveFile } = useWebClient();
+  const exportLog = useExportLog();
+
   const [isSaving, setIsSaving] = useState(false);
   const noLog = logContent.length === 0;
 
@@ -71,10 +72,8 @@ export const WebAppLogFileModal = ({
       warning(t('message.already-saving'))();
     } else {
       setIsSaving(true);
-      saveFile({
-        content: logContent.toString(),
-        filename: logToRender,
-      });
+      exportLog(logContent.toString(), logToRender);
+      exportLog(logContent.toString(), logToRender);
       setIsSaving(false);
     }
   };
