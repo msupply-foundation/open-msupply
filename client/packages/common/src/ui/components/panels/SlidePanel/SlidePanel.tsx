@@ -61,16 +61,18 @@ export const SlidePanel = ({
             zIndex: 1399,
           }}
         >
-          <Typography
-            sx={theme => ({
-              padding: 2,
-              color: theme.typography.body1.color,
-              fontSize: theme.typography.body1.fontSize,
-              fontWeight: 'bold',
-            })}
-          >
-            {title}
-          </Typography>
+          {title && (
+            <Typography
+              sx={theme => ({
+                padding: 2,
+                color: theme.typography.body1.color,
+                fontSize: theme.typography.body1.fontSize,
+                fontWeight: 'bold',
+              })}
+            >
+              {title}
+            </Typography>
+          )}
           <Box overflow="auto" flex={1}>
             {children}
           </Box>
