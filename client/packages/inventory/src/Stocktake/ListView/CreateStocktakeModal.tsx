@@ -200,25 +200,27 @@ export const CreateStocktakeModal = ({
                 }
                 label={t('label.master-list')}
               />
-              <InputWithLabelRow
-                labelProps={{ sx: { flex: `0 0 250px` } }}
-                sx={{ paddingLeft: '160px' }}
-                Input={
-                  <Checkbox
-                    style={{ paddingLeft: 0 }}
-                    disabled={!masterList || createBlankStocktake}
-                    checked={!!includeAllMasterListItems}
-                    onChange={e =>
-                      setState(prev => ({
-                        ...prev,
-                        includeAllMasterListItems: e.target.checked,
-                      }))
-                    }
-                  />
-                }
-                label={t('stocktake.all-master-list-items')}
-                labelRight={true}
-              />
+              {masterList ? (
+                <InputWithLabelRow
+                  labelProps={{ sx: { flex: `0 0 250px` } }}
+                  sx={{ paddingLeft: '160px' }}
+                  Input={
+                    <Checkbox
+                      style={{ paddingLeft: 0 }}
+                      disabled={!masterList || createBlankStocktake}
+                      checked={!!includeAllMasterListItems}
+                      onChange={e =>
+                        setState(prev => ({
+                          ...prev,
+                          includeAllMasterListItems: e.target.checked,
+                        }))
+                      }
+                    />
+                  }
+                  label={t('stocktake.all-master-list-items')}
+                  labelRight={true}
+                />
+              ) : null}
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
