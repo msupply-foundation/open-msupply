@@ -1,12 +1,13 @@
-use async_graphql::*;
+use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    loader::StockLineByIdLoader,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 
-use graphql_types::types::InvoiceNodeType;
+use graphql_types::types::{InvoiceNodeType, StockLineNode};
 use repository::{
     stock_line_ledger::{
         StockLineLedgerFilter, StockLineLedgerRow, StockLineLedgerSort, StockLineLedgerSortField,
@@ -45,6 +46,7 @@ pub struct LedgerFilterInput {
     pub stock_line_id: Option<EqualFilterStringInput>,
     pub item_id: Option<EqualFilterStringInput>,
     pub datetime: Option<DatetimeFilterInput>,
+    pub master_list_id: Option<EqualFilterStringInput>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -86,6 +88,20 @@ impl LedgerNode {
     }
     pub async fn running_balance(&self) -> &f64 {
         &self.ledger.running_balance
+    }
+
+    pub async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {
+        let stock_line_id = match &self.ledger.stock_line_id {
+            Some(id) => id.clone(),
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();
+        let stock_line = loader
+            .load_one(stock_line_id)
+            .await?
+            .map(StockLineNode::from_domain);
+        Ok(stock_line)
     }
 }
 
@@ -149,6 +165,7 @@ impl LedgerFilterInput {
             stock_line_id,
             item_id,
             datetime,
+            master_list_id,
         } = self;
 
         StockLineLedgerFilter {
@@ -156,6 +173,7 @@ impl LedgerFilterInput {
             item_id: item_id.map(EqualFilter::from),
             store_id: Some(EqualFilter::equal_to(store_id)),
             datetime: datetime.map(DatetimeFilter::from),
+            master_list_id: master_list_id.map(EqualFilter::from),
         }
     }
 }

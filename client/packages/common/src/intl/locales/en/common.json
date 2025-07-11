@@ -1886,6 +1886,7 @@
   "preference.manageVvmStatusForStock": "Manage VVM status for stock",
   "preference.showContactTracing": "Show contact tracing",
   "preference.sortByVvmStatusThenExpiry": "Sort available batches by VVM status then expiry",
+  "preference.useCampaigns": "Use Campaigns",
   "preference.useSimplifiedMobileUi": "Use simplified mobile UI",
   "prescription": "Prescriptions",
   "prescriptions": "Prescriptions",
