@@ -548,9 +548,9 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         String mimeType = data.getString("mimeType", "text/plain");
         String successMessage = data.getString("successMessage", "Saved successfully");
 
-               if (content == null) {
-           response.put("error", "No content");
-           response.put("success", false);
+        if (content == null) {
+            response.put("error", "No content");
+            response.put("success", false);
         } else {
             MainActivity mainActivity = (MainActivity) getActivity();
 
@@ -558,8 +558,8 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
             if (Boolean.TRUE.equals(isBinaryData)) {
                 try {
                     // Convert from base64 string to byte array
-                    byte[] binaryData;
-                    binaryData = android.util.Base64.decode(content, android.util.Base64.DEFAULT);
+                    byte[] binaryData = android.util.Base64.decode(content, android.util.Base64.DEFAULT);
+
                     mainActivity.SaveBinaryFile(filename, binaryData, mimeType, "Saved binary");
                     response.put("success", true);
                 } catch (Exception e) {
