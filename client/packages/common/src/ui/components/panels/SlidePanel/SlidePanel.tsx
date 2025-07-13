@@ -47,8 +47,6 @@ export const SlidePanel = ({
         right: 0,
         bottom: 0,
         width,
-        height: '100%',
-        overflow: 'hidden',
         zIndex: 1399,
       }}
     >
@@ -63,19 +61,23 @@ export const SlidePanel = ({
             zIndex: 1399,
           }}
         >
-          <Typography
-            sx={theme => ({
-              padding: 2,
-              color: theme.typography.body1.color,
-              fontSize: theme.typography.body1.fontSize,
-              fontWeight: 'bold',
-            })}
-          >
-            {title}
-          </Typography>
-          <Box flex={1}>{children}</Box>
+          {title && (
+            <Typography
+              sx={theme => ({
+                padding: 2,
+                color: theme.typography.body1.color,
+                fontSize: theme.typography.body1.fontSize,
+                fontWeight: 'bold',
+              })}
+            >
+              {title}
+            </Typography>
+          )}
+          <Box overflow="auto" flex={1}>
+            {children}
+          </Box>
           {(okButton || cancelButton) && (
-            <Box display="flex" justifyContent="center" pb={5} gap={1}>
+            <Box display="flex" justifyContent="center" pb={5} gap={1} pt={1.5}>
               {cancelButton}
               {okButton}
             </Box>
