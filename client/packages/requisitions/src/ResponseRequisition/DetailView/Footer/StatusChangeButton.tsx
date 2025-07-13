@@ -17,15 +17,22 @@ import { useResponseRequisitionLineErrorContext } from '../../context';
 
 const getStatusOptions = (
   currentStatus: RequisitionNodeStatus,
-  getButtonLabel: (status: RequisitionNodeStatus) => string
-): SplitButtonOption<RequisitionNodeStatus>[] => {
+  getButtonLabel: (status: RequisitionNodeStatus) => string,
+  getCreateShipmentLabel: string
+): SplitButtonOption<RequisitionNodeStatus | 'create-shipment'>[] => {
   const options: [
     SplitButtonOption<RequisitionNodeStatus>,
+    SplitButtonOption<'create-shipment'>,
     SplitButtonOption<RequisitionNodeStatus>,
   ] = [
     {
       value: RequisitionNodeStatus.New,
       label: getButtonLabel(RequisitionNodeStatus.New),
+      isDisabled: true,
+    },
+    {
+      value: 'create-shipment',
+      label: getCreateShipmentLabel,
       isDisabled: true,
     },
     {
@@ -44,8 +51,8 @@ const getStatusOptions = (
 
 const getNextStatusOption = (
   status: RequisitionNodeStatus,
-  options: SplitButtonOption<RequisitionNodeStatus>[]
-): SplitButtonOption<RequisitionNodeStatus> | null => {
+  options: SplitButtonOption<RequisitionNodeStatus | 'create-shipment'>[]
+): SplitButtonOption<RequisitionNodeStatus | 'create-shipment'> | null => {
   if (!status) return options[0] ?? null;
 
   const nextStatus = getNextResponseStatus(status);
@@ -75,7 +82,8 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
   const errorsContext = useResponseRequisitionLineErrorContext();
 
   const options = useMemo(
-    () => getStatusOptions(status, getButtonLabel(t)),
+    () =>
+      getStatusOptions(status, getButtonLabel(t), t('button.create-shipment')),
     [status, t]
   );
 
@@ -83,10 +91,9 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
     line => line.remainingQuantityToSupply > 0
   ).length;
 
-  const [selectedOption, setSelectedOption] =
-    useState<SplitButtonOption<RequisitionNodeStatus> | null>(() =>
-      getNextStatusOption(status, options)
-    );
+  const [selectedOption, setSelectedOption] = useState<SplitButtonOption<
+    RequisitionNodeStatus | 'create-shipment'
+  > | null>(() => getNextStatusOption(status, options));
 
   const mapStructuredErrors = (result: Awaited<ReturnType<typeof save>>) => {
     if (result.__typename === 'RequisitionNode') {
@@ -123,6 +130,8 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
 
   const onConfirmStatusChange = async () => {
     if (!selectedOption) return null;
+    if (selectedOption.value === 'create-shipment') return null;
+
     let result;
     try {
       result = await save({ id, status: selectedOption.value });
@@ -150,9 +159,11 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
       : {
           title: t('heading.are-you-sure'),
           message: t('messages.confirm-status-as', {
-            status: selectedOption?.value
-              ? getStatusTranslation(selectedOption?.value)
-              : '',
+            status:
+              selectedOption?.value &&
+              selectedOption.value !== 'create-shipment'
+                ? getStatusTranslation(selectedOption?.value)
+                : '',
           }),
           info: undefined,
         };

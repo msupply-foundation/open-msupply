@@ -15,9 +15,13 @@ import { StatusChangeButton } from './StatusChangeButton';
 import { CreateShipmentButton } from './CreateShipmentButton';
 
 export const createStatusLog = (requisition: ResponseFragment) => {
-  const statusLog: Record<RequisitionNodeStatus, null | undefined | string> = {
+  const statusLog: Record<
+    RequisitionNodeStatus | 'create-shipment',
+    null | undefined | string
+  > = {
     [RequisitionNodeStatus.New]: requisition.createdDatetime,
     [RequisitionNodeStatus.Finalised]: requisition.finalisedDatetime,
+    'create-shipment': null,
     // Keeping typescript happy, not used for response requisitions.
     [RequisitionNodeStatus.Draft]: null,
     [RequisitionNodeStatus.Sent]: null,

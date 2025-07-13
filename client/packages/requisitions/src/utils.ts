@@ -20,27 +20,35 @@ export const requestStatuses = [
   RequisitionNodeStatus.Finalised,
 ];
 
-// TODO: When response requisitions can be manually created, the status of DRAFT
-// becomes possible and such will need to be handled.
-export const responseStatuses = [
+// create-shipment is a special status for response requisitions
+export const responseStatuses: Array<
+  RequisitionNodeStatus | 'create-shipment'
+> = [
   RequisitionNodeStatus.New,
+  'create-shipment',
   RequisitionNodeStatus.Finalised,
 ];
 
-const requisitionStatusToLocaleKey: Record<RequisitionNodeStatus, LocaleKey> = {
+const requisitionStatusToLocaleKey: Record<
+  RequisitionNodeStatus | 'create-shipment',
+  LocaleKey
+> = {
   [RequisitionNodeStatus.Draft]: 'label.draft',
   [RequisitionNodeStatus.New]: 'label.new',
+  'create-shipment': 'button.create-shipment',
   [RequisitionNodeStatus.Sent]: 'label.sent',
   [RequisitionNodeStatus.Finalised]: 'label.finalised',
 };
 
-export const getStatusTranslation = (status: RequisitionNodeStatus) => {
+export const getStatusTranslation = (
+  status: RequisitionNodeStatus | 'create-shipment'
+) => {
   return requisitionStatusToLocaleKey[status];
 };
 
 export const getRequisitionTranslator =
   (t: ReturnType<typeof useTranslation>) =>
-  (currentStatus: RequisitionNodeStatus): string =>
+  (currentStatus: RequisitionNodeStatus | 'create-shipment'): string =>
     t(getStatusTranslation(currentStatus));
 
 export const getNextRequestStatus = (
@@ -54,8 +62,8 @@ export const getNextRequestStatus = (
 };
 
 export const getNextResponseStatus = (
-  currentStatus: RequisitionNodeStatus
-): RequisitionNodeStatus | null => {
+  currentStatus: RequisitionNodeStatus | 'create-shipment'
+): RequisitionNodeStatus | 'create-shipment' | null => {
   const currentStatusIdx = responseStatuses.findIndex(
     status => currentStatus === status
   );
