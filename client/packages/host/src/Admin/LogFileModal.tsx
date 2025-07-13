@@ -11,6 +11,7 @@ import {
   useNotification,
   useExportLog,
 } from '@openmsupply-client/common';
+import { Capacitor } from '@capacitor/core';
 import { useLog } from '@openmsupply-client/system';
 import { LogTextDisplay } from './LogTextDisplay';
 
@@ -65,6 +66,8 @@ export const LogFileModal = ({
     fileNames: { data, isLoading, isError },
   } = useLog();
 
+  const isAndroid = Capacitor.isNativePlatform();
+
   const saveLog = async () => {
     if (noLog) {
       warning(t('message.nothing-to-save'))();
@@ -72,7 +75,6 @@ export const LogFileModal = ({
       warning(t('message.already-saving'))();
     } else {
       setIsSaving(true);
-      exportLog(logContent.toString(), logToRender);
       exportLog(logContent.toString(), logToRender);
       setIsSaving(false);
     }
@@ -104,15 +106,19 @@ export const LogFileModal = ({
       width={850}
       height={700}
       copyButton={
-        <DialogButton
-          variant="copy"
-          onClick={
-            noLog
-              ? () => warning(t('message.nothing-to-copy'))()
-              : copyToClipboard
-          }
-          color="primary"
-        />
+        isAndroid ? (
+          <></>
+        ) : (
+          <DialogButton
+            variant="copy"
+            onClick={
+              noLog
+                ? () => warning(t('message.nothing-to-copy'))()
+                : copyToClipboard
+            }
+            color="primary"
+          />
+        )
       }
       saveButton={
         <DialogButton variant="save" onClick={saveLog} color="primary" />
