@@ -35,11 +35,10 @@ export const BasicTextInput = React.forwardRef<
   ) => {
     const inputRef = useRef<HTMLDivElement | null>(null);
     useEffect(() => {
-      if (focusOnRender) {
-        inputRef?.current;
-        inputRef?.current?.focus();
+      if (focusOnRender && inputRef.current) {
+        inputRef.current.focus();
       }
-    }, []);
+    }, [focusOnRender]);
 
     return (
       <Box

@@ -1,23 +1,23 @@
-import React, { FC } from 'react';
+import React from 'react';
+import {
+  Alert,
+  BasicSpinner,
+  useTranslation,
+  ObjUtils,
+} from '@openmsupply-client/common';
 import {
   Gender,
   JsonData,
   JsonForm,
   JsonFormsReactProps,
   useFormSchema,
+  IdGenerator,
+  idGeneratorTester,
   usePatientStore,
 } from '@openmsupply-client/programs';
 import { PatientPanel } from './PatientPanel';
-import { ObjUtils } from '@common/utils';
-
 import defaultPatientSchema from './DefaultCreatePatientSchema.json';
 import defaultPatientUISchema from './DefaultCreatePatientUISchema.json';
-import {
-  Alert,
-  BasicSpinner,
-  useTranslation,
-} from '@openmsupply-client/common';
-import { IdGenerator, idGeneratorTester } from '@openmsupply-client/programs';
 
 type Patient = {
   code?: string;
@@ -30,11 +30,11 @@ type Patient = {
   phone?: string;
 };
 
-export const PatientFormTab: FC<PatientPanel & JsonFormsReactProps> = ({
+export const PatientFormTab = ({
   patient,
   value,
   onChange,
-}) => {
+}: PatientPanel & JsonFormsReactProps) => {
   const t = useTranslation();
   const { updateCreateNewPatient } = usePatientStore();
   const {
@@ -71,7 +71,7 @@ export const PatientFormTab: FC<PatientPanel & JsonFormsReactProps> = ({
 
   return (
     <PatientPanel value={value} patient={patient}>
-      <Alert severity="info"> {t('messages.patients-search')}</Alert>
+      <Alert severity="info">{t('messages.patients-search')}</Alert>
       <JsonForm
         data={(patient as JsonData) || {}}
         jsonSchema={patientCreationUI?.jsonSchema || defaultPatientSchema}
