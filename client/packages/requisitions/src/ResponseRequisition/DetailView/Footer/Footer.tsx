@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Box,
   StatusCrumbs,
@@ -29,7 +29,7 @@ export const createStatusLog = (requisition: ResponseFragment) => {
   return statusLog;
 };
 
-export const Footer: FC = () => {
+export const Footer = () => {
   const { data } = useResponse.document.get();
   const t = useTranslation();
   const { selectedRows, confirmAndDelete } = useResponse.line.delete();
@@ -61,7 +61,9 @@ export const Footer: FC = () => {
               height={64}
             >
               <StatusCrumbs
-                statuses={responseStatuses}
+                statuses={responseStatuses.filter(
+                  status => status !== 'create-shipment'
+                )}
                 statusLog={createStatusLog(data)}
                 statusFormatter={getRequisitionTranslator(t)}
               />
