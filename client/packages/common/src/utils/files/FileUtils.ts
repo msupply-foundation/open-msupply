@@ -20,13 +20,16 @@ const useExportFile = () => {
     type: string | undefined,
     filename: string
   ) => {
+    const isBinaryData = typeof data !== 'string';
+
     // On android, use the native client to save the file
     if (EnvUtils.platform === Platform.Android) {
-      // Content must be a string for the native client
-      const content = typeof data === 'string' ? data : await asBase64(data);
+      // Content must sent via string for capacitor
+      const content = isBinaryData ? await asBase64(data) : data;
 
       await nativeClient.saveFile({
         content,
+        isBinaryData,
         filename,
         mimeType: type,
         successMessage,
@@ -38,12 +41,11 @@ const useExportFile = () => {
       // Only run on browsers that support HTML5 download attribute
       if (link.download !== undefined) {
         // Content must be a Blob for the browser
-        const blob =
-          typeof data === 'string'
-            ? new Blob([data], {
-                type: `${type ?? 'text/plain'};charset=utf-8;`,
-              })
-            : data;
+        const blob = !isBinaryData
+          ? new Blob([data], {
+              type: `${type ?? 'text/plain'};charset=utf-8;`,
+            })
+          : data;
 
         const url = URL.createObjectURL(blob);
         link.download = filename;
