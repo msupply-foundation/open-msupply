@@ -10,6 +10,7 @@ import {
   mapKeys,
   mapValues,
   noOtherVariants,
+  PlusCircleIcon,
 } from '@openmsupply-client/common';
 import { getNextResponseStatus, getStatusTranslation } from '../../../utils';
 import { ResponseFragment, useResponse } from '../../api';
@@ -35,6 +36,7 @@ const getStatusOptions = (
       value: 'create-shipment',
       label: getCreateShipmentLabel,
       isDisabled: true,
+      Icon: <PlusCircleIcon />,
     },
     {
       value: RequisitionNodeStatus.Finalised,
