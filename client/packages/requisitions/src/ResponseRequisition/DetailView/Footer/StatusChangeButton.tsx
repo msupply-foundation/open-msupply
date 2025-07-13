@@ -14,6 +14,7 @@ import {
 import { getNextResponseStatus, getStatusTranslation } from '../../../utils';
 import { ResponseFragment, useResponse } from '../../api';
 import { useResponseRequisitionLineErrorContext } from '../../context';
+import { useCreateShipment } from './useCreateShipment';
 
 const getStatusOptions = (
   currentStatus: RequisitionNodeStatus,
@@ -44,6 +45,7 @@ const getStatusOptions = (
 
   if (currentStatus === RequisitionNodeStatus.New) {
     options[1].isDisabled = false;
+    options[2].isDisabled = false;
   }
 
   return options;
@@ -69,17 +71,15 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = (requisition: ResponseFragment) => {
+  const t = useTranslation();
+  const { success, error } = useNotification();
+  const errorsContext = useResponseRequisitionLineErrorContext();
   const { id, lines, status } = useResponse.document.fields([
     'id',
     'lines',
     'status',
   ]);
   const { mutateAsync: save } = useResponse.document.update();
-
-  const { success, error } = useNotification();
-  const t = useTranslation();
-
-  const errorsContext = useResponseRequisitionLineErrorContext();
 
   const options = useMemo(
     () =>
@@ -168,7 +168,7 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
           info: undefined,
         };
 
-  const getConfirmation = useConfirmationModal({
+  const getFinalisedConfirmation = useConfirmationModal({
     title: confirmation.title,
     message: confirmation.message,
     info: confirmation.info,
@@ -182,7 +182,12 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
     setSelectedOption(() => getNextStatusOption(status, options));
   }, [status, options]);
 
-  return { options, selectedOption, setSelectedOption, getConfirmation };
+  return {
+    options,
+    selectedOption,
+    setSelectedOption,
+    getFinalisedConfirmation,
+  };
 };
 
 export const StatusChangeButton = ({
@@ -190,14 +195,27 @@ export const StatusChangeButton = ({
 }: {
   requisition: ResponseFragment;
 }) => {
-  const { options, selectedOption, setSelectedOption, getConfirmation } =
-    useStatusChangeButton(requisition);
+  const {
+    options,
+    selectedOption,
+    setSelectedOption,
+    getFinalisedConfirmation,
+  } = useStatusChangeButton(requisition);
+  const { onCreateShipment } = useCreateShipment();
   const isDisabled = useResponse.utils.isDisabled();
   const isDisabledByAuthorisation =
     useResponse.utils.isDisabledByAuthorisation();
-
   if (!selectedOption) return null;
   if (isDisabled && !isDisabledByAuthorisation) return null;
+
+  const handleClick = () => {
+    if (selectedOption.value === 'create-shipment') {
+      onCreateShipment();
+    }
+    if (selectedOption.value === RequisitionNodeStatus.Finalised) {
+      getFinalisedConfirmation();
+    }
+  };
 
   return (
     <SplitButton
@@ -205,7 +223,7 @@ export const StatusChangeButton = ({
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
       Icon={<ArrowRightIcon />}
-      onClick={() => getConfirmation()}
+      onClick={handleClick}
       isDisabled={isDisabledByAuthorisation}
     />
   );
