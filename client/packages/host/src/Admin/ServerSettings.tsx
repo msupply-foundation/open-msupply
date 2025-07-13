@@ -11,7 +11,7 @@ import {
 import { Environment } from '@openmsupply-client/config';
 
 import { Setting } from './Setting';
-import { WebAppLogFileModal } from './WebAppLogFileModal';
+import { LogFileModal } from './LogFileModal';
 import { useDatabaseSettings } from '../api/hooks/settings/useDatabaseSettings';
 
 export const ServerSettings = () => {
@@ -29,7 +29,7 @@ export const ServerSettings = () => {
         title={t('label.server-log')}
         component={
           <>
-            <WebAppLogFileModal onClose={hideLog} isOpen={isLogShown} />
+            <LogFileModal onClose={hideLog} isOpen={isLogShown} />
             <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
           </>
         }
