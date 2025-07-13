@@ -72,11 +72,14 @@ public class FileManager {
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // Saving a text based file
-        if (requestCode == SAVE_FILE_REQUEST && resultCode == Activity.RESULT_OK && data != null) {
-            Uri uri = data.getData();
-            Context context = activity.getApplicationContext();
+        if (resultCode != Activity.RESULT_OK || data == null) return;
 
+        Uri uri = data.getData();
+        Context context = activity.getApplicationContext();
+
+
+        // Saving a text based file
+        if (requestCode == SAVE_FILE_REQUEST) {
             try {
                 OutputStream outputStream = context.getContentResolver().openOutputStream(uri);
                 BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(outputStream));
@@ -91,10 +94,7 @@ public class FileManager {
         }
 
         // Saving a binary file e.g. XLSX
-        if (requestCode == SAVE_BINARY_FILE_REQUEST && resultCode == Activity.RESULT_OK && data != null) {
-            Uri uri = data.getData();
-            Context context = activity.getApplicationContext();
-
+        if (requestCode == SAVE_BINARY_FILE_REQUEST) {
             try {
                 OutputStream outputStream = context.getContentResolver().openOutputStream(uri);
                 BufferedOutputStream bos = new BufferedOutputStream(outputStream);
@@ -109,11 +109,7 @@ public class FileManager {
         }
 
         // Saving the database file
-        if (requestCode == SAVE_DATABASE_REQUEST && resultCode == Activity.RESULT_OK && data != null
-                && dbFile != null) {
-            Uri uri = data.getData();
-            Context context = activity.getApplicationContext();
-
+        if (requestCode == SAVE_DATABASE_REQUEST && dbFile != null) {
             // The db file name can be either `omsupply-database` or
             // `omsupply-database.sqlite`
             // The rust code automatically appends .sqlite to the file name if it doesn't
