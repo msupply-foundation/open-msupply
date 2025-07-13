@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import Box from '@mui/material/Box';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
@@ -183,11 +183,11 @@ const getTestId = (step: StepDefinition) => {
 };
 
 /* alternativeLabel shows icons on top */
-export const HorizontalStepper: FC<StepperProps> = ({
+export const HorizontalStepper = ({
   colour = 'secondary',
   steps,
   nowrap = false,
-}) => {
+}: StepperProps) => {
   const paletteColour = usePaletteColour(colour);
   const StyledConnector = getConnector(paletteColour);
 
@@ -215,10 +215,17 @@ export const HorizontalStepper: FC<StepperProps> = ({
               completed={completed}
             >
               <StepLabel
-                StepIconComponent={stepIcon}
                 optional={optional}
                 icon={icon}
                 error={error}
+                slots={{
+                  stepIcon: stepIcon,
+                }}
+                sx={{
+                  '& .MuiStepLabel-alternativeLabel': {
+                    mt: 0.2,
+                  },
+                }}
               >
                 <Box
                   flexDirection="row"
