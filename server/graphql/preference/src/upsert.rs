@@ -15,11 +15,12 @@ pub struct BoolStorePrefInput {
 pub struct UpsertPreferencesInput {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
-    pub show_contact_tracing: Option<bool>,
     pub gender_options: Option<Vec<GenderType>>,
+    pub show_contact_tracing: Option<bool>,
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
+    pub order_in_packs: Option<Vec<BoolStorePrefInput>>,
     pub sort_by_vvm_status_then_expiry: Option<Vec<BoolStorePrefInput>>,
     pub use_simplified_mobile_ui: Option<Vec<BoolStorePrefInput>>,
 }
@@ -51,11 +52,12 @@ impl UpsertPreferencesInput {
         let UpsertPreferencesInput {
             // Global preferences
             allow_tracking_of_stock_by_donor,
-            show_contact_tracing,
             gender_options,
+            show_contact_tracing,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
+            order_in_packs,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
         } = self;
@@ -63,15 +65,18 @@ impl UpsertPreferencesInput {
         UpsertPreferences {
             // Global preferences
             allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
-            show_contact_tracing: *show_contact_tracing,
             gender_options: gender_options
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            show_contact_tracing: *show_contact_tracing,
             // Global preferences*show_contact_tracing
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             manage_vvm_status_for_stock: manage_vvm_status_for_stock
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            order_in_packs: order_in_packs
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry
