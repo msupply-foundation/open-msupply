@@ -121,7 +121,6 @@ fn generate_stocktake_lines(
                  stock_line_row:
                      StockLineRow {
                          id: stock_line_id,
-                         item_link_id: _,
                          location_id,
                          batch,
                          pack_size,
@@ -130,13 +129,14 @@ fn generate_stocktake_lines(
                          total_number_of_packs,
                          expiry_date,
                          note,
+                         item_variant_id,
+                         donor_link_id,
+                         item_link_id: _,
                          supplier_link_id: _,
                          store_id: _,
                          on_hold: _,
                          available_number_of_packs: _,
                          barcode_id: _,
-                         item_variant_id,
-                         donor_link_id,
                          vvm_status_id: _, // Todo?
                          campaign_id: _,   // Todo?
                      },
@@ -153,7 +153,7 @@ fn generate_stocktake_lines(
                     snapshot_number_of_packs: total_number_of_packs,
                     item_link_id: item_row.id,
                     item_name: item_row.name,
-                    location_id: location_id,
+                    location_id,
                     batch,
                     expiry_date,
                     note,
@@ -161,10 +161,10 @@ fn generate_stocktake_lines(
                     pack_size: Some(pack_size),
                     cost_price_per_pack: Some(cost_price_per_pack),
                     sell_price_per_pack: Some(sell_price_per_pack),
-                    comment: None,
+                    item_variant_id,
+                    donor_link_id,
                     counted_number_of_packs: None,
-                    item_variant_id: item_variant_id,
-                    donor_link_id: donor_link_id,
+                    comment: None,
                     reason_option_id: None,
                 }
             },
