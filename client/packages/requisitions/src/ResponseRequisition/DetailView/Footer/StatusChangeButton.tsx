@@ -55,11 +55,21 @@ const getStatusOptions = (
 
 const getNextStatusOption = (
   status: RequisitionNodeStatus,
-  options: SplitButtonOption<RequisitionNodeStatus | 'create-shipment'>[]
+  options: SplitButtonOption<RequisitionNodeStatus | 'create-shipment'>[],
+  linesFullySupplied: boolean
 ): SplitButtonOption<RequisitionNodeStatus | 'create-shipment'> | null => {
   if (!status) return options[0] ?? null;
+  console.log('linesFullySupplied', linesFullySupplied);
 
   const nextStatus = getNextResponseStatus(status);
+
+  if (status === RequisitionNodeStatus.New && linesFullySupplied) {
+    const finalisedOption = options.find(
+      o => o.value === RequisitionNodeStatus.Finalised
+    );
+    return finalisedOption || null;
+  }
+
   const nextStatusOption = options.find(o => o.value === nextStatus);
   return nextStatusOption || null;
 };
@@ -92,10 +102,11 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
   const notFullySuppliedLines = requisition.lines.nodes.filter(
     line => line.remainingQuantityToSupply > 0
   ).length;
+  const linesFullySupplied = notFullySuppliedLines === 0;
 
   const [selectedOption, setSelectedOption] = useState<SplitButtonOption<
     RequisitionNodeStatus | 'create-shipment'
-  > | null>(() => getNextStatusOption(status, options));
+  > | null>(() => getNextStatusOption(status, options, linesFullySupplied));
 
   const mapStructuredErrors = (result: Awaited<ReturnType<typeof save>>) => {
     if (result.__typename === 'RequisitionNode') {
@@ -181,8 +192,10 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
   // When the status of the requisition changes (after an update), set the selected option to the next status.
   // Otherwise, it would be set to the current status, which is now a disabled option.
   useEffect(() => {
-    setSelectedOption(() => getNextStatusOption(status, options));
-  }, [status, options]);
+    setSelectedOption(() =>
+      getNextStatusOption(status, options, linesFullySupplied)
+    );
+  }, [status, options, linesFullySupplied]);
 
   return {
     options,
