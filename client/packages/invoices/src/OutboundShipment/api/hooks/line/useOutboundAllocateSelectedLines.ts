@@ -100,7 +100,7 @@ export const useOutboundAllocateSelectedLines = (): {
             getSkippedLinesMessage(t, result.failed)
         )();
       }
-      if (count.failed === 0 && count.partial === 0) {
+      if (result.failed.count === 0 && result.partial.count === 0) {
         clearSelected();
       }
     }
