@@ -43,13 +43,12 @@ export const PrescriptionDetailView = () => {
   } = useEditModal<Draft>();
 
   const onRowClick = useCallback(
-    (item: StockOutLineFragment | StockOutItem) => {
-      const itemId = 'item' in item ? item.item.id : item.itemId;
+    (line: StockOutLineFragment) => {
       navigate(
         RouteBuilder.create(AppRoute.Dispensary)
           .addPart(AppRoute.Prescription)
           .addPart(String(data?.id))
-          .addPart(itemId)
+          .addPart(line.item.id)
           .build()
       );
     },

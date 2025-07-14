@@ -7,12 +7,11 @@ import {
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { usePrescriptionColumn } from './columns';
-import { StockOutItem } from '../../types';
 import { StockOutLineFragment } from '../../StockOut';
 
 interface ContentAreaProps {
   onAddItem: () => void;
-  onRowClick?: null | ((rowData: StockOutLineFragment | StockOutItem) => void);
+  onRowClick?: null | ((rowData: StockOutLineFragment) => void);
 }
 
 export const ContentAreaComponent = ({
