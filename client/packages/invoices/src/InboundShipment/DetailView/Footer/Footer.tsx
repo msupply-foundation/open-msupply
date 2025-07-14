@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Box,
   ButtonWithIcon,
@@ -13,8 +14,6 @@ import {
   Action,
   ActionsFooter,
 } from '@openmsupply-client/common';
-
-import React, { FC } from 'react';
 import {
   getStatusTranslator,
   inboundStatuses,
@@ -64,9 +63,7 @@ interface FooterComponentProps {
   onReturnLines: (selectedLines: InboundLineFragment[]) => void;
 }
 
-export const FooterComponent: FC<FooterComponentProps> = ({
-  onReturnLines,
-}) => {
+export const FooterComponent = ({ onReturnLines }: FooterComponentProps) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
 
