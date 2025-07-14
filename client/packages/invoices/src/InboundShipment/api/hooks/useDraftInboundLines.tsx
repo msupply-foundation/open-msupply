@@ -1,16 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useInbound } from '.';
-import { useConfirmOnLeaving } from '@common/hooks';
+import { useConfirmOnLeaving, useNotification } from '@common/hooks';
 import { DraftInboundLine } from '../../../types';
 import { InboundLineFragment } from '../operations.generated';
 import { CreateDraft } from '../../DetailView/modals/utils';
 import { useDeleteInboundLines } from './line/useDeleteInboundLines';
+import { mapErrorToMessageAndSetContext } from './mapErrorToMessageAndSetContext';
+import { useTranslation } from '@common/intl';
 
 type InboundLineItem = InboundLineFragment['item'];
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 
 export const useDraftInboundLines = (item: InboundLineItem | null) => {
+  const t = useTranslation();
+  const { error } = useNotification();
+
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
 
   const { id } = useInbound.document.fields('id');
@@ -88,7 +93,21 @@ export const useDraftInboundLines = (item: InboundLineItem | null) => {
       });
     } else {
       const deletedBatch = { ...batch, isDeleted: true };
-      await deleteMutation([deletedBatch]);
+      const response = await deleteMutation([deletedBatch]);
+
+      const responseForLine =
+        response.batchInboundShipment.deleteInboundShipmentLines?.[0];
+
+      if (!responseForLine) {
+        error(t('error.something-wrong'))();
+        return;
+      }
+      const errorMessage = mapErrorToMessageAndSetContext(
+        responseForLine,
+        [deletedBatch],
+        t
+      );
+      if (errorMessage) error(errorMessage)();
     }
   };
 
