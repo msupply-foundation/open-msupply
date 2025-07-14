@@ -26,12 +26,13 @@ pub trait PreferenceServiceTrait: Sync + Send {
         let PreferenceProvider {
             // Global preferences
             allow_tracking_of_stock_by_donor,
-            show_contact_tracing,
             gender_options,
+            show_contact_tracing,
 
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
+            order_in_packs,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
         } = self.get_preference_provider();
@@ -46,11 +47,12 @@ pub trait PreferenceServiceTrait: Sync + Send {
 
         // Global preferences
         append_if_type(allow_tracking_of_stock_by_donor, &mut prefs, &input)?;
-        append_if_type(show_contact_tracing, &mut prefs, &input)?;
         append_if_type(gender_options, &mut prefs, &input)?;
+        append_if_type(show_contact_tracing, &mut prefs, &input)?;
         // Store preferences
         append_if_type(manage_vaccines_in_doses, &mut prefs, &input)?;
         append_if_type(manage_vvm_status_for_stock, &mut prefs, &input)?;
+        append_if_type(order_in_packs, &mut prefs, &input)?;
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
         append_if_type(use_simplified_mobile_ui, &mut prefs, &input)?;
 
