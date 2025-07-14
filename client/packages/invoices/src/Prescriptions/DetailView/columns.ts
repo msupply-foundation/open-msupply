@@ -333,7 +333,9 @@ export const usePrescriptionColumn = ({
           if (totalSellPrice === 0 && totalUnits === 0) return 0;
           return totalSellPrice / totalUnits;
         } else {
-          return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
+          return !!rowData.batch
+            ? (rowData.sellPricePerPack ?? 0) / rowData.packSize
+            : 0;
         }
       },
       getSortValue: rowData => {
