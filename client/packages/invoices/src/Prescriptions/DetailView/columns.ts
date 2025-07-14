@@ -11,7 +11,6 @@ import {
   NumberCell,
   CurrencyCell,
   ColumnDescription,
-  NumUtils,
   useAuthContext,
   usePreference,
   PreferenceKey,
@@ -25,45 +24,6 @@ interface UsePrescriptionColumnOptions {
   sortBy: SortBy<StockOutLineFragment | StockOutItem>;
   onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
 }
-
-export const useExpansionColumns = (
-  withDoseColumns?: boolean
-): Column<StockOutLineFragment>[] => {
-  const columns: ColumnDescription<StockOutLineFragment>[] = [
-    'batch',
-    'expiryDate',
-    [
-      'location',
-      {
-        accessor: ({ rowData }) => rowData.location?.code,
-      },
-    ],
-    [
-      'itemUnit',
-      {
-        accessor: ({ rowData }) => rowData.item?.unitName,
-      },
-    ],
-    'numberOfPacks',
-    'packSize',
-    [
-      'unitQuantity',
-      {
-        accessor: ({ rowData }) =>
-          NumUtils.round(
-            (rowData.numberOfPacks ?? 0) * (rowData.packSize ?? 1),
-            3
-          ),
-      },
-    ],
-  ];
-
-  if (withDoseColumns) {
-    columns.push(getDosesQuantityColumn());
-  }
-
-  return useColumns(columns, {}, []);
-};
 
 export const usePrescriptionColumn = ({
   sortBy,
