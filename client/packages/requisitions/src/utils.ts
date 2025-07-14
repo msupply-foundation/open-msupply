@@ -20,7 +20,6 @@ export const requestStatuses = [
   RequisitionNodeStatus.Finalised,
 ];
 
-// create-shipment is a special status for response requisitions
 export const responseStatuses: Array<RequisitionNodeStatus> = [
   RequisitionNodeStatus.New,
   RequisitionNodeStatus.Finalised,
@@ -53,8 +52,8 @@ export const getNextRequestStatus = (
 };
 
 export const getNextResponseStatus = (
-  currentStatus: RequisitionNodeStatus | 'create-shipment'
-): RequisitionNodeStatus | 'create-shipment' | null => {
+  currentStatus: RequisitionNodeStatus
+): RequisitionNodeStatus | null => {
   const currentStatusIdx = responseStatuses.findIndex(
     status => currentStatus === status
   );
