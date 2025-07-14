@@ -2,7 +2,7 @@ import {
   useDialog,
   // useFormErrors,
   useNotification,
-  // ErrorDisplay,
+  ErrorDisplay,
   FieldErrorWrapper,
   useFormErrorContext,
 } from '@common/hooks';
@@ -48,12 +48,11 @@ export const InsuranceModal = (): ReactElement => {
     updatePatch: updateDraft,
   } = useInsurancePolicies(nameId);
 
-  // const { resetRequiredErrors, getErrorProps, hasErrors } = useFormErrors();
-
-  const x = useFormErrorContext();
+  const { showRequiredErrors, resetRequiredErrors, hasErrors } =
+    useFormErrorContext();
 
   const updatePatch: (newData: Partial<unknown>) => void = newData => {
-    // resetRequiredErrors();
+    resetRequiredErrors();
     updateDraft(newData);
   };
 
@@ -82,10 +81,11 @@ export const InsuranceModal = (): ReactElement => {
   };
 
   const handleSave = async (): Promise<void> => {
-    // if (hasErrors()) {
-    //   // console.log("Errors, can't submit");
-    //   return;
-    // }
+    if (hasErrors()) {
+      // console.log("Errors, can't submit");
+      return;
+    }
+    showRequiredErrors();
     if (insuranceId !== undefined) await handleInsuranceUpdate();
     else await handleInsuranceInsert();
   };
@@ -303,7 +303,7 @@ export const InsuranceModal = (): ReactElement => {
             />
           </Box>
         </Stack>
-        {/* <ErrorDisplay /> */}
+        <ErrorDisplay />
       </>
     </Modal>
   );

@@ -1,19 +1,19 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from '@openmsupply-client/common';
 import { useFormErrorContext } from './NewFormErrorContext';
 
 type FieldErrorWrapperProps = {
   code: string;
   label?: string;
   value: string | undefined;
-  //   onChange: (value: string) => void;
   required?: boolean;
+  customValidation?: () => boolean;
+  customErrorMessage?: string;
   children: (fieldProps: {
     value: string | undefined;
     required?: boolean;
     errorMessage?: string | null;
     setError: (errorMessage: string | null) => void;
-    // onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    // onBlur: () => void;
   }) => React.ReactNode;
 };
 
@@ -22,6 +22,8 @@ export const FieldErrorWrapper: React.FC<FieldErrorWrapperProps> = ({
   label,
   value,
   required,
+  customValidation,
+  customErrorMessage,
   children,
 }) => {
   const {
@@ -30,7 +32,10 @@ export const FieldErrorWrapper: React.FC<FieldErrorWrapperProps> = ({
     setError,
     getErrorData,
     updateErrorData,
+    displayRequiredErrors,
   } = useFormErrorContext();
+
+  const t = useTranslation();
 
   const errorData = getErrorData(code);
 
@@ -42,21 +47,26 @@ export const FieldErrorWrapper: React.FC<FieldErrorWrapperProps> = ({
   useEffect(() => {
     const { requiredError } = errorData;
 
-    console.log('Value', code, errorData);
+    if (customValidation && !customValidation()) {
+      updateErrorData(code, { error: customErrorMessage ?? 'Invalid input' });
+    }
 
     if (required && !value) {
-      updateErrorData(code, { requiredError: 'this field is required' });
+      updateErrorData(code, { requiredError: t('messages.required-field') });
     } else if (requiredError) {
       updateErrorData(code, { requiredError: null });
     }
-  }, [value, required]);
+  }, [value, required, customValidation, customErrorMessage]);
+
+  const errorMessage =
+    errorData.error || displayRequiredErrors ? errorData.requiredError : null;
 
   return (
     <>
       {children({
         value,
         required,
-        errorMessage: errorData.error,
+        errorMessage,
         setError: (errorMessage: string | null) => setError(code, errorMessage),
       })}
     </>
