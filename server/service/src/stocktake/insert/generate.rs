@@ -248,8 +248,8 @@ pub fn generate_lines_from_master_list(
             .unwrap();
         let item_name = ItemRowRepository::new(connection)
             .find_active_by_id(item_id)
-            .unwrap()
-            .unwrap()
+            .unwrap_or_default()
+            .unwrap_or_default()
             .name;
 
         if stock_lines.is_empty() {
