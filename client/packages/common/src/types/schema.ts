@@ -4586,6 +4586,7 @@ export type LedgerConnector = {
 export type LedgerFilterInput = {
   datetime?: InputMaybe<DatetimeFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
+  masterListId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -4600,6 +4601,7 @@ export type LedgerNode = {
   quantity: Scalars['Float']['output'];
   reason?: Maybe<Scalars['String']['output']>;
   runningBalance: Scalars['Float']['output'];
+  stockLine?: Maybe<StockLineNode>;
   stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
 };
@@ -6188,6 +6190,7 @@ export enum PreferenceKey {
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
   ShowContactTracing = 'showContactTracing',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
+  UseCampaigns = 'useCampaigns',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
 }
 
@@ -6220,6 +6223,7 @@ export type PreferencesNode = {
   manageVvmStatusForStock: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
+  useCampaigns: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
 };
 
@@ -10186,6 +10190,7 @@ export type UpsertPreferencesInput = {
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
+  useCampaigns?: InputMaybe<Scalars['Boolean']['input']>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
 };
 
