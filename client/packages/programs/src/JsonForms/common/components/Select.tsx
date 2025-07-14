@@ -86,12 +86,12 @@ type DisplayOption = {
   right?: string;
 };
 
-const getDisplayOptions = (
+export const getDisplayOptions = (
   t: TypedTFunction<LocaleKey>,
   schemaEnum: string[],
   preferenceKey?: PreferenceKey,
   options?: Options,
-  prefOptions?: Pick<PreferencesNode, PreferenceKey | '__typename'>
+  prefOptions?: Pick<PreferencesNode, PreferenceKey>
 ): DisplayOption[] => {
   if (preferenceKey) {
     switch (preferenceKey) {
