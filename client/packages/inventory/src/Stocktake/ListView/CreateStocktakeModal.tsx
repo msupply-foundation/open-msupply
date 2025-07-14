@@ -14,6 +14,7 @@ import {
   LocationRowFragment,
   MasterListSearchInput,
   MasterListRowFragment,
+  useMasterListLineCount,
 } from '@openmsupply-client/system';
 import {
   Box,
@@ -37,6 +38,7 @@ interface ModalState {
   masterList: MasterListRowFragment | null;
   expiryDate: Date | null;
   createBlankStocktake: boolean;
+  includeAllMasterListItems: boolean;
 }
 
 export const CreateStocktakeModal = ({
@@ -53,13 +55,22 @@ export const CreateStocktakeModal = ({
     onClose,
     disableBackdrop: true,
   });
-  const [{ location, masterList, expiryDate, createBlankStocktake }, setState] =
-    useState<ModalState>({
-      location: null,
-      masterList: null,
-      expiryDate: null,
-      createBlankStocktake: false,
-    });
+  const [
+    {
+      location,
+      masterList,
+      expiryDate,
+      createBlankStocktake,
+      includeAllMasterListItems,
+    },
+    setState,
+  ] = useState<ModalState>({
+    location: null,
+    masterList: null,
+    expiryDate: null,
+    createBlankStocktake: false,
+    includeAllMasterListItems: false,
+  });
 
   const stockFilter: StockLineFilterInput = {
     location: location && {
@@ -74,6 +85,7 @@ export const CreateStocktakeModal = ({
   };
 
   const { data } = useStockListCount(stockFilter);
+  const { data: masterListLineCount } = useMasterListLineCount(masterList?.id);
 
   const { localisedDate } = useFormatDateTime();
 
@@ -128,6 +140,7 @@ export const CreateStocktakeModal = ({
       createBlankStocktake,
       expiresBefore: Formatter.naiveDate(adjustedExpiryDate),
       isInitialStocktake: false,
+      includeAllMasterListItems,
       description,
       comment: generateComment(),
     };
@@ -137,6 +150,17 @@ export const CreateStocktakeModal = ({
       }
     });
   };
+
+  let estimatedLineCount = 0;
+  if (createBlankStocktake) {
+    estimatedLineCount = 0;
+  } else {
+    const stockCount = data?.totalCount ?? 0;
+    estimatedLineCount =
+      includeAllMasterListItems && masterListLineCount
+        ? Math.max(masterListLineCount, stockCount)
+        : stockCount;
+  }
 
   return (
     <>
@@ -169,6 +193,10 @@ export const CreateStocktakeModal = ({
                       setState(prev => ({
                         ...prev,
                         createBlankStocktake: e.target.checked,
+                        masterList: null,
+                        includeAllMasterListItems: false,
+                        location: null,
+                        expiryDate: null,
                       }))
                     }
                   />
@@ -189,11 +217,36 @@ export const CreateStocktakeModal = ({
                 }
                 label={t('label.master-list')}
               />
+              {masterList ? (
+                <InputWithLabelRow
+                  labelProps={{ sx: { flex: `0 0 250px` } }}
+                  sx={{ paddingLeft: '160px' }}
+                  Input={
+                    <Checkbox
+                      style={{ paddingLeft: 0 }}
+                      disabled={!masterList || createBlankStocktake}
+                      checked={!!includeAllMasterListItems}
+                      onChange={e =>
+                        setState(prev => ({
+                          ...prev,
+                          includeAllMasterListItems: e.target.checked,
+                          location: null,
+                          expiryDate: null,
+                        }))
+                      }
+                    />
+                  }
+                  label={t('stocktake.all-master-list-items')}
+                  labelRight={true}
+                />
+              ) : null}
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
                   <LocationSearchInput
-                    disabled={!!createBlankStocktake}
+                    disabled={
+                      !!createBlankStocktake || includeAllMasterListItems
+                    }
                     onChange={location =>
                       setState(prev => ({ ...prev, location }))
                     }
@@ -207,7 +260,9 @@ export const CreateStocktakeModal = ({
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                 Input={
                   <DateTimePickerInput
-                    disabled={!!createBlankStocktake}
+                    disabled={
+                      !!createBlankStocktake || includeAllMasterListItems
+                    }
                     value={expiryDate}
                     onChange={expiryDate =>
                       setState(prev => ({ ...prev, expiryDate }))
@@ -218,8 +273,8 @@ export const CreateStocktakeModal = ({
               />
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={`${createBlankStocktake ? 0 : data?.totalCount}`}
-                label={t('label.stock-lines-found')}
+                Input={estimatedLineCount}
+                label={t('label.stocktake-estimated-lines')}
               />
             </Box>
           ) : (
