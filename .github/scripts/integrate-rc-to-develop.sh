@@ -17,6 +17,26 @@ create_merge_branch() {
     git fetch origin
     git checkout "origin/$RC_BRANCH"
     git checkout -b "$MERGE_BRANCH"
+
+    echo "Merging develop into $MERGE_BRANCH to detect conflicts"
+    if git merge origin/develop --no-commit --no-ff; then
+        echo "Clean merge - no conflicts detected"
+        git commit -m "Merge develop into $MERGE_BRANCH"
+    else 
+        echo "Merge conflicts detected"
+        if git status --porcelain | grep -q "package.json"; then 
+            echo "Conflicts in package.json detected, auto-resolving"
+            git checkout --theirs package.json
+            git add package.json
+        fi 
+
+        if git status --porcelain | grep -q "^UU\|^AA\|^DD"; then
+            git commit -m "Merge develop into $MERGE_BRANCH (manual resolution needed)"
+        else
+            git commit -m "Merge develop into $MERGE_BRANCH (auto-resolved)"
+        fi
+    fi
+
     git push -u origin "$MERGE_BRANCH"
     echo "Created merge branch $MERGE_BRANCH"
 }
