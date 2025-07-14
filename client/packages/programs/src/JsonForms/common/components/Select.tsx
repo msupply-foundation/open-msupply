@@ -89,12 +89,11 @@ type DisplayOption = {
 export const getDisplayOptions = (
   t: TypedTFunction<LocaleKey>,
   schemaEnum: string[],
-  preferenceKey?: PreferenceKey,
   options?: Options,
   prefOptions?: Pick<PreferencesNode, PreferenceKey>
 ): DisplayOption[] => {
-  if (preferenceKey) {
-    switch (preferenceKey) {
+  if (options?.preferenceKey) {
+    switch (options?.preferenceKey) {
       case PreferenceKey.GenderOptions:
         return (
           prefOptions?.genderOptions?.map(option => ({
@@ -104,7 +103,7 @@ export const getDisplayOptions = (
         );
       default:
         console.warn(
-          `Unknown preference key: ${preferenceKey}. Returning empty options.`
+          `Unknown preference key: ${options?.preferenceKey}. Returning empty options.`
         );
         return [];
     }
@@ -289,13 +288,7 @@ const UIComponent = (props: ControlProps) => {
     value: DisplayOption | null
   ) => handleChange(path, value?.value);
 
-  const options = getDisplayOptions(
-    t,
-    items,
-    schemaOptions?.preferenceKey,
-    schemaOptions,
-    preference
-  );
+  const options = getDisplayOptions(t, items, schemaOptions, preference);
 
   const value = data ? options.find(o => o.value === data) : null;
 

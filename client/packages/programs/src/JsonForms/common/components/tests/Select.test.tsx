@@ -20,14 +20,14 @@ describe('getDisplayOptions', () => {
         ['A', 'Ay'] as [string, string | undefined, ...(string | undefined)[]],
       ],
     };
-    const result = getDisplayOptions(t, schemaEnum, undefined, options);
+    const result = getDisplayOptions(t, schemaEnum, options);
     expect(result).toEqual([
       { value: 'B', label: 'Bee' },
       { value: 'A', label: 'Ay' },
     ]);
   });
 
-  it('returns preference options when preferenceKey is GenderOptions', () => {
+  it('returns preference options when preferenceKey is genderOptions', () => {
     const prefOptions = {
       __typename: 'PreferencesNode',
       genderOptions: [GenderType.Female, GenderType.Male, GenderType.Unknown],
@@ -38,13 +38,10 @@ describe('getDisplayOptions', () => {
       sortByVvmStatusThenExpiry: true,
       useSimplifiedMobileUi: true,
     };
-    const result = getDisplayOptions(
-      t,
-      [],
-      PreferenceKey.GenderOptions,
-      undefined,
-      prefOptions
-    );
+    const options = {
+      preferenceKey: PreferenceKey.GenderOptions,
+    };
+    const result = getDisplayOptions(t, [], options, prefOptions);
     expect(result).toEqual([
       { label: 'gender.female', value: 'FEMALE' },
       { label: 'gender.male', value: 'MALE' },
