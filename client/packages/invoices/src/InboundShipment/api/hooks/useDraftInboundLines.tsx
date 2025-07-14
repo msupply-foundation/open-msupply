@@ -76,8 +76,20 @@ export const useDraftInboundLines = (item: InboundLineItem | null) => {
   const removeDraftLine = async (id: string) => {
     const batch = draftLines.find(line => line.id === id);
     if (!batch) return;
-    const deletedBatch = { ...batch, isDeleted: true };
-    await deleteMutation([deletedBatch]);
+    if (batch.isCreated) {
+      setDraftLines(draftLines => {
+        const newLines = draftLines.filter(line => line.id !== id);
+        if (newLines.length === 0 && item) {
+          return [
+            CreateDraft.stockInLine({ item, invoiceId: id, defaultPackSize }),
+          ];
+        }
+        return newLines;
+      });
+    } else {
+      const deletedBatch = { ...batch, isDeleted: true };
+      await deleteMutation([deletedBatch]);
+    }
   };
 
   const saveLines = async () => {
