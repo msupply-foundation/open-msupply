@@ -192,5 +192,24 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
 
       return items;
     },
+    count: async ({
+      first,
+      offset,
+      sortBy,
+      filterBy,
+    }: ListParams<ItemRowFragment>) => {
+      const result = await sdk.itemCount({
+        first,
+        offset,
+        key: itemParsers.toSortField(sortBy),
+        desc: sortBy.isDesc,
+        storeId,
+        filter: { ...filterBy, isVisible: true, isActive: true },
+      });
+
+      const count = result?.items.totalCount;
+
+      return count;
+    },
   },
 });
