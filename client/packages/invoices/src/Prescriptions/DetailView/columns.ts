@@ -1,6 +1,5 @@
 import {
   useColumns,
-  getRowExpandColumn,
   getNotePopoverColumn,
   ColumnAlign,
   GenericColumnKey,
@@ -406,8 +405,7 @@ export const usePrescriptionColumn = ({
           return (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks;
         }
       },
-    },
-    getRowExpandColumn()
+    }
   );
 
   return useColumns(columns, { onChangeSortBy, sortBy }, [sortBy]);
