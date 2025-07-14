@@ -65,16 +65,17 @@ pub fn validate(
     }
 
     if let Some(donor_id) = &input.donor_id {
-        check_other_party(connection, store_id, donor_id, CheckOtherPartyType::Donor).map_err(
-            |e| match e {
-                OtherPartyErrors::OtherPartyDoesNotExist => DonorDoesNotExist {},
-                OtherPartyErrors::OtherPartyNotVisible => DonorNotVisible,
-                OtherPartyErrors::TypeMismatched => SelectedDonorPartyIsNotADonor,
+        match check_other_party(connection, store_id, donor_id, CheckOtherPartyType::Donor) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(DonorDoesNotExist),
+                OtherPartyErrors::OtherPartyNotVisible => {} // Invisible donors are allowed as it's possible to have a stock in from a donor that is not visible
+                OtherPartyErrors::TypeMismatched => return Err(SelectedDonorPartyIsNotADonor),
                 OtherPartyErrors::DatabaseError(repository_error) => {
-                    DatabaseError(repository_error)
+                    return Err(DatabaseError(repository_error))
                 }
             },
-        )?;
+        };
     };
 
     // TODO: LocationDoesNotBelongToCurrentStore
