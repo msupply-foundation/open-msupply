@@ -24,6 +24,14 @@ pub fn empty_str_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
     Ok(Some(T::deserialize(str_d)?))
 }
 
+pub fn option_enum_invalid_none<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
+    d: D,
+) -> Result<Option<T>, D::Error> {
+    let s = String::deserialize(d)?;
+    let str_d: StrDeserializer<D::Error> = s.as_str().into_deserializer();
+    Ok(T::deserialize(str_d).ok())
+}
+
 pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<NaiveDate>, D::Error> {
     let s: Option<String> = Option::deserialize(d)?;
     Ok(s.filter(|s| s != "0000-00-00")
@@ -33,7 +41,7 @@ pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Nai
 pub fn object_fields_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
     d: D,
 ) -> Result<Option<T>, D::Error> {
-    // error if cannot deserialise into a Value (which includes null, empty string or empty object)
+    // error if cannot deserialize into a Value (which includes null, empty string or empty object)
     let value: Value = Value::deserialize(d)?;
     return match value {
         Value::Null => Ok(None),

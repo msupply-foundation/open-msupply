@@ -6,7 +6,7 @@ use repository::{
 };
 
 use crate::sync::{
-    sync_serde::{empty_str_as_option_string, object_fields_as_option},
+    sync_serde::{empty_str_as_option_string, object_fields_as_option, option_enum_invalid_none},
     translations::store::StoreTranslation,
 };
 
@@ -16,7 +16,7 @@ use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 #[derive(Deserialize, Serialize)]
 pub struct ClinicianOmsFields {
     #[serde(default)]
-    #[serde(deserialize_with = "object_fields_as_option")]
+    #[serde(deserialize_with = "option_enum_invalid_none")]
     pub gender: Option<GenderType>,
 }
 
@@ -54,6 +54,7 @@ pub struct LegacyClinicianRow {
     #[serde(deserialize_with = "empty_str_as_option_string", rename = "store_ID")]
     pub store_id: Option<String>,
 
+    #[serde(default)]
     #[serde(deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<ClinicianOmsFields>,
 }
@@ -100,11 +101,13 @@ impl SyncTranslation for ClinicianTranslation {
             oms_fields,
         } = serde_json::from_str::<LegacyClinicianRow>(&sync_record.data)?;
 
-        let gender = oms_fields.and_then(|fields| fields.gender).or_else(|| {
+        let gender = if let Some(fields) = oms_fields {
+            fields.gender
+        } else {
             is_female
                 .then_some(GenderType::Female)
                 .or(Some(GenderType::Male))
-        });
+        };
 
         let result = ClinicianRow {
             id,
