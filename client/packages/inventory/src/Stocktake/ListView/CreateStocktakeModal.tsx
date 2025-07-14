@@ -14,6 +14,7 @@ import {
   LocationRowFragment,
   MasterListSearchInput,
   MasterListRowFragment,
+  useMasterListLineCount,
 } from '@openmsupply-client/system';
 import {
   Box,
@@ -84,6 +85,7 @@ export const CreateStocktakeModal = ({
   };
 
   const { data } = useStockListCount(stockFilter);
+  const { data: masterListLineCount } = useMasterListLineCount(masterList?.id);
 
   const { localisedDate } = useFormatDateTime();
 
@@ -148,6 +150,18 @@ export const CreateStocktakeModal = ({
       }
     });
   };
+
+  let estimatedLineCount = 0;
+  if (createBlankStocktake) {
+  } else if (
+    masterListLineCount &&
+    includeAllMasterListItems &&
+    masterListLineCount > (data?.totalCount ?? 0)
+  ) {
+    estimatedLineCount = masterListLineCount;
+  } else if (data?.totalCount) {
+    estimatedLineCount = data.totalCount;
+  }
 
   return (
     <>
@@ -254,8 +268,8 @@ export const CreateStocktakeModal = ({
               />
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={`${createBlankStocktake ? 0 : data?.totalCount}`}
-                label={t('label.stock-lines-found')}
+                Input={estimatedLineCount}
+                label={t('label.stocktake-estimated-lines')}
               />
             </Box>
           ) : (
