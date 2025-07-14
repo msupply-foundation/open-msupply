@@ -83,7 +83,9 @@ export const StocktakeListView = () => {
   );
 
   const createInitialStocktake = (hasStockTake: boolean) => {
-    const comment = t('stocktake.comment-initial-stocktake-template');
+    const comment = hasStockTake
+      ? '' // No comment for subsequent stocktakes
+      : t('stocktake.comment-initial-stocktake-template');
     create({
       comment,
       description,
