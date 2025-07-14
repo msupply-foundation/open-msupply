@@ -63,21 +63,15 @@ const getNextStatusOption = (
 
   const nextStatus = getNextResponseStatus(status);
 
-  if (
-    status === RequisitionNodeStatus.New &&
-    (placeholderOrEmpty || !linesFullySupplied)
-  ) {
-    const createShipmentOption = options.find(
-      o => o.value === 'create-shipment'
-    );
-    return createShipmentOption || null;
-  }
-
-  if (status === RequisitionNodeStatus.New && linesFullySupplied) {
-    const finalisedOption = options.find(
-      o => o.value === RequisitionNodeStatus.Finalised
-    );
-    return finalisedOption || null;
+  if (status === RequisitionNodeStatus.New) {
+    if (placeholderOrEmpty || !linesFullySupplied) {
+      return options.find(o => o.value === 'create-shipment') || null;
+    }
+    if (linesFullySupplied) {
+      return (
+        options.find(o => o.value === RequisitionNodeStatus.Finalised) || null
+      );
+    }
   }
 
   const nextStatusOption = options.find(o => o.value === nextStatus);
@@ -208,7 +202,12 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
   // Otherwise, it would be set to the current status, which is now a disabled option.
   useEffect(() => {
     setSelectedOption(() =>
-      getNextStatusOption(status, options, linesFullySupplied)
+      getNextStatusOption(
+        status,
+        options,
+        linesFullySupplied,
+        placeholderOrEmpty
+      )
     );
   }, [status, options, linesFullySupplied]);
 
