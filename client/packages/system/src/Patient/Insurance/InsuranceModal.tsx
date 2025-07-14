@@ -1,6 +1,5 @@
 import {
   useDialog,
-  // useFormErrors,
   useNotification,
   ErrorDisplay,
   FieldErrorWrapper,
@@ -81,11 +80,11 @@ export const InsuranceModal = (): ReactElement => {
   };
 
   const handleSave = async (): Promise<void> => {
+    showRequiredErrors();
     if (hasErrors()) {
       // console.log("Errors, can't submit");
       return;
     }
-    showRequiredErrors();
     if (insuranceId !== undefined) await handleInsuranceUpdate();
     else await handleInsuranceInsert();
   };
@@ -122,7 +121,7 @@ export const InsuranceModal = (): ReactElement => {
                   value={draft.policyNumberFamily ?? undefined}
                   required={!draft.policyNumberPerson}
                 >
-                  {({ value, required, errorMessage, setError }) => (
+                  {({ value, required, errorMessage }) => (
                     <BasicTextInput
                       disabled={haveInsuranceId}
                       onChange={event => {
@@ -133,7 +132,6 @@ export const InsuranceModal = (): ReactElement => {
                       value={value}
                       required={required}
                       error={errorMessage != null}
-                      setError={setError}
                     />
                   )}
                 </FieldErrorWrapper>
@@ -215,11 +213,6 @@ export const InsuranceModal = (): ReactElement => {
                 >
                   {({ value, required, errorMessage, setError }) => (
                     <DateTimePickerInput
-                      // {...getErrorProps({
-                      //   code: t('label.expiry-date'),
-                      //   value: DateUtils.getNaiveDate(draft.expiryDate),
-                      //   required: true,
-                      // })}
                       value={value}
                       required={required}
                       onChange={date => {
@@ -244,11 +237,6 @@ export const InsuranceModal = (): ReactElement => {
             >
               {({ value, required, errorMessage, setError }) => (
                 <InsuranceProvidersSelect
-                  // {...getErrorProps({
-                  //   code: t('label.provider-name'),
-                  //   value: draft.insuranceProviderId,
-                  //   required: true,
-                  // })}
                   insuranceProviderId={draft.insuranceProviderId}
                   onChange={value => {
                     updatePatch({
@@ -273,15 +261,6 @@ export const InsuranceModal = (): ReactElement => {
                 >
                   {({ value, required, errorMessage, setError }) => (
                     <NumericTextInput
-                      // {...getErrorProps({
-                      //   code: t('label.discount-rate'),
-                      //   value: draft.discountPercentage,
-                      //   required: true,
-                      //   customErrorMessage:
-                      //     draft.discountPercentage >= 110
-                      //       ? 'Waaaay to big!'
-                      //       : undefined,
-                      // })}
                       value={value}
                       required={required}
                       error={errorMessage != null}
