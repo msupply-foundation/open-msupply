@@ -66,9 +66,9 @@ const CLINICIAN_INVALID_OMS_FIELDS_GENDER: (&str, &str) = (
     }"#,
 );
 const CLINICIAN_OMS_FIELDS_GENDER_UNDEFINED: (&str, &str) = (
-    "CLINICIAN_INVALID_OMS_FIELDS_GENDER",
+    "CLINICIAN_OMS_FIELDS_GENDER_UNDEFINED",
     r#"{
-            "ID": "CLINICIAN_INVALID_OMS_FIELDS_GENDER",
+            "ID": "CLINICIAN_OMS_FIELDS_GENDER_UNDEFINED",
             "code": "CLINICIAN_CODE",
             "last_name": "Surname",
             "initials": "FS",
@@ -81,7 +81,7 @@ const CLINICIAN_OMS_FIELDS_GENDER_UNDEFINED: (&str, &str) = (
             "female": true,
             "active": true,
             "store_ID": "store_a",
-            "oms_fields": {}
+            "oms_fields": { "someFutureField": 123 }
     }"#,
 );
 
@@ -134,21 +134,6 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             CLINICIAN_TABLE,
-            CLINICIAN_INVALID_OMS_FIELDS_GENDER,
-            ClinicianRow {
-                id: CLINICIAN_INVALID_OMS_FIELDS_GENDER.0.to_owned(),
-                code: "CLINICIAN_CODE".to_string(),
-                last_name: "Surname".to_string(),
-                initials: "FS".to_string(),
-                first_name: Some("First Name".to_string()),
-                gender: None,
-                is_active: true,
-                store_id: Some("store_a".to_string()),
-                ..Default::default()
-            },
-        ),
-        TestSyncIncomingRecord::new_pull_upsert(
-            CLINICIAN_TABLE,
             CLINICIAN_OMS_FIELDS_GENDER_UNDEFINED,
             ClinicianRow {
                 id: CLINICIAN_OMS_FIELDS_GENDER_UNDEFINED.0.to_owned(),
@@ -164,6 +149,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         ),
     ]
 }
+
 pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![TestSyncOutgoingRecord {
         table_name: CLINICIAN_TABLE.to_string(),
