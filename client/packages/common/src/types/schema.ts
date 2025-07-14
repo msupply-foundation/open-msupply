@@ -3725,6 +3725,7 @@ export type InsertStocktakeInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   expiresBefore?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  includeAllMasterListItems?: InputMaybe<Scalars['Boolean']['input']>;
   isInitialStocktake?: InputMaybe<Scalars['Boolean']['input']>;
   locationId?: InputMaybe<Scalars['String']['input']>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
@@ -4061,6 +4062,7 @@ export type InvoiceLineFilterInput = {
   itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   numberOfPacks?: InputMaybe<EqualFilterBigFloatingNumberInput>;
+  programId?: InputMaybe<EqualFilterStringInput>;
   reasonOption?: InputMaybe<EqualFilterStringInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
