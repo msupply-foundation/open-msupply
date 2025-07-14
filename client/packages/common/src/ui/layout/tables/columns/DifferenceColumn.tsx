@@ -5,6 +5,7 @@ import { NumberCell } from '../components';
 import { StocktakeLineFragment } from '@openmsupply-client/inventory/src/Stocktake/api';
 import { LocaleKey, TypedTFunction, useFormatNumber } from '@common/intl';
 import { StocktakeSummaryItem } from 'packages/inventory/src/types';
+import { NumUtils } from '@common/utils';
 
 interface DifferenceValues {
   total: number;
@@ -83,7 +84,11 @@ export const getDifferenceColumn = (
           <Typography sx={{ marginLeft: 1 }}>
             {`(`}
             <Tooltip title={totalInDoses}>
-              <span>{doses}</span>
+              <span>
+                {!!NumUtils.hasMoreThanTwoDp(totalInDoses ?? 0)
+                  ? `${doses}...`
+                  : doses}
+              </span>
             </Tooltip>
             {` ${t('label.doses')})`}
           </Typography>
