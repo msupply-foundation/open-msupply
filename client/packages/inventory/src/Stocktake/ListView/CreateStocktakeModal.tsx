@@ -194,6 +194,10 @@ export const CreateStocktakeModal = ({
                       setState(prev => ({
                         ...prev,
                         createBlankStocktake: e.target.checked,
+                        masterList: null,
+                        includeAllMasterListItems: false,
+                        location: null,
+                        expiryDate: null,
                       }))
                     }
                   />
@@ -227,6 +231,8 @@ export const CreateStocktakeModal = ({
                         setState(prev => ({
                           ...prev,
                           includeAllMasterListItems: e.target.checked,
+                          location: null,
+                          expiryDate: null,
                         }))
                       }
                     />
@@ -268,7 +274,7 @@ export const CreateStocktakeModal = ({
               />
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={estimatedLineCount}
+                Input={`${createBlankStocktake ? 0 : data?.totalCount}`}
                 label={t('label.stocktake-estimated-lines')}
               />
             </Box>
