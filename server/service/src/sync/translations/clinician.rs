@@ -198,7 +198,13 @@ mod tests {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
-                .unwrap();
+                .expect(
+                    format!(
+                        "try_translate_from_upsert_sync_record error {:?}",
+                        record.sync_buffer_row.record_id
+                    )
+                    .as_str(),
+                );
 
             assert_eq!(translation_result, record.translated_record);
         }
