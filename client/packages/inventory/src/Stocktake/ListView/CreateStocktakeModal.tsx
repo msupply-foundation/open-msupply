@@ -153,14 +153,13 @@ export const CreateStocktakeModal = ({
 
   let estimatedLineCount = 0;
   if (createBlankStocktake) {
-  } else if (
-    masterListLineCount &&
-    includeAllMasterListItems &&
-    masterListLineCount > (data?.totalCount ?? 0)
-  ) {
-    estimatedLineCount = masterListLineCount;
-  } else if (data?.totalCount) {
-    estimatedLineCount = data.totalCount;
+    estimatedLineCount = 0;
+  } else {
+    const stockCount = data?.totalCount ?? 0;
+    estimatedLineCount =
+      includeAllMasterListItems && masterListLineCount
+        ? Math.max(masterListLineCount, stockCount)
+        : stockCount;
   }
 
   return (
@@ -274,7 +273,7 @@ export const CreateStocktakeModal = ({
               />
               <InputWithLabelRow
                 labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
-                Input={`${createBlankStocktake ? 0 : data?.totalCount}`}
+                Input={estimatedLineCount}
                 label={t('label.stocktake-estimated-lines')}
               />
             </Box>
