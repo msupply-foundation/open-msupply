@@ -21,34 +21,25 @@ export const requestStatuses = [
 ];
 
 // create-shipment is a special status for response requisitions
-export const responseStatuses: Array<
-  RequisitionNodeStatus | 'create-shipment'
-> = [
+export const responseStatuses: Array<RequisitionNodeStatus> = [
   RequisitionNodeStatus.New,
-  'create-shipment',
   RequisitionNodeStatus.Finalised,
 ];
 
-const requisitionStatusToLocaleKey: Record<
-  RequisitionNodeStatus | 'create-shipment',
-  LocaleKey
-> = {
+const requisitionStatusToLocaleKey: Record<RequisitionNodeStatus, LocaleKey> = {
   [RequisitionNodeStatus.Draft]: 'label.draft',
   [RequisitionNodeStatus.New]: 'label.new',
-  'create-shipment': 'button.create-shipment',
   [RequisitionNodeStatus.Sent]: 'label.sent',
   [RequisitionNodeStatus.Finalised]: 'label.finalised',
 };
 
-export const getStatusTranslation = (
-  status: RequisitionNodeStatus | 'create-shipment'
-) => {
+export const getStatusTranslation = (status: RequisitionNodeStatus) => {
   return requisitionStatusToLocaleKey[status];
 };
 
 export const getRequisitionTranslator =
   (t: ReturnType<typeof useTranslation>) =>
-  (currentStatus: RequisitionNodeStatus | 'create-shipment'): string =>
+  (currentStatus: RequisitionNodeStatus): string =>
     t(getStatusTranslation(currentStatus));
 
 export const getNextRequestStatus = (

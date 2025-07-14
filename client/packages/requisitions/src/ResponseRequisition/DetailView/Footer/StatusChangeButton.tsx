@@ -56,11 +56,22 @@ const getStatusOptions = (
 const getNextStatusOption = (
   status: RequisitionNodeStatus,
   options: SplitButtonOption<RequisitionNodeStatus | 'create-shipment'>[],
-  linesFullySupplied: boolean
+  linesFullySupplied: boolean,
+  placeholderOrEmpty: boolean
 ): SplitButtonOption<RequisitionNodeStatus | 'create-shipment'> | null => {
   if (!status) return options[0] ?? null;
 
   const nextStatus = getNextResponseStatus(status);
+
+  if (
+    status === RequisitionNodeStatus.New &&
+    (placeholderOrEmpty || !linesFullySupplied)
+  ) {
+    const createShipmentOption = options.find(
+      o => o.value === 'create-shipment'
+    );
+    return createShipmentOption || null;
+  }
 
   if (status === RequisitionNodeStatus.New && linesFullySupplied) {
     const finalisedOption = options.find(
@@ -102,10 +113,15 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
     line => line.remainingQuantityToSupply > 0
   ).length;
   const linesFullySupplied = notFullySuppliedLines === 0;
+  const placeholderOrEmpty =
+    lines.nodes.length === 0 ||
+    lines.nodes.every(line => line.supplyQuantity === 0);
 
   const [selectedOption, setSelectedOption] = useState<SplitButtonOption<
     RequisitionNodeStatus | 'create-shipment'
-  > | null>(() => getNextStatusOption(status, options, linesFullySupplied));
+  > | null>(() =>
+    getNextStatusOption(status, options, linesFullySupplied, placeholderOrEmpty)
+  );
 
   const mapStructuredErrors = (result: Awaited<ReturnType<typeof save>>) => {
     if (result.__typename === 'RequisitionNode') {

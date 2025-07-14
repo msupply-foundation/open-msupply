@@ -14,13 +14,9 @@ import { ResponseFragment, useResponse } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 
 export const createStatusLog = (requisition: ResponseFragment) => {
-  const statusLog: Record<
-    RequisitionNodeStatus | 'create-shipment',
-    null | undefined | string
-  > = {
+  const statusLog: Record<RequisitionNodeStatus, null | undefined | string> = {
     [RequisitionNodeStatus.New]: requisition.createdDatetime,
     [RequisitionNodeStatus.Finalised]: requisition.finalisedDatetime,
-    'create-shipment': null,
     // Keeping typescript happy, not used for response requisitions.
     [RequisitionNodeStatus.Draft]: null,
     [RequisitionNodeStatus.Sent]: null,
@@ -61,9 +57,7 @@ export const Footer = () => {
               height={64}
             >
               <StatusCrumbs
-                statuses={responseStatuses.filter(
-                  status => status !== 'create-shipment'
-                )}
+                statuses={responseStatuses}
                 statusLog={createStatusLog(data)}
                 statusFormatter={getRequisitionTranslator(t)}
               />
