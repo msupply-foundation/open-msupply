@@ -59,7 +59,6 @@ const getNextStatusOption = (
   linesFullySupplied: boolean
 ): SplitButtonOption<RequisitionNodeStatus | 'create-shipment'> | null => {
   if (!status) return options[0] ?? null;
-  console.log('linesFullySupplied', linesFullySupplied);
 
   const nextStatus = getNextResponseStatus(status);
 
