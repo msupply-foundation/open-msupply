@@ -20,7 +20,7 @@ export const requestStatuses = [
   RequisitionNodeStatus.Finalised,
 ];
 
-export const responseStatuses: Array<RequisitionNodeStatus> = [
+export const responseStatuses = [
   RequisitionNodeStatus.New,
   RequisitionNodeStatus.Finalised,
 ];
