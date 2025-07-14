@@ -54,7 +54,7 @@ export const useUrlQueryParams = ({
   const initialParams: URLSearchParamsInit = initialSort
     ? {
         sort: initialSort?.key ?? '',
-        dir: initialSort?.dir ?? 'asc',
+        dir: initialSort?.dir === 'desc' ? 'desc' : '',
       }
     : {};
 
