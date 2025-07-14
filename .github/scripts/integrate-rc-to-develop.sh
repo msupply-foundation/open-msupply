@@ -21,30 +21,6 @@ create_merge_branch() {
     echo "Created merge branch $MERGE_BRANCH"
 }
 
-update_version_number() {
-    echo "Updating package.json version number"
-    PKG_VERSION=$(cat ./package.json | grep 'version":' | sed 's/.*"version":[ \t]*"\([^"]*\)".*/\1/')
-    if [[ -z "$PKG_VERSION" ]]; then
-        echo "ERROR: Could not find version in package.json"
-        return 1
-    fi
-
-    if [[ "$PKG_VERSION" =~ -[Rr][Cc](-.*)?$ ]]; then
-        PKG_VERSION="${PKG_VERSION%-[Rr][Cc]*}"
-        echo "Updated version number to $PKG_VERSION (removed RC part)"
-    else
-        echo "No RC part found in version number: $PKG_VERSION"
-    fi
-
-    NEW_VERSION="${PKG_VERSION}-dev"
-    sed 's/"version":[ \t]*"[^"]*"/"version": "'"$NEW_VERSION"'"/' ./package.json > ./package.json.tmp && mv ./package.json.tmp ./package.json
-
-    echo "Updated package.json version to $NEW_VERSION"
-    git add package.json
-    git commit -m "Update package.json version to $NEW_VERSION"
-    git push
-}
-
 create_pull_request() {
     local RC_BRANCH=$1
     local MERGE_BRANCH=$2
@@ -105,10 +81,8 @@ for RC_BRANCH in $RC_BRANCHES; do
     if branch_exists "$MERGE_BRANCH" && [[ -z "$EXISTING_PR" ]]; then
         echo "Merge branch $MERGE_BRANCH already exists, but no PR found. Will create PR."
         git checkout "$MERGE_BRANCH"
-        update_version_number
     else
         create_merge_branch "$RC_BRANCH" "$MERGE_BRANCH"
-        update_version_number
     fi
 
     create_pull_request "$RC_BRANCH" "$MERGE_BRANCH"
