@@ -5,9 +5,20 @@ use repository::{
     ClinicianRowRepositoryTrait, GenderType, StorageConnection, SyncBufferRow,
 };
 
-use crate::sync::{sync_serde::empty_str_as_option_string, translations::store::StoreTranslation};
+use crate::sync::{
+    sync_serde::{empty_str_as_option_string, object_fields_as_option},
+    translations::store::StoreTranslation,
+};
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize)]
+pub struct ClinicianOmsFields {
+    #[serde(default)]
+    #[serde(deserialize_with = "object_fields_as_option")]
+    pub gender: Option<GenderType>,
+}
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyClinicianRow {
@@ -42,6 +53,9 @@ pub struct LegacyClinicianRow {
 
     #[serde(deserialize_with = "empty_str_as_option_string", rename = "store_ID")]
     pub store_id: Option<String>,
+
+    #[serde(deserialize_with = "object_fields_as_option")]
+    pub oms_fields: Option<ClinicianOmsFields>,
 }
 
 // Needs to be added to all_translators()
@@ -83,7 +97,14 @@ impl SyncTranslation for ClinicianTranslation {
             is_female,
             is_active,
             store_id,
+            oms_fields,
         } = serde_json::from_str::<LegacyClinicianRow>(&sync_record.data)?;
+
+        let gender = oms_fields.and_then(|fields| fields.gender).or_else(|| {
+            is_female
+                .then_some(GenderType::Female)
+                .or(Some(GenderType::Male))
+        });
 
         let result = ClinicianRow {
             id,
@@ -96,11 +117,7 @@ impl SyncTranslation for ClinicianTranslation {
             phone,
             mobile,
             email,
-            gender: if is_female {
-                Some(GenderType::Female)
-            } else {
-                Some(GenderType::Male)
-            },
+            gender,
             is_active,
             store_id,
         };
@@ -134,8 +151,11 @@ impl SyncTranslation for ClinicianTranslation {
             )))?;
 
         let is_female = gender
-            .map(|gender| matches!(gender, GenderType::Female))
+            .as_ref()
+            .map(|g| *g == GenderType::Female)
             .unwrap_or(false);
+
+        let oms_fields = Some(ClinicianOmsFields { gender });
 
         let legacy_row = LegacyClinicianRow {
             id,
@@ -151,6 +171,7 @@ impl SyncTranslation for ClinicianTranslation {
             is_female,
             is_active,
             store_id,
+            oms_fields,
         };
         Ok(PushTranslateResult::upsert(
             changelog,
