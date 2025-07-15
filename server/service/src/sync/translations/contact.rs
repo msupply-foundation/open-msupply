@@ -1,8 +1,8 @@
-use crate::sync::sync_serde::empty_str_as_option_string;
 use crate::sync::translations::{name::NameTranslation, PullTranslateResult, SyncTranslation};
 use repository::db_diesel::contact_row::ContactRowDelete;
 use repository::{ContactRow, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
+use util::sync_serde::empty_str_as_option_string;
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
