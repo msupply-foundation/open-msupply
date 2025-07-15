@@ -37,6 +37,8 @@ describe('getDisplayOptions', () => {
       showContactTracing: true,
       sortByVvmStatusThenExpiry: true,
       useSimplifiedMobileUi: true,
+      useCampaigns: true,
+      orderInPacks: true,
     };
     const options = {
       preferenceKey: PreferenceKey.GenderOptions,
