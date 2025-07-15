@@ -24,12 +24,10 @@ pub fn empty_str_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
     Ok(Some(T::deserialize(str_d)?))
 }
 
-pub fn option_enum_invalid_none<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
+pub fn ok_or_none<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
     d: D,
 ) -> Result<Option<T>, D::Error> {
-    let s = String::deserialize(d)?;
-    let str_d: StrDeserializer<D::Error> = s.as_str().into_deserializer();
-    Ok(T::deserialize(str_d).ok())
+    Ok(empty_str_as_option(d).map_or(None, |v| v))
 }
 
 pub fn zero_date_as_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<NaiveDate>, D::Error> {
@@ -141,7 +139,14 @@ mod test {
 
     use serde::{Deserialize, Serialize};
 
-    use crate::sync::sync_serde::object_fields_as_option;
+    use crate::sync::sync_serde::{object_fields_as_option, ok_or_none};
+
+    #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+    #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+    pub enum Status {
+        New,
+        Finalised,
+    }
 
     #[allow(non_snake_case)]
     #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
@@ -152,6 +157,9 @@ mod test {
         pub contract_signed_datetime: Option<NaiveDateTime>,
         #[serde(default)]
         pub advance_paid_datetime: Option<NaiveDateTime>,
+        #[serde(default)]
+        #[serde(deserialize_with = "ok_or_none")]
+        pub some_enum_field: Option<Status>,
     }
 
     #[allow(non_snake_case)]
@@ -231,5 +239,53 @@ mod test {
         );
         let e = serde_json::from_str::<LegacyRowWithOmsObjectField>(&LEGACY_ROW_5.1);
         assert!(e.is_ok());
+    }
+
+    #[test]
+    fn test_ok_or_none() {
+        let raw_json = r#"{
+                "ID": "LEGACY_ROW",
+                "oms_fields": {
+                    "some_enum_field": ""
+                }
+            }"#;
+        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(&raw_json);
+        assert!(row.is_ok(), "Empty string to None is OK");
+        let fields = row.unwrap().oms_fields.unwrap();
+        assert_eq!(fields.some_enum_field, None);
+
+        let raw_json = r#"{
+                "ID": "LEGACY_ROW",
+                "oms_fields": {
+                    "some_enum_field": null
+                }
+            }"#;
+        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(&raw_json);
+        dbg!(&row);
+        assert!(row.is_ok(), "null to None is OK");
+        let fields = row.unwrap().oms_fields.unwrap();
+        assert_eq!(fields.some_enum_field, None);
+
+        let raw_json = r#"{
+                "ID": "LEGACY_ROW",
+                "oms_fields": {
+                    "some_enum_field": "FINALISED"
+                }
+            }"#;
+        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(&raw_json);
+        assert!(row.is_ok(), "Valid enum variant is OK");
+        let fields = row.unwrap().oms_fields.unwrap();
+        assert_eq!(fields.some_enum_field, Some(Status::Finalised));
+
+        let raw_json = r#"{
+                "ID": "LEGACY_ROW",
+                "oms_fields": {
+                    "some_enum_field": "not valid variant"
+                }
+            }"#;
+        let row = serde_json::from_str::<LegacyRowWithOmsObjectField>(&raw_json);
+        assert!(row.is_ok(), "Invalid enum to None is OK");
+        let fields = row.unwrap().oms_fields.unwrap();
+        assert_eq!(fields.some_enum_field, None);
     }
 }
