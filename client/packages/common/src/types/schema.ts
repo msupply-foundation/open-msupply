@@ -3712,6 +3712,7 @@ export type InsertStocktakeInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   expiresBefore?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  includeAllMasterListItems?: InputMaybe<Scalars['Boolean']['input']>;
   isInitialStocktake?: InputMaybe<Scalars['Boolean']['input']>;
   locationId?: InputMaybe<Scalars['String']['input']>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
@@ -4048,6 +4049,7 @@ export type InvoiceLineFilterInput = {
   itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   numberOfPacks?: InputMaybe<EqualFilterBigFloatingNumberInput>;
+  programId?: InputMaybe<EqualFilterStringInput>;
   reasonOption?: InputMaybe<EqualFilterStringInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
@@ -4573,6 +4575,7 @@ export type LedgerConnector = {
 export type LedgerFilterInput = {
   datetime?: InputMaybe<DatetimeFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
+  masterListId?: InputMaybe<EqualFilterStringInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -4587,6 +4590,7 @@ export type LedgerNode = {
   quantity: Scalars['Float']['output'];
   reason?: Maybe<Scalars['String']['output']>;
   runningBalance: Scalars['Float']['output'];
+  stockLine?: Maybe<StockLineNode>;
   stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
 };
@@ -6167,6 +6171,7 @@ export enum PreferenceKey {
   GenderOptions = 'genderOptions',
   ManageVaccinesInDoses = 'manageVaccinesInDoses',
   ManageVvmStatusForStock = 'manageVvmStatusForStock',
+  OrderInPacks = 'orderInPacks',
   ShowContactTracing = 'showContactTracing',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
@@ -6199,6 +6204,7 @@ export type PreferencesNode = {
   genderOptions: Array<GenderType>;
   manageVaccinesInDoses: Scalars['Boolean']['output'];
   manageVvmStatusForStock: Scalars['Boolean']['output'];
+  orderInPacks: Scalars['Boolean']['output'];
   showContactTracing: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
@@ -10009,6 +10015,7 @@ export type UpsertPreferencesInput = {
   genderOptions?: InputMaybe<Array<GenderType>>;
   manageVaccinesInDoses?: InputMaybe<Array<BoolStorePrefInput>>;
   manageVvmStatusForStock?: InputMaybe<Array<BoolStorePrefInput>>;
+  orderInPacks?: InputMaybe<Array<BoolStorePrefInput>>;
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
