@@ -1948,7 +1948,7 @@ dependencies = [
  "shellexpand",
  "simple-log",
  "simple_logger",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
  "tokio",
  "util",
 ]
@@ -3783,7 +3783,7 @@ dependencies = [
  "serde_json",
  "service",
  "strum 0.27.1",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
  "tokio",
  "util",
 ]
@@ -6971,7 +6971,7 @@ dependencies = [
  "serde",
  "serde_json",
  "strum 0.27.1",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
  "tokio",
  "ts-rs",
  "util",
@@ -7606,7 +7606,7 @@ dependencies = [
  "serde_json",
  "service",
  "simple-log",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
  "tokio",
  "util",
  "winres",
@@ -7661,7 +7661,7 @@ dependencies = [
  "temperature-sensor",
  "tempfile",
  "tera",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
  "tokio",
  "topological-sort",
  "ts-rs",
@@ -8899,7 +8899,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
  "uuid",
 ]
 
