@@ -15,7 +15,7 @@ export const AddFromMasterListButtonComponent = () => {
   const { storeId } = useAuthContext();
 
   return (
-    
+    <>
       <MasterListSearchModal
         open={modalController.isOn}
         onClose={modalController.toggleOff}
@@ -33,7 +33,7 @@ export const AddFromMasterListButtonComponent = () => {
         label={t('button.add-from-master-list')}
         onClick={modalController.toggleOn}
       />
-    
+    </>
   );
 };
 
