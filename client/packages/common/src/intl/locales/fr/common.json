@@ -250,7 +250,7 @@
   "error.asset-not-found": "Actif non trouvé",
   "error.authentication-error": "Le serveur a renvoyé une erreur",
   "error.batch-is-reserved": "Le lot est déjà réservé/émis",
-  "error.cannot-add-from-masterlist-if-not-new": "L'ajout d'une liste maitresse n'est possible que depuis une nouvelle livraison",
+  "error.cannot-add-from-masterlist": "L'ajout d'une liste maitresse n'est possible que depuis une nouvelle livraison",
   "error.cannot-add-pack-size-of-zero": "Impossible d'ajouter une variante avec une taille d'emballage égale à zéro",
   "error.cannot-add-with-no-abbreviation-and-name": "Impossible d'ajouter une variante sans abréviation ni nom",
   "error.cannot-backdate-prescription": "Le stock n'est pas disponible à la date spécifiée",
