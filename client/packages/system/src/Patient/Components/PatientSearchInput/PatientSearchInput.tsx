@@ -64,11 +64,10 @@ export const PatientSearchInput = ({
 
   const handlePatientClose = (selectedPatient?: PatientColumnData) => {
     setCreatePatientOpen(false);
-    if (selectedPatient) {
-      onChange(asOption(selectedPatient));
-    } else if (createNewPatient) {
-      onChange(asOption(createNewPatient));
-    } else return;
+    const patientToSelect = selectedPatient ?? createNewPatient;
+    if (patientToSelect) {
+      onChange(asOption(patientToSelect));
+    }
     setInput('');
   };
 
