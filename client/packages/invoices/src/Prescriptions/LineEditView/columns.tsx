@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import {
   CellProps,
   ColumnAlign,
@@ -8,10 +8,13 @@ import {
   NumberCell,
   NumberInputCell,
   PreferenceKey,
+  RecordWithId,
+  Typography,
   useColumns,
   useIntlUtils,
   usePreference,
   useTranslation,
+  VvmstatusNode,
 } from '@openmsupply-client/common';
 import { getPrescriptionLineDosesColumns } from './columnsDoses';
 import {
@@ -72,11 +75,8 @@ export const usePrescriptionLineEditColumns = ({
     columnDefinitions.push({
       key: 'vvmStatus',
       label: 'label.vvm-status',
-      accessor: ({ rowData }) => {
-        if (!rowData.vvmStatus) return '';
-        // TODO: Show unusable VVM status somehow?
-        return rowData.vvmStatus?.description;
-      },
+      Cell: VvmStatusCell,
+      accessor: ({ rowData }) => rowData?.vvmStatus,
       width: 85,
     });
   }
@@ -155,3 +155,15 @@ const UnitQuantityCell = (props: CellProps<DraftStockOutLineFragment>) => (
     slotProps={{ htmlInput: { sx: { backgroundColor: 'white' } } }}
   />
 );
+
+const VvmStatusCell = <T extends RecordWithId>({
+  column,
+  rowData,
+}: CellProps<T>): ReactElement => {
+  const vvmStatus = column.accessor({ rowData }) as VvmstatusNode;
+  return (
+    <Typography sx={{ color: vvmStatus?.unusable ? 'error.main' : 'inherit' }}>
+      {vvmStatus?.description}
+    </Typography>
+  );
+};
