@@ -72,7 +72,7 @@ export const AddButton = ({
       case 'add-from-master-list':
         invoice?.status === InvoiceNodeStatus.New
           ? masterListModalController.toggleOn()
-          : info(t('error.cannot-add-from-masterlist-if-not-new'))();
+          : info(t('error.cannot-add-from-masterlist'))();
         break;
       case 'add-from-internal-order':
         internalOrderModalController.toggleOn();
