@@ -42,7 +42,7 @@ export const PatientSearchInput = ({
   const { createNewPatient } = usePatientStore();
   const { getLocalisedFullName } = useIntlUtils();
 
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState<string | undefined>(undefined);
   const [createPatientOpen, setCreatePatientOpen] = useState(false);
   const [editPatientModalOpen, setEditPatientModalOpen] = useState(false);
 
@@ -51,7 +51,7 @@ export const PatientSearchInput = ({
       setInput(value.name);
       search(value.name);
     }
-  }, [value]);
+  }, [search, value]);
 
   const asOption = (
     patient: CreateNewPatient | PatientColumnData
@@ -68,7 +68,7 @@ export const PatientSearchInput = ({
     if (patientToSelect) {
       onChange(asOption(patientToSelect));
     }
-    setInput('');
+    setInput(undefined);
   };
 
   const showCreate = allowCreate && input !== '' && !isLoading;
@@ -112,11 +112,7 @@ export const PatientSearchInput = ({
         }}
         filterOptions={options => options}
         sx={{ width: '100%', ...sx }}
-        noOptionsText={
-          input.length > 0
-            ? t('messages.no-matching-patients')
-            : t('messages.type-to-search')
-        }
+        noOptionsText={t('messages.type-to-search')}
         clickableOption={
           showCreate
             ? {
