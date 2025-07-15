@@ -93,21 +93,25 @@ export const useDraftInboundLines = (item: InboundLineItem | null) => {
       });
     } else {
       const deletedBatch = { ...batch, isDeleted: true };
-      const response = await deleteMutation([deletedBatch]);
+      try {
+        const response = await deleteMutation([deletedBatch]);
 
-      const responseForLine =
-        response.batchInboundShipment.deleteInboundShipmentLines?.[0];
+        const responseForLine =
+          response.batchInboundShipment.deleteInboundShipmentLines?.[0];
 
-      if (!responseForLine) {
+        if (!responseForLine) {
+          error(t('error.something-wrong'))();
+          return;
+        }
+        const errorMessage = mapErrorToMessageAndSetContext(
+          responseForLine,
+          [deletedBatch],
+          t
+        );
+        if (errorMessage) error(errorMessage)();
+      } catch {
         error(t('error.something-wrong'))();
-        return;
       }
-      const errorMessage = mapErrorToMessageAndSetContext(
-        responseForLine,
-        [deletedBatch],
-        t
-      );
-      if (errorMessage) error(errorMessage)();
     }
   };
 
