@@ -72,8 +72,7 @@ export const PatientSearchInput = ({
     setInput('');
   };
 
-  const showCreate =
-    allowCreate && patients.length === 0 && input !== '' && !isLoading;
+  const showCreate = allowCreate && input !== '' && !isLoading;
 
   const CreatePatient = mountSlidePanel
     ? CreatePatientSlider
@@ -120,7 +119,7 @@ export const PatientSearchInput = ({
             : t('messages.type-to-search')
         }
         clickableOption={
-          showCreate && setCreatePatientOpen
+          showCreate
             ? {
                 label: t('label.new-patient'),
                 onClick: () => {
