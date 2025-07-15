@@ -14,11 +14,12 @@ use super::{
 pub enum PrefKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
-    ManageVaccinesInDoses,
-    ShowContactTracing,
     GenderOptions,
+    ShowContactTracing,
     // Store preferences
+    ManageVaccinesInDoses,
     ManageVvmStatusForStock,
+    OrderInPacks,
     SortByVvmStatusThenExpiry,
     UseSimplifiedMobileUi,
 }
