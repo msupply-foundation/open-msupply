@@ -82,7 +82,7 @@ export const getDifferenceColumn = (
       >
         <NumberCell {...props} />
         {displayDoses && !!totalInDoses && (
-          <Typography sx={{ marginLeft: 1 }}>
+          <Typography>
             {`(`}
             <Tooltip title={tooltipDoses}>
               <span>
