@@ -52,15 +52,13 @@ const ClosedSummary = ({ closedSummary }: ClosedSummaryProps) => {
       {closedSummary?.map((summary, i) => (
         <Box key={i} sx={{ display: 'flex', flexDirection: 'row' }}>
           <Tooltip title={summary?.tooltip}>
-            <Typography>
+            <Typography sx={{ whiteSpace: 'pre-wrap' }}>
               {!!NumUtils.hasMoreThanTwoDp(summary?.tooltip ?? 0)
-                ? `${summary.qty}...`
-                : summary.qty}
+                ? `${summary.qty}... `
+                : `${summary.qty} `}
             </Typography>
           </Tooltip>
-          <Typography sx={{ whiteSpace: 'pre-wrap' }}>
-            {summary.text}
-          </Typography>
+          <Typography>{summary.text}</Typography>
         </Box>
       ))}
     </Box>
